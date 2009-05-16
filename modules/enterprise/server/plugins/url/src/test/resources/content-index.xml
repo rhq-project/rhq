@@ -58,4 +58,16 @@
     </p:extra-properties>
     <p:location>Mazzlocation</p:location>
   </p:package>
+  
+  <p:package>
+    <p:package-details-key>
+      <p:name>WOTGORILLAname</p:name>
+      <p:version>WOTGORILLAversion</p:version>
+      <p:package-type-name>WOTGORILLApackage-type-name</p:package-type-name>
+      <p:architecture-name>WOTGORILLAarchitecture-name</p:architecture-name>
+      <p:resource-type-name>WOTGORILLAresource-type-name</p:resource-type-name>
+      <p:resource-type-plugin>WOTGORILLAresource-type-plugin</p:resource-type-plugin>
+    </p:package-details-key>
+    <p:location>WOTGORILLAlocation</p:location>
+  </p:package>  
 </p:packages>

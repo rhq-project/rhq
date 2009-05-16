@@ -42,7 +42,7 @@ public class XmlIndexParserTest {
         Map<String, RemotePackageInfo> results;
         results = parser.jaxbParse(new FileInputStream(indexFile), indexFile.toURI().toURL(), "http://root/url/");
         assert results != null;
-        assert results.size() == 1 : "Wrong size=" + results.size();
+        assert results.size() == 2 : "Wrong size=" + results.size();
 
         System.out.println("TEST RESULTS:\n" + results);
 
@@ -132,5 +132,43 @@ public class XmlIndexParserTest {
         assert "List-o-Map #1 value 2".equals(((PropertySimple) map1.get("map1value2")).getStringValue()) : map1;
         assert "List-o-Map #2 value 1".equals(((PropertySimple) map2.get("map2value1")).getStringValue()) : map2;
         assert "List-o-Map #2 value 2".equals(((PropertySimple) map2.get("map2value2")).getStringValue()) : map2;
+
+        //// second package
+
+        details = results.get("WOTGORILLAlocation");
+        assert details != null : "missing details";
+        assert details instanceof FullRemotePackageInfo : "Bad class=" + details.getClass();
+        fullDetails = (FullRemotePackageInfo) details;
+        assert "WOTGORILLAlocation".equals(fullDetails.getLocation()) : fullDetails.getLocation();
+        assert null == fullDetails.getMD5() : fullDetails.getMD5();
+        assert new URL("http://root/url/WOTGORILLAlocation").equals(fullDetails.getUrl()) : fullDetails.getUrl();
+        assert "WOTGORILLAarchitecture-name".equals(fullDetails.getSupportedPackageType().architectureName) : fullDetails
+            .getSupportedPackageType().architectureName;
+        assert "WOTGORILLApackage-type-name".equals(fullDetails.getSupportedPackageType().packageTypeName) : fullDetails
+            .getSupportedPackageType().packageTypeName;
+        assert "WOTGORILLAresource-type-name".equals(fullDetails.getSupportedPackageType().resourceTypeName) : fullDetails
+            .getSupportedPackageType().resourceTypeName;
+        assert "WOTGORILLAresource-type-plugin".equals(fullDetails.getSupportedPackageType().resourceTypePluginName) : fullDetails
+            .getSupportedPackageType().resourceTypePluginName;
+        cspd = fullDetails.getContentSourcePackageDetails();
+        assert "WOTGORILLAarchitecture-name".equals(cspd.getArchitectureName()) : cspd.getArchitectureName();
+        assert null == cspd.getClassification() : cspd.getClassification();
+        assert null == cspd.getDisplayName() : cspd.getDisplayName();
+        assert null == cspd.getDisplayVersion() : cspd.getDisplayVersion();
+        assert null == cspd.getFileCreatedDate() : cspd.getFileCreatedDate();
+        assert null == cspd.getFileName() : cspd.getFileName();
+        assert null == cspd.getFileSize() : cspd.getFileSize();
+        assert null == cspd.getLicenseName() : cspd.getLicenseName();
+        assert null == cspd.getLicenseVersion() : cspd.getLicenseVersion();
+        assert "WOTGORILLAlocation".equals(cspd.getLocation()) : cspd.getLocation();
+        assert null == cspd.getLongDescription() : cspd.getLongDescription();
+        assert null == cspd.getMD5() : cspd.getMD5();
+        assert null == cspd.getMetadata() : cspd.getMetadata();
+        assert "WOTGORILLAname".equals(cspd.getName()) : cspd.getName();
+        assert "WOTGORILLApackage-type-name".equals(cspd.getPackageTypeName()) : cspd.getPackageTypeName();
+        assert null == cspd.getSHA256() : cspd.getSHA256();
+        assert null == cspd.getShortDescription() : cspd.getShortDescription();
+        assert "WOTGORILLAversion".equals(cspd.getVersion()) : cspd.getVersion();
+        assert 0 == cspd.getResourceVersions().size() : cspd.getResourceVersions();
     }
 }

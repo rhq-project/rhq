@@ -1,20 +1,24 @@
 /*
- * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Jopr Management Platform
+ * Copyright (C) 2005-2009 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation version 2 of the License.
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 package org.rhq.plugins.jbossas5;
 
@@ -59,20 +63,26 @@ public class WarMeasurementFacetDelegate implements MeasurementFacet
     {
         ManagementView managementView = this.managedDeploymentComponent.getConnection().getManagementView();
         String contextPath = getContextPath();
-        for (MeasurementScheduleRequest request : requests) {
+        for (MeasurementScheduleRequest request : requests)
+        {
             String metricName = request.getName();
             try
             {
-                if (metricName.equals(CONTEXT_ROOT_TRAIT)) {
-                    if (contextPath == null) {
+                if (metricName.equals(CONTEXT_ROOT_TRAIT))
+                {
+                    if (contextPath == null)
+                    {
                         // We can't figure out the context root for a stopped WAR.
                         continue;
                     }
                     String contextRoot = (contextPath.equals("/")) ? "/" : contextPath.substring(1);
                     MeasurementDataTrait trait = new MeasurementDataTrait(request, contextRoot);
                     report.addData(trait);
-                } else if (metricName.equals(VIRTUAL_HOSTS_TRAIT)) {
-                    if (contextPath == null) {
+                }
+                else if (metricName.equals(VIRTUAL_HOSTS_TRAIT))
+                {
+                    if (contextPath == null)
+                    {
                         // We can't figure out the virtual hosts for a stopped WAR.
                         continue;
                     }
@@ -113,9 +123,12 @@ public class WarMeasurementFacetDelegate implements MeasurementFacet
     {
         ManagedDeployment deployment = this.managedDeploymentComponent.getManagedDeployment();
         ManagedComponent contextComponent = deployment.getComponent(CONTEXT_COMPONENT_NAME);
-        if (contextComponent != null) {
+        if (contextComponent != null)
+        {
             return (String)ManagedComponentUtils.getSimplePropertyValue(contextComponent, "contextRoot");
-        } else {
+        }
+        else
+        {
             return null;
         }
     }

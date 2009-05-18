@@ -1,20 +1,24 @@
 /*
- * RHQ Management Platform
+ * Jopr Management Platform
  * Copyright (C) 2005-2009 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation version 2 of the License.
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 package org.rhq.plugins.jbossas5.util;
 
@@ -22,19 +26,41 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.Map;
-import java.util.HashMap;
+import java.util.Set;
 
 import javax.xml.bind.JAXBContext;
-import javax.xml.bind.Marshaller;
 import javax.xml.bind.JAXBElement;
+import javax.xml.bind.Marshaller;
 import javax.xml.namespace.QName;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.rhq.core.clientapi.descriptor.DescriptorPackages;
+import org.rhq.core.clientapi.descriptor.configuration.ConfigurationDescriptor;
+import org.rhq.core.clientapi.descriptor.configuration.ConfigurationProperty;
+import org.rhq.core.clientapi.descriptor.configuration.ListProperty;
+import org.rhq.core.clientapi.descriptor.configuration.MapProperty;
+import org.rhq.core.clientapi.descriptor.configuration.PropertyType;
+import org.rhq.core.clientapi.descriptor.configuration.SimpleProperty;
+import org.rhq.core.clientapi.descriptor.plugin.MetricDescriptor;
+import org.rhq.core.clientapi.descriptor.plugin.OperationDescriptor;
+import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
+import org.rhq.core.clientapi.descriptor.plugin.ResourceDescriptor;
+import org.rhq.core.clientapi.descriptor.plugin.ServiceDescriptor;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.core.domain.configuration.definition.PropertySimpleType;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.operation.OperationDefinition;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.plugins.jbossas5.helper.MoreKnownComponentTypes;
 
 import org.jboss.deployers.spi.management.KnownComponentTypes;
 import org.jboss.deployers.spi.management.KnownDeploymentTypes;
@@ -44,44 +70,24 @@ import org.jboss.managed.api.ManagedComponent;
 import org.jboss.managed.api.ManagedDeployment;
 import org.jboss.profileservice.spi.NoSuchDeploymentException;
 
-import org.rhq.core.clientapi.descriptor.DescriptorPackages;
-import org.rhq.core.clientapi.descriptor.configuration.ConfigurationDescriptor;
-import org.rhq.core.clientapi.descriptor.configuration.SimpleProperty;
-import org.rhq.core.clientapi.descriptor.configuration.PropertyType;
-import org.rhq.core.clientapi.descriptor.configuration.ConfigurationProperty;
-import org.rhq.core.clientapi.descriptor.configuration.ListProperty;
-import org.rhq.core.clientapi.descriptor.configuration.MapProperty;
-import org.rhq.core.clientapi.descriptor.plugin.MetricDescriptor;
-import org.rhq.core.clientapi.descriptor.plugin.OperationDescriptor;
-import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
-import org.rhq.core.clientapi.descriptor.plugin.ResourceDescriptor;
-import org.rhq.core.clientapi.descriptor.plugin.ServiceDescriptor;
-import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.configuration.definition.PropertyDefinition;
-import org.rhq.core.domain.configuration.definition.PropertySimpleType;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
-import org.rhq.core.domain.measurement.MeasurementDefinition;
-import org.rhq.core.domain.operation.OperationDefinition;
-import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.plugins.jbossas5.helper.MoreKnownComponentTypes;
-
 /**
  * Generates an RHQ plugin descriptor based on the ManagedComponent types represented in a Profile Service
- * ManagementView. 
+ * ManagementView.
  *
  * @author Ian Springer
  */
-public class PluginDescriptorGenerator {
-    private static final Log LOG = LogFactory.getLog(PluginDescriptorGenerator.class);    
+public class PluginDescriptorGenerator
+{
+    private static final Log LOG = LogFactory.getLog(PluginDescriptorGenerator.class);
 
     private static final QName SIMPLE_PROPERTY_QNAME = new QName(RhqNamespacePrefixMapper.CONFIGURATION_NAMESPACE, "simple-property");
     private static final QName LIST_PROPERTY_QNAME = new QName(RhqNamespacePrefixMapper.CONFIGURATION_NAMESPACE, "list-property");
     private static final QName MAP_PROPERTY_QNAME = new QName(RhqNamespacePrefixMapper.CONFIGURATION_NAMESPACE, "map-property");
 
     private static Map<PropertySimpleType, PropertyType> TYPE_MAP = new HashMap();
-    static {
+
+    static
+    {
         TYPE_MAP.put(PropertySimpleType.BOOLEAN, PropertyType.BOOLEAN);
         TYPE_MAP.put(PropertySimpleType.DIRECTORY, PropertyType.DIRECTORY);
         TYPE_MAP.put(PropertySimpleType.DOUBLE, PropertyType.DOUBLE);
@@ -94,7 +100,8 @@ public class PluginDescriptorGenerator {
         TYPE_MAP.put(PropertySimpleType.STRING, PropertyType.STRING);
     }
 
-    public static void generatePluginDescriptor(ManagementView managementView, File tempDir) throws Exception {
+    public static void generatePluginDescriptor(ManagementView managementView, File tempDir) throws Exception
+    {
         PluginDescriptor pluginDescriptor = new PluginDescriptor();
         addComponentsToDescriptor(managementView, pluginDescriptor);
         addDeploymentsToDescriptor(managementView, pluginDescriptor);
@@ -102,26 +109,33 @@ public class PluginDescriptorGenerator {
         writeToFile(pluginDescriptor, tempFile);
     }
 
-    private static void addDeploymentsToDescriptor(ManagementView managementView, PluginDescriptor pluginDescriptor) throws Exception {
+    private static void addDeploymentsToDescriptor(ManagementView managementView, PluginDescriptor pluginDescriptor) throws Exception
+    {
         Set<String> knownDeploymentTypeNames = getKnownDeploymentTypeNames();
-        for (String deploymentTypeName : knownDeploymentTypeNames) {
+        for (String deploymentTypeName : knownDeploymentTypeNames)
+        {
             Set<String> deploymentNames = managementView.getDeploymentNamesForType(deploymentTypeName);
-            if (deploymentNames == null || deploymentNames.isEmpty()) {
+            if (deploymentNames == null || deploymentNames.isEmpty())
+            {
                 LOG.warn("No deployments of type [" + deploymentTypeName + "] found.");
                 continue;
             }
             ManagedDeployment deployment = null;
-            for (String deploymentName : deploymentNames) {
-                try {
+            for (String deploymentName : deploymentNames)
+            {
+                try
+                {
                     // Use the first one we successfully retrieve as a representative sample of the type.
                     deployment = managementView.getDeployment(deploymentName);
                     break;
                 }
-                catch (NoSuchDeploymentException e) {
+                catch (NoSuchDeploymentException e)
+                {
                     LOG.warn(e);
                 }
             }
-            if (deployment == null) {
+            if (deployment == null)
+            {
                 LOG.warn("Unable to successfully retrieve a Deployment of type [" + deploymentTypeName
                         + "] due to https://jira.jboss.org/jira/browse/JBAS-5640.");
                 continue;
@@ -133,19 +147,25 @@ public class PluginDescriptorGenerator {
             convertAndMergeResourceType(pluginDescriptor, resourceType);
         }
     }
-    
-    private static void addComponentsToDescriptor(ManagementView managementView, PluginDescriptor pluginDescriptor) throws Exception {
+
+    private static void addComponentsToDescriptor(ManagementView managementView, PluginDescriptor pluginDescriptor) throws Exception
+    {
         Set<ComponentType> knownComponentTypes = getKnownComponentTypes();
-        for (ComponentType componentType : knownComponentTypes) {
+        for (ComponentType componentType : knownComponentTypes)
+        {
             Set<ManagedComponent> components = managementView.getComponentsForType(componentType);
-            if (components == null || components.isEmpty()) {
+            if (components == null || components.isEmpty())
+            {
                 LOG.warn("No components of type [" + componentType + "] found.");
                 continue;
             }
-            if (componentType.getSubtype().equals("*")) {
+            if (componentType.getSubtype().equals("*"))
+            {
                 for (ManagedComponent component : components)
                     addComponentToDescriptor(pluginDescriptor, component);
-            } else {
+            }
+            else
+            {
                 // Use the first one as a representative sample of the type.
                 ManagedComponent component = components.iterator().next();
                 addComponentToDescriptor(pluginDescriptor, component);
@@ -161,7 +181,8 @@ public class PluginDescriptorGenerator {
         convertAndMergeResourceType(pluginDescriptor, resourceType);
     }
 
-    private static void convertAndMergeResourceType(PluginDescriptor pluginDescriptor, ResourceType resourceType) {
+    private static void convertAndMergeResourceType(PluginDescriptor pluginDescriptor, ResourceType resourceType)
+    {
         List<ServiceDescriptor> services = pluginDescriptor.getServices();
         ServiceDescriptor serviceDescriptor = new ServiceDescriptor();
         serviceDescriptor.setName(resourceType.getName());
@@ -174,17 +195,20 @@ public class PluginDescriptorGenerator {
         services.add(serviceDescriptor);
     }
 
-    private static void convertAndMergeResourceConfiguration(ResourceType resourceType, ServiceDescriptor serviceDescriptor) {
+    private static void convertAndMergeResourceConfiguration(ResourceType resourceType, ServiceDescriptor serviceDescriptor)
+    {
         ConfigurationDefinition resourceConfigDef = resourceType.getResourceConfigurationDefinition();
         ConfigurationDescriptor resourceConfigDescriptor = convertConfigurationDefinitionToConfigurationDescriptor(
                 resourceConfigDef);
         serviceDescriptor.setResourceConfiguration(resourceConfigDescriptor);
     }
 
-    private static void convertAndMergeMetricDefinitions(ResourceType resourceType, ServiceDescriptor serviceDescriptor) {
+    private static void convertAndMergeMetricDefinitions(ResourceType resourceType, ServiceDescriptor serviceDescriptor)
+    {
         List<MetricDescriptor> metricDescriptors = serviceDescriptor.getMetric();
-        for (MeasurementDefinition metricDef : resourceType.getMetricDefinitions()) {
-        MetricDescriptor metricDescriptor = new MetricDescriptor();
+        for (MeasurementDefinition metricDef : resourceType.getMetricDefinitions())
+        {
+            MetricDescriptor metricDescriptor = new MetricDescriptor();
             metricDescriptors.add(metricDescriptor);
             if (metricDef.getCategory() != null)
                 metricDescriptor.setCategory(metricDef.getCategory().name().toLowerCase());
@@ -203,9 +227,11 @@ public class PluginDescriptorGenerator {
         }
     }
 
-    private static void convertAndMergeOperationDefinitions(ResourceType resourceType, ResourceDescriptor resourceDescriptor) {
+    private static void convertAndMergeOperationDefinitions(ResourceType resourceType, ResourceDescriptor resourceDescriptor)
+    {
         List<OperationDescriptor> operationDescriptors = resourceDescriptor.getOperation();
-        for (OperationDefinition opDef : resourceType.getOperationDefinitions()) {
+        for (OperationDefinition opDef : resourceType.getOperationDefinitions())
+        {
             OperationDescriptor operationDescriptor = new OperationDescriptor();
             operationDescriptors.add(operationDescriptor);
             operationDescriptor.setDescription(opDef.getDescription());
@@ -222,12 +248,14 @@ public class PluginDescriptorGenerator {
     }
 
     private static ConfigurationDescriptor convertConfigurationDefinitionToConfigurationDescriptor(
-            ConfigurationDefinition configDef) {
+            ConfigurationDefinition configDef)
+    {
         if (configDef == null)
             return null;
         ConfigurationDescriptor configDescriptor = new ConfigurationDescriptor();
         configDescriptor.setNotes(configDef.getDescription());
-        for (PropertyDefinition propDef : configDef.getPropertyDefinitions().values()) {
+        for (PropertyDefinition propDef : configDef.getPropertyDefinitions().values())
+        {
             ConfigurationProperty configProp = convertPropertyDefinitionToConfigurationProperty(propDef);
             JAXBElement propElement = getJAXBElement(configProp);
             configDescriptor.getConfigurationProperty().add(propElement);
@@ -235,9 +263,11 @@ public class PluginDescriptorGenerator {
         return configDescriptor;
     }
 
-    private static ConfigurationProperty convertPropertyDefinitionToConfigurationProperty(PropertyDefinition propDef) {
+    private static ConfigurationProperty convertPropertyDefinitionToConfigurationProperty(PropertyDefinition propDef)
+    {
         ConfigurationProperty configProp;
-        if (propDef instanceof PropertyDefinitionSimple) {
+        if (propDef instanceof PropertyDefinitionSimple)
+        {
             PropertyDefinitionSimple propDefSimple = (PropertyDefinitionSimple)propDef;
             SimpleProperty simpleProp = new SimpleProperty();
             simpleProp.setDefaultValue(propDefSimple.getDefaultValue());
@@ -246,7 +276,9 @@ public class PluginDescriptorGenerator {
             if (propDefSimple.getType() != PropertySimpleType.STRING)
                 simpleProp.setType(TYPE_MAP.get(propDefSimple.getType()));
             configProp = simpleProp;
-        } else if (propDef instanceof PropertyDefinitionList) {
+        }
+        else if (propDef instanceof PropertyDefinitionList)
+        {
             PropertyDefinitionList propDefList = (PropertyDefinitionList)propDef;
             ListProperty listProp = new ListProperty();
             //listProp.setMin(BigInteger.valueOf(propDefList.getMin()));
@@ -256,16 +288,21 @@ public class PluginDescriptorGenerator {
             JAXBElement propElement = getJAXBElement(memberConfigProp);
             listProp.setConfigurationProperty(propElement);
             configProp = listProp;
-        } else if (propDef instanceof PropertyDefinitionMap) {
+        }
+        else if (propDef instanceof PropertyDefinitionMap)
+        {
             PropertyDefinitionMap propDefMap = (PropertyDefinitionMap)propDef;
             MapProperty mapProp = new MapProperty();
-            for (PropertyDefinition itemPropDef : propDefMap.getPropertyDefinitions().values()) {
+            for (PropertyDefinition itemPropDef : propDefMap.getPropertyDefinitions().values())
+            {
                 ConfigurationProperty itemConfigProp = convertPropertyDefinitionToConfigurationProperty(itemPropDef);
                 JAXBElement propElement = getJAXBElement(itemConfigProp);
                 mapProp.getConfigurationProperty().add(propElement);
             }
             configProp = mapProp;
-        } else {
+        }
+        else
+        {
             throw new IllegalStateException("Invalid property definition type: " + propDef.getClass().getName());
         }
         configProp.setDescription(propDef.getDescription());
@@ -282,7 +319,8 @@ public class PluginDescriptorGenerator {
         return configProp;
     }
 
-    private static JAXBElement<? extends ConfigurationProperty> getJAXBElement(ConfigurationProperty configProp) {
+    private static JAXBElement<? extends ConfigurationProperty> getJAXBElement(ConfigurationProperty configProp)
+    {
         JAXBElement<? extends ConfigurationProperty> propElement;
         QName qname;
         if (configProp instanceof SimpleProperty)
@@ -297,55 +335,67 @@ public class PluginDescriptorGenerator {
         return propElement;
     }
 
-    private static Set<String> getKnownDeploymentTypeNames() {
+    private static Set<String> getKnownDeploymentTypeNames()
+    {
         Set<String> knownDeploymentTypeNames = new LinkedHashSet();
-        for (KnownDeploymentTypes type : KnownDeploymentTypes.values()) {
+        for (KnownDeploymentTypes type : KnownDeploymentTypes.values())
+        {
             knownDeploymentTypeNames.add(type.getType());
         }
         return knownDeploymentTypeNames;
     }
 
-    private static Set<ComponentType> getKnownComponentTypes() {
+    private static Set<ComponentType> getKnownComponentTypes()
+    {
         Set<ComponentType> knownComponentTypes = new LinkedHashSet<ComponentType>();
 
         // DataSource:*
-        for (KnownComponentTypes.DataSourceTypes componentType : KnownComponentTypes.DataSourceTypes.values()) {
+        for (KnownComponentTypes.DataSourceTypes componentType : KnownComponentTypes.DataSourceTypes.values())
+        {
             knownComponentTypes.add(componentType.getType());
         }
 
         // ConnectionFactory:*
-        for (KnownComponentTypes.ConnectionFactoryTypes componentType : KnownComponentTypes.ConnectionFactoryTypes.values()) {
+        for (KnownComponentTypes.ConnectionFactoryTypes componentType : KnownComponentTypes.ConnectionFactoryTypes.values())
+        {
             knownComponentTypes.add(componentType.getType());
         }
 
         // JMSDestination:*
-        for (KnownComponentTypes.JMSDestination componentType : KnownComponentTypes.JMSDestination.values()) {
+        for (KnownComponentTypes.JMSDestination componentType : KnownComponentTypes.JMSDestination.values())
+        {
             knownComponentTypes.add(componentType.getType());
         }
 
         // EJB:*
-        for (KnownComponentTypes.EJB componentType : KnownComponentTypes.EJB.values()) {
+        for (KnownComponentTypes.EJB componentType : KnownComponentTypes.EJB.values())
+        {
             knownComponentTypes.add(componentType.getType());
         }
 
         // MBean:*
-        for (KnownComponentTypes.MBean componentType : KnownComponentTypes.MBean.values()) {
+        for (KnownComponentTypes.MBean componentType : KnownComponentTypes.MBean.values())
+        {
             knownComponentTypes.add(componentType.getType());
         }
-        for (MoreKnownComponentTypes.MBean componentType : MoreKnownComponentTypes.MBean.values()) {
+        for (MoreKnownComponentTypes.MBean componentType : MoreKnownComponentTypes.MBean.values())
+        {
             knownComponentTypes.add(componentType.getType());
         }
 
         // MCBean:*
-        for (KnownComponentTypes.MCBean componentType : KnownComponentTypes.MCBean.values()) {
+        for (KnownComponentTypes.MCBean componentType : KnownComponentTypes.MCBean.values())
+        {
             knownComponentTypes.add(componentType.getType());
         }
-        for (MoreKnownComponentTypes.MCBean componentType : MoreKnownComponentTypes.MCBean.values()) {
+        for (MoreKnownComponentTypes.MCBean componentType : MoreKnownComponentTypes.MCBean.values())
+        {
             knownComponentTypes.add(componentType.getType());
         }
 
         // WAR:*
-        for (MoreKnownComponentTypes.WAR componentType : MoreKnownComponentTypes.WAR.values()) {
+        for (MoreKnownComponentTypes.WAR componentType : MoreKnownComponentTypes.WAR.values())
+        {
             knownComponentTypes.add(componentType.getType());
         }
 
@@ -354,7 +404,8 @@ public class PluginDescriptorGenerator {
 
     private static void writeToFile(PluginDescriptor pluginDescriptor,
                                     File file)
-            throws Exception {
+            throws Exception
+    {
         LOG.info("Writing plugin descriptor to [" + file + "]...");
         OutputStream outputStream = new BufferedOutputStream(new FileOutputStream(file));
         JAXBContext jaxbContext = JAXBContext.newInstance(DescriptorPackages.PC_PLUGIN);

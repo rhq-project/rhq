@@ -1,25 +1,25 @@
 /*
-* Jopr Management Platform
-* Copyright (C) 2005-2009 Red Hat, Inc.
-* All rights reserved.
-*
-* This program is free software; you can redistribute it and/or modify
-* it under the terms of the GNU General Public License, version 2, as
-* published by the Free Software Foundation, and/or the GNU Lesser
-* General Public License, version 2.1, also as published by the Free
-* Software Foundation.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-* GNU General Public License and the GNU Lesser General Public License
-* for more details.
-*
-* You should have received a copy of the GNU General Public License
-* and the GNU Lesser General Public License along with this program;
-* if not, write to the Free Software Foundation, Inc.,
-* 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-*/
+ * Jopr Management Platform
+ * Copyright (C) 2005-2009 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.plugins.jbossas5;
 
 import java.io.File;
@@ -32,15 +32,15 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.domain.measurement.MeasurementReport;
-import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
-import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
+import org.rhq.core.domain.measurement.MeasurementReport;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
-import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.plugins.jbossas5.util.DeploymentUtils;
 
 import org.jboss.deployers.spi.management.KnownDeploymentTypes;
@@ -63,7 +63,8 @@ import org.jboss.profileservice.spi.NoSuchDeploymentException;
  */
 public abstract class AbstractManagedDeploymentComponent
         extends AbstractManagedComponent
-        implements MeasurementFacet, OperationFacet, ProgressListener {
+        implements MeasurementFacet, OperationFacet, ProgressListener
+{
     public static final String DEPLOYMENT_NAME_PROPERTY = "deploymentName";
     public static final String DEPLOYMENT_TYPE_NAME_PROPERTY = "deploymentTypeName";
     public static final String EXTENSION_PROPERTY = "extension";
@@ -89,7 +90,8 @@ public abstract class AbstractManagedDeploymentComponent
 
     // ----------- ResourceComponent Implementation ------------
 
-    public void start(ResourceContext<ProfileServiceComponent> resourceContext) throws Exception {
+    public void start(ResourceContext<ProfileServiceComponent> resourceContext) throws Exception
+    {
         super.start(resourceContext);
         Configuration pluginConfig = getResourceContext().getPluginConfiguration();
         this.deploymentName = pluginConfig.getSimple(DEPLOYMENT_NAME_PROPERTY).getStringValue();
@@ -100,12 +102,15 @@ public abstract class AbstractManagedDeploymentComponent
                 + " deployment '" + this.deploymentName + "' with path '" + this.deploymentFile + "'.");
     }
 
-    public AvailabilityType getAvailability() {
-        try {
+    public AvailabilityType getAvailability()
+    {
+        try
+        {
             return (getManagedDeployment().getDeploymentState() == DeploymentState.STARTED) ? AvailabilityType.UP :
                     AvailabilityType.DOWN;
         }
-        catch (NoSuchDeploymentException e) {
+        catch (NoSuchDeploymentException e)
+        {
             log.warn(this.deploymentType + " deployment '" + this.deploymentName + "' not found. Cause: "
                     + e.getLocalizedMessage());
             return AvailabilityType.DOWN;
@@ -117,7 +122,8 @@ public abstract class AbstractManagedDeploymentComponent
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests)
             throws Exception
     {
-        if (this.deploymentType == KnownDeploymentTypes.JavaEEWebApplication) {
+        if (this.deploymentType == KnownDeploymentTypes.JavaEEWebApplication)
+        {
             WarMeasurementFacetDelegate warMeasurementFacetDelegate = new WarMeasurementFacetDelegate(this);
             warMeasurementFacetDelegate.getValues(report, requests);
         }
@@ -126,12 +132,15 @@ public abstract class AbstractManagedDeploymentComponent
     // TODO (ips): This method could be useful to other plugins, so move it to MeasurementReport.
     private static boolean isRequestInReport(MeasurementReport report, MeasurementScheduleRequest request)
     {
-        if (request.getDataType() == DataType.MEASUREMENT) {
-            for (MeasurementDataNumeric numericDatum : report.getNumericData()) {
+        if (request.getDataType() == DataType.MEASUREMENT)
+        {
+            for (MeasurementDataNumeric numericDatum : report.getNumericData())
+            {
                 if (numericDatum.getName().equals(request.getName()))
                     return true;
             }
-            for (MeasurementDataTrait traitDatum : report.getTraitData()) {
+            for (MeasurementDataTrait traitDatum : report.getTraitData())
+            {
                 if (traitDatum.getName().equals(request.getName()))
                     return true;
             }
@@ -150,15 +159,22 @@ public abstract class AbstractManagedDeploymentComponent
     {
         DeploymentManager deploymentManager = getConnection().getDeploymentManager();
         DeploymentProgress progress;
-        if (name.equals("start")) {
+        if (name.equals("start"))
+        {
             progress = deploymentManager.start(this.deploymentName);
-        } else if (name.equals("stop")) {
+        }
+        else if (name.equals("stop"))
+        {
             progress = deploymentManager.stop(this.deploymentName);
-        } else if (name.equals("restart")) {
+        }
+        else if (name.equals("restart"))
+        {
             progress = deploymentManager.stop(this.deploymentName);
             DeploymentUtils.run(progress);
             progress = deploymentManager.start(this.deploymentName);
-        } else {
+        }
+        else
+        {
             throw new UnsupportedOperationException(name);
         }
         DeploymentStatus status = DeploymentUtils.run(progress);
@@ -169,21 +185,25 @@ public abstract class AbstractManagedDeploymentComponent
 
     // ------------ ProgressListener implementation -------------
 
-    public void progressEvent(ProgressEvent event) {
+    public void progressEvent(ProgressEvent event)
+    {
         log.debug(event);
     }
 
     // ------------ AbstractManagedComponent implementation -------------     
 
-    protected Map<String, ManagedProperty> getManagedProperties() throws Exception {
+    protected Map<String, ManagedProperty> getManagedProperties() throws Exception
+    {
         return getManagedDeployment().getProperties();
     }
 
-    protected Log getLog() {
+    protected Log getLog()
+    {
         return this.log;
     }
 
-    protected void updateComponent() throws Exception {
+    protected void updateComponent() throws Exception
+    {
         ManagementView managementView = getConnection().getManagementView();
         managementView.process();
     }
@@ -193,11 +213,12 @@ public abstract class AbstractManagedDeploymentComponent
     protected ManagedDeployment getManagedDeployment() throws NoSuchDeploymentException
     {
         ManagementView managementView = getConnection().getManagementView();
-        managementView.load();        
+        managementView.load();
         return managementView.getDeployment(this.deploymentName);
     }
 
-    private File getDeploymentFile() throws MalformedURLException {
+    private File getDeploymentFile() throws MalformedURLException
+    {
         URL vfsURL = new URL(this.deploymentName);
         String path = vfsURL.getPath();
         // Under Windows, the deployment name URL will look like:

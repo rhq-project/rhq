@@ -1,31 +1,30 @@
- /*
-  * Jopr Management Platform
-  * Copyright (C) 2005-2009 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+* Jopr Management Platform
+* Copyright (C) 2005-2009 Red Hat, Inc.
+* All rights reserved.
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License, version 2, as
+* published by the Free Software Foundation, and/or the GNU Lesser
+* General Public License, version 2.1, also as published by the Free
+* Software Foundation.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+* GNU General Public License and the GNU Lesser General Public License
+* for more details.
+*
+* You should have received a copy of the GNU General Public License
+* and the GNU Lesser General Public License along with this program;
+* if not, write to the Free Software Foundation, Inc.,
+* 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+*/
 package org.rhq.plugins.jbossas5.adapter.impl.configuration;
 
-import org.jboss.metatype.api.types.MetaType;
-import org.jboss.metatype.api.values.ArrayValueSupport;
-import org.jboss.metatype.api.values.MetaValue;
-import org.jboss.metatype.api.values.MetaValueFactory;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
@@ -34,8 +33,10 @@ import org.rhq.plugins.jbossas5.adapter.api.AbstractPropertyListAdapter;
 import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapter;
 import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapterFactory;
 
-import java.util.ArrayList;
-import java.util.List;
+import org.jboss.metatype.api.types.MetaType;
+import org.jboss.metatype.api.values.ArrayValueSupport;
+import org.jboss.metatype.api.values.MetaValue;
+import org.jboss.metatype.api.values.MetaValueFactory;
 
 /**
  * @author Mark Spritzler
@@ -49,7 +50,7 @@ public class PropertyListToArrayValueAdapter extends AbstractPropertyListAdapter
         List<Property> properties = property.getList();
         if (metaValue != null)
         {
-            ArrayValueSupport valueSupport = (ArrayValueSupport) metaValue;
+            ArrayValueSupport valueSupport = (ArrayValueSupport)metaValue;
             MetaType listMetaType = valueSupport.getMetaType().getElementType();
             List<MetaValue> values = new ArrayList<MetaValue>(properties.size());
             for (Property propertyWithinList : properties)
@@ -79,9 +80,9 @@ public class PropertyListToArrayValueAdapter extends AbstractPropertyListAdapter
 
         if (metaValue != null)
         {
-            ArrayValueSupport valueSupport = (ArrayValueSupport) metaValue;
+            ArrayValueSupport valueSupport = (ArrayValueSupport)metaValue;
             MetaType listMetaType = valueSupport.getMetaType().getElementType();
-            MetaValue[] metaValues = (MetaValue[]) valueSupport.getValue();
+            MetaValue[] metaValues = (MetaValue[])valueSupport.getValue();
             PropertyAdapter propertyAdapter = PropertyAdapterFactory.getPropertyAdapter(listMetaType);
             for (MetaValue value : metaValues)
             {

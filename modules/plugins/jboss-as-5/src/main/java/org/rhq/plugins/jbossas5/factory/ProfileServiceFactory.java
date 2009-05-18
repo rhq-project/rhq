@@ -1,25 +1,25 @@
- /*
-  * Jopr Management Platform
-  * Copyright (C) 2005-2009 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+* Jopr Management Platform
+* Copyright (C) 2005-2009 Red Hat, Inc.
+* All rights reserved.
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License, version 2, as
+* published by the Free Software Foundation, and/or the GNU Lesser
+* General Public License, version 2.1, also as published by the Free
+* Software Foundation.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+* GNU General Public License and the GNU Lesser General Public License
+* for more details.
+*
+* You should have received a copy of the GNU General Public License
+* and the GNU Lesser General Public License along with this program;
+* if not, write to the Free Software Foundation, Inc.,
+* 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+*/
 package org.rhq.plugins.jbossas5.factory;
 
 import javax.naming.InitialContext;
@@ -35,11 +35,9 @@ import org.jboss.profileservice.spi.ProfileKey;
 import org.jboss.profileservice.spi.ProfileService;
 
 /**
- * Factory class to get the ProfileService and Profile Service related objects directly from the
- * ProfileService object.
+ * Factory class to get the ProfileService and Profile Service related objects directly from the ProfileService object.
  *
  * @author Mark Spritzler
- *
  * @deprecated use {@link org.rhq.plugins.jbossas5.connection.ProfileServiceConnection} instead
  */
 @Deprecated
@@ -52,7 +50,7 @@ public class ProfileServiceFactory
     private static ProfileService profileService;
 
     private static ManagementView currentProfileView;
-    
+
     private static final ProfileKey DEFAULT_PROFILE_KEY = new ProfileKey(ProfileKey.DEFAULT);
 
     /**
@@ -76,7 +74,7 @@ public class ProfileServiceFactory
             }
             try
             {
-                profileService = (ProfileService) initialContext.lookup(PROFILE_SERVICE_JNDI_NAME);
+                profileService = (ProfileService)initialContext.lookup(PROFILE_SERVICE_JNDI_NAME);
             }
             catch (NamingException e)
             {
@@ -88,8 +86,8 @@ public class ProfileServiceFactory
     }
 
     /**
-     * Get the current profile's Management view. This will get the domains from the profile service
-     * and return the first one in the list.
+     * Get the current profile's Management view. This will get the domains from the profile service and return the
+     * first one in the list.
      *
      * @return ManagementView the management view of the first domain
      */
@@ -104,14 +102,14 @@ public class ProfileServiceFactory
     }
 
     /**
-     * Refresh the current profile's ManagementView so it contains all the latest data.
-     * Use {@link #getCurrentProfileView()} to obtain the ManagementView.
+     * Refresh the current profile's ManagementView so it contains all the latest data. Use {@link
+     * #getCurrentProfileView()} to obtain the ManagementView.
      */
     public static void refreshCurrentProfileView()
     {
         try
         {
-        	loadProfile(getCurrentProfileView());
+            loadProfile(getCurrentProfileView());
         }
         catch (Exception e)
         {
@@ -119,7 +117,8 @@ public class ProfileServiceFactory
         }
     }
 
-    public static DeploymentManager getDeploymentManager() throws Exception {
+    public static DeploymentManager getDeploymentManager() throws Exception
+    {
         DeploymentManager deploymentManager = getProfileService().getDeploymentManager();
         // Load and associate the given profile with the DeploymentManager for future operations. This is mandatory
         // in order for us to be able to successfully invoke the various DeploymentManager methods.
@@ -129,35 +128,35 @@ public class ProfileServiceFactory
 
     private static void loadProfile(ManagementView managementView)
     {
-    	try
-    	{
-    		LOG.trace("Loading profile via ManagementView...");
-    		long startTime = System.currentTimeMillis();
-    		managementView.load();
-    	    long elapsedTime = System.currentTimeMillis() - startTime;
-    		LOG.trace("Loaded profile via Management View in " + elapsedTime + " ms.");
-    	}
-    	catch (Exception e)
-    	{
-    		LOG.error("Failed to load profile via Management View.", e);
-    	}    	
-    }    
-    
+        try
+        {
+            LOG.trace("Loading profile via ManagementView...");
+            long startTime = System.currentTimeMillis();
+            managementView.load();
+            long elapsedTime = System.currentTimeMillis() - startTime;
+            LOG.trace("Loaded profile via Management View in " + elapsedTime + " ms.");
+        }
+        catch (Exception e)
+        {
+            LOG.error("Failed to load profile via Management View.", e);
+        }
+    }
+
     private static void loadProfile(DeploymentManager deploymentManager)
     {
-    	try
-    	{
-    		LOG.trace("Loading profile '" + DEFAULT_PROFILE_KEY + "' via Deployment Manager...");
-    		long startTime = System.currentTimeMillis();
-    		deploymentManager.loadProfile(DEFAULT_PROFILE_KEY);
-    	    long elapsedTime = System.currentTimeMillis() - startTime;
-    		LOG.trace("Loaded profile '" + DEFAULT_PROFILE_KEY + "' via Deployment Manager in " + elapsedTime + " ms.");
-    	}
-    	catch (Exception e)
-    	{
-    		LOG.error("Failed to load profile '" + DEFAULT_PROFILE_KEY + "' via Deployment Manager.", e);
-    	}    	
-    }    
+        try
+        {
+            LOG.trace("Loading profile '" + DEFAULT_PROFILE_KEY + "' via Deployment Manager...");
+            long startTime = System.currentTimeMillis();
+            deploymentManager.loadProfile(DEFAULT_PROFILE_KEY);
+            long elapsedTime = System.currentTimeMillis() - startTime;
+            LOG.trace("Loaded profile '" + DEFAULT_PROFILE_KEY + "' via Deployment Manager in " + elapsedTime + " ms.");
+        }
+        catch (Exception e)
+        {
+            LOG.error("Failed to load profile '" + DEFAULT_PROFILE_KEY + "' via Deployment Manager.", e);
+        }
+    }
 
 
 }

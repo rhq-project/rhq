@@ -1,39 +1,43 @@
 /*
- * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Jopr Management Platform
+ * Copyright (C) 2005-2009 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation version 2 of the License.
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 package org.rhq.plugins.jbossas5.connection;
+
+import java.util.Properties;
+
+import javax.naming.Context;
+import javax.naming.InitialContext;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.deployers.spi.management.deploy.DeploymentManager;
 import org.jboss.profileservice.spi.ProfileService;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import javax.naming.Context;
-import javax.naming.InitialContext;
-import java.util.Properties;
-
 /**
  * @author Ian Springer
  */
-public class RemoteProfileServiceConnectionProvider extends AbstractProfileServiceConnectionProvider
-{
+public class RemoteProfileServiceConnectionProvider extends AbstractProfileServiceConnectionProvider {
     private static final String NAMING_CONTEXT_FACTORY = "org.jnp.interfaces.NamingContextFactory";
     private static final String JNDI_LOGIN_INITIAL_CONTEXT_FACTORY = "org.jboss.security.jndi.JndiLoginInitialContextFactory";
 
@@ -45,12 +49,12 @@ public class RemoteProfileServiceConnectionProvider extends AbstractProfileServi
     private static final String JNP_DISABLE_DISCOVERY_JNP_INIT_PROP = "jnp.disableDiscovery";
 
     /**
-     * This is the timeout for the initial attempt to establish the remote connection. 
+     * This is the timeout for the initial attempt to establish the remote connection.
      */
     private static final int JNP_TIMEOUT = 60 * 1000; // 60 seconds
     /**
-     * This is the timeout for methods invoked on the remote ProfileService.
-     * NOTE: This timeout comes into play if the JBossAS instance has gone down since the original JNP connection was made.
+     * This is the timeout for methods invoked on the remote ProfileService. NOTE: This timeout comes into play if the
+     * JBossAS instance has gone down since the original JNP connection was made.
      */
     private static final int JNP_SO_TIMEOUT = 60 * 1000; // 60 seconds
 
@@ -60,15 +64,13 @@ public class RemoteProfileServiceConnectionProvider extends AbstractProfileServi
     private String principal;
     private String credentials;
 
-    public RemoteProfileServiceConnectionProvider(String providerURL, String principal, String credentials)
-    {
+    public RemoteProfileServiceConnectionProvider(String providerURL, String principal, String credentials) {
         this.providerURL = providerURL;
         this.principal = principal;
         this.credentials = credentials;
     }
 
-    protected ProfileServiceConnectionImpl doConnect()
-    {
+    protected ProfileServiceConnectionImpl doConnect() {
         Properties env = new Properties();
         env.setProperty(Context.PROVIDER_URL, this.providerURL);
         ProfileService profileService;
@@ -83,9 +85,9 @@ public class RemoteProfileServiceConnectionProvider extends AbstractProfileServi
                 env.setProperty(Context.SECURITY_CREDENTIALS, this.credentials);
                 log.debug("Connecting to Profile Service via remote JNDI using env [" + env + "]...");
                 InitialContext initialContext = createInitialContext(env);
-                profileService = (ProfileService)lookup(initialContext, SECURE_PROFILE_SERVICE_JNDI_NAME);
-                managementView = (ManagementView)lookup(initialContext, SECURE_MANAGEMENT_VIEW_JNDI_NAME);
-                deploymentManager = (DeploymentManager)lookup(initialContext, SECURE_DEPLOYMENT_MANAGER_JNDI_NAME);
+                profileService = (ProfileService) lookup(initialContext, SECURE_PROFILE_SERVICE_JNDI_NAME);
+                managementView = (ManagementView) lookup(initialContext, SECURE_MANAGEMENT_VIEW_JNDI_NAME);
+                deploymentManager = (DeploymentManager) lookup(initialContext, SECURE_DEPLOYMENT_MANAGER_JNDI_NAME);
             } else {
                 env.setProperty(Context.INITIAL_CONTEXT_FACTORY, NAMING_CONTEXT_FACTORY);
                 env.setProperty(JNP_DISABLE_DISCOVERY_JNP_INIT_PROP, "true");
@@ -94,19 +96,17 @@ public class RemoteProfileServiceConnectionProvider extends AbstractProfileServi
                 env.setProperty("jnp.sotimeout", String.valueOf(JNP_SO_TIMEOUT));
                 log.debug("Connecting to Profile Service via remote JNDI using env [" + env + "]...");
                 InitialContext initialContext = createInitialContext(env);
-                profileService = (ProfileService)lookup(initialContext, PROFILE_SERVICE_JNDI_NAME);
+                profileService = (ProfileService) lookup(initialContext, PROFILE_SERVICE_JNDI_NAME);
                 managementView = profileService.getViewManager();
                 deploymentManager = profileService.getDeploymentManager();
             }
-        }
-        finally {
+        } finally {
             Thread.currentThread().setContextClassLoader(originalContextClassLoader);
         }
         return new ProfileServiceConnectionImpl(this, profileService, managementView, deploymentManager);
     }
 
-    protected void doDisconnect()
-    {
+    protected void doDisconnect() {
         return;
     }
 }

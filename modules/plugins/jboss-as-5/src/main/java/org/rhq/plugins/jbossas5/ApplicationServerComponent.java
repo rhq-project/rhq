@@ -1,53 +1,43 @@
- /*
-  * Jopr Management Platform
-  * Copyright (C) 2005-2009 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+* Jopr Management Platform
+* Copyright (C) 2005-2009 Red Hat, Inc.
+* All rights reserved.
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License, version 2, as
+* published by the Free Software Foundation, and/or the GNU Lesser
+* General Public License, version 2.1, also as published by the Free
+* Software Foundation.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+* GNU General Public License and the GNU Lesser General Public License
+* for more details.
+*
+* You should have received a copy of the GNU General Public License
+* and the GNU Lesser General Public License along with this program;
+* if not, write to the Free Software Foundation, Inc.,
+* 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+*/
 package org.rhq.plugins.jbossas5;
 
 import java.io.File;
 import java.io.Serializable;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
-import java.net.URL;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jboss.deployers.spi.management.ManagementView;
-import org.jboss.deployers.spi.management.KnownDeploymentTypes;
-import org.jboss.deployers.spi.management.deploy.DeploymentStatus;
-import org.jboss.deployers.spi.management.deploy.ProgressEvent;
-import org.jboss.deployers.spi.management.deploy.ProgressListener;
-import org.jboss.deployers.spi.management.deploy.DeploymentManager;
-import org.jboss.managed.api.ComponentType;
-import org.jboss.managed.api.DeploymentTemplateInfo;
-import org.jboss.managed.api.ManagedProperty;
-import org.jboss.managed.api.ManagedDeployment;
-import org.jboss.managed.api.ManagedComponent;
-import org.jboss.profileservice.spi.NoSuchDeploymentException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -57,11 +47,11 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.MeasurementDataNumeric;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
-import org.rhq.core.domain.measurement.MeasurementDataTrait;
-import org.rhq.core.domain.measurement.MeasurementDataNumeric;
-import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.domain.resource.ResourceCreationDataType;
 import org.rhq.core.domain.resource.ResourceType;
@@ -72,22 +62,32 @@ import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
-//import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
 import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapter;
 import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapterFactory;
+import org.rhq.plugins.jbossas5.connection.LocalProfileServiceConnectionProvider;
+import org.rhq.plugins.jbossas5.connection.ProfileServiceConnection;
+import org.rhq.plugins.jbossas5.connection.ProfileServiceConnectionProvider;
+import org.rhq.plugins.jbossas5.connection.RemoteProfileServiceConnectionProvider;
 import org.rhq.plugins.jbossas5.util.ConversionUtils;
 import org.rhq.plugins.jbossas5.util.DebugUtils;
 import org.rhq.plugins.jbossas5.util.DeploymentUtils;
-import org.rhq.plugins.jbossas5.util.ResourceComponentUtils;
 import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
-import org.rhq.plugins.jbossas5.connection.RemoteProfileServiceConnectionProvider;
-import org.rhq.plugins.jbossas5.connection.ProfileServiceConnectionProvider;
-import org.rhq.plugins.jbossas5.connection.LocalProfileServiceConnectionProvider;
-import org.rhq.plugins.jbossas5.connection.ProfileServiceConnection;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.rhq.plugins.jbossas5.util.ResourceComponentUtils;
 
- /**
+import org.jboss.deployers.spi.management.KnownDeploymentTypes;
+import org.jboss.deployers.spi.management.ManagementView;
+import org.jboss.deployers.spi.management.deploy.DeploymentManager;
+import org.jboss.deployers.spi.management.deploy.DeploymentStatus;
+import org.jboss.deployers.spi.management.deploy.ProgressEvent;
+import org.jboss.deployers.spi.management.deploy.ProgressListener;
+import org.jboss.managed.api.ComponentType;
+import org.jboss.managed.api.DeploymentTemplateInfo;
+import org.jboss.managed.api.ManagedComponent;
+import org.jboss.managed.api.ManagedDeployment;
+import org.jboss.managed.api.ManagedProperty;
+import org.jboss.profileservice.spi.NoSuchDeploymentException;
+
+/**
  * ResourceComponent for a JBoss AS, 5.1.0.CR1 or later, Server.
  *
  * @author Jason Dobies
@@ -96,7 +96,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ApplicationServerComponent
         implements ResourceComponent, ProfileServiceComponent, CreateChildResourceFacet, MeasurementFacet,
-         ConfigurationFacet, ProgressListener
+        ConfigurationFacet, ProgressListener
 {
     private static final String MANAGED_PROPERTY_GROUP = "managedPropertyGroup";
 
@@ -135,14 +135,16 @@ public class ApplicationServerComponent
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests)
     {
         ManagementView managementView = getConnection().getManagementView();
-        for (MeasurementScheduleRequest request : requests) {
+        for (MeasurementScheduleRequest request : requests)
+        {
             String metricName = request.getName();
             try
             {
                 // Metric names are expected to have the following syntax:
                 // "<componentType>|<componentSubType>|<componentName>|<propertyName>"
                 Matcher matcher = METRIC_NAME_PATTERN.matcher(metricName);
-                if (!matcher.matches()) {
+                if (!matcher.matches())
+                {
                     log.error("Metric name '" + metricName + "' does not match pattern '" + METRIC_NAME_PATTERN + "'.");
                     continue;
                 }
@@ -152,20 +154,27 @@ public class ApplicationServerComponent
                 String propertyName = matcher.group(4);
                 ComponentType componentType = new ComponentType(componentCategory, componentSubType);
                 ManagedComponent component;
-                if (componentName.equals("*")) {
+                if (componentName.equals("*"))
+                {
                     component = ManagedComponentUtils.getSingletonManagedComponent(managementView, componentType);
-                } else {
+                }
+                else
+                {
                     component = ManagedComponentUtils.getManagedComponent(managementView, componentType, componentName);
                 }
                 Serializable value = ManagedComponentUtils.getSimplePropertyValue(component, propertyName);
-                if (value == null) {
+                if (value == null)
+                {
                     log.debug("Null value returned for metric '" + metricName + "'.");
                     continue;
                 }
-                if (request.getDataType() == DataType.MEASUREMENT) {
+                if (request.getDataType() == DataType.MEASUREMENT)
+                {
                     Number number = (Number)value;
                     report.addData(new MeasurementDataNumeric(request, number.doubleValue()));
-                } else if (request.getDataType() == DataType.TRAIT) {
+                }
+                else if (request.getDataType() == DataType.TRAIT)
+                {
                     report.addData(new MeasurementDataTrait(request, value.toString()));
                 }
             }
@@ -214,37 +223,45 @@ public class ApplicationServerComponent
 
     // ProgressListener  --------------------------------------------
 
-    public void progressEvent(ProgressEvent eventInfo) {
+    public void progressEvent(ProgressEvent eventInfo)
+    {
         log.debug(eventInfo);
     }
 
     @Nullable
-    public ProfileServiceConnection getConnection() {
+    public ProfileServiceConnection getConnection()
+    {
         connect();
         return this.connection;
     }
 
     // ---------------------------------------------------------------
 
-    private void connect() {
+    private void connect()
+    {
         if (this.connection != null)
             return;
         // TODO: Check for a defunct connection and if found try to reconnect.
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
         String namingURL = pluginConfig.getSimpleValue(PluginConfigPropNames.NAMING_URL, null);
         ProfileServiceConnectionProvider connectionProvider;
-        if (namingURL != null) {
+        if (namingURL != null)
+        {
             validateNamingURL(namingURL);
             String principal = pluginConfig.getSimpleValue(PluginConfigPropNames.PRINCIPAL, null);
             String credentials = pluginConfig.getSimpleValue(PluginConfigPropNames.CREDENTIALS, null);
             connectionProvider = new RemoteProfileServiceConnectionProvider(namingURL, principal, credentials);
-        } else {
+        }
+        else
+        {
             connectionProvider = new LocalProfileServiceConnectionProvider();
         }
-        try {
+        try
+        {
             this.connection = connectionProvider.connect();
         }
-        catch (RuntimeException e) {
+        catch (RuntimeException e)
+        {
             log.debug("Failed to connect to Profile Service.", e);
         }
     }
@@ -296,7 +313,8 @@ public class ApplicationServerComponent
         String resourceName = getResourceName(defaultPluginConfig, resourceConfig);
         ComponentType componentType = ConversionUtils.getComponentType(resourceType);
         ManagementView managementView = getConnection().getManagementView();
-        if (ManagedComponentUtils.isManagedComponent(managementView, resourceName, componentType)) {
+        if (ManagedComponentUtils.isManagedComponent(managementView, resourceName, componentType))
+        {
             createResourceReport.setStatus(CreateResourceStatus.FAILURE);
             createResourceReport.setErrorMessage("A " + resourceType.getName() + " named '" + resourceName
                     + "' already exists.");
@@ -361,10 +379,12 @@ public class ApplicationServerComponent
         // This is the full path to a temporary file which was written by the UI layer.
         String archivePath = key.getName();
 
-        try {
+        try
+        {
             File archiveFile = new File(archivePath);
 
-            if (!DeploymentUtils.hasCorrectExtension(archiveFile, resourceType)) {
+            if (!DeploymentUtils.hasCorrectExtension(archiveFile, resourceType))
+            {
                 createResourceReport.setStatus(CreateResourceStatus.FAILURE);
                 createResourceReport.setErrorMessage("Incorrect extension specified on filename [" + archivePath + "]");
                 return;
@@ -380,33 +400,39 @@ public class ApplicationServerComponent
             DeploymentStatus status = DeploymentUtils.deployArchive(deploymentManager, archiveFile,
                     getDeployDirectory(), deployExploded);
 
-            if (status.getState() == DeploymentStatus.StateType.COMPLETED) {
+            if (status.getState() == DeploymentStatus.StateType.COMPLETED)
+            {
                 createResourceReport.setResourceName(archivePath);
                 createResourceReport.setResourceKey(archivePath);
                 createResourceReport.setStatus(CreateResourceStatus.SUCCESS);
-            } else {
+            }
+            else
+            {
                 createResourceReport.setStatus(CreateResourceStatus.FAILURE);
                 createResourceReport.setErrorMessage(status.getMessage());
                 //noinspection ThrowableResultOfMethodCallIgnored
                 createResourceReport.setException(status.getFailure());
             }
-        } catch (Throwable t) {
+        }
+        catch (Throwable t)
+        {
             log.error("Error deploying application for report: " + createResourceReport, t);
             createResourceReport.setStatus(CreateResourceStatus.FAILURE);
-            createResourceReport.setException(t);            
+            createResourceReport.setException(t);
         }
     }
 
-    private static Configuration getDefaultPluginConfiguration(ResourceType resourceType) {
+    private static Configuration getDefaultPluginConfiguration(ResourceType resourceType)
+    {
         ConfigurationTemplate pluginConfigDefaultTemplate =
                 resourceType.getPluginConfigurationDefinition().getDefaultTemplate();
         return (pluginConfigDefaultTemplate != null) ?
                 pluginConfigDefaultTemplate.createConfiguration() : new Configuration();
     }
-    
+
     private void abortIfApplicationAlreadyDeployed(ResourceType resourceType, File archiveFile)
             throws Exception
-    {        
+    {
         String archiveFileName = archiveFile.getName();
         KnownDeploymentTypes deploymentType = ConversionUtils.getDeploymentType(resourceType);
         String deploymentTypeString = deploymentType.getType();
@@ -427,7 +453,7 @@ public class ApplicationServerComponent
         try
         {
             warDeployments = managementView.getDeploymentsForType(
-                KnownDeploymentTypes.JavaEEWebApplication.getType());
+                    KnownDeploymentTypes.JavaEEWebApplication.getType());
         }
         catch (Exception e)
         {
@@ -436,7 +462,8 @@ public class ApplicationServerComponent
         ManagedDeployment standaloneWarDeployment = null;
         for (ManagedDeployment warDeployment : warDeployments)
         {
-            if (warDeployment.getParent() == null) {
+            if (warDeployment.getParent() == null)
+            {
                 standaloneWarDeployment = warDeployment;
                 break;
             }
@@ -461,9 +488,11 @@ public class ApplicationServerComponent
     }
 
     @NotNull
-    static File resolvePathRelativeToHomeDir(Configuration pluginConfig, @NotNull String path) {
+    static File resolvePathRelativeToHomeDir(Configuration pluginConfig, @NotNull String path)
+    {
         File configDir = new File(path);
-        if (!configDir.isAbsolute()) {
+        if (!configDir.isAbsolute())
+        {
             String homeDir = pluginConfig.getSimple(PluginConfigPropNames.HOME_DIR).getStringValue();
             configDir = new File(homeDir, path);
         }
@@ -488,7 +517,8 @@ public class ApplicationServerComponent
             throw new RuntimeException("Naming URL '" + namingURL + "' has an invalid protocol - the only valid protocol is 'jnp'.");
     }
 
-    static abstract class PluginConfigPropNames {
+    static abstract class PluginConfigPropNames
+    {
         static final String SERVER_NAME = "serverName";
         static final String NAMING_URL = "namingURL";
         static final String PRINCIPAL = "principal";

@@ -1,59 +1,60 @@
- /*
-  * Jopr Management Platform
-  * Copyright (C) 2005-2009 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+* Jopr Management Platform
+* Copyright (C) 2005-2009 Red Hat, Inc.
+* All rights reserved.
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License, version 2, as
+* published by the Free Software Foundation, and/or the GNU Lesser
+* General Public License, version 2.1, also as published by the Free
+* Software Foundation.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+* GNU General Public License and the GNU Lesser General Public License
+* for more details.
+*
+* You should have received a copy of the GNU General Public License
+* and the GNU Lesser General Public License along with this program;
+* if not, write to the Free Software Foundation, Inc.,
+* 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+*/
 package org.rhq.plugins.jbossas5;
 
- import java.util.HashSet;
- import java.util.Set;
+import java.util.HashSet;
+import java.util.Set;
 
- import org.apache.commons.logging.Log;
- import org.apache.commons.logging.LogFactory;
- import org.rhq.core.domain.configuration.PropertySimple;
- import org.rhq.core.domain.resource.ResourceType;
- import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
- import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
- import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
- import org.rhq.plugins.jbossas5.util.ConversionUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
+import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
+import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.plugins.jbossas5.util.ConversionUtils;
 
- import org.jboss.deployers.spi.management.KnownDeploymentTypes;
- import org.jboss.deployers.spi.management.ManagementView;
- import org.jboss.managed.api.ManagedDeployment;
- import org.jboss.profileservice.spi.NoSuchDeploymentException;
+import org.jboss.deployers.spi.management.KnownDeploymentTypes;
+import org.jboss.deployers.spi.management.ManagementView;
+import org.jboss.managed.api.ManagedDeployment;
+import org.jboss.profileservice.spi.NoSuchDeploymentException;
 
- /**
+/**
  * Discovery class for discovering deployable resources like ear/war/jar/sar
  *
  * @author Mark Spritzler
  * @author Ian Springer
  */
-public abstract class AbstractManagedDeploymentDiscoveryComponent implements ResourceDiscoveryComponent<ProfileServiceComponent> {
-    private final Log log = LogFactory.getLog(this.getClass());    
+public abstract class AbstractManagedDeploymentDiscoveryComponent implements ResourceDiscoveryComponent<ProfileServiceComponent>
+{
+    private final Log log = LogFactory.getLog(this.getClass());
 
     public Set<DiscoveredResourceDetails> discoverResources(
             ResourceDiscoveryContext<ProfileServiceComponent> discoveryContext)
     {
         Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
         ResourceType resourceType = discoveryContext.getResourceType();
-        log.trace("Discovering " + resourceType.getName() + " Resources..." );
+        log.trace("Discovering " + resourceType.getName() + " Resources...");
         KnownDeploymentTypes deploymentType = ConversionUtils.getDeploymentType(resourceType);
         String deploymentTypeString = deploymentType.getType();
 
@@ -117,7 +118,7 @@ public abstract class AbstractManagedDeploymentDiscoveryComponent implements Res
             }
         }
 
-        log.trace("Discovered " + discoveredResources.size() + " " + resourceType.getName() + " Resources." );
+        log.trace("Discovered " + discoveredResources.size() + " " + resourceType.getName() + " Resources.");
         return discoveredResources;
     }
 
@@ -125,7 +126,7 @@ public abstract class AbstractManagedDeploymentDiscoveryComponent implements Res
 
     private static String getResourceName(String fullPath)
     {
-        int lastSlashIndex = fullPath.lastIndexOf("/");                
+        int lastSlashIndex = fullPath.lastIndexOf("/");
         return fullPath.substring(lastSlashIndex + 1);
     }
 }

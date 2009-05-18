@@ -39,16 +39,33 @@
 '>
 
 <!ENTITY datasourceMetrics '
-    <metric property="availableConnectionCount" measurementType="dynamic" displayType="summary" displayName="Available Connection Count" description="number of available connections" defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
-    <metric property="connectionCount" measurementType="dynamic" displayType="summary" displayName="Connection Count" defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
-    <metric property="connectionCreatedCount" measurementType="dynamic" displayType="detail" displayName="Connection Created Count" defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
-    <metric property="connectionDestroyedCount" measurementType="dynamic" displayType="detail" displayName="Connection Destroyed Count" defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
-    <metric property="inUseConnectionCount" measurementType="dynamic" displayType="detail" displayName="In Use Connection Count" description="number of connections currently in use" defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
-    <metric property="local-transaction" displayType="summary" displayName="Local Transaction" defaultOn="true" defaultInterval="60000" dataType="trait" category="performance"/>
-    <metric property="maxConnectionsInUseCount" measurementType="dynamic" displayType="detail" displayName="Max Connections In Use Count" description="maximum number of connections in use" defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
-    <metric property="maxSize" measurementType="dynamic" displayType="detail" displayName="Max Size" defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
-    <metric property="minSize" measurementType="dynamic" displayType="detail" displayName="Min Size" defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
-    <metric property="poolJndiName" displayType="summary" displayName="Pool Jndi Name" defaultOn="true" defaultInterval="60000" dataType="trait" category="performance"/>
+    <metric property="availableConnectionCount" measurementType="dynamic" displayType="summary"
+            defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"
+            description="the maximum number of connections that are available"/>
+    <metric property="connectionCount" measurementType="dynamic" displayType="summary"
+            defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"
+            description="the number of connections that are currently in the pool"/>
+    <metric property="connectionCreatedCount" measurementType="dynamic" displayType="detail"
+            defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"
+            description="the number of connections that have been created since the datasource was last started"/>
+    <metric property="connectionDestroyedCount" measurementType="dynamic" displayType="detail"
+            defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"
+            description="the number of connections that have been destroyed since the datasource was last started"/>
+    <metric property="inUseConnectionCount" measurementType="dynamic" displayType="detail"
+            defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"
+            description="the number of connections that are currently in use"/>
+    <metric property="local-transaction" displayType="summary"
+            defaultOn="true" defaultInterval="60000" dataType="trait" category="performance"/>
+    <metric property="maxConnectionsInUseCount" measurementType="dynamic" displayType="detail"
+            defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"
+            description="the most connections that have been simultaneously in use since this datasource was started"/>
+    <metric property="maxSize" measurementType="dynamic" displayType="detail" displayName="Max Size"
+            defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
+    <metric property="minSize" measurementType="dynamic" displayType="detail" displayName="Min Size"
+            defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
+    <metric property="poolJndiName" displayType="summary" displayName="Pool Jndi Name"
+            defaultOn="true" defaultInterval="60000" dataType="trait" category="performance"
+            description="the JNDI name of the connection pool for this datasource"/>
 '>
 
 <!-- NOTE: For Datasource ManagedProperty annotations, see:

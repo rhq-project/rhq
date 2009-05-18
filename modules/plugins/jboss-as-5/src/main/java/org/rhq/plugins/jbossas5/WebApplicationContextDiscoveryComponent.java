@@ -1,39 +1,40 @@
 /*
-* Jopr Management Platform
-* Copyright (C) 2005-2009 Red Hat, Inc.
-* All rights reserved.
-*
-* This program is free software; you can redistribute it and/or modify
-* it under the terms of the GNU General Public License, version 2, as
-* published by the Free Software Foundation, and/or the GNU Lesser
-* General Public License, version 2.1, also as published by the Free
-* Software Foundation.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-* GNU General Public License and the GNU Lesser General Public License
-* for more details.
-*
-* You should have received a copy of the GNU General Public License
-* and the GNU Lesser General Public License along with this program;
-* if not, write to the Free Software Foundation, Inc.,
-* 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-*/
+ * Jopr Management Platform
+ * Copyright (C) 2005-2009 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.plugins.jbossas5;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.Collections;
 
-import javax.management.ObjectName;
 import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.rhq.core.domain.configuration.PropertySimple;
+import org.jetbrains.annotations.Nullable;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
@@ -42,7 +43,6 @@ import org.rhq.plugins.jbossas5.helper.MoreKnownComponentTypes;
 import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
 import org.rhq.plugins.jbossas5.util.RegularExpressionNameMatcher;
 import org.rhq.plugins.jbossas5.util.ResourceComponentUtils;
-import org.jetbrains.annotations.Nullable;
 
 import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.managed.api.ComponentType;
@@ -69,7 +69,7 @@ public class WebApplicationContextDiscoveryComponent
     // The name of the MBean:WebApplicationManager component for a WAR.
     private static final String WEB_APPLICATION_MANAGER_COMPONENT_NAME_TEMPLATE =
             "jboss.web:host=%" + WebApplicationContextComponent.VIRTUAL_HOST_PROPERTY + "%,"
-          + "path=%" + WebApplicationContextComponent.CONTEXT_PATH_PROPERTY + "%,type=Manager";
+                    + "path=%" + WebApplicationContextComponent.CONTEXT_PATH_PROPERTY + "%,type=Manager";
 
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -107,7 +107,7 @@ public class WebApplicationContextDiscoveryComponent
             // e.g. "jboss.web:J2EEApplication=none,J2EEServer=none,j2eeType=WebModule,name=//localhost/jmx-console"
             String webApplicationManagerComponentName =
                     ResourceComponentUtils.replacePropertyExpressionsInTemplate(WEB_APPLICATION_MANAGER_COMPONENT_NAME_TEMPLATE,
-                    pluginConfig);
+                            pluginConfig);
             pluginConfig.put(new PropertySimple(ManagedComponentComponent.Config.COMPONENT_NAME,
                     webApplicationManagerComponentName));
 
@@ -128,8 +128,8 @@ public class WebApplicationContextDiscoveryComponent
     }
 
     /**
-     * Returns the parent WAR's context path (e.g. "/jmx-console"), or <code>null</code> if the WAR is currently stopped,
-     * since stopped WARs are not associated with any contexts.
+     * Returns the parent WAR's context path (e.g. "/jmx-console"), or <code>null</code> if the WAR is currently
+     * stopped, since stopped WARs are not associated with any contexts.
      *
      * @return this WAR's context path (e.g. "/jmx-console"), or <code>null</code> if the WAR is currently stopped,
      *         since stopped WARs are not associated with any contexts
@@ -143,9 +143,12 @@ public class WebApplicationContextDiscoveryComponent
         ManagedDeployment deployment = parentWarComponent.getManagedDeployment();
         ManagedComponent contextComponent = deployment.getComponent(CONTEXT_COMPONENT_NAME);
         // e.g. "/jmx-console"
-        if (contextComponent != null) {
+        if (contextComponent != null)
+        {
             return (String)ManagedComponentUtils.getSimplePropertyValue(contextComponent, "contextRoot");
-        } else {
+        }
+        else
+        {
             return null;
         }
     }
@@ -165,7 +168,8 @@ public class WebApplicationContextDiscoveryComponent
     private static Set<ManagedComponent> getWebApplicationComponents(String contextPath, ManagementView managementView)
             throws Exception
     {
-        if (contextPath == null) {
+        if (contextPath == null)
+        {
             // This means the WAR is stopped, which means it has no contexts associated with it.
             return Collections.emptySet();
         }
@@ -174,7 +178,7 @@ public class WebApplicationContextDiscoveryComponent
                         + WebApplicationContextComponent.CONTEXT_PATH_PROPERTY + "%", contextPath);
         ComponentType webApplicationComponentType = MoreKnownComponentTypes.MBean.WebApplication.getType();
         return managementView.getMatchingComponents(webApplicationManagerComponentNamesRegex,
-                        webApplicationComponentType, new RegularExpressionNameMatcher());
+                webApplicationComponentType, new RegularExpressionNameMatcher());
     }
 
     private static String getWebApplicationComponentVirtualHost(ManagedComponent webApplicationComponent)

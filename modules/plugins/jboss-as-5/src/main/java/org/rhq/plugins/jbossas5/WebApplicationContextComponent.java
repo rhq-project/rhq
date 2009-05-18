@@ -1,20 +1,24 @@
 /*
- * RHQ Management Platform
+ * Jopr Management Platform
  * Copyright (C) 2005-2009 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation version 2 of the License.
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 package org.rhq.plugins.jbossas5;
 
@@ -25,9 +29,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
-import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.plugins.jbossas5.helper.MoreKnownComponentTypes;
 import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
@@ -53,8 +57,8 @@ public class WebApplicationContextComponent extends ManagedComponentComponent
     // A regex for the names of all MBean:Servlet components for a WAR.
     private static final String SERVLET_COMPONENT_NAMES_REGEX_TEMPLATE =
             "jboss.web:J2EEApplication=none,J2EEServer=none,"
-          + "WebModule=//%" + VIRTUAL_HOST_PROPERTY + "%"
-          + "%" + CONTEXT_PATH_PROPERTY + "%,j2eeType=Servlet,name=[^,]+";
+                    + "WebModule=//%" + VIRTUAL_HOST_PROPERTY + "%"
+                    + "%" + CONTEXT_PATH_PROPERTY + "%,j2eeType=Servlet,name=[^,]+";
 
     private static final String SERVLET_METRIC_PREFIX = "Servlet.";
 
@@ -86,20 +90,26 @@ public class WebApplicationContextComponent extends ManagedComponentComponent
         ProfileServiceComponent warComponent = getResourceContext().getParentResourceComponent();
         ManagementView managementView = warComponent.getConnection().getManagementView();
         Set<MeasurementScheduleRequest> remainingRequests = new LinkedHashSet();
-        for (MeasurementScheduleRequest request : requests) {
+        for (MeasurementScheduleRequest request : requests)
+        {
             String metricName = request.getName();
             try
             {
-                if (metricName.startsWith(SERVLET_METRIC_PREFIX)) {
+                if (metricName.startsWith(SERVLET_METRIC_PREFIX))
+                {
                     Double value = getServletMetric(managementView, metricName);
                     MeasurementDataNumeric metric = new MeasurementDataNumeric(request, value);
                     report.addData(metric);
-                } else if (metricName.equals(VIRTUAL_HOST_TRAIT)) {
+                }
+                else if (metricName.equals(VIRTUAL_HOST_TRAIT))
+                {
                     Configuration pluginConfig = getResourceContext().getPluginConfiguration();
                     String virtualHost = pluginConfig.getSimple(VIRTUAL_HOST_PROPERTY).getStringValue();
                     MeasurementDataTrait trait = new MeasurementDataTrait(request, virtualHost);
                     report.addData(trait);
-                } else  {
+                }
+                else
+                {
                     remainingRequests.add(request);
                 }
             }
@@ -125,46 +135,71 @@ public class WebApplicationContextComponent extends ManagedComponentComponent
         long processingTime = 0;
         int requestCount = 0;
         int errorCount = 0;
-        for (ManagedComponent servletComponent : servletComponents) {
-            if (metricName.equals(SERVLET_MINIMUM_RESPONSE_TIME_METRIC)) {
+        for (ManagedComponent servletComponent : servletComponents)
+        {
+            if (metricName.equals(SERVLET_MINIMUM_RESPONSE_TIME_METRIC))
+            {
                 Long longValue = (Long)ManagedComponentUtils.getSimplePropertyValue(servletComponent, "minTime");
                 if (longValue < min)
                     min = longValue;
-            } else if (metricName.equals(SERVLET_MAXIMUM_RESPONSE_TIME_METRIC)) {
+            }
+            else if (metricName.equals(SERVLET_MAXIMUM_RESPONSE_TIME_METRIC))
+            {
                 Long longValue = (Long)ManagedComponentUtils.getSimplePropertyValue(servletComponent, "maxTime");
                 if (longValue > max)
                     max = longValue;
-            } else if (metricName.equals(SERVLET_AVERAGE_RESPONSE_TIME_METRIC)) {
+            }
+            else if (metricName.equals(SERVLET_AVERAGE_RESPONSE_TIME_METRIC))
+            {
                 Long longValue = (Long)ManagedComponentUtils.getSimplePropertyValue(servletComponent, "processingTime");
                 processingTime += longValue;
                 Integer intValue = (Integer)ManagedComponentUtils.getSimplePropertyValue(servletComponent, "requestCount");
                 requestCount += intValue;
-            } else if (metricName.equals(SERVLET_REQUEST_COUNT_METRIC)) {
+            }
+            else if (metricName.equals(SERVLET_REQUEST_COUNT_METRIC))
+            {
                 Integer intValue = (Integer)ManagedComponentUtils.getSimplePropertyValue(servletComponent, "requestCount");
                 requestCount += intValue;
-            } else if (metricName.equals(SERVLET_ERROR_COUNT_METRIC)) {
+            }
+            else if (metricName.equals(SERVLET_ERROR_COUNT_METRIC))
+            {
                 Integer intValue = (Integer)ManagedComponentUtils.getSimplePropertyValue(servletComponent, "errorCount");
                 errorCount += intValue;
-            } else if (metricName.equals(SERVLET_TOTAL_RESPONSE_TIME_METRIC)) {
+            }
+            else if (metricName.equals(SERVLET_TOTAL_RESPONSE_TIME_METRIC))
+            {
                 Long longValue = (Long)ManagedComponentUtils.getSimplePropertyValue(servletComponent, "processingTime");
                 processingTime += longValue;
             }
         }
 
         Double result;
-        if (metricName.equals(SERVLET_AVERAGE_RESPONSE_TIME_METRIC)) {
-            result = (requestCount > 0) ? ((double) processingTime / (double) requestCount) : Double.NaN;
-        } else if (metricName.equals(SERVLET_MINIMUM_RESPONSE_TIME_METRIC)) {
-            result = (min != Long.MAX_VALUE) ? (double) min : Double.NaN;
-        } else if (metricName.equals(SERVLET_MAXIMUM_RESPONSE_TIME_METRIC)) {
-            result = (max != 0) ? (double) max : Double.NaN;
-        } else if (metricName.equals(SERVLET_ERROR_COUNT_METRIC)) {
-            result = (double) errorCount;
-        } else if (metricName.equals(SERVLET_REQUEST_COUNT_METRIC)) {
-            result = (double) requestCount;
-        } else if (metricName.equals(SERVLET_TOTAL_RESPONSE_TIME_METRIC)) {
-            result = (double) processingTime;
-        } else {
+        if (metricName.equals(SERVLET_AVERAGE_RESPONSE_TIME_METRIC))
+        {
+            result = (requestCount > 0) ? ((double)processingTime / (double)requestCount) : Double.NaN;
+        }
+        else if (metricName.equals(SERVLET_MINIMUM_RESPONSE_TIME_METRIC))
+        {
+            result = (min != Long.MAX_VALUE) ? (double)min : Double.NaN;
+        }
+        else if (metricName.equals(SERVLET_MAXIMUM_RESPONSE_TIME_METRIC))
+        {
+            result = (max != 0) ? (double)max : Double.NaN;
+        }
+        else if (metricName.equals(SERVLET_ERROR_COUNT_METRIC))
+        {
+            result = (double)errorCount;
+        }
+        else if (metricName.equals(SERVLET_REQUEST_COUNT_METRIC))
+        {
+            result = (double)requestCount;
+        }
+        else if (metricName.equals(SERVLET_TOTAL_RESPONSE_TIME_METRIC))
+        {
+            result = (double)processingTime;
+        }
+        else
+        {
             // fallback
             result = Double.NaN;
         }

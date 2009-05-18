@@ -21,6 +21,7 @@ package org.rhq.plugins.netservices;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 import java.util.Set;
 
 import org.apache.commons.httpclient.HttpClient;
@@ -110,7 +111,9 @@ public class HTTPNetServiceComponent implements ResourceComponent, MeasurementFa
 
             long readTime = (System.currentTimeMillis() - start);
 
-            SimpleDateFormat sdf = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss zzz");
+            // TODO: may need to allow plugin to configure the locale, but for this fixed string, make sure we
+            // ignore default locale, this works for english.
+            SimpleDateFormat sdf = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss zzz", Locale.ENGLISH);
             Date contentDate = sdf.parse(method.getResponseHeader("Date").getValue());
 
             //            System.out.println("Success: " + success);

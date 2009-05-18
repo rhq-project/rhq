@@ -9,6 +9,9 @@
 	<classpathentry kind="src" path="modules/plugins/hibernate/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/jboss-as/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/jboss-as/src/test/java"/>
+	<classpathentry kind="src" path="modules/plugins/jboss-as-5/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/jboss-as-5/src/main/resources"/>
+	<classpathentry kind="src" path="modules/plugins/jboss-as-5/src/test/java"/>
 	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.5">
 		<accessrules>
 			<accessrule kind="accessible" pattern="sun/misc/**"/>

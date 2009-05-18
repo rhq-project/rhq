@@ -1709,7 +1709,7 @@
                 <results>
 					<c:notes>Return all subscriptions for the topic</c:notes>                
                     <c:list-property name="result">
-                        <c:simple-property required="false" name="element"/>
+                        <c:map-property required="false" name="element"/>
                     </c:list-property>
                 </results>
             </operation>
@@ -1727,7 +1727,7 @@
                 <results>
                 	<c:notes>Return all durable subscriptions for the topic</c:notes>
                     <c:list-property name="result">
-                        <c:simple-property required="false" name="element"/>
+                        <c:map-property required="false" name="element"/>
                     </c:list-property>
                 </results>
             </operation>
@@ -1745,7 +1745,7 @@
                 <results>
                   	<c:notes>Return all non durable subscriptions for the topic</c:notes>
                     <c:list-property name="result">
-                        <c:simple-property required="false" name="item"/>
+                        <c:map-property required="false" name="element"/>
                     </c:list-property>
                 </results>
             </operation>

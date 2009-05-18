@@ -2347,11 +2347,11 @@
 
         </service>
 -->
-        <service name="Resource Adaptor (RAR)"
+        <service name="Resource Adapter (RAR)"
                  subCategory="Applications"
                  class="StandaloneManagedDeploymentComponent"
                  discovery="StandaloneManagedDeploymentDiscoveryComponent"
-                 description="a standalone resource adaptor"
+                 description="a standalone resource adapter"
                  createDeletePolicy="both"
                  creationDataType="content">
 
@@ -2362,7 +2362,7 @@
                 </c:group>
                 <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
                     <c:simple-property name="extension" default="rar" readOnly="true"/>
-                    <c:simple-property name="descriptionTemplate" default="a standalone resource adaptor" readOnly="true"/>
+                    <c:simple-property name="descriptionTemplate" default="a standalone resource adapter" readOnly="true"/>
                     <c:simple-property name="deploymentTypeName" default="JavaEEResourceAdaptor" readOnly="true">
                         <c:description>
                             The name of the item from the org.jboss.deployers.spi.management.KnownDeploymentTypes enum
@@ -2401,11 +2401,11 @@
 
         </service>
 
-        <service name="Embedded Resource Adaptor (RAR)"
+        <service name="Embedded Resource Adapter (RAR)"
                  subCategory="Applications"
                  class="EmbeddedManagedDeploymentComponent"
                  discovery="EmbeddedManagedDeploymentDiscoveryComponent"
-                 description="an embedded resource adaptor">
+                 description="an embedded resource adapter">
 
             <plugin-configuration>
                 <c:group name="general" displayName="General">
@@ -2414,7 +2414,7 @@
                 </c:group>
                 <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
                     <c:simple-property name="extension" default="rar" readOnly="true"/>
-                    <c:simple-property name="descriptionTemplate" default="an embedded resource adaptor" readOnly="true"/>
+                    <c:simple-property name="descriptionTemplate" default="an embedded resource adapter" readOnly="true"/>
                     <c:simple-property name="deploymentTypeName" default="JavaEEResourceAdaptor" readOnly="true">
                         <c:description>
                             The name of the item from the org.jboss.deployers.spi.management.KnownDeploymentTypes enum

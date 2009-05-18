@@ -35,6 +35,7 @@ import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.event.EventSeverity;
+import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
@@ -92,33 +93,37 @@ public class AgentDiscoveryComponent implements ResourceDiscoveryComponent {
     private void initLogEventSourcesConfigProp(AgentManagementMBean agent, Configuration pluginConfiguration) {
         File logsDir = new File(agent.getAgentHomeDirectory(), "logs");
 
-        PropertyList logEventSources = pluginConfiguration.getList(AgentServerComponent.LOG_EVENT_SOURCES_CONFIG_PROP);
+        PropertyList logEventSources = pluginConfiguration
+            .getList(LogFileEventResourceComponentHelper.LOG_EVENT_SOURCES_CONFIG_PROP);
         if (logEventSources == null) {
-            logEventSources = new PropertyList(AgentServerComponent.LOG_EVENT_SOURCES_CONFIG_PROP);
+            logEventSources = new PropertyList(LogFileEventResourceComponentHelper.LOG_EVENT_SOURCES_CONFIG_PROP);
             pluginConfiguration.put(logEventSources);
         }
 
         // agent.log
         File agentLogFile = new File(logsDir, "agent.log");
         if (agentLogFile.exists() && !agentLogFile.isDirectory()) {
-            PropertyMap agentLogEventSource = new PropertyMap(AgentServerComponent.LOG_EVENT_SOURCE_CONFIG_PROP);
-            agentLogEventSource.put(new PropertySimple(AgentServerComponent.LogEventSourcePropertyNames.LOG_FILE_PATH,
-                agentLogFile));
-            agentLogEventSource.put(new PropertySimple(AgentServerComponent.LogEventSourcePropertyNames.ENABLED,
-                Boolean.FALSE));
+            PropertyMap agentLogEventSource = new PropertyMap(
+                LogFileEventResourceComponentHelper.LOG_EVENT_SOURCE_CONFIG_PROP);
             agentLogEventSource.put(new PropertySimple(
-                AgentServerComponent.LogEventSourcePropertyNames.MINIMUM_SEVERITY, EventSeverity.ERROR.name()));
+                LogFileEventResourceComponentHelper.LogEventSourcePropertyNames.LOG_FILE_PATH, agentLogFile));
+            agentLogEventSource.put(new PropertySimple(
+                LogFileEventResourceComponentHelper.LogEventSourcePropertyNames.ENABLED, Boolean.FALSE));
+            agentLogEventSource.put(new PropertySimple(
+                LogFileEventResourceComponentHelper.LogEventSourcePropertyNames.MINIMUM_SEVERITY, EventSeverity.ERROR
+                    .name()));
             logEventSources.add(agentLogEventSource);
         }
 
         // command-trace.log
         File commandTraceLogFile = new File(logsDir, "command-trace.log");
         if (commandTraceLogFile.exists() && !commandTraceLogFile.isDirectory()) {
-            PropertyMap commandTraceLogEventSource = new PropertyMap(AgentServerComponent.LOG_EVENT_SOURCE_CONFIG_PROP);
+            PropertyMap commandTraceLogEventSource = new PropertyMap(
+                LogFileEventResourceComponentHelper.LOG_EVENT_SOURCE_CONFIG_PROP);
             commandTraceLogEventSource.put(new PropertySimple(
-                AgentServerComponent.LogEventSourcePropertyNames.LOG_FILE_PATH, commandTraceLogFile));
-            commandTraceLogEventSource.put(new PropertySimple(AgentServerComponent.LogEventSourcePropertyNames.ENABLED,
-                Boolean.FALSE));
+                LogFileEventResourceComponentHelper.LogEventSourcePropertyNames.LOG_FILE_PATH, commandTraceLogFile));
+            commandTraceLogEventSource.put(new PropertySimple(
+                LogFileEventResourceComponentHelper.LogEventSourcePropertyNames.ENABLED, Boolean.FALSE));
             logEventSources.add(commandTraceLogEventSource);
         }
 

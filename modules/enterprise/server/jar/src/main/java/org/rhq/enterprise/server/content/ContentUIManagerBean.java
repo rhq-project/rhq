@@ -165,7 +165,7 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
 
     @SuppressWarnings("unchecked")
     public PageList<PackageListItemComposite> getInstalledPackages(Subject user, int resourceId,
-        Integer packageTypeFilterId, String packageVersionFilter, PageControl pageControl) {
+        Integer packageTypeFilterId, String packageVersionFilter, String search, PageControl pageControl) {
         pageControl.initDefaultOrderingField("gp.name", PageOrdering.ASC);
 
         Query queryCount = PersistenceUtility.createCountQuery(entityManager,
@@ -181,6 +181,13 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
 
         queryCount.setParameter("packageVersionFilter", packageVersionFilter);
         query.setParameter("packageVersionFilter", packageVersionFilter);
+
+        if (search != null) {
+            search = "%" + search.toUpperCase() + "%";
+        }
+
+        queryCount.setParameter("search", search );
+        query.setParameter("search", search);
 
         long totalCount = (Long) queryCount.getSingleResult();
         List<PackageListItemComposite> packages = query.getResultList();

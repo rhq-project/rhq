@@ -131,11 +131,12 @@ public interface ContentUIManagerLocal {
      *
      * @param user        the user who is requesting the retrieval
      * @param resourceId  identifies the resource whose requests to retrieve
+     * @param search string to search against filtering by name or description
      * @param pageControl pagination controller
      * @return pagable list of packages installed on the resource
      */
     PageList<PackageListItemComposite> getInstalledPackages(Subject user, int resourceId, Integer packageTypeFilterId,
-        String packageVersionFilter, PageControl pageControl);
+        String packageVersionFilter, String search, PageControl pageControl);
 
     PageList<InstalledPackageHistory> getInstalledPackageHistory(Subject subject, int resourceId, int generalPackageId,
         PageControl pc);

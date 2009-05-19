@@ -170,7 +170,8 @@ public abstract class AbstractManagedDeploymentComponent
         else if (name.equals("restart"))
         {
             progress = deploymentManager.stop(this.deploymentName);
-            DeploymentUtils.run(progress);
+            DeploymentStatus stopStatus = DeploymentUtils.run(progress);
+            // Still try to start, even if stop fails (maybe the app wasn't running to begin with).
             progress = deploymentManager.start(this.deploymentName);
         }
         else
@@ -178,8 +179,11 @@ public abstract class AbstractManagedDeploymentComponent
             throw new UnsupportedOperationException(name);
         }
         DeploymentStatus status = DeploymentUtils.run(progress);
-        log.debug("Operation '" + name + "' on " + getResourceDescription() + " completed with status [" + status
+        log.debug("Operation '" + name + "' on " + getResourceDescription() + " returned status [" + status
                 + "].");
+        if (status.isFailed()) {
+            throw status.getFailure();
+        }
         return new OperationResult();
     }
 

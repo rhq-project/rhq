@@ -25,6 +25,7 @@ package org.rhq.plugins.jbossas5.util;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Arrays;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -57,6 +58,18 @@ public class DeploymentUtils {
         return (extension != null && new File(extension).equals(new File(expectedExtension)));
     }
 
+    /**
+     * Deploys (i.e. distributes then starts) the specified archive file.
+     *
+     * @param deploymentManager
+     * @param archiveFile
+     * @param deployDirectory
+     * @param deployExploded
+     * 
+     * @return
+     *
+     * @throws Exception if an unrecoverable error occurred during distribution or starting
+     */
     public static DeploymentStatus deployArchive(DeploymentManager deploymentManager, File archiveFile,
         File deployDirectory, boolean deployExploded) throws Exception {
         if (deployDirectory == null)
@@ -79,21 +92,33 @@ public class DeploymentUtils {
             boolean copyContent = !deployLocation.equals(archiveFile);
             progress = deploymentManager.distribute(archiveFileName, contentURL, copyContent);
         }
-        run(progress);
+        DeploymentStatus distributeStatus = run(progress);
+        if (distributeStatus.isFailed()) {
+            return distributeStatus;
+        }
 
-        // Now that we've distributed the deployment, we need to start it!
-        String[] repositoryNames = progress.getDeploymentID().getRepositoryNames();
-        progress = deploymentManager.start(repositoryNames);
-        return run(progress);
+        // Now that we've successfully distributed the deployment, we need to start it.
+        String[] deploymentNames = progress.getDeploymentID().getRepositoryNames();
+        progress = deploymentManager.start(deploymentNames);
+        DeploymentStatus startStatus = run(progress);
+        if (startStatus.isFailed()) {
+            LOG.error("Failed to start deployment " + Arrays.asList(deploymentNames)
+                    + " during initial deployment of '" + archiveFileName + "'. Backing out the deployment...",
+                    startStatus.getFailure());
+            // If start failed, the app is invalid, so back out the deployment.
+            progress = deploymentManager.remove(deploymentNames);
+            DeploymentStatus removeStatus = run(progress);
+            if (removeStatus.isFailed()) {
+                throw new Exception("Failed to remove deployment " + Arrays.asList(deploymentNames)
+                        + " after start failure.", removeStatus.getFailure());
+            }
+        }
+        return startStatus;
     }
 
     public static DeploymentStatus run(DeploymentProgress progress) throws Exception {
         progress.run();
-        DeploymentStatus status = progress.getDeploymentStatus();
-        if (status.isFailed())
-            //noinspection ThrowableResultOfMethodCallIgnored
-            throw new Exception(status.getMessage(), status.getFailure());
-        return status;
+        return progress.getDeploymentStatus();
     }
 
     private DeploymentUtils() {

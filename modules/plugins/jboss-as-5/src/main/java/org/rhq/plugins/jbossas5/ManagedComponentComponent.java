@@ -55,6 +55,7 @@ import org.rhq.plugins.jbossas5.util.ResourceTypeUtils;
 import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.deployers.spi.management.deploy.DeploymentManager;
 import org.jboss.deployers.spi.management.deploy.DeploymentProgress;
+import org.jboss.deployers.spi.management.deploy.DeploymentStatus;
 import org.jboss.managed.api.ComponentType;
 import org.jboss.managed.api.ManagedComponent;
 import org.jboss.managed.api.ManagedDeployment;
@@ -136,7 +137,12 @@ public class ManagedComponentComponent extends AbstractManagedComponent
         log.debug("Redeploying parent deployment '" + parentDeployment.getName()
                 + "' in order to complete removal of component " + toString(managedComponent) + "...");
         DeploymentProgress progress = deploymentManager.redeploy(parentDeployment.getName());
-        DeploymentUtils.run(progress);
+        DeploymentStatus redeployStatus = DeploymentUtils.run(progress);
+        if (redeployStatus.isFailed()) {
+            log.error("Failed to redeploy parent deployment '" + parentDeployment.getName() +
+                      "during removal of component " + toString(managedComponent) +
+                      " - removal may not persist when the app server is restarted.", redeployStatus.getFailure());
+        }
         managementView.load();
     }
 

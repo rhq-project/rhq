@@ -60,6 +60,7 @@ import org.rhq.plugins.jbossas5.util.DeploymentUtils;
 
 import org.jboss.deployers.spi.management.deploy.DeploymentManager;
 import org.jboss.deployers.spi.management.deploy.DeploymentProgress;
+import org.jboss.deployers.spi.management.deploy.DeploymentStatus;
 
 /**
  * @author Ian Springer
@@ -313,11 +314,21 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
     {
         DeploymentManager deploymentManager = getConnection().getDeploymentManager();
         log.debug("Stopping deployment [" + this.deploymentName + "]...");
-        DeploymentProgress progress = deploymentManager.stop(deploymentName);
-        DeploymentUtils.run(progress);
+        DeploymentProgress progress = deploymentManager.stop(this.deploymentName);
+        DeploymentStatus stopStatus = DeploymentUtils.run(progress);
+        if (stopStatus.isFailed()) {
+            log.error("Failed to stop deployment '" + this.deploymentName + "'.", stopStatus.getFailure());
+            throw new Exception("Failed to stop deployment '" + this.deploymentName + "' - cause: "
+                    + stopStatus.getFailure());
+        }
         log.debug("Removing deployment [" + this.deploymentName + "]...");
-        progress = deploymentManager.remove(deploymentName);
-        DeploymentUtils.run(progress);
+        progress = deploymentManager.remove(this.deploymentName);
+        DeploymentStatus removeStatus = DeploymentUtils.run(progress);
+        if (removeStatus.isFailed()) {
+            log.error("Failed to remove deployment '" + this.deploymentName + "'.", removeStatus.getFailure());
+            throw new Exception("Failed to remove deployment '" + this.deploymentName + "' - cause: "
+                    + removeStatus.getFailure());
+        }
     }
 
     // ------------ AbstractManagedComponent implementation -------------

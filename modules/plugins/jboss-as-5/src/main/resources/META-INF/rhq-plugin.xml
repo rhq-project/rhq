@@ -38,34 +38,46 @@
     </operation>
 '>
 
+<!-- TODO: Use one shared XML entity for datasource and connection factory metrics. -->
 <!ENTITY datasourceMetrics '
+    <!-- Traits -->
+    <metric property="poolJndiName" displayType="summary" displayName="Pool JNDI Name"
+            defaultOn="true" defaultInterval="60000" dataType="trait" category="performance"
+            description="the JNDI name of the connection pool for this datasource"/>
+
+    <!-- Numerics -->
     <metric property="availableConnectionCount" measurementType="dynamic" displayType="summary"
             defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"
             description="the maximum number of connections that are available"/>
+
     <metric property="connectionCount" measurementType="dynamic" displayType="summary"
             defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"
             description="the number of connections that are currently in the pool"/>
+
     <metric property="connectionCreatedCount" measurementType="dynamic" displayType="detail"
             defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"
             description="the number of connections that have been created since the datasource was last started"/>
+
     <metric property="connectionDestroyedCount" measurementType="dynamic" displayType="detail"
             defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"
             description="the number of connections that have been destroyed since the datasource was last started"/>
+
     <metric property="inUseConnectionCount" measurementType="dynamic" displayType="detail"
             defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"
             description="the number of connections that are currently in use"/>
+
     <metric property="local-transaction" displayType="summary"
             defaultOn="true" defaultInterval="60000" dataType="trait" category="performance"/>
+
     <metric property="maxConnectionsInUseCount" measurementType="dynamic" displayType="detail"
             defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"
             description="the most connections that have been simultaneously in use since this datasource was started"/>
+
     <metric property="maxSize" measurementType="dynamic" displayType="detail" displayName="Max Size"
             defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
+
     <metric property="minSize" measurementType="dynamic" displayType="detail" displayName="Min Size"
             defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
-    <metric property="poolJndiName" displayType="summary" displayName="Pool Jndi Name"
-            defaultOn="true" defaultInterval="60000" dataType="trait" category="performance"
-            description="the JNDI name of the connection pool for this datasource"/>
 '>
 
 <!-- NOTE: For Datasource ManagedProperty annotations, see:
@@ -564,15 +576,15 @@
 
 <!ENTITY connectionFactoryMetrics '
     <!-- Traits -->
-    <metric property="poolJndiName" displayType="summary" displayName="Pool Jndi Name" defaultOn="true"
+    <metric property="poolJndiName" displayType="summary" displayName="Pool JNDI Name" defaultOn="true"
             defaultInterval="600000" dataType="trait" category="performance"/>
 
     <!-- Numerics -->
-    <metric property="availableConnectionCount" measurementType="dynamic" displayType="detail"
-            displayName="Available Connection Count" description="Mumber of available connections."
+    <metric property="availableConnectionCount" measurementType="dynamic" displayType="summary"
+            displayName="Available Connection Count" description="Number of available connections."
             defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
 
-    <metric property="connectionCount" measurementType="dynamic" displayType="detail"
+    <metric property="connectionCount" measurementType="dynamic" displayType="summary"
             displayName="Connection Count" defaultOn="true" defaultInterval="60000" dataType="measurement"
             category="performance"/>
 
@@ -1438,36 +1450,52 @@
             <!-- Traits -->
 
             <metric property="createdProgrammatically" displayType="summary"
-                    description="True if this queue was created programmatically"
-                    defaultOn="true" defaultInterval="600000" dataType="trait" category="performance"/>
+                    defaultOn="true" defaultInterval="600000" dataType="trait" category="performance"
+                    description="A flag indicating whether this queue was created programmatically"/>
 
             <!-- NOTE: We have to make this a trait rather than a resource config prop due to a bug in JBMESSAGING
                        (see https://jira.jboss.org/jira/browse/JBAS-6721). -->
             <metric property="messageCounterHistoryDayLimit"
-                    description="This queue's message counter history day limit - &lt;0: unlimited, =0: history disabled, &gt;0: maximum day count"
-                    defaultOn="true" defaultInterval="600000" dataType="trait" category="performance"/>
+                    defaultOn="true" defaultInterval="600000" dataType="trait" category="performance"
+                    description="This queue's message counter history day limit - &lt;0: unlimited, =0: history disabled, &gt;0: maximum day count"/>
 
             <!-- Numerics -->
 
-            <metric property="consumerCount" measurementType="dynamic" displayType="detail" displayName="Consumer Count"
-                    description="The number of consumers on the queue" defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"/>
+            <metric property="consumerCount" measurementType="dynamic" displayType="summary" displayName="Consumer Count"
+                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"
+                    description="The number of consumers on the queue"/>
+
             <metric property="deliveringCount" measurementType="dynamic" displayType="detail" displayName="Delivering Count"
-                    description="The number of messages currently being delivered" defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"/>
-            <metric property="messageCount" measurementType="dynamic" displayType="detail" displayName="Message Count"
-                    description="The number of messages in the queue" defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"/>
+                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"
+                    description="The number of messages currently being delivered"/>
+
+            <metric property="messageCount" measurementType="dynamic" displayType="summary" displayName="Message Count"
+                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"
+                    description="The number of messages in the queue"/>
+
             <metric property="scheduledMessageCount" measurementType="dynamic" displayType="detail" displayName="Scheduled Message Count"
-                    description="The number of scheduled messages in the queue" defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"/>
+                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"
+                    description="The number of scheduled messages in the queue"/>
 
             <metric property="messageStatistics.count" measurementType="dynamic" displayType="detail" displayName="Count"
-                    description="The total message count since startup or last counter reset" defaultOn="true" defaultInterval="60000" dataType="measurement" category="utilization"/>
+                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="utilization"
+                    description="The total message count since startup or last counter reset"/>
+
             <metric property="messageStatistics.countDelta" measurementType="dynamic" displayType="detail" displayName="Count Delta"
-                    description="The message count delta since last method call" defaultOn="true" defaultInterval="60000" dataType="measurement" category="utilization"/>
+                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="utilization"
+                    description="The message count delta since last method call"/>
+            
             <metric property="messageStatistics.depth" measurementType="dynamic" displayType="detail" displayName="Depth"
-                    description="The current message count of pending messages within the queue waiting for dispatch" defaultOn="true" defaultInterval="60000" dataType="measurement" category="utilization"/>
+                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="utilization"
+                    description="The current message count of pending messages within the queue waiting for dispatch"/>
+
             <metric property="messageStatistics.depthDelta" measurementType="dynamic" displayType="detail" displayName="Depth Delta"
-                    description="The message count delta of pending messages since last method call" defaultOn="true" defaultInterval="60000" dataType="measurement" category="utilization"/>
+                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="utilization"
+                    description="The message count delta of pending messages since last method call"/>
+
             <metric property="messageStatistics.timeLastUpdate" measurementType="dynamic" displayType="detail" displayName="Time Last Update"
-                    description="The timestamp of the last message add" defaultOn="true" defaultInterval="60000" dataType="measurement" category="utilization"/>
+                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="utilization"
+                    description="The timestamp of the last message add"/>
             
             <resource-configuration>
 
@@ -1763,29 +1791,40 @@
             <!-- Traits -->
 
             <metric property="createdProgrammatically" displayType="summary"
-                    description="True if this topic was created programmatically"
-                    defaultOn="true" defaultInterval="600000" dataType="trait" category="performance"/>
+                    defaultOn="true" defaultInterval="600000" dataType="trait" category="performance"
+                    description="A flag indicating whether this topic was created programmatically"/>
 
             <!-- NOTE: We have to make this a trait rather than a resource config prop due to a bug in JBMESSAGING
                        (see https://jira.jboss.org/jira/browse/JBAS-6721). -->
             <metric property="messageCounterHistoryDayLimit"
-                    description="This topic's message counter history day limit - &lt;0: unlimited, =0: history disabled, &gt;0: maximum day count"
-                    defaultOn="true" defaultInterval="600000" dataType="trait" category="performance"/>
+                    defaultOn="true" defaultInterval="600000" dataType="trait" category="performance"
+                    description="This topic's message counter history day limit - &lt;0: unlimited, =0: history disabled, &gt;0: maximum day count"/>
 
             <!-- Numerics -->
 
-            <metric property="allMessageCount" measurementType="dynamic" displayType="detail" displayName="All Message Count"
-                    description="The count of all messages in all subscriptions of this topic" defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"/>
-            <metric property="allSubscriptionsCount" measurementType="dynamic" displayType="detail" displayName="All Subscriptions Count"
-                    description="The count of all subscriptions of this topic" defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"/>
+            <metric property="allMessageCount" measurementType="dynamic" displayType="summary" displayName="All Message Count"
+                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"
+                    description="The count of all messages in all subscriptions to this topic"/>
+
+            <metric property="allSubscriptionsCount" measurementType="dynamic" displayType="summary" displayName="All Subscriptions Count"
+                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"
+                    description="The count of all subscriptions to this topic"/>
+
             <metric property="durableMessageCount" measurementType="dynamic" displayType="detail" displayName="Durable Message Count"
-                    description="The count of all messages in all durable subscriptions of this topic" defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"/>
+                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"
+                    description="The count of all messages for all durable subscriptions to this topic"/>
+
             <metric property="durableSubscriptionsCount" measurementType="dynamic" displayType="detail" displayName="Durable Subscriptions Count"
-                    description="The count of all durable subscriptions of this topic" defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"/>
+                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"
+                    description="The count of all durable subscriptions to this topic"/>
+
             <metric property="nonDurableMessageCount" measurementType="dynamic" displayType="detail" displayName="Non Durable Message Count"
-                    description="The count of all messages in all non durable subscriptions of this topic" defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"/>
+                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"
+                    description="The count of all messages in all non durable subscriptions to this topic"/>
+
             <metric property="nonDurableSubscriptionsCount" measurementType="dynamic" displayType="detail" displayName="Non Durable Subscriptions Count"
-                    description="The count of all non durable subscriptions of this topic" defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"/>
+                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"
+                    description="The count of all non durable subscriptions to this topic"/>
             
             <resource-configuration>
 

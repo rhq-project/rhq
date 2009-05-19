@@ -22,5 +22,7 @@
 	</classpathentry>
 	<classpathentry exported="true" kind="var" path="M2_REPO/commons-httpclient/commons-httpclient/3.0.1/commons-httpclient-3.0.1.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/rhq"/>
+	<classpathentry kind="var" path="M2_REPO/org/jboss/man/jboss-managed/2.1.0.CR8/jboss-managed-2.1.0.CR8.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/jboss/man/jboss-metatype/2.1.0.CR8/jboss-metatype-2.1.0.CR8.jar"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

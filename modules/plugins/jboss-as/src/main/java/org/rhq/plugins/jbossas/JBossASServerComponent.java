@@ -262,7 +262,7 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
             EmsBean bean = connection.getBean("jboss.system:type=ServerConfig");
 
             File serverHomeViaJNP = (File) bean.getAttribute("ServerHomeDir").refresh();
-            if (this.configPath.equals(serverHomeViaJNP)) {
+            if (this.configPath.getCanonicalPath().equals(serverHomeViaJNP.getCanonicalPath())) {
                 return AvailabilityType.UP;
             } else {
                 // a different server must have been started on our jnp url

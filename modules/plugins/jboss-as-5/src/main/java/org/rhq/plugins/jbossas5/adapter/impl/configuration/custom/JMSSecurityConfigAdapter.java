@@ -79,6 +79,12 @@ public class JMSSecurityConfigAdapter extends AbstractPropertyListAdapter {
                                               PropertyDefinitionList propertyDefinitionList)
     {
         MapCompositeValueSupport securityConfigCompositeValue = (MapCompositeValueSupport)metaValue;
+        // First clear out all existing values from the MapCompositeValue.
+        for (String key : securityConfigCompositeValue.getMetaType().keySet())
+        {
+            securityConfigCompositeValue.remove(key);
+        }
+        // Now re-populate it with the values from the PropertyList.
         PropertyDefinitionMap memberPropDefMap = (PropertyDefinitionMap)propertyDefinitionList.getMemberDefinition();
         for (Property memberProperty : propertyList.getList())
         {

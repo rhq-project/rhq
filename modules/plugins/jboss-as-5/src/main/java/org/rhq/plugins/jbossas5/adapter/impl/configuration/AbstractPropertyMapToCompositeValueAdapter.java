@@ -54,7 +54,7 @@ public abstract class AbstractPropertyMapToCompositeValueAdapter extends Abstrac
 
     public void populateMetaValueFromProperty(PropertyMap propMap, MetaValue metaValue, PropertyDefinitionMap propDefMap)
     {
-        CompositeValue compositeValue = (CompositeValue)metaValue;
+        CompositeValue compositeValue = (CompositeValue)metaValue;                
         for (String mapMemberPropName : propMap.getMap().keySet())
         {
             Property mapMemberProp = propMap.get(mapMemberPropName);

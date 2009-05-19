@@ -35,12 +35,26 @@ import org.jboss.metatype.api.values.MetaValue;
 /**
  * This class provides code that maps back and forth between a {@link PropertyMap} and a {@link
  * MapCompositeValueSupport}. A <code>MapCompositeValueSupport</code> is a {@link CompositeValue} implementation that
- * contains items that are all of the same type.
+ * contains items that are all of the same type; there is no predefined list of valid keys, so it maps nicely to an
+ * "open" PropertyMap.
  *
  * @author Ian Springer
  */
 public class PropertyMapToMapCompositeValueSupportAdapter extends AbstractPropertyMapToCompositeValueAdapter implements PropertyAdapter<PropertyMap, PropertyDefinitionMap>
 {
+    @Override
+    public void populateMetaValueFromProperty(PropertyMap propMap, MetaValue metaValue, PropertyDefinitionMap propDefMap)
+    {
+        MapCompositeValueSupport mapCompositeValueSupport = (MapCompositeValueSupport)metaValue;
+        // First clear out all existing values from the MapCompositeValue.
+        for (String key : mapCompositeValueSupport.getMetaType().keySet())
+        {
+            mapCompositeValueSupport.remove(key);
+        }
+        // Now re-populate it with the values from the PropertyMap.
+        super.populateMetaValueFromProperty(propMap, metaValue, propDefMap);
+    }
+
     protected void putValue(CompositeValue compositeValue, String key, MetaValue value)
     {
         MapCompositeValueSupport mapCompositeValueSupport = (MapCompositeValueSupport)compositeValue;

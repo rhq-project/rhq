@@ -70,8 +70,12 @@ public class JavaUtilLoggingResourceComponent extends MBeanResourceComponent {
     public String getLoggerLevel(LoggingMXBean logging, String name) {
         String level = logging.getLoggerLevel(name);
         if (level != null) {
-            if (level.equals("") && (logging.getParentLoggerName(name) != null)) {
-                level = getLoggerLevel(logging, logging.getParentLoggerName(name));
+            String parentLoggerName = logging.getParentLoggerName(name);
+            // A level of "" means the level is not explicitly specified, i.e. inherited from the logger's parent.
+            // In this case, we want to recurse, unless the logger's parent is "", which means this is already the
+            // root logger (recursing in this ununsual case would cause infinite recursion).
+            if (level.equals("") && parentLoggerName != null && !parentLoggerName.equals("")) {
+                level = getLoggerLevel(logging, parentLoggerName); // recurse
             }
         } else {
             level = "Pseudo"; // only needed for the compare in updateResourceConfiguration() below

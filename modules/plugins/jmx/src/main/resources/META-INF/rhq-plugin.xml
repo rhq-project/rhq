@@ -34,6 +34,7 @@
                <c:option value="org.mc4j.ems.connection.support.metadata.Weblogic9Jsr77ConnectionTypeDescriptor" name="Weblogic 9 JSR 77"/>
                <c:option value="org.mc4j.ems.connection.support.metadata.WebsphereConnectionTypeDescriptor" name="WebSphere"/>
                <c:option value="org.mc4j.ems.connection.support.metadata.WebsphereStudioConnectionTypeDescriptor" name="WebSphere Studio"/>
+               <c:option value="PARENT" name="Parent"/>
             </c:property-options>
          </c:simple-property>
 

@@ -62,7 +62,21 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent {
     /* Ignore certain processes that are managed by their own plugin. For example The Tomcat plugin will
      * handle tomcat processes configured for JMX management.
      */
-    private static final String[] PROCESS_FILTERS = { "catalina.startup.Bootstrap" };
+    private static final String[] PROCESS_FILTERS;
+
+    static {
+        String[] processFilters = new String[] { "catalina.startup.Bootstrap", "org.jboss.Main" };
+        try {
+            String env = System.getProperty("rhq.jmxplugin.process-filters");
+            if (env != null) {
+                processFilters = env.split(",");
+            }
+        } catch (Throwable t) {
+            log.error("Can't determine process filters, using default. Cause: " + t);
+        } finally {
+            PROCESS_FILTERS = processFilters;
+        }
+    }
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) {
 

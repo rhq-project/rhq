@@ -115,8 +115,13 @@ public class ProcessExecutor {
 
             waitThread.setDaemon(true);
             waitThread.start();
-            waitThread.join(process.getWaitForExit().intValue());
-            waitThread.interrupt();
+            try {
+                waitThread.join(process.getWaitForExit().intValue());
+            } catch (InterruptedException ie) {
+                // this might happen if the launching thread got interrupted
+            } finally {
+                waitThread.interrupt();
+            }
 
             if (retExitCode[0] == null) {
                 // never got the exit code so the wait time must have expired, kill the process if configured to do so

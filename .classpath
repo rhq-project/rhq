@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
+	<classpathentry kind="var" path="M2_REPO/org/jboss/integration/jboss-profileservice-spi/5.1.0.GA/jboss-profileservice-spi-5.1.0.GA.jar"/>
 	<classpathentry kind="src" path="modules/serverplugins/jboss-software/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/tomcat/src/main/java"/>
 	<classpathentry kind="src" path="modules/serverplugins/jboss-software/src/test/java"/>
@@ -12,17 +13,11 @@
 	<classpathentry kind="src" path="modules/plugins/jboss-as-5/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/jboss-as-5/src/main/resources"/>
 	<classpathentry kind="src" path="modules/plugins/jboss-as-5/src/test/java"/>
-	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.5">
-		<accessrules>
-			<accessrule kind="accessible" pattern="sun/misc/**"/>
-			<accessrule kind="accessible" pattern="sun/security/**"/>
-			<accessrule kind="accessible" pattern="com/sun/java_cup/internal/**"/>
-			<accessrule kind="accessible" pattern="com/sun/org/apache/bcel/internal/generic/**"/>
-		</accessrules>
-	</classpathentry>
-	<classpathentry exported="true" kind="var" path="M2_REPO/commons-httpclient/commons-httpclient/3.0.1/commons-httpclient-3.0.1.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/rhq"/>
 	<classpathentry kind="var" path="M2_REPO/org/jboss/man/jboss-managed/2.1.0.CR8/jboss-managed-2.1.0.CR8.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/jboss/man/jboss-metatype/2.1.0.CR8/jboss-metatype-2.1.0.CR8.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/apache/commons/commons-io/1.3.2/commons-io-1.3.2.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="var" path="M2_REPO/com/sun/xml/bind/jaxb-impl/2.1.6/jaxb-impl-2.1.6.jar"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

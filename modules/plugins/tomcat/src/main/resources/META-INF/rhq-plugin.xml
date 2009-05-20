@@ -9,7 +9,9 @@
    xmlns="urn:xmlns:rhq-plugin"
    xmlns:c="urn:xmlns:rhq-configuration">
 
-   <depends plugin="JMX" useClasses="true"/>
+   <depends
+      plugin="JMX"
+      useClasses="true" />
 
    <server
       name="Tomcat Server"
@@ -59,7 +61,7 @@
                <c:property-options>
                   <c:option
                      value="RPM"
-                     name="RPM System V init script"/>
+                     name="RPM System V init script" />
                   <c:option
                      value="SCRIPT"
                      name="shutdown script"
@@ -164,8 +166,8 @@
          sourcePlugin="JMX"
          sourceType="JMX Server"
          discovery="org.rhq.plugins.jmx.EmbeddedJMXServerDiscoveryComponent"
-         class="org.rhq.plugins.jmx.JMXServerComponent" 
-         singleton="true" >
+         class="org.rhq.plugins.jmx.JMXServerComponent"
+         singleton="true">
       </server>
 
       <service
@@ -218,6 +220,11 @@
                   name="deployOnStartup"
                   type="boolean"
                   description="Does this host deploy applications in appBase at startup?" />
+               <c:simple-property
+                  name="deployXML"
+                  displayName="Deploy XML"
+                  type="boolean"
+                  description="deploy Context XML config files?" />
                <c:simple-property
                   name="unpackWARs"
                   displayName="Unpack WARs"
@@ -418,10 +425,104 @@
             <resource-configuration>
                <c:group name="Attributes">
                   <c:simple-property
+                     name="allowLinking"
+                     type="boolean"
+                     description="If the value of this flag is true, symlinks will be allowed inside the web application, pointing to resources outside the web application base path. If not specified, the default value of the flag is false. NOTE: This flag MUST NOT be set to true on the Windows platform (or any other OS which does not have a case sensitive filesystem), as it will disable case sensitivity checks, allowing JSP source code disclosure, among other security problems." />
+                  <c:simple-property
+                     name="antiJarLocking"
+                     type="boolean"
+                     description="If true, the Tomcat classloader will take extra measures to avoid JAR file locking when resources are accessed inside JARs through URLs. This will impact startup time of applications, but could prove to be useful on platforms or configurations where file locking can occur. If not specified, the default value is false." />
+                  <c:simple-property
+                     name="antiResourceLocking"
+                     type="boolean"
+                     description="If true, Tomcat will prevent any file locking. This will significantly impact startup time of applications, but allows full webapp hot deploy and undeploy on platforms or configurations where file locking can occur. If not specified, the default value is false. Please note that setting this to true has some side effects, including the disabling of JSP reloading in a running server: see Bugzilla 37668. Please note that setting this flag to true in applications that are outside the appBase for the Host (the webapps directory by default) will cause the application to be deleted on Tomcat shutdown. You probably don't want to do this, so think twice before setting antiResourceLocking=true on a webapp that's outside the appBase for its Host. " />
+                  <c:simple-property
+                     name="cachingAllowed"
+                     type="boolean"
+                     description="If the value of this flag is true, the cache for static resources will be used. If not specified, the default value of the flag is true." />
+                  <c:simple-property
+                     name="cacheTTL"
+                     displayName="Cache TTL"
+                     type="integer"
+                     description="Amount of time in milliseconds between cache entries revalidation. If not specified, the default value is 5000 (5 seconds)." />
+                  <c:simple-property
+                     name="cacheMaxSize"
+                     type="integer"
+                     description="Maximum size of the static resource cache in kilobytes. If not specified, the default value is 10240  (10 megabytes)." />
+                  <c:simple-property
+                     name="caseSensitive"
+                     type="boolean"
+                     description="If the value of this flag is true, all case sensitivity checks will be disabled. If not specified, the default value of the flag is true. NOTE: This flag MUST NOT be set to false on the Windows platform (or any other OS which does not have a case sensitive filesystem), as it will disable case sensitivity checks, allowing JSP source code disclosure, among other security problems." />
+                  <c:simple-property
+                     name="cookies"
+                     type="boolean"
+                     description="Set to true if you want cookies to be used for session identifier communication if supported by the client (this is the default). Set to false if you want to disable the use of cookies for session identifier communication, and rely only on URL rewriting by the application." />
+                  <c:simple-property
+                     name="compilerClasspath"
+                     type="string"
+                     description="The compiler classpath to use"
+                     required="false" />
+                  <c:simple-property
+                     name="configFile"
+                     type="string"
+                     description="The location of the context.xml resource or file" />
+                  <c:simple-property
+                     name="crossContext"
+                     type="boolean"
+                     description="Set to true if you want calls within this application to ServletContext.getContext() to successfully return a request dispatcher for other web applications running on this virtual host. Set to false (the default) in security conscious environments, to make getContext() always return null." />
+                  <c:simple-property
                      name="docBase"
                      readOnly="true"
                      required="true"
                      description="The docBase set for this application" />
+                  <!-- Although it claims to be writable, update failed in my V5 test, so read only for now. -->
+                  <c:simple-property
+                     name="eventProvider"
+                     type="boolean"
+                     description="Event provider support for this managed object?"                     
+                     readOnly="true" />                     
+                  <c:simple-property
+                     name="privileged"
+                     type="boolean"
+                     description="Set to true to allow this context to use container servlets, like the manager servlet. Use of the privileged  attribute will change the context's parent class loader to be the Server class loader rather than the Shared class loader. Note that in a default installation, the Common class loader is used for both the Server and the Shared  class loaders." />
+                  <c:simple-property
+                     name="reloadable"
+                     type="boolean"
+                     description="Set to true if you want Catalina to monitor classes in /WEB-INF/classes/ and /WEB-INF/lib for changes, and automatically reload the web application if a change is detected. This feature is very useful during application development, but it requires significant runtime overhead and is not recommended for use on deployed production applications. That's why the default setting for this attribute is false." />
+                  <c:simple-property
+                     name="saveConfig"
+                     type="boolean"
+                     description="Write the configuration as needed on startup?" />
+                  <!-- Although it claims to be writable, update failed in my V5 test, so read only for now. -->
+                  <c:simple-property
+                     name="stateManageable"
+                     type="boolean"
+                     description="State management support for this managed object?"
+                     readOnly="true" />
+                  <!-- Although it claims to be writable, update failed in my V5 test, so read only for now. -->
+                  <c:simple-property
+                     name="statisticsProvider"
+                     type="boolean"
+                     description="Performance statistics support for this managed object?"                     
+                     readOnly="true" />
+                  <c:simple-property
+                     name="swallowOutput"
+                     type="boolean"
+                     description="If the value of this flag is true, the bytes output to System.out and System.err by the web application will be redirected to the web application logger. If not specified, the default value of the flag is false." />
+                  <c:simple-property
+                     name="unloadDelay"
+                     type="integer"
+                     description="Amount of ms that the container will wait for servlets to unload. If not specified, the default value of the flag is 2000 ms." />
+                  <c:simple-property
+                     name="useNaming"
+                     type="boolean"
+                     description="Set to true (the default) to have Catalina enable a JNDI InitialContext for this web application that is compatible with Java2 Enterprise Edition (J2EE) platform conventions." />
+                  <c:simple-property
+                     name="workDir"
+                     displayName="Work Directory"
+                     type="string"
+                     description="Pathname to a scratch directory to be provided by this Context for temporary read-write use by servlets within the associated web application. This directory will be made visible to servlets in the web application by a servlet context attribute (of type java.io.File) named javax.servlet.context.tempdir as described in the Servlet Specification. If not specified, a suitable directory underneath $CATALINA_BASE/work will be provided."
+                     required="false" />
                </c:group>
             </resource-configuration>
 
@@ -495,26 +596,15 @@
                   readOnly="true"
                   default="Catalina:type=Connector,port=%port%" />
                <c:simple-property
-                  name="address"
-                  type="string"
-                  description="IP Address on which this connector listens."
-                  readOnly="true" />
-               <c:simple-property
                   name="port"
                   type="string"
                   description="Port on which this connector is configured to listen."
                   readOnly="true" />
                <c:simple-property
-                  name="scheme"
+                  name="handler"
                   type="string"
-                  description="Protocol scheme (jk, ajp, http)."
-                  readOnly="true"
-                  default="http" />
-               <c:simple-property
-                  name="protocol"
-                  type="string"
-                  description="Protocol handler."
-                  readOnly="true" />
+                  description="Connector protocol handler."
+                  readOnly="true" />                  
             </c:group>
 
             <c:group
@@ -523,7 +613,7 @@
                hiddenByDefault="true">
                <c:simple-property
                   name="nameTemplate"
-                  default="Tomcat Connector ({scheme}-{port})" />
+                  default="Tomcat Connector ({handler}-{port})" />
                <c:simple-property
                   name="descriptionTemplate"
                   default="A Tomcat connector" />
@@ -551,7 +641,7 @@
             description="Resumes this connector" />
 
          <metric
-            property="Catalina:type=GlobalRequestProcessor,name=%scheme%-%port%:maxTime"
+            property="Catalina:type=GlobalRequestProcessor,name=%handler%%address%-%port%:maxTime"
             displayName="Maximum Request Time"
             description="Maximum time it took to process a request."
             units="milliseconds"
@@ -559,7 +649,7 @@
             category="performance" />
 
          <metric
-            property="Catalina:type=GlobalRequestProcessor,name=%scheme%-%port%:requestCount"
+            property="Catalina:type=GlobalRequestProcessor,name=%handler%%address%-%port%:requestCount"
             displayName="Request count"
             description="Total number of requests processed since last restart."
             defaultOn="false"
@@ -567,7 +657,7 @@
             measurementType="trendsup" />
 
          <metric
-            property="Catalina:type=GlobalRequestProcessor,name=%scheme%-%port%:errorCount"
+            property="Catalina:type=GlobalRequestProcessor,name=%handler%%address%-%port%:errorCount"
             displayName="Error count"
             description="Number of errors while processing since last restart."
             defaultOn="true"
@@ -575,7 +665,7 @@
             measurementType="trendsup" />
 
          <metric
-            property="Catalina:type=ThreadPool,name=%scheme%-%port%:currentThreadsBusy"
+            property="Catalina:type=ThreadPool,name=%handler%%address%-%port%:currentThreadsBusy"
             displayName="Threadpool Threads Active"
             description="Number of current busy threads."
             defaultOn="true"
@@ -583,7 +673,7 @@
             displayType="summary" />
 
          <metric
-            property="Catalina:type=ThreadPool,name=%scheme%-%port%:currentThreadCount"
+            property="Catalina:type=ThreadPool,name=%handler%%address%-%port%:currentThreadCount"
             displayName="Threadpool Threads Allocated"
             description="Number of current threads."
             defaultOn="true"
@@ -591,12 +681,216 @@
             displayType="summary" />
 
          <metric
-            property="Catalina:type=ThreadPool,name=%scheme%-%port%:maxThreads"
+            property="Catalina:type=ThreadPool,name=%handler%%address%-%port%:maxThreads"
             displayName="Threadpool Max Threads"
             description="Maximum number of threads that can be allocated for the ThreadPool."
             defaultOn="true"
             category="utilization"
             displayType="detail" />
+
+         <resource-configuration>
+            <c:group name="Attributes">
+               <c:simple-property
+                  name="address"
+                  type="string"
+                  description="For servers with more than one IP address, this attribute specifies which address will be used for listening on the specified port. By default, this port will be used on all IP addresses associated with the server. Warning: changing this value in essence defines a new connector resource!" />
+               <c:simple-property
+                  name="allowTrace"
+                  type="boolean"
+                  description="A boolean value which can be used to enable or disable the TRACE HTTP method. If not specified, this attribute is set to false." />
+               <c:simple-property
+                  name="connectionLinger"
+                  type="integer"
+                  description="The number of milliseconds during which the sockets used by this Connector will linger when they are closed. (-1 socket linger is disabled)."
+                  required="false" />
+               <c:simple-property
+                  name="connectionTimeout"
+                  type="integer"
+                  description="The number of milliseconds this Connector will wait, after accepting a connection, for the request URI line to be presented. The default is no timeout."
+                  required="false" />
+               <c:simple-property
+                  name="disableUploadTimeout"
+                  type="boolean"
+                  description="This flag allows the servlet container to use a different, longer connection timeout while a servlet is being executed, which in the end allows either the servlet a longer amount of time to complete its execution, or a longer timeout during data upload. If not specified, this attribute is set to true."
+                  required="false" />                  
+               <c:simple-property
+                  name="emptySessionPath"
+                  type="boolean"
+                  description="If set to true, all paths for session cookies will be set to /. This can be useful for portlet specification implementations, but will greatly affect performance if many applications are accessed on a given server by the client. If not specified, this attribute is set to false." />
+               <c:simple-property
+                  name="enableLookups"
+                  type="boolean"
+                  description="Set to true if you want calls to request.getRemoteHost() to perform DNS lookups in order to return the actual host name of the remote client. Set to false to skip the DNS lookup and return the IP address in String form instead (thereby improving performance). By default, DNS lookups are enabled." />
+               <c:simple-property
+                  name="keepAliveTimeout"
+                  type="integer"
+                  description="The number of milliseconds this Connector will wait for another HTTP request before closing the connection. The default value is to use the value that has been set for the connectionTimeout attribute. Ignored prior to Tomcat 6."
+                  required="false" />
+               <c:simple-property
+                  name="maxHttpHeaderSize"
+                  type="integer"
+                  description="The maximum size of the request and response HTTP header, specified in bytes. If not specified, this attribute is set to 4096 (4 KB)."
+                  required="false" />
+               <c:simple-property
+                  name="maxKeepAliveRequests"
+                  type="integer"
+                  description="The maximum number of HTTP requests which can be pipelined until the connection is closed by the server. Setting this attribute to 1 will disable HTTP/1.0 keep-alive, as well as HTTP/1.1 keep-alive and pipelining. Setting this to -1 will allow an unlimited amount of pipelined or keep-alive HTTP requests. If not specified, this attribute is set to 100."
+                  required="false" />
+               <c:simple-property
+                  name="maxPostSize"
+                  type="integer"
+                  description="The maximum size in bytes of the POST which will be handled by the container FORM URL parameter parsing. The limit can be disabled by setting this attribute to a value less than or equal to 0. If not specified, this attribute is set to 2097152 (2 megabytes)." />
+               <c:simple-property
+                  name="protocol"
+                  type="string"
+                  description="The protocol to handle incoming traffic." />
+               <c:simple-property
+                  name="proxyName"
+                  type="string"
+                  description="If this Connector is being used in a proxy configuration, configure this attribute to specify the server name to be returned for calls to request.getServerName()."
+                  required="false" />
+               <c:simple-property
+                  name="proxyPort"
+                  type="integer"
+                  description="If this Connector is being used in a proxy configuration, configure this attribute to specify the server port to be returned for calls to request.getServerPort()."
+                  required="false" />
+               <c:simple-property
+                  name="redirectPort"
+                  type="integer"
+                  description="If this Connector is supporting non-SSL requests, and a request is received for which a matching security-constraint requires SSL transport, Catalina will automatically redirect the request to the port number specified here." />
+               <c:simple-property
+                  name="scheme"
+                  type="string"
+                  description="the name of the protocol you wish to have returned by calls to request.getScheme(). For example, you would set this attribute to 'https' for an SSL Connector. The default value is 'http'"
+                  default="http" />                  
+               <c:simple-property
+                  name="useBodyEncodingForURI"
+                  displayName="Use Body Encoding for URI"
+                  type="boolean"
+                  description="This specifies if the encoding specified in contentType should be used for URI query parameters, instead of using the URIEncoding. This setting is present for compatibility with Tomcat 4.1.x." />
+               <c:simple-property
+                  name="xpoweredBy"
+                  displayName="X-Powered-By"
+                  type="boolean"
+                  description="Set this attribute to true to cause Tomcat to advertise support for the Servlet specification using the header recommended in the specification. The default value is false." />
+            </c:group>
+
+            <c:group name="Performance">
+               <c:simple-property
+                  name="bufferSize"
+                  type="integer"
+                  description="The size (in bytes) of the buffer to be provided for input streams created by this connector. By default, buffers of 2048 bytes will be provided." />
+               <c:simple-property
+                  name="compression"
+                  type="string"
+                  description="The Connector may use HTTP/1.1 GZIP compression in an attempt to save server bandwidth. The acceptable values for the parameter is 'off' (disable compression), 'on' (allow compression, which causes text data to be compressed), 'force' (forces compression in all cases), or a numerical integer value (which is equivalent to 'on', but specifies the minimum amount of data before the output is compressed). If the content-length is not known and compression is set to 'on' or more aggressive, the output will also be compressed. If not specified, this attribute is set to 'off'."
+                  required="false" />                  
+               <c:simple-property
+                  name="maxThreads"
+                  type="integer"
+                  description="The maximum number of request processing threads to be created by this Connector, which therefore determines the maximum number of simultaneous requests that can be handled. If not specified, this attribute is set to 40. If an executor is associated with this connector, this attribute is ignored as the connector will execute tasks using the executor rather than an internal thread pool."
+                  required="false" />
+               <c:simple-property
+                  name="maxSpareThreads"
+                  type="integer"
+                  description="The maximum number of unused request processing threads that will be allowed to exist until the thread pool starts stopping the unnecessary threads. The default value is 50."
+                  required="false" />
+               <c:simple-property
+                  name="minSpareThreads"
+                  type="integer"
+                  description="The number of request processing threads that will be created when this Connector is first started. The connector will also make sure it has the specified number of idle processing threads available. This attribute should be set to a value smaller than that set for maxThreads. The default value is 4."
+                  required="false" />
+               <c:simple-property
+                  name="strategy"
+                  type="string"
+                  description="The thread pooling strategy which will be used. The default strategy does not use a master thread, but a more conventional strategy using a master listener thread can be used by setting 'ms' as this attribute's value. The master strategy will work significantly better using the threadPriority attribute, which will apply only to the thread which listens on the server socket. This is set to 'lf' by default."
+                  required="false" />                  
+               <c:simple-property
+                  name="tcpNoDelay"
+                  displayName="TCP NoDelay"
+                  type="boolean"
+                  description="If set to true, the TCP_NO_DELAY option will be set on the server socket, which improves performance under most circumstances. This is set to true by default."
+                  required="false" />                  
+               <c:simple-property
+                  name="threadPriority"
+                  type="integer"
+                  description="The priority of the request processing threads within the JVM. The default value is java.lang.Thread#NORM_PRIORITY. See the JavaDoc for the java.lang.Thread class for more details on what this priority means."
+                  required="false" />
+            </c:group>
+
+            <c:group name="Security">
+               <c:simple-property
+                  name="algorithm"
+                  type="string"
+                  description="The certificate encoding algorithm to be used. This defaults to the Sun implementation (SunX509). For IBM JVMs you should use the value IbmX509. For other vendors, consult the JVM documentation for the correct value."
+                  required="false" />
+               <c:simple-property
+                  name="ciphers"
+                  type="string"
+                  description="The comma separated list of encryption ciphers that this socket is allowed to use. By default, the default ciphers for the JVM will be used. Note that this usually means that the weak export grade ciphers will be included in the list of available ciphers. The ciphers are specified using the JSSE cipher naming convention."
+                  required="false" />
+               <c:simple-property
+                  name="clientAuth"
+                  displayName="Client Authentication"
+                  type="boolean"
+                  description="Set to true if you want the SSL stack to require a valid certificate chain from the client before accepting a connection. Set to want if you want the SSL stack to request a client Certificate, but not fail if one isn't presented. A false  value (which is the default) will not require a certificate chain unless the client requests a resource protected by a security constraint that uses CLIENT-CERT authentication."
+                  required="false" />
+               <c:simple-property
+                  name="keyAlias"
+                  type="string"
+                  description="The alias used to for the server certificate in the keystore. If not specified the first key read in the keystore will be used."
+                  required="false" />
+               <c:simple-property
+                  name="keystorePass"
+                  displayName="Keystore Password"
+                  type="password"
+                  description="The password used to access the server certificate from the specified keystore file."
+                  required="false" />
+               <c:simple-property
+                  name="keystoreFile"
+                  type="string"
+                  description="Pathname to the keystore file used to validate client certificates."
+                  required="false" />
+               <c:simple-property
+                  name="keystoreType"
+                  type="string"
+                  description="The type of keystore file to be used for the server certificate. If not specified, the default value is 'JKS'."
+                  required="false" />
+               <c:simple-property
+                  name="secure"
+                  type="boolean"
+                  description="Set this attribute to true if you wish to have calls to request.isSecure() to return true  for requests received by this Connector. You would want this on an SSL Connector or a non SSL connector that is receiving data from a SSL accelerator, like a crypto card, a SSL appliance or even a webserver. The default value is false"
+                  required="false" />
+               <c:simple-property
+                  name="sslProtocol"
+                  displayName="SSL Protocol"
+                  type="string"
+                  description="The version of the SSL protocol to use. If not specified, the default is 'TLS'."
+                  required="false" />
+               <c:simple-property
+                  name="tomcatAuthentication"
+                  type="boolean"
+                  description="If set to true, the authentication will be done in Tomcat. Otherwise, the authenticated principal will be propagated from the native webserver and used for authorization in Tomcat. The default value is true."
+                  required="false" />                  
+               <c:simple-property
+                  name="trustStoreFile"
+                  type="string"
+                  description="Pathname to the trust store file used to validate client certificates."
+                  required="false" />
+               <c:simple-property
+                  name="trustStorePass"
+                  displayName="Trust Store Password"
+                  type="password"
+                  description="The password to access the TrustStore. This defaults to the value of Keystore Password."
+                  required="false" />
+               <c:simple-property
+                  name="trustStoreType"
+                  type="string"
+                  description="Add this element if your are using a different format for the TrustStore then you are using for the KeyStore."
+                  required="false" />
+            </c:group>
+         </resource-configuration>
+
       </service>
 
       <service

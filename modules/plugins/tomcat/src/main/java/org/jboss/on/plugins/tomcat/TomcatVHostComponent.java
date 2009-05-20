@@ -106,8 +106,6 @@ public class TomcatVHostComponent extends MBeanResourceComponent<TomcatServerCom
 
     @Override
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
-        // updating Role membership is done via MBean operation, not manipulation of the attribute
-
         Configuration reportConfiguration = report.getConfiguration();
         // reserve the new alias settings 
         PropertySimple newAliases = reportConfiguration.getSimple(CONFIG_ALIASES);

@@ -22,6 +22,8 @@
  */
 package org.jboss.on.plugins.tomcat;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Set;
 
@@ -31,10 +33,12 @@ import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
 import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
@@ -48,22 +52,24 @@ import org.rhq.plugins.jmx.ObjectNameQueryUtility;
  * @author Jason Dobies
  */
 public class TomcatConnectorComponent extends MBeanResourceComponent<TomcatServerComponent> {
+
     /**
-     * Plugin property name for the address the connector is bound to.
+     * property name for the address the connector is bound to.
      */
-    public static final String PLUGIN_CONFIG_ADDRESS = "address";
+    public static final String CONFIG_ADDRESS = "address";
+    /**
+     * property name for the scheme the connector is processing. Possible values are http (also for https), jk
+     */
+    public static final String CONFIG_SCHEME = "scheme";
+
+    /**
+     * Plugin property name for the protocol handler. This prefix is used in the associated GlobalRequestProcessor object name.
+     */
+    public static final String PLUGIN_CONFIG_HANDLER = "handler";
     /**
      * Plugin property name for the port the connector is listening on.
      */
     public static final String PLUGIN_CONFIG_PORT = "port";
-    /**
-     * Plugin property name for the schema the connector is processing. Possible values are http (also for https), jk
-     */
-    public static final String PLUGIN_CONFIG_PROTOCOL = "protocol";
-    /**
-     * Plugin property name for the schema the connector is processing. Possible values are http (also for https), jk
-     */
-    public static final String PLUGIN_CONFIG_SCHEME = "scheme";
 
     public static final String UNKNOWN = "?";
 
@@ -72,11 +78,8 @@ public class TomcatConnectorComponent extends MBeanResourceComponent<TomcatServe
     @Override
     public AvailabilityType getAvailability() {
         // When the connector is stopped its associated GlobalRequestProcessor will not exist. We test
-        // for availability by checking the existence of objectName Catalina:type=GlobalRequestProcessor,name=%scheme%-%port%.
-        Configuration config = this.getResourceContext().getPluginConfiguration();
-        String scheme = config.getSimpleValue(PLUGIN_CONFIG_SCHEME, "");
-        String port = config.getSimpleValue(PLUGIN_CONFIG_PORT, "");
-        String objectName = "Catalina:type=GlobalRequestProcessor,name=" + scheme + "-" + port;
+        // for availability by checking the existence of objectName Catalina:type=GlobalRequestProcessor,name=%handler%[%address%]-%port%.
+        String objectName = getGlobalRequestProcessorName();
         EmsConnection connection = getEmsConnection();
         ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(objectName);
         List<EmsBean> beans = connection.queryBeans(queryUtility.getTranslatedQuery());
@@ -86,9 +89,10 @@ public class TomcatConnectorComponent extends MBeanResourceComponent<TomcatServe
 
     @Override
     public void start(ResourceContext<TomcatServerComponent> context) {
-        if (UNKNOWN.equals(context.getPluginConfiguration().getSimple(PLUGIN_CONFIG_SCHEME).getStringValue())) {
+        if (UNKNOWN.equals(context.getPluginConfiguration().getSimple(PLUGIN_CONFIG_HANDLER).getStringValue())) {
             throw new InvalidPluginConfigurationException(
-                "The connector is not listening for requests on the configured port. This is most likely due to the configured port being in use at Tomcat startup. In some cases (AJP connectors) Tomcat will assign an open port. This happens most often when there are multiple Tomcat servers running on the same platform. Check your Tomcat configurations for conflicts.");
+                "The connector is not listening for requests on the configured port. This is most likely due to the configured port being in use at Tomcat startup. In some cases (AJP connectors) Tomcat will assign an open port. This happens most often when there are multiple Tomcat servers running on the same platform. Check your Tomcat configuration for conflicts: "
+                    + context.getResourceKey());
         }
 
         super.start(context);
@@ -127,26 +131,91 @@ public class TomcatConnectorComponent extends MBeanResourceComponent<TomcatServe
 
     /**
      * Get the real name of the passed property for a concrete connector. The actual object name will begin with:
-     * Catalina:name=xxx-y.y.y.y-ppppp with xxx being the scheme, y.y.y.y the address and ppppp the port. We need to
+     * Catalina:type=GlobalRequestProcessor,name=handler[-address]-port. We need to
      * substitute in the address and port of this particular connector before the value can be read. In the plugin
-     * descriptor, these are written as {scheme}, {address} and {port} respectively, so we can replace on those.
+     * descriptor, these are written as %handler%, %address% and %port% respectively, so we can replace on those.
      */
     @Override
     protected String getAttributeName(String property) {
-        String theProperty = property;
+        String theProperty = replaceGlobalRequestProcessorNameProps(property);
 
-        Configuration pluginConfiguration = getResourceContext().getPluginConfiguration();
-        String address = pluginConfiguration.getSimple(PLUGIN_CONFIG_ADDRESS).getStringValue();
-        String port = pluginConfiguration.getSimple(PLUGIN_CONFIG_PORT).getStringValue();
-        String scheme = pluginConfiguration.getSimple(PLUGIN_CONFIG_SCHEME).getStringValue();
-
-        theProperty = theProperty.replace("%address%", address);
-        theProperty = theProperty.replace("%port%", port);
-        theProperty = theProperty.replace("%scheme%", scheme);
-
-        if (log.isDebugEnabled())
+        if (log.isDebugEnabled()) {
             log.debug("Finding metrics for: " + theProperty);
+        }
 
         return theProperty;
     }
+
+    private String getGlobalRequestProcessorName() {
+        String name = "Catalina:type=GlobalRequestProcessor,name=%handler%%address%-%port%";
+
+        return replaceGlobalRequestProcessorNameProps(name);
+    }
+
+    private String replaceGlobalRequestProcessorNameProps(String name) {
+        String result = name;
+
+        Configuration pluginConfiguration = getResourceContext().getPluginConfiguration();
+        String port = pluginConfiguration.getSimple(PLUGIN_CONFIG_PORT).getStringValue();
+        String handler = pluginConfiguration.getSimple(PLUGIN_CONFIG_HANDLER).getStringValue();
+        EmsBean emsBean = getEmsBean();
+        EmsAttribute addressAttr = emsBean.getAttribute(CONFIG_ADDRESS);
+        String address = ((null != addressAttr) && (null != addressAttr.getValue())) ? (String) addressAttr.getValue()
+            : "";
+
+        if (!"".equals(address)) {
+            StringBuilder sb = new StringBuilder("-");
+            sb.append(address);
+            // if it's a host name, add the IP portion that Tomcat expects
+            if (!address.contains(".")) {
+                String ip;
+
+                try {
+                    ip = InetAddress.getByName(address).getHostAddress();
+                    sb.append("%2F");
+                    sb.append(ip);
+                    address = sb.toString();
+                } catch (UnknownHostException e) {
+                    log.debug("Failed to resolve host [" + address + "]. Can not get objectName for property: " + name);
+                }
+            } else {
+                address = sb.toString();
+            }
+        }
+
+        result = result.replace("%port%", port);
+        result = result.replace("%address%", address);
+        result = result.replace("%handler%", handler);
+
+        return result;
+    }
+
+    @Override
+    public void updateResourceConfiguration(ConfigurationUpdateReport report) {
+
+        if (getResourceContext().getParentResourceComponent().getResourceContext().getVersion().startsWith("5")) {
+            report.getConfiguration().remove("keepAliveTimeout");
+        }
+
+        super.updateResourceConfiguration(report);
+
+        // if the mbean update failed, return now
+        if (ConfigurationUpdateStatus.SUCCESS != report.getStatus()) {
+            return;
+        }
+
+        // If all went well, persist the changes to the Tomcat server.xml
+        try {
+            storeConfig();
+        } catch (Exception e) {
+            report
+                .setErrorMessage("Failed to persist configuration change.  Changes will not survive Tomcat restart unless a successful Store Configuration operation is performed.");
+        }
+    }
+
+    /** Persist local changes to the server.xml */
+    void storeConfig() throws Exception {
+        this.getResourceContext().getParentResourceComponent().storeConfig();
+    }
+
 }

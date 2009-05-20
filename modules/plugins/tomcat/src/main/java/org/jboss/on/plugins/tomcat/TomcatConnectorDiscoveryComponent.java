@@ -33,7 +33,6 @@ import org.apache.commons.logging.LogFactory;
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
 import org.mc4j.ems.connection.bean.EmsBeanName;
-import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
@@ -57,31 +56,36 @@ public class TomcatConnectorDiscoveryComponent extends MBeanResourceDiscoveryCom
     @Override
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<TomcatServerComponent> context) {
 
-        // Get the connectors via the default JMX discovery for the connector mbeans
-        Set<DiscoveredResourceDetails> resourceDetails = super.discoverResources(context);
+        // Connector objectNames can have two formats:
+        // Catalina:type=Connector,port=%port% (this is the default for the connector type in the plugin desc) 
+        // Catalina:type=Connector,port=%port%,address=%address% (this happens if <address> is specified in connector def 
+        // Get both by querying without skipping unknown props
+        Set<DiscoveredResourceDetails> resourceDetails = super.discoverResources(context, false);
 
         // we depend on the GlobalRequestProcessor MBeans (1 for each connector) to fully define the resources, so the connector and
-        // GlobalRequestProcessor MBeans must be fully deployed. If the mbeans aren't fully deployed yet wait for 
+        // GlobalRequestProcessor MBeans must be fully deployed. If the mbeans aren't fully deployed then wait for 
         // the next go around of the PC.
         EmsConnection connection = context.getParentResourceComponent().getEmsConnection();
-        ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility("Catalina:type=GlobalRequestProcessor,name=%name%");
-        List<EmsBean> beans = connection.queryBeans(queryUtility.getTranslatedQuery());
+        ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(
+            "Catalina:type=GlobalRequestProcessor,name=%name%");
+        List<EmsBean> grpBeans = connection.queryBeans(queryUtility.getTranslatedQuery());
 
-        if (beans.size() != resourceDetails.size()) {
+        if (grpBeans.size() != resourceDetails.size()) {
             if (log.isDebugEnabled())
-                log.debug("jboss.web:type=GlobalRequestProcessor,name=* MBeans are not fully deployed yet - aborting...");
+                log.debug("Connector discovery pending jboss.web:type=GlobalRequestProcessor,name=* deployment...");
             return Collections.emptySet();
         }
 
         // Map <port, ConfigInfo>
-        Map<String, ConfigInfo> configMap = new HashMap<String, ConfigInfo>(beans.size());
+        Map<String, ConfigInfo> configMap = new HashMap<String, ConfigInfo>(grpBeans.size());
 
-        for (EmsBean bean : beans) {
+        for (EmsBean bean : grpBeans) {
             ConfigInfo configInfo = new ConfigInfo(bean);
             if (null != configInfo.getPort()) {
                 configMap.put(configInfo.port, configInfo);
             } else {
-                log.warn("Unknown ObjectName for GlobalRequestProcessor: " + configInfo.getName());
+                log.warn("Failed to parse ObjectName for GlobalRequestProcessor: " + configInfo.getName() + ": "
+                    + configInfo.getException());
             }
         }
 
@@ -91,33 +95,35 @@ public class TomcatConnectorDiscoveryComponent extends MBeanResourceDiscoveryCom
             String port = pluginConfiguration.getSimple(TomcatConnectorComponent.PLUGIN_CONFIG_PORT).getStringValue();
             ConfigInfo configInfo = configMap.get(port);
 
+            // Set handler plugin config and update resource name 
+            String handler = (null != configInfo) ? configInfo.getHandler() : TomcatConnectorComponent.UNKNOWN;
+            resource.setResourceName(resource.getResourceName().replace("{handler}", handler));
+
             // It is unusual but possible that there is a GlobalRequestProcessor object representing a configured AJP
             // connector but with a different port.  If the configured AJP connector port is in use, Tomcat increments
             // the port number (up to maxPort) looking for a free port.  That actual listening port is used on the
             // GlobalRequestProcessor object.  This behavior seems to be, after some research, considered a bug in
             // Tomcat. So, until proven otherwise, we'll treat it as such. To bring this to the attention of the user
             // we do still discover the connector, but we'll fail the component start and provide a useful message
-            // indicating that the Tomcat configuration should change. We'll use a special scheme property value
-            // to signal the problem.
-            String scheme = (null != configInfo) ? configInfo.getScheme() : TomcatConnectorComponent.UNKNOWN;
-            String address = (null != configInfo) ? configInfo.getAddress() : TomcatConnectorComponent.UNKNOWN;
+            // indicating that the Tomcat configuration should change. Handler being set UNKNOWN will signal the problem.
+            pluginConfiguration.put(new PropertySimple(TomcatConnectorComponent.PLUGIN_CONFIG_HANDLER, handler));
 
-            pluginConfiguration.put(new PropertySimple(TomcatConnectorComponent.PLUGIN_CONFIG_SCHEME, scheme));
-            pluginConfiguration.put(new PropertySimple(TomcatConnectorComponent.PLUGIN_CONFIG_ADDRESS, address));
-            resource.setResourceName(resource.getResourceName().replace("{scheme}", scheme));
+            // Set the address and protocol
+            //            queryUtility = new ObjectNameQueryUtility("Catalina:type=Connector,port=" + port);
+            //            grpBeans = connection.queryBeans(queryUtility.getTranslatedQuery());
+            //
+            //            if (!grpBeans.isEmpty()) {
+            //                EmsAttribute scheme = grpBeans.get(0).getAttribute("
 
-            queryUtility = new ObjectNameQueryUtility("Catalina:type=Connector,port=" + port);
-            beans = connection.queryBeans(queryUtility.getTranslatedQuery());
-
-            if (!beans.isEmpty()) {
-                EmsAttribute protocol = beans.get(0).getAttribute("protocol");
-                if (null != protocol) {
-                    pluginConfiguration.put(new PropertySimple(TomcatConnectorComponent.PLUGIN_CONFIG_PROTOCOL, (String) protocol.getValue()));
-                }
-            }
+            //                if (null != scheme) {
+            //                    pluginConfiguration.put(new PropertySimple(TomcatConnectorComponent.CONFIG_SCHEME,
+            //                        (String) scheme.getValue()));
+            //                }
+            //            }
 
             if (log.isDebugEnabled()) {
-                log.debug("Found a connector: " + scheme + "-" + address + "-" + port);
+                log.debug("Found a connector: " + handler
+                    + ((null != configInfo) ? ("-" + configInfo.getAddress()) : "") + "-" + port);
             }
         }
 
@@ -125,25 +131,48 @@ public class TomcatConnectorDiscoveryComponent extends MBeanResourceDiscoveryCom
     }
 
     private static class ConfigInfo {
-        private static final String LOCAL_IP = "0.0.0.0";
-
         private String name;
         private String address;
-        private String scheme;
+        private String handler;
         private String port;
+        private Exception exception;
 
         public ConfigInfo(EmsBean bean) {
             EmsBeanName eName = bean.getBeanName();
             this.name = eName.getKeyProperty("name");
-            String[] tokens = name.split("-");
-            if (tokens.length == 2) {
-                this.scheme = tokens[0];
-                this.port = tokens[1];
-                this.address = LOCAL_IP;
-            } else if (tokens.length == 3) {
-                this.scheme = tokens[0];
-                this.address = tokens[1];
-                this.port = tokens[2];
+
+            /* Possible name formats:
+             * 1) handler-port
+             * 2) handler-ipaddress-port
+             * 3) handler-host%2Fipaddress-port
+             * 
+             * Option 2 or 3 occurs when the <address> is explicitly defined in the <connector> element.
+             * Option 3 occurs when the address is an alias.  The alias is resolved and appended to the alias separated
+             * by '/' (encoded a slash comes through as %2F).  Note that the host may have itself contain dashes '-'. 
+             */
+
+            try {
+                int firstDash = name.indexOf('-');
+                int lastDash = name.lastIndexOf('-');
+                handler = name.substring(0, firstDash);
+                port = name.substring(lastDash + 1);
+                // validate that the port is a valid int
+                Integer.valueOf(port);
+
+                // Check to see if an address portion exists
+                if (firstDash != lastDash) {
+                    // For option 3 keep the alias and we'll resolve
+                    String rawAddress = name.substring(firstDash + 1, lastDash);
+                    int delim = rawAddress.indexOf("%2F");
+                    address = (-1 == delim) ? rawAddress : rawAddress.substring(0, delim);
+                } else {
+                    this.address = TomcatConnectorComponent.UNKNOWN;
+                }
+            } catch (Exception e) {
+                port = null;
+                address = null;
+                handler = null;
+                exception = e;
             }
         }
 
@@ -155,12 +184,17 @@ public class TomcatConnectorDiscoveryComponent extends MBeanResourceDiscoveryCom
             return address;
         }
 
-        public String getScheme() {
-            return scheme;
+        public String getHandler() {
+            return handler;
         }
 
         public String getPort() {
             return port;
         }
+
+        public Exception getException() {
+            return exception;
+        }
+
     }
 }

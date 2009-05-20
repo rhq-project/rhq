@@ -175,7 +175,7 @@ public abstract class OracleDatabaseType extends DatabaseType {
 
         try {
             selectPS = conn.prepareStatement("SELECT index_name FROM user_indexes WHERE table_name = '" + table
-                + "' ANT index_type = 'NORMAL'");
+                + "' AND index_type = 'NORMAL'");
             rs = selectPS.executeQuery();
             while (rs.next()) {
                 String indexName = rs.getString(1);

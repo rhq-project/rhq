@@ -2517,45 +2517,6 @@
 
         </service>
 -->
-    <service name="Script"
-               discovery="org.rhq.plugins.jbossas5.script.ScriptDiscoveryComponent"
-               class="org.rhq.plugins.jbossas5.script.ScriptComponent"
-               supportsManualAdd="true"
-               subCategory="Resources"
-               description="provides the ability to execute a script that performs some task related to its parent JBossAS server">
-         
-         <plugin-configuration>
-             <c:simple-property name="path" description="the absolute path to the script file"/>
-         </plugin-configuration>
-         
-         <operation name="execute" displayName="Execute Script"
-                    description="execute the script; NOTE: environment variables to be
-                                 passed to the script can be configured via this Script
-                                 service's connection properties (under its Inventory tab)">
-            <parameters>
-               <c:simple-property name="commandLineArguments" type="longString" required="false"
-                                  description="the command-line arguments (if any) to pass to the script; each
-                                               command-line argument must be on a new line;
-                                               the arguments can contain properties
-                                               with the syntax %propertyName%; the script plugin will interpolate these with
-                                               the current values of the corresponding properties from the
-                                               script's parent JBossAS server's connection properties"/>
-            </parameters>
-            <results>
-               <c:simple-property name="exitCode" type="integer" description="the script's exit code (0 indicates success, any other value indicates failure)"/>
-               <c:simple-property name="output" type="longString" description="the script's output (stdout and stderr interleaved)"/>
-            </results>
-         </operation>
-
-         <resource-configuration>
-            <c:simple-property name="environmentVariables" type="longString" required="false"
-                               description="the environment variables that will be passed to the script; each variable must
-                                            be on a new line and have the syntax name=value; the variable's value can contain properties
-                                            with the syntax %propertyName%; the script plugin will interpolate these with
-                                            the current values of the corresponding properties from the
-                                            script's parent JBossAS server's connection properties"/>
-         </resource-configuration>         
-      </service>
     </server>
 
 </plugin>

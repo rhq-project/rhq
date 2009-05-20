@@ -30,7 +30,7 @@
     <properties>
         <scm.module.path>modules/plugins/jboss-as-5/</scm.module.path>
                         
-        <jboss-man.version>2.1.0.CR8</jboss-man.version>
+        <jboss-man.version>2.1.0.GA</jboss-man.version>
         <jboss-profileservice-spi.version>5.1.0.GA</jboss-profileservice-spi.version>
     </properties>
 
@@ -110,8 +110,9 @@
         </dependency>
 
         <!-- Uncomment the below deps if you want to pull down the jboss-profileservice 
-             and jboss-system sources jars for debugging purposes. NOTE: These jars are
-             *not* available from the public JBoss repo. -->        
+             and jboss-system sources jars for debugging purposes. You will also need
+             to make sure you have the JBoss snapshot repo in this POM or your settings.xml. 
+        -->        
 <!--
         <dependency>
             <groupId>org.jboss.jbossas</groupId>

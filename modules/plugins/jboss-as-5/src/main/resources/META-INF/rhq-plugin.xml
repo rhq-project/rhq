@@ -1983,7 +1983,7 @@
 
         <!-- =================================== ManagedDeployment Resource types ================================== -->
 
-        <service name="Enterprise Application (EAR)"
+        <service name="EAR"
                  subCategory="Applications"
                  class="StandaloneManagedDeploymentComponent"
                  discovery="StandaloneManagedDeploymentDiscoveryComponent"
@@ -2037,7 +2037,7 @@
 
         </service>
 
-        <service name="Web Application (WAR)"
+        <service name="WAR"
                  subCategory="Applications"
                  class="StandaloneManagedDeploymentComponent"
                  discovery="StandaloneManagedDeploymentDiscoveryComponent"
@@ -2111,7 +2111,7 @@
 
         </service>
 
-        <service name="Embedded Web Application (WAR)"
+        <service name="Embedded WAR"
                  subCategory="Applications"
                  class="EmbeddedManagedDeploymentComponent"
                  discovery="EmbeddedManagedDeploymentDiscoveryComponent"
@@ -2166,7 +2166,7 @@
 
         </service>
 
-        <service name="EJB 2.x Application (EJB JAR)"
+        <service name="EJB2 JAR"
                  subCategory="Applications"
                  class="StandaloneManagedDeploymentComponent"
                  discovery="StandaloneManagedDeploymentDiscoveryComponent"
@@ -2220,7 +2220,7 @@
 
         </service>
 
-        <service name="Embedded EJB 2.x Application (EJB JAR)"
+        <service name="Embedded EJB2 JAR"
                  subCategory="Applications"
                  class="EmbeddedManagedDeploymentComponent"
                  discovery="EmbeddedManagedDeploymentDiscoveryComponent"
@@ -2255,7 +2255,7 @@
 
         </service>
 
-        <service name="EJB 3.x Application (EJB JAR)"
+        <service name="EJB3 JAR"
                  subCategory="Applications"
                  class="StandaloneManagedDeploymentComponent"
                  discovery="StandaloneManagedDeploymentDiscoveryComponent"
@@ -2309,7 +2309,7 @@
 
         </service>
 
-        <service name="Embedded EJB 3.x Application (EJB JAR)"
+        <service name="Embedded EJB3 JAR"
                  subCategory="Applications"
                  class="EmbeddedManagedDeploymentComponent"
                  discovery="EmbeddedManagedDeploymentDiscoveryComponent"
@@ -2344,7 +2344,7 @@
 
         </service>
 <!--
-        <service name="JBoss Service (SAR)"
+        <service name="SAR"
                  subCategory="Applications"
                  class="StandaloneManagedDeploymentComponent"
                  discovery="StandaloneManagedDeploymentDiscoveryComponent"
@@ -2386,7 +2386,7 @@
 
         </service>
 -->
-        <service name="Resource Adapter (RAR)"
+        <service name="RAR"
                  subCategory="Applications"
                  class="StandaloneManagedDeploymentComponent"
                  discovery="StandaloneManagedDeploymentDiscoveryComponent"
@@ -2440,7 +2440,7 @@
 
         </service>
 
-        <service name="Embedded Resource Adapter (RAR)"
+        <service name="Embedded RAR"
                  subCategory="Applications"
                  class="EmbeddedManagedDeploymentComponent"
                  discovery="EmbeddedManagedDeploymentDiscoveryComponent"
@@ -2475,7 +2475,7 @@
 
         </service>
 <!--
-        <service name="Microcontainer Beans (MC Beans)"
+        <service name="MC Beans"
                  subCategory="Applications"
                  class="StandaloneManagedDeploymentComponent"
                  discovery="StandaloneManagedDeploymentDiscoveryComponent"

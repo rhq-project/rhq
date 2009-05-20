@@ -29,16 +29,8 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathFactory;
 
-import churchillobjects.rss4j.RssChannel;
-import churchillobjects.rss4j.RssChannelItem;
-import churchillobjects.rss4j.RssDocument;
-import churchillobjects.rss4j.RssDublinCore;
-import churchillobjects.rss4j.RssJbnDependency;
-import churchillobjects.rss4j.RssJbnPatch;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetails;
 import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetailsKey;
 import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
@@ -46,6 +38,13 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.w3c.dom.Document;
+
+import churchillobjects.rss4j.RssChannel;
+import churchillobjects.rss4j.RssChannelItem;
+import churchillobjects.rss4j.RssDocument;
+import churchillobjects.rss4j.RssDublinCore;
+import churchillobjects.rss4j.RssJbnDependency;
+import churchillobjects.rss4j.RssJbnPatch;
 
 /**
  * Parses the contents of the JBoss RSS feed into the server's domain model.
@@ -92,13 +91,13 @@ public class RssFeedParser {
         Enumeration channels = feed.channels();
 
         // do setup in preparation for parsing the automated installation instructions
-		DocumentBuilderFactory xmlFact = DocumentBuilderFactory.newInstance();
+        DocumentBuilderFactory xmlFact = DocumentBuilderFactory.newInstance();
         xmlFact.setNamespaceAware(false);
         DocumentBuilder builder = xmlFact.newDocumentBuilder();
 
         XPath xpath = XPathFactory.newInstance().newXPath();
-		String instructionExpression = "/automatedInstallation/instructions/instructionSet";
-        
+        String instructionExpression = "/automatedInstallation/instructions/instructionSet";
+
         while (channels.hasMoreElements()) {
             RssChannel channel = (RssChannel) channels.nextElement();
             Enumeration channeltems = channel.items();
@@ -190,20 +189,21 @@ public class RssFeedParser {
 
                     if (patch.getAutomatedInstallation() != null) {
                         String instructions = patch.getAutomatedInstallation();
-           				
+
                         // JOPR-51, remove some of the xml elements which wrap the automated installation
                         // instructions but which aren't needed by JBPM
                         try {
-                        	Document document = builder.parse(new ByteArrayInputStream(instructions.getBytes()));                				
-                        	String choppedInstructions = xpath.evaluate(instructionExpression, document);
-                        	// the jbpm xml processor doesn't like whitespace at the beginning, so trim it
-                        	// bytes will be retrieved using platform encoding on the agent side so use the same
-                        	// on the server side and assume they are identical
-                        	packageDetails.setMetadata(choppedInstructions.trim().getBytes());
+                            Document document = builder.parse(new ByteArrayInputStream(instructions.getBytes()));
+                            String choppedInstructions = xpath.evaluate(instructionExpression, document);
+                            // the jbpm xml processor doesn't like whitespace at the beginning, so trim it
+                            // bytes will be retrieved using platform encoding on the agent side so use the same
+                            // on the server side and assume they are identical
+                            packageDetails.setMetadata(choppedInstructions.trim().getBytes());
                         } catch (Exception e) {
-                        	log.error("Could not parse or set automated installation instructions for package: " + packageName);
+                            log.error("Could not parse or set automated installation instructions for package: "
+                                + packageName);
                             continue;
-                        }                          
+                        }
                     }
 
                     packageDetails.setExtraProperties(extraProperties);
@@ -221,7 +221,7 @@ public class RssFeedParser {
                             productVersion = "4.0.4.GA";
                         }
 
-                        if (productVersion == null) {
+                        if ((null == productVersion) || ("".equals(productVersion.trim()))) {
                             productVersion = product.getProductVersion();
                         }
 

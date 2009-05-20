@@ -81,13 +81,22 @@ public class MBeanResourceDiscoveryComponent<T extends JMXComponent> implements 
     // ResourceDiscoveryComponent Implementation  --------------------------------------------
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<T> context) {
-        this.discoveryContext = context;
-        return performDiscovery(context.getDefaultPluginConfiguration(), context.getParentResourceComponent(), context
-            .getResourceType(), true);
-
+        return discoverResources(context, true);
     }
 
     // Public  --------------------------------------------
+
+    /**
+     * Same as {@link discoverResources(ResourceDiscoveryContext<T>)} with additional param.
+     * @param skipUnknownProps         Should we skip over MBeans that have unknown properties in their ObjectName
+     */
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<T> context,
+        boolean skipUnknownProps) {
+        this.discoveryContext = context;
+        return performDiscovery(context.getDefaultPluginConfiguration(), context.getParentResourceComponent(), context
+            .getResourceType(), skipUnknownProps);
+    }
+
     /**
      * Performs the actual discovery through MBeans.
      *

@@ -277,7 +277,7 @@ public class DeploymentUtility {
 
     /**
      * Return the path where the passed objectnames are deployed
-     * @param connection 
+     * @param connection
      * @param fileNames The objectNames of the EAR files we are interested in
      * @return a Map with objectname as key and path as value. This map may be empty on error.
      */
@@ -347,6 +347,13 @@ public class DeploymentUtility {
         return jndiNameBinding;
     }
 
+    /**
+     * Invoke the listDeployedModules() operation of the MainDeployer to obtain all deployed modules along their
+     * DeploymentInfo structures. Falls back to listDeployed() if neessary (see #getListDeployedOperation ).
+     * @param connection A valid EmsConnection to the AS
+     * @return Collection of DeploymentInfo
+     * @throws Exception If the listDeployed() or listDeployedModuls() ops can not be found.
+     */
     private static Collection getDeploymentInformations(EmsConnection connection) throws Exception {
         Collection deploymentInfos = null;
         EmsOperation operation = null;

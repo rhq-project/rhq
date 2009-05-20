@@ -23,26 +23,37 @@
 package org.rhq.plugins.jbossas.util;
 
 import java.io.File;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathException;
+import javax.xml.xpath.XPathFactory;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mc4j.ems.connection.EmsConnection;
+import org.mc4j.ems.connection.bean.EmsBean;
+import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
+import org.xml.sax.InputSource;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
+import org.rhq.plugins.jbossas.ApplicationComponent;
 import org.rhq.plugins.jbossas.EmbeddedWarDiscoveryComponent;
 import org.rhq.plugins.jbossas.JBossASServerComponent;
 import org.rhq.plugins.jbossas.WarComponent;
 import org.rhq.plugins.jbossas.WarDiscoveryComponent;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
+import org.rhq.plugins.jmx.ObjectNameQueryUtility;
 
 /**
  * Provides helper methods that are used by both {@link WarDiscoveryComponent} and {@link EmbeddedWarDiscoveryComponent}
@@ -70,7 +81,8 @@ public class WarDiscoveryHelper {
     }
 
     public static Set<DiscoveredResourceDetails> initPluginConfigurations(
-        JBossASServerComponent parentJBossASComponent, Set<DiscoveredResourceDetails> warResources) {
+            JBossASServerComponent parentJBossASComponent, Set<DiscoveredResourceDetails> warResources,
+            ApplicationComponent parentEARComponent) {
 
         EmsConnection jmxConnection = parentJBossASComponent.getEmsConnection();
         File configPath = parentJBossASComponent.getConfigurationPath();
@@ -86,11 +98,13 @@ public class WarDiscoveryHelper {
             objectNames.add(objectNameProperty.getStringValue());
         }
 
+        // Get the list of deployed modules
         Map<String, List<WarDeploymentInformation>> deploymentInformations = DeploymentUtility
             .getWarDeploymentInformation(jmxConnection, objectNames);
 
         Set<DiscoveredResourceDetails> resultingResources = new HashSet<DiscoveredResourceDetails>();
 
+        // Loop over the discovered war files and try to fill in missing information
         for (Iterator<DiscoveredResourceDetails> warResourcesIterator = warResources.iterator(); warResourcesIterator
             .hasNext();) {
             DiscoveredResourceDetails discoResDetail = warResourcesIterator.next();
@@ -136,20 +150,106 @@ public class WarDiscoveryHelper {
                         resultingResources.add(myDetail); // the cloned one
                     }
                 }
-            } else {
-                // WAR has no associated context root, so remove it from the list of discovered resources...
-                // @todo Might not want to call remove, because, as an example, in EC, the EC war file would end up being removed because this happens before it is completely deployed
-                warResourcesIterator.remove();
+            } else { // Our war was not in the list, the main deployer's listDeployedModules()
+                if (parentEARComponent==null) {
+                    // WAR has no associated context root, so remove it from the list of discovered resources...
+                    // @todo Might not want to call remove, because, as an example, in EC, the EC war file would end up being removed because this happens before it is completely deployed
+                    LOG.warn("D--##--  Would remove " + discoResDetail); // TODO remove for production
+                   //  warResourcesIterator.remove();
 
-                if (!discoResDetail.getResourceName().equals(ROOT_WEBAPP_RESOURCE_NAME)) {
-                    LOG
-                        .debug("The deployed WAR '"
-                            + discoResDetail.getResourceName()
-                            + "' does not have a jboss.web MBean (i.e. context root) associated with it; it will not be added to inventory.");
+                    if (!discoResDetail.getResourceName().equals(ROOT_WEBAPP_RESOURCE_NAME)) {
+                        LOG
+                            .debug("The deployed WAR '"
+                                + discoResDetail.getResourceName()
+                                + "' does not have a jboss.web MBean (i.e. context root) associated with it; it will not be added to inventory.");
+                    }
+                } else { // WAR within an EAR and distributable flag set in the war
+
+                    // Search for the parent ear and its deployment-descritptor(s) and read the contextroot from there
+                    String appName = parentEARComponent.getApplicationName();
+                    String warName = objectNameProperty.getStringValue();
+                    Pattern pat = Pattern.compile(".*,name=([\\w-]+\\.war).*");
+                    Matcher m = pat.matcher(warName);
+                    if (m.find()) {
+                        warName = m.group(1);
+                    }
+                    String contextRoot = getContextRootFromEar(parentEARComponent,parentJBossASComponent,warName);
+                    warConfig.put(new PropertySimple(WarComponent.CONTEXT_ROOT_CONFIG_PROP,contextRoot));
+
+                    String webName = getJbossWebNameFromContextRoot(contextRoot,parentJBossASComponent);
+                    warConfig.put(new PropertySimple(WarComponent.JBOSS_WEB_NAME,webName));
+
+                    warConfig.put(new PropertySimple(WarComponent.VHOST_CONFIG_PROP,"localhost"));
+                    setRtLogInPluginConfig(rtLogDir,warConfig,contextRoot,"localhost"); // TODO check if vhost can be != localhost
+
+                    resultingResources.add(discoResDetail);
                 }
             }
         }
         return resultingResources;
+    }
+
+
+
+    /**
+     * Try to get the context root from the ear file this war is embedded in
+     * @param parentEARComponent the ApplicationComponent representing the EAR
+     * @param parentJBossASComponent The JBossAS instance the ear is deployed in
+     * @param warName THe name of the war file we are looking for
+     * @return context root of the war file
+     */
+    private static String getContextRootFromEar(ApplicationComponent parentEARComponent,
+                                                JBossASServerComponent parentJBossASComponent,
+                                                String warName) {
+
+        String contextRoot =" - invalid - ";
+
+        // Get the ear and then the deploymentDescriptor attribute from it - this directly contains the one and
+        // only context-root
+        String objectNameTemplate = "jboss.management.local:J2EEServer=Local,j2eeType=J2EEApplication,name=" + parentEARComponent.getApplicationName();
+        ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(objectNameTemplate);
+        List<EmsBean> mBeans = parentJBossASComponent.getEmsConnection().queryBeans(queryUtility.getTranslatedQuery());
+        if (mBeans.size() ==1) {
+            EmsBean theBean = mBeans.get(0);
+            EmsAttribute ddAttr = theBean.getAttribute("deploymentDescriptor");
+            ddAttr.refresh();
+            ddAttr.getValue();
+            String dd = (String) ddAttr.getValue();
+            // dd contains application.xml
+
+            InputSource is = new InputSource(new StringReader(dd));
+
+            XPath xp = XPathFactory.newInstance().newXPath();
+
+            try {
+                contextRoot = xp.evaluate("/application/module/web/web-uri['" + warName +"']/../context-root",is);
+            }
+            catch (XPathException xpe) {
+                xpe.printStackTrace(); // TODO fix this
+
+            }
+
+        }
+
+
+        return contextRoot;
+    }
+
+
+    private static String getJbossWebNameFromContextRoot(String contextRoot,
+                                                       JBossASServerComponent parentJBossASComponent) {
+
+        if (contextRoot.startsWith("/"))
+            contextRoot = contextRoot.substring(1);
+        String objectNameTemplate = "jboss.web:j2eeType=WebModule,name=//localhost/"+ contextRoot + ",J2EEApplication=none,J2EEServer=none";
+        ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(objectNameTemplate);
+        List<EmsBean> mBeans = parentJBossASComponent.getEmsConnection().queryBeans(queryUtility.getTranslatedQuery());
+        if (mBeans.size() ==1) {
+            EmsBean theMBean = mBeans.get(0);
+            return theMBean.getBeanName().getCanonicalName();
+        }
+
+        return null;
     }
 
     public static void setDeploymentInformation(Configuration pluginConfig,
@@ -170,6 +270,7 @@ public class WarDiscoveryHelper {
 
     private static void initPluginConfiguration(WarDeploymentInformation deploymentInformation, File rtLogDir,
         Iterator<DiscoveredResourceDetails> warResourcesIterator, DiscoveredResourceDetails resource) {
+
         Configuration pluginConfig = resource.getPluginConfiguration();
         String warFileName = resource.getResourceName();
         String contextRoot = deploymentInformation.getContextRoot();
@@ -189,11 +290,17 @@ public class WarDiscoveryHelper {
         // Set the default value for the 'responseTimeLogFile' plugin config prop.
         // We do it here because the filename is derived from the context root.
         // first check if the context root is a multi level one and replace the / with an underscore
-        if (!contextRoot.equals("/"))
+        String vHost = deploymentInformation.getVHost();
+        setRtLogInPluginConfig(rtLogDir, pluginConfig, contextRoot, vHost);
+    }
+
+    private static void setRtLogInPluginConfig(File rtLogDir, Configuration pluginConfig, String contextRoot,
+                                               String vHost) {
+        if (!contextRoot.equals("/")) {
             contextRoot = contextRoot.replace('/', '_');
+        }
         String rtLogFileNameBase = (contextRoot.equals(WarComponent.ROOT_WEBAPP_CONTEXT_ROOT)) ? ROOT_WEBAPP_RT_LOG_FILE_NAME_BASE
             : contextRoot;
-        String vHost = deploymentInformation.getVHost();
         if ("localhost".equals(vHost))
             vHost = "";
         else

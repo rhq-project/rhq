@@ -26,7 +26,6 @@ import java.util.Set;
 
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.plugins.jbossas.ApplicationDiscoveryComponent;
 import org.rhq.plugins.jbossas.util.WarDiscoveryHelper;
 import org.rhq.plugins.jmx.JMXComponent;
 
@@ -41,7 +40,7 @@ public class WarDiscoveryComponent extends ApplicationDiscoveryComponent {
         Set<DiscoveredResourceDetails> resources = super.discoverResources(discoveryContext);
         JBossASServerComponent parentJBossASComponent = (JBossASServerComponent) discoveryContext
             .getParentResourceComponent();
-        resources = WarDiscoveryHelper.initPluginConfigurations(parentJBossASComponent, resources);
+        resources = WarDiscoveryHelper.initPluginConfigurations(parentJBossASComponent, resources, null);
         return resources;
     }
 }

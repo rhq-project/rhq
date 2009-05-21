@@ -30,7 +30,7 @@
     <properties>
         <scm.module.path>modules/plugins/jboss-as-5/</scm.module.path>
                         
-        <jboss-man.version>2.1.0.GA</jboss-man.version>
+        <jboss-man.version>2.1.0.SP1</jboss-man.version>
         <jboss-profileservice-spi.version>5.1.0.GA</jboss-profileservice-spi.version>
     </properties>
 

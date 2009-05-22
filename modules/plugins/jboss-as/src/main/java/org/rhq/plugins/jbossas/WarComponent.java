@@ -405,7 +405,7 @@ public class WarComponent extends ApplicationComponent implements OperationFacet
      */
     private List<EmsBean> getVHosts(String contextRoot) {
 
-        return DeploymentUtility.getVHosts(contextRoot, getEmsConnection());
+        return DeploymentUtility.getVHostsFromLocalManager(contextRoot, getEmsConnection());
     }
 
     private WarDeploymentInformation getDeploymentInformation() {

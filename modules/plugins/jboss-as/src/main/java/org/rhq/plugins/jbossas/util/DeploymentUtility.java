@@ -1,6 +1,6 @@
  /*
   * Jopr Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
+  * Copyright (C) 2005-2009 Red Hat, Inc.
   * All rights reserved.
   *
   * This program is free software; you can redistribute it and/or modify
@@ -50,6 +50,7 @@ import org.rhq.plugins.jmx.ObjectNameQueryUtility;
  * Accesses the MainDeployer mbean to find the deployment files behind services.
  *
  * @author Greg Hinkle
+ * @author Heiko W. Rupp
  */
 public class DeploymentUtility {
     private static Log log = LogFactory.getLog(DeploymentUtility.class);
@@ -244,22 +245,42 @@ public class DeploymentUtility {
                              * of them.
                              * Most of the time this will only be one virtual host called 'localhost', as
                              * this is the default if no vhost is set.
+                             * It may happen (in the case of war files with distributable tag and in some configurations
+                             * that we do not get any vhosts. Here we assume 'localhost'
                              */
                             List<EmsBean> vhosts = getVHosts(contextRoot, connection);
                             List<WarDeploymentInformation> infos = new ArrayList<WarDeploymentInformation>(vhosts
                                 .size());
 
-                            for (EmsBean vhost : vhosts) {
+                            if (!vhosts.isEmpty()) {
+                                for (EmsBean vhost : vhosts) {
+                                    WarDeploymentInformation deploymentInformation = new WarDeploymentInformation();
+                                    String vhostname = vhost.getBeanName().getKeyProperty("host");
+                                    deploymentInformation.setVHost(vhostname);
+                                    deploymentInformation.setFileName(file);
+                                    deploymentInformation.setContextRoot(contextRoot);
+                                    // jboss.web:J2EEApplication=none,J2EEServer=none,j2eeType=WebModule,name=//bsd.de/test
+                                    // TODO to we have a better tool to exchange a value of a key-value pair in an ObjectName ?
+                                    int index = jbossWebmBeanName.indexOf("name=");
+                                    jbossWebmBeanName = jbossWebmBeanName.substring(0, index + 5);
+                                    jbossWebmBeanName += "//" + vhostname + WarDiscoveryHelper.getContextPath(contextRoot);
+
+                                    deploymentInformation.setJbossWebModuleMBeanObjectName(jbossWebmBeanName);
+                                    infos.add(deploymentInformation);
+                                }
+                            }
+                            else {
+                                // JBoss did not pass a list of vhosts as the Manger object is lacking
+                                // So just put localhost in as fallback
                                 WarDeploymentInformation deploymentInformation = new WarDeploymentInformation();
-                                String vhostname = vhost.getBeanName().getKeyProperty("host");
-                                deploymentInformation.setVHost(vhostname);
+                                deploymentInformation.setVHost("localhost");
                                 deploymentInformation.setFileName(file);
                                 deploymentInformation.setContextRoot(contextRoot);
                                 // jboss.web:J2EEApplication=none,J2EEServer=none,j2eeType=WebModule,name=//bsd.de/test
                                 // TODO to we have a better tool to exchange a value of a key-value pair in an ObjectName ?
                                 int index = jbossWebmBeanName.indexOf("name=");
                                 jbossWebmBeanName = jbossWebmBeanName.substring(0, index + 5);
-                                jbossWebmBeanName += "//" + vhostname + WarDiscoveryHelper.getContextPath(contextRoot);
+                                jbossWebmBeanName += "//localhost"  + WarDiscoveryHelper.getContextPath(contextRoot);
 
                                 deploymentInformation.setJbossWebModuleMBeanObjectName(jbossWebmBeanName);
                                 infos.add(deploymentInformation);

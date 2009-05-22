@@ -36,7 +36,7 @@ public final class LicenseGenerator {
 
     public static final String EVAL_NAME = "Evaluation Customer";
     public static final String EVAL_EMAIL = "johndoe@example.com";
-    public static final String EVAL_PHONE = "";
+    public static final String EVAL_PHONE = "888-555-1212";
 
     public static final String LICENSE_VERSION = "2.0";
 
@@ -47,7 +47,7 @@ public final class LicenseGenerator {
         + "\n    page on your first login to the application." + "\n    "
         + "\n    You must login as an administrator to update your license file." + "\n-->\n";
 
-    // max 3 platforms in an eval
+    // max 20 platforms in an eval
     public static final int EVAL_MAXPLATFORMS = 20;
 
     // level 0 support in an eval
@@ -74,17 +74,26 @@ public final class LicenseGenerator {
 
         LicenseGenerator g = new LicenseGenerator();
 
-        if (args[0].equals("EVAL")) {
+        if (args.length == 1 && args[0].equals("EVAL")) {
             try {
                 g.generateEval(System.out);
             } catch (IOException e) {
-                System.err.println("IOException: " + e);
+                System.err.println("Failed to generate license - cause: " + e);
                 e.printStackTrace();
+                System.exit(1);
             }
             return;
         }
 
         int i = 0;
+        if (args.length != 8) {
+            System.err.println("Too " + ((args.length < 8) ? "few" : "many") + " arguments.");
+            System.err.println();
+            System.err.println("Usage: " + LicenseGenerator.class.getSimpleName() + " <Name> <Email> <Phone> <Expiration Date> <Platform Limit> <IP List> <Plugins List> <Support Level>");
+            System.err.println("For example: " + LicenseGenerator.class.getSimpleName() +" \"Customer Name\" sales@jboss.com 404-467-8555 2009-07-01 \"*\" \"*\" \"*\" 3");
+            System.exit(1);
+        }
+        
         String name = args[i++];
         String email = args[i++];
         String phone = args[i++];
@@ -96,10 +105,10 @@ public final class LicenseGenerator {
 
         try {
             g.generate(name, email, phone, expString, aLimitString, serverIps, plugins, supportString, System.out);
-
         } catch (IOException e) {
-            System.err.println("IOException: " + e);
+            System.err.println("Failed to generate license - cause: " + e);
             e.printStackTrace();
+            System.exit(1);
         }
     }
 

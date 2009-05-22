@@ -53,11 +53,13 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = InstalledPackage.QUERY_FIND_BY_RESOURCE_ID_AND_PKG_VER_ID, query = "SELECT ip FROM InstalledPackage AS ip WHERE ip.resource.id = :resourceId AND ip.packageVersion.id = :packageVersionId"),
     @NamedQuery(name = InstalledPackage.QUERY_FIND_BY_RESOURCE_AND_PACKAGE, query = "SELECT ip FROM InstalledPackage AS ip WHERE ip.resource.id = :resourceId AND ip.packageVersion.generalPackage.id = :packageId  "),
     @NamedQuery(name = InstalledPackage.QUERY_FIND_BY_RESOURCE_AND_PACKAGE_VER, query = "SELECT ip FROM InstalledPackage AS ip WHERE ip.resource.id = :resourceId AND ip.packageVersion.id = :packageVersionId  "),
-    @NamedQuery(name = InstalledPackage.QUERY_FIND_PACKAGE_LIST_ITEM_COMPOSITE, query = "SELECT new org.rhq.core.domain.content.composite.PackageListItemComposite(ip.id, gp.name, pt.displayName, ip.packageVersion.version) "
+    @NamedQuery(name = InstalledPackage.QUERY_FIND_PACKAGE_LIST_ITEM_COMPOSITE,
+        query = "SELECT new org.rhq.core.domain.content.composite.PackageListItemComposite(ip.id, gp.name, pt.displayName, ip.packageVersion.version, ip.installationDate ) "
         + " FROM InstalledPackage ip JOIN ip.resource res LEFT JOIN ip.packageVersion pv LEFT JOIN pv.generalPackage gp LEFT JOIN gp.packageType pt "
         + "WHERE res.id = :resourceId "
         + "  AND (:packageTypeFilterId = pt.id OR :packageTypeFilterId is null) "
-        + "  AND (:packageVersionFilter = ip.packageVersion.version OR :packageVersionFilter is null) "),
+        + "  AND (:packageVersionFilter = ip.packageVersion.version OR :packageVersionFilter is null) "
+        + " AND (UPPER(gp.name) LIKE :search OR UPPER(pv.longDescription) LIKE :search OR :search is null) "),
     @NamedQuery(name = InstalledPackage.QUERY_FIND_PACKAGE_LIST_TYPES, query = "SELECT DISTINCT new org.rhq.core.domain.common.composite.IntegerOptionItem(pt.id, pt.displayName) "
         + "    FROM InstalledPackage ip JOIN ip.resource res LEFT JOIN ip.packageVersion pv LEFT JOIN pv.generalPackage gp LEFT JOIN gp.packageType pt "
         + "   WHERE res.id = :resourceId " + "ORDER BY pt.displayName"),

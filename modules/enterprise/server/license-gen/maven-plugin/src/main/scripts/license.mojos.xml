@@ -9,10 +9,22 @@
         
       <!-- this element refers to the Ant target M2 should invoke -->
       <call>generateLicense</call>
+      
       <description>
-        Generate a RHQ license file
+        Generate an RHQ license file
       </description>
         
+      <parameters>                
+        <parameter>
+          <name>rhq.version</name> 
+          <property>rhq.version</property>
+          <required>true</required>
+          <readonly>true</readonly>
+          <defaultValue>${project.version}</defaultValue>
+          <type>java.lang.String</type>
+          <description>The RHQ version</description>
+        </parameter>        
+      </parameters>        
     </mojo>
     
   </mojos>

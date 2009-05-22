@@ -41,6 +41,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
+import org.mc4j.ems.connection.bean.EmsBeanName;
 import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 import org.mc4j.ems.connection.bean.operation.EmsOperation;
 
@@ -247,15 +248,33 @@ public class DeploymentUtility {
                              * this is the default if no vhost is set.
                              * It may happen (in the case of war files with distributable tag and in some configurations
                              * that we do not get any vhosts. Here we assume 'localhost'
+                             *
+                             * We stuff the list of beans into a list to re-use the code that is mostly the same for both
+                             * cases
                              */
-                            List<EmsBean> vhosts = getVHosts(contextRoot, connection);
-                            List<WarDeploymentInformation> infos = new ArrayList<WarDeploymentInformation>(vhosts
-                                .size());
+                            List<List<EmsBean>> beansList = new ArrayList<List<EmsBean>>(2);
+                            List<EmsBean> vhostsFromLocal = getVHostsFromLocalManager(contextRoot, connection);
+                            List<EmsBean> vhostsFromCluster = getVHostsFromClusterManager(contextRoot,connection);
+                            beansList.add(vhostsFromLocal);
+                            beansList.add(vhostsFromCluster);
 
-                            if (!vhosts.isEmpty()) {
+                            List<WarDeploymentInformation> infos = new ArrayList<WarDeploymentInformation>();
+
+                            for (List<EmsBean> vhosts : beansList) {
                                 for (EmsBean vhost : vhosts) {
                                     WarDeploymentInformation deploymentInformation = new WarDeploymentInformation();
-                                    String vhostname = vhost.getBeanName().getKeyProperty("host");
+                                    EmsBeanName emsBeanName = vhost.getBeanName();
+                                    String vhostname;
+                                    if (emsBeanName.getKeyProperty("type") != null)
+                                        vhostname = emsBeanName.getKeyProperty("host");
+                                    else {
+                                        vhostname = emsBeanName.getKeyProperty("WebModule");
+                                        if (!vhostname.endsWith(contextRoot))
+                                            continue;
+
+                                        vhostname = vhostname.substring(2);
+                                        vhostname = vhostname.substring(0,vhostname.indexOf("/"));
+                                    }
                                     deploymentInformation.setVHost(vhostname);
                                     deploymentInformation.setFileName(file);
                                     deploymentInformation.setContextRoot(contextRoot);
@@ -268,22 +287,6 @@ public class DeploymentUtility {
                                     deploymentInformation.setJbossWebModuleMBeanObjectName(jbossWebmBeanName);
                                     infos.add(deploymentInformation);
                                 }
-                            }
-                            else {
-                                // JBoss did not pass a list of vhosts as the Manger object is lacking
-                                // So just put localhost in as fallback
-                                WarDeploymentInformation deploymentInformation = new WarDeploymentInformation();
-                                deploymentInformation.setVHost("localhost");
-                                deploymentInformation.setFileName(file);
-                                deploymentInformation.setContextRoot(contextRoot);
-                                // jboss.web:J2EEApplication=none,J2EEServer=none,j2eeType=WebModule,name=//bsd.de/test
-                                // TODO to we have a better tool to exchange a value of a key-value pair in an ObjectName ?
-                                int index = jbossWebmBeanName.indexOf("name=");
-                                jbossWebmBeanName = jbossWebmBeanName.substring(0, index + 5);
-                                jbossWebmBeanName += "//localhost"  + WarDiscoveryHelper.getContextPath(contextRoot);
-
-                                deploymentInformation.setJbossWebModuleMBeanObjectName(jbossWebmBeanName);
-                                infos.add(deploymentInformation);
                             }
                             retDeploymentInformationMap.put(objectNameString, infos);
                         }
@@ -448,14 +451,30 @@ public class DeploymentUtility {
      * VHost MBeans have the pattern "jboss.web:host=*,path=/<ctx_root>,type=Manager".
      *
      * @param contextRoot the context root
-     *
+     * @param emsConnection valid connection to the remote
      * @return the list of VHost MBeans for this webapp
      */
-    public static List<EmsBean> getVHosts(String contextRoot, EmsConnection emsConnection) {
+    public static List<EmsBean> getVHostsFromLocalManager(String contextRoot, EmsConnection emsConnection) {
         String pattern = "jboss.web:host=%host%,path=" + WarDiscoveryHelper.getContextPath(contextRoot)
                 + ",type=Manager";
         ObjectNameQueryUtility queryUtil = new ObjectNameQueryUtility(pattern);
         List<EmsBean> mBeans = emsConnection.queryBeans(queryUtil.getTranslatedQuery());
         return mBeans;
     }
+
+    /**
+     * Retrieves the virtual host MBeans for the webapp with the specified context root.
+     * VHost MBeans have the pattern "jboss.web:WebModule=//snert.home.pilhuhn.de/dist-vhost,service=ClusterManager".
+     *
+     * @param contextRoot the context root
+     * @param emsConnection valid connection to the remote
+     * @return the list of VHost MBeans for this webapp
+     */
+    public static List<EmsBean> getVHostsFromClusterManager(String contextRoot, EmsConnection emsConnection) {
+        String pattern = "jboss.web:service=ClusterManager,WebModule=%module%";
+        ObjectNameQueryUtility queryUtil = new ObjectNameQueryUtility(pattern);
+        List<EmsBean> mBeans = emsConnection.queryBeans(queryUtil.getTranslatedQuery());
+        return mBeans;
+    }
+
 }

@@ -154,8 +154,7 @@ public class WarDiscoveryHelper {
                 if (parentEARComponent==null) {
                     // WAR has no associated context root, so remove it from the list of discovered resources...
                     // @todo Might not want to call remove, because, as an example, in EC, the EC war file would end up being removed because this happens before it is completely deployed
-                    LOG.warn("D--##--  Would remove " + discoResDetail); // TODO remove for production
-                   //  warResourcesIterator.remove();
+                     warResourcesIterator.remove();
 
                     if (!discoResDetail.getResourceName().equals(ROOT_WEBAPP_RESOURCE_NAME)) {
                         LOG

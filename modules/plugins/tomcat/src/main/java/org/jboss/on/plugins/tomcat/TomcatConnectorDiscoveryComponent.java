@@ -108,18 +108,11 @@ public class TomcatConnectorDiscoveryComponent extends MBeanResourceDiscoveryCom
             // indicating that the Tomcat configuration should change. Handler being set UNKNOWN will signal the problem.
             pluginConfiguration.put(new PropertySimple(TomcatConnectorComponent.PLUGIN_CONFIG_HANDLER, handler));
 
-            // Set the address and protocol
-            //            queryUtility = new ObjectNameQueryUtility("Catalina:type=Connector,port=" + port);
-            //            grpBeans = connection.queryBeans(queryUtility.getTranslatedQuery());
-            //
-            //            if (!grpBeans.isEmpty()) {
-            //                EmsAttribute scheme = grpBeans.get(0).getAttribute("
-
-            //                if (null != scheme) {
-            //                    pluginConfiguration.put(new PropertySimple(TomcatConnectorComponent.CONFIG_SCHEME,
-            //                        (String) scheme.getValue()));
-            //                }
-            //            }
+            // Set address if it is in use
+            String address = (null != configInfo) ? configInfo.getAddress() : null;
+            if ((null != address) && !"".equals(address.trim())) {
+                pluginConfiguration.put(new PropertySimple(TomcatConnectorComponent.PLUGIN_CONFIG_ADDRESS, address));
+            }
 
             if (log.isDebugEnabled()) {
                 log.debug("Found a connector: " + handler
@@ -161,12 +154,10 @@ public class TomcatConnectorDiscoveryComponent extends MBeanResourceDiscoveryCom
 
                 // Check to see if an address portion exists
                 if (firstDash != lastDash) {
-                    // For option 3 keep the alias and we'll resolve
+                    // For option 3 keep the alias and we'll resolve as needed
                     String rawAddress = name.substring(firstDash + 1, lastDash);
                     int delim = rawAddress.indexOf("%2F");
                     address = (-1 == delim) ? rawAddress : rawAddress.substring(0, delim);
-                } else {
-                    this.address = TomcatConnectorComponent.UNKNOWN;
                 }
             } catch (Exception e) {
                 port = null;

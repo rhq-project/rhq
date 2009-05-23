@@ -34,6 +34,8 @@ import org.mc4j.ems.connection.bean.EmsBean;
 import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementReport;
@@ -54,14 +56,19 @@ import org.rhq.plugins.jmx.ObjectNameQueryUtility;
 public class TomcatConnectorComponent extends MBeanResourceComponent<TomcatServerComponent> {
 
     /**
-     * property name for the address the connector is bound to.
+     * property name for the protocol of the connector
      */
-    public static final String CONFIG_ADDRESS = "address";
-    /**
-     * property name for the scheme the connector is processing. Possible values are http (also for https), jk
-     */
-    public static final String CONFIG_SCHEME = "scheme";
+    public static final String CONFIG_PROTOCOL = "protocol";
 
+    /**
+     * V5 only property
+     */
+    public static final String CONFIG_V5_KEEP_ALIVE_TIMEOUT = "keepAliveTimeout";
+
+    /**
+     * Plugin property name for the address the connector is bound to.
+     */
+    public static final String PLUGIN_CONFIG_ADDRESS = "address";
     /**
      * Plugin property name for the protocol handler. This prefix is used in the associated GlobalRequestProcessor object name.
      */
@@ -158,10 +165,7 @@ public class TomcatConnectorComponent extends MBeanResourceComponent<TomcatServe
         Configuration pluginConfiguration = getResourceContext().getPluginConfiguration();
         String port = pluginConfiguration.getSimple(PLUGIN_CONFIG_PORT).getStringValue();
         String handler = pluginConfiguration.getSimple(PLUGIN_CONFIG_HANDLER).getStringValue();
-        EmsBean emsBean = getEmsBean();
-        EmsAttribute addressAttr = emsBean.getAttribute(CONFIG_ADDRESS);
-        String address = ((null != addressAttr) && (null != addressAttr.getValue())) ? (String) addressAttr.getValue()
-            : "";
+        String address = pluginConfiguration.getSimpleValue(PLUGIN_CONFIG_ADDRESS, "");
 
         if (!"".equals(address)) {
             StringBuilder sb = new StringBuilder("-");
@@ -193,8 +197,28 @@ public class TomcatConnectorComponent extends MBeanResourceComponent<TomcatServe
     @Override
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
 
+        // When starting the component get the connector type specific property keys
+        ResourceContext<TomcatServerComponent> context = getResourceContext();
+        ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
+        String protocol = report.getConfiguration().getSimpleValue(CONFIG_PROTOCOL, null);
+        if ((null == protocol) || protocol.toUpperCase().contains("HTTP")) {
+            // remove AJP only properties            
+            for (PropertyDefinition propDef : configDef.getPropertiesInGroup("AJP")) {
+                report.getConfiguration().remove(propDef.getName());
+            }
+        }
+        if ((null == protocol) || protocol.toUpperCase().contains("AJP")) {
+            // remove HTTP only properties
+            for (PropertyDefinition propDef : configDef.getPropertiesInGroup("HTTP")) {
+                report.getConfiguration().remove(propDef.getName());
+            }
+            for (PropertyDefinition propDef : configDef.getPropertiesInGroup("HTTP SSL")) {
+                report.getConfiguration().remove(propDef.getName());
+            }
+        }
+
         if (getResourceContext().getParentResourceComponent().getResourceContext().getVersion().startsWith("5")) {
-            report.getConfiguration().remove("keepAliveTimeout");
+            report.getConfiguration().remove(CONFIG_V5_KEEP_ALIVE_TIMEOUT);
         }
 
         super.updateResourceConfiguration(report);

@@ -605,6 +605,12 @@
                   type="string"
                   description="Connector protocol handler."
                   readOnly="true" />                  
+               <c:simple-property
+                  name="address"
+                  type="string"
+                  description="For servers with more than one IP address, this attribute specifies which address will be used for listening on the specified port. By default, this port will be used on all IP addresses associated with the server." 
+                  required="false"
+                  readOnly="true" />
             </c:group>
 
             <c:group
@@ -689,30 +695,20 @@
             displayType="detail" />
 
          <resource-configuration>
-            <c:group name="Attributes">
-               <c:simple-property
-                  name="address"
-                  type="string"
-                  description="For servers with more than one IP address, this attribute specifies which address will be used for listening on the specified port. By default, this port will be used on all IP addresses associated with the server. Warning: changing this value in essence defines a new connector resource!" />
+            <c:group name="Common">
                <c:simple-property
                   name="allowTrace"
                   type="boolean"
                   description="A boolean value which can be used to enable or disable the TRACE HTTP method. If not specified, this attribute is set to false." />
                <c:simple-property
-                  name="connectionLinger"
+                  name="bufferSize"
                   type="integer"
-                  description="The number of milliseconds during which the sockets used by this Connector will linger when they are closed. (-1 socket linger is disabled)."
-                  required="false" />
+                  description="HTTP: The size (in bytes) of the buffer to be provided for input streams created by this connector. By default, buffers of 2048 bytes will be provided. AJP: The size of the output buffer to use. If less than or equal to zero, then output buffering is disabled. The default value is -1 (i.e. buffering disabled)" />
                <c:simple-property
                   name="connectionTimeout"
                   type="integer"
-                  description="The number of milliseconds this Connector will wait, after accepting a connection, for the request URI line to be presented. The default is no timeout."
+                  description="HTTP: The number of milliseconds this Connector will wait, after accepting a connection, for the request URI line to be presented. The default value is 60000 (i.e. 60 seconds). AJP: The number of milliseconds this Connector will wait, after accepting a connection, for the request URI line to be presented. The default value is infinite (i.e. no timeout)."
                   required="false" />
-               <c:simple-property
-                  name="disableUploadTimeout"
-                  type="boolean"
-                  description="This flag allows the servlet container to use a different, longer connection timeout while a servlet is being executed, which in the end allows either the servlet a longer amount of time to complete its execution, or a longer timeout during data upload. If not specified, this attribute is set to true."
-                  required="false" />                  
                <c:simple-property
                   name="emptySessionPath"
                   type="boolean"
@@ -724,22 +720,17 @@
                <c:simple-property
                   name="keepAliveTimeout"
                   type="integer"
-                  description="The number of milliseconds this Connector will wait for another HTTP request before closing the connection. The default value is to use the value that has been set for the connectionTimeout attribute. Ignored prior to Tomcat 6."
-                  required="false" />
-               <c:simple-property
-                  name="maxHttpHeaderSize"
-                  type="integer"
-                  description="The maximum size of the request and response HTTP header, specified in bytes. If not specified, this attribute is set to 4096 (4 KB)."
-                  required="false" />
-               <c:simple-property
-                  name="maxKeepAliveRequests"
-                  type="integer"
-                  description="The maximum number of HTTP requests which can be pipelined until the connection is closed by the server. Setting this attribute to 1 will disable HTTP/1.0 keep-alive, as well as HTTP/1.1 keep-alive and pipelining. Setting this to -1 will allow an unlimited amount of pipelined or keep-alive HTTP requests. If not specified, this attribute is set to 100."
+                  description="Ignored prior to Tomcat 6. HTTP: The number of milliseconds this Connector will wait for another HTTP request before closing the connection. The default value is to use the value that has been set for the connectionTimeout attribute. AJP: The number of milliseconds this Connector will wait for another AJP request before closing the connection. The default value is to use the value that has been set for the connectionTimeout attribute."
                   required="false" />
                <c:simple-property
                   name="maxPostSize"
                   type="integer"
                   description="The maximum size in bytes of the POST which will be handled by the container FORM URL parameter parsing. The limit can be disabled by setting this attribute to a value less than or equal to 0. If not specified, this attribute is set to 2097152 (2 megabytes)." />
+               <c:simple-property
+                  name="maxThreads"
+                  type="integer"
+                  description="HTTP: The maximum number of request processing threads to be created by this Connector, which therefore determines the maximum number of simultaneous requests that can be handled. If not specified, this attribute is set to 40. If an executor is associated with this connector, this attribute is ignored as the connector will execute tasks using the executor rather than an internal thread pool. AJP: The maximum number of request processing threads to be created by this Connector, which therefore determines the maximum number of simultaneous requests that can be handled. If not specified, this attribute is set to 200. If an executor is associated with this connector, this attribute is ignored as the connector will execute tasks using the executor rather than an internal thread pool."
+                  required="false" />                  
                <c:simple-property
                   name="protocol"
                   type="string"
@@ -761,8 +752,25 @@
                <c:simple-property
                   name="scheme"
                   type="string"
-                  description="the name of the protocol you wish to have returned by calls to request.getScheme(). For example, you would set this attribute to 'https' for an SSL Connector. The default value is 'http'"
+                  description="The name of the protocol you wish to have returned by calls to request.getScheme(). For example, you would set this attribute to 'https' for an SSL Connector. The default value is 'http'"
                   default="http" />                  
+               <c:simple-property
+                  name="secure"
+                  type="boolean"
+                  description="Set this attribute to true if you wish to have calls to request.isSecure() to return true  for requests received by this Connector. You would want this on an SSL Connector or a non SSL connector that is receiving data from a SSL accelerator, like a crypto card, a SSL appliance or even a webserver. The default value is false"
+                  required="false" />
+               <c:simple-property
+                  name="tcpNoDelay"
+                  displayName="TCP NoDelay"
+                  type="boolean"
+                  description="If set to true, the TCP_NO_DELAY option will be set on the server socket, which improves performance under most circumstances. This is set to true by default."
+                  required="false" />                  
+               <c:simple-property
+                  name="URIEncoding"
+                  displayName="URI Encoding"
+                  type="string"
+                  description="This specifies the character encoding used to decode the URI bytes, after %xx decoding the URL. If not specified, ISO-8859-1 will be used. "                  
+                  required="false" />                  
                <c:simple-property
                   name="useBodyEncodingForURI"
                   displayName="Use Body Encoding for URI"
@@ -775,20 +783,36 @@
                   description="Set this attribute to true to cause Tomcat to advertise support for the Servlet specification using the header recommended in the specification. The default value is false." />
             </c:group>
 
-            <c:group name="Performance">
+            <c:group name="HTTP" hiddenByDefault="true">
                <c:simple-property
-                  name="bufferSize"
+                  name="acceptCount"
                   type="integer"
-                  description="The size (in bytes) of the buffer to be provided for input streams created by this connector. By default, buffers of 2048 bytes will be provided." />
+                  description="The maximum queue length for incoming connection requests when all possible request processing threads are in use. Any requests received when the queue is full will be refused. The default value is 10."
+                  required="false" />
                <c:simple-property
                   name="compression"
                   type="string"
                   description="The Connector may use HTTP/1.1 GZIP compression in an attempt to save server bandwidth. The acceptable values for the parameter is 'off' (disable compression), 'on' (allow compression, which causes text data to be compressed), 'force' (forces compression in all cases), or a numerical integer value (which is equivalent to 'on', but specifies the minimum amount of data before the output is compressed). If the content-length is not known and compression is set to 'on' or more aggressive, the output will also be compressed. If not specified, this attribute is set to 'off'."
                   required="false" />                  
                <c:simple-property
-                  name="maxThreads"
+                  name="connectionLinger"
                   type="integer"
-                  description="The maximum number of request processing threads to be created by this Connector, which therefore determines the maximum number of simultaneous requests that can be handled. If not specified, this attribute is set to 40. If an executor is associated with this connector, this attribute is ignored as the connector will execute tasks using the executor rather than an internal thread pool."
+                  description="The number of milliseconds during which the sockets used by this Connector will linger when they are closed. (-1 socket linger is disabled)."
+                  required="false" />
+               <c:simple-property
+                  name="disableUploadTimeout"
+                  type="boolean"
+                  description="This flag allows the servlet container to use a different, longer connection timeout while a servlet is being executed, which in the end allows either the servlet a longer amount of time to complete its execution, or a longer timeout during data upload. If not specified, this attribute is set to true."
+                  required="false" />                  
+               <c:simple-property
+                  name="maxHttpHeaderSize"
+                  type="integer"
+                  description="The maximum size of the request and response HTTP header, specified in bytes. If not specified, this attribute is set to 4096 (4 KB)."
+                  required="false" />
+               <c:simple-property
+                  name="maxKeepAliveRequests"
+                  type="integer"
+                  description="The maximum number of HTTP requests which can be pipelined until the connection is closed by the server. Setting this attribute to 1 will disable HTTP/1.0 keep-alive, as well as HTTP/1.1 keep-alive and pipelining. Setting this to -1 will allow an unlimited amount of pipelined or keep-alive HTTP requests. If not specified, this attribute is set to 100."
                   required="false" />
                <c:simple-property
                   name="maxSpareThreads"
@@ -806,19 +830,13 @@
                   description="The thread pooling strategy which will be used. The default strategy does not use a master thread, but a more conventional strategy using a master listener thread can be used by setting 'ms' as this attribute's value. The master strategy will work significantly better using the threadPriority attribute, which will apply only to the thread which listens on the server socket. This is set to 'lf' by default."
                   required="false" />                  
                <c:simple-property
-                  name="tcpNoDelay"
-                  displayName="TCP NoDelay"
-                  type="boolean"
-                  description="If set to true, the TCP_NO_DELAY option will be set on the server socket, which improves performance under most circumstances. This is set to true by default."
-                  required="false" />                  
-               <c:simple-property
                   name="threadPriority"
                   type="integer"
                   description="The priority of the request processing threads within the JVM. The default value is java.lang.Thread#NORM_PRIORITY. See the JavaDoc for the java.lang.Thread class for more details on what this priority means."
                   required="false" />
             </c:group>
 
-            <c:group name="Security">
+            <c:group name="HTTP SSL" hiddenByDefault="true">
                <c:simple-property
                   name="algorithm"
                   type="string"
@@ -857,21 +875,11 @@
                   description="The type of keystore file to be used for the server certificate. If not specified, the default value is 'JKS'."
                   required="false" />
                <c:simple-property
-                  name="secure"
-                  type="boolean"
-                  description="Set this attribute to true if you wish to have calls to request.isSecure() to return true  for requests received by this Connector. You would want this on an SSL Connector or a non SSL connector that is receiving data from a SSL accelerator, like a crypto card, a SSL appliance or even a webserver. The default value is false"
-                  required="false" />
-               <c:simple-property
                   name="sslProtocol"
                   displayName="SSL Protocol"
                   type="string"
                   description="The version of the SSL protocol to use. If not specified, the default is 'TLS'."
                   required="false" />
-               <c:simple-property
-                  name="tomcatAuthentication"
-                  type="boolean"
-                  description="If set to true, the authentication will be done in Tomcat. Otherwise, the authenticated principal will be propagated from the native webserver and used for authorization in Tomcat. The default value is true."
-                  required="false" />                  
                <c:simple-property
                   name="trustStoreFile"
                   type="string"
@@ -887,6 +895,14 @@
                   name="trustStoreType"
                   type="string"
                   description="Add this element if your are using a different format for the TrustStore then you are using for the KeyStore."
+                  required="false" />            
+            </c:group>
+
+            <c:group name="AJP" hiddenByDefault="true">
+               <c:simple-property
+                  name="tomcatAuthentication"
+                  type="boolean"
+                  description="If set to true, the authentication will be done in Tomcat. Otherwise, the authenticated principal will be propagated from the native webserver and used for authorization in Tomcat. The default value is true."
                   required="false" />
             </c:group>
          </resource-configuration>

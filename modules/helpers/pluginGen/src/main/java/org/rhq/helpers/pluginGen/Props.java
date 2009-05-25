@@ -66,6 +66,10 @@ public class Props {
     private boolean manualAddOfChildren;
     /** Does it use the PluginLifecycleListener api ? */
     private boolean usePluginLifecycleListenerApi;
+    /** Depends on JMX plugin ? */
+    private boolean dependsOnJmxPlugin;
+    /** What version of RHQ should this plugin's pom use ? */
+    private String rhqVersion = "1.2.0.GA";
 
     /** Embedded children */
     private Set<Props> children = new HashSet<Props>();
@@ -228,6 +232,22 @@ public class Props {
 
     public void setUsePluginLifecycleListenerApi(boolean usePluginLifecycleListenerApi) {
         this.usePluginLifecycleListenerApi = usePluginLifecycleListenerApi;
+    }
+
+    public boolean isDependsOnJmxPlugin() {
+        return dependsOnJmxPlugin;
+    }
+
+    public void setDependsOnJmxPlugin(boolean dependsOnJmxPlugin) {
+        this.dependsOnJmxPlugin = dependsOnJmxPlugin;
+    }
+
+    public String getRhqVersion() {
+        return rhqVersion;
+    }
+
+    public void setRhqVersion(String rhqVersion) {
+        this.rhqVersion = rhqVersion;
     }
 
     @Override

@@ -167,6 +167,10 @@ public class PluginGen {
                 // Skip this one on children
             } else if (name.equals("UsePluginLifecycleListenerApi") && parentProps.getName() != null) {
                 // Skip this one on children
+            } else if (name.equals("DependsOnJmxPlugin") && parentProps.getName() != null) {
+                // Skip this one on children
+            } else if (name.equals("RhqVersion") && parentProps.getName() != null) {
+                // Skip this one on children
             } else if (name.equals("Pkg")) {
                 // Always skip this - we postprocess it
             } else {
@@ -223,7 +227,7 @@ public class PluginGen {
 
         File baseDir = new File(props.getFileSystemRoot());
         if (!baseDir.isDirectory()) {
-            log.error("This is no directory: " + baseDir.getAbsolutePath());
+            log.error("This is no directory: '" + baseDir.getAbsolutePath() +"'");
             return;
         }
 

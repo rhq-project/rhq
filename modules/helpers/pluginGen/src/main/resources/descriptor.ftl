@@ -30,6 +30,9 @@
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
 
+<#if props.dependsOnJmxPlugin>
+    <depends plugin="JMX" useClasses="true"/>
+</#if>    
 
     <${props.category.lowerName}
     <#include "descriptorMain.ftl"/>

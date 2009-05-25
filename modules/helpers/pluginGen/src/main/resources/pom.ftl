@@ -31,7 +31,7 @@
     <parent>
         <groupId>org.rhq</groupId>
         <artifactId>rhq-plugins-parent</artifactId>
-        <version>1.3.0-SNAPSHOT</version><!-- TODO adjust RHQ version -->
+        <version><#if props.rhqVersion??>${props.rhqVersion}<#else >1.3.0-SNAPSHOT</#if></version><!-- TODO adjust RHQ version -->
     </parent>
 
     <groupId>${props.packagePrefix}</groupId>
@@ -43,6 +43,10 @@
     <description>${props.description}</description>
     </#if>
 
+    <properties>
+        <scm.module.path>TODO</scm.module.path>
+        <rhq.version><#if props.rhqVersion??>${props.rhqVersion}<#else >1.3.0-SNAPSHOT</#if></rhq.version> <!-- TODO adjust, see above too -->
+    </properties>
 
     <build>
         <plugins>
@@ -209,21 +213,29 @@
             <dependency>
                 <groupId>org.rhq</groupId>
                 <artifactId>rhq-core-domain</artifactId>
-                <version>${r"${project.version}"}</version>
+                <version>${r"${rhq.version}"}</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.rhq</groupId>
                 <artifactId>rhq-core-plugin-api</artifactId>
-                <version>${r"${project.version}"}</version>
+                <version>${r"${rhq.version}"}</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.rhq</groupId>
                 <artifactId>rhq-core-native-system</artifactId>
-                <version>${r"${project.version}"}</version>
+                <version>${r"${rhq.version}"}</version>
                 <scope>provided</scope>
             </dependency>
+<#if props.dependsOnJmxPlugin>
+            <dependency>
+                <groupId>org.rhq</groupId>
+                <artifactId>rhq-jmx-plugin</artifactId>
+                <version>${r"${rhq.version}"}</version>
+                <scope>provided</scope>
+            </dependency>
+</#if>
 
             <!-- TODO add your dependencies here -->
 

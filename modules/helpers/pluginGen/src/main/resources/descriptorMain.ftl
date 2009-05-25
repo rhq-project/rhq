@@ -45,6 +45,7 @@
 
             <plugin-configuration>
                 <!-- TODO add your own here -->
+                <c:simple-property name="dummy"/>
             </plugin-configuration>
 
         <!-- TODO process scans -->
@@ -61,11 +62,12 @@
         </#if>
         <#if props.events>
             <event name="${props.name}DummyEvent"/>
-            
+
         </#if>
         <#if props.resourceConfiguration>
             <resource-configuration>
                 <!-- TODO supply your configuration parameters -->
+                <c:simple-property name="dummy"/>
             </resource-configuration>
-            
+
         </#if>

@@ -39,7 +39,7 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 /**
  * Discovery class
  */
-public class ${props.discoveryClass} implements ResourceDiscoveryComponent<${props.componentClass}> {
+public class ${props.discoveryClass} implements ResourceDiscoveryComponent<#if props.parentType??><${props.parentType}></#if> {
 
 
     private final Log log = LogFactory.getLog(this.getClass());
@@ -48,7 +48,7 @@ public class ${props.discoveryClass} implements ResourceDiscoveryComponent<${pro
     /**
      * Run the discovery
      */
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<${props.componentClass}> discoveryContext) throws Exception {
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<#if props.parentType??><${props.parentType}></#if> discoveryContext) throws Exception {
 
         Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
 

@@ -37,6 +37,10 @@ import java.util.Set;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jboss.deployers.spi.management.ManagementView;
+import org.jboss.deployers.spi.management.deploy.DeploymentManager;
+import org.jboss.deployers.spi.management.deploy.DeploymentProgress;
+import org.jboss.deployers.spi.management.deploy.DeploymentStatus;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.transfer.ContentResponseResult;
@@ -58,16 +62,11 @@ import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.plugins.jbossas5.util.DeploymentUtils;
 
-import org.jboss.deployers.spi.management.deploy.DeploymentManager;
-import org.jboss.deployers.spi.management.deploy.DeploymentProgress;
-import org.jboss.deployers.spi.management.deploy.DeploymentStatus;
-
 /**
  * @author Ian Springer
  */
-public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploymentComponent
-        implements MeasurementFacet, ContentFacet, DeleteResourceFacet
-{
+public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploymentComponent implements
+    MeasurementFacet, ContentFacet, DeleteResourceFacet {
     private static final String CUSTOM_PATH_TRAIT = "custom.path";
     private static final String CUSTOM_EXPLODED_TRAIT = "custom.exploded";
 
@@ -92,25 +91,19 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
 
     // ------------ MeasurementFacet Implementation ------------
 
-    public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) throws Exception
-    {
+    @Override
+    public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) throws Exception {
         Set<MeasurementScheduleRequest> remainingRequests = new HashSet();
-        for (MeasurementScheduleRequest request : requests)
-        {
+        for (MeasurementScheduleRequest request : requests) {
             String metricName = request.getName();
-            if (metricName.equals(CUSTOM_PATH_TRAIT))
-            {
+            if (metricName.equals(CUSTOM_PATH_TRAIT)) {
                 MeasurementDataTrait trait = new MeasurementDataTrait(request, this.deploymentFile.getPath());
                 report.addData(trait);
-            }
-            else if (metricName.equals(CUSTOM_EXPLODED_TRAIT))
-            {
+            } else if (metricName.equals(CUSTOM_EXPLODED_TRAIT)) {
                 boolean exploded = this.deploymentFile.isDirectory();
                 MeasurementDataTrait trait = new MeasurementDataTrait(request, (exploded) ? "yes" : "no");
                 report.addData(trait);
-            }
-            else
-            {
+            } else {
                 remainingRequests.add(request);
             }
         }
@@ -119,38 +112,30 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
 
     // ------------ ContentFacet implementation -------------
 
-    public InputStream retrievePackageBits(ResourcePackageDetails packageDetails)
-    {
+    public InputStream retrievePackageBits(ResourcePackageDetails packageDetails) {
         File packageFile = new File(packageDetails.getName());
         File fileToSend;
-        try
-        {
-            if (packageFile.isDirectory())
-            {
+        try {
+            if (packageFile.isDirectory()) {
                 fileToSend = File.createTempFile("rhq", ".zip");
                 ZipUtil.zipFileOrDirectory(packageFile, fileToSend);
-            }
-            else
+            } else
                 fileToSend = packageFile;
             return new BufferedInputStream(new FileInputStream(fileToSend));
-        }
-        catch (IOException e)
-        {
+        } catch (IOException e) {
             throw new RuntimeException("Failed to retrieve package bits for " + packageDetails, e);
         }
     }
 
-    public Set<ResourcePackageDetails> discoverDeployedPackages(PackageType packageType)
-    {
+    public Set<ResourcePackageDetails> discoverDeployedPackages(PackageType packageType) {
         if (!this.deploymentFile.exists())
-            throw new IllegalStateException("Deployment file '" + this.deploymentFile + "' for " +
-                    getResourceDescription() + " does not exist.");
+            throw new IllegalStateException("Deployment file '" + this.deploymentFile + "' for "
+                + getResourceDescription() + " does not exist.");
 
         String fileName = this.deploymentFile.getName();
         PackageVersions packageVersions = loadPackageVersions();
         String version = packageVersions.getVersion(fileName);
-        if (version == null)
-        {
+        if (version == null) {
             // This is either the first time we've discovered this EAR/WAR, or someone purged the PC's data dir.
             version = "1.0";
             packageVersions.putVersion(fileName, version);
@@ -171,26 +156,23 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
         return packages;
     }
 
-    public RemovePackagesResponse removePackages(Set<ResourcePackageDetails> packages)
-    {
+    public RemovePackagesResponse removePackages(Set<ResourcePackageDetails> packages) {
         throw new UnsupportedOperationException("Cannot remove the package backing an EAR/WAR resource.");
     }
 
-    public List<DeployPackageStep> generateInstallationSteps(ResourcePackageDetails packageDetails)
-    {
+    public List<DeployPackageStep> generateInstallationSteps(ResourcePackageDetails packageDetails) {
         // Intentional - there are no steps involved in installing an EAR or WAR.
         return null;
     }
 
-    public DeployPackagesResponse deployPackages(Set<ResourcePackageDetails> packages, ContentServices contentServices)
-    {
+    public DeployPackagesResponse deployPackages(Set<ResourcePackageDetails> packages, ContentServices contentServices) {
         // You can only update the one application file referenced by this resource, so punch out if multiple are
         // specified.
-        if (packages.size() != 1)
-        {
+        if (packages.size() != 1) {
             log.warn("Request to update an EAR/WAR file contained multiple packages: " + packages);
             DeployPackagesResponse response = new DeployPackagesResponse(ContentResponseResult.FAILURE);
-            response.setOverallRequestErrorMessage("When updating an EAR/WAR, only one EAR/WAR can be updated at a time.");
+            response
+                .setOverallRequestErrorMessage("When updating an EAR/WAR, only one EAR/WAR can be updated at a time.");
             return response;
         }
 
@@ -198,22 +180,18 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
 
         log.debug("Updating EAR/WAR file '" + this.deploymentFile + "' using [" + packageDetails + "]...");
         // Find location of existing application.
-        if (!this.deploymentFile.exists())
-        {
-            return failApplicationDeployment("Could not find application to update at location: " + this.deploymentFile,
-                    packageDetails);
+        if (!this.deploymentFile.exists()) {
+            return failApplicationDeployment(
+                "Could not find application to update at location: " + this.deploymentFile, packageDetails);
         }
 
         log.debug("Writing new EAR/WAR bits to temporary file...");
         File tempFile;
-        try
-        {
+        try {
             tempFile = writeNewAppBitsToTempFile(contentServices, packageDetails);
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             return failApplicationDeployment("Error writing new application bits to temporary file - cause: " + e,
-                    packageDetails);
+                packageDetails);
         }
         log.debug("Wrote new EAR/WAR bits to temporary file '" + tempFile + "'.");
 
@@ -222,42 +200,33 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
         // Backup the original app file/dir to <filename>.rej.
         File backupOfOriginalFile = new File(this.deploymentFile.getPath() + BACKUP_FILE_EXTENSION);
         log.debug("Backing up existing EAR/WAR '" + this.deploymentFile + "' to '" + backupOfOriginalFile + "'...");
-        try
-        {
+        try {
             if (backupOfOriginalFile.exists())
                 FileUtils.forceDelete(backupOfOriginalFile);
             if (this.deploymentFile.isDirectory())
                 FileUtils.copyDirectory(this.deploymentFile, backupOfOriginalFile, true);
             else
                 FileUtils.copyFile(this.deploymentFile, backupOfOriginalFile, true);
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             throw new RuntimeException("Failed to backup existing EAR/WAR '" + this.deploymentFile + "' to '"
-                    + backupOfOriginalFile + "'.");
+                + backupOfOriginalFile + "'.");
         }
 
         // Now stop the original app.
-        try
-        {
+        try {
             DeploymentManager deploymentManager = getConnection().getDeploymentManager();
             DeploymentProgress progress = deploymentManager.stop(this.deploymentName);
             DeploymentUtils.run(progress);
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             throw new RuntimeException("Failed to stop deployment [" + this.deploymentName + "].", e);
         }
 
         // And then remove it (this will delete the physical file/dir from the deploy dir).
-        try
-        {
+        try {
             DeploymentManager deploymentManager = getConnection().getDeploymentManager();
             DeploymentProgress progress = deploymentManager.remove(this.deploymentName);
             DeploymentUtils.run(progress);
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             throw new RuntimeException("Failed to remove deployment [" + this.deploymentName + "].", e);
         }
 
@@ -265,28 +234,22 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
         log.debug("Deploying '" + tempFile + "'...");
         File deployDir = this.deploymentFile.getParentFile();
         DeploymentManager deploymentManager = getConnection().getDeploymentManager();
-        try
-        {
+        try {
             DeploymentUtils.deployArchive(deploymentManager, tempFile, deployDir, deployExploded);
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             // Deploy failed - rollback to the original app file...
             log.debug("Redeploy failed - rolling back to original archive...", e);
             String errorMessage = ThrowableUtil.getAllMessages(e);
-            try
-            {
+            try {
                 // Delete the new app, which failed to deploy.
                 FileUtils.forceDelete(this.deploymentFile);
                 // Need to redeploy the original file - this generally should succeed.
                 DeploymentUtils.deployArchive(deploymentManager, backupOfOriginalFile, deployDir, deployExploded);
                 errorMessage += " ***** ROLLED BACK TO ORIGINAL APPLICATION FILE. *****";
-            }
-            catch (Exception e1)
-            {
+            } catch (Exception e1) {
                 log.debug("Rollback failed!", e1);
                 errorMessage += " ***** FAILED TO ROLLBACK TO ORIGINAL APPLICATION FILE. *****: "
-                        + ThrowableUtil.getAllMessages(e1);
+                    + ThrowableUtil.getAllMessages(e1);
             }
             log.info("Failed to update EAR/WAR file '" + this.deploymentFile + "' using [" + packageDetails + "].");
             return failApplicationDeployment(errorMessage, packageDetails);
@@ -298,20 +261,19 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
         persistApplicationVersion(packageDetails, this.deploymentFile);
 
         DeployPackagesResponse response = new DeployPackagesResponse(ContentResponseResult.SUCCESS);
-        DeployIndividualPackageResponse packageResponse =
-                new DeployIndividualPackageResponse(packageDetails.getKey(), ContentResponseResult.SUCCESS);
+        DeployIndividualPackageResponse packageResponse = new DeployIndividualPackageResponse(packageDetails.getKey(),
+            ContentResponseResult.SUCCESS);
         response.addPackageResponse(packageResponse);
 
         log.debug("Updated EAR/WAR file '" + this.deploymentFile + "' successfully - returning response [" + response
-                + "]...");
+            + "]...");
 
         return response;
     }
 
     // ------------ DeleteResourceFacet implementation -------------
 
-    public void deleteResource() throws Exception
-    {
+    public void deleteResource() throws Exception {
         DeploymentManager deploymentManager = getConnection().getDeploymentManager();
         log.debug("Stopping deployment [" + this.deploymentName + "]...");
         DeploymentProgress progress = deploymentManager.stop(this.deploymentName);
@@ -319,7 +281,7 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
         if (stopStatus.isFailed()) {
             log.error("Failed to stop deployment '" + this.deploymentName + "'.", stopStatus.getFailure());
             throw new Exception("Failed to stop deployment '" + this.deploymentName + "' - cause: "
-                    + stopStatus.getFailure());
+                + stopStatus.getFailure());
         }
         log.debug("Removing deployment [" + this.deploymentName + "]...");
         progress = deploymentManager.remove(this.deploymentName);
@@ -327,15 +289,16 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
         if (removeStatus.isFailed()) {
             log.error("Failed to remove deployment '" + this.deploymentName + "'.", removeStatus.getFailure());
             throw new Exception("Failed to remove deployment '" + this.deploymentName + "' - cause: "
-                    + removeStatus.getFailure());
+                + removeStatus.getFailure());
         }
+        ManagementView managementView = getConnection().getManagementView();
+        managementView.load();
     }
 
     // ------------ AbstractManagedComponent implementation -------------
 
     @Override
-    protected Log getLog()
-    {
+    protected Log getLog() {
         return this.log;
     }
 
@@ -346,12 +309,11 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
      * @param packageDetails describes the update being made
      * @return response populated to reflect a failure
      */
-    private DeployPackagesResponse failApplicationDeployment(String errorMessage, ResourcePackageDetails packageDetails)
-    {
+    private DeployPackagesResponse failApplicationDeployment(String errorMessage, ResourcePackageDetails packageDetails) {
         DeployPackagesResponse response = new DeployPackagesResponse(ContentResponseResult.FAILURE);
 
-        DeployIndividualPackageResponse packageResponse =
-                new DeployIndividualPackageResponse(packageDetails.getKey(), ContentResponseResult.FAILURE);
+        DeployIndividualPackageResponse packageResponse = new DeployIndividualPackageResponse(packageDetails.getKey(),
+            ContentResponseResult.FAILURE);
         packageResponse.setErrorMessage(errorMessage);
 
         response.addPackageResponse(packageResponse);
@@ -359,64 +321,48 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
         return response;
     }
 
-    private void persistApplicationVersion(ResourcePackageDetails packageDetails, File appFile)
-    {
+    private void persistApplicationVersion(ResourcePackageDetails packageDetails, File appFile) {
         String packageName = appFile.getName();
         log.debug("Persisting application version '" + packageDetails.getVersion() + "' for package '" + packageName
-                + "'");
+            + "'");
         PackageVersions versions = loadPackageVersions();
         versions.putVersion(packageName, packageDetails.getVersion());
     }
 
-    private void deleteBackupOfOriginalFile(File backupOfOriginalFile)
-    {
+    private void deleteBackupOfOriginalFile(File backupOfOriginalFile) {
         log.debug("Deleting backup of original file '" + backupOfOriginalFile + "'...");
-        try
-        {
+        try {
             FileUtils.forceDelete(backupOfOriginalFile);
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             // not critical.
             log.warn("Failed to delete backup of original file: " + backupOfOriginalFile);
         }
     }
 
-    private File writeNewAppBitsToTempFile(ContentServices contentServices, ResourcePackageDetails packageDetails
-    ) throws Exception
-    {
+    private File writeNewAppBitsToTempFile(ContentServices contentServices, ResourcePackageDetails packageDetails)
+        throws Exception {
         File tempDir = getResourceContext().getTemporaryDirectory();
         File tempFile = new File(tempDir, this.deploymentFile.getName());
 
         OutputStream tempOutputStream = null;
-        try
-        {
+        try {
             tempOutputStream = new BufferedOutputStream(new FileOutputStream(tempFile));
-            long bytesWritten = contentServices.downloadPackageBits(getResourceContext().getContentContext(), packageDetails.getKey(),
-                    tempOutputStream, true);
+            long bytesWritten = contentServices.downloadPackageBits(getResourceContext().getContentContext(),
+                packageDetails.getKey(), tempOutputStream, true);
             log.debug("Wrote " + bytesWritten + " bytes to '" + tempFile + "'.");
-        }
-        catch (IOException e)
-        {
+        } catch (IOException e) {
             log.error("Error writing updated application bits to temporary location: " + tempFile, e);
             throw e;
-        }
-        finally
-        {
-            if (tempOutputStream != null)
-            {
-                try
-                {
+        } finally {
+            if (tempOutputStream != null) {
+                try {
                     tempOutputStream.close();
-                }
-                catch (IOException e)
-                {
+                } catch (IOException e) {
                     log.error("Error closing temporary output stream", e);
                 }
             }
         }
-        if (!tempFile.exists())
-        {
+        if (!tempFile.exists()) {
             log.error("Temporary file for application update not written to: " + tempFile);
             throw new Exception();
         }
@@ -428,17 +374,15 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
      *
      * @return will not be <code>null</code>
      */
-    private PackageVersions loadPackageVersions()
-    {
-        if (this.versions == null)
-        {
+    private PackageVersions loadPackageVersions() {
+        if (this.versions == null) {
             ResourceType resourceType = getResourceContext().getResourceType();
             String pluginName = resourceType.getPlugin();
             File dataDirectoryFile = getResourceContext().getDataDirectory();
             dataDirectoryFile.mkdirs();
             String dataDirectory = dataDirectoryFile.getAbsolutePath();
-            log.trace("Creating application versions store with plugin name [" + pluginName +
-                    "] and data directory [" + dataDirectory + "]");
+            log.trace("Creating application versions store with plugin name [" + pluginName + "] and data directory ["
+                + dataDirectory + "]");
             this.versions = new PackageVersions(pluginName, dataDirectory);
             this.versions.loadFromDisk();
         }

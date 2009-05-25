@@ -304,6 +304,9 @@ public class StandaloneContainer {
         case AVAIL:
             avail(tokens);
             break;
+        case CHILDREN:
+            children(tokens);
+            break;
         case DISCOVER:
             discover(tokens);
             break;
@@ -442,6 +445,19 @@ public class StandaloneContainer {
                 Availability availability = inventoryManager.getCurrentAvailability(res);
                 System.out.println(res.getName() + "( " + res.getId() + " ):" + availability.getAvailabilityType());
             }
+        }
+    }
+
+    /**
+     * Print the direct child resources of a given resource
+     * @param tokens tokenized command line tokens[0] is the command itself
+     */
+    private void children(String[] tokens) {
+        int id = Integer.valueOf(tokens[1]);
+        Resource r = inventoryManager.getResourceContainer(id).getResource();
+        Set<Resource> resources = r.getChildResources();
+        for (Resource res : resources) {
+            System.out.println(res);
         }
     }
 
@@ -650,6 +666,7 @@ public class StandaloneContainer {
     private enum Command {
         ASCAN("as", "", 0, "Triggers an availability scan"), //
         AVAIL("a", " ( id )", 0, "Shows an availability report. If id is given, only shows availability for resource with id id"), //
+        CHILDREN("chi","id",1, "Shows the direct children of the resource with the passed id"),//
         DISCOVER("disc", " s | i |Êall", 1, "Triggers a discovery scan for (s)erver, serv(i)ce or all resources"), //
         //      EVENT("e", "", 0,  "Pull events"), // TODO needs to be defined
         FIND("find", "r | t  | rt <name>", 2, "Searches a (r)esource, resource (t)ype or resources of (rt)ype. Use * as wildcard.\n"

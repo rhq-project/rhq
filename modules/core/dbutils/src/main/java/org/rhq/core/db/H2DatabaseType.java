@@ -32,7 +32,7 @@ import java.util.List;
  */
 public abstract class H2DatabaseType extends DatabaseType {
     /**
-     * The vendor name for all PostgresQL databases.
+     * The vendor name for all H2 databases.
      */
     public static final String VENDOR_NAME = "h2";
 

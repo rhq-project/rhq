@@ -72,12 +72,20 @@
 
     <property name="jms.oracle.dir" value="jms-oracle.rej"/>
     <property name="jms.postgres.dir" value="jms-postgres.rej"/>
+  	<property name="jms.h2.dir" value="jms-h2.rej"/>
 
     <property name="ds.oracle.file" value="rhq-ds.xml.oracle.rej"/>
     <property name="ds.postgres.file" value="rhq-ds.xml.postgres.rej"/>
+  	<property name="ds.h2.file" value="rhq-ds.xml.h2.rej"/>
 
     <condition property="use-postgres" value="true">
-       <not><contains string="${rhq.server.database.type-mapping}" substring="Oracle" casesensitive="false" /></not>
+       <contains string="${rhq.server.database.type-mapping}" substring="postgres" casesensitive="false" />
+    </condition>
+    <condition property="use-oracle" value="true">
+       <contains string="${rhq.server.database.type-mapping}" substring="oracle" casesensitive="false" />
+    </condition>
+    <condition property="use-h2" value="true">
+       <contains string="${rhq.server.database.type-mapping}" substring="h2" casesensitive="false" />
     </condition>
 
     <condition property="copy.dev.resources" value="true">
@@ -97,7 +105,14 @@
     <condition property="predeploy-oracle" value="true">
        <and>
           <equals arg1="${predeploy}" arg2="true" />
-          <not><equals arg1="${use-postgres}" arg2="true" /></not>
+          <equals arg1="${use-oracle}" arg2="true" />
+       </and>
+    </condition>
+
+    <condition property="predeploy-h2" value="true">
+       <and>
+          <equals arg1="${predeploy}" arg2="true" />
+          <equals arg1="${use-h2}" arg2="true" />
        </and>
     </condition>
 
@@ -182,6 +197,8 @@
           toDir="${jboss.lib.dir}" failonerror="false" verbose="true" />
     <copy file="${settings.localRepository}/postgresql/postgresql/${postgresql.version}/postgresql-${postgresql.version}.jar"
           toDir="${jboss.lib.dir}" verbose="true" />
+    <copy file="${settings.localRepository}/com/h2database/h2/${h2.version}/h2-${h2.version}.jar"
+          toDir="${jboss.lib.dir}" verbose="true" />
 
     <!-- Generate SSL key for RHQ server - 128-bit key that expires in 20 years... -->
     <property name="jboss.conf.dir" location="${jboss.home}/server/default/conf" />
@@ -246,6 +263,9 @@
        <fileset dir="${jboss.deploy.dir}/jms" />
     </copy>
     <copy todir="${jboss.deploy.dir}/${jms.postgres.dir}">
+       <fileset dir="${jboss.deploy.dir}/jms" />
+    </copy>
+    <copy todir="${jboss.deploy.dir}/${jms.h2.dir}">
        <fileset dir="${jboss.deploy.dir}/jms" />
     </copy>
     <antcall target="setup-jms-backend" />
@@ -546,8 +566,10 @@ rhq.server.agent-plugin-scan-period-ms=${rhq.server.agent-plugin-scan-period-ms}
   <target name="setup-jms-backend"
           depends="setup-jms-backend-postgres,
                    setup-jms-backend-oracle,
+                   setup-jms-backend-h2,
                    make-default-jms-backend-postgres,
-                   make-default-jms-backend-oracle">
+                   make-default-jms-backend-oracle,
+                   make-default-jms-backend-h2">
   </target>
 
   <target name="setup-jms-backend-postgres">
@@ -590,11 +612,36 @@ rhq.server.agent-plugin-scan-period-ms=${rhq.server.agent-plugin-scan-period-ms}
              value="CREATE_TABLES_ON_STARTUP = FALSE"/>
   </target>
 
-  <target name="make-default-jms-backend-oracle" unless="use-postgres">
+  <target name="make-default-jms-backend-oracle" if="use-oracle">
     <echo>Oracle will be your JMS backend!</echo>
     <delete dir="${jboss.deploy.dir}/jms"/>
     <copy todir="${jboss.deploy.dir}/jms">
        <fileset dir="${jboss.deploy.dir}/${jms.oracle.dir}"/>
+    </copy>
+  </target>
+	
+  <target name="setup-jms-backend-h2">
+    <echo>Preparing the H2 JMS configuration...</echo>
+    <move file="${jboss.deploy.dir}/${jms.h2.dir}/hsqldb-jdbc-state-service.xml"
+          tofile="${jboss.deploy.dir}/${jms.h2.dir}/rhq-jdbc-state-service.xml" verbose="true" failonerror="false"/>
+    <replace file="${jboss.deploy.dir}/${jms.h2.dir}/rhq-jdbc-state-service.xml" token="DefaultDS" value="RHQDS"/>
+    <replace file="${jboss.deploy.dir}/${jms.h2.dir}/rhq-jdbc-state-service.xml"
+             token="CREATE_TABLES_ON_STARTUP = TRUE"
+             value="CREATE_TABLES_ON_STARTUP = FALSE"/>
+    <!-- since JBossAS distro did not provide a samples for the H2 database, this file was prepared in 
+         resources/jbossas/server/default/${jms.h2.dir}/rhq-jdbc2-service.xml and will be copied to
+         ${jboss.deploy.dir}/${jms.h2.dir}/rhq-jdbc2-service.xml directly; it needs to be copied now
+         because if H2 is the chosen JMS backend this file needs to exist in the target directory so
+         it can be copied to the 'jms' directory in time -->
+    <copy file="src/main/resources/jbossas/server/default/deploy/${jms.h2.dir}/rhq-jdbc2-service.xml"
+          tofile="${jboss.deploy.dir}/${jms.h2.dir}/rhq-jdbc2-service.xml" verbose="true" failonerror="false" />
+  </target>
+
+  <target name="make-default-jms-backend-h2" if="use-h2">
+    <echo>H2 will be your JMS backend!</echo>
+    <delete dir="${jboss.deploy.dir}/jms"/>
+    <copy todir="${jboss.deploy.dir}/jms">
+       <fileset dir="${jboss.deploy.dir}/${jms.h2.dir}"/>
     </copy>
   </target>
 
@@ -620,6 +667,7 @@ rhq.server.agent-plugin-scan-period-ms=${rhq.server.agent-plugin-scan-period-ms}
                    process-ds-files,
                    deploy-postgres-ds,
                    deploy-oracle-ds,
+                   deploy-h2-ds,
                    undeploy-jmx-console,
                    undeploy-mail-service,
                    undeploy-cluster-service,
@@ -720,6 +768,13 @@ rhq.server.agent-plugin-scan-period-ms=${rhq.server.agent-plugin-scan-period-ms}
   <target name="deploy-oracle-ds" if="predeploy-oracle">
      <echo>Oracle will be your datasource backend!</echo>
      <copy file="${jboss.deploy.dir}/${ds.oracle.file}"
+           tofile="${jboss.deploy.dir}/rhq-ds.xml"
+           verbose="true"/>
+  </target>
+
+  <target name="deploy-h2-ds" if="predeploy-h2">
+     <echo>H2 will be your datasource backend!</echo>
+     <copy file="${jboss.deploy.dir}/${ds.h2.file}"
            tofile="${jboss.deploy.dir}/rhq-ds.xml"
            verbose="true"/>
   </target>

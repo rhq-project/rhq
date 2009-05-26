@@ -39,6 +39,8 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
+import org.rhq.core.db.H2DatabaseType;
+import org.rhq.core.db.OracleDatabaseType;
 import org.rhq.core.db.PostgresqlDatabaseType;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
@@ -198,18 +200,20 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
             conn = dataSource.getConnection();
             DatabaseType dbType = DatabaseTypeFactory.getDatabaseType(conn);
 
-            if (dbType instanceof PostgresqlDatabaseType) {
+            if (dbType instanceof PostgresqlDatabaseType || dbType instanceof H2DatabaseType) {
                 insertQuery = conn.prepareStatement(MeasurementBaseline.NATIVE_QUERY_CALC_FIRST_AUTOBASELINE_POSTGRES);
                 insertQuery.setLong(1, computeTime);
                 insertQuery.setLong(2, startTime);
                 insertQuery.setLong(3, endTime);
                 insertQuery.setLong(4, startTime);
-            } else {
+            } else if (dbType instanceof OracleDatabaseType) {
                 insertQuery = conn.prepareStatement(MeasurementBaseline.NATIVE_QUERY_CALC_FIRST_AUTOBASELINE_ORACLE);
                 insertQuery.setLong(1, computeTime);
                 insertQuery.setLong(2, startTime);
                 insertQuery.setLong(3, endTime);
                 insertQuery.setLong(4, startTime);
+            } else {
+                throw new IllegalArgumentException("Unknown database type, can't continue: " + dbType);
             }
 
             int inserted = insertQuery.executeUpdate();

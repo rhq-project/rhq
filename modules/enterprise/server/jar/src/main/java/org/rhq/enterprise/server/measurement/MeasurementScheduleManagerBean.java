@@ -50,6 +50,7 @@ import org.jboss.annotation.IgnoreDependency;
 
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
+import org.rhq.core.db.H2DatabaseType;
 import org.rhq.core.db.OracleDatabaseType;
 import org.rhq.core.db.PostgresqlDatabaseType;
 import org.rhq.core.domain.auth.Subject;
@@ -423,7 +424,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         DatabaseType type = systemManager.getDatabaseType();
 
         String queryString;
-        if (type instanceof PostgresqlDatabaseType) {
+        if (type instanceof PostgresqlDatabaseType || type instanceof H2DatabaseType) {
             queryString = "select defi.id, defi.display_name, defi.description,defi.category,defi.data_type, foo.coMin, foo.coMax, foo.coAny, foo.coAll "
                 + " from RHQ_measurement_def defi, "
                 + " ( "

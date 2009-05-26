@@ -128,9 +128,6 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
     private AgentManagerLocal agentClientManager;
 
     @EJB
-    @IgnoreDependency
-    private MeasurementScheduleManagerLocal scheduleManager;
-    @EJB
     private ResourceGroupManagerLocal resourceGroupManager;
     @EJB
     private CallTimeDataManagerLocal callTimeDataManager;
@@ -289,13 +286,8 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
 
         Connection conn = null;
         PreparedStatement ps = null;
-        DatabaseType dbType = null;
         try {
             conn = rhqDs.getConnection();
-
-            // TODO GH: Can't do this managed txn? conn.setAutoCommit(false);
-            dbType = DatabaseTypeFactory.getDatabaseType(conn);
-
             ps = conn.prepareStatement(TRAIT_INSERT_STATEMENT);
 
             for (MeasurementDataTrait aData : data) {
@@ -355,6 +347,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
         return aggregate;
     }
 
+    @SuppressWarnings("unchecked")
     public Set<MeasurementData> getLiveData(int resourceId, Set<Integer> definitionIds) {
         Resource resource = entityManager.find(Resource.class, resourceId);
         Agent agent = resource.getAgent();
@@ -376,7 +369,6 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
         return values;
     }
 
-    @SuppressWarnings("unchecked")
     public List<List<MeasurementDataNumericHighLowComposite>> getMeasurementDataForResource(Subject subject,
         int resourceId, int[] measurementDefinitionIds, long beginTime, long endTime, int numberOfDataPoints) {
         return MeasurementDataManagerUtility.getInstance(rhqDs).getMeasurementDataForResource(beginTime, endTime,
@@ -462,6 +454,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
      * @param begin          begin time
      * @param end            end time
      */
+    @SuppressWarnings("unchecked")
     public Map<Integer, List<MetricDisplaySummary>> getNarrowedMetricDisplaySummariesForResourcesAndParent(
         Subject subject, int resourceTypeId, int parentId, List<Integer> resourceIds, long begin, long end) {
         Map<Integer, List<MetricDisplaySummary>> sumMap = new HashMap<Integer, List<MetricDisplaySummary>>();
@@ -588,6 +581,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
      * {@link ResourceType}. Summaries only contain a basic selection of fields for the purpose of filling the Child
      * resource popups.
      */
+    @SuppressWarnings("unchecked")
     public Map<Integer, List<MetricDisplaySummary>> getNarrowedMetricDisplaySummaryForCompatibleResources(
         Subject subject, Collection<Resource> resources, long beginTime, long endTime) {
         Map<Integer, List<MetricDisplaySummary>> resMap = new HashMap<Integer, List<MetricDisplaySummary>>();

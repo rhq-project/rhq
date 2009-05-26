@@ -41,6 +41,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
+import org.rhq.core.db.H2DatabaseType;
 import org.rhq.core.db.OracleDatabaseType;
 import org.rhq.core.db.PostgresqlDatabaseType;
 import org.rhq.core.domain.auth.Subject;
@@ -120,7 +121,7 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
             String theQuery;
 
             // Compute the OOBs and put them in the tmp table
-            if (dbType instanceof PostgresqlDatabaseType)
+            if (dbType instanceof PostgresqlDatabaseType || dbType instanceof H2DatabaseType)
                 theQuery = MeasurementOOB.INSERT_QUERY.replace("%TRUE%", "true");
             else if (dbType instanceof OracleDatabaseType)
                 theQuery = MeasurementOOB.INSERT_QUERY.replace("%TRUE%", "1");
@@ -140,9 +141,7 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
 
             // Update the real table from the tmp table
             if (dbType instanceof PostgresqlDatabaseType) {
-                theQuery = MeasurementOOB.UPDATE_MASTER_POSTGRES;
-
-                stmt = conn.prepareStatement(theQuery);
+                stmt = conn.prepareStatement(MeasurementOOB.UPDATE_MASTER_POSTGRES);
                 stmt.executeUpdate();
                 t1 = System.currentTimeMillis();
                 timings.add((t1 - t0));
@@ -156,12 +155,25 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
                 timings.add((t1 - t0));
                 log.debug("Insert of new oobs done");
             } else if (dbType instanceof OracleDatabaseType) {
-                theQuery = MeasurementOOB.MERGE_TABLES_ORACLE;
-                stmt = conn.prepareStatement(theQuery);
+                stmt = conn.prepareStatement(MeasurementOOB.MERGE_TABLES_ORACLE);
                 stmt.executeUpdate();
                 t1 = System.currentTimeMillis();
                 timings.add((t1 - t0));
                 log.debug("Merge of master table done");
+            } else if (dbType instanceof H2DatabaseType) {
+                stmt = conn.prepareStatement(MeasurementOOB.UPDATE_MASTER_H2);
+                stmt.executeUpdate();
+                t1 = System.currentTimeMillis();
+                timings.add((t1 - t0));
+                log.debug("Update of master table done");
+                t0 = t1;
+
+                // Insert missing ones
+                stmt = conn.prepareStatement(MeasurementOOB.INSERT_NEW_ONES);
+                stmt.executeUpdate();
+                t1 = System.currentTimeMillis();
+                timings.add((t1 - t0));
+                log.debug("Insert of new oobs done");
             } else
                 throw new IllegalArgumentException("Unknown database type, can't continue: " + dbType);
 

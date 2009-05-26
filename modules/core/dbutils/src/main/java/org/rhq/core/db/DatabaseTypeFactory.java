@@ -50,6 +50,7 @@ public class DatabaseTypeFactory {
         DB_URL_DRIVER_MAP.put("jdbc:postgresql:", "org.postgresql.Driver");
         DB_URL_DRIVER_MAP.put("jdbc:oracle:thin:@", "oracle.jdbc.driver.OracleDriver");
         DB_URL_DRIVER_MAP.put("jdbc:oracle:oci8:", "oracle.jdbc.driver.OracleDriver");
+        DB_URL_DRIVER_MAP.put("jdbc:h2:", "org.h2.Driver");
     }
 
     /**
@@ -157,6 +158,10 @@ public class DatabaseTypeFactory {
                 } else if (db_version.startsWith("oracle database 11g")) {
                     database_type_class = Oracle11DatabaseType.class;
                 }
+            } else if (db_name.indexOf("h2") != -1) {
+                if (db_version.startsWith("1.1")) {
+                    database_type_class = H2v11DatabaseType.class;
+                }
             }
 
             if (database_type_class == null) {
@@ -249,5 +254,30 @@ public class DatabaseTypeFactory {
      */
     public static boolean isOracle(DatabaseType type) {
         return (type instanceof OracleDatabaseType);
+    }
+
+    /**
+     * Is the database H2?
+     *
+     * @param  c the connection to the database
+     *
+     * @return <code>true</code> if the connection is talking to an H2 database
+     *
+     * @throws Exception
+     */
+    public static boolean isH2(Connection c) throws Exception {
+        DatabaseType type = getDatabaseType(c);
+        return isH2(type);
+    }
+
+    /**
+     * Determines if the given type refers to an H2 database.
+     *
+     * @param  type
+     *
+     * @return <code>true</code> if the type is an H2 database
+     */
+    public static boolean isH2(DatabaseType type) {
+        return (type instanceof H2DatabaseType);
     }
 }

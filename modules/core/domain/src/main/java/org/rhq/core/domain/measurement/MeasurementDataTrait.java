@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.domain.measurement;
 
 import javax.persistence.Column;
@@ -85,7 +85,7 @@ public class MeasurementDataTrait extends MeasurementData {
      */
     public static final String NATIVE_QUERY_PURGE = "" //
         + "DELETE FROM rhq_measurement_data_trait t " //
-        + "WHERE (t.schedule_id, t.time_stamp) in " //
+        + "WHERE EXISTS " // rewritten as exists because H2 doesn't support multi-column conditions
         + "  (SELECT t2.schedule_id, t2.time_stamp " //
         + "   FROM rhq_measurement_data_trait t2, " //
         + "     (SELECT max(t4.time_stamp) as mx, t4.schedule_id as schedule_id " //
@@ -93,7 +93,9 @@ public class MeasurementDataTrait extends MeasurementData {
         + "      WHERE t4.time_stamp < ? " //
         + "      GROUP BY t4.schedule_id) t3 " //
         + "   WHERE t2.schedule_id = t3.schedule_id " //
-        + "   AND t2.time_stamp < t3.mx) ";
+        + "   AND t2.time_stamp < t3.mx " //
+        + "   AND t.time_stamp = t2.time_stamp " // rewrote multi-column conditions as additional
+        + "   AND t.schedule_id = t2.schedule_id) "; // correlated restrictions to the delete table
 
     private static final long serialVersionUID = 1L;
 

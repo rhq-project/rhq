@@ -177,6 +177,18 @@ public class MeasurementOOB {
                            "WHEN MATCHED THEN UPDATE SET oob_factor = tmp_.oob_factor, time_stamp = tmp_.time_stamp    \n" +
                            "WHEN NOT MATCHED THEN INSERT (oob_.schedule_id, oob_.time_stamp, oob_.oob_factor) \n" +
                            "    VALUES (tmp_.schedule_id, tmp_.time_stamp, tmp_.oob_factor)";
+    
+    /* 
+     * H2 syntax doesn't support the more complex SET...FROM...WHERE like Postgres, and although it does support
+     * MERGE it doesn't support the WHEN [NOT] MATCHED syntax; so we'll just delete any and all OOBs that have become
+     * obsolete, and follow that up with a call to INSERT_NEW_ONES, which should give us the same effect as row updates
+     */
+    public static final String UPDATE_MASTER_H2 = "" //
+        + " DELETE FROM rhq_measurement_oob " //
+        + " WHERE EXISTS ( SELECT oob_tmp.schedule_id " //
+        + "                  FROM rhq_measurement_oob_tmp oob_tmp " //
+        + "                 WHERE oob_tmp.oob_factor > rhq_measurement_oob.oob_factor " //
+        + "                   AND oob_tmp.schedule_id = rhq_measurement_oob.schedule_id ) ";
 
     public static final String INSERT_NEW_ONES =
                     "insert into rhq_measurement_oob (oob_factor, schedule_id,  time_stamp)  (\n" +

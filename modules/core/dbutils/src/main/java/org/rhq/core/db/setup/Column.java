@@ -25,10 +25,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.db.TypeMap;
@@ -189,10 +191,7 @@ class Column {
         return this.m_sDefault;
     }
 
-    protected String getCreateCommand(List cmds, Collection typemaps, DatabaseType dbtype) {
-        String type = this.getMappedType(typemaps, dbtype);
-        String strCmd = this.getName() + ' ' + type;
-
+    protected void validate(String type) {
         if (type.equals("VARCHAR2") && (this.getSize() == 0)) {
             throw new RuntimeException("VARCHAR columns must declare size attributes for oracle compatiblity "
                 + this.m_strTableName + ":" + this.getName());
@@ -209,6 +208,18 @@ class Column {
                 "Columns with sequences must be at most 25 characters including their table names for oracle compatibility "
                     + this.m_strTableName + ":" + this.getName());
         }
+
+        if (this.ondelete != null && this.m_sReferences == null) {
+            throw new RuntimeException("Specifying 'ondelete' requires a 'references' attribute also: "
+                + this.m_strTableName + ":" + this.getName());
+        }
+    }
+
+    protected String getCreateCommand(List cmds, Collection typemaps, DatabaseType dbtype) {
+        String type = this.getMappedType(typemaps, dbtype);
+        String strCmd = this.getName() + ' ' + type;
+
+        validate(type);
 
         if (this.getSize() > 0) {
             strCmd = strCmd + this.getSizeCommand(cmds);
@@ -239,10 +250,6 @@ class Column {
             if (this.ondelete != null) {
                 strCmd += " ON DELETE " + this.getOnDelete();
             }
-        } else if (this.ondelete != null) {
-            throw new RuntimeException("Specifying 'ondelete' requires a 'references' attribute also: "
-                + this.m_strTableName + ":" + this.getName());
-
         }
 
         return strCmd;
@@ -266,6 +273,8 @@ class Column {
                         col = new OracleColumn(node, table);
                     } else if (DatabaseTypeFactory.isPostgres(dbtype)) {
                         col = new PostgresColumn(node, table);
+                    } else if (DatabaseTypeFactory.isH2(dbtype)) {
+                        col = new H2Column(node, table);
                     } else {
                         col = new Column(node, table);
                     }

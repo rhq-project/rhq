@@ -341,17 +341,7 @@ public class PersistenceUtility {
 
     // wanted to combine postgres and oracle methods, but org.rhq.core.db.DatabaseType objects are not visible to domain
     public static String addPostgresNativePagingSortingToQuery(String query, PageControl pageControl) {
-        StringBuilder queryWithPagingSorting = new StringBuilder(query.length() + 50);
-        queryWithPagingSorting.append(query);
-
-        // for postgres, first order by
-        buildOrderBy(queryWithPagingSorting, pageControl.getOrderingFieldsAsArray());
-
-        // for postgres, then paginate
-        queryWithPagingSorting.append(" LIMIT ").append(pageControl.getPageSize());
-        queryWithPagingSorting.append(" OFFSET ").append(pageControl.getStartRow());
-
-        return queryWithPagingSorting.toString();
+        return addLimitOffsetToQuery(query, pageControl);
     }
 
     // wanted to combine postgres and oracle methods, but org.rhq.core.db.DatabaseType objects are not visible to domain
@@ -376,6 +366,25 @@ public class PersistenceUtility {
         // for oracle, paginate low off of the outer projection
         queryWithPagingSorting.append(" ) outerResults ");
         queryWithPagingSorting.append(" WHERE rnum >= ").append(minRowNum);
+
+        return queryWithPagingSorting.toString();
+    }
+
+    // wanted to combine postgres and oracle methods, but org.rhq.core.db.DatabaseType objects are not visible to domain
+    public static String addH2NativePagingSortingToQuery(String query, PageControl pageControl) {
+        return addLimitOffsetToQuery(query, pageControl);
+    }
+
+    private static String addLimitOffsetToQuery(String query, PageControl pageControl) {
+        StringBuilder queryWithPagingSorting = new StringBuilder(query.length() + 50);
+        queryWithPagingSorting.append(query);
+
+        // for postgres, first order by
+        buildOrderBy(queryWithPagingSorting, pageControl.getOrderingFieldsAsArray());
+
+        // for postgres, then paginate
+        queryWithPagingSorting.append(" LIMIT ").append(pageControl.getPageSize());
+        queryWithPagingSorting.append(" OFFSET ").append(pageControl.getStartRow());
 
         return queryWithPagingSorting.toString();
     }

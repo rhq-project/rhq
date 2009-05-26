@@ -48,6 +48,7 @@ import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
+import org.rhq.core.db.H2DatabaseType;
 import org.rhq.core.db.OracleDatabaseType;
 import org.rhq.core.db.PostgresqlDatabaseType;
 import org.rhq.core.domain.plugin.Plugin;
@@ -303,7 +304,7 @@ public class AgentPluginURLDeploymentScanner extends URLDeploymentScanner {
         if (null == this.dbType) {
             this.dbType = DatabaseTypeFactory.getDatabaseType(conn);
         }
-        if (dbType instanceof PostgresqlDatabaseType) {
+        if (dbType instanceof PostgresqlDatabaseType || dbType instanceof H2DatabaseType) {
             ps.setBoolean(index, enabled);
         } else if (dbType instanceof OracleDatabaseType) {
             ps.setInt(index, (enabled ? 1 : 0));

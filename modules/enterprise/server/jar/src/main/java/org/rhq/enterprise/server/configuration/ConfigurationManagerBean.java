@@ -87,6 +87,7 @@ import org.rhq.enterprise.server.configuration.job.AggregatePluginConfigurationU
 import org.rhq.enterprise.server.configuration.job.AggregateResourceConfigurationUpdateJob;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
@@ -222,8 +223,11 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
     public PluginConfigurationUpdate updatePluginConfiguration(Subject whoami, int resourceId,
         Configuration configuration) {
-        Resource resource = this.entityManager.find(Resource.class, resourceId);
-        if (resource == null) {
+        Subject overlord = subjectManager.getOverlord();
+        Resource resource;
+        try {
+            resource = resourceManager.getResourceById(overlord, resourceId);
+        } catch (ResourceNotFoundException rfne) {
             throw new IllegalStateException("Cannot update plugin config for unknown resource [" + resourceId + "]");
         }
 

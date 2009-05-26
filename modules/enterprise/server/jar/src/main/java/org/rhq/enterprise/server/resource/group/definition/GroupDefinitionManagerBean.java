@@ -45,6 +45,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
+import org.rhq.core.db.H2DatabaseType;
 import org.rhq.core.db.OracleDatabaseType;
 import org.rhq.core.db.PostgresqlDatabaseType;
 import org.rhq.core.domain.auth.Subject;
@@ -474,6 +475,8 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
                 query = PersistenceUtility.addPostgresNativePagingSortingToQuery(query, pc);
             } else if (this.dbType instanceof OracleDatabaseType) {
                 query = PersistenceUtility.addOracleNativePagingSortingToQuery(query, pc);
+            } else if (this.dbType instanceof H2DatabaseType) {
+                query = PersistenceUtility.addH2NativePagingSortingToQuery(query, pc);
             } else {
                 throw new RuntimeException("Unknown database type: " + this.dbType);
             }

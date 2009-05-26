@@ -53,6 +53,7 @@ import org.jboss.annotation.IgnoreDependency;
 
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
+import org.rhq.core.db.H2DatabaseType;
 import org.rhq.core.db.OracleDatabaseType;
 import org.rhq.core.db.PostgresqlDatabaseType;
 import org.rhq.core.domain.auth.Subject;
@@ -1027,7 +1028,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
 
             if (groupId == null) {
                 // only filter by visibility if the user isn't selecting a group directly
-                if (this.dbType instanceof PostgresqlDatabaseType) {
+                if (this.dbType instanceof PostgresqlDatabaseType || this.dbType instanceof H2DatabaseType) {
                     query = query.replace("%GROUP_AND_VISIBILITY_FRAGMENT_WHERE%", "rg.visible = TRUE");
                 } else if (this.dbType instanceof OracleDatabaseType) {
                     query = query.replace("%GROUP_AND_VISIBILITY_FRAGMENT_WHERE%", "rg.visible = 1");
@@ -1043,6 +1044,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
                 query = PersistenceUtility.addPostgresNativePagingSortingToQuery(query, pc);
             } else if (this.dbType instanceof OracleDatabaseType) {
                 query = PersistenceUtility.addOracleNativePagingSortingToQuery(query, pc);
+            } else if (this.dbType instanceof H2DatabaseType) {
+                query = PersistenceUtility.addH2NativePagingSortingToQuery(query, pc);
             } else {
                 throw new RuntimeException("Unknown database type: " + this.dbType);
             }

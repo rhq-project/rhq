@@ -39,6 +39,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
+import org.rhq.core.db.H2DatabaseType;
 import org.rhq.core.db.OracleDatabaseType;
 import org.rhq.core.db.PostgresqlDatabaseType;
 import org.rhq.core.domain.auth.Subject;
@@ -108,6 +109,8 @@ public class ResourceAvailabilityManagerBean implements ResourceAvailabilityMana
                 nextValSqlFragment = "nextval('%s_id_seq'::text)";
             } else if (dbType instanceof OracleDatabaseType) {
                 nextValSqlFragment = "%s_id_seq.nextval";
+            } else if (dbType instanceof H2DatabaseType) {
+                nextValSqlFragment = "nextval('%s_id_seq')";
             } else {
                 throw new IllegalStateException("insertNeededAvailabilityForImportedResources does not support "
                     + dbType);

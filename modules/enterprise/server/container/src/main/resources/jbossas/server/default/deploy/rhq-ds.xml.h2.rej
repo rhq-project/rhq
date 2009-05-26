@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+
+<!-- The RHQ datasources for H2 -->
+
+<datasources>
+
+  <xa-datasource>
+    <jndi-name>RHQDS</jndi-name>
+    <xa-datasource-class>${rhq.server.database.xa-datasource-class}</xa-datasource-class>
+    <xa-datasource-property name="User">${rhq.server.database.user-name}</xa-datasource-property>
+    <xa-datasource-property name="Password">${rhq.server.database.password}</xa-datasource-property>
+    <xa-datasource-property name="URL">${rhq.server.database.connection-url}</xa-datasource-property>
+
+    <no-tx-separate-pools/>
+    <track-connection-by-tx/>
+    <isSameRM-override-value>false</isSameRM-override-value>
+    
+    <user-name>${rhq.server.database.user-name}</user-name>
+    <password>${rhq.server.database.password}</password>
+    <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>
+    <min-pool-size>5</min-pool-size>
+    <max-pool-size>50</max-pool-size>
+    <blocking-timeout-millis>30000</blocking-timeout-millis>
+    <idle-timeout-minutes>15</idle-timeout-minutes>
+    <prepared-statement-cache-size>75</prepared-statement-cache-size>
+    <check-valid-connection-sql>SELECT * FROM DUAL</check-valid-connection-sql>
+  </xa-datasource>
+
+  <!-- Quartz needs a no-tx datasource defined -->
+  <no-tx-datasource>
+    <jndi-name>NoTxRHQDS</jndi-name>
+    <connection-url>${rhq.server.database.connection-url}</connection-url>
+    <driver-class>${rhq.server.database.driver-class}</driver-class>
+    <user-name>${rhq.server.database.user-name}</user-name>
+    <password>${rhq.server.database.password}</password>
+    <connection-property name="char.encoding">UTF-8</connection-property>
+    <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>
+    <min-pool-size>2</min-pool-size>
+    <max-pool-size>5</max-pool-size>
+    <blocking-timeout-millis>30000</blocking-timeout-millis>
+    <idle-timeout-minutes>15</idle-timeout-minutes>
+    <prepared-statement-cache-size>75</prepared-statement-cache-size>
+    <check-valid-connection-sql>SELECT * FROM DUAL</check-valid-connection-sql>
+  </no-tx-datasource>
+
+
+</datasources>

@@ -362,8 +362,6 @@
                <c:property-options>
                   <c:option name="socket"    value="socket" default="true" />
                   <c:option name="sslsocket" value="sslsocket" />
-                  <c:option name="http"      value="http" />
-                  <c:option name="https"     value="https" />
                </c:property-options>
             </c:simple-property>
             <c:simple-property name="rhq.communications.connector.bind-address" type="string" activationPolicy="restart" required="false" default="" displayName="Agent IP Address" description="The address the agent binds to when listening for incoming commands from the RHQ Server" />

@@ -1,25 +1,25 @@
- /*
-  * Jopr Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * Jopr Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.jboss.on.common.jbossas.test;
 
 import java.io.BufferedOutputStream;
@@ -72,7 +72,7 @@ public class JBPMWorkflowManagerTest {
         packageDetails.setExtraProperties(extraProperties);
 
         InputStream processStream = this.getClass().getClassLoader().getResourceAsStream(
-                "handlers/JBPMWorkflowManagerTest-1.xml");
+            "handlers/JBPMWorkflowManagerTest-1.xml");
         byte[] process = new byte[processStream.available()];
         processStream.read(process);
         packageDetails.setMetadata(process);
@@ -86,20 +86,19 @@ public class JBPMWorkflowManagerTest {
         jbossPluginConfiguration = new Configuration();
 
         // Copy the test jboss server directory structure over to target to be worked on
-        File jbossServerZip =
-            new File("src" + File.separator + "test" + File.separator +
-                     "resources" + File.separator + "jboss-server.zip");
+        File jbossServerZip = new File("src" + File.separator + "test" + File.separator + "resources" + File.separator
+            + "jboss-server.zip");
         File targetDir = new File("target");
         File jbossTestServerDir = new File("target" + File.separator + "jboss-server");
-        File jbossServerDir =
-            new File(jbossTestServerDir.getAbsolutePath() + File.separator + "server" + File.separator + "default");
+        File jbossServerDir = new File(jbossTestServerDir.getAbsolutePath() + File.separator + "server"
+            + File.separator + "default");
 
         unzip(jbossServerZip, targetDir);
 
-        jbossPluginConfiguration.put(new PropertySimple(JBOSS_HOME_DIR_CONFIG_PROP,
-                jbossTestServerDir.getAbsolutePath()));
-        jbossPluginConfiguration.put(new PropertySimple(CONFIGURATION_PATH_CONFIG_PROP,
-                jbossServerDir.getAbsolutePath()));
+        jbossPluginConfiguration.put(new PropertySimple(JBOSS_HOME_DIR_CONFIG_PROP, jbossTestServerDir
+            .getAbsolutePath()));
+        jbossPluginConfiguration.put(new PropertySimple(CONFIGURATION_PATH_CONFIG_PROP, jbossServerDir
+            .getAbsolutePath()));
     }
 
     @Test(enabled = ENABLE_TESTS)
@@ -113,10 +112,12 @@ public class JBPMWorkflowManagerTest {
         mockContentServices.setFilename("test-patch.zip");
 
         // Test
-        JBPMWorkflowManager manager = new JBPMWorkflowManager(mockContentContext, mockFacade, getJBossPaths(jbossPluginConfiguration));
+        JBPMWorkflowManager manager = new JBPMWorkflowManager(mockContentContext, mockFacade,
+            getJBossPaths(jbossPluginConfiguration));
         DeployIndividualPackageResponse response = manager.run(packageDetails);
 
-        assert response.getResult() == ContentResponseResult.SUCCESS : "Incorrect response status. Expected: Success, Found: " + response.getResult();
+        assert response.getResult() == ContentResponseResult.SUCCESS : "Incorrect response status. Expected: Success, Found: "
+            + response.getResult();
 
         List<DeployPackageStep> steps = response.getDeploymentSteps();
 
@@ -139,10 +140,12 @@ public class JBPMWorkflowManagerTest {
         mockContentServices.setFilename("nonexistent-file");
 
         // Test
-        JBPMWorkflowManager manager = new JBPMWorkflowManager(mockContentContext, mockFacade, getJBossPaths(jbossPluginConfiguration));
+        JBPMWorkflowManager manager = new JBPMWorkflowManager(mockContentContext, mockFacade,
+            getJBossPaths(jbossPluginConfiguration));
         DeployIndividualPackageResponse response = manager.run(packageDetails);
 
-        assert response.getResult() == ContentResponseResult.FAILURE : "Incorrect response status. Expected: Failed, Found: " + response.getResult();
+        assert response.getResult() == ContentResponseResult.FAILURE : "Incorrect response status. Expected: Failed, Found: "
+            + response.getResult();
 
         List<DeployPackageStep> steps = response.getDeploymentSteps();
 
@@ -152,14 +155,15 @@ public class JBPMWorkflowManagerTest {
         int counter = 0;
         for (DeployPackageStep step : steps) {
             if (counter++ == 0) {
-                assert step.getStepResult() == ContentResponseResult.FAILURE: "First step was not reported as failed. Expected: Failed, Found: " + step.getStepResult();
-            }
-            else {
-                assert step.getStepResult() == ContentResponseResult.NOT_PERFORMED : "Subsequent steps not reported as not executed. Step number: " +  counter + ", Expected: Not Performed, Found: " + step.getStepResult();
+                assert step.getStepResult() == ContentResponseResult.FAILURE : "First step was not reported as failed. Expected: Failed, Found: "
+                    + step.getStepResult();
+            } else {
+                assert step.getStepResult() == ContentResponseResult.NOT_PERFORMED : "Subsequent steps not reported as not executed. Step number: "
+                    + counter + ", Expected: Not Performed, Found: " + step.getStepResult();
             }
         }
     }
-    
+
     @Test(enabled = ENABLE_TESTS)
     public void successfulTranslateSteps() throws Exception {
         // Setup
@@ -171,7 +175,8 @@ public class JBPMWorkflowManagerTest {
         mockContentServices.setFilename("test-patch.zip");
 
         // Test
-        JBPMWorkflowManager manager = new JBPMWorkflowManager(mockContentContext, mockFacade, getJBossPaths(jbossPluginConfiguration));
+        JBPMWorkflowManager manager = new JBPMWorkflowManager(mockContentContext, mockFacade,
+            getJBossPaths(jbossPluginConfiguration));
         List<DeployPackageStep> steps = manager.translateSteps(packageDetails);
 
         assert steps != null : "Null steps received from call to translate steps";
@@ -179,7 +184,8 @@ public class JBPMWorkflowManagerTest {
 
         for (DeployPackageStep step : steps) {
             assert step.getDescription() != null : "Null description for step: " + step;
-            assert step.getStepResult() == ContentResponseResult.NOT_PERFORMED : "Incorrect step result for step: " + step;
+            assert step.getStepResult() == ContentResponseResult.NOT_PERFORMED : "Incorrect step result for step: "
+                + step;
         }
     }
 
@@ -209,16 +215,16 @@ public class JBPMWorkflowManagerTest {
             }
         }
     }
-    
+
     private JBossASPaths getJBossPaths(Configuration jbossPluginConfiguration) {
-    	JBossASPaths paths = new JBossASPaths();
-    	
-    	String homeDir = jbossPluginConfiguration.getSimpleValue(JBOSS_HOME_DIR_CONFIG_PROP, null);
-    	String serverDir = jbossPluginConfiguration.getSimpleValue(CONFIGURATION_PATH_CONFIG_PROP, null);
-		
-    	paths.setHomeDir(homeDir);
-		paths.setServerDir(serverDir);
- 
-    	return paths;
+        JBossASPaths paths = new JBossASPaths();
+
+        String homeDir = jbossPluginConfiguration.getSimpleValue(JBOSS_HOME_DIR_CONFIG_PROP, null);
+        String serverDir = jbossPluginConfiguration.getSimpleValue(CONFIGURATION_PATH_CONFIG_PROP, null);
+
+        paths.setHomeDir(homeDir);
+        paths.setServerDir(serverDir);
+
+        return paths;
     }
 }

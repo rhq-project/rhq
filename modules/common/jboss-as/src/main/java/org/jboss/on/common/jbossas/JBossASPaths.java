@@ -30,32 +30,32 @@ package org.jboss.on.common.jbossas;
  */
 public class JBossASPaths {
 
-	private String homeDir;
-	private String serverDir;
+    private String homeDir;
+    private String serverDir;
 
-	public JBossASPaths() {
+    public JBossASPaths() {
 
-	}
+    }
 
-	public JBossASPaths(String homeDir, String serverDir) {
-		super();
-		this.homeDir = homeDir;
-		this.serverDir = serverDir;
-	}
+    public JBossASPaths(String homeDir, String serverDir) {
+        super();
+        this.homeDir = homeDir;
+        this.serverDir = serverDir;
+    }
 
-	public String getHomeDir() {
-		return homeDir;
-	}
+    public String getHomeDir() {
+        return homeDir;
+    }
 
-	public void setHomeDir(String homeDir) {
-		this.homeDir = homeDir;
-	}
+    public void setHomeDir(String homeDir) {
+        this.homeDir = homeDir;
+    }
 
-	public String getServerDir() {
-		return serverDir;
-	}
+    public String getServerDir() {
+        return serverDir;
+    }
 
-	public void setServerDir(String serverDir) {
-		this.serverDir = serverDir;
-	}
+    public void setServerDir(String serverDir) {
+        this.serverDir = serverDir;
+    }
 }

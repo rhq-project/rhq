@@ -1,25 +1,25 @@
- /*
-  * Jopr Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * Jopr Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package com.jboss.jbossnetwork.product.jbpm.handlers;
 
 import org.apache.commons.logging.Log;
@@ -134,7 +134,7 @@ public abstract class BaseHandler implements ActionHandler {
         try {
             run(executionContext);
         } catch (Exception e) {
-//            error(executionContext, new ActionHandlerException(e), e.getMessage(), TRANSITION_ERROR);
+            //            error(executionContext, new ActionHandlerException(e), e.getMessage(), TRANSITION_ERROR);
             logger.error("Error caught from run", e);
         }
     }
@@ -246,9 +246,10 @@ public abstract class BaseHandler implements ActionHandler {
         // in the additionalMessage field that is customized to what the handler does (i.e. "Could not download file").
         // Once we do more testing, I may revisit this and reenable this form of description generation.
         // jdobies, Mar 6, 2008
-        
+
         // lkrejci, 2009-05-25 - added additional check for nullity of the throwable's message because the description mustn't be null 
-        String description = (throwable == null || throwable.getMessage() == null) ? additionalMessage : throwable.getMessage();
+        String description = (throwable == null || throwable.getMessage() == null) ? additionalMessage : throwable
+            .getMessage();
 
         DeployPackageStep step = new DeployPackageStep(Integer.toString(stepCounter), description);
         step.setStepResult(result);

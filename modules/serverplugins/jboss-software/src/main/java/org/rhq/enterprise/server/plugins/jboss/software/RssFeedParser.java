@@ -58,7 +58,7 @@ public class RssFeedParser {
 
     public static final String JBOSS_AS4_PLUGIN_NAME = "JBossAS";
     public static final String JBOSS_AS5_PLUGIN_NAME = "JBossAS5";
-    
+
     public static final String ARCHITECTURE = "noarch";
 
     /**
@@ -85,7 +85,7 @@ public class RssFeedParser {
     private final Log log = LogFactory.getLog(this.getClass());
 
     private static final OSGiVersionComparator versionComparator = new OSGiVersionComparator();
-    
+
     // Public  --------------------------------------------
 
     public void parseResults(RssDocument feed, PackageSyncReport report,
@@ -288,12 +288,12 @@ public class RssFeedParser {
 
         return null;
     }
-    
+
     private String getPluginName(String jbossVersion) {
-    	if (versionComparator.compare(jbossVersion, "5") >= 0) {
-    	    return JBOSS_AS5_PLUGIN_NAME;
-    	} else {
-    	    return JBOSS_AS4_PLUGIN_NAME;
-    	}
+        if (versionComparator.compare(jbossVersion, "5") >= 0) {
+            return JBOSS_AS5_PLUGIN_NAME;
+        } else {
+            return JBOSS_AS4_PLUGIN_NAME;
+        }
     }
 }

@@ -109,17 +109,15 @@ import org.rhq.plugins.jbossas5.util.ResourceComponentUtils;
  * @author Mark Spritzler
  * @author Ian Springer
  */
-public class ApplicationServerComponent
-        implements ResourceComponent, ProfileServiceComponent, CreateChildResourceFacet, MeasurementFacet,
-        ConfigurationFacet, ProgressListener, ContentFacet
-{
+public class ApplicationServerComponent implements ResourceComponent, ProfileServiceComponent,
+    CreateChildResourceFacet, MeasurementFacet, ConfigurationFacet, ProgressListener, ContentFacet {
     private static final String MANAGED_PROPERTY_GROUP = "managedPropertyGroup";
 
     private static final Pattern METRIC_NAME_PATTERN = Pattern.compile("(.*)\\|(.*)\\|(.*)\\|(.*)");
 
     private static final String HOME_DIR_PROP_NAME = "homeDir";
-    private static final String SERVER_HOME_DIR_PROP_NAME ="serverHomeDir";
-    
+    private static final String SERVER_HOME_DIR_PROP_NAME = "serverHomeDir";
+
     private final Log log = LogFactory.getLog(this.getClass());
 
     private ResourceContext resourceContext;
@@ -127,59 +125,51 @@ public class ApplicationServerComponent
     private File deployDirectory;
 
     private JBossASContentFacetDelegate contentFacetDelegate;
-    
+
     //private LogFileEventResourceComponentHelper logFileEventDelegate;
 
-    public AvailabilityType getAvailability()
-    {
+    public AvailabilityType getAvailability() {
         connect();
         // TODO: Ping the connection to make sure it's not defunct.
         return (this.connection != null) ? AvailabilityType.UP : AvailabilityType.DOWN;
     }
 
-    public void start(ResourceContext resourceContext)
-    {
+    public void start(ResourceContext resourceContext) {
         this.resourceContext = resourceContext;
         connect();
         //this.logFileEventDelegate = new LogFileEventResourceComponentHelper(this.resourceContext);
         //this.logFileEventDelegate.startLogFileEventPollers();
-        
+
         JBossASPaths paths = getJBossASPaths();
         ContentContext contentContext = resourceContext.getContentContext();
-        
+
         //TODO define the control action facade once we support operations on the app server.
         //OperationContext operationContext = resourceContext.getOperationContext();
         //
         //ControlActionFacade controlActionFacade = 
         //	new PluginContainerControlActionFacade(operationContext, this);
         ControlActionFacade controlActionFacade = null;
-        
-        JBPMWorkflowManager workflowManager = new JBPMWorkflowManager(contentContext, 
-        	controlActionFacade, paths);
-        
+
+        JBPMWorkflowManager workflowManager = new JBPMWorkflowManager(contentContext, controlActionFacade, paths);
+
         contentFacetDelegate = new JBossASContentFacetDelegate(workflowManager);
     }
 
-    public void stop()
-    {
+    public void stop() {
         //this.logFileEventDelegate.stopLogFileEventPollers();
     }
 
     // ------------ MeasurementFacet Implementation ------------
 
-    public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests)
-    {
+    public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) {
         ManagementView managementView = getConnection().getManagementView();
-        for (MeasurementScheduleRequest request : requests)
-        {
+        for (MeasurementScheduleRequest request : requests) {
             String metricName = request.getName();
-            try
-            {
+            try {
                 // Metric names are expected to have the following syntax:
                 // "<componentType>|<componentSubType>|<componentName>|<propertyName>"
                 Matcher matcher = METRIC_NAME_PATTERN.matcher(metricName);
-                if (!matcher.matches())
-                {
+                if (!matcher.matches()) {
                     log.error("Metric name '" + metricName + "' does not match pattern '" + METRIC_NAME_PATTERN + "'.");
                     continue;
                 }
@@ -189,32 +179,23 @@ public class ApplicationServerComponent
                 String propertyName = matcher.group(4);
                 ComponentType componentType = new ComponentType(componentCategory, componentSubType);
                 ManagedComponent component;
-                if (componentName.equals("*"))
-                {
+                if (componentName.equals("*")) {
                     component = ManagedComponentUtils.getSingletonManagedComponent(managementView, componentType);
-                }
-                else
-                {
+                } else {
                     component = ManagedComponentUtils.getManagedComponent(managementView, componentType, componentName);
                 }
                 Serializable value = ManagedComponentUtils.getSimplePropertyValue(component, propertyName);
-                if (value == null)
-                {
+                if (value == null) {
                     log.debug("Null value returned for metric '" + metricName + "'.");
                     continue;
                 }
-                if (request.getDataType() == DataType.MEASUREMENT)
-                {
-                    Number number = (Number)value;
+                if (request.getDataType() == DataType.MEASUREMENT) {
+                    Number number = (Number) value;
                     report.addData(new MeasurementDataNumeric(request, number.doubleValue()));
-                }
-                else if (request.getDataType() == DataType.TRAIT)
-                {
+                } else if (request.getDataType() == DataType.TRAIT) {
                     report.addData(new MeasurementDataTrait(request, value.toString()));
                 }
-            }
-            catch (RuntimeException e)
-            {
+            } catch (RuntimeException e) {
                 log.error("Failed to obtain metric '" + metricName + "'.", e);
             }
         }
@@ -222,8 +203,7 @@ public class ApplicationServerComponent
 
     // ------------ ConfigurationFacet Implementation ------------
 
-    public Configuration loadResourceConfiguration()
-    {
+    public Configuration loadResourceConfiguration() {
         /* Need to determine what we consider server configuration to return. Also need to understand
            what ComponentType the profile service would use to retrieve "server" level configuration.
         */
@@ -231,15 +211,13 @@ public class ApplicationServerComponent
         return null;
     }
 
-    public void updateResourceConfiguration(ConfigurationUpdateReport configurationUpdateReport)
-    {
+    public void updateResourceConfiguration(ConfigurationUpdateReport configurationUpdateReport) {
         // See above comment on server configuration.
     }
 
     // CreateChildResourceFacet  --------------------------------------------
 
-    public CreateResourceReport createResource(CreateResourceReport createResourceReport)
-    {
+    public CreateResourceReport createResource(CreateResourceReport createResourceReport) {
         //ProfileServiceFactory.refreshCurrentProfileView();
         ResourceType resourceType = createResourceReport.getResourceType();
         if (resourceType.getCreationDataType() == ResourceCreationDataType.CONTENT)
@@ -249,8 +227,7 @@ public class ApplicationServerComponent
         return createResourceReport;
     }
 
-    public File getDeployDirectory()
-    {
+    public File getDeployDirectory() {
         if (this.deployDirectory == null)
             this.deployDirectory = computeDeployDirectory();
         return this.deployDirectory;
@@ -258,113 +235,90 @@ public class ApplicationServerComponent
 
     // ProgressListener  --------------------------------------------
 
-    public void progressEvent(ProgressEvent eventInfo)
-    {
+    public void progressEvent(ProgressEvent eventInfo) {
         log.debug(eventInfo);
     }
 
     @Nullable
-    public ProfileServiceConnection getConnection()
-    {
+    public ProfileServiceConnection getConnection() {
         connect();
         return this.connection;
     }
 
     // ContentFacet -------------------------------------------------
-    
-    @Override
-	public DeployPackagesResponse deployPackages(
-			Set<ResourcePackageDetails> packages,
-			ContentServices contentServices) {
-		return contentFacetDelegate.deployPackages(packages, contentServices);
-	}
 
-	@Override
-	public Set<ResourcePackageDetails> discoverDeployedPackages(PackageType type) {
-		return contentFacetDelegate.discoverDeployedPackages(type);
-	}
+    public DeployPackagesResponse deployPackages(Set<ResourcePackageDetails> packages, ContentServices contentServices) {
+        return contentFacetDelegate.deployPackages(packages, contentServices);
+    }
 
-	@Override
-	public List<DeployPackageStep> generateInstallationSteps(
-			ResourcePackageDetails packageDetails) {
-		return contentFacetDelegate.generateInstallationSteps(packageDetails);
-	}
+    public Set<ResourcePackageDetails> discoverDeployedPackages(PackageType type) {
+        return contentFacetDelegate.discoverDeployedPackages(type);
+    }
 
-	@Override
-	public RemovePackagesResponse removePackages(
-			Set<ResourcePackageDetails> packages) {
-		return contentFacetDelegate.removePackages(packages);
-	}
+    public List<DeployPackageStep> generateInstallationSteps(ResourcePackageDetails packageDetails) {
+        return contentFacetDelegate.generateInstallationSteps(packageDetails);
+    }
 
-	@Override
-	public InputStream retrievePackageBits(ResourcePackageDetails packageDetails) {
-		return contentFacetDelegate.retrievePackageBits(packageDetails);
-	}
-    
+    public RemovePackagesResponse removePackages(Set<ResourcePackageDetails> packages) {
+        return contentFacetDelegate.removePackages(packages);
+    }
+
+    public InputStream retrievePackageBits(ResourcePackageDetails packageDetails) {
+        return contentFacetDelegate.retrievePackageBits(packageDetails);
+    }
+
     // ---------------------------------------------------------------
 
-	private void connect()
-    {
+    private void connect() {
         if (this.connection != null)
             return;
         // TODO: Check for a defunct connection and if found try to reconnect.
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
         String namingURL = pluginConfig.getSimpleValue(PluginConfigPropNames.NAMING_URL, null);
         ProfileServiceConnectionProvider connectionProvider;
-        if (namingURL != null)
-        {
+        if (namingURL != null) {
             validateNamingURL(namingURL);
             String principal = pluginConfig.getSimpleValue(PluginConfigPropNames.PRINCIPAL, null);
             String credentials = pluginConfig.getSimpleValue(PluginConfigPropNames.CREDENTIALS, null);
             connectionProvider = new RemoteProfileServiceConnectionProvider(namingURL, principal, credentials);
-        }
-        else
-        {
+        } else {
             connectionProvider = new LocalProfileServiceConnectionProvider();
         }
-        try
-        {
+        try {
             this.connection = connectionProvider.connect();
-        }
-        catch (RuntimeException e)
-        {
+        } catch (RuntimeException e) {
             log.debug("Failed to connect to Profile Service.", e);
         }
     }
 
     private void handleMiscManagedProperties(Collection<PropertyDefinition> managedPropertyGroup,
-                                             Map<String, ManagedProperty> managedProperties,
-                                             Configuration pluginConfiguration)
-    {
-        for (PropertyDefinition propertyDefinition : managedPropertyGroup)
-        {
+        Map<String, ManagedProperty> managedProperties, Configuration pluginConfiguration) {
+        for (PropertyDefinition propertyDefinition : managedPropertyGroup) {
             String propertyKey = propertyDefinition.getName();
             Property property = pluginConfiguration.get(propertyKey);
             ManagedProperty managedProperty = managedProperties.get(propertyKey);
-            if (managedProperty != null && property != null)
-            {
-                PropertyAdapter propertyAdapter = PropertyAdapterFactory.getPropertyAdapter(managedProperty.getMetaType());
+            if (managedProperty != null && property != null) {
+                PropertyAdapter propertyAdapter = PropertyAdapterFactory.getPropertyAdapter(managedProperty
+                    .getMetaType());
                 propertyAdapter.populateMetaValueFromProperty(property, managedProperty.getValue(), propertyDefinition);
             }
         }
     }
 
-    private static String getResourceName(Configuration pluginConfig, Configuration resourceConfig)
-    {
+    private static String getResourceName(Configuration pluginConfig, Configuration resourceConfig) {
         PropertySimple resourceNameProp = pluginConfig.getSimple(ManagedComponentComponent.Config.RESOURCE_NAME);
         if (resourceNameProp == null || resourceNameProp.getStringValue() == null)
             throw new IllegalStateException("Property [" + ManagedComponentComponent.Config.RESOURCE_NAME
-                    + "] is not defined in the default plugin configuration.");
+                + "] is not defined in the default plugin configuration.");
         String resourceNamePropName = resourceNameProp.getStringValue();
         PropertySimple propToUseAsResourceName = resourceConfig.getSimple(resourceNamePropName);
         if (propToUseAsResourceName == null)
             throw new IllegalStateException("Property [" + resourceNamePropName
-                    + "] is not defined in initial Resource configuration.");
+                + "] is not defined in initial Resource configuration.");
         return propToUseAsResourceName.getStringValue();
     }
 
-    private String getResourceKey(ResourceType resourceType, String resourceName)
-    {
+    private String getResourceKey(ResourceType resourceType, String resourceName) {
         ComponentType componentType = ConversionUtils.getComponentType(resourceType);
         if (componentType == null)
             throw new IllegalStateException("Unable to map " + resourceType + " to a ComponentType.");
@@ -372,18 +326,16 @@ public class ApplicationServerComponent
         return componentType.getType() + ":" + componentType.getSubtype() + ":" + resourceName;
     }
 
-    private void createConfigurationBasedResource(CreateResourceReport createResourceReport, ResourceType resourceType)
-    {
+    private void createConfigurationBasedResource(CreateResourceReport createResourceReport, ResourceType resourceType) {
         Configuration defaultPluginConfig = getDefaultPluginConfiguration(resourceType);
         Configuration resourceConfig = createResourceReport.getResourceConfiguration();
         String resourceName = getResourceName(defaultPluginConfig, resourceConfig);
         ComponentType componentType = ConversionUtils.getComponentType(resourceType);
         ManagementView managementView = getConnection().getManagementView();
-        if (ManagedComponentUtils.isManagedComponent(managementView, resourceName, componentType))
-        {
+        if (ManagedComponentUtils.isManagedComponent(managementView, resourceName, componentType)) {
             createResourceReport.setStatus(CreateResourceStatus.FAILURE);
             createResourceReport.setErrorMessage("A " + resourceType.getName() + " named '" + resourceName
-                    + "' already exists.");
+                + "' already exists.");
             return;
         }
 
@@ -391,66 +343,60 @@ public class ApplicationServerComponent
         String resourceKey = getResourceKey(resourceType, resourceName);
         createResourceReport.setResourceKey(resourceKey);
 
-        PropertySimple templateNameProperty = defaultPluginConfig.getSimple(ManagedComponentComponent.Config.TEMPLATE_NAME);
+        PropertySimple templateNameProperty = defaultPluginConfig
+            .getSimple(ManagedComponentComponent.Config.TEMPLATE_NAME);
         String templateName = templateNameProperty.getStringValue();
 
         DeploymentTemplateInfo template;
-        try
-        {
+        try {
             template = managementView.getTemplate(templateName);
             Map<String, ManagedProperty> managedProperties = template.getProperties();
             Map<String, PropertySimple> customProps = ResourceComponentUtils.getCustomProperties(defaultPluginConfig);
 
-            if (log.isDebugEnabled()) log.debug("BEFORE CREATE:\n" + DebugUtils.convertPropertiesToString(template));
-            ConversionUtils.convertConfigurationToManagedProperties(managedProperties, resourceConfig, resourceType, customProps);
-            if (log.isDebugEnabled()) log.debug("AFTER CREATE:\n" + DebugUtils.convertPropertiesToString(template));
+            if (log.isDebugEnabled())
+                log.debug("BEFORE CREATE:\n" + DebugUtils.convertPropertiesToString(template));
+            ConversionUtils.convertConfigurationToManagedProperties(managedProperties, resourceConfig, resourceType,
+                customProps);
+            if (log.isDebugEnabled())
+                log.debug("AFTER CREATE:\n" + DebugUtils.convertPropertiesToString(template));
 
             ConfigurationDefinition pluginConfigDef = resourceType.getPluginConfigurationDefinition();
-            Collection<PropertyDefinition> managedPropertyGroup = pluginConfigDef.getPropertiesInGroup(MANAGED_PROPERTY_GROUP);
+            Collection<PropertyDefinition> managedPropertyGroup = pluginConfigDef
+                .getPropertiesInGroup(MANAGED_PROPERTY_GROUP);
             handleMiscManagedProperties(managedPropertyGroup, managedProperties, defaultPluginConfig);
             log.debug("Applying template [" + templateName + "] to create ManagedComponent of type [" + componentType
-                    + "]...");
-            try
-            {
+                + "]...");
+            try {
                 managementView.applyTemplate(resourceName, template);
                 managementView.process();
                 createResourceReport.setStatus(CreateResourceStatus.SUCCESS);
-            }
-            catch (Exception e)
-            {
+            } catch (Exception e) {
                 log.error("Unable to apply template [" + templateName + "] to create ManagedComponent of type "
-                        + componentType + ".", e);
+                    + componentType + ".", e);
                 createResourceReport.setStatus(CreateResourceStatus.FAILURE);
                 createResourceReport.setException(e);
             }
-        }
-        catch (NoSuchDeploymentException e)
-        {
+        } catch (NoSuchDeploymentException e) {
             log.error("Unable to find template [" + templateName + "].", e);
             createResourceReport.setStatus(CreateResourceStatus.FAILURE);
             createResourceReport.setException(e);
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             log.error("Unable to process create request", e);
             createResourceReport.setStatus(CreateResourceStatus.FAILURE);
             createResourceReport.setException(e);
         }
     }
 
-    private void createContentBasedResource(CreateResourceReport createResourceReport, ResourceType resourceType)
-    {
+    private void createContentBasedResource(CreateResourceReport createResourceReport, ResourceType resourceType) {
         ResourcePackageDetails details = createResourceReport.getPackageDetails();
         PackageDetailsKey key = details.getKey();
         // This is the full path to a temporary file which was written by the UI layer.
         String archivePath = key.getName();
 
-        try
-        {
+        try {
             File archiveFile = new File(archivePath);
 
-            if (!DeploymentUtils.hasCorrectExtension(archiveFile, resourceType))
-            {
+            if (!DeploymentUtils.hasCorrectExtension(archiveFile, resourceType)) {
                 createResourceReport.setStatus(CreateResourceStatus.FAILURE);
                 createResourceReport.setErrorMessage("Incorrect extension specified on filename [" + archivePath + "]");
                 return;
@@ -459,77 +405,62 @@ public class ApplicationServerComponent
             abortIfApplicationAlreadyDeployed(resourceType, archiveFile);
 
             Configuration deployTimeConfig = details.getDeploymentTimeConfiguration();
-            @SuppressWarnings({"ConstantConditions"})
+            @SuppressWarnings( { "ConstantConditions" })
             boolean deployExploded = deployTimeConfig.getSimple("deployExploded").getBooleanValue();
 
             DeploymentManager deploymentManager = getConnection().getDeploymentManager();
             DeploymentStatus status = DeploymentUtils.deployArchive(deploymentManager, archiveFile,
-                    getDeployDirectory(), deployExploded);
+                getDeployDirectory(), deployExploded);
 
-            if (status.getState() == DeploymentStatus.StateType.COMPLETED)
-            {
+            if (status.getState() == DeploymentStatus.StateType.COMPLETED) {
                 createResourceReport.setResourceName(archivePath);
                 createResourceReport.setResourceKey(archivePath);
                 createResourceReport.setStatus(CreateResourceStatus.SUCCESS);
-            }
-            else
-            {
+            } else {
                 createResourceReport.setStatus(CreateResourceStatus.FAILURE);
                 createResourceReport.setErrorMessage(status.getMessage());
                 //noinspection ThrowableResultOfMethodCallIgnored
                 createResourceReport.setException(status.getFailure());
             }
-        }
-        catch (Throwable t)
-        {
+        } catch (Throwable t) {
             log.error("Error deploying application for report: " + createResourceReport, t);
             createResourceReport.setStatus(CreateResourceStatus.FAILURE);
             createResourceReport.setException(t);
         }
     }
 
-    private static Configuration getDefaultPluginConfiguration(ResourceType resourceType)
-    {
-        ConfigurationTemplate pluginConfigDefaultTemplate =
-                resourceType.getPluginConfigurationDefinition().getDefaultTemplate();
-        return (pluginConfigDefaultTemplate != null) ?
-                pluginConfigDefaultTemplate.createConfiguration() : new Configuration();
+    private static Configuration getDefaultPluginConfiguration(ResourceType resourceType) {
+        ConfigurationTemplate pluginConfigDefaultTemplate = resourceType.getPluginConfigurationDefinition()
+            .getDefaultTemplate();
+        return (pluginConfigDefaultTemplate != null) ? pluginConfigDefaultTemplate.createConfiguration()
+            : new Configuration();
     }
 
-    private void abortIfApplicationAlreadyDeployed(ResourceType resourceType, File archiveFile)
-            throws Exception
-    {
+    private void abortIfApplicationAlreadyDeployed(ResourceType resourceType, File archiveFile) throws Exception {
         String archiveFileName = archiveFile.getName();
         KnownDeploymentTypes deploymentType = ConversionUtils.getDeploymentType(resourceType);
         String deploymentTypeString = deploymentType.getType();
         ManagementView managementView = getConnection().getManagementView();
         managementView.load();
         Set<ManagedDeployment> managedDeployments = managementView.getDeploymentsForType(deploymentTypeString);
-        for (ManagedDeployment managedDeployment : managedDeployments)
-        {
+        for (ManagedDeployment managedDeployment : managedDeployments) {
             if (managedDeployment.getSimpleName().equals(archiveFileName))
-                throw new IllegalArgumentException("An application named '" + archiveFileName + "' is already deployed.");
+                throw new IllegalArgumentException("An application named '" + archiveFileName
+                    + "' is already deployed.");
         }
     }
 
-    private File computeDeployDirectory()
-    {
+    private File computeDeployDirectory() {
         ManagementView managementView = getConnection().getManagementView();
         Set<ManagedDeployment> warDeployments;
-        try
-        {
-            warDeployments = managementView.getDeploymentsForType(
-                    KnownDeploymentTypes.JavaEEWebApplication.getType());
-        }
-        catch (Exception e)
-        {
+        try {
+            warDeployments = managementView.getDeploymentsForType(KnownDeploymentTypes.JavaEEWebApplication.getType());
+        } catch (Exception e) {
             throw new IllegalStateException(e);
         }
         ManagedDeployment standaloneWarDeployment = null;
-        for (ManagedDeployment warDeployment : warDeployments)
-        {
-            if (warDeployment.getParent() == null)
-            {
+        for (ManagedDeployment warDeployment : warDeployments) {
+            if (warDeployment.getParent() == null) {
                 standaloneWarDeployment = warDeployment;
                 break;
             }
@@ -539,12 +470,9 @@ public class ApplicationServerComponent
             return null;
         log.debug("Standalone WAR deployment: " + standaloneWarDeployment.getName());
         URL warUrl;
-        try
-        {
+        try {
             warUrl = new URL(standaloneWarDeployment.getName());
-        }
-        catch (MalformedURLException e)
-        {
+        } catch (MalformedURLException e) {
             throw new IllegalStateException(e);
         }
         File warFile = new File(warUrl.getPath());
@@ -555,20 +483,18 @@ public class ApplicationServerComponent
 
     @NotNull
     private JBossASPaths getJBossASPaths() {
-    	Configuration pluginConfiguration = resourceContext.getPluginConfiguration();
-    	
-    	String homeDir = pluginConfiguration.getSimpleValue(HOME_DIR_PROP_NAME, null);
-    	String serverHomeDir = pluginConfiguration.getSimpleValue(SERVER_HOME_DIR_PROP_NAME, null);
-    	
-    	return new JBossASPaths(homeDir, serverHomeDir);
+        Configuration pluginConfiguration = resourceContext.getPluginConfiguration();
+
+        String homeDir = pluginConfiguration.getSimpleValue(HOME_DIR_PROP_NAME, null);
+        String serverHomeDir = pluginConfiguration.getSimpleValue(SERVER_HOME_DIR_PROP_NAME, null);
+
+        return new JBossASPaths(homeDir, serverHomeDir);
     }
-    
+
     @NotNull
-    static File resolvePathRelativeToHomeDir(Configuration pluginConfig, @NotNull String path)
-    {
+    static File resolvePathRelativeToHomeDir(Configuration pluginConfig, @NotNull String path) {
         File configDir = new File(path);
-        if (!configDir.isAbsolute())
-        {
+        if (!configDir.isAbsolute()) {
             String homeDir = pluginConfig.getSimple(PluginConfigPropNames.HOME_DIR).getStringValue();
             configDir = new File(homeDir, path);
         }
@@ -576,25 +502,21 @@ public class ApplicationServerComponent
         return configDir;
     }
 
-    private static void validateNamingURL(String namingURL)
-    {
+    private static void validateNamingURL(String namingURL) {
         URI namingURI;
-        try
-        {
+        try {
             namingURI = new URI(namingURL);
-        }
-        catch (URISyntaxException e)
-        {
+        } catch (URISyntaxException e) {
             throw new RuntimeException("Naming URL '" + namingURL + "' is not valid: " + e.getLocalizedMessage());
         }
         if (!namingURI.isAbsolute())
             throw new RuntimeException("Naming URL '" + namingURL + "' is not absolute.");
         if (!namingURI.getScheme().equals("jnp"))
-            throw new RuntimeException("Naming URL '" + namingURL + "' has an invalid protocol - the only valid protocol is 'jnp'.");
+            throw new RuntimeException("Naming URL '" + namingURL
+                + "' has an invalid protocol - the only valid protocol is 'jnp'.");
     }
 
-    static abstract class PluginConfigPropNames
-    {
+    static abstract class PluginConfigPropNames {
         static final String SERVER_NAME = "serverName";
         static final String NAMING_URL = "namingURL";
         static final String PRINCIPAL = "principal";
@@ -605,4 +527,3 @@ public class ApplicationServerComponent
         static final String BIND_ADDRESS = "bindAddress";
     }
 }
-

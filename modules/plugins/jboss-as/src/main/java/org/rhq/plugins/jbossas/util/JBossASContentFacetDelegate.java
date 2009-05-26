@@ -21,40 +21,38 @@ import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
  */
 public class JBossASContentFacetDelegate extends AbstractJBossASContentFacetDelegate {
 
-	private Map<PackageType, FileContentDelegate> contentDelegates = 
-		new HashMap<PackageType, FileContentDelegate>();
-	
-	private File configurationPath;
-	
-	public JBossASContentFacetDelegate(JBPMWorkflowManager workflowManager, File configurationPath) {
-		super(workflowManager);
-		this.configurationPath = configurationPath;
-	}
+    private Map<PackageType, FileContentDelegate> contentDelegates = new HashMap<PackageType, FileContentDelegate>();
 
-	@Override
-	public Set<ResourcePackageDetails> discoverDeployedPackages(PackageType type) {
-		FileContentDelegate contentDelegate = getContentDelegate(type);
+    private File configurationPath;
 
-		Set<ResourcePackageDetails> details = null;
-		if (contentDelegate != null) {
-			details = contentDelegate.discoverDeployedPackages();
-		}
+    public JBossASContentFacetDelegate(JBPMWorkflowManager workflowManager, File configurationPath) {
+        super(workflowManager);
+        this.configurationPath = configurationPath;
+    }
 
-		return details;
-	}
+    @Override
+    public Set<ResourcePackageDetails> discoverDeployedPackages(PackageType type) {
+        FileContentDelegate contentDelegate = getContentDelegate(type);
 
-	private FileContentDelegate getContentDelegate(PackageType type) {
-		FileContentDelegate contentDelegate = contentDelegates.get(type);
-		if (contentDelegate == null) {
-			if (type.getName().equals("library")) {
-				File deployLib = new File(configurationPath, "lib");
-				contentDelegate = new JarContentDelegate(deployLib, type
-						.getName());
-			}
+        Set<ResourcePackageDetails> details = null;
+        if (contentDelegate != null) {
+            details = contentDelegate.discoverDeployedPackages();
+        }
 
-			contentDelegates.put(type, contentDelegate);
-		}
+        return details;
+    }
 
-		return contentDelegate;
-	}
+    private FileContentDelegate getContentDelegate(PackageType type) {
+        FileContentDelegate contentDelegate = contentDelegates.get(type);
+        if (contentDelegate == null) {
+            if (type.getName().equals("library")) {
+                File deployLib = new File(configurationPath, "lib");
+                contentDelegate = new JarContentDelegate(deployLib, type.getName());
+            }
+
+            contentDelegates.put(type, contentDelegate);
+        }
+
+        return contentDelegate;
+    }
 }

@@ -52,30 +52,29 @@ import org.rhq.core.pluginapi.content.ContentServices;
 public abstract class AbstractJBossASContentFacetDelegate implements ContentFacet {
 
     private final Log log = LogFactory.getLog(AbstractJBossASContentFacetDelegate.class);
-    
+
     public static final String PACKAGE_TYPE_PATCH = "cumulativePatch";
     public static final String PACKAGE_TYPE_LIBRARY = "library";
 
-	private JBPMWorkflowManager workflowManager;
-	
-	protected AbstractJBossASContentFacetDelegate(JBPMWorkflowManager workflowManager) {
-		this.workflowManager = workflowManager;
-	}
-	
-	/**
-	 * This default implementation supports deploying a single patch. For that the packages set
-	 * must contain a single package with the type name equal to {@link #PACKAGE_TYPE_PATCH}.
-	 * <p>
-	 * Packages of type {@link #PACKAGE_TYPE_LIBRARY} are unsupported, all other package types 
-	 * are silently ignored.
-	 * 
-	 * @throws UnsupportedOperationException 
-	 *             if the packages set contains a package of type {@link #PACKAGE_TYPE_LIBRARY}
-	 * 
-	 * @return a package response describing th results of the deployment.
-	 */
-	public DeployPackagesResponse deployPackages(Set<ResourcePackageDetails> packages,
-			ContentServices contentServices) {
+    private JBPMWorkflowManager workflowManager;
+
+    protected AbstractJBossASContentFacetDelegate(JBPMWorkflowManager workflowManager) {
+        this.workflowManager = workflowManager;
+    }
+
+    /**
+     * This default implementation supports deploying a single patch. For that the packages set
+     * must contain a single package with the type name equal to {@link #PACKAGE_TYPE_PATCH}.
+     * <p>
+     * Packages of type {@link #PACKAGE_TYPE_LIBRARY} are unsupported, all other package types 
+     * are silently ignored.
+     * 
+     * @throws UnsupportedOperationException 
+     *             if the packages set contains a package of type {@link #PACKAGE_TYPE_LIBRARY}
+     * 
+     * @return a package response describing th results of the deployment.
+     */
+    public DeployPackagesResponse deployPackages(Set<ResourcePackageDetails> packages, ContentServices contentServices) {
         ContentResponseResult overallResult = ContentResponseResult.SUCCESS;
         List<DeployIndividualPackageResponse> individualResponses = new ArrayList<DeployIndividualPackageResponse>(
             packages.size());
@@ -122,22 +121,21 @@ public abstract class AbstractJBossASContentFacetDelegate implements ContentFace
         response.getPackageResponses().addAll(individualResponses);
 
         return response;
-	}
+    }
 
-	/**
-	 * The default implementation of this method merely throws an
-	 * unsupported operation exception.
-	 * 
-	 * @throws UnsupportedOperationException
-	 * 
-	 * @see ContentFacet#discoverDeployedPackages(PackageType)
-	 */
-	public Set<ResourcePackageDetails> discoverDeployedPackages(PackageType type) {
-		throw new UnsupportedOperationException();
-	}
+    /**
+     * The default implementation of this method merely throws an
+     * unsupported operation exception.
+     * 
+     * @throws UnsupportedOperationException
+     * 
+     * @see ContentFacet#discoverDeployedPackages(PackageType)
+     */
+    public Set<ResourcePackageDetails> discoverDeployedPackages(PackageType type) {
+        throw new UnsupportedOperationException();
+    }
 
-	public List<DeployPackageStep> generateInstallationSteps(
-			ResourcePackageDetails packageDetails) {
+    public List<DeployPackageStep> generateInstallationSteps(ResourcePackageDetails packageDetails) {
         log.info("Translating installation steps for package: " + packageDetails);
 
         List<DeployPackageStep> steps = null;
@@ -155,37 +153,36 @@ public abstract class AbstractJBossASContentFacetDelegate implements ContentFace
         }
 
         return steps;
-	}
+    }
 
-	/**
-	 * The default implementation of this method merely throws an
-	 * unsupported operation exception.
-	 * 
-	 * @throws UnsupportedOperationException
-	 * 
-	 * @see ContentFacet#removePackages(Set)
-	 */
-	public RemovePackagesResponse removePackages(
-			Set<ResourcePackageDetails> packages) {
-		throw new UnsupportedOperationException();
-	}
+    /**
+     * The default implementation of this method merely throws an
+     * unsupported operation exception.
+     * 
+     * @throws UnsupportedOperationException
+     * 
+     * @see ContentFacet#removePackages(Set)
+     */
+    public RemovePackagesResponse removePackages(Set<ResourcePackageDetails> packages) {
+        throw new UnsupportedOperationException();
+    }
 
-	/**
-	 * The default implementation of this method merely throws an
-	 * unsupported operation exception.
-	 * 
-	 * @throws UnsupportedOperationException
-	 * 
-	 * @see ContentFacet#retrievePackageBits(ResourcePackageDetails)
-	 */
-	public InputStream retrievePackageBits(ResourcePackageDetails packageDetails) {
-		throw new UnsupportedOperationException();
-	}
+    /**
+     * The default implementation of this method merely throws an
+     * unsupported operation exception.
+     * 
+     * @throws UnsupportedOperationException
+     * 
+     * @see ContentFacet#retrievePackageBits(ResourcePackageDetails)
+     */
+    public InputStream retrievePackageBits(ResourcePackageDetails packageDetails) {
+        throw new UnsupportedOperationException();
+    }
 
-	/**
-	 * @return the workflow manager
-	 */
-	protected JBPMWorkflowManager getWorkflowManager() {
-		return workflowManager;
-	}
+    /**
+     * @return the workflow manager
+     */
+    protected JBPMWorkflowManager getWorkflowManager() {
+        return workflowManager;
+    }
 }

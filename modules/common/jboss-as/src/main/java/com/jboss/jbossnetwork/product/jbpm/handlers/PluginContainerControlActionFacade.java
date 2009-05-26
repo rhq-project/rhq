@@ -23,10 +23,10 @@
 package com.jboss.jbossnetwork.product.jbpm.handlers;
 
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.operation.OperationContext;
 import org.rhq.core.pluginapi.operation.OperationServices;
 import org.rhq.core.pluginapi.operation.OperationServicesResult;
-import org.rhq.plugins.jbossas.JBossASServerComponent;
 
 /**
  * Implementation of the {@link ControlActionFacade} that connects to the plugin container to perform its calls.
@@ -41,9 +41,9 @@ public class PluginContainerControlActionFacade implements ControlActionFacade {
 
     private OperationContext operationContext;
     private OperationServices operationServices;
-    private JBossASServerComponent serverComponent;
+    private ResourceComponent<?> serverComponent;
 
-    public PluginContainerControlActionFacade(OperationContext operationContext, JBossASServerComponent serverComponent) {
+    public PluginContainerControlActionFacade(OperationContext operationContext, ResourceComponent<?> serverComponent) {
         this.operationContext = operationContext;
         this.serverComponent = serverComponent;
         this.operationServices = operationContext.getOperationServices();

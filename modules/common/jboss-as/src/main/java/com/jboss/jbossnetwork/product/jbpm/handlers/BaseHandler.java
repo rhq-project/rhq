@@ -27,6 +27,7 @@ import org.apache.commons.logging.LogFactory;
 import org.jbpm.graph.def.ActionHandler;
 import org.jbpm.graph.exe.ExecutionContext;
 import org.jbpm.jpdl.el.impl.JbpmExpressionEvaluator;
+
 import org.rhq.core.clientapi.util.StringUtil;
 import org.rhq.core.domain.content.transfer.ContentResponseResult;
 import org.rhq.core.domain.content.transfer.DeployPackageStep;
@@ -245,8 +246,9 @@ public abstract class BaseHandler implements ActionHandler {
         // in the additionalMessage field that is customized to what the handler does (i.e. "Could not download file").
         // Once we do more testing, I may revisit this and reenable this form of description generation.
         // jdobies, Mar 6, 2008
-
-        String description = (throwable == null) ? additionalMessage : throwable.getMessage();
+        
+        // lkrejci, 2009-05-25 - added additional check for nullity of the throwable's message because the description mustn't be null 
+        String description = (throwable == null || throwable.getMessage() == null) ? additionalMessage : throwable.getMessage();
 
         DeployPackageStep step = new DeployPackageStep(Integer.toString(stepCounter), description);
         step.setStepResult(result);

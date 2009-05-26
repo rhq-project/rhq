@@ -51,14 +51,14 @@
          <scope>provided</scope>
       </dependency>
       
+      <dependency>
+         <groupId>org.jboss.on</groupId>
+         <artifactId>jopr-jboss-as-common</artifactId>
+         <version>${project.version}</version>
+      </dependency>
+
       <!-- 3rd-party -->
 
-      <dependency>
-         <groupId>ant</groupId>
-         <artifactId>ant</artifactId>
-         <version>1.6.5</version>
-      </dependency>
-      
       <dependency>
          <groupId>bsh</groupId>
          <artifactId>bsh</artifactId>
@@ -66,24 +66,12 @@
       </dependency>
       
       <dependency>
-         <groupId>dom4j</groupId>
-         <artifactId>dom4j</artifactId>
-         <version>1.6.1</version>
-      </dependency>
-
-      <dependency>
          <groupId>gnu-getopt</groupId>
          <artifactId>getopt</artifactId>
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
          <scope>provided</scope> <!-- by PC -->
       </dependency>  
       
-      <dependency>
-         <groupId>jboss</groupId>
-         <artifactId>jbpm</artifactId>
-         <version>3.1.1</version>
-      </dependency>
-
       <dependency>
          <groupId>jboss</groupId>
          <artifactId>jboss-common</artifactId>
@@ -147,10 +135,42 @@
                            <artifactId>ant</artifactId>
                            <version>1.6.5</version>
                         </artifactItem>
+                        <artifactItem>
+                           <groupId>org.jboss.on</groupId>
+                           <artifactId>jopr-jboss-as-common</artifactId>
+                           <version>${project.version}</version>
+                        </artifactItem>
                      </artifactItems>
                      <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
                   </configuration>
                </execution>
+               <execution>
+                  <id>copy-dependencies-of-jbossas-common</id>
+                  <phase>process-resources</phase>
+                  <goals>
+                    <goal>copy</goal>
+                  </goals>
+                  <configuration>
+                     <artifactItems>
+                       <artifactItem>
+                         <groupId>jboss</groupId>
+                         <artifactId>jbpm</artifactId>
+                         <version>3.1.1</version>
+                       </artifactItem>
+                       <artifactItem>
+                         <groupId>ant</groupId>
+                         <artifactId>ant</artifactId>
+                         <version>1.6.5</version>
+                       </artifactItem>
+                       <artifactItem>
+                          <groupId>dom4j</groupId>
+                          <artifactId>dom4j</artifactId>
+                          <version>1.6.1</version>
+                       </artifactItem>
+                     </artifactItems>  
+                     <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
+                  </configuration>
+               </execution>               
             </executions>
          </plugin>
 

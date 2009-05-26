@@ -20,7 +20,7 @@
   * if not, write to the Free Software Foundation, Inc.,
   * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
   */
-package org.rhq.plugins.jbossas.test;
+package org.jboss.on.common.jbossas.test;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -30,11 +30,17 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+
 import com.jboss.jbossnetwork.product.jbpm.handlers.test.MockContentContext;
 import com.jboss.jbossnetwork.product.jbpm.handlers.test.MockContentServices;
 import com.jboss.jbossnetwork.product.jbpm.handlers.test.MockControlActionFacade;
+
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import org.jboss.on.common.jbossas.JBPMWorkflowManager;
+import org.jboss.on.common.jbossas.JBossASPaths;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.PackageDetailsKey;
@@ -43,8 +49,6 @@ import org.rhq.core.domain.content.transfer.DeployIndividualPackageResponse;
 import org.rhq.core.domain.content.transfer.DeployPackageStep;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.pluginapi.operation.OperationServicesResultCode;
-import org.rhq.plugins.jbossas.JBPMWorkflowManager;
-import org.rhq.plugins.jbossas.JBossASServerComponent;
 
 /**
  * @author Jason Dobies
@@ -52,6 +56,8 @@ import org.rhq.plugins.jbossas.JBossASServerComponent;
 public class JBPMWorkflowManagerTest {
 
     private static final boolean ENABLE_TESTS = true;
+    private static final String JBOSS_HOME_DIR_CONFIG_PROP = "jbossHomeDir";
+    private static final String CONFIGURATION_PATH_CONFIG_PROP = "configurationPath";
 
     private ResourcePackageDetails packageDetails;
     private Configuration jbossPluginConfiguration;
@@ -90,9 +96,9 @@ public class JBPMWorkflowManagerTest {
 
         unzip(jbossServerZip, targetDir);
 
-        jbossPluginConfiguration.put(new PropertySimple(JBossASServerComponent.JBOSS_HOME_DIR_CONFIG_PROP,
+        jbossPluginConfiguration.put(new PropertySimple(JBOSS_HOME_DIR_CONFIG_PROP,
                 jbossTestServerDir.getAbsolutePath()));
-        jbossPluginConfiguration.put(new PropertySimple(JBossASServerComponent.CONFIGURATION_PATH_CONFIG_PROP,
+        jbossPluginConfiguration.put(new PropertySimple(CONFIGURATION_PATH_CONFIG_PROP,
                 jbossServerDir.getAbsolutePath()));
     }
 
@@ -107,7 +113,7 @@ public class JBPMWorkflowManagerTest {
         mockContentServices.setFilename("test-patch.zip");
 
         // Test
-        JBPMWorkflowManager manager = new JBPMWorkflowManager(mockContentContext, mockFacade, jbossPluginConfiguration);
+        JBPMWorkflowManager manager = new JBPMWorkflowManager(mockContentContext, mockFacade, getJBossPaths(jbossPluginConfiguration));
         DeployIndividualPackageResponse response = manager.run(packageDetails);
 
         assert response.getResult() == ContentResponseResult.SUCCESS : "Incorrect response status. Expected: Success, Found: " + response.getResult();
@@ -133,7 +139,7 @@ public class JBPMWorkflowManagerTest {
         mockContentServices.setFilename("nonexistent-file");
 
         // Test
-        JBPMWorkflowManager manager = new JBPMWorkflowManager(mockContentContext, mockFacade, jbossPluginConfiguration);
+        JBPMWorkflowManager manager = new JBPMWorkflowManager(mockContentContext, mockFacade, getJBossPaths(jbossPluginConfiguration));
         DeployIndividualPackageResponse response = manager.run(packageDetails);
 
         assert response.getResult() == ContentResponseResult.FAILURE : "Incorrect response status. Expected: Failed, Found: " + response.getResult();
@@ -165,7 +171,7 @@ public class JBPMWorkflowManagerTest {
         mockContentServices.setFilename("test-patch.zip");
 
         // Test
-        JBPMWorkflowManager manager = new JBPMWorkflowManager(mockContentContext, mockFacade, jbossPluginConfiguration);
+        JBPMWorkflowManager manager = new JBPMWorkflowManager(mockContentContext, mockFacade, getJBossPaths(jbossPluginConfiguration));
         List<DeployPackageStep> steps = manager.translateSteps(packageDetails);
 
         assert steps != null : "Null steps received from call to translate steps";
@@ -202,5 +208,17 @@ public class JBPMWorkflowManagerTest {
                 fos.close();
             }
         }
+    }
+    
+    private JBossASPaths getJBossPaths(Configuration jbossPluginConfiguration) {
+    	JBossASPaths paths = new JBossASPaths();
+    	
+    	String homeDir = jbossPluginConfiguration.getSimpleValue(JBOSS_HOME_DIR_CONFIG_PROP, null);
+    	String serverDir = jbossPluginConfiguration.getSimpleValue(CONFIGURATION_PATH_CONFIG_PROP, null);
+		
+    	paths.setHomeDir(homeDir);
+		paths.setServerDir(serverDir);
+ 
+    	return paths;
     }
 }

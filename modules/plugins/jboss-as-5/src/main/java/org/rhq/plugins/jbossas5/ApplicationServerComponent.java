@@ -23,21 +23,41 @@
 package org.rhq.plugins.jbossas5;
 
 import java.io.File;
+import java.io.InputStream;
 import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.jboss.jbossnetwork.product.jbpm.handlers.ControlActionFacade;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import org.jboss.deployers.spi.management.KnownDeploymentTypes;
+import org.jboss.deployers.spi.management.ManagementView;
+import org.jboss.deployers.spi.management.deploy.DeploymentManager;
+import org.jboss.deployers.spi.management.deploy.DeploymentStatus;
+import org.jboss.deployers.spi.management.deploy.ProgressEvent;
+import org.jboss.deployers.spi.management.deploy.ProgressListener;
+import org.jboss.managed.api.ComponentType;
+import org.jboss.managed.api.DeploymentTemplateInfo;
+import org.jboss.managed.api.ManagedComponent;
+import org.jboss.managed.api.ManagedDeployment;
+import org.jboss.managed.api.ManagedProperty;
+import org.jboss.on.common.jbossas.JBPMWorkflowManager;
+import org.jboss.on.common.jbossas.JBossASPaths;
+import org.jboss.profileservice.spi.NoSuchDeploymentException;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -45,6 +65,10 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.content.PackageDetailsKey;
+import org.rhq.core.domain.content.PackageType;
+import org.rhq.core.domain.content.transfer.DeployPackageStep;
+import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
+import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
@@ -57,6 +81,9 @@ import org.rhq.core.domain.resource.ResourceCreationDataType;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
+import org.rhq.core.pluginapi.content.ContentContext;
+import org.rhq.core.pluginapi.content.ContentFacet;
+import org.rhq.core.pluginapi.content.ContentServices;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
@@ -71,21 +98,9 @@ import org.rhq.plugins.jbossas5.connection.RemoteProfileServiceConnectionProvide
 import org.rhq.plugins.jbossas5.util.ConversionUtils;
 import org.rhq.plugins.jbossas5.util.DebugUtils;
 import org.rhq.plugins.jbossas5.util.DeploymentUtils;
+import org.rhq.plugins.jbossas5.util.JBossASContentFacetDelegate;
 import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
 import org.rhq.plugins.jbossas5.util.ResourceComponentUtils;
-
-import org.jboss.deployers.spi.management.KnownDeploymentTypes;
-import org.jboss.deployers.spi.management.ManagementView;
-import org.jboss.deployers.spi.management.deploy.DeploymentManager;
-import org.jboss.deployers.spi.management.deploy.DeploymentStatus;
-import org.jboss.deployers.spi.management.deploy.ProgressEvent;
-import org.jboss.deployers.spi.management.deploy.ProgressListener;
-import org.jboss.managed.api.ComponentType;
-import org.jboss.managed.api.DeploymentTemplateInfo;
-import org.jboss.managed.api.ManagedComponent;
-import org.jboss.managed.api.ManagedDeployment;
-import org.jboss.managed.api.ManagedProperty;
-import org.jboss.profileservice.spi.NoSuchDeploymentException;
 
 /**
  * ResourceComponent for a JBoss AS, 5.1.0.CR1 or later, Server.
@@ -96,18 +111,23 @@ import org.jboss.profileservice.spi.NoSuchDeploymentException;
  */
 public class ApplicationServerComponent
         implements ResourceComponent, ProfileServiceComponent, CreateChildResourceFacet, MeasurementFacet,
-        ConfigurationFacet, ProgressListener
+        ConfigurationFacet, ProgressListener, ContentFacet
 {
     private static final String MANAGED_PROPERTY_GROUP = "managedPropertyGroup";
 
     private static final Pattern METRIC_NAME_PATTERN = Pattern.compile("(.*)\\|(.*)\\|(.*)\\|(.*)");
 
+    private static final String HOME_DIR_PROP_NAME = "homeDir";
+    private static final String SERVER_HOME_DIR_PROP_NAME ="serverHomeDir";
+    
     private final Log log = LogFactory.getLog(this.getClass());
 
     private ResourceContext resourceContext;
     private ProfileServiceConnection connection;
     private File deployDirectory;
 
+    private JBossASContentFacetDelegate contentFacetDelegate;
+    
     //private LogFileEventResourceComponentHelper logFileEventDelegate;
 
     public AvailabilityType getAvailability()
@@ -123,6 +143,21 @@ public class ApplicationServerComponent
         connect();
         //this.logFileEventDelegate = new LogFileEventResourceComponentHelper(this.resourceContext);
         //this.logFileEventDelegate.startLogFileEventPollers();
+        
+        JBossASPaths paths = getJBossASPaths();
+        ContentContext contentContext = resourceContext.getContentContext();
+        
+        //TODO define the control action facade once we support operations on the app server.
+        //OperationContext operationContext = resourceContext.getOperationContext();
+        //
+        //ControlActionFacade controlActionFacade = 
+        //	new PluginContainerControlActionFacade(operationContext, this);
+        ControlActionFacade controlActionFacade = null;
+        
+        JBPMWorkflowManager workflowManager = new JBPMWorkflowManager(contentContext, 
+        	controlActionFacade, paths);
+        
+        contentFacetDelegate = new JBossASContentFacetDelegate(workflowManager);
     }
 
     public void stop()
@@ -235,9 +270,40 @@ public class ApplicationServerComponent
         return this.connection;
     }
 
+    // ContentFacet -------------------------------------------------
+    
+    @Override
+	public DeployPackagesResponse deployPackages(
+			Set<ResourcePackageDetails> packages,
+			ContentServices contentServices) {
+		return contentFacetDelegate.deployPackages(packages, contentServices);
+	}
+
+	@Override
+	public Set<ResourcePackageDetails> discoverDeployedPackages(PackageType type) {
+		return contentFacetDelegate.discoverDeployedPackages(type);
+	}
+
+	@Override
+	public List<DeployPackageStep> generateInstallationSteps(
+			ResourcePackageDetails packageDetails) {
+		return contentFacetDelegate.generateInstallationSteps(packageDetails);
+	}
+
+	@Override
+	public RemovePackagesResponse removePackages(
+			Set<ResourcePackageDetails> packages) {
+		return contentFacetDelegate.removePackages(packages);
+	}
+
+	@Override
+	public InputStream retrievePackageBits(ResourcePackageDetails packageDetails) {
+		return contentFacetDelegate.retrievePackageBits(packageDetails);
+	}
+    
     // ---------------------------------------------------------------
 
-    private void connect()
+	private void connect()
     {
         if (this.connection != null)
             return;
@@ -487,6 +553,16 @@ public class ApplicationServerComponent
         return deployDir;
     }
 
+    @NotNull
+    private JBossASPaths getJBossASPaths() {
+    	Configuration pluginConfiguration = resourceContext.getPluginConfiguration();
+    	
+    	String homeDir = pluginConfiguration.getSimpleValue(HOME_DIR_PROP_NAME, null);
+    	String serverHomeDir = pluginConfiguration.getSimpleValue(SERVER_HOME_DIR_PROP_NAME, null);
+    	
+    	return new JBossASPaths(homeDir, serverHomeDir);
+    }
+    
     @NotNull
     static File resolvePathRelativeToHomeDir(Configuration pluginConfig, @NotNull String path)
     {

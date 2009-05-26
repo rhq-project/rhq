@@ -29,22 +29,24 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathFactory;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetails;
-import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetailsKey;
-import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.content.PackageDetailsKey;
-import org.w3c.dom.Document;
-
 import churchillobjects.rss4j.RssChannel;
 import churchillobjects.rss4j.RssChannelItem;
 import churchillobjects.rss4j.RssDocument;
 import churchillobjects.rss4j.RssDublinCore;
 import churchillobjects.rss4j.RssJbnDependency;
 import churchillobjects.rss4j.RssJbnPatch;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.w3c.dom.Document;
+
+import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetails;
+import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetailsKey;
+import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.content.PackageDetailsKey;
+import org.rhq.core.util.OSGiVersionComparator;
 
 /**
  * Parses the contents of the JBoss RSS feed into the server's domain model.
@@ -54,7 +56,9 @@ import churchillobjects.rss4j.RssJbnPatch;
 public class RssFeedParser {
     // Constants  --------------------------------------------
 
-    public static final String PLUGIN_NAME = "JBossAS";
+    public static final String JBOSS_AS4_PLUGIN_NAME = "JBossAS";
+    public static final String JBOSS_AS5_PLUGIN_NAME = "JBossAS5";
+    
     public static final String ARCHITECTURE = "noarch";
 
     /**
@@ -80,6 +84,8 @@ public class RssFeedParser {
 
     private final Log log = LogFactory.getLog(this.getClass());
 
+    private static final OSGiVersionComparator versionComparator = new OSGiVersionComparator();
+    
     // Public  --------------------------------------------
 
     public void parseResults(RssDocument feed, PackageSyncReport report,
@@ -162,7 +168,7 @@ public class RssFeedParser {
                     }
 
                     ContentSourcePackageDetailsKey key = new ContentSourcePackageDetailsKey(packageName, version,
-                        PACKAGE_TYPE_CUMULATIVE_PATCH, ARCHITECTURE, RESOURCE_TYPE_JBOSS_AS, PLUGIN_NAME);
+                        PACKAGE_TYPE_CUMULATIVE_PATCH, ARCHITECTURE, RESOURCE_TYPE_JBOSS_AS, getPluginName(version));
 
                     // If this package is already known to the server, don't add it as a new package
                     // Remove from the map; entries still in the map will be returned as deleted packages
@@ -281,5 +287,13 @@ public class RssFeedParser {
         }
 
         return null;
+    }
+    
+    private String getPluginName(String jbossVersion) {
+    	if (versionComparator.compare(jbossVersion, "5") >= 0) {
+    	    return JBOSS_AS5_PLUGIN_NAME;
+    	} else {
+    	    return JBOSS_AS4_PLUGIN_NAME;
+    	}
     }
 }

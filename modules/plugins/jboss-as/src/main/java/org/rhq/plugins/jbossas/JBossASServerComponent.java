@@ -30,7 +30,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,12 +61,13 @@ import org.mc4j.ems.connection.support.ConnectionProvider;
 import org.mc4j.ems.connection.support.metadata.ConnectionTypeDescriptor;
 import org.mc4j.ems.connection.support.metadata.InternalVMTypeDescriptor;
 
+import org.jboss.on.common.jbossas.JBPMWorkflowManager;
+import org.jboss.on.common.jbossas.JBossASPaths;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageType;
-import org.rhq.core.domain.content.transfer.ContentResponseResult;
-import org.rhq.core.domain.content.transfer.DeployIndividualPackageResponse;
 import org.rhq.core.domain.content.transfer.DeployPackageStep;
 import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
 import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
@@ -98,6 +98,7 @@ import org.rhq.plugins.jbossas.util.DatasourceConfigurationEditor;
 import org.rhq.plugins.jbossas.util.DeploymentUtility;
 import org.rhq.plugins.jbossas.util.FileContentDelegate;
 import org.rhq.plugins.jbossas.util.FileNameUtility;
+import org.rhq.plugins.jbossas.util.JBossASContentFacetDelegate;
 import org.rhq.plugins.jbossas.util.JarContentDelegate;
 import org.rhq.plugins.jbossas.util.XMLConfigurationEditor;
 import org.rhq.plugins.jmx.JMXComponent;
@@ -170,9 +171,8 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
     private ResourceContext resourceContext;
     private ContentContext contentContext;
 
-    private ControlActionFacade controlFacade;
-    private JBPMWorkflowManager workflowManager;
-
+    private JBossASContentFacetDelegate contentFacetDelegate;
+    
     private EmsConnection connection;
     private File configPath;
     private String configSet;
@@ -203,12 +203,6 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
 
         this.operationsDelegate = new JBossASServerOperationsDelegate(this, resourceContext.getSystemInformation());
 
-        // Until the bugs get worked out of the calls back into the PC's operation framework, use the implementation
-        // that will simply make calls directly in the plugin.
-        // controlFacade = new PluginContainerControlActionFacade(operationContext, this);
-        controlFacade = new InPluginControlActionFacade(this);
-        workflowManager = new JBPMWorkflowManager(contentContext, controlFacade, getPluginConfiguration());
-
         validatePluginConfiguration();
 
         Configuration pluginConfig = context.getPluginConfiguration();
@@ -220,6 +214,19 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
         }
         this.configSet = pluginConfig.getSimpleValue(CONFIGURATION_SET_CONFIG_PROP, this.configPath.getName());
 
+        // Until the bugs get worked out of the calls back into the PC's operation framework, use the implementation
+        // that will simply make calls directly in the plugin.
+        // controlFacade = new PluginContainerControlActionFacade(operationContext, this);
+        ControlActionFacade controlFacade = new InPluginControlActionFacade(this);
+
+        JBossASPaths jbossPaths = new JBossASPaths();
+        jbossPaths.setHomeDir(getPluginConfiguration().getSimpleValue(JBOSS_HOME_DIR_CONFIG_PROP, null));
+        jbossPaths.setServerDir(getPluginConfiguration().getSimpleValue(CONFIGURATION_PATH_CONFIG_PROP, null));
+        
+        JBPMWorkflowManager workflowManager = new JBPMWorkflowManager(contentContext, controlFacade, jbossPaths);
+
+        this.contentFacetDelegate = new JBossASContentFacetDelegate(workflowManager, this.configPath);
+        
         // Attempt to load the connection now. If we cannot, do not consider the start operation as failed. The only
         // exception to this rule is if the connection cannot be made due to a JMX security exception. In this case,
         // we treat it as an invalid plugin configuration and throw the appropriate exception (see the javadoc for
@@ -324,92 +331,23 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
     // ContentFacet Implementation  --------------------------------------------
 
     public List<DeployPackageStep> generateInstallationSteps(ResourcePackageDetails packageDetails) {
-        log.info("Translating installation steps for package: " + packageDetails);
-
-        List<DeployPackageStep> steps = null;
-
-        String packageTypeName = packageDetails.getPackageTypeName();
-        if (packageTypeName.equals(PACKAGE_TYPE_PATCH)) {
-            try {
-                steps = workflowManager.translateSteps(packageDetails);
-            } catch (Exception e) {
-                log.error("Error translating installation steps for package: " + packageDetails, e);
-            }
-
-            log.info("Translated number of steps: " + (steps != null ? steps.size() : null));
-
-        }
-
-        return steps;
+        return contentFacetDelegate.generateInstallationSteps(packageDetails);
     }
 
     public DeployPackagesResponse deployPackages(Set<ResourcePackageDetails> packages, ContentServices contentServices) {
-
-        ContentResponseResult overallResult = ContentResponseResult.SUCCESS;
-        List<DeployIndividualPackageResponse> individualResponses = new ArrayList<DeployIndividualPackageResponse>(
-            packages.size());
-
-        for (ResourcePackageDetails pkg : packages) {
-            log.info("Attempting to deploy package: " + pkg);
-
-            String packageTypeName = pkg.getPackageTypeName();
-            if (packageTypeName.equals(PACKAGE_TYPE_PATCH)) {
-
-                if (packages.size() > 1) {
-                    log.warn("Attempt to install more than one patch at a time, installation aborted.");
-
-                    DeployPackagesResponse response = new DeployPackagesResponse(ContentResponseResult.FAILURE);
-                    response
-                        .setOverallRequestErrorMessage("When deploying a patch, no other packages may be deployed at the same time.");
-                    return response;
-                }
-
-                try {
-                    DeployIndividualPackageResponse response = workflowManager.run(pkg);
-                    individualResponses.add(response);
-
-                    if (response.getResult() == ContentResponseResult.FAILURE) {
-                        overallResult = ContentResponseResult.FAILURE;
-                    }
-                } catch (Throwable throwable) {
-                    log.error("Error deploying package: " + pkg, throwable);
-
-                    // Don't forget to provide an individual response for the failed package.
-                    DeployIndividualPackageResponse response = new DeployIndividualPackageResponse(pkg.getKey(),
-                        ContentResponseResult.FAILURE);
-                    response.setErrorMessageFromThrowable(throwable);
-                    individualResponses.add(response);
-
-                    overallResult = ContentResponseResult.FAILURE;
-                }
-            } else if (packageTypeName.equals(PACKAGE_TYPE_LIBRARY)) {
-                throw new UnsupportedOperationException("Deployment of new libraries is not supported by the plugin.");
-            }
-        }
-
-        DeployPackagesResponse response = new DeployPackagesResponse(overallResult);
-        response.getPackageResponses().addAll(individualResponses);
-
-        return response;
+    	return contentFacetDelegate.deployPackages(packages, contentServices);
     }
 
     public RemovePackagesResponse removePackages(Set<ResourcePackageDetails> packages) {
-        throw new UnsupportedOperationException();
+        return contentFacetDelegate.removePackages(packages);
     }
 
     public Set<ResourcePackageDetails> discoverDeployedPackages(PackageType type) {
-        FileContentDelegate contentDelegate = getContentDelegate(type);
-
-        Set<ResourcePackageDetails> details = null;
-        if (contentDelegate != null) {
-            details = contentDelegate.discoverDeployedPackages();
-        }
-
-        return details;
+    	return contentFacetDelegate.discoverDeployedPackages(type);
     }
 
     public InputStream retrievePackageBits(ResourcePackageDetails packageDetails) {
-        throw new UnsupportedOperationException();
+        return contentFacetDelegate.retrievePackageBits(packageDetails);
     }
 
     // CreateChildResourceFacet Implementation  --------------------------------------------

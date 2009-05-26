@@ -1,0 +1,28 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.jboss.on</groupId>
+        <artifactId>jopr-modules-parent</artifactId>
+        <version>2.3.0-SNAPSHOT</version>
+    </parent>
+
+    <groupId>org.jboss.on</groupId>
+    <artifactId>jopr-common-parent</artifactId>
+    <packaging>pom</packaging>
+    <name>Jopr Common Libraries</name>
+    <description>parent POM for all Jopr common libraries</description>
+
+    <scm>
+        <connection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/common</connection>
+        <developerConnection>scm:svn:https://svn.jboss.org/repos/jopr/trunk/modules/common</developerConnection>
+    </scm>
+
+    <properties>
+        <scm.module.path>modules/common/</scm.module.path>
+    </properties>
+
+    <modules>
+      <module>jboss-as</module>
+    </modules>
+</project>

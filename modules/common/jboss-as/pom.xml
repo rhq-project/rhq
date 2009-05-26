@@ -1,0 +1,89 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+   <modelVersion>4.0.0</modelVersion>
+
+   <parent>
+      <groupId>org.jboss.on</groupId>
+      <!--  Bypass the jopr-plugins-parent which can not have children. It must build after the plugins in order to execute integration tests on them. -->
+      <artifactId>jopr-common-parent</artifactId>
+      <version>2.3.0-SNAPSHOT</version>
+   </parent>
+
+   <groupId>org.jboss.on</groupId>
+   <artifactId>jopr-jboss-as-common</artifactId>
+   <packaging>jar</packaging>
+
+   <name>Jopr JBossAS 4/5 Plugins Common Library</name>
+   <description>A library with the code common to the JBoss AS 4 and 5 plugins</description>
+
+   <scm>
+      <connection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/common/jboss-as/</connection>
+      <developerConnection>scm:svn:https://svn.jboss.org/repos/jopr/trunk/modules/common/jboss-as/</developerConnection>
+   </scm>
+
+   <properties>
+      <scm.module.path>modules/common/jboss-as/</scm.module.path>
+   </properties>
+
+   <dependencies>
+      
+      <dependency>
+         <groupId>ant</groupId>
+         <artifactId>ant</artifactId>
+         <version>1.6.5</version>
+      </dependency>
+      
+      <dependency>
+         <groupId>jboss</groupId>
+         <artifactId>jbpm</artifactId>
+         <version>3.1.1</version>
+      </dependency>
+
+      <dependency>
+         <groupId>dom4j</groupId>
+         <artifactId>dom4j</artifactId>
+         <version>1.6.1</version>
+      </dependency>
+
+   </dependencies>
+
+<!-- Because this library is a helper only used by other libraries, it doesn't make
+     sense to package its dependencies into the /lib folder of its jar. The libraries
+     there wouldn't be loaded by the plugin container classloader anyway because this
+     helper library is already present in a /lib of the actual plugin.
+     The plugin poms therefore must copy the dependencies of this library into their
+     /lib dirs manually (until we find a better way of solving this...).
+-->
+<!-- 
+   <build>      
+      <plugins>
+
+         <plugin>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <version>2.0</version>
+            <executions>
+               <execution>
+                  <id>copy-dependencies</id>
+                  <phase>process-resources</phase>
+                  <goals>
+                     <goal>copy</goal>
+                  </goals>
+                  <configuration>
+                     <artifactItems>
+                        <artifactItem>
+                           <groupId>jboss</groupId>
+                           <artifactId>jbpm</artifactId>
+                           <version>3.1.1</version>
+                        </artifactItem>
+                     </artifactItems>
+                     <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+
+      </plugins>
+   </build>
+-->
+
+</project>

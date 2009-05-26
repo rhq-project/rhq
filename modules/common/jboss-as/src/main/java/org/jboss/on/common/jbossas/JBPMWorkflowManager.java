@@ -20,7 +20,7 @@
   * if not, write to the Free Software Foundation, Inc.,
   * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
   */
-package org.rhq.plugins.jbossas;
+package org.jboss.on.common.jbossas;
 
 import java.io.File;
 import java.io.IOException;
@@ -66,15 +66,15 @@ import org.rhq.core.pluginapi.content.ContentContext;
 public class JBPMWorkflowManager {
     private ContentContext contentContext;
     private ControlActionFacade controlFacade;
-    private Configuration pluginConfiguration;
+	private JBossASPaths jbossPaths;
 
     private final Log log = LogFactory.getLog(this.getClass());
 
     public JBPMWorkflowManager(ContentContext contentContext, ControlActionFacade controlFacade,
-        Configuration pluginConfiguration) {
+    		JBossASPaths jbossPaths) {
         this.contentContext = contentContext;
         this.controlFacade = controlFacade;
-        this.pluginConfiguration = pluginConfiguration;
+        this.jbossPaths = jbossPaths;
     }
 
     /**
@@ -132,14 +132,14 @@ public class JBPMWorkflowManager {
         }
 
         // Populate the variables describing the AS instance
-        String jbossHomeDir = safeGet(pluginConfiguration, JBossASServerComponent.JBOSS_HOME_DIR_CONFIG_PROP);
-        jbossHomeDir += File.separator; // Just to make sure it ends with the separator
-        context.setVariable(ContextVariables.JBOSS_HOME_DIR, jbossHomeDir);
+        String jbossHomeDir = jbossPaths.getHomeDir();
+		jbossHomeDir += File.separator; // Just to make sure it ends with the separator
+		context.setVariable(ContextVariables.JBOSS_HOME_DIR, jbossHomeDir);
 
         String jbossClientDir = jbossHomeDir + File.separator + "client" + File.separator;
         context.setVariable(ContextVariables.JBOSS_CLIENT_DIR, jbossClientDir);
 
-        String jbossServerDir = safeGet(pluginConfiguration, JBossASServerComponent.CONFIGURATION_PATH_CONFIG_PROP);
+        String jbossServerDir = jbossPaths.getServerDir();
         jbossServerDir += File.separator; // Just to make sure
         context.setVariable(ContextVariables.JBOSS_SERVER_DIR, jbossServerDir);
 
@@ -357,7 +357,7 @@ public class JBPMWorkflowManager {
         softwareValue.setLicenseVersion(pkg.getLicenseVersion());
         softwareValue.setLongDescription(pkg.getLongDescription());
         softwareValue.setMD5(pkg.getMD5());
-        softwareValue.setSHA256(pkg.getSHA265());
+        softwareValue.setSHA256(pkg.getSHA256());
         softwareValue.setShortDescription(pkg.getShortDescription());
         softwareValue.setTitle(pkg.getName());
 

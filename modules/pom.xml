@@ -94,6 +94,7 @@
   </dependencies>
   
   <modules>
+    <module>common</module>
     <module>plugins</module>  
   </modules>
         

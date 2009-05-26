@@ -890,6 +890,28 @@
             </configuration>
         </content>-->
 
+      <content name="library" displayName="Jar Library" category="deployable"
+                description="Library Jar files deployed in JBoss AS">
+         <configuration>
+            <c:simple-property name="version" readOnly="true" description="The version declared by the JAR's manifest."/>
+            <c:simple-property name="title" readOnly="true" description="The title declared by the JAR's manifest."/>
+            <c:simple-property name="url" readOnly="true" description="The url declared by the JAR's manifest."/>
+            <c:simple-property name="vendor" readOnly="true" description="The vendor declared by the JAR's manifest."/>
+            <c:simple-property name="classpath" readOnly="true"
+                               description="The classpath declared by the JAR's manifest."/>
+            <c:simple-property name="sealed" readOnly="true" type="boolean" description="True if the JAR is sealed."/>
+         </configuration>
+      </content>
+
+      <content name="cumulativePatch" displayName="Cumulative Patch" category="deployable"
+               description="Automatically installable application server patches">
+         <configuration>
+            <c:simple-property name="jiraId"/>
+            <c:simple-property name="distributionStatus"/>
+            <c:simple-property name="downloadUrl"/>
+            <c:simple-property name="instructionCompatibilityVersion"/>
+         </configuration>
+      </content>
 
         <service name="JBoss Web"
                  description="JBoss Web Servlet Container"

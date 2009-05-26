@@ -43,6 +43,12 @@
           <scope>provided</scope> <!-- by PC -->
 		</dependency>
         
+        <dependency>
+           <groupId>org.jboss.on</groupId>
+           <artifactId>jopr-jboss-as-common</artifactId>
+           <version>${project.version}</version>
+        </dependency>
+              
         <!-- Needed for the plugin descriptor generator code -->
         <dependency>
           <groupId>apache-xerces</groupId>
@@ -108,7 +114,7 @@
           <version>${jboss-man.version}</version>          
           <!--<scope>provided</scope>-->
         </dependency>
-
+        
         <!-- Uncomment the below deps if you want to pull down the jboss-profileservice 
              and jboss-system sources jars for debugging purposes. You will also need
              to make sure you have the JBoss snapshot repo in this POM or your settings.xml. 
@@ -152,6 +158,33 @@
                       <configuration>
                          <includeScope>runtime</includeScope>
                          <excludeTransitive>true</excludeTransitive>
+                         <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
+                      </configuration>
+                   </execution>
+                   <execution>
+                      <id>copy-dependencies-of-jbossas-common</id>
+                      <phase>process-resources</phase>
+                      <goals>
+                        <goal>copy</goal>
+                      </goals>
+                      <configuration>
+                         <artifactItems>
+                           <artifactItem>
+                             <groupId>jboss</groupId>
+                             <artifactId>jbpm</artifactId>
+                             <version>3.1.1</version>
+                           </artifactItem>
+                           <artifactItem>
+                             <groupId>ant</groupId>
+                             <artifactId>ant</artifactId>
+                             <version>1.6.5</version>
+                           </artifactItem>
+                           <artifactItem>
+                              <groupId>dom4j</groupId>
+                              <artifactId>dom4j</artifactId>
+                              <version>1.6.1</version>
+                           </artifactItem>
+                         </artifactItems>  
                          <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
                       </configuration>
                    </execution>

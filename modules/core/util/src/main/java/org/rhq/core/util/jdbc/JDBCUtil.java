@@ -52,6 +52,7 @@ public class JDBCUtil {
      */
     private static final String POSTGRES_NEXTVAL_SQL = "(SELECT nextval('%s_id_seq'::text))";
     private static final String ORACLE_NEXTVAL_SQL = "%s_id_seq.nextval";
+    private static final String H2_NEXTVAL_SQL = "(SELECT nextval('%s_id_seq'))";
 
     public static void safeClose(Statement stm, ResultSet rs) {
         safeClose(rs);
@@ -156,6 +157,8 @@ public class JDBCUtil {
                 nextvalSql = POSTGRES_NEXTVAL_SQL;
             } else if (name.contains("oracle")) {
                 nextvalSql = ORACLE_NEXTVAL_SQL;
+            } else if (name.contains("h2")) {
+                nextvalSql = H2_NEXTVAL_SQL;
             } else {
                 JDBCUtil.safeClose(conn);
                 throw new IllegalStateException("Unsupported database type: " + name);

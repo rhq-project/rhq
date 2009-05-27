@@ -148,7 +148,7 @@
          <id>h2</id>
          <properties>
             <rhq.test.ds.driver-class>org.h2.Driver</rhq.test.ds.driver-class>
-            <rhq.test.ds.connection-url>jdbc:h2:~/rhq;MVCC=TRUE</rhq.test.ds.connection-url>
+            <rhq.test.ds.connection-url>jdbc:h2:~/rhq;MVCC=TRUE;DB_CLOSE_ON_EXIT=FALSE</rhq.test.ds.connection-url>
             <rhq.test.ds.user-name>rhqadmin</rhq.test.ds.user-name>
             <rhq.test.ds.password>rhqadmin</rhq.test.ds.password>
             <rhq.test.ds.type-mapping>h2</rhq.test.ds.type-mapping>

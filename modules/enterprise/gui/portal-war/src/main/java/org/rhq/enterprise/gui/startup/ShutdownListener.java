@@ -18,14 +18,23 @@
  */
 package org.rhq.enterprise.gui.startup;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
+
 import javax.management.Notification;
 import javax.management.NotificationListener;
+import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.db.DatabaseType;
+import org.rhq.core.db.DatabaseTypeFactory;
+import org.rhq.core.db.H2DatabaseType;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.cloud.Server.OperationMode;
+import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -48,6 +57,19 @@ public class ShutdownListener implements NotificationListener {
      * @see javax.management.NotificationListener#handleNotification(Notification, Object)
      */
     public void handleNotification(Notification notification, Object handback) {
+        Connection connection = null;
+        Statement statement = null;
+        DatabaseType dbType = null;
+        try {
+            DataSource ds = LookupUtil.getDataSource();
+            connection = ds.getConnection();
+            dbType = DatabaseTypeFactory.getDatabaseType(connection);
+        } catch (Exception e) {
+            log.warn("If using the embedded database, you should pass 'DB_CLOSE_ON_EXIT=FALSE' in the connection URL");
+        } finally {
+            JDBCUtil.safeClose(connection, statement, null);
+        }
+
         if (org.jboss.system.server.Server.STOP_NOTIFICATION_TYPE.equals(notification.getType())) {
             stopScheduler();
 
@@ -56,6 +78,8 @@ public class ShutdownListener implements NotificationListener {
             if (Server.OperationMode.MAINTENANCE != server.getOperationMode()) {
                 LookupUtil.getCloudManager().updateServerMode(new Integer[] { server.getId() }, OperationMode.DOWN);
             }
+
+            stopEmbeddedDatabase(dbType);
         }
     }
 
@@ -70,5 +94,33 @@ public class ShutdownListener implements NotificationListener {
         } catch (Exception e) {
             log.warn("Failed to shutdown the scheduler.", e);
         }
+    }
+
+    private void stopEmbeddedDatabase(DatabaseType dbType) {
+        Connection connection = null;
+        Statement statement = null;
+        try {
+            DataSource ds = LookupUtil.getDataSource();
+            connection = ds.getConnection();
+            if (dbType instanceof H2DatabaseType) {
+                statement = connection.createStatement();
+                statement.execute("shutdown");
+            }
+            log.info("Embedded database closed cleanly");
+        } catch (SQLException sqle) {
+            if (sqle.getMessage().toLowerCase().indexOf("database is already closed") != -1) {
+                log.warn("Database is already shut down, can not perform graceful service shutdown");
+                return;
+            } else {
+                if (log.isDebugEnabled()) {
+                    log.warn("Could not shut down the embedded database cleanly", sqle);
+                } else {
+                    log.warn("Could not shut down the embedded database cleanly: " + sqle.getMessage());
+                }
+            }
+        } finally {
+            JDBCUtil.safeClose(connection, statement, null);
+        }
+
     }
 }

@@ -97,15 +97,18 @@ public class ShutdownListener implements NotificationListener {
     }
 
     private void stopEmbeddedDatabase(DatabaseType dbType) {
+        if (!(dbType instanceof H2DatabaseType)) {
+            // only perform shutdown actions if this is the embedded database
+            return;
+        }
+
         Connection connection = null;
         Statement statement = null;
         try {
             DataSource ds = LookupUtil.getDataSource();
             connection = ds.getConnection();
-            if (dbType instanceof H2DatabaseType) {
-                statement = connection.createStatement();
-                statement.execute("shutdown");
-            }
+            statement = connection.createStatement();
+            statement.execute("shutdown");
             log.info("Embedded database closed cleanly");
         } catch (SQLException sqle) {
             if (sqle.getMessage().toLowerCase().indexOf("database is already closed") != -1) {

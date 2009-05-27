@@ -33,6 +33,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Arrays;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -49,6 +50,7 @@ public class PluginClassLoader extends URLClassLoader {
     private final Log log = LogFactory.getLog(this.getClass());
 
     private File embeddedJarsDirectory;
+    private String stringValue;
 
     public PluginClassLoader(URL[] urls, ClassLoader parent) {
         super(urls, parent);
@@ -88,7 +90,12 @@ public class PluginClassLoader extends URLClassLoader {
         }
 
         URL[] classpath = classpathUrlList.toArray(new URL[classpathUrlList.size()]);
-        PluginClassLoader newLoader = new PluginClassLoader(classpath, parent);
+        PluginClassLoader newLoader;
+        if (pluginJarName.matches("jopr-jboss-as-5-plugin-.+\\.jar")) {
+            newLoader = new ChildFirstPluginClassLoader(classpath, parent);
+        } else {
+            newLoader = new PluginClassLoader(classpath, parent);
+        }
         newLoader.embeddedJarsDirectory = unpackedDirectory;
 
         return newLoader;
@@ -213,5 +220,17 @@ public class PluginClassLoader extends URLClassLoader {
         tmpDir.deleteOnExit();
 
         return tmpDir;
+    }
+
+    @Override
+    public String toString() {
+        if (this.stringValue == null) {
+            StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.append(this.getClass().getSimpleName()).append("[");
+            stringBuilder.append("parent=").append(getParent()).append(", ");
+            stringBuilder.append("urls=").append(Arrays.asList(getURLs())).append("]");
+            this.stringValue = stringBuilder.toString();
+        }
+        return this.stringValue;
     }
 }

@@ -150,9 +150,7 @@ public class PluginManager implements ContainerService {
 
                             String lastDependency = graph.getUseClassesDependency(nextPlugin);
                             PluginEnvironment lastDepEnvironment = this.loadedPluginEnvironments.get(lastDependency);
-
-                            String pluginJarName = new File(pluginUrl.getPath()).getName();
-
+                            
                             // create the URL array where all classes can be found - make sure we put the plugin's URL
                             // up at the front so its plugin descriptor is found before any other dependent plugin descriptors
                             //  URL[] allUrlsArray = new URL[allUrls.size() + 1];
@@ -163,7 +161,10 @@ public class PluginManager implements ContainerService {
 
                             ClassLoader classloader = lastDepEnvironment.getPluginClassLoader();
 
-                            // note that we don't really care if the URL uses file: or not, we just use File to parse the name from the path 
+                            // Note that we don't really care if the URL uses "file:" or not, we just use File to parse
+                            // the name from the path.
+                            String pluginJarName = new File(pluginUrl.getPath()).getName();
+
                             loadPlugin(pluginUrl, PluginClassLoader.create(pluginJarName, pluginUrl, true, classloader,
                                 tmpDir));
                         }

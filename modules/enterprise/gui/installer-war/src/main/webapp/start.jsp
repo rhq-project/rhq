@@ -65,7 +65,7 @@
                                           document.getElementById('propForm:databasedriverclass').value = 'oracle.jdbc.driver.OracleDriver';
                                           document.getElementById('propForm:databasexadatasourceclass').value = 'oracle.jdbc.xa.client.OracleXADataSource';
                                        } else if (this.options[this.selectedIndex].value == 'H2') {
-                                          document.getElementById('propForm:databaseconnectionurl').value = 'jdbc:h2:#{configurationBean.dataDirectory}/rhq;MVCC=TRUE';
+                                          document.getElementById('propForm:databaseconnectionurl').value = 'jdbc:h2:#{configurationBean.dataDirectory}/rhq;MVCC=TRUE;DB_CLOSE_ON_EXIT=FALSE';
                                           document.getElementById('propForm:databasedriverclass').value = 'org.h2.Driver';
                                           document.getElementById('propForm:databasexadatasourceclass').value = 'org.h2.jdbcx.JdbcDataSource';
                                        } else if (this.options[this.selectedIndex].value == 'MySQL') {

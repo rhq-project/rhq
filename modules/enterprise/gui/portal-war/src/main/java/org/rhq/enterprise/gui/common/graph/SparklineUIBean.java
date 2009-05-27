@@ -23,7 +23,13 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.Stroke;
 import java.awt.BasicStroke;
+import java.awt.Point;
+import java.awt.Polygon;
+import java.awt.LinearGradientPaint;
+import java.awt.GradientPaint;
+import java.awt.geom.Point2D;
 import java.util.List;
+import java.util.ArrayList;
 
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
@@ -37,8 +43,6 @@ public class SparklineUIBean {
     private int scheduleId;
 
     public void paint(Graphics2D g2d, Object obj) {
-
-//        this.scheduleId = (Integer) obj;
 
         String[] keys = ((String)obj).split(":");
 
@@ -62,30 +66,26 @@ public class SparklineUIBean {
 
         double heightScale = max-min != 0 ? (18d / (max - min)) : 0;
 
-        g2d.setColor(Color.lightGray);
         int i = 1;
-        for (MeasurementDataNumericHighLowComposite d : data) {
-           g2d.drawLine(i, 18 - (int)(heightScale * (d.getValue() - min)) - 1, i, 18);
-           i++;
-        }
-
-        g2d.setColor(Color.gray);
-        i = 1;
-        double lastValue = 0;
         g2d.setStroke(new BasicStroke(0.6f));
+        Polygon p = new Polygon();
+        p.addPoint(0,18);
         for (MeasurementDataNumericHighLowComposite d : data) {
 
-            g2d.drawRect(i, 18 - (int)(heightScale * (d.getValue() - min)), 1, 1);
-            if (i > 1) {
-                g2d.drawLine(i-1, 18 - (int)(heightScale * (lastValue - min)), i, 18 - (int)(heightScale * (d.getValue() - min)));
-            } else {
-                g2d.drawRect(i, 18 - (int)(heightScale * (d.getValue() - min)), 1, 1);
-
+            if (!Double.isNaN(d.getValue())) {
+                   p.addPoint(i,18 - (int)(heightScale * (d.getValue() - min)));
             }
-            lastValue = d.getValue();
             i++;
         }
-       
+        p.addPoint(60,18);
+
+        g2d.setPaint(new GradientPaint(0,18, Color.lightGray , 0,0, Color.darkGray));
+        g2d.fillPolygon(p);
+
+
+        g2d.setColor(Color.lightGray);
+        g2d.drawPolygon(p);
+
     }
 
     private List<MeasurementDataNumericHighLowComposite> getData(int resourceId, int scheduleDefId) {

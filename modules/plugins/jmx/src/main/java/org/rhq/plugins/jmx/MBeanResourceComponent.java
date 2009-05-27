@@ -200,7 +200,7 @@ public class MBeanResourceComponent<T extends JMXComponent> implements Measureme
      */
     public AvailabilityType getAvailability() {
         try {
-            if (getEmsBean().isRegistered()) {
+            if (isMBeanAvailable()) {
                 return AvailabilityType.UP;
             } else {
                 return AvailabilityType.DOWN;
@@ -210,7 +210,7 @@ public class MBeanResourceComponent<T extends JMXComponent> implements Measureme
                 // Retry by connecting to a new parent connection (this bean might have been connected to by an old
                 // provider that's since been recreated).
                 this.bean = null;
-                if (getEmsBean().isRegistered()) {
+                if (isMBeanAvailable()) {
                     return AvailabilityType.UP;
                 } else {
                     return AvailabilityType.DOWN;
@@ -219,6 +219,19 @@ public class MBeanResourceComponent<T extends JMXComponent> implements Measureme
                 throw e;
             }
         }
+    }
+
+    private boolean isMBeanAvailable() {
+        EmsBean emsBean = getEmsBean();
+        boolean isAvailable = emsBean.isRegistered();
+        if (isAvailable == false) {
+            // in some buggy situations, a remote server might tell us an MBean isn't registered but it really is.
+            // see JBPAPP-2031 for more
+            String emsBeanName = emsBean.getBeanName().getCanonicalName();
+            int size = emsBean.getConnectionProvider().getExistingConnection().queryBeans(emsBeanName).size();
+            isAvailable = (size == 1);
+        }
+        return isAvailable;
     }
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) {

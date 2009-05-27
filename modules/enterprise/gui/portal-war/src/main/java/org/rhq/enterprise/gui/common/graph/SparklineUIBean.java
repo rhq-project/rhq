@@ -18,18 +18,13 @@
  */
 package org.rhq.enterprise.gui.common.graph;
 
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.Stroke;
 import java.awt.BasicStroke;
-import java.awt.Point;
-import java.awt.Polygon;
-import java.awt.LinearGradientPaint;
+import java.awt.Color;
 import java.awt.GradientPaint;
-import java.awt.geom.Point2D;
+import java.awt.Graphics2D;
+import java.awt.Polygon;
+import java.awt.RenderingHints;
 import java.util.List;
-import java.util.ArrayList;
 
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;

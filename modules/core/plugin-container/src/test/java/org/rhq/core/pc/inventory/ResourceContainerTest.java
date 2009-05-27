@@ -28,7 +28,10 @@ import org.testng.annotations.Test;
 
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.pc.util.FacetLockType;
+import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 
@@ -42,16 +45,19 @@ public class ResourceContainerTest {
 
     @BeforeClass
     public void beforeClass() {
+        PluginContainer.getInstance().initialize();
         ResourceContainer.initialize();
     }
 
     @AfterClass
     public void afterClass() {
         ResourceContainer.shutdown();
+        PluginContainer.getInstance().shutdown();
     }
 
     public void testCreateResourceComponentProxy() throws Exception {
-        Resource resource = new Resource();
+        ResourceType resourceType = new ResourceType("name", "plugin", ResourceCategory.PLATFORM, null);
+        Resource resource = new Resource("key", "name", resourceType);
         ResourceContainer resourceContainer = new ResourceContainer(resource);
         ResourceComponent resourceComponent = new MockResourceComponent(false);
         resourceContainer.setResourceComponent(resourceComponent);

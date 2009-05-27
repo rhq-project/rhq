@@ -43,6 +43,8 @@ import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.inventory.TimeoutException;
 import org.rhq.core.pc.plugin.BlacklistedException;
+import org.rhq.core.pc.plugin.PluginEnvironment;
+import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 
 /**
@@ -87,15 +89,18 @@ public class DiscoveryComponentProxyFactory {
         }
 
         try {
+            String pluginName = type.getPlugin();
+            PluginEnvironment pluginEnv = PluginContainer.getInstance().getPluginManager().getPlugin(pluginName);
+            ClassLoader pluginClassLoader = pluginEnv.getPluginClassLoader();
+
+            // This is the handler that will actually invoke the method calls.
+            ResourceDiscoveryComponentInvocationHandler handler = new ResourceDiscoveryComponentInvocationHandler(type,
+                component, timeout, pluginClassLoader);
+
             ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 
-            // this is the handler that will actually invoke the method calls
-            ResourceDiscoveryComponentInvocationHandler handler = new ResourceDiscoveryComponentInvocationHandler(type,
-                component, timeout);
-
-            // this is the proxy that will look like the discovery component object that the caller will use
-            ResourceDiscoveryComponent proxy;
-            proxy = (ResourceDiscoveryComponent) Proxy.newProxyInstance(classLoader,
+            // This is the proxy that will look like the discovery component object that the caller will use.
+            ResourceDiscoveryComponent proxy = (ResourceDiscoveryComponent) Proxy.newProxyInstance(classLoader,
                 new Class<?>[] { ResourceDiscoveryComponent.class }, handler);
 
             return proxy;
@@ -155,9 +160,10 @@ public class DiscoveryComponentProxyFactory {
         private final ResourceDiscoveryComponent component;
         private final long timeout;
         private final ResourceType resourceType;
+        private final ClassLoader pluginClassLoader;
 
         public ResourceDiscoveryComponentInvocationHandler(ResourceType type, ResourceDiscoveryComponent component,
-            long timeout) {
+                                                           long timeout, ClassLoader pluginClassLoader) {
 
             if (timeout <= 0) {
                 throw new IllegalArgumentException("timeout value is not positive.");
@@ -169,19 +175,27 @@ public class DiscoveryComponentProxyFactory {
             this.resourceType = type;
             this.component = component;
             this.timeout = timeout;
+            this.pluginClassLoader = pluginClassLoader;
         }
 
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
             if (isResourceTypeBlacklisted(this.resourceType)) {
                 throw new RuntimeException("Discovery component for resource type [" + this.resourceType
-                    + "] has been blacklisted and can no longer be invoked");
+                    + "] has been blacklisted and can no longer be invoked.");
             }
 
-            if (method.getDeclaringClass().equals(ResourceDiscoveryComponent.class)) {
-                return invokeInNewThread(method, args);
-            } else {
-                // toString(), etc.
-                return invokeInCurrentThread(method, args);
+            ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
+            try {
+                Thread.currentThread().setContextClassLoader(this.pluginClassLoader);
+                if (method.getDeclaringClass().equals(ResourceDiscoveryComponent.class)) {
+                    return invokeInNewThread(method, args);
+                } else {
+                    // toString(), etc.
+                    return invokeInCurrentThread(method, args);
+                }
+            }
+            finally {
+                Thread.currentThread().setContextClassLoader(originalContextClassLoader);
             }
         }
 

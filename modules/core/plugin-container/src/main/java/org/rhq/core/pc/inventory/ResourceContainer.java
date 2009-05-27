@@ -53,6 +53,8 @@ import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pc.util.LoggingThreadFactory;
+import org.rhq.core.pc.PluginContainer;
+import org.rhq.core.pc.plugin.PluginEnvironment;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.jetbrains.annotations.Nullable;
@@ -76,6 +78,8 @@ public class ResourceContainer implements Serializable {
         STARTED, STOPPED
     }
 
+    private final Log log = LogFactory.getLog(this.getClass());
+
     private transient ResourceComponent resourceComponent;
     private transient ResourceContext resourceContext;
     private transient ResourceComponentState resourceComponentState = ResourceComponentState.STOPPED;
@@ -86,6 +90,7 @@ public class ResourceContainer implements Serializable {
     private Set<MeasurementScheduleRequest> measurementSchedule = new HashSet<MeasurementScheduleRequest>();
     private SynchronizationState synchronizationState = SynchronizationState.NEW;
     private transient Map<Integer, Object> proxyCache = new HashMap<Integer, Object>();
+    private ClassLoader pluginClassLoader;
 
     // thread pools used to invoke methods on container's components
     private static final String DAEMON_THREAD_POOL_NAME = "ResourceContainer.invoker.daemon";
@@ -113,6 +118,13 @@ public class ResourceContainer implements Serializable {
 
     public ResourceContainer(Resource resource) {
         this.resource = resource;
+        String pluginName = this.resource.getResourceType().getPlugin();
+        PluginEnvironment pluginEnv = PluginContainer.getInstance().getPluginManager().getPlugin(pluginName);
+        if (pluginEnv == null) {
+            log.warn("No plugin environment found for plugin '" + pluginName + "'.");
+        }
+        ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
+        this.pluginClassLoader = (pluginEnv != null) ? pluginEnv.getPluginClassLoader() : contextClassLoader;
     }
 
     public Availability updateAvailability(AvailabilityType availabilityType) {
@@ -261,9 +273,13 @@ public class ResourceContainer implements Serializable {
         }
     }
 
+    public ClassLoader getPluginClassLoader() {
+        return this.pluginClassLoader;
+    }
+
     @Override
     public String toString() {
-        return "ResourceContainer: resource=[" + this.resource + "]";
+        return this.getClass().getSimpleName() + "[resource=" + this.resource + "]";
     }
 
     /**
@@ -375,6 +391,7 @@ public class ResourceContainer implements Serializable {
         private final boolean daemonThread;
         private final Class facetInterface;
 
+
         /**
          *
          * @param container the resource container managing the resource component upon which the method will be invoked;
@@ -402,11 +419,18 @@ public class ResourceContainer implements Serializable {
         }
 
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            if (method.getDeclaringClass().equals(this.facetInterface)) {
-                return invokeInNewThreadWithLock(method, args);
-            } else {
-                // toString(), etc.
-                return invokeInCurrentThreadWithoutLock(method, args);
+            ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
+            try {
+                Thread.currentThread().setContextClassLoader(this.container.getPluginClassLoader());
+                if (method.getDeclaringClass().equals(this.facetInterface)) {
+                    return invokeInNewThreadWithLock(method, args);
+                } else {
+                    // toString(), etc.
+                    return invokeInCurrentThreadWithoutLock(method, args);
+                }
+            }
+            finally {
+                Thread.currentThread().setContextClassLoader(originalContextClassLoader);
             }
         }
 

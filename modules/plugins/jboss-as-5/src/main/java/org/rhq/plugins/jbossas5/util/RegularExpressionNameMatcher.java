@@ -24,6 +24,7 @@ package org.rhq.plugins.jbossas5.util;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.io.Serializable;
 
 import org.jboss.deployers.spi.management.NameMatcher;
 import org.jboss.managed.api.ManagedComponent;
@@ -31,8 +32,10 @@ import org.jboss.managed.api.ManagedComponent;
 /**
  * @author Ian Springer
  */
-public class RegularExpressionNameMatcher implements NameMatcher<ManagedComponent>
+public class RegularExpressionNameMatcher implements NameMatcher<ManagedComponent>, Serializable
 {
+    private static final long serialVersionUID = 1L;
+    
     /**
      * Matches a managed component's name against a regular expression.
      *

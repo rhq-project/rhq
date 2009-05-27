@@ -38,6 +38,7 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.plugins.jbossas5.helper.MoreKnownComponentTypes;
 import org.rhq.plugins.jbossas5.util.RegularExpressionNameMatcher;
+import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
 
 import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.managed.api.ComponentType;
@@ -121,7 +122,9 @@ public class ConnectorDiscoveryComponent
             throws Exception
     {
         ComponentType webRequestProcessorComponentType = MoreKnownComponentTypes.MBean.WebRequestProcessor.getType();
-        return managementView.getMatchingComponents(WEB_REQUEST_PROCESSOR_COMPONENT_NAMES_REGEX,
-                webRequestProcessorComponentType, new RegularExpressionNameMatcher());
+        //return managementView.getMatchingComponents(WEB_REQUEST_PROCESSOR_COMPONENT_NAMES_REGEX,
+        //        webRequestProcessorComponentType, new RegularExpressionNameMatcher());
+        return ManagedComponentUtils.getManagedComponents(managementView, webRequestProcessorComponentType,
+                WEB_REQUEST_PROCESSOR_COMPONENT_NAMES_REGEX, new RegularExpressionNameMatcher());
     }
 }

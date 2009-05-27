@@ -37,6 +37,7 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.plugins.jbossas5.helper.MoreKnownComponentTypes;
 import org.rhq.plugins.jbossas5.util.RegularExpressionNameMatcher;
+import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
 
 import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.managed.api.ComponentType;
@@ -114,7 +115,9 @@ public class VirtualHostDiscoveryComponent
             throws Exception
     {
         ComponentType webHostComponentType = MoreKnownComponentTypes.MBean.WebHost.getType();
-        return managementView.getMatchingComponents(WEB_HOST_COMPONENT_NAMES_REGEX,
-                webHostComponentType, new RegularExpressionNameMatcher());
+        //return managementView.getMatchingComponents(WEB_HOST_COMPONENT_NAMES_REGEX,
+        //        webHostComponentType, new RegularExpressionNameMatcher());
+        return ManagedComponentUtils.getManagedComponents(managementView, webHostComponentType,
+                WEB_HOST_COMPONENT_NAMES_REGEX, new RegularExpressionNameMatcher());
     }
 }

@@ -28,12 +28,21 @@
     </scm>
 
     <properties>
-        <scm.module.path>modules/plugins/jboss-as-5/</scm.module.path>
-                        
-        <jboss-man.version>2.1.0.SP1</jboss-man.version>
-        <jboss-profileservice-spi.version>5.1.0.GA</jboss-profileservice-spi.version>
+        <scm.module.path>modules/plugins/jboss-as-5/</scm.module.path>                        
     </properties>
 
+    <dependencyManagement>
+        <dependencies>
+          <dependency>
+            <groupId>org.jboss.jbossas</groupId>
+		    <artifactId>jboss-as-parent</artifactId>
+		    <version>5.1.0-SNAPSHOT</version>
+            <type>pom</type>
+            <scope>import</scope>
+          </dependency>
+        </dependencies>
+    </dependencyManagement>
+    
     <dependencies>
 
 		<dependency>
@@ -84,56 +93,216 @@
           <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
           <scope>provided</scope> <!-- by PC -->
         </dependency>
-                
-      <dependency>
-         <groupId>jboss</groupId>
-         <artifactId>jboss-common</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by PC -->
-      </dependency>
-
-      <!-- The below Profile Service API deps are temporarily set to compile scope, so they can be
-           referenced when running within Enterprise Jopr. -->
+                      
+        <!-- The below Profile Service API deps are temporarily set to compile scope, so they can be
+             referenced when running within Enterprise Jopr. -->
         <dependency>
           <groupId>org.jboss.integration</groupId>
-          <artifactId>jboss-profileservice-spi</artifactId>                    
-          <version>${jboss-profileservice-spi.version}</version>          
+          <artifactId>jboss-profileservice-spi</artifactId>                              
           <!--<scope>provided</scope>-->
         </dependency>        
         
         <dependency>
           <groupId>org.jboss.man</groupId>
-          <artifactId>jboss-managed</artifactId>
-          <version>${jboss-man.version}</version>          
+          <artifactId>jboss-managed</artifactId>          
           <!--<scope>provided</scope>-->
         </dependency>
         
         <dependency>
           <groupId>org.jboss.man</groupId>
-          <artifactId>jboss-metatype</artifactId>
-          <version>${jboss-man.version}</version>          
+          <artifactId>jboss-metatype</artifactId>          
           <!--<scope>provided</scope>-->
         </dependency>
+
+        <!--======= client API jars (temporary) =======-->
+        <dependency>
+          <groupId>org.jboss.naming</groupId>
+          <artifactId>jnp-client</artifactId>          
+          <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.remoting</groupId>
+          <artifactId>jboss-remoting</artifactId>          
+          <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.jbossas</groupId>
+          <artifactId>jboss-as-aspects</artifactId>
+          <version>5.1.0.CR1</version>
+          <classifier>jboss-aspect-jdk50-client</classifier>
+          <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>trove</groupId>
+          <artifactId>trove</artifactId>          
+          <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>javassist</groupId>
+          <artifactId>javassist</artifactId>          
+          <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.security</groupId>
+          <artifactId>jboss-security-spi</artifactId>          
+          <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.javaee</groupId>
+          <artifactId>jboss-javaee</artifactId>          
+          <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>oswego-concurrent</groupId>
+          <artifactId>concurrent</artifactId>
+          <version>1.3.4-jboss</version>
+          <scope>runtime</scope>
+        </dependency>
+
+        <!-- aka jboss-client.jar -->
+        <dependency>
+            <groupId>org.jboss.jbossas</groupId>
+            <artifactId>jboss-as-server</artifactId>            
+            <classifier>client</classifier>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss</groupId>
+          <artifactId>jboss-mdr</artifactId>          
+          <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.logging</groupId>
+          <artifactId>jboss-logging-spi</artifactId>          
+          <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.logging</groupId>
+          <artifactId>jboss-logging-log4j</artifactId>          
+          <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.jbossas</groupId>
+          <artifactId>jboss-as-security</artifactId>
+          <version>5.1.0.CR1</version>
+          <classifier>client</classifier>
+          <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.integration</groupId>
+          <artifactId>jboss-transaction-spi</artifactId>          
+          <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.ejb3</groupId>
+          <artifactId>jboss-ejb3-common</artifactId>          
+          <classifier>client</classifier>
+          <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.ejb3</groupId>
+          <artifactId>jboss-ejb3-core</artifactId>          
+          <classifier>client</classifier>
+          <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.ejb3</groupId>
+          <artifactId>jboss-ejb3-ext-api</artifactId>
+          <version>1.0.0</version>
+          <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.ejb3</groupId>
+          <artifactId>jboss-ejb3-proxy-spi</artifactId>          
+          <classifier>client</classifier>
+          <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.ejb3</groupId>
+          <artifactId>jboss-ejb3-proxy-impl</artifactId>          
+          <classifier>client</classifier>
+          <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.ejb3</groupId>
+          <artifactId>jboss-ejb3-security</artifactId>          
+          <classifier>client</classifier>
+          <scope>runtime</scope>
+        </dependency>
+
+        <!-- needed by ManagementView.getDeployment() -->
+        <dependency>
+          <groupId>org.jboss.microcontainer</groupId>
+          <artifactId>jboss-dependency</artifactId>          
+          <scope>runtime</scope>
+        </dependency>
         
+        <!-- The four below deps are needed by the non-EJB proxy but not by the EJB proxy. -->        
+        <dependency>
+          <groupId>org.jboss.security</groupId>
+          <artifactId>jbosssx-client</artifactId>          
+          <scope>runtime</scope>          
+        </dependency>       
+
+        <dependency>
+          <groupId>org.jboss.aspects</groupId>
+          <artifactId>jboss-security-aspects</artifactId>          
+          <scope>runtime</scope>                   
+        </dependency>
+        
+        <dependency>
+          <groupId>org.jboss.aop</groupId>
+          <artifactId>jboss-aop</artifactId>          
+          <classifier>client</classifier>          
+          <scope>runtime</scope>          
+        </dependency>       
+        
+        <dependency>
+          <groupId>org.jboss</groupId>
+          <artifactId>jboss-common-core</artifactId>                    
+        </dependency>       
+                 
         <!-- Uncomment the below deps if you want to pull down the jboss-profileservice 
              and jboss-system sources jars for debugging purposes. You will also need
              to make sure you have the JBoss snapshot repo in this POM or your settings.xml. 
         -->        
-<!--
+
         <dependency>
             <groupId>org.jboss.jbossas</groupId>
-            <artifactId>jboss-as-profileservice</artifactId>  
-            <version>5.1.0-SNAPSHOT</version>
-            <scope>provided</scope>            
+            <artifactId>jboss-as-profileservice</artifactId>              
+            <scope>runtime</scope>            
+        </dependency>
+
+        <dependency>
+            <groupId>org.jboss</groupId>
+            <artifactId>jboss-reflect</artifactId>              
+            <scope>runtime</scope>            
         </dependency>
         
         <dependency>
             <groupId>org.jboss.jbossas</groupId>
-            <artifactId>jboss-as-system</artifactId>  
-            <version>5.1.0-SNAPSHOT</version>
+            <artifactId>jboss-as-system</artifactId>              
             <scope>provided</scope>            
         </dependency>
--->
+
     </dependencies>
 
     <build>
@@ -225,6 +394,84 @@
         </plugins>
     </build>
 
+    <profiles>
+
+      <profile>
+         <id>dev</id>
+
+         <properties>
+            <rhq.rootDir>../../..</rhq.rootDir>
+            <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
+            <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/rhq-downloads/rhq-plugins</rhq.deploymentDir>
+         </properties>
+
+         <build>
+            <plugins>
+
+               <plugin>
+                 <artifactId>maven-antrun-plugin</artifactId>
+                 <version>1.1</version>
+                 <executions>
+
+                     <execution>
+                        <id>deploy</id>
+                        <phase>compile</phase>
+                        <configuration>
+                          <tasks>
+                            <mkdir dir="${rhq.deploymentDir}" />
+                            <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
+                            <echo>*** Updating ${deployment.file}...</echo>
+                            <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}" />
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                     <execution>
+                        <id>deploy-jar-meta-inf</id>
+                        <phase>package</phase>
+                        <configuration>
+                          <tasks>                             
+                             <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />                             
+                             <echo>*** Updating META-INF dir in ${deployment.file}...</echo>
+                             <unjar src="${project.build.directory}/${project.build.finalName}.jar" dest="${project.build.outputDirectory}">
+                               <patternset><include name="META-INF/**" /></patternset>
+                             </unjar>
+                             <jar destfile="${deployment.file}" manifest="${project.build.outputDirectory}/META-INF/MANIFEST.MF" update="true">                                
+                             </jar>
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+                     
+                     <execution>
+                        <id>undeploy</id>
+                        <phase>clean</phase>
+                        <configuration>
+                          <tasks>
+                            <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
+                            <echo>*** Deleting ${deployment.file}...</echo>
+                            <delete file="${deployment.file}" />
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                   </executions>
+               </plugin>
+
+            </plugins>
+         </build>
+      </profile>
+
+    </profiles>    
+    
     <repositories>    
         <repository>
             <id>jboss</id>

@@ -24,7 +24,7 @@ package org.rhq.plugins.jbossas5;
 
 import java.io.File;
 import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
 import java.util.Map;
 import java.util.Set;
 
@@ -223,8 +223,10 @@ public abstract class AbstractManagedDeploymentComponent
 
     private File getDeploymentFile() throws MalformedURLException
     {
-        URL vfsURL = new URL(this.deploymentName);
-        String path = vfsURL.getPath();
+        // e.g.: vfszip:/C:/opt/jboss-5.0.0.GA/server/default/deploy/foo.war
+        URI vfsURI = URI.create(this.deploymentName);
+        // e.g.: foo.war
+        String path = vfsURI.getPath();
         // Under Windows, the deployment name URL will look like:
         // vfszip:/C:/opt/jboss-5.1.0.CR1/server/default/deploy/eardeployment.ear/
         // so we need to trim the leading slash off the path portion. Java considers the version with the leading slash

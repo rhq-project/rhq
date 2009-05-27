@@ -90,13 +90,10 @@ public abstract class DebugUtils
             buf.append(", readOnly=").append(managedProperty.isReadOnly());
             buf.append(", mandatory=").append(managedProperty.isMandatory());
             buf.append(", removed=").append(managedProperty.isRemoved());
-            Object value = managedProperty.getValue();
-            if (value != null && !(value instanceof MetaValue))
-                throw new IllegalStateException("Value of ManagedProperty [" + managedProperty.getName()
-                        + "] is not a MetaValue - it is a " + value.getClass().getName() + ".");
+            MetaValue value = managedProperty.getValue();
             if (value == null)
                 buf.append(", type=").append(managedProperty.getMetaType());
-            buf.append(", value=").append(convertMetaValueToString((MetaValue)value));
+            buf.append(", value=").append(convertMetaValueToString(value));
         }
         return buf.toString();
     }

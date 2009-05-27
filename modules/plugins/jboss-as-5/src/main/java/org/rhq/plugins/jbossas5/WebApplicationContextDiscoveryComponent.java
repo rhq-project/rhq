@@ -177,8 +177,11 @@ public class WebApplicationContextDiscoveryComponent
                 WEB_APPLICATION_COMPONENT_NAMES_REGEX_TEMPLATE.replaceAll("%"
                         + WebApplicationContextComponent.CONTEXT_PATH_PROPERTY + "%", contextPath);
         ComponentType webApplicationComponentType = MoreKnownComponentTypes.MBean.WebApplication.getType();
-        return managementView.getMatchingComponents(webApplicationManagerComponentNamesRegex,
-                webApplicationComponentType, new RegularExpressionNameMatcher());
+        //return managementView.getMatchingComponents(webApplicationManagerComponentNamesRegex,
+        //        webApplicationComponentType, new RegularExpressionNameMatcher());
+        return ManagedComponentUtils.getManagedComponents(managementView, webApplicationComponentType,
+                webApplicationManagerComponentNamesRegex, new RegularExpressionNameMatcher());
+
     }
 
     private static String getWebApplicationComponentVirtualHost(ManagedComponent webApplicationComponent)

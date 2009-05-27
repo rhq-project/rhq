@@ -126,9 +126,10 @@ public class WebApplicationContextComponent extends ManagedComponentComponent
     private Double getServletMetric(ManagementView managementView, String metricName) throws Exception
     {
         ComponentType servletComponentType = MoreKnownComponentTypes.MBean.Servlet.getType();
-        Set<ManagedComponent> servletComponents =
-                managementView.getMatchingComponents(this.servletComponentNamesRegex,
-                        servletComponentType, new RegularExpressionNameMatcher());
+        //Set<ManagedComponent> servletComponents = managementView.getMatchingComponents(this.servletComponentNamesRegex,
+        //        servletComponentType, new RegularExpressionNameMatcher());
+        Set<ManagedComponent> servletComponents = ManagedComponentUtils.getManagedComponents(managementView,
+                servletComponentType, this.servletComponentNamesRegex, new RegularExpressionNameMatcher());
 
         long min = Long.MAX_VALUE;
         long max = 0;

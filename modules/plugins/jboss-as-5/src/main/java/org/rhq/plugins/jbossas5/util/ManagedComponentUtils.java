@@ -25,10 +25,12 @@ package org.rhq.plugins.jbossas5.util;
 import java.io.Serializable;
 import java.util.EnumSet;
 import java.util.Set;
+import java.util.HashSet;
 
 import org.jetbrains.annotations.NotNull;
 
 import org.jboss.deployers.spi.management.ManagementView;
+import org.jboss.deployers.spi.management.NameMatcher;
 import org.jboss.managed.api.ComponentType;
 import org.jboss.managed.api.ManagedComponent;
 import org.jboss.managed.api.ManagedProperty;
@@ -38,6 +40,8 @@ import org.jboss.metatype.api.values.EnumValue;
 import org.jboss.metatype.api.values.SimpleValue;
 
 /**
+ * A collection of utility methods for working with Profile Service {@link ManagedComponent}s.
+ *
  * @author Ian Springer
  */
 public class ManagedComponentUtils
@@ -127,6 +131,20 @@ public class ManagedComponentUtils
             }
         }
         return isDeployed;
+    }
+
+    @NotNull
+    public static Set<ManagedComponent> getManagedComponents(ManagementView managementView, ComponentType componentType,
+                                                             String name, NameMatcher<ManagedComponent> nameMatcher)
+    {
+        Set<ManagedComponent> matchingComponents = new HashSet<ManagedComponent>();
+        Set<ManagedComponent> allComponents = getManagedComponents(managementView, componentType);
+        for (ManagedComponent component : allComponents) {
+            if (nameMatcher.matches(component, name)) {
+                matchingComponents.add(component);
+            }
+        }
+        return matchingComponents;
     }
 
     @NotNull

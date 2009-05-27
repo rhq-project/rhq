@@ -21,9 +21,20 @@
 
    <h:form>
       <p align="left">
-         <h5 align="left">
+         <h4 align="left">
+            <h:outputText value="#{bundle.prepareForEmbeddedMode}" />
+         </h4>
+         <h:commandButton id="useEmbeddedMode"
+                          action="#{configurationBean.prepareForEmbeddedMode}"
+                          value="#{bundle.embeddedMode}" />
+      </p>
+   </h:form>
+
+   <h:form>
+      <p align="left">
+         <h4 align="left">
             <h:outputText value="#{bundle.advancedSettingsInstructions}" />
-         </h5>
+         </h4>
          <h:selectBooleanCheckbox onclick="submit()"
                                   id="showAdvancedSettings"
                                   value="#{configurationBean.showAdvancedSettings}" />
@@ -53,6 +64,10 @@
                                           document.getElementById('propForm:databaseconnectionurl').value = 'jdbc:oracle:thin:@127.0.0.1:1521:rhq';
                                           document.getElementById('propForm:databasedriverclass').value = 'oracle.jdbc.driver.OracleDriver';
                                           document.getElementById('propForm:databasexadatasourceclass').value = 'oracle.jdbc.xa.client.OracleXADataSource';
+                                       } else if (this.options[this.selectedIndex].value == 'H2') {
+                                          document.getElementById('propForm:databaseconnectionurl').value = 'jdbc:h2:#{configurationBean.dataDirectory}/rhq;MVCC=TRUE';
+                                          document.getElementById('propForm:databasedriverclass').value = 'org.h2.Driver';
+                                          document.getElementById('propForm:databasexadatasourceclass').value = 'org.h2.jdbcx.JdbcDataSource';
                                        } else if (this.options[this.selectedIndex].value == 'MySQL') {
                                           document.getElementById('propForm:databaseconnectionurl').value = 'jdbc:mysql://127.0.0.1/rhq';
                                           document.getElementById('propForm:databasedriverclass').value = 'com.mysql.jdbc.Driver';

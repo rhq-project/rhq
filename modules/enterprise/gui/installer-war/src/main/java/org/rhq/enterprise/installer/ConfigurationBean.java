@@ -220,6 +220,33 @@ public class ConfigurationBean {
         return;
     }
 
+    public void prepareForEmbeddedMode() {
+        // embedded mode simply means use our embedded database and the embedded agent - used mainly for demo purposes
+
+        // set embedded agent enabled to true
+        PropertyItemWithValue prop = getConfigurationProperty(ServerProperties.PROP_EMBEDDED_AGENT_ENABLED);
+        prop.setValue(Boolean.TRUE.toString());
+        List<PropertyItemWithValue> newConfig = new ArrayList<PropertyItemWithValue>(1);
+        newConfig.add(prop);
+        setConfiguration(newConfig);
+
+        // use the H2 database, which is our embedded DB
+        List<PropertyItemWithValue> dbConfig = getDatabaseConfiguration();
+        for (PropertyItemWithValue dbProp : dbConfig) {
+            if (dbProp.getItemDefinition().getPropertyName().equals(ServerProperties.PROP_DATABASE_CONNECTION_URL)) {
+                dbProp.setValue("jdbc:h2:" + getDataDirectory() + "/rhq;MVCC=TRUE");
+            } else if (dbProp.getItemDefinition().getPropertyName().equals(ServerProperties.PROP_DATABASE_TYPE)) {
+                dbProp.setValue("H2");
+            } else if (dbProp.getItemDefinition().getPropertyName().equals(ServerProperties.PROP_DATABASE_DRIVER_CLASS)) {
+                dbProp.setValue("org.h2.Driver");
+            } else if (dbProp.getItemDefinition().getPropertyName().equals(ServerProperties.PROP_DATABASE_XA_DS_CLASS)) {
+                dbProp.setValue("org.h2.jdbcx.JdbcDataSource");
+            }
+        }
+
+        return;
+    }
+
     public Boolean isShowAdvancedSettings() {
         return showAdvancedSettings;
     }
@@ -269,6 +296,8 @@ public class ConfigurationBean {
                     adminUsername = "sys";
                 } else if (dbtype.toLowerCase().indexOf("postgres") > -1) {
                     adminUsername = "postgres";
+                } else if (dbtype.toLowerCase().indexOf("h2") > -1) {
+                    adminUsername = "sa";
                 } else if (dbtype.toLowerCase().indexOf("mysql") > -1) {
                     adminUsername = "mysqladmin";
                 }
@@ -364,6 +393,10 @@ public class ConfigurationBean {
             } else if (dbType.equalsIgnoreCase("oracle10g")) {
                 sql1 = "CREATE USER rhqadmin IDENTIFIED BY rhqadmin";
                 sql2 = "GRANT connect, resource TO rhqadmin";
+            } else if (dbType.equalsIgnoreCase("h2")) {
+                // I have no idea if these are correct for H2 - I just copied oracle's sql
+                sql1 = "CREATE USER rhqadmin IDENTIFIED BY rhqadmin";
+                sql2 = "GRANT connect, resource TO rhqadmin";
             } else {
                 throw new Exception("Unknown database type: " + dbType);
             }
@@ -410,6 +443,16 @@ public class ConfigurationBean {
         }
 
         return StartPageResults.STAY;
+    }
+
+    public String getDataDirectory() {
+        try {
+            String path = this.serverInfo.getDataDirectory().getCanonicalPath();
+            path = path.replace('\\', '/'); // in case we are on windows, we still want forward slashes
+            return path;
+        } catch (Exception e) {
+            throw new RuntimeException(e); // this should never happen unless the file system is out of wack 
+        }
     }
 
     public boolean isDatabaseSchemaExist() {
@@ -475,6 +518,8 @@ public class ConfigurationBean {
                 LOG.info("Oracle does not need to have server-name, port and db-name individually set, skipping");
                 // if we ever find that we'll need these props set, uncomment below and it should all work
                 //pattern = Pattern.compile(".*@(.*):([0123456789]+):(.*)"); // jdbc:oracle:thin:@host.name:1521:rhq
+            } else if (db.toLowerCase().indexOf("h2") > -1) {
+                LOG.info("H2 does not need to have server-name, port and db-name individually set, skipping");
             } else {
                 LOG.info("Unknown database type - will not set server-name, port and db-name");
                 // don't bother throwing error; these three extra settings are only for postgres anyway
@@ -512,6 +557,8 @@ public class ConfigurationBean {
                 dialect = "org.hibernate.dialect.PostgreSQLDialect";
             } else if (db.toLowerCase().indexOf("oracle") > -1) {
                 dialect = "org.hibernate.dialect.Oracle10gDialect";
+            } else if (db.toLowerCase().indexOf("h2") > -1) {
+                dialect = "org.hibernate.dialect.H2Dialect";
             } else if (db.toLowerCase().indexOf("mysql") > -1) {
                 dialect = "org.hibernate.dialect.MySQL5InnoDBDialect";
             } else {

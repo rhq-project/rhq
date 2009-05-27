@@ -72,6 +72,7 @@ public class ServerInformation {
     private static final String DEPLOYED_DS_FILENAME = "rhq-ds.xml";
     private static final String UNDEPLOYED_POSTGRES_DS_FILENAME = DEPLOYED_DS_FILENAME + ".postgres.rej";
     private static final String UNDEPLOYED_ORACLE_DS_FILENAME = DEPLOYED_DS_FILENAME + ".oracle.rej";
+    private static final String UNDEPLOYED_H2_DS_FILENAME = DEPLOYED_DS_FILENAME + ".h2.rej";
     private static final String DEPLOYED_EMBEDDED_AGENT_FILENAME = "rhq-agent.sar";
     private static final String UNDEPLOYED_EMBEDDED_AGENT_FILENAME = DEPLOYED_EMBEDDED_AGENT_FILENAME + ".rej";
     private static final String DEPLOYED_MAIL_SERVICE_FILENAME = "mail-service.xml";
@@ -82,12 +83,14 @@ public class ServerInformation {
     private static final String DEPLOYED_JMS_FILENAME = "jms";
     private static final String UNDEPLOYED_POSTGRES_JMS_FILENAME = "jms-postgres.rej";
     private static final String UNDEPLOYED_ORACLE_JMS_FILENAME = "jms-oracle.rej";
+    private static final String UNDEPLOYED_H2_JMS_FILENAME = "jms-h2.rej";
     private static final String SERVER_PROPERTIES_FILENAME = "rhq-server.properties";
 
     private MBeanServer mbeanServer = null;
     private File deployDirectory = null;
     private File binDirectory = null;
     private File logDirectory = null;
+    private File dataDirectory = null;
 
     /**
      * Returns <code>true</code> if the given set of properties provides settings that allow for a successful database
@@ -135,6 +138,10 @@ public class ServerInformation {
             } else if (DatabaseTypeFactory.isOracle(db)) {
                 if (version.startsWith("8") || version.startsWith("9")) {
                     throw new Exception("Unsupported Oracle [" + db + "]");
+                }
+            } else if (DatabaseTypeFactory.isH2(db)) {
+                if (version.startsWith("1.0")) {
+                    throw new Exception("Unsupported H2 [" + db + "]");
                 }
             } else {
                 throw new Exception("Unsupported DB [" + db + "]");
@@ -438,6 +445,8 @@ public class ServerInformation {
                 file = new File(deployDir, UNDEPLOYED_POSTGRES_DS_FILENAME);
             } else if (db.toLowerCase().indexOf("oracle") > -1) {
                 file = new File(deployDir, UNDEPLOYED_ORACLE_DS_FILENAME);
+            } else if (db.toLowerCase().indexOf("h2") > -1) {
+                file = new File(deployDir, UNDEPLOYED_H2_DS_FILENAME);
             } else {
                 throw new RuntimeException("Unsupported database: " + db);
             }
@@ -458,6 +467,8 @@ public class ServerInformation {
                 file = new File(deployDir, UNDEPLOYED_POSTGRES_JMS_FILENAME);
             } else if (db.toLowerCase().indexOf("oracle") > -1) {
                 file = new File(deployDir, UNDEPLOYED_ORACLE_JMS_FILENAME);
+            } else if (db.toLowerCase().indexOf("h2") > -1) {
+                file = new File(deployDir, UNDEPLOYED_H2_JMS_FILENAME);
             } else {
                 throw new RuntimeException("Unsupported database: " + db);
             }
@@ -520,6 +531,19 @@ public class ServerInformation {
         }
 
         return logDirectory;
+    }
+
+    public File getDataDirectory() {
+        if (dataDirectory == null) {
+            MBeanServer mbs = getMBeanServer();
+            ObjectName name = ObjectNameFactory.create("jboss.system:type=ServerConfig");
+            Object mbean = MBeanServerInvocationHandler.newProxyInstance(mbs, name, ServerConfig.class, false);
+
+            dataDirectory = new File(((ServerConfig) mbean).getServerHomeDir(), "data");
+            dataDirectory.mkdirs(); // just in case it doesn't exist yet, let's create it now
+        }
+
+        return dataDirectory;
     }
 
     private MBeanServer getMBeanServer() {

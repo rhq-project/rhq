@@ -151,6 +151,15 @@ public interface InstallerI18NResourceKeys {
     String ADVANCED_SETTINGS_INSTRUCTIONS = "advancedSettingsInstructions";
 
     @I18NMessages( {
+        @I18NMessage(locale = "en", value = "Press this button to prepare the server to use embedded mode. This will configure the server to use the embedded database and embedded agent. You cannot use this in an HA environment. This is for DEMO PURPOSES ONLY!"),
+        @I18NMessage(locale = "de", value = "Für Embedded-Modus, diese Taste drücken. Dies wird den Server konfigurieren für die eingebettete Datenbank-und Embedded-Agenten. Nicht für den Einsatz in einer HA-Umgebung. Dies ist nur für Demo-Zwecke!") })
+    String PREPARE_FOR_EMBEDDED_MODE = "prepareForEmbeddedMode";
+
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Embedded Mode"),
+        @I18NMessage(locale = "de", value = "Embedded-Modus") })
+    String EMBEDDED_MODE = "embeddedMode";
+
+    @I18NMessages( {
         @I18NMessage(locale = "en", value = "Database Settings define the database configured for this installation. All are required. Use the \"Test Connection\" button to validate the settings."),
         @I18NMessage(locale = "de", value = "Die Datenbankeinstellungen definieren die Datenbank für diese Installation. Alle einstellungen werden benötigt.\\n\\\n"
             + "Klicken Sie auf den \"Verbindung testen\" Button, um die Einstellungen zu validieren.") })

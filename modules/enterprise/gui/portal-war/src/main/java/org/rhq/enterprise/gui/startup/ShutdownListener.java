@@ -29,9 +29,6 @@ import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.db.DatabaseType;
-import org.rhq.core.db.DatabaseTypeFactory;
-import org.rhq.core.db.H2DatabaseType;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.cloud.Server.OperationMode;
 import org.rhq.core.util.jdbc.JDBCUtil;
@@ -51,6 +48,8 @@ public class ShutdownListener implements NotificationListener {
      */
     private final Log log = LogFactory.getLog(ShutdownListener.class);
 
+    private final String RHQ_DB_TYPE_MAPPING_PROPERTY = "rhq.server.database.type-mapping";
+
     /**
      * This is called when the shutdown notification is received from the JBoss server. This gives a chance for us to
      * cleanly shutdown our application in an orderly fashion.
@@ -59,38 +58,12 @@ public class ShutdownListener implements NotificationListener {
      */
     public void handleNotification(Notification notification, Object handback) {
         if (org.jboss.system.server.Server.STOP_NOTIFICATION_TYPE.equals(notification.getType())) {
-            DatabaseType dbType = getDatabaseType();
-
-            /* 
-             * a null dbType implies that we could not communicate with the database.  so, should we shortcut
-             * any shutdown logic below since we know it will likely fail anyway?  nah.  let's instead add better
-             * error handling to each method below just in case the connection error was a fluke.  note, however,
-             * if the fluke happened when running in embedded mode, we won't close the database properly which 
-             * could conceivably result in errors on next start
-             */
-
             stopScheduler();
 
             updateServerOperationMode();
 
-            stopEmbeddedDatabase(dbType);
+            stopEmbeddedDatabase();
         }
-    }
-
-    private DatabaseType getDatabaseType() {
-        Connection connection = null;
-        Statement statement = null;
-        DatabaseType dbType = null;
-        try {
-            DataSource ds = LookupUtil.getDataSource();
-            connection = ds.getConnection();
-            dbType = DatabaseTypeFactory.getDatabaseType(connection);
-        } catch (Exception e) {
-            log.warn("If using the embedded database, ensure 'DB_CLOSE_ON_EXIT=FALSE' is in the connection URL");
-        } finally {
-            JDBCUtil.safeClose(connection, statement, null);
-        }
-        return dbType; // OK to return null
     }
 
     /**
@@ -128,9 +101,8 @@ public class ShutdownListener implements NotificationListener {
         }
     }
 
-    private void stopEmbeddedDatabase(DatabaseType dbType) {
-        // dbType would be null if we had trouble communicating with the database
-        if (dbType != null && !(dbType instanceof H2DatabaseType)) {
+    private void stopEmbeddedDatabase() {
+        if (!isEmbedded()) {
             // only perform shutdown actions if we ABSOLUTELY know for sure this is the embedded database
             return;
         }
@@ -158,6 +130,14 @@ public class ShutdownListener implements NotificationListener {
         } finally {
             JDBCUtil.safeClose(connection, statement, null);
         }
+    }
 
+    private boolean isEmbedded() {
+        String identity = System.getProperty(RHQ_DB_TYPE_MAPPING_PROPERTY, "");
+        if (identity.equals("")) {
+            log.error("Could not determine datatype base; is the " + RHQ_DB_TYPE_MAPPING_PROPERTY
+                + " property set in rhq-server.properties?");
+        }
+        return identity.toLowerCase().indexOf("h2") != -1;
     }
 }

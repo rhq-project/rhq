@@ -30,7 +30,14 @@
     <properties>
         <scm.module.path>modules/plugins/jboss-as-5/</scm.module.path>                        
         
-        <jbossas.version>5.1.0-SNAPSHOT</jbossas.version>                        
+        <!-- NOTE: If you are developing this plugin or using it with a snapshot EAP 5.0 build, 
+                   you should do the following before building the plugin:
+                   
+                   1) Checkout and build the EAP 5.0 branch via Maven.
+                   2) Change the below property to "5.1.0-SNAPSHOT".
+                   3) Uncomment the JBoss snapshot repo near the bottom of this POM.
+        -->
+        <jbossas.version>5.1.0.GA</jbossas.version>                                
     </properties>
 
     <dependencyManagement>
@@ -476,7 +483,8 @@
 
     </profiles>    
     
-    <repositories>    
+    <repositories>   
+<!--    
         <repository>
             <id>jboss-snapshots</id>
             <name>JBoss Snapshot Repository</name>
@@ -486,6 +494,7 @@
                 <updatePolicy>always</updatePolicy>
             </snapshots>
         </repository>
+-->        
     </repositories>
 
 </project>

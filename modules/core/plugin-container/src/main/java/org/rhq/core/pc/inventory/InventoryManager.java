@@ -84,6 +84,7 @@ import org.rhq.core.pc.operation.OperationServicesAdapter;
 import org.rhq.core.pc.plugin.BlacklistedException;
 import org.rhq.core.pc.plugin.PluginComponentFactory;
 import org.rhq.core.pc.plugin.PluginManager;
+import org.rhq.core.pc.plugin.PluginEnvironment;
 import org.rhq.core.pc.util.DiscoveryComponentProxyFactory;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pc.util.LoggingThreadFactory;
@@ -1030,7 +1031,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
     private ResourceContainer initResourceContainer(Resource resource) {
         ResourceContainer resourceContainer = getResourceContainer(resource);
         if (resourceContainer == null) {
-            resourceContainer = new ResourceContainer(resource);
+            ClassLoader pluginClassLoader = getPluginClassLoader(resource);
+            resourceContainer = new ResourceContainer(resource, pluginClassLoader);
             if (!this.configuration.isInsideAgent()) {
                 // Auto-sync if the PC is running within the embedded JBossAS console.
                 resourceContainer.setSynchronizationState(ResourceContainer.SynchronizationState.SYNCHRONIZED);
@@ -1045,6 +1047,16 @@ public class InventoryManager extends AgentService implements ContainerService, 
             }
         }
         return resourceContainer;
+    }
+
+    private ClassLoader getPluginClassLoader(Resource resource) {
+        if (resource.getResourceType().equals(PluginMetadataManager.TEST_PLATFORM_TYPE)) {
+            return Thread.currentThread().getContextClassLoader();
+        } else {
+            String pluginName = resource.getResourceType().getPlugin();
+            PluginEnvironment pluginEnv = this.pluginManager.getPlugin(pluginName);
+            return pluginEnv.getPluginClassLoader();
+        }
     }
 
     /**
@@ -1315,23 +1327,29 @@ public class InventoryManager extends AgentService implements ContainerService, 
             File file = new File(this.configuration.getDataDirectory(), "inventory.dat");
             if (file.exists()) {
                 long start = System.currentTimeMillis();
-                log.info("Loading inventory from persistent data file");
+                log.info("Loading inventory from data file " + file + "...");
 
                 InventoryFile inventoryFile = new InventoryFile(file);
                 inventoryFile.loadInventory();
 
                 this.platform = inventoryFile.getPlatform();
                 this.resourceContainers.clear();
-                this.resourceContainers.putAll(inventoryFile.getResourceContainers());
+                for (String uuid : inventoryFile.getResourceContainers().keySet()) {
+                    ResourceContainer resourceContainer = inventoryFile.getResourceContainers().get(uuid);
+                    this.resourceContainers.put(uuid, resourceContainer);
+                    // Make sure to set the plugin class loader, which is transient and so not saved to inventory.dat.
+                    ClassLoader pluginClassLoader = getPluginClassLoader(resourceContainer.getResource());
+                    resourceContainer.setPluginClassLoader(pluginClassLoader);                    
+                }
 
                 initResourceContainer(this.platform);
                 activateFromDisk(this.platform);
 
-                log.info("Inventory size [" + this.resourceContainers.size() + "] initialized from disk in ["
+                log.info("Inventory with size [" + this.resourceContainers.size() + "] initialized from data file in ["
                     + (System.currentTimeMillis() - start) + "ms]");
             }
         } catch (Exception e) {
-            log.error("Could not load inventory data from disk", e);
+            log.error("Could not load inventory from data file.", e);
         } finally {
             this.inventoryLock.writeLock().unlock();
         }

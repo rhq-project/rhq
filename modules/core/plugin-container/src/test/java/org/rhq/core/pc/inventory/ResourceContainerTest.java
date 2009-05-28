@@ -28,12 +28,11 @@ import org.testng.annotations.Test;
 
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 
 /**
  * Unit test for {@link ResourceContainer}.
@@ -56,9 +55,9 @@ public class ResourceContainerTest {
     }
 
     public void testCreateResourceComponentProxy() throws Exception {
-        ResourceType resourceType = new ResourceType("name", "plugin", ResourceCategory.PLATFORM, null);
-        Resource resource = new Resource("key", "name", resourceType);
-        ResourceContainer resourceContainer = new ResourceContainer(resource);
+        Resource resource = new Resource("TestPlatformKey", "MyTestPlatform", PluginMetadataManager.TEST_PLATFORM_TYPE);
+        ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
+        ResourceContainer resourceContainer = new ResourceContainer(resource, contextClassLoader);
         ResourceComponent resourceComponent = new MockResourceComponent(false);
         resourceContainer.setResourceComponent(resourceComponent);
         System.out.println("Testing proxy call that should timeout...");

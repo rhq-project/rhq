@@ -53,8 +53,6 @@ import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pc.util.LoggingThreadFactory;
-import org.rhq.core.pc.PluginContainer;
-import org.rhq.core.pc.plugin.PluginEnvironment;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.jetbrains.annotations.Nullable;
@@ -78,25 +76,26 @@ public class ResourceContainer implements Serializable {
         STARTED, STOPPED
     }
 
-    private final Log log = LogFactory.getLog(this.getClass());
-
-    private transient ResourceComponent resourceComponent;
-    private transient ResourceContext resourceContext;
-    private transient ResourceComponentState resourceComponentState = ResourceComponentState.STOPPED;
-    private transient ReentrantReadWriteLock facetAccessLock = new ReentrantReadWriteLock();
-    private final Resource resource;
-    private Availability availability;
-    private Set<ResourcePackageDetails> installedPackages = new HashSet<ResourcePackageDetails>();
-    private Set<MeasurementScheduleRequest> measurementSchedule = new HashSet<MeasurementScheduleRequest>();
-    private SynchronizationState synchronizationState = SynchronizationState.NEW;
-    private transient Map<Integer, Object> proxyCache = new HashMap<Integer, Object>();
-    private ClassLoader pluginClassLoader;
-
     // thread pools used to invoke methods on container's components
     private static final String DAEMON_THREAD_POOL_NAME = "ResourceContainer.invoker.daemon";
     private static final String NON_DAEMON_THREAD_POOL_NAME = "ResourceContainer.invoker.nonDaemon";
     private static ExecutorService DAEMON_THREAD_POOL;
     private static ExecutorService NON_DAEMON_THREAD_POOL;
+
+    // non-transient fields
+    private final Resource resource;
+    private Availability availability;
+    private SynchronizationState synchronizationState = SynchronizationState.NEW;
+    private Set<MeasurementScheduleRequest> measurementSchedule = new HashSet<MeasurementScheduleRequest>();
+    private Set<ResourcePackageDetails> installedPackages = new HashSet<ResourcePackageDetails>();
+
+    // transient fields
+    private transient ResourceComponent resourceComponent;
+    private transient ResourceContext resourceContext;
+    private transient ResourceComponentState resourceComponentState = ResourceComponentState.STOPPED;
+    private transient ReentrantReadWriteLock facetAccessLock = new ReentrantReadWriteLock();
+    private transient Map<Integer, Object> proxyCache = new HashMap<Integer, Object>();
+    private transient ClassLoader pluginClassLoader;
 
     /**
      * Initialize the ResourceContainer's internals, such as its thread pools.
@@ -116,15 +115,9 @@ public class ResourceContainer implements Serializable {
         NON_DAEMON_THREAD_POOL.shutdown();
     }
 
-    public ResourceContainer(Resource resource) {
+    public ResourceContainer(Resource resource, ClassLoader pluginClassLoader) {
         this.resource = resource;
-        String pluginName = this.resource.getResourceType().getPlugin();
-        PluginEnvironment pluginEnv = PluginContainer.getInstance().getPluginManager().getPlugin(pluginName);
-        if (pluginEnv == null) {
-            log.warn("No plugin environment found for plugin '" + pluginName + "'.");
-        }
-        ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
-        this.pluginClassLoader = (pluginEnv != null) ? pluginEnv.getPluginClassLoader() : contextClassLoader;
+        this.pluginClassLoader = pluginClassLoader;
     }
 
     public Availability updateAvailability(AvailabilityType availabilityType) {
@@ -277,6 +270,10 @@ public class ResourceContainer implements Serializable {
         return this.pluginClassLoader;
     }
 
+    public void setPluginClassLoader(ClassLoader pluginClassLoader) {
+        this.pluginClassLoader = pluginClassLoader;
+    }
+
     @Override
     public String toString() {
         return this.getClass().getSimpleName() + "[resource=" + this.resource + "]";
@@ -322,12 +319,12 @@ public class ResourceContainer implements Serializable {
                 + "] interface: " + this);
         }
 
-        // if no locking is required and there is no timeout, there is no need for a proxy - return the actual component
+        // If no locking is required and there is no timeout, there is no need for a proxy - return the actual component.
         if (lockType == FacetLockType.NONE && timeout == 0) {
             return (T) resourceComponent;
         }
 
-        // Check for a cached proxy
+        // Check for a cached proxy.
         int key;
         key = facetInterface.hashCode();
         key = 31 * key + lockType.hashCode();
@@ -368,7 +365,7 @@ public class ResourceContainer implements Serializable {
         return str.toString();
     }
 
-    // Recreate the facet lock on deserialization
+    // Recreate the facet lock on deserialization.
     private Object readResolve() throws java.io.ObjectStreamException {
         this.facetAccessLock = new ReentrantReadWriteLock();
         return this;
@@ -391,14 +388,13 @@ public class ResourceContainer implements Serializable {
         private final boolean daemonThread;
         private final Class facetInterface;
 
-
         /**
          *
          * @param container the resource container managing the resource component upon which the method will be invoked;
          *                  caller must ensure the container's component is never null
          * @param lockType the type of facet lock to acquire for the invocation; must not be null
          * @param timeout if the method invocation thread has not completed after this many milliseconds, interrupt it;
-        *                value must be positive
+         *                value must be positive
          * @param daemonThread whether or not the thread used for the invocation should be a daemon thread
          * @param facetInterface the interface that the component implements that is being exposed by this proxy
          */
@@ -421,7 +417,12 @@ public class ResourceContainer implements Serializable {
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
             ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
             try {
-                Thread.currentThread().setContextClassLoader(this.container.getPluginClassLoader());
+
+                ClassLoader pluginClassLoader = this.container.getPluginClassLoader();
+                if (pluginClassLoader == null) {
+                    throw new IllegalStateException("No plugin classloader was specified for " + this + ".");
+                }
+                Thread.currentThread().setContextClassLoader(pluginClassLoader);
                 if (method.getDeclaringClass().equals(this.facetInterface)) {
                     return invokeInNewThreadWithLock(method, args);
                 } else {
@@ -503,6 +504,7 @@ public class ResourceContainer implements Serializable {
 
             try {
                 // This is the actual call into the resource component's facet interface.
+                @SuppressWarnings({"UnnecessaryLocalVariable"})
                 Object results = this.method.invoke(resourceComponent, this.args);
                 return results;
             } catch (InvocationTargetException e) {
@@ -513,7 +515,8 @@ public class ResourceContainer implements Serializable {
             } catch (Exception e) {
                 throw new RuntimeException(e);
             } finally {
-                if (this.lock != null) {
+                if (this.lock != null)
+                {
                     this.lock.unlock();
                 }
             }

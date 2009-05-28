@@ -43,6 +43,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  *
  * @author John Mazzitelli
  * @author Jay Shaughnessy
+ * @author Joseph Marques
  */
 public class ShutdownListener implements NotificationListener {
     /**
@@ -57,6 +58,26 @@ public class ShutdownListener implements NotificationListener {
      * @see javax.management.NotificationListener#handleNotification(Notification, Object)
      */
     public void handleNotification(Notification notification, Object handback) {
+        if (org.jboss.system.server.Server.STOP_NOTIFICATION_TYPE.equals(notification.getType())) {
+            DatabaseType dbType = getDatabaseType();
+
+            /* 
+             * a null dbType implies that we could not communicate with the database.  so, should we shortcut
+             * any shutdown logic below since we know it will likely fail anyway?  nah.  let's instead add better
+             * error handling to each method below just in case the connection error was a fluke.  note, however,
+             * if the fluke happened when running in embedded mode, we won't close the database properly which 
+             * could conceivably result in errors on next start
+             */
+
+            stopScheduler();
+
+            updateServerOperationMode();
+
+            stopEmbeddedDatabase(dbType);
+        }
+    }
+
+    private DatabaseType getDatabaseType() {
         Connection connection = null;
         Statement statement = null;
         DatabaseType dbType = null;
@@ -65,22 +86,11 @@ public class ShutdownListener implements NotificationListener {
             connection = ds.getConnection();
             dbType = DatabaseTypeFactory.getDatabaseType(connection);
         } catch (Exception e) {
-            log.warn("If using the embedded database, you should pass 'DB_CLOSE_ON_EXIT=FALSE' in the connection URL");
+            log.warn("If using the embedded database, ensure 'DB_CLOSE_ON_EXIT=FALSE' is in the connection URL");
         } finally {
             JDBCUtil.safeClose(connection, statement, null);
         }
-
-        if (org.jboss.system.server.Server.STOP_NOTIFICATION_TYPE.equals(notification.getType())) {
-            stopScheduler();
-
-            // Set the server operation mode to DOWN unless in MM
-            Server server = LookupUtil.getServerManager().getServer();
-            if (Server.OperationMode.MAINTENANCE != server.getOperationMode()) {
-                LookupUtil.getCloudManager().updateServerMode(new Integer[] { server.getId() }, OperationMode.DOWN);
-            }
-
-            stopEmbeddedDatabase(dbType);
-        }
+        return dbType; // OK to return null
     }
 
     /**
@@ -91,14 +101,37 @@ public class ShutdownListener implements NotificationListener {
             log.info("Shutting down the scheduler gracefully - currently running jobs will be allowed to finish...");
             LookupUtil.getSchedulerBean().shutdown(true);
             log.info("The scheduler has been shutdown and all jobs are done.");
-        } catch (Exception e) {
-            log.warn("Failed to shutdown the scheduler.", e);
+        } catch (Throwable t) {
+            // only show ugly stack traces if the user runs the server in debug mode
+            if (log.isDebugEnabled()) {
+                log.warn("Failed to shutdown the scheduler", t);
+            } else {
+                log.warn("Failed to shutdown the scheduler: " + t.getMessage());
+            }
+        }
+    }
+
+    private void updateServerOperationMode() {
+        try {
+            // Set the server operation mode to DOWN unless in MM
+            Server server = LookupUtil.getServerManager().getServer();
+            if (Server.OperationMode.MAINTENANCE != server.getOperationMode()) {
+                LookupUtil.getCloudManager().updateServerMode(new Integer[] { server.getId() }, OperationMode.DOWN);
+            }
+        } catch (Throwable t) {
+            // only show ugly stack traces if the user runs the server in debug mode
+            if (log.isDebugEnabled()) {
+                log.warn("Could not update this server's OperationMode to DOWN in the database", t);
+            } else {
+                log.warn("Could not update this server's OperationMode to DOWN in the database: " + t.getMessage());
+            }
         }
     }
 
     private void stopEmbeddedDatabase(DatabaseType dbType) {
-        if (!(dbType instanceof H2DatabaseType)) {
-            // only perform shutdown actions if this is the embedded database
+        // dbType would be null if we had trouble communicating with the database
+        if (dbType != null && !(dbType instanceof H2DatabaseType)) {
+            // only perform shutdown actions if we ABSOLUTELY know for sure this is the embedded database
             return;
         }
 
@@ -115,6 +148,7 @@ public class ShutdownListener implements NotificationListener {
                 log.warn("Database is already shut down, can not perform graceful service shutdown");
                 return;
             } else {
+                // only show ugly stack traces if the user runs the server in debug mode
                 if (log.isDebugEnabled()) {
                     log.warn("Could not shut down the embedded database cleanly", sqle);
                 } else {

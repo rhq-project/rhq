@@ -415,23 +415,11 @@ public class ResourceContainer implements Serializable {
         }
 
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
-            try {
-
-                ClassLoader pluginClassLoader = this.container.getPluginClassLoader();
-                if (pluginClassLoader == null) {
-                    throw new IllegalStateException("No plugin classloader was specified for " + this + ".");
-                }
-                Thread.currentThread().setContextClassLoader(pluginClassLoader);
-                if (method.getDeclaringClass().equals(this.facetInterface)) {
-                    return invokeInNewThreadWithLock(method, args);
-                } else {
-                    // toString(), etc.
-                    return invokeInCurrentThreadWithoutLock(method, args);
-                }
-            }
-            finally {
-                Thread.currentThread().setContextClassLoader(originalContextClassLoader);
+            if (method.getDeclaringClass().equals(this.facetInterface)) {
+                return invokeInNewThreadWithLock(method, args);
+            } else {
+                // toString(), etc.
+                return invokeInCurrentThreadWithoutLock(method, args);
             }
         }
 
@@ -470,10 +458,19 @@ public class ResourceContainer implements Serializable {
         }
 
         private Object invokeInCurrentThreadWithoutLock(Method method, Object[] args) throws Throwable {
+            ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
             try {
+                ClassLoader pluginClassLoader = this.container.getPluginClassLoader();
+                if (pluginClassLoader == null) {
+                    throw new IllegalStateException("No plugin classloader was specified for " + this + ".");
+                }
+                Thread.currentThread().setContextClassLoader(pluginClassLoader);
+                // This is the actual call into the resource component.
                 return method.invoke(this.container.getResourceComponent(), args);
             } catch (InvocationTargetException ite) {
                 throw (ite.getCause() != null) ? ite.getCause() : ite;
+            } finally {
+                Thread.currentThread().setContextClassLoader(originalContextClassLoader);
             }
         }
     }
@@ -502,13 +499,20 @@ public class ResourceContainer implements Serializable {
                 // If we made it here, we have acquired the lock.
             }
 
+            ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
             try {
+                ClassLoader pluginClassLoader = this.resourceContainer.getPluginClassLoader();
+                if (pluginClassLoader == null) {
+                    throw new IllegalStateException("No plugin classloader was specified for " + this + ".");
+                }
+                Thread.currentThread().setContextClassLoader(pluginClassLoader);
                 // This is the actual call into the resource component's facet interface.
                 @SuppressWarnings({"UnnecessaryLocalVariable"})
                 Object results = this.method.invoke(resourceComponent, this.args);
                 return results;
             } catch (InvocationTargetException e) {
                 Throwable cause = e.getCause();
+                //noinspection ThrowableInstanceNeverThrown
                 throw (cause instanceof Exception) ? (Exception) cause : new Exception(cause);
             } catch (RuntimeException e) {
                 throw e;
@@ -519,6 +523,7 @@ public class ResourceContainer implements Serializable {
                 {
                     this.lock.unlock();
                 }
+                Thread.currentThread().setContextClassLoader(originalContextClassLoader);
             }
         }
     }

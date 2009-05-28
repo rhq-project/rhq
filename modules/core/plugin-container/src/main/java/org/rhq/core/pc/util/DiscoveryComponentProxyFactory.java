@@ -164,7 +164,6 @@ public class DiscoveryComponentProxyFactory {
 
         public ResourceDiscoveryComponentInvocationHandler(ResourceType type, ResourceDiscoveryComponent component,
                                                            long timeout, ClassLoader pluginClassLoader) {
-
             if (timeout <= 0) {
                 throw new IllegalArgumentException("timeout value is not positive.");
             }
@@ -184,24 +183,19 @@ public class DiscoveryComponentProxyFactory {
                     + "] has been blacklisted and can no longer be invoked.");
             }
 
-            ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
-            try {
-                Thread.currentThread().setContextClassLoader(this.pluginClassLoader);
-                if (method.getDeclaringClass().equals(ResourceDiscoveryComponent.class)) {
-                    return invokeInNewThread(method, args);
-                } else {
-                    // toString(), etc.
-                    return invokeInCurrentThread(method, args);
-                }
-            }
-            finally {
-                Thread.currentThread().setContextClassLoader(originalContextClassLoader);
+            Thread.currentThread().setContextClassLoader(this.pluginClassLoader);
+            if (method.getDeclaringClass().equals(ResourceDiscoveryComponent.class)) {
+                return invokeInNewThread(method, args);
+            } else {
+                // toString(), etc.
+                return invokeInCurrentThread(method, args);
             }
         }
 
         private Object invokeInNewThread(Method method, Object[] args) throws Throwable {
             ExecutorService threadPool = getThreadPool();
-            Callable invocationThread = new ComponentInvocationThread(this.component, method, args);
+            Callable invocationThread = new ComponentInvocationThread(this.component, method, args,
+                    this.pluginClassLoader);
             Future<?> future = threadPool.submit(invocationThread);
             try {
                 return future.get(this.timeout, TimeUnit.MILLISECONDS);
@@ -224,12 +218,16 @@ public class DiscoveryComponentProxyFactory {
         }
 
         private Object invokeInCurrentThread(Method method, Object[] args) throws Throwable {
-            // this method is triggered when the component calls itself, do not timeout.
-            // we already have a timed call in the call stack, no need to do it again
+            // This method is triggered when the component calls itself - do not timeout.
+            // We already have a timed call on the call stack - no need to do it again
+            ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
             try {
+                Thread.currentThread().setContextClassLoader(this.pluginClassLoader);
                 return method.invoke(this.component, args);
             } catch (InvocationTargetException ite) {
                 throw (ite.getCause() != null) ? ite.getCause() : ite;
+            } finally {
+                Thread.currentThread().setContextClassLoader(originalContextClassLoader);
             }
         }
 
@@ -245,16 +243,21 @@ public class DiscoveryComponentProxyFactory {
         private final ResourceDiscoveryComponent component;
         private final Method method;
         private final Object[] args;
+        private ClassLoader pluginClassLoader;
 
-        ComponentInvocationThread(ResourceDiscoveryComponent component, Method method, Object[] args) {
+        ComponentInvocationThread(ResourceDiscoveryComponent component, Method method, Object[] args,
+                                  ClassLoader pluginClassLoader) {
             this.component = component;
             this.method = method;
             this.args = args;
+            this.pluginClassLoader = pluginClassLoader;
         }
 
         public Object call() throws Exception {
+            ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
             try {
-                // This is the actual call into the discovery component
+                Thread.currentThread().setContextClassLoader(this.pluginClassLoader);
+                // This is the actual call into the discovery component.
                 Object results = this.method.invoke(this.component, this.args);
                 return results;
             } catch (InvocationTargetException ite) {
@@ -262,6 +265,8 @@ public class DiscoveryComponentProxyFactory {
                 throw new Exception("Discovery component invocation failed.", cause);
             } catch (Throwable t) {
                 throw new Exception("Failed to invoke discovery component", t);
+            } finally {
+                Thread.currentThread().setContextClassLoader(originalContextClassLoader);
             }
         }
     }

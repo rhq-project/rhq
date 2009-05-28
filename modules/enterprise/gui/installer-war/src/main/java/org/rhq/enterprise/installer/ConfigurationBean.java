@@ -234,7 +234,7 @@ public class ConfigurationBean {
         List<PropertyItemWithValue> dbConfig = getDatabaseConfiguration();
         for (PropertyItemWithValue dbProp : dbConfig) {
             if (dbProp.getItemDefinition().getPropertyName().equals(ServerProperties.PROP_DATABASE_CONNECTION_URL)) {
-                dbProp.setValue("jdbc:h2:" + getDataDirectory() + "/rhq;MVCC=TRUE");
+                dbProp.setValue("jdbc:h2:" + getDataDirectory() + "/rhq;MVCC=TRUE;DB_CLOSE_ON_EXIT=FALSE");
             } else if (dbProp.getItemDefinition().getPropertyName().equals(ServerProperties.PROP_DATABASE_TYPE)) {
                 dbProp.setValue("H2");
             } else if (dbProp.getItemDefinition().getPropertyName().equals(ServerProperties.PROP_DATABASE_DRIVER_CLASS)) {

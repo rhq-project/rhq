@@ -707,9 +707,7 @@
                   <xs:documentation>
                      If specified, this indicates that this server
                      definition is actually a copy of a server type as
-                     defined in the named plugin. If you define this,
-                     you must also define the sourceServer attribute,
-                     too.
+                     defined in the named plugin.
                   </xs:documentation>
                </xs:annotation>
             </xs:attributeGroup>
@@ -759,9 +757,7 @@
                   <xs:documentation>
                      If specified, this indicates that this server
                      definition is actually a copy of a server type as
-                     defined in the named plugin. If you define this,
-                     you must also define the sourceServer attribute,
-                     too.
+                     defined in the named plugin.
                   </xs:documentation>
                </xs:annotation>
             </xs:attributeGroup>

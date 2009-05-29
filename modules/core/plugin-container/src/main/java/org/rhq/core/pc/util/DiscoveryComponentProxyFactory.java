@@ -183,7 +183,6 @@ public class DiscoveryComponentProxyFactory {
                     + "] has been blacklisted and can no longer be invoked.");
             }
 
-            Thread.currentThread().setContextClassLoader(this.pluginClassLoader);
             if (method.getDeclaringClass().equals(ResourceDiscoveryComponent.class)) {
                 return invokeInNewThread(method, args);
             } else {

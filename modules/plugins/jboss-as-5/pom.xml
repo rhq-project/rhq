@@ -49,6 +49,13 @@
             <type>pom</type>
             <scope>import</scope>
           </dependency>
+          <dependency>
+            <groupId>org.jboss.jbossas</groupId>
+		    <artifactId>jboss-as-component-matrix</artifactId>
+		    <version>${jbossas.version}</version>
+            <type>pom</type>
+            <scope>import</scope>
+          </dependency>
         </dependencies>
     </dependencyManagement>
     
@@ -238,16 +245,14 @@
 
         <dependency>
           <groupId>org.jboss.ejb3</groupId>
-          <artifactId>jboss-ejb3-proxy-spi</artifactId>          
-          <version>1.0.1-SNAPSHOT</version>
+          <artifactId>jboss-ejb3-proxy-spi</artifactId>                    
           <classifier>client</classifier>
           <scope>runtime</scope>
         </dependency>
 
         <dependency>
           <groupId>org.jboss.ejb3</groupId>
-          <artifactId>jboss-ejb3-proxy-impl</artifactId>          
-          <version>1.0.3-SNAPSHOT</version>
+          <artifactId>jboss-ejb3-proxy-impl</artifactId>                    
           <classifier>client</classifier>
           <scope>runtime</scope>
         </dependency>

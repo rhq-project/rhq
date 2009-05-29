@@ -493,4 +493,8 @@ public class PluginContainer implements ContainerService {
     public ContentAgentService getContentAgentService() {
         return getContentManager();
     }
+
+    public boolean isInsideAgent() {
+        return this.configuration.isInsideAgent();
+    }    
 }

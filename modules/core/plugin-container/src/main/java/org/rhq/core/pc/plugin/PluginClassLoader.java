@@ -42,6 +42,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.pluginapi.util.FileUtils;
+import org.rhq.core.pc.PluginContainer;
 
 /**
  * Classloader for the plugin jar itself and any embedded lib/* jars.
@@ -90,8 +91,15 @@ public class PluginClassLoader extends URLClassLoader {
         }
 
         URL[] classpath = classpathUrlList.toArray(new URL[classpathUrlList.size()]);
+
         PluginClassLoader newLoader;
-        if (pluginJarName.matches("jopr-jboss-as-5-plugin-.+\\.jar")) {
+        // TODO (ips): Remove this temporary hack once http://jira.rhq-project.org/browse/RHQ-2059 has been
+        //             implemented.
+        if (PluginContainer.getInstance().isInsideAgent() && pluginJarName.matches("jopr-jboss-as-5-plugin-.+\\.jar")) {
+            // Use a child first plugin classloader for the as5 plugin but only if we're running in the enterprise Agent.
+            // Don't use it in embedded - it's not necessary since there are no conflicting Agent jars (jboss-remoting
+            // etc.), and furthermore, it breaks things. For more info on this temporary hack, see
+            // http://jira.rhq-project.org/browse/RHQ-2059.
             newLoader = new ChildFirstPluginClassLoader(classpath, parent);
         } else {
             newLoader = new PluginClassLoader(classpath, parent);
@@ -175,7 +183,7 @@ public class PluginClassLoader extends URLClassLoader {
 
                             BufferedInputStream inputStream = new BufferedInputStream(zis);
 
-                            int count = 0;
+                            int count;
                             byte[] b = new byte[8192];
                             while ((count = inputStream.read(b)) > -1) {
                                 outputStream.write(b, 0, count);
@@ -196,7 +204,7 @@ public class PluginClassLoader extends URLClassLoader {
         } finally {
             try {
                 zis.close();
-            } catch (Exception e) {
+            } catch (Exception ignored) {
             }
         }
 

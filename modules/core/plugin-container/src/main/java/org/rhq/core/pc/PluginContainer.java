@@ -349,6 +349,7 @@ public class PluginContainer implements ContainerService {
         try {
             if (!readLock.tryLock(60L, TimeUnit.SECONDS)) {
                 String msg = "There may be a deadlock in the plugin container.";
+                //noinspection ThrowableInstanceNeverThrown
                 log.warn(msg, new Throwable(msg));
                 readLock = null;
             }
@@ -368,6 +369,7 @@ public class PluginContainer implements ContainerService {
         try {
             if (!writeLock.tryLock(60L, TimeUnit.SECONDS)) {
                 String msg = "There may be a deadlock in the plugin container.";
+                //noinspection ThrowableInstanceNeverThrown
                 log.warn(msg, new Throwable(msg));
                 writeLock = null;
             }
@@ -495,6 +497,6 @@ public class PluginContainer implements ContainerService {
     }
 
     public boolean isInsideAgent() {
-        return this.configuration.isInsideAgent();
+        return (this.configuration != null && this.configuration.isInsideAgent());
     }    
 }

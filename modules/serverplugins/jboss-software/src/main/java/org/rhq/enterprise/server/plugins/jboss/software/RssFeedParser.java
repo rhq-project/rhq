@@ -46,7 +46,6 @@ import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.PackageDetailsKey;
-import org.rhq.core.util.OSGiVersionComparator;
 
 /**
  * Parses the contents of the JBoss RSS feed into the server's domain model.
@@ -83,8 +82,6 @@ public class RssFeedParser {
     // Attributes  --------------------------------------------
 
     private final Log log = LogFactory.getLog(this.getClass());
-
-    private static final OSGiVersionComparator versionComparator = new OSGiVersionComparator();
 
     // Public  --------------------------------------------
 
@@ -289,8 +286,15 @@ public class RssFeedParser {
         return null;
     }
 
+    /**
+     * Determines what plugin to use based on the version of jboss the feed we're parsing is for.
+     * 
+     * @param jbossVersion the jboss version specified in the patch
+     * @return name of the plugin to handle this patch
+     */
     private String getPluginName(String jbossVersion) {
-        if (versionComparator.compare(jbossVersion, "5") >= 0) {
+        //this is very crude and hackish, but serves the purpose for now.
+        if (jbossVersion.trim().startsWith("5")) {
             return JBOSS_AS5_PLUGIN_NAME;
         } else {
             return JBOSS_AS4_PLUGIN_NAME;

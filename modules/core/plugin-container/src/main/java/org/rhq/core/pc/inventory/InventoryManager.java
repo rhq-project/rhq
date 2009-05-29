@@ -1148,9 +1148,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 getContentContext(resource)); // for content manager access
 
             container.setResourceContext(context);
-            ClassLoader startingClassLoader = Thread.currentThread().getContextClassLoader();
             try {
-                Thread.currentThread().setContextClassLoader(component.getClass().getClassLoader());
                 // One last check to make sure another thread didn't beat us to the punch.
                 // TODO: Add some real synchronization to this method. (ips, 07/09/07)
                 if (container.getResourceComponentState() == ResourceComponentState.STARTED) {
@@ -1171,8 +1169,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
                         + ".", t);
                 }
                 throw new PluginContainerException("Failed to start component for resource " + resource + ".", t);
-            } finally {
-                Thread.currentThread().setContextClassLoader(startingClassLoader);
             }
 
             // We purposefully do not get availability of this resource yet

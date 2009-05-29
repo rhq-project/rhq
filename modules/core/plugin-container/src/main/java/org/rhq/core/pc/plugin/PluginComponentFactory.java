@@ -118,8 +118,7 @@ public class PluginComponentFactory implements ContainerService {
      */
     private Object instantiateClass(PluginEnvironment environment, String className) throws PluginContainerException {
         ClassLoader loader = environment.getPluginClassLoader();
-
-        log.debug("Loading class: " + className);
+        log.debug("Loading class '" + className + "' via " + loader + "...");
 
         try {
             Class<?> clazz = Class.forName(className, true, loader);

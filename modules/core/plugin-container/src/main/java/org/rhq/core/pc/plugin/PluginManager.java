@@ -284,7 +284,7 @@ public class PluginManager implements ContainerService {
      * @throws PluginContainerException if the plugin fails to load
      */
     private void loadPlugin(URL pluginUrl, ClassLoader classLoader) throws PluginContainerException {
-        log.debug("Loading plugin from: " + pluginUrl);
+        log.debug("Loading plugin from [" + pluginUrl + "]...");
 
         PluginDescriptorLoader pluginDescriptorLoader = new PluginDescriptorLoader(pluginUrl, classLoader, null, true,
             this.configuration.getTemporaryDirectory());
@@ -296,14 +296,14 @@ public class PluginManager implements ContainerService {
         PluginLifecycleListener overseer = getPluginLifecycleListener(pluginName, pluginEnvironment, pluginDescriptor);
         if (overseer != null) {
             PluginContext context = createPluginContext(pluginName);
-            ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
-            Thread.currentThread().setContextClassLoader(pluginEnvironment.getPluginClassLoader());
+            ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
             try {
+                Thread.currentThread().setContextClassLoader(pluginEnvironment.getPluginClassLoader());
                 overseer.initialize(context);
             } catch (Throwable t) {
                 throw new PluginContainerException("Plugin Lifecycle Listener failed to initialize plugin", t);
             } finally {
-                Thread.currentThread().setContextClassLoader(originalCL);
+                Thread.currentThread().setContextClassLoader(originalContextClassLoader);
             }
             this.pluginLifecycleListenerCache.put(pluginName, overseer);
         }
@@ -367,6 +367,7 @@ public class PluginManager implements ContainerService {
         File tmpDir = this.configuration.getTemporaryDirectory();
         String pcName = this.configuration.getContainerName();
 
+        //noinspection UnnecessaryLocalVariable
         PluginContext context = new PluginContext(pluginName, sysInfo, tmpDir, dataDir, pcName);
 
         return context;
@@ -375,11 +376,11 @@ public class PluginManager implements ContainerService {
     private Object instantiateClass(PluginEnvironment environment, String className) throws PluginContainerException {
         ClassLoader loader = environment.getPluginClassLoader();
 
-        log.debug("Loading class: " + className);
+        log.debug("Loading class [" + className + "]...");
 
         try {
             Class<?> clazz = Class.forName(className, true, loader);
-            log.debug("Loaded class: " + clazz);
+            log.debug("Loaded class [" + clazz + "].");
             return clazz.newInstance();
         } catch (InstantiationException e) {
             throw new PluginContainerException("Could not instantiate plugin class [" + className

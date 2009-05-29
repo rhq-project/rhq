@@ -49,7 +49,7 @@ public class ChildFirstPluginClassLoader extends PluginClassLoader {
                 clazz = super.loadClass(name, resolve);
             }
             else {
-                // But try to load other classes oursleves before giving our parent a shot.
+                // But try to load other classes ourselves before giving our parent a shot.
                 try {
                     try {
                         clazz = findClass(name);
@@ -61,7 +61,12 @@ public class ChildFirstPluginClassLoader extends PluginClassLoader {
                         Package pkg = getPackage(packageName);
                         if (pkg == null) {
                             definePackage(packageName, null, null, null, null, null, null, null);
+                            // TODO: Do clazz = findClass(name) again?
                         }
+                    }
+                    catch (RuntimeException re) {
+                        log.error("Failed to find class '" + name + "' - cause: " + re);
+                        throw re;
                     }
                     if (resolve) {
                         resolveClass(clazz);

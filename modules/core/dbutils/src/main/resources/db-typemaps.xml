@@ -18,7 +18,9 @@ attribute (see DatabaseType.getName/getVendor javadocs).
       <map db="java"        type="INTEGER" />
       <map db="postgresql"  type="INTEGER" />
       <map db="oracle"      type="INTEGER" />
-      <map db="h2"          type="INTEGER" />
+      <!-- RHQ-2120: use BIGINT for H2 instead of INTEGER because there are overflow issues with SUM/AVG methods, for more information see
+           http://groups.google.com/group/h2-database/browse_frm/thread/b5b2f3a135f304fd/a79e9bd0be219069?hl=en&lnk=gst&q=value+out+of+range#a79e9bd0be219069 -->
+      <map db="h2"          type="BIGINT" />
    </typemap>
    <typemap type="LONG">
       <map db="java"        type="BIGINT" />

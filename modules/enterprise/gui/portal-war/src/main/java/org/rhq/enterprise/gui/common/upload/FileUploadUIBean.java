@@ -82,7 +82,7 @@ public class FileUploadUIBean {
                 throw new FileNotFoundException("The uploaded file [" + uploadedFile + "] does not exist!");
             }
 
-            String uploadedFilename = getFileItem().getFileName();
+            String uploadedFilename = getFileItem().getFileName(); // careful, IE passes in the full absolute path here - currently we don't care here
             long uploadedFileSize = uploadedFile.length();
             log.info("A file named [" + uploadedFilename + "] with a size of [" + uploadedFileSize
                 + "] has been uploaded to [" + uploadedFile + "]");

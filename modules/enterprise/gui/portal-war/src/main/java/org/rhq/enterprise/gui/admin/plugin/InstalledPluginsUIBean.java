@@ -85,6 +85,10 @@ public class InstalledPluginsUIBean {
 
             // some browsers (IE in particular) passes an absolute filename, we just want the name of the file, no paths
             if (newPluginFilename != null) {
+                newPluginFilename = newPluginFilename.replace('\\', '/');
+                if (newPluginFilename.length() > 2 && newPluginFilename.charAt(1) == ':') {
+                    newPluginFilename = newPluginFilename.substring(2);
+                }
                 newPluginFilename = new File(newPluginFilename).getName();
             }
 

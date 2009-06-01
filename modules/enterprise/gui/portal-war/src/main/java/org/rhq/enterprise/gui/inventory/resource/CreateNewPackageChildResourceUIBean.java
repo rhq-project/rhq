@@ -149,6 +149,10 @@ public class CreateNewPackageChildResourceUIBean {
 
             // some browsers (IE in particular) passes an absolute filename, we just want the name of the file, no paths
             if (packageName != null) {
+                packageName = packageName.replace('\\', '/');
+                if (packageName.length() > 2 && packageName.charAt(1) == ':') {
+                    packageName = packageName.substring(2);
+                }
                 packageName = new File(packageName).getName();
             }
 

@@ -379,10 +379,17 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public void addResourcesToGroup(Subject subject, Integer groupId, Integer[] resourceIds)
         throws ResourceGroupNotFoundException, ResourceGroupUpdateException {
-        List<Integer> resourceIdList = Arrays.asList(resourceIds);
+
         boolean isRecursive = isRecursive(groupId); // will perform check for group existence
-        addResourcesToGroupImplicit(subject, groupId, resourceIdList, true, isRecursive);
-        addResourcesToGroupExplicit(subject, groupId, resourceIdList, isRecursive);
+
+        // batch the removes to prevent the ORA error about IN clauses containing more than 1000 items
+        for (int batchIndex = 0; batchIndex < resourceIds.length; batchIndex += 1000) {
+            Integer[] batchIdArray = ArrayUtils.copyOfRange(resourceIds, batchIndex, batchIndex + 1000);
+            List<Integer> batchIds = Arrays.asList(batchIdArray);
+
+            addResourcesToGroupImplicit(subject, groupId, batchIds, true, isRecursive);
+            addResourcesToGroupExplicit(subject, groupId, batchIds, isRecursive);
+        }
     }
 
     private void addResourcesToGroupExplicit(Subject subject, Integer groupId, List<Integer> resourceIds,
@@ -506,11 +513,23 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public void removeResourcesFromGroup(Subject subject, Integer groupId, Integer[] resourceIds)
         throws ResourceGroupNotFoundException, ResourceGroupUpdateException {
+
         if (resourceIds == null || resourceIds.length == 0) {
             return;
         }
 
         boolean isRecursive = isRecursive(groupId); // will perform check for group existence
+
+        // batch the removes to prevent the ORA error about IN clauses containing more than 1000 items
+        for (int batchIndex = 0; batchIndex < resourceIds.length; batchIndex += 1000) {
+            Integer[] batchIdArray = ArrayUtils.copyOfRange(resourceIds, batchIndex, batchIndex + 1000);
+
+            removeResourcesFromGroup_helper(subject, groupId, batchIdArray, isRecursive);
+        }
+    }
+
+    private void removeResourcesFromGroup_helper(Subject subject, Integer groupId, Integer[] resourceIds,
+        boolean isRecursive) throws ResourceGroupNotFoundException, ResourceGroupUpdateException {
 
         List<Integer> nonMembersToBeRemoved = getNonMemberExplicitResources(groupId, Arrays.asList(resourceIds));
         if (nonMembersToBeRemoved.size() != 0) {

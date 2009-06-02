@@ -31,6 +31,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
@@ -60,9 +61,7 @@ import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.plugins.jbossas5.helper.MoreKnownComponentTypes;
 
-import org.jboss.deployers.spi.management.KnownComponentTypes;
 import org.jboss.deployers.spi.management.KnownDeploymentTypes;
 import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.managed.api.ComponentType;
@@ -150,8 +149,10 @@ public class PluginDescriptorGenerator
 
     private static void addComponentsToDescriptor(ManagementView managementView, PluginDescriptor pluginDescriptor) throws Exception
     {
-        Set<ComponentType> knownComponentTypes = getKnownComponentTypes();
-        for (ComponentType componentType : knownComponentTypes)
+        Set<ComponentType> componentTypes = managementView.getComponentTypes();
+        Set<ComponentType> sortedComponentTypes = new TreeSet<ComponentType>(ManagedComponentUtils.getComponentTypeComparator());
+        sortedComponentTypes.addAll(componentTypes);
+        for (ComponentType componentType : sortedComponentTypes)
         {
             Set<ManagedComponent> components = managementView.getComponentsForType(componentType);
             if (components == null || components.isEmpty())
@@ -337,69 +338,13 @@ public class PluginDescriptorGenerator
 
     private static Set<String> getKnownDeploymentTypeNames()
     {
-        Set<String> knownDeploymentTypeNames = new LinkedHashSet();
+        // Use a TreeSet so the names will be sorted.
+        Set<String> knownDeploymentTypeNames = new TreeSet<String>();
         for (KnownDeploymentTypes type : KnownDeploymentTypes.values())
         {
             knownDeploymentTypeNames.add(type.getType());
         }
         return knownDeploymentTypeNames;
-    }
-
-    private static Set<ComponentType> getKnownComponentTypes()
-    {
-        Set<ComponentType> knownComponentTypes = new LinkedHashSet<ComponentType>();
-
-        // DataSource:*
-        for (KnownComponentTypes.DataSourceTypes componentType : KnownComponentTypes.DataSourceTypes.values())
-        {
-            knownComponentTypes.add(componentType.getType());
-        }
-
-        // ConnectionFactory:*
-        for (KnownComponentTypes.ConnectionFactoryTypes componentType : KnownComponentTypes.ConnectionFactoryTypes.values())
-        {
-            knownComponentTypes.add(componentType.getType());
-        }
-
-        // JMSDestination:*
-        for (KnownComponentTypes.JMSDestination componentType : KnownComponentTypes.JMSDestination.values())
-        {
-            knownComponentTypes.add(componentType.getType());
-        }
-
-        // EJB:*
-        for (KnownComponentTypes.EJB componentType : KnownComponentTypes.EJB.values())
-        {
-            knownComponentTypes.add(componentType.getType());
-        }
-
-        // MBean:*
-        for (KnownComponentTypes.MBean componentType : KnownComponentTypes.MBean.values())
-        {
-            knownComponentTypes.add(componentType.getType());
-        }
-        for (MoreKnownComponentTypes.MBean componentType : MoreKnownComponentTypes.MBean.values())
-        {
-            knownComponentTypes.add(componentType.getType());
-        }
-
-        // MCBean:*
-        for (KnownComponentTypes.MCBean componentType : KnownComponentTypes.MCBean.values())
-        {
-            knownComponentTypes.add(componentType.getType());
-        }
-        for (MoreKnownComponentTypes.MCBean componentType : MoreKnownComponentTypes.MCBean.values())
-        {
-            knownComponentTypes.add(componentType.getType());
-        }
-
-        // WAR:*
-        for (MoreKnownComponentTypes.WAR componentType : MoreKnownComponentTypes.WAR.values())
-        {
-            knownComponentTypes.add(componentType.getType());
-        }
-
-        return knownComponentTypes;
     }
 
     private static void writeToFile(PluginDescriptor pluginDescriptor,

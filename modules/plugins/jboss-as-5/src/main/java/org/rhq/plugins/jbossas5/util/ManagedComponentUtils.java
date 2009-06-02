@@ -26,6 +26,7 @@ import java.io.Serializable;
 import java.util.EnumSet;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.Comparator;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -46,6 +47,8 @@ import org.jboss.metatype.api.values.SimpleValue;
  */
 public class ManagedComponentUtils
 {
+    private static final Comparator<ComponentType> COMPONENT_TYPE_COMPARATOR = new ComponentTypeComparator();
+
     public static ManagedComponent getManagedComponent(ManagementView managementView, ComponentType componentType,
                                                        String componentName)
     {
@@ -108,9 +111,7 @@ public class ManagedComponentUtils
     }
 
     /**
-     * @param name
-     * @param componentType
-     * @return
+     * TODO
      */
     public static boolean isManagedComponent(ManagementView managementView, String name, ComponentType componentType)
     {
@@ -147,6 +148,10 @@ public class ManagedComponentUtils
         return matchingComponents;
     }
 
+    public static Comparator<ComponentType> getComponentTypeComparator() {
+        return COMPONENT_TYPE_COMPARATOR;
+    }
+
     @NotNull
     private static Set<ManagedComponent> getManagedComponents(ManagementView managementView, ComponentType componentType)
     {
@@ -160,5 +165,15 @@ public class ManagedComponentUtils
             throw new IllegalStateException(e);
         }
         return components;
+    }
+
+    private static class ComponentTypeComparator implements Comparator<ComponentType>
+    {
+        public int compare(ComponentType type1, ComponentType type2)
+        {
+            int value = type1.getType().compareTo(type2.getType());
+            // If the categories (e.g. JMSDestination) were equal, do a secondary sort by subtype (e.g. Queue).
+            return (value != 0) ? value : type1.getSubtype().compareTo(type2.getSubtype());
+        }
     }
 }

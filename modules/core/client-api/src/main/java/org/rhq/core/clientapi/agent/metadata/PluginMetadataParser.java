@@ -125,11 +125,13 @@ public class PluginMetadataParser {
 
     private ResourceType parsePlatformDescriptor(PlatformDescriptor platformDescriptor)
         throws InvalidPluginDescriptorException {
+
         ResourceType platformResourceType = new ResourceType(platformDescriptor.getName(), pluginDescriptor.getName(),
             ResourceCategory.PLATFORM, null);
 
         platformResourceType.setDescription(platformDescriptor.getDescription());
         LOG.debug("Parsed platform resource type: " + platformResourceType);
+
         parseResourceDescriptor(platformDescriptor, platformResourceType, null, null, null);
 
         if ((platformResourceType.getProcessScans() != null) && (platformResourceType.getProcessScans().size() > 0)) {
@@ -407,11 +409,14 @@ public class PluginMetadataParser {
         // 9) Child subcategories
 
         // Only set the description, subCategory, etc. if they have not already been set. This is in
-        if (resourceType.getDescription() == null)
+        if (resourceType.getDescription() == null) {
             resourceType.setDescription(resourceDescriptor.getDescription());
+        }
+
         // TODO (ips): I don't think platforms can have a subcategory.
-        if (resourceType.getSubCategory() == null)
+        if (resourceType.getSubCategory() == null) {
             setSubCategory(resourceDescriptor, resourceType);
+        }
 
         if (discoveryClass == null) {
             discoveryClass = getFullyQualifiedComponentClassName(pluginDescriptor.getPackage(), resourceDescriptor

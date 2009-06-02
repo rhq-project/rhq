@@ -80,12 +80,10 @@ public class ManagedComponentDiscoveryComponent
         */
         for (ManagedComponent component : components)
         {
-            String resourceName = component.getName();
+            String resourceName = getResourceName(component);
+            String resourceKey = component.getName();
+            String version = null; // (ips) I don't think there's anything generic we can do here.
 
-            String resourceKey = componentType.getType() + ":" +
-                    componentType.getSubtype() + ":" + resourceName;
-
-            String version = "?"; // TODO
             DiscoveredResourceDetails resource =
                     new DiscoveredResourceDetails(resourceType,
                             resourceKey,
@@ -103,5 +101,9 @@ public class ManagedComponentDiscoveryComponent
 
         log.trace("Discovered " + discoveredResources.size() + " " + resourceType.getName() + " Resources.");
         return discoveredResources;
+    }
+
+    protected String getResourceName(ManagedComponent component) {
+        return component.getName();
     }
 }

@@ -723,6 +723,31 @@
            measurementType="trendsup" displayType="summary"/>
 '>
 
+<!ENTITY ejb3SessionBeanMetrics '
+    <metric property="availableCount"
+            description="The number of pooled instances of this EJB3 Session Bean in the method-ready state"/>
+
+    <metric property="createCount" displayType="summary" measurementType="trendsup"
+            description="The number of instances of this EJB3 Session Bean that have been created since server start"/>
+            
+    <metric property="currentSize" displayName="Current Count"
+            description="The total number of currently pooled instances of this EJB3 Session Bean"/>
+
+    <metric property="maxSize"
+            description="The maximum number of instances that are allowed to be pooled"/>
+
+    <metric property="removeCount" displayType="summary" measurementType="trendsup"
+            description="The number of instances of this EJB3 Session Bean that have been removed since server start"/>
+<!--
+    <!-//- default interval == 600000 ms == 10 min -//->
+    <metric property="MethodInvocationTime" dataType="calltime" units="milliseconds"
+            defaultOn="false" defaultInterval="600000" destinationType="Method Name"
+            description="The minimum, maximum, and average invocation times for each of the methods exposed by this EJB;
+                         NOTE: this metric is only available if JBoss EJB3 RC9 Patch 1 or later is being used
+                         (a capable version of EJB3 is included with JBossAS 4.2.0.GA or later)"/>
+-->
+'>
+
 ]>
 
 <!--############################################# END OF XML ENTITIES ###############################################-->
@@ -734,7 +759,7 @@
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
 
-   <depends plugin="JMX" useClasses="true"/>
+    <depends plugin="JMX" useClasses="true"/>
 
     <server name="JBossAS Server"
             class="ApplicationServerComponent"
@@ -753,9 +778,11 @@
                     description="Different types of Connection Factories"/>
                 <subcategory name="JMS Destinations"
                              description="Different types of JMS Destinations"/>
+                <subcategory name="EJBs"
+                             description="Different types of EJBs"/>
             </subcategory>
             <subcategory name="Applications"
-                description="Different types of Applications">
+                description="Different types of Applications (WARs, EARs, etc.)">
             </subcategory>
         </subcategories>
 
@@ -2004,6 +2031,48 @@
             </resource-configuration>
         </service>
 
+        <service name="EJB3 Stateless Session Bean"
+                 subCategory="EJBs"
+                 class="ManagedComponentComponent"
+                 discovery="Ejb3BeanDiscoveryComponent"
+                 description="An EJB3 Stateless Session Bean">
+
+            <plugin-configuration>
+                <c:simple-property name="componentType" default="EJB3" readOnly="true"/>
+                <c:simple-property name="componentSubtype" default="SLSB" readOnly="true"/>
+                <c:simple-property name="componentName" readOnly="true"/>
+            </plugin-configuration>
+
+            &ejb3SessionBeanMetrics;
+
+        </service>
+
+        <service name="EJB3 Stateful Session Bean"
+                 subCategory="EJBs"
+                 class="ManagedComponentComponent"
+                 discovery="Ejb3BeanDiscoveryComponent"
+                 description="An EJB3 Stateful Session Bean">
+
+            <plugin-configuration>
+                <c:simple-property name="componentType" default="EJB3" readOnly="true"/>
+                <c:simple-property name="componentSubtype" default="SFSB" readOnly="true"/>
+                <c:simple-property name="componentName" readOnly="true"/>
+            </plugin-configuration>
+
+            &ejb3SessionBeanMetrics;
+
+            <!-- SFSBs have a few additional metrics that SLSBs do not have... -->
+            <metric property="cacheSize" measurementType="dynamic" displayType="detail" displayName="Cache Size"
+                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
+
+            <metric property="passivatedCount" measurementType="dynamic" displayType="detail" displayName="Passivated Count"
+                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
+
+            <metric property="totalSize" measurementType="dynamic" displayType="detail" displayName="Total Size"
+                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
+
+        </service>
+
 
         <!-- =================================== ManagedDeployment Resource types ================================== -->
 
@@ -2368,61 +2437,6 @@
 
         </service>
 
-              <service name="EJB3 Session Bean"
-               subCategory="Applications"
-               class="EJB3BeanComponent"
-               discovery="Ejb3DiscoveryComponent"
-               description="An EJB3 Stateless or Stateful Session Bean">
-
-         <!-- ear=rhq.ear,jar=rhq-enterprise-server-ejb.ejb3,name=AgentManagerBean,service=EJB3 -->
-         <!-- jboss.j2ee:jar=SimpleSLSB.jar,name=SimpleSLSB,service=EJB3 -->
-
-         <plugin-configuration>
-             <c:simple-property name="deploymentTypeName" default="JavaEEEnterpriseBeans3x" readOnly="true">
-                 <c:description>
-                     The name of the item from the org.jboss.deployers.spi.management.KnownDeploymentTypes enum
-                     corresponding to this deployment's type.
-                 </c:description>
-             </c:simple-property>
-
-         </plugin-configuration>
-
-<!--
-         <operation name="viewMethodStats" description="View method execution statistics for the EJB.">
-            <results>
-               <c:list-property name="methods">
-                  <c:map-property name="method">
-                     <c:simple-property name="methodName" summary="true"/>
-                     <c:simple-property name="count" displayName="Call Count" summary="true" type="integer"/>
-                     <c:simple-property name="minTime" displayName="Min Time" summary="true" type="integer"/>
-                     <c:simple-property name="maxTime" displayName="Max Time" summary="true" type="integer"/>
-                     <c:simple-property name="totalTime" displayName="Total Time" summary="true" type="integer"/>
-                  </c:map-property>
-               </c:list-property>
-            </results>
-         </operation>
-
--->
-         <metric displayName="Current Count" property="CurrentSize"
-                 description="The total number of currently pooled instances of this EJB3 Session Bean"/>
-         <metric displayName="Create Count" property="CreateCount" displayType="summary" measurementType="trendsup"
-                 description="The number of instances of this EJB3 Session Bean that have been created since server start"/>
-         <metric displayName="Remove Count" property="RemoveCount" displayType="summary" measurementType="trendsup"
-                 description="The number of instances of this EJB3 Session Bean that have been removed since server start"/>
-         <metric displayName="Available Count" property="AvailableCount"
-                 description="The number of pooled instances of this EJB3 Session Bean in the method-ready state"/>
-         <metric displayName="Max Size" property="MaxSize"
-                 description="The maximum number of instances that are allowed to be pooled"/>
-
-         <!-- default interval == 600000 ms == 10 min -->
-<!--
-         <metric property="MethodInvocationTime" dataType="calltime" units="milliseconds"
-                 defaultOn="false" defaultInterval="600000" destinationType="Method Name"
-                 description="The minimum, maximum, and average invocation times for each of the methods exposed by this EJB;
-                              NOTE: this metric is only available if JBoss EJB3 RC9 Patch 1 or later is being used
-                              (a capable version of EJB3 is included with JBossAS 4.2.0.GA or later)"/>
--->
-      </service>
 <!--
         <service name="JBoss Service (SAR)"
                  subCategory="Applications"

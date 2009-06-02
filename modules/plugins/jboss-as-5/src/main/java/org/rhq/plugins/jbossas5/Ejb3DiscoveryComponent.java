@@ -1,20 +1,24 @@
 /*
- * RHQ Management Platform
+ * Jopr Management Platform
  * Copyright (C) 2005-2009 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation version 2 of the License.
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 package org.rhq.plugins.jbossas5;
 
@@ -28,7 +32,6 @@ import org.apache.commons.logging.LogFactory;
 import org.jboss.beans.metadata.plugins.AbstractBeanMetaData;
 import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.deployers.spi.management.KnownDeploymentTypes;
-import org.jboss.managed.api.ComponentType;
 import org.jboss.managed.api.ManagedDeployment;
 import org.jboss.managed.api.ManagedObject;
 import org.jboss.profileservice.spi.NoSuchDeploymentException;
@@ -39,10 +42,16 @@ import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 
 /**
- * Discover EJB 3 beans
+ * Discover EJB3 session and message-driven beans.
+ *
  * @author Heiko W. Rupp
  * @author Ian Springer
  */
+@Deprecated
+//
+// ***NOTE*** Ejb3BeanDiscoveryComponent is now used for discovering session beans, but let's keep this class around
+//            in case we still need to discover MDBs and/or Session beans via the method it uses. (ips, 06/02/09)
+//
 public  class Ejb3DiscoveryComponent extends AbstractManagedDeploymentDiscoveryComponent
 {
     private final Log log = LogFactory.getLog(this.getClass());

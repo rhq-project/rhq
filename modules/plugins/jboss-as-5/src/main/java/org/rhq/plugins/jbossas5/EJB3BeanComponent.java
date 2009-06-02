@@ -1,25 +1,25 @@
  /*
-  * Jopr Management Platform
-  * Copyright (C) 2005-2009 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+ * Jopr Management Platform
+ * Copyright (C) 2005-2009 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.plugins.jbossas5;
 
 import java.lang.reflect.Field;
@@ -50,17 +50,21 @@ import org.mc4j.ems.connection.bean.EmsBean;
 import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 
  /**
- * A plugin component for managing an EJB3 session bean.
+  * A plugin component for managing an EJB3 session bean.
   *
   * @author Greg Hinkle
   * @author Ian Springer
   * @author Heiko W. Rupp
   */
+//
+// ***TODO*** ManagedComponentComponent is now used for managing session beans. This class will eventually need to
+//            subclass that class. It will also need to be reworked to use the PS rather than JMX to retrieve the
+//            method invocation call-time stats, once ALR is done implementing those on the JBAS side. (ips, 06/02/09)
+//
  public class EJB3BeanComponent extends EmbeddedManagedDeploymentComponent {
      private final Log log = LogFactory.getLog(EJB3BeanComponent.class);
 
      private Map<Integer, CallTimeData> previousRawCallTimeDatas = new HashMap<Integer,CallTimeData>();
-
 
      @Override
      public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {

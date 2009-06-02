@@ -58,7 +58,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
         PLUGIN_CONFIGURATION(".pluginConfiguration", "pluginConf"), //
         SCHEDULES(".schedules", "sched"), //
         RESOURCE_CHILD(".childResources", "child"), //
-        AVAILABILITY(".availability", "avail"), //
+        AVAILABILITY(".currentAvailability", "avail"), //
         RESOURCE_CONFIGURATION_DEFINITION(".resourceType.resourceConfigurationDefinition", "confDef"), //
         PLUGIN_CONFIGURATION_DEFINITION(".resourceType.pluginConfigurationDefinition", "pluginConfDef");
 
@@ -478,7 +478,6 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                 }
                 addJoinCondition(JoinCondition.AVAILABILITY);
                 populatePredicateCollections(JoinCondition.AVAILABILITY.alias + ".availabilityType", type);
-                whereStatics.add(JoinCondition.AVAILABILITY.alias + ".endTime IS NULL");
             } else if (context == ParseContext.Trait) {
                 // SELECT res.id FROM Resource res JOIN res.schedules sched, sched.definition def, MeasurementDataTrait trait
                 // WHERE def.name = :arg1 AND trait.value = :arg2 AND trait.schedule = sched AND trait.id.timestamp =
@@ -881,6 +880,27 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
      */
     @SuppressWarnings("unchecked")
     private List getSingleResultList(String queryStr) {
+        if (log.isDebugEnabled()) {
+            String resolvedQuery = queryStr;
+
+            for (Map.Entry<String, Object> replacement : whereReplacements.entrySet()) {
+                String bindArgument = replacement.getKey();
+                String bindValueAsString = replacement.getValue().toString();
+                Class bindType = whereReplacementTypes.get(bindArgument);
+
+                if (bindType.equals(Integer.class)) {
+                    resolvedQuery = resolvedQuery.replace(":" + bindArgument, bindValueAsString);
+                } else if (bindType.equals(String.class)) {
+                    resolvedQuery = resolvedQuery.replace(":" + bindArgument, "'" + bindValueAsString + "'");
+                } else {
+                    throw new IllegalArgumentException("Unknown bindType " + bindType + " for " + bindArgument
+                        + " having value " + bindValueAsString);
+                }
+            }
+
+            log.debug("Query: " + resolvedQuery);
+        }
+
         if (isTestMode) {
             return Collections.emptyList();
         }
@@ -904,7 +924,6 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                 throw new IllegalArgumentException("Unknown bindType " + bindType + " for " + bindArgument
                     + " having value " + bindValue);
             }
-
         }
 
         return query.getResultList();

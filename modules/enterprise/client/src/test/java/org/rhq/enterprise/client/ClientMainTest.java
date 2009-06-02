@@ -11,8 +11,6 @@ import junit.framework.TestCase;
 
 import com.thoughtworks.xstream.XStream;
 
-import org.testng.annotations.Test;
-
 import org.rhq.enterprise.server.ws.Architecture;
 import org.rhq.enterprise.server.ws.AvailabilityType;
 import org.rhq.enterprise.server.ws.Channel;
@@ -35,6 +33,7 @@ import org.rhq.enterprise.server.ws.ResourceManagerBeanService;
 import org.rhq.enterprise.server.ws.ResourceManagerRemote;
 import org.rhq.enterprise.server.ws.ResourceOperationHistory;
 import org.rhq.enterprise.server.ws.ResourceOperationSchedule;
+import org.rhq.enterprise.server.ws.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.ws.Role;
 import org.rhq.enterprise.server.ws.RoleManagerBeanService;
 import org.rhq.enterprise.server.ws.RoleManagerRemote;
@@ -340,7 +339,6 @@ public class ClientMainTest extends TestCase {
         assertTrue(schedules.isEmpty());
     }
 
-    @Test(enabled = false)
     public void testJBossAS() throws Exception {
 
         //instantiate SLSB
@@ -563,7 +561,7 @@ public class ClientMainTest extends TestCase {
         //        configManager.updatePluginConfiguration(user, testAS.getResource().getId(), config);
     }
 
-    public void testDeployment() throws Exception {
+    public void testDeployment() throws Exception, ResourceTypeNotFoundException {
 
         reportHeap("start");
 

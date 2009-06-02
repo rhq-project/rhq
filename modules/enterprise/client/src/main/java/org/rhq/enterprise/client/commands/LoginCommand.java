@@ -25,7 +25,7 @@ import org.rhq.enterprise.client.RHQRemoteClient;
  * @author Greg Hinkle
  */
 public class LoginCommand implements ClientCommand {
-    
+
     public String getPromptCommandString() {
         return "login";
     }
@@ -37,8 +37,8 @@ public class LoginCommand implements ClientCommand {
             String host;
             int port;
             if (args.length == 5) {
-                 host = args[3];
-               port = Integer.parseInt(args[4]);
+                host = args[3];
+                port = Integer.parseInt(args[4]);
             } else {
                 host = "localhost";
                 port = 7080;
@@ -49,7 +49,7 @@ public class LoginCommand implements ClientCommand {
 
             client.setUser(user);
             client.setPass(pass);
-            client.setSubject(client.getRemoteClient().getSubjectManager().login(user, pass));
+            client.setSubject(client.getRemoteClient().getSubjectManagerRemote().login(user, pass));
             client.getPrintWriter().println("Login successful");
         } catch (Exception e) {
             client.getPrintWriter().println("Login failed: " + e.getMessage());
@@ -67,6 +67,6 @@ public class LoginCommand implements ClientCommand {
     }
 
     public String getDetailedHelp() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return null; //To change body of implemented methods use File | Settings | File Templates.
     }
 }

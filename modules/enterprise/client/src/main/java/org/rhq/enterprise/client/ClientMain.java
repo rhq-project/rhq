@@ -7,89 +7,110 @@ package org.rhq.enterprise.client;
 
 import gnu.getopt.Getopt;
 import gnu.getopt.LongOpt;
-import jline.*;
-import mazz.i18n.Msg;
-import org.rhq.enterprise.client.commands.ClientCommand;
-import org.rhq.core.domain.auth.Subject;
 
-import java.io.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.io.StreamTokenizer;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import jline.ArgumentCompletor;
+import jline.Completor;
+import jline.ConsoleReader;
+import jline.SimpleCompletor;
+import mazz.i18n.Msg;
+
+import org.rhq.enterprise.client.commands.ClientCommand;
+import org.rhq.enterprise.server.ws.Subject;
 
 /**
- * @author Greg Hinkle
+ * @author Greg Hinkle, Simeon Pinder
  */
 public class ClientMain {
 
+    //I18N messaging
     private static final Msg MSG = ClientI18NFactory.getMsg();
 
+    //Stored command map. Key to instance that handles that command.
     private static Map<String, ClientCommand> commands = new HashMap<String, ClientCommand>();
 
     /**
-     * This is the thread that is running the input loop; it accepts prompt commands from the user.
+     * This is the thread that is running the input loop; it accepts prompt commands 
+     * from the user.
      */
     private Thread inputLoopThread;
 
     private BufferedReader inputReader;
 
+    //JLine console reader
     private ConsoleReader consoleReader;
 
     private boolean stdinInput = true;
 
-
+    //for feedback to user.
     private PrintWriter outputWriter;
 
+    //Local storage of credentials for this session/client
     private String host;
     private int port;
     private String user;
     private String pass;
+
+    //reference to the webservice reference factory 
     private RHQRemoteClient remoteClient;
 
+    //The subject that will be used to carry out all requested actions
     private Subject subject;
 
+    //Entrance to main.
     public static void main(String[] args) throws Exception {
 
-        /*Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
-            public void run() {
-                try {
-                new UnixTerminal().restoreTerminal();     }
-                catch (Exception e) { }
-            }
-        }));*/
-        try {
-//            new UnixTerminal().initializeTerminal();
+        //instantiate
+        ClientMain main = new ClientMain();
 
-            ClientMain main = new ClientMain();
-            main.processArguments(args);
-            main.inputLoop();
-        } finally {
-            //new UnixTerminal().restoreTerminal();
-        }
+        //process startup arguments
+        main.processArguments(args);
+
+        //begin client access loop
+        main.inputLoop();
     }
 
+    //
     public ClientMain() throws Exception {
 
-//        this.inputReader = new BufferedReader(new InputStreamReader(System.in));
+        //        this.inputReader = new BufferedReader(new InputStreamReader(System.in));
+
+        //initialize the printwriter to system.out for console conversations
         this.outputWriter = new PrintWriter(System.out, true);
 
+        //Initialize JLine console elements.
         consoleReader = new jline.ConsoleReader();
-        consoleReader.addCompletor(
-                new SimpleCompletor(commands.keySet().toArray(new String[commands.size()])));
-        consoleReader.addCompletor(
-                new ArgumentCompletor(
-                        new Completor[]{
-                                new SimpleCompletor("help"),
-                                new SimpleCompletor(commands.keySet().toArray(new String[commands.size()]))}));
 
+        //Setup the command line completers for listed actions for the user before login
+        //completes initial commands available
+        consoleReader.addCompletor(new SimpleCompletor(commands.keySet().toArray(new String[commands.size()])));
+        //completes arguments
+        consoleReader.addCompletor(new ArgumentCompletor(new Completor[] { new SimpleCompletor("help"),
+            new SimpleCompletor(commands.keySet().toArray(new String[commands.size()])) }));
+
+        //enable pagination
         consoleReader.setUsePagination(true);
 
     }
 
+    //?? what is this again? Might be able to remove this.
     public void start() {
         outputWriter = new PrintWriter(System.out);
-//        inputReader = new BufferedReader(new InputStreamReader(System.in));
+        //        inputReader = new BufferedReader(new InputStreamReader(System.in));
 
     }
-
 
     public String getUserInput(String prompt) {
 
@@ -105,7 +126,7 @@ public class ClientMain {
                     prompt = host + ":" + port + "> ";
                 }
             }
-//            outputWriter.print(prompt);
+            //            outputWriter.print(prompt);
 
             try {
                 outputWriter.flush();
@@ -129,23 +150,32 @@ public class ClientMain {
             }
 
             // if we are not in daemon mode, let's now start processing prompt commands coming in via stdin
-//            if (!m_daemonMode) {
-//                inputReader = new BufferedReader(new InputStreamReader(System.in));
-//                stdinInput = true;
-//                input_string = "";
-//            } else {
-//                inputReader = null;
-//            }
+            //            if (!m_daemonMode) {
+            //                inputReader = new BufferedReader(new InputStreamReader(System.in));
+            //                stdinInput = true;
+            //                input_string = "";
+            //            } else {
+            //                inputReader = null;
+            //            }
         }
 
         return input_string;
     }
 
+    /** Indicates whether the 'Subject', used for all authenticated actions, is currently logged in.
+     * 
+     * @return flag indicating status of realtime check.
+     */
     public boolean loggedIn() {
-        return this.subject != null
-                && this.getRemoteClient() != null
-                && this.getRemoteClient().isConnected()
-                && this.getRemoteClient().getSubjectManager().isValidSessionId(subject.getSessionId(), subject.getName());
+        //        return this.subject != null && this.getRemoteClient() != null && this.getRemoteClient().isConnected()
+        //            && this.getRemoteClient().getSubjectManager().isValidSessionId(subject.getSessionId(), subject.getName());
+        //        return this.subject != null && this.getRemoteClient() != null && this.getRemoteClient().isConnected();
+        //        && this.getRemoteClient().getSubjectManager().isValidSessionId(subject.getSessionId(), subject.getName());
+        boolean loggedIn = false;
+        if ((this.subject != null) && (this.getRemoteClient() != null) && (this.getRemoteClient().isConnected())) {
+            loggedIn = true;
+        }
+        return loggedIn;
     }
 
     /**
@@ -161,11 +191,11 @@ public class ClientMain {
                     // get a command from the user
                     // if in daemon mode, only get input if reading from an input file; ignore stdin
                     String cmd;
-//                        if ((m_daemonMode == false) || (stdinInput == false)) {
+                    //                        if ((m_daemonMode == false) || (stdinInput == false)) {
                     cmd = getUserInput(null);
-//                        } else {
-//                            cmd = null;
-//                        }
+                    //                        } else {
+                    //                            cmd = null;
+                    //                        }
 
                     try {
                         // parse the command into separate arguments and execute it
@@ -178,7 +208,7 @@ public class ClientMain {
                             break;
                         }
                     } catch (Throwable t) {
-//                        outputWriter.println(ThrowableUtil.getAllMessages(t));
+                        //                        outputWriter.println(ThrowableUtil.getAllMessages(t));
                         t.printStackTrace(outputWriter);
                         //LOG.debug(t, AgentI18NResourceKeys.COMMAND_FAILURE_STACK_TRACE);
                     }
@@ -197,7 +227,6 @@ public class ClientMain {
         return;
     }
 
-
     private boolean executePromptCommand(String[] args) throws Exception {
         String cmd = args[0];
         if (commands.containsKey(cmd)) {
@@ -214,7 +243,6 @@ public class ClientMain {
         }
         return true;
     }
-
 
     /**
      * Given a command line, this will parse each argument and return the argument array.
@@ -258,23 +286,19 @@ public class ClientMain {
         return args.toArray(new String[args.size()]);
     }
 
-
     private void displayUsage() {
         outputWriter.println("rhq-client.sh [-h] [-u user] [-p pass] [-s host] [-t port] [-f file]");
     }
 
-
     void processArguments(String[] args) throws IllegalArgumentException {
 
         String sopts = "-:hu:p:s:t:f:";
-        LongOpt[] lopts = {
-                new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'h'),
-                new LongOpt("user", LongOpt.REQUIRED_ARGUMENT, null, 'u'),
-                new LongOpt("password", LongOpt.REQUIRED_ARGUMENT, null, 'p'),
-                new LongOpt("host", LongOpt.REQUIRED_ARGUMENT, null, 's'),
-                new LongOpt("port", LongOpt.REQUIRED_ARGUMENT, null, 't'),
-                new LongOpt("file", LongOpt.NO_ARGUMENT, null, 'f')
-        };
+        LongOpt[] lopts = { new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'h'),
+            new LongOpt("user", LongOpt.REQUIRED_ARGUMENT, null, 'u'),
+            new LongOpt("password", LongOpt.REQUIRED_ARGUMENT, null, 'p'),
+            new LongOpt("host", LongOpt.REQUIRED_ARGUMENT, null, 's'),
+            new LongOpt("port", LongOpt.REQUIRED_ARGUMENT, null, 't'),
+            new LongOpt("file", LongOpt.NO_ARGUMENT, null, 'f') };
 
         String config_file_name = null;
         boolean clean_config = false;
@@ -285,47 +309,46 @@ public class ClientMain {
 
         while ((code = getopt.getopt()) != -1) {
             switch (code) {
-                case ':':
-                case '?': {
-                    // for now both of these should exit
-                    displayUsage();
-                    throw new IllegalArgumentException("mm");//MSG.getMsg(ClientI18NResourceKeys.BAD_ARGS,null));
+            case ':':
+            case '?': {
+                // for now both of these should exit
+                displayUsage();
+                throw new IllegalArgumentException("mm");//MSG.getMsg(ClientI18NResourceKeys.BAD_ARGS,null));
+            }
+
+            case 1: {
+                // this will catch non-option arguments (which we don't currently care about)
+                System.err.println(MSG.getMsg(ClientI18NResourceKeys.USAGE, getopt.getOptarg()));
+                break;
+            }
+
+            case 'h': {
+                displayUsage();
+            }
+
+            case 'u': {
+                this.user = getopt.getOptarg();
+            }
+            case 'p': {
+                this.pass = getopt.getOptarg();
+            }
+
+            case 'i': {
+                File script = new File(getopt.getOptarg());
+
+                try {
+                    inputReader = new BufferedReader(new FileReader(script));
+                    stdinInput = false;
+                } catch (Exception e) {
+                    //throw new IllegalArgumentException(MSG.getMsg(ClientI18NResourceKeys.BAD_INPUT_FILE, script, e));
                 }
 
-                case 1: {
-                    // this will catch non-option arguments (which we don't currently care about)
-                    System.err.println(MSG.getMsg(ClientI18NResourceKeys.USAGE, getopt.getOptarg()));
-                    break;
-                }
-
-                case 'h': {
-                    displayUsage();
-                }
-
-                case 'u': {
-                    this.user = getopt.getOptarg();
-                }
-                case 'p': {
-                    this.pass = getopt.getOptarg();
-                }
-
-
-                case 'i': {
-                    File script = new File(getopt.getOptarg());
-
-                    try {
-                        inputReader = new BufferedReader(new FileReader(script));
-                        stdinInput = false;
-                    } catch (Exception e) {
-                        //throw new IllegalArgumentException(MSG.getMsg(ClientI18NResourceKeys.BAD_INPUT_FILE, script, e));
-                    }
-
-                    break;
-                }
+                break;
+            }
             }
         }
         if (user != null && pass != null) {
-            commands.get("login").execute(this, new String[]{"login", user, pass});
+            commands.get("login").execute(this, new String[] { "login", user, pass });
         }
     }
 
@@ -336,17 +359,15 @@ public class ClientMain {
     public void setRemoteClient(RHQRemoteClient remoteClient) {
         this.remoteClient = remoteClient;
         if (remoteClient != null) {
-            consoleReader.addCompletor(
-                    new ArgumentCompletor(
-                            new Completor[]{
-                                    new SimpleCompletor("help"),
-                                    new SimpleCompletor("api"),
-                                    new SimpleCompletor(this.getRemoteClient().getAllServices().keySet().toArray(new String[this.getRemoteClient().getAllServices().size()]))}));
+            consoleReader.addCompletor(new ArgumentCompletor(new Completor[] {
+                new SimpleCompletor("help"),
+                new SimpleCompletor("api"),
+                new SimpleCompletor(this.getRemoteClient().getAllServices().keySet().toArray(
+                    new String[this.getRemoteClient().getAllServices().size()])) }));
 
             consoleReader.addCompletor(new ServiceCompletor(this.getRemoteClient().getAllServices()));
         }
     }
-
 
     public Subject getSubject() {
         return subject;
@@ -396,7 +417,6 @@ public class ClientMain {
         return this.consoleReader.getTermwidth();
     }
 
-
     static {
         for (Class commandClass : ClientCommand.COMMANDS) {
             ClientCommand command = null;
@@ -405,9 +425,9 @@ public class ClientMain {
                 commands.put(command.getPromptCommandString(), command);
 
             } catch (InstantiationException e) {
-                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                e.printStackTrace(); //To change body of catch statement use File | Settings | File Templates.
             } catch (IllegalAccessException e) {
-                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                e.printStackTrace(); //To change body of catch statement use File | Settings | File Templates.
             }
         }
     }

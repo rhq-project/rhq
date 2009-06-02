@@ -18,10 +18,10 @@
  */
 package org.rhq.enterprise.client.commands;
 
-import org.rhq.enterprise.client.RHQRemoteClient;
 import org.rhq.enterprise.client.ClientMain;
+import org.rhq.enterprise.client.RHQRemoteClient;
 import org.rhq.enterprise.client.TabularWriter;
-import org.rhq.core.domain.util.PageControl;
+import org.rhq.enterprise.server.ws.PageControl;
 
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptEngine;
@@ -37,7 +37,10 @@ public class ScriptCommand implements ClientCommand {
 
     public ScriptCommand() {
         sem = new ScriptEngineManager();
-        sem.getBindings().put("unlimitedPC", PageControl.getUnlimitedInstance());
+//        sem.getBindings().put("unlimitedPC", PageControl.getUnlimitedInstance());
+        PageControl pc = new PageControl();
+          pc.setPageNumber(-1);
+        sem.getBindings().put("unlimitedPC", pc);
         jsEngine = sem.getEngineByName("JavaScript");
     }
 

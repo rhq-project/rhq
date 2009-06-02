@@ -21,17 +21,20 @@ package org.rhq.enterprise.client.commands;
 import org.rhq.enterprise.client.ClientMain;
 
 /**
- * @author Greg Hinkle
+ * @author Greg Hinkle, Simeon Pinder
  */
 public interface ClientCommand {
 
 
     public static Class[] COMMANDS = new Class[] {
             FindResourcesCommand.class,
-            FindGroupsCommand.class,
+//            FindGroupsCommand.class,
             HelpCommand.class,
             LoginCommand.class,
             LogoutCommand.class,
+            CreateUserCommand.class,
+            FindUserAccountsCommand.class,
+            DeleteUserCommand.class,
             QuitCommand.class,
             ScriptCommand.class
     };

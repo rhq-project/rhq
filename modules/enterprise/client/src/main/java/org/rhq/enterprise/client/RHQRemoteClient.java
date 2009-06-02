@@ -19,62 +19,30 @@
 package org.rhq.enterprise.client;
 
 import java.lang.reflect.Method;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
-import org.jboss.remoting.Client;
-import org.jboss.remoting.InvokerLocator;
-import org.rhq.enterprise.server.auth.SubjectManagerBean;
-import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.resource.*;
-import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerLocal;
-import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerBean;
-import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionManagerLocal;
-import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionManagerBean;
-import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
-import org.rhq.enterprise.server.resource.group.ResourceGroupManagerBean;
-import org.rhq.enterprise.server.report.DataAccessBean;
-import org.rhq.enterprise.server.report.DataAccessLocal;
-import org.rhq.enterprise.server.alert.engine.jms.CachedConditionProducerBean;
-import org.rhq.enterprise.server.alert.engine.jms.CachedConditionProducerLocal;
-import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
-import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerBean;
-import org.rhq.enterprise.server.alert.*;
-import org.rhq.enterprise.server.core.AgentManagerLocal;
-import org.rhq.enterprise.server.core.AgentManagerBean;
-import org.rhq.enterprise.server.core.EmailManagerLocal;
-import org.rhq.enterprise.server.core.EmailManagerBean;
-import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
-import org.rhq.enterprise.server.authz.AuthorizationManagerBean;
-import org.rhq.enterprise.server.authz.RoleManagerLocal;
-import org.rhq.enterprise.server.authz.RoleManagerBean;
-import org.rhq.enterprise.server.measurement.*;
-import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
-import org.rhq.enterprise.server.configuration.ConfigurationManagerBean;
-import org.rhq.enterprise.server.configuration.metadata.ConfigurationMetadataManagerLocal;
-import org.rhq.enterprise.server.configuration.metadata.ConfigurationMetadataManagerBean;
-import org.rhq.enterprise.server.content.*;
-import org.rhq.enterprise.server.content.metadata.ContentSourceMetadataManagerLocal;
-import org.rhq.enterprise.server.content.metadata.ContentSourceMetadataManagerBean;
-import org.rhq.enterprise.server.discovery.DiscoveryBossLocal;
-import org.rhq.enterprise.server.discovery.DiscoveryBossBean;
-import org.rhq.enterprise.server.event.EventManagerLocal;
-import org.rhq.enterprise.server.event.EventManagerBean;
-import org.rhq.enterprise.server.operation.OperationManagerLocal;
-import org.rhq.enterprise.server.operation.OperationManagerBean;
-import org.rhq.enterprise.server.scheduler.SchedulerLocal;
-import org.rhq.enterprise.server.scheduler.SchedulerBean;
-import org.rhq.enterprise.server.test.SubjectRoleTestBeanLocal;
-import org.rhq.enterprise.server.test.SubjectRoleTestBean;
-import org.rhq.enterprise.server.system.SystemManagerLocal;
-import org.rhq.enterprise.server.system.SystemManagerBean;
-import org.rhq.enterprise.server.perspective.PerspectiveManagerLocal;
-import org.rhq.enterprise.server.perspective.PerspectiveManagerBean;
+import org.rhq.enterprise.server.ws.ChannelManagerBeanService;
+import org.rhq.enterprise.server.ws.ChannelManagerRemote;
+import org.rhq.enterprise.server.ws.ConfigurationManagerBeanService;
+import org.rhq.enterprise.server.ws.ConfigurationManagerRemote;
+import org.rhq.enterprise.server.ws.ContentManagerBeanService;
+import org.rhq.enterprise.server.ws.ContentManagerRemote;
+import org.rhq.enterprise.server.ws.OperationManagerBeanService;
+import org.rhq.enterprise.server.ws.OperationManagerRemote;
+import org.rhq.enterprise.server.ws.ResourceManagerBeanService;
+import org.rhq.enterprise.server.ws.ResourceManagerRemote;
+import org.rhq.enterprise.server.ws.RoleManagerBeanService;
+import org.rhq.enterprise.server.ws.RoleManagerRemote;
+import org.rhq.enterprise.server.ws.Subject;
+import org.rhq.enterprise.server.ws.SubjectManagerBeanService;
+import org.rhq.enterprise.server.ws.SubjectManagerRemote;
+
 
 /**
  * A remote access client with transparent proxies to RHQ servers.
  *
- * @author Greg Hinkle
+ * @author Greg Hinkle, Simeon Pinder
  */
 public class RHQRemoteClient {
     // Default locator values
@@ -82,58 +50,21 @@ public class RHQRemoteClient {
     private String host = "localhost";
     private int port = 7080;
 
-    private Client remotingClient = null;
+    //    private Client remotingClient = null;
     private Map<String, Object> allServices;
+    private Subject subject = null;
 
     public RHQRemoteClient(String host, int port) {
         this.host = host;
         this.port = port;
-        init();
-    }
-
-
-
-    private void init() {
-        try {
-            // create InvokerLocator with the url type string
-            // indicating the target remoting server to call upon.
-            String locatorURI = transport + "://" + host + ":" + port + "/jboss-remoting-servlet-invoker/ServerInvokerServlet";
-            InvokerLocator locator = new InvokerLocator(locatorURI);
-            System.out.println("Calling remoting server with locator uri of: " + locatorURI);
-
-            remotingClient = new Client(locator);
-//        remotingClient.setSubsystem("EJB3");
-            remotingClient.setSubsystem("AOP");
-            remotingClient.connect();
-        } catch (Exception e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-        }
+        //        init();
     }
 
     public boolean isConnected() {
-        return this.remotingClient.isConnected();
+        //        return this.subject != null && this.subjectManager != null && this.subjectManager.isLoggedIn(subject.getName());
+        return (this.subject != null && this.subjectManagerRemote != null && this.subjectManagerRemote
+            .isLoggedIn(subject.getName()));
     }
-
-    /*
-
-    public static void main(String[] args) throws Throwable {
-
-
-        String[] foo = new String[0];
-        System.out.println(foo.getClass().getName());
-
-        SubjectManagerLocal subjectManager = RHQRemoteClient.getSubjectManager();
-
-        Subject subject = subjectManager.login("rhqadmin", "rhqadmin");
-
-        System.out.println("Login successful: " + subject);
-
-        ResourceManagerLocal resourceManager = RHQRemoteClient.getResourceManager();
-        Resource res = resourceManager.getResourceTree(500050, true);
-
-        System.out.println("res: " + res);
-
-    }*/
 
     public String getHost() {
         return host;
@@ -143,191 +74,95 @@ public class RHQRemoteClient {
         return port;
     }
 
-    public AgentManagerLocal getAgentManager() {
-        return RHQRemoteClientProxy.getProcessor(this, AgentManagerBean.class, AgentManagerLocal.class);
+    private RoleManagerRemote roleManagerRemote = null;
+    private ContentManagerRemote contentManagerRemote = null;
+    private SubjectManagerRemote subjectManagerRemote = null;
+    private OperationManagerRemote operationManagerRemote = null;
+    private ChannelManagerRemote channelManagerRemote = null;
+    private ConfigurationManagerRemote configurationManagerRemote = null;
+    private ResourceManagerRemote resourceManagerRemote = null;
+
+    public RoleManagerRemote getRoleManagerRemote() {
+        RoleManagerBeanService roleManagerService = null;
+        if (roleManagerRemote == null) {
+            roleManagerService = new RoleManagerBeanService();
+            roleManagerRemote = roleManagerService.getRoleManagerBeanPort();
+        }
+        return roleManagerRemote;
     }
 
-    public AlertConditionCacheManagerLocal getAlertConditionCacheManager() {
-        return RHQRemoteClientProxy.getProcessor(this, AlertConditionCacheManagerBean.class, AlertConditionCacheManagerLocal.class);
+    public ContentManagerRemote getContentManagerRemote() {
+        ContentManagerBeanService service = null;
+        if (contentManagerRemote == null) {
+            service = new ContentManagerBeanService();
+            contentManagerRemote = service.getContentManagerBeanPort();
+        }
+        return contentManagerRemote;
     }
 
-    public AlertConditionManagerLocal getAlertConditionManager() {
-        return RHQRemoteClientProxy.getProcessor(this, AlertConditionManagerBean.class, AlertConditionManagerLocal.class);
+    public SubjectManagerRemote getSubjectManagerRemote() {
+        SubjectManagerBeanService subjectManagerService = null;
+        if (subjectManagerRemote == null) {
+            subjectManagerService = new SubjectManagerBeanService();
+            subjectManagerRemote = subjectManagerService.getSubjectManagerBeanPort();
+        }
+        return subjectManagerRemote;
     }
 
-    public AlertDefinitionManagerLocal getAlertDefinitionManager() {
-        return RHQRemoteClientProxy.getProcessor(this, AlertDefinitionManagerBean.class, AlertDefinitionManagerLocal.class);
+    public OperationManagerRemote getOperationManagerRemote() {
+        OperationManagerRemote remote = null;
+        OperationManagerBeanService operationManagerService = null;
+        if (operationManagerRemote == null) {
+            operationManagerService = new OperationManagerBeanService();
+            operationManagerRemote = operationManagerService.getOperationManagerBeanPort();
+        }
+        return operationManagerRemote;
     }
 
-    public AlertManagerLocal getAlertManager() {
-        return RHQRemoteClientProxy.getProcessor(this, AlertManagerBean.class, AlertManagerLocal.class);
+    public ChannelManagerRemote getChannelManagerRemote() {
+        ChannelManagerRemote remote = null;
+        ChannelManagerBeanService channelManagerService = null;
+        if (channelManagerRemote == null) {
+            channelManagerService = new ChannelManagerBeanService();
+            channelManagerRemote = channelManagerService.getChannelManagerBeanPort();
+        }
+        return channelManagerRemote;
     }
 
-    public AlertNotificationManagerLocal getAlertNotificationManager() {
-        return RHQRemoteClientProxy.getProcessor(this, AlertNotificationManagerBean.class, AlertNotificationManagerLocal.class);
+    public Subject getSubject() {
+        return subject;
     }
 
-    public AlertTemplateManagerLocal getAlertTemplateManager() {
-        return RHQRemoteClientProxy.getProcessor(this, AlertTemplateManagerBean.class, AlertTemplateManagerLocal.class);
+    public void setSubject(Subject subject) {
+        this.subject = subject;
     }
 
-    public AuthorizationManagerLocal getAuthorizationManager() {
-        return RHQRemoteClientProxy.getProcessor(this, AuthorizationManagerBean.class, AuthorizationManagerLocal.class);
+    public void setChannelManagerRemote(ChannelManagerRemote channelManagerRemote) {
+        this.channelManagerRemote = channelManagerRemote;
     }
 
-    public AvailabilityManagerLocal getAvailabilityManager() {
-        return RHQRemoteClientProxy.getProcessor(this, AvailabilityManagerBean.class, AvailabilityManagerLocal.class);
+    public ConfigurationManagerRemote getConfigurationManagerRemote() {
+        ConfigurationManagerRemote remote = null;
+        ConfigurationManagerBeanService configurationManagerService = null;
+        if (configurationManagerRemote == null) {
+            configurationManagerService = new ConfigurationManagerBeanService();
+            configurationManagerRemote = configurationManagerService.getConfigurationManagerBeanPort();
+        }
+        return configurationManagerRemote;
     }
 
-    public CallTimeDataManagerLocal getCallTimeDataManager() {
-        return RHQRemoteClientProxy.getProcessor(this, CallTimeDataManagerBean.class, CallTimeDataManagerLocal.class);
+    public ResourceManagerRemote getResourceManagerRemote() {
+        ResourceManagerBeanService resourceManagerService = null;
+        if (resourceManagerRemote == null) {
+            resourceManagerService = new ResourceManagerBeanService();
+            resourceManagerRemote = resourceManagerService.getResourceManagerBeanPort();
+        }
+        return resourceManagerRemote;
     }
 
-    public ConfigurationManagerLocal getConfigurationManager() {
-        return RHQRemoteClientProxy.getProcessor(this, ConfigurationManagerBean.class, ConfigurationManagerLocal.class);
-    }
-
-    public ContentManagerLocal getContentManager() {
-        return RHQRemoteClientProxy.getProcessor(this, ContentManagerBean.class, ContentManagerLocal.class);
-    }
-
-    public ContentUIManagerLocal getContentUIManager() {
-        return RHQRemoteClientProxy.getProcessor(this, ContentUIManagerBean.class, ContentUIManagerLocal.class);
-    }
-
-    public DiscoveryBossLocal getDiscoveryBoss() {
-        return RHQRemoteClientProxy.getProcessor(this, DiscoveryBossBean.class, DiscoveryBossLocal.class);
-    }
-
-    public EmailManagerLocal getEmailManagerBean() {
-        return RHQRemoteClientProxy.getProcessor(this, EmailManagerBean.class, EmailManagerLocal.class);
-    }
-
-    public EventManagerLocal getEventManager() {
-        return RHQRemoteClientProxy.getProcessor(this, EventManagerBean.class, EventManagerLocal.class);
-    }
-
-    public GroupDefinitionManagerLocal getGroupDefinitionManager() {
-        return RHQRemoteClientProxy.getProcessor(this, GroupDefinitionManagerBean.class, GroupDefinitionManagerLocal.class);
-    }
-
-    public MeasurementDefinitionManagerLocal getMeasurementDefinitionManager() {
-        return RHQRemoteClientProxy.getProcessor(this, MeasurementDefinitionManagerBean.class, MeasurementDefinitionManagerLocal.class);
-    }
-
-    public MeasurementScheduleManagerLocal getMeasurementScheduleManager() {
-        return RHQRemoteClientProxy.getProcessor(this, MeasurementScheduleManagerBean.class, MeasurementScheduleManagerLocal.class);
-    }
-
-    public MeasurementDataManagerLocal getMeasurementDataManager() {
-        return RHQRemoteClientProxy.getProcessor(this, MeasurementDataManagerBean.class, MeasurementDataManagerLocal.class);
-    }
-
-    public MeasurementCompressionManagerLocal getMeasurementCompressionManager() {
-        return RHQRemoteClientProxy.getProcessor(this, MeasurementCompressionManagerBean.class, MeasurementCompressionManagerLocal.class);
-    }
-
-    public MeasurementProblemManagerLocal getMeasurementProblemManager() {
-        return RHQRemoteClientProxy.getProcessor(this, MeasurementProblemManagerBean.class, MeasurementProblemManagerLocal.class);
-    }
-
-    public MeasurementBaselineManagerLocal getMeasurementBaselineManager() {
-        return RHQRemoteClientProxy.getProcessor(this, MeasurementBaselineManagerBean.class, MeasurementBaselineManagerLocal.class);
-    }
-
-    public OperationManagerLocal getOperationManager() {
-        return RHQRemoteClientProxy.getProcessor(this, OperationManagerBean.class, OperationManagerLocal.class);
-    }
-
-    public ConfigurationMetadataManagerLocal getConfigurationMetadataManager() {
-        return RHQRemoteClientProxy.getProcessor(this, ConfigurationMetadataManagerBean.class, ConfigurationMetadataManagerLocal.class);
-    }
-
-    public ContentSourceMetadataManagerLocal getContentSourceMetadataManager() {
-        return RHQRemoteClientProxy.getProcessor(this, ContentSourceMetadataManagerBean.class, ContentSourceMetadataManagerLocal.class);
-    }
-
-    public ContentSourceManagerLocal getContentSourceManager() {
-        return RHQRemoteClientProxy.getProcessor(this, ContentSourceManagerBean.class, ContentSourceManagerLocal.class);
-    }
-
-    public ChannelManagerLocal getChannelManagerLocal() {
-        return RHQRemoteClientProxy.getProcessor(this, ChannelManagerBean.class, ChannelManagerLocal.class);
-    }
-
-    public ResourceMetadataManagerLocal getResourceMetadataManager() {
-        return RHQRemoteClientProxy.getProcessor(this, ResourceMetadataManagerBean.class, ResourceMetadataManagerLocal.class);
-    }
-
-    public ResourceBossLocal getResourceBoss() {
-        return RHQRemoteClientProxy.getProcessor(this, ResourceBossBean.class, ResourceBossLocal.class);
-    }
-
-    public ResourceGroupManagerLocal getResourceGroupManager() {
-        return RHQRemoteClientProxy.getProcessor(this, ResourceGroupManagerBean.class, ResourceGroupManagerLocal.class);
-    }
-
-    public ResourceManagerLocal getResourceManager() {
-        return RHQRemoteClientProxy.getProcessor(this, ResourceManagerBean.class, ResourceManagerLocal.class);
-    }
-
-    /*public ResourceManagerRemote getResourceManagerRemote() {
-        return lookupRemote(ResourceManagerBean.class,);
-    }
-    */
-
-    public DataAccessLocal getDataAccess() {
-        return RHQRemoteClientProxy.getProcessor(this, DataAccessBean.class, DataAccessLocal.class);
-    }
-
-    public ResourceFactoryManagerLocal getResourceFactoryManager() {
-        return RHQRemoteClientProxy.getProcessor(this, ResourceFactoryManagerBean.class, ResourceFactoryManagerLocal.class);
-    }
-
-    public ResourceTypeManagerLocal getResourceTypeManager() {
-        return RHQRemoteClientProxy.getProcessor(this, ResourceTypeManagerBean.class, ResourceTypeManagerLocal.class);
-    }
-
-    public RoleManagerLocal getRoleManager() {
-        return RHQRemoteClientProxy.getProcessor(this, RoleManagerBean.class, RoleManagerLocal.class);
-    }
-
-    public SchedulerLocal getSchedulerBean() {
-        return RHQRemoteClientProxy.getProcessor(this, SchedulerBean.class, SchedulerLocal.class);
-    }
-
-    public SubjectManagerLocal getSubjectManager() {
-        return RHQRemoteClientProxy.getProcessor(this, SubjectManagerBean.class, SubjectManagerLocal.class);
-    }
-
-    /*public SubjectManagerRemote getSubjectManagerRemote() {
-        return lookupRemote(SubjectManagerBean.class);
-    }
-*/
-    public SubjectRoleTestBeanLocal getSubjectRoleTestBean() {
-        return RHQRemoteClientProxy.getProcessor(this, SubjectRoleTestBean.class, SubjectRoleTestBeanLocal.class);
-    }
-
-    public SystemManagerLocal getSystemManager() {
-        return RHQRemoteClientProxy.getProcessor(this, SystemManagerBean.class, SystemManagerLocal.class);
-    }
-
-    public PerspectiveManagerLocal getPerspectiveManager() {
-        return RHQRemoteClientProxy.getProcessor(this, PerspectiveManagerBean.class, PerspectiveManagerLocal.class);
-    }
-
-    public ProductVersionManagerLocal getProductVersionManager() {
-        return RHQRemoteClientProxy.getProcessor(this, ProductVersionManagerBean.class, ProductVersionManagerLocal.class);
-    }
-
-    public CachedConditionProducerLocal getCachedConditionProducerLocal() {
-        return RHQRemoteClientProxy.getProcessor(this, CachedConditionProducerBean.class, CachedConditionProducerLocal.class);
-    }
-
-
-    public Client getRemotingClient() {
-        return remotingClient;
-    }
+    public static final String[] SERVICE_NAMES = new String[] { "RoleManagerRemote", "ContentManagerRemote",
+        "SubjectManagerRemote", "OperationManagerRemote", "ChannelManagerRemote", "ConfigurationManagerRemote",
+        "ResourceManagerRemote" };
 
     public Map<String, Object> getAllServices() {
         if (this.allServices == null) {
@@ -339,58 +174,12 @@ public class RHQRemoteClient {
                     Method m = this.getClass().getMethod("get" + serviceName);
                     this.allServices.put(serviceName, m.invoke(this));
                 } catch (Throwable e) {
-                    System.out.println("Couldn't load service " + serviceName + " due to missing class " + e.getMessage());
+                    System.out.println("Couldn't load service " + serviceName + " due to missing class "
+                        + e.getMessage());
                 }
             }
         }
 
         return allServices;
     }
-
-    public static final String[] SERVICE_NAMES = new String[]
-            {
-                    "AgentManager",
-                    "AlertConditionCacheManager",
-                    "AlertConditionManager",
-                    "AlertDefinitionManager",
-                    "AlertManager",
-                    "AlertNotificationManager",
-                    "AlertTemplateManager",
-                    "AuthorizationManager",
-                    "AvailabilityManager",
-                    "CallTimeDataManager",
-                    "ConfigurationManager",
-                    "ContentManager",
-                    "ContentUIManager",
-                    "DiscoveryBoss",
-                    "EmailManagerBean",
-                    "EventManager",
-                    "GroupDefinitionManager",
-                    "MeasurementDefinitionManager",
-                    "MeasurementScheduleManager",
-                    "MeasurementDataManager",
-                    "MeasurementCompressionManager",
-                    "MeasurementProblemManager",
-                    "MeasurementBaselineManager",
-                    "OperationManager",
-                    "ConfigurationMetadataManager",
-                    "ContentSourceMetadataManager",
-                    "ContentSourceManager",
-                    "ChannelManagerLocal",
-                    "ResourceMetadataManager",
-                    "ResourceBoss",
-                    "ResourceGroupManager",
-                    "ResourceManager",
-                    "DataAccess",
-                    "ResourceFactoryManager",
-                    "ResourceTypeManager",
-                    "RoleManager",
-                    "SchedulerBean",
-                    "SubjectManager",
-                    "SubjectRoleTestBean",
-                    "SystemManager",
-                    "PerspectiveManager",
-                    "ProductVersionManager",
-
-            };
 }

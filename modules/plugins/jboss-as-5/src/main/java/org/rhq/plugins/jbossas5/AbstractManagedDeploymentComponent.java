@@ -30,6 +30,18 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jboss.deployers.spi.management.KnownDeploymentTypes;
+import org.jboss.deployers.spi.management.ManagementView;
+import org.jboss.deployers.spi.management.deploy.DeploymentManager;
+import org.jboss.deployers.spi.management.deploy.DeploymentProgress;
+import org.jboss.deployers.spi.management.deploy.DeploymentStatus;
+import org.jboss.deployers.spi.management.deploy.ProgressEvent;
+import org.jboss.deployers.spi.management.deploy.ProgressListener;
+import org.jboss.managed.api.DeploymentState;
+import org.jboss.managed.api.ManagedDeployment;
+import org.jboss.managed.api.ManagedProperty;
+import org.jboss.profileservice.spi.NoSuchDeploymentException;
+import org.mc4j.ems.connection.EmsConnection;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
@@ -42,18 +54,7 @@ import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.plugins.jbossas5.util.DeploymentUtils;
-
-import org.jboss.deployers.spi.management.KnownDeploymentTypes;
-import org.jboss.deployers.spi.management.ManagementView;
-import org.jboss.deployers.spi.management.deploy.DeploymentManager;
-import org.jboss.deployers.spi.management.deploy.DeploymentProgress;
-import org.jboss.deployers.spi.management.deploy.DeploymentStatus;
-import org.jboss.deployers.spi.management.deploy.ProgressEvent;
-import org.jboss.deployers.spi.management.deploy.ProgressListener;
-import org.jboss.managed.api.DeploymentState;
-import org.jboss.managed.api.ManagedDeployment;
-import org.jboss.managed.api.ManagedProperty;
-import org.jboss.profileservice.spi.NoSuchDeploymentException;
+import org.rhq.plugins.jbossas5.helper.JmxConnectionHelper;
 
 /**
  * ResourceComponent for managing ManagedDeployments (EARs, WARs, etc.).
@@ -72,6 +73,7 @@ public abstract class AbstractManagedDeploymentComponent
     private static final boolean IS_WINDOWS = (File.separatorChar == '\\');
 
     private final Log log = LogFactory.getLog(this.getClass());
+
 
     /**
      * The name of the ManagedDeloyment (e.g.: vfszip:/C:/opt/jboss-5.0.0.GA/server/default/deploy/foo.war).
@@ -194,7 +196,7 @@ public abstract class AbstractManagedDeploymentComponent
         log.debug(event);
     }
 
-    // ------------ AbstractManagedComponent implementation -------------     
+    // ------------ AbstractManagedComponent implementation -------------
 
     protected Map<String, ManagedProperty> getManagedProperties() throws Exception
     {

@@ -20,7 +20,7 @@
                     The fully qualified name of the Java class to use to format the the sub pool statistics. The default
                     is "org.jboss.resource.statistic.pool.JBossDefaultSubPoolStatisticFormatter".
                 </c:description>
-            </c:simple-property>                                                              
+            </c:simple-property>
         </parameters>
         <results>
             <c:simple-property name="result" type="longString">
@@ -323,7 +323,7 @@
             <c:option name="PointBase" value="PointBase"/>
             <c:option name="PostgreSQL" value="PostgreSQL"/>
             <c:option name="PostgreSQL 7.2" value="PostgreSQL 7.2"/>
-            <c:option name="PostgreSQL 8.0" value="PostgreSQL 8.0"/>            
+            <c:option name="PostgreSQL 8.0" value="PostgreSQL 8.0"/>
             <c:option name="SapDB" value="SapDB"/>
             <c:option name="SOLID" value="SOLID"/>
             <c:option name="Sybase" value="Sybase"/>
@@ -566,7 +566,7 @@
                     <c:option value="java.lang.Short"/>
                     <c:option value="java.lang.Long"/>
                     <c:option value="java.lang.Float"/>
-                    <c:option value="java.lang.Character"/> 
+                    <c:option value="java.lang.Character"/>
                 </c:property-options>
             </c:simple-property>
             <c:simple-property name="value" required="false" description="The value of the configuration property." />
@@ -642,7 +642,7 @@
 
 <!--<c:simple-property name="deployDirectory" type="string" required="true" default="deploy"
                               description="Path of the directory where the EAR should be deployed (e.g. "deploy" or "farm") - relative to the AS configuration set directory (e.g. /opt/jboss-5.1.0.CR1/server/default)."/>-->
-           
+
 <!ENTITY deploymentContentConfigProps '
     <configuration>
         <c:group name="deployment" displayName="Deployment Options">
@@ -733,6 +733,8 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
+
+   <depends plugin="JMX" useClasses="true"/>
 
     <server name="JBossAS Server"
             class="ApplicationServerComponent"
@@ -1076,7 +1078,7 @@
 
                 <!-- For ManagedProperty annotations, see:
                      https://anonsvn.jboss.org/repos/jbossas/trunk/connector/src/main/org/jboss/resource/metadata/mcf/LocalDataSourceDeploymentMetaData.java -->
-                
+
                 <c:group name="connection" displayName="Connection Information">
                     &datasourceConnectionResourceConfigProps;
                     &datasourceAndConnectionFactoryConnectionResourceConfigProps;
@@ -1232,8 +1234,8 @@
                          hiddenByDefault="true">
                     <c:map-property name="customProperties"
                                     description="Holds a list of custom properties, and the Adapter type class to use ">
-                        <c:simple-property name="config-property" 
-                            default="org.rhq.plugins.jbossas5.adapter.impl.configuration.custom.ConnectionFactoryConfigPropertyAdapter" />                
+                        <c:simple-property name="config-property"
+                            default="org.rhq.plugins.jbossas5.adapter.impl.configuration.custom.ConnectionFactoryConfigPropertyAdapter" />
                     </c:map-property>
                 </c:group>
             </plugin-configuration>
@@ -1295,8 +1297,8 @@
                          hiddenByDefault="true">
                     <c:map-property name="customProperties"
                                     description="Holds a list of custom properties, and the Adapter type class to use ">
-                        <c:simple-property name="config-property" 
-                            default="org.rhq.plugins.jbossas5.adapter.impl.configuration.custom.ConnectionFactoryConfigPropertyAdapter" />                
+                        <c:simple-property name="config-property"
+                            default="org.rhq.plugins.jbossas5.adapter.impl.configuration.custom.ConnectionFactoryConfigPropertyAdapter" />
                     </c:map-property>
                 </c:group>
             </plugin-configuration>
@@ -1365,7 +1367,7 @@
                     <c:simple-property name="xa-transaction" default="false"/>
                 </c:template>
 
-                <c:template name="XA Transaction" description="a connection factory that uses XA transactions">                    
+                <c:template name="XA Transaction" description="a connection factory that uses XA transactions">
                     <c:simple-property name="xa-transaction" default="true"/>
                 </c:template>
             </resource-configuration>
@@ -1416,7 +1418,7 @@
 	                </c:list-property>
 		        </results>
 		    </operation>
-		
+
 		    <operation name="listDurableMessages" displayName="List Durable Messages" description="List all durable messages for the specified selector">
 		        <parameters>
 		            <c:simple-property required="false" name="arg#0" displayName="selector"/>
@@ -1432,7 +1434,7 @@
 	                </c:list-property>
 		        </results>
 		    </operation>
-		
+
 		    <operation name="listNonDurableMessages" displayName="List Non Durable Messages" description="List all non durable messages for the specified selector">
 		        <parameters>
 		            <c:simple-property required="false" name="arg#0" displayName="selector"/>
@@ -1518,7 +1520,7 @@
             <metric property="messageStatistics.timeLastUpdate" measurementType="dynamic" displayType="detail" displayName="Time Last Update"
                     defaultOn="true" defaultInterval="60000" dataType="measurement" category="utilization"
                     description="The timestamp of the last message add"/>
-            
+
             <resource-configuration>
 
                 <!-- See: https://anonsvn.jboss.org/repos/jbossas/trunk/messaging/src/main/org/jboss/jms/server/destination/QueueServiceMO.java -->
@@ -1719,7 +1721,7 @@
 	                </c:list-property>
 		        </results>
 		    </operation>
-		
+
 		    <operation name="listDurableMessages" displayName="List Durable Messages" description="List all durable messages for the specified subscription with the specified selector">
 		        <parameters>
 		            <c:simple-property required="false" name="arg#0" displayName="subscriptionID"/>
@@ -1736,7 +1738,7 @@
 	                </c:list-property>
 		        </results>
 		    </operation>
-		
+
 		    <operation name="listNonDurableMessages" displayName="List Non Durable Messages" description="List all non durable messages for the specified subscription with the specified selector">
 		        <parameters>
 		            <c:simple-property required="false" name="arg#0" displayName="subscriptionID"/>
@@ -1757,7 +1759,7 @@
             <operation name="listAllSubscriptions" displayName="List All Subscriptions"
                        description="Return all subscriptions for the topic">
                 <results>
-					<c:notes>Return all subscriptions for the topic</c:notes>                
+					<c:notes>Return all subscriptions for the topic</c:notes>
                     <c:list-property name="result">
                         <c:map-property required="false" name="element"/>
                     </c:list-property>
@@ -1847,7 +1849,7 @@
             <metric property="nonDurableSubscriptionsCount" measurementType="dynamic" displayType="detail" displayName="Non Durable Subscriptions Count"
                     defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"
                     description="The count of all non durable subscriptions to this topic"/>
-            
+
             <resource-configuration>
 
                 <!-- See: https://anonsvn.jboss.org/repos/jbossas/trunk/messaging/src/main/org/jboss/jms/server/destination/TopicServiceMO.java -->
@@ -2066,7 +2068,7 @@
                  description="a standalone web application (WAR)"
                  createDeletePolicy="both"
                  creationDataType="content">
-        
+
             <plugin-configuration>
                 <c:group name="general" displayName="General">
                     <c:simple-property name="deploymentName" description="The name of this WAR" readOnly="true"/>
@@ -2365,8 +2367,64 @@
             -->
 
         </service>
+
+              <service name="EJB3 Session Bean"
+               subCategory="Applications"
+               class="EJB3BeanComponent"
+               discovery="Ejb3DiscoveryComponent"
+               description="An EJB3 Stateless or Stateful Session Bean">
+
+         <!-- ear=rhq.ear,jar=rhq-enterprise-server-ejb.ejb3,name=AgentManagerBean,service=EJB3 -->
+         <!-- jboss.j2ee:jar=SimpleSLSB.jar,name=SimpleSLSB,service=EJB3 -->
+
+         <plugin-configuration>
+             <c:simple-property name="deploymentTypeName" default="JavaEEEnterpriseBeans3x" readOnly="true">
+                 <c:description>
+                     The name of the item from the org.jboss.deployers.spi.management.KnownDeploymentTypes enum
+                     corresponding to this deployment's type.
+                 </c:description>
+             </c:simple-property>
+
+         </plugin-configuration>
+
 <!--
-        <service name="SAR"
+         <operation name="viewMethodStats" description="View method execution statistics for the EJB.">
+            <results>
+               <c:list-property name="methods">
+                  <c:map-property name="method">
+                     <c:simple-property name="methodName" summary="true"/>
+                     <c:simple-property name="count" displayName="Call Count" summary="true" type="integer"/>
+                     <c:simple-property name="minTime" displayName="Min Time" summary="true" type="integer"/>
+                     <c:simple-property name="maxTime" displayName="Max Time" summary="true" type="integer"/>
+                     <c:simple-property name="totalTime" displayName="Total Time" summary="true" type="integer"/>
+                  </c:map-property>
+               </c:list-property>
+            </results>
+         </operation>
+
+-->
+         <metric displayName="Current Count" property="CurrentSize"
+                 description="The total number of currently pooled instances of this EJB3 Session Bean"/>
+         <metric displayName="Create Count" property="CreateCount" displayType="summary" measurementType="trendsup"
+                 description="The number of instances of this EJB3 Session Bean that have been created since server start"/>
+         <metric displayName="Remove Count" property="RemoveCount" displayType="summary" measurementType="trendsup"
+                 description="The number of instances of this EJB3 Session Bean that have been removed since server start"/>
+         <metric displayName="Available Count" property="AvailableCount"
+                 description="The number of pooled instances of this EJB3 Session Bean in the method-ready state"/>
+         <metric displayName="Max Size" property="MaxSize"
+                 description="The maximum number of instances that are allowed to be pooled"/>
+
+         <!-- default interval == 600000 ms == 10 min -->
+<!--
+         <metric property="MethodInvocationTime" dataType="calltime" units="milliseconds"
+                 defaultOn="false" defaultInterval="600000" destinationType="Method Name"
+                 description="The minimum, maximum, and average invocation times for each of the methods exposed by this EJB;
+                              NOTE: this metric is only available if JBoss EJB3 RC9 Patch 1 or later is being used
+                              (a capable version of EJB3 is included with JBossAS 4.2.0.GA or later)"/>
+-->
+      </service>
+<!--
+        <service name="JBoss Service (SAR)"
                  subCategory="Applications"
                  class="StandaloneManagedDeploymentComponent"
                  discovery="StandaloneManagedDeploymentDiscoveryComponent"
@@ -2539,6 +2597,64 @@
 
         </service>
 -->
+    <service name="Script"
+               discovery="org.rhq.plugins.jbossas5.script.ScriptDiscoveryComponent"
+               class="org.rhq.plugins.jbossas5.script.ScriptComponent"
+               supportsManualAdd="true"
+               subCategory="Resources"
+               description="provides the ability to execute a script that performs some task related to its parent JBossAS server">
+
+         <plugin-configuration>
+             <c:simple-property name="path" description="the absolute path to the script file"/>
+         </plugin-configuration>
+
+         <operation name="execute" displayName="Execute Script"
+                    description="execute the script; NOTE: environment variables to be
+                                 passed to the script can be configured via this Script
+                                 service's connection properties (under its Inventory tab)">
+            <parameters>
+               <c:simple-property name="commandLineArguments" type="longString" required="false"
+                                  description="the command-line arguments (if any) to pass to the script; each
+                                               command-line argument must be on a new line;
+                                               the arguments can contain properties
+                                               with the syntax %propertyName%; the script plugin will interpolate these with
+                                               the current values of the corresponding properties from the
+                                               script's parent JBossAS server's connection properties"/>
+            </parameters>
+            <results>
+               <c:simple-property name="exitCode" type="integer" description="the script's exit code (0 indicates success, any other value indicates failure)"/>
+               <c:simple-property name="output" type="longString" description="the script's output (stdout and stderr interleaved)"/>
+            </results>
+         </operation>
+
+         <resource-configuration>
+            <c:simple-property name="environmentVariables" type="longString" required="false"
+                               description="the environment variables that will be passed to the script; each variable must
+                                            be on a new line and have the syntax name=value; the variable's value can contain properties
+                                            with the syntax %propertyName%; the script plugin will interpolate these with
+                                            the current values of the corresponding properties from the
+                                            script's parent JBossAS server's connection properties"/>
+         </resource-configuration>
+      </service>
+
+        <service name="Service Binding Manager"
+                 class="org.rhq.plugins.jbossas5.serviceBinding.ManagerComponent"
+                 discovery="ManagedComponentDiscoveryComponent"
+                 description="The Service Binding Manager manages the ports of the deployed services">
+
+            <plugin-configuration>
+                <c:simple-property name="componentType" default="MCBean" readOnly="true"/>
+                <c:simple-property name="componentSubtype" default="ServiceBindingManager" readOnly="true"/>
+                <c:simple-property name="componentName" readOnly="true"/>
+            </plugin-configuration>
+
+           <resource-configuration>
+              <c:simple-property name="activeBindingSetName" description="Name of the currently active binding set"/>
+           </resource-configuration>
+
+      </service>
+
+
     </server>
 
 </plugin>

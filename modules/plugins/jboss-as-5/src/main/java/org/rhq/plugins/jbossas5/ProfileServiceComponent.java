@@ -25,6 +25,7 @@ package org.rhq.plugins.jbossas5;
 import org.jetbrains.annotations.Nullable;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.plugins.jbossas5.connection.ProfileServiceConnection;
+import org.mc4j.ems.connection.EmsConnection;
 
 /**
  * @author Ian Springer
@@ -33,4 +34,8 @@ public interface ProfileServiceComponent<T extends ResourceComponent> extends Re
 {
     @Nullable
     ProfileServiceConnection getConnection();
+
+    EmsConnection getEmsConnection();
+
+
 }

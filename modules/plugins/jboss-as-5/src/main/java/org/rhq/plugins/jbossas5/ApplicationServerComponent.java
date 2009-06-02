@@ -40,6 +40,18 @@ import com.jboss.jbossnetwork.product.jbpm.handlers.ControlActionFacade;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jboss.deployers.spi.management.KnownDeploymentTypes;
+import org.jboss.deployers.spi.management.ManagementView;
+import org.jboss.deployers.spi.management.deploy.DeploymentManager;
+import org.jboss.deployers.spi.management.deploy.DeploymentStatus;
+import org.jboss.deployers.spi.management.deploy.ProgressEvent;
+import org.jboss.deployers.spi.management.deploy.ProgressListener;
+import org.jboss.managed.api.ComponentType;
+import org.jboss.managed.api.DeploymentTemplateInfo;
+import org.jboss.managed.api.ManagedComponent;
+import org.jboss.managed.api.ManagedDeployment;
+import org.jboss.managed.api.ManagedProperty;
+import org.jboss.profileservice.spi.NoSuchDeploymentException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -101,6 +113,10 @@ import org.rhq.plugins.jbossas5.util.DeploymentUtils;
 import org.rhq.plugins.jbossas5.util.JBossASContentFacetDelegate;
 import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
 import org.rhq.plugins.jbossas5.util.ResourceComponentUtils;
+import org.rhq.plugins.jbossas5.helper.JmxConnectionHelper;
+import org.rhq.plugins.jmx.JMXDiscoveryComponent;
+
+import org.mc4j.ems.connection.EmsConnection;
 
 /**
  * ResourceComponent for a JBoss AS, 5.1.0.CR1 or later, Server.
@@ -123,10 +139,14 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
     private ResourceContext resourceContext;
     private ProfileServiceConnection connection;
     private File deployDirectory;
+    private JmxConnectionHelper jmxConnectionHelper;
 
     private JBossASContentFacetDelegate contentFacetDelegate;
 
     //private LogFileEventResourceComponentHelper logFileEventDelegate;
+
+    private static final String REMOTE = "service:jmx:rmi://localhost/jndi/rmi://localhost:1090/jmxconnector"; // TODO sensible default
+    private static final String JDK5CONNECTOR = "org.mc4j.ems.connection.support.metadata.J2SE5ConnectionTypeDescriptor";
 
     public AvailabilityType getAvailability() {
         connect();
@@ -153,10 +173,22 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
         JBPMWorkflowManager workflowManager = new JBPMWorkflowManager(contentContext, controlActionFacade, paths);
 
         contentFacetDelegate = new JBossASContentFacetDelegate(workflowManager);
+
+        Configuration c = new Configuration(); // TODO get from defaultPluginConfig
+
+
+        c.put(new PropertySimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY, REMOTE));
+        c.put(new PropertySimple(JMXDiscoveryComponent.CONNECTION_TYPE, JDK5CONNECTOR));
+        // TODO get credentials from the console if needed and pass them in the configuration
+        jmxConnectionHelper = new JmxConnectionHelper();
+        EmsConnection conn = jmxConnectionHelper.getEmsConnection(c);
+        if (conn!=null)
+            log.info("Successfully obtained a JMX connection to " + c.getSimpleValue(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY, "-n/a-"));
     }
 
     public void stop() {
         //this.logFileEventDelegate.stopLogFileEventPollers();
+        jmxConnectionHelper.closeConnection();
     }
 
     // ------------ MeasurementFacet Implementation ------------
@@ -514,6 +546,10 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
         if (!namingURI.getScheme().equals("jnp"))
             throw new RuntimeException("Naming URL '" + namingURL
                 + "' has an invalid protocol - the only valid protocol is 'jnp'.");
+    }
+
+    public EmsConnection getEmsConnection() {
+        return jmxConnectionHelper.getEmsConnection();
     }
 
     static abstract class PluginConfigPropNames {

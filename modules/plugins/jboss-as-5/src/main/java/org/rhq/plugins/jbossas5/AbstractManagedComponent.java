@@ -38,6 +38,7 @@ import org.rhq.plugins.jbossas5.util.DebugUtils;
 import org.rhq.plugins.jbossas5.util.ResourceComponentUtils;
 
 import org.jboss.managed.api.ManagedProperty;
+import org.mc4j.ems.connection.EmsConnection;
 
 /**
  * @author Ian Springer
@@ -127,5 +128,9 @@ public abstract class AbstractManagedComponent implements ProfileServiceComponen
     protected String getResourceDescription()
     {
         return resourceDescription;
+    }
+
+    public EmsConnection getEmsConnection() {
+        return this.resourceContext.getParentResourceComponent().getEmsConnection();
     }
 }

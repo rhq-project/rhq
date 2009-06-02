@@ -76,32 +76,26 @@ public class RemoteProfileServiceConnectionProvider extends AbstractProfileServi
         ProfileService profileService;
         ManagementView managementView;
         DeploymentManager deploymentManager;
-        ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
-        try {
-            Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
-            if (this.principal != null) {
-                env.setProperty(Context.INITIAL_CONTEXT_FACTORY, JNDI_LOGIN_INITIAL_CONTEXT_FACTORY);
-                env.setProperty(Context.SECURITY_PRINCIPAL, this.principal);
-                env.setProperty(Context.SECURITY_CREDENTIALS, this.credentials);
-                log.debug("Connecting to Profile Service via remote JNDI using env [" + env + "]...");
-                InitialContext initialContext = createInitialContext(env);
-                profileService = (ProfileService) lookup(initialContext, SECURE_PROFILE_SERVICE_JNDI_NAME);
-                managementView = (ManagementView) lookup(initialContext, SECURE_MANAGEMENT_VIEW_JNDI_NAME);
-                deploymentManager = (DeploymentManager) lookup(initialContext, SECURE_DEPLOYMENT_MANAGER_JNDI_NAME);
-            } else {
-                env.setProperty(Context.INITIAL_CONTEXT_FACTORY, NAMING_CONTEXT_FACTORY);
-                env.setProperty(JNP_DISABLE_DISCOVERY_JNP_INIT_PROP, "true");
-                // Make sure the timeout always happens, even if the JBoss server is hung.
-                env.setProperty("jnp.timeout", String.valueOf(JNP_TIMEOUT));
-                env.setProperty("jnp.sotimeout", String.valueOf(JNP_SO_TIMEOUT));
-                log.debug("Connecting to Profile Service via remote JNDI using env [" + env + "]...");
-                InitialContext initialContext = createInitialContext(env);
-                profileService = (ProfileService) lookup(initialContext, PROFILE_SERVICE_JNDI_NAME);
-                managementView = profileService.getViewManager();
-                deploymentManager = profileService.getDeploymentManager();
-            }
-        } finally {
-            Thread.currentThread().setContextClassLoader(originalContextClassLoader);
+        if (this.principal != null) {
+            env.setProperty(Context.INITIAL_CONTEXT_FACTORY, JNDI_LOGIN_INITIAL_CONTEXT_FACTORY);
+            env.setProperty(Context.SECURITY_PRINCIPAL, this.principal);
+            env.setProperty(Context.SECURITY_CREDENTIALS, this.credentials);
+            log.debug("Connecting to Profile Service via remote JNDI using env [" + env + "]...");
+            InitialContext initialContext = createInitialContext(env);
+            profileService = (ProfileService) lookup(initialContext, SECURE_PROFILE_SERVICE_JNDI_NAME);
+            managementView = (ManagementView) lookup(initialContext, SECURE_MANAGEMENT_VIEW_JNDI_NAME);
+            deploymentManager = (DeploymentManager) lookup(initialContext, SECURE_DEPLOYMENT_MANAGER_JNDI_NAME);
+        } else {
+            env.setProperty(Context.INITIAL_CONTEXT_FACTORY, NAMING_CONTEXT_FACTORY);
+            env.setProperty(JNP_DISABLE_DISCOVERY_JNP_INIT_PROP, "true");
+            // Make sure the timeout always happens, even if the JBoss server is hung.
+            env.setProperty("jnp.timeout", String.valueOf(JNP_TIMEOUT));
+            env.setProperty("jnp.sotimeout", String.valueOf(JNP_SO_TIMEOUT));
+            log.debug("Connecting to Profile Service via remote JNDI using env [" + env + "]...");
+            InitialContext initialContext = createInitialContext(env);
+            profileService = (ProfileService) lookup(initialContext, PROFILE_SERVICE_JNDI_NAME);
+            managementView = profileService.getViewManager();
+            deploymentManager = profileService.getDeploymentManager();
         }
         return new ProfileServiceConnectionImpl(this, profileService, managementView, deploymentManager);
     }

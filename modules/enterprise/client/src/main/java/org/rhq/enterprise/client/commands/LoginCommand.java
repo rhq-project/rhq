@@ -18,8 +18,12 @@
  */
 package org.rhq.enterprise.client.commands;
 
+import javax.jws.WebService;
+import javax.xml.ws.WebServiceClient;
+
 import org.rhq.enterprise.client.ClientMain;
 import org.rhq.enterprise.client.RHQRemoteClient;
+import org.rhq.enterprise.server.ws.SubjectManagerRemote;
 
 /**
  * @author Greg Hinkle
@@ -45,12 +49,19 @@ public class LoginCommand implements ClientCommand {
             }
             client.setHost(host);
             client.setPort(port);
-            client.setRemoteClient(new RHQRemoteClient(host, port));
+//            client.setRemoteClient(new RHQRemoteClient(host, port));
+              RHQRemoteClient remoteClient = new RHQRemoteClient(host,port);
+            client.setRemoteClient(remoteClient);
 
             client.setUser(user);
             client.setPass(pass);
+             remoteClient.reinitialize();
             client.setSubject(client.getRemoteClient().getSubjectManagerRemote().login(user, pass));
+            client.getRemoteClient().setLoggedIn(true);
             client.getPrintWriter().println("Login successful");
+            //spit out somethign that tells which server we're talking to
+//            System.out.println("SRVR:"+client.getRemoteClient().sbms.getClass().getAnnotation(WebServiceClient.class).wsdlLocation());
+
         } catch (Exception e) {
             client.getPrintWriter().println("Login failed: " + e.getMessage());
         }

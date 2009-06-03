@@ -28,7 +28,7 @@ import org.rhq.enterprise.server.ws.ResourceComposite;
 import org.rhq.enterprise.server.ws.ResourceManagerRemote;
 
 /**
- * @author Greg Hinkle
+ * @author Greg Hinkle, Simeon Pinder
  */
 public class FindResourcesCommand implements ClientCommand {
 
@@ -39,41 +39,55 @@ public class FindResourcesCommand implements ClientCommand {
     public boolean execute(ClientMain client, String[] args) {
 
         String search = args[1];
-
-        //        ResourceManagerLocal res = client.getRemoteClient().getResourceManager();
-        //        PageList<ResourceComposite> list =
-        //                res.findResourceComposites(client.getSubject(),null, null, null, search, false, PageControl.getUnlimitedInstance());
-        //          ResourceManagerRemote res = client.getRemoteClient().getResourceManagerRemote();
-        //          list = res.findResourceComposites(client.getSubject(), null, null, null, searchString, pageControl)
-
         PageControl pc = new PageControl();
         pc.setPageSize(-1);
-        //        pc.setPageSize(CliEngine.PAGE_CONTROL_SIZE_UNLIMITED);
         ResourceCategory rc = null;
         String empty = null;
-        //        ResourceManagerLocal res = client.getRemoteClient().getResourceManager();
-        //        PageList<ResourceComposite> list = res.findResourceComposites(client.getSubject(), null, null, null, search,
-        //            false, PageControl.getUnlimitedInstance());
-        //        ResourceManagerBeanService rmes = new ResourceManagerBeanService();
-        //        ResourceManagerRemote res = rmes.getResourceManagerBeanPort();
-        //        List<ResourceComposite> list = res.findResourceComposites(client.getSubject(), rc, empty, 0, search, pc);
         ResourceManagerRemote res = client.getRemoteClient().getResourceManagerRemote();
         List<ResourceComposite> list = res.findResourceComposites(client.getSubject(), rc, empty, 0, search, pc);
 
         String[][] data = new String[list.size()][4];
         int i = 0;
+        boolean missingData = false;
         for (ResourceComposite resource : list) {
-            data[i++] = new String[] {
-                String.valueOf(resource.getResource().getId()),
-                resource.getResource().getName(),
-                resource.getResource().getResourceType().getPlugin() + ":"
-                    + resource.getResource().getResourceType().getName(),
-                "[" + resource.getAvailability().name() + "]" };
+        	//initialize the sensible defaults?
+           String rId = "(unavailable)";
+           String rName = "(unavailable)";
+           String rTypePlugin = "(unavailable)";
+           String rTypeName = "(unavailable)";
+           String rAvailability = "(unavailable)";
+           if((resource!=null)&&resource.getResource()!=null){
+        	   rId =String.valueOf(resource.getResource().getId());
+        	   rName =resource.getResource().getName();
+        	   if(resource.getResource().getResourceType()!=null){
+       		      rTypePlugin = resource.getResource().getResourceType().getPlugin();
+        		  rTypeName = resource.getResource().getResourceType().getName();
+        	   }else{missingData =true;}
+        	   if(resource.getAvailability()!=null){
+        		  rAvailability = resource.getAvailability().name();
+        	   }else{missingData =true;}
+           }
+//           data[i++] = new String[] {
+//        		   String.valueOf(resource.getResource().getId()),
+//        		   resource.getResource().getName(),
+//        		   resource.getResource().getResourceType().getPlugin() + ":"
+//        		   + resource.getResource().getResourceType().getName(),
+//        		   "[" + resource.getAvailability().name() + "]" };
+        	data[i++] = new String[] {
+                rId,
+                rName,
+                rTypePlugin + ":"
+                + rTypeName,
+                "[" + rAvailability + "]" };
 //            "[" + resource.getAvailability().getName() + "]" };
         }
+        //Generate data in table format
         TabularWriter tw = new TabularWriter(client.getPrintWriter(), "Id", "Name", "Type", "Availability");
         tw.setWidth(client.getConsoleWidth());
         tw.print(data);
+        if(missingData){
+           client.addMenuNote("Data for some of the objects was unavailable. Contact the System Administrator if that a problem.");
+        }
 
         return true;
     }

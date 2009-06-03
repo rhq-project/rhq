@@ -32,7 +32,7 @@ public class FindUserAccountsCommand implements ClientCommand {
           if(located!=null){
             client.getPrintWriter().println("Account '"+user+"' located with id: "+located.getId());
           }else{
-        	client.getPrintWriter().println("No account located with id: '"+user);
+        	client.getPrintWriter().println("No account located with id: '"+user+"'");
           }
       } catch (Exception e) {
           client.getPrintWriter().println("Account search failed: " + e.getMessage());

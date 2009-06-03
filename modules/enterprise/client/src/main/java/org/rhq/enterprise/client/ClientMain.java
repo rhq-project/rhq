@@ -42,7 +42,7 @@ public class ClientMain {
     private static Map<String, ClientCommand> commands = new HashMap<String, ClientCommand>();
 
     /**
-     * This is the thread that is running the input loop; it accepts prompt commands 
+     * This is the thread that is running the input loop; it accepts prompt commands
      * from the user.
      */
     private Thread inputLoopThread;
@@ -62,8 +62,10 @@ public class ClientMain {
     private int port;
     private String user;
     private String pass;
+    private boolean isHttps = false;
+    private ArrayList<String> notes = new ArrayList<String>();
 
-    //reference to the webservice reference factory 
+    //reference to the webservice reference factory
     private RHQRemoteClient remoteClient;
 
     //The subject that will be used to carry out all requested actions
@@ -122,8 +124,17 @@ public class ClientMain {
                 if (!loggedIn()) {
                     prompt = "unconnected> ";
                 } else {
-
-                    prompt = host + ":" + port + "> ";
+//                	prompt = host + ":" + port + "> ";
+                	//Modify the prompt to display host:port(logged-in-user)
+                	String loggedInUser = "";
+                	if((getSubject()!=null)&&(getSubject().getName()!=null)){
+                		loggedInUser = getSubject().getName();
+                	}
+                	if(loggedInUser.trim().length()>0){
+                        prompt = host + ":" + port +"("+loggedInUser+ ")> ";
+                	}else{
+                		prompt = host + ":" + port + "> ";
+                	}
                 }
             }
             //            outputWriter.print(prompt);
@@ -163,14 +174,10 @@ public class ClientMain {
     }
 
     /** Indicates whether the 'Subject', used for all authenticated actions, is currently logged in.
-     * 
+     *
      * @return flag indicating status of realtime check.
      */
     public boolean loggedIn() {
-        //        return this.subject != null && this.getRemoteClient() != null && this.getRemoteClient().isConnected()
-        //            && this.getRemoteClient().getSubjectManager().isValidSessionId(subject.getSessionId(), subject.getName());
-        //        return this.subject != null && this.getRemoteClient() != null && this.getRemoteClient().isConnected();
-        //        && this.getRemoteClient().getSubjectManager().isValidSessionId(subject.getSessionId(), subject.getName());
         boolean loggedIn = false;
         if ((this.subject != null) && (this.getRemoteClient() != null) && (this.getRemoteClient().isConnected())) {
             loggedIn = true;
@@ -232,7 +239,12 @@ public class ClientMain {
         if (commands.containsKey(cmd)) {
             ClientCommand command = commands.get(cmd);
             try {
-                return command.execute(this, args);
+//                return command.execute(this, args);
+            	//add extra printline for readability
+            	boolean response =command.execute(this, args);
+            	processNotes(outputWriter);
+            	  outputWriter.println("");
+                return response;
             } catch (ArrayIndexOutOfBoundsException e) {
                 outputWriter.println("Unexpected syntax: " + args);
                 outputWriter.println("   [" + args[0] + " syntax: " + command.getPromptCommandString());
@@ -244,7 +256,21 @@ public class ClientMain {
         return true;
     }
 
-    /**
+    /** Meant to display small note/helpful ui messages to the user as
+     *  feedback from the previous command.
+     *
+     * @param outputWriter2 reference to printWriter.
+     */
+    private void processNotes(PrintWriter outputWriter2) {
+    	if((outputWriter2!=null)&&(notes.size()>0)){
+    		for(String line: notes){
+    			outputWriter2.println("(*) "+notes);
+    		}
+    		notes.clear();
+    	}
+	}
+
+	/**
      * Given a command line, this will parse each argument and return the argument array.
      *
      * @param cmdLine the command line
@@ -357,7 +383,9 @@ public class ClientMain {
     }
 
     public void setRemoteClient(RHQRemoteClient remoteClient) {
+    	//connect cli class and remoteClient registry objects
         this.remoteClient = remoteClient;
+        this.remoteClient.setCliReference(this);
         if (remoteClient != null) {
             consoleReader.addCompletor(new ArgumentCompletor(new Completor[] {
                 new SimpleCompletor("help"),
@@ -435,4 +463,25 @@ public class ClientMain {
     public Map<String, ClientCommand> getCommands() {
         return commands;
     }
+
+	public boolean isHttps() {
+		return isHttps;
+	}
+
+	public void setHttps(boolean isHttps) {
+		this.isHttps = isHttps;
+	}
+	/**This method allows ClientCommands to insert a small note to be displayed
+	 * after the command has been executed.  A note can be an indicaiton of a problem
+	 * that was handled or a note about some option that should be changed.
+	 *
+	 * These notes are meant to be terse, and pasted/purged at the end of every command execution.
+	 *
+	 * @param note String. Ex."There were errors retrieving some data from the server objects. See System Admin."
+	 */
+	public void addMenuNote(String note){
+		if((note!=null)&&(note.trim().length()>0)){
+		  notes.add(note);
+		}
+	}
 }

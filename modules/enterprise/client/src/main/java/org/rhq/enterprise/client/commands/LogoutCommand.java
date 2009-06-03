@@ -33,12 +33,14 @@ public class LogoutCommand implements ClientCommand {
 
         client.setHost(null);
         client.setPort(0);
+        client.getRemoteClient().setLoggedIn(false);
         client.setRemoteClient(null);
 
         client.setUser(null);
         client.setPass(null);
 
         client.getPrintWriter().println("Logout successful");
+
 
         return true;
     }

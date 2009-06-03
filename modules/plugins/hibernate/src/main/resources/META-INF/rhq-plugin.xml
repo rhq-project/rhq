@@ -9,8 +9,6 @@
         xmlns:c="urn:xmlns:rhq-configuration">
 
    <depends plugin="JMX" />
-   <depends plugin="JBossAS" useClasses="true"/>
-
 
    <service name="Hibernate Statistics"
       discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"

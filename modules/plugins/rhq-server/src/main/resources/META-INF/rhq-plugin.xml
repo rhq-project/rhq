@@ -7,7 +7,6 @@
         xmlns:c="urn:xmlns:rhq-configuration">
 
    <depends plugin="JMX"/>
-   <depends plugin="JBossAS" useClasses="true"/>
 
    <service name="RHQ Server Alerts Engine Subsystem"
             discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"

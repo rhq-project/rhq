@@ -10,8 +10,7 @@
    xmlns:c="urn:xmlns:rhq-configuration">
 
    <depends
-      plugin="JMX"
-      useClasses="true" />
+      plugin="JMX" />
 
    <server
       name="Tomcat Server"

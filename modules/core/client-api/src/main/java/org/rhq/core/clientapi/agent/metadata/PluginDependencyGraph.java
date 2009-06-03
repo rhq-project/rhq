@@ -24,7 +24,6 @@ package org.rhq.core.clientapi.agent.metadata;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -37,7 +36,7 @@ import org.apache.commons.logging.LogFactory;
 
 /**
  * This class determines the deployment order for plugins by building the dependency graph of the plugins. You use this
- * class by first {@link #addPlugin(String, String[])} adding} plugins to the graph, and then when all plugins have been
+ * class by first {@link #addPlugin(String, List) adding} plugins to the graph, and then when all plugins have been
  * added you can get the {@link #getDeploymentOrder() deployment order} that lists all the plugins in the order in which
  * they should be deployed.
  *
@@ -54,45 +53,39 @@ public class PluginDependencyGraph {
     private Map<String, List<PluginDependency>> dependencyMap = new HashMap<String, List<PluginDependency>>();
 
     /**
-     * Adds a plugin to the graph. The <code>dependencies</code> is a comma-separated list of other plugin names. The
-     * plugin names in th dependencies must match names of other plugins that were, or will be, added to this graph.
+     * Adds a plugin to the graph. The plugin names in the dependencies must match names of other plugins that were,
+     * or will be, added to this graph.
      *
      * <p>If the plugin already exists, it will be overridden such that the given dependencies replace its old ones.</p>
      *
      * @param pluginName   the name of the plugin getting added to the graph
-     * @param dependencies comma-separate list of plugin names that are dependencies of this plugin
+     * @param dependencies list of plugin names that are dependencies of this plugin
      */
     public void addPlugin(String pluginName, List<PluginDependency> dependencies) {
-        dependencyMap.put(pluginName, dependencies);
-    }
-
-    public void addPlugin(String pluginName, String... dependencyNames) {
-        List<PluginDependency> dependencies = new ArrayList<PluginDependency>();
-        for (String name : dependencyNames) {
-            dependencies.add(new PluginDependency(name, false));
-        }
-
+        // it doesn't make sense that a plugin depends on itself.
+        // remove duplicates to avoid erroneous circular dependencies.
+        dependencies.remove(new PluginDependency(pluginName, false, false));
         dependencyMap.put(pluginName, dependencies);
     }
 
     /**
      * Returns the name of the plugin who's classloader will be used as the parent of this plugin. If none is explicitly
      * declared, the last one in the dependency list will be used.
-     *
-     * @param  pluginName
-     *
-     * @return
+     * @deprecated this method will go away once we implement better classloading and support for multiple plugin deps
      */
     public String getUseClassesDependency(String pluginName) {
         PluginDependency last = null;
-        for (PluginDependency dependency : this.dependencyMap.get(pluginName)) {
-            if (dependency.useClasses) {
-                return dependency.name;
+        if (this.dependencyMap.containsKey(pluginName)) {
+            for (PluginDependency dependency : this.dependencyMap.get(pluginName)) {
+                // only required deps can have their classes used - optional deps cannot (since classes may not exist)
+                if (dependency.required) {
+                    if (dependency.useClasses) {
+                        return dependency.name; // classes from only one dep can be used, so we only return one
+                    }
+                    last = dependency;
+                }
             }
-
-            last = dependency;
         }
-
         return (last == null) ? null : last.name;
     }
 
@@ -110,6 +103,11 @@ public class PluginDependencyGraph {
      * plugins this plugin explicitly depends on). The list will be empty if there are no dependencies. <code>
      * null</code> will be returned if the plugin does not exist in this graph.
      *
+     * Note that if a dependency is not required to exist, and it does not exist, it will not be returned
+     * in the list.  This is to say that if a plugin was configured to depend on another plugin, but that
+     * dependency was not required, that other plugin will not be in the returned list if it hasn't been added
+     * to this graph yet.
+     * 
      * @param  pluginName the plugin name
      *
      * @return list of plugin dependencies (<code>null</code> if the plugin doesn't exist yet in the graph)
@@ -117,18 +115,21 @@ public class PluginDependencyGraph {
     public List<String> getPluginDependencies(String pluginName) {
         List<String> dependencies = new ArrayList<String>();
         for (PluginDependency dependency : this.dependencyMap.get(pluginName)) {
-            dependencies.add(dependency.name);
+            if (dependency.required || this.dependencyMap.containsKey(dependency.name)) {
+                dependencies.add(dependency.name);
+            }
         }
 
         return dependencies;
     }
 
     /**
-     * Returns <code>true</code> if the dependency graph has no missing plugins. That is to say, all dependencies of all
-     * plugins can be found in this graph. If this returns <code>true</code>, you can safely call
-     * {@link #getDeploymentOrder()} and expect it to return an ordered list of plugins. This will return <code>
-     * false</code> if one or more dependencies are missing and still need to be {@link #addPlugin(String, List) added}.
-     * This will throw an exception if a circular dependency has been detected.
+     * Returns <code>true</code> if the dependency graph has no missing required plugins.
+     * That is to say, all required dependencies of all plugins can be found in this graph. If this returns <code>true</code>,
+     * you can safely call {@link #getDeploymentOrder()} and expect it to return an ordered list of plugins.
+     * This will return <code>false</code> if one or more required dependencies are missing and still need to be
+     * {@link #addPlugin(String, List) added}. This will throw an exception if a circular dependency has been
+     * detected.
      *
      * @param  errorBuffer if not <code>null</code> and this method returns <code>false</code>, this will be appended
      *                     with the error message that will contain information on the first plugin found to be missing
@@ -151,8 +152,9 @@ public class PluginDependencyGraph {
     }
 
     /**
-     * Returns the deployment order for all added plugins. If a dependency is missing and thus one or more plugins
-     * cannot be deployed, an exception is thrown.
+     * Returns the deployment order for all added plugins. If a required dependency is missing and thus one or
+     * more plugins cannot be deployed, an exception is thrown. If an optional dependency is missing, that
+     * optional dependency plugin will be ignored and not returned in the list.
      *
      * @return the list of plugin names, in the order in which they can be deployed.
      *
@@ -165,7 +167,7 @@ public class PluginDependencyGraph {
         // Compute the deep dependencies so we know all the plugins that must be deployed before each plugin.
         // We use TreeSet so we can be able to predict the resulting order based on alphabetic ordering of plugins (mainly for tests)
         for (String pluginName : new TreeSet<String>(dependencyMap.keySet())) {
-            pluginItems.add(new PluginItem(pluginName, getDeepDependencies(pluginName, new ArrayList<String>())));
+            pluginItems.add(new PluginItem(pluginName, getDeepDependencies(pluginName, new ArrayList<String>(), true)));
         }
 
         // got through each plugin and put it in the returned list such that it appears
@@ -202,44 +204,48 @@ public class PluginDependencyGraph {
 
     /**
      * Given a known plugin name, this returns all dependencies of that plugin (including those dependencies of its
-     * dependencies, down N levels).
+     * dependencies, down N levels). If a dependency is missing but is required, an exception is thrown - missing
+     * optional plugins are simply ignored and not returned in the set but otherwise no errors occur.
      *
-     * @param  pluginName
-     * @param  dependingPlugins set of plugins that are known to be depending on pluginName (must not be <code>
-     *                          null</code>)
+     * @param pluginName
+     * @param dependingPlugins set of plugins that are known to be depending on pluginName (must not be <code>
+     *                         null</code>)
+     * @param required if <code>true</code>, then <code>pluginName</code> must exist in the graph. If it does not, an
+     *                 exception will be thrown. Otherwise, it is considered an optional plugin and if it is missing,
+     *                 it will be ignored.
      *
      * @return the dependencies
      *
      * @throws IllegalStateException    if the given plugin has a circular dependency
      * @throws IllegalArgumentException if the plugin hasn't been added to the graph yet
      */
-    private Set<String> getDeepDependencies(String pluginName, Collection<String> dependingPlugins)
+    private Set<String> getDeepDependencies(String pluginName, Collection<String> dependingPlugins, boolean required)
         throws IllegalStateException, IllegalArgumentException {
         HashSet<String> results = new HashSet<String>();
 
         List<PluginDependency> childDependencies = dependencyMap.get(pluginName);
         if (childDependencies == null) {
-            /* 
-             * in general, missing dependencies will cause this plugin to fail later in the deployment process;
-             * however, there are certain rare circumstances when deployments will succeed even in the face of
-             * missing dependencies; in these cases, we'll be a little lenient when parsing the dependency graph
-             */
-            log.warn("Plugin [" + pluginName + "] does not yet exist in the dependency graph to satisfy "
-                + dependingPlugins);
-            return Collections.emptySet();
-        }
-
-        for (PluginDependency childDependency : childDependencies) {
-            if (dependingPlugins.contains(childDependency.name)) {
-                throw createCircularDependencyException(childDependency.name);
+            if (required) {
+                throw new IllegalArgumentException("Plugin [" + pluginName + "] is required by plugins ["
+                    + dependingPlugins + "] but it does not exist in the dependency graph yet");
             }
 
-            dependingPlugins.add(pluginName);
-            Set<String> childDeepDependencies = getDeepDependencies(childDependency.name, dependingPlugins);
-            dependingPlugins.remove(pluginName);
+            log.info("Optional plugin [" + pluginName + "] was requested by plugins [" + dependingPlugins
+                + "] but it does not exist in the dependency graph yet and will be ignored");
+        } else {
+            for (PluginDependency childDependency : childDependencies) {
+                if (dependingPlugins.contains(childDependency.name)) {
+                    throw createCircularDependencyException(childDependency.name);
+                }
 
-            results.add(childDependency.name);
-            results.addAll(childDeepDependencies);
+                dependingPlugins.add(pluginName);
+                Set<String> childDeepDependencies = getDeepDependencies(childDependency.name, dependingPlugins,
+                    childDependency.required);
+                dependingPlugins.remove(pluginName);
+
+                results.add(childDependency.name);
+                results.addAll(childDeepDependencies);
+            }
         }
 
         return results;
@@ -305,14 +311,16 @@ public class PluginDependencyGraph {
     public static class PluginDependency {
         final String name;
         final boolean useClasses;
+        final boolean required;
 
         public PluginDependency(String name) {
-            this(name, false);
+            this(name, false, false);
         }
 
-        public PluginDependency(String name, boolean useClasses) {
+        public PluginDependency(String name, boolean useClasses, boolean required) {
             this.name = name;
             this.useClasses = useClasses;
+            this.required = required;
         }
 
         public boolean equals(Object o) {
@@ -335,6 +343,10 @@ public class PluginDependencyGraph {
 
         public int hashCode() {
             return name.hashCode();
+        }
+
+        public String toString() {
+            return "name=[" + this.name + "], required=[" + this.required + "], useClasses=[" + this.useClasses + "]";
         }
     }
 }

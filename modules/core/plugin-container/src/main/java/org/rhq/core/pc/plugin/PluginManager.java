@@ -109,6 +109,7 @@ public class PluginManager implements ContainerService {
                     log.debug("Plugin found at: " + url);
 
                     PluginDescriptor descriptor;
+
                     try {
                         descriptor = AgentPluginDescriptorUtil.loadPluginDescriptorFromUrl(url);
                     } catch (Throwable t) {
@@ -117,16 +118,8 @@ public class PluginManager implements ContainerService {
                         continue;
                     }
 
-                    String pluginName = descriptor.getName();
-
-                    List<PluginDependencyGraph.PluginDependency> dependencies = new ArrayList<PluginDependencyGraph.PluginDependency>();
-                    for (PluginDescriptor.Depends dependency : descriptor.getDepends()) {
-                        dependencies.add(new PluginDependencyGraph.PluginDependency(dependency.getPlugin(), dependency
-                            .isUseClasses()));
-                    }
-
-                    graph.addPlugin(pluginName, dependencies);
-                    pluginNamesUrls.put(pluginName, url);
+                    AgentPluginDescriptorUtil.addPluginToDependencyGraph(graph, descriptor);
+                    pluginNamesUrls.put(descriptor.getName(), url);
                 }
 
                 // get the order that we have to deploy the plugins
@@ -138,7 +131,9 @@ public class PluginManager implements ContainerService {
                     List<String> dependencies = graph.getPluginDependencies(nextPlugin);
 
                     try {
-                        if (dependencies.size() == 0) {
+                        String lastDependency = graph.getUseClassesDependency(nextPlugin);
+
+                        if (dependencies.size() == 0 || lastDependency == null) {
                             log.debug("Loading independent plugin [" + nextPlugin + "] from URL: " + pluginUrl);
                             loadPlugin(pluginUrl, null);
                         } else {
@@ -148,9 +143,8 @@ public class PluginManager implements ContainerService {
                             log.debug("Loading dependent plugin [" + nextPlugin + "] from URL [" + pluginUrl
                                 + "] that has the following dependencies: " + dependencies);
 
-                            String lastDependency = graph.getUseClassesDependency(nextPlugin);
                             PluginEnvironment lastDepEnvironment = this.loadedPluginEnvironments.get(lastDependency);
-                            
+
                             // create the URL array where all classes can be found - make sure we put the plugin's URL
                             // up at the front so its plugin descriptor is found before any other dependent plugin descriptors
                             //  URL[] allUrlsArray = new URL[allUrls.size() + 1];

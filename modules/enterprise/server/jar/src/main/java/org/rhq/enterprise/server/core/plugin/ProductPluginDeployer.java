@@ -53,6 +53,7 @@ import org.jboss.deployment.DeploymentState;
 import org.jboss.deployment.SubDeployerSupport;
 
 import org.rhq.core.clientapi.agent.metadata.PluginDependencyGraph;
+import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
 import org.rhq.core.clientapi.descriptor.DescriptorPackages;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.auth.Subject;
@@ -528,12 +529,7 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
         PluginDependencyGraph dependencyGraph = new PluginDependencyGraph();
         for (String pluginName : this.deploymentInfos.keySet()) {
             PluginDescriptor descriptor = this.pluginDescriptors.get(pluginName);
-            List<PluginDependencyGraph.PluginDependency> dependencies = new ArrayList<PluginDependencyGraph.PluginDependency>();
-            for (PluginDescriptor.Depends dependency : descriptor.getDepends()) {
-                dependencies.add(new PluginDependencyGraph.PluginDependency(dependency.getPlugin(), dependency
-                    .isUseClasses()));
-            }
-            dependencyGraph.addPlugin(pluginName, dependencies);
+            AgentPluginDescriptorUtil.addPluginToDependencyGraph(dependencyGraph, descriptor);
         }
         log.debug("Dependency graph deployment order: " + dependencyGraph.getDeploymentOrder());
         return dependencyGraph;

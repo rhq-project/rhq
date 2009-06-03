@@ -70,7 +70,7 @@ public class PluginValidator {
             if (args.length > 0) {
                 finder = new SimplePluginFinder();
                 for (String arg : args) {
-                    URL jarUrl = new File(arg).toURL();
+                    URL jarUrl = new File(arg).toURI().toURL();
                     finder.addUrl(jarUrl);
                     LOG.info("Plugin jar: " + jarUrl);
                 }

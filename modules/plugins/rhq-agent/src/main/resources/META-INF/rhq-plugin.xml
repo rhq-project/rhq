@@ -8,7 +8,7 @@
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
 
-   <depends plugin="JMX" useClasses="true"/>
+   <depends plugin="JMX" />
 
    <server name="RHQ Agent"
            discovery="AgentDiscoveryComponent"

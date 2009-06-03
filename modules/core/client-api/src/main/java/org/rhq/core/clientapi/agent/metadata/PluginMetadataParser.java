@@ -107,20 +107,33 @@ public class PluginMetadataParser {
     }
 
     public void parseDescriptor() throws InvalidPluginDescriptorException {
-        // Plugin's Platforms
-        for (PlatformDescriptor serverDescriptor : pluginDescriptor.getPlatforms()) {
-            rootResourceTypes.add(parsePlatformDescriptor(serverDescriptor));
+        ResourceType type = null;
+
+        // the plugin's root platforms
+        for (PlatformDescriptor descriptor : pluginDescriptor.getPlatforms()) {
+            type = parsePlatformDescriptor(descriptor);
+            if (type != null) {
+                rootResourceTypes.add(type);
+            }
         }
 
-        // Plugin's Servers
-        for (ServerDescriptor serverDescriptor : pluginDescriptor.getServers()) {
-            rootResourceTypes.add(parseServerDescriptor(serverDescriptor, null));
+        // the plugin's root servers
+        for (ServerDescriptor descriptor : pluginDescriptor.getServers()) {
+            type = parseServerDescriptor(descriptor, null);
+            if (type != null) {
+                rootResourceTypes.add(type);
+            }
         }
 
-        // Plugin's Services
-        for (ServiceDescriptor serviceDescriptor : pluginDescriptor.getServices()) {
-            rootResourceTypes.add(parseServiceDescriptor(serviceDescriptor, null, null));
+        // the plugin's root services
+        for (ServiceDescriptor descriptor : pluginDescriptor.getServices()) {
+            type = parseServiceDescriptor(descriptor, null, null);
+            if (type != null) {
+                rootResourceTypes.add(type);
+            }
         }
+
+        return;
     }
 
     private ResourceType parsePlatformDescriptor(PlatformDescriptor platformDescriptor)
@@ -137,6 +150,12 @@ public class PluginMetadataParser {
         if ((platformResourceType.getProcessScans() != null) && (platformResourceType.getProcessScans().size() > 0)) {
             LOG.warn("Platforms are not auto-discovered via process scans. "
                 + "The <process-scan> elements will be ignored in resource type: " + platformResourceType);
+        }
+
+        RunsInsideType runsInside = platformDescriptor.getRunsInside();
+        if (runsInside != null) {
+            LOG.warn("Platforms do not currently support running inside other resources. "
+                + "The <runs-inside> information will be ignored in resource type: " + platformResourceType);
         }
 
         return platformResourceType;
@@ -169,9 +188,10 @@ public class PluginMetadataParser {
             ServerDescriptor sourceServerDescriptor = pluginServerDescriptors.get(sourceServer);
 
             if (sourceServerDescriptor == null) {
-                throw new InvalidPluginDescriptorException("There is no server type named [" + sourceServer
-                    + "] from a plugin named [" + sourcePlugin + "]; please check the descriptor of type ["
-                    + serverDescriptor.getName() + "]");
+                LOG.info("There is no server type named [" + sourceServer + "] from a plugin named [" + sourcePlugin
+                    + "]. This is probably because that plugin is missing. Resource Type ["
+                    + serverDescriptor.getName() + "] will be ignored.");
+                return null;
             }
 
             serverResourceType = new ResourceType(serverDescriptor.getName(), pluginDescriptor.getName(),
@@ -238,14 +258,16 @@ public class PluginMetadataParser {
                 String parentTypePlugin = parentTypeDescriptor.getPlugin();
                 ResourceType parentTypeToInjectInto = getResourceTypeFromPlugin(parentTypeName, parentTypePlugin);
 
-                if (parentTypeToInjectInto == null) {
-                    throw new InvalidPluginDescriptorException("There is no resource type named [" + parentTypeName
-                        + "] from a plugin named [" + parentTypePlugin + "]; please check the descriptor of type ["
-                        + serverDescriptor.getName() + "]");
+                if (parentTypeToInjectInto != null) {
+                    // inject our new server resource type as a child type to the parent plugin's type
+                    parentTypeToInjectInto.addChildResourceType(serverResourceType);
+                } else {
+                    // The parent plugin owning the resource that this resource can run inside of does not exist.
+                    // We will ignore this runs-inside declaration, thus allowing optional plugins to be missing.
+                    LOG.info("There is no resource type named [" + parentTypeName + "] from a plugin named ["
+                        + parentTypePlugin + "]. This is probably because that plugin is missing. Resource Type ["
+                        + serverDescriptor.getName() + "] will not have that missing type as a possible parent.");
                 }
-
-                // inject our new server resource type as a child type to the parent plugin's type
-                parentTypeToInjectInto.addChildResourceType(serverResourceType);
             }
         }
 
@@ -296,9 +318,10 @@ public class PluginMetadataParser {
             }
 
             if (sourceServiceDescriptor == null) {
-                throw new InvalidPluginDescriptorException("There is no service type named [" + sourceService
-                    + "] from a plugin named [" + sourcePlugin + "]; please check the descriptor of type ["
-                    + serviceDescriptor.getName() + "]");
+                LOG.info("There is no service type named [" + sourceService + "] from a plugin named [" + sourcePlugin
+                    + "]. This is probably because that plugin is missing. Resource Type ["
+                    + serviceDescriptor.getName() + "] will be ignored.");
+                return null;
             }
 
             serviceResourceType = new ResourceType(serviceDescriptor.getName(), pluginDescriptor.getName(),
@@ -355,14 +378,16 @@ public class PluginMetadataParser {
                     String parentTypePlugin = parentTypeDescriptor.getPlugin();
                     ResourceType parentTypeToInjectInto = getResourceTypeFromPlugin(parentTypeName, parentTypePlugin);
 
-                    if (parentTypeToInjectInto == null) {
-                        throw new InvalidPluginDescriptorException("There is no resource type named [" + parentTypeName
-                            + "] from a plugin named [" + parentTypePlugin + "]; please check the descriptor of type ["
-                            + serviceDescriptor.getName() + "]");
+                    if (parentTypeToInjectInto != null) {
+                        // inject our new server resource type as a child type to the parent plugin's type
+                        parentTypeToInjectInto.addChildResourceType(serviceResourceType);
+                    } else {
+                        // The parent plugin owning the resource that this resource can run inside of does not exist.
+                        // We will ignore this runs-inside declaration, thus allowing optional plugins to be missing.
+                        LOG.info("There is no resource type named [" + parentTypeName + "] from a plugin named ["
+                            + parentTypePlugin + "]. This is probably because that plugin is missing. Resource Type ["
+                            + serviceDescriptor.getName() + "] will not have that missing type as a possible parent.");
                     }
-
-                    // inject our new server resource type as a child type to the parent plugin's type
-                    parentTypeToInjectInto.addChildResourceType(serviceResourceType);
                 }
             }
         }

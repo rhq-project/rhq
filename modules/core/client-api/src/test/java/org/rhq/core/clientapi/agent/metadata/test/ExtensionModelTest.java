@@ -1,35 +1,40 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.clientapi.agent.metadata.test;
 
 import java.net.URL;
 import java.util.Set;
+
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.util.ValidationEventCollector;
+
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
+import org.rhq.core.clientapi.agent.metadata.PluginDependencyGraph;
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
+import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
 import org.rhq.core.clientapi.descriptor.DescriptorPackages;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -70,22 +75,30 @@ public class ExtensionModelTest {
     }
 
     public void loadPluginDescriptors() throws Exception {
-        loadPluginDescriptor(DESCRIPTOR_JMX);
+        PluginDescriptor descriptor_jmx = loadPluginDescriptor(DESCRIPTOR_JMX);
         assertJmxTypes();
 
-        loadPluginDescriptor(DESCRIPTOR_TOMCAT);
+        PluginDescriptor descriptor_tomcat = loadPluginDescriptor(DESCRIPTOR_TOMCAT);
         assertTomcatTypes();
 
-        loadPluginDescriptor(DESCRIPTOR_JBOSSAS);
+        PluginDescriptor descriptor_jbossas = loadPluginDescriptor(DESCRIPTOR_JBOSSAS);
         assertJBossASTypes();
 
-        loadPluginDescriptor(DESCRIPTOR_HIBERNATE);
+        PluginDescriptor descriptor_hibernate = loadPluginDescriptor(DESCRIPTOR_HIBERNATE);
         assertHibernateTypes();
 
-        loadPluginDescriptor(DESCRIPTOR_CUSTOMJMX);
+        PluginDescriptor descriptor_customjmx = loadPluginDescriptor(DESCRIPTOR_CUSTOMJMX);
         assertCustomJmxTypes();
 
         outputAllTypes();
+
+        PluginDependencyGraph graph = new PluginDependencyGraph();
+        AgentPluginDescriptorUtil.addPluginToDependencyGraph(graph, descriptor_jmx);
+        AgentPluginDescriptorUtil.addPluginToDependencyGraph(graph, descriptor_tomcat);
+        AgentPluginDescriptorUtil.addPluginToDependencyGraph(graph, descriptor_jbossas);
+        AgentPluginDescriptorUtil.addPluginToDependencyGraph(graph, descriptor_hibernate);
+        AgentPluginDescriptorUtil.addPluginToDependencyGraph(graph, descriptor_customjmx);
+        assert graph.isComplete(null);
     }
 
     @Test(dependsOnMethods = "loadPluginDescriptors")
@@ -294,7 +307,7 @@ public class ExtensionModelTest {
         assert customJmxServer.getChildResourceTypes().contains(customJmxService);
     }
 
-    private void loadPluginDescriptor(String file) throws Exception {
+    private PluginDescriptor loadPluginDescriptor(String file) throws Exception {
         PluginDescriptor pluginDescriptor;
 
         URL descriptorUrl = this.getClass().getClassLoader().getResource(file);
@@ -309,7 +322,7 @@ public class ExtensionModelTest {
 
         this.metadataManager.loadPlugin(pluginDescriptor);
 
-        return;
+        return pluginDescriptor;
     }
 
     private void outputAllTypes() {

@@ -22,11 +22,13 @@
  */
 package org.rhq.core.clientapi.agent.metadata.test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.testng.annotations.Test;
 
 import org.rhq.core.clientapi.agent.metadata.PluginDependencyGraph;
+import org.rhq.core.clientapi.agent.metadata.PluginDependencyGraph.PluginDependency;
 
 /**
  * Test PluginDependencyGraph.
@@ -35,18 +37,89 @@ import org.rhq.core.clientapi.agent.metadata.PluginDependencyGraph;
  */
 @Test
 public class PluginDependencyGraphTest {
+    public void testOptionalPluginsDeployment() {
+        PluginDependencyGraph graph;
+        List<String> order;
+
+        // let's assume we have a dependency graph like this:
+        //    plugin A depends on plugin B (required)
+        //    plugin B depends on plugin D and C (required)
+        //    plugin C depends on plugin E and F (optional)
+        //    plugin D depends on plugin E and F (optional)
+        //    plugin E does not depend on any other plugin
+        //    plugin F does not depend on any other plugin
+        //    plugin G depends on plugin F (required)
+        //    plugin Z does not depend on any other plugin
+        // the deployment order should be: Z F G E D C B A
+
+        graph = new PluginDependencyGraph();
+        addPlugin(graph, "A", "B");
+        addPlugin(graph, "B", "D", "C");
+        addPluginWithOptionalDeps(graph, "C", "E", "F");
+        addPluginWithOptionalDeps(graph, "D", "E", "F");
+        addPlugin(graph, "E");
+        addPlugin(graph, "F");
+        addPlugin(graph, "G", "F");
+        addPlugin(graph, "Z");
+        assert graph.isComplete(null);
+        order = graph.getDeploymentOrder();
+        assert order.get(0).equals("Z") : order;
+        assert order.get(1).equals("F") : order;
+        assert order.get(2).equals("G") : order;
+        assert order.get(3).equals("E") : order;
+        assert order.get(4).equals("D") : order;
+        assert order.get(5).equals("C") : order;
+        assert order.get(6).equals("B") : order;
+        assert order.get(7).equals("A") : order;
+
+        // Use the same dependency graph, but do not deploy plugin F.
+        // With F missing, G will fail because it required F
+        graph = new PluginDependencyGraph();
+        addPlugin(graph, "A", "B");
+        addPlugin(graph, "B", "D", "C");
+        addPluginWithOptionalDeps(graph, "C", "E", "F");
+        addPluginWithOptionalDeps(graph, "D", "E", "F");
+        addPlugin(graph, "E");
+        //addPlugin(graph, "F"); PLUGIN F IS GOING TO BE MISSING FROM THIS GRAPH!
+        addPlugin(graph, "G", "F");
+        addPlugin(graph, "Z");
+        assert !graph.isComplete(null) : "Plugin F was missing, so G should have failed";
+
+        // Use the same dependency graph, but do not deploy plugin F AND make G optionally depend on F.
+        // With F missing, but all dependencies on it being optional, this graph should be complete.
+        // The deployment order in this case should be: Z G E D C B A
+        graph = new PluginDependencyGraph();
+        addPlugin(graph, "A", "B");
+        addPlugin(graph, "B", "D", "C");
+        addPluginWithOptionalDeps(graph, "C", "E", "F");
+        addPluginWithOptionalDeps(graph, "D", "E", "F");
+        addPlugin(graph, "E");
+        //addPlugin(graph, "F"); PLUGIN F IS GOING TO BE MISSING FROM THIS GRAPH!
+        addPluginWithOptionalDeps(graph, "G", "F"); // G is optionally dependent on F
+        addPlugin(graph, "Z");
+        assert graph.isComplete(null);
+        order = graph.getDeploymentOrder();
+        assert order.get(0).equals("Z") : order;
+        assert order.get(1).equals("G") : order;
+        assert order.get(2).equals("E") : order;
+        assert order.get(3).equals("D") : order;
+        assert order.get(4).equals("C") : order;
+        assert order.get(5).equals("B") : order;
+        assert order.get(6).equals("A") : order;
+    }
+
     public void testTypicalDeployment() {
         PluginDependencyGraph graph;
         List<String> order;
 
         graph = new PluginDependencyGraph();
-        graph.addPlugin("apache");
-        graph.addPlugin("Platforms");
-        graph.addPlugin("JBossAS", "JMX", "Tomcat");
-        graph.addPlugin("Tomcat", "JMX");
-        graph.addPlugin("Hibernate", "JMX");
-        graph.addPlugin("JMX");
-        graph.addPlugin("JONAgent");
+        addPlugin(graph, "apache");
+        addPlugin(graph, "Platforms");
+        addPlugin(graph, "JBossAS", "JMX", "Tomcat");
+        addPlugin(graph, "Tomcat", "JMX");
+        addPlugin(graph, "Hibernate", "JMX");
+        addPlugin(graph, "JMX");
+        addPlugin(graph, "JONAgent");
 
         assert graph.isComplete(null);
         order = graph.getDeploymentOrder();
@@ -64,11 +137,11 @@ public class PluginDependencyGraphTest {
         List<String> order;
 
         graph = new PluginDependencyGraph();
-        graph.addPlugin("apache");
-        graph.addPlugin("Platforms");
-        graph.addPlugin("CustomPlugin", "JONAgent");
-        graph.addPlugin("JMX");
-        graph.addPlugin("JONAgent");
+        addPlugin(graph, "apache");
+        addPlugin(graph, "Platforms");
+        addPlugin(graph, "CustomPlugin", "JONAgent");
+        addPlugin(graph, "JMX");
+        addPlugin(graph, "JONAgent");
 
         assert graph.isComplete(null);
         order = graph.getDeploymentOrder();
@@ -83,9 +156,9 @@ public class PluginDependencyGraphTest {
         List<String> order;
 
         graph = new PluginDependencyGraph();
-        graph.addPlugin("CustomPlugin", "JONAgent");
-        graph.addPlugin("JMX");
-        graph.addPlugin("JONAgent");
+        addPlugin(graph, "CustomPlugin", "JONAgent");
+        addPlugin(graph, "JMX");
+        addPlugin(graph, "JONAgent");
 
         assert graph.isComplete(null);
         order = graph.getDeploymentOrder();
@@ -101,9 +174,9 @@ public class PluginDependencyGraphTest {
 
         // a graph with no plugins that have any dependencies
         graph = new PluginDependencyGraph();
-        graph.addPlugin("A");
-        graph.addPlugin("B");
-        graph.addPlugin("C");
+        addPlugin(graph, "A");
+        addPlugin(graph, "B");
+        addPlugin(graph, "C");
         assert graph.isComplete(null);
         order = graph.getDeploymentOrder();
         assert order.contains("A") : order;
@@ -112,9 +185,9 @@ public class PluginDependencyGraphTest {
 
         // a graph with no plugins that have any dependencies is ordered by plugin name
         graph = new PluginDependencyGraph();
-        graph.addPlugin("C");
-        graph.addPlugin("A");
-        graph.addPlugin("B");
+        addPlugin(graph, "C");
+        addPlugin(graph, "A");
+        addPlugin(graph, "B");
         assert graph.isComplete(null);
         order = graph.getDeploymentOrder();
         assert order.contains("A") : order;
@@ -133,9 +206,9 @@ public class PluginDependencyGraphTest {
         // the deployment order should be: C B A
 
         graph = new PluginDependencyGraph();
-        graph.addPlugin("A", "B");
-        graph.addPlugin("B", "C");
-        graph.addPlugin("C");
+        addPlugin(graph, "A", "B");
+        addPlugin(graph, "B", "C");
+        addPlugin(graph, "C");
         assert graph.isComplete(null);
         order = graph.getDeploymentOrder();
         assert order.get(0).equals("C") : order;
@@ -144,9 +217,9 @@ public class PluginDependencyGraphTest {
 
         // add them in a different order and see the dependency order doesn't change
         graph = new PluginDependencyGraph();
-        graph.addPlugin("C");
-        graph.addPlugin("B", "C");
-        graph.addPlugin("A", "B");
+        addPlugin(graph, "C");
+        addPlugin(graph, "B", "C");
+        addPlugin(graph, "A", "B");
         assert graph.isComplete(null);
         order = graph.getDeploymentOrder();
         assert order.get(0).equals("C") : order;
@@ -155,9 +228,9 @@ public class PluginDependencyGraphTest {
 
         // add them in a different order and see the dependency order doesn't change
         graph = new PluginDependencyGraph();
-        graph.addPlugin("B", "C");
-        graph.addPlugin("C");
-        graph.addPlugin("A", "B");
+        addPlugin(graph, "B", "C");
+        addPlugin(graph, "C");
+        addPlugin(graph, "A", "B");
         assert graph.isComplete(null);
         order = graph.getDeploymentOrder();
         assert order.get(0).equals("C") : order;
@@ -181,14 +254,14 @@ public class PluginDependencyGraphTest {
         // the deployment order should be: Z F G E D C B A
 
         graph = new PluginDependencyGraph();
-        graph.addPlugin("A", "B");
-        graph.addPlugin("B", "D", "C");
-        graph.addPlugin("C", "E", "F");
-        graph.addPlugin("D", "E", "F");
-        graph.addPlugin("E");
-        graph.addPlugin("F");
-        graph.addPlugin("G", "F");
-        graph.addPlugin("Z");
+        addPlugin(graph, "A", "B");
+        addPlugin(graph, "B", "D", "C");
+        addPlugin(graph, "C", "E", "F");
+        addPlugin(graph, "D", "E", "F");
+        addPlugin(graph, "E");
+        addPlugin(graph, "F");
+        addPlugin(graph, "G", "F");
+        addPlugin(graph, "Z");
         assert graph.isComplete(null);
         order = graph.getDeploymentOrder();
         assert order.get(0).equals("Z") : order;
@@ -203,14 +276,14 @@ public class PluginDependencyGraphTest {
         // add them in a different order and see the dependency order doesn't change
         graph = new PluginDependencyGraph();
         graph = new PluginDependencyGraph();
-        graph.addPlugin("E");
-        graph.addPlugin("D", "E", "F");
-        graph.addPlugin("B", "C", "D");
-        graph.addPlugin("A", "B");
-        graph.addPlugin("G", "F");
-        graph.addPlugin("Z");
-        graph.addPlugin("F");
-        graph.addPlugin("C", "E", "F");
+        addPlugin(graph, "E");
+        addPlugin(graph, "D", "E", "F");
+        addPlugin(graph, "B", "C", "D");
+        addPlugin(graph, "A", "B");
+        addPlugin(graph, "G", "F");
+        addPlugin(graph, "Z");
+        addPlugin(graph, "F");
+        addPlugin(graph, "C", "E", "F");
         assert graph.isComplete(null);
         order = graph.getDeploymentOrder();
         assert order.get(0).equals("Z") : order;
@@ -228,7 +301,7 @@ public class PluginDependencyGraphTest {
         PluginDependencyGraph graph = new PluginDependencyGraph();
         StringBuilder error = new StringBuilder();
 
-        graph.addPlugin("A", "B");
+        addPlugin(graph, "A", "B");
         assert graph.getPlugins().size() == 1;
         assert graph.getPlugins().contains("A");
         assert !graph.isComplete(error);
@@ -240,7 +313,7 @@ public class PluginDependencyGraphTest {
         } catch (IllegalArgumentException expected) {
         }
 
-        graph.addPlugin("B", "C");
+        addPlugin(graph, "B", "C");
         assert graph.getPlugins().size() == 2;
         assert graph.getPlugins().contains("A");
         assert graph.getPlugins().contains("B");
@@ -254,7 +327,7 @@ public class PluginDependencyGraphTest {
         } catch (IllegalArgumentException expected) {
         }
 
-        graph.addPlugin("C"); // this completes the dependency graph
+        addPlugin(graph, "C"); // this completes the dependency graph
         assert graph.getPlugins().size() == 3;
         assert graph.getPlugins().contains("A");
         assert graph.getPlugins().contains("B");
@@ -279,8 +352,8 @@ public class PluginDependencyGraphTest {
 
         graph = new PluginDependencyGraph();
 
-        graph.addPlugin("A", "B");
-        graph.addPlugin("B", "A");
+        addPlugin(graph, "A", "B");
+        addPlugin(graph, "B", "A");
         assert graph.getPlugins().size() == 2;
         assertCircularDependency(graph);
 
@@ -291,9 +364,9 @@ public class PluginDependencyGraphTest {
 
         graph = new PluginDependencyGraph();
 
-        graph.addPlugin("A", "B");
-        graph.addPlugin("B", "C");
-        graph.addPlugin("C", "A");
+        addPlugin(graph, "A", "B");
+        addPlugin(graph, "B", "C");
+        addPlugin(graph, "C", "A");
         assert graph.getPlugins().size() == 3;
         assertCircularDependency(graph);
 
@@ -305,10 +378,10 @@ public class PluginDependencyGraphTest {
 
         graph = new PluginDependencyGraph();
 
-        graph.addPlugin("A", "B");
-        graph.addPlugin("B", "C");
-        graph.addPlugin("C", "D");
-        graph.addPlugin("D", "B");
+        addPlugin(graph, "A", "B");
+        addPlugin(graph, "B", "C");
+        addPlugin(graph, "C", "D");
+        addPlugin(graph, "D", "B");
         assert graph.getPlugins().size() == 4;
         assertCircularDependency(graph);
 
@@ -324,17 +397,17 @@ public class PluginDependencyGraphTest {
 
         graph = new PluginDependencyGraph();
 
-        graph.addPlugin("A", "B", "C");
-        graph.addPlugin("B", "C", "D", "E");
-        graph.addPlugin("C");
-        graph.addPlugin("D", "F", "G");
-        graph.addPlugin("E", "F");
-        graph.addPlugin("F", "H");
-        graph.addPlugin("G"); // let's first see this work
-        graph.addPlugin("H");
+        addPlugin(graph, "A", "B", "C");
+        addPlugin(graph, "B", "C", "D", "E");
+        addPlugin(graph, "C");
+        addPlugin(graph, "D", "F", "G");
+        addPlugin(graph, "E", "F");
+        addPlugin(graph, "F", "H");
+        addPlugin(graph, "G"); // let's first see this work
+        addPlugin(graph, "H");
         assert graph.getPlugins().size() == 8;
         assert graph.isComplete(null);
-        graph.addPlugin("G", "A"); // now blow it up
+        addPlugin(graph, "G", "A"); // now blow it up
         assertCircularDependency(graph);
     }
 
@@ -350,5 +423,23 @@ public class PluginDependencyGraphTest {
             assert false : "The deployment isn't possible yet - there is a circular dependency that should have been caught";
         } catch (IllegalStateException expected) {
         }
+    }
+
+    private void addPlugin(PluginDependencyGraph graph, String pluginName, String... dependencyNames) {
+        List<PluginDependency> dependencies = new ArrayList<PluginDependency>();
+        for (String name : dependencyNames) {
+            dependencies.add(new PluginDependency(name, false, true));
+        }
+
+        graph.addPlugin(pluginName, dependencies);
+    }
+
+    private void addPluginWithOptionalDeps(PluginDependencyGraph graph, String pluginName, String... dependencyNames) {
+        List<PluginDependency> dependencies = new ArrayList<PluginDependency>();
+        for (String name : dependencyNames) {
+            dependencies.add(new PluginDependency(name, false, false));
+        }
+
+        graph.addPlugin(pluginName, dependencies);
     }
 }

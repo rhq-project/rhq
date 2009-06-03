@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-parent</artifactId>
-      <version>1.2.1</version>
+      <version>1.3.0-SNAPSHOT</version>
    </parent>
 
    <groupId>org.rhq</groupId>
@@ -16,8 +16,8 @@
    <description>A library of classes that will be deployed in the server container itself, above the main EAR</description>
 
    <scm>
-      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_2_1/modules/enterprise/server/container-lib</connection>
-      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_2_1/modules/enterprise/server/container-lib</developerConnection>
+      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/container-lib/</connection>
+      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/container-lib/</developerConnection>
    </scm>
 
    <properties>

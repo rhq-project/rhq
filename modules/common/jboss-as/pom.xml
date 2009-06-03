@@ -6,7 +6,7 @@
       <groupId>org.jboss.on</groupId>
       <!--  Bypass the jopr-plugins-parent which can not have children. It must build after the plugins in order to execute integration tests on them. -->
       <artifactId>jopr-common-parent</artifactId>
-      <version>2.2.1</version>
+      <version>2.3.0-SNAPSHOT</version>
    </parent>
 
    <groupId>org.jboss.on</groupId>
@@ -17,8 +17,8 @@
    <description>A library with the code common to the JBoss AS 4 and 5 plugins</description>
 
    <scm>
-      <connection>scm:svn:http://svn.jboss.org/repos/jopr/tags/Jopr_2_2_1/modules/common/jboss-as</connection>
-      <developerConnection>scm:svn:https://svn.jboss.org/repos/jopr/tags/Jopr_2_2_1/modules/common/jboss-as</developerConnection>
+      <connection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/common/jboss-as/</connection>
+      <developerConnection>scm:svn:https://svn.jboss.org/repos/jopr/trunk/modules/common/jboss-as/</developerConnection>
    </scm>
 
    <properties>

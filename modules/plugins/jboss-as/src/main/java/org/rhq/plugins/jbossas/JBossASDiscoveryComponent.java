@@ -38,18 +38,17 @@ import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.Nullable;
 import org.mc4j.ems.connection.support.metadata.InternalVMTypeDescriptor;
 import org.mc4j.ems.connection.support.metadata.JBossConnectionTypeDescriptor;
-
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.pluginapi.util.FileUtils;
-import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.plugins.jbossas.helper.JBossInstallationInfo;
 import org.rhq.plugins.jbossas.helper.JBossInstanceInfo;
@@ -130,10 +129,9 @@ public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent {
                         + configDir + "' does not exist or is not a directory.");
                     continue;
                 }
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 log.error("Skipping discovery for process " + processInfo + ", because JBAS configuration dir '"
-                        + configDir + "' could not be canonicalized.", e);
+                    + configDir + "' could not be canonicalized.", e);
                 continue;
             }
 
@@ -212,8 +210,8 @@ public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent {
             PropertyMap serverLogEventSource = new PropertyMap("serverLog");
             serverLogEventSource.put(new PropertySimple(
                 LogFileEventResourceComponentHelper.LogEventSourcePropertyNames.LOG_FILE_PATH, serverLogFile));
-            serverLogEventSource.put(new PropertySimple(LogFileEventResourceComponentHelper.LogEventSourcePropertyNames.ENABLED,
-                Boolean.FALSE));
+            serverLogEventSource.put(new PropertySimple(
+                LogFileEventResourceComponentHelper.LogEventSourcePropertyNames.ENABLED, Boolean.FALSE));
             PropertyList logEventSources = pluginConfiguration
                 .getList(LogFileEventResourceComponentHelper.LOG_EVENT_SOURCES_CONFIG_PROP);
             logEventSources.add(serverLogEventSource);
@@ -251,8 +249,7 @@ public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent {
     }
 
     private DiscoveredResourceDetails createResourceDetails(ResourceDiscoveryContext discoveryContext,
-        Configuration pluginConfiguration, @Nullable
-        ProcessInfo processInfo, JBossInstallationInfo installInfo) {
+        Configuration pluginConfiguration, @Nullable ProcessInfo processInfo, JBossInstallationInfo installInfo) {
         String configPath = pluginConfiguration.getSimple(JBossASServerComponent.CONFIGURATION_PATH_CONFIG_PROP)
             .getStringValue();
         File absoluteConfigPath = JBossASServerComponent.resolvePathRelativeToHomeDir(pluginConfiguration, configPath);
@@ -288,8 +285,8 @@ public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent {
         File rhqInstallerWarUndeployed = new File(deployDir, "rhq-installer.war.rej");
         boolean isRhqServer = rhqInstallerWar.exists() || rhqInstallerWarUndeployed.exists();
         if (isRhqServer) {
-            baseName += " RHQ Server, ";
-            description += " hosting the RHQ Server";
+            baseName += " Jopr Server, ";
+            description += " hosting the Jopr Server";
 
             // RHQ-633 : We know this is an RHQ Server. Let's auto configure for tracking its log file
             // JOPR-53 : Tracking will be disabled, user will have to explicitly enable it now

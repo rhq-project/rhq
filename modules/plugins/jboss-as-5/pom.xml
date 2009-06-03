@@ -10,7 +10,7 @@
       <groupId>org.jboss.on</groupId>
       <!--  Bypass the jopr-plugins-parent which can not have children. It must build after the plugins in order to execute integration tests on them. -->
       <artifactId>jopr-modules-parent</artifactId>
-      <version>2.3.0-SNAPSHOT</version>
+      <version>2.2.1</version>
     </parent>
 
     <groupId>org.jboss.on</groupId>
@@ -21,9 +21,9 @@
     <description>A plugin for managing JBoss Application Server 5.x</description>
 
     <scm>
-        <connection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/plugins/jboss-as-5</connection>
+        <connection>scm:svn:http://svn.jboss.org/repos/jopr/tags/Jopr_2_2_1/modules/plugins/jboss-as-5</connection>
         <developerConnection>
-            scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/plugins/jboss-as-5
+            scm:svn:http://svn.jboss.org/repos/jopr/tags/Jopr_2_2_1/modules/plugins/jboss-as-5
         </developerConnection>
     </scm>
 

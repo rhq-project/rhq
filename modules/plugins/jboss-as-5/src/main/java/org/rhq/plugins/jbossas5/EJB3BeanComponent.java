@@ -207,13 +207,8 @@ import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
          DeploymentProgress progress;
 
          String name = getManagedComponent().getName();
-         // Determine component sub type from original type -- TODO remove when this is fixed in EAP
-         String stype;
-         if (getManagedComponent().getType().getSubtype().equals("MDB"))
-            stype="Message"; // TODO check
-         else
-            stype="Session";
-         ComponentType ct = new ComponentType(getManagedComponent().getType().getType(),stype);
+         // Get component sub type from original type
+         ComponentType ct = getManagedComponent().getType();
          name = name.replace("instance","invocation");
          ManagedComponent invComp = getConnection().getManagementView().getComponent(name,ct);
          if (invComp==null) {

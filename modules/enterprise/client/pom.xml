@@ -1,327 +1,169 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project
+   xmlns="http://maven.apache.org/POM/4.0.0"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
-    <modelVersion>4.0.0</modelVersion>
+   <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>org.rhq</groupId>
-        <artifactId>rhq-parent</artifactId>
-        <version>1.3.0-SNAPSHOT</version>
-    </parent>
+   <parent>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-parent</artifactId>
+      <version>1.3.0-SNAPSHOT</version>
+   </parent>
 
-    <groupId>org.rhq</groupId>
-    <artifactId>rhq-enterprise-client</artifactId>
-    <packaging>jar</packaging>
+   <groupId>org.rhq</groupId>
+   <artifactId>rhq-client</artifactId>
+   <packaging>pom</packaging>
 
-    <name>RHQ Enterprise Client</name>
-    <description>RHQ Client</description>
+   <name>RHQ Enterprise Remote Client</name>
+   <description>RHQ Remote Client</description>
 
-    <scm>
-        <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/client/</connection>
-        <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/client/
-        </developerConnection>
-    </scm>
+   <scm>
+      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/client/</connection>
+      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/client/</developerConnection>
+   </scm>
 
-    <properties>
-        <scm.module.path>modules/enterprise/client/</scm.module.path>
-    </properties>
+   <properties>
+      <scm.module.path>modules/enterprise/client/</scm.module.path>
 
-    <dependencies>
+      <jline.version>0.9.94</jline.version>
+      <I18Nlog.version>1.0.9</I18Nlog.version>
+      <persistence-api.version>1.0</persistence-api.version>      
+   </properties>
 
-        <!-- Internal Deps -->
+   <dependencies>
 
-        <dependency>
-            <groupId>org.rhq</groupId>
-            <artifactId>rhq-core-domain</artifactId>
-            <version>${project.version}</version>
-            <scope>provided</scope>
-        </dependency>
+      <!-- Required for WS API Clients or generation -->
+      <!-- 
+      <dependency>
+         <groupId>jboss</groupId>
+         <artifactId>jbossws</artifactId>
+         <scope>provided</scope>
+         <type>zip</type>
+      </dependency>
+      -->
 
-        <dependency>
-            <groupId>org.rhq</groupId>
-            <artifactId>rhq-enterprise-comm</artifactId>
-            <version>${project.version}</version>
-        </dependency>
+      <!-- This only validates that a container is available.  We only use it if
+           we can't find an exploded AS already under the container target directory -->
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-enterprise-server-container</artifactId>
+         <version>${project.version}</version>         
+         <type>zip</type>
+         <scope>provided</scope>
+      </dependency>
 
-        <dependency>
-            <groupId>org.rhq</groupId>
-            <artifactId>rhq-core-plugin-api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-enterprise-server</artifactId>
+         <version>${project.version}</version>
+         <type>ejb</type>
+         <scope>compile</scope>
+      </dependency>
 
-        <dependency>
-            <groupId>org.rhq</groupId>
-            <artifactId>rhq-core-plugin-container</artifactId>
-            <version>${project.version}</version>
-        </dependency>
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-core-domain</artifactId>
+         <version>${project.version}</version>
+         <type>ejb</type>
+         <scope>compile</scope>         
+      </dependency>
 
-        <dependency>
-            <groupId>org.rhq</groupId>
-            <artifactId>rhq-core-client-api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
+      <!-- Required by the CLI  -->
+      <dependency>
+         <groupId>gnu-getopt</groupId>
+         <artifactId>getopt</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+      </dependency>
 
-        <dependency>
-            <groupId>org.rhq</groupId>
-            <artifactId>rhq-enterprise-server</artifactId>
-            <version>${project.version}</version>
-        </dependency>
+      <dependency>
+         <groupId>I18Nlog</groupId>
+         <artifactId>I18Nlog</artifactId>
+         <version>${I18Nlog.version}</version>
+      </dependency>
 
-        <!-- 3rd Party Deps -->
+      <dependency>
+         <groupId>jline</groupId>
+         <artifactId>jline</artifactId>
+         <version>${jline.version}</version>
+      </dependency>
 
-        <dependency>
-            <groupId>gnu-getopt</groupId>
-            <artifactId>getopt</artifactId>
-            <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-        </dependency>
+   </dependencies>
 
+   <build>
+      <plugins>
 
-        <!-- TODO: This is a fix for the Javac bug requiring annotations to be
-available when compiling dependent classes. It is fixed in JDK 6 -->
-        <dependency>
-            <groupId>javax.persistence</groupId>
-            <artifactId>persistence-api</artifactId>
-            <version>1.0</version>
-            <scope>provided</scope>
-        </dependency>
+         <plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
 
-        <dependency>
-            <groupId>jboss</groupId>
-            <artifactId>jboss-remoting</artifactId>
-            <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-        </dependency>
+               <execution>
+                  <id>client-distribution</id>
+                  <phase>install</phase>
+                  <configuration>
+                     <tasks>
+                        <ant
+                           antfile="${basedir}/src/main/resources/rhq-client.build.xml"
+                           dir="${basedir}"
+                           target="prepare-dist"
+                           inheritAll="false"
+                           inheritRefs="false">
 
+                           <property
+                              name="java.jre.home"
+                              value="${java.home}" />
 
-        <dependency>
-            <groupId>jboss</groupId>
-            <artifactId>jboss-j2ee</artifactId>
-            <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->            
-            <scope>provided</scope>
-        </dependency>
+                           <property
+                              name="maven.compile.classpath"
+                              refid="maven.compile.classpath" />
+                           <property
+                              name="maven.runtime.classpath"
+                              refid="maven.runtime.classpath" />
+                           <property
+                              name="buildNumber"
+                              value="${buildNumber}" />
+                              
+                           <property
+                              name="project.build.outputDirectory"
+                              value="${project.build.outputDirectory}" />
+                           <property
+                              name="project.name"
+                              value="${project.name}" />
+                           <property
+                              name="project.groupId"
+                              value="${project.groupId}" />
+                           <property
+                              name="project.version"
+                              value="${project.version}" />
+                           <property
+                              name="settings.localRepository"
+                              value="${settings.localRepository}" />
+                           <property
+                              name="getopt.version"
+                              value="${getopt.version}" />
+                           <property
+                              name="jbossws.version"
+                              value="${jbossws.version}" />
+                           <property
+                              name="jline.version"
+                              value="${jline.version}" />
+                           <property
+                              name="persistence-api.version"
+                              value="${persistence-api.version}" />
+                              
+                        </ant>
+                     </tasks>
+                  </configuration>
+                  <goals>
+                     <goal>run</goal>
+                  </goals>
+               </execution>
 
-        <dependency>
-            <groupId>jboss</groupId>
-            <artifactId>jboss-ejb3-client</artifactId>
-            <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->            
-            <scope>provided</scope>
-        </dependency>
-        
-        <dependency>
-            <groupId>jboss</groupId>
-            <artifactId>jbossall-client</artifactId>
-            <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->            
-            <scope>provided</scope>
-        </dependency>
+            </executions>
 
-        <dependency>
-            <groupId>jboss.jbossws</groupId>
-            <artifactId>jboss-jaxws</artifactId>
-            <!-- <version>2.0.1.SP2</version>  -->
-        </dependency>
+         </plugin>
 
-        <!-- needed for referenced domain entities that use Hibernate annotations -->
-        <dependency>
-            <groupId>jboss.jboss-embeddable-ejb3</groupId>
-            <artifactId>jboss-ejb3-all</artifactId>
-            <version>1.0.0.Alpha9</version>
-            <scope>provided</scope>
-        </dependency>
-
-        <!-- needed for referenced domain entities that use Hibernate annotations -->
-        <dependency>
-            <groupId>jboss.jboss-embeddable-ejb3</groupId>
-            <artifactId>hibernate-all</artifactId>
-            <version>1.0.0.Alpha9</version>
-            <scope>provided</scope>            
-        </dependency>
-
-        <dependency>
-           <groupId>org.opensymphony.quartz</groupId>
-           <artifactId>quartz</artifactId>
-           <version>1.6.5</version>
-           <scope>provided</scope> <!-- by JBossAS itself, which the container build has packaged with 1.6.5 -->
-        </dependency>
-
-        <dependency>
-           <groupId>hibernate</groupId>
-           <artifactId>hibernate3</artifactId>
-           <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-           <scope>provided</scope> <!-- by JBossAS -->
-        </dependency>
-
-        <dependency>
-            <groupId>xmlrpc</groupId>
-            <artifactId>xmlrpc-client</artifactId>
-            <version>3.0</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.xmlrpc</groupId>
-            <artifactId>xmlrpc-common</artifactId>
-            <version>3.0</version>
-        </dependency>
-
-        <dependency>
-            <groupId>jline</groupId>
-            <artifactId>jline</artifactId>
-            <version>0.9.94</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.testng</groupId>
-            <artifactId>testng</artifactId>
-            <version>5.8</version>
-            <scope>test</scope>
-            <classifier>jdk15</classifier>
-        </dependency>
-
-    </dependencies>
-
-    <build>
-        <plugins>
-
-            <plugin>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <phase>process-classes</phase>
-                        <configuration>
-                            <tasks>
-
-                                <!-- generate the I18N resource bundles -->
-                                <taskdef name="i18n" classpathref="maven.runtime.classpath"
-                                         classname="mazz.i18n.ant.I18NAntTask"/>
-
-                                <!--
-                                                <i18n outputdir="${project.build.outputDirectory}" defaultlocale="en" verbose="false" append="false" verify="true">
-                                                   <classpath refid="maven.runtime.classpath" />
-                                                   <classfileset dir="${project.build.outputDirectory}">
-                                                      <include name="**/AgentI18NResourceKeys.class" />
-                                                      <include name="**/AgentSetupInstructions.class" />
-                                                   </classfileset>
-                                                </i18n>
-                                -->
-                                <!-- create our version.txt file that goes in our jar -->
-                                <tstamp>
-                                    <format property="build.time" pattern="dd.MMM.yyyy HH.mm.ss z"/>
-                                </tstamp>
-
-                                <!-- cross-platform way to get the hostname, assuming hostname executable is in your path -->
-                                <exec executable="hostname" outputproperty="build.hostname" failifexecutionfails="false"
-                                      failonerror="false"/>
-
-                                <echo file="${project.build.outputDirectory}/version.txt" append="false">
-                                    Product-Name=${rhq.product.name}
-                                    Product-Version=${project.version}
-                                    Module-Name=${pom.name}
-                                    Module-Version=${pom.version}
-                                    Build-Date=${build.time}
-                                    Build-Jdk-Vendor=${java.vendor}
-                                    Build-Jdk=${java.version}
-                                    Build-OS-Name=${os.name}
-                                    Build-OS-Version=${os.version}
-                                    Built-By=${user.name}
-                                    Build-Machine=${build.hostname}
-                                    Build-Number=${buildNumber}
-                                </echo>
-
-                            </tasks>
-                        </configuration>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                    </execution>
-
-                    <execution>
-                        <id>client-distro-package</id>
-                        <phase>install</phase>
-                        <configuration>
-                            <tasks>
-                                <ant antfile="${basedir}/ant-run.xml" dir="${basedir}" target="package-dist"
-                                     inheritAll="false" inheritRefs="false">
-                                    <property name="settings.localRepository" value="${settings.localRepository}"/>
-                                    <property name="project.version" value="${project.version}"/>
-
-                                    <property name="concurrent.version" value="${concurrent.version}"/>
-                                    <property name="getopt.version" value="${getopt.version}"/>
-                                    <property name="jboss.version" value="${jboss.version}"/>
-                                    <property name="jboss-common.version" value="${jboss-common.version}"/>
-                                    <property name="jboss-remoting.version" value="${jboss-remoting.version}"/>
-                                    <property name="jboss-serialization.version"
-                                              value="${jboss-serialization.version}"/>
-                                    <property name="sigar.version" value="${sigar.version}"/>
-                                    <property name="jaxb-api.version" value="${jaxb-api.version}"/>
-                                    <property name="jaxb-impl.version" value="${jaxb-impl.version}"/>
-                                </ant>
-                            </tasks>
-                        </configuration>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                    </execution>
-
-
-                    <execution>
-                        <id>clean-test-dirs</id>
-                        <phase>test</phase>
-                        <configuration>
-                            <tasks>
-                                <delete dir="${basedir}/data"/>
-                                <delete dir="${basedir}/plugins"/>
-                            </tasks>
-                        </configuration>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
-                <artifactId>maven-jar-plugin</artifactId>
-                <configuration>
-                    <archive>
-                        <manifestEntries>
-                            <Product-Name>${rhq.product.name}</Product-Name>
-                            <Product-Version>${project.version}</Product-Version>
-                        </manifestEntries>
-                    </archive>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <artifactId>maven-surefire-report-plugin</artifactId>
-            </plugin>
-
-        </plugins>
-    </build>
-
-    <reporting>
-        <plugins>
-
-            <plugin>
-                <artifactId>maven-surefire-report-plugin</artifactId>
-            </plugin>
-
-        </plugins>
-    </reporting>
-
-    <profiles>
-
-        <profile>
-            <id>prod</id>
-            <properties>
-                <agent-with-connectors>true</agent-with-connectors>
-            </properties>
-        </profile>
-
-    </profiles>
+      </plugins>
+   </build>
 
 </project>

@@ -1,0 +1,438 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project
+   name="rhq-client"
+   basedir=".">
+
+   <property
+      name="bin.home"
+      location="${project.build.outputDirectory}/bin" />
+   <!--
+      <property
+      name="jbossws.home"
+      location="${project.build.outputDirectory}/jbossws-native-dist" />
+   -->
+   <property
+      name="lib.home"
+      location="${project.build.outputDirectory}/lib" />
+   <property
+      name="wsdl.home"
+      location="${project.build.outputDirectory}/wsdl" />
+
+   <property
+      name="wsconsume.home"
+      location="${project.build.outputDirectory}/wsconsume-output" />
+   <property
+      name="wsprovide.home"
+      location="${project.build.outputDirectory}/wsprovide-output" />
+
+   <target
+      name="prepare-dist"
+      depends="prepare-client-lib" />
+
+   <!--
+      <target name="prepare-native-dir"> 
+      <echo>*** Removing old native distribution</echo>
+      <delete
+      dir="${jbossws.home}" />
+      <echo>*** Unzipping native distribution</echo>
+      <unzip
+      src="${settings.localRepository}/jboss/jbossws/${jbossws.version}/jbossws-${jbossws.version}.zip"
+      dest="${project.build.outputDirectory}" />         
+      </target>
+   -->
+
+   <target name="prepare-container">
+      <property
+         name="container.project.bin"
+         value="${basedir}/../server/container/target/rhq-server-${project.version}/jbossas/bin" />
+      <property
+         name="container.local.bin"
+         value="${basedir}/target/rhq-server-${project.version}/jbossas/bin" />
+      <!-- set to local unzipping if it exists  -->
+      <condition
+         property="container.bin"
+         value="${container.local.bin}">
+         <available
+            file="${container.local.bin}"
+            type="dir" />
+      </condition>
+      <!-- override with set to actual container build if possible  -->
+      <condition
+         property="container.bin"
+         value="${container.project.bin}">
+         <available
+            file="${container.project.bin}"
+            type="dir" />
+      </condition>
+      <!--  If necessary, unzip a local container -->
+      <antcall target="unzip-local-container" />
+   </target>
+
+   <target
+      name="unzip-local-container"
+      unless="container.bin">
+      <unzip
+         src="${settings.localRepository}/org/rhq/rhq-enterprise-server-container/${project.version}/rhq-enterprise-server-container-${project.version}.zip"
+         dest="${basedir}/target" />
+      <property
+         name="container.bin"
+         value="${container.local.bin}" />
+   </target>
+
+
+   <target name="prepare-bin-dir">
+      <echo>*** Removing old bin dir</echo>
+      <delete dir="${bin.home}" />
+      <echo>*** Creating bin dir</echo>
+      <mkdir dir="${bin.home}" />
+      <echo>*** Populating bin scripts</echo>
+      <copy
+         verbose="true"
+         toDir="${bin.home}">
+         <fileset
+            dir="${basedir}/src/etc/"
+            includes="rhq-cli*.*" />
+      </copy>
+   </target>
+
+   <target name="prepare-lib-dir">
+      <echo>*** Removing old lib</echo>
+      <delete
+         verbose="true"
+         dir="${lib.home}" />
+      <echo>*** Creating lib dir</echo>
+      <mkdir dir="${lib.home}" />
+      <mkdir dir="${lib.home}/endorsed" />
+      <echo>*** Populating lib</echo>
+      <copy
+         file="${settings.localRepository}/gnu-getopt/getopt/${getopt.version}/getopt-${getopt.version}.jar"
+         tofile="${lib.home}/getopt-${getopt.version}.jar"
+         verbose="true" />
+      <copy
+         file="${settings.localRepository}/jline/jline/${jline.version}/jline-${jline.version}.jar"
+         tofile="${lib.home}/jline-${jline.version}.jar"
+         verbose="true" />
+   </target>
+
+   <target name="prepare-wsdl">
+      <echo>*** Removing old wsdl</echo>
+      <delete dir="${wsdl.home}" />
+      <echo>*** Creating wsdl dir</echo>
+
+      <!--  This classpath basically provides the environment the wsprovide script creates.  So,it's
+         JBossws version specific (and assumes compatibility between JBossws and AS -->
+      <path id="jbossws.native.classpath">
+         <!-- java dependencies -->
+         <fileset
+            dir="${java.jre.home}/../lib/"
+            includes="*.jar" />
+
+         <!-- AS dependencies  -->
+         <fileset
+            dir="${container.bin}/../lib/endorsed/"
+            includes="*.jar" />
+         <fileset
+            dir="${container.bin}/../lib/"
+            includes="*.jar" />
+
+         <!-- JBossws/AS client dependencies  -->
+         <fileset dir="${container.bin}/../client">
+            <include name="activation.jar" />
+            <include name="getopt.jar" />
+            <include name="jbossall-client.jar" />
+            <include name="jbossws-client.jar" />
+            <include name="log4j.jar" />
+            <include name="mail.jar" />
+            <include name="jaxb-api.jar" />
+            <include name="jaxb-impl.jar" />
+            <include name="jaxb-xjc.jar" />
+            <include name="jaxws-tools.jar" />
+            <include name="jaxws-rt.jar" />
+            <include name="streambuffer.jar" />
+            <include name="stax-ex.jar" />
+            <include name="javassist.jar" />
+            <include name="jboss-xml-binding.jar" />
+            <include name="jboss-jaxws.jar" />
+            <include name="jboss-jaxrpc.jar" />
+            <include name="jboss-saaj.jar" />
+            <include name="policy.jar" />
+            <include name="wsdl4j.jar" />
+         </fileset>
+
+         <!-- Oddball dependency that seems needed but missing -->
+         <fileset dir="${settings.localRepository}/javax/persistence/persistence-api/${persistence-api.version}/">
+            <include name="persistence-api-${persistence-api.version}.jar" />
+         </fileset>
+
+         <!--  Add support for wsconsume -->
+         <fileset dir="${container.bin}/../client">
+            <include name="wstx.jar" />
+            <include name="stax-api.jar" />
+            <include name="stax-ex.jar" />
+         </fileset>
+      </path>
+
+      <echo>*** Providing ChannelManagerRemote wsdl...</echo>
+      <taskdef
+         name="wsprovide-channel"
+         classname="org.jboss.wsf.spi.tools.ant.WSProvideTask">
+         <classpath>
+            <path refid="jbossws.native.classpath" />
+         </classpath>
+      </taskdef>
+      <wsprovide-channel
+         fork="true"
+         destdir="${wsprovide.home}"
+         resourcedestdir="${wsdl.home}"
+         genwsdl="true"
+         sei="org.rhq.enterprise.server.content.ChannelManagerBean">
+         <classpath>
+            <pathelement path="${maven.runtime.classpath}" />
+         </classpath>
+      </wsprovide-channel>
+
+
+      <echo>*** Providing ConfigurationManagerRemote wsdl...</echo>
+      <taskdef
+         name="wsprovide-configuration"
+         classname="org.jboss.wsf.spi.tools.ant.WSProvideTask">
+         <classpath>
+            <path refid="jbossws.native.classpath" />
+         </classpath>
+      </taskdef>
+      <wsprovide-configuration
+         fork="true"
+         destdir="${wsprovide.home}"
+         resourcedestdir="${wsdl.home}"
+         genwsdl="true"
+         sei="org.rhq.enterprise.server.configuration.ConfigurationManagerBean">
+         <classpath>
+            <pathelement path="${maven.runtime.classpath}" />
+         </classpath>
+      </wsprovide-configuration>
+
+      <echo>*** Providing ContentManagerRemote wsdl...</echo>
+      <taskdef
+         name="wsprovide-content"
+         classname="org.jboss.wsf.spi.tools.ant.WSProvideTask">
+         <classpath>
+            <path refid="jbossws.native.classpath" />
+         </classpath>
+      </taskdef>
+      <wsprovide-content
+         fork="true"
+         destdir="${wsprovide.home}"
+         resourcedestdir="${wsdl.home}"
+         genwsdl="true"
+         sei="org.rhq.enterprise.server.content.ContentManagerBean">
+         <classpath>
+            <pathelement path="${maven.runtime.classpath}" />
+         </classpath>
+      </wsprovide-content>
+
+      <echo>*** Providing OperationManagerRemote wsdl...</echo>
+      <taskdef
+         name="wsprovide-operation"
+         classname="org.jboss.wsf.spi.tools.ant.WSProvideTask">
+         <classpath>
+            <path refid="jbossws.native.classpath" />
+         </classpath>
+      </taskdef>
+      <wsprovide-operation
+         fork="true"
+         destdir="${wsprovide.home}"
+         resourcedestdir="${wsdl.home}"
+         genwsdl="true"
+         sei="org.rhq.enterprise.server.operation.OperationManagerBean">
+         <classpath>
+            <pathelement path="${maven.runtime.classpath}" />
+         </classpath>
+      </wsprovide-operation>
+
+      <echo>*** Providing ResourceManagerRemote wsdl...</echo>
+      <taskdef
+         name="wsprovide-resource"
+         classname="org.jboss.wsf.spi.tools.ant.WSProvideTask">
+         <classpath>
+            <path refid="jbossws.native.classpath" />
+         </classpath>
+      </taskdef>
+      <wsprovide-resource
+         fork="true"
+         destdir="${wsprovide.home}"
+         resourcedestdir="${wsdl.home}"
+         genwsdl="true"
+         sei="org.rhq.enterprise.server.resource.ResourceManagerBean">
+         <classpath>
+            <pathelement path="${maven.runtime.classpath}" />
+         </classpath>
+      </wsprovide-resource>
+
+      <echo>*** Providing RoleManagerRemote wsdl...</echo>
+      <taskdef
+         name="wsprovide-role"
+         classname="org.jboss.wsf.spi.tools.ant.WSProvideTask">
+         <classpath>
+            <path refid="jbossws.native.classpath" />
+         </classpath>
+      </taskdef>
+      <wsprovide-role
+         fork="true"
+         destdir="${wsprovide.home}"
+         resourcedestdir="${wsdl.home}"
+         genwsdl="true"
+         sei="org.rhq.enterprise.server.authz.RoleManagerBean">
+         <classpath>
+            <pathelement path="${maven.runtime.classpath}" />
+         </classpath>
+      </wsprovide-role>
+
+      <echo>*** Providing SubjectManagerRemote wsdl...</echo>
+      <taskdef
+         name="wsprovide-subject"
+         classname="org.jboss.wsf.spi.tools.ant.WSProvideTask">
+         <classpath>
+            <path refid="jbossws.native.classpath" />
+         </classpath>
+      </taskdef>
+      <wsprovide-subject
+         fork="true"
+         destdir="${wsprovide.home}"
+         resourcedestdir="${wsdl.home}"
+         genwsdl="true"
+         sei="org.rhq.enterprise.server.auth.SubjectManagerBean">
+         <classpath>
+            <pathelement path="${maven.runtime.classpath}" />
+         </classpath>
+      </wsprovide-subject>
+
+      <echo>*** Consuming ChannelManagerRemote wsdl...</echo>
+      <taskdef
+         name="wsconsume-channel"
+         classname="org.jboss.wsf.spi.tools.ant.WSConsumeTask">
+         <classpath>
+            <path refid="jbossws.native.classpath" />
+         </classpath>
+      </taskdef>
+      <wsconsume-channel
+         fork="true"
+         package="org.rhq.enterprise.server.ws"
+         destdir="${wsconsume.home}"
+         wsdl="${wsdl.home}ChannelManagerBeanService.wsdl">
+      </wsconsume-channel>
+
+      <echo>*** Consuming ContentManagerRemote wsdl...</echo>
+      <taskdef
+         name="wsconsume-content"
+         classname="org.jboss.wsf.spi.tools.ant.WSConsumeTask">
+         <classpath>
+            <path refid="jbossws.native.classpath" />
+         </classpath>
+      </taskdef>
+      <wsconsume-content
+         fork="true"
+         package="org.rhq.enterprise.server.ws"
+         destdir="${wsconsume.home}"
+         wsdl="${wsdl.home}/ContentManagerBeanService.wsdl">
+      </wsconsume-content>
+
+      <echo>*** Consuming ConfigurationManagerRemote wsdl...</echo>
+      <taskdef
+         name="wsconsume-configuration"
+         classname="org.jboss.wsf.spi.tools.ant.WSConsumeTask">
+         <classpath>
+            <path refid="jbossws.native.classpath" />
+         </classpath>
+      </taskdef>
+      <wsconsume-configuration
+         fork="true"
+         package="org.rhq.enterprise.server.ws"
+         destdir="${wsconsume.home}"
+         wsdl="${wsdl.home}/ConfigurationManagerBeanService.wsdl">
+      </wsconsume-configuration>
+
+      <echo>*** Consuming OperationManagerRemote wsdl...</echo>
+      <taskdef
+         name="wsconsume-operation"
+         classname="org.jboss.wsf.spi.tools.ant.WSConsumeTask">
+         <classpath>
+            <path refid="jbossws.native.classpath" />
+         </classpath>
+      </taskdef>
+      <wsconsume-operation
+         fork="true"
+         package="org.rhq.enterprise.server.ws"
+         destdir="${wsconsume.home}"
+         wsdl="${wsdl.home}/OperationManagerBeanService.wsdl">
+      </wsconsume-operation>
+
+      <echo>*** Consuming ResourceManagerRemote wsdl...</echo>
+      <taskdef
+         name="wsconsume-resource"
+         classname="org.jboss.wsf.spi.tools.ant.WSConsumeTask">
+         <classpath>
+            <path refid="jbossws.native.classpath" />
+         </classpath>
+      </taskdef>
+      <wsconsume-resource
+         fork="true"
+         package="org.rhq.enterprise.server.ws"
+         destdir="${wsconsume.home}"
+         wsdl="${wsdl.home}/ResourceManagerBeanService.wsdl">
+      </wsconsume-resource>
+
+      <echo>*** Consuming RoleManagerRemote wsdl...</echo>
+      <taskdef
+         name="wsconsume-role"
+         classname="org.jboss.wsf.spi.tools.ant.WSConsumeTask">
+         <classpath>
+            <path refid="jbossws.native.classpath" />
+         </classpath>
+      </taskdef>
+      <wsconsume-role
+         fork="true"
+         package="org.rhq.enterprise.server.ws"
+         destdir="${wsconsume.home}"
+         wsdl="${wsdl.home}/RoleManagerBeanService.wsdl">
+      </wsconsume-role>
+
+      <echo>*** Consuming SubjectManagerRemote wsdl...</echo>
+      <taskdef
+         name="wsconsume-subject"
+         classname="org.jboss.wsf.spi.tools.ant.WSConsumeTask">
+         <classpath>
+            <path refid="jbossws.native.classpath" />
+         </classpath>
+      </taskdef>
+      <wsconsume-subject
+         fork="true"
+         package="org.rhq.enterprise.server.ws"
+         destdir="${wsconsume.home}"
+         wsdl="${wsdl.home}/SubjectManagerBeanService.wsdl">
+      </wsconsume-subject>
+   </target>
+
+   <target name="prepare-client-lib">
+      <jar
+         destfile="${lib.home}/rhq-client-${project.version}.jar"
+         basedir="${wsconsume.home}"
+         includes="org/rhq/**">
+         <manifest>
+            <attribute
+               name="Implementation-Title"
+               value="${project.name}" />
+            <attribute
+               name="Implementation-Version"
+               value="${project.version}" />
+            <attribute
+               name="Implementation-Vendor-Id"
+               value="${project.groupId}" />
+            <attribute
+               name="Build-Number"
+               value="${buildNumber}" />               
+         </manifest>
+      </jar>
+   </target>
+
+</project>

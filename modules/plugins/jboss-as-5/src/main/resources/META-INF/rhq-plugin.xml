@@ -2094,7 +2094,7 @@
                     defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
 
             <metric property="maxMessages" measurementType="dynamic" displayType="detail" displayName="Maximum number of Messages"
-                    defaultOn="true" defaultInterval="60000" dataType="management" category="performance"/>
+                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
 
         </service>
         <!-- =================================== ManagedDeployment Resource types ================================== -->

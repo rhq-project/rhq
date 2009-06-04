@@ -28,23 +28,16 @@ import javax.management.MalformedObjectNameException;
 import org.jboss.managed.api.ManagedComponent;
 
 /**
+ * Discovery of EJB3 beans
  * @author Ian Springer
  */
 public class Ejb3BeanDiscoveryComponent extends ManagedComponentDiscoveryComponent {
+
     @Override
     protected String getResourceName(ManagedComponent component) {
-        // e.g. "jboss.j2ee:service=EJB3,name=SecureProfileService-metrics-instance"
+        // e.g. MyMessageDrivenBean-metrics-{instance,invocation}
         String componentName = component.getName();
-        ObjectName objectName;
-        try {
-            objectName = new ObjectName(componentName);
-        }
-        catch (MalformedObjectNameException e) {
-            throw new IllegalStateException("Component name '" + componentName + "' is not a valid ObjectName.", e);
-        }
-        // e.g. "SecureProfileService-metrics-instance"
-        String rawName = objectName.getKeyProperty("name");
-        // e.g. "SecureProfileService"
-        return rawName.substring(0, rawName.indexOf("-metrics-instance"));
+       // e.g. "SecureProfileService"
+        return componentName.substring(0, componentName.indexOf("-metrics-instance"));
     }
 }

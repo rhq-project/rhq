@@ -32,6 +32,10 @@ import org.apache.commons.logging.LogFactory;
 import org.jboss.deployers.spi.management.deploy.DeploymentManager;
 import org.jboss.deployers.spi.management.deploy.DeploymentProgress;
 import org.jboss.deployers.spi.management.deploy.DeploymentStatus;
+import org.jboss.managed.api.ManagedComponent;
+import org.jboss.managed.api.ComponentType;
+import org.jboss.managed.api.ManagedOperation;
+import org.jboss.managed.api.ManagedProperty;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyList;
@@ -70,7 +74,7 @@ import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
      public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
          if ("viewMethodStats".equals(name)) {
 
-             Object invocationStatistics = getInvocationStatistics();
+             ManagedProperty invocationStatistics = getInvocationStatistics();
 
              OperationResult result = new OperationResult();
              PropertyList methodList = new PropertyList("methods");
@@ -104,7 +108,7 @@ import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
              if (schedule.getDataType() == DataType.MEASUREMENT) {
                  numericMetricSchedules.add(schedule);
              } else if (schedule.getName().equals("MethodInvocationTime")) {
-                 Object invocationStatistics;
+                 ManagedProperty invocationStatistics;
                  try {
                      invocationStatistics = getInvocationStatistics();
                  } catch (Exception e) {
@@ -126,23 +130,6 @@ import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
                  }
              }
          }
-
-//         EmsConnection conn = getEmsConnection();
-//         EmsBean bean = conn.getBean(getResourceContext().getResourceKey());
-//         List<EmsAttribute> attributes = bean.refreshAttributes();
-//         for (MeasurementScheduleRequest req : numericMetricSchedules) {
-//             try {
-//                 for (EmsAttribute attr : attributes) {
-//                     if (attr.getName().equals(req.getName())) {
-//                         Integer tmp = (Integer)attr.getValue();
-//                         MeasurementDataNumeric data = new MeasurementDataNumeric(req, Double.valueOf(tmp));
-//                         report.addData(data);
-//                     }
-//                 }
-//             } catch (Exception e) {
-//                 e.printStackTrace();
-//             }
-//         }
 
 
          try {
@@ -209,46 +196,45 @@ import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
          return callTimeData;
      }
 
-
-     private Object getInvocationStatistics() throws Exception {
+     /**
+      * Helper to obtain the statistics from the remote server
+      * @return
+      * @throws Exception
+      */
+     private ManagedProperty getInvocationStatistics() throws Exception {
 
          DeploymentManager deploymentManager = getConnection().getDeploymentManager();
          DeploymentProgress progress;
 
-         progress = deploymentManager.start(getManagedComponent().getName());
-
-                 DeploymentStatus status = DeploymentUtils.run(progress);
-        log.debug("Operation 'viewInvocationStats' on " + getResourceDescription() + " completed with status [" + status
-                + "].");
-         return null; // TODO
-/*
-         ClassLoader cl = Thread.currentThread().getContextClassLoader();
-         Thread.currentThread().setContextClassLoader(getEmsBean().getClass().getClassLoader());
-         // Value is an InvocationStatistics object, but to avoid classloader issues, we don't cast it as such.
-         // (see http://anonsvn.jboss.org/repos/jbossas/branches/Branch_4_2/ejb3/src/main/org/jboss/ejb3/statistics/InvocationStatistics.java)
-         Object invocationStatistics = null;
-         try {
-             invocationStatistics = getEmsBean().getAttribute("InvokeStats").refresh();
-         } catch (RuntimeException e) {
-             String msg = "Failed to retrieve EJB3 invocation stats - perhaps JBoss EJB3 impl version is less than RC9 Patch 1.";
-             log.info(msg + " Enable DEBUG logging to see cause.");
-             if (log.isDebugEnabled())
-                 log.debug(msg, e);
-             throw new Exception(msg, e);
-         } finally {
-             Thread.currentThread().setContextClassLoader(cl);
+         String name = getManagedComponent().getName();
+         // Determine component sub type from original type -- TODO remove when this is fixed in EAP
+         String stype;
+         if (getManagedComponent().getType().getSubtype().equals("MDB"))
+            stype="Message"; // TODO check
+         else
+            stype="Session";
+         ComponentType ct = new ComponentType(getManagedComponent().getType().getType(),stype);
+         name = name.replace("instance","invocation");
+         ManagedComponent invComp = getConnection().getManagementView().getComponent(name,ct);
+         if (invComp==null) {
+             log.warn("No component with name " + name + " and type " + ct + " found");
+             return null;
          }
-         return invocationStatistics;
-*/
+
+         ManagedProperty stats = invComp.getProperty("stats");
+         ManagedProperty lastResetTime = invComp.getProperty("lastResetTime"); // TODO what to do with this?
+
+         return stats;
      }
 
-     private long getLastResetTime(Object invocationStatistics) throws Exception {
+     private long getLastResetTime(ManagedProperty invocationStatistics) throws Exception {
+         // TODO implement this
          Field field = invocationStatistics.getClass().getField("lastResetTime");
          return (Long) field.get(invocationStatistics);
      }
 
-     private Map<String, Object> getStats(Object invocationStatistics) throws Exception {
-         Method method = invocationStatistics.getClass().getMethod("getStats");
-         return (Map<String, Object>) method.invoke(invocationStatistics);
+     private Map<String, Object> getStats(ManagedProperty invocationStatistics) throws Exception {
+        // TODO implement this
+         return (Map<String, Object>) new HashMap<String,Object>();
      }
  }

@@ -61,7 +61,7 @@ import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 //            subclass that class. It will also need to be reworked to use the PS rather than JMX to retrieve the
 //            method invocation call-time stats, once ALR is done implementing those on the JBAS side. (ips, 06/02/09)
 //
- public class EJB3BeanComponent extends EmbeddedManagedDeploymentComponent {
+ public class EJB3BeanComponent extends ManagedComponentComponent {
      private final Log log = LogFactory.getLog(EJB3BeanComponent.class);
 
      private Map<Integer, CallTimeData> previousRawCallTimeDatas = new HashMap<Integer,CallTimeData>();
@@ -127,25 +127,29 @@ import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
              }
          }
 
-         EmsConnection conn = getEmsConnection();
-         EmsBean bean = conn.getBean(getResourceContext().getResourceKey());
-         List<EmsAttribute> attributes = bean.refreshAttributes();
-         for (MeasurementScheduleRequest req : numericMetricSchedules) {
-             try {
-                 for (EmsAttribute attr : attributes) {
-                     if (attr.getName().equals(req.getName())) {
-                         Integer tmp = (Integer)attr.getValue();
-                         MeasurementDataNumeric data = new MeasurementDataNumeric(req, Double.valueOf(tmp));
-                         report.addData(data);
-                     }
-                 }
-             } catch (Exception e) {
-                 e.printStackTrace();
-             }
+//         EmsConnection conn = getEmsConnection();
+//         EmsBean bean = conn.getBean(getResourceContext().getResourceKey());
+//         List<EmsAttribute> attributes = bean.refreshAttributes();
+//         for (MeasurementScheduleRequest req : numericMetricSchedules) {
+//             try {
+//                 for (EmsAttribute attr : attributes) {
+//                     if (attr.getName().equals(req.getName())) {
+//                         Integer tmp = (Integer)attr.getValue();
+//                         MeasurementDataNumeric data = new MeasurementDataNumeric(req, Double.valueOf(tmp));
+//                         report.addData(data);
+//                     }
+//                 }
+//             } catch (Exception e) {
+//                 e.printStackTrace();
+//             }
+//         }
+
+
+         try {
+             super.getValues(report, numericMetricSchedules);
+         } catch (Exception e) {
+             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
          }
-
-
- // TODO        super.getValues(report, numericMetricSchedules);
      }
 
      private CallTimeData createCallTimeData(MeasurementScheduleRequest schedule, Map<String, Object> stats,
@@ -205,17 +209,13 @@ import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
          return callTimeData;
      }
 
-     // NOTE: Invocation stats were not exposed by EJB3 MBeans in versions of JBoss EJB3 prior to RC9 Patch 1
-     //       (see http://jira.jboss.com/jira/browse/EJBTHREE-742 and
-     //       http://viewvc.jboss.org/cgi-bin/viewvc.cgi/jbossas?view=rev&revision=57901). The EJB3 builds
-     //       bundled with JBossAS 4.2.x are newer than RC9 Patch 1, so invocation stats should always be
-     //       available from AS 4.2.x instances.
+
      private Object getInvocationStatistics() throws Exception {
 
          DeploymentManager deploymentManager = getConnection().getDeploymentManager();
          DeploymentProgress progress;
 
-         progress = deploymentManager.start(this.deploymentName);
+         progress = deploymentManager.start(getManagedComponent().getName());
 
                  DeploymentStatus status = DeploymentUtils.run(progress);
         log.debug("Operation 'viewInvocationStats' on " + getResourceDescription() + " completed with status [" + status

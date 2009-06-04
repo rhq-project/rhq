@@ -2033,7 +2033,7 @@
 
         <service name="EJB3 Stateless Session Bean"
                  subCategory="EJBs"
-                 class="ManagedComponentComponent"
+                 class="EJB3BeanComponent"
                  discovery="Ejb3BeanDiscoveryComponent"
                  description="An EJB3 Stateless Session Bean">
 
@@ -2049,7 +2049,7 @@
 
         <service name="EJB3 Stateful Session Bean"
                  subCategory="EJBs"
-                 class="ManagedComponentComponent"
+                 class="EJB3BeanComponent"
                  discovery="Ejb3BeanDiscoveryComponent"
                  description="An EJB3 Stateful Session Bean">
 
@@ -2058,6 +2058,8 @@
                 <c:simple-property name="componentSubtype" default="SFSB" readOnly="true"/>
                 <c:simple-property name="componentName" readOnly="true"/>
             </plugin-configuration>
+            
+            <operation name="viewMethodStats" /> <!-- TODO add result params -->
 
             &ejb3SessionBeanMetrics;
 
@@ -2073,7 +2075,21 @@
 
         </service>
 
+        <service name="EJB3 Message-driven Bean"
+                 subCategory="EJBs"
+                 class="EJB3BeanComponent"
+                 discovery="Ejb3BeanDiscoveryComponent"
+                 description="An EJB3 Message-driven Bean">
 
+            <plugin-configuration>
+                <c:simple-property name="componentType" default="EJB3" readOnly="true"/>
+                <c:simple-property name="componentSubtype" default="MDB" readOnly="true"/>
+                <c:simple-property name="componentName" readOnly="true"/>
+            </plugin-configuration>
+
+            &ejb3SessionBeanMetrics;
+
+        </service>
         <!-- =================================== ManagedDeployment Resource types ================================== -->
 
         <service name="EAR"

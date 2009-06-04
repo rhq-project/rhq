@@ -71,7 +71,7 @@
     <jsf-impl.version>1.2_12</jsf-impl.version>
     <ojdbc14.version>10.2.0.4.0</ojdbc14.version>
     <ojdbc5.version>11.1.0.7.0</ojdbc5.version>
-    <ems.version>1.2.6</ems.version>
+    <ems.version>1.2.5</ems.version>
     <postgresql.version>8.3-604.jdbc3</postgresql.version>
     <h2.version>1.1.113</h2.version>
     <richfaces.version>3.3.0.GA</richfaces.version>

@@ -38,8 +38,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -83,8 +83,8 @@ import org.rhq.core.pc.operation.OperationManager;
 import org.rhq.core.pc.operation.OperationServicesAdapter;
 import org.rhq.core.pc.plugin.BlacklistedException;
 import org.rhq.core.pc.plugin.PluginComponentFactory;
-import org.rhq.core.pc.plugin.PluginManager;
 import org.rhq.core.pc.plugin.PluginEnvironment;
+import org.rhq.core.pc.plugin.PluginManager;
 import org.rhq.core.pc.util.DiscoveryComponentProxyFactory;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pc.util.LoggingThreadFactory;
@@ -431,8 +431,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 Lock lock = resourceContainer.getReadFacetLock();
                 if (lock.tryLock()) {
                     // We have acquired the lock.
-                    try
-                    {
+                    try {
                         ResourceCategory resourceCategory = resource.getResourceType().getCategory();
                         // Give the call to getAvailablity() a bit more time if the Resource is a server.
                         long componentTimeout = (resourceCategory == ResourceCategory.SERVER) ? 10000 : 5000;
@@ -440,9 +439,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                         resourceComponent = resourceContainer.createResourceComponentProxy(ResourceComponent.class,
                             FacetLockType.NONE, componentTimeout, true, true);
                         availType = resourceComponent.getAvailability();
-                    }
-                    catch (PluginContainerException e)
-                    {
+                    } catch (PluginContainerException e) {
                         log.error("Failed to retrieve ResourceComponent for " + resource + ".", e);
                     } catch (RuntimeException e) {
                         log.error("Call to getAvailablity() on ResourceComponent for " + resource + " failed.", e);
@@ -1031,8 +1028,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
     private ResourceContainer initResourceContainer(Resource resource) {
         ResourceContainer resourceContainer = getResourceContainer(resource);
         if (resourceContainer == null) {
-            ClassLoader pluginClassLoader = getPluginClassLoader(resource);
-            resourceContainer = new ResourceContainer(resource, pluginClassLoader);
+            ClassLoader classLoader = getResourceClassloader(resource);
+            resourceContainer = new ResourceContainer(resource, classLoader);
             if (!this.configuration.isInsideAgent()) {
                 // Auto-sync if the PC is running within the embedded JBossAS console.
                 resourceContainer.setSynchronizationState(ResourceContainer.SynchronizationState.SYNCHRONIZED);
@@ -1049,7 +1046,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         return resourceContainer;
     }
 
-    private ClassLoader getPluginClassLoader(Resource resource) {
+    private ClassLoader getResourceClassloader(Resource resource) {
         if (resource.getResourceType().equals(PluginMetadataManager.TEST_PLATFORM_TYPE)) {
             return Thread.currentThread().getContextClassLoader();
         } else {
@@ -1334,8 +1331,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     ResourceContainer resourceContainer = inventoryFile.getResourceContainers().get(uuid);
                     this.resourceContainers.put(uuid, resourceContainer);
                     // Make sure to set the plugin class loader, which is transient and so not saved to inventory.dat.
-                    ClassLoader pluginClassLoader = getPluginClassLoader(resourceContainer.getResource());
-                    resourceContainer.setPluginClassLoader(pluginClassLoader);                    
+                    ClassLoader classLoader = getResourceClassloader(resourceContainer.getResource());
+                    resourceContainer.setResourceClassLoader(classLoader);
                 }
 
                 initResourceContainer(this.platform);

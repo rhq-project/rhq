@@ -44,6 +44,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
@@ -55,7 +56,6 @@ import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pc.util.LoggingThreadFactory;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * This object holds information relative to the running state of a {@link ResourceComponent} in the Plugin Container.
@@ -95,7 +95,7 @@ public class ResourceContainer implements Serializable {
     private transient ResourceComponentState resourceComponentState = ResourceComponentState.STOPPED;
     private transient ReentrantReadWriteLock facetAccessLock = new ReentrantReadWriteLock();
     private transient Map<Integer, Object> proxyCache = new HashMap<Integer, Object>();
-    private transient ClassLoader pluginClassLoader;
+    private transient ClassLoader resourceClassLoader;
 
     /**
      * Initialize the ResourceContainer's internals, such as its thread pools.
@@ -115,9 +115,9 @@ public class ResourceContainer implements Serializable {
         NON_DAEMON_THREAD_POOL.shutdown();
     }
 
-    public ResourceContainer(Resource resource, ClassLoader pluginClassLoader) {
+    public ResourceContainer(Resource resource, ClassLoader resourceClassLoader) {
         this.resource = resource;
-        this.pluginClassLoader = pluginClassLoader;
+        this.resourceClassLoader = resourceClassLoader;
     }
 
     public Availability updateAvailability(AvailabilityType availabilityType) {
@@ -266,12 +266,18 @@ public class ResourceContainer implements Serializable {
         }
     }
 
-    public ClassLoader getPluginClassLoader() {
-        return this.pluginClassLoader;
+    public ClassLoader getResourceClassLoader() {
+        return this.resourceClassLoader;
     }
 
-    public void setPluginClassLoader(ClassLoader pluginClassLoader) {
-        this.pluginClassLoader = pluginClassLoader;
+    /**
+     * Sets the classloader that should be used by the resource when its component interfaces are being invoked.
+     * In most (but not all) cases, this is the plugin classloader of the plugin that defined the resource.
+     *
+     * @param resourceClassLoader the resource's context classloader
+     */
+    public void setResourceClassLoader(ClassLoader resourceClassLoader) {
+        this.resourceClassLoader = resourceClassLoader;
     }
 
     @Override
@@ -402,9 +408,18 @@ public class ResourceContainer implements Serializable {
             boolean daemonThread, Class facetInterface) {
             this.container = container;
             switch (lockType) {
-                case WRITE: this.lock = container.getWriteFacetLock(); break;
-                case READ: this.lock = container.getReadFacetLock(); break;
-                default: this.lock = null; break;
+            case WRITE: {
+                this.lock = container.getWriteFacetLock();
+                break;
+            }
+            case READ: {
+                this.lock = container.getReadFacetLock();
+                break;
+            }
+            default: {
+                this.lock = null;
+                break;
+            }
             }
             if (timeout <= 0) {
                 throw new IllegalArgumentException("timeout value is not positive.");
@@ -460,7 +475,7 @@ public class ResourceContainer implements Serializable {
         private Object invokeInCurrentThreadWithoutLock(Method method, Object[] args) throws Throwable {
             ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
             try {
-                ClassLoader pluginClassLoader = this.container.getPluginClassLoader();
+                ClassLoader pluginClassLoader = this.container.getResourceClassLoader();
                 if (pluginClassLoader == null) {
                     throw new IllegalStateException("No plugin classloader was specified for " + this + ".");
                 }
@@ -501,13 +516,13 @@ public class ResourceContainer implements Serializable {
 
             ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
             try {
-                ClassLoader pluginClassLoader = this.resourceContainer.getPluginClassLoader();
+                ClassLoader pluginClassLoader = this.resourceContainer.getResourceClassLoader();
                 if (pluginClassLoader == null) {
                     throw new IllegalStateException("No plugin classloader was specified for " + this + ".");
                 }
                 Thread.currentThread().setContextClassLoader(pluginClassLoader);
                 // This is the actual call into the resource component's facet interface.
-                @SuppressWarnings({"UnnecessaryLocalVariable"})
+                @SuppressWarnings( { "UnnecessaryLocalVariable" })
                 Object results = this.method.invoke(resourceComponent, this.args);
                 return results;
             } catch (InvocationTargetException e) {
@@ -519,8 +534,7 @@ public class ResourceContainer implements Serializable {
             } catch (Exception e) {
                 throw new RuntimeException(e);
             } finally {
-                if (this.lock != null)
-                {
+                if (this.lock != null) {
                     this.lock.unlock();
                 }
                 Thread.currentThread().setContextClassLoader(originalContextClassLoader);

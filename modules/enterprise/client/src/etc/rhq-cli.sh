@@ -3,6 +3,12 @@
 # =============================================================================
 # RHQ CLI client UNIX Startup Script
 #
+# This file is used to execute the RHQ Agent on a Windows platform.
+# Run this script with the --help option for the runtime options.
+#
+# This script is customizable by setting certain environment variables, which
+# are described in comments in rhq-client-env.sh. The variables can also be
+# set via rhq-client-env.sh, which is sourced by this script.
 # =============================================================================
 
 # ----------------------------------------------------------------------
@@ -106,7 +112,22 @@ if [ -z "$RHQ_CLI_JAVA_OPTS" ]; then
    RHQ_CLI_JAVA_OPTS="-Xms64m -Xmx128m -Djava.net.preferIPv4Stack=true"
 fi
 
-RHQ_CLI_JAVA_OPTS="-Djava.endorsed.dirs=${RHQ_CLI_HOME}/lib/endorsed ${RHQ_CLI_JAVA_OPTS} -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=9787"
+if [ "$RHQ_CLI_JAVA_ENDORSED_DIRS" = "none" ]; then
+   debug_msg "Not explicitly setting java.endorsed.dirs"
+else
+   if [ "x$RHQ_CLI_JAVA_ENDORSED_DIRS" = "x" ]; then
+      RHQ_CLI_JAVA_ENDORSED_DIRS="${RHQ_CLI_HOME}/lib/endorsed"
+   fi
+
+   # convert the path if on Windows
+   if [ "x$_CYGWIN" != "x" ]; then
+      RHQ_CLI_JAVA_ENDORSED_DIRS=`cygpath --windows --path "$RHQ_CLI_JAVA_ENDORSED_DIRS"`
+   fi
+   debug_msg "RHQ_CLI_JAVA_ENDORSED_DIRS: $RHQ_CLI_JAVA_ENDORSED_DIRS"
+   _JAVA_ENDORSED_DIRS_OPT="\"-Djava.endorsed.dirs=${RHQ_CLI_JAVA_ENDORSED_DIRS}\""
+fi
+
+RHQ_CLI_JAVA_OPTS="${_JAVA_ENDORSED_DIRS_OPT} ${RHQ_CLI_JAVA_OPTS} -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=9787"
 
 debug_msg "RHQ_CLI_JAVA_OPTS: $RHQ_CLI_JAVA_OPTS"
 debug_msg "RHQ_CLI_ADDITIONAL_JAVA_OPTS: $RHQ_CLI_ADDITIONAL_JAVA_OPTS"

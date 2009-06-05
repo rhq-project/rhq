@@ -20,7 +20,7 @@
 #                          use. This will be ignored if
 #                          RHQ_CLI_JAVA_EXE_FILE_PATH is set.
 #                          If this and RHQ_CLI_JAVA_EXE_FILE_PATH are
-#                          not set, the CLI's embedded JRE will be used.
+#                          not set, the CLI will default to JAVA_HOME.
 #
 #RHQ_CLI_JAVA_HOME="/opt/java"
 
@@ -29,9 +29,7 @@
 #                                   RHQ_CLI_JAVA_HOME is ignored.
 #                                   If this is not set, then
 #                                   $RHQ_CLI_JAVA_HOME/bin/java
-#                                   is used. If this and
-#                                   RHQ_CLI_JAVA_HOME are not set, the
-#                                   CLI's embedded JRE will be used.
+#                                   is used.
 #
 #RHQ_CLI_JAVA_EXE_FILE_PATH="/usr/local/bin/java"
 

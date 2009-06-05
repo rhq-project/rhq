@@ -27,28 +27,30 @@
       <scm.module.path>modules/enterprise/client/</scm.module.path>
 
       <jline.version>0.9.94</jline.version>
-      <I18Nlog.version>1.0.9</I18Nlog.version>
-      <persistence-api.version>1.0</persistence-api.version>      
+      <i18nlog.version>1.0.9</i18nlog.version>
+      <log4j.version>1.2.14</log4j.version>
+      <persistence-api.version>1.0</persistence-api.version>
    </properties>
 
    <dependencies>
 
       <!-- Required for WS API Clients or generation -->
-      <!-- 
-      <dependency>
+
+      <!-- Currently we are not packaging the JBossWS native distribution. Leave until final decision is made. 
+         <dependency>
          <groupId>jboss</groupId>
          <artifactId>jbossws</artifactId>
          <scope>provided</scope>
          <type>zip</type>
-      </dependency>
+         </dependency>
       -->
 
       <!-- This only validates that a container is available.  We only use it if
-           we can't find an exploded AS already under the container target directory -->
+         we can't find an exploded AS already under the container target directory -->
       <dependency>
          <groupId>org.rhq</groupId>
          <artifactId>rhq-enterprise-server-container</artifactId>
-         <version>${project.version}</version>         
+         <version>${project.version}</version>
          <type>zip</type>
          <scope>provided</scope>
       </dependency>
@@ -66,31 +68,67 @@
          <artifactId>rhq-core-domain</artifactId>
          <version>${project.version}</version>
          <type>ejb</type>
-         <scope>compile</scope>         
+         <scope>compile</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-core-domain</artifactId>
+         <version>${project.version}</version>
+         <type>ejb</type>
+         <scope>compile</scope>
+      </dependency>
+
+      <!--  This is needed for wsprovide's classpath. I'm not sure why, but it's not provided with jbossws -->
+      <dependency>
+         <groupId>javax.persistence</groupId>
+         <artifactId>persistence-api</artifactId>
+         <version>${persistence-api.version}</version>
+         <scope>compile</scope>
       </dependency>
 
       <!-- Required by the CLI  -->
       <dependency>
-         <groupId>gnu-getopt</groupId>
-         <artifactId>getopt</artifactId>
+         <groupId>commons-logging</groupId>
+         <artifactId>commons-logging</artifactId>
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+         <scope>provided</scope>
       </dependency>
 
       <dependency>
-         <groupId>I18Nlog</groupId>
-         <artifactId>I18Nlog</artifactId>
-         <version>${I18Nlog.version}</version>
+         <groupId>gnu-getopt</groupId>
+         <artifactId>getopt</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+         <scope>provided</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>i18nlog</groupId>
+         <artifactId>i18nlog</artifactId>
+         <version>${i18nlog.version}</version>
+         <scope>provided</scope>
       </dependency>
 
       <dependency>
          <groupId>jline</groupId>
          <artifactId>jline</artifactId>
          <version>${jline.version}</version>
+         <scope>provided</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>log4j</groupId>
+         <artifactId>log4j</artifactId>
+         <version>${log4j.version}</version>
+         <scope>provided</scope>
       </dependency>
 
    </dependencies>
 
    <build>
+      <finalName>rhq-client-${project.version}</finalName>
+      <outputDirectory>target/${project.build.finalName}</outputDirectory>
+
       <plugins>
 
          <plugin>
@@ -99,30 +137,28 @@
 
                <execution>
                   <id>client-distribution</id>
-                  <phase>install</phase>
+                  <phase>package</phase>
                   <configuration>
                      <tasks>
                         <ant
-                           antfile="${basedir}/src/main/resources/rhq-client.build.xml"
+                           antfile="${basedir}/src/main/scripts/rhq-client.build.xml"
                            dir="${basedir}"
                            target="prepare-dist"
                            inheritAll="false"
                            inheritRefs="false">
 
                            <property
+                              name="buildNumber"
+                              value="${buildNumber}" />
+                           <property
                               name="java.jre.home"
                               value="${java.home}" />
-
                            <property
                               name="maven.compile.classpath"
                               refid="maven.compile.classpath" />
                            <property
                               name="maven.runtime.classpath"
                               refid="maven.runtime.classpath" />
-                           <property
-                              name="buildNumber"
-                              value="${buildNumber}" />
-                              
                            <property
                               name="project.build.outputDirectory"
                               value="${project.build.outputDirectory}" />
@@ -139,8 +175,14 @@
                               name="settings.localRepository"
                               value="${settings.localRepository}" />
                            <property
+                              name="commons-logging.version"
+                              value="${commons-logging.version}" />
+                           <property
                               name="getopt.version"
                               value="${getopt.version}" />
+                           <property
+                              name="i18nlog.version"
+                              value="${i18nlog.version}" />
                            <property
                               name="jbossws.version"
                               value="${jbossws.version}" />
@@ -148,9 +190,11 @@
                               name="jline.version"
                               value="${jline.version}" />
                            <property
+                              name="log4j.version"
+                              value="${log4j.version}" />
+                           <property
                               name="persistence-api.version"
                               value="${persistence-api.version}" />
-                              
                         </ant>
                      </tasks>
                   </configuration>
@@ -160,7 +204,25 @@
                </execution>
 
             </executions>
+         </plugin>
 
+         <plugin>
+            <artifactId>maven-assembly-plugin</artifactId>
+            <configuration>
+               <descriptors>
+                  <descriptor>src/main/scripts/rhq-client.assembly.xml</descriptor>
+               </descriptors>
+               <finalName>${project.build.finalName}</finalName>
+            </configuration>
+            <executions>
+               <execution>
+                  <id>assemble-rhq-client-zip</id>
+                  <phase>package</phase>
+                  <goals>
+                     <goal>attached</goal>
+                  </goals>
+               </execution>
+            </executions>
          </plugin>
 
       </plugins>

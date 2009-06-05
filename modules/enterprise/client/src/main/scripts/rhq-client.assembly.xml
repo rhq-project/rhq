@@ -16,9 +16,6 @@
       </includes>            
       <excludes>
         <exclude>**/*.sh</exclude>
-        <exclude>**/*.so</exclude>
-        <exclude>**/*.sl</exclude>
-        <exclude>**/*.dylib</exclude>        
       </excludes>
     </fileSet>
     <fileSet>      
@@ -26,9 +23,6 @@
       <outputDirectory>/</outputDirectory>
       <includes>
         <include>**/*.sh</include>
-        <include>**/*.so</include>
-        <include>**/*.sl</include>
-        <include>**/*.dylib</include>
       </includes>            
       <fileMode>0755</fileMode>
     </fileSet>

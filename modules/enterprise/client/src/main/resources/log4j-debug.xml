@@ -23,7 +23,7 @@
    <appender name="FILE" class="org.apache.log4j.RollingFileAppender">
 
       <param name="Threshold"      value="DEBUG"/>
-      <param name="File"           value="logs/agent.log"/>
+      <param name="File"           value="logs/rhq-client.log"/>
       <param name="MaxBackupIndex" value="9"/>
       <param name="MaxFileSize"    value="10MB"/>
       <param name="Append"         value="true"/>
@@ -59,32 +59,6 @@
    <category name="org.rhq">
       <priority value="DEBUG"/>
    </category>
-
-   <!-- RHQ outgoing command tracing  - set to TRACE to trace commands sent by the agent -->
-   <category name="org.rhq.enterprise.communications.command.client.OutgoingCommandTrace">
-      <priority value="NONE"/>
-      <appender-ref ref="COMMANDTRACE"/>
-   </category>
-
-   <!-- RHQ incoming command tracing  - set to TRACE to trace commands coming in from the Server -->
-   <category name="org.rhq.enterprise.communications.command.server.IncomingCommandTrace">
-      <priority value="NONE"/>
-      <appender-ref ref="COMMANDTRACE"/>
-   </category>
-
-   <!-- JBoss/Remoting - for low level communications layer tracing -->
-   <!--
-   <category name="org.jboss.remoting">
-      <priority value="TRACE" class="org.jboss.logging.XLevel"/>
-   </category>
-   -->
-
-   <!-- EMS can be noisy with its WARN messages - uncomment the below to suppress them. -->
-   <!--
-   <category name="org.mc4j.ems">
-      <priority value="ERROR"/>
-   </category>
-   -->
 
    <!-- ======================= -->
    <!-- Setup the Root category -->

@@ -30,11 +30,13 @@ import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertyList;
+import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 
 @Test
@@ -42,14 +44,18 @@ public class SnapshotReportTest {
     private final File baseDir = new File(System.getProperty("java.io.tmpdir"), "test-snapshot");
     private final File configDir = new File(baseDir, "configdir");
     private final File logDir = new File(baseDir, "logdir");
+    private final File additionalDir1 = new File(baseDir, "additional1");
+    private final File additionalDir2 = new File(baseDir, "additional2");
 
-    @BeforeTest
+    @BeforeMethod
     public void prepareTest() {
         configDir.mkdirs();
         logDir.mkdirs();
+        additionalDir1.mkdirs();
+        additionalDir2.mkdirs();
     }
 
-    @AfterTest
+    @AfterMethod
     public void cleanupTest() {
         File[] files = configDir.listFiles();
         if (files != null) {
@@ -66,6 +72,22 @@ public class SnapshotReportTest {
             }
         }
         logDir.delete();
+
+        files = additionalDir1.listFiles();
+        if (files != null) {
+            for (File doomed : files) {
+                doomed.delete();
+            }
+        }
+        additionalDir1.delete();
+
+        files = additionalDir2.listFiles();
+        if (files != null) {
+            for (File doomed : files) {
+                doomed.delete();
+            }
+        }
+        additionalDir2.delete();
 
         baseDir.delete();
     }
@@ -253,6 +275,91 @@ public class SnapshotReportTest {
             //   snapshot.properties
             assert entryNames.size() == 1 : entryNames;
             assert entryNames.contains("snapshot.properties") : entryNames;
+        } finally {
+            snapshot.delete();
+        }
+    }
+
+    public void testSnapshotReportWithAdditionalFiles() throws Exception {
+        writeFile(configDir, "one.config", "config 1 file");
+        writeFile(logDir, "first.log", "log 1 file");
+        writeFile(additionalDir1, "adddir1-custom-file1.txt", "1. custom file #1");
+        writeFile(additionalDir1, "adddir1-custom-file2.txt", "1. custom file #2");
+        writeFile(additionalDir1, "adddir1-custom-file3.xml", "1. custom file #3 XML");
+        writeFile(additionalDir2, "adddir2-custom-file1.txt", "2. custom file #1");
+        writeFile(additionalDir2, "adddir2-custom-file2.txt", "2. custom file #2");
+        writeFile(additionalDir2, "adddir2-custom-file3.xml", "2. custom file #3 XML");
+
+        Configuration config = new Configuration();
+        config.put(new PropertySimple(SnapshotReport.PROP_BASE_DIRECTORY, baseDir.getAbsolutePath()));
+        config.put(new PropertySimple(SnapshotReport.PROP_SNAPSHOT_CONFIG_FILES, "true"));
+        config.put(new PropertySimple(SnapshotReport.PROP_SNAPSHOT_LOG_FILES, "true"));
+        config.put(new PropertySimple(SnapshotReport.PROP_SNAPSHOT_ADDITIONAL_FILES, "true"));
+        config.put(new PropertySimple(SnapshotReport.PROP_CONFIG_DIRECTORY, configDir.getName())); // relative path
+        config.put(new PropertySimple(SnapshotReport.PROP_LOG_DIRECTORY, logDir.getName())); // relative path
+        config.put(new PropertySimple(SnapshotReport.PROP_CONFIG_REGEX, ".*\\.config"));
+        config.put(new PropertySimple(SnapshotReport.PROP_LOG_REGEX, ".*\\.log"));
+
+        String dir1 = additionalDir1.getName();
+        String dir2 = additionalDir2.getName();
+
+        PropertyList additionalList = new PropertyList(SnapshotReport.PROP_ADDITIONAL_FILES_LIST);
+        PropertyMap additionalFiles1 = new PropertyMap("map");
+        PropertyMap additionalFiles2 = new PropertyMap("map");
+        PropertyMap additionalFiles3 = new PropertyMap("map");
+        PropertyMap additionalFiles4 = new PropertyMap("map");
+        additionalFiles1.put(new PropertySimple(SnapshotReport.PROP_ADDITIONAL_FILES_DIRECTORY, dir1));
+        additionalFiles1.put(new PropertySimple(SnapshotReport.PROP_ADDITIONAL_FILES_REGEX, ".*\\.txt"));
+        additionalFiles1.put(new PropertySimple(SnapshotReport.PROP_SNAPSHOT_ADDITIONAL_FILES, "true"));
+        additionalFiles2.put(new PropertySimple(SnapshotReport.PROP_ADDITIONAL_FILES_DIRECTORY, dir2));
+        additionalFiles2.put(new PropertySimple(SnapshotReport.PROP_ADDITIONAL_FILES_REGEX, ".*\\.txt"));
+        //additionalFiles2.put(new PropertySimple(SnapshotReport.PROP_SNAPSHOT_ADDITIONAL_FILES, "true")); // default should be true
+        additionalFiles3.put(new PropertySimple(SnapshotReport.PROP_ADDITIONAL_FILES_DIRECTORY, dir1));
+        additionalFiles3.put(new PropertySimple(SnapshotReport.PROP_ADDITIONAL_FILES_REGEX, ".*\\.xml"));
+        additionalFiles3.put(new PropertySimple(SnapshotReport.PROP_SNAPSHOT_ADDITIONAL_FILES, "true"));
+        additionalFiles4.put(new PropertySimple(SnapshotReport.PROP_ADDITIONAL_FILES_DIRECTORY, dir2));
+        additionalFiles4.put(new PropertySimple(SnapshotReport.PROP_ADDITIONAL_FILES_REGEX, ".*\\.xml"));
+        additionalFiles4.put(new PropertySimple(SnapshotReport.PROP_SNAPSHOT_ADDITIONAL_FILES, "false"));
+
+        config.put(additionalList);
+        additionalList.add(additionalFiles1);
+        additionalList.add(additionalFiles2);
+        additionalList.add(additionalFiles3);
+        additionalList.add(additionalFiles4);
+
+        SnapshotReport report = new SnapshotReport("test-snapshot", "some desc", config);
+        File snapshot = report.generate();
+        try {
+            FileInputStream fis = new FileInputStream(snapshot);
+            ZipInputStream zip = new ZipInputStream(fis);
+            ZipEntry zipEntry;
+            Set<String> entryNames = new HashSet<String>();
+            try {
+                for (zipEntry = zip.getNextEntry(); zipEntry != null; zipEntry = zip.getNextEntry()) {
+                    entryNames.add(zipEntry.getName());
+                }
+            } finally {
+                zip.close();
+            }
+
+            // there should be the following files in the snapshot report:
+            //   snapshot.properties
+            //   config/one.config
+            //   log/first.log
+            //   additional1/adddir1-custom-file1.txt
+            //   additional1/adddir1-custom-file2.txt
+            //   additional2/adddir2-custom-file1.txt
+            //   additional2/adddir2-custom-file2.txt
+            //   additional1/adddir1-custom-file3.xml
+            assert entryNames.size() == 8 : entryNames;
+            assert entryNames.contains("snapshot.properties") : entryNames;
+            assert entryNames.contains("config/one.config") : entryNames;
+            assert entryNames.contains("log/first.log") : entryNames;
+            assert entryNames.contains("additional1/adddir1-custom-file1.txt") : entryNames;
+            assert entryNames.contains("additional1/adddir1-custom-file2.txt") : entryNames;
+            assert entryNames.contains("additional2/adddir2-custom-file1.txt") : entryNames;
+            assert entryNames.contains("additional2/adddir2-custom-file2.txt") : entryNames;
+            assert entryNames.contains("additional1/adddir1-custom-file3.xml") : entryNames;
         } finally {
             snapshot.delete();
         }

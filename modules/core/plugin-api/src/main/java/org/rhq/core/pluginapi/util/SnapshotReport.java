@@ -33,7 +33,13 @@ import java.util.Properties;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertyList;
+import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.util.stream.StreamUtil;
 
 /**
@@ -43,6 +49,8 @@ import org.rhq.core.util.stream.StreamUtil;
  * @author John Mazzitelli
  */
 public class SnapshotReport {
+    private static final Log log = LogFactory.getLog(SnapshotReport.class);
+
     /**
      * The relative directory under the report where the config files can be found. This
      * is the directory that will be found inside the zip file.
@@ -88,6 +96,31 @@ public class SnapshotReport {
      * that are to be snapshotted. This regex must match files under the log directory.
      */
     public static final String PROP_LOG_REGEX = "snapshotLogRegex";
+
+    /**
+     * A boolean config property that dictates if a snapshot of the additional files should be in the report.
+     */
+    public static final String PROP_SNAPSHOT_ADDITIONAL_FILES = "snapshotAdditionalFilesEnabled";
+
+    /**
+     * The property name for the list of of additional files.
+     */
+    public static final String PROP_ADDITIONAL_FILES_LIST = "snapshotAdditionalFilesList";
+
+    /**
+     * A config property whose value is a directory relative to the base directory where
+     * additional files are located.
+     * This should be a property inside a map where that map is a list item within a additional files list.
+     */
+    public static final String PROP_ADDITIONAL_FILES_DIRECTORY = "snapshotAdditionalFilesDirectory";
+
+    /**
+     * A config property whose value is a regular expression that matches all additional files
+     * that are to be snapshotted. This regex must match files under its associated
+     * additional files directory.
+     * This should be a property inside a map where that map is a list item within a additional files list.
+     */
+    public static final String PROP_ADDITIONAL_FILES_REGEX = "snapshotAdditionalFilesRegex";
 
     /**
      * A config property whose value is the base directory where all config and logs files are under
@@ -163,6 +196,11 @@ public class SnapshotReport {
             allFiles.putAll(logFiles);
         }
 
+        Map<String, URL> additionalFiles = getAdditionalFilesToSnapshot();
+        if (additionalFiles != null) {
+            allFiles.putAll(additionalFiles);
+        }
+
         return allFiles;
     }
 
@@ -176,17 +214,21 @@ public class SnapshotReport {
         String confDir = config.getSimpleValue(PROP_CONFIG_DIRECTORY, "conf");
         String confRegex = config.getSimpleValue(PROP_CONFIG_REGEX, null);
 
+        Map<String, URL> filesMap = null;
+
         File confDirFile = new File(baseDir, confDir);
         File[] confFiles = confDirFile.listFiles(new RegexFilenameFilter(confRegex));
         if (confFiles != null) {
-            Map<String, URL> filesMap = new HashMap<String, URL>(confFiles.length);
+            filesMap = new HashMap<String, URL>(confFiles.length);
             for (File confFile : confFiles) {
                 filesMap.put(REPORT_CONFIG_DIRECTORY + '/' + confFile.getName(), confFile.toURI().toURL());
             }
-            return filesMap;
         } else {
-            throw new Exception("Failed to get list of conf files from [" + confDirFile + "]");
+            // the directory probably doesn't exist, this may not be fatal so just log and keep going
+            log.warn("Failed to get list of conf files from [" + confDirFile + "]");
         }
+
+        return filesMap;
     }
 
     protected Map<String, URL> getLogFilesToSnapshot() throws Exception {
@@ -199,17 +241,61 @@ public class SnapshotReport {
         String logDir = config.getSimpleValue(PROP_LOG_DIRECTORY, "logs");
         String logRegex = config.getSimpleValue(PROP_LOG_REGEX, null);
 
+        Map<String, URL> filesMap = null;
+
         File logDirFile = new File(baseDir, logDir);
         File[] logFiles = logDirFile.listFiles(new RegexFilenameFilter(logRegex));
         if (logFiles != null) {
-            Map<String, URL> filesMap = new HashMap<String, URL>(logFiles.length);
+            filesMap = new HashMap<String, URL>(logFiles.length);
             for (File logFile : logFiles) {
                 filesMap.put(REPORT_LOG_DIRECTORY + '/' + logFile.getName(), logFile.toURI().toURL());
             }
-            return filesMap;
         } else {
-            throw new Exception("Failed to get list of log files from [" + logDirFile + "]");
+            // the directory probably doesn't exist, this may not be fatal so just log and keep going
+            log.warn("Failed to get list of log files from [" + logDirFile + "]");
         }
+
+        return filesMap;
+    }
+
+    protected Map<String, URL> getAdditionalFilesToSnapshot() throws Exception {
+        Configuration config = getConfiguration();
+        if (!"true".equals(config.getSimpleValue(PROP_SNAPSHOT_ADDITIONAL_FILES, "false"))) {
+            return null; // any additional files are not to be snapshotted into the report, abort
+        }
+
+        String baseDir = config.getSimpleValue(PROP_BASE_DIRECTORY, null);
+        PropertyList additionalList = config.getList(PROP_ADDITIONAL_FILES_LIST);
+        if (additionalList == null || additionalList.getList() == null) {
+            return null; // there are no additional files defined, just skip it
+        }
+
+        Map<String, URL> filesMap = new HashMap<String, URL>();
+
+        for (Property property : additionalList.getList()) {
+            PropertyMap additionalFileMap = (PropertyMap) property; // must be a map, let it throw exception if not
+            String additionalFilesDir = additionalFileMap.getSimpleValue(PROP_ADDITIONAL_FILES_DIRECTORY, "");
+            String additionalFilesRegex = additionalFileMap.getSimpleValue(PROP_ADDITIONAL_FILES_REGEX, null);
+
+            // it is possible that the user wanted to just disable one of the additional files
+            String additionalFilesEnabled = additionalFileMap.getSimpleValue(PROP_SNAPSHOT_ADDITIONAL_FILES, "true");
+            if (!"true".equals(additionalFilesEnabled)) {
+                continue;
+            }
+
+            File additionalFilesDirFile = new File(baseDir, additionalFilesDir);
+            File[] additionalFiles = additionalFilesDirFile.listFiles(new RegexFilenameFilter(additionalFilesRegex));
+            if (additionalFiles != null) {
+                for (File additionalFile : additionalFiles) {
+                    filesMap.put(additionalFilesDir + '/' + additionalFile.getName(), additionalFile.toURI().toURL());
+                }
+            } else {
+                // the directory probably doesn't exist, this may not be fatal so just log and keep going
+                log.warn("Failed to get list of additional files from [" + additionalFilesDirFile + "]");
+            }
+        }
+
+        return filesMap;
     }
 
     /**

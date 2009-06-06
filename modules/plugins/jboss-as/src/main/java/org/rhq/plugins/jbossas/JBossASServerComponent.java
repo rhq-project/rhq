@@ -90,6 +90,7 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.core.pluginapi.snapshot.SnapshotReportFacet;
 import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.plugins.jbossas.helper.JavaSystemProperties;
 import org.rhq.plugins.jbossas.helper.MainDeployer;
@@ -99,6 +100,7 @@ import org.rhq.plugins.jbossas.util.DeploymentUtility;
 import org.rhq.plugins.jbossas.util.FileContentDelegate;
 import org.rhq.plugins.jbossas.util.FileNameUtility;
 import org.rhq.plugins.jbossas.util.JBossASContentFacetDelegate;
+import org.rhq.plugins.jbossas.util.JBossASSnapshotReport;
 import org.rhq.plugins.jbossas.util.JarContentDelegate;
 import org.rhq.plugins.jbossas.util.XMLConfigurationEditor;
 import org.rhq.plugins.jmx.JMXComponent;
@@ -114,7 +116,7 @@ import org.rhq.plugins.jmx.ObjectNameQueryUtility;
  * @author Ian Springer
  */
 public class JBossASServerComponent implements MeasurementFacet, OperationFacet, JMXComponent,
-    CreateChildResourceFacet, ApplicationServerComponent, ContentFacet {
+    CreateChildResourceFacet, ApplicationServerComponent, ContentFacet, SnapshotReportFacet {
     // Constants  --------------------------------------------
 
     private static final String LOCALHOST = "localhost";
@@ -371,6 +373,18 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
         return report;
     }
 
+    // SnapshotReportFacet Implementation  --------------------------------------------
+
+    public InputStream getSnapshotReport(String name, String description) throws Exception {
+        Configuration pluginConfig = resourceContext.getPluginConfiguration();
+        String tmpDir = resourceContext.getTemporaryDirectory().getAbsolutePath();
+        JBossASSnapshotReport report = new JBossASSnapshotReport(name, description, pluginConfig, this.configPath.getCanonicalPath(), tmpDir);
+        File reportFile = report.generate();
+        InputStream inputStream = new BufferedInputStream(new FileInputStream(reportFile));
+        return inputStream;
+    }
+    
+    
     // JMXComponent Implementation  --------------------------------------------
 
     public EmsConnection getEmsConnection() {

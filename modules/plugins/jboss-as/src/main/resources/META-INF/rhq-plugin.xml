@@ -112,15 +112,26 @@
          </c:group>
 
          <c:group name="snapshotReport" displayName="Snapshot Report">
-            <c:simple-property name="snapshotConfigEnabled" type="boolean" default="true" description="If true, take a snapshot of the configuration"/>
-            <c:simple-property name="snapshotConfigDirectory" type="string" default="conf" description="The directory containing the configuration files that will be captured in the snapshot. This is usually relative to the configurationPath but can be a full absolute path."/>
-            <c:simple-property name="snapshotConfigRegex" type="string" required="false" description="If defined, this regular expression must match a configuration file name if that file is to be captured in the snapshot. If not defined, all configuration files will be captured."/>
-            <c:simple-property name="snapshotLogEnabled" type="boolean" default="true" description="If true, take a snapshot of the log files"/>
-            <c:simple-property name="snapshotLogDirectory" type="string" default="log" description="The directory containing the log files that will be captured in the snapshot. This is usually relative to the configurationPath but can be a full absolute path."/>
-            <c:simple-property name="snapshotLogRegex" type="string" required="false" description="If defined, this regular expression must match a log file name if that file is to be captured in the snapshot. If not defined, all log files will be captured."/>
-            <c:simple-property name="snapshotDataEnabled" type="boolean" default="false" description="If true, take a snapshot of the data files"/>
-            <c:simple-property name="snapshotDataDirectory" type="string" default="data" description="The directory containing the data files that will be captured in the snapshot. This is usually relative to the configurationPath but can be a full absolute path."/>
-            <c:simple-property name="snapshotDataRegex" type="string" required="false" description="If defined, this regular expression must match a data file name if that file is to be captured in the snapshot. If not defined, all data files will be captured."/>
+             <c:simple-property name="snapshotConfigEnabled" type="boolean" default="true" description="If true, take a snapshot of the configuration"/>
+             <c:simple-property name="snapshotConfigDirectory" type="string" default="conf" description="The directory containing the configuration files that will be captured in the snapshot. This is usually relative to the configurationPath but can be a full absolute path."/>
+             <c:simple-property name="snapshotConfigRegex" type="string" required="false" description="If defined, this regular expression must match a configuration file name if that file is to be captured in the snapshot. If not defined, all configuration files will be captured."/>
+             <c:simple-property name="snapshotConfigRecursive" type="boolean" default="true" description="If true, the snapshot will include files located in subdirectories under the config directory."/>
+             <c:simple-property name="snapshotLogEnabled" type="boolean" default="true" description="If true, take a snapshot of the log files"/>
+             <c:simple-property name="snapshotLogDirectory" type="string" default="log" description="The directory containing the log files that will be captured in the snapshot. This is usually relative to the configurationPath but can be a full absolute path."/>
+             <c:simple-property name="snapshotLogRegex" type="string" required="false" description="If defined, this regular expression must match a log file name if that file is to be captured in the snapshot. If not defined, all log files will be captured."/>
+             <c:simple-property name="snapshotLogRecursive" type="boolean" default="false" description="If true, the snapshot will include files located in subdirectories under the log directory."/>
+             <c:simple-property name="snapshotDataEnabled" type="boolean" default="false" description="If true, take a snapshot of the data files"/>
+             <c:simple-property name="snapshotDataDirectory" type="string" default="data" description="The directory containing the data files that will be captured in the snapshot. This is usually relative to the configurationPath but can be a full absolute path."/>
+             <c:simple-property name="snapshotDataRegex" type="string" required="false" description="If defined, this regular expression must match a data file name if that file is to be captured in the snapshot. If not defined, all data files will be captured."/>
+             <c:simple-property name="snapshotDataRecursive" type="boolean" default="true" description="If true, the snapshot will include files located in subdirectories under the data directory."/>
+             <c:list-property name="snapshotAdditionalFilesList" description="Additional files to be included in the snapshot report">
+                 <c:map-property name="snapshotAdditionalFilesMap">
+                     <c:simple-property name="snapshotAdditionalFilesEnabled" summary="true" type="boolean" default="true" description="If true, take a snapshot of these additional files"/>
+                     <c:simple-property name="snapshotAdditionalFilesDirectory" summary="true" type="string" default="" description="The directory containing the additional files that will be captured in the snapshot. This is usually relative to the configurationPath but can be a full absolute path."/>
+                     <c:simple-property name="snapshotAdditionalFilesRegex" summary="true" type="string" required="false" description="If defined, this regular expression must match an additional file name if that file is to be captured in the snapshot. If not defined, all additional files will be captured."/>
+                     <c:simple-property name="snapshotAdditionalFilesRecursive" summary="true" type="boolean" default="true" description="If true, the snapshot will include files located in subdirectories under the additional files directory."/>
+                 </c:map-property>
+             </c:list-property>
          </c:group>         
 
          <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">

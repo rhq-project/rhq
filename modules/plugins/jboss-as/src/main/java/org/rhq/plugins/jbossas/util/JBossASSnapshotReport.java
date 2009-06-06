@@ -23,6 +23,7 @@
 package org.rhq.plugins.jbossas.util;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.util.SnapshotReport;
 
@@ -41,6 +42,7 @@ public class JBossASSnapshotReport extends SnapshotReport {
         Configuration config = new Configuration();
         config.put(new PropertySimple(SnapshotReport.PROP_REPORT_OUTPUT_DIRECTORY, tmpDir));
         config.put(new PropertySimple(SnapshotReport.PROP_BASE_DIRECTORY, configPath));
+        
         config.put(new PropertySimple(SnapshotReport.PROP_SNAPSHOT_CONFIG_FILES, pluginConfiguration.getSimpleValue(
             SnapshotReport.PROP_SNAPSHOT_CONFIG_FILES, "true")));
         config.put(new PropertySimple(SnapshotReport.PROP_SNAPSHOT_LOG_FILES, pluginConfiguration.getSimpleValue(
@@ -59,6 +61,22 @@ public class JBossASSnapshotReport extends SnapshotReport {
             SnapshotReport.PROP_LOG_REGEX, null)));
         config.put(new PropertySimple(SnapshotReport.PROP_DATA_REGEX, pluginConfiguration.getSimpleValue(
             SnapshotReport.PROP_DATA_REGEX, null)));
+        config.put(new PropertySimple(SnapshotReport.PROP_CONFIG_RECURSIVE, pluginConfiguration.getSimpleValue(
+            SnapshotReport.PROP_CONFIG_RECURSIVE, null)));
+        config.put(new PropertySimple(SnapshotReport.PROP_LOG_RECURSIVE, pluginConfiguration.getSimpleValue(
+            SnapshotReport.PROP_LOG_RECURSIVE, null)));
+        config.put(new PropertySimple(SnapshotReport.PROP_DATA_RECURSIVE, pluginConfiguration.getSimpleValue(
+            SnapshotReport.PROP_DATA_RECURSIVE, null)));
+        
+        // our list-o-maps have the same names in the plugin descriptor as required
+        // by SnapshotReport object so we can just make a shallow copy. 
+        PropertyList additionaFilesList = pluginConfiguration.getList(PROP_ADDITIONAL_FILES_LIST);
+        if (additionaFilesList != null) {
+            // a list is defined, so as a whole, we enable the ability to snapshot additional files globally.
+            // each map in the list has the ability to individual enable/disable themselves if they want
+           config.put(new PropertySimple(SnapshotReport.PROP_SNAPSHOT_ADDITIONAL_FILES, "true"));
+           config.put(additionaFilesList);
+        }
 
         return config;
     }

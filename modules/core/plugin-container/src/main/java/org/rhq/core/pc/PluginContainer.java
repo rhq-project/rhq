@@ -40,6 +40,7 @@ import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
 import org.rhq.core.clientapi.agent.inventory.ResourceFactoryAgentService;
 import org.rhq.core.clientapi.agent.measurement.MeasurementAgentService;
 import org.rhq.core.clientapi.agent.operation.OperationAgentService;
+import org.rhq.core.clientapi.agent.snapshot.SnapshotReportAgentService;
 import org.rhq.core.pc.agent.AgentRegistrar;
 import org.rhq.core.pc.agent.AgentService;
 import org.rhq.core.pc.agent.AgentServiceLifecycleListener;
@@ -54,6 +55,7 @@ import org.rhq.core.pc.measurement.MeasurementManager;
 import org.rhq.core.pc.operation.OperationManager;
 import org.rhq.core.pc.plugin.PluginComponentFactory;
 import org.rhq.core.pc.plugin.PluginManager;
+import org.rhq.core.pc.snapshot.SnapshotReportManager;
 import org.rhq.core.pluginapi.util.FileUtils;
 
 /**
@@ -86,6 +88,7 @@ public class PluginContainer implements ContainerService {
     private ResourceFactoryManager resourceFactoryManager;
     private ContentManager contentManager;
     private EventManager eventManager;
+    private SnapshotReportManager snapshotReportManager;
 
     private Collection<AgentServiceLifecycleListener> agentServiceListeners = new LinkedHashSet<AgentServiceLifecycleListener>();
     private AgentServiceStreamRemoter agentServiceStreamRemoter = null;
@@ -226,6 +229,7 @@ public class PluginContainer implements ContainerService {
                 resourceFactoryManager = new ResourceFactoryManager();
                 contentManager = new ContentManager();
                 eventManager = new EventManager();
+                snapshotReportManager = new SnapshotReportManager();
 
                 startContainerService(pluginManager);
                 startContainerService(pluginComponentFactory);
@@ -236,6 +240,7 @@ public class PluginContainer implements ContainerService {
                 startContainerService(resourceFactoryManager);
                 startContainerService(contentManager);
                 startContainerService(eventManager);
+                startContainerService(snapshotReportManager);
 
                 started = true;
             }
@@ -257,6 +262,7 @@ public class PluginContainer implements ContainerService {
 
                 boolean isInsideAgent = configuration.isInsideAgent();
 
+                snapshotReportManager.shutdown();
                 eventManager.shutdown();
                 contentManager.shutdown();
                 resourceFactoryManager.shutdown();
@@ -274,6 +280,7 @@ public class PluginContainer implements ContainerService {
 
                 ResourceContainer.shutdown();
 
+                snapshotReportManager = null;
                 eventManager = null;
                 contentManager = null;
                 resourceFactoryManager = null;
@@ -469,6 +476,15 @@ public class PluginContainer implements ContainerService {
         }
     }
 
+    public SnapshotReportManager getSnapshotReportManager() {
+        Lock lock = obtainReadLock();
+        try {
+            return snapshotReportManager;
+        } finally {
+            releaseLock(lock);
+        }
+    }
+
     // The methods below return the manager implementations wrapped in their remote client interfaces.
     // External clients to the plugin container should probably use these rather than the getXXXManager() methods.
 
@@ -496,7 +512,11 @@ public class PluginContainer implements ContainerService {
         return getContentManager();
     }
 
+    public SnapshotReportAgentService getSnapshotReportAgentService() {
+        return getSnapshotReportManager();
+    }
+
     public boolean isInsideAgent() {
         return (this.configuration != null && this.configuration.isInsideAgent());
-    }    
+    }
 }

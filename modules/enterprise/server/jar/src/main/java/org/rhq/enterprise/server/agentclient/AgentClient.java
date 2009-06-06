@@ -24,6 +24,7 @@ import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
 import org.rhq.core.clientapi.agent.inventory.ResourceFactoryAgentService;
 import org.rhq.core.clientapi.agent.measurement.MeasurementAgentService;
 import org.rhq.core.clientapi.agent.operation.OperationAgentService;
+import org.rhq.core.clientapi.agent.snapshot.SnapshotReportAgentService;
 import org.rhq.core.domain.resource.Agent;
 
 /**
@@ -76,4 +77,6 @@ public interface AgentClient {
     OperationAgentService getOperationAgentService();
 
     ConfigurationAgentService getConfigurationAgentService();
+
+    SnapshotReportAgentService getSnapshotReportAgentService();
 }

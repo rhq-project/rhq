@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.test;
 
+import java.io.InputStream;
 import java.util.List;
 import java.util.Set;
 
@@ -35,6 +36,7 @@ import org.rhq.core.clientapi.agent.inventory.ResourceFactoryAgentService;
 import org.rhq.core.clientapi.agent.measurement.MeasurementAgentService;
 import org.rhq.core.clientapi.agent.operation.CancelResults;
 import org.rhq.core.clientapi.agent.operation.OperationAgentService;
+import org.rhq.core.clientapi.agent.snapshot.SnapshotReportAgentService;
 import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
 import org.rhq.core.communications.command.annotation.Asynchronous;
 import org.rhq.core.domain.configuration.Configuration;
@@ -49,16 +51,17 @@ import org.rhq.core.domain.discovery.InventoryReport;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.measurement.Availability;
+import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
-import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 
 public class TestAgentClient implements AgentClient, ContentAgentService, ResourceFactoryAgentService,
-    ConfigurationAgentService, DiscoveryAgentService, MeasurementAgentService, OperationAgentService {
+    ConfigurationAgentService, DiscoveryAgentService, MeasurementAgentService, OperationAgentService,
+    SnapshotReportAgentService {
     private final Agent agent;
     private final TestServerCommunicationsService commService;
 
@@ -95,6 +98,10 @@ public class TestAgentClient implements AgentClient, ContentAgentService, Resour
         return (commService.operationService != null) ? commService.operationService : this;
     }
 
+    public SnapshotReportAgentService getSnapshotReportAgentService() {
+        return (commService.snapshotReportService != null) ? commService.snapshotReportService : this;
+    }
+
     public void startSending() {
         return; // no-op
     }
@@ -109,7 +116,8 @@ public class TestAgentClient implements AgentClient, ContentAgentService, Resour
 
     // provide no-ops for all agent services
 
-    public Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, DataType dataType, String... measurementNames) {
+    public Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, DataType dataType,
+        String... measurementNames) {
         return null;
     }
 
@@ -226,6 +234,10 @@ public class TestAgentClient implements AgentClient, ContentAgentService, Resour
 
     public DeleteResourceResponse executeDeleteResourceImmediately(DeleteResourceRequest request)
         throws PluginContainerException {
+        return null;
+    }
+
+    public InputStream getSnapshotReport(int resourceId, String name, String description) throws Exception {
         return null;
     }
 }

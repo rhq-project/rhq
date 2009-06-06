@@ -32,6 +32,7 @@ import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
 import org.rhq.core.clientapi.agent.inventory.ResourceFactoryAgentService;
 import org.rhq.core.clientapi.agent.measurement.MeasurementAgentService;
 import org.rhq.core.clientapi.agent.operation.OperationAgentService;
+import org.rhq.core.clientapi.agent.snapshot.SnapshotReportAgentService;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.enterprise.communications.ServiceContainer;
 import org.rhq.enterprise.communications.command.server.CommandProcessorMetrics.Calltime;
@@ -50,6 +51,7 @@ public class TestServerCommunicationsService implements TestServerCommunications
     public DiscoveryAgentService discoveryService;
     public MeasurementAgentService measurementService;
     public OperationAgentService operationService;
+    public SnapshotReportAgentService snapshotReportService;
 
     private Map<Agent, AgentClient> agentClients = new HashMap<Agent, AgentClient>();
 

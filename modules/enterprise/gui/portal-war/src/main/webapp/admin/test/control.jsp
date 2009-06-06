@@ -23,6 +23,7 @@
 <%@ page import="org.rhq.enterprise.server.core.AgentManagerLocal" %>
 <%@ page import="org.rhq.enterprise.server.system.SystemManagerLocal" %>
 <%@ page import="org.rhq.enterprise.server.auth.SubjectManagerLocal" %>
+<%@ page import="org.rhq.enterprise.server.snapshot.SnapshotReportManagerLocal" %>
 <%@ page import="org.rhq.enterprise.server.util.LookupUtil" %>
 <%@ page import="org.rhq.enterprise.server.scheduler.jobs.DataPurgeJob"%>
 
@@ -51,6 +52,7 @@
    AgentManagerLocal agentManager;
    SystemManagerLocal systemManager;
    SubjectManagerLocal subjectManager;
+   SnapshotReportManagerLocal snapshotReportManager;
 
    coreTestBean = LookupUtil.getCoreTest();
    discoveryTestBean = LookupUtil.getDiscoveryTest();
@@ -64,6 +66,7 @@
    agentManager = LookupUtil.getAgentManager();
    systemManager = LookupUtil.getSystemManager();
    subjectManager = LookupUtil.getSubjectManager();
+   snapshotReportManager = LookupUtil.getSnapshotReportManager();
 
    String result = null;
    String mode = pageContext.getRequest().getParameter("mode");
@@ -179,6 +182,14 @@
       else if ("errorCorrectSchedules".equals("mode"))
       {
          measurementScheduleManager.errorCorrectSchedules();
+      }
+      else if ("generateSnapshotReport".equals(mode))
+      {
+         int resourceId = Integer.parseInt(request.getParameter("resourceId"));
+         String name = request.getParameter("name");
+         String description = request.getParameter("description");
+         java.net.URL url = snapshotReportManager.getSnapshotReport(subjectManager.getOverlord(), resourceId, name, description);
+         result = "Snapshot Report is located here: " + url.toString();
       }
    }
    catch (Exception e)
@@ -301,8 +312,6 @@ Template Cloning
    <input type="submit" value="Send" name="Send"/>
 </form>
 
-</ul>
-
 <h2>Utilities</h2>
 <ul>
    <li><c:url var="url" value="/admin/test/control.jsp?mode=startStats"/>
@@ -321,6 +330,18 @@ Template Cloning
    <input type="hidden" name="mode" value="metricDisplayRange"/>
    Last X hours: <input type="text" name="lastHours" size="5" value="<c:out value="${lastHours}"/>"/><br/>
    <input type="submit" value="Send" name="Send"/>
+</form>
+
+<h2>Snapshot Report</h2>
+
+<c:url var="url" value="/admin/test/control.jsp?mode=generateSnapshotReport"/>
+Generate Snapshot Report
+<form action="<c:out value="${url}"/>" method="get">
+   <input type="hidden" name="mode" value="generateSnapshotReport"/>
+   Resource ID: <input type="text" name="resourceId" size="10"/><br/>
+   Name: <input type="text" name="name" size="30"/><br/>
+   Description: <input type="text" name="description" size="100"/><br/>
+   <input type="submit" value="Generate Snapshot" name="Generate Snapshot"/>
 </form>
 
 </body>

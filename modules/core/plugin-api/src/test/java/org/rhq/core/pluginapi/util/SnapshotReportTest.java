@@ -44,6 +44,7 @@ public class SnapshotReportTest {
     private final File baseDir = new File(System.getProperty("java.io.tmpdir"), "test-snapshot");
     private final File configDir = new File(baseDir, "configdir");
     private final File logDir = new File(baseDir, "logdir");
+    private final File dataDir = new File(baseDir, "datadir");
     private final File additionalDir1 = new File(baseDir, "additional1");
     private final File additionalDir2 = new File(baseDir, "additional2");
 
@@ -51,6 +52,7 @@ public class SnapshotReportTest {
     public void prepareTest() {
         configDir.mkdirs();
         logDir.mkdirs();
+        dataDir.mkdirs();
         additionalDir1.mkdirs();
         additionalDir2.mkdirs();
     }
@@ -73,6 +75,14 @@ public class SnapshotReportTest {
         }
         logDir.delete();
 
+        files = dataDir.listFiles();
+        if (files != null) {
+            for (File doomed : files) {
+                doomed.delete();
+            }
+        }
+        dataDir.delete();
+
         files = additionalDir1.listFiles();
         if (files != null) {
             for (File doomed : files) {
@@ -90,6 +100,65 @@ public class SnapshotReportTest {
         additionalDir2.delete();
 
         baseDir.delete();
+    }
+
+    public void testSnapshotReportOutputDir() throws Exception {
+
+        File tmpDir = new File(System.getProperty("java.io.tmpdir"), "SNAPSHOT_TMP");
+        tmpDir.mkdirs();
+
+        try {
+            Configuration config = new Configuration();
+            config.put(new PropertySimple(SnapshotReport.PROP_REPORT_OUTPUT_DIRECTORY, tmpDir.getAbsolutePath()));
+
+            SnapshotReport report = new SnapshotReport("test-snapshot", "some desc", config);
+            File snapshot = report.generate();
+            try {
+                assert snapshot.getParentFile().equals(tmpDir);
+            } finally {
+                snapshot.delete();
+            }
+        } finally {
+            tmpDir.delete();
+        }
+    }
+
+    public void testSnapshotReportOnlyDataFiles() throws Exception {
+        writeFile(configDir, "one.config", "config 1 file");
+        writeFile(logDir, "first.log", "log 1 file");
+        writeFile(dataDir, "data.dat", "this is a data file");
+
+        Configuration config = new Configuration();
+        config.put(new PropertySimple(SnapshotReport.PROP_BASE_DIRECTORY, baseDir.getAbsolutePath()));
+        config.put(new PropertySimple(SnapshotReport.PROP_SNAPSHOT_CONFIG_FILES, "false"));
+        config.put(new PropertySimple(SnapshotReport.PROP_SNAPSHOT_LOG_FILES, "false"));
+        config.put(new PropertySimple(SnapshotReport.PROP_SNAPSHOT_DATA_FILES, "true"));
+        config.put(new PropertySimple(SnapshotReport.PROP_DATA_DIRECTORY, dataDir.getName())); // relative path
+
+        SnapshotReport report = new SnapshotReport("test-snapshot", "some desc", config);
+        File snapshot = report.generate();
+        try {
+            FileInputStream fis = new FileInputStream(snapshot);
+            ZipInputStream zip = new ZipInputStream(fis);
+            ZipEntry zipEntry;
+            Set<String> entryNames = new HashSet<String>();
+            try {
+                for (zipEntry = zip.getNextEntry(); zipEntry != null; zipEntry = zip.getNextEntry()) {
+                    entryNames.add(zipEntry.getName());
+                }
+            } finally {
+                zip.close();
+            }
+
+            // there should be the following files in the snapshot report:
+            //   snapshot.properties
+            //   data/data.dat
+            assert entryNames.size() == 2 : entryNames;
+            assert entryNames.contains("snapshot.properties") : entryNames;
+            assert entryNames.contains("data/data.dat") : entryNames;
+        } finally {
+            snapshot.delete();
+        }
     }
 
     public void testSnapshotReportNoRegex() throws Exception {

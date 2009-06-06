@@ -142,6 +142,8 @@ import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerBean;
 import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerBean;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
+import org.rhq.enterprise.server.snapshot.SnapshotReportManagerBean;
+import org.rhq.enterprise.server.snapshot.SnapshotReportManagerLocal;
 import org.rhq.enterprise.server.subsystem.AlertSubsystemManagerBean;
 import org.rhq.enterprise.server.subsystem.AlertSubsystemManagerLocal;
 import org.rhq.enterprise.server.subsystem.ConfigurationSubsystemManagerBean;
@@ -477,6 +479,10 @@ public final class LookupUtil {
 
     public static CachedConditionProducerLocal getCachedConditionProducerLocal() {
         return lookupLocal(CachedConditionProducerBean.class);
+    }
+
+    public static SnapshotReportManagerLocal getSnapshotReportManager() {
+        return lookupLocal(SnapshotReportManagerBean.class);
     }
 
     //--------------------------------------------

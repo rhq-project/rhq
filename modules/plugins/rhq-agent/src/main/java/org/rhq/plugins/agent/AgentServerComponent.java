@@ -18,7 +18,11 @@
  */
 package org.rhq.plugins.agent;
 
+import java.io.BufferedInputStream;
 import java.io.CharArrayWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -50,6 +54,7 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.core.pluginapi.snapshot.SnapshotReportFacet;
 import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.util.exception.ExceptionPackage;
 import org.rhq.core.util.exception.Severity;
@@ -59,12 +64,12 @@ import org.rhq.plugins.jmx.JMXComponent;
 import org.rhq.plugins.jmx.JMXServerComponent;
 
 /**
- * The component that represents the JON Agent itself.
+ * The component that represents the Agent itself.
  *
  * @author John Mazzitelli
  */
 public class AgentServerComponent extends JMXServerComponent implements JMXComponent, MeasurementFacet, OperationFacet,
-    ConfigurationFacet {
+    ConfigurationFacet, SnapshotReportFacet {
     private static Log log = LogFactory.getLog(AgentServerComponent.class);
 
     /**
@@ -235,4 +240,19 @@ public class AgentServerComponent extends JMXServerComponent implements JMXCompo
 
         return;
     }
+
+    public InputStream getSnapshotReport(String name, String description) throws Exception {
+        AgentManagementMBean mbean = AgentDiscoveryComponent.getAgentManagementMBean();
+        ResourceContext resourceContext = getResourceContext();
+        Configuration pluginConfig = resourceContext.getPluginConfiguration();
+        String installDir = mbean.getAgentHomeDirectory();
+        Properties config = mbean.getAgentConfiguration();
+        String tmpDir = resourceContext.getTemporaryDirectory().getAbsolutePath();
+        AgentSnapshotReport report = new AgentSnapshotReport(name, description, pluginConfig, installDir, config,
+            tmpDir);
+        File reportFile = report.generate();
+        InputStream inputStream = new BufferedInputStream(new FileInputStream(reportFile));
+        return inputStream;
+    }
+
 }

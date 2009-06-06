@@ -96,6 +96,12 @@ public class SnapshotReport {
     public static final String PROP_CONFIG_REGEX = "snapshotConfigRegex";
 
     /**
+     * A config property whose value is the boolean flag to indicate if
+     * the snapshot should include files found in subdirectories of the config directory.
+     */
+    public static final String PROP_CONFIG_RECURSIVE = "snapshotConfigRecursive";
+
+    /**
      * A boolean config property that dictates if a snapshot of log files should be in the report.
      */
     public static final String PROP_SNAPSHOT_LOG_FILES = "snapshotLogEnabled";
@@ -113,6 +119,12 @@ public class SnapshotReport {
     public static final String PROP_LOG_REGEX = "snapshotLogRegex";
 
     /**
+     * A config property whose value is the boolean flag to indicate if
+     * the snapshot should include files found in subdirectories of the log directory.
+     */
+    public static final String PROP_LOG_RECURSIVE = "snapshotLogRecursive";
+
+    /**
      * A boolean config property that dictates if a snapshot of data files should be in the report.
      */
     public static final String PROP_SNAPSHOT_DATA_FILES = "snapshotDataEnabled";
@@ -128,6 +140,12 @@ public class SnapshotReport {
      * that are to be snapshotted. This regex must match files under the data directory.
      */
     public static final String PROP_DATA_REGEX = "snapshotDataRegex";
+
+    /**
+     * A config property whose value is the boolean flag to indicate if
+     * the snapshot should include files found in subdirectories of the data directory.
+     */
+    public static final String PROP_DATA_RECURSIVE = "snapshotDataRecursive";
 
     /**
      * A boolean config property that dictates if a snapshot of the additional files should be in the report.
@@ -153,6 +171,12 @@ public class SnapshotReport {
      * This should be a property inside a map where that map is a list item within a additional files list.
      */
     public static final String PROP_ADDITIONAL_FILES_REGEX = "snapshotAdditionalFilesRegex";
+
+    /**
+     * A config property whose value is the boolean flag to indicate if
+     * the snapshot should include files found in subdirectories of the additional files directory.
+     */
+    public static final String PROP_ADDITIONAL_FILES_RECURSIVE = "snapshotAdditionalFilesRecursive";
 
     /**
      * A config property whose value is the base directory where all config, logs and data files are under.
@@ -286,6 +310,7 @@ public class SnapshotReport {
         String baseDir = config.getSimpleValue(PROP_BASE_DIRECTORY, null);
         String confDir = config.getSimpleValue(PROP_CONFIG_DIRECTORY, "conf");
         String confRegex = config.getSimpleValue(PROP_CONFIG_REGEX, null);
+        String recursive = config.getSimpleValue(PROP_CONFIG_RECURSIVE, "false");
 
         Map<String, URL> filesMap = null;
 
@@ -293,12 +318,12 @@ public class SnapshotReport {
         if (!confDirFile.isAbsolute()) {
             confDirFile = new File(baseDir, confDir);
         }
-        File[] confFiles = confDirFile.listFiles(new RegexFilenameFilter(confRegex));
+
+        RegexFilenameFilter filter = new RegexFilenameFilter(confRegex, recursive);
+        File[] confFiles = confDirFile.listFiles(filter);
         if (confFiles != null) {
             filesMap = new HashMap<String, URL>(confFiles.length);
-            for (File confFile : confFiles) {
-                filesMap.put(REPORT_CONFIG_DIRECTORY + '/' + confFile.getName(), confFile.toURI().toURL());
-            }
+            populateFilesMap(confFiles, filesMap, REPORT_CONFIG_DIRECTORY, filter);
         } else {
             // the directory probably doesn't exist, this may not be fatal so just log and keep going
             log.warn("Failed to get list of conf files from [" + confDirFile + "]");
@@ -316,6 +341,7 @@ public class SnapshotReport {
         String baseDir = config.getSimpleValue(PROP_BASE_DIRECTORY, null);
         String logDir = config.getSimpleValue(PROP_LOG_DIRECTORY, "logs");
         String logRegex = config.getSimpleValue(PROP_LOG_REGEX, null);
+        String recursive = config.getSimpleValue(PROP_LOG_RECURSIVE, "false");
 
         Map<String, URL> filesMap = null;
 
@@ -323,12 +349,12 @@ public class SnapshotReport {
         if (!logDirFile.isAbsolute()) {
             logDirFile = new File(baseDir, logDir);
         }
-        File[] logFiles = logDirFile.listFiles(new RegexFilenameFilter(logRegex));
+
+        RegexFilenameFilter filter = new RegexFilenameFilter(logRegex, recursive);
+        File[] logFiles = logDirFile.listFiles(filter);
         if (logFiles != null) {
             filesMap = new HashMap<String, URL>(logFiles.length);
-            for (File logFile : logFiles) {
-                filesMap.put(REPORT_LOG_DIRECTORY + '/' + logFile.getName(), logFile.toURI().toURL());
-            }
+            populateFilesMap(logFiles, filesMap, REPORT_LOG_DIRECTORY, filter);
         } else {
             // the directory probably doesn't exist, this may not be fatal so just log and keep going
             log.warn("Failed to get list of log files from [" + logDirFile + "]");
@@ -346,6 +372,7 @@ public class SnapshotReport {
         String baseDir = config.getSimpleValue(PROP_BASE_DIRECTORY, null);
         String dataDir = config.getSimpleValue(PROP_DATA_DIRECTORY, "data");
         String dataRegex = config.getSimpleValue(PROP_DATA_REGEX, null);
+        String recursive = config.getSimpleValue(PROP_DATA_RECURSIVE, "false");
 
         Map<String, URL> filesMap = null;
 
@@ -353,12 +380,12 @@ public class SnapshotReport {
         if (!dataDirFile.isAbsolute()) {
             dataDirFile = new File(baseDir, dataDir);
         }
-        File[] dataFiles = dataDirFile.listFiles(new RegexFilenameFilter(dataRegex));
+
+        RegexFilenameFilter filter = new RegexFilenameFilter(dataRegex, recursive);
+        File[] dataFiles = dataDirFile.listFiles(filter);
         if (dataFiles != null) {
             filesMap = new HashMap<String, URL>(dataFiles.length);
-            for (File dataFile : dataFiles) {
-                filesMap.put(REPORT_DATA_DIRECTORY + '/' + dataFile.getName(), dataFile.toURI().toURL());
-            }
+            populateFilesMap(dataFiles, filesMap, REPORT_DATA_DIRECTORY, filter);
         } else {
             // the directory probably doesn't exist, this may not be fatal so just log and keep going
             log.warn("Failed to get list of data files from [" + dataDirFile + "]");
@@ -396,11 +423,12 @@ public class SnapshotReport {
             if (!additionalFilesDirFile.isAbsolute()) {
                 additionalFilesDirFile = new File(baseDir, additionalFilesDir);
             }
-            File[] additionalFiles = additionalFilesDirFile.listFiles(new RegexFilenameFilter(additionalFilesRegex));
+
+            String recursive = additionalFileMap.getSimpleValue(PROP_ADDITIONAL_FILES_RECURSIVE, "false");
+            RegexFilenameFilter filter = new RegexFilenameFilter(additionalFilesRegex, recursive);
+            File[] additionalFiles = additionalFilesDirFile.listFiles(filter);
             if (additionalFiles != null) {
-                for (File additionalFile : additionalFiles) {
-                    filesMap.put(additionalFilesDir + '/' + additionalFile.getName(), additionalFile.toURI().toURL());
-                }
+                populateFilesMap(additionalFiles, filesMap, additionalFilesDir, filter);
             } else {
                 // the directory probably doesn't exist, this may not be fatal so just log and keep going
                 log.warn("Failed to get list of additional files from [" + additionalFilesDirFile + "]");
@@ -410,18 +438,43 @@ public class SnapshotReport {
         return filesMap;
     }
 
+    private void populateFilesMap(File[] filesDirectories, Map<String, URL> filesMap, String directoryPrefix,
+        RegexFilenameFilter filter) throws Exception {
+
+        for (File fileDirectory : filesDirectories) {
+            if (fileDirectory.isDirectory()) {
+                File[] subDirectoryFiles = fileDirectory.listFiles(filter);
+                if (subDirectoryFiles != null) {
+                    populateFilesMap(subDirectoryFiles, filesMap, directoryPrefix + "/" + fileDirectory.getName(),
+                        filter);
+                } else {
+                    log.warn("Failed to get subdirectory files for [" + fileDirectory + "]");
+                }
+            } else {
+                filesMap.put(directoryPrefix + '/' + fileDirectory.getName(), fileDirectory.toURI().toURL());
+            }
+        }
+
+        return;
+    }
+
     /**
      * Filename filter that matches the filename if it matches a given regular expression.
      * If the given regular expression is <code>null</code>, this filter matches everything.
      */
     protected static class RegexFilenameFilter implements FilenameFilter {
         private String regex;
+        private boolean recursive;
 
-        public RegexFilenameFilter(String regex) {
+        public RegexFilenameFilter(String regex, String recursive) {
             this.regex = regex;
+            this.recursive = Boolean.parseBoolean(recursive);
         }
 
         public boolean accept(File dir, String name) {
+            if (new File(dir, name).isDirectory()) {
+                return recursive;
+            }
             return this.regex == null || name.matches(this.regex);
         }
     }

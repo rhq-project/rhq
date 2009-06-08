@@ -102,7 +102,7 @@
 		<echo>*** Creating new cli jar...</echo>
 		<echo>*** ${maven.compile.executable}</echo>
 		<mkdir dir="${cli.home}/classes" />
-		<javac srcdir="${basedir}/src/main/java" destdir="${cli.home}/classes" classpathref="cli.classpath" fork="true" executable="${java.jre.home}/../bin/javac.exe" />
+		<javac srcdir="${basedir}/src/main/java" destdir="${cli.home}/classes" classpathref="cli.classpath" fork="true" executable="${java.jre.home}/../bin/javac" />
 		<jar destfile="${lib.home}/rhq-cli-${project.version}.jar" basedir="${cli.home}/classes" includes="org/rhq/**">
 			<manifest>
 				<attribute name="Specification-Title" value="JBossWS" />

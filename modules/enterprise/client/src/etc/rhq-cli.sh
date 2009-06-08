@@ -3,7 +3,7 @@
 # =============================================================================
 # RHQ CLI client UNIX Startup Script
 #
-# This file is used to execute the RHQ Agent on a Windows platform.
+# This file is used to execute the RHQ CLI on a Windows platform.
 # Run this script with the --help option for the runtime options.
 #
 # This script is customizable by setting certain environment variables, which
@@ -34,7 +34,7 @@ esac
 
 # ----------------------------------------------------------------------
 # Change directory so the current directory is the CLI home.
-# Here we assume this script is a child directory of the agent home
+# Here we assume this script is a child directory of the CLI home
 # ----------------------------------------------------------------------
 RHQ_CLI_BIN_DIR_PATH=`dirname $0`
 
@@ -141,7 +141,7 @@ fi
 debug_msg "RHQ_CLI_CMDLINE_OPTS: $RHQ_CLI_CMDLINE_OPTS"
 
 # ----------------------------------------------------------------------
-# Execute the VM which starts the agent
+# Execute the VM which starts the CLI
 # ----------------------------------------------------------------------
 
 if [ -n "$RHQ_CLI_DEBUG" ]; then
@@ -163,7 +163,9 @@ fi
 # Build the command line that starts the VM
 CMD="${RHQ_CLI_JAVA_EXE_FILE_PATH} ${RHQ_CLI_JAVA_OPTS} ${RHQ_CLI_ADDITIONAL_JAVA_OPTS} ${_LOG_CONFIG} -cp ${CLASSPATH} org.rhq.enterprise.client.ClientMain ${RHQ_CLI_CMDLINE_OPTS}"
 
-debug_msg "Executing the agent with this command line:"
+debug_msg "Executing the CLI with this command line:"
 debug_msg "$CMD"
+
+eval "$CMD"
 
 debug_msg echo $0 done.

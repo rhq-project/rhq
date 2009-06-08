@@ -46,10 +46,10 @@ import org.rhq.core.util.stream.StreamUtil;
  * A common snapshot report that allows you to prepare a zip'ed file containing
  * a snapshot of content belonging to a resource. This report contains a snapshot
  * configuration, log and data files along with a customizable set of additional files.
- * Uses of this object can pick and choose which types of files to snapshot and filter
+ * Users of this object can pick and choose which types of files to snapshot and filter
  * the files of those types.
  * 
- * This class can be subclasses if you wish to alter the way it collects and stores
+ * This class can be subclassed if you wish to alter the way it collects and stores
  * the snapshot content. For example, if the configuration is not stored as files, but instead
  * stored in memory, you can subclass this to obtain the configuration by reading memory, writing
  * that data to a temporary file and then having this class add that temporary file to the

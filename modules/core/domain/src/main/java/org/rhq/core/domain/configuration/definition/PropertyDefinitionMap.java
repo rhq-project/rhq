@@ -33,6 +33,8 @@ import javax.persistence.FetchType;
 import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
+import javax.xml.bind.annotation.XmlRootElement;
+
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -43,6 +45,7 @@ import org.jetbrains.annotations.NotNull;
  */
 @DiscriminatorValue("map")
 @Entity(name = "PropertyDefinitionMap")
+@XmlRootElement(name = "PropertyDefinitionMap")
 public class PropertyDefinitionMap extends PropertyDefinition {
     private static final long serialVersionUID = 1L;
 

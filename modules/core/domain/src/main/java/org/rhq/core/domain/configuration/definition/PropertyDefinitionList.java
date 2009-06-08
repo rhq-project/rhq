@@ -28,6 +28,8 @@ import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
 import javax.persistence.Transient;
+import javax.xml.bind.annotation.XmlRootElement;
+
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -38,6 +40,7 @@ import org.jetbrains.annotations.NotNull;
  */
 @DiscriminatorValue("list")
 @Entity(name = "PropertyDefinitionList")
+@XmlRootElement(name = "PropertyDefinitionList")
 public class PropertyDefinitionList extends PropertyDefinition {
     private static final long serialVersionUID = 1L;
 

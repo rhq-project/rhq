@@ -42,6 +42,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.bind.annotation.XmlTransient;
 
@@ -58,7 +59,8 @@ import org.jetbrains.annotations.NotNull;
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CONFIG_PROP_DEF_ID_SEQ")
 @Table(name = "RHQ_CONFIG_PROP_DEF")
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlSeeAlso( { PropertyDefinitionSimple.class, PropertyDefinitionSimple.class, PropertyDefinitionSimple.class })
+@XmlSeeAlso( { PropertyDefinitionSimple.class, PropertyDefinitionList.class, PropertyDefinitionMap.class })
+@XmlRootElement
 public abstract class PropertyDefinition implements Serializable {
     private static final long serialVersionUID = 1L;
 

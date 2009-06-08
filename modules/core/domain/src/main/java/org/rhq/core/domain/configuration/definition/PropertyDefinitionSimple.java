@@ -35,6 +35,7 @@ import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.OneToMany;
+import javax.xml.bind.annotation.XmlRootElement;
 
 import org.hibernate.annotations.Cascade;
 import org.hibernate.annotations.IndexColumn;
@@ -52,6 +53,7 @@ import org.rhq.core.domain.measurement.MeasurementUnits;
  */
 @DiscriminatorValue("property")
 @Entity(name = "PropertyDefinitionSimple")
+@XmlRootElement(name = "PropertyDefinitionSimple")
 public class PropertyDefinitionSimple extends PropertyDefinition {
     private static final long serialVersionUID = 1L;
 

@@ -28,6 +28,7 @@ import jline.SimpleCompletor;
 import mazz.i18n.Msg;
 
 import org.rhq.enterprise.client.commands.ClientCommand;
+import org.rhq.enterprise.server.ws.PageControl;
 import org.rhq.enterprise.server.ws.Subject;
 
 /**
@@ -40,7 +41,14 @@ public class ClientMain {
 
     //Stored command map. Key to instance that handles that command.
     private static Map<String, ClientCommand> commands = new HashMap<String, ClientCommand>();
-
+    public static PageControl pagecontrol_unlimited = null;
+    static {
+        if(pagecontrol_unlimited!=null){
+            pagecontrol_unlimited = new PageControl();
+            pagecontrol_unlimited.setPageSize(-1);
+        }
+    }
+    
     /**
      * This is the thread that is running the input loop; it accepts prompt commands
      * from the user.
@@ -385,8 +393,8 @@ public class ClientMain {
     public void setRemoteClient(RHQRemoteClient remoteClient) {
     	//connect cli class and remoteClient registry objects
         this.remoteClient = remoteClient;
-        this.remoteClient.setCliReference(this);
         if (remoteClient != null) {
+            this.remoteClient.setCliReference(this);        	
             consoleReader.addCompletor(new ArgumentCompletor(new Completor[] {
                 new SimpleCompletor("help"),
                 new SimpleCompletor("api"),

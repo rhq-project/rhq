@@ -4,15 +4,22 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.xml.namespace.QName;
 
 import junit.framework.TestCase;
 
 import com.thoughtworks.xstream.XStream;
 
+import org.rhq.enterprise.client.utility.Utility;
 import org.rhq.enterprise.server.ws.Architecture;
 import org.rhq.enterprise.server.ws.AvailabilityType;
+//import org.rhq.enterprise.server.ws.BatchManagerBeanService;
+//import org.rhq.enterprise.server.ws.BatchManagerRemote;
 import org.rhq.enterprise.server.ws.Channel;
 import org.rhq.enterprise.server.ws.ChannelManagerBeanService;
 import org.rhq.enterprise.server.ws.ChannelManagerRemote;
@@ -21,6 +28,7 @@ import org.rhq.enterprise.server.ws.ConfigurationManagerBeanService;
 import org.rhq.enterprise.server.ws.ConfigurationManagerRemote;
 import org.rhq.enterprise.server.ws.ContentManagerBeanService;
 import org.rhq.enterprise.server.ws.ContentManagerRemote;
+import org.rhq.enterprise.server.ws.Exception_Exception;
 import org.rhq.enterprise.server.ws.OperationManagerBeanService;
 import org.rhq.enterprise.server.ws.OperationManagerRemote;
 import org.rhq.enterprise.server.ws.PackageType;
@@ -33,6 +41,8 @@ import org.rhq.enterprise.server.ws.ResourceManagerBeanService;
 import org.rhq.enterprise.server.ws.ResourceManagerRemote;
 import org.rhq.enterprise.server.ws.ResourceOperationHistory;
 import org.rhq.enterprise.server.ws.ResourceOperationSchedule;
+import org.rhq.enterprise.server.ws.ResourceSubCategory;
+import org.rhq.enterprise.server.ws.ResourceType;
 import org.rhq.enterprise.server.ws.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.ws.Role;
 import org.rhq.enterprise.server.ws.RoleManagerBeanService;
@@ -61,13 +71,78 @@ public class ClientMainTest extends TestCase {
 
     //TODO: figure out if there is a way to use just JAXB. One less dependency. Also will be more picky
     private static XStream XS = new XStream();
-    private static PageControl pagecontrol_unlimited = null;
-
+    public static PageControl pagecontrol_unlimited = null;
+    private static boolean isWstestUserCreated = false;
+    private static String host = "127.0.0.1";
+    private static int port = 7080;
+    
+    
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        pagecontrol_unlimited = new PageControl();
-        pagecontrol_unlimited.setPageSize(-1);
+        if(pagecontrol_unlimited!=null){
+          pagecontrol_unlimited = new PageControl();
+          pagecontrol_unlimited.setPageSize(-1);
+        }
+//        //Checks for Ws-test user and creates it if it doesn't exist
+//        if(!isWstestUserCreated){
+//        	//assumes default rhqadmin details are in effect
+////        	SubjectManagerBeanService smService = new SubjectManagerBeanService();
+//        	URL sUrl = Utility.generateRhqRemoteWebserviceURL(SubjectManagerBeanService.class,
+//        			host, port, false);
+//        	QName sQName = Utility.generateRhqRemoteWebserviceQName(SubjectManagerBeanService.class);
+//        	SubjectManagerBeanService smService = new SubjectManagerBeanService(sUrl,sQName);
+//            SubjectManagerRemote subjectManager = smService.getSubjectManagerBeanPort();
+//            Subject user = subjectManager.login("rhqadmin", "rhqadmin");
+//            Subject wsTestUser = subjectManager.findSubjectByName(user, credentials);
+//            if((wsTestUser!=null) &&(wsTestUser.getId()>0)){
+//            	isWstestUserCreated = true;
+//            }
+//            //Create ws-test user
+//        	if(!isWstestUserCreated){
+//                Subject newUser = new Subject();
+//                //        if(logXmlToScreen){displayXml(newUser);}
+//
+//                String fName = "WS";
+//                String lName = "Test";
+//                newUser.setName(credentials);
+//                newUser.setFirstName(fName);
+//                newUser.setLastName(lName);
+//                newUser.setFactive(true);
+//
+//                //Send command to create the new user
+//                subjectManager.createSubject(user, newUser);
+//                
+//               //Now locate role and attach
+//                //make connection to Role Bean
+////                RoleManagerBeanService rmService = new RoleManagerBeanService();
+//            	URL rUrl = Utility.generateRhqRemoteWebserviceURL(RoleManagerBeanService.class,
+//            			host, port, false);
+//            	QName rQName = Utility.generateRhqRemoteWebserviceQName(RoleManagerBeanService.class);
+//                RoleManagerBeanService rmService = new RoleManagerBeanService(rUrl,rQName);
+//                RoleManagerRemote roleManager = rmService.getRoleManagerBeanPort();
+//                List<Integer> emptyList = null;
+//                List<Role> roles = null;
+//                roles = roleManager.getAvailableRolesForSubject(user, Integer.valueOf(newUser.getId()), 
+//                		emptyList, pagecontrol_unlimited);
+//
+//                //locate 'All Role Id'
+//                int roleId = 0;
+//                for (Role role : roles) {
+//                    if ("all resources role".equalsIgnoreCase(role.getName())) {
+//                        roleId = role.getId();
+//                        break;
+//                    }
+//                }
+//
+//                //assign that role to the subject 
+//                List<Integer> roleBag = new ArrayList<Integer>();
+//                roleBag.add(roleId);
+//                roleManager.assignRolesToSubject(user, newUser.getId(), roleBag);
+//	
+//        	  isWstestUserCreated = true;
+//        	}
+//        }
 
     }
 
@@ -80,7 +155,11 @@ public class ClientMainTest extends TestCase {
     public void testSubject() throws Exception {
 
         //instantiate SLSB
-        SubjectManagerBeanService smService = new SubjectManagerBeanService();
+//        SubjectManagerBeanService smService = new SubjectManagerBeanService();
+    	URL sUrl = Utility.generateRhqRemoteWebserviceURL(SubjectManagerBeanService.class,
+    			host, port, false);
+    	QName sQName = Utility.generateRhqRemoteWebserviceQName(SubjectManagerBeanService.class);
+        SubjectManagerBeanService smService = new SubjectManagerBeanService(sUrl,sQName);
         SubjectManagerRemote subjectManager = smService.getSubjectManagerBeanPort();
         Subject user = subjectManager.login(credentials, credentials);
 
@@ -175,7 +254,12 @@ public class ClientMainTest extends TestCase {
 
         //ROLE testing
         //make connection to Role Bean
-        RoleManagerBeanService rmService = new RoleManagerBeanService();
+//        RoleManagerBeanService rmService = new RoleManagerBeanService();
+    	URL rUrl = Utility.generateRhqRemoteWebserviceURL(RoleManagerBeanService.class,
+    			host, port, false);
+    	QName rQName = Utility.generateRhqRemoteWebserviceQName(RoleManagerBeanService.class);
+        RoleManagerBeanService rmService = new RoleManagerBeanService(rUrl,rQName);
+        
         RoleManagerRemote roleManager = rmService.getRoleManagerBeanPort();
 
         //locate roles available for subject
@@ -232,11 +316,19 @@ public class ClientMainTest extends TestCase {
 
         //        URL wsdlURL = new URL(WSDL_URL_PREFIX + "SubjectManagerBean?wsdl");
         //        QName serviceName = new QName(TARGET_NS_SUBJECT_MANAGER, "SubjectManagerBeanService");
-        SubjectManagerBeanService smService = new SubjectManagerBeanService();
+//        SubjectManagerBeanService smService = new SubjectManagerBeanService();
+    	URL sUrl = Utility.generateRhqRemoteWebserviceURL(SubjectManagerBeanService.class,
+    			host, port, false);
+    	QName sQName = Utility.generateRhqRemoteWebserviceQName(SubjectManagerBeanService.class);
+        SubjectManagerBeanService smService = new SubjectManagerBeanService(sUrl,sQName);
         SubjectManagerRemote subjectManager = smService.getSubjectManagerBeanPort();
         Subject user = subjectManager.login(credentials, credentials);
 
-        ResourceManagerBeanService rmService = new ResourceManagerBeanService();
+//        ResourceManagerBeanService rmService = new ResourceManagerBeanService();
+    	URL rUrl = Utility.generateRhqRemoteWebserviceURL(ResourceManagerBeanService.class,
+    			host, port, false);
+    	QName rQName = Utility.generateRhqRemoteWebserviceQName(ResourceManagerBeanService.class);
+    	ResourceManagerBeanService rmService = new ResourceManagerBeanService(rUrl,rQName);
         ResourceManagerRemote resourceManager = rmService.getResourceManagerBeanPort();
 
         PageControl pageControl = new PageControl();
@@ -253,7 +345,11 @@ public class ClientMainTest extends TestCase {
         ResourceComposite testPlatform = resources.get(0);
         //displayXml(testPlatform);
 
-        OperationManagerBeanService opManagerService = new OperationManagerBeanService();
+//        OperationManagerBeanService opManagerService = new OperationManagerBeanService();
+    	URL oUrl = Utility.generateRhqRemoteWebserviceURL(OperationManagerBeanService.class,
+    			host, port, false);
+    	QName oQName = Utility.generateRhqRemoteWebserviceQName(OperationManagerBeanService.class);
+    	OperationManagerBeanService opManagerService = new OperationManagerBeanService(oUrl,oQName);        
         OperationManagerRemote opManager = opManagerService.getOperationManagerBeanPort();
 
         List<ResourceOperationHistory> history = opManager.getPendingResourceOperationHistories(user, testPlatform
@@ -342,13 +438,28 @@ public class ClientMainTest extends TestCase {
     public void testJBossAS() throws Exception {
 
         //instantiate SLSB
-        SubjectManagerBeanService smService = new SubjectManagerBeanService();
+//        SubjectManagerBeanService smService = new SubjectManagerBeanService();
+    	URL sUrl = Utility.generateRhqRemoteWebserviceURL(SubjectManagerBeanService.class,
+    			host, port, false);
+    	QName sQName = Utility.generateRhqRemoteWebserviceQName(SubjectManagerBeanService.class);
+        SubjectManagerBeanService smService = new SubjectManagerBeanService(sUrl,sQName);
         SubjectManagerRemote subjectManager = smService.getSubjectManagerBeanPort();
         Subject user = subjectManager.login("ws-test", "ws-test");
 
-        ResourceManagerBeanService service = new ResourceManagerBeanService();
+        //RemoteManagerBean
+//        ResourceManagerBeanService service = new ResourceManagerBeanService();
+    	URL rUrl = Utility.generateRhqRemoteWebserviceURL(ResourceManagerBeanService.class,
+    			host, port, false);
+    	QName rQName = Utility.generateRhqRemoteWebserviceQName(ResourceManagerBeanService.class);
+    	ResourceManagerBeanService service = new ResourceManagerBeanService(rUrl,rQName);
         ResourceManagerRemote resourceManager = service.getPort(ResourceManagerRemote.class);
 
+        ResourceType rt = new ResourceType();
+//        ResourceCategory rc = ResourceCategory.SERVER;
+        ResourceSubCategory subCat = new ResourceSubCategory();
+           subCat.setDescription("JBoss Application Server");
+        rt.setSubCategory(subCat);
+        
         //        PageList<ResourceComposite> resources = resourceManager.findResourceComposites(user, null, "JBossAS Server", 0,
         List<ResourceComposite> resources = resourceManager.findResourceComposites(user, null, "JBossAS Server", 0,
             null, pagecontrol_unlimited);
@@ -367,7 +478,11 @@ public class ClientMainTest extends TestCase {
 
         assertNotNull("Test requires a Non-RHQ AS Server, please start and import a JBoss AS", testAS);
 
-        OperationManagerBeanService omService = new OperationManagerBeanService();
+//        OperationManagerBeanService omService = new OperationManagerBeanService();
+    	URL oUrl = Utility.generateRhqRemoteWebserviceURL(OperationManagerBeanService.class,
+    			host, port, false);
+    	QName oQName = Utility.generateRhqRemoteWebserviceQName(OperationManagerBeanService.class);
+    	OperationManagerBeanService omService = new OperationManagerBeanService(oUrl,oQName);        
         OperationManagerRemote operationManager = omService.getPort(OperationManagerRemote.class);
 
         // Remove any pending histories
@@ -458,12 +573,20 @@ public class ClientMainTest extends TestCase {
 
     public void testUpdateResourceConfiguration() throws Exception {
 
-        SubjectManagerBeanService smService = new SubjectManagerBeanService();
+//        SubjectManagerBeanService smService = new SubjectManagerBeanService();
+       	URL sUrl = Utility.generateRhqRemoteWebserviceURL(SubjectManagerBeanService.class,
+    			host, port, false);
+    	QName sQName = Utility.generateRhqRemoteWebserviceQName(SubjectManagerBeanService.class);
+        SubjectManagerBeanService smService = new SubjectManagerBeanService(sUrl,sQName);    	
         SubjectManagerRemote subjectManager = smService.getSubjectManagerBeanPort();
 
         Subject user = subjectManager.login("ws-test", "ws-test");
 
-        ResourceManagerBeanService rmService = new ResourceManagerBeanService();
+//        ResourceManagerBeanService rmService = new ResourceManagerBeanService();
+    	URL rUrl = Utility.generateRhqRemoteWebserviceURL(ResourceManagerBeanService.class,
+    			host, port, false);
+    	QName rQName = Utility.generateRhqRemoteWebserviceQName(ResourceManagerBeanService.class);
+    	ResourceManagerBeanService rmService = new ResourceManagerBeanService(rUrl,rQName);
         ResourceManagerRemote resourceManager = rmService.getResourceManagerBeanPort();
 
         List<ResourceComposite> resources = resourceManager.findResourceComposites(user, null, "RHQ Agent", 0, null,
@@ -483,7 +606,11 @@ public class ClientMainTest extends TestCase {
         assertNotNull("Test requires an available RHQ Agent, please start an RHQ Agent", testAgent);
 
         //instantiate SLSB
-        ConfigurationManagerBeanService cmService = new ConfigurationManagerBeanService();
+//        ConfigurationManagerBeanService cmService = new ConfigurationManagerBeanService();
+    	URL cUrl = Utility.generateRhqRemoteWebserviceURL(ConfigurationManagerBeanService.class,
+    			host, port, false);
+    	QName cQName = Utility.generateRhqRemoteWebserviceQName(ConfigurationManagerBeanService.class);
+    	ConfigurationManagerBeanService cmService = new ConfigurationManagerBeanService(cUrl,cQName);
         ConfigurationManagerRemote configManager = cmService.getConfigurationManagerBeanPort();
 
         Configuration config = configManager.getCurrentResourceConfiguration(user, testAgent.getResource().getId());
@@ -515,12 +642,20 @@ public class ClientMainTest extends TestCase {
     public void testUpdatePluginConfiguration() throws Exception {
 
         //instantiate SLSB
-        SubjectManagerBeanService smService = new SubjectManagerBeanService();
+//        SubjectManagerBeanService smService = new SubjectManagerBeanService();
+    	URL sUrl = Utility.generateRhqRemoteWebserviceURL(SubjectManagerBeanService.class,
+    			host, port, false);
+    	QName sQName = Utility.generateRhqRemoteWebserviceQName(SubjectManagerBeanService.class);
+        SubjectManagerBeanService smService = new SubjectManagerBeanService(sUrl,sQName);
         SubjectManagerRemote subjectManager = smService.getSubjectManagerBeanPort();
         Subject user = subjectManager.login("ws-test", "ws-test");
 
         //instantiate SLSB
-        ResourceManagerBeanService rmService = new ResourceManagerBeanService();
+//        ResourceManagerBeanService rmService = new ResourceManagerBeanService();
+    	URL rUrl = Utility.generateRhqRemoteWebserviceURL(ResourceManagerBeanService.class,
+    			host, port, false);
+    	QName rQName = Utility.generateRhqRemoteWebserviceQName(ResourceManagerBeanService.class);
+    	ResourceManagerBeanService rmService = new ResourceManagerBeanService(rUrl,rQName);        
         ResourceManagerRemote rmManager = rmService.getResourceManagerBeanPort();
 
         List<ResourceComposite> resources = rmManager.findResourceComposites(user, null, "JBossAS Server", 0, null,
@@ -539,7 +674,11 @@ public class ClientMainTest extends TestCase {
 
         assertNotNull("Could not find RHQ Server, that's not good...", testAS);
 
-        ConfigurationManagerBeanService configService = new ConfigurationManagerBeanService();
+//        ConfigurationManagerBeanService configService = new ConfigurationManagerBeanService();
+    	URL cUrl = Utility.generateRhqRemoteWebserviceURL(ConfigurationManagerBeanService.class,
+    			host, port, false);
+    	QName cQName = Utility.generateRhqRemoteWebserviceQName(ConfigurationManagerBeanService.class);
+    	ConfigurationManagerBeanService configService = new ConfigurationManagerBeanService(cUrl,cQName);
         ConfigurationManagerRemote configManager = configService.getConfigurationManagerBeanPort();
 
         Configuration config = configManager.getCurrentPluginConfiguration(user, testAS.getResource().getId());
@@ -561,11 +700,16 @@ public class ClientMainTest extends TestCase {
         //        configManager.updatePluginConfiguration(user, testAS.getResource().getId(), config);
     }
 
-    public void testDeployment() throws Exception, ResourceTypeNotFoundException {
+//    public void testDeployment() throws Exception, ResourceTypeNotFoundException {
+    public void testDeployment() throws Exception {    	
 
         reportHeap("start");
 
-        SubjectManagerBeanService smService = new SubjectManagerBeanService();
+//        SubjectManagerBeanService smService = new SubjectManagerBeanService();
+    	URL sUrl = Utility.generateRhqRemoteWebserviceURL(SubjectManagerBeanService.class,
+    			host, port, false);
+    	QName sQName = Utility.generateRhqRemoteWebserviceQName(SubjectManagerBeanService.class);
+        SubjectManagerBeanService smService = new SubjectManagerBeanService(sUrl,sQName);
         SubjectManagerRemote subjectManager = smService.getSubjectManagerBeanPort();
 
         reportHeap("subjectManager");
@@ -574,7 +718,11 @@ public class ClientMainTest extends TestCase {
 
         reportHeap("login");
 
-        ResourceManagerBeanService rmService = new ResourceManagerBeanService();
+//        ResourceManagerBeanService rmService = new ResourceManagerBeanService();
+    	URL rUrl = Utility.generateRhqRemoteWebserviceURL(ResourceManagerBeanService.class,
+    			host, port, false);
+    	QName rQName = Utility.generateRhqRemoteWebserviceQName(ResourceManagerBeanService.class);
+    	ResourceManagerBeanService rmService = new ResourceManagerBeanService(rUrl,rQName);        
         ResourceManagerRemote resourceManager = rmService.getResourceManagerBeanPort();
 
         reportHeap("resourceManager");
@@ -596,7 +744,12 @@ public class ClientMainTest extends TestCase {
 
         assertNotNull("Test requires a Non-RHQ AS Server, please start and import a JBoss AS", testWar);
 
-        ChannelManagerBeanService cmbService = new ChannelManagerBeanService();
+//        ChannelManagerBeanService cmbService = new ChannelManagerBeanService();
+    	URL cUrl = Utility.generateRhqRemoteWebserviceURL(ChannelManagerBeanService.class,
+    			host, port, false);
+    	QName cQName = Utility.generateRhqRemoteWebserviceQName(ChannelManagerBeanService.class);
+    	ChannelManagerBeanService cmbService = new ChannelManagerBeanService(cUrl,cQName);
+        
         ChannelManagerRemote channelManager = cmbService.getChannelManagerBeanPort();
 
         reportHeap("channelManager");
@@ -637,7 +790,11 @@ public class ClientMainTest extends TestCase {
         assertEquals(1, channelResources.size());
         assertTrue(channelResources.get(0).equals(testWar.getResource()));
 
-        ContentManagerBeanService cmService = new ContentManagerBeanService();
+//        ContentManagerBeanService cmService = new ContentManagerBeanService();
+    	URL ctUrl = Utility.generateRhqRemoteWebserviceURL(ContentManagerBeanService.class,
+    			host, port, false);
+    	QName ctQName = Utility.generateRhqRemoteWebserviceQName(ContentManagerBeanService.class);
+    	ContentManagerBeanService cmService = new ContentManagerBeanService(ctUrl,ctQName);
         ContentManagerRemote contentManager = cmService.getContentManagerBeanPort();
 
         reportHeap("contentManager");
@@ -708,6 +865,20 @@ public class ClientMainTest extends TestCase {
         channelManager.deleteChannel(user, testChannel.getId());
     }
 
+//    enum Operations {
+//        rComposite
+//    }
+//
+//   public void testBatchBean() throws MalformedURLException, Exception_Exception{
+//    	URL bUrl = Utility.generateRhqRemoteWebserviceURL(BatchManagerBeanService.class,
+//    			host, port, false);
+//    	QName bQName = Utility.generateRhqRemoteWebserviceQName(BatchManagerBeanService.class);
+//        BatchManagerBeanService smService = new BatchManagerBeanService(bUrl,bQName);
+//        BatchManagerRemote bManager = smService.getBatchManagerBeanPort();
+//        String resp = bManager.runOperation(Operations.rComposite.toString());
+//    	System.out.println("RESPONSE is:"+resp+":");
+//    }
+    
     private void reportHeap(String description) {
         Runtime runtime = Runtime.getRuntime();
         long mbConst = 1024 * 1024L;

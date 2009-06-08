@@ -52,6 +52,8 @@ import javax.persistence.Table;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElementRef;
+import javax.xml.bind.annotation.XmlElementRefs;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
@@ -144,8 +146,8 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
     // CascadeType.REMOVE has been omitted, the cascade delete has been moved to the data model for performance 
     @Cascade( { CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.DELETE_ORPHAN })
     @MapKey(name = "name")
-    //   @XmlJavaTypeAdapter(MapAdapter.class)
     @OneToMany(mappedBy = "configuration", fetch = FetchType.EAGER)
+    @XmlTransient
     private Map<String, Property> properties;
 
     @Column(name = "NOTES")
@@ -318,7 +320,9 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
      * @return all child properties of this Configuration
      */
     @NotNull
-    //   @javax.xml.bind.annotation.XmlTransient
+    @XmlElementRefs( { @XmlElementRef(name = "PropertyList", type = PropertyList.class),
+        @XmlElementRef(name = "PropertySimple", type = PropertySimple.class),
+        @XmlElementRef(name = "PropertyMap", type = PropertyMap.class) })
     public Collection<Property> getProperties() {
         return getMap().values();
     }

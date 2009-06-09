@@ -89,9 +89,11 @@ public class DebugPromptCommand implements AgentPromptCommand {
             return;
         }
 
-        String sopts = "tc:f:";
+        String sopts = "tdec:f:";
         LongOpt[] lopts = { new LongOpt("comm", LongOpt.REQUIRED_ARGUMENT, null, 'c'), // trace comm messages
             new LongOpt("threaddump", LongOpt.NO_ARGUMENT, null, 't'), // dump thread stacks
+            new LongOpt("enable", LongOpt.NO_ARGUMENT, null, 'e'), // shorthand for -f log4j-debug.xml
+            new LongOpt("disable", LongOpt.NO_ARGUMENT, null, 'd'), // shorthand for -f log4j.xml
             new LongOpt("file", LongOpt.REQUIRED_ARGUMENT, null, 'f') }; // reconfigure with new log file
 
         Getopt getopt = new Getopt(getPromptCommandString(), args, sopts, lopts);
@@ -118,6 +120,32 @@ public class DebugPromptCommand implements AgentPromptCommand {
                         CommandTraceUtil.getSettingTraceCommandResponseSizeThreshold()));
                 } else {
                     out.println(MSG.getMsg(AgentI18NResourceKeys.DEBUG_CMD_TRACING_DISABLED));
+                }
+                break;
+            }
+
+            case 'd': {
+                String file = "log4j.xml";
+                try {
+                    agent.hotDeployLogConfigurationFile(file);
+                    out.println(MSG.getMsg(AgentI18NResourceKeys.DEBUG_LOG_FILE_LOADED, file, LogManager
+                        .getRootLogger().getLevel()));
+                } catch (Exception e) {
+                    out.println(MSG.getMsg(AgentI18NResourceKeys.DEBUG_CANNOT_LOAD_LOG_FILE, file, ThrowableUtil
+                        .getAllMessages(e)));
+                }
+                break;
+            }
+
+            case 'e': {
+                String file = "log4j-debug.xml";
+                try {
+                    agent.hotDeployLogConfigurationFile(file);
+                    out.println(MSG.getMsg(AgentI18NResourceKeys.DEBUG_LOG_FILE_LOADED, file, LogManager
+                        .getRootLogger().getLevel()));
+                } catch (Exception e) {
+                    out.println(MSG.getMsg(AgentI18NResourceKeys.DEBUG_CANNOT_LOAD_LOG_FILE, file, ThrowableUtil
+                        .getAllMessages(e)));
                 }
                 break;
             }

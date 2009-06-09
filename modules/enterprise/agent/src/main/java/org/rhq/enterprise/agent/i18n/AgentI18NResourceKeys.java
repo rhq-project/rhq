@@ -728,7 +728,8 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("debug")
     String DEBUG = "PromptCommand.debug";
 
-    @I18NMessage("debug [--file=<conf>] [--comm=true|false] [--threaddump]")
+    @I18NMessage("debug [--disable] [--enable] [--file=<conf>]\\n\\\n" //
+        + "\\              [--comm=true|false] [--threaddump]")
     String DEBUG_SYNTAX = "PromptCommand.debug.syntax";
 
     @I18NMessage("Provides features to help debug the agent.")
@@ -741,6 +742,8 @@ public interface AgentI18NResourceKeys {
         + "\\                  'log4j-warn.xml' or any file found in /conf.\\n\\\n"
         + "\\                  You can even use your own log configuration file by\\n\\\n"
         + "\\                  placing it in the /conf directory.\\n\\\n"
+        + "-d|--disable: disabled debug logging. This is the same as '-f log4j.xml'.\\n\\\n"
+        + "-e|--enable: enable debug logging. This is the same as '-f log4j-debug.xml'.\\n\\\n"
         + "-t|--threaddump: dumps the stacks for all threads in the agent VM.\\n\\\n")
     String DEBUG_DETAILED_HELP = "PromptCommand.debug.detailed-help";
 

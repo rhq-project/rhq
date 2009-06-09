@@ -165,6 +165,11 @@ public class AgentServerComponent extends JMXServerComponent implements JMXCompo
                     result = new OperationResult();
                     result.getComplexResults().put(
                         new PropertySimple("dateTime", getAgentBean().getOperation(name).invoke(timeZone)));
+                } else if (name.equals("setDebugMode")) {
+                    Boolean enabled = params.getSimple("enabled").getBooleanValue();
+                    Boolean traceMessaging = params.getSimple("traceMessaging").getBooleanValue();
+                    result = new OperationResult();
+                    getAgentBean().getOperation(name).invoke(enabled, traceMessaging);
                 } else if (name.equals("executePromptCommand")) {
                     String command = params.getSimple("command").getStringValue();
                     result = new OperationResult();

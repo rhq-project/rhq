@@ -264,6 +264,21 @@ public class AgentManagement implements AgentManagementMBean, MBeanRegistration 
         return df.format(new Date());
     }
 
+    public void setDebugMode(Boolean enabled, Boolean traceMessaging) throws ExecutionException {
+        if (enabled != null && enabled.booleanValue()) {
+            executePromptCommand("debug -f log4j-debug.xml");
+            if (traceMessaging != null && traceMessaging.booleanValue()) {
+                executePromptCommand("debug -c true");
+            } else {
+                executePromptCommand("debug -c false");
+            }
+        } else {
+            executePromptCommand("debug -f log4j.xml");
+            executePromptCommand("debug -c false");
+        }
+        return;
+    }
+
     public String executePromptCommand(String command) throws ExecutionException {
         CharArrayWriter listener = new CharArrayWriter();
         AgentPrintWriter apw = m_agent.getOut();

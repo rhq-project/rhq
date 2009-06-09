@@ -69,7 +69,7 @@
 
       <operation name="restartPluginContainer"
                  displayName="Restart Plugin Container"
-                 description="Recycles the plugin container. Use this if you want to reload plugins.">
+                 description="Recycles the plugin container.">
       </operation>
 
       <operation name="downloadLatestFailoverList"
@@ -141,6 +141,15 @@
          <results>
             <c:simple-property name="dateTime" type="string" description="The agent's current date/time, formatted in the given time zone" />
          </results>
+      </operation>
+
+      <operation name="setDebugMode"
+                 displayName="Set Debug Mode"
+                 description="Turns on or off debug mode, which causes the agent to emit verbose log messages.">
+         <parameters>
+            <c:simple-property name="enabled" type="boolean" required="true" description="Indicates if debug mode should be enabled or disabled"/>
+            <c:simple-property name="traceMessaging" type="boolean" default="false" required="true" description="Indicates if incoming and outgoing messages should be traced. This tracks the messaging between the agent and its server. This will be ignored and default to false if 'enabled' is false."/>
+         </parameters>
       </operation>
 
       <operation name="executePromptCommand"

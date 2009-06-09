@@ -199,6 +199,20 @@ public interface AgentManagementMBean {
     String retrieveCurrentDateTime(String timeZone);
 
     /**
+     * Turns on or off debug mode, which makes the agent log more verbose with debug messages.
+     * This will also be able to optionally turn on and off messaging trace, which
+     * lets you debug the messaging between server and agent.
+     * If the <code>enabled</code> flag is false, <code>traceMessaging</code> is ignored (i.e. all debug
+     * will be disabled, including message tracing).
+     * 
+     * @param enabled enable debug mode
+     * @param traceMessaging if <code>true</code>, message tracing will be enabled unless <code>enabled</code> is <code>false</code>
+     *
+     * @throws ExecutionException if failed to change the debug mode 
+     */
+    void setDebugMode(Boolean enabled, Boolean traceMessaging) throws ExecutionException;
+
+    /**
      * Executes an agent prompt command.  The given <code>command</code> is the prompt command
      * plus any additional command arguments, separated by spaces (just as if you typed the command
      * in the console window). The results will be a string that contains the text that you would

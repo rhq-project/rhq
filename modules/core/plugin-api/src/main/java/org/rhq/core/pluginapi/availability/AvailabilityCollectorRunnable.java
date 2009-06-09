@@ -30,6 +30,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.util.exception.ThrowableUtil;
 
 /**
  * A class that can be used by plugins whose components may not be able to collect availability statuses fast enough.
@@ -191,6 +192,13 @@ public class AvailabilityCollectorRunnable implements Runnable {
                 try {
                     AvailabilityType availability = this.availabilityChecker.getAvailability();
                     this.lastKnownAvailability.set(availability);
+                } catch (Throwable t) {
+                    log.warn("Availability collector [" + this.facetId
+                        + "] failed to get availability - keeping the last known availability of ["
+                        + this.lastKnownAvailability.get() + "]. Cause: " + ThrowableUtil.getAllMessages(t));
+                }
+
+                try {
                     Thread.sleep(this.interval);
                 } catch (InterruptedException e) {
                     // we got interrupted, we assume we need to shutdown

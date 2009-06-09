@@ -89,6 +89,12 @@ public class AvailabilityCollectorRunnable implements Runnable {
     private AtomicReference<AvailabilityType> lastKnownAvailability = new AtomicReference<AvailabilityType>();
 
     /**
+     * Just a cache of the facet toString used in log messages. We don't want to keep calling toString on the
+     * facet for fear we might get some odd blocking or exceptions thrown. So we call it once and cache it here. 
+     */
+    private final String facetId;
+
+    /**
      * Creates a collector instance that will perform availability checking for a particular managed resource.
      * 
      * The interval is the time, in milliseconds, this collector will wait between availability checks.
@@ -128,6 +134,7 @@ public class AvailabilityCollectorRunnable implements Runnable {
         this.contextClassloader = contextClassloader;
         this.interval = interval;
         this.lastKnownAvailability.set(AvailabilityType.DOWN);
+        this.facetId = availabilityChecker.toString();
     }
 
     /**
@@ -150,10 +157,10 @@ public class AvailabilityCollectorRunnable implements Runnable {
     public void start() {
         boolean isStarted = (this.started.getAndSet(true));
         if (isStarted) {
-            log.debug("Availability collector runnable [" + this.availabilityChecker + "] is already started");
+            log.debug("Availability collector runnable [" + this.facetId + "] is already started");
         } else {
             this.threadPool.execute(this);
-            log.debug("Availability collector runnable [" + this.availabilityChecker + "] submitted to thread pool");
+            log.debug("Availability collector runnable [" + this.facetId + "] submitted to thread pool");
         }
     }
 
@@ -164,7 +171,7 @@ public class AvailabilityCollectorRunnable implements Runnable {
      */
     public void stop() {
         this.started.set(false);
-        log.debug("Availability collector runnable [" + this.availabilityChecker + "] was told to stop");
+        log.debug("Availability collector runnable [" + this.facetId + "] was told to stop");
     }
 
     /**
@@ -173,7 +180,7 @@ public class AvailabilityCollectorRunnable implements Runnable {
      * You should not be calling this method directly - use {@link #start()} instead.
      */
     public void run() {
-        log.debug("Availability collector runnable [" + this.availabilityChecker + "] started");
+        log.debug("Availability collector runnable [" + this.facetId + "] started");
 
         ClassLoader originalClassloader = Thread.currentThread().getContextClassLoader();
         Thread.currentThread().setContextClassLoader(this.contextClassloader);
@@ -188,14 +195,14 @@ public class AvailabilityCollectorRunnable implements Runnable {
                 } catch (InterruptedException e) {
                     // we got interrupted, we assume we need to shutdown
                     this.started.set(false);
-                    log.debug("Availability collector [" + this.availabilityChecker + "] interrupted");
+                    log.debug("Availability collector [" + this.facetId + "] interrupted");
                 }
             } while (this.started.get());
         } finally {
             Thread.currentThread().setContextClassLoader(originalClassloader);
         }
 
-        log.debug("Availability collector runnable [" + this.availabilityChecker + "] stopped");
+        log.debug("Availability collector runnable [" + this.facetId + "] stopped");
         return;
     }
 }

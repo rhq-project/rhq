@@ -14,8 +14,8 @@
 	<classpathentry kind="src" path="modules/plugins/jboss-as-5/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/jboss-as-5/src/test/java"/>
 	<classpathentry kind="var" path="M2_REPO/org/jboss/integration/jboss-profileservice-spi/5.1.0.GA/jboss-profileservice-spi-5.1.0.GA.jar"/>
-	<classpathentry kind="var" path="M2_REPO/org/jboss/man/jboss-managed/2.1.0.CR8/jboss-managed-2.1.0.CR8.jar"/>
-	<classpathentry kind="var" path="M2_REPO/org/jboss/man/jboss-metatype/2.1.0.CR8/jboss-metatype-2.1.0.CR8.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/jboss/man/jboss-managed/2.1.0.SP1/jboss-managed-2.1.0.SP1.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/jboss/man/jboss-metatype/2.1.0.SP1/jboss-metatype-2.1.0.SP1.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/apache/commons/commons-io/1.3.2/commons-io-1.3.2.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="var" path="M2_REPO/com/sun/xml/bind/jaxb-impl/2.1.6/jaxb-impl-2.1.6.jar"/>

@@ -298,9 +298,9 @@
     </delete>
 
     <!-- make sure our downloads directories exist -->
-   <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-agent"/>
-   <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-client"/>  	
-  	<mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-plugins"/>
+    <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-agent"/>
+    <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-client"/>
+    <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-plugins"/>
 
     <!-- deploy the agent update binary to the downloads location -->
     <echo>Deploying the latest agent update binary and renaming it rhq-enterprise-agent-${rhq.version}.jar</echo>
@@ -316,7 +316,7 @@
          verbose="true"
          failonerror="true"/>
 
-  	<!-- optionally package the connectors -->
+    <!-- optionally package the connectors -->
     <antcall target="package-connectors" />
 
     <!-- Let's deploy some developer-only stuff - we'll remove these later if this is a release build -->

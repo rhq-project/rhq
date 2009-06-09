@@ -277,6 +277,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             InstalledPackage newlyInstalledPackage = new InstalledPackage();
             newlyInstalledPackage.setPackageVersion(packageVersion);
             newlyInstalledPackage.setResource(resource);
+            newlyInstalledPackage.setInstallationDate(resourcePackage.getInstallationTimestamp());
 
             entityManager.persist(newlyInstalledPackage);
 

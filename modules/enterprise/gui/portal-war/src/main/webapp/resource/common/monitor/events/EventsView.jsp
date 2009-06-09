@@ -64,12 +64,28 @@
 
 <div id="loading" style="position: absolute; left:40%; top: 40%;z-index: 10"><img src="/images/LoadingEvents.png" alt="Loading events"/></div>
 
-
+<form action="#" onsubmit="onLoad()" name="show">
+<input type="checkbox" name="alerts" checked="checked" onchange="onLoad()" id="alertsField"/>
+    <label for="alertsField"><img src="/images/icons/Alert_grey_16.png"/> Alerts</label>
+&nbsp;
+<input type="checkbox" name="events" checked="checked" onchange="onLoad()" id="eventsField"/>
+    <label for="eventsField"><img src="/images/icons/Events_grey_16.png"/> Events</label>
+&nbsp;
+<input type="checkbox" name="configurations" checked="checked" onchange="onLoad()" id="configurationsField"/>
+    <label for="configurationsField"><img src="/images/icons/Configure_grey_16.png"/> Configuration Changes</label>
+&nbsp;
+<input type="checkbox" name="operations" checked="checked" onchange="onLoad()" id="operationsField"/>
+    <label for="operationsField"><img src="/images/icons/Operation_grey_16.png"/> Operations</label>
+&nbsp;
+<input type="checkbox" name="content" checked="checked" onchange="onLoad()" id="contentField"/>
+    <label for="contentField"><img src="/images/icons/Content_grey_16.png"/> Content Changes</label>
+</form>
 <script type="text/javascript">
 
 var tl;
 
 function onLoad() {
+    
 
     var begin = <%= begin%>;
     var end = <%= end%>;
@@ -167,7 +183,7 @@ for (Availability avail : availabilities) {
 
   tl = Timeline.create(document.getElementById("t1"), bandInfos);
 
-    var toLoad = 6;
+    var toLoad = 7;
      function done() {
          toLoad--;
          if (toLoad == 0) {
@@ -179,47 +195,69 @@ for (Availability avail : availabilities) {
          }
      }
 
-      var link = "/resource/common/monitor/events/EventConfigJSON.jsp?id=" + resourceId + "&begin=" + begin + "&end=" + end;
-      Timeline.loadJSON(link, function(json, url) {
-          eventSource.loadJSON(json, url);
-          document.getElementById("event-count").innerHTML = eventSource.getCount();
-          done();
-      });
+      if (document.forms['show'].configurations.checked) {
+          var link = "/resource/common/monitor/events/EventConfigJSON.jsp?id=" + resourceId + "&begin=" + begin + "&end=" + end;
+          Timeline.loadJSON(link, function(json, url) {
+              eventSource.loadJSON(json, url);
+              document.getElementById("event-count").innerHTML = eventSource.getCount();
+              done();
+          });
+      }
 
-      link = "/resource/common/monitor/events/EventPluginConfigJSON.jsp?id=" + resourceId + "&begin=" + begin + "&end=" + end;
-      Timeline.loadJSON(link, function(json, url) {
-          eventSource.loadJSON(json, url);
-          document.getElementById("event-count").innerHTML = eventSource.getCount();
-          done();
-      });
+      if (document.forms['show'].configurations.checked) {
+          link = "/resource/common/monitor/events/EventPluginConfigJSON.jsp?id=" + resourceId + "&begin=" + begin + "&end=" + end;
+          Timeline.loadJSON(link, function(json, url) {
+              eventSource.loadJSON(json, url);
+              document.getElementById("event-count").innerHTML = eventSource.getCount();
+              done();
+          });
+      }
 
-      link = "/resource/common/monitor/events/EventCreateDeleteChildJSON.jsp?id=" + resourceId + "&begin=" + begin + "&end=" + end;
-      Timeline.loadJSON(link, function(json, url) {
-          eventSource.loadJSON(json, url);
-          document.getElementById("event-count").innerHTML = eventSource.getCount();
-          done();
-      });
+      if (document.forms['show'].configurations.checked) {
+          link = "/resource/common/monitor/events/EventCreateDeleteChildJSON.jsp?id=" + resourceId + "&begin=" + begin + "&end=" + end;
+          Timeline.loadJSON(link, function(json, url) {
+              eventSource.loadJSON(json, url);
+              document.getElementById("event-count").innerHTML = eventSource.getCount();
+              done();
+          });
+      }
 
-      link = "/resource/common/monitor/events/EventAlertJSON.jsp?id=" + resourceId + "&begin=" + begin + "&end=" + end;
-      Timeline.loadJSON(link, function(json, url) {
-          eventSource.loadJSON(json, url);
-          document.getElementById("event-count").innerHTML = eventSource.getCount();
-          done();
-      });
+      if (document.forms['show'].alerts.checked) {
+          link = "/resource/common/monitor/events/EventAlertJSON.jsp?id=" + resourceId + "&begin=" + begin + "&end=" + end;
+          Timeline.loadJSON(link, function(json, url) {
+              eventSource.loadJSON(json, url);
+              document.getElementById("event-count").innerHTML = eventSource.getCount();
+              done();
+          });
+      }
 
-      link = "/resource/common/monitor/events/EventOperationsJSON.jsp?id=" + resourceId + "&begin=" + begin + "&end=" + end;
-      Timeline.loadJSON(link, function(json, url) {
-          eventSource.loadJSON(json, url);
-          document.getElementById("event-count").innerHTML = eventSource.getCount();
-          done();
-      });
-      link = "/resource/common/monitor/events/EventEventsJSON.jsp?id=" + resourceId + "&begin=" + begin + "&end=" + end;
-      Timeline.loadJSON(link, function(json, url) {
-          eventSource.loadJSON(json, url);
-          document.getElementById("event-count").innerHTML = eventSource.getCount();
-          done();
-      });
 
+      if (document.forms['show'].operations.checked) {
+          link = "/resource/common/monitor/events/EventOperationsJSON.jsp?id=" + resourceId + "&begin=" + begin + "&end=" + end;
+          Timeline.loadJSON(link, function(json, url) {
+              eventSource.loadJSON(json, url);
+              document.getElementById("event-count").innerHTML = eventSource.getCount();
+              done();
+          });
+      }
+
+      if (document.forms['show']['events'].checked) {
+          link = "/resource/common/monitor/events/EventEventsJSON.jsp?id=" + resourceId + "&begin=" + begin + "&end=" + end;
+          Timeline.loadJSON(link, function(json, url) {
+              eventSource.loadJSON(json, url);
+              document.getElementById("event-count").innerHTML = eventSource.getCount();
+              done();
+          });
+      }
+
+    if (document.forms['show']['content'].checked) {
+          link = "/resource/common/monitor/events/EventContentJSON.jsp?id=" + resourceId + "&begin=" + begin + "&end=" + end;
+          Timeline.loadJSON(link, function(json, url) {
+              eventSource.loadJSON(json, url);
+              document.getElementById("event-count").innerHTML = eventSource.getCount();
+              done();
+          });
+      }
 
     setupFilterHighlightControls(document.getElementById("controls"), tl, [0,1], theme);
 }

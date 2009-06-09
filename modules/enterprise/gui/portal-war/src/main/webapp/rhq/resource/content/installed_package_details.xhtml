@@ -10,147 +10,152 @@
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:c="http://java.sun.com/jstl/core"
       xmlns:onc="http://jboss.org/on/component"
-      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich"
+      xmlns:a4j="http://richfaces.org/a4j">
 
 THIS TEXT WILL BE REMOVED.
 
 <ui:composition template="/rhq/resource/layout/main.xhtml">
 
-   <ui:param name="pageTitle" value="View Package History"/>
-   <ui:param name="selectedTabName" value="Content.Deployed"/>
-   <ui:define name="content">
+    <ui:param name="pageTitle" value="View Package History"/>
+    <ui:param name="selectedTabName" value="Content.Deployed"/>
+    <ui:define name="content">
 
-      <ui:param name="current" value="#{ListPackageHistoryUIBean.currentPackage}"/>
+        <a4j:keepAlive beanName="ListPackageHistoryUIBean"/>
 
-      <!-- Current Package Display -->
+        <ui:param name="current" value="#{ListPackageHistoryUIBean.currentPackage}"/>
 
-      <rich:panel rendered="#{!empty current}">
-         <f:facet name="header"><h:outputText value="Current Package Information"/></f:facet>
+        <!-- Current Package Display -->
 
-         <h:form id="packageDataForm">
-            <input type="hidden" name="id" value="#{param.id}"/>
-            <input type="hidden" name="currentPackageId" value="#{current.id}"/>
-            
-            <h:dataTable value="#{ListPackageHistoryUIBean.packageValues}" var="item"
-                         styleClass="revision-data-table"
-                         headerClass="revision-data-table-header"
-                         rowClasses="revision-data-table-even-row,revision-data-table-odd-row"
-                         cellpadding="3"
-                         cellspacing="0">
+        <rich:panel rendered="#{!empty current}">
+            <f:facet name="header"><h:outputText value="Current Package Information"/></f:facet>
 
-               <h:column>
-                   <b><h:outputText value="#{item.name}"/><f:verbatim>:</f:verbatim> </b>
-                </h:column>
-                 <h:column>
-                    <h:outputText value="#{item.currentValue}"/>
-                </h:column>
+            <h:form id="packageDataForm">
+                <input type="hidden" name="id" value="#{param.id}"/>
+                <input type="hidden" name="currentPackageId" value="#{current.id}"/>
 
-            </h:dataTable>
+                <h:dataTable value="#{ListPackageHistoryUIBean.packageValues}" var="item"
+                             styleClass="revision-data-table"
+                             headerClass="revision-data-table-header"
+                             rowClasses="revision-data-table-even-row,revision-data-table-odd-row"
+                             cellpadding="3"
+                             cellspacing="0">
 
-         </h:form>
-      </rich:panel>
+                    <h:column>
+                        <b><h:outputText value="#{item.name}"/><f:verbatim>:</f:verbatim> </b>
+                    </h:column>
+                    <h:column>
+                        <h:outputText value="#{item.currentValue}"/>
+                    </h:column>
 
-      <!-- Packages List Table -->
+                </h:dataTable>
 
-      <!-- TODO: jdobies, Feb 22, 2008: Revisit this and reuse it on history subtab.
-           For now, just making this change to use the history entries since InstalledPackage no longer carries
-           historical data. -->
+            </h:form>
+        </rich:panel>
 
-      <rich:panel>
+        <!-- Packages List Table -->
 
-         <f:facet name="header"><h:outputText value="Package History"/></f:facet>
+        <!-- TODO: jdobies, Feb 22, 2008: Revisit this and reuse it on history subtab.
+      For now, just making this change to use the history entries since InstalledPackage no longer carries
+      historical data. -->
 
-         <h:form id="previousForm">
-            <input type="hidden" name="id" value="#{param.id}"/>
-            <input type="hidden" name="currentPackageId" value="#{current.id}"/>
+        <rich:panel>
 
-            <ui:param name="packagesDataModel" value="#{ListPackageHistoryUIBean.dataModel}"/>
-            <rich:dataTable id="packagesDataTable"
-                            rows="#{PageControl.AllPackageVersionsList.pageSize}"
-                            value="#{packagesDataModel}"
-                            var="item"
-                            width="100%"
-                            columnsWidth="20%, 20%, 20%, 20%, 20%"
-                            headerClass="tableRowHeader"
-                            footerClass="on-pager-footer"
-                            onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
-                            onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+            <f:facet name="header"><h:outputText value="Package History"/></f:facet>
 
-               <f:facet name="PageControlView">
-                  <onc:paginationControl id="AllPackageVersionsList" />
-               </f:facet>
+            <h:form id="previousForm">
+                <input type="hidden" name="id" value="#{param.id}"/>
+                <input type="hidden" name="currentPackageId" value="#{current.id}"/>
 
-               <rich:column>
-                  <f:facet name="header">
-                     <onc:sortableColumnHeader sort="iph.timestamp">
-                        <h:outputText styleClass="headerText" value="Timestamp" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
+                <ui:param name="packagesDataModel" value="#{ListPackageHistoryUIBean.dataModel}"/>
+                <rich:dataTable id="packagesDataTable"
+                                rows="#{PageControl.AllPackageVersionsList.pageSize}"
+                                value="#{packagesDataModel}"
+                                var="item"
+                                width="100%"
+                                columnsWidth="20%, 20%, 20%, 20%, 20%"
+                                headerClass="tableRowHeader"
+                                footerClass="on-pager-footer"
+                                onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                                onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
 
-                  <h:outputText value="#{item.timestamp}" />
-               </rich:column>
+                    <f:facet name="PageControlView">
+                        <onc:paginationControl id="AllPackageVersionsList"/>
+                    </f:facet>
 
-               <rich:column>
-                  <f:facet name="header">
-                     <onc:sortableColumnHeader sort="iph.status">
-                        <h:outputText styleClass="headerText" value="Status" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
+                    <rich:column>
+                        <f:facet name="header">
+                            <onc:sortableColumnHeader sort="iph.timestamp">
+                                <h:outputText styleClass="headerText" value="Timestamp"/>
+                            </onc:sortableColumnHeader>
+                        </f:facet>
 
-                  <h:outputText value="#{item.status}" />
-               </rich:column>
+                        <h:outputText value="#{item.timestamp}">
+                            <f:converter converterId="UserDateTimeConverter"/>
+                        </h:outputText>
+                    </rich:column>
 
-               <rich:column>
-                  <f:facet name="header">
-                     <onc:sortableColumnHeader sort="iph.packageVersion.displayVersion">
-                        <h:outputText styleClass="headerText" value="Version" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
+                    <rich:column>
+                        <f:facet name="header">
+                            <onc:sortableColumnHeader sort="iph.status">
+                                <h:outputText styleClass="headerText" value="Status"/>
+                            </onc:sortableColumnHeader>
+                        </f:facet>
 
-                  <h:outputText value="#{item.packageVersion.displayVersion}"/>
-               </rich:column>
+                        <h:outputText value="#{item.status}"/>
+                    </rich:column>
 
-               <rich:column>
-                  <f:facet name="header">
-                     <onc:sortableColumnHeader sort="ip.packageVersion.architecture">
-                        <h:outputText styleClass="headerText" value="Architecture" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
+                    <rich:column>
+                        <f:facet name="header">
+                            <onc:sortableColumnHeader sort="iph.packageVersion.displayVersion">
+                                <h:outputText styleClass="headerText" value="Version"/>
+                            </onc:sortableColumnHeader>
+                        </f:facet>
 
-                  <h:outputText value="#{item.packageVersion.architecture.name}"/>
-               </rich:column>
+                        <h:outputText value="#{item.packageVersion.displayVersion}"/>
+                    </rich:column>
 
-               <rich:column>
-                  <f:facet name="header">
-                     <h:outputText styleClass="headerText" value="Original Request"/>
-                  </f:facet>
+                    <rich:column>
+                        <f:facet name="header">
+                            <onc:sortableColumnHeader sort="ip.packageVersion.architecture">
+                                <h:outputText styleClass="headerText" value="Architecture"/>
+                            </onc:sortableColumnHeader>
+                        </f:facet>
 
-                  <h:outputText value="View Request" rendered="#{item.contentServiceRequest ne null}"/>
-               </rich:column>
+                        <h:outputText value="#{item.packageVersion.architecture.name}"/>
+                    </rich:column>
 
-               <f:facet name="footer">
-                  <rich:columnGroup>
-                     <rich:column colspan="5" width="100%">
-                        <ui:param name="paginationDataTableName" value="packagesDataTable"/>
-                        <ui:param name="paginationDataModel" value="#{packagesDataModel}"/>
-                        <ui:param name="paginationPageControl" value="#{PageControl.AllPackageVersionsList}"/>
-                        <ui:include src="../include/pagination.xhtml"/>
-                     </rich:column>
-                  </rich:columnGroup>
-               </f:facet>
+                    <rich:column>
+                        <f:facet name="header">
+                            <h:outputText styleClass="headerText" value="Original Request"/>
+                        </f:facet>
 
-            </rich:dataTable>
+                        <h:outputText value="View Request" rendered="#{item.contentServiceRequest ne null}"/>
+                    </rich:column>
 
-         </h:form>
-      </rich:panel>
+                    <f:facet name="footer">
+                        <rich:columnGroup>
+                            <rich:column colspan="5" width="100%">
+                                <ui:param name="paginationDataTableName" value="packagesDataTable"/>
+                                <ui:param name="paginationDataModel" value="#{packagesDataModel}"/>
+                                <ui:param name="paginationPageControl" value="#{PageControl.AllPackageVersionsList}"/>
+                                <ui:include src="../include/pagination.xhtml"/>
+                            </rich:column>
+                        </rich:columnGroup>
+                    </f:facet>
 
-      <!-- Return Link -->
+                </rich:dataTable>
 
-      <h:outputLink value="/rhq/resource/content/view.xhtml?id=#{param.id}">
-         <h:outputText value="Return to Packages"/>
-      </h:outputLink>
+            </h:form>
+        </rich:panel>
 
-   </ui:define>
+        <!-- Return Link -->
+
+        <h:outputLink value="/rhq/resource/content/view.xhtml?id=#{param.id}">
+            <h:outputText value="Return to Packages"/>
+        </h:outputLink>
+
+    </ui:define>
 
 </ui:composition>
 

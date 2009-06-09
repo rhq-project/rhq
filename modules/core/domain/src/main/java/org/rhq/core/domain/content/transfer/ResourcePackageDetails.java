@@ -41,6 +41,8 @@ public class ResourcePackageDetails extends PackageDetails {
      */
     private Configuration deploymentTimeConfiguration;
 
+    private long installationTimestamp;
+
     // Constructors  --------------------------------------------
 
     public ResourcePackageDetails(PackageDetailsKey key) {
@@ -56,4 +58,14 @@ public class ResourcePackageDetails extends PackageDetails {
     public void setDeploymentTimeConfiguration(Configuration deploymentTimeConfiguration) {
         this.deploymentTimeConfiguration = deploymentTimeConfiguration;
     }
+
+    public long getInstallationTimestamp() {
+        return installationTimestamp;
+    }
+
+    public void setInstallationTimestamp(long installationTimestamp) {
+        this.installationTimestamp = installationTimestamp;
+    }
 }
+
+

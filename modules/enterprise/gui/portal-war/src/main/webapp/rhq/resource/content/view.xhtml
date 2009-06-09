@@ -79,7 +79,7 @@
                             value="#{packagesDataModel}"
                             var="item"
                             width="100%"
-                            columnsWidth="1%, 33%, 33%, 33%"
+                            columnsWidth="1%, 35%, 20%, 20%, 24%"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer"
                             onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
@@ -152,7 +152,7 @@
 
                <f:facet name="footer">
                   <rich:columnGroup>
-                     <rich:column colspan="4" width="100%">
+                     <rich:column colspan="5" width="100%">
                         <onc:selectCommandButton action="#{DeletePackagesUIBean.beginDeleteWorkflow}"
                                                  value="DELETE SELECTED" target="selectedPackages" styleClass="on-pager-button buttonsmall"/>
 

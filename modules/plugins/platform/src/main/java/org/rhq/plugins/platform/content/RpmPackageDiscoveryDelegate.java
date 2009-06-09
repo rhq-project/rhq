@@ -123,7 +123,7 @@ public class RpmPackageDiscoveryDelegate {
                 name = rpmDataReader.readLine();
                 version = rpmDataReader.readLine();
                 architectureName = rpmDataReader.readLine();
-                String installTime = rpmDataReader.readLine();
+                String installTimeString = rpmDataReader.readLine();
                 String md5 = rpmDataReader.readLine();
                 String category = rpmDataReader.readLine();
                 String fileName = rpmDataReader.readLine();
@@ -145,6 +145,16 @@ public class RpmPackageDiscoveryDelegate {
                     }
                 }
 
+                Long installTime = null;
+                if (installTimeString != null) {
+                    try {
+                        installTime = Long.parseLong(installTimeString);
+                        installTime *= 1000L; // RPM returns epoch seconds, we need epoch millis
+                    } catch (NumberFormatException e) {
+                        log.debug("Could not parse package install time");
+                    }
+                }
+
                 // There may be multiple file names. For now, just ignore the package (I'll find a better way
                 // to deal with this going forward). There will be a blank space in the fileName attribute, so
                 // just abort if we see that
@@ -161,7 +171,7 @@ public class RpmPackageDiscoveryDelegate {
                 packageDetails.setFileSize(fileSize);
                 packageDetails.setLicenseName(license);
                 packageDetails.setLongDescription(description.toString());
-
+                packageDetails.setInstallationTimestamp(installTime);
                 packages.add(packageDetails);
             } catch (Exception e) {
                 log.error("Error creating resource package. RPM Name: " + rpmName + " Version: " + version

@@ -36,6 +36,9 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.core.clientapi.util.units.UnitsFormat;
+import org.rhq.core.clientapi.util.units.UnitNumber;
+import org.rhq.core.clientapi.util.units.UnitsConstants;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
@@ -109,12 +112,13 @@ public class ListPackageHistoryUIBean extends PagedDataTableUIBean {
             (current.getPackageVersion().getFileSize() != null) ? current.getPackageVersion().getFileName() : null,
             (old != null) ? ((old.getPackageVersion().getFileSize() != null) ? old.getPackageVersion().getFileName()
                 : null) : null));
+
+        long fileSizeBytes = (current.getPackageVersion().getFileSize() != null) ? current.getPackageVersion().getFileSize() : 0;
+        long oldFileSizeBytes = (old != null) ? ((old.getPackageVersion().getFileSize() != null) ? old.getPackageVersion().getFileSize() : 0) : 0;
         results.add(new PackageTableDataValue("File Size",
-            (current.getPackageVersion().getFileSize() != null) ? current.getPackageVersion().getFileSize().toString()
-                : null, (old != null) ? ((old.getPackageVersion().getFileSize() != null) ? old.getPackageVersion()
-                .getFileSize().toString() : null) : null));
-        results.add(new PackageTableDataValue("MD5", current.getPackageVersion().getMD5(), ((old != null) ? old
-            .getPackageVersion().getMD5() : null)));
+                UnitsFormat.format(new UnitNumber(fileSizeBytes, UnitsConstants.UNIT_BYTES)).toString(),
+                UnitsFormat.format(new UnitNumber(oldFileSizeBytes, UnitsConstants.UNIT_BYTES)).toString()));
+
         results.add(new PackageTableDataValue("SHA256", current.getPackageVersion().getSHA256(), ((old != null) ? old
             .getPackageVersion().getSHA256() : null)));
         results.add(new PackageTableDataValue("Installation Date", dateToString(current.getInstallationDate()),

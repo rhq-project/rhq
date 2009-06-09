@@ -488,7 +488,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                 int minInterval = resultSet.getInt(7);
                 int collectionInterval = (maxInterval == minInterval) ? maxInterval : 0; // 0 will be flagged as "DIFFERENT"
                 Boolean collectionEnabled = null;
-                if (type instanceof PostgresqlDatabaseType) {
+                if (type instanceof PostgresqlDatabaseType || type instanceof H2DatabaseType) {
                     boolean bOr = resultSet.getBoolean(8);
                     boolean bAnd = resultSet.getBoolean(9);
                     if (bOr == bAnd) {

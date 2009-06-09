@@ -75,6 +75,7 @@ import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.ServerServices;
 import org.rhq.core.pc.agent.AgentRegistrar;
 import org.rhq.core.pc.agent.AgentService;
+import org.rhq.core.pc.availability.AvailabilityCollectorThreadPool;
 import org.rhq.core.pc.content.ContentContextImpl;
 import org.rhq.core.pc.event.EventContextImpl;
 import org.rhq.core.pc.inventory.ResourceContainer.ResourceComponentState;
@@ -172,6 +173,11 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
     private DiscoveryComponentProxyFactory discoveryComponentProxyFactory;
 
+    /**
+     * Used by resource components that want to perform asynchronous availability checking.
+     */
+    private AvailabilityCollectorThreadPool availabilityCollectors;
+
     public InventoryManager() {
         super(DiscoveryAgentService.class);
     }
@@ -193,6 +199,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
             if (configuration.isInsideAgent()) {
                 loadFromDisk();
             }
+
+            availabilityCollectors = new AvailabilityCollectorThreadPool();
+            availabilityCollectors.initialize();
 
             // Discover the platform first thing.
             executePlatformScan();
@@ -240,6 +249,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             this.persistToDisk();
         }
         this.discoveryComponentProxyFactory.shutdown();
+        this.availabilityCollectors.shutdown();
     }
 
     /**
@@ -1142,7 +1152,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 this.configuration.getContainerName(), // the name of the agent/PC
                 getEventContext(resource), // for event access
                 getOperationContext(resource), // for operation manager access
-                getContentContext(resource)); // for content manager access
+                getContentContext(resource), // for content manager access
+                this.availabilityCollectors); // for components that want to perform async avail checking
 
             container.setResourceContext(context);
             try {

@@ -83,21 +83,19 @@ input.button_submit {
     <jsp:include page="/rhq/common/ie6/ie6fix.xhtml"/>
 <div id="PageHeader">
 
-<table width="100%" border="0" cellpadding="0" cellspacing="0" height="70px">
-    <tr valign="bottom">
-        <td align="left" rowspan="2">
+<table width="100%" border="0" cellpadding="5" cellspacing="0" height="70px">
+    <tr valign="top">
+        <td align="left">
             <fmt:message var="urlDomain" key="product.url.domain" />
             <fmt:message var="productName" key="product.fullName" />
             <a href="#" onclick="openAbout(aboutWindowTitle)">
-                <img src="/images/logo_header.png" title="${productName}" />
+                <img src="/images/logo_header.png" title="${productName}" alt="Jopr" />
             </a>
         </td>
-        <td valign="top" align="right">
-            <map name="redhat-jboss-logo-map">
-                <area href="http://www.redhat.com/" alt="Red Hat Homepage" title="Red Hat" shape="rect" coords="0,0,100,42" />
-                <area href="http://www.jboss.org/" alt="JBoss Homepage" title="JBoss" shape="rect" coords="100,0,200,42" />
-            </map>
-            <img src="/images/redhat-jboss-logo.gif" usemap="#redhat-jboss-logo-map" border="0" />
+        <td align="right">
+            <a href="http://jboss.org/">
+                <img src="/images/jboss_logo.png" alt="JBoss Homepage" title="JBoss by Red Hat" height="55" />
+            </a>
         </td>
     </tr>
 </table>

@@ -45,14 +45,15 @@
          </dependency>
       -->
 
-      <!-- This only validates that a container is available.  We only use it if
-         we can't find an exploded AS already under the container target directory -->
+      <!-- To build the client service endpoint classes we need an AS distribution.  We'll only unzip
+         what we jbossws needs and only if we don't already have an uptodate version in the target
+         directory.
+      -->
       <dependency>
-         <groupId>org.rhq</groupId>
-         <artifactId>rhq-enterprise-server-container</artifactId>
-         <version>${project.version}</version>
+         <groupId>org.jboss.jbossas</groupId>
+         <artifactId>jboss-as-dist</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
          <type>zip</type>
-         <scope>provided</scope>
       </dependency>
 
       <dependency>
@@ -184,6 +185,9 @@
                               name="i18nlog.version"
                               value="${i18nlog.version}" />
                            <property
+                              name="jboss.version"
+                              value="${jboss.version}" />
+                           <property
                               name="jbossws.version"
                               value="${jbossws.version}" />
                            <property
@@ -228,4 +232,94 @@
       </plugins>
    </build>
 
+   <profiles>
+      <!-- 
+         Just for running Web Service / Remote API tests. To run the tests execute them explicitly via
+         -Dtest=TestRemoteInterface
+         If running these tests there are some prerequisites:
+         * RHQ Server must be running on localhost:7080.
+         * ws-test user defined in database with full permissions
+         * RHQ agent running
+         *   Non RHQ Server JBossAS in inventory.
+         * -Djbossws-native-home= to jbossws native stack install (e.g. jbossws-native-3.0.4.GA.zip)
+         * -Dws.test.package-path= to a test .war file for deploy tests
+         * -Dws.test.package-version= package version for the test .war fil   
+      -->
+      <profile>
+         <id>ws-dynamic-test</id>
+
+         <activation>
+            <property>
+               <name>test</name>
+               <value>TestRemoteInterface</value>
+            </property>
+         </activation>
+
+         <build>
+            <plugins>
+               <plugin>
+                  <artifactId>maven-surefire-plugin</artifactId>
+                  <configuration>
+                     <groups>ws</groups>
+                     <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
+                     <excludes>
+                        <exclude>com/**/*.java</exclude>
+                     </excludes>
+                     <forkMode>pertest</forkMode>
+                     <argLine>-Xmx512m -Xms128m</argLine>
+                     <systemProperties>
+                        <property>
+                           <name>deploymentDirectory</name>
+                           <value>target/classes</value>
+                        </property>
+                     </systemProperties>
+                     <additionalClasspathElements>
+                        <!-- The below is required for WS Java Client support -->
+                        <additionalClasspathElement>${jbossws-native-home}/deploy/lib/jbossws-client.jar</additionalClasspathElement>
+                     </additionalClasspathElements>
+                  </configuration>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+
+      <profile>
+         <id>ws-static-test</id>
+
+         <activation>
+            <property>
+               <name>test</name>
+               <value>ClientMainTest</value>
+            </property>
+         </activation>
+
+         <build>
+            <plugins>
+               <plugin>
+                  <artifactId>maven-surefire-plugin</artifactId>
+                  <configuration>
+                     <groups>ws</groups>
+                     <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
+                     <excludes>
+                        <exclude>com/**/*.java</exclude>
+                     </excludes>
+                     <forkMode>pertest</forkMode>
+                     <argLine>-Xmx512m -Xms128m</argLine>
+                     <systemProperties>
+                        <property>
+                           <name>deploymentDirectory</name>
+                           <value>target/classes</value>
+                        </property>
+                     </systemProperties>
+                     <additionalClasspathElements>
+                        <!-- The below is required for WS Java Client support -->
+                        <additionalClasspathElement>${project.build.outputDirectory}/lib/${project.build.finalName}.jar</additionalClasspathElement>
+                     </additionalClasspathElements>
+                  </configuration>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+
+   </profiles>
 </project>

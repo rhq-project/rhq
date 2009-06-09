@@ -322,6 +322,12 @@
       <load-on-startup>1</load-on-startup>
    </servlet>
 
+   <servlet>
+      <servlet-name>RemoteClientServlet</servlet-name>
+      <servlet-class>org.rhq.enterprise.gui.client.RemoteClientServlet</servlet-class>
+      <load-on-startup>1</load-on-startup>
+   </servlet>
+
    <!-- standalone servlets used by the JSPs -->
    <servlet>
       <servlet-name>navMapImage</servlet-name>
@@ -399,6 +405,16 @@
    <servlet-mapping>
       <servlet-name>AgentUpdateServlet</servlet-name>
       <url-pattern>/agentupdate/download</url-pattern>
+   </servlet-mapping>
+
+   <!-- The endpoints to the remote client servlet -->
+   <servlet-mapping>
+      <servlet-name>RemoteClientServlet</servlet-name>
+      <url-pattern>/client/version</url-pattern>
+   </servlet-mapping>
+   <servlet-mapping>
+      <servlet-name>RemoteClientServlet</servlet-name>
+      <url-pattern>/client/download</url-pattern>
    </servlet-mapping>
 
    <!-- The download servlet; this URI /downloads will effectively look like its pointing to rhq-downloads -->

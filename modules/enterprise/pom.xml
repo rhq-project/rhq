@@ -28,7 +28,7 @@
 
     <profile>
       <id>default</id>
-      <!-- everything except server/container -->
+      <!-- everything except server/container and remote client -->
       <activation>
         <activeByDefault>true</activeByDefault>
       </activation>
@@ -60,8 +60,9 @@
         <module>server/safe-invoker</module>
         <module>server/sars</module>
         <module>gui</module>
+        <module>client</module>        
         <module>server/plugins</module>
-        <module>server/ear</module>
+        <module>server/ear</module>        
         <module>server/container-lib</module>
         <module>server/container</module>
       </modules>

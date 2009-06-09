@@ -336,6 +336,16 @@
             </rich:menuItem>
         </rich:menuGroup>
 
+        <ui:remove>***** Administration > CLIENT DISTRIBUTION *****</ui:remove>
+        <rich:menuGroup value="Client Distribution">
+            <rich:menuItem submitMode="none" onclick="window.location = '/client/version'">
+                <h:outputText value="Remote Client (CLI) Version Info"/>
+            </rich:menuItem>
+            <rich:menuItem submitMode="none" onclick="window.location = '/client/download'">
+                <h:outputText value="Download Remote Client (CLI) Binary"/>
+            </rich:menuItem>
+        </rich:menuGroup>
+
         <rich:menuItem submitMode="none"
                        onclick="window.location = '/admin/license/LicenseAdmin.do?mode=view'"
                        rendered="#{GlobalPermissionsUIBean.settings}">

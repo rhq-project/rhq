@@ -118,7 +118,7 @@
 
     <condition property="undeploy-web-services" value="true">
        <not>
-          <equals arg1="${rhq.server.enable.web.services}" arg2="true" />
+          <equals arg1="${rhq.server.enable.ws}" arg2="true" />
        </not>
     </condition>
 
@@ -298,8 +298,9 @@
     </delete>
 
     <!-- make sure our downloads directories exist -->
-    <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-plugins"/>
-    <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-agent"/>
+   <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-agent"/>
+   <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-client"/>  	
+  	<mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-plugins"/>
 
     <!-- deploy the agent update binary to the downloads location -->
     <echo>Deploying the latest agent update binary and renaming it rhq-enterprise-agent-${rhq.version}.jar</echo>
@@ -308,7 +309,14 @@
           verbose="true"
           failonerror="true"/>
 
-    <!-- optionally package the connectors -->
+   <!-- deploy the remote client binary to the downloads location. -->
+   <echo>Deploying the latest remote client binary</echo>
+   <copy file="${settings.localRepository}/org/rhq/rhq-client/${rhq.version}/rhq-client-${rhq.version}.zip"
+         tofile="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-client/rhq-client-${rhq.version}.zip"
+         verbose="true"
+         failonerror="true"/>
+
+  	<!-- optionally package the connectors -->
     <antcall target="package-connectors" />
 
     <!-- Let's deploy some developer-only stuff - we'll remove these later if this is a release build -->

@@ -58,7 +58,7 @@ public class RHQConstants {
     // how long can an agent be quiet (i.e. not send an avail report) before we consider it down and backfill it
     public static final String AgentMaxQuietTimeAllowed = "AGENT_MAX_QUIET_TIME_ALLOWED";
 
-    // how long can an agent be quiet (i.e. not send an avail report) before we consider it down and backfill it
+    // Are we allowing automatic AgentUpdate binary download
     public static final String EnableAgentAutoUpdate = "ENABLE_AGENT_AUTO_UPDATE";
 
     // How long do we keep data compressed in hourly intervals?

@@ -181,7 +181,7 @@
                   <property name="rhq.server.http.port" value="${rhq.server.http.port}" />
                   <property name="rhq.server.https.port" value="${rhq.server.https.port}" />
 
-                  <property name="rhq.server.enable.web.services" value="${rhq.server.enable.ws}" />
+                  <property name="rhq.server.enable.ws" value="${rhq.server.enable.ws}" />
                 </ant>
               </tasks>
             </configuration>

@@ -36,6 +36,7 @@ import static org.rhq.core.clientapi.util.units.UnitsConstants.UNIT_DATE;
 import static org.rhq.core.clientapi.util.units.UnitsConstants.UNIT_DURATION;
 import static org.rhq.core.clientapi.util.units.UnitsConstants.UNIT_NONE;
 import static org.rhq.core.clientapi.util.units.UnitsConstants.UNIT_PERCENTAGE;
+import static org.rhq.core.clientapi.util.units.UnitsConstants.UNIT_TEMPERATURE;
 
 class UnitsUtil {
     static final BigDecimal FACT_NONE = new BigDecimal(1);
@@ -63,6 +64,7 @@ class UnitsUtil {
     static void checkValidScaleForUnits(UnitsConstants unit, ScaleConstants scale) {
         EnumSet<ScaleConstants> weightSet = ScaleConstants.getBinaryScaleSet();
         EnumSet<ScaleConstants> timeSet = ScaleConstants.getTimeSet();
+        EnumSet<ScaleConstants> temperatureSet = ScaleConstants.getTemperatureSet();
 
         //       if(!(scale == SCALE_NONE ||
         //                ((unit == UNIT_BYTES || unit == UNIT_BITS) &&
@@ -76,6 +78,7 @@ class UnitsUtil {
 
         if (!((scale == SCALE_NONE) || (((unit == UNIT_BYTES) || (unit == UNIT_BITS)) && weightSet.contains(scale))
             || (((unit == UNIT_DURATION) || (unit == UNIT_DATE)) && timeSet.contains(scale))
+            || (((unit == UNIT_TEMPERATURE)) && temperatureSet.contains(scale))
             || ((unit == UNIT_PERCENTAGE) && (scale != SCALE_NONE)) || ((unit == UNIT_NONE) && (scale != SCALE_NONE)))) {
             throw new IllegalArgumentException("Scale is not valid for the " + "specified units");
         }

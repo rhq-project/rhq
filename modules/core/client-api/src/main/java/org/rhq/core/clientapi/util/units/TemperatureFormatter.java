@@ -56,7 +56,7 @@ public class TemperatureFormatter implements Formatter {
 
         int i=0;
         for (double val : values) {
-            numbers[i] = format(new UnitNumber(values[i], unitType), locale, format);
+            numbers[i] = format(new UnitNumber(values[i], unitType, scale), locale, format);
             i++;
         }
         return numbers;

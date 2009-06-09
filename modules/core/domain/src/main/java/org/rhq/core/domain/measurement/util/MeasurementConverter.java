@@ -350,6 +350,10 @@ public class MeasurementConverter {
         if (MeasurementUnits.Family.RELATIVE == units.getFamily()) {
             return new MeasurementNumericValueAndUnits(origin, units);
         }
+        
+        if (MeasurementUnits.Family.TEMPERATURE == units.getFamily()) {
+            return new MeasurementNumericValueAndUnits(origin, units);
+        }
 
         // if the magnitude is zero, the best-fit also will spin around forever since it won't change
         if (Math.abs(origin) < 1e-9) {

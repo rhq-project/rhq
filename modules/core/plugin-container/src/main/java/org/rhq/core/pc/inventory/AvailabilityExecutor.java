@@ -1,33 +1,33 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.pc.inventory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.Set;
-import java.util.HashSet;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -42,7 +42,7 @@ import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceErrorType;
 import org.rhq.core.pc.inventory.ResourceContainer.ResourceComponentState;
 import org.rhq.core.pc.util.FacetLockType;
-import org.rhq.core.pluginapi.inventory.ResourceComponent;
+import org.rhq.core.pluginapi.availability.AvailabilityFacet;
 
 /**
  * Runs a periodic scan for resource availability.
@@ -136,10 +136,10 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
     private void checkInventory(Resource resource, AvailabilityReport availabilityReport, boolean reportChangesOnly,
         boolean checkChildren) {
         ResourceContainer resourceContainer = this.inventoryManager.getResourceContainer(resource);
-        ResourceComponent resourceComponent = null;
+        AvailabilityFacet resourceComponent = null;
         if (resourceContainer != null) {
             try {
-                resourceComponent = resourceContainer.createResourceComponentProxy(ResourceComponent.class,
+                resourceComponent = resourceContainer.createResourceComponentProxy(AvailabilityFacet.class,
                     FacetLockType.NONE, GET_AVAILABILITY_TIMEOUT, true, false);
             } catch (PluginContainerException e) {
                 if (log.isDebugEnabled()) {
@@ -167,8 +167,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
                         current = resourceComponent.getAvailability();
                     } else {
                         this.inventoryManager.activateResource(resource, resourceContainer, false);
-                        if (resourceContainer.getResourceComponentState() == ResourceComponentState.STARTED)
-                        {
+                        if (resourceContainer.getResourceComponentState() == ResourceComponentState.STARTED) {
                             current = resourceComponent.getAvailability();
                         }
                     }
@@ -210,7 +209,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
                         checkInventory(child, availabilityReport, reportChangesOnly, true);
                 } else {
                     for (Resource child : children)
-                        markDown(child, availabilityReport, reportChangesOnly);                    
+                        markDown(child, availabilityReport, reportChangesOnly);
                 }
             }
         }

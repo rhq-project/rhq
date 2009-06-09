@@ -134,7 +134,7 @@ public class AvailabilityCollectorRunnable implements Runnable {
      * This returns the last known availability status that was most recently retrieved from the managed resource.
      * This will not perform a live check on the managed resource; instead, it immediately returns the last known
      * state of the managed resource. For those resource components using this availability collector utility,
-     * their {@link ResourceComponent#getAvailability()} method should simply be calling this method.
+     * their {@link AvailabilityFacet#getAvailability()} method should simply be calling this method.
      *
      * @return {@link AvailabilityType#UP} if the resource can be accessed; otherwise {@link AvailabilityType#DOWN}
      */

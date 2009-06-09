@@ -26,13 +26,14 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pc.PluginContainer;
+import org.rhq.core.pc.util.FacetLockType;
+import org.rhq.core.pluginapi.availability.AvailabilityFacet;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
-import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 
 /**
  * Unit test for {@link ResourceContainer}.
@@ -61,8 +62,8 @@ public class ResourceContainerTest {
         ResourceComponent resourceComponent = new MockResourceComponent(false);
         resourceContainer.setResourceComponent(resourceComponent);
         System.out.println("Testing proxy call that should timeout...");
-        ResourceComponent resourceComponentProxy = resourceContainer.createResourceComponentProxy(
-            ResourceComponent.class, FacetLockType.NONE, 50, true, false);
+        AvailabilityFacet resourceComponentProxy = resourceContainer.createResourceComponentProxy(
+            AvailabilityFacet.class, FacetLockType.NONE, 50, true, false);
         try {
             resourceComponentProxy.getAvailability();
             assert (false);
@@ -71,7 +72,7 @@ public class ResourceContainerTest {
         }
         System.out.println("SUCCESS!");
         System.out.println("Testing proxy call that should complete successfully...");
-        resourceComponentProxy = resourceContainer.createResourceComponentProxy(ResourceComponent.class,
+        resourceComponentProxy = resourceContainer.createResourceComponentProxy(AvailabilityFacet.class,
             FacetLockType.NONE, 150, true, false);
         AvailabilityType avail = resourceComponentProxy.getAvailability();
         assert (avail == AvailabilityType.UP);
@@ -79,7 +80,7 @@ public class ResourceContainerTest {
         System.out.println("Testing proxy call that should fail...");
         ResourceComponent naughtyResourceComponent = new MockResourceComponent(true);
         resourceContainer.setResourceComponent(naughtyResourceComponent);
-        resourceComponentProxy = resourceContainer.createResourceComponentProxy(ResourceComponent.class,
+        resourceComponentProxy = resourceContainer.createResourceComponentProxy(AvailabilityFacet.class,
             FacetLockType.NONE, Long.MAX_VALUE, true, false);
         try {
             resourceComponentProxy.getAvailability();
@@ -89,7 +90,7 @@ public class ResourceContainerTest {
         }
         System.out.println("SUCCESS!");
         System.out.println("Testing proxy call should not timeout; its not to a declared method in proxied interface");
-        resourceComponentProxy = resourceContainer.createResourceComponentProxy(ResourceComponent.class,
+        resourceComponentProxy = resourceContainer.createResourceComponentProxy(AvailabilityFacet.class,
             FacetLockType.NONE, 50, true, false);
         String string = resourceComponentProxy.toString();
         assert (string.equals(MockResourceComponent.class.toString()));

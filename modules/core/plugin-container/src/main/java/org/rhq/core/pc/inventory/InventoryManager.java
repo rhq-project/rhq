@@ -89,6 +89,7 @@ import org.rhq.core.pc.plugin.PluginManager;
 import org.rhq.core.pc.util.DiscoveryComponentProxyFactory;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pc.util.LoggingThreadFactory;
+import org.rhq.core.pluginapi.availability.AvailabilityFacet;
 import org.rhq.core.pluginapi.content.ContentContext;
 import org.rhq.core.pluginapi.content.ContentServices;
 import org.rhq.core.pluginapi.event.EventContext;
@@ -437,7 +438,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         ResourceContainer resourceContainer = getResourceContainer(resource);
         if (resourceContainer != null) {
             if (resourceContainer.getResourceComponentState() == ResourceComponentState.STARTED) {
-                ResourceComponent resourceComponent;
+                AvailabilityFacet resourceComponent;
                 Lock lock = resourceContainer.getReadFacetLock();
                 if (lock.tryLock()) {
                     // We have acquired the lock.
@@ -446,7 +447,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                         // Give the call to getAvailablity() a bit more time if the Resource is a server.
                         long componentTimeout = (resourceCategory == ResourceCategory.SERVER) ? 10000 : 5000;
                         // We already possess the lock, so tell the proxy not to do any locking of its own.
-                        resourceComponent = resourceContainer.createResourceComponentProxy(ResourceComponent.class,
+                        resourceComponent = resourceContainer.createResourceComponentProxy(AvailabilityFacet.class,
                             FacetLockType.NONE, componentTimeout, true, true);
                         availType = resourceComponent.getAvailability();
                     } catch (PluginContainerException e) {

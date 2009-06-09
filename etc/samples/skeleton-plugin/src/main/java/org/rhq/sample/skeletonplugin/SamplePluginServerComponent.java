@@ -36,6 +36,7 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.pluginapi.availability.AvailabilityFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.content.ContentFacet;
@@ -101,7 +102,7 @@ public class SamplePluginServerComponent implements ResourceComponent, Measureme
      * This method is called by the plugin container when it needs to know if the managed resource is actually up and
      * available.
      *
-     * @see ResourceComponent#getAvailability()
+     * @see AvailabilityFacet#getAvailability()
      */
     public AvailabilityType getAvailability() {
         // TODO: here you normally make some type of connection attempt to the managed resource

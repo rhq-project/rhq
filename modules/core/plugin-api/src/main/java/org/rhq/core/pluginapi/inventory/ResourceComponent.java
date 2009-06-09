@@ -67,7 +67,7 @@ public interface ResourceComponent<T extends ResourceComponent> extends Availabi
      * {@link InvalidPluginConfigurationException}. This exception typically should not be thrown if the connection
      * failed for some reason other than an invalid plugin configuration (e.g. in the case the managed resource is
      * simply not running now) because usually those conditions can be tracked as part of the resource's
-     * {@link #getAvailability() availability} data.</p>
+     * {@link AvailabilityFacet#getAvailability() availability} data.</p>
      *
      * <p>Note that this method does <b>not</b> imply that the actual managed resource should be started; this only
      * starts the plugin's resource component. To start the actual resource, plugins must utilize the

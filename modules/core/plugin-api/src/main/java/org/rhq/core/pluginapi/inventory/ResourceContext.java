@@ -327,7 +327,7 @@ public class ResourceContext<T extends ResourceComponent> {
 
     /**
      * Under certain circumstances, a resource component may want to perform asynchronous availability checks, as
-     * opposed to {@link ResourceComponent#getAvailability()} blocking waiting for the managed resource to return
+     * opposed to {@link AvailabilityFacet#getAvailability()} blocking waiting for the managed resource to return
      * its availability status. Using asynchronous availability checking frees the resource component from having
      * to guarantee that the managed resource will provide availability status in a timely fashion.
      * 
@@ -336,7 +336,7 @@ public class ResourceContext<T extends ResourceComponent> {
      * It should then call the returned object's {@link AvailabilityCollectorRunnable#start()} method within the same resource
      * component {@link ResourceComponent#start(ResourceContext)} method. The resource component should call the
      * {@link AvailabilityCollectorRunnable#stop()} method when the resource component
-     * {@link ResourceComponent#stop() stops}. The resource component's {@link ResourceComponent#getAvailability()} method
+     * {@link ResourceComponent#stop() stops}. The resource component's {@link AvailabilityFacet#getAvailability()} method
      * should simply return the value returned by {@link AvailabilityCollectorRunnable#getLastKnownAvailability()}. This
      * method will be extremely fast since it simply returns the last availability that was retrieved by the
      * given availability checker. Only when the availability checker finishes checking for availability of the managed resource

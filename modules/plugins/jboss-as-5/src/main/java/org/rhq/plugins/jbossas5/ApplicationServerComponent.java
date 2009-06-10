@@ -40,20 +40,10 @@ import com.jboss.jbossnetwork.product.jbpm.handlers.ControlActionFacade;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jboss.deployers.spi.management.KnownDeploymentTypes;
-import org.jboss.deployers.spi.management.ManagementView;
-import org.jboss.deployers.spi.management.deploy.DeploymentManager;
-import org.jboss.deployers.spi.management.deploy.DeploymentStatus;
-import org.jboss.deployers.spi.management.deploy.ProgressEvent;
-import org.jboss.deployers.spi.management.deploy.ProgressListener;
-import org.jboss.managed.api.ComponentType;
-import org.jboss.managed.api.DeploymentTemplateInfo;
-import org.jboss.managed.api.ManagedComponent;
-import org.jboss.managed.api.ManagedDeployment;
-import org.jboss.managed.api.ManagedProperty;
-import org.jboss.profileservice.spi.NoSuchDeploymentException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.mc4j.ems.connection.EmsConnection;
+import org.mc4j.ems.connection.support.metadata.InternalVMTypeDescriptor;
 
 import org.jboss.deployers.spi.management.KnownDeploymentTypes;
 import org.jboss.deployers.spi.management.ManagementView;
@@ -107,16 +97,14 @@ import org.rhq.plugins.jbossas5.connection.LocalProfileServiceConnectionProvider
 import org.rhq.plugins.jbossas5.connection.ProfileServiceConnection;
 import org.rhq.plugins.jbossas5.connection.ProfileServiceConnectionProvider;
 import org.rhq.plugins.jbossas5.connection.RemoteProfileServiceConnectionProvider;
+import org.rhq.plugins.jbossas5.helper.JBossAS5ConnectionTypeDescriptor;
+import org.rhq.plugins.jbossas5.helper.JmxConnectionHelper;
 import org.rhq.plugins.jbossas5.util.ConversionUtils;
 import org.rhq.plugins.jbossas5.util.DebugUtils;
 import org.rhq.plugins.jbossas5.util.DeploymentUtils;
 import org.rhq.plugins.jbossas5.util.JBossASContentFacetDelegate;
 import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
 import org.rhq.plugins.jbossas5.util.ResourceComponentUtils;
-import org.rhq.plugins.jbossas5.helper.JmxConnectionHelper;
-import org.rhq.plugins.jmx.JMXDiscoveryComponent;
-
-import org.mc4j.ems.connection.EmsConnection;
 
 /**
  * ResourceComponent for a JBoss AS, 5.1.0.CR1 or later, Server.
@@ -145,7 +133,6 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
 
     //private LogFileEventResourceComponentHelper logFileEventDelegate;
 
-    private static final String REMOTE = "service:jmx:rmi://localhost/jndi/rmi://localhost:1090/jmxconnector"; // TODO sensible default
     private static final String JDK5CONNECTOR = "org.mc4j.ems.connection.support.metadata.J2SE5ConnectionTypeDescriptor";
 
     public AvailabilityType getAvailability() {
@@ -174,16 +161,40 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
 
         contentFacetDelegate = new JBossASContentFacetDelegate(workflowManager);
 
-        Configuration c = new Configuration(); // TODO get from defaultPluginConfig
+        initializeEmsConnection();
+    }
 
+    private void initializeEmsConnection() {
+        Configuration pluginConfiguration = resourceContext.getPluginConfiguration();
 
-        c.put(new PropertySimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY, REMOTE));
-        c.put(new PropertySimple(JMXDiscoveryComponent.CONNECTION_TYPE, JDK5CONNECTOR));
-        // TODO get credentials from the console if needed and pass them in the configuration
-        jmxConnectionHelper = new JmxConnectionHelper();
-        EmsConnection conn = jmxConnectionHelper.getEmsConnection(c);
-        if (conn!=null)
-            log.info("Successfully obtained a JMX connection to " + c.getSimpleValue(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY, "-n/a-"));
+        Configuration jmxConfig = new Configuration();
+
+        String jbossHomeDir = pluginConfiguration.getSimpleValue(PluginConfigPropNames.HOME_DIR, null);
+
+        String connectorDescriptorType = null;
+
+        boolean runningEmbedded = runningEmbedded();
+        if (runningEmbedded) {
+            connectorDescriptorType = InternalVMTypeDescriptor.class.getName();
+        } else {
+            String connectorAddress = pluginConfiguration.getSimpleValue(PluginConfigPropNames.NAMING_URL, null);
+            String connectorPrincipal = pluginConfiguration.getSimpleValue(PluginConfigPropNames.PRINCIPAL, null);
+            String connectorCredentials = pluginConfiguration.getSimpleValue(PluginConfigPropNames.CREDENTIALS, null);
+
+            connectorDescriptorType = JBossAS5ConnectionTypeDescriptor.class.getName();
+
+            jmxConfig.put(new PropertySimple(JmxConnectionHelper.CONNECTOR_ADDRESS, connectorAddress));
+            jmxConfig.put(new PropertySimple(JmxConnectionHelper.CONNECTOR_CREDENTIALS, connectorCredentials));
+            jmxConfig.put(new PropertySimple(JmxConnectionHelper.CONNECTOR_PRINCIPAL, connectorPrincipal));
+        }
+        jmxConfig.put(new PropertySimple(JmxConnectionHelper.CONNECTOR_DESCRIPTOR_TYPE, connectorDescriptorType));
+        jmxConfig.put(new PropertySimple(JmxConnectionHelper.JBOSS_HOME_DIR, jbossHomeDir));
+
+        jmxConnectionHelper = new JmxConnectionHelper(!runningEmbedded, resourceContext.getTemporaryDirectory());
+        EmsConnection conn = jmxConnectionHelper.getEmsConnection(jmxConfig);
+        if (conn != null)
+            log.info("Successfully obtained a JMX connection to "
+                + pluginConfiguration.getSimpleValue(JmxConnectionHelper.CONNECTOR_ADDRESS, "-n/a-"));
     }
 
     public void stop() {
@@ -305,16 +316,16 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
         if (this.connection != null)
             return;
         // TODO: Check for a defunct connection and if found try to reconnect.
-        Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
-        String namingURL = pluginConfig.getSimpleValue(PluginConfigPropNames.NAMING_URL, null);
         ProfileServiceConnectionProvider connectionProvider;
-        if (namingURL != null) {
+        if (runningEmbedded()) {
+            connectionProvider = new LocalProfileServiceConnectionProvider();
+        } else {
+            Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
+            String namingURL = pluginConfig.getSimpleValue(PluginConfigPropNames.NAMING_URL, null);
             validateNamingURL(namingURL);
             String principal = pluginConfig.getSimpleValue(PluginConfigPropNames.PRINCIPAL, null);
             String credentials = pluginConfig.getSimpleValue(PluginConfigPropNames.CREDENTIALS, null);
             connectionProvider = new RemoteProfileServiceConnectionProvider(namingURL, principal, credentials);
-        } else {
-            connectionProvider = new LocalProfileServiceConnectionProvider();
         }
         try {
             this.connection = connectionProvider.connect();
@@ -521,6 +532,12 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
         String serverHomeDir = pluginConfiguration.getSimpleValue(SERVER_HOME_DIR_PROP_NAME, null);
 
         return new JBossASPaths(homeDir, serverHomeDir);
+    }
+
+    private boolean runningEmbedded() {
+        Configuration pluginConfiguration = resourceContext.getPluginConfiguration();
+        String namingUrl = pluginConfiguration.getSimpleValue(PluginConfigPropNames.NAMING_URL, null);
+        return namingUrl == null;
     }
 
     @NotNull

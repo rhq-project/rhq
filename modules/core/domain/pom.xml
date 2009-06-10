@@ -107,6 +107,13 @@
       </dependency>
 
       <dependency>
+         <groupId>net.sourceforge.jtds</groupId>
+         <artifactId>jtds</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
          <groupId>jboss.jboss-embeddable-ejb3</groupId>
          <artifactId>jboss-ejb3-all</artifactId>
          <version>${jboss-embeddable-ejb3.version}</version>

@@ -22,6 +22,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+
 import org.rhq.core.db.DatabaseTypeFactory;
 
 /**
@@ -42,16 +43,20 @@ abstract class DataSet {
         int rowcnt = 0;
 
         try {
+            executePreCreateCommands();
+
             // loop through each row
             for (; this.next(); rowcnt++) {
                 String strCmd = this.getCreateCommand();
-                m_parent.doSQL(strCmd);
+                doSQL(strCmd);
             }
+
+            executePostCreateCommands();
         } catch (SQLException e) {
             try {
                 this.m_parent.getConnection().rollback();
             } catch (Exception e2) {
-                // Log this?
+                e2.printStackTrace();
             }
 
             throw e;
@@ -62,6 +67,16 @@ abstract class DataSet {
         }
 
         return rowcnt; // The number of rows created.
+    }
+
+    protected void doSQL(String sql) throws SQLException {
+        m_parent.doSQL(sql);
+    }
+
+    protected void executePreCreateCommands() throws SQLException {
+    }
+
+    protected void executePostCreateCommands() throws SQLException {
     }
 
     /**
@@ -86,6 +101,7 @@ abstract class DataSet {
     }
 
     protected String getInsertCommand() throws SQLException {
+        System.out.println("DATASET TYPE IS " + this.getClass().getSimpleName());
         int iCols = this.getNumberColumns();
 
         StringBuffer strCmd = new StringBuffer("INSERT INTO ");
@@ -114,10 +130,11 @@ abstract class DataSet {
                 // We need to replace the value 'TRUE' with '1' if this is
                 // Oracle. It's a hack to have this code in this class until I
                 // do some restructuring of the code
-                if (DatabaseTypeFactory.isOracle(m_parent.getDatabaseType())) {
-                    if (strValue.equals("TRUE")) {
+                if (DatabaseTypeFactory.isOracle(m_parent.getDatabaseType())
+                    || DatabaseTypeFactory.isSQLServer(m_parent.getDatabaseType())) {
+                    if (strValue.equalsIgnoreCase("TRUE")) {
                         strValue = "1";
-                    } else if (strValue.equals("FALSE")) {
+                    } else if (strValue.equalsIgnoreCase("FALSE")) {
                         strValue = "0";
                     }
                 }
@@ -163,10 +180,11 @@ abstract class DataSet {
                 // We need to replace the value 'TRUE' with '1' if this is
                 // Oracle. It's a hack to have this code in this class until I
                 // do some restructuring of the code
-                if (DatabaseTypeFactory.isOracle(m_parent.getDatabaseType())) {
-                    if (strValue.equals("TRUE")) {
+                if (DatabaseTypeFactory.isOracle(m_parent.getDatabaseType())
+                    || DatabaseTypeFactory.isSQLServer(m_parent.getDatabaseType())) {
+                    if (strValue.equalsIgnoreCase("TRUE")) {
                         strValue = "1";
-                    } else if (strValue.equals("FALSE")) {
+                    } else if (strValue.equalsIgnoreCase("FALSE")) {
                         strValue = "0";
                     }
                 }
@@ -196,10 +214,11 @@ abstract class DataSet {
                 // We need to replace the value 'TRUE' with '1' if this is
                 // Oracle. It's a hack to have this code in this class until I
                 // do some restructuring of the code
-                if (DatabaseTypeFactory.isOracle(m_parent.getDatabaseType())) {
-                    if (key_value.equals("TRUE")) {
+                if (DatabaseTypeFactory.isOracle(m_parent.getDatabaseType())
+                    || DatabaseTypeFactory.isSQLServer(m_parent.getDatabaseType())) {
+                    if (key_value.equalsIgnoreCase("TRUE")) {
                         key_value = "1";
-                    } else if (key_value.equals("FALSE")) {
+                    } else if (key_value.equalsIgnoreCase("FALSE")) {
                         key_value = "0";
                     }
                 }
@@ -226,7 +245,11 @@ abstract class DataSet {
     protected boolean keyColumnsExist() {
         int num_col = getNumberColumns();
         for (int i = 0; i < num_col; i++) {
-            if (getData(i).isKeyColumn()) {
+            Data data = getData(i);
+            if (data == null) {
+                System.err.println("Data at column index for table " + m_strTableName + " is null");
+            }
+            if (data.isKeyColumn()) {
                 return true;
             }
         }
@@ -239,6 +262,9 @@ abstract class DataSet {
         int num_col = getNumberColumns();
         for (int i = 0; i < num_col; i++) {
             Data data = getData(i);
+            if (data == null) {
+                System.err.println("Data at column index for table " + m_strTableName + " is null");
+            }
             if (data.isKeyColumn()) {
                 keys.add(data);
             }

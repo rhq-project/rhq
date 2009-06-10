@@ -69,7 +69,7 @@ public class FailoverListDetails implements Serializable {
     public static final String QUERY_TRUNCATE = "FailoverListDetails.truncate";
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "id")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "id")
     @Id
     private int id;
 

@@ -254,7 +254,7 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
 
     @Id
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
     private int id;
 
     @Column(name = "NAME", nullable = false)

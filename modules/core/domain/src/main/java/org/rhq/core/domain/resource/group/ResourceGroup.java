@@ -239,7 +239,11 @@ public class ResourceGroup extends Group {
         + "                     WHERE impMap.resource_group_id = rg.id "
         + "              ) as implicitAvail, "
         + "" //
-        + "                rg.id as groupId "
+        + "                rg.id as groupId, "
+        + "                rg.name as groupName, "
+        + "                rg.description as groupDescription, "
+        + "                resType.name as resourceTypeName "
+        + "" //
         + "           FROM rhq_resource_group rg "
         + "LEFT OUTER JOIN rhq_resource_type resType "
         + "             ON rg.resource_type_id = resType.id "
@@ -355,7 +359,7 @@ public class ResourceGroup extends Group {
         + "                          g6parent.ID = alreadyMember.RESOURCE_ID ) ) ";
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "id")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "id")
     @Id
     private int id;
 

@@ -112,11 +112,13 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
 
         Agent knownAgent = agentManager.getAgentByName(agent.getName());
         if (knownAgent == null) {
-            throw new InvalidInventoryReportException("Unknown Agent named [" + agent.getName() + "] sent an inventory report - that report will be ignored");
+            throw new InvalidInventoryReportException("Unknown Agent named [" + agent.getName()
+                + "] sent an inventory report - that report will be ignored");
         }
 
         if (log.isDebugEnabled()) {
-            log.debug("Received inventory report from RHQ Agent [" + knownAgent + "]. Number of added roots: " + report.getAddedRoots().size());
+            log.debug("Received inventory report from RHQ Agent [" + knownAgent + "]. Number of added roots: "
+                + report.getAddedRoots().size());
         }
 
         Set<Resource> roots = report.getAddedRoots();
@@ -144,7 +146,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
             entityManager.clear();
 
             if (log.isDebugEnabled()) {
-                log.debug("Root merged: resource/millis=" + root.getName() + '/' + (System.currentTimeMillis() - rootStart));
+                log.debug("Root merged: resource/millis=" + root.getName() + '/'
+                    + (System.currentTimeMillis() - rootStart));
             }
         }
 
@@ -186,8 +189,10 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
     public PageList<Resource> getQueuedPlatforms(Subject user, EnumSet<InventoryStatus> statuses, PageControl pc) {
         pc.initDefaultOrderingField("res.ctime", PageOrdering.DESC); // show the newest ones first by default
 
-        Query queryCount = PersistenceUtility.createCountQuery(entityManager, Resource.QUERY_FIND_QUEUED_PLATFORMS_BY_INVENTORY_STATUS);
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, Resource.QUERY_FIND_QUEUED_PLATFORMS_BY_INVENTORY_STATUS, pc);
+        Query queryCount = PersistenceUtility.createCountQuery(entityManager,
+            Resource.QUERY_FIND_QUEUED_PLATFORMS_BY_INVENTORY_STATUS);
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+            Resource.QUERY_FIND_QUEUED_PLATFORMS_BY_INVENTORY_STATUS, pc);
 
         queryCount.setParameter("inventoryStatuses", statuses);
         long count = (Long) queryCount.getSingleResult();
@@ -200,13 +205,15 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public List<Resource> getQueuedPlatformChildServers(Subject user, InventoryStatus status, Resource platform) {
-        PageList<Resource> childServers = resourceManager.getChildResourcesByCategoryAndInventoryStatus(user, platform, ResourceCategory.SERVER, status, PageControl.getUnlimitedInstance());
+        PageList<Resource> childServers = resourceManager.getChildResourcesByCategoryAndInventoryStatus(user, platform,
+            ResourceCategory.SERVER, status, PageControl.getUnlimitedInstance());
 
         return childServers;
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public void updateInventoryStatus(Subject user, List<Resource> platforms, List<Resource> servers, InventoryStatus status) {
+    public void updateInventoryStatus(Subject user, List<Resource> platforms, List<Resource> servers,
+        InventoryStatus status) {
         long start = System.currentTimeMillis();
 
         // need to attach the resources
@@ -234,9 +241,11 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
         for (Resource platform : platforms) {
             AgentClient agentClient = agentManager.getAgentClient(platform.getAgent());
             try {
-                agentClient.getDiscoveryAgentService().synchronizeInventory(entityManager.find(ResourceSyncInfo.class, platform.getId()));
+                agentClient.getDiscoveryAgentService().synchronizeInventory(
+                    entityManager.find(ResourceSyncInfo.class, platform.getId()));
             } catch (Exception e) {
-                log.warn("Could not perform commit synchronization with agent for platform [" + platform.getName() + "]", e);
+                log.warn("Could not perform commit synchronization with agent for platform [" + platform.getName()
+                    + "]", e);
             }
         }
 
@@ -245,15 +254,18 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
             if (!platforms.contains(server.getParentResource())) {
                 AgentClient agentClient = agentManager.getAgentClient(server.getAgent());
                 try {
-                    agentClient.getDiscoveryAgentService().synchronizeInventory(entityManager.find(ResourceSyncInfo.class, server.getId()));
+                    agentClient.getDiscoveryAgentService().synchronizeInventory(
+                        entityManager.find(ResourceSyncInfo.class, server.getId()));
                 } catch (Exception e) {
-                    log.warn("Could not perform commit synchronization with agent for server [" + server.getName() + "]", e);
+                    log.warn("Could not perform commit synchronization with agent for server [" + server.getName()
+                        + "]", e);
                 }
             }
         }
 
         if (log.isDebugEnabled()) {
-            log.debug("Inventory status set to [" + status + "] for [" + platforms.size() + "] platforms and [" + servers.size() + "] servers in [" + (System.currentTimeMillis() - start) + "]ms");
+            log.debug("Inventory status set to [" + status + "] for [" + platforms.size() + "] platforms and ["
+                + servers.size() + "] servers in [" + (System.currentTimeMillis() - start) + "]ms");
         }
     }
 
@@ -263,7 +275,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
      * version.
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void updateInventoryStatus(Subject user, InventoryStatus status, List<Resource> platforms, List<Resource> servers) {
+    public void updateInventoryStatus(Subject user, InventoryStatus status, List<Resource> platforms,
+        List<Resource> servers) {
         for (Resource platform : platforms) {
             resourceManager.setResourceStatus(user, platform, status, false);
         }
@@ -284,19 +297,22 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
     }
 
     @NotNull
-    public MergeResourceResponse manuallyAddResource(Subject user, ResourceType resourceType, int parentResourceId, Configuration pluginConfiguration)
-        throws InvalidPluginConfigurationClientException, PluginContainerException {
+    public MergeResourceResponse manuallyAddResource(Subject user, ResourceType resourceType, int parentResourceId,
+        Configuration pluginConfiguration) throws InvalidPluginConfigurationClientException, PluginContainerException {
         if (!this.authorizationManager.hasResourcePermission(user, Permission.CREATE_CHILD_RESOURCES, parentResourceId)) {
-            throw new PermissionException("You do not have permission on resource with id " + parentResourceId + " to manually add child resources.");
+            throw new PermissionException("You do not have permission on resource with id " + parentResourceId
+                + " to manually add child resources.");
         }
 
         MergeResourceResponse mergeResourceResponse;
         try {
             Resource parentResource = this.resourceManager.getResourceById(user, parentResourceId);
             AgentClient agentClient = this.agentManager.getAgentClient(parentResource.getAgent());
-            mergeResourceResponse = agentClient.getDiscoveryAgentService().manuallyAddResource(resourceType, parentResourceId, pluginConfiguration, user.getId());
+            mergeResourceResponse = agentClient.getDiscoveryAgentService().manuallyAddResource(resourceType,
+                parentResourceId, pluginConfiguration, user.getId());
         } catch (RuntimeException e) {
-            throw new RuntimeException("Error adding " + resourceType.getName() + " resource to inventory as a child of the resource with id " + parentResourceId + " - cause: "
+            throw new RuntimeException("Error adding " + resourceType.getName()
+                + " resource to inventory as a child of the resource with id " + parentResourceId + " - cause: "
                 + e.getLocalizedMessage(), e);
         }
 
@@ -312,7 +328,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
             throw new IllegalStateException("Plugin Container sent an invalid Resource - " + e.getLocalizedMessage());
         }
         if (!initResourceTypes(resource)) {
-            throw new IllegalStateException("Plugin Container sent a Resource with an unknown type - " + resource.getResourceType());
+            throw new IllegalStateException("Plugin Container sent a Resource with an unknown type - "
+                + resource.getResourceType());
         }
 
         Resource existingResource = getExistingResource(resource);
@@ -323,10 +340,12 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
             try {
                 creator = this.subjectManager.loginUnauthenticated(creator.getName(), true);
             } catch (LoginException e) {
-                throw new IllegalStateException("Unable to temporarily login to provided resource creator user for resource creation", e);
+                throw new IllegalStateException(
+                    "Unable to temporarily login to provided resource creator user for resource creation", e);
             }
 
-            Resource parentResource = this.resourceManager.getResourceById(creator, resource.getParentResource().getId());
+            Resource parentResource = this.resourceManager.getResourceById(creator, resource.getParentResource()
+                .getId());
             resource.setAgent(parentResource.getAgent());
             resource.setModifiedBy(creator);
 
@@ -389,7 +408,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
             versionChanged = !oldVersion.equals(newVersion);
 
             if (versionChanged) {
-                log.info("Resource [" + resource + "] changed its version from [" + oldVersion + "] to [" + newVersion + "]");
+                log.info("Resource [" + resource + "] changed its version from [" + oldVersion + "] to [" + newVersion
+                    + "]");
                 resource.setVersion(newVersion);
 
                 ProductVersion productVersion = null;
@@ -418,7 +438,10 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
         }
 
         if (resource.getInventoryStatus() == InventoryStatus.DELETED) {
-            throw new InvalidInventoryReportException("Reported resource [" + resource + "] has an illegal inventory status of 'DELETED' - agents are not allowed to delete platforms from inventory.");
+            throw new InvalidInventoryReportException(
+                "Reported resource ["
+                    + resource
+                    + "] has an illegal inventory status of 'DELETED' - agents are not allowed to delete platforms from inventory.");
         }
 
         // Recursively validate all the resource's descendants.
@@ -438,10 +461,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
      *
      * @throws InvalidInventoryReportException if a critical field in the resource is missing or invalid
      */
-    private void mergeResource(@NotNull
-    Resource resource, @Nullable
-    Resource parentResource, @NotNull
-    Agent agent) throws InvalidInventoryReportException {
+    private void mergeResource(@NotNull Resource resource, @Nullable Resource parentResource, @NotNull Agent agent)
+        throws InvalidInventoryReportException {
         long start = System.currentTimeMillis();
 
         log.debug("Merging [" + resource + "]...");
@@ -455,7 +476,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
         }
 
         if (log.isDebugEnabled()) {
-            log.debug("Resource merged: resource/millis=" + resource.getName() + '/' + (System.currentTimeMillis() - start));
+            log.debug("Resource merged: resource/millis=" + resource.getName() + '/'
+                + (System.currentTimeMillis() - start));
         }
         return;
     }
@@ -513,8 +535,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
              * or if the agent didn't know about it to begin with (id was 0).
              */
             ResourceType resourceType = resource.getResourceType();
-            existingResource = resourceManager.getResourceByParentAndKey(subjectManager.getOverlord(), resource.getParentResource(), resource.getResourceKey(), resourceType.getPlugin(), resourceType
-                .getName());
+            existingResource = resourceManager.getResourceByParentAndKey(subjectManager.getOverlord(), resource
+                .getParentResource(), resource.getResourceKey(), resourceType.getPlugin(), resourceType.getName());
             if (existingResource != null) {
                 // we found it, reset the id to what it should be
                 resource.setId(existingResource.getId());
@@ -540,18 +562,22 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
         return existingResource;
     }
 
-    private void updatePreviouslyInventoriedResource(Resource resource, Resource existingResource, Resource parentResource) throws InvalidInventoryReportException {
+    private void updatePreviouslyInventoriedResource(Resource resource, Resource existingResource,
+        Resource parentResource) throws InvalidInventoryReportException {
         assert (parentResource == null) || (parentResource.getId() != 0);
 
         // The below block is for Resources that were created via the RHQ GUI, whose descriptions will be null.
         if (existingResource.getDescription() == null && resource.getDescription() != null) {
-            log.debug("Setting description of existing resource with id " + existingResource.getId() + " to '" + resource.getDescription() + "' (as reported by agent)...");
+            log.debug("Setting description of existing resource with id " + existingResource.getId() + " to '"
+                + resource.getDescription() + "' (as reported by agent)...");
             existingResource.setDescription(resource.getDescription());
         }
 
         // Log a warning if the agent says the Resource key has changed (should rarely happen).
-        if ((existingResource.getResourceKey() != null) && !existingResource.getResourceKey().equals(resource.getResourceKey())) {
-            log.warn("Agent reported that key for " + existingResource + " has changed from '" + existingResource.getResourceKey() + "' to '" + resource.getResourceKey() + "'.");
+        if ((existingResource.getResourceKey() != null)
+            && !existingResource.getResourceKey().equals(resource.getResourceKey())) {
+            log.warn("Agent reported that key for " + existingResource + " has changed from '"
+                + existingResource.getResourceKey() + "' to '" + resource.getResourceKey() + "'.");
         }
 
         updateResourceVersion(existingResource, resource.getVersion());
@@ -571,10 +597,12 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
 
     private boolean initResourceTypes(Resource resource) {
         ResourceType resourceType;
-        resourceType = this.resourceTypeManager.getResourceTypeByNameAndPlugin(resource.getResourceType().getName(), resource.getResourceType().getPlugin());
+        resourceType = this.resourceTypeManager.getResourceTypeByNameAndPlugin(resource.getResourceType().getName(),
+            resource.getResourceType().getPlugin());
         if (resourceType == null) {
-            log.error("Reported resource [" + resource + "] has an unknown type [" + resource.getResourceType() + "]. The Agent most likely has a plugin named '"
-                + resource.getResourceType().getPlugin() + "' installed that is not installed on the Server. Resource will be ignored...");
+            log.error("Reported resource [" + resource + "] has an unknown type [" + resource.getResourceType()
+                + "]. The Agent most likely has a plugin named '" + resource.getResourceType().getPlugin()
+                + "' installed that is not installed on the Server. Resource will be ignored...");
             return false;
         }
 
@@ -630,8 +658,10 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
     private void initAutoDiscoveredResource(Resource resource, Resource parent) {
         // Before adding a new auto-discovered resource to inventory, ensure that it, and all its descendants, has
         // the proper inventory status and an owner and modifier of superUser.
-        if ((resource.getParentResource() != null) && (resource.getParentResource().getInventoryStatus() == InventoryStatus.COMMITTED)
-            && ((resource.getResourceType().getCategory() == ResourceCategory.SERVICE) || (resource.getParentResource().getResourceType().getCategory() == ResourceCategory.SERVER))) {
+        if ((resource.getParentResource() != null)
+            && (resource.getParentResource().getInventoryStatus() == InventoryStatus.COMMITTED)
+            && ((resource.getResourceType().getCategory() == ResourceCategory.SERVICE) || (resource.getParentResource()
+                .getResourceType().getCategory() == ResourceCategory.SERVER))) {
             // Auto-commit services whose parent resources have already been imported by the user
             resource.setInventoryStatus(InventoryStatus.COMMITTED);
         } else {

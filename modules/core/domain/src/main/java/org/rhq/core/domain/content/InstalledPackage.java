@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.domain.content;
 
 import java.io.Serializable;
@@ -53,13 +53,12 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = InstalledPackage.QUERY_FIND_BY_RESOURCE_ID_AND_PKG_VER_ID, query = "SELECT ip FROM InstalledPackage AS ip WHERE ip.resource.id = :resourceId AND ip.packageVersion.id = :packageVersionId"),
     @NamedQuery(name = InstalledPackage.QUERY_FIND_BY_RESOURCE_AND_PACKAGE, query = "SELECT ip FROM InstalledPackage AS ip WHERE ip.resource.id = :resourceId AND ip.packageVersion.generalPackage.id = :packageId  "),
     @NamedQuery(name = InstalledPackage.QUERY_FIND_BY_RESOURCE_AND_PACKAGE_VER, query = "SELECT ip FROM InstalledPackage AS ip WHERE ip.resource.id = :resourceId AND ip.packageVersion.id = :packageVersionId  "),
-    @NamedQuery(name = InstalledPackage.QUERY_FIND_PACKAGE_LIST_ITEM_COMPOSITE,
-        query = "SELECT new org.rhq.core.domain.content.composite.PackageListItemComposite(ip.id, gp.name, pt.displayName, ip.packageVersion.version, ip.installationDate ) "
+    @NamedQuery(name = InstalledPackage.QUERY_FIND_PACKAGE_LIST_ITEM_COMPOSITE, query = "SELECT new org.rhq.core.domain.content.composite.PackageListItemComposite(ip.id, gp.name, pt.displayName, ip.packageVersion.version, ip.installationDate ) "
         + " FROM InstalledPackage ip JOIN ip.resource res LEFT JOIN ip.packageVersion pv LEFT JOIN pv.generalPackage gp LEFT JOIN gp.packageType pt "
         + "WHERE res.id = :resourceId "
         + "  AND (:packageTypeFilterId = pt.id OR :packageTypeFilterId is null) "
         + "  AND (:packageVersionFilter = ip.packageVersion.version OR :packageVersionFilter is null) "
-        + " AND (UPPER(gp.name) LIKE :search OR UPPER(pv.longDescription) LIKE :search OR :search is null) "),
+        + " AND (UPPER(gp.name) LIKE :search OR :search is null) "),
     @NamedQuery(name = InstalledPackage.QUERY_FIND_PACKAGE_LIST_TYPES, query = "SELECT DISTINCT new org.rhq.core.domain.common.composite.IntegerOptionItem(pt.id, pt.displayName) "
         + "    FROM InstalledPackage ip JOIN ip.resource res LEFT JOIN ip.packageVersion pv LEFT JOIN pv.generalPackage gp LEFT JOIN gp.packageType pt "
         + "   WHERE res.id = :resourceId " + "ORDER BY pt.displayName"),
@@ -93,7 +92,7 @@ public class InstalledPackage implements Serializable {
     // Attributes  --------------------------------------------
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
     @Id
     private int id;
 

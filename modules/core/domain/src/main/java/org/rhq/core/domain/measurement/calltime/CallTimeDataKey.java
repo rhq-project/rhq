@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.domain.measurement.calltime;
 
 import java.io.Serializable;
@@ -59,7 +59,7 @@ public class CallTimeDataKey implements Serializable {
 
     public static final int DESTINATION_MAX_LENGTH = 4000;
 
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "idGenerator")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "idGenerator")
     @Id
     private int id;
 
@@ -76,9 +76,7 @@ public class CallTimeDataKey implements Serializable {
      * @param schedule        the collection schedule corresponding to this call-time data
      * @param callDestination the call destination (e.g. a URL or an EJB name)
      */
-    public CallTimeDataKey(@NotNull
-    MeasurementSchedule schedule, @NotNull
-    String callDestination) {
+    public CallTimeDataKey(@NotNull MeasurementSchedule schedule, @NotNull String callDestination) {
         this.schedule = schedule;
         this.callDestination = callDestination;
     }

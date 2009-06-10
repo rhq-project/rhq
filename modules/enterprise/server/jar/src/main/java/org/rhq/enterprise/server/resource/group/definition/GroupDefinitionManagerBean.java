@@ -48,6 +48,7 @@ import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.db.H2DatabaseType;
 import org.rhq.core.db.OracleDatabaseType;
 import org.rhq.core.db.PostgresqlDatabaseType;
+import org.rhq.core.db.SQLServerDatabaseType;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.ResourceType;
@@ -449,7 +450,7 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
     public PageList<ResourceGroupComposite> getManagedResourceGroups(Subject subject, int groupDefinitionId,
         PageControl pc) throws GroupDefinitionException {
 
-        pc.initDefaultOrderingField("rg.name");
+        pc.initDefaultOrderingField("groupName");
         pc.truncateOrderingFields(1); // remove all but the primary sort
         OrderingField primary = pc.getOrderingFields().get(0);
         String field = primary.getField();
@@ -458,12 +459,13 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
             String secondaryField = prefix + "Count";
             pc.addDefaultOrderingField(secondaryField, primary.getOrdering());
         }
-        if (field.equals("rg.name") == false) {
-            pc.addDefaultOrderingField("rg.name");
+        if (field.equals("groupName") == false) {
+            pc.addDefaultOrderingField("groupName");
         }
 
         Connection conn = null;
         PreparedStatement stmt = null;
+        ResultSet rs = null;
 
         List<Object[]> rawResults = new ArrayList<Object[]>();
         try {
@@ -477,6 +479,8 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
                 query = PersistenceUtility.addOracleNativePagingSortingToQuery(query, pc);
             } else if (this.dbType instanceof H2DatabaseType) {
                 query = PersistenceUtility.addH2NativePagingSortingToQuery(query, pc);
+            } else if (this.dbType instanceof SQLServerDatabaseType) {
+                query = PersistenceUtility.addSQLServerNativePagingSortingToQuery(query, pc);
             } else {
                 throw new RuntimeException("Unknown database type: " + this.dbType);
             }
@@ -484,7 +488,7 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
             stmt = conn.prepareStatement(query);
             stmt.setInt(1, groupDefinitionId);
 
-            ResultSet rs = stmt.executeQuery();
+            rs = stmt.executeQuery();
             while (rs.next()) {
                 long explicitCount = rs.getLong(1);
                 double explicitAvail = rs.getDouble(2);
@@ -497,7 +501,7 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
         } catch (Throwable t) {
             throw new GroupDefinitionException(t);
         } finally {
-            JDBCUtil.safeClose(conn, stmt, null);
+            JDBCUtil.safeClose(conn, stmt, rs);
         }
 
         //Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, GroupDefinition.QUERY_FIND_MEMBERS, pc);

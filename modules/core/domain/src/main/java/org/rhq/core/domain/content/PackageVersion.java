@@ -82,8 +82,6 @@ import org.rhq.core.domain.resource.ProductVersion;
         + "                        LEFT JOIN pv1.channelPackageVersions cpv "
         + "                  WHERE cpv.channel.id = :channelId"
         + "                          AND (UPPER(pv1.displayName) LIKE :filter "
-        + "                             OR UPPER(pv1.shortDescription) LIKE :filter "
-        + "                             OR UPPER(pv1.longDescription) LIKE :filter"
         + "                             OR :filter IS NULL)) "),
     @NamedQuery(name = PackageVersion.QUERY_FIND_BY_PACKAGE_ID, query = "SELECT pv " + "  FROM PackageVersion pv "
         + " WHERE pv.generalPackage.id = :packageId "),
@@ -98,8 +96,6 @@ import org.rhq.core.domain.resource.ProductVersion;
         + "                        LEFT JOIN pv1.channelPackageVersions cpv "
         + "                  WHERE cpv.channel.id = :channelId"
         + "                          AND (UPPER(pv1.displayName) LIKE :filter "
-        + "                             OR UPPER(pv1.shortDescription) LIKE :filter "
-        + "                             OR UPPER(pv1.longDescription) LIKE :filter"
         + "                             OR :filter IS NULL)) "),
     @NamedQuery(name = PackageVersion.QUERY_FIND_METADATA_BY_RESOURCE_ID, query = "SELECT new org.rhq.core.domain.content.composite.PackageVersionMetadataComposite "
         + "                ( "
@@ -213,8 +209,6 @@ import org.rhq.core.domain.resource.ProductVersion;
         + " WHERE rc.resource.id = :resourceId "
         + "   AND cpv.channel.id = rc.channel.id "
         + "   AND (UPPER(pv.displayName) LIKE :filter "
-        + "        OR UPPER(pv.shortDescription) LIKE :filter "
-        + "        OR UPPER(pv.longDescription) LIKE :filter "
         + "        OR :filter IS NULL) "
         + "   AND (pv.productVersionPackageVersions IS EMPTY "
         + "        OR (pv.productVersionPackageVersions IS NOT EMPTY "
@@ -258,7 +252,7 @@ public class PackageVersion implements Serializable {
     // Attributes  --------------------------------------------
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
     @Id
     private int id;
 

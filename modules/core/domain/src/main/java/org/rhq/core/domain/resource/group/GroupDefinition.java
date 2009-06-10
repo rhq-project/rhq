@@ -134,7 +134,11 @@ public class GroupDefinition implements Serializable {
         + "                     WHERE impMap.resource_group_id = rg.id "
         + "              ) as implicitAvail, "
         + "" //
-        + "                rg.id as groupId "
+        + "                rg.id as groupId, "
+        + "                rg.name as groupName, "
+        + "                rg.category as groupCategory, "
+        + "                rg.group_by as groupedBy "
+        + "" //
         + "           FROM rhq_resource_group rg "
         + "LEFT OUTER JOIN rhq_resource_group_res_imp_map memberMap "
         + "             ON rg.id = memberMap.resource_group_id "
@@ -146,7 +150,7 @@ public class GroupDefinition implements Serializable {
         + "       GROUP BY rg.id, rg.category, rg.name, rg.group_by ";
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "id")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "id")
     @Id
     private int id;
 

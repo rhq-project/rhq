@@ -272,7 +272,7 @@ public class AlertCondition implements Serializable {
         + "  ) ";
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "RHQ_ALERT_CONDITION_ID_SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_ALERT_CONDITION_ID_SEQ")
     @Id
     private int id;
 

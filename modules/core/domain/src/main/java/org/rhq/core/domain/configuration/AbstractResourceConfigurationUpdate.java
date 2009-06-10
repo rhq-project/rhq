@@ -53,12 +53,11 @@ import javax.persistence.Table;
 public abstract class AbstractResourceConfigurationUpdate extends AbstractConfigurationUpdate implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    @GeneratedValue(generator = "SEQ", strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(generator = "SEQ", strategy = GenerationType.AUTO)
     @Id
     private int id;
 
-    protected AbstractResourceConfigurationUpdate()
-    {
+    protected AbstractResourceConfigurationUpdate() {
     }
 
     /**

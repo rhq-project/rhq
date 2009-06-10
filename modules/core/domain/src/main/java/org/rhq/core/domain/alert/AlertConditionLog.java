@@ -75,7 +75,7 @@ public class AlertConditionLog implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "RHQ_ALERT_CONDITION_LOG_ID_SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_ALERT_CONDITION_LOG_ID_SEQ")
     @Id
     private int id;
 

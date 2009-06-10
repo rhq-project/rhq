@@ -54,6 +54,10 @@ import org.jboss.system.server.ServerConfig;
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.db.DbUtil;
+import org.rhq.core.db.H2DatabaseType;
+import org.rhq.core.db.OracleDatabaseType;
+import org.rhq.core.db.PostgresqlDatabaseType;
+import org.rhq.core.db.SQLServerDatabaseType;
 import org.rhq.core.db.setup.DBSetup;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.jdbc.JDBCUtil;
@@ -142,6 +146,10 @@ public class ServerInformation {
             } else if (DatabaseTypeFactory.isH2(db)) {
                 if (version.startsWith("1.0")) {
                     throw new Exception("Unsupported H2 [" + db + "]");
+                }
+            } else if (DatabaseTypeFactory.isSQLServer(db)) {
+                if (!version.startsWith("2000") || !version.startsWith("2005")) {
+                    throw new Exception("Unsupported SQL Server [" + db + "]");
                 }
             } else {
                 throw new Exception("Unsupported DB [" + db + "]");
@@ -1015,9 +1023,17 @@ public class ServerInformation {
             return;
 
         try {
-            stm = conn.prepareStatement("INSERT INTO rhq_affinity_group ( id, name ) VALUES ( ?, ? )");
-            stm.setInt(1, db.getNextSequenceValue(conn, "rhq_affinity_group", "id"));
-            stm.setString(2, affinityGroup);
+            int i = 1;
+            if (db instanceof SQLServerDatabaseType) {
+                stm = conn.prepareStatement("INSERT INTO rhq_affinity_group ( name ) VALUES ( ? )");
+            } else if (db instanceof PostgresqlDatabaseType || db instanceof OracleDatabaseType
+                || db instanceof H2DatabaseType) {
+                stm = conn.prepareStatement("INSERT INTO rhq_affinity_group ( id, name ) VALUES ( ?, ? )");
+                stm.setInt(i++, db.getNextSequenceValue(conn, "rhq_affinity_group", "id"));
+            } else {
+                throw new IllegalArgumentException("Unknown database type, can't continue: " + db);
+            }
+            stm.setString(i++, affinityGroup);
             stm.executeUpdate();
 
         } catch (SQLException e) {
@@ -1129,16 +1145,28 @@ public class ServerInformation {
                 stm.close();
 
                 // set all new servers to operation_mode=INSTALLED
-                stm = conn
-                    .prepareStatement("INSERT INTO rhq_server ( id, name, address, port, secure_port, ctime, mtime, operation_mode, compute_power ) VALUES ( ?, ?, ?, ?, ?, ?, ?, 'INSTALLED', 1 )");
-                stm.setInt(1, db.getNextSequenceValue(conn, "rhq_server", "id"));
-                stm.setString(2, server.name);
-                stm.setString(3, server.endpointAddress);
-                stm.setInt(4, server.endpointPort);
-                stm.setInt(5, server.endpointSecurePort);
+                int i = 1;
+                if (db instanceof SQLServerDatabaseType) {
+                    stm = conn.prepareStatement("INSERT INTO rhq_server " //
+                        + " ( name, address, port, secure_port, ctime, mtime, operation_mode, compute_power ) " //
+                        + "VALUES ( ?, ?, ?, ?, ?, ?, 'INSTALLED', 1 )");
+                } else if (db instanceof PostgresqlDatabaseType || db instanceof OracleDatabaseType
+                    || db instanceof H2DatabaseType) {
+                    stm = conn.prepareStatement("INSERT INTO rhq_server " //
+                        + " ( id, name, address, port, secure_port, ctime, mtime, operation_mode, compute_power ) " //
+                        + "VALUES ( ?, ?, ?, ?, ?, ?, ?, 'INSTALLED', 1 )");
+                    stm.setInt(i++, db.getNextSequenceValue(conn, "rhq_server", "id"));
+                } else {
+                    throw new IllegalArgumentException("Unknown database type, can't continue: " + db);
+                }
+
+                stm.setString(i++, server.name);
+                stm.setString(i++, server.endpointAddress);
+                stm.setInt(i++, server.endpointPort);
+                stm.setInt(i++, server.endpointSecurePort);
                 long now = System.currentTimeMillis();
-                stm.setLong(6, now);
-                stm.setLong(7, now);
+                stm.setLong(i++, now);
+                stm.setLong(i++, now);
                 stm.executeUpdate();
             }
 

@@ -51,6 +51,7 @@ public class DatabaseTypeFactory {
         DB_URL_DRIVER_MAP.put("jdbc:oracle:thin:@", "oracle.jdbc.driver.OracleDriver");
         DB_URL_DRIVER_MAP.put("jdbc:oracle:oci8:", "oracle.jdbc.driver.OracleDriver");
         DB_URL_DRIVER_MAP.put("jdbc:h2:", "org.h2.Driver");
+        DB_URL_DRIVER_MAP.put("jdbc:jtds:sqlserver", "net.sourceforge.jtds.jdbc.Driver");
     }
 
     /**
@@ -161,6 +162,10 @@ public class DatabaseTypeFactory {
             } else if (db_name.indexOf("h2") != -1) {
                 if (db_version.startsWith("1.1")) {
                     database_type_class = H2v11DatabaseType.class;
+                }
+            } else if (db_name.indexOf("sql server") != -1) {
+                if (db_version.startsWith("09.00") || db_version.startsWith("9.00")) { // SQL Server 2005
+                    database_type_class = SQLServer2005DatabaseType.class;
                 }
             }
 
@@ -279,5 +284,30 @@ public class DatabaseTypeFactory {
      */
     public static boolean isH2(DatabaseType type) {
         return (type instanceof H2DatabaseType);
+    }
+
+    /**
+     * Is the database SQL Server?
+     *
+     * @param  c the connection to the database
+     *
+     * @return <code>true</code> if the connection is talking to an SQL Server database
+     *
+     * @throws Exception
+     */
+    public static boolean isSQLServer(Connection c) throws Exception {
+        DatabaseType type = getDatabaseType(c);
+        return isSQLServer(type);
+    }
+
+    /**
+     * Determines if the given type refers to an SQL Server database.
+     *
+     * @param  type
+     *
+     * @return <code>true</code> if the type is an SQL Server database
+     */
+    public static boolean isSQLServer(DatabaseType type) {
+        return (type instanceof SQLServerDatabaseType);
     }
 }

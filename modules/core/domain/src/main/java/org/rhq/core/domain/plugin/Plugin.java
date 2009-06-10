@@ -107,7 +107,7 @@ public class Plugin implements Serializable {
     public static final String UPDATE_ALL_BUT_CONTENT = "Plugin.updateAllButContent";
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
     @Id
     private int id;
 

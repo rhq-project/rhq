@@ -25,12 +25,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
+import org.rhq.core.db.SQLServerDatabaseType;
 
 class Table {
     private DBSetup m_parent;
@@ -42,7 +45,7 @@ class Table {
     private String m_tableSpace;
     private String m_storage;
     private String m_engine;
-    private List m_listColumns;
+    private List<Column> m_listColumns;
     private Collection<Index> m_collIndexes;
     private Collection<Constraint> m_collConstraints;
     private DataSet m_dataset;
@@ -84,7 +87,13 @@ class Table {
             this.m_listColumns = Column.getColumns(node, this, dbtype);
             this.m_collIndexes = Index.getIndexes(this, node, dbtype);
             this.m_collConstraints = Constraint.getConstraints(this, node, dbtype);
-            this.m_dataset = new XmlDataSet(this, node);
+
+            if (dbsetup.getDatabaseType() instanceof SQLServerDatabaseType) {
+                // needs special pre and post handling for data set insertions
+                this.m_dataset = new SQLServerXmlDataSet(this, node);
+            } else {
+                this.m_dataset = new XmlDataSet(this, node);
+            }
         } else {
             throw new SAXException("node is not a table.");
         }
@@ -94,7 +103,12 @@ class Table {
         this.m_parent = dbsetup;
         this.m_strName = set.getString(3);
         this.m_listColumns = Column.getColumns(meta, this, dbsetup.getJdbcUser());
-        this.m_dataset = new SqlDataSet(this);
+        if (dbsetup.getDatabaseType() instanceof SQLServerDatabaseType) {
+            // needs special pre and post handling for data set insertions
+            this.m_dataset = new SQLServerSqlDataSet(this);
+        } else {
+            this.m_dataset = new SqlDataSet(this);
+        }
     }
 
     protected void create(Collection typemaps) throws SQLException {
@@ -379,7 +393,6 @@ class Table {
         if (DatabaseTypeFactory.isOracle(dbtype)) {
             return OracleTable.getTables(parent, username);
         }
-
 
         Collection<Table> coll = new ArrayList<Table>();
         DatabaseMetaData meta = parent.getConnection().getMetaData();

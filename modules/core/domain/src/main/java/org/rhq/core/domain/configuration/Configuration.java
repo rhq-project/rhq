@@ -139,7 +139,7 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
     public static final String QUERY_DELETE_PROPERTIES_BY_CONFIGURATION_IDS = "Property.deleteByConfigurationIds";
     public static final String QUERY_DELETE_CONFIGURATIONS_BY_CONFIGURATION_IDs = "Configuration.deleteByConfigurationIdS";
 
-    @GeneratedValue(generator = "SEQ", strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(generator = "SEQ", strategy = GenerationType.AUTO)
     @Id
     private int id;
 

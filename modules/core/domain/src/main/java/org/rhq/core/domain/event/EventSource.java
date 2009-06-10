@@ -69,7 +69,7 @@ public class EventSource implements Externalizable {
 
     @Id
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "idGenerator")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "idGenerator")
     private int id;
 
     @JoinColumn(name = "EVENT_DEF_ID", nullable = false)

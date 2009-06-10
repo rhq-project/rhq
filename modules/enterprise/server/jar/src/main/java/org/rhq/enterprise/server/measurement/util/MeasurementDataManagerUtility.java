@@ -543,7 +543,7 @@ public class MeasurementDataManagerUtility {
             + "   (SELECT timestamp, avg(value) as av, max(value) as peak, min(value) as low FROM (\n"
             + unions.toString()
             + "   ) data GROUP BY timestamp) \n"
-            + "   UNION (select ? + (? * i) as timestamp, null as av, null as peak, null as low from RHQ_numbers where i < ?) ) alldata \n"
+            + "   UNION ALL (select ? + (? * i) as timestamp, null as av, null as peak, null as low from RHQ_numbers where i < ?) ) alldata \n"
             + "GROUP BY timestamp ORDER BY timestamp";
 
         PreparedStatement ps = connection.prepareStatement(sql);
@@ -605,9 +605,9 @@ public class MeasurementDataManagerUtility {
     }
 
     public static String getTableString(String table, String valuesClause, String otherTables, String conditions) {
-        return "      (SELECT begin as timestamp, value \n"
-            + "      FROM (select ? + (? * i) as begin, i from RHQ_numbers where i < ?) n,\n" + "         " + table
-            + " d " + otherTables + " \n" + "      WHERE time_stamp BETWEEN begin AND (begin + ?)\n" + "      "
+        return "      (SELECT beginTS as timestamp, value \n"
+            + "      FROM (select ? + (? * i) as beginTS, i from RHQ_numbers where i < ?) n,\n" + "         " + table
+            + " d " + otherTables + " \n" + "      WHERE time_stamp BETWEEN beginTS AND (beginTS + ?)\n" + "      "
             + conditions + "      ) \n";
     }
 

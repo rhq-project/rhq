@@ -119,7 +119,7 @@ public class Availability implements Serializable {
     public static final String NATIVE_QUERY_PURGE = "DELETE FROM RHQ_AVAILABILITY WHERE END_TIME < ?";
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "Generator")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "Generator")
     @Id
     private int id;
 

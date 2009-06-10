@@ -26,8 +26,6 @@ import java.util.List;
 import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
@@ -42,6 +40,7 @@ import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.db.H2DatabaseType;
 import org.rhq.core.db.OracleDatabaseType;
 import org.rhq.core.db.PostgresqlDatabaseType;
+import org.rhq.core.db.SQLServerDatabaseType;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.ResourceAvailability;
@@ -84,7 +83,6 @@ public class ResourceAvailabilityManagerBean implements ResourceAvailabilityMana
         }
     }
 
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void insertNeededAvailabilityForImportedResources(List<Integer> resourceIds) {
         // Hibernate diddn't want to swallow ResourceAvailability.INSERT_BY_RESOURCE_IDS, so had to go native
         Connection conn = null;
@@ -95,29 +93,41 @@ public class ResourceAvailabilityManagerBean implements ResourceAvailabilityMana
                 values[i] = resourceIds.get(i);
             }
 
-            String query = "" //
-                + "INSERT INTO RHQ_RESOURCE_AVAIL ( ID, RESOURCE_ID ) " //
-                + "     SELECT %s, res.ID " //
-                + "       FROM RHQ_RESOURCE res " //
-                + "  LEFT JOIN RHQ_RESOURCE_AVAIL avail ON res.ID = avail.RESOURCE_ID " //
-                + "      WHERE res.ID IN ( :resourceIds ) " //
-                + "        AND avail.ID IS NULL ";
-
-            conn = rhqDs.getConnection();
-            String nextValSqlFragment = null;
-            if (dbType instanceof PostgresqlDatabaseType) {
-                nextValSqlFragment = "nextval('%s_id_seq'::text)";
-            } else if (dbType instanceof OracleDatabaseType) {
-                nextValSqlFragment = "%s_id_seq.nextval";
-            } else if (dbType instanceof H2DatabaseType) {
-                nextValSqlFragment = "nextval('%s_id_seq')";
+            String query = null;
+            if (dbType instanceof SQLServerDatabaseType) {
+                query = "" //
+                    + "INSERT INTO RHQ_RESOURCE_AVAIL ( RESOURCE_ID ) " //
+                    + "     SELECT res.ID " //
+                    + "       FROM RHQ_RESOURCE res " //
+                    + "  LEFT JOIN RHQ_RESOURCE_AVAIL avail ON res.ID = avail.RESOURCE_ID " //
+                    + "      WHERE res.ID IN ( :resourceIds ) " //
+                    + "        AND avail.ID IS NULL ";
             } else {
-                throw new IllegalStateException("insertNeededAvailabilityForImportedResources does not support "
-                    + dbType);
+                query = "" //
+                    + "INSERT INTO RHQ_RESOURCE_AVAIL ( ID, RESOURCE_ID ) " //
+                    + "     SELECT %s, res.ID " //
+                    + "       FROM RHQ_RESOURCE res " //
+                    + "  LEFT JOIN RHQ_RESOURCE_AVAIL avail ON res.ID = avail.RESOURCE_ID " //
+                    + "      WHERE res.ID IN ( :resourceIds ) " //
+                    + "        AND avail.ID IS NULL ";
+
+                String nextValSqlFragment = null;
+                if (dbType instanceof PostgresqlDatabaseType) {
+                    nextValSqlFragment = "nextval('%s_id_seq'::text)";
+                } else if (dbType instanceof OracleDatabaseType) {
+                    nextValSqlFragment = "%s_id_seq.nextval";
+                } else if (dbType instanceof H2DatabaseType) {
+                    nextValSqlFragment = "nextval('%s_id_seq')";
+                } else {
+                    throw new IllegalStateException("insertNeededAvailabilityForImportedResources does not support "
+                        + dbType);
+                }
+                String nextValSql = String.format(nextValSqlFragment, ResourceAvailability.TABLE_NAME);
+                query = String.format(query, nextValSql);
             }
-            String nextValSql = String.format(nextValSqlFragment, ResourceAvailability.TABLE_NAME);
-            query = String.format(query, nextValSql);
+
             query = JDBCUtil.transformQueryForMultipleInParameters(query, ":resourceIds", values.length);
+            conn = rhqDs.getConnection();
             ps = conn.prepareStatement(query);
             JDBCUtil.bindNTimes(ps, values, 1);
             ps.execute();

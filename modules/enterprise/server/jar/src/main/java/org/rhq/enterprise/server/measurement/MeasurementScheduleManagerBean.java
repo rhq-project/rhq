@@ -53,6 +53,7 @@ import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.db.H2DatabaseType;
 import org.rhq.core.db.OracleDatabaseType;
 import org.rhq.core.db.PostgresqlDatabaseType;
+import org.rhq.core.db.SQLServerDatabaseType;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.measurement.DataType;
@@ -434,7 +435,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                 + "     and d.id IN (@@DEFINITIONS@@) "
                 + "     and s.resource_id IN (@@RESOURCES@@) "
                 + "   group by d.id " + " ) as foo " + " where defi.id = foo.did order by defi.display_name";
-        } else if (type instanceof OracleDatabaseType) {
+        } else if (type instanceof OracleDatabaseType || type instanceof SQLServerDatabaseType) {
             queryString = "select defi.id, defi.display_name, defi.description, defi.category, defi.data_type, coMin, coMax, coAny, coAll "
                 + " from RHQ_measurement_def defi, "
                 + " ( "
@@ -496,7 +497,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                     } else {
                         collectionInterval = 0; // will be flagged as "DIFFERENT"
                     }
-                } else if (type instanceof OracleDatabaseType) {
+                } else if (type instanceof OracleDatabaseType || type instanceof SQLServerDatabaseType) {
                     int boAny = resultSet.getInt(8);
                     int boAll = resultSet.getInt(9);
                     if (boAny == boAll) {
@@ -1010,8 +1011,12 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
             String insertQueryString = null;
             if (dbType instanceof PostgresqlDatabaseType) {
                 insertQueryString = MeasurementSchedule.NATIVE_QUERY_INSERT_SCHEDULES_POSTGRES;
-            } else {
+            } else if (dbType instanceof OracleDatabaseType || dbType instanceof H2DatabaseType) {
                 insertQueryString = MeasurementSchedule.NATIVE_QUERY_INSERT_SCHEDULES_ORACLE;
+            } else if (dbType instanceof SQLServerDatabaseType) {
+                insertQueryString = MeasurementSchedule.NATIVE_QUERY_INSERT_SCHEDULES_SQL_SERVER;
+            } else {
+                throw new IllegalArgumentException("Unknown database type, can't continue: " + dbType);
             }
 
             insertQueryString = JDBCUtil.transformQueryForMultipleInParameters(insertQueryString, "@@RESOURCES@@",

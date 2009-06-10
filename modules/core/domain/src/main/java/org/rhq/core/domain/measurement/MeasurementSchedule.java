@@ -174,7 +174,22 @@ public class MeasurementSchedule implements Serializable {
         + "                                   WHERE ms.RESOURCE_ID = res.ID " //
         + "                                     AND ms.DEFINITION = def.ID ) ) ";
 
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "RHQ_METRIC_SCHED_ID_SEQ")
+    public static final String NATIVE_QUERY_INSERT_SCHEDULES_SQL_SERVER = "" //
+        + "INSERT INTO RHQ_MEASUREMENT_SCHED ( ENABLED, COLL_INTERVAL, DEFINITION, RESOURCE_ID ) " //
+        + "     SELECT def.DEFAULT_ON AS defaultOn, " //
+        + "            def.DEFAULT_INTERVAL AS interval, " //
+        + "            def.ID AS definitionId, " //
+        + "            res.ID AS resourceId " //
+        + "       FROM RHQ_RESOURCE res, RHQ_RESOURCE_TYPE type, RHQ_MEASUREMENT_DEF def " //
+        + "      WHERE ( res.ID in ( @@RESOURCES@@ ) ) " //
+        + "        AND type.ID = res.RESOURCE_TYPE_ID " //
+        + "        AND type.ID = def.RESOURCE_TYPE_ID " //
+        + "        AND NOT EXISTS ( SELECT ms.id " //
+        + "                           FROM RHQ_MEASUREMENT_SCHED ms " //
+        + "                          WHERE ms.RESOURCE_ID = res.ID " //
+        + "                            AND ms.DEFINITION = def.ID ) ";
+
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_METRIC_SCHED_ID_SEQ")
     @Id
     private int id;
 

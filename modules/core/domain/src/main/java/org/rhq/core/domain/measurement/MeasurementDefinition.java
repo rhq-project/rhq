@@ -105,7 +105,7 @@ public class MeasurementDefinition implements Serializable {
     public static final String DISABLE_ALL = "MeasurementDefinition.disableAll";
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "id")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "id")
     @Id
     private int id;
 
@@ -420,13 +420,11 @@ public class MeasurementDefinition implements Serializable {
         return rawNumericType != null;
     }
 
-    public NumericType getRawNumericType()
-    {
+    public NumericType getRawNumericType() {
         return rawNumericType;
     }
 
-    public void setRawNumericType(NumericType rawNumericType)
-    {
+    public void setRawNumericType(NumericType rawNumericType) {
         this.rawNumericType = rawNumericType;
     }
 

@@ -51,6 +51,7 @@ import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.db.H2DatabaseType;
 import org.rhq.core.db.OracleDatabaseType;
 import org.rhq.core.db.PostgresqlDatabaseType;
+import org.rhq.core.db.SQLServerDatabaseType;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.util.MD5Generator;
 import org.rhq.core.util.jdbc.JDBCUtil;
@@ -306,7 +307,7 @@ public class AgentPluginURLDeploymentScanner extends URLDeploymentScanner {
         }
         if (dbType instanceof PostgresqlDatabaseType || dbType instanceof H2DatabaseType) {
             ps.setBoolean(index, enabled);
-        } else if (dbType instanceof OracleDatabaseType) {
+        } else if (dbType instanceof OracleDatabaseType || dbType instanceof SQLServerDatabaseType) {
             ps.setInt(index, (enabled ? 1 : 0));
         } else {
             throw new RuntimeException("Unknown database type : " + dbType);

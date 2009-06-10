@@ -62,7 +62,7 @@ public abstract class AlertNotification implements Serializable {
     public static final String QUERY_DELETE_ORPHANED = "AlertNotification.deleteOrphaned";
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "RHQ_ALERT_NOTIFICATION_ID_SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_ALERT_NOTIFICATION_ID_SEQ")
     @Id
     private int id;
 

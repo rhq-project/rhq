@@ -110,7 +110,7 @@ public class AffinityGroup implements Serializable {
     public static final String QUERY_DELETE_BY_IDS = "AffinityGroup.deleteByIds";
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "id")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "id")
     @Id
     private int id;
 

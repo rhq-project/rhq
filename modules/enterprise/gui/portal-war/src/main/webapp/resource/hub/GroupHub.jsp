@@ -248,23 +248,23 @@
          <c:choose>
             <c:when test="${GroupHubForm.groupCategory == 'COMPATIBLE'}">
                <display:column width="25%" property="resourceGroup.name" title="common.header.Group"
-                               isLocalizedTitle="true" sortAttr="rg.name"
+                               isLocalizedTitle="true" sortAttr="groupName"
                                href="/rhq/group/monitor/graphs.xhtml?category=${GroupHubForm.groupCategory}&groupId=${groupComposite.resourceGroup.id}"/>
             </c:when>
             <c:otherwise>
                <display:column width="25%" property="resourceGroup.name" title="common.header.Group"
-                               isLocalizedTitle="true" sortAttr="rg.name"
+                               isLocalizedTitle="true" sortAttr="groupName"
                                href="/rhq/group/inventory/view.xhtml?category=${GroupHubForm.groupCategory}&groupId=${groupComposite.resourceGroup.id}"/>
             </c:otherwise>
          </c:choose>
          <c:if test="${not empty resourceTypeTH}">
             <display:column width="25%" property="resourceGroup.resourceType.name" title="${resourceTypeTH}"
-                            isLocalizedTitle="false" sortAttr="resType.name">
+                            isLocalizedTitle="false" sortAttr="resourceTypeName">
             </display:column>
          </c:if>
 
          <display:column width="30%" property="resourceGroup.description"
-                         title="common.header.Description" sortAttr="rg.description"/>
+                         title="common.header.Description" sortAttr="groupDescription"/>
 
          <display:column width="10%" property="explicitFormatted" title="resource.common.monitor.visibility.ChildAvailabilityTH"
                          headerStyleClass="ListHeaderCheckbox" valign="middle"

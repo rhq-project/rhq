@@ -1,28 +1,29 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.domain.configuration.definition;
 
 import java.io.Serializable;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -34,6 +35,7 @@ import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -46,7 +48,7 @@ public class PropertyDefinitionEnumeration implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
     @Id
     private long id;
 
@@ -70,13 +72,11 @@ public class PropertyDefinitionEnumeration implements Serializable {
         // empty constructor, JPA use only
     }
 
-    public PropertyDefinitionEnumeration(@NotNull
-    String name, String value) {
+    public PropertyDefinitionEnumeration(@NotNull String name, String value) {
         this(name, value, false);
     }
 
-    public PropertyDefinitionEnumeration(@NotNull
-    String name, String value, boolean isDefault) {
+    public PropertyDefinitionEnumeration(@NotNull String name, String value, boolean isDefault) {
         this.name = name;
         this.value = value;
         this.isDefault = isDefault;
@@ -109,8 +109,7 @@ public class PropertyDefinitionEnumeration implements Serializable {
         return name;
     }
 
-    public void setName(@NotNull
-    String name) {
+    public void setName(@NotNull String name) {
         this.name = name;
     }
 
@@ -169,7 +168,7 @@ public class PropertyDefinitionEnumeration implements Serializable {
     public int hashCode() {
         int result;
         result = ((name != null) ? name.hashCode() : 0);
-//        result = (31 * result) + ((propertyDefinitionSimple != null) ? propertyDefinitionSimple.hashCode() : 0);
+        //        result = (31 * result) + ((propertyDefinitionSimple != null) ? propertyDefinitionSimple.hashCode() : 0);
         return result;
     }
 

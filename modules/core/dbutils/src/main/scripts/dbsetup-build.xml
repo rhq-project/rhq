@@ -58,6 +58,7 @@ To run the default target, you must set one of the following properties to true:
         <pathelement location="${settings.localRepository}/com/oracle/ojdbc5/${ojdbc5.version}/ojdbc5-${ojdbc5.version}.jar"/>
         <pathelement location="${settings.localRepository}/postgresql/postgresql/${postgresql.version}/postgresql-${postgresql.version}.jar"/>
         <pathelement location="${settings.localRepository}/com/h2database/h2/${h2.version}/h2-${h2.version}.jar"/>
+        <pathelement location="${settings.localRepository}/net/sourceforge/jtds/jtds/${jtds.version}/jtds-${jtds.version}.jar"/>
      </path>
      <property name="full.task.classpath.property" refid="full.task.classpath" /> 
      
@@ -309,6 +310,7 @@ To run the default target, you must set one of the following properties to true:
             <pathelement location="${settings.localRepository}/com/oracle/ojdbc5/${ojdbc5.version}/ojdbc5-${ojdbc5.version}.jar"/>
             <pathelement location="${settings.localRepository}/postgresql/postgresql/${postgresql.version}/postgresql-${postgresql.version}.jar"/>
             <pathelement location="${settings.localRepository}/com/h2database/h2/${h2.version}/h2-${h2.version}.jar"/>
+            <pathelement location="${settings.localRepository}/net/sourceforge/jtds/jtds/${jtds.version}/jtds-${jtds.version}.jar"/>
          </classpath> 
          <transaction>
             SELECT PROPERTY_VALUE FROM RHQ_SYSTEM_CONFIG WHERE PROPERTY_KEY='DB_SCHEMA_VERSION'

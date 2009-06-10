@@ -19,24 +19,20 @@
 package org.rhq.core.db;
 
 /**
- * H2 database version 1.1 which extends the abstract support for H2 database.
+ * SQL Server version 2005 which extends the abstract support for SQL Server database.
  * 
  * @author Joseph Marques
  */
-public class H2v11DatabaseType extends H2DatabaseType {
-    /**
-     * @see DatabaseType#getName()
-     */
+public class SQLServer2005DatabaseType extends SQLServerDatabaseType {
+
     @Override
     public String getName() {
-        return H2DatabaseType.VENDOR_NAME + "v1.1";
+        return SQLServerDatabaseType.VENDOR_NAME + getVersion();
     }
 
-    /**
-     * @see DatabaseType#getVersion()
-     */
     @Override
     public String getVersion() {
-        return "1.1";
+        return "2005";
     }
+
 }

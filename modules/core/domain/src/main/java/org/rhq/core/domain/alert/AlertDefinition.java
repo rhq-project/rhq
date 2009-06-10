@@ -177,7 +177,7 @@ public class AlertDefinition implements Serializable {
     public static final String QUERY_FIND_ALL_COMPOSITES_ADMIN = "AlertDefinition.findAllComposites_admin";
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "RHQ_ALERT_DEFINITION_ID_SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_ALERT_DEFINITION_ID_SEQ")
     @Id
     private int id;
 

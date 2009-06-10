@@ -135,7 +135,7 @@ public abstract class OperationHistory implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Column(name = "ID")
-    @GeneratedValue(generator = "SEQ", strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(generator = "SEQ", strategy = GenerationType.AUTO)
     @Id
     private int id;
 

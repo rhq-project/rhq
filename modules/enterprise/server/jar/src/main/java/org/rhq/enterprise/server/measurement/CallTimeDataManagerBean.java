@@ -40,6 +40,12 @@ import org.jetbrains.annotations.NotNull;
 
 import org.jboss.annotation.ejb.TransactionTimeout;
 
+import org.rhq.core.db.DatabaseType;
+import org.rhq.core.db.DatabaseTypeFactory;
+import org.rhq.core.db.H2DatabaseType;
+import org.rhq.core.db.OracleDatabaseType;
+import org.rhq.core.db.PostgresqlDatabaseType;
+import org.rhq.core.db.SQLServerDatabaseType;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.calltime.CallTimeData;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
@@ -67,6 +73,10 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal {
         + "(id, schedule_id, call_destination) " + "SELECT %s, ?, ? FROM RHQ_numbers WHERE i = 42 "
         + "AND NOT EXISTS (SELECT * FROM " + DATA_KEY_TABLE_NAME + " WHERE schedule_id = ? AND call_destination = ?)";
 
+    private static final String CALLTIME_KEY_INSERT_STATEMENT_AUTOINC = "INSERT INTO " + DATA_KEY_TABLE_NAME
+        + "(schedule_id, call_destination) " + "SELECT ?, ? FROM RHQ_numbers WHERE i = 42 "
+        + "AND NOT EXISTS (SELECT * FROM " + DATA_KEY_TABLE_NAME + " WHERE schedule_id = ? AND call_destination = ?)";
+
     private static final String CALLTIME_VALUE_DELETE_SUPERCEDED_STATEMENT = "DELETE FROM " + DATA_VALUE_TABLE_NAME
         + " WHERE key_id = " + "(SELECT id FROM " + DATA_KEY_TABLE_NAME
         + " WHERE schedule_id = ? AND call_destination = ?) AND begin_time = ?";
@@ -74,6 +84,11 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal {
     private static final String CALLTIME_VALUE_INSERT_STATEMENT = "INSERT INTO " + DATA_VALUE_TABLE_NAME
         + "(id, key_id, begin_time, end_time, minimum, maximum, total, count) "
         + "SELECT %s, key.id, ?, ?, ?, ?, ?, ? FROM RHQ_numbers num, RHQ_calltime_data_key key WHERE num.i = 42 "
+        + "AND key.id = (SELECT id FROM " + DATA_KEY_TABLE_NAME + " WHERE schedule_id = ? AND call_destination = ?)";
+
+    private static final String CALLTIME_VALUE_INSERT_STATEMENT_AUTOINC = "INSERT INTO " + DATA_VALUE_TABLE_NAME
+        + "(key_id, begin_time, end_time, minimum, maximum, total, count) "
+        + "SELECT key.id, ?, ?, ?, ?, ?, ? FROM RHQ_numbers num, RHQ_calltime_data_key key WHERE num.i = 42 "
         + "AND key.id = (SELECT id FROM " + DATA_KEY_TABLE_NAME + " WHERE schedule_id = ? AND call_destination = ?)";
 
     private static final String CALLTIME_VALUE_PURGE_STATEMENT = "DELETE FROM " + DATA_VALUE_TABLE_NAME
@@ -191,12 +206,24 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal {
         }
     }
 
-    private void insertCallTimeDataKeys(Set<CallTimeData> callTimeDataSet, Connection conn) throws SQLException {
-        String keyNextvalSql = JDBCUtil.getNextValSql(conn, "RHQ_calltime_data_key");
-        String insertKeySql = String.format(CALLTIME_KEY_INSERT_STATEMENT, keyNextvalSql);
-        PreparedStatement ps = null;
+    private void insertCallTimeDataKeys(Set<CallTimeData> callTimeDataSet, Connection conn) throws Exception {
+
         int[] results;
+        String insertKeySql;
+        PreparedStatement ps = null;
+
         try {
+            DatabaseType dbType = DatabaseTypeFactory.getDatabaseType(conn);
+            if (dbType instanceof PostgresqlDatabaseType || dbType instanceof OracleDatabaseType
+                || dbType instanceof H2DatabaseType) {
+                String keyNextvalSql = JDBCUtil.getNextValSql(conn, "RHQ_calltime_data_key");
+                insertKeySql = String.format(CALLTIME_KEY_INSERT_STATEMENT, keyNextvalSql);
+            } else if (dbType instanceof SQLServerDatabaseType) {
+                insertKeySql = CALLTIME_KEY_INSERT_STATEMENT_AUTOINC;
+            } else {
+                throw new IllegalArgumentException("Unknown database type, can't continue: " + dbType);
+            }
+
             ps = conn.prepareStatement(insertKeySql);
             for (CallTimeData callTimeData : callTimeDataSet) {
                 ps.setInt(1, callTimeData.getScheduleId());
@@ -268,13 +295,23 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal {
                 + " redundant call-time data value rows that were superceded by data in the measurement report currently being processed.");
     }
 
-    private void insertCallTimeDataValues(Set<CallTimeData> callTimeDataSet, Connection conn) throws SQLException {
-
-        String valueNextvalSql = JDBCUtil.getNextValSql(conn, "RHQ_calltime_data_value");
-        String insertValueSql = String.format(CALLTIME_VALUE_INSERT_STATEMENT, valueNextvalSql);
-        PreparedStatement ps = null;
+    private void insertCallTimeDataValues(Set<CallTimeData> callTimeDataSet, Connection conn) throws Exception {
         int[] results;
+        String insertValueSql;
+        PreparedStatement ps = null;
+
         try {
+            DatabaseType dbType = DatabaseTypeFactory.getDatabaseType(conn);
+            if (dbType instanceof PostgresqlDatabaseType || dbType instanceof OracleDatabaseType
+                || dbType instanceof H2DatabaseType) {
+                String valueNextvalSql = JDBCUtil.getNextValSql(conn, "RHQ_calltime_data_value");
+                insertValueSql = String.format(CALLTIME_VALUE_INSERT_STATEMENT, valueNextvalSql);
+            } else if (dbType instanceof SQLServerDatabaseType) {
+                insertValueSql = CALLTIME_VALUE_INSERT_STATEMENT_AUTOINC;
+            } else {
+                throw new IllegalArgumentException("Unknown database type, can't continue: " + dbType);
+            }
+
             ps = conn.prepareStatement(insertValueSql);
             for (CallTimeData callTimeData : callTimeDataSet) {
                 ps.setInt(7, callTimeData.getScheduleId());

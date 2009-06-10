@@ -804,7 +804,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
     public static final int ROOT_ID = -1;
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "RHQ_RESOURCE_SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_RESOURCE_SEQ")
     @Id
     private int id;
 

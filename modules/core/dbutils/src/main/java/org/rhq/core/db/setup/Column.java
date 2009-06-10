@@ -209,7 +209,7 @@ class Column {
                     + this.m_strTableName + ":" + this.getName());
         }
 
-        if (this.ondelete != null && this.m_sReferences == null) {
+        if (this.getOnDelete() != null && this.getReferences() == null) {
             throw new RuntimeException("Specifying 'ondelete' requires a 'references' attribute also: "
                 + this.m_strTableName + ":" + this.getName());
         }
@@ -245,9 +245,9 @@ class Column {
             strCmd += " PRIMARY KEY";
         }
 
-        if (this.m_sReferences != null) {
+        if (this.getReferences() != null) {
             strCmd += " REFERENCES " + this.getReferences();
-            if (this.ondelete != null) {
+            if (this.getOnDelete() != null) {
                 strCmd += " ON DELETE " + this.getOnDelete();
             }
         }
@@ -275,6 +275,8 @@ class Column {
                         col = new PostgresColumn(node, table);
                     } else if (DatabaseTypeFactory.isH2(dbtype)) {
                         col = new H2Column(node, table);
+                    } else if (DatabaseTypeFactory.isSQLServer(dbtype)) {
+                        col = new SQLServerColumn(node, table);
                     } else {
                         col = new Column(node, table);
                     }

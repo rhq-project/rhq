@@ -52,6 +52,7 @@ import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.db.H2DatabaseType;
 import org.rhq.core.db.OracleDatabaseType;
 import org.rhq.core.db.PostgresqlDatabaseType;
+import org.rhq.core.db.SQLServerDatabaseType;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventDefinition;
@@ -86,10 +87,15 @@ public class EventManagerBean implements EventManagerLocal {
         + "SELECT %s, (SELECT id FROM RHQ_Event_Def WHERE name = ? AND resource_type_id = (SELECT id FROM RHQ_Resource_Type WHERE name = ? AND plugin = ?)), ?, ? FROM RHQ_Numbers WHERE i = 42 "
         + "AND NOT EXISTS (SELECT * FROM RHQ_Event_Source WHERE event_def_id = (SELECT id FROM RHQ_Event_Def WHERE name = ? AND resource_type_id = (SELECT id FROM RHQ_Resource_Type WHERE name = ? AND plugin = ?)) AND resource_id = ? AND location = ?)";
 
+    private static final String EVENT_SOURCE_INSERT_STMT_AUTOINC = "INSERT INTO RHQ_Event_Source (event_def_id, resource_id, location) "
+        + "SELECT (SELECT id FROM RHQ_Event_Def WHERE name = ? AND resource_type_id = (SELECT id FROM RHQ_Resource_Type WHERE name = ? AND plugin = ?)), ?, ? FROM RHQ_Numbers WHERE i = 42 "
+        + "AND NOT EXISTS (SELECT * FROM RHQ_Event_Source WHERE event_def_id = (SELECT id FROM RHQ_Event_Def WHERE name = ? AND resource_type_id = (SELECT id FROM RHQ_Resource_Type WHERE name = ? AND plugin = ?)) AND resource_id = ? AND location = ?)";
+
     private static final String EVENT_INSERT_STMT = "INSERT INTO RHQ_Event (id, event_source_id, timestamp, severity, detail) "
         + "VALUES (%s, (SELECT id FROM RHQ_Event_Source WHERE event_def_id = (SELECT id FROM RHQ_Event_Def WHERE name = ? AND resource_type_id = (SELECT id FROM RHQ_Resource_Type WHERE name = ? AND plugin = ?)) AND resource_id = ? AND location = ?), ?, ?, ?)";
 
-    private static final int DEFAULT_EVENTS_PAGE_SIZE = 15;
+    private static final String EVENT_INSERT_STMT_AUTOINC = "INSERT INTO RHQ_Event (event_source_id, timestamp, severity, detail) "
+        + "VALUES ((SELECT id FROM RHQ_Event_Source WHERE event_def_id = (SELECT id FROM RHQ_Event_Def WHERE name = ? AND resource_type_id = (SELECT id FROM RHQ_Resource_Type WHERE name = ? AND plugin = ?)) AND resource_id = ? AND location = ?), ?, ?, ?)";
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
@@ -124,14 +130,24 @@ public class EventManagerBean implements EventManagerLocal {
         if (events == null || events.size() == 0)
             return;
 
+        String statementSql;
         Connection conn = null;
         PreparedStatement ps = null;
         try {
             conn = rhqDs.getConnection();
+            DatabaseType dbType = DatabaseTypeFactory.getDatabaseType(conn);
+
+            if (dbType instanceof PostgresqlDatabaseType || dbType instanceof OracleDatabaseType
+                || dbType instanceof H2DatabaseType) {
+                String nextvalSql = JDBCUtil.getNextValSql(conn, EventSource.TABLE_NAME);
+                statementSql = String.format(EVENT_SOURCE_INSERT_STMT, nextvalSql);
+            } else if (dbType instanceof SQLServerDatabaseType) {
+                statementSql = EVENT_SOURCE_INSERT_STMT_AUTOINC;
+            } else {
+                throw new IllegalArgumentException("Unknown database type, can't continue: " + dbType);
+            }
 
             // First insert the "keys" (i.e. the EventSources).
-            String nextvalSql = JDBCUtil.getNextValSql(conn, EventSource.TABLE_NAME);
-            String statementSql = String.format(EVENT_SOURCE_INSERT_STMT, nextvalSql);
             ps = conn.prepareStatement(statementSql);
             try {
                 for (EventSource eventSource : events.keySet()) {
@@ -154,9 +170,17 @@ public class EventManagerBean implements EventManagerLocal {
                 JDBCUtil.safeClose(ps);
             }
 
+            if (dbType instanceof PostgresqlDatabaseType || dbType instanceof OracleDatabaseType
+                || dbType instanceof H2DatabaseType) {
+                String nextvalSql = JDBCUtil.getNextValSql(conn, Event.TABLE_NAME);
+                statementSql = String.format(EVENT_INSERT_STMT, nextvalSql);
+            } else if (dbType instanceof SQLServerDatabaseType) {
+                statementSql = EVENT_INSERT_STMT_AUTOINC;
+            } else {
+                throw new IllegalArgumentException("Unknown database type, can't continue: " + dbType);
+            }
+
             // Then insert the "values" (i.e. the Events).
-            nextvalSql = JDBCUtil.getNextValSql(conn, Event.TABLE_NAME);
-            statementSql = String.format(EVENT_INSERT_STMT, nextvalSql);
             ps = conn.prepareStatement(statementSql);
             try {
                 for (EventSource eventSource : events.keySet()) {
@@ -182,9 +206,9 @@ public class EventManagerBean implements EventManagerLocal {
                 JDBCUtil.safeClose(ps);
             }
 
-        } catch (SQLException e) {
+        } catch (Throwable t) {
             // TODO what do we want to do here ?
-            log.warn("addEventData: Insert of events failed : " + e.getMessage());
+            log.warn("addEventData: Insert of events failed : " + t.getMessage());
         } finally {
             JDBCUtil.safeClose(conn);
         }
@@ -517,6 +541,8 @@ public class EventManagerBean implements EventManagerLocal {
                 query = PersistenceUtility.addOracleNativePagingSortingToQuery(query, pc);
             } else if (this.dbType instanceof H2DatabaseType) {
                 query = PersistenceUtility.addH2NativePagingSortingToQuery(query, pc);
+            } else if (this.dbType instanceof SQLServerDatabaseType) {
+                query = PersistenceUtility.addSQLServerNativePagingSortingToQuery(query, pc, true);
             } else {
                 throw new RuntimeException("Unknown database type : " + this.dbType);
             }

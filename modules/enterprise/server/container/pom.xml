@@ -96,6 +96,13 @@
       <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
       <scope>test</scope>
     </dependency>
+    
+    <dependency>
+      <groupId>net.sourceforge.jtds</groupId>
+      <artifactId>jtds</artifactId>
+      <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+      <scope>test</scope>
+    </dependency>
 
   </dependencies>
 
@@ -160,6 +167,7 @@
                   <property name="ojdbc5.version" value="${ojdbc5.version}" />
                   <property name="postgresql.version" value="${postgresql.version}" />
                   <property name="h2.version" value="${h2.version}" />
+                  <property name="jtds.version" value="${jtds.version}" />
                   <property name="jsf-api.version" value="${jsf-api.version}" />
                   <property name="jsf-impl.version" value="${jsf-impl.version}" />
                   <property name="jboss-faces.version" value="${jboss-faces.version}" />

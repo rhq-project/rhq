@@ -68,7 +68,7 @@ public class DeleteResourceHistory {
 
     // Attributes  --------------------------------------------
 
-    @GeneratedValue(generator = "SEQ", strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(generator = "SEQ", strategy = GenerationType.AUTO)
     @Id
     private int id;
 

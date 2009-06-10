@@ -56,6 +56,7 @@ import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.db.H2DatabaseType;
 import org.rhq.core.db.OracleDatabaseType;
 import org.rhq.core.db.PostgresqlDatabaseType;
+import org.rhq.core.db.SQLServerDatabaseType;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
@@ -1024,7 +1025,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
             query = query.replace("%RESOURCE_FRAGMENT_WHERE%", "");
         }
 
-        pc.initDefaultOrderingField("rg.name");
+        pc.initDefaultOrderingField("groupName");
         pc.truncateOrderingFields(1); // remove all but the primary sort
         OrderingField primary = pc.getOrderingFields().get(0);
         String field = primary.getField();
@@ -1033,8 +1034,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
             String secondaryField = prefix + "Count";
             pc.addDefaultOrderingField(secondaryField, primary.getOrdering());
         }
-        if (field.equals("rg.name") == false) {
-            pc.addDefaultOrderingField("rg.name");
+        if (field.equals("groupName") == false) {
+            pc.addDefaultOrderingField("groupName");
         }
         nameFilter = PersistenceUtility.formatSearchParameter(nameFilter);
 
@@ -1049,7 +1050,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
                 // only filter by visibility if the user isn't selecting a group directly
                 if (this.dbType instanceof PostgresqlDatabaseType || this.dbType instanceof H2DatabaseType) {
                     query = query.replace("%GROUP_AND_VISIBILITY_FRAGMENT_WHERE%", "rg.visible = TRUE");
-                } else if (this.dbType instanceof OracleDatabaseType) {
+                } else if (this.dbType instanceof OracleDatabaseType || this.dbType instanceof SQLServerDatabaseType) {
                     query = query.replace("%GROUP_AND_VISIBILITY_FRAGMENT_WHERE%", "rg.visible = 1");
                 } else {
                     throw new RuntimeException("Unknown database type: " + this.dbType);
@@ -1065,6 +1066,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
                 query = PersistenceUtility.addOracleNativePagingSortingToQuery(query, pc);
             } else if (this.dbType instanceof H2DatabaseType) {
                 query = PersistenceUtility.addH2NativePagingSortingToQuery(query, pc);
+            } else if (this.dbType instanceof SQLServerDatabaseType) {
+                query = PersistenceUtility.addSQLServerNativePagingSortingToQuery(query, pc);
             } else {
                 throw new RuntimeException("Unknown database type: " + this.dbType);
             }

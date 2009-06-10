@@ -150,6 +150,23 @@ public class PersistenceUtility {
         return query;
     }
 
+    private static String getOrderByFragment(OrderingField... orderByFields) {
+        boolean first = true;
+        StringBuilder builder = new StringBuilder();
+        for (OrderingField orderingField : orderByFields) {
+            if (first) {
+                builder.append(" ORDER BY ");
+                first = false;
+            } else {
+                builder.append(", ");
+            }
+
+            builder.append(orderingField.getField()).append(" ").append(orderingField.getOrdering());
+        }
+
+        return builder.toString();
+    }
+
     /**
      * Builds a count(*) version of the named query so we don't have duplicate all our queries to use two query
      * pagination model.
@@ -368,6 +385,105 @@ public class PersistenceUtility {
         queryWithPagingSorting.append(" WHERE rnum >= ").append(minRowNum);
 
         return queryWithPagingSorting.toString();
+    }
+
+    /**
+     * Note: always put the rownum column at the END of the columns, so that code
+     *       which relies on index-based access to the result set data doesn't break
+     * 
+     * Method 1:
+     * 
+     * SELECT outerResults.* FROM (
+     *    SELECT innerResults.*,
+     *           ROW_NUMBER() OVER( {orderByClause} ) AS rownum
+     *    FROM ( {queryWithoutOrderBy} ) AS innerResults
+     * ) AS outerResults
+     * WHERE rownum <= maxRowNum AND rownum >= minRowNum
+     * 
+     * The above method fails in circumstances where the orderByClause is built up with
+     * aliases that aren't in the explicit select list returned from queryWithoutOrderBy
+     * 
+     * 
+     * Method 2:
+     * 
+     * Fix above shortcomings by pushing the orderByClause into the actual select list
+     * 
+     * SELECT singleResults.* FROM (
+     *    {queryWithoutOrderBySelectList}
+     *    , ROW_NUMBER() OVER( {orderByClause} ) AS rownum
+     *    {queryWithoutOrderByRestOfQuery}
+     * ) AS singleResults
+     * WHERE rownum <= maxRowNum AND rownum >= minRowNum
+     * 
+     * 
+     * Actually, both of the above methods have small flaws.  The first can not sort by columns that
+     * aren't in the explicit return list.  The second can not sort by computed columns and subqueries
+     * in the select list.  The only way I see how this can work is by modifying the queryWithoutOrderBy
+     * to explicitly return all parameters that will be sorted on (even if the use case wouldn't normally
+     * require them to be in the select list), alias them, and order by the aliases by modifying the web 
+     * ui code to use those tokens when generating the sortable column headers (jmarques - June/2009)
+     */
+    public static String addSQLServerNativePagingSortingToQuery(String query, PageControl pageControl) {
+        return addSQLServerNativePagingSortingToQuery(query, pageControl, false);
+    }
+
+    public static String addSQLServerNativePagingSortingToQuery(String query, PageControl pageControl,
+        boolean alternatePagingStyle) {
+        StringBuilder queryWithPagingSorting = new StringBuilder(query.length() + 50);
+
+        int minRowNum = pageControl.getStartRow() + 1;
+        int maxRowNum = minRowNum + pageControl.getPageSize() - 1;
+
+        String orderByClause = getOrderByFragment(pageControl.getOrderingFieldsAsArray());
+
+        if (alternatePagingStyle) {
+            int index = findSelectListEndIndex(query);
+            String selectList = query.substring(0, index);
+            String restOfQuery = query.substring(index);
+            queryWithPagingSorting.append("SELECT singleResults.* FROM ( ");
+            queryWithPagingSorting.append(selectList);
+            queryWithPagingSorting.append(", ROW_NUMBER() OVER( " + orderByClause + " ) AS rownum ");
+            queryWithPagingSorting.append(restOfQuery);
+            queryWithPagingSorting.append(") AS singleResults ");
+        } else {
+            queryWithPagingSorting.append("SELECT outerResults.* FROM ( ");
+            queryWithPagingSorting.append("   SELECT innerResults.*, ");
+            queryWithPagingSorting.append("          ROW_NUMBER() OVER( " + orderByClause + " ) AS rownum ");
+            queryWithPagingSorting.append("   FROM ( " + query + " ) AS innerResults ");
+            queryWithPagingSorting.append(" ) AS outerResults ");
+        }
+        queryWithPagingSorting.append("WHERE rownum <= ").append(maxRowNum);
+        queryWithPagingSorting.append(" AND rownum >= ").append(minRowNum);
+
+        return queryWithPagingSorting.toString();
+    }
+
+    // beginning of from clause (not counting retrievals via subqueries) should indicate end of select list
+    private static int findSelectListEndIndex(String query) {
+        int nesting = 0;
+        query = query.toLowerCase();
+        StringBuilder wordBuffer = new StringBuilder();
+        for (int i = 0; i < query.length(); i++) {
+            char next = query.charAt(i);
+            if (next == '(') {
+                nesting++;
+            } else if (next == ')') {
+                nesting--;
+            } else {
+                if (nesting != 0) {
+                    continue;
+                }
+                if (Character.isLetter(next)) {
+                    wordBuffer.append(next);
+                    if (wordBuffer.toString().equals("from")) {
+                        return i - 4; // return index representing the character just before "from"
+                    }
+                } else {
+                    wordBuffer.setLength(0); // clear buffer if we find any non-letter
+                }
+            }
+        }
+        throw new IllegalArgumentException("Could not find select list end index");
     }
 
     // wanted to combine postgres and oracle methods, but org.rhq.core.db.DatabaseType objects are not visible to domain

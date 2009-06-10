@@ -55,6 +55,13 @@
       <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
       <scope>test</scope>
     </dependency>
+    
+    <dependency>
+      <groupId>net.sourceforge.jtds</groupId>
+      <artifactId>jtds</artifactId>
+      <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+      <scope>test</scope>
+    </dependency>
 
   </dependencies>
 
@@ -95,6 +102,8 @@
                   <!--<property name="ojdbc14.version" value="${ojdbc14.version}" />-->
                   <property name="ojdbc5.version" value="${ojdbc5.version}" />
                   <property name="postgresql.version" value="${postgresql.version}" />
+                  <property name="h2.version" value="${h2.version}" />
+                  <property name="jtds.version" value="${jtds.version}" />
                   <property name="task.classpath.property" refid="maven.test.classpath" />
                   <property name="rhq.ds.type-mapping" value="${rhq.test.ds.type-mapping}" />
                   <property name="rhq.ds.connection-url" value="${rhq.test.ds.connection-url}" />
@@ -125,6 +134,8 @@
                   <!--<property name="ojdbc14.version" value="${ojdbc14.version}" />-->
                   <property name="ojdbc5.version" value="${ojdbc5.version}" />
                   <property name="postgresql.version" value="${postgresql.version}" />
+                  <property name="h2.version" value="${h2.version}" />
+                  <property name="jtds.version" value="${jtds.version}" />
                   <property name="task.classpath.property" refid="maven.test.classpath" />
                   <property name="rhq.ds.type-mapping" value="${rhq.test.ds.type-mapping}" />
                   <property name="rhq.ds.connection-url" value="${rhq.test.ds.connection-url}" />
@@ -156,6 +167,8 @@
                   <!--<property name="ojdbc14.version" value="${ojdbc14.version}" />-->
                   <property name="ojdbc5.version" value="${ojdbc5.version}" />
                   <property name="postgresql.version" value="${postgresql.version}" />
+                  <property name="h2.version" value="${h2.version}" />
+                  <property name="jtds.version" value="${jtds.version}" />
                   <property name="task.classpath.property" refid="maven.test.classpath" />
                   <property name="rhq.ds.type-mapping" value="${rhq.test.ds.type-mapping}" />
                   <property name="rhq.ds.connection-url" value="${rhq.test.ds.connection-url}" />

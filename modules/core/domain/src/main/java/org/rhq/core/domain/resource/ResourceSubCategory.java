@@ -38,14 +38,14 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -55,18 +55,14 @@ import org.jetbrains.annotations.NotNull;
 @Entity
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_RESOURCE_SUBCAT_ID_SEQ")
 @Table(name = "RHQ_RESOURCE_SUBCAT")
-@NamedQueries({
-    @NamedQuery(name = ResourceSubCategory.QUERY_FIND_BY_NAME_AND_PLUGIN,
-    query = "SELECT rsc FROM ResourceSubCategory AS rsc WHERE rsc.name = :name AND rsc.resourceType.plugin = :plugin")
-})
-
+@NamedQueries( { @NamedQuery(name = ResourceSubCategory.QUERY_FIND_BY_NAME_AND_PLUGIN, query = "SELECT rsc FROM ResourceSubCategory AS rsc WHERE rsc.name = :name AND rsc.resourceType.plugin = :plugin") })
 public class ResourceSubCategory implements Comparable<ResourceSubCategory>, Serializable {
     private static final long serialVersionUID = 1L;
 
     public static final String QUERY_FIND_BY_NAME_AND_PLUGIN = "ResourceSubCategory.findByNameAndPlugin";
-    
+
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
     @Id
     private int id;
 
@@ -224,8 +220,7 @@ public class ResourceSubCategory implements Comparable<ResourceSubCategory>, Ser
      *
      * @param newSubCategory contains new data to merge into this definition; cannot be <code>null</code>
      */
-    public void update(@NotNull
-    ResourceSubCategory newSubCategory) {
+    public void update(@NotNull ResourceSubCategory newSubCategory) {
         this.displayName = newSubCategory.getDisplayName();
         this.description = newSubCategory.getDescription();
     }

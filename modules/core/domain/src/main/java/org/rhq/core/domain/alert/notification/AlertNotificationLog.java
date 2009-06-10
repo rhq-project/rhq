@@ -67,7 +67,7 @@ public class AlertNotificationLog implements Serializable {
     public static final String QUERY_DELETE_BY_RESOURCES = "AlertNotificationLog.deleteByResources";
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "RHQ_ALERT_NOTIF_LOG_ID_SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_ALERT_NOTIF_LOG_ID_SEQ")
     @Id
     private int id;
 

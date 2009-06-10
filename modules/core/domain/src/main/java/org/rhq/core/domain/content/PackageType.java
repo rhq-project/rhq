@@ -1,30 +1,31 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.domain.content;
 
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
+
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -44,8 +45,10 @@ import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlTransient;
+
 import org.hibernate.annotations.NamedQueries;
 import org.hibernate.annotations.NamedQuery;
+
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.resource.ResourceType;
 
@@ -66,8 +69,7 @@ import org.rhq.core.domain.resource.ResourceType;
     @NamedQuery(name = PackageType.QUERY_FIND_BY_RESOURCE_TYPE_ID_AND_CREATION_FLAG, query = "SELECT pt FROM PackageType pt "
         + "JOIN pt.resourceType rt "
         + "LEFT JOIN FETCH pt.deploymentConfigurationDefinition cd "
-        + "LEFT JOIN FETCH cd.templates cts "
-        + "WHERE rt.id = :typeId AND pt.isCreationData = true") })
+        + "LEFT JOIN FETCH cd.templates cts " + "WHERE rt.id = :typeId AND pt.isCreationData = true") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_PACKAGE_TYPE_ID_SEQ")
 @Table(name = "RHQ_PACKAGE_TYPE")
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -83,7 +85,7 @@ public class PackageType implements Serializable {
     // Attributes  --------------------------------------------
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
     @Id
     private int id;
 
@@ -304,8 +306,8 @@ public class PackageType implements Serializable {
         this.category = newType.getCategory();
         this.discoveryInterval = newType.getDiscoveryInterval();
         // Don't update references... these have to be linked to persistent objects
-//        this.deploymentConfigurationDefinition = newType.getDeploymentConfigurationDefinition();
-//        this.packageExtraPropertiesDefinition = newType.getPackageExtraPropertiesDefinition();
+        //        this.deploymentConfigurationDefinition = newType.getDeploymentConfigurationDefinition();
+        //        this.packageExtraPropertiesDefinition = newType.getPackageExtraPropertiesDefinition();
         this.isCreationData = newType.isCreationData();
         this.packages = newType.getPackages();
     }

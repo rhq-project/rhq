@@ -183,7 +183,7 @@ public class MeasurementOOB {
      * MERGE it doesn't support the WHEN [NOT] MATCHED syntax; so we'll just delete any and all OOBs that have become
      * obsolete, and follow that up with a call to INSERT_NEW_ONES, which should give us the same effect as row updates
      */
-    public static final String UPDATE_MASTER_H2 = "" //
+    public static final String UPDATE_MASTER_GENERIC = "" //
         + " DELETE FROM rhq_measurement_oob " //
         + " WHERE EXISTS ( SELECT oob_tmp.schedule_id " //
         + "                  FROM rhq_measurement_oob_tmp oob_tmp " //

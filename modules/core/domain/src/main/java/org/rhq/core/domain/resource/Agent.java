@@ -114,7 +114,7 @@ public class Agent implements Serializable {
     public static final String QUERY_REMOVE_SERVER_REFERENCE = "Agent.removeServerReference";
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "id")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "id")
     @Id
     private int id;
 

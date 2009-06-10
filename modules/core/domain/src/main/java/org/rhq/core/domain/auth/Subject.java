@@ -96,26 +96,21 @@ import org.rhq.core.domain.configuration.PropertySimple;
         @QueryHint(name = "org.hibernate.cacheRegion", value = "security") }, query = "SELECT COUNT(p) "
         + "FROM Subject AS s, IN (s.roles) r, IN (r.permissions) p " + "WHERE s = :subject AND p = :permission"),
 
-    @NamedQuery(name = Subject.QUERY_GET_PERMISSIONS_BY_GROUP_ID, query =
-            "SELECT DISTINCT p " +
-            "FROM Role r JOIN r.subjects s JOIN r.permissions p " +
-            "WHERE " +
-            "  (" +
-            "    r in (SELECT r2 from ResourceGroup g JOIN g.roles r2 WHERE g.id = :groupId) " +
-            "    OR r in (SELECT r3 from ResourceGroup g JOIN g.clusterResourceGroup crg JOIN crg.roles r3 WHERE g.id = :groupId AND crg.recursive = true) " +
-            "  ) " +
-            "  AND s = :subject"),
+    @NamedQuery(name = Subject.QUERY_GET_PERMISSIONS_BY_GROUP_ID, query = "SELECT DISTINCT p "
+        + "FROM Role r JOIN r.subjects s JOIN r.permissions p "
+        + "WHERE "
+        + "  ("
+        + "    r in (SELECT r2 from ResourceGroup g JOIN g.roles r2 WHERE g.id = :groupId) "
+        + "    OR r in (SELECT r3 from ResourceGroup g JOIN g.clusterResourceGroup crg JOIN crg.roles r3 WHERE g.id = :groupId AND crg.recursive = true) "
+        + "  ) " + "  AND s = :subject"),
 
-    @NamedQuery(name = Subject.QUERY_HAS_GROUP_PERMISSION, query =
-            "SELECT count(r) " +
-            "FROM Role r JOIN r.subjects s JOIN r.permissions p " +
-            "WHERE " +
-            "  (" +
-            "    r in (SELECT r2 from ResourceGroup g JOIN g.roles r2 WHERE g.id = :groupId) " +
-            "    OR r in (SELECT r3 from ResourceGroup g JOIN g.clusterResourceGroup crg JOIN crg.roles r3 WHERE g.id = :groupId AND crg.recursive = true) " +
-            "  ) " +
-            "  AND s = :subject " +
-            "  AND p = :permission"),
+    @NamedQuery(name = Subject.QUERY_HAS_GROUP_PERMISSION, query = "SELECT count(r) "
+        + "FROM Role r JOIN r.subjects s JOIN r.permissions p "
+        + "WHERE "
+        + "  ("
+        + "    r in (SELECT r2 from ResourceGroup g JOIN g.roles r2 WHERE g.id = :groupId) "
+        + "    OR r in (SELECT r3 from ResourceGroup g JOIN g.clusterResourceGroup crg JOIN crg.roles r3 WHERE g.id = :groupId AND crg.recursive = true) "
+        + "  ) " + "  AND s = :subject " + "  AND p = :permission"),
 
     @NamedQuery(name = Subject.QUERY_GET_PERMISSIONS_BY_RESOURCE_ID, query = "SELECT distinct p "
         + "FROM Resource res, IN (res.implicitGroups) g, IN (g.roles) r, IN (r.subjects) s, IN (r.permissions) p "
@@ -129,21 +124,13 @@ import org.rhq.core.domain.configuration.PropertySimple;
         + "FROM Resource res, IN (res.implicitGroups) g, IN (g.roles) r, IN (r.subjects) s "
         + "WHERE s = :subject AND res.id = :resourceId"),
 
-    @NamedQuery(name = Subject.QUERY_CAN_VIEW_GROUP, query =
-            "SELECT count(g) " +
-            "FROM ResourceGroup g " +
-            "WHERE (g.id IN (SELECT rg.id " +
-            "                  FROM ResourceGroup rg " +
-            "                  JOIN rg.roles r " +
-            "                  JOIN r.subjects s " +
-            "                 WHERE s = :subject) " +
-            "    OR g.id IN (SELECT rg.id " +
-            "                  FROM ResourceGroup rg " +
-            "                  JOIN rg.clusterResourceGroup crg " +
-            "                  JOIN crg.roles r " +
-            "                  JOIN r.subjects s " +
-            "                 WHERE crg.recursive = true AND s = :subject)) " +
-            "    AND g.id = :groupId"),
+    @NamedQuery(name = Subject.QUERY_CAN_VIEW_GROUP, query = "SELECT count(g) " + "FROM ResourceGroup g "
+        + "WHERE (g.id IN (SELECT rg.id " + "                  FROM ResourceGroup rg "
+        + "                  JOIN rg.roles r " + "                  JOIN r.subjects s "
+        + "                 WHERE s = :subject) " + "    OR g.id IN (SELECT rg.id "
+        + "                  FROM ResourceGroup rg " + "                  JOIN rg.clusterResourceGroup crg "
+        + "                  JOIN crg.roles r " + "                  JOIN r.subjects s "
+        + "                 WHERE crg.recursive = true AND s = :subject)) " + "    AND g.id = :groupId"),
 
     /*
      * No easy way to test whether ALL resources are      in some group     in some role     in some subject     where
@@ -231,7 +218,7 @@ public class Subject implements Externalizable {
     private static final long serialVersionUID = 1L;
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "RHQ_SUBJECT_ID_SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_SUBJECT_ID_SEQ")
     @Id
     private int id;
 

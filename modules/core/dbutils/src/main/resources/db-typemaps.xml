@@ -21,77 +21,93 @@ attribute (see DatabaseType.getName/getVendor javadocs).
       <!-- RHQ-2120: use BIGINT for H2 instead of INTEGER because there are overflow issues with SUM/AVG methods, for more information see
            http://groups.google.com/group/h2-database/browse_frm/thread/b5b2f3a135f304fd/a79e9bd0be219069?hl=en&lnk=gst&q=value+out+of+range#a79e9bd0be219069 -->
       <map db="h2"          type="BIGINT" />
+      <map db="sqlserver"   type="INT" />
    </typemap>
    <typemap type="LONG">
       <map db="java"        type="BIGINT" />
       <map db="postgresql"  type="BIGINT" />
       <map db="oracle"      type="NUMBER(19,0)" />
       <map db="h2"          type="BIGINT" />
+      <map db="sqlserver"   type="BIGINT" />
    </typemap>
    <typemap type="BIGDEC">
       <map db="java"        type="DOUBLE" />
       <map db="postgresql"  type="NUMERIC(24,5)" />
       <map db="oracle"      type="NUMBER(24,5)" />
       <map db="h2"          type="DOUBLE" />
+      <map db="sqlserver"   type="REAL" />
    </typemap>
    <typemap type="VARCHAR2">
       <map db="java"        type="VARCHAR" />
       <map db="postgresql"  type="CHARACTER VARYING" />
       <map db="oracle"      type="VARCHAR2" />
       <map db="h2"          type="VARCHAR" />
+      <map db="sqlserver"   type="VARCHAR" />
    </typemap>
    <typemap type="LONGVARCHAR">
       <map db="java"        type="LONGVARCHAR" />
       <map db="postgresql"  type="TEXT" />
       <map db="oracle"      type="CLOB" />
       <map db="h2"          type="LONGVARCHAR" />
+      <map db="sqlserver"   type="TEXT" />
    </typemap>
    <typemap type="CHAR">
       <map db="java"        type="CHAR" />
       <map db="postgresql"  type="CHARACTER" />
       <map db="oracle"      type="CHAR" />
       <map db="h2"          type="CHAR" />
+      <map db="sqlserver"   type="CHAR" />
    </typemap>
    <typemap type="DOUBLE">
       <map db="java"        type="FLOAT" />
       <map db="postgresql"  type="FLOAT8" />
       <map db="oracle"      type="FLOAT(15)" />
       <map db="h2"          type="FLOAT" />
+      <map db="sqlserver"   type="FLOAT" />
    </typemap>
    <typemap type="BOOLEAN">
       <map db="java"        type="BOOLEAN" />
       <map db="postgresql"  type="BOOLEAN" />
       <map db="oracle"      type="NUMBER(1)" />
       <map db="h2"          type="BOOLEAN" />
+      <!-- Would prefer to use 'BIT' here, but SQL Server 
+           provides no aggregate functions for this type,
+           such as bool_and / bool_or like Postgres does -->
+      <map db="sqlserver"   type="TINYINT" />
    </typemap>
    <typemap type="BYTES">
       <map db="java"        type="BLOB" />
       <map db="postgresql"  type="BYTEA" />
       <map db="oracle"      type="BLOB" />
       <map db="h2"          type="BLOB" />
+      <map db="sqlserver"   type="IMAGE" />
    </typemap>
    <typemap type="BLOB">
       <map db="java"        type="BLOB" />
       <map db="postgresql"  type="BYTEA" />
       <map db="oracle"      type="BLOB" />
       <map db="h2"          type="BLOB" />
+      <map db="sqlserver"   type="IMAGE" />
    </typemap>
    <typemap type="CLOB">
       <map db="java"        type="CLOB" />
       <map db="postgresql"  type="VARCHAR" />
       <map db="oracle"      type="CLOB" />
       <map db="h2"          type="CLOB" />
+      <map db="sqlserver"   type="TEXT" />
    </typemap>
    <typemap type="SMALLINT">
       <map db="java"        type="SMALLINT" />
       <map db="postgresql"  type="SMALLINT" />
       <map db="oracle"      type="NUMBER(3)" />
       <map db="h2"          type="SMALLINT" />
+      <map db="sqlserver"   type="SMALLINT" />
    </typemap>
    <typemap type="TIMESTAMP">
       <map db="java"        type="DATE" />
       <map db="postgresql"  type="TIMESTAMP WITHOUT TIME ZONE" />
       <map db="oracle"      type="TIMESTAMP" />
       <map db="h2"          type="TIMESTAMP" />
+      <map db="sqlserver"   type="TIMESTAMP" />
    </typemap>
 </typemaps>

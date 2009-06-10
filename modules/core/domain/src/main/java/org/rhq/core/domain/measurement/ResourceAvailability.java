@@ -76,7 +76,7 @@ public class ResourceAvailability implements Serializable {
 
     @SuppressWarnings("unused")
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "RHQ_RESOURCE_AVAIL_SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_RESOURCE_AVAIL_SEQ")
     @Id
     private int id;
 

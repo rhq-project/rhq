@@ -73,10 +73,12 @@
     <property name="jms.oracle.dir" value="jms-oracle.rej"/>
     <property name="jms.postgres.dir" value="jms-postgres.rej"/>
     <property name="jms.h2.dir" value="jms-h2.rej"/>
+  	<property name="jms.sqlserver.dir" value="jms-sqlserver.rej"/>
 
     <property name="ds.oracle.file" value="rhq-ds.xml.oracle.rej"/>
     <property name="ds.postgres.file" value="rhq-ds.xml.postgres.rej"/>
     <property name="ds.h2.file" value="rhq-ds.xml.h2.rej"/>
+  	<property name="ds.sqlserver.file" value="rhq-ds.xml.sqlserver.rej"/>
 
     <condition property="use-postgres" value="true">
        <contains string="${rhq.server.database.type-mapping}" substring="postgres" casesensitive="false" />
@@ -86,6 +88,9 @@
     </condition>
     <condition property="use-h2" value="true">
        <contains string="${rhq.server.database.type-mapping}" substring="h2" casesensitive="false" />
+    </condition>
+    <condition property="use-sqlserver" value="true">
+       <contains string="${rhq.server.database.type-mapping}" substring="sqlserver" casesensitive="false" />
     </condition>
 
     <condition property="copy.dev.resources" value="true">
@@ -113,6 +118,13 @@
        <and>
           <equals arg1="${predeploy}" arg2="true" />
           <equals arg1="${use-h2}" arg2="true" />
+       </and>
+    </condition>
+
+    <condition property="predeploy-sqlserver" value="true">
+       <and>
+          <equals arg1="${predeploy}" arg2="true" />
+          <equals arg1="${use-sqlserver}" arg2="true" />
        </and>
     </condition>
 
@@ -199,6 +211,9 @@
           toDir="${jboss.lib.dir}" verbose="true" />
     <copy file="${settings.localRepository}/com/h2database/h2/${h2.version}/h2-${h2.version}.jar"
           toDir="${jboss.lib.dir}" verbose="true" />
+    <!-- jtds for SQL Server support -->
+    <copy file="${settings.localRepository}/net/sourceforge/jtds/jtds/${jtds.version}/jtds-${jtds.version}.jar"
+          toDir="${jboss.lib.dir}" verbose="true" />
 
     <!-- Generate SSL key for RHQ server - 128-bit key that expires in 20 years... -->
     <property name="jboss.conf.dir" location="${jboss.home}/server/default/conf" />
@@ -266,6 +281,9 @@
        <fileset dir="${jboss.deploy.dir}/jms" />
     </copy>
     <copy todir="${jboss.deploy.dir}/${jms.h2.dir}">
+       <fileset dir="${jboss.deploy.dir}/jms" />
+    </copy>
+    <copy todir="${jboss.deploy.dir}/${jms.sqlserver.dir}">
        <fileset dir="${jboss.deploy.dir}/jms" />
     </copy>
     <antcall target="setup-jms-backend" />
@@ -575,9 +593,11 @@ rhq.server.agent-plugin-scan-period-ms=${rhq.server.agent-plugin-scan-period-ms}
           depends="setup-jms-backend-postgres,
                    setup-jms-backend-oracle,
                    setup-jms-backend-h2,
+                   setup-jms-backend-sqlserver,
                    make-default-jms-backend-postgres,
                    make-default-jms-backend-oracle,
-                   make-default-jms-backend-h2">
+                   make-default-jms-backend-h2,
+                   make-default-jms-backend-sqlserver">
   </target>
 
   <target name="setup-jms-backend-postgres">
@@ -653,6 +673,30 @@ rhq.server.agent-plugin-scan-period-ms=${rhq.server.agent-plugin-scan-period-ms}
     </copy>
   </target>
 
+  <target name="setup-jms-backend-sqlserver">
+    <echo>Preparing the SQL Server JMS configuration...</echo>
+    <move file="${jboss.deploy.dir}/${jms.sqlserver.dir}/hsqldb-jdbc-state-service.xml"
+          tofile="${jboss.deploy.dir}/${jms.sqlserver.dir}/rhq-jdbc-state-service.xml" verbose="true" failonerror="false"/>
+    <replace file="${jboss.deploy.dir}/${jms.sqlserver.dir}/rhq-jdbc-state-service.xml" token="DefaultDS" value="RHQDS"/>
+    <replace file="${jboss.deploy.dir}/${jms.sqlserver.dir}/rhq-jdbc-state-service.xml"
+             token="CREATE_TABLES_ON_STARTUP = TRUE"
+             value="CREATE_TABLES_ON_STARTUP = FALSE"/>
+    <copy file="${jboss.home}/docs/examples/jms/mssql-jdbc2-service.xml"
+          tofile="${jboss.deploy.dir}/${jms.sqlserver.dir}/rhq-jdbc2-service.xml" verbose="true" failonerror="false" />
+    <replace file="${jboss.deploy.dir}/${jms.sqlserver.dir}/rhq-jdbc2-service.xml" token="MSSQLDS" value="RHQDS"/>
+    <replace file="${jboss.deploy.dir}/${jms.sqlserver.dir}/rhq-jdbc2-service.xml"
+             token="CREATE_TABLES_ON_STARTUP = TRUE"
+             value="CREATE_TABLES_ON_STARTUP = FALSE"/>
+  </target>
+
+  <target name="make-default-jms-backend-sqlserver" if="use-sqlserver">
+    <echo>SQL Server will be your JMS backend!</echo>
+    <delete dir="${jboss.deploy.dir}/jms"/>
+    <copy todir="${jboss.deploy.dir}/jms">
+       <fileset dir="${jboss.deploy.dir}/${jms.sqlserver.dir}"/>
+    </copy>
+  </target>
+
   <target name="copy-dev-resources" if="copy.dev.resources">
     <echo>Copying dev-only resources ...</echo>
     <copy todir="${project.build.outputDirectory}" verbose="true">
@@ -676,6 +720,7 @@ rhq.server.agent-plugin-scan-period-ms=${rhq.server.agent-plugin-scan-period-ms}
                    deploy-postgres-ds,
                    deploy-oracle-ds,
                    deploy-h2-ds,
+                   deploy-sqlserver-ds,
                    undeploy-jmx-console,
                    undeploy-mail-service,
                    undeploy-cluster-service,
@@ -783,6 +828,13 @@ rhq.server.agent-plugin-scan-period-ms=${rhq.server.agent-plugin-scan-period-ms}
   <target name="deploy-h2-ds" if="predeploy-h2">
      <echo>H2 will be your datasource backend!</echo>
      <copy file="${jboss.deploy.dir}/${ds.h2.file}"
+           tofile="${jboss.deploy.dir}/rhq-ds.xml"
+           verbose="true"/>
+  </target>
+
+  <target name="deploy-sqlserver-ds" if="predeploy-sqlserver">
+     <echo>SQL Server will be your datasource backend!</echo>
+     <copy file="${jboss.deploy.dir}/${ds.sqlserver.file}"
            tofile="${jboss.deploy.dir}/rhq-ds.xml"
            verbose="true"/>
   </target>

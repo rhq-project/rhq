@@ -31,6 +31,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -45,6 +46,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,7 +74,7 @@ public class ConfigurationDefinition implements Serializable {
     public static final String QUERY_FIND_PLUGIN_BY_RESOURCE_TYPE_ID = "ConfigurationDefinition.findPluginByResourceTypeId";
 
     @Column(name = "id")
-    @GeneratedValue(generator = "SEQ", strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(generator = "SEQ", strategy = GenerationType.AUTO)
     @Id
     private int id;
 
@@ -96,8 +98,7 @@ public class ConfigurationDefinition implements Serializable {
         // JPA use only
     }
 
-    public ConfigurationDefinition(@NotNull
-    String name, String description) {
+    public ConfigurationDefinition(@NotNull String name, String description) {
         this.name = name;
         this.description = description;
     }
@@ -115,8 +116,7 @@ public class ConfigurationDefinition implements Serializable {
         return name;
     }
 
-    public void setName(@NotNull
-    String name) {
+    public void setName(@NotNull String name) {
         this.name = name;
     }
 
@@ -293,8 +293,7 @@ public class ConfigurationDefinition implements Serializable {
      * @return <code>ConfigurationTemplate</code> with the specified name; <code>null</code> if no template by that name
      *         exists.
      */
-    public ConfigurationTemplate getTemplate(@NotNull
-    String name) {
+    public ConfigurationTemplate getTemplate(@NotNull String name) {
         return getTemplates().get(name);
     }
 

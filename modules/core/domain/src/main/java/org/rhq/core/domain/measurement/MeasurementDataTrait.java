@@ -84,7 +84,7 @@ public class MeasurementDataTrait extends MeasurementData {
      *       E051-08).
      */
     public static final String NATIVE_QUERY_PURGE = "" //
-        + "DELETE FROM rhq_measurement_data_trait t " //
+        + "DELETE FROM rhq_measurement_data_trait " // SQL Server doesn't like aliases, use full table name
         + "WHERE EXISTS " // rewritten as exists because H2 doesn't support multi-column conditions
         + "  (SELECT t2.schedule_id, t2.time_stamp " //
         + "   FROM rhq_measurement_data_trait t2, " //
@@ -94,8 +94,8 @@ public class MeasurementDataTrait extends MeasurementData {
         + "      GROUP BY t4.schedule_id) t3 " //
         + "   WHERE t2.schedule_id = t3.schedule_id " //
         + "   AND t2.time_stamp < t3.mx " //
-        + "   AND t.time_stamp = t2.time_stamp " // rewrote multi-column conditions as additional
-        + "   AND t.schedule_id = t2.schedule_id) "; // correlated restrictions to the delete table
+        + "   AND rhq_measurement_data_trait.time_stamp = t2.time_stamp " // rewrote multi-column conditions as additional
+        + "   AND rhq_measurement_data_trait.schedule_id = t2.schedule_id) "; // correlated restrictions to the delete table
 
     private static final long serialVersionUID = 1L;
 

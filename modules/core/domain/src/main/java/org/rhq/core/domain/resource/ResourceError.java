@@ -67,7 +67,7 @@ public class ResourceError implements Serializable {
     private static final int MAX_SUMMARY_LENGTH = 1000;
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "RHQ_RESOURCE_ERROR_SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_RESOURCE_ERROR_SEQ")
     @Id
     private int id;
 
@@ -100,11 +100,8 @@ public class ResourceError implements Serializable {
      * @param detail       a detailed description of the error - typically a stack trace; may be null
      * @param timeOccurred the epoch time when the error occurred
      */
-    public ResourceError(@NotNull
-    Resource resource, @NotNull
-    ResourceErrorType errorType, @NotNull
-    String summary, @Nullable
-    String detail, long timeOccurred) {
+    public ResourceError(@NotNull Resource resource, @NotNull ResourceErrorType errorType, @NotNull String summary,
+        @Nullable String detail, long timeOccurred) {
         setResource(resource);
         setErrorType(errorType);
         setSummary(summary);
@@ -121,10 +118,8 @@ public class ResourceError implements Serializable {
      * @param exception    exception whose stack will be used as this object's error message
      * @param timeOccurred the epoch time when the error occurred
      */
-    public ResourceError(@NotNull
-    Resource resource, @NotNull
-    ResourceErrorType errorType, @NotNull
-    Throwable exception, long timeOccurred) {
+    public ResourceError(@NotNull Resource resource, @NotNull ResourceErrorType errorType,
+        @NotNull Throwable exception, long timeOccurred) {
         setResource(resource);
         setErrorType(errorType);
         setSummary(exception.getLocalizedMessage());
@@ -183,8 +178,7 @@ public class ResourceError implements Serializable {
      *
      * @throws NullPointerException if <code>t</code> is <code>null</code>
      */
-    public void setDetailFromThrowable(@NotNull
-    Throwable t) {
+    public void setDetailFromThrowable(@NotNull Throwable t) {
         //noinspection ConstantConditions
         if (t == null) {
             throw new IllegalArgumentException("t == null");

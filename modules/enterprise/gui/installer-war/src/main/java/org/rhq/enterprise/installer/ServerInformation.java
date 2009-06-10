@@ -77,6 +77,7 @@ public class ServerInformation {
     private static final String UNDEPLOYED_POSTGRES_DS_FILENAME = DEPLOYED_DS_FILENAME + ".postgres.rej";
     private static final String UNDEPLOYED_ORACLE_DS_FILENAME = DEPLOYED_DS_FILENAME + ".oracle.rej";
     private static final String UNDEPLOYED_H2_DS_FILENAME = DEPLOYED_DS_FILENAME + ".h2.rej";
+    private static final String UNDEPLOYED_SQLSERVER_DS_FILENAME = DEPLOYED_DS_FILENAME + ".sqlserver.rej";
     private static final String DEPLOYED_EMBEDDED_AGENT_FILENAME = "rhq-agent.sar";
     private static final String UNDEPLOYED_EMBEDDED_AGENT_FILENAME = DEPLOYED_EMBEDDED_AGENT_FILENAME + ".rej";
     private static final String DEPLOYED_MAIL_SERVICE_FILENAME = "mail-service.xml";
@@ -88,6 +89,7 @@ public class ServerInformation {
     private static final String UNDEPLOYED_POSTGRES_JMS_FILENAME = "jms-postgres.rej";
     private static final String UNDEPLOYED_ORACLE_JMS_FILENAME = "jms-oracle.rej";
     private static final String UNDEPLOYED_H2_JMS_FILENAME = "jms-h2.rej";
+    private static final String UNDEPLOYED_SQLSERVER_JMS_FILENAME = "jms-sqlserver.rej";
     private static final String SERVER_PROPERTIES_FILENAME = "rhq-server.properties";
 
     private MBeanServer mbeanServer = null;
@@ -148,7 +150,7 @@ public class ServerInformation {
                     throw new Exception("Unsupported H2 [" + db + "]");
                 }
             } else if (DatabaseTypeFactory.isSQLServer(db)) {
-                if (!version.startsWith("2000") || !version.startsWith("2005")) {
+                if (version.startsWith("2000")) {
                     throw new Exception("Unsupported SQL Server [" + db + "]");
                 }
             } else {
@@ -455,6 +457,8 @@ public class ServerInformation {
                 file = new File(deployDir, UNDEPLOYED_ORACLE_DS_FILENAME);
             } else if (db.toLowerCase().indexOf("h2") > -1) {
                 file = new File(deployDir, UNDEPLOYED_H2_DS_FILENAME);
+            } else if (db.toLowerCase().indexOf("sqlserver") > -1) {
+                file = new File(deployDir, UNDEPLOYED_SQLSERVER_DS_FILENAME);
             } else {
                 throw new RuntimeException("Unsupported database: " + db);
             }
@@ -477,6 +481,8 @@ public class ServerInformation {
                 file = new File(deployDir, UNDEPLOYED_ORACLE_JMS_FILENAME);
             } else if (db.toLowerCase().indexOf("h2") > -1) {
                 file = new File(deployDir, UNDEPLOYED_H2_JMS_FILENAME);
+            } else if (db.toLowerCase().indexOf("sqlserver") > -1) {
+                file = new File(deployDir, UNDEPLOYED_SQLSERVER_JMS_FILENAME);
             } else {
                 throw new RuntimeException("Unsupported database: " + db);
             }

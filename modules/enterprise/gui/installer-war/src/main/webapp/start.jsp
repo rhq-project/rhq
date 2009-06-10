@@ -68,10 +68,17 @@
                                           document.getElementById('propForm:databaseconnectionurl').value = 'jdbc:h2:#{configurationBean.dataDirectory}/rhq;MVCC=TRUE;DB_CLOSE_ON_EXIT=FALSE';
                                           document.getElementById('propForm:databasedriverclass').value = 'org.h2.Driver';
                                           document.getElementById('propForm:databasexadatasourceclass').value = 'org.h2.jdbcx.JdbcDataSource';
+                                          alert('#{bundle.experimentalDb}');
+                                       } else if (this.options[this.selectedIndex].value == 'sqlserver') {
+                                          document.getElementById('propForm:databaseconnectionurl').value = 'jdbc:jtds:sqlserver://localhost:1433;databaseName=rhq';
+                                          document.getElementById('propForm:databasedriverclass').value = 'net.sourceforge.jtds.jdbc.Driver';
+                                          document.getElementById('propForm:databasexadatasourceclass').value = 'net.sourceforge.jtds.jdbcx.JtdsDataSource';
+                                          alert('#{bundle.experimentalDb}');
                                        } else if (this.options[this.selectedIndex].value == 'MySQL') {
                                           document.getElementById('propForm:databaseconnectionurl').value = 'jdbc:mysql://127.0.0.1/rhq';
                                           document.getElementById('propForm:databasedriverclass').value = 'com.mysql.jdbc.Driver';
                                           document.getElementById('propForm:databasexadatasourceclass').value = 'com.mysql.jdbc.jdbc2.optional.MysqlXADataSource';
+                                          alert('#{bundle.experimentalDb}');
                                        }
                                       ">
                <f:selectItems value="#{configurationBean.databaseConfiguration[0].itemDefinition.options}" />

@@ -298,6 +298,8 @@ public class ConfigurationBean {
                     adminUsername = "postgres";
                 } else if (dbtype.toLowerCase().indexOf("h2") > -1) {
                     adminUsername = "sa";
+                } else if (dbtype.toLowerCase().indexOf("sqlserver") > -1) {
+                    adminUsername = "sa";
                 } else if (dbtype.toLowerCase().indexOf("mysql") > -1) {
                     adminUsername = "mysqladmin";
                 }
@@ -395,6 +397,10 @@ public class ConfigurationBean {
                 sql2 = "GRANT connect, resource TO rhqadmin";
             } else if (dbType.equalsIgnoreCase("h2")) {
                 // I have no idea if these are correct for H2 - I just copied oracle's sql
+                sql1 = "CREATE USER rhqadmin IDENTIFIED BY rhqadmin";
+                sql2 = "GRANT connect, resource TO rhqadmin";
+            } else if (dbType.equalsIgnoreCase("sqlserver")) {
+                // I have no idea if these are correct for sql server - I just copied oracle's sql
                 sql1 = "CREATE USER rhqadmin IDENTIFIED BY rhqadmin";
                 sql2 = "GRANT connect, resource TO rhqadmin";
             } else {
@@ -520,9 +526,11 @@ public class ConfigurationBean {
                 //pattern = Pattern.compile(".*@(.*):([0123456789]+):(.*)"); // jdbc:oracle:thin:@host.name:1521:rhq
             } else if (db.toLowerCase().indexOf("h2") > -1) {
                 LOG.info("H2 does not need to have server-name, port and db-name individually set, skipping");
+            } else if (db.toLowerCase().indexOf("sqlserver") > -1) {
+                pattern = Pattern.compile("(?i).*://(.*):([0123456789]+).*databaseName=([^;]*)"); // jdbc:jtds:sqlserver://localhost:7777;databaseName=rhq
             } else {
                 LOG.info("Unknown database type - will not set server-name, port and db-name");
-                // don't bother throwing error; these three extra settings are only for postgres anyway
+                // don't bother throwing error; these three extra settings may not be necessary anyway
             }
             if (pattern != null) {
                 Matcher match = pattern.matcher(url);
@@ -559,6 +567,8 @@ public class ConfigurationBean {
                 dialect = "org.hibernate.dialect.Oracle10gDialect";
             } else if (db.toLowerCase().indexOf("h2") > -1) {
                 dialect = "org.hibernate.dialect.H2Dialect";
+            } else if (db.toLowerCase().indexOf("sqlserver") > -1) {
+                dialect = "org.hibernate.dialect.SQLServerDialect";
             } else if (db.toLowerCase().indexOf("mysql") > -1) {
                 dialect = "org.hibernate.dialect.MySQL5InnoDBDialect";
             } else {

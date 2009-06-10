@@ -71,6 +71,11 @@ public interface InstallerI18NResourceKeys {
         @I18NMessage(locale = "de", value = "Passwort des Datenbankadministrators") })
     String ADMIN_PASSWORD = "adminPassword";
 
+    @I18NMessages( {
+        @I18NMessage(locale = "en", value = "Support for this database is experimental and is to be used for demo and testing purposes only."),
+        @I18NMessage(locale = "de", value = "Unterstützung für diese Datenbank ist experimentell und wird für Demo-und Testzwecken nur.") })
+    String EXPERIMENTAL_DB = "experimentalDb";
+
     @I18NMessages( { @I18NMessage(locale = "en", value = "Create a database/user if needed"),
         @I18NMessage(locale = "de", value = "DB mit -benutzer anlegen, falls nötig") })
     String CREATE_DATABASE_NOTE = "createDatabaseNote";

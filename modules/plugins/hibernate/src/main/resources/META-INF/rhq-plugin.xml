@@ -18,6 +18,7 @@
       <runs-inside>
          <parent-resource-type name="JMX Server" plugin="JMX"/>
          <parent-resource-type name="JBossAS Server" plugin="JBossAS"/>
+         <parent-resource-type name="JBossAS Server" plugin="JBossAS5"/>
       </runs-inside>
 
       <plugin-configuration>

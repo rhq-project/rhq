@@ -73,7 +73,9 @@ public class JBossAS5ConnectionTypeDescriptor extends JBossConnectionTypeDescrip
             "client/jboss-aspect-jdk50-client.jar", "client/trove.jar", "client/javassist.jar", "client/jboss-mdr.jar",
             "client/jboss-security-spi.jar", "client/jbosssx-client.jar", "client/jboss-javaee.jar",
             "client/concurrent.jar", "client/jmx-invoker-adaptor-client.jar", "client/jboss-client.jar",
-            "client/jboss-integration.jar" };
+            "client/jboss-integration.jar",
+            //this is to support hibernate plugin out of the box in jboss as 5
+            "common/lib/hibernate-core.jar" };
     }
 
 }

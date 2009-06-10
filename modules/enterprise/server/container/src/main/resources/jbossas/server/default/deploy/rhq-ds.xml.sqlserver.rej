@@ -1,0 +1,69 @@
+<?xml version="1.0"?>
+
+<!-- The RHQ datasources for SQL Server -->
+
+<datasources>
+
+  <xa-datasource>
+    <jndi-name>RHQDS</jndi-name>
+    <xa-datasource-class>${rhq.server.database.xa-datasource-class}</xa-datasource-class>
+    <xa-datasource-property name="User">${rhq.server.database.user-name}</xa-datasource-property>
+    <xa-datasource-property name="Password">${rhq.server.database.password}</xa-datasource-property>
+    <xa-datasource-property name="ServerName">${rhq.server.database.server-name}</xa-datasource-property>
+    <xa-datasource-property name="PortNumber">${rhq.server.database.port}</xa-datasource-property>
+    <xa-datasource-property name="DatabaseName">${rhq.server.database.db-name}</xa-datasource-property>
+    
+    <track-connection-by-tx></track-connection-by-tx>
+    <isSameRM-override-value>false</isSameRM-override-value>
+
+    <!-- 
+     When set to true, emulate XA distributed transaction support, when set to false use experimental 
+     true distributed transaction support. True distributed transaction support is only available for 
+     SQL Server 2000 and requires the installation of an external stored procedure in the target server 
+    (see the README.XA file in the distribution for details).
+    
+    <xa-datasource-property name="XaEmulation">true</xa-datasource-property>
+    -->
+    
+    <user-name>${rhq.server.database.user-name}</user-name>
+    <password>${rhq.server.database.password}</password>
+    <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>
+    <min-pool-size>5</min-pool-size>
+    <max-pool-size>50</max-pool-size>
+    <blocking-timeout-millis>30000</blocking-timeout-millis>
+    <idle-timeout-minutes>15</idle-timeout-minutes>
+    <prepared-statement-cache-size>75</prepared-statement-cache-size>
+    <new-connection-sql>SET TRANSACTION ISOLATION LEVEL SNAPSHOT</new-connection-sql>
+    <check-valid-connection-sql>select 1</check-valid-connection-sql>
+    <set-tx-query-timeout></set-tx-query-timeout>
+    <metadata>
+      <type-mapping>MS SQLSERVER2000</type-mapping>
+    </metadata>
+  </xa-datasource>
+
+  <!-- Quartz needs a no-tx datasource defined -->
+  <no-tx-datasource>
+    <jndi-name>NoTxRHQDS</jndi-name>
+    <connection-url>${rhq.server.database.connection-url}</connection-url>
+    <driver-class>${rhq.server.database.driver-class}</driver-class>
+    <user-name>${rhq.server.database.user-name}</user-name>
+    <password>${rhq.server.database.password}</password>
+    
+    <track-connection-by-tx></track-connection-by-tx>
+    
+    <connection-property name="char.encoding">UTF-8</connection-property>
+    <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>
+    <min-pool-size>2</min-pool-size>
+    <max-pool-size>5</max-pool-size>
+    <blocking-timeout-millis>30000</blocking-timeout-millis>
+    <idle-timeout-minutes>15</idle-timeout-minutes>
+    <prepared-statement-cache-size>75</prepared-statement-cache-size>
+    <new-connection-sql>SET TRANSACTION ISOLATION LEVEL SNAPSHOT</new-connection-sql>
+    <check-valid-connection-sql>select 1</check-valid-connection-sql>
+    <set-tx-query-timeout></set-tx-query-timeout>
+    <metadata>
+      <type-mapping>MS SQLSERVER2000</type-mapping>
+    </metadata>
+  </no-tx-datasource>
+
+</datasources>

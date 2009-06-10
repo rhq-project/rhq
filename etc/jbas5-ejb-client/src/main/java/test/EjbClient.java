@@ -18,8 +18,8 @@ public class EjbClient
    private static final String SECURE_MANAGEMENT_VIEW_JNDI_NAME = "SecureManagementView/remote";
    private static final String SECURE_DEPLOYMENT_MANAGER_JNDI_NAME = "SecureDeploymentManager/remote";
    
-   private static final String PROFILE_SERVICE_PRINCIPAL = "javaduke";
-   private static final String PROFILE_SERVICE_CREDENTIALS = "anotherduke";
+   private static final String PROFILE_SERVICE_PRINCIPAL = "admin"; // "javaduke";
+   private static final String PROFILE_SERVICE_CREDENTIALS = "admin"; // "anotherduke";
    
    public static void main(String[] args)
       throws Exception

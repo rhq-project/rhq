@@ -14,33 +14,52 @@
     <name>JBAS5 JNP Client</name>
     <description>a simple client for testing connecting to a JBAS5 instance via JNP and looking up the ProfileService</description>
     
+    <properties>        
+        <jbossas.version>5.1.0-SNAPSHOT</jbossas.version>
+    </properties>
+    
+    <dependencyManagement>
+        <dependencies>
+          <dependency>
+            <groupId>org.jboss.jbossas</groupId>
+		    <artifactId>jboss-as-parent</artifactId>
+		    <version>${jbossas.version}</version>
+            <type>pom</type>
+            <scope>import</scope>
+          </dependency>
+          <dependency>
+            <groupId>org.jboss.jbossas</groupId>
+		    <artifactId>jboss-as-component-matrix</artifactId>
+		    <version>${jbossas.version}</version>
+            <type>pom</type>
+            <scope>import</scope>
+          </dependency>
+        </dependencies>
+    </dependencyManagement>
+    
     <dependencies>
 
         <dependency>
           <groupId>org.jboss.naming</groupId>
           <artifactId>jnp-client</artifactId>
-          <version>5.0.1.GA</version>      
           <scope>runtime</scope>                 
         </dependency>
         
         <dependency>
           <groupId>org.jboss.security</groupId>
           <artifactId>jbosssx-client</artifactId>
-          <version>2.0.3.SP1</version>          
           <scope>runtime</scope>          
         </dependency>       
 
         <dependency>
           <groupId>org.jboss.aspects</groupId>
           <artifactId>jboss-security-aspects</artifactId>
-          <version>1.0.0.GA</version>    
           <scope>runtime</scope>                   
         </dependency>
         
         <dependency>
           <groupId>org.jboss.aop</groupId>
           <artifactId>jboss-aop</artifactId>
-          <version>2.1.0.CR3</version>     
           <classifier>client</classifier>          
           <scope>runtime</scope>          
         </dependency>       
@@ -48,21 +67,19 @@
         <dependency>
           <groupId>org.jboss</groupId>
           <artifactId>jboss-common-core</artifactId>
-          <version>2.2.13.GA</version>     
           <scope>runtime</scope>          
         </dependency>       
         
         <dependency>
           <groupId>org.jboss.remoting</groupId>
           <artifactId>jboss-remoting</artifactId>
-          <version>2.5.1</version>          
           <scope>runtime</scope>          
         </dependency>       
 
         <dependency>
           <groupId>org.jboss.jbossas</groupId>
           <artifactId>jboss-as-aspects</artifactId>
-          <version>5.1.0.CR1</version>   
+          <version>${jbossas.version}</version>   
           <classifier>jboss-aspect-jdk50-client</classifier>
           <scope>runtime</scope>              
         </dependency>        
@@ -70,35 +87,30 @@
         <dependency>
           <groupId>trove</groupId>
           <artifactId>trove</artifactId>
-          <version>1.0.2</version>          
           <scope>runtime</scope>          
         </dependency>       
 
         <dependency>
           <groupId>javassist</groupId>
           <artifactId>javassist</artifactId>
-          <version>3.9.0.GA</version>          
           <scope>runtime</scope>          
         </dependency>       
 
         <dependency>
           <groupId>org.jboss.security</groupId>
           <artifactId>jboss-security-spi</artifactId>
-          <version>2.0.3.SP1</version>          
           <scope>runtime</scope>          
         </dependency>       
         
         <dependency>
           <groupId>org.jboss.javaee</groupId>
           <artifactId>jboss-javaee</artifactId>
-          <version>5.0.1.GA</version>          
           <scope>runtime</scope>          
         </dependency>       
 
         <dependency>
           <groupId>oswego-concurrent</groupId>
           <artifactId>concurrent</artifactId>
-          <version>1.3.4-jboss</version>          
           <scope>runtime</scope>          
         </dependency>       
 
@@ -106,7 +118,6 @@
         <dependency>
             <groupId>org.jboss.jbossas</groupId>
             <artifactId>jboss-as-server</artifactId>           
-            <version>5.1.0.CR1</version>
             <classifier>client</classifier>
             <scope>runtime</scope>
         </dependency>         
@@ -114,40 +125,34 @@
         <dependency>
           <groupId>org.jboss</groupId>
           <artifactId>jboss-mdr</artifactId>
-          <version>2.0.1.GA</version>   
           <scope>runtime</scope>              
         </dependency>               
 
         <dependency>
           <groupId>org.jboss.logging</groupId>
           <artifactId>jboss-logging-spi</artifactId>
-          <version>2.0.5.GA</version>    
           <scope>runtime</scope>                  
         </dependency>
 
         <dependency>
           <groupId>org.jboss.logging</groupId>
           <artifactId>jboss-logging-log4j</artifactId>
-          <version>2.0.6.GA</version>    
           <scope>runtime</scope>                  
         </dependency>
         
         <dependency>
           <groupId>org.jboss.integration</groupId>
           <artifactId>jboss-profileservice-spi</artifactId>                    
-          <version>5.1.0.CR3</version>          
         </dependency>        
         
         <dependency>
           <groupId>org.jboss.man</groupId>
           <artifactId>jboss-managed</artifactId>
-          <version>2.1.0.CR8</version>          
         </dependency>
         
         <dependency>
           <groupId>org.jboss.man</groupId>
           <artifactId>jboss-metatype</artifactId>
-          <version>2.1.0.CR8</version>          
         </dependency>        
         
       </dependencies>
@@ -202,7 +207,7 @@
             <name>JBoss Repository</name>
             <url>http://repository.jboss.org/maven2/</url>
         </repository>
-<!--            
+           
         <repository>
             <id>jboss-snapshots</id>
             <name>JBoss Snapshot Repository</name>
@@ -212,7 +217,7 @@
                 <updatePolicy>always</updatePolicy>
             </snapshots>
         </repository>
--->        
+
     </repositories>
 
 </project>

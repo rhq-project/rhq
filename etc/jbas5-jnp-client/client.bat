@@ -11,7 +11,7 @@ if "%OS%" == "Windows_NT"  setlocal
 set MAIN_JAR_NAME=jbas5-jnp-client-1.0.jar
 set MAIN_CLASS=test.RmiClient
 
-set JBOSS_HOME=C:\opt\jboss-5.1.0.GA-SNAPSHOT
+set JBOSS_HOME=C:\opt\jboss-5.1.0.GA
 
 set DIRNAME=.\
 if "%OS%" == "Windows_NT" set DIRNAME=%~dp0%

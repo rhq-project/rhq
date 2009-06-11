@@ -260,6 +260,8 @@ public class PluginContainer implements ContainerService {
         try {
             if (started) {
 
+                log.info("Plugin container is being shutdown...");
+
                 boolean isInsideAgent = configuration.isInsideAgent();
 
                 snapshotReportManager.shutdown();
@@ -292,6 +294,8 @@ public class PluginContainer implements ContainerService {
                 pluginManager = null;
 
                 started = false;
+
+                log.info("Plugin container is now shutdown.");
 
                 // we typically do not want to do this if embedded somewhere other than the agent VM
                 if (isInsideAgent) {

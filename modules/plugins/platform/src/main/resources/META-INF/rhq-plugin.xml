@@ -235,7 +235,7 @@
                   type="integer"
                   description="The port the plugin will listen on in order to process yum requests. Set this to 0 to disable the internal yum server.">
                <c:constraint>
-                  <c:integer-constraint minimum="1024" maximum="65535"/>
+                  <c:integer-constraint minimum="0" maximum="65535"/>
                </c:constraint>
             </c:simple-property>
             <c:simple-property

@@ -116,6 +116,10 @@ public class YumServer {
         }
     }
 
+    public boolean isStarted() {
+        return this.thread != null;
+    }
+
     /**
      * Clean the cached metadata.
      */

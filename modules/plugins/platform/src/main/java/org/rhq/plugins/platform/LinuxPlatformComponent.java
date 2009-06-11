@@ -105,6 +105,8 @@ public class LinuxPlatformComponent extends PlatformComponent implements Content
 
     private void startWithContentContext(ContentContext context) {
         int port = yumPort();
+        log.debug("yum port=[" + port + "]");
+
         if (port > 0) {
             this.contentContext = context;
             try {
@@ -195,13 +197,13 @@ public class LinuxPlatformComponent extends PlatformComponent implements Content
     @Override
     public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
         if ("cleanYumMetadataCache".equals(name)) {
-            if (this.enableContentDiscovery) {
+            if (this.yumServer.isStarted()) {
                 log.info("Cleaning yum metadata");
                 yumServer.cleanMetadata();
                 yumProxy.cleanMetadata();
                 return new OperationResult();
             } else {
-                throw new UnsupportedOperationException("Content discovery is disabled, this operation is a no-op");
+                throw new UnsupportedOperationException("Internal yum server is disabled, this operation is a no-op");
             }
         }
 

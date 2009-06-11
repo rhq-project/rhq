@@ -92,9 +92,9 @@ public class LinuxPlatformComponent extends PlatformComponent implements Content
 
             //DebPackageDiscoveryDelegate.setSystemInfo(this.resourceContext.getSystemInformation());
             //DebPackageDiscoveryDelegate.checkExecutables();
-
-            startWithContentContext(context.getContentContext());
         }
+
+        startWithContentContext(context.getContentContext());
     }
 
     @Override
@@ -104,13 +104,19 @@ public class LinuxPlatformComponent extends PlatformComponent implements Content
     }
 
     private void startWithContentContext(ContentContext context) {
-        this.contentContext = context;
-        try {
-            YumContext yumContext = new PluginContext(yumPort(), this.resourceContext, context);
-            yumServer.start(yumContext);
-            yumProxy.init(this.resourceContext);
-        } catch (Exception e) {
-            log.error("Start failed:", e);
+        int port = yumPort();
+        if (port > 0) {
+            this.contentContext = context;
+            try {
+                YumContext yumContext = new PluginContext(port, this.resourceContext, context);
+                yumServer.start(yumContext);
+                yumProxy.init(this.resourceContext);
+
+            } catch (Exception e) {
+                log.error("Start failed:", e);
+            }
+        } else {
+            log.info("Internal yum server is disabled.");
         }
     }
 

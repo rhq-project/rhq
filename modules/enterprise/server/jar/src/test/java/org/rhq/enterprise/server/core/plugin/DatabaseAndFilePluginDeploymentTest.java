@@ -329,8 +329,10 @@ public class DatabaseAndFilePluginDeploymentTest extends AbstractEJB3Test {
     public void beforeClass() throws Exception {
         Calendar cal = Calendar.getInstance();
         cal.set(2009, Calendar.FEBRUARY, 1, 1, 0, 0);
+        cal.set(Calendar.MILLISECOND, 0);
         Date febDate = cal.getTime();
         cal.set(2009, Calendar.JUNE, 1, 1, 0, 0);
+        cal.set(Calendar.MILLISECOND, 0);
         Date juneDate = cal.getTime();
         testTimestamps.put(TESTPLUGIN_1_0_FEB, febDate);
         testTimestamps.put(TESTPLUGIN_1_0_JUN, juneDate);

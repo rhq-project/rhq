@@ -28,10 +28,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-import java.util.jar.Manifest;
 
 import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
@@ -337,7 +335,12 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
         PluginDescriptor descriptor = getPluginDescriptor(deploymentInfo);
         String pluginName = descriptor.getName();
         boolean initialDeploy = !this.deploymentInfos.containsKey(pluginName);
-        ComparableVersion version = getPluginVersion(pluginFile, descriptor);
+        ComparableVersion version;
+        try {
+            version = AgentPluginDescriptorUtil.getPluginVersion(pluginFile, descriptor);
+        } catch (Exception e) {
+            throw new DeploymentException(e);
+        }
 
         if (initialDeploy) {
             log.info("Discovered agent plugin [" + pluginName + "]");
@@ -391,40 +394,6 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
         }
 
         return pluginDescriptor;
-    }
-
-    /**
-     * Returns the version for the plugin represented by the given descriptor/file.
-     * If the descriptor defines a version, that is considered the version of the plugin.
-     * However, if the plugin descriptor does not define a version, the plugin jar's manifest
-     * is searched for an implementation version string and if one is found that is the version
-     * of the plugin. If the manifest entry is also not found, the plugin does not have a version
-     * associated with it, which causes this method to throw an exception.
-     * 
-     * @param pluginFile the plugin jar
-     * @param descriptor the plugin descriptor as found in the plugin jar
-     * @return the version of the plugin
-     * @throws DeploymentException if there is no version for the plugin or the version string is invalid
-     */
-    private ComparableVersion getPluginVersion(File pluginFile, PluginDescriptor descriptor) throws DeploymentException {
-
-        String version = descriptor.getVersion();
-        if (version == null) {
-            Manifest manifest = getManifest(pluginFile);
-            version = manifest.getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VERSION);
-        }
-
-        if (version == null) {
-            throw new DeploymentException("No version is defined for plugin jar [" + pluginFile
-                + "]. A version must be defined either via the MANIFEST.MF [" + Attributes.Name.IMPLEMENTATION_VERSION
-                + "] attribute or via the plugin descriptor 'version' attribute.");
-        }
-
-        try {
-            return new ComparableVersion(version);
-        } catch (RuntimeException e) {
-            throw new DeploymentException("Version [" + version + "] for [" + pluginFile + "] did not parse", e);
-        }
     }
 
     /**
@@ -687,28 +656,6 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
             }
         }
         return isValid;
-    }
-
-    /**
-     * Obtains the manifest of the plugin file represented by the given deployment info.
-     * Use this method rather than calling deploymentInfo.getManifest()
-     * (workaround for https://jira.jboss.org/jira/browse/JBAS-6266).
-     * 
-     * @param pluginFile the plugin file
-     * @return the deployed plugin's manifest
-     */
-    private Manifest getManifest(File pluginFile) {
-        try {
-            JarFile jarFile = new JarFile(pluginFile);
-            try {
-                Manifest manifest = jarFile.getManifest();
-                return manifest;
-            } finally {
-                jarFile.close();
-            }
-        } catch (Exception ignored) {
-            return null; // this is OK, it just means we do not have a manifest
-        }
     }
 
     /**

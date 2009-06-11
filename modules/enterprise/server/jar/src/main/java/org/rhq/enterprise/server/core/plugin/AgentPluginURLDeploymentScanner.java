@@ -23,6 +23,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FilenameFilter;
 import java.io.InputStream;
 import java.net.URL;
 import java.sql.Connection;
@@ -64,10 +65,14 @@ import org.rhq.enterprise.server.util.LookupUtil;
  *
  * If an agent plugin is different in the database than on the filesystem,
  * this scanner will stream the plugin's content to the filesystem. This
- * scanner will then do the normal file system scanning (and will therefore
- * see the new plugin from the database now in the file system and will
- * process it normally, as if someone hand-copied that plugin to the
- * file system).
+ * allows for the normal file system scanning to occur (the normal file
+ * system scanning processor will see the new plugin from the database
+ * now in the file system and will process it normally, as if someone
+ * hand-copied that plugin to the file system).
+ *
+ * So the job of this scanner is merely to look at the database and
+ * reconcile the file system so the file system has the most up-to-date
+ * plugins. Any old plugins will be deleted from the file system.
  *
  * @author John Mazzitelli
  */
@@ -86,13 +91,17 @@ public class AgentPluginURLDeploymentScanner extends URLDeploymentScanner {
     /** The location where the user stores agent plugin files */
     private File pluginDirectory;
 
+    /** Maintains a cache of what we had on the filesystem during the last scan */
+    private Map<File, Plugin> pluginsOnFilesystem = new HashMap<File, Plugin>();
+
     /**
-     * This will first scan the database for new/updated plugins and if it finds
-     * any, will write the content as plugin files in the file system. After that,
-     * this will tell the superclass to perform the normal file system scanning.
+     * This will scan the database for new/updated plugins and if it finds
+     * any, will write the content as plugin files in the file system. This
+     * will also delete old, obsolete plugins.
      */
     @Override
     public synchronized void scan() throws Exception {
+        scanFilesystem();
         scanDatabase();
         super.scan();
         return;
@@ -108,11 +117,131 @@ public class AgentPluginURLDeploymentScanner extends URLDeploymentScanner {
     @Override
     public void startService() throws Exception {
         // the first URL in the scanner's list must be the agent plugin directory
-        this.pluginDirectory = new File(((URL) getURLList().get(0)).toURI());
+        setPluginDirectory(new File(((URL) getURLList().get(0)).toURI()));
 
         fixMissingPluginContent();
 
         super.startService();
+    }
+
+    protected void setPluginDirectory(File pluginDirectory) {
+        this.pluginDirectory = pluginDirectory;
+    }
+
+    /**
+     * Scans the plugin directory and updates our cache of known plugin files.
+     * This will purge any old plugins that are deemed obsolete.
+     */
+    private void scanFilesystem() {
+        // get the current list of plugins deployed on the filesystem
+        File[] pluginJars = this.pluginDirectory.listFiles(new FilenameFilter() {
+            public boolean accept(File dir, String name) {
+                return name.endsWith(".jar");
+            }
+        });
+
+        // refresh our cache so it reflects what is currently on the filesystem
+        // first we remove any jar files in our cache that we longer have on the filesystem
+        ArrayList<File> doomedPluginFiles = new ArrayList<File>();
+        for (File cachedPluginFile : this.pluginsOnFilesystem.keySet()) {
+            boolean existsOnFileSystem = false;
+            for (File filesystemPluginFile : pluginJars) {
+                if (cachedPluginFile.equals(filesystemPluginFile)) {
+                    existsOnFileSystem = true;
+                    continue; // our cached jar still exists on the file system
+                }
+            }
+            if (!existsOnFileSystem) {
+                doomedPluginFiles.add(cachedPluginFile); // this plugin file has been deleted from the filesystem, remove it from the cache
+            }
+        }
+        for (File deletedPluginFile : doomedPluginFiles) {
+            this.pluginsOnFilesystem.remove(deletedPluginFile);
+        }
+
+        // now insert new cache items representing new jar files and update existing ones as appropriate
+        for (File pluginJar : pluginJars) {
+            String md5 = null;
+
+            Plugin plugin = this.pluginsOnFilesystem.get(pluginJar);
+            try {
+                if (plugin != null) {
+                    if (pluginJar.lastModified() == 0L) {
+                        // for some reason the operating system can't give us the last mod time, we need to do MD5 check
+                        md5 = MD5Generator.getDigestString(pluginJar);
+                        if (!md5.equals(plugin.getMd5())) {
+                            plugin = null; // this plugin jar has changed - force it to refresh the cache.
+                        }
+                    } else if (pluginJar.lastModified() != plugin.getMtime()) {
+                        plugin = null; // this plugin jar has changed - force it to refresh the cache.
+                    }
+                }
+
+                if (plugin == null) {
+                    cacheFilesystemPluginJar(pluginJar, md5);
+                }
+            } catch (Exception e) {
+                log.warn("Failed to scan plugin [" + pluginJar + "] found on filesystem. Skipping it. Cause: " + e);
+                this.pluginsOnFilesystem.remove(pluginJar); // act like we never saw it
+            }
+        }
+
+        // Let's check to see if there are any obsolete plugins that need to be deleted.
+        // This is needed if plugin-A-1.0.jar exists and someone deployed plugin-A-1.1.jar but fails to delete plugin-A-1.0.jar.
+        doomedPluginFiles.clear();
+        HashMap<String, Plugin> pluginsByName = new HashMap<String, Plugin>();
+        for (Map.Entry<File, Plugin> currentPluginFileEntry : this.pluginsOnFilesystem.entrySet()) {
+            Plugin currentPlugin = currentPluginFileEntry.getValue();
+            Plugin existingPlugin = pluginsByName.get(currentPlugin.getName());
+            if (existingPlugin == null) {
+                // this is the usual case - this is the only plugin with the given name we've seen
+                pluginsByName.put(currentPlugin.getName(), currentPlugin);
+            } else {
+                Plugin obsolete = AgentPluginDescriptorUtil.determineObsoletePlugin(currentPlugin, existingPlugin);
+                if (obsolete == null) {
+                    obsolete = currentPlugin; // both were identical, but we only want one file so pick one to get rid of
+                }
+                doomedPluginFiles.add(new File(this.pluginDirectory, obsolete.getPath()));
+                if (obsolete == existingPlugin) { // yes use == for reference equality!
+                    pluginsByName.put(currentPlugin.getName(), currentPlugin); // override the original one we saw with this latest one
+                }
+            }
+        }
+
+        // now we need to actually delete any obsolete plugin files from the file system
+        for (File doomedPluginFile : doomedPluginFiles) {
+            if (doomedPluginFile.delete()) {
+                log.info("Deleted an obsolete plugin file: " + doomedPluginFile);
+                this.pluginsOnFilesystem.remove(doomedPluginFile);
+            } else {
+                log.warn("Failed to delete what was deemed an obsolete plugin file: " + doomedPluginFile);
+            }
+        }
+
+        return;
+    }
+
+    /**
+     * Creates a {@link Plugin} object for the given plugin jar and caches it.
+     * @param pluginJar information about this plugin jar will be cached
+     * @param md5 if known, this is the plugin jar's MD5, <code>null</code> if not known
+     * @return the plugin jar files's information that has been cached
+     * @throws Exception if failed to get information about the plugin
+     */
+    private Plugin cacheFilesystemPluginJar(File pluginJar, String md5) throws Exception {
+        if (md5 == null) { // don't calculate the MD5 is we've already done it before
+            md5 = MD5Generator.getDigestString(pluginJar);
+        }
+        URL pluginUrl = pluginJar.toURI().toURL();
+        PluginDescriptor descriptor = AgentPluginDescriptorUtil.loadPluginDescriptorFromUrl(pluginUrl);
+        String version = AgentPluginDescriptorUtil.getPluginVersion(pluginJar, descriptor).toString();
+        String name = descriptor.getName();
+        Plugin plugin = new Plugin(name, pluginJar.getName());
+        plugin.setMd5(md5);
+        plugin.setVersion(version);
+        plugin.setMtime(pluginJar.lastModified());
+        this.pluginsOnFilesystem.put(pluginJar, plugin);
+        return plugin;
     }
 
     /**
@@ -132,7 +261,8 @@ public class AgentPluginURLDeploymentScanner extends URLDeploymentScanner {
             conn = ds.getConnection();
 
             // get all the plugins
-            ps = conn.prepareStatement("SELECT NAME, PATH, MD5, MTIME FROM " + Plugin.TABLE_NAME + " WHERE ENABLED=?");
+            ps = conn.prepareStatement("SELECT NAME, PATH, MD5, MTIME, VERSION FROM " + Plugin.TABLE_NAME
+                + " WHERE ENABLED=?");
             setEnabledFlag(conn, ps, 1, true);
             rs = ps.executeQuery();
             while (rs.next()) {
@@ -140,27 +270,86 @@ public class AgentPluginURLDeploymentScanner extends URLDeploymentScanner {
                 String path = rs.getString(2);
                 String md5 = rs.getString(3);
                 long mtime = rs.getLong(4);
-                File file = new File(this.pluginDirectory, path);
-                if (file.exists()) {
-                    long fileMtime = file.lastModified();
-                    if (fileMtime < mtime) {
-                        String fileMd5 = MD5Generator.getDigestString(file);
-                        if (!fileMd5.equals(md5)) {
-                            log.info("Found agent plugin in the DB that is newer than the one we have [" + name
-                                + "]. DB timestamp=[" + new Date(mtime) + "]; file timestamp=[" + new Date(fileMtime)
-                                + "]; DB MD5=[" + md5 + "]; file MD5=[" + fileMd5 + "]");
-                            Plugin plugin = new Plugin(name, path, md5);
-                            plugin.setMtime(mtime);
-                            updatedPlugins.add(plugin);
-                        } else {
-                            file.setLastModified(mtime); // its up-to-date, set the file mtime so we don't check MD5 again
+                String version = rs.getString(5);
+
+                // let's see if we have this logical plugin on the filesystem (it may or may not be under the same filename)
+                File expectedFile = new File(this.pluginDirectory, path);
+                File currentFile = null; // will be non-null if we find that we have this plugin on the filesystem already
+                Plugin cachedPluginOnFilesystem = this.pluginsOnFilesystem.get(expectedFile);
+
+                if (cachedPluginOnFilesystem != null) {
+                    currentFile = expectedFile; // we have it where we are expected to have it
+                    if (!cachedPluginOnFilesystem.getName().equals(name)) {
+                        // I have no idea when or if this would ever happen, but at least log it so we'll see it if it does happen
+                        log.warn("For some reason, the plugin file [" + expectedFile + "] is plugin ["
+                            + cachedPluginOnFilesystem.getName() + "] but the database says it should be [" + name
+                            + "]");
+                    } else {
+                        log.debug("File system and database agree on a plugin location for [" + expectedFile + "]");
+                    }
+                } else {
+                    // the plugin might still be on the file system but under a different filename, see if we can find it
+                    for (Map.Entry<File, Plugin> cachePluginEntry : this.pluginsOnFilesystem.entrySet()) {
+                        if (cachePluginEntry.getValue().getName().equals(name)) {
+                            currentFile = cachePluginEntry.getKey();
+                            cachedPluginOnFilesystem = cachePluginEntry.getValue();
+                            log.info("Filesystem has a plugin [" + name + "] at the file [" + currentFile
+                                + "] which is different than where the DB thinks it should be [" + expectedFile + "]");
+                            break; // we found it, no need to continue the loop
                         }
+                    }
+                }
+
+                if (cachedPluginOnFilesystem != null && currentFile != null && currentFile.exists()) {
+                    Plugin dbPlugin = new Plugin(name, path);
+                    dbPlugin.setMd5(md5);
+                    dbPlugin.setVersion(version);
+                    dbPlugin.setMtime(mtime);
+
+                    Plugin obsoletePlugin = AgentPluginDescriptorUtil.determineObsoletePlugin(dbPlugin,
+                        cachedPluginOnFilesystem);
+
+                    if (obsoletePlugin == cachedPluginOnFilesystem) { // yes use == for reference equality!
+                        StringBuilder logMsg = new StringBuilder();
+                        logMsg.append("Found agent plugin [").append(name);
+                        logMsg.append("] in the DB that is newer than the one on the filesystem: ");
+                        logMsg.append("DB path=[").append(path);
+                        logMsg.append("]; file path=[").append(currentFile.getName());
+                        logMsg.append("]; DB MD5=[").append(md5);
+                        logMsg.append("]; file MD5=[").append(cachedPluginOnFilesystem.getMd5());
+                        logMsg.append("]; DB version=[").append(version);
+                        logMsg.append("]; file version=[").append(cachedPluginOnFilesystem.getVersion());
+                        logMsg.append("]; DB timestamp=[").append(new Date(mtime));
+                        logMsg.append("]; file timestamp=[").append(new Date(cachedPluginOnFilesystem.getMtime()));
+                        logMsg.append("]");
+                        log.info(logMsg.toString());
+
+                        updatedPlugins.add(dbPlugin);
+
+                        if (currentFile.delete()) {
+                            log.info("Deleted the obsolete plugin file to be updated: " + currentFile);
+                            this.pluginsOnFilesystem.remove(currentFile);
+                        } else {
+                            log.warn("Failed to delete the obsolete (to-be-updated) plugin file: " + currentFile);
+                        }
+                        currentFile = null;
+                    } else if (obsoletePlugin == null) {
+                        // the db is up-to-date, but update the cache so we don't check MD5 or parse the descriptor again
+                        currentFile.setLastModified(mtime);
+                        cachedPluginOnFilesystem.setMtime(mtime);
+                        cachedPluginOnFilesystem.setVersion(version);
+                        cachedPluginOnFilesystem.setMd5(md5);
+                    } else {
+                        log.debug("It appears that the plugin [" + dbPlugin
+                            + "] in the database may be obsolete. If so, it will be updated by the plugin deployer.");
                     }
                 } else {
                     log.info("Found agent plugin in the DB that we do not yet have: " + name);
                     Plugin plugin = new Plugin(name, path, md5);
                     plugin.setMtime(mtime);
+                    plugin.setVersion(version);
                     updatedPlugins.add(plugin);
+                    this.pluginsOnFilesystem.remove(expectedFile); // paranoia, make sure the cache doesn't have this
                 }
             }
             JDBCUtil.safeClose(ps, rs);

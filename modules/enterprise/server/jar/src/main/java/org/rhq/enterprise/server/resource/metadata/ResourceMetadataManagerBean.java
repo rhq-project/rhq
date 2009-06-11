@@ -46,6 +46,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.clientapi.agent.metadata.SubCategoriesMetadataParser;
+import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
@@ -138,13 +139,13 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         }
 
         if (existingPlugin != null) {
-            if (!plugin.getMd5().equals(existingPlugin.getMd5())) {
+            Plugin obsolete = AgentPluginDescriptorUtil.determineObsoletePlugin(plugin, existingPlugin);
+            if (obsolete == existingPlugin) { // yes use == for reference equality
                 newOrUpdated = true;
             }
             plugin.setId(existingPlugin.getId());
         }
 
-        // Notice that we only ever look at MD5 to determine if plugin entity needs to be updated.
         // If this is a brand new plugin, it gets "updated" too - which ends up being a simple persist.
         if (newOrUpdated) {
             if (plugin.getDisplayName() == null) {

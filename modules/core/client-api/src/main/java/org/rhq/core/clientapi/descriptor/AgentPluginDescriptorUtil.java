@@ -22,13 +22,17 @@
  */
 package org.rhq.core.clientapi.descriptor;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
+import java.util.jar.Manifest;
 
 import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
@@ -40,6 +44,7 @@ import javax.xml.validation.SchemaFactory;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.maven.artifact.versioning.ComparableVersion;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.metadata.PluginDependencyGraph;
@@ -50,6 +55,7 @@ import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.RunsInsideType;
 import org.rhq.core.clientapi.descriptor.plugin.ServerDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.ServiceDescriptor;
+import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.util.exception.WrappedRemotingException;
 
 /**
@@ -58,9 +64,118 @@ import org.rhq.core.util.exception.WrappedRemotingException;
  * @author John Mazzitelli
  */
 public abstract class AgentPluginDescriptorUtil {
+    private static final Log LOG = LogFactory.getLog(AgentPluginDescriptorUtil.class);
 
     private static final String PLUGIN_DESCRIPTOR_PATH = "META-INF/rhq-plugin.xml";
     private static final String PLUGIN_SCHEMA_PATH = "rhq-plugin.xsd";
+
+    /**
+     * Determines which of the two plugins is obsolete - in other words, this determines which
+     * plugin is older. Each plugin must have the same logical name, but
+     * one of which will be determined to be obsolete and should not be deployed.
+     * If they have the same MD5, they are identical, so <code>null</code> will be returned.
+     * Otherwise, the versions are compared and the one with the oldest version is obsolete.
+     * If they have the same versions, the one with the oldest timestamp is obsolete.
+     * If they have the same timestamp too, we have no other way to determine obsolescence so plugin1
+     * will be picked arbitrarily and a message will be logged when this occurs.
+     *
+     * @param plugin1
+     * @param plugin2
+     * @return a reference to the obsolete plugin (plugin1 or plugin2 reference will be returned)
+     *         <code>null</code> is returned if they are the same (i.e. they have the same MD5)
+     * @throws IllegalArgumentException if the two plugins have different logical names
+     */
+    public static Plugin determineObsoletePlugin(Plugin plugin1, Plugin plugin2) {
+        if (!plugin1.getName().equals(plugin2.getName())) {
+            throw new IllegalArgumentException("The two plugins don't have the same name:" + plugin1 + ":" + plugin2);
+        }
+
+        if (plugin1.getMd5().equals(plugin2.getMd5())) {
+            return null;
+        } else {
+            ComparableVersion plugin1Version = new ComparableVersion(plugin1.getVersion());
+            ComparableVersion plugin2Version = new ComparableVersion(plugin2.getVersion());
+            if (plugin1Version.equals(plugin2Version)) {
+                if (plugin1.getMtime() == plugin2.getMtime()) {
+                    LOG.info("Plugins [" + plugin1 + ", " + plugin2
+                        + "] are the same logical plugin but have different content. The plugin [" + plugin1
+                        + "] will be considered obsolete.");
+                    return plugin1;
+                } else if (plugin1.getMtime() < plugin2.getMtime()) {
+                    return plugin1;
+                } else {
+                    return plugin2;
+                }
+            } else if (plugin1Version.compareTo(plugin2Version) < 0) {
+                return plugin1;
+            } else {
+                return plugin2;
+            }
+        }
+    }
+
+    /**
+     * Returns the version for the plugin represented by the given descriptor/file.
+     * If the descriptor defines a version, that is considered the version of the plugin.
+     * However, if the plugin descriptor does not define a version, the plugin jar's manifest
+     * is searched for an implementation version string and if one is found that is the version
+     * of the plugin. If the manifest entry is also not found, the plugin does not have a version
+     * associated with it, which causes this method to throw an exception.
+     * 
+     * @param pluginFile the plugin jar
+     * @param descriptor the plugin descriptor as found in the plugin jar (if <code>null</code>,
+     *                   the plugin file will be read and the descriptor parsed from it)
+     * @return the version of the plugin
+     * @throws Exception if the plugin is invalid, there is no version for the plugin or the version string is invalid
+     */
+    public static ComparableVersion getPluginVersion(File pluginFile, PluginDescriptor descriptor) throws Exception {
+
+        if (descriptor == null) {
+            descriptor = loadPluginDescriptorFromUrl(pluginFile.toURI().toURL());
+        }
+
+        String version = descriptor.getVersion();
+        if (version == null) {
+            Manifest manifest = getManifest(pluginFile);
+            if (manifest != null) {
+                version = manifest.getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VERSION);
+            }
+        }
+
+        if (version == null) {
+            throw new Exception("No version is defined for plugin jar [" + pluginFile
+                + "]. A version must be defined either via the MANIFEST.MF [" + Attributes.Name.IMPLEMENTATION_VERSION
+                + "] attribute or via the plugin descriptor 'version' attribute.");
+        }
+
+        try {
+            return new ComparableVersion(version);
+        } catch (RuntimeException e) {
+            throw new Exception("Version [" + version + "] for [" + pluginFile + "] did not parse", e);
+        }
+    }
+
+    /**
+     * Obtains the manifest of the plugin file represented by the given deployment info.
+     * Use this method rather than calling deploymentInfo.getManifest()
+     * (workaround for https://jira.jboss.org/jira/browse/JBAS-6266).
+     * 
+     * @param pluginFile the plugin file
+     * @return the deployed plugin's manifest
+     */
+    private static Manifest getManifest(File pluginFile) {
+        try {
+            JarFile jarFile = new JarFile(pluginFile);
+            try {
+                Manifest manifest = jarFile.getManifest();
+                return manifest;
+            } finally {
+                jarFile.close();
+            }
+        } catch (Exception ignored) {
+            return null; // this is OK, it just means we do not have a manifest
+        }
+    }
 
     /**
      * Given an existing dependency graph and a plugin descriptor, this will add that plugin and its dependencies

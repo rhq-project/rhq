@@ -22,8 +22,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
-import java.net.URL;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -477,9 +475,6 @@ public class DatabaseAndFilePluginDeploymentTest extends AbstractEJB3Test {
         AgentPluginURLDeploymentScanner scanner = new AgentPluginURLDeploymentScanner();
         File pluginDirectoryFile = new File(DEPLOY_LOCATION);
         scanner.setPluginDirectory(pluginDirectoryFile);
-        List<URL> url = new ArrayList<URL>();
-        url.add(pluginDirectoryFile.toURI().toURL());
-        scanner.setURLList(url);
         return scanner;
     }
 

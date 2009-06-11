@@ -243,6 +243,8 @@ public class PluginContainer implements ContainerService {
                 startContainerService(snapshotReportManager);
 
                 started = true;
+
+                log.info("Plugin Container initialized.");
             }
         } finally {
             releaseLock(lock);

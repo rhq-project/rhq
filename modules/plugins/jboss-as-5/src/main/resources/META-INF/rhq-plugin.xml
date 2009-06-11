@@ -767,7 +767,7 @@
             description="JBoss Application Server">
 
         <subcategories>
-            <!-- Remove until we have support for JVM management.
+   <!-- Remove until we have support for JVM management.
             <subcategory name="Environment"/>
             -->
             <subcategory name="Resources"
@@ -941,8 +941,16 @@
             <c:simple-property name="instructionCompatibilityVersion"/>
          </configuration>
       </content>
+         
+         <server name="JBoss AS JVM"
+              description="JVM of the JBossAS"
+              sourcePlugin="JMX"
+              sourceType="JMX Server"
+              discovery="org.rhq.plugins.jmx.EmbeddedJMXServerDiscoveryComponent"
+              class="org.rhq.plugins.jmx.JMXServerComponent"
+              singleton="true"/>
 
-        <service name="JBoss Web"
+          <service name="JBoss Web"
                  description="JBoss Web Servlet Container"
                  subCategory="Resources"
                  discovery="JBossWebDiscoveryComponent"

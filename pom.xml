@@ -76,7 +76,7 @@
     <h2.version>1.1.113</h2.version>
     <jtds.version>1.2.2</jtds.version>
     <richfaces.version>3.3.0.GA</richfaces.version>
-    <sigar.version>1.6.0.14</sigar.version>
+    <sigar.version>1.6.3.68-beta1</sigar.version>
 
     <!-- misc properties -->
     <server.quartzDelegate>org.quartz.impl.jdbcjobstore.PostgreSQLDelegate</server.quartzDelegate>

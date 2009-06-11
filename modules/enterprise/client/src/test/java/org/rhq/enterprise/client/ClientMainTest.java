@@ -11,9 +11,14 @@ import java.util.List;
 
 import javax.xml.namespace.QName;
 
-import junit.framework.TestCase;
+//import junit.framework.TestCase;
 
-import com.thoughtworks.xstream.XStream;
+import org.testng.AssertJUnit;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+//import com.thoughtworks.xstream.XStream;
 
 import org.rhq.enterprise.client.utility.Utility;
 import org.rhq.enterprise.server.ws.Architecture;
@@ -64,22 +69,24 @@ import org.rhq.enterprise.server.ws.SubjectManagerRemote;
  * 
  * @author Jay Shaughnessy, Simeon Pinder
  */
-public class ClientMainTest extends TestCase {
+@Test(groups = "ws")
+public class ClientMainTest extends AssertJUnit {
 
+    static private final boolean TESTS_ENABLED = true;
+    
     //test constants
     private static String credentials = "ws-test";
 
     //TODO: figure out if there is a way to use just JAXB. One less dependency. Also will be more picky
-    private static XStream XS = new XStream();
+    //private static XStream XS = new XStream();
     public static PageControl pagecontrol_unlimited = null;
     private static boolean isWstestUserCreated = false;
     private static String host = "127.0.0.1";
     private static int port = 7080;
     
     
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @BeforeMethod
+    protected void beforeMethod() throws Exception {
         if(pagecontrol_unlimited!=null){
           pagecontrol_unlimited = new PageControl();
           pagecontrol_unlimited.setPageSize(-1);
@@ -146,12 +153,12 @@ public class ClientMainTest extends TestCase {
 
     }
 
-    @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
+    @AfterMethod
+    protected void afterMethod() throws Exception {
     }
 
     //Create and use SubjectManagerBean
+    @Test(enabled = TESTS_ENABLED)
     public void testSubject() throws Exception {
 
         //instantiate SLSB
@@ -312,6 +319,7 @@ public class ClientMainTest extends TestCase {
 
     }
 
+    @Test(enabled = TESTS_ENABLED)
     public void testOperation() throws Exception {
 
         //        URL wsdlURL = new URL(WSDL_URL_PREFIX + "SubjectManagerBean?wsdl");
@@ -435,6 +443,7 @@ public class ClientMainTest extends TestCase {
         assertTrue(schedules.isEmpty());
     }
 
+    @Test(enabled = TESTS_ENABLED)
     public void testJBossAS() throws Exception {
 
         //instantiate SLSB
@@ -571,6 +580,7 @@ public class ClientMainTest extends TestCase {
         assertTrue(schedules.isEmpty());
     }
 
+    @Test(enabled = TESTS_ENABLED)
     public void testUpdateResourceConfiguration() throws Exception {
 
 //        SubjectManagerBeanService smService = new SubjectManagerBeanService();
@@ -639,6 +649,7 @@ public class ClientMainTest extends TestCase {
         //        configManager.updateResourceConfiguration(user, testAgent.getResource().getId(), config);
     }
 
+    @Test(enabled = TESTS_ENABLED)
     public void testUpdatePluginConfiguration() throws Exception {
 
         //instantiate SLSB
@@ -701,6 +712,7 @@ public class ClientMainTest extends TestCase {
     }
 
 //    public void testDeployment() throws Exception, ResourceTypeNotFoundException {
+    @Test(enabled = TESTS_ENABLED)
     public void testDeployment() throws Exception {    	
 
         reportHeap("start");
@@ -878,7 +890,7 @@ public class ClientMainTest extends TestCase {
 //        String resp = bManager.runOperation(Operations.rComposite.toString());
 //    	System.out.println("RESPONSE is:"+resp+":");
 //    }
-    
+        
     private void reportHeap(String description) {
         Runtime runtime = Runtime.getRuntime();
         long mbConst = 1024 * 1024L;
@@ -929,7 +941,9 @@ public class ClientMainTest extends TestCase {
 
     private void displayXml(Object... elements) {
         for (Object element : elements) {
-            String xml = XS.toXML(element);
+            //String xml = XS.toXML(element);
+            String xml = element.toString();
+            
             System.out.println("------- NOT JAXB XML: (XStream) ----:" + Object.class.getCanonicalName());
             System.out.println(xml + "\n\n");
         }

@@ -72,14 +72,6 @@
          <scope>compile</scope>
       </dependency>
 
-      <dependency>
-         <groupId>org.rhq</groupId>
-         <artifactId>rhq-core-domain</artifactId>
-         <version>${project.version}</version>
-         <type>ejb</type>
-         <scope>compile</scope>
-      </dependency>
-
       <!--  This is needed for wsprovide's classpath. I'm not sure why, but it's not provided with jbossws -->
       <dependency>
          <groupId>javax.persistence</groupId>
@@ -199,6 +191,9 @@
                            <property
                               name="persistence-api.version"
                               value="${persistence-api.version}" />
+                           <property
+                              name="rhq.client.generate.jar"
+                              value="${rhq.client.generate.jar}" />
                         </ant>
                      </tasks>
                   </configuration>
@@ -257,6 +252,46 @@
 
          <build>
             <plugins>
+
+               <plugin>
+                  <artifactId>maven-antrun-plugin</artifactId>
+                  <executions>
+
+                     <execution>
+                        <id>test-build</id>
+                        <phase>test</phase>
+                        <configuration>
+                           <tasks>
+                              <ant
+                                 antfile="${basedir}/src/main/scripts/rhq-client.build.xml"
+                                 dir="${basedir}"
+                                 target="prepare-tests"
+                                 inheritAll="false"
+                                 inheritRefs="false">
+
+                                 <property
+                                    name="java.jre.home"
+                                    value="${java.home}" />
+                                 <property
+                                    name="maven.test.classpath"
+                                    refid="maven.test.classpath" />
+                                 <property
+                                    name="project.build.outputDirectory"
+                                    value="${project.build.outputDirectory}" />
+                                 <property
+                                    name="project.version"
+                                    value="${project.version}" />
+                              </ant>
+                           </tasks>
+                        </configuration>
+                        <goals>
+                           <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                  </executions>
+               </plugin>
+
                <plugin>
                   <artifactId>maven-surefire-plugin</artifactId>
                   <configuration>
@@ -296,30 +331,88 @@
          <build>
             <plugins>
                <plugin>
-                  <artifactId>maven-surefire-plugin</artifactId>
-                  <configuration>
-                     <groups>ws</groups>
-                     <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
-                     <excludes>
-                        <exclude>com/**/*.java</exclude>
-                     </excludes>
-                     <forkMode>pertest</forkMode>
-                     <argLine>-Xmx512m -Xms128m</argLine>
-                     <systemProperties>
-                        <property>
-                           <name>deploymentDirectory</name>
-                           <value>target/classes</value>
-                        </property>
-                     </systemProperties>
-                     <additionalClasspathElements>
-                        <!-- The below is required for WS Java Client support -->
-                        <additionalClasspathElement>${project.build.outputDirectory}/lib/${project.build.finalName}.jar</additionalClasspathElement>
-                     </additionalClasspathElements>
-                  </configuration>
+                  <artifactId>maven-antrun-plugin</artifactId>
+                  <executions>
+
+                     <execution>
+                        <id>test-build</id>
+                        <phase>test</phase>
+                        <configuration>
+                           <tasks>
+                              <ant
+                                 antfile="${basedir}/src/main/scripts/rhq-client.build.xml"
+                                 dir="${basedir}"
+                                 target="prepare-tests"
+                                 inheritAll="false"
+                                 inheritRefs="false">
+
+                                 <property
+                                    name="java.jre.home"
+                                    value="${java.home}" />
+                                 <property
+                                    name="maven.test.classpath"
+                                    refid="maven.test.classpath" />
+                                 <property
+                                    name="project.build.outputDirectory"
+                                    value="${project.build.outputDirectory}" />
+                                 <property
+                                    name="project.version"
+                                    value="${project.version}" />
+                              </ant>
+                           </tasks>
+                        </configuration>
+                        <goals>
+                           <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                  </executions>
                </plugin>
+
+               <plugin>
+                  <artifactId>maven-surefire-plugin</artifactId>
+                  <executions>
+
+                     <execution>
+                        <id>test-run</id>
+                        <phase>test</phase>
+
+                        <configuration>
+                           <groups>ws</groups>
+                           <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
+                           <includes>
+                              <include>**/*.java</include>
+                           </includes>
+                           <forkMode>pertest</forkMode>
+                           <argLine>-Xmx512m -Xms128m</argLine>
+                           <systemProperties>
+                              <property>
+                                 <name>deploymentDirectory</name>
+                                 <value>target/classes</value>
+                              </property>
+                           </systemProperties>
+                           <additionalClasspathElements>
+                              <!-- The below is required for WS Java Client support -->
+                              <additionalClasspathElement>${project.build.outputDirectory}/lib/${project.build.finalName}.jar</additionalClasspathElement>
+                           </additionalClasspathElements>
+                        </configuration>
+                        <goals>
+                           <goal>test</goal>
+                        </goals>
+                     </execution>
+                  </executions>
+               </plugin>
+
             </plugins>
          </build>
       </profile>
 
+      <profile>
+         <id>dev</id>
+
+         <properties>
+            <rhq.client.generate.jar>true</rhq.client.generate.jar>
+         </properties>
+      </profile>
    </profiles>
 </project>

@@ -80,7 +80,7 @@ public class UpdateEventsSubsystemTest extends UpdateSubsytemTestBase {
 
             System.out.println("==> Done with v2");
 
-            registerPlugin("event1-1.xml");
+            registerPlugin("event1-1.xml", "3.0");
             platform = getResourceType("events");
             eDefs = platform.getEventDefinitions();
             assert eDefs != null;
@@ -117,7 +117,7 @@ public class UpdateEventsSubsystemTest extends UpdateSubsytemTestBase {
 
             System.out.println("==> Done with v1");
 
-            registerPlugin("event1-1.xml");
+            registerPlugin("event1-1.xml", "2.0");
             platform = getResourceType("events");
             assert platform != null;
             eDefs = platform.getEventDefinitions();
@@ -203,7 +203,7 @@ public class UpdateEventsSubsystemTest extends UpdateSubsytemTestBase {
              * Now check that the event source + events are gone.
              */
 
-            registerPlugin("event1-1.xml");
+            registerPlugin("event1-1.xml", "3.0");
             platform = getResourceType("events");
 
             Set<EventDefinition> eDefs = platform.getEventDefinitions();

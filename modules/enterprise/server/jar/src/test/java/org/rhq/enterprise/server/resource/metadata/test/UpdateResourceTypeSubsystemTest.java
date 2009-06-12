@@ -69,7 +69,7 @@ public class UpdateResourceTypeSubsystemTest extends UpdateSubsytemTestBase {
             Set<MeasurementDefinition> mdef = server2.getMetricDefinitions();
             assert mdef.size() == 1 : "Expected one MeasurementDefinition in v2";
 
-            registerPlugin("update4-v1_0.xml");
+            registerPlugin("update4-v1_0.xml", "3.0");
             ResourceType platform3 = getResourceType("myPlatform4");
             Set<ResourceType> servers3 = platform3.getChildResourceTypes();
             assert servers3.size() == 2 : "Expected to find 2 servers in v1/2";

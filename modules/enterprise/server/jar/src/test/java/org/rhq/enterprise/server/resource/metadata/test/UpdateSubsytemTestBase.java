@@ -122,15 +122,26 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
         return ".";
     }
 
-    protected void registerPlugin(String pathToDescriptor) throws Exception {
+    protected void registerPlugin(String pathToDescriptor, String versionOverride) throws Exception {
         pathToDescriptor = COMMON_PATH_PREFIX + getSubsystemDirectory() + "/" + pathToDescriptor;
         System.out.println("Registering plugin with descriptor [" + pathToDescriptor + "]...");
         String md5 = MD5Generator.getDigestString(pathToDescriptor);
         Plugin testPlugin = new Plugin(PLUGIN_NAME, "foo.jar", md5);
         testPlugin.setDisplayName("ResourceMetaDataManagerBeanTest: " + pathToDescriptor);
         PluginDescriptor descriptor = loadPluginDescriptor(pathToDescriptor);
+        // if caller passed in their own version, use it - otherwise, use the plugin descriptor version.
+        // this allows our tests to reuse descriptors without having to duplicate them
+        if (versionOverride != null) {
+            testPlugin.setVersion(versionOverride);
+        } else {
+            testPlugin.setVersion(descriptor.getVersion());
+        }
         metadataManager.registerPlugin(LookupUtil.getSubjectManager().getOverlord(), testPlugin, descriptor, null);
         getEntityManager().flush();
+    }
+
+    protected void registerPlugin(String pathToDescriptor) throws Exception {
+        registerPlugin(pathToDescriptor, null);
     }
 
     public PluginDescriptor loadPluginDescriptor(String descriptorFile) throws Exception {

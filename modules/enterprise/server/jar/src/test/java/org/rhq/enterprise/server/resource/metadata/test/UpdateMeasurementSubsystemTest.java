@@ -105,7 +105,7 @@ public class UpdateMeasurementSubsystemTest extends UpdateSubsytemTestBase {
             getEntityManager().flush();
 
             // Now try the other way round
-            registerPlugin("update-v1_0.xml");
+            registerPlugin("update-v1_0.xml", "3.0");
             ResourceType server3 = getResourceType("testServer1");
             Set<MeasurementDefinition> definitions3 = server3.getMetricDefinitions();
             assert definitions3.size() == 4 : "There should be 4 metrics for v3";
@@ -150,7 +150,7 @@ public class UpdateMeasurementSubsystemTest extends UpdateSubsytemTestBase {
             }
 
             { // extra block for variable scoping purposes
-                registerPlugin("measurementDeletion-v1_0.xml");
+                registerPlugin("measurementDeletion-v1_0.xml", "3.0");
                 ResourceType server = getResourceType("testServer1");
                 Set<MeasurementDefinition> def = server.getMetricDefinitions();
                 assert def.size() == 4;

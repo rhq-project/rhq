@@ -56,7 +56,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
     public void testUpdatePluginConfig() throws Exception {
         getTransactionManager().begin();
         try {
-            ResourceType server1 = getServer1ForConfig5();
+            ResourceType server1 = getServer1ForConfig5(null);
             ConfigurationDefinition cDef = server1.getPluginConfigurationDefinition();
             assert cDef != null : "Expected to find a PluginConfigurationDefinition in v1";
             List<PropertyGroupDefinition> groups1 = cDef.getGroupDefinitions();
@@ -93,7 +93,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
              * Now deploy version 2
              */
 
-            ResourceType server2 = getServer2ForConfig5();
+            ResourceType server2 = getServer2ForConfig5(null);
             ConfigurationDefinition cDef2 = server2.getPluginConfigurationDefinition();
             assert cDef2 != null : "Expected to find a PluginConfigurationDefinition in v2";
             List<PropertyGroupDefinition> groups2 = cDef2.getGroupDefinitions();
@@ -147,7 +147,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
     public void testResourceConfiguration() throws Exception {
         getTransactionManager().begin();
         try {
-            ResourceType server1 = getServer1ForConfig5();
+            ResourceType server1 = getServer1ForConfig5("1");
             ConfigurationDefinition def1 = server1.getResourceConfigurationDefinition();
 
             List<PropertyDefinition> cpdl = def1.getNonGroupedProperties();
@@ -183,7 +183,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
              * Now check the changed plugin
              */
 
-            ResourceType server2 = getServer2ForConfig5();
+            ResourceType server2 = getServer2ForConfig5("2");
             ConfigurationDefinition def2 = server2.getResourceConfigurationDefinition();
             List<PropertyDefinition> cpdl2 = def2.getNonGroupedProperties();
             assert cpdl2.size() == 3 : "Did not find 3 properties in <resource-configuration> in v2 but "
@@ -243,7 +243,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
              * And now back to the first version
              */
 
-            ResourceType server3 = getServer1ForConfig5();
+            ResourceType server3 = getServer1ForConfig5("3");
             ConfigurationDefinition def3 = server3.getResourceConfigurationDefinition();
 
             List<PropertyDefinition> cpdl3 = def3.getNonGroupedProperties();
@@ -285,8 +285,8 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
         }
     }
 
-    protected ResourceType getServer1ForConfig5() throws Exception {
-        registerPlugin("update5-v1_0.xml");
+    protected ResourceType getServer1ForConfig5(String version) throws Exception {
+        registerPlugin("update5-v1_0.xml", version);
         ResourceType platform1 = getResourceType("myPlatform5");
         Set<ResourceType> servers = platform1.getChildResourceTypes();
         assert servers.size() == 1 : "Expected to find 1 server in v1, but got " + servers.size();
@@ -294,8 +294,8 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
         return server1;
     }
 
-    protected ResourceType getServer2ForConfig5() throws Exception {
-        registerPlugin("update5-v2_0.xml");
+    protected ResourceType getServer2ForConfig5(String version) throws Exception {
+        registerPlugin("update5-v2_0.xml", version);
         ResourceType platform2 = getResourceType("myPlatform5");
         Set<ResourceType> servers2 = platform2.getChildResourceTypes();
         assert servers2.size() == 1 : "Expected to find 1 server in v2, but got " + servers2.size();
@@ -751,7 +751,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
             /*
              * Now deploy v1 again
              */{ // extra block for variable scoping purposes
-                registerPlugin("propertyChanging-v1.xml");
+                registerPlugin("propertyChanging-v1.xml", "3.0"); // this is our 3rd version, but reuse v1
                 ResourceType platform = getResourceType("myPlatform7");
                 ConfigurationDefinition cd = platform.getResourceConfigurationDefinition();
                 Map<String, PropertyDefinition> propDefs = cd.getPropertyDefinitions();
@@ -793,7 +793,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
             System.out.println("==> Done with v1");
             registerPlugin("groupDeleted-v2.xml");
             System.out.println("==> Done with v2");
-            registerPlugin("groupDeleted-v1.xml");
+            registerPlugin("groupDeleted-v1.xml", "3.0");
             System.out.println("==> Done with v1");
         } finally {
             getTransactionManager().rollback();
@@ -809,7 +809,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
             System.out.println("==> Done with v1");
             registerPlugin("groupPropDeleted-v2.xml");
             System.out.println("==> Done with v2");
-            registerPlugin("groupPropDeleted-v1.xml");
+            registerPlugin("groupPropDeleted-v1.xml", "3.0");
             System.out.println("==> Done with v1");
         } finally {
             getTransactionManager().rollback();
@@ -825,7 +825,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
             System.out.println("==> Done with v1");
             registerPlugin("groupPropDeleted-v4.xml");
             System.out.println("==> Done with v2");
-            registerPlugin("groupPropDeleted-v3.xml");
+            registerPlugin("groupPropDeleted-v3.xml", "5.0");
             System.out.println("==> Done with v1");
         } finally {
             getTransactionManager().rollback();
@@ -841,7 +841,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
             System.out.println("==> Done with v1");
             registerPlugin("groupPropMoved-v2.xml");
             System.out.println("==> Done with v2");
-            registerPlugin("groupPropMoved-v1.xml");
+            registerPlugin("groupPropMoved-v1.xml", "3.0");
             System.out.println("==> Done with v1");
         } finally {
             getTransactionManager().rollback();
@@ -925,7 +925,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
                 + ps.getStringValue();
             System.out.println("Done with v3");
 
-            registerPlugin("addDeleteTemplate1.xml");
+            registerPlugin("addDeleteTemplate1.xml", "4.0"); // this is our 4th version, but reuse v1
             platform = getResourceType("myPlatform7");
             cd = platform.getResourceConfigurationDefinition();
             defaultTemplate = cd.getDefaultTemplate();

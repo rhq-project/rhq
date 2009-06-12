@@ -101,7 +101,7 @@ public class UpdateOperationsSubsystemTest extends UpdateSubsytemTestBase {
              * Now try the other way round
              */
 
-            registerPlugin("update3-v1_0.xml");
+            registerPlugin("update3-v1_0.xml", "3.0");
             ResourceType platform3 = getResourceType("myPlatform3");
             Set<PackageType> packageTypes3 = platform3.getPackageTypes();
             assert packageTypes3.size() == 3 : "Did not find the three package types in v3";
@@ -176,7 +176,7 @@ public class UpdateOperationsSubsystemTest extends UpdateSubsytemTestBase {
             getEntityManager().flush();
             System.out.println("==> Done with v2");
 
-            registerPlugin("operation1-1.xml");
+            registerPlugin("operation1-1.xml", "3.0");
             platform = getResourceType("ops");
             assert platform != null;
             opDefs = platform.getOperationDefinitions();
@@ -225,7 +225,7 @@ public class UpdateOperationsSubsystemTest extends UpdateSubsytemTestBase {
 
             System.out.println("==> Done with v2");
 
-            registerPlugin("operation2-1.xml");
+            registerPlugin("operation2-1.xml", "3.0");
             platform = getResourceType("ops");
             assert platform != null;
             opDefs = platform.getOperationDefinitions();
@@ -275,7 +275,7 @@ public class UpdateOperationsSubsystemTest extends UpdateSubsytemTestBase {
             assert found == 4 : "Did not find all 4 expected operations";
 
             System.out.println("==> Done with v2");
-            registerPlugin("operation3-1.xml");
+            registerPlugin("operation3-1.xml", "3.0");
             platform = getResourceType("ops");
             assert platform != null;
             opDefs = platform.getOperationDefinitions();

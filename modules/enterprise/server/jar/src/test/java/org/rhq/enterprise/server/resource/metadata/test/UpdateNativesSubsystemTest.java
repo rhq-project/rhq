@@ -41,7 +41,7 @@ public class UpdateNativesSubsystemTest extends UpdateSubsytemTestBase {
     public void testProcessScans() throws Exception {
         getTransactionManager().begin();
         try {
-            ResourceType server1 = getServer1ForConfig5();
+            ResourceType server1 = getServer1ForConfig5(null);
 
             /*
              * TODO check process scans as well
@@ -63,7 +63,7 @@ public class UpdateNativesSubsystemTest extends UpdateSubsytemTestBase {
             /*
              * check process scans in v2 as well
              */
-            ResourceType server2 = getServer2ForConfig5();
+            ResourceType server2 = getServer2ForConfig5(null);
             Set<ProcessScan> scans2 = server2.getProcessScans();
             assert scans2.size() == 3 : "Expected to find 3 process scans in v2, but got " + scans2.size();
             found = 0;
@@ -80,7 +80,7 @@ public class UpdateNativesSubsystemTest extends UpdateSubsytemTestBase {
             /*
              * Now return to first version of plugin
              */
-            server1 = getServer1ForConfig5();
+            server1 = getServer1ForConfig5("3.0");
             scans1 = server1.getProcessScans();
             assert scans1.size() == 3 : "Expected to find 3 process scans in v1, but got " + scans1.size();
             found = 0;
@@ -96,8 +96,8 @@ public class UpdateNativesSubsystemTest extends UpdateSubsytemTestBase {
         }
     }
 
-    protected ResourceType getServer1ForConfig5() throws Exception {
-        registerPlugin("update5-v1_0.xml");
+    protected ResourceType getServer1ForConfig5(String version) throws Exception {
+        registerPlugin("update5-v1_0.xml", version);
         ResourceType platform1 = getResourceType("myPlatform5");
         Set<ResourceType> servers = platform1.getChildResourceTypes();
         assert servers.size() == 1 : "Expected to find 1 server in v1, but got " + servers.size();
@@ -105,8 +105,8 @@ public class UpdateNativesSubsystemTest extends UpdateSubsytemTestBase {
         return server1;
     }
 
-    protected ResourceType getServer2ForConfig5() throws Exception {
-        registerPlugin("update5-v2_0.xml");
+    protected ResourceType getServer2ForConfig5(String version) throws Exception {
+        registerPlugin("update5-v2_0.xml", version);
         ResourceType platform2 = getResourceType("myPlatform5");
         Set<ResourceType> servers2 = platform2.getChildResourceTypes();
         assert servers2.size() == 1 : "Expected to find 1 server in v2, but got " + servers2.size();

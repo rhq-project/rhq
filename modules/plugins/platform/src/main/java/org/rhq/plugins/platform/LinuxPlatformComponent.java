@@ -72,6 +72,7 @@ public class LinuxPlatformComponent extends PlatformComponent implements Content
     private YumProxy yumProxy = new YumProxy();
 
     private boolean enableContentDiscovery = false;
+    private boolean enableInternalYumServer = false;
 
     @Override
     public void start(ResourceContext context) {
@@ -81,6 +82,14 @@ public class LinuxPlatformComponent extends PlatformComponent implements Content
         PropertySimple contentProp = pluginConfiguration.getSimple("enableContentDiscovery");
         if (contentProp != null) {
             Boolean bool = contentProp.getBooleanValue();
+            this.enableContentDiscovery = (bool != null) ? bool.booleanValue() : false;
+        } else {
+            this.enableContentDiscovery = false;
+        }
+
+        PropertySimple yumProp = pluginConfiguration.getSimple("enableInternalYumServer");
+        if (yumProp != null) {
+            Boolean bool = yumProp.getBooleanValue();
             this.enableContentDiscovery = (bool != null) ? bool.booleanValue() : false;
         } else {
             this.enableContentDiscovery = false;
@@ -104,10 +113,10 @@ public class LinuxPlatformComponent extends PlatformComponent implements Content
     }
 
     private void startWithContentContext(ContentContext context) {
-        int port = yumPort();
-        log.debug("yum port=[" + port + "]");
+        if (this.enableInternalYumServer) {
+            int port = yumPort();
+            log.debug("yum port=[" + port + "]");
 
-        if (port > 0) {
             this.contentContext = context;
             try {
                 YumContext yumContext = new PluginContext(port, this.resourceContext, context);
@@ -120,6 +129,7 @@ public class LinuxPlatformComponent extends PlatformComponent implements Content
         } else {
             log.info("Internal yum server is disabled.");
         }
+        return;
     }
 
     public Set<ResourcePackageDetails> discoverDeployedPackages(PackageType type) {

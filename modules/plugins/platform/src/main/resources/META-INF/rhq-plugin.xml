@@ -228,14 +228,21 @@
                   description="If true, attempts will be made to discover installed packages on this platform">
             </c:simple-property>
             <c:simple-property
+                  name="enableInternalYumServer" 
+                  default="false"
+                  required="true" 
+                  type="boolean"
+                  description="If true, an internal yum server will be started in order to process yum content requests made on the local machine.">
+            </c:simple-property>
+            <c:simple-property
                   name="yumPort" 
                   displayName="Yum server port" 
                   default="9080"
                   required="true" 
                   type="integer"
-                  description="The port the plugin will listen on in order to process yum requests. Set this to 0 to disable the internal yum server.">
+                  description="The port the plugin will listen on in order to process yum requests. This is ignored if the internal yum server is not enabled.">
                <c:constraint>
-                  <c:integer-constraint minimum="0" maximum="65535"/>
+                  <c:integer-constraint minimum="1" maximum="65535"/>
                </c:constraint>
             </c:simple-property>
             <c:simple-property

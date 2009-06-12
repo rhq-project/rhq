@@ -18,12 +18,14 @@ public class EjbClient
    private static final String SECURE_MANAGEMENT_VIEW_JNDI_NAME = "SecureManagementView/remote";
    private static final String SECURE_DEPLOYMENT_MANAGER_JNDI_NAME = "SecureDeploymentManager/remote";
    
-   private static final String PROFILE_SERVICE_PRINCIPAL = "admin"; // "javaduke";
-   private static final String PROFILE_SERVICE_CREDENTIALS = "admin"; // "anotherduke";
+   private static final String PROFILE_SERVICE_PRINCIPAL = "javaduke";
+   private static final String PROFILE_SERVICE_CREDENTIALS = "anotherduke";
    
    public static void main(String[] args)
       throws Exception
    {           
+      //if (System.getProperty("java.security.auth.login.config") == null)
+      //   System.setProperty("java.security.auth.login.config", "C:/Projects/jboss-eap-5.0/testsuite/output/resources/security/auth.conf");
       Properties env = new Properties();
       env.setProperty(Context.PROVIDER_URL, "jnp://127.0.0.1:1099/");
       env.setProperty(Context.INITIAL_CONTEXT_FACTORY, JNDI_LOGIN_INITIAL_CONTEXT_FACTORY);

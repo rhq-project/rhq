@@ -11,7 +11,7 @@ if "%OS%" == "Windows_NT"  setlocal
 set MAIN_JAR_NAME=jbas5-ejb-client-1.0.jar
 set MAIN_CLASS=test.EjbClient
 
-set JBOSS_HOME=C:\opt\jboss-5.1.0.GA
+set JBOSS_HOME=C:\opt\jboss-eap-5.0.0-SNAPSHOT
 
 set DIRNAME=.\
 if "%OS%" == "Windows_NT" set DIRNAME=%~dp0%

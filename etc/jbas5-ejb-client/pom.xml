@@ -12,10 +12,9 @@
     <packaging>jar</packaging>
 
     <name>JBAS5 EJB Client</name>
-    <description>a simple client for testing connecting to a JBAS5 instance via JNP and looking up the ProfileService</description>
+    <description>a simple client for testing connecting to a JBAS5 instance via JNP, looking up the ProfileService EJB3 beans, and invoking some methods on them</description>
 
-    <properties>
-        <jboss.home>C:/opt/jboss-5.1.0.GA-SNAPSHOT</jboss.home>
+    <properties>        
         <jbossas.version>5.1.0-SNAPSHOT</jbossas.version>
     </properties>
     

@@ -76,7 +76,8 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
     private static final String ANY_ADDRESS = "0.0.0.0";
     private static final String LOCALHOST = "127.0.0.1";
     private static final String JAVA_HOME_ENV_VAR = "JAVA_HOME";
-    private static final ComparableVersion MINIMUM_VERSION = new ComparableVersion("5.1.0.CR1");
+    private static final ComparableVersion AS_MINIMUM_VERSION = new ComparableVersion("5.1.0.CR1");
+    private static final ComparableVersion EAP_MINIMUM_VERSION = new ComparableVersion("5.0.0.Beta");
 
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -103,7 +104,7 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
         }
         log
             .trace("Discovered " + resources.size() + " " + discoveryContext.getResourceType().getName()
-                + " Resources.");
+                + " resources.");
 
         return resources;
     }
@@ -128,13 +129,23 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
             // See if this JBAS instance's version is less than 5.1.0.CR1 - if so, skip it.
             JBossInstallationInfo installInfo = cmdLine.getInstallInfo();
             ComparableVersion version = new ComparableVersion(installInfo.getVersion());
-            if (version.compareTo(MINIMUM_VERSION) < 0) {
+
+            String productType = installInfo.getProductType().name();
+
+            // Check if this is a compatible JBoass AS instance
+            if (productType.equals("AS") && version.compareTo(AS_MINIMUM_VERSION) < 0) {
                 if (log.isDebugEnabled())
                     log.debug("JBAS version " + version + " is not supported by this plugin (minimum version is "
-                        + MINIMUM_VERSION + ") - skipping...");
+                        + AS_MINIMUM_VERSION + ") - skipping...");
                 continue;
             }
-
+            // Check if this is a compatible JBoass EAP instance
+            if (productType.equals("EAP") && version.compareTo(EAP_MINIMUM_VERSION) < 0) {
+                if (log.isDebugEnabled())
+                    log.debug("JBEAP version " + version + " is not supported by this plugin (minimum version is "
+                        + EAP_MINIMUM_VERSION + ") - skipping...");
+                continue;
+            }
             File installHome = new File(cmdLine.getSystemProperties().getProperty(JBossProperties.HOME_DIR));
             File configDir = new File(cmdLine.getSystemProperties().getProperty(JBossProperties.SERVER_HOME_DIR));
 

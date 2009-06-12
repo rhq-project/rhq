@@ -30,18 +30,16 @@ import java.util.jar.Attributes;
  * @author Jessica Sant
  * @author Ian Springer
  */
-public enum JBossProductType
-{
+public enum JBossProductType {
     AS("JBossAS", "JBoss Application Server", "default"), // the public offering
-    EAP("JBossEAP", "JBoss Enterprise Application Platform", "production"), // the customer offering
+    EAP("JBossEAP", "JBoss Enterprise Application Platform", "default"), // the customer offering
     SOA("JBossSOA", "JBoss Enterprise SOA Platform", "production"); // the customer SOA platform
 
     public final String NAME;
     public final String DESCRIPTION;
     public final String DEFAULT_CONFIG_NAME;
 
-    JBossProductType(String name, String description, String defaultConfigName)
-    {
+    JBossProductType(String name, String description, String defaultConfigName) {
         this.NAME = name;
         this.DESCRIPTION = description;
         this.DEFAULT_CONFIG_NAME = defaultConfigName;
@@ -53,18 +51,14 @@ public enum JBossProductType
      * @param attributes the attributes from a manifest file (typically run.jar or jboss-j2ee.jar)
      * @return AS, EAP or SOA
      */
-    public static JBossProductType determineJBossProductType(Attributes attributes)
-    {
+    public static JBossProductType determineJBossProductType(Attributes attributes) {
         JBossProductType result = JBossProductType.AS;
-        String implementationTitle = (attributes != null) ? attributes.getValue(Attributes.Name.IMPLEMENTATION_TITLE) : null;
-        if (implementationTitle != null)
-        {
-            if (implementationTitle.equalsIgnoreCase("JBoss [EAP]"))
-            {
+        String implementationTitle = (attributes != null) ? attributes.getValue(Attributes.Name.IMPLEMENTATION_TITLE)
+            : null;
+        if (implementationTitle != null) {
+            if (implementationTitle.equalsIgnoreCase("JBoss [EAP]")) {
                 result = JBossProductType.EAP;
-            }
-            else if (implementationTitle.equalsIgnoreCase("JBoss [SOA]"))
-            {
+            } else if (implementationTitle.equalsIgnoreCase("JBoss [SOA]")) {
                 result = JBossProductType.SOA;
             }
         }
@@ -72,8 +66,7 @@ public enum JBossProductType
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return this.NAME;
     }
 }

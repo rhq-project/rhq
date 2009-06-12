@@ -156,7 +156,8 @@
             <rhq.test.ds.server-name>127.0.0.1</rhq.test.ds.server-name>
             <rhq.test.ds.port>9092</rhq.test.ds.port>
             <rhq.test.ds.db-name>rhq</rhq.test.ds.db-name>
-            <rhq.test.ds.hibernate-dialect>org.hibernate.dialect.H2Dialect</rhq.test.ds.hibernate-dialect>
+            <!-- This custom dialect is required for proper operation using H2, see class JavaDoc for more info -->
+            <rhq.test.ds.hibernate-dialect>org.rhq.core.domain.dialect.H2CustomDialect</rhq.test.ds.hibernate-dialect>
          </properties>
       </profile>
       

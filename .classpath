@@ -149,5 +149,6 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/freemarker/freemarker/2.3.11/freemarker-2.3.11.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/seam/jboss-seam/2.1.0.SP1/jboss-seam-2.1.0.SP1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/seam/jboss-seam-ui/2.1.0.SP1/jboss-seam-ui-2.1.0.SP1.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/hibernate/hibernate3/3.2.r14201-2/hibernate3-3.2.r14201-2.jar"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

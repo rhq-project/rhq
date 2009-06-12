@@ -36,15 +36,8 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.jboss.jbossnetwork.product.jbpm.handlers.ControlActionFacade;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.mc4j.ems.connection.EmsConnection;
-import org.mc4j.ems.connection.support.metadata.InternalVMTypeDescriptor;
-
 import org.jboss.deployers.spi.management.KnownDeploymentTypes;
 import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.deployers.spi.management.deploy.DeploymentManager;
@@ -59,7 +52,10 @@ import org.jboss.managed.api.ManagedProperty;
 import org.jboss.on.common.jbossas.JBPMWorkflowManager;
 import org.jboss.on.common.jbossas.JBossASPaths;
 import org.jboss.profileservice.spi.NoSuchDeploymentException;
-
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.mc4j.ems.connection.EmsConnection;
+import org.mc4j.ems.connection.support.metadata.InternalVMTypeDescriptor;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -88,6 +84,7 @@ import org.rhq.core.pluginapi.content.ContentFacet;
 import org.rhq.core.pluginapi.content.ContentServices;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
@@ -102,9 +99,10 @@ import org.rhq.plugins.jbossas5.helper.JmxConnectionHelper;
 import org.rhq.plugins.jbossas5.util.ConversionUtils;
 import org.rhq.plugins.jbossas5.util.DebugUtils;
 import org.rhq.plugins.jbossas5.util.DeploymentUtils;
-import org.rhq.plugins.jbossas5.util.JBossASContentFacetDelegate;
 import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
 import org.rhq.plugins.jbossas5.util.ResourceComponentUtils;
+
+import com.jboss.jbossnetwork.product.jbpm.handlers.ControlActionFacade;
 
 /**
  * ResourceComponent for a JBoss AS, 5.1.0.CR1 or later, Server.
@@ -129,7 +127,10 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
     private File deployDirectory;
     private JmxConnectionHelper jmxConnectionHelper;
 
-    private JBossASContentFacetDelegate contentFacetDelegate;
+    private File configPath;
+    private String configSet;
+
+    private ApplicationServerContentFacetDelegate contentFacetDelegate;
 
     //private LogFileEventResourceComponentHelper logFileEventDelegate;
 
@@ -153,13 +154,22 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
         //TODO define the control action facade once we support operations on the app server.
         //OperationContext operationContext = resourceContext.getOperationContext();
         //
-        //ControlActionFacade controlActionFacade = 
+        //ControlActionFacade controlActionFacade =
         //	new PluginContainerControlActionFacade(operationContext, this);
         ControlActionFacade controlActionFacade = null;
 
         JBPMWorkflowManager workflowManager = new JBPMWorkflowManager(contentContext, controlActionFacade, paths);
 
-        contentFacetDelegate = new JBossASContentFacetDelegate(workflowManager);
+        File configPath = null;
+        Configuration pluginConfig = resourceContext.getPluginConfiguration();
+
+        this.configPath = resolvePathRelativeToHomeDir(getRequiredPropertyValue(pluginConfig, HOME_DIR_PROP_NAME));
+        if (!this.configPath.exists()) {
+            throw new InvalidPluginConfigurationException("Configuration path '" + configPath + "' does not exist.");
+        }
+        this.configSet = pluginConfig.getSimpleValue(SERVER_HOME_DIR_PROP_NAME, this.configPath.getName());
+
+        contentFacetDelegate = new ApplicationServerContentFacetDelegate(workflowManager, null);
 
         initializeEmsConnection();
     }
@@ -541,6 +551,11 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
     }
 
     @NotNull
+    private File resolvePathRelativeToHomeDir(@NotNull String path) {
+        return resolvePathRelativeToHomeDir(this.resourceContext.getPluginConfiguration(), path);
+    }
+
+    @NotNull
     static File resolvePathRelativeToHomeDir(Configuration pluginConfig, @NotNull String path) {
         File configDir = new File(path);
         if (!configDir.isAbsolute()) {
@@ -567,6 +582,17 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
 
     public EmsConnection getEmsConnection() {
         return jmxConnectionHelper.getEmsConnection();
+    }
+
+    @NotNull
+    private static String getRequiredPropertyValue(@NotNull Configuration config, @NotNull String propName) {
+        String propValue = config.getSimpleValue(propName, null);
+        if (propValue == null) {
+            // Something's not right - neither autodiscovery, nor the config edit GUI, should ever allow this.
+            throw new IllegalStateException("Required property '" + propName + "' is not set.");
+        }
+
+        return propValue;
     }
 
     static abstract class PluginConfigPropNames {

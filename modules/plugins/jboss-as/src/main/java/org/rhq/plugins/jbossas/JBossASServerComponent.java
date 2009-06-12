@@ -1,25 +1,25 @@
- /*
-  * Jopr Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * Jopr Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.plugins.jbossas;
 
 import java.io.BufferedInputStream;
@@ -41,11 +41,10 @@ import java.util.jar.JarFile;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
-import com.jboss.jbossnetwork.product.jbpm.handlers.ControlActionFacade;
-import com.jboss.jbossnetwork.product.jbpm.handlers.InPluginControlActionFacade;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jboss.on.common.jbossas.JBPMWorkflowManager;
+import org.jboss.on.common.jbossas.JBossASPaths;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
@@ -60,10 +59,6 @@ import org.mc4j.ems.connection.settings.ConnectionSettings;
 import org.mc4j.ems.connection.support.ConnectionProvider;
 import org.mc4j.ems.connection.support.metadata.ConnectionTypeDescriptor;
 import org.mc4j.ems.connection.support.metadata.InternalVMTypeDescriptor;
-
-import org.jboss.on.common.jbossas.JBPMWorkflowManager;
-import org.jboss.on.common.jbossas.JBossASPaths;
-
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.PackageDetailsKey;
@@ -107,14 +102,17 @@ import org.rhq.plugins.jmx.JMXComponent;
 import org.rhq.plugins.jmx.JMXDiscoveryComponent;
 import org.rhq.plugins.jmx.ObjectNameQueryUtility;
 
- /**
- * Supports JBoss 3.2.3 through 4.2.x
- *
- * @author Greg Hinkle
- * @author John Mazzitelli
- * @author Jason Dobies
- * @author Ian Springer
- */
+import com.jboss.jbossnetwork.product.jbpm.handlers.ControlActionFacade;
+import com.jboss.jbossnetwork.product.jbpm.handlers.InPluginControlActionFacade;
+
+/**
+* Supports JBoss 3.2.3 through 4.2.x
+*
+* @author Greg Hinkle
+* @author John Mazzitelli
+* @author Jason Dobies
+* @author Ian Springer
+*/
 public class JBossASServerComponent implements MeasurementFacet, OperationFacet, JMXComponent,
     CreateChildResourceFacet, ApplicationServerComponent, ContentFacet, SnapshotReportFacet {
     // Constants  --------------------------------------------
@@ -174,12 +172,12 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
     private ContentContext contentContext;
 
     private JBossASContentFacetDelegate contentFacetDelegate;
-    
+
     private EmsConnection connection;
     private File configPath;
     private String configSet;
 
-    private Map<PackageType, FileContentDelegate> contentDelegates = new HashMap<PackageType, FileContentDelegate>();
+    private final Map<PackageType, FileContentDelegate> contentDelegates = new HashMap<PackageType, FileContentDelegate>();
 
     /**
      * Delegate instance for handling all calls to invoke operations on this component.
@@ -224,11 +222,11 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
         JBossASPaths jbossPaths = new JBossASPaths();
         jbossPaths.setHomeDir(getPluginConfiguration().getSimpleValue(JBOSS_HOME_DIR_CONFIG_PROP, null));
         jbossPaths.setServerDir(getPluginConfiguration().getSimpleValue(CONFIGURATION_PATH_CONFIG_PROP, null));
-        
+
         JBPMWorkflowManager workflowManager = new JBPMWorkflowManager(contentContext, controlFacade, jbossPaths);
 
         this.contentFacetDelegate = new JBossASContentFacetDelegate(workflowManager, this.configPath);
-        
+
         // Attempt to load the connection now. If we cannot, do not consider the start operation as failed. The only
         // exception to this rule is if the connection cannot be made due to a JMX security exception. In this case,
         // we treat it as an invalid plugin configuration and throw the appropriate exception (see the javadoc for
@@ -337,7 +335,7 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
     }
 
     public DeployPackagesResponse deployPackages(Set<ResourcePackageDetails> packages, ContentServices contentServices) {
-    	return contentFacetDelegate.deployPackages(packages, contentServices);
+        return contentFacetDelegate.deployPackages(packages, contentServices);
     }
 
     public RemovePackagesResponse removePackages(Set<ResourcePackageDetails> packages) {
@@ -345,7 +343,7 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
     }
 
     public Set<ResourcePackageDetails> discoverDeployedPackages(PackageType type) {
-    	return contentFacetDelegate.discoverDeployedPackages(type);
+        return contentFacetDelegate.discoverDeployedPackages(type);
     }
 
     public InputStream retrievePackageBits(ResourcePackageDetails packageDetails) {
@@ -366,8 +364,7 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
             } else {
                 throw new UnsupportedOperationException("Unknown Resource type: " + resourceTypeName);
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             setErrorOnCreateResourceReport(report, e);
         }
         return report;
@@ -378,13 +375,13 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
     public InputStream getSnapshotReport(String name, String description) throws Exception {
         Configuration pluginConfig = resourceContext.getPluginConfiguration();
         String tmpDir = resourceContext.getTemporaryDirectory().getAbsolutePath();
-        JBossASSnapshotReport report = new JBossASSnapshotReport(name, description, pluginConfig, this.configPath.getCanonicalPath(), tmpDir);
+        JBossASSnapshotReport report = new JBossASSnapshotReport(name, description, pluginConfig, this.configPath
+            .getCanonicalPath(), tmpDir);
         File reportFile = report.generate();
         InputStream inputStream = new BufferedInputStream(new FileInputStream(reportFile));
         return inputStream;
     }
-    
-    
+
     // JMXComponent Implementation  --------------------------------------------
 
     public EmsConnection getEmsConnection() {
@@ -694,14 +691,12 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
     }
 
     @NotNull
-    private File resolvePathRelativeToHomeDir(@NotNull
-    String path) {
+    private File resolvePathRelativeToHomeDir(@NotNull String path) {
         return resolvePathRelativeToHomeDir(this.resourceContext.getPluginConfiguration(), path);
     }
 
     @NotNull
-    static File resolvePathRelativeToHomeDir(Configuration pluginConfig, @NotNull
-    String path) {
+    static File resolvePathRelativeToHomeDir(Configuration pluginConfig, @NotNull String path) {
         File configDir = new File(path);
         if (!configDir.isAbsolute()) {
             String jbossHomeDir = getRequiredPropertyValue(pluginConfig, JBOSS_HOME_DIR_CONFIG_PROP);
@@ -712,9 +707,7 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
     }
 
     @NotNull
-    private static String getRequiredPropertyValue(@NotNull
-    Configuration config, @NotNull
-    String propName) {
+    private static String getRequiredPropertyValue(@NotNull Configuration config, @NotNull String propName) {
         String propValue = config.getSimpleValue(propName, null);
         if (propValue == null) {
             // Something's not right - neither autodiscovery, nor the config edit GUI, should ever allow this.
@@ -747,7 +740,7 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
         String extension = archiveName.substring(lastPeriod + 1);
         if (lastPeriod == -1 || !expectedExtension.equals(extension)) {
             setErrorOnCreateResourceReport(report, "Incorrect extension specified on filename [" + archiveName
-                    + "]. Expected [" + expectedExtension + "]");
+                + "]. Expected [" + expectedExtension + "]");
             return;
         }
 
@@ -771,8 +764,9 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
         }
 
         if (deployDirectory.contains("..")) {
-            setErrorOnCreateResourceReport(report, "Path to deploy (deployDirectory) may not reference the parent directory. "
-                    + "Path specified: " + deployDirectory);
+            setErrorOnCreateResourceReport(report,
+                "Path to deploy (deployDirectory) may not reference the parent directory. " + "Path specified: "
+                    + deployDirectory);
             return;
         }
 
@@ -781,7 +775,6 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
         if (backupProperty != null && backupProperty.getBooleanValue() != null && backupProperty.getBooleanValue())
             createBackup = true;
 
-
         // Perform the deployment
         File deployDir = new File(getConfigurationPath(), deployDirectory);
         FileContentDelegate deployer = new FileContentDelegate(deployDir, "", details.getPackageTypeName());
@@ -789,7 +782,7 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
         File path = deployer.getPath(details);
         if (!createBackup && path.exists()) {
             setErrorOnCreateResourceReport(report, "A " + resourceTypeName + " file named " + path.getName()
-                    + " is already deployed with path " + path + ".");
+                + " is already deployed with path " + path + ".");
             return;
         }
 
@@ -807,15 +800,15 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
         OutputStream osForTempDir = new BufferedOutputStream(new FileOutputStream(tempFile));
 
         ContentServices contentServices = contentContext.getContentServices();
-        contentServices
-            .downloadPackageBitsForChildResource(contentContext, resourceTypeName, key, osForTempDir);
+        contentServices.downloadPackageBitsForChildResource(contentContext, resourceTypeName, key, osForTempDir);
 
         osForTempDir.close();
 
         // check for content
         boolean valid = isOfType(tempFile, resourceTypeName);
         if (!valid) {
-            setErrorOnCreateResourceReport(report, "Expected a " + resourceTypeName + " file, but its format/content did not match");
+            setErrorOnCreateResourceReport(report, "Expected a " + resourceTypeName
+                + " file, but its format/content did not match");
             return;
         }
 
@@ -833,8 +826,7 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
 
         String resourceKey;
         if (resourceTypeName.equals(RESOURCE_TYPE_EAR)) {
-            resourceKey = "jboss.management.local:J2EEServer=Local,j2eeType=J2EEApplication,name="
-                + archiveName;
+            resourceKey = "jboss.management.local:J2EEServer=Local,j2eeType=J2EEApplication,name=" + archiveName;
         } else {
             resourceKey = "jboss.management.local:J2EEApplication=null,J2EEServer=Local,j2eeType=WebModule,name="
                 + archiveName;
@@ -848,14 +840,12 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
 
         try {
             deployFile(path);
-        }
-        catch (MainDeployer.DeployerException e) {
+        } catch (MainDeployer.DeployerException e) {
             log.debug("Failed to deploy [" + path + "] - undeploying and deleting [" + path + "]...");
             try {
                 undeployFile(path);
                 FileUtils.purge(path, true);
-            }
-            catch (Exception e1) {
+            } catch (Exception e1) {
                 log.error("Failed to rollback deployment of [" + path + "].", e1);
             }
             throw e;
@@ -948,7 +938,6 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
                 }
         }
     }
-
 
     @Nullable
     private String getPartitionName() {

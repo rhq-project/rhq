@@ -35,22 +35,20 @@ import org.apache.maven.artifact.versioning.ComparableVersion;
  * @author Ian Springer
  * @author Jessica Sant
  */
-public class JBossInstallationInfo
-{
+public class JBossInstallationInfo {
     private static final String ANY_ADDRESS = "0.0.0.0";
     private static final String LOCALHOST_ADDRESS = "127.0.0.1";
     private static final String SOA_IMPL_VERSION_PREFIX = "SOA-";
     private static final String EAP_IMPL_VERSION_PREFIX = "EAP-";
     private static final ComparableVersion VERSION_4_2 = new ComparableVersion("4.2");
 
-    private JBossProductType productType;
-    private String version;
-    private String defaultBindAddress;
-    private boolean isEap;
-    private String majorVersion;
+    private final JBossProductType productType;
+    private final String version;
+    private final String defaultBindAddress;
+    private final boolean isEap;
+    private final String majorVersion;
 
-    public JBossInstallationInfo(File installationDir) throws IOException
-    {
+    public JBossInstallationInfo(File installationDir) throws IOException {
         File binDir = new File(installationDir, "bin");
         File runJar = new File(binDir, "run.jar");
         Attributes jarManifestAttributes = loadManifestAttributesFromJar(runJar);
@@ -61,8 +59,7 @@ public class JBossInstallationInfo
         this.majorVersion = version.substring(0, version.indexOf('.'));
     }
 
-    public JBossProductType getProductType()
-    {
+    public JBossProductType getProductType() {
         return this.productType;
     }
 
@@ -72,13 +69,11 @@ public class JBossInstallationInfo
      *
      * @return the version of this JBoss installation
      */
-    public String getVersion()
-    {
+    public String getVersion() {
         return this.version;
     }
 
-    public String getDefaultBindAddress()
-    {
+    public String getDefaultBindAddress() {
         return this.defaultBindAddress;
     }
 
@@ -87,13 +82,11 @@ public class JBossInstallationInfo
      *
      * @return
      */
-    public boolean isEap()
-    {
+    public boolean isEap() {
         return isEap;
     }
 
-    public String getMajorVersion()
-    {
+    public String getMajorVersion() {
         return majorVersion;
     }
 
@@ -104,64 +97,54 @@ public class JBossInstallationInfo
      * @return the top-level attributes from the manifest file
      * @throws IOException on failure to read the jar file
      */
-    private static Attributes loadManifestAttributesFromJar(File jarFile) throws IOException
-    {
+    private static Attributes loadManifestAttributesFromJar(File jarFile) throws IOException {
         JarFile jar = new JarFile(jarFile);
         Attributes mainAttributes = jar.getManifest().getMainAttributes();
         jar.close();
         return mainAttributes;
     }
 
-    private static String getVersion(Attributes jarManifestAttributes)
-    {
+    private static String getVersion(Attributes jarManifestAttributes) {
         String implementationVersion = jarManifestAttributes.getValue(Attributes.Name.IMPLEMENTATION_VERSION);
         // e.g. Implementation-Version: 4.2.2.GA (build: SVNTag=JBoss_4_2_2_GA date=200710221139)
         int spaceIndex = validateImplementationVersion(implementationVersion);
         String version = implementationVersion.substring(0, spaceIndex);
-        if (version.startsWith(SOA_IMPL_VERSION_PREFIX))
-        {
+        if (version.startsWith(SOA_IMPL_VERSION_PREFIX)) {
             version = version.substring(SOA_IMPL_VERSION_PREFIX.length());
         }
-        if (version.startsWith(EAP_IMPL_VERSION_PREFIX))
-        {
+        if (version.startsWith(EAP_IMPL_VERSION_PREFIX)) {
             version = version.substring(EAP_IMPL_VERSION_PREFIX.length());
         }
         return version;
     }
 
-    private static boolean determineEap(Attributes jarManifestAttributes)
-    {
+    private static boolean determineEap(Attributes jarManifestAttributes) {
         String implementationVersion = jarManifestAttributes.getValue(Attributes.Name.IMPLEMENTATION_VERSION);
         validateImplementationVersion(implementationVersion);
         return (implementationVersion.startsWith(EAP_IMPL_VERSION_PREFIX));
     }
 
-    private static int validateImplementationVersion(String implementationVersion)
-    {
-        if (implementationVersion == null)
-        {
-            throw new IllegalStateException(
-                    "'" + Attributes.Name.IMPLEMENTATION_VERSION + "' MANIFEST.MF attribute not found.");
+    private static int validateImplementationVersion(String implementationVersion) {
+        if (implementationVersion == null) {
+            throw new IllegalStateException("'" + Attributes.Name.IMPLEMENTATION_VERSION
+                + "' MANIFEST.MF attribute not found.");
         }
         int spaceIndex = implementationVersion.indexOf(' ');
-        if (spaceIndex == -1)
-        {
-            throw new IllegalStateException("'" + Attributes.Name.IMPLEMENTATION_VERSION +
-                    "' MANIFEST.MF attribute has an invalid value: " + implementationVersion);
+        if (spaceIndex == -1) {
+            throw new IllegalStateException("'" + Attributes.Name.IMPLEMENTATION_VERSION
+                + "' MANIFEST.MF attribute has an invalid value: " + implementationVersion);
         }
         return spaceIndex;
     }
 
-    private static String getDefaultServerName(String serverVersion)
-    {
+    private static String getDefaultServerName(String serverVersion) {
         ComparableVersion comparableVersion = new ComparableVersion(serverVersion);
         return (comparableVersion.compareTo(VERSION_4_2) >= 0) ? ANY_ADDRESS : LOCALHOST_ADDRESS; // TODO check
     }
 
     @Override
-    public String toString()
-    {
-        return this.getClass().getSimpleName() + "[productType=" + this.productType + ", version=" + this.version +
-                ", defaultBindAddress=" + this.defaultBindAddress + "]";
+    public String toString() {
+        return this.getClass().getSimpleName() + "[productType=" + this.productType + ", version=" + this.version
+            + ", defaultBindAddress=" + this.defaultBindAddress + "]";
     }
 }

@@ -571,7 +571,7 @@ public class ConfigurationBean {
             } else if (db.toLowerCase().indexOf("oracle") > -1) {
                 dialect = "org.hibernate.dialect.Oracle10gDialect";
             } else if (db.toLowerCase().indexOf("h2") > -1) {
-                dialect = "org.hibernate.dialect.H2Dialect";
+                dialect = "org.rhq.core.domain.dialect.H2CustomDialect";
             } else if (db.toLowerCase().indexOf("sqlserver") > -1) {
                 dialect = "org.hibernate.dialect.SQLServerDialect";
             } else if (db.toLowerCase().indexOf("mysql") > -1) {

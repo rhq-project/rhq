@@ -156,13 +156,18 @@ public interface InstallerI18NResourceKeys {
     String ADVANCED_SETTINGS_INSTRUCTIONS = "advancedSettingsInstructions";
 
     @I18NMessages( {
-        @I18NMessage(locale = "en", value = "Press this button to prepare the server to use embedded mode. This will configure the server to use the embedded database and embedded agent. You cannot use this in an HA environment. This is for DEMO PURPOSES ONLY!"),
-        @I18NMessage(locale = "de", value = "Für Embedded-Modus, diese Taste drücken. Dies wird den Server konfigurieren für die eingebettete Datenbank-und Embedded-Agenten. Nicht für den Einsatz in einer HA-Umgebung. Dies ist nur für Demo-Zwecke!") })
-    String PREPARE_FOR_EMBEDDED_MODE = "prepareForEmbeddedMode";
+        @I18NMessage(locale = "en", value = "Press the 'Production Installation' button for a normal installation.\\n\\\n"
+            + "Press the 'Embedded Installation' button to quickly create a complete environment with the help of the embedded database and embedded agent. The embedded installation is for demonstration and evaluation purposes ONLY!"),
+        @I18NMessage(locale = "de", value = "Drücken Sie die 'Produktion Installation'-Taste für eine normale Installation durchzuführen.\\n\\\n"
+            + "Drücken Sie die 'Embedded Installation'-Taste, um schnell eine vollständige Umwelt mit Hilfe der eingebetteten Datenbank und Embedded Agenten. Die Embedded-Installation ist für die Demonstration und Evaluierung Zwecke ONLY!") })
+    String INSTALL_BUTTONS_TEXT = "installButtonsText";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Embedded Mode"),
-        @I18NMessage(locale = "de", value = "Embedded-Modus") })
-    String EMBEDDED_MODE = "embeddedMode";
+    @I18NMessages( { @I18NMessage(locale = "en", value = "-- or --"), @I18NMessage(locale = "de", value = "-- oder --") })
+    String OR_TEXT = "orText";
+
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Embedded Installation"),
+        @I18NMessage(locale = "de", value = "Embedded Installation") })
+    String SAVE_EMBEDDED_MODE = "saveEmbeddedMode";
 
     @I18NMessages( {
         @I18NMessage(locale = "en", value = "Database Settings define the database configured for this installation. All are required. Use the \"Test Connection\" button to validate the settings."),
@@ -190,8 +195,8 @@ public interface InstallerI18NResourceKeys {
         @I18NMessage(locale = "de", value = "Diese Servereinstellungen konfigurieren den Server für diese Installation. Alle Einstellungen werden benötigt.") })
     String SERVER_SETTINGS_INSTRUCTIONS = "serverSettingsInstructions";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Install ${product.shortName} Server!"),
-        @I18NMessage(locale = "de", value = "${product.shortName} Server installieren!") })
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Production Installation"),
+        @I18NMessage(locale = "de", value = "Produktion Installation") })
     String SAVE = "save";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Yes"), @I18NMessage(locale = "de", value = "Ja") })

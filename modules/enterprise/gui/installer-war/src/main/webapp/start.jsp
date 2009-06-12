@@ -22,17 +22,6 @@
    <h:form>
       <p align="left">
          <h4 align="left">
-            <h:outputText value="#{bundle.prepareForEmbeddedMode}" />
-         </h4>
-         <h:commandButton id="useEmbeddedMode"
-                          action="#{configurationBean.prepareForEmbeddedMode}"
-                          value="#{bundle.embeddedMode}" />
-      </p>
-   </h:form>
-
-   <h:form>
-      <p align="left">
-         <h4 align="left">
             <h:outputText value="#{bundle.advancedSettingsInstructions}" />
          </h4>
          <h:selectBooleanCheckbox onclick="submit()"
@@ -56,7 +45,10 @@
             </h:outputLink>
             <h:selectOneMenu id="databasetype"
                              value="#{configurationBean.databaseConfiguration[0].value}"
-                             onchange="if (this.options[this.selectedIndex].value == 'PostgreSQL'){
+                             onchange="document.getElementById('propForm:databaseusername').value = 'rhqadmin';
+                                       document.getElementById('propForm:databasepassword').value = 'rhqadmin';
+
+                                       if (this.options[this.selectedIndex].value == 'PostgreSQL'){
                                           document.getElementById('propForm:databaseconnectionurl').value = 'jdbc:postgresql://127.0.0.1:5432/rhq';
                                           document.getElementById('propForm:databasedriverclass').value = 'org.postgresql.Driver';
                                           document.getElementById('propForm:databasexadatasourceclass').value = 'org.postgresql.xa.PGXADataSource';
@@ -115,9 +107,9 @@
             <h:outputLink value="javascript:popUp('#{bundle.helpDocRHQServerPropParentPage}#{configurationBean.databaseConfiguration[5].itemDefinition.help}', 'propertyHelp')">
                <h:outputText value="#{configurationBean.databaseConfiguration[5].itemDefinition.propertyLabel}" />
             </h:outputLink>
-            <h:inputText id="databasepassword"
-                         size="#{configurationBean.databaseConfiguration[5].itemDefinition.fieldSize}"
-                         value="#{configurationBean.databaseConfiguration[5].value}" />
+            <h:inputSecret id="databasepassword"
+                           size="#{configurationBean.databaseConfiguration[5].itemDefinition.fieldSize}"
+                           value="#{configurationBean.databaseConfiguration[5].value}" />
          </h:panelGrid>
 
          <h:panelGrid columns="2" border="1">
@@ -156,7 +148,7 @@
       <h:panelGrid columns="2" columnClasses="warningColor" rendered="#{configurationBean.databaseSchemaExist == true}">
          <h:outputText value="#{bundle.existingSchemaQuestion}" style="font-size: 80%"/>
          <h:selectOneMenu onchange="submit()" label="#{bundle.existingSchemaQuestion}" value="#{configurationBean.existingSchemaOption}">
-                                       <f:selectItems value="#{configurationBean.existingSchemaOptions}" />
+            <f:selectItems value="#{configurationBean.existingSchemaOptions}" />
          </h:selectOneMenu>
       </h:panelGrid>
 
@@ -296,7 +288,14 @@
 
       <br/>
       <p align="left">
-         <h:commandButton id="save" action="#{configurationBean.save}" value="#{bundle.save}" />
+         <h4 align="left">
+            <h:outputText value="#{bundle.installButtonsText}" />
+         </h4>
+         <table border="1"><tr>
+            <td><h:commandButton id="save" action="#{configurationBean.save}" value="#{bundle.save}" /></td>
+            <td><h:outputText value="#{bundle.orText}" /></td>
+            <td><h:commandButton id="saveEmbeddedMode" action="#{configurationBean.saveEmbeddedMode}" value="#{bundle.saveEmbeddedMode}" /></td>
+         </tr></table>
       </p>
    </h:form>
 

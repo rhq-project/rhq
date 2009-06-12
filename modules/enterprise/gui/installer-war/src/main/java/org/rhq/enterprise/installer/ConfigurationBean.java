@@ -220,33 +220,6 @@ public class ConfigurationBean {
         return;
     }
 
-    public void prepareForEmbeddedMode() {
-        // embedded mode simply means use our embedded database and the embedded agent - used mainly for demo purposes
-
-        // set embedded agent enabled to true
-        PropertyItemWithValue prop = getConfigurationProperty(ServerProperties.PROP_EMBEDDED_AGENT_ENABLED);
-        prop.setValue(Boolean.TRUE.toString());
-        List<PropertyItemWithValue> newConfig = new ArrayList<PropertyItemWithValue>(1);
-        newConfig.add(prop);
-        setConfiguration(newConfig);
-
-        // use the H2 database, which is our embedded DB
-        List<PropertyItemWithValue> dbConfig = getDatabaseConfiguration();
-        for (PropertyItemWithValue dbProp : dbConfig) {
-            if (dbProp.getItemDefinition().getPropertyName().equals(ServerProperties.PROP_DATABASE_CONNECTION_URL)) {
-                dbProp.setValue("jdbc:h2:" + getDataDirectory() + "/rhq;MVCC=TRUE;DB_CLOSE_ON_EXIT=FALSE");
-            } else if (dbProp.getItemDefinition().getPropertyName().equals(ServerProperties.PROP_DATABASE_TYPE)) {
-                dbProp.setValue("H2");
-            } else if (dbProp.getItemDefinition().getPropertyName().equals(ServerProperties.PROP_DATABASE_DRIVER_CLASS)) {
-                dbProp.setValue("org.h2.Driver");
-            } else if (dbProp.getItemDefinition().getPropertyName().equals(ServerProperties.PROP_DATABASE_XA_DS_CLASS)) {
-                dbProp.setValue("org.h2.jdbcx.JdbcDataSource");
-            }
-        }
-
-        return;
-    }
-
     public Boolean isShowAdvancedSettings() {
         return showAdvancedSettings;
     }
@@ -481,6 +454,38 @@ public class ConfigurationBean {
 
     public boolean isKeepExistingSchema() {
         return ExistingSchemaOption.KEEP.name().equals(existingSchemaOption);
+    }
+
+    public StartPageResults saveEmbeddedMode() {
+        // embedded mode simply means use our embedded database and the embedded agent - used mainly for demo purposes
+
+        // set embedded agent enabled to true
+        PropertyItemWithValue prop = getConfigurationProperty(ServerProperties.PROP_EMBEDDED_AGENT_ENABLED);
+        prop.setValue(Boolean.TRUE.toString());
+        List<PropertyItemWithValue> newConfig = new ArrayList<PropertyItemWithValue>(1);
+        newConfig.add(prop);
+        setConfiguration(newConfig);
+
+        // use the H2 database, which is our embedded DB
+        List<PropertyItemWithValue> dbConfig = getDatabaseConfiguration();
+        for (PropertyItemWithValue dbProp : dbConfig) {
+            if (dbProp.getItemDefinition().getPropertyName().equals(ServerProperties.PROP_DATABASE_CONNECTION_URL)) {
+                dbProp.setValue("jdbc:h2:" + getDataDirectory() + "/rhq;MVCC=TRUE;DB_CLOSE_ON_EXIT=FALSE");
+            } else if (dbProp.getItemDefinition().getPropertyName().equals(ServerProperties.PROP_DATABASE_TYPE)) {
+                dbProp.setValue("H2");
+            } else if (dbProp.getItemDefinition().getPropertyName().equals(ServerProperties.PROP_DATABASE_DRIVER_CLASS)) {
+                dbProp.setValue("org.h2.Driver");
+            } else if (dbProp.getItemDefinition().getPropertyName().equals(ServerProperties.PROP_DATABASE_XA_DS_CLASS)) {
+                dbProp.setValue("org.h2.jdbcx.JdbcDataSource");
+            } else if (dbProp.getItemDefinition().getPropertyName().equals(ServerProperties.PROP_DATABASE_USERNAME)) {
+                dbProp.setValue("rhqadmin");
+            } else if (dbProp.getItemDefinition().getPropertyName().equals(ServerProperties.PROP_DATABASE_PASSWORD)) {
+                dbProp.setValue("rhqadmin");
+            }
+        }
+        setExistingSchemaOption(ExistingSchemaOption.OVERWRITE.name());
+
+        return save();
     }
 
     public StartPageResults save() {

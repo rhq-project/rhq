@@ -93,8 +93,10 @@ public abstract class AgentPluginDescriptorUtil {
         if (plugin1.getMd5().equals(plugin2.getMd5())) {
             return null;
         } else {
-            ComparableVersion plugin1Version = new ComparableVersion(plugin1.getVersion());
-            ComparableVersion plugin2Version = new ComparableVersion(plugin2.getVersion());
+            String version1Str = plugin1.getVersion();
+            String version2Str = plugin2.getVersion();
+            ComparableVersion plugin1Version = new ComparableVersion((version1Str != null) ? version1Str : "0");
+            ComparableVersion plugin2Version = new ComparableVersion((version2Str != null) ? version2Str : "0");
             if (plugin1Version.equals(plugin2Version)) {
                 if (plugin1.getMtime() == plugin2.getMtime()) {
                     LOG.info("Plugins [" + plugin1 + ", " + plugin2

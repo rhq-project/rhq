@@ -160,16 +160,20 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
 
         JBPMWorkflowManager workflowManager = new JBPMWorkflowManager(contentContext, controlActionFacade, paths);
 
-        File configPath = null;
         Configuration pluginConfig = resourceContext.getPluginConfiguration();
 
         this.configPath = resolvePathRelativeToHomeDir(getRequiredPropertyValue(pluginConfig, HOME_DIR_PROP_NAME));
         if (!this.configPath.exists()) {
             throw new InvalidPluginConfigurationException("Configuration path '" + configPath + "' does not exist.");
         }
-        this.configSet = pluginConfig.getSimpleValue(SERVER_HOME_DIR_PROP_NAME, this.configPath.getName());
+        configSet = pluginConfig.getSimpleValue(SERVER_HOME_DIR_PROP_NAME, this.configPath.getName());
 
-        contentFacetDelegate = new ApplicationServerContentFacetDelegate(workflowManager, null);
+        File configSetFile = new File(configSet);
+        if (!configSetFile.exists()) {
+            throw new InvalidPluginConfigurationException("Configuration path '" + configSetFile + "' does not exist.");
+        }
+
+        contentFacetDelegate = new ApplicationServerContentFacetDelegate(workflowManager, configSetFile);
 
         initializeEmsConnection();
     }

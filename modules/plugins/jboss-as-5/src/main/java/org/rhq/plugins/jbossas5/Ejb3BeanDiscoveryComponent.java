@@ -22,22 +22,79 @@
  */
 package org.rhq.plugins.jbossas5;
 
-import javax.management.ObjectName;
-import javax.management.MalformedObjectNameException;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import org.jboss.deployers.spi.management.ManagementView;
+import org.jboss.managed.api.ComponentType;
 import org.jboss.managed.api.ManagedComponent;
+import org.jboss.managed.api.ManagedDeployment;
+
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
+import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 
 /**
- * Discovery of EJB3 beans
+ * Discover EJB3 bean Resources.
+ *
  * @author Ian Springer
  */
-public class Ejb3BeanDiscoveryComponent extends ManagedComponentDiscoveryComponent {
+public class Ejb3BeanDiscoveryComponent extends ManagedComponentDiscoveryComponent<AbstractManagedDeploymentComponent> {
+    private static final String METRICS_INSTANCE_COMPONENT_NAME_SUFFIX = "-metrics-instance";
+
+    private final Log log = LogFactory.getLog(this.getClass());
 
     @Override
-    protected String getResourceName(ManagedComponent component) {
-        // e.g. MyMessageDrivenBean-metrics-{instance,invocation}
-        String componentName = component.getName();
-       // e.g. "SecureProfileService"
-        return componentName.substring(0, componentName.indexOf("-metrics-instance"));
+    public Set<DiscoveredResourceDetails> discoverResources(
+            ResourceDiscoveryContext<AbstractManagedDeploymentComponent> discoveryContext)
+            throws Exception {
+        ResourceType resourceType = discoveryContext.getResourceType();
+        log.trace("Discovering " + resourceType.getName() + " Resources...");
+
+        ManagementView managementView = discoveryContext.getParentResourceComponent().getConnection().getManagementView();
+        // TODO (ips): Only refresh the ManagementView *once* per runtime discovery scan, rather than every time this
+        //             method is called. Do this by providing a runtime scan id in the ResourceDiscoveryContext.
+        managementView.load();
+
+        AbstractManagedDeploymentComponent parentResourceComponent = discoveryContext.getParentResourceComponent();
+        ManagedDeployment parentDeployment = parentResourceComponent.getManagedDeployment();
+        Collection<ManagedComponent> components = parentDeployment.getComponents().values();
+        ComponentType componentType = getComponentType(discoveryContext);
+        Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
+        for (ManagedComponent component : components) {
+            String componentName = component.getName();
+            if (component.getType().equals(componentType) && componentName.endsWith(METRICS_INSTANCE_COMPONENT_NAME_SUFFIX)) {
+                // e.g. "foo.ear-MyEjb" for EJBs inside EARs or "MyEjb" for EJBs within standalone EJB-JARs
+                String qualifiedEjbName = componentName.substring(0, componentName.indexOf(METRICS_INSTANCE_COMPONENT_NAME_SUFFIX));
+                int index = qualifiedEjbName.indexOf(".ear-");
+                // Strip off the EAR filename prefix if there is one, so we end up with just the EJB name.
+                String resourceName = (index != -1) ? qualifiedEjbName.substring(index + ".ear-".length()) : qualifiedEjbName;
+                String resourceKey = resourceName;
+                String version = null;
+
+                Configuration pluginConfig = discoveryContext.getDefaultPluginConfiguration();
+                pluginConfig.put(new PropertySimple(ManagedComponentComponent.Config.COMPONENT_NAME, componentName));
+
+                DiscoveredResourceDetails resource =
+                        new DiscoveredResourceDetails(resourceType,
+                                resourceKey,
+                                resourceName,
+                                version,
+                                resourceType.getDescription(),
+                                pluginConfig,
+                                null);
+
+                discoveredResources.add(resource);
+            }
+        }
+
+        log.trace("Discovered " + discoveredResources.size() + " " + resourceType.getName() + " Resources.");
+        return discoveredResources;
     }
 }

@@ -46,13 +46,13 @@ import org.jboss.managed.api.ManagedComponent;
  * @author Mark Spritzer
  * @author Ian Springer
  */
-public class ManagedComponentDiscoveryComponent
-        implements ResourceDiscoveryComponent<ProfileServiceComponent>
+public class ManagedComponentDiscoveryComponent<P extends ProfileServiceComponent>
+        implements ResourceDiscoveryComponent<P>
 {
     private final Log log = LogFactory.getLog(this.getClass());
 
     public Set<DiscoveredResourceDetails> discoverResources(
-            ResourceDiscoveryContext<ProfileServiceComponent> discoveryContext)
+            ResourceDiscoveryContext<P> discoveryContext) throws Exception
     {
         ResourceType resourceType = discoveryContext.getResourceType();
         log.trace("Discovering " + resourceType.getName() + " Resources...");
@@ -62,7 +62,7 @@ public class ManagedComponentDiscoveryComponent
         //             method is called. Do this by providing a runtime scan id in the ResourceDiscoveryContext.
         managementView.load();
 
-        ComponentType componentType = ConversionUtils.getComponentType(resourceType);
+        ComponentType componentType = getComponentType(discoveryContext);
         Set<ManagedComponent> components;
         try
         {
@@ -101,6 +101,12 @@ public class ManagedComponentDiscoveryComponent
 
         log.trace("Discovered " + discoveredResources.size() + " " + resourceType.getName() + " Resources.");
         return discoveredResources;
+    }
+
+    protected ComponentType getComponentType(ResourceDiscoveryContext<P> discoveryContext) {
+        ManagementView managementView = discoveryContext.getParentResourceComponent().getConnection().getManagementView();
+        ResourceType resourceType = discoveryContext.getResourceType();
+        return ConversionUtils.getComponentType(resourceType);
     }
 
     protected String getResourceName(ManagedComponent component) {

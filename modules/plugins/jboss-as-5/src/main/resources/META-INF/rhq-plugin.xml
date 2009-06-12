@@ -748,6 +748,27 @@
 -->
 '>
 
+<!ENTITY ejb3StatefulSessionBeanMetrics '
+    <metric property="cacheSize" measurementType="dynamic" displayType="detail" displayName="Cache Size"
+            defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
+
+    <metric property="passivatedCount" measurementType="dynamic" displayType="detail" displayName="Passivated Count"
+            defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
+
+    <metric property="totalSize" measurementType="dynamic" displayType="detail" displayName="Total Size"
+            defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
+'>
+
+<!ENTITY ejb3MessageDrivenBeanMetrics '
+    <metric property="minPoolSize" measurementType="dynamic" displayType="detail" displayName="Minimum Pool Size"
+            defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
+
+    <metric property="maxPoolSize" measurementType="dynamic" displayType="detail" displayName="Maximum Pool Size"
+            defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
+
+    <metric property="maxMessages" measurementType="dynamic" displayType="detail" displayName="Maximum number of Messages"
+            defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
+'>
 ]>
 
 <!--############################################# END OF XML ENTITIES ###############################################-->
@@ -778,8 +799,6 @@
                     description="Different types of Connection Factories"/>
                 <subcategory name="JMS Destinations"
                              description="Different types of JMS Destinations"/>
-                <subcategory name="EJBs"
-                             description="Different types of EJBs"/>
             </subcategory>
             <subcategory name="Applications"
                 description="Different types of Applications (WARs, EARs, etc.)">
@@ -2039,72 +2058,7 @@
             </resource-configuration>
         </service>
 
-        <service name="EJB3 Stateless Session Bean"
-                 subCategory="EJBs"
-                 class="EJB3BeanComponent"
-                 discovery="Ejb3BeanDiscoveryComponent"
-                 description="An EJB3 Stateless Session Bean">
 
-            <plugin-configuration>
-                <c:simple-property name="componentType" default="EJB3" readOnly="true"/>
-                <c:simple-property name="componentSubtype" default="SLSB" readOnly="true"/>
-                <c:simple-property name="componentName" readOnly="true"/>
-            </plugin-configuration>
-
-            &ejb3SessionBeanMetrics;
-
-        </service>
-
-        <service name="EJB3 Stateful Session Bean"
-                 subCategory="EJBs"
-                 class="EJB3BeanComponent"
-                 discovery="Ejb3BeanDiscoveryComponent"
-                 description="An EJB3 Stateful Session Bean">
-
-            <plugin-configuration>
-                <c:simple-property name="componentType" default="EJB3" readOnly="true"/>
-                <c:simple-property name="componentSubtype" default="SFSB" readOnly="true"/>
-                <c:simple-property name="componentName" readOnly="true"/>
-            </plugin-configuration>
-
-            <operation name="viewMethodStats" /> <!-- TODO add result params -->
-
-            &ejb3SessionBeanMetrics;
-
-            <!-- SFSBs have a few additional metrics that SLSBs do not have... -->
-            <metric property="cacheSize" measurementType="dynamic" displayType="detail" displayName="Cache Size"
-                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
-
-            <metric property="passivatedCount" measurementType="dynamic" displayType="detail" displayName="Passivated Count"
-                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
-
-            <metric property="totalSize" measurementType="dynamic" displayType="detail" displayName="Total Size"
-                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
-
-        </service>
-
-        <service name="EJB3 Message-driven Bean"
-                 subCategory="EJBs"
-                 class="EJB3BeanComponent"
-                 discovery="Ejb3BeanDiscoveryComponent"
-                 description="An EJB3 Message-driven Bean">
-
-            <plugin-configuration>
-                <c:simple-property name="componentType" default="EJB3" readOnly="true"/>
-                <c:simple-property name="componentSubtype" default="MDB" readOnly="true"/>
-                <c:simple-property name="componentName" readOnly="true"/>
-            </plugin-configuration>
-
-            <metric property="minPoolSize" measurementType="dynamic" displayType="detail" displayName="Minimum Pool Size"
-                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
-
-            <metric property="maxPoolSize" measurementType="dynamic" displayType="detail" displayName="Maximum Pool Size"
-                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
-
-            <metric property="maxMessages" measurementType="dynamic" displayType="detail" displayName="Maximum number of Messages"
-                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
-
-        </service>
         <!-- =================================== ManagedDeployment Resource types ================================== -->
 
         <service name="EAR"
@@ -2431,6 +2385,56 @@
             </resource-configuration>
             -->
 
+            <service name="EJB3 Stateless Session Bean"
+                     class="Ejb3BeanComponent"
+                     discovery="Ejb3BeanDiscoveryComponent"
+                     description="An EJB3 Stateless Session Bean (SLSB)">
+
+                <plugin-configuration>
+                    <c:simple-property name="componentType" default="EJB3" readOnly="true"/>
+                    <c:simple-property name="componentSubtype" default="SLSB" readOnly="true"/>
+                    <c:simple-property name="componentName" readOnly="true"/>
+                </plugin-configuration>
+
+                &ejb3SessionBeanMetrics;
+
+            </service>
+
+            <service name="EJB3 Stateful Session Bean"
+                     class="Ejb3BeanComponent"
+                     discovery="Ejb3BeanDiscoveryComponent"
+                     description="An EJB3 Stateful Session Bean (SFSB)">
+
+                <plugin-configuration>
+                    <c:simple-property name="componentType" default="EJB3" readOnly="true"/>
+                    <c:simple-property name="componentSubtype" default="SFSB" readOnly="true"/>
+                    <c:simple-property name="componentName" readOnly="true"/>
+                </plugin-configuration>
+
+                <operation name="viewMethodStats" /> <!-- TODO add result params -->
+
+                &ejb3SessionBeanMetrics;
+
+                <!-- SFSBs have a few additional metrics that SLSBs do not have... -->
+                &ejb3StatefulSessionBeanMetrics;
+
+            </service>
+
+            <service name="EJB3 Message-Driven Bean"
+                     class="Ejb3BeanComponent"
+                     discovery="Ejb3BeanDiscoveryComponent"
+                     description="An EJB3 Message-Driven Bean (MDB)">
+
+                <plugin-configuration>
+                    <c:simple-property name="componentType" default="EJB3" readOnly="true"/>
+                    <c:simple-property name="componentSubtype" default="MDB" readOnly="true"/>
+                    <c:simple-property name="componentName" readOnly="true"/>
+                </plugin-configuration>
+
+                &ejb3MessageDrivenBeanMetrics;
+
+            </service>
+
         </service>
 
         <service name="Embedded EJB3 JAR"
@@ -2465,6 +2469,56 @@
                 &deploymentResourceConfigProps;
             </resource-configuration>
             -->
+
+            <service name="EJB3 Stateless Session Bean (Embedded)"
+                     class="Ejb3BeanComponent"
+                     discovery="Ejb3BeanDiscoveryComponent"
+                     description="An EJB3 Stateless Session Bean (SLSB)">
+
+                <plugin-configuration>
+                    <c:simple-property name="componentType" default="EJB3" readOnly="true"/>
+                    <c:simple-property name="componentSubtype" default="SLSB" readOnly="true"/>
+                    <c:simple-property name="componentName" readOnly="true"/>
+                </plugin-configuration>
+
+                &ejb3SessionBeanMetrics;
+
+            </service>
+
+            <service name="EJB3 Stateful Session Bean (Embedded)"
+                     class="Ejb3BeanComponent"
+                     discovery="Ejb3BeanDiscoveryComponent"
+                     description="An EJB3 Stateful Session Bean (SFSB)">
+
+                <plugin-configuration>
+                    <c:simple-property name="componentType" default="EJB3" readOnly="true"/>
+                    <c:simple-property name="componentSubtype" default="SFSB" readOnly="true"/>
+                    <c:simple-property name="componentName" readOnly="true"/>
+                </plugin-configuration>
+
+                <operation name="viewMethodStats" /> <!-- TODO add result params -->
+
+                &ejb3SessionBeanMetrics;
+
+                <!-- SFSBs have a few additional metrics that SLSBs do not have... -->
+                &ejb3StatefulSessionBeanMetrics;
+
+            </service>
+
+            <service name="EJB3 Message-Driven Bean (Embedded)"
+                     class="Ejb3BeanComponent"
+                     discovery="Ejb3BeanDiscoveryComponent"
+                     description="An EJB3 Message-Driven Bean (MDB)">
+
+                <plugin-configuration>
+                    <c:simple-property name="componentType" default="EJB3" readOnly="true"/>
+                    <c:simple-property name="componentSubtype" default="MDB" readOnly="true"/>
+                    <c:simple-property name="componentName" readOnly="true"/>
+                </plugin-configuration>
+
+                &ejb3MessageDrivenBeanMetrics;
+
+            </service>
 
         </service>
 

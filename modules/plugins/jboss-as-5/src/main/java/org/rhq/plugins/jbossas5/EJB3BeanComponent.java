@@ -22,36 +22,32 @@
  */
 package org.rhq.plugins.jbossas5;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.util.*;
+ import java.lang.reflect.Field;
+ import java.util.Date;
+ import java.util.HashMap;
+ import java.util.LinkedHashSet;
+ import java.util.Map;
+ import java.util.Set;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+ import org.apache.commons.logging.Log;
+ import org.apache.commons.logging.LogFactory;
 
-import org.jboss.deployers.spi.management.deploy.DeploymentManager;
-import org.jboss.deployers.spi.management.deploy.DeploymentProgress;
-import org.jboss.deployers.spi.management.deploy.DeploymentStatus;
-import org.jboss.managed.api.ManagedComponent;
-import org.jboss.managed.api.ComponentType;
-import org.jboss.managed.api.ManagedOperation;
-import org.jboss.managed.api.ManagedProperty;
+ import org.jboss.deployers.spi.management.deploy.DeploymentManager;
+ import org.jboss.deployers.spi.management.deploy.DeploymentProgress;
+ import org.jboss.managed.api.ComponentType;
+ import org.jboss.managed.api.ManagedComponent;
+ import org.jboss.managed.api.ManagedProperty;
 
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertyList;
-import org.rhq.core.domain.configuration.PropertyMap;
-import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.measurement.DataType;
-import org.rhq.core.domain.measurement.MeasurementReport;
-import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
-import org.rhq.core.domain.measurement.MeasurementDataNumeric;
-import org.rhq.core.domain.measurement.calltime.CallTimeData;
-import org.rhq.core.domain.measurement.calltime.CallTimeDataValue;
-import org.rhq.core.pluginapi.operation.OperationResult;
-import org.rhq.plugins.jbossas5.util.DeploymentUtils;
-import org.mc4j.ems.connection.EmsConnection;
-import org.mc4j.ems.connection.bean.EmsBean;
-import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
+ import org.rhq.core.domain.configuration.Configuration;
+ import org.rhq.core.domain.configuration.PropertyList;
+ import org.rhq.core.domain.configuration.PropertyMap;
+ import org.rhq.core.domain.configuration.PropertySimple;
+ import org.rhq.core.domain.measurement.DataType;
+ import org.rhq.core.domain.measurement.MeasurementReport;
+ import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+ import org.rhq.core.domain.measurement.calltime.CallTimeData;
+ import org.rhq.core.domain.measurement.calltime.CallTimeDataValue;
+ import org.rhq.core.pluginapi.operation.OperationResult;
 
  /**
   * A plugin component for managing an EJB3 session bean.
@@ -65,8 +61,8 @@ import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 //            subclass that class. It will also need to be reworked to use the PS rather than JMX to retrieve the
 //            method invocation call-time stats, once ALR is done implementing those on the JBAS side. (ips, 06/02/09)
 //
- public class EJB3BeanComponent extends ManagedComponentComponent {
-     private final Log log = LogFactory.getLog(EJB3BeanComponent.class);
+ public class Ejb3BeanComponent extends ManagedComponentComponent {
+     private final Log log = LogFactory.getLog(Ejb3BeanComponent.class);
 
      private Map<Integer, CallTimeData> previousRawCallTimeDatas = new HashMap<Integer,CallTimeData>();
 

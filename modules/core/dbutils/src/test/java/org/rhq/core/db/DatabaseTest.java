@@ -20,7 +20,9 @@ package org.rhq.core.db;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
+
 import org.testng.annotations.Test;
+
 import org.rhq.core.db.setup.DBSetup;
 
 /**
@@ -162,28 +164,6 @@ public class DatabaseTest extends AbstractDatabaseTestUtil {
     }
 
     /**
-     * Tests postgres 7.x database.
-     *
-     * @throws Exception
-     */
-    public void testPostgres7() throws Exception {
-        Connection conn = getPostgresConnection("7");
-        if (conn == null) {
-            return;
-        }
-
-        DatabaseType dbtype = DatabaseTypeFactory.getDatabaseType(conn);
-
-        assert DatabaseTypeFactory.isPostgres(conn);
-        assert DatabaseTypeFactory.isPostgres(dbtype);
-        assert dbtype.getVendor().equals("postgresql");
-        assert dbtype.getVersion().equals("7");
-        assert dbtype.getName().equals("postgresql7");
-
-        assertPostgresTypes(dbtype);
-    }
-
-    /**
      * Tests postgres 8.x database.
      *
      * @throws Exception
@@ -198,9 +178,9 @@ public class DatabaseTest extends AbstractDatabaseTestUtil {
 
         assert DatabaseTypeFactory.isPostgres(conn);
         assert DatabaseTypeFactory.isPostgres(dbtype);
-        assert dbtype.getVendor().equals("postgresql");
-        assert dbtype.getVersion().equals("8");
-        assert dbtype.getName().startsWith("postgresql8");
+        assert dbtype.getVendor().equals("postgresql") : dbtype;
+        assert dbtype.getVersion().startsWith("8") : dbtype;
+        assert dbtype.getName().startsWith("postgresql8") : dbtype;
 
         assertPostgresTypes(dbtype);
     }
@@ -226,50 +206,6 @@ public class DatabaseTest extends AbstractDatabaseTestUtil {
     }
 
     /**
-     * Tests oracle version 8 database.
-     *
-     * @throws Exception
-     */
-    public void testOracle8() throws Exception {
-        Connection conn = getOracleConnection("8");
-        if (conn == null) {
-            return;
-        }
-
-        DatabaseType dbtype = DatabaseTypeFactory.getDatabaseType(conn);
-
-        assert DatabaseTypeFactory.isOracle(conn);
-        assert DatabaseTypeFactory.isOracle(dbtype);
-        assert dbtype.getVendor().equals("oracle");
-        assert dbtype.getVersion().equals("8");
-        assert dbtype.getName().equals("oracle8");
-
-        assertOracleTypes(dbtype);
-    }
-
-    /**
-     * Tests oracle version 9 database.
-     *
-     * @throws Exception
-     */
-    public void testOracle9() throws Exception {
-        Connection conn = getOracleConnection("9");
-        if (conn == null) {
-            return;
-        }
-
-        DatabaseType dbtype = DatabaseTypeFactory.getDatabaseType(conn);
-
-        assert DatabaseTypeFactory.isOracle(conn);
-        assert DatabaseTypeFactory.isOracle(dbtype);
-        assert dbtype.getVendor().equals("oracle");
-        assert dbtype.getVersion().equals("9");
-        assert dbtype.getName().equals("oracle9");
-
-        assertOracleTypes(dbtype);
-    }
-
-    /**
      * Tests oracle version 10 database.
      *
      * @throws Exception
@@ -284,9 +220,9 @@ public class DatabaseTest extends AbstractDatabaseTestUtil {
 
         assert DatabaseTypeFactory.isOracle(conn);
         assert DatabaseTypeFactory.isOracle(dbtype);
-        assert dbtype.getVendor().equals("oracle");
-        assert dbtype.getVersion().equals("10");
-        assert dbtype.getName().equals("oracle10");
+        assert dbtype.getVendor().equals("oracle") : dbtype;
+        assert dbtype.getVersion().equals("10") : dbtype;
+        assert dbtype.getName().equals("oracle10") : dbtype;
 
         assertOracleTypes(dbtype);
     }
@@ -299,17 +235,17 @@ public class DatabaseTest extends AbstractDatabaseTestUtil {
     private void assertPostgresTypes(DatabaseType dbtype) {
         assert dbtype instanceof PostgresqlDatabaseType;
 
-        assert "INTEGER".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "INTEGER", dbtype));
-        assert "BIGINT".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "LONG", dbtype));
-        assert "NUMERIC(24,5)".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "BIGDEC", dbtype));
-        assert "CHARACTER VARYING".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "VARCHAR2", dbtype));
-        assert "TEXT".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "LONGVARCHAR", dbtype));
-        assert "CHARACTER".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "CHAR", dbtype));
-        assert "FLOAT8".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "DOUBLE", dbtype));
-        assert "BOOLEAN".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "BOOLEAN", dbtype));
-        assert "BYTEA".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "BYTES", dbtype));
-        assert "BYTEA".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "BLOB", dbtype));
-        assert "VARCHAR".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "CLOB", dbtype));
+        assert "INTEGER".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "INTEGER", dbtype)) : dbtype;
+        assert "BIGINT".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "LONG", dbtype)) : dbtype;
+        assert "NUMERIC(24,5)".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "BIGDEC", dbtype)) : dbtype;
+        assert "CHARACTER VARYING".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "VARCHAR2", dbtype)) : dbtype;
+        assert "TEXT".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "LONGVARCHAR", dbtype)) : dbtype;
+        assert "CHARACTER".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "CHAR", dbtype)) : dbtype;
+        assert "FLOAT8".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "DOUBLE", dbtype)) : dbtype;
+        assert "BOOLEAN".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "BOOLEAN", dbtype)) : dbtype;
+        assert "BYTEA".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "BYTES", dbtype)) : dbtype;
+        assert "BYTEA".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "BLOB", dbtype)) : dbtype;
+        assert "VARCHAR".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "CLOB", dbtype)) : dbtype;
     }
 
     /**
@@ -320,16 +256,16 @@ public class DatabaseTest extends AbstractDatabaseTestUtil {
     private void assertOracleTypes(DatabaseType dbtype) {
         assert dbtype instanceof OracleDatabaseType;
 
-        assert "INTEGER".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "INTEGER", dbtype));
-        assert "NUMBER(19,0)".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "LONG", dbtype));
-        assert "NUMBER(24,5)".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "BIGDEC", dbtype));
-        assert "VARCHAR2".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "VARCHAR2", dbtype));
-        assert "CLOB".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "LONGVARCHAR", dbtype));
-        assert "CHAR".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "CHAR", dbtype));
-        assert "FLOAT(15)".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "DOUBLE", dbtype));
-        assert "NUMBER(1)".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "BOOLEAN", dbtype));
-        assert "BLOB".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "BYTES", dbtype));
-        assert "BLOB".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "BLOB", dbtype));
-        assert "CLOB".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "CLOB", dbtype));
+        assert "INTEGER".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "INTEGER", dbtype)) : dbtype;
+        assert "NUMBER(19,0)".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "LONG", dbtype)) : dbtype;
+        assert "NUMBER(24,5)".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "BIGDEC", dbtype)) : dbtype;
+        assert "VARCHAR2".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "VARCHAR2", dbtype)) : dbtype;
+        assert "CLOB".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "LONGVARCHAR", dbtype)) : dbtype;
+        assert "CHAR".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "CHAR", dbtype)) : dbtype;
+        assert "FLOAT(15)".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "DOUBLE", dbtype)) : dbtype;
+        assert "NUMBER(1)".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "BOOLEAN", dbtype)) : dbtype;
+        assert "BLOB".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "BYTES", dbtype)) : dbtype;
+        assert "BLOB".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "BLOB", dbtype)) : dbtype;
+        assert "CLOB".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "CLOB", dbtype)) : dbtype;
     }
 }

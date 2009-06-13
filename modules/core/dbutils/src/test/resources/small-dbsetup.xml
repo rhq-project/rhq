@@ -17,6 +17,9 @@
     <column name="MYVARCHAR2" type="VARCHAR2" required="false" size="100" />
     <column name="MYCLOB" type="CLOB" required="false" />
     <column name="MYBLOB" type="BLOB" required="false" />
+    <column name="MYCHAR" type="CHAR" required="false" />
+    <column name="MYSMALLINT" type="SMALLINT" required="false" />
+    <column name="MYTIMESTAMP" type="TIMESTAMP" required="false" />
 
     <index name="MYLONG_INDEX" unique="true">
         <field ref="MYLONG"/>

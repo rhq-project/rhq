@@ -23,6 +23,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.Properties;
+
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 
@@ -82,6 +83,31 @@ public class AbstractDatabaseTestUtil {
         }
 
         return;
+    }
+
+    /**
+     * Gets connection to the test h2 database, will be <code>null</code> if not defined.
+     *
+     * @return connection
+     *
+     * @throws Exception
+     */
+    protected Connection getH2Connection() throws Exception {
+        return getConnection("h2");
+    }
+
+    /**
+     * Gets connection to the test h2 database of the specified version, will be <code>null</code> if not
+     * defined.
+     *
+     * @param  version
+     *
+     * @return connection
+     *
+     * @throws Exception
+     */
+    protected Connection getH2Connection(String version) throws Exception {
+        return getConnection("h2" + version);
     }
 
     /**

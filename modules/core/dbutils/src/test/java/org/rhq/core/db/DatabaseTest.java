@@ -18,9 +18,12 @@
  */
 package org.rhq.core.db;
 
+import java.io.File;
 import java.sql.Connection;
 import java.sql.ResultSet;
 
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import org.rhq.core.db.setup.DBSetup;
@@ -37,6 +40,36 @@ import org.rhq.core.db.setup.DBSetup;
  */
 @Test
 public class DatabaseTest extends AbstractDatabaseTestUtil {
+    private Connection conn;
+
+    @AfterTest
+    public void afterTest() {
+        if (conn != null) {
+            try {
+                conn.close();
+            } catch (Exception e) {
+                System.out.println("Cannot close connection: " + e);
+            }
+        }
+    }
+
+    @BeforeClass
+    public void beforeClass() {
+        // clean old H2 test database directory of all the H2 db files from prior test runs
+        File h2DbDir = new File("target/test-h2-db");
+        if (h2DbDir.isDirectory()) {
+            File[] h2DbFiles = h2DbDir.listFiles();
+            if (h2DbFiles != null) {
+                for (File h2DbFile : h2DbFiles) {
+                    h2DbFile.delete();
+                }
+            }
+            if (!h2DbDir.delete()) {
+                System.out.println("Cannot clean the H2 test database");
+            }
+        }
+    }
+
     /**
      * Test DBSetup using a postgres DB.
      *
@@ -46,8 +79,11 @@ public class DatabaseTest extends AbstractDatabaseTestUtil {
         String db = "postgresql";
 
         // skip test if it is to be skipped
-        if (getConnection(db) == null) {
+        conn = getConnection(db);
+        if (conn == null) {
             return;
+        } else {
+            conn.close();
         }
 
         DBSetup dbsetup = new DBSetup(getTestDatabaseConnectionUrl(db), getTestDatabaseConnectionUsername(db),
@@ -56,7 +92,7 @@ public class DatabaseTest extends AbstractDatabaseTestUtil {
         try {
             dbsetup.setup("small-dbsetup.xml");
 
-            Connection conn = getConnection(db);
+            conn = getConnection(db);
             DatabaseType dbtype = DatabaseTypeFactory.getDatabaseType(conn);
 
             assert dbtype.checkTableExists(conn, "TEST_SMALL");
@@ -70,10 +106,14 @@ public class DatabaseTest extends AbstractDatabaseTestUtil {
             assert dbtype.checkColumnExists(conn, "TEST_SMALL", "MYVARCHAR2");
             assert dbtype.checkColumnExists(conn, "TEST_SMALL", "MYCLOB");
             assert dbtype.checkColumnExists(conn, "TEST_SMALL", "MYBLOB");
+            assert dbtype.checkColumnExists(conn, "TEST_SMALL", "MYCHAR");
+            assert dbtype.checkColumnExists(conn, "TEST_SMALL", "MYSMALLINT");
+            assert dbtype.checkColumnExists(conn, "TEST_SMALL", "MYTIMESTAMP");
 
             ResultSet results = conn.prepareCall("SELECT MYVARCHAR2 FROM TEST_SMALL").executeQuery();
             results.next();
             assert "abc-myvarchar2".equals(results.getString("MYVARCHAR2"));
+            results.close();
         } finally {
             try {
                 dbsetup.uninstall("small-dbsetup.xml");
@@ -94,7 +134,99 @@ public class DatabaseTest extends AbstractDatabaseTestUtil {
         String db = "postgresql";
 
         // skip test if it is to be skipped
-        if (getConnection(db) == null) {
+        conn = getConnection(db);
+        if (conn == null) {
+            return;
+        } else {
+            conn.close();
+        }
+
+        DBSetup dbsetup = new DBSetup(getTestDatabaseConnectionUrl(db), getTestDatabaseConnectionUsername(db),
+            getTestDatabaseConnectionPassword(db), false);
+
+        dbsetup.setup("small-dbsetup.xml");
+
+        DatabaseType dbtype;
+
+        // get the connection, make sure the setup worked, and then uninstall the schema
+        try {
+            conn = getConnection(db);
+            dbtype = DatabaseTypeFactory.getDatabaseType(conn);
+            assert dbtype.checkTableExists(conn, "TEST_SMALL");
+        } finally {
+            dbsetup.uninstall("small-dbsetup.xml");
+        }
+
+        // make sure the uninstall worked
+        assert !dbtype.checkTableExists(conn, "TEST_SMALL");
+    }
+
+    /**
+     * Test DBSetup using a embedded H2 DB.
+     *
+     * @throws Exception
+     */
+    public void testDbSetupH2() throws Exception {
+        String db = "h2";
+
+        // skip test if it is to be skipped
+        conn = getConnection(db);
+        if (conn == null) {
+            return;
+        } else {
+            conn.close();
+        }
+
+        DBSetup dbsetup = new DBSetup(getTestDatabaseConnectionUrl(db), getTestDatabaseConnectionUsername(db),
+            getTestDatabaseConnectionPassword(db), false);
+
+        try {
+            dbsetup.setup("small-dbsetup.xml");
+
+            conn = getConnection(db);
+            DatabaseType dbtype = DatabaseTypeFactory.getDatabaseType(conn);
+
+            assert dbtype.checkTableExists(conn, "TEST_SMALL");
+            assert dbtype.checkColumnExists(conn, "TEST_SMALL", "ID");
+            assert dbtype.checkColumnExists(conn, "TEST_SMALL", "MYLONG");
+            assert dbtype.checkColumnExists(conn, "TEST_SMALL", "MYBIGDEC");
+            assert dbtype.checkColumnExists(conn, "TEST_SMALL", "MYLONGVARCHAR");
+            assert dbtype.checkColumnExists(conn, "TEST_SMALL", "MYDOUBLE");
+            assert dbtype.checkColumnExists(conn, "TEST_SMALL", "MYBOOLEAN");
+            assert dbtype.checkColumnExists(conn, "TEST_SMALL", "MYBYTES");
+            assert dbtype.checkColumnExists(conn, "TEST_SMALL", "MYVARCHAR2");
+            assert dbtype.checkColumnExists(conn, "TEST_SMALL", "MYCLOB");
+            assert dbtype.checkColumnExists(conn, "TEST_SMALL", "MYBLOB");
+            assert dbtype.checkColumnExists(conn, "TEST_SMALL", "MYCHAR");
+            assert dbtype.checkColumnExists(conn, "TEST_SMALL", "MYSMALLINT");
+            assert dbtype.checkColumnExists(conn, "TEST_SMALL", "MYTIMESTAMP");
+
+            ResultSet results = conn.prepareCall("SELECT MYVARCHAR2 FROM TEST_SMALL").executeQuery();
+            results.next();
+            assert "abc-myvarchar2".equals(results.getString("MYVARCHAR2"));
+            results.close();
+        } finally {
+            try {
+                dbsetup.uninstall("small-dbsetup.xml");
+            } catch (Exception e) {
+                System.err.println("Cannot uninstall the test schema");
+            }
+        }
+
+        return;
+    }
+
+    /**
+     * Test DBSetup uninstall using a embedded H2 DB
+     *
+     * @throws Exception
+     */
+    public void testDbUninstallH2() throws Exception {
+        String db = "h2";
+
+        // skip test if it is to be skipped
+        conn = getConnection(db);
+        if (conn == null) {
             return;
         }
 
@@ -103,7 +235,6 @@ public class DatabaseTest extends AbstractDatabaseTestUtil {
 
         dbsetup.setup("small-dbsetup.xml");
 
-        Connection conn;
         DatabaseType dbtype;
 
         // get the connection, make sure the setup worked, and then uninstall the schema
@@ -128,18 +259,49 @@ public class DatabaseTest extends AbstractDatabaseTestUtil {
         DatabaseType oracle10 = new Oracle10DatabaseType();
         DatabaseType postgres7 = new Postgresql7DatabaseType();
         DatabaseType postgres8 = new Postgresql8DatabaseType();
+        DatabaseType h2_11 = new H2v11DatabaseType();
 
         assert DatabaseTypeFactory.isOracle(oracle8);
         assert !DatabaseTypeFactory.isPostgres(oracle8);
+        assert !DatabaseTypeFactory.isH2(oracle8);
         assert DatabaseTypeFactory.isOracle(oracle9);
         assert !DatabaseTypeFactory.isPostgres(oracle9);
+        assert !DatabaseTypeFactory.isH2(oracle9);
         assert DatabaseTypeFactory.isOracle(oracle10);
         assert !DatabaseTypeFactory.isPostgres(oracle10);
+        assert !DatabaseTypeFactory.isH2(oracle10);
 
         assert DatabaseTypeFactory.isPostgres(postgres7);
         assert !DatabaseTypeFactory.isOracle(postgres7);
+        assert !DatabaseTypeFactory.isH2(postgres7);
         assert DatabaseTypeFactory.isPostgres(postgres8);
         assert !DatabaseTypeFactory.isOracle(postgres8);
+        assert !DatabaseTypeFactory.isH2(postgres8);
+
+        assert DatabaseTypeFactory.isH2(h2_11);
+        assert !DatabaseTypeFactory.isPostgres(h2_11);
+        assert !DatabaseTypeFactory.isOracle(h2_11);
+    }
+
+    /**
+     * Tests embedded H2 database.
+     *
+     * @throws Exception
+     */
+    public void testH2() throws Exception {
+        conn = getH2Connection();
+
+        if (conn == null) {
+            return;
+        }
+
+        DatabaseType dbtype = DatabaseTypeFactory.getDatabaseType(conn);
+
+        assert DatabaseTypeFactory.isH2(conn);
+        assert DatabaseTypeFactory.isH2(dbtype);
+        assert dbtype.getVendor().equals("h2");
+
+        assertH2Types(dbtype);
     }
 
     /**
@@ -148,7 +310,7 @@ public class DatabaseTest extends AbstractDatabaseTestUtil {
      * @throws Exception
      */
     public void testPostgres() throws Exception {
-        Connection conn = getPostgresConnection();
+        conn = getPostgresConnection();
 
         if (conn == null) {
             return;
@@ -169,7 +331,7 @@ public class DatabaseTest extends AbstractDatabaseTestUtil {
      * @throws Exception
      */
     public void testPostgres8() throws Exception {
-        Connection conn = getPostgresConnection("8");
+        conn = getPostgresConnection("8");
         if (conn == null) {
             return;
         }
@@ -191,7 +353,7 @@ public class DatabaseTest extends AbstractDatabaseTestUtil {
      * @throws Exception
      */
     public void testOracle() throws Exception {
-        Connection conn = getOracleConnection();
+        conn = getOracleConnection();
         if (conn == null) {
             return;
         }
@@ -211,7 +373,7 @@ public class DatabaseTest extends AbstractDatabaseTestUtil {
      * @throws Exception
      */
     public void testOracle10() throws Exception {
-        Connection conn = getOracleConnection("10");
+        conn = getOracleConnection("10");
         if (conn == null) {
             return;
         }
@@ -246,6 +408,9 @@ public class DatabaseTest extends AbstractDatabaseTestUtil {
         assert "BYTEA".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "BYTES", dbtype)) : dbtype;
         assert "BYTEA".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "BLOB", dbtype)) : dbtype;
         assert "VARCHAR".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "CLOB", dbtype)) : dbtype;
+        assert "SMALLINT".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "SMALLINT", dbtype)) : dbtype;
+        assert "TIMESTAMP WITHOUT TIME ZONE".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "TIMESTAMP",
+            dbtype)) : dbtype;
     }
 
     /**
@@ -267,5 +432,30 @@ public class DatabaseTest extends AbstractDatabaseTestUtil {
         assert "BLOB".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "BYTES", dbtype)) : dbtype;
         assert "BLOB".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "BLOB", dbtype)) : dbtype;
         assert "CLOB".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "CLOB", dbtype)) : dbtype;
+        assert "NUMBER(3)".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "SMALLINT", dbtype)) : dbtype;
+        assert "TIMESTAMP".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "TIMESTAMP", dbtype)) : dbtype;
+    }
+
+    /**
+     * Tests that the H2 type mappings are correct. These are common across all H2 versions.
+     *
+     * @param dbtype
+     */
+    private void assertH2Types(DatabaseType dbtype) {
+        assert dbtype instanceof H2DatabaseType;
+
+        assert "BIGINT".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "INTEGER", dbtype)) : dbtype;
+        assert "BIGINT".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "LONG", dbtype)) : dbtype;
+        assert "DOUBLE".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "BIGDEC", dbtype)) : dbtype;
+        assert "VARCHAR".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "VARCHAR2", dbtype)) : dbtype;
+        assert "LONGVARCHAR".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "LONGVARCHAR", dbtype)) : dbtype;
+        assert "CHAR".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "CHAR", dbtype)) : dbtype;
+        assert "FLOAT".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "DOUBLE", dbtype)) : dbtype;
+        assert "BOOLEAN".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "BOOLEAN", dbtype)) : dbtype;
+        assert "BLOB".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "BYTES", dbtype)) : dbtype;
+        assert "BLOB".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "BLOB", dbtype)) : dbtype;
+        assert "CLOB".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "CLOB", dbtype)) : dbtype;
+        assert "SMALLINT".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "SMALLINT", dbtype)) : dbtype;
+        assert "TIMESTAMP".equals(TypeMap.getMappedType(TypeMap.loadKnownTypeMaps(), "TIMESTAMP", dbtype)) : dbtype;
     }
 }

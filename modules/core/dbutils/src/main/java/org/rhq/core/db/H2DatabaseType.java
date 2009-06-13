@@ -46,7 +46,7 @@ public abstract class H2DatabaseType extends DatabaseType {
     }
 
     public String getHibernateDialect() {
-        return "org.hibernate.dialect.H2Dialect";
+        return "org.rhq.core.domain.dialect.H2CustomDialect";
     }
 
     /**

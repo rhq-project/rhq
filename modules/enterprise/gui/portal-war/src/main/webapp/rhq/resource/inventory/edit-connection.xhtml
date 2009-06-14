@@ -29,9 +29,10 @@
          </f:facet>
 
          <h:form id="editConnectionPropertiesForm" onsubmit="prepareInputsForSubmission(this)">
- 				<h:commandButton type="submit" action="#{ConnectionPropertiesUIBean.update}" value="OK" style="display:none;">
-                     <s:defaultAction />
-                </h:commandButton>
+            <h:commandButton type="submit" action="#{ConnectionPropertiesUIBean.update}" value="OK" style="display:none;">
+               <s:defaultAction />
+            </h:commandButton>
+
             <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
          
             <onc:config configurationDefinition="#{ConnectionPropertiesUIBean.configurationDefinition}"

@@ -6,6 +6,8 @@
 -->
 <server>
 
+   <!-- do not expose the EJB3 beans using the built-in way - we'll do it our own way using remote-api-service.xml -->
+   <!--
    <mbean code="org.jboss.remoting.transport.Connector"
           name="jboss.remoting:type=Connector,name=DefaultEjb3Connector,handler=ejb3">
       <depends>jboss.aop:service=AspectDeployer</depends>
@@ -16,7 +18,8 @@
          </handlers>
       </attribute>
    </mbean>
-   
+   -->
+
    <!-- The following is sample configuration for modifying the Connector 
    <mbean code="org.jboss.remoting.transport.Connector"
           name="jboss.remoting:type=Connector,name=DefaultEjb3Connector,handler=ejb3">

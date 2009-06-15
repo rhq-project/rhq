@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <jboss-app>
-  
+
   <module>
     <service>server-comm-service.xml</service>
   </module>
@@ -13,11 +13,11 @@
   <module>
     <service>custom-jaas-deployment-service.xml</service>
   </module>
-  
+
   <module>
     <service>product-plugin-service.xml</service>
   </module>
-  
+
   <module>
     <service>mq-service.xml</service>
   </module>
@@ -25,5 +25,9 @@
   <module>
     <service>server-service.xml</service>
   </module>
-  
-</jboss-app> 
+
+  <module>
+    <service>remote-api-service.xml</service>
+  </module>
+
+</jboss-app>

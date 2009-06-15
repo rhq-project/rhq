@@ -38,7 +38,7 @@
                    2) Change the below property to "5.1.0-SNAPSHOT".
                    3) Uncomment the JBoss snapshot repo near the bottom of this POM.
         -->
-        <jbossas.version>5.1.0-SNAPSHOT</jbossas.version>                                
+        <jbossas.version>5.1.0.GA</jbossas.version>                                
     </properties>
 
     <dependencyManagement>
@@ -504,7 +504,7 @@
     </profiles>    
     
     <repositories>   
-    
+<!--    
         <repository>
             <id>jboss-snapshots</id>
             <name>JBoss Snapshot Repository</name>
@@ -514,7 +514,7 @@
                 <updatePolicy>always</updatePolicy>
             </snapshots>
         </repository>
-
+-->
     </repositories>
 
   <reporting>

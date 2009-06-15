@@ -50,43 +50,49 @@ public class FindResourcesCommand implements ClientCommand {
         int i = 0;
         boolean missingData = false;
         for (ResourceComposite resource : list) {
-        	//initialize the sensible defaults?
-           String rId = "(unavailable)";
-           String rName = "(unavailable)";
-           String rTypePlugin = "(unavailable)";
-           String rTypeName = "(unavailable)";
-           String rAvailability = "(unavailable)";
-           if((resource!=null)&&resource.getResource()!=null){
-        	   rId =String.valueOf(resource.getResource().getId());
-        	   rName =resource.getResource().getName();
-        	   if(resource.getResource().getResourceType()!=null){
-       		      rTypePlugin = resource.getResource().getResourceType().getPlugin();
-        		  rTypeName = resource.getResource().getResourceType().getName();
-        	   }else{missingData =true;}
-        	   if(resource.getAvailability()!=null){
-        		  rAvailability = resource.getAvailability().name();
-        	   }else{missingData =true;}
-           }
-//           data[i++] = new String[] {
-//        		   String.valueOf(resource.getResource().getId()),
-//        		   resource.getResource().getName(),
-//        		   resource.getResource().getResourceType().getPlugin() + ":"
-//        		   + resource.getResource().getResourceType().getName(),
-//        		   "[" + resource.getAvailability().name() + "]" };
-        	data[i++] = new String[] {
-                rId,
-                rName,
-                rTypePlugin + ":"
-                + rTypeName,
-                "[" + rAvailability + "]" };
-//            "[" + resource.getAvailability().getName() + "]" };
+            // initialize the sensible defaults?
+            String rId = "(unavailable)";
+            String rName = "(unavailable)";
+            String rTypePlugin = "(unavailable)";
+            String rTypeName = "(unavailable)";
+            String rAvailability = "(unavailable)";
+            if ((resource != null) && resource.getResource() != null) {
+                rId = String.valueOf(resource.getResource().getId());
+                rName = resource.getResource().getName();
+                if (resource.getResource().getResourceType() != null) {
+                    rTypePlugin = resource.getResource().getResourceType().getPlugin();
+                    rTypeName = resource.getResource().getResourceType().getName();
+                } else {
+                    missingData = true;
+                }
+                if (resource.getAvailability() != null) {
+                    rAvailability = resource.getAvailability().name();
+                } else {
+                    missingData = true;
+                }
+            }
+
+            // trim name data down so more data visible
+            int fieldLength = 25;
+            if (rName.length() > fieldLength) {
+                rName = rName.substring(0, fieldLength - 1);
+            }
+            // data[i++] = new String[] {
+            // String.valueOf(resource.getResource().getId()),
+            // resource.getResource().getName(),
+            // resource.getResource().getResourceType().getPlugin() + ":"
+            // + resource.getResource().getResourceType().getName(),
+            // "[" + resource.getAvailability().name() + "]" };
+            data[i++] = new String[] { rId, rName, rTypePlugin + ":" + rTypeName, "[" + rAvailability + "]" };
+            // "[" + resource.getAvailability().getName() + "]" };
         }
-        //Generate data in table format
+        // Generate data in table format
         TabularWriter tw = new TabularWriter(client.getPrintWriter(), "Id", "Name", "Type", "Availability");
         tw.setWidth(client.getConsoleWidth());
         tw.print(data);
-        if(missingData){
-           client.addMenuNote("Data for some of the objects was unavailable. Contact the System Administrator if that a problem.");
+        if (missingData) {
+            client
+                .addMenuNote("Data for some of the objects was unavailable. Contact the System Administrator if that a problem.");
         }
 
         return true;

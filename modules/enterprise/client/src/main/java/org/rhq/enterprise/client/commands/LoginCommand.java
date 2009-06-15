@@ -49,18 +49,14 @@ public class LoginCommand implements ClientCommand {
             }
             client.setHost(host);
             client.setPort(port);
-//            client.setRemoteClient(new RHQRemoteClient(host, port));
-              RHQRemoteClient remoteClient = new RHQRemoteClient(host,port);
+            RHQRemoteClient remoteClient = new RHQRemoteClient(host, port);
             client.setRemoteClient(remoteClient);
 
             client.setUser(user);
             client.setPass(pass);
-             remoteClient.reinitialize();
             client.setSubject(client.getRemoteClient().getSubjectManagerRemote().login(user, pass));
             client.getRemoteClient().setLoggedIn(true);
             client.getPrintWriter().println("Login successful");
-            //spit out somethign that tells which server we're talking to
-//            System.out.println("SRVR:"+client.getRemoteClient().sbms.getClass().getAnnotation(WebServiceClient.class).wsdlLocation());
 
         } catch (Exception e) {
             client.getPrintWriter().println("Login failed: " + e.getMessage());
@@ -78,6 +74,6 @@ public class LoginCommand implements ClientCommand {
     }
 
     public String getDetailedHelp() {
-        return null; //To change body of implemented methods use File | Settings | File Templates.
+        return ""; // To change body of implemented methods use File | Settings | File Templates.
     }
 }

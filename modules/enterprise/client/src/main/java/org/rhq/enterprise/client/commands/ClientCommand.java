@@ -25,20 +25,12 @@ import org.rhq.enterprise.client.ClientMain;
  */
 public interface ClientCommand {
 
-
     public static Class[] COMMANDS = new Class[] {
-            FindResourcesCommand.class,
-//            FindGroupsCommand.class,
-            HelpCommand.class,
-            LoginCommand.class,
-            LogoutCommand.class,
-            CreateUserCommand.class,
-            FindUserAccountsCommand.class,
-            DeleteUserCommand.class,
-            QuitCommand.class,
-            ScriptCommand.class
-    };
-
+        FindResourcesCommand.class,
+        // FindGroupsCommand.class,
+        HelpCommand.class, LoginCommand.class, LogoutCommand.class, CreateUserCommand.class,
+        FindUserAccountsCommand.class, DeleteUserCommand.class, StartJBossAsCommand.class, StopJBossAsCommand.class,
+        QuitCommand.class, ScriptCommand.class };
 
     /**
      * All implementations must indicate what the prompt command is that will trigger its execution. This method returns
@@ -52,10 +44,12 @@ public interface ClientCommand {
     /**
      * Executes the agent prompt command with the given arguments.
      *
-     * @param client the ClientMain class itself
-     * @param args  the arguments passed to the agent on the agent prompt
-     * @return <code>true</code> if the agent can continue accepting prompt commands; <code>false</code> if the agent
-     *         should die
+     * @param client
+     *            the ClientMain class itself
+     * @param args
+     *            the arguments passed to the agent on the agent prompt
+     * @return <code>true</code> if the agent can continue accepting prompt commands; <code>false</code> if the
+     *         agent should die
      */
     boolean execute(ClientMain client, String[] args);
 

@@ -25,6 +25,7 @@ import javax.jws.WebService;
 import javax.jws.soap.SOAPBinding;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
@@ -32,7 +33,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
 /**
- * @author Greg Hinkle
+ * @author Greg Hinkle, Simeon Pinder
  */
 
 @SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
@@ -45,12 +46,18 @@ public interface ResourceManagerRemote {
      * Except for the user parameter, the other parameters can be left null so that the query will not filter by that
      * attribute.
      *
-     * @param  user           The logged in user's subject.
-     * @param  category       Limit the search to a given {@link ResourceCategory}
-     * @param  type           Limit the search to to a given {@link ResourceType}
-     * @param  parentResource Limit the search to children of a given parent resource
-     * @param  searchString   An SQL <i>like</i> expression that is used to search the name and description.
-     * @param  pageControl    Controls the <i>paging</i> of the items returned.
+     * @param user
+     *            The logged in user's subject.
+     * @param category
+     *            Limit the search to a given {@link ResourceCategory}
+     * @param type
+     *            Limit the search to to a given {@link ResourceType}
+     * @param parentResource
+     *            Limit the search to children of a given parent resource
+     * @param searchString
+     *            An SQL <i>like</i> expression that is used to search the name and description.
+     * @param pageControl
+     *            Controls the <i>paging</i> of the items returned.
      *
      * @return The requested list of pages.
      */
@@ -63,9 +70,16 @@ public interface ResourceManagerRemote {
         @WebParam(name = "typeName")
         String typeName, //
         @WebParam(name = "parentResourceId")
-        int parentResourceId, // 
+        int parentResourceId, //
         @WebParam(name = "searchString")
-        String searchString, // 
+        String searchString, //
         @WebParam(name = "pageControl")
         PageControl pageControl);
+
+    @WebMethod
+    Resource getResourceById( //
+        @WebParam(name = "user")
+        Subject user, //
+        @WebParam(name = "resourceId")
+        int resourceId);
 }

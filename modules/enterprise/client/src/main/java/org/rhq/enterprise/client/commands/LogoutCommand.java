@@ -41,7 +41,6 @@ public class LogoutCommand implements ClientCommand {
 
         client.getPrintWriter().println("Logout successful");
 
-
         return true;
     }
 
@@ -54,6 +53,6 @@ public class LogoutCommand implements ClientCommand {
     }
 
     public String getDetailedHelp() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return ""; // To change body of implemented methods use File | Settings | File Templates.
     }
 }

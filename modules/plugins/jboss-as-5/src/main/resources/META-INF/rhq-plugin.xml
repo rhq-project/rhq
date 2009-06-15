@@ -2414,6 +2414,10 @@
                  &ejb2SessionBeanOperations;
                  &ejb2CommonMetrics;
                  &ejb2StatelessSessionBeanMetrics;
+
+                <metric property="methodInvocationTime" dataType="calltime" units="milliseconds"
+                        defaultOn="false" defaultInterval="600000" destinationType="Method Name"
+                        description="The minimum, maximum, and average invocation times for each of the methods exposed by this EJB"/>
             </service>
             
             <service name="EJB2 Stateful Session Bean"
@@ -2424,9 +2428,13 @@
                  &ejb2SessionBeanOperations;                 
                  &ejb2CommonMetrics;                 
                  &ejb2StatefulSessionBeanMetrics;
+
+                <metric property="methodInvocationTime" dataType="calltime" units="milliseconds"
+                        defaultOn="false" defaultInterval="600000" destinationType="Method Name"
+                        description="The minimum, maximum, and average invocation times for each of the methods exposed by this EJB"/>
             </service>
             
-            <service name="EJB2 Message Driven Bean"
+            <service name="EJB2 Message-Driven Bean"
                      class="Ejb2BeanComponent"
                      discovery="Ejb2BeanDiscoveryComponent"
                      description="An EJB2 Message Driven Bean">
@@ -2498,7 +2506,7 @@
                  &ejb2StatefulSessionBeanMetrics;
             </service>         
 
-            <service name="Message Driven Bean (Embedded)"
+            <service name="EJB2 Message-Driven Bean (Embedded)"
                      class="Ejb2BeanComponent"
                      discovery="Ejb2BeanDiscoveryComponent"
                      description="An EJB2 Message Driven Bean">

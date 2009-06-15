@@ -258,14 +258,16 @@
 
         <dependency>
           <groupId>org.jboss.ejb3</groupId>
-          <artifactId>jboss-ejb3-proxy-spi</artifactId>                    
+          <artifactId>jboss-ejb3-proxy-spi</artifactId>      
+          <!--<version>${jbossas.version}</version>-->
           <classifier>client</classifier>
           <scope>runtime</scope>
         </dependency>
 
         <dependency>
           <groupId>org.jboss.ejb3</groupId>
-          <artifactId>jboss-ejb3-proxy-impl</artifactId>                    
+          <artifactId>jboss-ejb3-proxy-impl</artifactId>   
+          <!--<version>${jbossas.version}</version>-->
           <classifier>client</classifier>
           <scope>runtime</scope>
         </dependency>

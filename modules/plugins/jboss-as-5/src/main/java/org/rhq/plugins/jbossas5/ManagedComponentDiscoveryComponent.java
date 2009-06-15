@@ -27,16 +27,15 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jboss.deployers.spi.management.ManagementView;
+import org.jboss.managed.api.ComponentType;
+import org.jboss.managed.api.ManagedComponent;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.plugins.jbossas5.util.ConversionUtils;
-
-import org.jboss.deployers.spi.management.ManagementView;
-import org.jboss.managed.api.ComponentType;
-import org.jboss.managed.api.ManagedComponent;
 
 /**
  * Discovery component for ManagedComponents exposed by the JBoss AS 5.x Profile Service that will be represented as
@@ -46,30 +45,26 @@ import org.jboss.managed.api.ManagedComponent;
  * @author Mark Spritzer
  * @author Ian Springer
  */
-public class ManagedComponentDiscoveryComponent<P extends ProfileServiceComponent>
-        implements ResourceDiscoveryComponent<P>
-{
+public class ManagedComponentDiscoveryComponent<P extends ProfileServiceComponent> implements
+    ResourceDiscoveryComponent<P> {
     private final Log log = LogFactory.getLog(this.getClass());
 
-    public Set<DiscoveredResourceDetails> discoverResources(
-            ResourceDiscoveryContext<P> discoveryContext) throws Exception
-    {
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<P> discoveryContext)
+        throws Exception {
         ResourceType resourceType = discoveryContext.getResourceType();
         log.trace("Discovering " + resourceType.getName() + " Resources...");
 
-        ManagementView managementView = discoveryContext.getParentResourceComponent().getConnection().getManagementView();
+        ManagementView managementView = discoveryContext.getParentResourceComponent().getConnection()
+            .getManagementView();
         // TODO (ips): Only refresh the ManagementView *once* per runtime discovery scan, rather than every time this
         //             method is called. Do this by providing a runtime scan id in the ResourceDiscoveryContext.
         managementView.load();
 
         ComponentType componentType = getComponentType(discoveryContext);
         Set<ManagedComponent> components;
-        try
-        {
+        try {
             components = managementView.getComponentsForType(componentType);
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             throw new IllegalStateException("Failed to get component types for " + resourceType + ".", e);
         }
 
@@ -78,25 +73,21 @@ public class ManagedComponentDiscoveryComponent<P extends ProfileServiceComponen
            type we're interested in, so we can just add them all. There may be need for multiple iterations
            over lists retrieved from different component types, but that is possible through the current API.
         */
-        for (ManagedComponent component : components)
-        {
-            String resourceName = getResourceName(component);
-            String resourceKey = component.getName();
-            String version = null; // (ips) I don't think there's anything generic we can do here.
+        for (ManagedComponent component : components) {
+            if (accept(discoveryContext, component)) {
+                String resourceName = getResourceName(component);
+                String resourceKey = component.getName();
+                String version = null; // (ips) I don't think there's anything generic we can do here.
 
-            DiscoveredResourceDetails resource =
-                    new DiscoveredResourceDetails(resourceType,
-                            resourceKey,
-                            resourceName,
-                            version,
-                            resourceType.getDescription(),
-                            discoveryContext.getDefaultPluginConfiguration(),
-                            null);
+                DiscoveredResourceDetails resource = new DiscoveredResourceDetails(resourceType, resourceKey,
+                    resourceName, version, resourceType.getDescription(), discoveryContext
+                        .getDefaultPluginConfiguration(), null);
 
-            resource.getPluginConfiguration().put(new PropertySimple(ManagedComponentComponent.Config.COMPONENT_NAME,
-                    component.getName()));
+                resource.getPluginConfiguration().put(
+                    new PropertySimple(ManagedComponentComponent.Config.COMPONENT_NAME, component.getName()));
 
-            discoveredResources.add(resource);
+                discoveredResources.add(resource);
+            }
         }
 
         log.trace("Discovered " + discoveredResources.size() + " " + resourceType.getName() + " Resources.");
@@ -104,12 +95,29 @@ public class ManagedComponentDiscoveryComponent<P extends ProfileServiceComponen
     }
 
     protected ComponentType getComponentType(ResourceDiscoveryContext<P> discoveryContext) {
-        ManagementView managementView = discoveryContext.getParentResourceComponent().getConnection().getManagementView();
         ResourceType resourceType = discoveryContext.getResourceType();
         return ConversionUtils.getComponentType(resourceType);
     }
 
     protected String getResourceName(ManagedComponent component) {
         return component.getName();
+    }
+
+    /**
+     * This method is called during {@link #discoverResources(ResourceDiscoveryContext)} to determine
+     * whether given component that has been found in the management view by this component's configured
+     * component type is applicable in the discovery context.
+     * <p>
+     * Because the Profile Service doesn't always provide the components in a hierarchy we present the resources
+     * we need this method to filter the components into their appropriate places.
+     * <p> 
+     * This default implementation always returns true.
+     * 
+     * @param discoveryContext the current discovery context
+     * @param component the discovered component
+     * @return true if the component logically belongs in the context, false otherwise.
+     */
+    protected boolean accept(ResourceDiscoveryContext<P> discoveryContext, ManagedComponent component) {
+        return true;
     }
 }

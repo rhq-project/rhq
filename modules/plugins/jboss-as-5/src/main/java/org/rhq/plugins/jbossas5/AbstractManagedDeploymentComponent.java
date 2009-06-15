@@ -216,6 +216,14 @@ public abstract class AbstractManagedDeploymentComponent
 
     // -------------------------------------------------------------
 
+    public String getDeploymentName() {
+        return deploymentName;
+    }
+
+    public KnownDeploymentTypes getDeploymentType() {
+        return deploymentType;
+    }
+
     protected ManagedDeployment getManagedDeployment() throws NoSuchDeploymentException
     {
         ManagementView managementView = getConnection().getManagementView();

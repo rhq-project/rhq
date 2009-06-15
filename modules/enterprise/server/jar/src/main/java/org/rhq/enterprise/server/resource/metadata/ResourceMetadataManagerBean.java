@@ -121,6 +121,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     /**
      * Returns the information on all plugins as found in the database.
      */
+    @SuppressWarnings("unchecked")
     public List<Plugin> getPlugins() {
         Query q = entityManager.createNamedQuery(Plugin.QUERY_FIND_ALL);
         return q.getResultList();
@@ -155,7 +156,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
             plugin = updatePluginExceptContent(plugin);
             if (pluginFile != null) {
                 entityManager.flush();
-                streamPluginFileContentToDatabase(plugin.getName(), pluginFile);
+                streamPluginFileContentToDatabase(plugin.getId(), pluginFile);
             }
             log.debug("Updated plugin entity [" + plugin + "]");
         }
@@ -212,7 +213,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
      *
      * @throws Exception
      */
-    private void streamPluginFileContentToDatabase(String name, File file) throws Exception {
+    private void streamPluginFileContentToDatabase(int id, File file) throws Exception {
         Connection conn = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -220,13 +221,14 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         FileInputStream fis = new FileInputStream(file);
 
         try {
+
             conn = this.dataSource.getConnection();
-            ps = conn.prepareStatement("UPDATE " + Plugin.TABLE_NAME + " SET CONTENT = ? WHERE NAME = ?");
+            ps = conn.prepareStatement("UPDATE " + Plugin.TABLE_NAME + " SET CONTENT = ? WHERE ID = ?");
             ps.setBinaryStream(1, new BufferedInputStream(fis), (int) file.length());
-            ps.setString(2, name);
+            ps.setInt(2, id);
             int updateResults = ps.executeUpdate();
             if (updateResults != 1) {
-                throw new Exception("Failed to update content for plugin [" + name + "] from [" + file + "]");
+                throw new Exception("Failed to update content for plugin [" + id + "] from [" + file + "]");
             }
         } finally {
             JDBCUtil.safeClose(conn, ps, rs);

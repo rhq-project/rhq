@@ -3,19 +3,18 @@
  * Copyright 2007, Red Hat Middleware, LLC. All rights reserved.
  */
 
-package org.rhq.enterprise.server.safeinvoker;
+package org.rhq.enterprise.server.util;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.naming.InitialContext;
 
 import org.jboss.aspects.remoting.AOPRemotingInvocationHandler;
 import org.jboss.remoting.InvocationRequest;
 import org.jboss.remoting.invocation.NameBasedInvocation;
-
-import javax.naming.InitialContext;
-import java.lang.reflect.Method;
-import java.lang.reflect.InvocationTargetException;
-import java.util.Map;
-import java.util.HashMap;
-
-import org.rhq.enterprise.server.util.HibernateDetachUtility;
 
 /**
  * This rather hackish endpoint is here to handle remote invocations over the standard
@@ -24,7 +23,6 @@ import org.rhq.enterprise.server.util.HibernateDetachUtility;
  * @author Greg Hinkle
  */
 public class RemoteSafeAOPInvocationHandler extends AOPRemotingInvocationHandler {
-
 
     public static final Map<String, Class> PRIMITIVE_CLASSES;
 
@@ -39,7 +37,6 @@ public class RemoteSafeAOPInvocationHandler extends AOPRemotingInvocationHandler
         PRIMITIVE_CLASSES.put(Character.TYPE.getName(), Character.TYPE);
         PRIMITIVE_CLASSES.put(Byte.TYPE.getName(), Byte.TYPE);
     }
-
 
     public Object invoke(InvocationRequest invocationRequest) throws Throwable {
 
@@ -64,7 +61,6 @@ public class RemoteSafeAOPInvocationHandler extends AOPRemotingInvocationHandler
 
             result = m.invoke(target, nbi.getParameters());
 
-
         } catch (InvocationTargetException e) {
             e.printStackTrace();
             return e.getTargetException();
@@ -76,12 +72,13 @@ public class RemoteSafeAOPInvocationHandler extends AOPRemotingInvocationHandler
             if (result != null) {
 
                 try {
-                    HibernateDetachUtility.nullOutUninitializedFields(result, HibernateDetachUtility.SerializationType.SERIALIZATION);
+                    HibernateDetachUtility.nullOutUninitializedFields(result,
+                        HibernateDetachUtility.SerializationType.SERIALIZATION);
                 } catch (Exception e) {
                     e.printStackTrace();
                     return e;
                 }
-//                   System.out.println("ExecutionTime: " + (System.currentTimeMillis() - time));
+                //                   System.out.println("ExecutionTime: " + (System.currentTimeMillis() - time));
 
             }
         }

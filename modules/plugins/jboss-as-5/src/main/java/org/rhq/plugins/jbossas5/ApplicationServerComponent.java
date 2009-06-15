@@ -82,6 +82,7 @@ import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.content.ContentContext;
 import org.rhq.core.pluginapi.content.ContentFacet;
 import org.rhq.core.pluginapi.content.ContentServices;
+import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
@@ -136,6 +137,8 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
 
     private static final String JDK5CONNECTOR = "org.mc4j.ems.connection.support.metadata.J2SE5ConnectionTypeDescriptor";
 
+    private LogFileEventResourceComponentHelper logFileEventDelegate;
+
     public AvailabilityType getAvailability() {
         connect();
         // TODO: Ping the connection to make sure it's not defunct.
@@ -145,8 +148,8 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
     public void start(ResourceContext resourceContext) {
         this.resourceContext = resourceContext;
         connect();
-        //this.logFileEventDelegate = new LogFileEventResourceComponentHelper(this.resourceContext);
-        //this.logFileEventDelegate.startLogFileEventPollers();
+        this.logFileEventDelegate = new LogFileEventResourceComponentHelper(this.resourceContext);
+        this.logFileEventDelegate.startLogFileEventPollers();
 
         JBossASPaths paths = getJBossASPaths();
         ContentContext contentContext = resourceContext.getContentContext();
@@ -212,7 +215,7 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
     }
 
     public void stop() {
-        //this.logFileEventDelegate.stopLogFileEventPollers();
+        this.logFileEventDelegate.stopLogFileEventPollers();
         jmxConnectionHelper.closeConnection();
     }
 

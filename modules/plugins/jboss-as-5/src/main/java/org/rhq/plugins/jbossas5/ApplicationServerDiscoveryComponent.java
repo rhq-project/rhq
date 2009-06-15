@@ -244,9 +244,10 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
         String serverName = (String) ManagedComponentUtils.getSimplePropertyValue(serverConfigComponent, "serverName");
 
         // serverHomeDir is the full path to the instance's configuration dir, e.g. "/opt/jboss-5.1.0.GA/server/default";
-        // that's guaranteed to be unique, so we'll use it as the Resource key.
-        String resourceKey = (String) ManagedComponentUtils.getSimplePropertyValue(serverConfigComponent,
+        // That's guaranteed to be unique among JBAS instances on the same machine, so we'll use it as the Resource key.
+        String serverHomeDir = (String) ManagedComponentUtils.getSimplePropertyValue(serverConfigComponent,
             "serverHomeDir");
+        String resourceKey = serverHomeDir;
 
         // homeDir is the full path to the JBoss installation dir used by this instance, e.g. "/opt/jboss-5.1.0.GA".
         String homeDir = (String) ManagedComponentUtils.getSimplePropertyValue(serverConfigComponent, "homeDir");
@@ -266,8 +267,10 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
             "specificationVersion");
 
         Configuration pluginConfig = discoveryContext.getDefaultPluginConfiguration();
-        pluginConfig.put(new PropertySimple(ApplicationServerComponent.PluginConfigPropNames.SERVER_NAME, serverName));
         pluginConfig.put(new PropertySimple(ApplicationServerComponent.PluginConfigPropNames.HOME_DIR, homeDir));
+        pluginConfig.put(new PropertySimple(ApplicationServerComponent.PluginConfigPropNames.SERVER_HOME_DIR, serverHomeDir));
+        pluginConfig.put(new PropertySimple(ApplicationServerComponent.PluginConfigPropNames.SERVER_NAME, serverName));
+
         boolean debug = Boolean.getBoolean(JBMANCON_DEBUG_SYSPROP);
         if (debug) {
             //new UnitTestRunner().runUnitTests(connection);

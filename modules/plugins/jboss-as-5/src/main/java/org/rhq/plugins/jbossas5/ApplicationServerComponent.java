@@ -114,12 +114,20 @@ import com.jboss.jbossnetwork.product.jbpm.handlers.ControlActionFacade;
  */
 public class ApplicationServerComponent implements ResourceComponent, ProfileServiceComponent,
     CreateChildResourceFacet, MeasurementFacet, ConfigurationFacet, ProgressListener, ContentFacet {
+    static abstract class PluginConfigPropNames {
+        static final String SERVER_NAME = "serverName";
+        static final String NAMING_URL = "namingURL";
+        static final String PRINCIPAL = "principal";
+        static final String CREDENTIALS = "credentials";
+        static final String HOME_DIR = "homeDir";
+        static final String SERVER_HOME_DIR = "serverHomeDir";
+        static final String JAVA_HOME = "javaHome";
+        static final String BIND_ADDRESS = "bindAddress";
+    }
+        
     private static final String MANAGED_PROPERTY_GROUP = "managedPropertyGroup";
 
     private static final Pattern METRIC_NAME_PATTERN = Pattern.compile("(.*)\\|(.*)\\|(.*)\\|(.*)");
-
-    private static final String HOME_DIR_PROP_NAME = "homeDir";
-    private static final String SERVER_HOME_DIR_PROP_NAME = "serverHomeDir";
 
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -127,9 +135,6 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
     private ProfileServiceConnection connection;
     private File deployDirectory;
     private JmxConnectionHelper jmxConnectionHelper;
-
-    private File configPath;
-    private String configSet;
 
     private ApplicationServerContentFacetDelegate contentFacetDelegate;
 
@@ -165,18 +170,12 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
 
         Configuration pluginConfig = resourceContext.getPluginConfiguration();
 
-        this.configPath = resolvePathRelativeToHomeDir(getRequiredPropertyValue(pluginConfig, HOME_DIR_PROP_NAME));
-        if (!this.configPath.exists()) {
+        File configPath = resolvePathRelativeToHomeDir(getRequiredPropertyValue(pluginConfig, PluginConfigPropNames.SERVER_HOME_DIR));
+        if (!configPath.exists()) {
             throw new InvalidPluginConfigurationException("Configuration path '" + configPath + "' does not exist.");
         }
-        configSet = pluginConfig.getSimpleValue(SERVER_HOME_DIR_PROP_NAME, this.configPath.getName());
 
-        File configSetFile = new File(configSet);
-        if (!configSetFile.exists()) {
-            throw new InvalidPluginConfigurationException("Configuration path '" + configSetFile + "' does not exist.");
-        }
-
-        contentFacetDelegate = new ApplicationServerContentFacetDelegate(workflowManager, configSetFile);
+        this.contentFacetDelegate = new ApplicationServerContentFacetDelegate(workflowManager, configPath);
 
         initializeEmsConnection();
     }
@@ -211,7 +210,7 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
         EmsConnection conn = jmxConnectionHelper.getEmsConnection(jmxConfig);
         if (conn != null)
             log.info("Successfully obtained a JMX connection to "
-                + pluginConfiguration.getSimpleValue(JmxConnectionHelper.CONNECTOR_ADDRESS, "-n/a-"));
+                + jmxConfig.getSimpleValue(JmxConnectionHelper.CONNECTOR_ADDRESS, "-n/a-"));
     }
 
     public void stop() {
@@ -545,8 +544,8 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
     private JBossASPaths getJBossASPaths() {
         Configuration pluginConfiguration = resourceContext.getPluginConfiguration();
 
-        String homeDir = pluginConfiguration.getSimpleValue(HOME_DIR_PROP_NAME, null);
-        String serverHomeDir = pluginConfiguration.getSimpleValue(SERVER_HOME_DIR_PROP_NAME, null);
+        String homeDir = pluginConfiguration.getSimpleValue(PluginConfigPropNames.HOME_DIR, null);
+        String serverHomeDir = pluginConfiguration.getSimpleValue(PluginConfigPropNames.SERVER_HOME_DIR, null);
 
         return new JBossASPaths(homeDir, serverHomeDir);
     }
@@ -600,16 +599,5 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
         }
 
         return propValue;
-    }
-
-    static abstract class PluginConfigPropNames {
-        static final String SERVER_NAME = "serverName";
-        static final String NAMING_URL = "namingURL";
-        static final String PRINCIPAL = "principal";
-        static final String CREDENTIALS = "credentials";
-        static final String HOME_DIR = "homeDir";
-        static final String SERVER_HOME_DIR = "serverHomeDir";
-        static final String JAVA_HOME = "javaHome";
-        static final String BIND_ADDRESS = "bindAddress";
     }
 }

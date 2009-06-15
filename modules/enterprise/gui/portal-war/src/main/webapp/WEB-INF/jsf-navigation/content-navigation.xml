@@ -184,32 +184,6 @@
 
    </navigation-rule>
 
-   <!-- Content Source List -->
-   <navigation-rule>
-      <from-view-id>/rhq/content/listContentSources.xhtml</from-view-id>
-
-      <navigation-case>
-         <!-- catch all navigation-case: if any actions return 'success', go here -->
-         <from-outcome>success</from-outcome>
-         <to-view-id>/rhq/content/listContentSources.xhtml</to-view-id>
-         <redirect/>
-      </navigation-case>
-
-      <navigation-case>
-         <from-outcome>createNewContentSource</from-outcome>
-         <to-view-id>/rhq/content/createContentSource.xhtml</to-view-id>
-         <redirect/>
-      </navigation-case>
-      
-      <navigation-case>
-         <!-- sorting rule --> 
-         <from-outcome>sort</from-outcome>
-         <to-view-id>/rhq/content/listContentSources.xhtml</to-view-id>
-         <redirect/>
-      </navigation-case> 
-      
-   </navigation-rule>
-
    <!-- Channel List -->
    <navigation-rule>
       <from-view-id>/rhq/content/listChannels.xhtml</from-view-id>
@@ -231,31 +205,6 @@
          <!-- sorting rule --> 
          <from-outcome>sort</from-outcome>
          <to-view-id>/rhq/content/listChannels.xhtml</to-view-id>
-         <redirect/>
-      </navigation-case> 
-      
-   </navigation-rule>
-
-   <!-- Content Source View -->
-   <navigation-rule>
-      <from-view-id>/rhq/content/contentSource.xhtml</from-view-id>
-
-      <navigation-case>
-         <from-outcome>success</from-outcome>
-         <to-view-id>/rhq/content/contentSource.xhtml?mode=view&amp;id=#{param.id}</to-view-id>
-         <redirect/>
-      </navigation-case>
-
-      <navigation-case>
-         <from-outcome>edit</from-outcome>
-         <to-view-id>/rhq/content/contentSource.xhtml?mode=edit&amp;id=#{param.id}</to-view-id>
-         <redirect/>
-      </navigation-case>
-
-      <navigation-case>
-         <!-- sorting rule --> 
-         <from-outcome>sort</from-outcome>
-         <to-view-id>/rhq/content/contentSource.xhtml?mode=view&amp;id=#{param.id}</to-view-id>
          <redirect/>
       </navigation-case> 
       
@@ -297,15 +246,85 @@
       </navigation-case> 
       
    </navigation-rule>
+   
+   <!-- Content Source List -->
+   <navigation-rule>
+      <from-view-id>/rhq/content/listContentSources.xhtml</from-view-id>
+
+      <navigation-case>
+         <!-- catch all navigation-case: if any actions return 'success', go here -->
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/content/listContentSources.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>createNewContentSource</from-outcome>
+         <to-view-id>/rhq/content/createContentSource.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+      
+      <navigation-case>
+         <!-- sorting rule --> 
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/content/listContentSources.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case> 
+      
+   </navigation-rule>
+   
+   <!-- Content Source View -->
+   <navigation-rule>
+      <from-view-id>/rhq/content/contentSource.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/content/contentSource.xhtml?mode=view&amp;id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>edit</from-outcome>
+         <to-view-id>/rhq/content/contentSource.xhtml?mode=edit&amp;id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <!-- sorting rule --> 
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/content/contentSource.xhtml?mode=view&amp;id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+      
+      <navigation-case>
+         <from-action>#{ConfigHelperUIBean.accessMap}</from-action>
+         <to-view-id>/rhq/content/contentSource-view-map.xhtml</to-view-id>
+      </navigation-case>
+
+      <navigation-case>
+         <from-action>#{ConfigHelperUIBean.accessMap}</from-action>
+         <to-view-id>/rhq/content/contentSource-edit-map.xhtml</to-view-id>
+      </navigation-case>
+
+      <navigation-case>
+         <from-action>#{ConfigHelperUIBean.addNewMap}</from-action>
+         <to-view-id>/rhq/content/contentSource-add-map.xhtml</to-view-id>
+      </navigation-case>
+
+   </navigation-rule>
 
    <!-- Content Source Creation -->
    <navigation-rule>
       <from-view-id>/rhq/content/createContentSource.xhtml</from-view-id>
 
       <navigation-case>
-         <from-outcome>changedSelectedContentSourceTypeName</from-outcome>
-         <to-view-id>/rhq/content/createContentSource.xhtml</to-view-id>
-         <redirect/>
+         <from-action>#{ConfigHelperUIBean.accessMap}</from-action>
+         <to-view-id>/rhq/content/createContentSource-edit-map.xhtml</to-view-id>
+      </navigation-case>
+
+      <navigation-case>
+         <from-action>#{ConfigHelperUIBean.addNewMap}</from-action>
+         <to-view-id>/rhq/content/createContentSource-add-map.xhtml</to-view-id>
       </navigation-case>
 
       <navigation-case>
@@ -318,7 +337,46 @@
          <from-outcome>cancel</from-outcome>
          <to-view-id>/rhq/content/listContentSources.xhtml</to-view-id>
       </navigation-case>
-      
+   </navigation-rule>
+
+   <navigation-rule>
+      <from-view-id>/rhq/content/createContentSource-edit-map.xhtml</from-view-id>
+
+      <navigation-case>
+         <to-view-id>/rhq/content/createContentSource.xhtml</to-view-id>
+      </navigation-case>
+   </navigation-rule>
+
+   <navigation-rule>
+      <from-view-id>/rhq/content/createContentSource-add-map.xhtml</from-view-id>
+
+      <navigation-case>
+         <to-view-id>/rhq/content/createContentSource.xhtml</to-view-id>
+      </navigation-case>
+   </navigation-rule>
+
+   <navigation-rule>
+      <from-view-id>/rhq/content/contentSource-view-map.xhtml</from-view-id>
+
+      <navigation-case>
+         <to-view-id>/rhq/content/contentSource.xhtml</to-view-id>
+      </navigation-case>
+   </navigation-rule>
+
+   <navigation-rule>
+      <from-view-id>/rhq/content/contentSource-edit-map.xhtml</from-view-id>
+
+      <navigation-case>
+         <to-view-id>/rhq/content/contentSource.xhtml</to-view-id>
+      </navigation-case>
+   </navigation-rule>
+
+   <navigation-rule>
+      <from-view-id>/rhq/content/contentSource-add-map.xhtml</from-view-id>
+
+      <navigation-case>
+         <to-view-id>/rhq/content/contentSource.xhtml</to-view-id>
+      </navigation-case>
    </navigation-rule>
 
    <!-- Channel Creation -->

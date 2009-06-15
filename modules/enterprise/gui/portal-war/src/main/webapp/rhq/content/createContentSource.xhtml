@@ -41,49 +41,85 @@
                width="100%"/>
    
       <h:form id="setContentSourceType">
+         <input type="hidden" name="typeName" value="#{param.typeName}"/>
+
          <rich:panel>
             <f:facet name="header">Content Source Type</f:facet>
-            <h:panelGrid columns="3" styleClass="buttons-table" columnClasses="button-cell">
-                <h:outputText value="Select the type you want to create:" />
-                <h:selectOneMenu value="#{CreateContentSourceUIBean.selectedContentSourceTypeName}">
-                    <f:selectItems value="#{CreateContentSourceUIBean.contentSourceTypeNames}" />
-                </h:selectOneMenu>
-                <h:commandButton value="SELECT"
-                                 action="#{CreateContentSourceUIBean.changedSelectedContentSourceTypeName}"
-                                 styleClass="buttonmed" />
+
+            <h:panelGrid columns="1" styleClass="data-table">
+
+            <rich:dataTable id="contentSourceTypesDataTable"
+                            rows="0"
+                            value="#{CreateContentSourceUIBean.dataModel}"
+                            var="item"
+                            width="100%"
+                            columnsWidth="35%, 65%"
+                            styleClass="resources-table"
+                            headerClass="tableRowHeader"
+                            onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                            onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+
+               <f:facet name="PageControlView">
+                  <onc:paginationControl id="NONE" />
+               </f:facet>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="cst.displayName">
+                        <h:outputText styleClass="headerText" value="Name" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputLink value="/rhq/content/createContentSource.xhtml">
+                     <f:param name="typeName" value="#{item.name}" />
+
+                     <h:outputText value="#{item.displayName}" />
+                     <h:outputText value=" *" rendered="#{(not empty param.typeName) and (param.typeName eq item.name)}"/>
+                  </h:outputLink>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="cst.description">
+                        <h:outputText styleClass="headerText" value="Description" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.description}"/>
+               </rich:column>
+
+            </rich:dataTable>
+
             </h:panelGrid>
          </rich:panel>
-      </h:form>
 
-      <h:form id="createContentSourceDetailsForm">
-            
- 	      <rich:panel rendered="#{CreateContentSourceUIBean.selectedContentSourceTypeName ne null}">
-	         <f:facet name="header">Basic Details</f:facet>
-	         <table>
-	            <tr>
-	               <td align="right"><b>Name:</b></td>
-	               <td align="left">
+         <rich:panel rendered="#{not empty param.typeName}">
+             <f:facet name="header">Basic Details</f:facet>
+             <table>
+                <tr>
+                   <td align="right"><b>Name:</b></td>
+                   <td align="left">
                      <h:inputText id="name" value="#{CreateContentSourceUIBean.contentSource.name}" />
-	               </td>
-	            </tr>
-	            <tr>
-	               <td align="right"><b>Description:</b></td>
-	               <td align="left">
+                   </td>
+                </tr>
+                <tr>
+                   <td align="right"><b>Description:</b></td>
+                   <td align="left">
                      <h:inputTextarea id="description" rows="3" cols="20" value="#{CreateContentSourceUIBean.contentSource.description}"/>
-	               </td>
-	            </tr>
-	            <tr>
+                   </td>
+                </tr>
+                <tr>
                   <td align="right"><b>Sync Schedule:</b></td>
                   <td align="left">
                      <h:inputText id="syncSchedule" value="#{CreateContentSourceUIBean.contentSource.syncSchedule}" />
                   </td>
-	            </tr>
-	            <tr>
+                </tr>
+                <tr>
                   <td align="right"><b>Lazy Load:</b></td>
                   <td align="left">
                      <h:selectBooleanCheckbox id="lazyLoad" value="#{CreateContentSourceUIBean.contentSource.lazyLoad}" />
                   </td>
-	            </tr>
+                </tr>
                <tr>
                   <td align="right"><b>Download Mode:</b></td>
                   <td align="left">
@@ -93,11 +129,11 @@
                      </h:selectOneMenu> 
                   </td>
                </tr>
-	         </table>
-	      </rich:panel>
-	      
-	      <rich:panel rendered="#{CreateContentSourceUIBean.selectedContentSourceTypeName ne null}">
-	         <f:facet name="header">Configuration</f:facet>
+             </table>
+         </rich:panel>
+          
+         <rich:panel rendered="#{not empty param.typeName}">
+             <f:facet name="header">Configuration</f:facet>
             <table>
                <tr>
                   <td>
@@ -110,15 +146,15 @@
                   </td>
                </tr>
             </table>
-	      </rich:panel>
+         </rich:panel>
          
-         <h:panelGrid rendered="#{CreateContentSourceUIBean.selectedContentSourceTypeName ne null}"
-                      id="buttonGrid" columns="2" styleClass="buttons-table" columnClasses="button-cell">
+         <rich:panel rendered="#{not empty param.typeName}"
+                     id="buttonGrid" columns="2" styleClass="buttons-table" columnClasses="button-cell">
             <h:commandButton value="SAVE" action="#{CreateContentSourceUIBean.save}"
                              alt="save" styleClass="buttonmed" id="saveButton"/>
             <h:commandButton value="CANCEL" action="#{CreateContentSourceUIBean.cancel}" immediate="true"
                              alt="cancel" styleClass="buttonmed" id="cancelButton"/>
-         </h:panelGrid>
+         </rich:panel>
 
       </h:form>
    </ui:define>

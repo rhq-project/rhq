@@ -101,7 +101,7 @@
    <managed-bean>
       <managed-bean-name>ContentSourceDetailsUIBean</managed-bean-name>
       <managed-bean-class>org.rhq.enterprise.gui.content.ContentSourceDetailsUIBean</managed-bean-class>
-      <managed-bean-scope>request</managed-bean-scope>
+      <managed-bean-scope>session</managed-bean-scope>
    </managed-bean>
    <managed-bean>
       <managed-bean-name>ContentSourceSyncResultsUIBean</managed-bean-name>

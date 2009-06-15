@@ -125,9 +125,9 @@ public class ContentSourceDetailsUIBean {
     }
 
     private void loadContentSource() {
-        if (this.contentSource == null) {
+        Integer id = FacesContextUtility.getRequiredRequestParameter("id", Integer.class);
+        if (this.contentSource == null || (this.contentSource != null && this.contentSource.getId() != id)) {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
-            Integer id = FacesContextUtility.getRequiredRequestParameter("id", Integer.class);
             ContentSourceManagerLocal manager = LookupUtil.getContentSourceManager();
             this.contentSource = manager.getContentSource(subject, id);
 
@@ -138,5 +138,15 @@ public class ContentSourceDetailsUIBean {
             ConfigurationUtility.normalizeConfiguration(this.contentSource.getConfiguration(), this.contentSource
                 .getContentSourceType().getContentSourceConfigurationDefinition());
         }
+    }
+
+    public String finishAddMap() {
+        FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Map added.");
+        return "success";
+    }
+
+    public String finishEditMap() {
+        FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Map updated.");
+        return "success";
     }
 }

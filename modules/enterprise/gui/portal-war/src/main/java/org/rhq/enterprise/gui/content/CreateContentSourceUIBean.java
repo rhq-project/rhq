@@ -18,72 +18,41 @@
  */
 package org.rhq.enterprise.gui.content;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.faces.application.FacesMessage;
+import javax.faces.model.DataModel;
 import javax.faces.model.SelectItem;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
-import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceType;
 import org.rhq.core.domain.content.DownloadMode;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
+import org.rhq.enterprise.gui.common.paging.PageControlView;
+import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.content.ContentException;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
-public class CreateContentSourceUIBean {
+public class CreateContentSourceUIBean extends PagedDataTableUIBean {
+    public static final String MANAGED_BEAN_NAME = "CreateContentSourceUIBean";
+
+    ContentSourceManagerLocal manager = LookupUtil.getContentSourceManager();
+
     private ContentSource newContentSource = new ContentSource();
-    private Map<String, ContentSourceType> contentSourceTypes = null;
     private ContentSourceType selectedContentSourceType = null;
-
-    public SelectItem[] getContentSourceTypeNames() {
-        loadContentSourceTypes();
-
-        if (this.contentSourceTypes == null) {
-            return new SelectItem[0];
-        }
-
-        List<String> names = new ArrayList<String>(this.contentSourceTypes.keySet());
-        Collections.sort(names);
-        SelectItem[] items = new SelectItem[names.size()];
-
-        int i = 0;
-        for (String name : names) {
-            items[i++] = new SelectItem(name);
-        }
-
-        return items;
-    }
 
     public ConfigurationDefinition getContentSourceTypeConfigurationDefinition() {
         return (selectedContentSourceType != null) ? selectedContentSourceType
             .getContentSourceConfigurationDefinition() : null;
-    }
-
-    public String getSelectedContentSourceTypeName() {
-        return (selectedContentSourceType != null) ? selectedContentSourceType.getName() : null;
-    }
-
-    public void setSelectedContentSourceTypeName(String name) {
-        loadContentSourceTypes();
-
-        ContentSourceType cst = null;
-
-        if (name != null) {
-            cst = contentSourceTypes.get(name);
-        }
-
-        updateSelectedContentSourceType(cst);
     }
 
     public SelectItem[] getDownloadModes() {
@@ -104,10 +73,6 @@ public class CreateContentSourceUIBean {
 
     public void setSelectedDownloadMode(String mode) {
         this.newContentSource.setDownloadMode(DownloadMode.valueOf(mode));
-    }
-
-    public String changedSelectedContentSourceTypeName() {
-        return "changedSelectedContentSourceTypeName";
     }
 
     public ContentSource getContentSource() {
@@ -139,7 +104,6 @@ public class CreateContentSourceUIBean {
             return "edit"; // stay in edit mode upon failure
         }
 
-        contentSourceTypes = null;
         selectedContentSourceType = null;
         newContentSource = new ContentSource();
 
@@ -147,7 +111,6 @@ public class CreateContentSourceUIBean {
     }
 
     public String cancel() {
-        contentSourceTypes = null;
         selectedContentSourceType = null;
         newContentSource = new ContentSource();
         return "cancel";
@@ -165,13 +128,12 @@ public class CreateContentSourceUIBean {
             if (cst.getContentSourceConfigurationDefinition() == null) {
                 newContentSource.setConfiguration(null);
             } else {
-                ConfigurationTemplate defaultTemplate =
-                    cst.getContentSourceConfigurationDefinition().getDefaultTemplate();
+                ConfigurationTemplate defaultTemplate = cst.getContentSourceConfigurationDefinition()
+                    .getDefaultTemplate();
 
                 if (defaultTemplate != null) {
                     newContentSource.setConfiguration(defaultTemplate.createConfiguration());
-                }
-                else {
+                } else {
                     newContentSource.setConfiguration(new Configuration());
                 }
             }
@@ -183,14 +145,47 @@ public class CreateContentSourceUIBean {
         }
     }
 
-    private void loadContentSourceTypes() {
-        if (this.contentSourceTypes == null) {
-            ContentSourceManagerLocal manager = LookupUtil.getContentSourceManager();
-            Set<ContentSourceType> types = manager.getAllContentSourceTypes();
-            this.contentSourceTypes = new HashMap<String, ContentSourceType>(types.size());
-            for (ContentSourceType cst : types) {
-                this.contentSourceTypes.put(cst.getName(), cst);
+    public String finishAddMap() {
+        FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Map added.");
+        return "success";
+    }
+
+    public String finishEditMap() {
+        FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Map updated.");
+        return "success";
+    }
+
+    @Override
+    public DataModel getDataModel() {
+        if (dataModel == null) {
+            dataModel = new ListAlertDefinitionsDataModel(PageControlView.NONE, MANAGED_BEAN_NAME);
+        } else {
+            String typeName = FacesContextUtility.getOptionalRequestParameter("typeName");
+            if (typeName != null) {
+                if (this.selectedContentSourceType == null
+                    || (this.selectedContentSourceType != null && !typeName.equals(this.selectedContentSourceType
+                        .getName()))) {
+                    this.selectedContentSourceType = manager.getContentSourceType(typeName);
+                    updateSelectedContentSourceType(this.selectedContentSourceType);
+                }
             }
+        }
+
+        return dataModel;
+    }
+
+    private class ListAlertDefinitionsDataModel extends PagedListDataModel<ContentSourceType> {
+        public ListAlertDefinitionsDataModel(PageControlView view, String beanName) {
+            super(view, beanName);
+        }
+
+        @Override
+        public PageList<ContentSourceType> fetchPage(PageControl pc) {
+            Set<ContentSourceType> types = manager.getAllContentSourceTypes();
+
+            PageList<ContentSourceType> results = null;
+            results = new PageList<ContentSourceType>(types, types.size(), PageControl.getUnlimitedInstance());
+            return results;
         }
     }
 }

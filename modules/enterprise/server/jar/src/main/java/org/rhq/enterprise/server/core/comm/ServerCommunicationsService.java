@@ -81,10 +81,16 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author John Mazzitelli
  */
 public class ServerCommunicationsService implements ServerCommunicationsServiceMBean, MBeanRegistration {
+
     /**
      * A log for subclasses to be able to use.
      */
     private static Logger LOG = ServerI18NFactory.getLogger(ServerCommunicationsService.class);
+
+    /**
+     * The remoting subsystem name that identifies remote API client messages.
+     */
+    private static final String REMOTE_API_SUBSYSTEM = "REMOTEAPI";
 
     /**
      * The MBeanServer where this bootstrap service is registered and where the server-side comm services will be
@@ -137,7 +143,12 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
     /**
      * Have the communication services been started
      */
-    boolean m_started = false;
+    private boolean m_started = false;
+
+    /**
+     * The invocation handler used to process incoming remote API requests from things such as the CLI.
+     */
+    private RemoteSafeInvocationHandler m_remoteApiHandler;
 
     /**
      * Sets up some internal state.
@@ -185,7 +196,9 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
                 .getClientCommandSenderConfiguration(), m_mbs);
 
             // now let's add our additional handler to support the remote clients (e.g. CLI)
-            container.addInvocationHandler("REMOTEAPI", new RemoteSafeInvocationHandler());
+            m_remoteApiHandler = new RemoteSafeInvocationHandler();
+            m_remoteApiHandler.registerMetricsMBean(container.getMBeanServer());
+            container.addInvocationHandler(REMOTE_API_SUBSYSTEM, m_remoteApiHandler);
 
             m_container = container;
             m_configuration = config;
@@ -202,8 +215,18 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
      */
     public synchronized void stop() {
         if (m_container != null) {
+
+            // be a good citizen and remove the handler, but ignore if any errors occur and keep going
+            try {
+                m_remoteApiHandler.unregisterMetricsMBean(m_container.getMBeanServer());
+                m_container.removeInvocationHandler(REMOTE_API_SUBSYSTEM);
+            } catch (Exception e) {
+                LOG.warn(ServerI18NResourceKeys.REMOTE_API_REMOVAL_FAILURE, ThrowableUtil.getAllMessages(e));
+            }
+
             m_container.shutdown();
             m_container = null;
+            m_remoteApiHandler = null;
             m_started = false;
         }
 

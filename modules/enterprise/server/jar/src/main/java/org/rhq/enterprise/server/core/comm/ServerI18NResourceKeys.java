@@ -29,6 +29,9 @@ import mazz.i18n.annotation.I18NResourceBundle;
  */
 @I18NResourceBundle(baseName = "server-messages", defaultLocale = "en")
 public interface ServerI18NResourceKeys {
+    @I18NMessages( { @I18NMessage("Failed to remove remote API invocation handler. Cause: {0}") })
+    String REMOTE_API_REMOVAL_FAILURE = "ServerCommunicationsService.remote-api-removal-failure";
+
     @I18NMessages( { @I18NMessage("Failed to ping endpoint [{0}]. Cause: {1}") })
     String PING_FAILED = "ServerCommunicationsService.ping-failed";
 

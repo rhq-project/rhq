@@ -46,11 +46,10 @@ import org.rhq.enterprise.server.util.HibernateDetachUtility;
 public class RemoteSafeInvocationHandler implements ServerInvocationHandler {
 
     private static final Log log = LogFactory.getLog(RemoteSafeInvocationHandler.class);
-
-    public static final Map<String, Class> PRIMITIVE_CLASSES;
+    private static final Map<String, Class<?>> PRIMITIVE_CLASSES;
 
     static {
-        PRIMITIVE_CLASSES = new HashMap<String, Class>();
+        PRIMITIVE_CLASSES = new HashMap<String, Class<?>>();
         PRIMITIVE_CLASSES.put(Short.TYPE.getName(), Short.TYPE);
         PRIMITIVE_CLASSES.put(Integer.TYPE.getName(), Integer.TYPE);
         PRIMITIVE_CLASSES.put(Long.TYPE.getName(), Long.TYPE);
@@ -61,8 +60,12 @@ public class RemoteSafeInvocationHandler implements ServerInvocationHandler {
         PRIMITIVE_CLASSES.put(Byte.TYPE.getName(), Byte.TYPE);
     }
 
+    private RemoteSafeInvocationHandlerMetrics metrics = new RemoteSafeInvocationHandlerMetrics();
+
     public Object invoke(InvocationRequest invocationRequest) throws Throwable {
 
+        String methodName = null;
+        boolean successful = false; // we will flip this to true when we know we were successful
         Object result = null;
         long time = System.currentTimeMillis();
 
@@ -70,20 +73,22 @@ public class RemoteSafeInvocationHandler implements ServerInvocationHandler {
             InitialContext ic = new InitialContext();
 
             NameBasedInvocation nbi = ((NameBasedInvocation) invocationRequest.getParameter());
-            String[] methodInfo = nbi.getMethodName().split(":");
+            methodName = nbi.getMethodName();
+            String[] methodInfo = methodName.split(":");
 
             String jndiName = "rhq/" + methodInfo[0] + "/local";
             Object target = ic.lookup(jndiName);
 
-            Class[] sig = new Class[nbi.getSignature().length];
-            int i = 0;
-            for (String cn : nbi.getSignature()) {
-                sig[i] = getClass(nbi.getSignature()[i++]);
+            String[] signature = nbi.getSignature();
+            int signatureLength = signature.length;
+            Class<?>[] sig = new Class[signatureLength];
+            for (int i = 0; i < signatureLength; i++) {
+                sig[i] = getClass(signature[i]);
             }
 
             Method m = target.getClass().getMethod(methodInfo[1], sig);
             result = m.invoke(target, nbi.getParameters());
-
+            successful = true;
         } catch (InvocationTargetException e) {
             log.error("Failed to invoke remote request", e);
             return e.getTargetException();
@@ -97,18 +102,23 @@ public class RemoteSafeInvocationHandler implements ServerInvocationHandler {
                         HibernateDetachUtility.SerializationType.SERIALIZATION);
                 } catch (Exception e) {
                     log.error("Failed to null out uninitialized fields", e);
+                    this.metrics.addData(methodName, System.currentTimeMillis() - time, false);
                     return e;
                 }
-                if (log.isDebugEnabled()) {
-                    log.debug("Remote request execution time (ms): " + (System.currentTimeMillis() - time));
-                }
+            }
+
+            // want to calculate this after the hibernate util so we take that into account too
+            long executionTime = System.currentTimeMillis() - time;
+            this.metrics.addData(methodName, executionTime, successful);
+            if (log.isDebugEnabled()) {
+                log.debug("Remote request [" + methodName + "] execution time (ms): " + executionTime);
             }
         }
 
         return result;
     }
 
-    Class getClass(String name) throws ClassNotFoundException {
+    Class<?> getClass(String name) throws ClassNotFoundException {
         // TODO GH: Doesn't support arrays
         if (PRIMITIVE_CLASSES.containsKey(name)) {
             return PRIMITIVE_CLASSES.get(name);
@@ -117,15 +127,41 @@ public class RemoteSafeInvocationHandler implements ServerInvocationHandler {
         }
     }
 
-    public void addListener(InvokerCallbackHandler arg0) {
+    /**
+     * Registers the MBean used to monitor the remote API processing.
+     * 
+     * @param mbs the MBeanServer where the metrics MBean should be registered
+     */
+    public void registerMetricsMBean(MBeanServer mbs) {
+        try {
+            mbs.registerMBean(this.metrics, RemoteSafeInvocationHandlerMetricsMBean.OBJECTNAME_METRICS);
+        } catch (Exception e) {
+            log.warn("Failed to register the metrics object, will not be able to monitor remote API: " + e);
+        }
     }
 
-    public void removeListener(InvokerCallbackHandler arg0) {
+    /**
+     * Unregisters the MBean that was used to monitor the remote API processing.
+     * 
+     * @param mbs the MBeanServer where the metrics MBean is registered
+     */
+    public void unregisterMetricsMBean(MBeanServer mbs) {
+        try {
+            mbs.unregisterMBean(RemoteSafeInvocationHandlerMetricsMBean.OBJECTNAME_METRICS);
+        } catch (Exception e) {
+            log.warn("Failed to unregister the metrics object: " + e);
+        }
     }
 
-    public void setInvoker(ServerInvoker arg0) {
+    public void addListener(InvokerCallbackHandler handler) {
     }
 
-    public void setMBeanServer(MBeanServer arg0) {
+    public void removeListener(InvokerCallbackHandler handler) {
+    }
+
+    public void setInvoker(ServerInvoker invoker) {
+    }
+
+    public void setMBeanServer(MBeanServer mbs) {
     }
 }

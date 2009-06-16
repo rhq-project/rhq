@@ -23,20 +23,21 @@
 package org.rhq.plugins.jbossas5.util;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.util.ZipUtil;
 import org.rhq.plugins.jbossas5.AbstractManagedDeploymentComponent;
 
 import org.jboss.deployers.spi.management.deploy.DeploymentManager;
 import org.jboss.deployers.spi.management.deploy.DeploymentProgress;
 import org.jboss.deployers.spi.management.deploy.DeploymentStatus;
+import org.jboss.profileservice.spi.DeploymentOption;
 
 /**
  * @author Ian Springer
@@ -72,26 +73,19 @@ public class DeploymentUtils {
      */
     public static DeploymentStatus deployArchive(DeploymentManager deploymentManager, File archiveFile,
         File deployDirectory, boolean deployExploded) throws Exception {
-        if (deployDirectory == null)
-            throw new IllegalArgumentException("Deploy directory is null.");
+        //if (deployDirectory == null)
+        //    throw new IllegalArgumentException("Deploy directory is null.");
         String archiveFileName = archiveFile.getName();
-        DeploymentProgress progress;
+        LOG.debug("Deploying '" + archiveFileName + "' (deployExploded=" + deployExploded + ")...");
+        URL contentURL = archiveFile.toURI().toURL();
+        //File deployLocation = new File(deployDirectory, archiveFileName);
+        //boolean copyContent = !deployLocation.equals(archiveFile);
+        List<DeploymentOption> deploymentOptions = new ArrayList<DeploymentOption>();
         if (deployExploded) {
-            LOG.debug("Deploying '" + archiveFileName + "' in exploded form...");
-            File tempDir = new File(deployDirectory, archiveFile.getName() + ".rej");
-            ZipUtil.unzipFile(archiveFile, tempDir);
-            File archiveDir = new File(deployDirectory, archiveFileName);
-            URL contentURL = archiveDir.toURI().toURL();
-            if (!tempDir.renameTo(archiveDir))
-                throw new IOException("Failed to rename '" + tempDir + "' to '" + archiveDir + "'.");
-            progress = deploymentManager.distribute(archiveFileName, contentURL, false);
-        } else {
-            LOG.debug("Deploying '" + archiveFileName + "' in non-exploded form...");
-            URL contentURL = archiveFile.toURI().toURL();
-            File deployLocation = new File(deployDirectory, archiveFileName);
-            boolean copyContent = !deployLocation.equals(archiveFile);
-            progress = deploymentManager.distribute(archiveFileName, contentURL, copyContent);
+            deploymentOptions.add(DeploymentOption.Explode);
         }
+        DeploymentProgress progress = deploymentManager.distribute(archiveFileName, contentURL,
+                deploymentOptions.toArray(new DeploymentOption[deploymentOptions.size()]));
         DeploymentStatus distributeStatus = run(progress);
         if (distributeStatus.isFailed()) {
             return distributeStatus;

@@ -5,10 +5,12 @@ import java.util.List;
 
 //import org.rhq.client.CliEngine;
 //import org.rhq.client.RHQRemoteRegistry;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.client.ClientMain;
 import org.rhq.enterprise.client.RHQRemoteClient;
-import org.rhq.enterprise.server.ws.Subject;
-import org.rhq.enterprise.server.ws.SubjectManagerRemote;
+//import org.rhq.enterprise.server.ws.Subject;
+//import org.rhq.enterprise.server.ws.SubjectManagerRemote;
+import org.rhq.enterprise.server.auth.SubjectManagerRemote;
 
 public class DeleteUserCommand implements ClientCommand {
 
@@ -35,7 +37,9 @@ public class DeleteUserCommand implements ClientCommand {
             SubjectManagerRemote subjectManager = registry.getSubjectManagerRemote();
             List<Integer> userToDelete = new ArrayList<Integer>();
             userToDelete.add(userId);
-            subjectManager.deleteUsers(loggedInUser, userToDelete);
+            Integer[] usersToDelete = new Integer[userId];
+//            subjectManager.deleteUsers(loggedInUser, userToDelete);
+            subjectManager.deleteUsers(loggedInUser, usersToDelete);
 
             client.getPrintWriter().println("Account deletion successful");
         } catch (Exception e) {

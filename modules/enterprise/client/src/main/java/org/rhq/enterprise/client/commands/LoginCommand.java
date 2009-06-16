@@ -18,15 +18,11 @@
  */
 package org.rhq.enterprise.client.commands;
 
-import javax.jws.WebService;
-import javax.xml.ws.WebServiceClient;
-
 import org.rhq.enterprise.client.ClientMain;
 import org.rhq.enterprise.client.RHQRemoteClient;
-import org.rhq.enterprise.server.ws.SubjectManagerRemote;
 
 /**
- * @author Greg Hinkle
+ * @author Greg Hinkle, Simeon Pinder
  */
 public class LoginCommand implements ClientCommand {
 

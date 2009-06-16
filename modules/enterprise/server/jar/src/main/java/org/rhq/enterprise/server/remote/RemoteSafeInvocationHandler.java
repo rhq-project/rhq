@@ -38,8 +38,7 @@ import org.jboss.remoting.invocation.NameBasedInvocation;
 import org.rhq.enterprise.server.util.HibernateDetachUtility;
 
 /**
- * This rather hackish endpoint is here to handle remote invocations over the standard
- * invocation handler.
+ * This rather hackish endpoint is here to handle remote invocations over the standard invocation handler.
  *
  * @author Greg Hinkle
  */
@@ -64,6 +63,11 @@ public class RemoteSafeInvocationHandler implements ServerInvocationHandler {
 
     public Object invoke(InvocationRequest invocationRequest) throws Throwable {
 
+        if (invocationRequest == null) {
+            System.out.println("The invocation request entered was NULL!");
+            throw new IllegalArgumentException("InvocationRequest was null.");
+        }
+
         String methodName = null;
         boolean successful = false; // we will flip this to true when we know we were successful
         Object result = null;
@@ -76,7 +80,8 @@ public class RemoteSafeInvocationHandler implements ServerInvocationHandler {
             methodName = nbi.getMethodName();
             String[] methodInfo = methodName.split(":");
 
-            String jndiName = "rhq/" + methodInfo[0] + "/local";
+            // String jndiName = "rhq/" + methodInfo[0] + "/local";
+            String jndiName = "rhq/" + methodInfo[0] + "/remote";
             Object target = ic.lookup(jndiName);
 
             String[] signature = nbi.getSignature();
@@ -129,8 +134,9 @@ public class RemoteSafeInvocationHandler implements ServerInvocationHandler {
 
     /**
      * Registers the MBean used to monitor the remote API processing.
-     * 
-     * @param mbs the MBeanServer where the metrics MBean should be registered
+     *
+     * @param mbs
+     *            the MBeanServer where the metrics MBean should be registered
      */
     public void registerMetricsMBean(MBeanServer mbs) {
         try {
@@ -142,8 +148,9 @@ public class RemoteSafeInvocationHandler implements ServerInvocationHandler {
 
     /**
      * Unregisters the MBean that was used to monitor the remote API processing.
-     * 
-     * @param mbs the MBeanServer where the metrics MBean is registered
+     *
+     * @param mbs
+     *            the MBeanServer where the metrics MBean is registered
      */
     public void unregisterMetricsMBean(MBeanServer mbs) {
         try {

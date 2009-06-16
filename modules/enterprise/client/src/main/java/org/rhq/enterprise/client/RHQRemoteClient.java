@@ -18,31 +18,21 @@
  */
 package org.rhq.enterprise.client;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.xml.namespace.QName;
-import javax.xml.ws.WebServiceClient;
+import org.jboss.remoting.Client;
+import org.jboss.remoting.InvokerLocator;
 
-import org.rhq.enterprise.server.ws.ChannelManagerBeanService;
-import org.rhq.enterprise.server.ws.ChannelManagerRemote;
-import org.rhq.enterprise.server.ws.ConfigurationManagerBeanService;
-import org.rhq.enterprise.server.ws.ConfigurationManagerRemote;
-import org.rhq.enterprise.server.ws.ContentManagerBeanService;
-import org.rhq.enterprise.server.ws.ContentManagerRemote;
-import org.rhq.enterprise.server.ws.OperationManagerBeanService;
-import org.rhq.enterprise.server.ws.OperationManagerRemote;
-import org.rhq.enterprise.server.ws.ResourceManagerBeanService;
-import org.rhq.enterprise.server.ws.ResourceManagerRemote;
-import org.rhq.enterprise.server.ws.RoleManagerBeanService;
-import org.rhq.enterprise.server.ws.RoleManagerRemote;
-import org.rhq.enterprise.server.ws.Subject;
-import org.rhq.enterprise.server.ws.SubjectManagerBeanService;
-import org.rhq.enterprise.server.ws.SubjectManagerRemote;
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.enterprise.server.auth.SubjectManagerRemote;
+import org.rhq.enterprise.server.authz.RoleManagerRemote;
+import org.rhq.enterprise.server.configuration.ConfigurationManagerRemote;
+import org.rhq.enterprise.server.content.ChannelManagerRemote;
+import org.rhq.enterprise.server.content.ContentManagerRemote;
+import org.rhq.enterprise.server.operation.OperationManagerRemote;
+import org.rhq.enterprise.server.resource.ResourceManagerRemote;
 
 /**
  * A remote access client with transparent proxies to RHQ servers.
@@ -60,14 +50,13 @@ public class RHQRemoteClient {
         this.loggedIn = value;
     }
 
-    public SubjectManagerBeanService sbms = null;
-
     private Map<String, Object> allServices;
     private Subject subject = null;
 
     public RHQRemoteClient(String host, int port) {
         this.host = host;
         this.port = port;
+        init();
     }
 
     public boolean isConnected() {
@@ -92,49 +81,23 @@ public class RHQRemoteClient {
     private ClientMain clireference;
 
     public RoleManagerRemote getRoleManagerRemote() {
-        RoleManagerBeanService roleManagerService = null;
-        if (roleManagerRemote == null) {
-            roleManagerService = new RoleManagerBeanService();
-            roleManagerRemote = roleManagerService.getRoleManagerBeanPort();
-        }
-        return roleManagerRemote;
+        return RHQRemoteClientProxy.getProcessor(this, "RoleManager" + "Bean", RoleManagerRemote.class);
     }
 
     public ContentManagerRemote getContentManagerRemote() {
-        ContentManagerBeanService service = null;
-        if (contentManagerRemote == null) {
-            service = new ContentManagerBeanService();
-            contentManagerRemote = service.getContentManagerBeanPort();
-        }
-        return contentManagerRemote;
+        return RHQRemoteClientProxy.getProcessor(this, "ContentManager" + "Bean", ContentManagerRemote.class);
     }
 
     public SubjectManagerRemote getSubjectManagerRemote() {
-        SubjectManagerBeanService subjectManagerService = null;
-        if (subjectManagerRemote == null) {
-            subjectManagerService = new SubjectManagerBeanService();
-            subjectManagerRemote = subjectManagerService.getSubjectManagerBeanPort();
-            sbms = subjectManagerService;// store ref
-        }
-        return subjectManagerRemote;
+        return RHQRemoteClientProxy.getProcessor(this, "SubjectManager" + "Bean", SubjectManagerRemote.class);
     }
 
     public OperationManagerRemote getOperationManagerRemote() {
-        OperationManagerBeanService operationManagerService = null;
-        if (operationManagerRemote == null) {
-            operationManagerService = new OperationManagerBeanService();
-            operationManagerRemote = operationManagerService.getOperationManagerBeanPort();
-        }
-        return operationManagerRemote;
+        return RHQRemoteClientProxy.getProcessor(this, "OperationManager" + "Bean", OperationManagerRemote.class);
     }
 
     public ChannelManagerRemote getChannelManagerRemote() {
-        ChannelManagerBeanService channelManagerService = null;
-        if (channelManagerRemote == null) {
-            channelManagerService = new ChannelManagerBeanService();
-            channelManagerRemote = channelManagerService.getChannelManagerBeanPort();
-        }
-        return channelManagerRemote;
+        return RHQRemoteClientProxy.getProcessor(this, "ChannelManager" + "Bean", ChannelManagerRemote.class);
     }
 
     public Subject getSubject() {
@@ -150,21 +113,12 @@ public class RHQRemoteClient {
     }
 
     public ConfigurationManagerRemote getConfigurationManagerRemote() {
-        ConfigurationManagerBeanService configurationManagerService = null;
-        if (configurationManagerRemote == null) {
-            configurationManagerService = new ConfigurationManagerBeanService();
-            configurationManagerRemote = configurationManagerService.getConfigurationManagerBeanPort();
-        }
-        return configurationManagerRemote;
+        return RHQRemoteClientProxy.getProcessor(this, "ConfigurationManager" + "Bean",
+            ConfigurationManagerRemote.class);
     }
 
     public ResourceManagerRemote getResourceManagerRemote() {
-        ResourceManagerBeanService resourceManagerService = null;
-        if (resourceManagerRemote == null) {
-            resourceManagerService = new ResourceManagerBeanService();
-            resourceManagerRemote = resourceManagerService.getResourceManagerBeanPort();
-        }
-        return resourceManagerRemote;
+        return RHQRemoteClientProxy.getProcessor(this, "ResourceManager" + "Bean", ResourceManagerRemote.class);
     }
 
     public static final String[] SERVICE_NAMES = new String[] { "RoleManagerRemote", "ContentManagerRemote",
@@ -190,93 +144,42 @@ public class RHQRemoteClient {
         return allServices;
     }
 
+    /**
+     * Called after host and port have been changed/set on login.
+     */
     public void reinitialize() {
         try {
-            // RoleManager
-            RoleManagerBeanService roleManagerService = new RoleManagerBeanService(
-                getClientConnectionWsdl(RoleManagerBeanService.class), getServiceQName(RoleManagerBeanService.class));
-            roleManagerRemote = roleManagerService.getRoleManagerBeanPort();
-            // "SubjectManagerRemote",
-            SubjectManagerBeanService subjectManagerService = new SubjectManagerBeanService(
-                getClientConnectionWsdl(SubjectManagerBeanService.class),
-                getServiceQName(SubjectManagerBeanService.class));
-            subjectManagerRemote = subjectManagerService.getSubjectManagerBeanPort();
-            sbms = subjectManagerService;
-            // "OperationManagerRemote",
-            OperationManagerBeanService operationManagerService = new OperationManagerBeanService(
-                getClientConnectionWsdl(OperationManagerBeanService.class),
-                getServiceQName(OperationManagerBeanService.class));
-            operationManagerRemote = operationManagerService.getOperationManagerBeanPort();
-
-            // "ChannelManagerRemote",
-            ChannelManagerBeanService channelManagerService = new ChannelManagerBeanService(
-                getClientConnectionWsdl(ChannelManagerBeanService.class),
-                getServiceQName(ChannelManagerBeanService.class));
-            channelManagerRemote = channelManagerService.getChannelManagerBeanPort();
-
-            // "ConfigurationManagerRemote",
-            ConfigurationManagerBeanService configurationManagerService = new ConfigurationManagerBeanService(
-                getClientConnectionWsdl(ConfigurationManagerBeanService.class),
-                getServiceQName(ConfigurationManagerBeanService.class));
-            configurationManagerRemote = configurationManagerService.getConfigurationManagerBeanPort();
-
-            // "ResourceManagerRemote"
-            ResourceManagerBeanService resourceManagerService = new ResourceManagerBeanService(
-                getClientConnectionWsdl(ResourceManagerBeanService.class),
-                getServiceQName(ResourceManagerBeanService.class));
-            resourceManagerRemote = resourceManagerService.getResourceManagerBeanPort();
-            // "ContentManagerRemote"
-            ContentManagerBeanService contentManagerService = new ContentManagerBeanService(
-                getClientConnectionWsdl(ContentManagerBeanService.class),
-                getServiceQName(ContentManagerBeanService.class));
-            contentManagerRemote = contentManagerService.getContentManagerBeanPort();
-
+            init();
         } catch (Exception ex) {
             System.out.println("Exception reinitalizing with new host :" + ex.getMessage());
         }
 
     }
 
-    private QName getServiceQName(Class remote) {
-        QName generated = null;
-        // check for reference to ClientEngine/Client && that class passed in has right annotation
-        if ((remote != null) && (remote.isAnnotationPresent(WebServiceClient.class))) {
-            String annotatedQnameValue = "";
-            Annotation annot = remote.getAnnotation(WebServiceClient.class);
-            WebServiceClient annotated = (WebServiceClient) annot;
-            annotatedQnameValue = annotated.targetNamespace();
-            String beanName = remote.getSimpleName();
-
-            generated = new QName(annotatedQnameValue, beanName);
-        }
-        return generated;
-    }
-
-    /**
-     * Dynamically builds the WSDL URL to connect to a remote server.
-     *
-     * @param remote
-     *            class correctly annotated with Webservice reference.
-     * @return valid URL
-     * @throws MalformedURLException
-     */
-    private URL getClientConnectionWsdl(Class remote) throws MalformedURLException {
-        URL wsdlLocation = null;
-        // check for reference to ClientEngine/Client && that class passed in has right annotation
-        if ((remote != null) && remote.isAnnotationPresent(WebServiceClient.class)) {
-            String beanName = remote.getSimpleName();
-            String protocol = "https://";
-            if ((this.clireference != null) && (!this.clireference.isHttps())) {
-                protocol = "http://";
-            }
-            wsdlLocation = new URL(protocol + getHost() + ":" + getPort() + "/rhq-rhq-enterprise-server-ejb3/"
-                + beanName.substring(0, beanName.length() - "Service".length()) + "?wsdl");
-        }
-        return wsdlLocation;
-    }
-
     public void setCliReference(ClientMain main) {
         this.clireference = main;
+    }
+
+    public Client getRemotingClient() {
+        return remotingClient;
+    }
+
+    private Client remotingClient = null;
+
+    private void init() {
+        try {
+            // create InvokerLocator with the url type string
+            // indicating the target remoting server to call upon.
+            String locatorURI = transport + "://" + host + ":" + port
+                + "/jboss-remoting-servlet-invoker/ServerInvokerServlet";
+            InvokerLocator locator = new InvokerLocator(locatorURI);
+
+            remotingClient = new Client(locator);
+            remotingClient.setSubsystem("REMOTEAPI");
+            remotingClient.connect();
+        } catch (Exception e) {
+            e.printStackTrace(); // To change body of catch statement use File | Settings | File Templates.
+        }
     }
 
 }

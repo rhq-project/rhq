@@ -20,12 +20,16 @@ package org.rhq.enterprise.client.commands;
 
 import java.util.List;
 
+import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.composite.ResourceComposite;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.client.ClientMain;
 import org.rhq.enterprise.client.TabularWriter;
-import org.rhq.enterprise.server.ws.PageControl;
-import org.rhq.enterprise.server.ws.ResourceCategory;
-import org.rhq.enterprise.server.ws.ResourceComposite;
-import org.rhq.enterprise.server.ws.ResourceManagerRemote;
+//import org.rhq.enterprise.server.ws.PageControl;
+//import org.rhq.enterprise.server.ws.ResourceCategory;
+//import org.rhq.enterprise.server.ws.ResourceComposite;
+//import org.rhq.enterprise.server.ws.ResourceManagerRemote;
+import org.rhq.enterprise.server.resource.ResourceManagerRemote;
 
 /**
  * @author Greg Hinkle, Simeon Pinder

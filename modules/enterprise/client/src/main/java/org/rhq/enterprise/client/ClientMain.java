@@ -27,8 +27,8 @@ import jline.ConsoleReader;
 import jline.SimpleCompletor;
 import mazz.i18n.Msg;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.client.commands.ClientCommand;
-import org.rhq.enterprise.server.ws.Subject;
 
 /**
  * @author Greg Hinkle, Simeon Pinder

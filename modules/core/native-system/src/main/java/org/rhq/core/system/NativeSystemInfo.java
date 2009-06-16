@@ -152,9 +152,23 @@ public class NativeSystemInfo implements SystemInfo {
 
     public NetworkStats getNetworkStats(String addressName, int port) {
         try {
-            InetAddress address = InetAddress.getByName(addressName);
-            NetStat interfaceStat = sigar.getNetStat();// TODO GH: ?? address.getAddress(), port);
-            return new NetworkStats(interfaceStat);
+            int flags = NetFlags.CONN_SERVER | NetFlags.CONN_CLIENT | NetFlags.CONN_TCP;
+            NetConnection[] conns = sigar.getNetConnectionList(flags);
+
+            InetAddress matchAddress = InetAddress.getByName(addressName);
+
+            List<NetConnection> matches = new ArrayList<NetConnection>();
+            for (NetConnection conn : conns) {
+
+                InetAddress connAddress = InetAddress.getByName(conn.getLocalAddress());
+                if (conn.getLocalPort() == port && matchAddress.equals(connAddress)) {
+                    matches.add(conn);
+                }
+            }
+
+            NetworkStats stats = new NetworkStats(matches.toArray(new NetConnection[matches.size()]));
+
+            return stats;
         } catch (SigarException e) {
             throw new SystemInfoException(e);
         } catch (UnknownHostException e) {
@@ -180,8 +194,6 @@ public class NativeSystemInfo implements SystemInfo {
         ArrayList<ProcessInfo> processes = new ArrayList<ProcessInfo>();
         long[] pids = null;
         final int timeout = 2 * 60 * 1000; // 2 minutes
-        Sigar sigarImpl = new Sigar();
-        SigarProxy sigar = SigarProxyCache.newInstance(sigarImpl, timeout);
 
         log.debug("Retrieving PIDs of all running processes..." );
         long startTime = System.currentTimeMillis();
@@ -192,7 +204,6 @@ public class NativeSystemInfo implements SystemInfo {
             // NOTE: Do not close sigarImpl on success, as the ProcessInfos created below will reuse it.
         } catch (Exception e) {
             log.warn("Failed to retrieve PIDs of all running processes.", e);
-            sigarImpl.close();
         }
 
         if (pids != null) {
@@ -327,6 +338,6 @@ public class NativeSystemInfo implements SystemInfo {
      * this object.
      */
     public NativeSystemInfo() {
-        this.sigar = SigarProxyCache.newInstance(new Sigar(), 1000);
+        this.sigar = SigarProxyCache.newInstance(new Sigar(), 100);
     }
 }

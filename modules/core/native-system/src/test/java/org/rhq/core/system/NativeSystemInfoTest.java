@@ -434,7 +434,7 @@ public class NativeSystemInfoTest {
             public void run() {
                 sysinfo.getAllProcesses();
             }
-        }, "native-getAllProcesses", 4, 5, MemoryLeakChecker.JAVA_AND_NATIVE);
+        }, "native-getAllProcesses", 4, 50, MemoryLeakChecker.JAVA_AND_NATIVE);
     }
 
     /**

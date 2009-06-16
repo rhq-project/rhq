@@ -24,7 +24,10 @@ package org.rhq.core.system;
 
 import java.util.EnumSet;
 
-/**
+import org.hyperic.sigar.Sigar;
+import org.hyperic.sigar.ProcMem;
+
+ /**
  * Checks for memory leaks.
  *
  * @author John Mazzitelli
@@ -162,6 +165,16 @@ public class MemoryLeakChecker {
         long freeMemory = Runtime.getRuntime().freeMemory();
         long totalMemory = Runtime.getRuntime().totalMemory();
         long usedMemory = totalMemory - freeMemory;
+
+        try {
+            Sigar s = new Sigar();
+            ProcMem m = s.getProcMem(s.getPid());
+            System.out.println("Sigar says total: " + m.getSize());
+            usedMemory = m.getSize();
+            s.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return usedMemory;
     }
 }

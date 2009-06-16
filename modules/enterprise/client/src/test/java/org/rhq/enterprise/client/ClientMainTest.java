@@ -4,16 +4,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import javax.xml.namespace.QName;
-
-import junit.framework.TestCase;
 
 import org.testng.AssertJUnit;
 import org.testng.annotations.AfterMethod;
@@ -35,7 +28,6 @@ import org.rhq.core.domain.resource.ResourceSubCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageControl;
-import org.rhq.enterprise.client.utility.Utility;
 import org.rhq.enterprise.server.auth.SubjectManagerRemote;
 import org.rhq.enterprise.server.authz.RoleManagerRemote;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerRemote;
@@ -59,8 +51,7 @@ import org.rhq.enterprise.server.resource.ResourceManagerRemote;
  * @author Jay Shaughnessy, Simeon Pinder
  */
 @Test(groups = "ws")
-//public class ClientMainTest extends AssertJUnit {
-public class ClientMainTest extends TestCase {
+public class ClientMainTest extends AssertJUnit {
 
     static private final boolean TESTS_ENABLED = true;
 
@@ -74,16 +65,6 @@ public class ClientMainTest extends TestCase {
     private static String host = "127.0.0.1";
     private static int port = 7080;
     private static RHQRemoteClient remoteClientRef = null;
-
-    static{
-        if(pagecontrol_unlimited!=null){
-            pagecontrol_unlimited = new PageControl();
-            pagecontrol_unlimited.setPageSize(-1);
-          }
-          if(remoteClientRef==null){
-              remoteClientRef = new RHQRemoteClient(host,port);
-          }
-    }
 
     @BeforeMethod
     protected void beforeMethod() throws Exception {

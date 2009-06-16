@@ -43,8 +43,7 @@
               <c:simple-property name="errorLogFilePath" type="file" required="false"
                                  description="The absolute path to the error log file - if the path is not absolute, it will be resolved relative to the server root directory; if unset, default will be 'logs/error_log' on UNIX or 'logs\error.log' on Windows."/>
               <c:simple-property name="errorLogEventsEnabled" type="boolean"
-                                 description="A flag indicating whether of not generation of Events for new error log entries
-                                              is enabled." default="false"/>
+                                 description="A flag indicating whether or not generation of Events for new error log entries is enabled." default="false"/>
               <c:simple-property name="errorLogMinimumSeverity" required="false" default="error"
                                  description="The minimum severity of error log entry Events that should be collected.
                                               If not specified, there is no minimum severity (i.e. all

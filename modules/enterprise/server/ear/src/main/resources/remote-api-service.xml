@@ -6,7 +6,7 @@
       <attribute name="InvokerLocator">servlet://${jboss.bind.address}:${rhq.server.startup.web.http.port}/jboss-remoting-servlet-invoker/ServerInvokerServlet</attribute>
       <attribute name="Configuration">
          <handlers>
-            <handler subsystem="REMOTEAPI">org.rhq.enterprise.server.remote.RemoteSafeAOPInvocationHandler</handler>
+            <handler subsystem="REMOTEAPI">org.rhq.enterprise.server.remote.RemoteSafeInvocationHandler</handler>
          </handlers>
       </attribute>
    </mbean>

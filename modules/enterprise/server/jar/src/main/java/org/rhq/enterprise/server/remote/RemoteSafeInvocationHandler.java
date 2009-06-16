@@ -43,9 +43,9 @@ import org.rhq.enterprise.server.util.HibernateDetachUtility;
  *
  * @author Greg Hinkle
  */
-public class RemoteSafeAOPInvocationHandler implements ServerInvocationHandler {
+public class RemoteSafeInvocationHandler implements ServerInvocationHandler {
 
-    private static final Log log = LogFactory.getLog(RemoteSafeAOPInvocationHandler.class);
+    private static final Log log = LogFactory.getLog(RemoteSafeInvocationHandler.class);
 
     public static final Map<String, Class> PRIMITIVE_CLASSES;
 

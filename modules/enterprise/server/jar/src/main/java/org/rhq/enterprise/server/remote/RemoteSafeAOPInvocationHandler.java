@@ -26,6 +26,9 @@ import java.util.Map;
 import javax.management.MBeanServer;
 import javax.naming.InitialContext;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.jboss.remoting.InvocationRequest;
 import org.jboss.remoting.ServerInvocationHandler;
 import org.jboss.remoting.ServerInvoker;
@@ -41,6 +44,8 @@ import org.rhq.enterprise.server.util.HibernateDetachUtility;
  * @author Greg Hinkle
  */
 public class RemoteSafeAOPInvocationHandler implements ServerInvocationHandler {
+
+    private static final Log log = LogFactory.getLog(RemoteSafeAOPInvocationHandler.class);
 
     public static final Map<String, Class> PRIMITIVE_CLASSES;
 
@@ -60,6 +65,7 @@ public class RemoteSafeAOPInvocationHandler implements ServerInvocationHandler {
 
         Object result = null;
         long time = System.currentTimeMillis();
+
         try {
             InitialContext ic = new InitialContext();
 
@@ -76,27 +82,26 @@ public class RemoteSafeAOPInvocationHandler implements ServerInvocationHandler {
             }
 
             Method m = target.getClass().getMethod(methodInfo[1], sig);
-
             result = m.invoke(target, nbi.getParameters());
 
         } catch (InvocationTargetException e) {
-            e.printStackTrace();
+            log.error("Failed to invoke remote request", e);
             return e.getTargetException();
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Failed to invoke remote request", e);
             return e;
         } finally {
-
             if (result != null) {
-
                 try {
                     HibernateDetachUtility.nullOutUninitializedFields(result,
                         HibernateDetachUtility.SerializationType.SERIALIZATION);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    log.error("Failed to null out uninitialized fields", e);
                     return e;
                 }
-                // System.out.println("ExecutionTime: " + (System.currentTimeMillis() - time));
+                if (log.isDebugEnabled()) {
+                    log.debug("Remote request execution time (ms): " + (System.currentTimeMillis() - time));
+                }
             }
         }
 
@@ -110,7 +115,6 @@ public class RemoteSafeAOPInvocationHandler implements ServerInvocationHandler {
         } else {
             return Class.forName(name);
         }
-
     }
 
     public void addListener(InvokerCallbackHandler arg0) {

@@ -70,11 +70,13 @@ import org.rhq.enterprise.communications.util.SecurityUtil;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.agentclient.impl.AgentClientImpl;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
+import org.rhq.enterprise.server.remote.RemoteSafeInvocationHandler;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * This is an MBean service that can be used to bootstrap the {@link ServiceContainer}. The main purpose for the
- * existence of this class is to bootstrap the comm services for the JON Server.
+ * existence of this class is to bootstrap the comm services for the Server so remote CLI and Agent clients
+ * can talk to the server.
  *
  * @author John Mazzitelli
  */
@@ -176,13 +178,14 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
             ServerConfiguration config = reloadConfiguration();
 
             ServiceContainer container = (null == m_container) ? new ServiceContainer() : m_container;
-
             AutoDiscoveryListener listener = new ServerAutoDiscoveryListener(m_knownAgents);
-
             container.addDiscoveryListener(listener);
 
             container.start(config.getServiceContainerPreferences().getPreferences(), config
                 .getClientCommandSenderConfiguration(), m_mbs);
+
+            // now let's add our additional handler to support the remote clients (e.g. CLI)
+            container.addInvocationHandler("REMOTEAPI", new RemoteSafeInvocationHandler());
 
             m_container = container;
             m_configuration = config;

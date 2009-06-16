@@ -26,8 +26,4 @@
     <service>server-service.xml</service>
   </module>
 
-  <module>
-    <service>remote-api-service.xml</service>
-  </module>
-
 </jboss-app>

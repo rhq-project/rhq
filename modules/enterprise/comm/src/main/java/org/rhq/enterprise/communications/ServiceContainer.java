@@ -1020,6 +1020,32 @@ public class ServiceContainer {
     }
 
     /**
+     * Allows a caller to install their own invocation handler for another subsystem.
+     * This allows the caller to use this ServiceContainer to set up all the infrastructure so the caller
+     * doesn't have to do it all. All the caller needs is an invocation handler to handle their own remote
+     * messages.  To stop the handler from processing messages, call {@link #removeInvocationHandler(String)}.
+     * 
+     * @param subsystem the new subsystem whose messages will be handled by the given handler
+     * @param handler used to handle incoming messages for the given subsystem
+     * @throws Exception if the remote connector hasn't been created/started or the handler failed to get added for some reason
+     */
+    public void addInvocationHandler(String subsystem, ServerInvocationHandler handler) throws Exception {
+        if (m_connector != null) {
+            m_connector.addInvocationHandler(subsystem, handler);
+        } else {
+            throw new IllegalStateException("m_connector==null"); // the connector isn't created/started
+        }
+    }
+
+    public void removeInvocationHandler(String subsystem) throws Exception {
+        if (m_connector != null) {
+            m_connector.removeInvocationHandler(subsystem);
+        } else {
+            throw new IllegalStateException("m_connector==null"); // the connector isn't created/started
+        }
+    }
+
+    /**
      * Given the name of the MBeanServer (i.e. its default domain name) that identifies the server to use, this method
      * finds it or, if it is not found, creates one. This method should only be used when starting the container; to get
      * the MBeanServer this container is currently using, call {@link #getMBeanServer()} instead.

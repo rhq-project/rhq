@@ -30,12 +30,7 @@ import javax.management.ObjectName;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
-
-import org.jboss.managed.api.ManagedComponent;
-import org.jboss.managed.api.ComponentType;
-import org.jboss.deployers.spi.management.KnownComponentTypes;
 
 /**
  * A Resource component for JBoss AS 5 JBoss Messaging JMS topic and queues.
@@ -45,28 +40,6 @@ import org.jboss.deployers.spi.management.KnownComponentTypes;
 public class JmsDestinationComponent extends ManagedComponentComponent
 {
     private static final String[] OBJECT_NAME_PROPERTY_NAMES = new String[]{"DLQ", "expiryQueue", "serverPeer"};
-
-    // TODO (ips, 05/18/09): The below override of getAvailability() is a workaround for
-    //                       https://jira.jboss.org/jira/browse/JBAS-6939.
-    //                       It should be removed once that issue is fixed.
-    @Override
-    public AvailabilityType getAvailability()
-    {
-        try
-        {
-            ManagedComponent managedComponent = getManagedComponent();
-            // If the topic or queue is stopped, the call to getValue() will throw an
-            // "IllegalArgumentException: No such context: jboss.messaging.destination:name=FooQueue,service=Queue".
-            ComponentType queueComponentType = KnownComponentTypes.JMSDestination.Queue.getType();
-            String propName = (managedComponent.getType().equals(queueComponentType)) ? "consumerCount" : "allMessageCount";
-            managedComponent.getProperty(propName).getValue();
-            return super.getAvailability();
-        }
-        catch (Exception e)
-        {
-            return AvailabilityType.DOWN;
-        }        
-    }
 
     @Override
     public void updateResourceConfiguration(ConfigurationUpdateReport configurationUpdateReport)

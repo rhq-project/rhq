@@ -18,14 +18,13 @@ ANT Script that provides ways to package the agent.
    <property name="concurrent.version" value="1.3.4-jboss"/>
    <property name="jboss-common.version" value="1.2.0.GA"/>
    <property name="jboss.version" value="4.2.1.GA"/>
-   <property name="jboss-remoting.version" value="2.2.1.GA"/>
+   <property name="jboss-remoting.version" value="2.2.2.SP8"/>
    <property name="jboss-serialization.version" value="1.0.3.GA"/>
    <property name="jline.version" value="0.9.94"/>
    <property name="jboss-ejb3.version" value="4.2.2.GA"/>
    <property name="hibernate.version" value="3.2.r14201-1"/>
    <property name="javassist.version" value="3.3.GA"/>
-
-
+   <property name="persistence-api.version" value="1.0"/>
 
    <!--
    =======================================================================
@@ -47,9 +46,9 @@ ANT Script that provides ways to package the agent.
          <include name="jboss/jboss-j2ee/${jboss.version}/jboss-j2ee-${jboss.version}.jar" />
          <include name="jboss/jboss-remoting/${jboss-remoting.version}/jboss-remoting-${jboss-remoting.version}.jar" />
          <include name="jboss/jboss-serialization/${jboss-serialization.version}/jboss-serialization-${jboss-serialization.version}.jar" />
+         <include name="javax/persistence/persistence-api/${persistence-api.version}/persistence-api-${persistence-api.version}.jar" />
 
          <include name="hibernate/hibernate3/${hibernate.version}/hibernate3-${hibernate.version}.jar" />
-
 
          <include name="org/rhq/rhq-enterprise-client/${project.version}/rhq-enterprise-client-${project.version}.jar" />
          <include name="org/rhq/rhq-enterprise-server/${project.version}/rhq-enterprise-server-${project.version}.jar" />

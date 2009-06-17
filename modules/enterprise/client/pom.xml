@@ -30,6 +30,7 @@
       <i18nlog.version>1.0.9</i18nlog.version>
       <log4j.version>1.2.14</log4j.version>
       <persistence-api.version>1.0</persistence-api.version>
+      <hibernate-all.version>1.0.0.Alpha9</hibernate-all.version>
    </properties>
 
    <dependencies>
@@ -55,6 +56,12 @@
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
          <type>zip</type>
       </dependency>
+
+      <dependency>
+         <groupId>jboss</groupId>
+         <artifactId>jboss-remoting</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+       </dependency>
 
       <dependency>
          <groupId>org.rhq</groupId>
@@ -106,7 +113,7 @@
          <groupId>jline</groupId>
          <artifactId>jline</artifactId>
          <version>${jline.version}</version>
-         <scope>provided</scope>
+         
       </dependency>
 
       <dependency>
@@ -180,6 +187,9 @@
                               name="jboss.version"
                               value="${jboss.version}" />
                            <property
+                              name="jboss-remoting.version"
+                              value="${jboss-remoting.version}" />
+                           <property
                               name="jbossws.version"
                               value="${jbossws.version}" />
                            <property
@@ -191,6 +201,9 @@
                            <property
                               name="persistence-api.version"
                               value="${persistence-api.version}" />
+                           <property
+                              name="hibernate-all.version"
+                              value="${hibernate-all.version}" />
                            <property
                               name="rhq.client.generate.jar"
                               value="${rhq.client.generate.jar}" />

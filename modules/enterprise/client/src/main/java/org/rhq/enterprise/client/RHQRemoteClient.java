@@ -37,7 +37,8 @@ import org.rhq.enterprise.server.resource.ResourceManagerRemote;
 /**
  * A remote access client with transparent proxies to RHQ servers.
  *
- * @author Greg Hinkle, Simeon Pinder
+ * @author Greg Hinkle
+ * @author Simeon Pinder
  */
 public class RHQRemoteClient {
     // Default locator values

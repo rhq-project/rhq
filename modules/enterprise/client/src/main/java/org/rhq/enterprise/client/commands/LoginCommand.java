@@ -22,7 +22,8 @@ import org.rhq.enterprise.client.ClientMain;
 import org.rhq.enterprise.client.RHQRemoteClient;
 
 /**
- * @author Greg Hinkle, Simeon Pinder
+ * @author Greg Hinkle
+ * @author Simeon Pinder
  */
 public class LoginCommand implements ClientCommand {
 

@@ -1,19 +1,8 @@
 package org.rhq.enterprise.client.commands;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.client.ClientMain;
-import org.rhq.enterprise.client.RHQRemoteClient;
-//import org.rhq.enterprise.server.ws.AvailabilityType;
-//import org.rhq.enterprise.server.ws.OperationManagerRemote;
-//import org.rhq.enterprise.server.ws.Resource;
-//import org.rhq.enterprise.server.ws.ResourceManagerRemote;
-//import org.rhq.enterprise.server.ws.ResourceOperationSchedule;
-//import org.rhq.enterprise.server.ws.Subject;
-//import org.rhq.enterprise.server.ws.SubjectManagerRemote;
 import org.rhq.enterprise.server.operation.OperationManagerRemote;
 import org.rhq.enterprise.server.operation.ResourceOperationSchedule;
 import org.rhq.enterprise.server.resource.ResourceManagerRemote;

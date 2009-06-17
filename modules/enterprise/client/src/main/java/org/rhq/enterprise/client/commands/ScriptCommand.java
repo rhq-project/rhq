@@ -18,14 +18,14 @@
  */
 package org.rhq.enterprise.client.commands;
 
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
+
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.client.ClientMain;
 import org.rhq.enterprise.client.RHQRemoteClient;
 import org.rhq.enterprise.client.TabularWriter;
-import org.rhq.enterprise.server.ws.PageControl;
-
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptEngine;
-import javax.script.ScriptException;
 
 /**
  * @author Greg Hinkle
@@ -37,9 +37,9 @@ public class ScriptCommand implements ClientCommand {
 
     public ScriptCommand() {
         sem = new ScriptEngineManager();
-//        sem.getBindings().put("unlimitedPC", PageControl.getUnlimitedInstance());
+        //        sem.getBindings().put("unlimitedPC", PageControl.getUnlimitedInstance());
         PageControl pc = new PageControl();
-          pc.setPageNumber(-1);
+        pc.setPageNumber(-1);
         sem.getBindings().put("unlimitedPC", pc);
         jsEngine = sem.getEngineByName("JavaScript");
     }
@@ -63,7 +63,6 @@ public class ScriptCommand implements ClientCommand {
             script.append(" ");
         }
         try {
-
 
             Object result = jsEngine.eval(script.toString());
             if (result != null) {
@@ -92,7 +91,8 @@ public class ScriptCommand implements ClientCommand {
 
     public String getDetailedHelp() {
         StringBuilder help = new StringBuilder();
-        help.append("Executes JavaScript commands. You can utilize the following services: " + RHQRemoteClient.SERVICE_NAMES);
+        help.append("Executes JavaScript commands. You can utilize the following services: "
+            + RHQRemoteClient.SERVICE_NAMES);
         return help.toString();
     }
 }

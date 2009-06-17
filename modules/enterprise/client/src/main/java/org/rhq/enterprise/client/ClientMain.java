@@ -31,7 +31,8 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.client.commands.ClientCommand;
 
 /**
- * @author Greg Hinkle, Simeon Pinder
+ * @author Greg Hinkle
+ * @author Simeon Pinder
  */
 public class ClientMain {
 

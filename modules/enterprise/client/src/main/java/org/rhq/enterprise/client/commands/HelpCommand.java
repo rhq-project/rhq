@@ -18,11 +18,16 @@
  */
 package org.rhq.enterprise.client.commands;
 
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+
 import org.rhq.enterprise.client.ClientMain;
 import org.rhq.enterprise.client.TabularWriter;
-
-import java.util.*;
-import java.lang.reflect.Method;
 
 /**
  * @author Greg Hinkle
@@ -38,19 +43,19 @@ public class HelpCommand implements ClientCommand {
         if (args.length == 1) {
             String[][] data = new String[commands.size()][2];
             int i = 0;
-            List<String> cmds = new ArrayList(commands.keySet());
+            List<String> cmds = new ArrayList<String>(commands.keySet());
             Collections.sort(cmds);
             for (String name : cmds) {
                 ClientCommand command = commands.get(name);
                 data[i][0] = name;
                 data[i++][1] = command.getHelp();
             }
-            TabularWriter tw = new TabularWriter(client.getPrintWriter(),"Command", "Description");
+            TabularWriter tw = new TabularWriter(client.getPrintWriter(), "Command", "Description");
             tw.setWidth(client.getConsoleWidth());
 
             tw.print(data);
         } else if ("api".equals(args[1])) {
-            Map<String,Object> services = client.getRemoteClient().getAllServices();
+            Map<String, Object> services = client.getRemoteClient().getAllServices();
             if (args.length == 2) {
                 TabularWriter tw = new TabularWriter(client.getPrintWriter(), "API", "Package");
                 tw.setWidth(client.getConsoleWidth());
@@ -67,7 +72,7 @@ public class HelpCommand implements ClientCommand {
             } else if (args.length == 3) {
                 Object service = services.get(args[2]);
                 if (service != null) {
-                    Class intf = service.getClass().getInterfaces()[0];
+                    Class<?> intf = service.getClass().getInterfaces()[0];
                     Method[] methods = intf.getMethods();
                     Arrays.sort(methods, new Comparator<Method>() {
                         public int compare(Method o1, Method o2) {
@@ -78,7 +83,7 @@ public class HelpCommand implements ClientCommand {
                     for (int i = 0; i < methods.length; i++) {
                         data[i][0] = methods[i].getName();
 
-                        Class[] paramTypes = methods[i].getParameterTypes();
+                        Class<?>[] paramTypes = methods[i].getParameterTypes();
                         StringBuilder buf = new StringBuilder();
 
                         buf.append(methods[i].getReturnType().getSimpleName());
@@ -87,9 +92,9 @@ public class HelpCommand implements ClientCommand {
                         buf.append("(");
 
                         boolean secondary = false;
-                        for (Class paramType : paramTypes) {
+                        for (Class<?> paramType : paramTypes) {
                             if (secondary)
-                               buf.append(", ");
+                                buf.append(", ");
                             secondary = true;
                             buf.append(paramType.getSimpleName());
                         }
@@ -102,7 +107,8 @@ public class HelpCommand implements ClientCommand {
 
                     tw.print(data);
                 } else {
-                    client.getPrintWriter().println("Unknown service [" + args[2] + "] try 'help api' for a listing of services");
+                    client.getPrintWriter().println(
+                        "Unknown service [" + args[2] + "] try 'help api' for a listing of services");
                 }
 
             }
@@ -129,8 +135,8 @@ public class HelpCommand implements ClientCommand {
     }
 
     public String getDetailedHelp() {
-        return "Use help [command] to get detailed help\n" +
-                "help api will return the list of service apis available for script execs\n" +
-                "help api [service] will display the methods and signatures of a specific api";
+        return "Use help [command] to get detailed help\n"
+            + "help api will return the list of service apis available for script execs\n"
+            + "help api [service] will display the methods and signatures of a specific api";
     }
 }

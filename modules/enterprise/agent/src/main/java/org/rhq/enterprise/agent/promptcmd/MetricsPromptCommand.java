@@ -32,10 +32,10 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import mazz.i18n.Msg;
 import org.rhq.enterprise.agent.AgentMain;
+import org.rhq.enterprise.agent.StringUtil;
 import org.rhq.enterprise.agent.AgentManagement;
 import org.rhq.enterprise.agent.i18n.AgentI18NFactory;
 import org.rhq.enterprise.agent.i18n.AgentI18NResourceKeys;
-import org.rhq.enterprise.communications.util.StringUtil;
 
 /**
  * Displays the current metrics emitted by the agent itself.

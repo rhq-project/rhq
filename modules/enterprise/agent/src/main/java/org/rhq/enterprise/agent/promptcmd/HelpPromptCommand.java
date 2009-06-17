@@ -25,9 +25,9 @@ import java.util.Iterator;
 import java.util.Map;
 import mazz.i18n.Msg;
 import org.rhq.enterprise.agent.AgentMain;
+import org.rhq.enterprise.agent.StringUtil;
 import org.rhq.enterprise.agent.i18n.AgentI18NFactory;
 import org.rhq.enterprise.agent.i18n.AgentI18NResourceKeys;
-import org.rhq.enterprise.communications.util.StringUtil;
 
 /**
  * Displays help on a prompt command.

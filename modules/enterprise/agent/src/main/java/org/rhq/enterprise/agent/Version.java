@@ -24,8 +24,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Properties;
 
-import org.rhq.enterprise.communications.util.StringUtil;
-
 /**
  * Utility that can be used to determine the version of the software.
  *

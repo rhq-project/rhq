@@ -346,6 +346,45 @@
                 </configuration>
             </plugin>
 
+         <!-- this should eventually be removed, plugins should not be worried about clientapi jar -->
+         <!-- this debug/testing plugin descriptor generator should be a separate utility module -->
+         <plugin>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <version>2.0</version>
+            <executions>
+               <execution>
+                  <id>copy-plugin-descriptor-generator-deps</id>
+                  <phase>process-resources</phase>
+                  <goals>
+                     <goal>copy</goal>
+                  </goals>
+                  <configuration>
+                     <artifactItems>
+                        <artifactItem>
+                           <groupId>${rhq.groupId}</groupId>
+                           <artifactId>rhq-core-client-api</artifactId>
+                           <version>${rhq.version}</version>
+                        </artifactItem>
+                        <artifactItem>
+                           <groupId>apache-xerces</groupId>
+                           <artifactId>xml-apis</artifactId>
+                           <version>2.9.1</version>
+                        </artifactItem>
+                        <artifactItem>
+                           <groupId>javax.xml.bind</groupId>
+                           <artifactId>jaxb-api</artifactId>
+                        </artifactItem>
+                        <artifactItem>
+                           <groupId>com.sun.xml.bind</groupId>
+                           <artifactId>jaxb-impl</artifactId>
+                        </artifactItem>
+                     </artifactItems>
+                     <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+
             <plugin>
                 <artifactId>maven-dependency-plugin</artifactId>
                 <version>2.0</version>

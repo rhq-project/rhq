@@ -38,7 +38,7 @@ import org.jboss.remoting.invocation.NameBasedInvocation;
 import org.rhq.enterprise.server.util.HibernateDetachUtility;
 
 /**
- * This rather hackish endpoint is here to handle remote invocations over the standard invocation handler.
+ * Remoting handler endpoint used to handle remote API invocations over the standard invocation handler.
  *
  * @author Greg Hinkle
  */
@@ -64,7 +64,6 @@ public class RemoteSafeInvocationHandler implements ServerInvocationHandler {
     public Object invoke(InvocationRequest invocationRequest) throws Throwable {
 
         if (invocationRequest == null) {
-            System.out.println("The invocation request entered was NULL!");
             throw new IllegalArgumentException("InvocationRequest was null.");
         }
 
@@ -135,8 +134,7 @@ public class RemoteSafeInvocationHandler implements ServerInvocationHandler {
     /**
      * Registers the MBean used to monitor the remote API processing.
      *
-     * @param mbs
-     *            the MBeanServer where the metrics MBean should be registered
+     * @param mbs the MBeanServer where the metrics MBean should be registered
      */
     public void registerMetricsMBean(MBeanServer mbs) {
         try {
@@ -149,8 +147,7 @@ public class RemoteSafeInvocationHandler implements ServerInvocationHandler {
     /**
      * Unregisters the MBean that was used to monitor the remote API processing.
      *
-     * @param mbs
-     *            the MBeanServer where the metrics MBean is registered
+     * @param mbs the MBeanServer where the metrics MBean is registered
      */
     public void unregisterMetricsMBean(MBeanServer mbs) {
         try {

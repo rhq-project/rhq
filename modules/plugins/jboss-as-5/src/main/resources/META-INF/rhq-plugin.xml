@@ -194,12 +194,6 @@
         </c:constraint>
     </c:simple-property>
 
-    <c:simple-property name="interleaving" type="boolean" required="false" defaultValue="false">
-        <c:description>
-            If true, enable transaction interleaving if the DB vendor supports it (most do not). The default is false.
-        </c:description>
-    </c:simple-property>
-
     <c:simple-property name="isSameRM-override-value" type="boolean" required="false">
         <c:description>
             If set, unconditionally sets the boolean return value of javax.transaction.xa.XAResource.isSameRM(XAResource).
@@ -736,6 +730,40 @@
            measurementType="trendsup" displayType="summary"/>
 '>
 
+<!ENTITY ejb3StatelessSessionBeanDefinition '
+    <plugin-configuration>
+        <c:simple-property name="componentType" default="EJB3" readOnly="true"/>
+        <c:simple-property name="componentSubtype" default="StatelessSession" readOnly="true"/>
+        <c:simple-property name="componentName" readOnly="true"/>
+        <c:simple-property name="invocationStatsPropertyName" default="invocationStats" readOnly="true"/>
+    </plugin-configuration>
+'>
+
+<!ENTITY ejb3StatefulSessionBeanDefinition '
+    <plugin-configuration>
+        <c:simple-property name="componentType" default="EJB3" readOnly="true"/>
+        <c:simple-property name="componentSubtype" default="StatefulSession" readOnly="true"/>
+        <c:simple-property name="componentName" readOnly="true"/>
+        <c:simple-property name="invocationStatsPropertyName" default="invocationStats" readOnly="true"/>
+    </plugin-configuration>
+'>
+
+<!ENTITY ejb3MessageDrivenBeanDefinition '
+    <plugin-configuration>
+        <c:simple-property name="componentType" default="EJB3" readOnly="true"/>
+        <c:simple-property name="componentSubtype" default="MessageDriven" readOnly="true"/>
+        <c:simple-property name="componentName" readOnly="true"/>
+    </plugin-configuration>
+'>
+
+<!ENTITY ejb3EntityBeanDefinition '
+    <plugin-configuration>
+        <c:simple-property name="componentType" default="EJB3" readOnly="true"/>
+        <c:simple-property name="componentSubtype" default="Entity" readOnly="true"/>
+        <c:simple-property name="componentName" readOnly="true"/>
+    </plugin-configuration>
+'>
+
 <!ENTITY ejb3SessionBeanMetrics '
     <metric property="availableCount"
             description="The number of pooled instances of this EJB3 Session Bean in the method-ready state"/>
@@ -751,14 +779,11 @@
 
     <metric property="removeCount" displayType="summary" measurementType="trendsup"
             description="The number of instances of this EJB3 Session Bean that have been removed since server start"/>
-<!--
-    <!-//- default interval == 600000 ms == 10 min -//->
-    <metric property="MethodInvocationTime" dataType="calltime" units="milliseconds"
+
+    <!-- default interval == 600000 ms == 10 min -->
+    <metric property="methodInvocationTime" dataType="calltime" units="milliseconds"
             defaultOn="false" defaultInterval="600000" destinationType="Method Name"
-            description="The minimum, maximum, and average invocation times for each of the methods exposed by this EJB;
-                         NOTE: this metric is only available if JBoss EJB3 RC9 Patch 1 or later is being used
-                         (a capable version of EJB3 is included with JBossAS 4.2.0.GA or later)"/>
--->
+            description="The minimum, maximum, and average invocation times for each of the methods exposed by this EJB"/>
 '>
 
 <!ENTITY ejb3StatefulSessionBeanMetrics '
@@ -784,11 +809,11 @@
 '>
 
 <!ENTITY ejb2CommonMetrics '
-   <metric property="CreateCount" displayName="Create Count" displayType="summary" measurementType="trendsup"
-           description="The number of instances of this EJB2 Session Bean that have been created. since server start."/>
+    <metric property="CreateCount" displayName="Create Count" displayType="summary" measurementType="trendsup"
+            description="The number of instances of this EJB2 Session Bean that have been created. since server start."/>
            
-   <metric property="RemoveCount" displayName="Remove Count" displayType="summary" measurementType="trendsup"
-           description="The number of instances of this EJB2 Session Bean that have been removed since server start."/>
+    <metric property="RemoveCount" displayName="Remove Count" displayType="summary" measurementType="trendsup"
+            description="The number of instances of this EJB2 Session Bean that have been removed since server start."/>
 
     <metric property="CurrentPoolSize" displayName="Current Pool Size" displayType="summary" measurementType="dynamic"
             description="The number of beans in the pool."/>
@@ -797,9 +822,16 @@
             description="The maximum pool size."/>
 '>
 
-<!ENTITY ejb2SessionBeanOperations '
+<!ENTITY ejb2SessionBeanMetrics '
+    <!-- default interval == 600000 ms == 10 min -->
+    <metric property="methodInvocationTime" dataType="calltime" units="milliseconds"
+            defaultOn="false" defaultInterval="600000" destinationType="Method Name"
+            description="The minimum, maximum, and average invocation times for each of the methods exposed by this EJB"/>
+'>
 
-   <operation name="methodStats" displayName="View Method Statistics" description="Display detailed method invocation statistics.">
+<!ENTITY ejbSessionBeanOperations '
+
+   <operation name="viewInvocationStats" displayName="View Method Statistics" description="Display detailed method invocation statistics.">
        <results>
            <c:list-property name="methods">
                <c:map-property name="method">
@@ -820,6 +852,7 @@
         <c:simple-property name="componentType" default="EJB" readOnly="true"/>
         <c:simple-property name="componentSubtype" default="StatelessSession" readOnly="true"/>
         <c:simple-property name="componentName" readOnly="true"/>
+        <c:simple-property name="invocationStatsPropertyName" default="DetypedInvocationStatistics" readOnly="true"/>
     </plugin-configuration>
 '>   
 
@@ -832,6 +865,7 @@
         <c:simple-property name="componentType" default="EJB" readOnly="true"/>
         <c:simple-property name="componentSubtype" default="StatefulSession" readOnly="true"/>
         <c:simple-property name="componentName" readOnly="true"/>
+        <c:simple-property name="invocationStatsPropertyName" default="DetypedInvocationStatistics" readOnly="true"/>
     </plugin-configuration>
 '>
 
@@ -1388,7 +1422,7 @@
                     <c:simple-property name="url-property"
                                        displayName="URL Property"
                                        required="false"
-                                       description="For HA XA datasource, specifies the name of an XA Datasource Property that contains a list of URLs."
+                                       description="For HA XA datasources, specifies the name of an XA Datasource Property that contains a list of URLs."
                                        activationPolicy="immediate"/>
                 </c:group>
 
@@ -1396,9 +1430,12 @@
                     &datasourceAndConnectionFactoryAdvancedResourceConfigProps;
                     &datasourceAdvancedResourceConfigProps;
 
-                    <c:simple-property name="track-connection-by-tx" type="boolean" activationPolicy="immediate"
-                                       displayName="Track Connection By Transaction" required="false">
-                        <c:description>Whether the connection should be locked into the transaction.</c:description>
+                    <c:simple-property name="interleaving" type="boolean" required="false" defaultValue="false">
+                        <c:description>
+                            If true, enable transaction interleaving if the DB vendor supports it (most do not).
+                            This property supercedes the "track-connection-by-tx" property from earlier versions of
+                            JBoss AS. The default is false.
+                        </c:description>
                     </c:simple-property>
                 </c:group>
 
@@ -2457,8 +2494,9 @@
                      discovery="Ejb2BeanDiscoveryComponent"
                      description="An EJB2 Stateless Session Bean">
                  &ejb2StatelessSessionBeanDefinition;
-                 &ejb2SessionBeanOperations;
+                 &ejbSessionBeanOperations;
                  &ejb2CommonMetrics;
+                 &ejb2SessionBeanMetrics;
                  &ejb2StatelessSessionBeanMetrics;
 
                 <metric property="methodInvocationTime" dataType="calltime" units="milliseconds"
@@ -2471,8 +2509,9 @@
                      discovery="Ejb2BeanDiscoveryComponent"
                      description="An EJB2 Stateful Session Bean">
                  &ejb2StatefulSessionBeanDefinition;                 
-                 &ejb2SessionBeanOperations;                 
-                 &ejb2CommonMetrics;                 
+                 &ejbSessionBeanOperations;
+                 &ejb2CommonMetrics;
+                 &ejb2SessionBeanMetrics;
                  &ejb2StatefulSessionBeanMetrics;
 
                 <metric property="methodInvocationTime" dataType="calltime" units="milliseconds"
@@ -2537,8 +2576,9 @@
                      discovery="Ejb2BeanDiscoveryComponent"
                      description="An EJB2 Stateless Session Bean">
                  &ejb2StatelessSessionBeanDefinition;
-                 &ejb2SessionBeanOperations;
+                 &ejbSessionBeanOperations;
                  &ejb2CommonMetrics;
+                 &ejb2SessionBeanMetrics;
                  &ejb2StatelessSessionBeanMetrics;
             </service>
 
@@ -2547,8 +2587,9 @@
                      discovery="Ejb2BeanDiscoveryComponent"
                      description="An EJB2 Stateful Session Bean">
                  &ejb2StatefulSessionBeanDefinition;
-                 &ejb2SessionBeanOperations;
+                 &ejbSessionBeanOperations;
                  &ejb2CommonMetrics;
+                 &ejb2SessionBeanMetrics;
                  &ejb2StatefulSessionBeanMetrics;
             </service>         
 
@@ -2627,65 +2668,35 @@
                      class="Ejb3BeanComponent"
                      discovery="Ejb3BeanDiscoveryComponent"
                      description="An EJB3 Stateless Session Bean (SLSB)">
-
-                <plugin-configuration>
-                    <c:simple-property name="componentType" default="EJB3" readOnly="true"/>
-                    <c:simple-property name="componentSubtype" default="StatelessSession" readOnly="true"/>
-                    <c:simple-property name="componentName" readOnly="true"/>
-                </plugin-configuration>
-
+                &ejb3StatelessSessionBeanDefinition;
+                &ejbSessionBeanOperations;
                 &ejb3SessionBeanMetrics;
-
             </service>
 
             <service name="EJB3 Stateful Session Bean"
                      class="Ejb3BeanComponent"
                      discovery="Ejb3BeanDiscoveryComponent"
                      description="An EJB3 Stateful Session Bean (SFSB)">
-
-                <plugin-configuration>
-                    <c:simple-property name="componentType" default="EJB3" readOnly="true"/>
-                    <c:simple-property name="componentSubtype" default="StatefulSession" readOnly="true"/>
-                    <c:simple-property name="componentName" readOnly="true"/>
-                </plugin-configuration>
-
-                <operation name="viewMethodStats" /> <!-- TODO add result params -->
-
+                &ejb3StatefulSessionBeanDefinition;
+                &ejbSessionBeanOperations;
                 &ejb3SessionBeanMetrics;
-
                 <!-- SFSBs have a few additional metrics that SLSBs do not have... -->
                 &ejb3StatefulSessionBeanMetrics;
-
             </service>
 
             <service name="EJB3 Entity Bean"
                      class="Ejb3BeanComponent"
                      discovery="Ejb3BeanDiscoveryComponent"
                      description="An EJB3 Entity Bean">
-
-                <plugin-configuration>
-                    <c:simple-property name="componentType" default="EJB3" readOnly="true"/>
-                    <c:simple-property name="componentSubtype" default="Entity" readOnly="true"/>
-                    <c:simple-property name="componentName" readOnly="true"/>
-                </plugin-configuration>
-
-                <!-- TODO -->
-
+                &ejb3EntityBeanDefinition;
             </service>
 
             <service name="EJB3 Message-Driven Bean"
                      class="Ejb3BeanComponent"
                      discovery="Ejb3BeanDiscoveryComponent"
                      description="An EJB3 Message-Driven Bean (MDB)">
-
-                <plugin-configuration>
-                    <c:simple-property name="componentType" default="EJB3" readOnly="true"/>
-                    <c:simple-property name="componentSubtype" default="MessageDriven" readOnly="true"/>
-                    <c:simple-property name="componentName" readOnly="true"/>
-                </plugin-configuration>
-
+                &ejb3MessageDrivenBeanDefinition;
                 &ejb3MessageDrivenBeanMetrics;
-
             </service>
 
         </service>
@@ -2728,12 +2739,8 @@
                      discovery="Ejb3BeanDiscoveryComponent"
                      description="An EJB3 Stateless Session Bean (SLSB)">
 
-                <plugin-configuration>
-                    <c:simple-property name="componentType" default="EJB3" readOnly="true"/>
-                    <c:simple-property name="componentSubtype" default="StatelessSession" readOnly="true"/>
-                    <c:simple-property name="componentName" readOnly="true"/>
-                </plugin-configuration>
-
+                &ejb3StatelessSessionBeanDefinition;
+                &ejbSessionBeanOperations;
                 &ejb3SessionBeanMetrics;
 
             </service>
@@ -2743,16 +2750,9 @@
                      discovery="Ejb3BeanDiscoveryComponent"
                      description="An EJB3 Stateful Session Bean (SFSB)">
 
-                <plugin-configuration>
-                    <c:simple-property name="componentType" default="EJB3" readOnly="true"/>
-                    <c:simple-property name="componentSubtype" default="StatefulSession" readOnly="true"/>
-                    <c:simple-property name="componentName" readOnly="true"/>
-                </plugin-configuration>
-
-                <operation name="viewMethodStats" /> <!-- TODO add result params -->
-
+                &ejb3StatefulSessionBeanDefinition;
+                &ejbSessionBeanOperations;
                 &ejb3SessionBeanMetrics;
-
                 <!-- SFSBs have a few additional metrics that SLSBs do not have... -->
                 &ejb3StatefulSessionBeanMetrics;
 
@@ -2763,11 +2763,7 @@
                      discovery="Ejb3BeanDiscoveryComponent"
                      description="An EJB3 Entity Bean">
 
-                <plugin-configuration>
-                    <c:simple-property name="componentType" default="EJB3" readOnly="true"/>
-                    <c:simple-property name="componentSubtype" default="Entity" readOnly="true"/>
-                    <c:simple-property name="componentName" readOnly="true"/>
-                </plugin-configuration>
+                &ejb3EntityBeanDefinition;
 
                 <!-- TODO -->
 
@@ -2778,12 +2774,7 @@
                      discovery="Ejb3BeanDiscoveryComponent"
                      description="An EJB3 Message-Driven Bean (MDB)">
 
-                <plugin-configuration>
-                    <c:simple-property name="componentType" default="EJB3" readOnly="true"/>
-                    <c:simple-property name="componentSubtype" default="MessageDriven" readOnly="true"/>
-                    <c:simple-property name="componentName" readOnly="true"/>
-                </plugin-configuration>
-
+                &ejb3MessageDrivenBeanDefinition;
                 &ejb3MessageDrivenBeanMetrics;
 
             </service>

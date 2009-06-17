@@ -20,6 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
+
 package org.rhq.plugins.jbossas5.util;
 
 import org.jboss.managed.api.ComponentType;
@@ -30,14 +31,14 @@ import org.jboss.metatype.api.values.SimpleValue;
  * @author Lukas Krejci
  */
 public class Ejb2BeanUtils {
-    private static final ComponentType mdbComponentType = new ComponentType("EJB", "MDB");
+    private static final ComponentType MDB_COMPONENT_TYPE = new ComponentType("EJB", "MDB");
 
     private Ejb2BeanUtils() {
 
     }
 
     public static String getUniqueBeanIdentificator(ManagedComponent component) {
-        if (mdbComponentType.equals(component.getType())) {
+        if (MDB_COMPONENT_TYPE.equals(component.getType())) {
             //for MDBs, the unique combination is the deployment name + (component name - @object-id)
             String componentName = stripObjectId(component.getName());
             String deploymentName = ((SimpleValue) component.getProperty("DeploymentName").getValue()).getValue()
@@ -52,7 +53,7 @@ public class Ejb2BeanUtils {
     public static String parseResourceName(ManagedComponent component) {
         String resourceName = parseSimpleResourceName(component.getName());
 
-        if (mdbComponentType.equals(component.getType())) {
+        if (MDB_COMPONENT_TYPE.equals(component.getType())) {
             //we need to exclude the @object-id part from the name
             //in a given deployment, there's guaranteed to be at most 1
             //instance of an MDB with a given name

@@ -25,12 +25,11 @@ import java.util.concurrent.ExecutionException;
 
 import javax.management.ObjectName;
 
-import org.jboss.mx.util.ObjectNameFactory;
-
 import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.enterprise.communications.ServiceContainerMetricsMBean;
 import org.rhq.enterprise.communications.command.client.ClientCommandSenderMetrics;
 

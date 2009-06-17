@@ -926,6 +926,46 @@
                                                if not specified, it will default to the last path component of {serverHomeDir}."
                                   default="default"/>
              </c:group>
+            <c:group name="control" displayName="Operations">
+               <c:simple-property name="scriptPrefix" displayName="Script Prefix" type="string" required="false"
+                               description="A prefix applied to script execution commands. Typically a sudo
+                                            for applicable platforms. The prefix is applied verbatim. As such, a
+                                            sudo user must be configured appropriately. Ignored if not set."/>
+               <c:simple-property name="startScript" displayName="Start Script" type="file" required="false"
+                               description="The path to the script used by the 'Start' operation
+                                            to start this JBossAS server
+                                            (e.g. /opt/jboss-5.1.0.GA/bin/run.sh); if the path is not absolute,
+                                            then it will be resolved relative to {jbossHomeDir};
+                                            defaults to 'bin/run.sh' on UNIX or 'bin\run.bat' on Windows."/>
+               <c:simple-property name="shutdownScript" displayName="Shutdown Script" type="file" required="false"
+                               description="The path to the script used by the 'Shutdown' operation
+                                            to shutdown this JBossAS server
+                                            (e.g. /opt/jboss-5.1.0.GA/bin/shutdown.sh); if the path is not absolute,
+                                            then it will be resolved relative to {jbossHomeDir};
+                                            defaults to 'bin/shutdown.sh' on UNIX or 'bin\shutdown.bat' on Windows."/>
+               <c:simple-property name="shutdownMethod" displayName="Shutdown Method" type="string" required="false" default="JMX"
+                               description="The method used to execute the Shutdown operation;
+                                            defaults to 'JMX MBean'.">
+                <c:property-options>
+                   <c:option value="JMX"    name="JMX MBean" default="true"/>
+                   <c:option value="SCRIPT" name="shutdown script"/>
+                </c:property-options>
+               </c:simple-property>
+             <c:simple-property name="bindingAddress" displayName="Binding Address" required="false" default="127.0.0.1"
+                               description="The host or IP address used by all JBoss services as the binding
+                                            address (e.g. 10.11.14.233); specify 0.0.0.0 to tell JBossAS to
+                                            bind to all available network interfaces; defaults to '127.0.0.1'."/>
+             </c:group>
+             
+           <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
+                     <c:simple-property name="shutdownMbeanName" displayName="Shutdown MBean Name"
+                               default="jboss.system:type=Server"
+                               description="Name of the MBean to use when shutting down this server through JMX."/>
+                     <c:simple-property name="shutdownMbeanOperation" displayName="Shutdown MBean Operation" default="shutdown"
+                               description="Name of the operation to invoke when shutting down this server through JMX.
+                                 Note that only operations with no parameter or with one int parameter are supported. If the
+                                 operation requires an int parameter, '0' will be supplied."/>
+            </c:group>
 
              <c:group name="events">
                  <c:list-property name="logEventSources">
@@ -964,6 +1004,19 @@
         </plugin-configuration>
 
         <process-scan name="jbossas" query="process|basename|match=^java.*,arg|org.jboss.Main|match=.*"/>
+
+      <operation name="start" displayName="Start"
+                 description="Start this application server. The script used is specified in the Operations group of connection properties.">
+          <results><c:simple-property name="operationResult" description="Outcome of starting the server."/></results>
+      </operation>
+      <operation name="shutdown" displayName="Shutdown"
+                 description="Shutdown this application server via script or JMX depending on the settings in the Operations and Advanced groups of connection properties.">
+          <results><c:simple-property name="operationResult" description="Outcome of stopping the server."/></results>
+      </operation>
+      <operation name="restart" displayName="Restart"
+                 description="Shutdown and then start this application server.">
+          <results><c:simple-property name="operationResult" description="Outcome of restarting the server."/></results>
+      </operation>
 
           <!--
           <metric property="partitionName" dataType="trait" displayType="summary"

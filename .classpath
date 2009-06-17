@@ -56,7 +56,6 @@
 	<classpathentry kind="src" path="modules/plugins/apt/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/hosts/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/sshd/src/main/java"/>
-	<classpathentry kind="src" path="modules/plugins/sshd/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/hardware/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/oracle/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/grub/src/test/java"/>

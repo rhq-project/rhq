@@ -36,7 +36,7 @@ import org.jboss.mx.util.MBeanServerLocator;
 import org.jboss.system.server.ServerConfig;
 
 import org.rhq.core.domain.cloud.Server.OperationMode;
-import org.rhq.core.domain.util.MD5Generator;
+import org.rhq.core.util.MD5Generator;
 import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.core.CoreServerMBean;

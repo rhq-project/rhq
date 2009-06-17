@@ -44,7 +44,7 @@ import org.testng.annotations.Test;
 import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.plugin.Plugin;
-import org.rhq.core.domain.util.MD5Generator;
+import org.rhq.core.util.MD5Generator;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerLocal;

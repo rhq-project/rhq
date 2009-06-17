@@ -33,20 +33,12 @@
          <scope>test</scope>
       </dependency>
 
-      <!-- TODO: Get rid of this dep. -->
       <dependency>
-         <groupId>${rhq.groupId}</groupId>
-         <artifactId>rhq-core-plugin-container</artifactId>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-database-plugin</artifactId>
          <version>${project.version}</version>
          <scope>provided</scope>
       </dependency>
-
-       <dependency>
-          <groupId>org.rhq</groupId>
-          <artifactId>rhq-database-plugin</artifactId>
-          <version>${project.version}</version>
-          <scope>provided</scope>
-       </dependency>
 
    </dependencies>
 

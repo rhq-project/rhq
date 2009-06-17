@@ -37,7 +37,6 @@ import java.lang.reflect.Method;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.clientapi.agent.PluginPermissionException;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PropertyList;
@@ -179,11 +178,10 @@ public class PostgresServerComponent implements DatabaseComponent, Configuration
             if (e instanceof FileNotFoundException) {
                 String msg = "Can not read the configuration files: " + e.getMessage();
                 log.debug(msg);
-                throw new PluginPermissionException(msg);
+                throw new Exception(msg); // don't throw FileNotFound to not confuse caller - file probably exists, but file is not readable due to permissions
             }
 
-            //log.info("Couldn't load postgres configuration file", e);
-            e.printStackTrace();
+            log.debug("Couldn't load postgres configuration file", e);
         }
 
         Statement statement = null;

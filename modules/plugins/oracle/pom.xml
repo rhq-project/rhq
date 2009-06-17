@@ -27,13 +27,6 @@
    <dependencies>
 
       <dependency>
-         <groupId>org.hyperic</groupId>
-         <artifactId>sigar</artifactId>        
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope>         
-      </dependency>
-      
-      <dependency>
          <groupId>${rhq.groupId}</groupId>
          <artifactId>rhq-database-plugin</artifactId>
          <version>${project.version}</version>

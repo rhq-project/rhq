@@ -35,8 +35,8 @@ import mazz.i18n.Logger;
 
 import org.rhq.core.clientapi.server.core.CoreServerService;
 import org.rhq.core.domain.plugin.Plugin;
-import org.rhq.core.domain.util.MD5Generator;
 import org.rhq.core.pc.PluginContainerConfiguration;
+import org.rhq.core.util.MD5Generator;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.agent.i18n.AgentI18NFactory;

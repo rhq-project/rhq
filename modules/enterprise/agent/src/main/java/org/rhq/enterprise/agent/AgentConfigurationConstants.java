@@ -523,6 +523,11 @@ public interface AgentConfigurationConstants {
     String DEFAULT_PLUGINS_DIRECTORY = "plugins";
 
     /**
+     * The regular expression to indicate what agent/plugin container classes the plugins cannot access. 
+     */
+    String PLUGINS_ROOT_PLUGIN_CLASSLOADER_REGEX = PROPERTY_NAME_PREFIX + "plugins.root-plugin-classloader-regex";
+
+    /**
      * Defines, in seconds, the initial delay before the first server discovery scan is run.
      */
     String PLUGINS_SERVER_DISCOVERY_INITIAL_DELAY = PROPERTY_NAME_PREFIX

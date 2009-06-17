@@ -31,12 +31,12 @@ import org.rhq.core.clientapi.server.plugin.content.ContentSourceAdapter;
 import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetails;
 import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetailsKey;
 import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
-import org.rhq.core.clientapi.server.plugin.content.util.ContentFileInfo;
-import org.rhq.core.clientapi.server.plugin.content.util.ContentFileInfoFactory;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyMap;
-import org.rhq.core.domain.util.MD5Generator;
+import org.rhq.core.util.MD5Generator;
+import org.rhq.core.util.file.ContentFileInfo;
+import org.rhq.core.util.file.ContentFileInfoFactory;
 
 /**
  * This is the most basic <i>reference</i> implementation of a content source. It provides primative package

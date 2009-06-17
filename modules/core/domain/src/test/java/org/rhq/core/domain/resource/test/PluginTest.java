@@ -38,7 +38,7 @@ import org.testng.annotations.Test;
 
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.test.AbstractEJB3Test;
-import org.rhq.core.domain.util.MD5Generator;
+import org.rhq.core.util.MD5Generator;
 import org.rhq.core.util.stream.StreamUtil;
 
 @Test

@@ -20,18 +20,29 @@
   * if not, write to the Free Software Foundation, Inc.,
   * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
   */
-package org.rhq.core.clientapi.agent;
+package org.rhq.core.util;
+
+import org.testng.annotations.Test;
+
+import org.rhq.core.util.MD5Generator;
 
 /**
- * This exception is to be thrown by a plugin if it was told to do something for which is does not have permissions.
- * E.g. if it was to read a file and it was not able to access that file.
+ * Tests MD5 generation.
  *
- * @author Heiko W. Rupp
+ * @author John Mazzitelli
  */
-public class PluginPermissionException extends Exception {
-    private static final long serialVersionUID = -1L;
+@Test
+public class MD5GeneratorTest {
+    /**
+     * Tests generating the MD5 of a String.
+     */
+    public void testString() {
+        String md5 = MD5Generator.getDigestString("calculate MD5 of this String!\n");
+        assert md5.equals("ac98d9c00ea0d821cd757b0f3c628c99") : "Invalid MD5 was " + md5;
+    }
 
-    public PluginPermissionException(String message) {
-        super(message);
+    public void testEmpty() {
+        MD5Generator md5 = new MD5Generator();
+        assert md5.getDigestString().equals("d41d8cd98f00b204e9800998ecf8427e"); // empty data results in this MD5
     }
 }

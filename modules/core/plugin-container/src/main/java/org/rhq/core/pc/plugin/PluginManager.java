@@ -81,6 +81,8 @@ public class PluginManager implements ContainerService {
     private PluginMetadataManager metadataManager;
     private PluginContainerConfiguration configuration;
 
+    private ClassLoader rootPluginClassLoader;
+
     /**
      * Finds all plugins using the plugin finder defined in the
      * {@link #setConfiguration(PluginContainerConfiguration) plugin container configuration} and
@@ -96,6 +98,13 @@ public class PluginManager implements ContainerService {
 
         PluginFinder finder = configuration.getPluginFinder();
         File tmpDir = configuration.getTemporaryDirectory();
+
+        // The root classloader for all plugins will have all classes hidden except for those configured in the regex.
+        // Notice this root classloader has no jar URLs - it will provide no classes except for what it will allow
+        // the parent to expose as dictated by the regex.
+        ClassLoader parentClassLoader = this.getClass().getClassLoader();
+        String rootPluginClassLoaderRegex = configuration.getRootPluginClassLoaderRegex();
+        rootPluginClassLoader = new RootPluginClassLoader(new URL[] {}, parentClassLoader, rootPluginClassLoaderRegex);
 
         try {
             if (finder != null) {
@@ -131,36 +140,29 @@ public class PluginManager implements ContainerService {
                     List<String> dependencies = graph.getPluginDependencies(nextPlugin);
 
                     try {
-                        String lastDependency = graph.getUseClassesDependency(nextPlugin);
+                        String useClassesDep = graph.getUseClassesDependency(nextPlugin);
 
-                        if (dependencies.size() == 0 || lastDependency == null) {
+                        if (dependencies.size() == 0 || useClassesDep == null) {
                             log.debug("Loading independent plugin [" + nextPlugin + "] from URL: " + pluginUrl);
-                            loadPlugin(pluginUrl, null);
+                            loadPlugin(pluginUrl, null, this.rootPluginClassLoader);
                         } else {
-                            // Set<URL> allUrls = new HashSet<URL>();
-                            // getDependentUrls( nextPlugin, pluginNamesUrls, graph, allUrls );
-
                             log.debug("Loading dependent plugin [" + nextPlugin + "] from URL [" + pluginUrl
                                 + "] that has the following dependencies: " + dependencies);
 
-                            PluginEnvironment lastDepEnvironment = this.loadedPluginEnvironments.get(lastDependency);
-
-                            // create the URL array where all classes can be found - make sure we put the plugin's URL
-                            // up at the front so its plugin descriptor is found before any other dependent plugin descriptors
-                            //  URL[] allUrlsArray = new URL[allUrls.size() + 1];
-                            //  System.arraycopy( allUrls.toArray( new URL[allUrls.size()] ), 0,
-                            //                    allUrlsArray, 1,
-                            //                    allUrls.size() );
-                            //  allUrlsArray[0] = pluginUrl;
-
-                            ClassLoader classloader = lastDepEnvironment.getPluginClassLoader();
+                            PluginEnvironment useClassesDepEnv = this.loadedPluginEnvironments.get(useClassesDep);
+                            if (useClassesDepEnv == null) {
+                                throw new IllegalStateException("There is no plugin environment for dependency ["
+                                    + useClassesDep + "] - did it fail to deploy earlier?");
+                            }
+                            ClassLoader classloader = useClassesDepEnv.getPluginClassLoader();
 
                             // Note that we don't really care if the URL uses "file:" or not, we just use File to parse
                             // the name from the path.
                             String pluginJarName = new File(pluginUrl.getPath()).getName();
 
-                            loadPlugin(pluginUrl, PluginClassLoader.create(pluginJarName, pluginUrl, true, classloader,
-                                tmpDir));
+                            PluginClassLoader pluginClassLoader = PluginClassLoader.create(pluginJarName, pluginUrl,
+                                true, classloader, tmpDir);
+                            loadPlugin(pluginUrl, pluginClassLoader, null);
                         }
                     } catch (Throwable t) {
                         // for some reason, the plugin failed to load - it will be ignored, its depending plugins will also fail later
@@ -173,13 +175,15 @@ public class PluginManager implements ContainerService {
                 // Loading a null plugin loads the plugin using the current classloader
                 // This is useful for testing plugins in unit tests.
                 log.info("Loading the null plugin which uses non-isolated classloader");
-                loadPlugin(null, null);
+                loadPlugin(null, null, null);
             }
         } catch (Exception e) {
             shutdown(); // have to clean up the environments (e.g. unpacked jars) we might have already created
             log.error("Error initializing plugin container", e);
             throw new RuntimeException("Cannot initialize the plugin container", e);
         }
+
+        return;
     }
 
     /**
@@ -223,6 +227,10 @@ public class PluginManager implements ContainerService {
         this.pluginLifecycleListenerCache = null;
 
         this.metadataManager = null;
+
+        this.rootPluginClassLoader = null;
+
+        return;
     }
 
     /**
@@ -274,14 +282,18 @@ public class PluginManager implements ContainerService {
      *
      * @param  pluginUrl   the new plugin's jar location
      * @param  classLoader the new plugin's classloader - if <code>null</code>, one will be created for it
+     * @param  parentClassLoader if this method is to create a new classloader, this will be its parent.
+     *                           if <code>classLoader</code> is <code>null</code>, this parameter is ignored
      *
      * @throws PluginContainerException if the plugin fails to load
      */
-    private void loadPlugin(URL pluginUrl, ClassLoader classLoader) throws PluginContainerException {
+    private void loadPlugin(URL pluginUrl, ClassLoader classLoader, ClassLoader parentClassLoader)
+        throws PluginContainerException {
+
         log.debug("Loading plugin from [" + pluginUrl + "]...");
 
-        PluginDescriptorLoader pluginDescriptorLoader = new PluginDescriptorLoader(pluginUrl, classLoader, null, true,
-            this.configuration.getTemporaryDirectory());
+        PluginDescriptorLoader pluginDescriptorLoader = new PluginDescriptorLoader(pluginUrl, classLoader,
+            parentClassLoader, true, this.configuration.getTemporaryDirectory());
         PluginDescriptor pluginDescriptor = pluginDescriptorLoader.loadPluginDescriptor();
         PluginEnvironment pluginEnvironment = new PluginEnvironment(pluginDescriptor.getName(), pluginDescriptorLoader);
         String pluginName = pluginEnvironment.getPluginName();
@@ -361,9 +373,7 @@ public class PluginManager implements ContainerService {
         File tmpDir = this.configuration.getTemporaryDirectory();
         String pcName = this.configuration.getContainerName();
 
-        //noinspection UnnecessaryLocalVariable
         PluginContext context = new PluginContext(pluginName, sysInfo, tmpDir, dataDir, pcName);
-
         return context;
     }
 
@@ -400,7 +410,7 @@ public class PluginManager implements ContainerService {
      * @param graph           the dependency graph
      * @param allUrls         where the results will be stored
      *
-     * TODO: Use it or lose it.
+     * TODO: Use it or lose it - this used to be needed, keeping this around just in case it needs to be resurrected
      */
     private void getDependentUrls(String pluginName, Map<String, URL> pluginNamesUrls, PluginDependencyGraph graph,
         Set<URL> allUrls) {

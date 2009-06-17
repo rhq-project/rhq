@@ -16,8 +16,8 @@
    <description>A plugin for managing PostgreSQL</description>
 
    <scm>
-      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_2_0_EmbJopr_1_2_0-1/modules/plugins/postgres</connection>
-      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_2_0_EmbJopr_1_2_0-1/modules/plugins/postgres</developerConnection>
+      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/plugins/postgres</connection>
+      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/plugins/postgres</developerConnection>
    </scm>
 
    <properties>
@@ -32,20 +32,12 @@
          <scope>test</scope>
       </dependency>
 
-      <!-- TODO: Get rid of this dep. -->
       <dependency>
-         <groupId>${rhq.groupId}</groupId>
-         <artifactId>rhq-core-plugin-container</artifactId>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-database-plugin</artifactId>
          <version>${project.version}</version>
          <scope>provided</scope>
       </dependency>
-
-       <dependency>
-          <groupId>org.rhq</groupId>
-          <artifactId>rhq-database-plugin</artifactId>
-          <version>${project.version}</version>
-          <scope>provided</scope>
-       </dependency>
 
    </dependencies>
 

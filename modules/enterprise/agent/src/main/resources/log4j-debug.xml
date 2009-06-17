@@ -72,10 +72,22 @@
       <appender-ref ref="COMMANDTRACE"/>
    </category>
 
+   <!-- Trace classloading in the agent and plugin container by setting these to TRACE. -->
+   <!-- Setting these to TRACE requires the appender's Threshold to be set to TRACE too. -->
+   <!--
+   <category name="org.rhq.core.pc.plugin.RootPluginClassLoader">
+      <priority value="TRACE"/>
+   </category>
+   <category name="org.rhq.core.pc.plugin.PluginClassLoader">
+      <priority value="TRACE"/>
+   </category>
+   -->
+
    <!-- JBoss/Remoting - for low level communications layer tracing -->
+   <!-- Setting this to TRACE requires the appender's Threshold to be set to TRACE too. -->
    <!--
    <category name="org.jboss.remoting">
-      <priority value="TRACE" class="org.jboss.logging.XLevel"/>
+      <priority value="TRACE"/>
    </category>
    -->
 

@@ -54,7 +54,7 @@ import org.rhq.core.db.OracleDatabaseType;
 import org.rhq.core.db.PostgresqlDatabaseType;
 import org.rhq.core.db.SQLServerDatabaseType;
 import org.rhq.core.domain.plugin.Plugin;
-import org.rhq.core.domain.util.MD5Generator;
+import org.rhq.core.util.MD5Generator;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.util.LookupUtil;

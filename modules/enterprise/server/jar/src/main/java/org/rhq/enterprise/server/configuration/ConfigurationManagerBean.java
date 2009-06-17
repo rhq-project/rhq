@@ -44,7 +44,6 @@ import org.quartz.JobDetail;
 import org.quartz.SchedulerException;
 import org.quartz.Trigger;
 
-import org.rhq.core.clientapi.agent.PluginPermissionException;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
 import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
 import org.rhq.core.domain.auth.Subject;
@@ -1307,10 +1306,6 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                     + resource + "]");
             }
         } catch (Exception e) {
-            if (e instanceof PluginPermissionException) {
-                throw new PermissionException(e.getMessage());
-            }
-
             log.warn("Could not get live configuration for resource [" + resource + "]"
                 + ThrowableUtil.getAllMessages(e, true));
         }

@@ -32,8 +32,8 @@ import java.io.InputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Arrays;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -42,7 +42,6 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.pluginapi.util.FileUtils;
-import org.rhq.core.pc.PluginContainer;
 
 /**
  * Classloader for the plugin jar itself and any embedded lib/* jars.
@@ -53,8 +52,26 @@ public class PluginClassLoader extends URLClassLoader {
     private File embeddedJarsDirectory;
     private String stringValue;
 
-    public PluginClassLoader(URL[] urls, ClassLoader parent) {
+    protected PluginClassLoader(URL[] urls, ClassLoader parent) {
         super(urls, parent);
+    }
+
+    @Override
+    protected synchronized Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+        // this method is here simply to log success or failure so it is logging along side RootPluginClassLoader.
+        // Both these logs and  RootPluginClassLoader logs helps determine where a class is being loaded from.
+        try {
+            Class<?> clazz = super.loadClass(name, resolve);
+            if (log.isTraceEnabled()) {
+                log.trace("Plugin class loaded: " + name);
+            }
+            return clazz;
+        } catch (ClassNotFoundException cnfe) {
+            if (log.isTraceEnabled()) {
+                log.trace("Plugin class not found: " + name);
+            }
+            throw cnfe;
+        }
     }
 
     public void destroy() {
@@ -91,19 +108,7 @@ public class PluginClassLoader extends URLClassLoader {
         }
 
         URL[] classpath = classpathUrlList.toArray(new URL[classpathUrlList.size()]);
-
-        PluginClassLoader newLoader;
-        // TODO (ips): Remove this temporary hack once http://jira.rhq-project.org/browse/RHQ-2059 has been
-        //             implemented.
-        if (PluginContainer.getInstance().isInsideAgent() && pluginJarName.matches("jopr-jboss-as-5-plugin-.+\\.jar")) {
-            // Use a child first plugin classloader for the as5 plugin but only if we're running in the enterprise Agent.
-            // Don't use it in embedded - it's not necessary since there are no conflicting Agent jars (jboss-remoting
-            // etc.), and furthermore, it breaks things. For more info on this temporary hack, see
-            // http://jira.rhq-project.org/browse/RHQ-2059.
-            newLoader = new ChildFirstPluginClassLoader(classpath, parent);
-        } else {
-            newLoader = new PluginClassLoader(classpath, parent);
-        }
+        PluginClassLoader newLoader = new PluginClassLoader(classpath, parent);
         newLoader.embeddedJarsDirectory = unpackedDirectory;
 
         return newLoader;

@@ -26,24 +26,10 @@
 
    <dependencies>
 
-      <!-- <dependency>
-        <groupId>jboss</groupId>
-        <artifactId>jmx-adaptor-plugin</artifactId>
-        <version>4.0.2</version>
-        <scope>provided</scope>
-      </dependency>-->
-
       <dependency>
          <groupId>mc4j</groupId>
          <artifactId>org-mc4j-ems</artifactId>
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-      </dependency>
-
-      <dependency>
-         <groupId>${rhq.groupId}</groupId>
-         <artifactId>rhq-core-plugin-container</artifactId>
-         <version>${project.version}</version>
-         <scope>test</scope>
       </dependency>
 
    </dependencies>

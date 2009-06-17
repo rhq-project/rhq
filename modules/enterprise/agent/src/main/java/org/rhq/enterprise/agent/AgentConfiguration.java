@@ -1161,6 +1161,78 @@ public class AgentConfiguration {
             tmp_directory.mkdir();
         }
 
+        // Define what plugin container/agent classes are to be hidden from our plugins.
+        String clRegex = m_preferences.get(AgentConfigurationConstants.PLUGINS_ROOT_PLUGIN_CLASSLOADER_REGEX, null);
+        if (clRegex == null) {
+
+            StringBuilder defaultRegex = new StringBuilder();
+
+            // I don't know if its appropriate to force plugins to have their own implementation
+            // of the Java Management API. Commenting out for now - plugins get our VM's JMX implementation.
+            //
+            //defaultRegex.append("(javax\\.management\\..*)|");
+
+            // Hide our version of JAXB.
+            // If the plugins want these, they should include their own implementations.
+            defaultRegex.append("(javax\\.xml\\.bind\\..*)|");
+            defaultRegex.append("(com\\.sun\\.activation\\..*)|");
+            defaultRegex.append("(com\\.sun\\.istack\\..*)|");
+            defaultRegex.append("(com\\.sun\\.xml\\..*)|");
+
+            // Hide some Apache libraries used by the agent.
+            // If the plugins want these, they should include their own implementations.
+            defaultRegex.append("(org\\.apache\\.commons\\.httpclient\\..*)|");
+            defaultRegex.append("(org\\.apache\\.xerces\\..*)|");
+
+            // Provide to the plugins some logging frameworks. These are such common
+            // dependencies that we provide them for the plugins, thus eliminating every plugin
+            // needing to include their own. Most plugins want to log messages and will most
+            // likely want to just piggyback what the agent is using and log in the agent log.
+            //
+            //defaultRegex.append("(org\\.apache\\.commons\\.logging\\..*)|");
+            //defaultRegex.append("(org\\.apache\\.log4j\\..*)|");
+            //defaultRegex.append("(mazz\\.i18n\\..*)|");
+
+            // Hide all JBoss libraries, including the JBoss JMX implementation and Remoting.
+            // If the plugins want these, they should include their own implementations.
+            defaultRegex.append("(org\\.jboss\\.logging\\..*)|");
+            defaultRegex.append("(org\\.jboss\\.net\\..*)|");
+            defaultRegex.append("(org\\.jboss\\.util\\..*)|");
+            defaultRegex.append("(org\\.jboss\\.dom4j\\..*)|");
+            defaultRegex.append("(org\\.jboss\\.mx\\..*)|");
+            defaultRegex.append("(org\\.jboss\\.remoting\\..*)|");
+            defaultRegex.append("(org\\.jboss\\.serial\\..*)|");
+
+            // Miscelleneous libraries that the agent has that we want to hide from plugins.
+            // If the plugins want these, they should include their own implementations.
+            defaultRegex.append("(org\\.dom4j\\..*)|");
+            defaultRegex.append("(EDU\\.oswego\\..*)|");
+            defaultRegex.append("(gnu\\.getopt\\..*)|");
+
+            // These core agent/plugin container libraries are not to be used by the plugins.
+            // We hide them to enforce this - plugin developers should not be using these.
+            defaultRegex.append("(org\\.rhq\\.core\\.clientapi\\..*)|");
+            defaultRegex.append("(org\\.rhq\\.core\\.communications\\..*)|");
+            defaultRegex.append("(org\\.rhq\\.core\\.pc\\..*)|");
+
+            // This is commented out mainly to support the agent plugin to be able
+            // to talk to the agent core in both production and testing scenarios.
+            // See the _static_ org.rhq.enterprise.agent.AgentManagementMBean.BASE_OBJECT_NAME
+            // and its accompanying javadoc for what that is used for. Putting a second copy
+            // of that in another classloader for the agent plugin defeats that hack. Therefore,
+            // we must ensure we do not exclude this package.
+            //
+            //defaultRegex.append("(org\\.rhq\\.enterprise\\.agent\\..*)|");
+
+            // Plugins should not be doing anything with the agent-server comm layer - hiding all comm classes.
+            defaultRegex.append("(org\\.rhq\\.enterprise\\.communications\\..*)");
+
+            // Other packages from other jars in the agent lib directory allowed to be used by the plugins.
+            // Therefore, they are no excluded here. This includes things like the plugin API and the core domain objects.
+
+            clRegex = defaultRegex.toString();
+        }
+
         // now that we have all the individual preferences, let's squirrel them away in a config object
         PluginContainerConfiguration config = new PluginContainerConfiguration();
 
@@ -1168,6 +1240,7 @@ public class AgentConfiguration {
         config.setPluginDirectory(plugin_dir);
         config.setDataDirectory(data_directory);
         config.setTemporaryDirectory(tmp_directory);
+        config.setRootPluginClassLoaderRegex(clRegex);
         config.setServerDiscoveryInitialDelay(server_discovery_initial_delay);
         config.setServerDiscoveryPeriod(server_discovery_period);
         config.setServiceDiscoveryInitialDelay(service_discovery_initial_delay);

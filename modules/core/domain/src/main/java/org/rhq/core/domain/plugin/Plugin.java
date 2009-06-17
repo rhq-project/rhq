@@ -38,7 +38,7 @@ import javax.persistence.Table;
 
 import org.jetbrains.annotations.NotNull;
 
-import org.rhq.core.domain.util.MD5Generator;
+import org.rhq.core.util.MD5Generator;
 
 /**
  * An agent plugin.

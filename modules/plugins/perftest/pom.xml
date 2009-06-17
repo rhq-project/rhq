@@ -16,13 +16,27 @@
    <description>a plugin for performance testing</description>
 
    <scm>
-      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_2_0_EmbJopr_1_2_0-1/modules/plugins/perftest</connection>
-      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_2_0_EmbJopr_1_2_0-1/modules/plugins/perftest</developerConnection>
+      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/plugins/perftest</connection>
+      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/plugins/perftest</developerConnection>
    </scm>
 
    <properties>
       <scm.module.path>modules/plugins/perftest/</scm.module.path>
    </properties>
+
+   <dependencies>
+      <dependency>
+         <groupId>javax.xml.bind</groupId>
+         <artifactId>jaxb-api</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+      </dependency>
+
+      <dependency>
+         <groupId>com.sun.xml.bind</groupId>
+         <artifactId>jaxb-impl</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+      </dependency>
+   </dependencies>
 
    <build>
       <plugins>
@@ -41,6 +55,33 @@
                <generatePackage>org.rhq.plugins.perftest.scenario</generatePackage>
                <generateDirectory>${basedir}/target/generated-sources/xjc</generateDirectory>
             </configuration>
+         </plugin>
+
+         <plugin>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <version>2.0</version>
+            <executions>
+               <execution>
+                  <id>copy-jaxb-deps</id>
+                  <phase>process-resources</phase>
+                  <goals>
+                     <goal>copy</goal>
+                  </goals>
+                  <configuration>
+                     <artifactItems>
+                        <artifactItem>
+                           <groupId>javax.xml.bind</groupId>
+                           <artifactId>jaxb-api</artifactId>
+                        </artifactItem>
+                        <artifactItem>
+                           <groupId>com.sun.xml.bind</groupId>
+                           <artifactId>jaxb-impl</artifactId>
+                        </artifactItem>
+                     </artifactItems>
+                     <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
+                  </configuration>
+               </execution>
+            </executions>
          </plugin>
 
          <plugin>

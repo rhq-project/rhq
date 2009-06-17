@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.rhq.core.pc.plugin.PluginFinder;
+import org.rhq.core.pc.plugin.RootPluginClassLoader;
 
 /**
  * Configuration properties for the plugin container and all its internal managers.
@@ -42,6 +43,7 @@ public class PluginContainerConfiguration {
     private static final String CONTAINER_NAME_PROP = PROP_PREFIX + "container-name";
     private static final String DATA_DIRECTORY_PROP = PROP_PREFIX + "data-directory";
     private static final String TEMP_DIRECTORY_PROP = PROP_PREFIX + "temp-directory";
+    private static final String ROOT_PLUGIN_CLASSLOADER_REGEX_PROP = PROP_PREFIX + "root-plugin-classloader-regex";
 
     // The following configuration settings have hardcoded default values. These defaults are publicly
     // accessible so the entity that embeds the plugin container can know what its default values are.
@@ -90,7 +92,8 @@ public class PluginContainerConfiguration {
 
     // Configuration -------
 
-    private static final String CONFIGURATION_DISCOVERY_INITIAL_DELAY_PROP = PROP_PREFIX + "configuration-discovery-initial-delay";
+    private static final String CONFIGURATION_DISCOVERY_INITIAL_DELAY_PROP = PROP_PREFIX
+        + "configuration-discovery-initial-delay";
     public static final long CONFIGURATION_DISCOVERY_INITIAL_DELAY_DEFAULT = 300L; // in seconds
     private static final String CONFIGURATION_DISCOVERY_PERIOD_PROP = PROP_PREFIX + "configuration-discovery-period";
     public static final long CONFIGURATION_DISCOVERY_PERIOD_DEFAULT = 3600L; // in seconds
@@ -179,6 +182,37 @@ public class PluginContainerConfiguration {
      */
     public void setTemporaryDirectory(File tmpDir) {
         configuration.put(TEMP_DIRECTORY_PROP, tmpDir);
+    }
+
+    /**
+     * Returns the regex that defines what classes the plugin container can provide to its
+     * plugins from its own classloader and its parents. If not <code>null</code>, any classes
+     * found in the plugin container's classloader (and its parent classloaders) that do
+     * NOT match this regex will be hidden from the plugins. If <code>null</code>, there
+     * are no hidden classes and any class the plugin container's classloader has is visible
+     * to all plugins.
+     *
+     * @return regular expression (may be <code>null</code>)
+     * 
+     * @see RootPluginClassLoader
+     */
+    public String getRootPluginClassLoaderRegex() {
+        return (String) configuration.get(ROOT_PLUGIN_CLASSLOADER_REGEX_PROP);
+    }
+
+    /**
+     * Sets the regex that defines what classes the plugin container should hide from its plugins.
+     * 
+     * @param regex regular expression
+     *
+     * @see RootPluginClassLoader
+     */
+    public void setRootPluginClassLoaderRegex(String regex) {
+        if (regex != null) {
+            configuration.put(ROOT_PLUGIN_CLASSLOADER_REGEX_PROP, regex);
+        } else {
+            configuration.remove(ROOT_PLUGIN_CLASSLOADER_REGEX_PROP);
+        }
     }
 
     /**

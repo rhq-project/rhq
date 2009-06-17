@@ -88,9 +88,8 @@ public class PluginDescriptorLoader {
         if (jarUrl != null) {
             // Note that we don't really care if the URL uses "file:" or not, we just use File to parse the name from
             // the path.
-            String pluginJarName = new File(jarUrl.getPath()).getName();            
-            classLoader = PluginClassLoader.create(pluginJarName, jarUrl, unpackJars,
-                parentClassLoader, tmpDir);
+            String pluginJarName = new File(jarUrl.getPath()).getName();
+            classLoader = PluginClassLoader.create(pluginJarName, jarUrl, unpackJars, parentClassLoader, tmpDir);
             log.debug("Created classloader for plugin [" + jarUrl + "]");
         } else {
             // this is mainly to support tests

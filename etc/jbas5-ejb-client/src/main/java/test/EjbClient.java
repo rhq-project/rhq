@@ -40,7 +40,8 @@ public class EjbClient
       profileService.getDomains();
       profileService.getProfileKeys();            
       managementView.load();
-      managementView.getDeploymentNames();            
+      managementView.getDeploymentNames();  
+      deploymentManager.getProfiles();      
    }
    
     private static InitialContext createInitialContext(Properties env) throws NamingException

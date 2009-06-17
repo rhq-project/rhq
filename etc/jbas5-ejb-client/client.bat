@@ -44,8 +44,9 @@ set JAVA=%JAVA_HOME%\bin\java
 
 rem only include jbossall-client.jar in classpath, if
 rem JBOSS_CLASSPATH was not yet set
-if not "%JBOSS_CLASSPATH%" == "" GOTO HAVE_JB_CP
-rem set JBOSS_CLASSPATH=%JBOSS_HOME%\client\jbossall-client.jar
+if not "%JBOSS_CLASSPATH%" == "" goto HAVE_JB_CP
+set JBOSS_CLASSPATH=%JBOSS_HOME%\client\jbossall-client.jar
+goto HAVE_JB_CP
 
 rem For the call to new InitialContext() (using org.jnp.interfaces.NamingContextFactory)...
 set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\client\jnp-client.jar

@@ -194,6 +194,12 @@
         </c:constraint>
     </c:simple-property>
 
+    <c:simple-property name="interleaving" type="boolean" required="false" defaultValue="false">
+        <c:description>
+            If true, enable transaction interleaving if the DB vendor supports it (most do not). The default is false.
+        </c:description>
+    </c:simple-property>
+
     <c:simple-property name="isSameRM-override-value" type="boolean" required="false">
         <c:description>
             If set, unconditionally sets the boolean return value of javax.transaction.xa.XAResource.isSameRM(XAResource).
@@ -464,9 +470,10 @@
         </c:property-options>
     </c:simple-property>
 
-    <c:simple-property name="url-delimiter" required="false">
+    <c:simple-property name="url-delimiter" required="false" default="|">
         <c:description>
-             Specifies the delimiter for URLs in connection-url for HA datasources.
+             Specifies the delimiter for URLs in  the value of the connection-url property for HA datasources.
+             The default is "|".
         </c:description>
     </c:simple-property>
 
@@ -495,15 +502,21 @@
 <!ENTITY nonXaDatasourceConnectionResourceConfigProps '
     <c:simple-property name="driver-class"
                        displayName="JDBC Driver Class"
-                       description="The fully qualified name of the JDBC driver class."
-                       type="string"
-                       activationPolicy="immediate"/>
+                       type="string">
+        <c:description>
+            The fully qualified name of the JDBC driver class (e.g. "oracle.jdbc.driver.OracleDriver").
+        </c:description>
+    </c:simple-property>
 
     <c:simple-property name="connection-url"
                        displayName="Connection URL"
-                       description="The JDBC driver URL string."
-                       type="string"
-                       activationPolicy="immediate"/>
+                       type="string">
+        <c:description>
+            The JDBC URL for the database (e.g. "jdbc:oracle:thin:@host.example.com:1521:db"). To define a high
+            availablity (HA) datasource, specify a list of URLs separated by URL delimiters
+            (e.g. "jdbc:oracle:thin:@host1.example.com:1521:db1|jdbc:oracle:thin:@host2.example.com:1521:db2").
+        </c:description>
+    </c:simple-property>
 
     <c:map-property name="connection-properties" required="false"
                     description="Arbitrary connection properties that should be passed to the java.sql.Driver.connect(url, props) method."/>
@@ -2564,7 +2577,7 @@
 
                 <plugin-configuration>
                     <c:simple-property name="componentType" default="EJB3" readOnly="true"/>
-                    <c:simple-property name="componentSubtype" default="SLSB" readOnly="true"/>
+                    <c:simple-property name="componentSubtype" default="StatelessSession" readOnly="true"/>
                     <c:simple-property name="componentName" readOnly="true"/>
                 </plugin-configuration>
 
@@ -2579,7 +2592,7 @@
 
                 <plugin-configuration>
                     <c:simple-property name="componentType" default="EJB3" readOnly="true"/>
-                    <c:simple-property name="componentSubtype" default="SFSB" readOnly="true"/>
+                    <c:simple-property name="componentSubtype" default="StatefulSession" readOnly="true"/>
                     <c:simple-property name="componentName" readOnly="true"/>
                 </plugin-configuration>
 
@@ -2592,6 +2605,21 @@
 
             </service>
 
+            <service name="EJB3 Entity Bean"
+                     class="Ejb3BeanComponent"
+                     discovery="Ejb3BeanDiscoveryComponent"
+                     description="An EJB3 Entity Bean">
+
+                <plugin-configuration>
+                    <c:simple-property name="componentType" default="EJB3" readOnly="true"/>
+                    <c:simple-property name="componentSubtype" default="Entity" readOnly="true"/>
+                    <c:simple-property name="componentName" readOnly="true"/>
+                </plugin-configuration>
+
+                <!-- TODO -->
+
+            </service>
+
             <service name="EJB3 Message-Driven Bean"
                      class="Ejb3BeanComponent"
                      discovery="Ejb3BeanDiscoveryComponent"
@@ -2599,7 +2627,7 @@
 
                 <plugin-configuration>
                     <c:simple-property name="componentType" default="EJB3" readOnly="true"/>
-                    <c:simple-property name="componentSubtype" default="MDB" readOnly="true"/>
+                    <c:simple-property name="componentSubtype" default="MessageDriven" readOnly="true"/>
                     <c:simple-property name="componentName" readOnly="true"/>
                 </plugin-configuration>
 
@@ -2649,7 +2677,7 @@
 
                 <plugin-configuration>
                     <c:simple-property name="componentType" default="EJB3" readOnly="true"/>
-                    <c:simple-property name="componentSubtype" default="SLSB" readOnly="true"/>
+                    <c:simple-property name="componentSubtype" default="StatelessSession" readOnly="true"/>
                     <c:simple-property name="componentName" readOnly="true"/>
                 </plugin-configuration>
 
@@ -2664,7 +2692,7 @@
 
                 <plugin-configuration>
                     <c:simple-property name="componentType" default="EJB3" readOnly="true"/>
-                    <c:simple-property name="componentSubtype" default="SFSB" readOnly="true"/>
+                    <c:simple-property name="componentSubtype" default="StatefulSession" readOnly="true"/>
                     <c:simple-property name="componentName" readOnly="true"/>
                 </plugin-configuration>
 
@@ -2677,6 +2705,21 @@
 
             </service>
 
+            <service name="EJB3 Entity Bean (Embedded)"
+                     class="Ejb3BeanComponent"
+                     discovery="Ejb3BeanDiscoveryComponent"
+                     description="An EJB3 Entity Bean">
+
+                <plugin-configuration>
+                    <c:simple-property name="componentType" default="EJB3" readOnly="true"/>
+                    <c:simple-property name="componentSubtype" default="Entity" readOnly="true"/>
+                    <c:simple-property name="componentName" readOnly="true"/>
+                </plugin-configuration>
+
+                <!-- TODO -->
+
+            </service>
+
             <service name="EJB3 Message-Driven Bean (Embedded)"
                      class="Ejb3BeanComponent"
                      discovery="Ejb3BeanDiscoveryComponent"
@@ -2684,7 +2727,7 @@
 
                 <plugin-configuration>
                     <c:simple-property name="componentType" default="EJB3" readOnly="true"/>
-                    <c:simple-property name="componentSubtype" default="MDB" readOnly="true"/>
+                    <c:simple-property name="componentSubtype" default="MessageDriven" readOnly="true"/>
                     <c:simple-property name="componentName" readOnly="true"/>
                 </plugin-configuration>
 

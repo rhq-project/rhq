@@ -80,16 +80,6 @@ public class Ejb2BeanComponent extends ManagedComponentComponent implements Oper
         super.getValues(report, remainingRequests);
     }
 
-    private void resetInvocationStats() {
-        Set<ManagedOperation> operations = getManagedComponent().getOperations();
-        for (ManagedOperation operation : operations) {
-            if (operation.getName().equals("resetInvocationStats")) {
-                operation.invoke();
-                break;
-            }
-        }
-    }
-
     @Override
     public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
         OperationResult result;
@@ -152,6 +142,16 @@ public class Ejb2BeanComponent extends ManagedComponentComponent implements Oper
                     methodStats.maxTime, methodStats.totalTime, methodStats.count);
         }
         return callTimeData;
+    }
+
+    private void resetInvocationStats() {
+        Set<ManagedOperation> operations = getManagedComponent().getOperations();
+        for (ManagedOperation operation : operations) {
+            if (operation.getName().equals("resetInvocationStats")) {
+                operation.invoke();
+                break;
+            }
+        }
     }
 
     class InvocationStats {

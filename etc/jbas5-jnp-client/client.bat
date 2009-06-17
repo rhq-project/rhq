@@ -11,7 +11,7 @@ if "%OS%" == "Windows_NT"  setlocal
 set MAIN_JAR_NAME=jbas5-jnp-client-1.0.jar
 set MAIN_CLASS=test.RmiClient
 
-set JBOSS_HOME=C:\opt\jboss-5.1.0.GA
+set JBOSS_HOME=C:\opt\jboss-eap-5.0.0-SNAPSHOT
 
 set DIRNAME=.\
 if "%OS%" == "Windows_NT" set DIRNAME=%~dp0%
@@ -44,8 +44,9 @@ set JAVA=%JAVA_HOME%\bin\java
 
 rem only include jbossall-client.jar in classpath, if
 rem JBOSS_CLASSPATH was not yet set
-if not "%JBOSS_CLASSPATH%" == "" GOTO HAVE_JB_CP
-rem set JBOSS_CLASSPATH=%JBOSS_HOME%\client\jbossall-client.jar
+if not "%JBOSS_CLASSPATH%" == "" goto HAVE_JB_CP
+set JBOSS_CLASSPATH=%JBOSS_HOME%\client\jbossall-client.jar
+goto HAVE_JB_CP
 
 rem For the call to new InitialContext() (using org.jnp.interfaces.NamingContextFactory)...
 set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\client\jnp-client.jar

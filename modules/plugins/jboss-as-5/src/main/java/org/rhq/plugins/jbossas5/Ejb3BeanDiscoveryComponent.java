@@ -68,13 +68,12 @@ public class Ejb3BeanDiscoveryComponent extends ManagedComponentDiscoveryCompone
         ComponentType componentType = getComponentType(discoveryContext);
         Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
         for (ManagedComponent component : components) {
-            String componentName = component.getName();
-            if (component.getType().equals(componentType) && componentName.endsWith(METRICS_INSTANCE_COMPONENT_NAME_SUFFIX)) {
+            if (component.getType().equals(componentType)) {
                 // e.g. "foo.ear-MyEjb" for EJBs inside EARs or "MyEjb" for EJBs within standalone EJB-JARs
-                String qualifiedEjbName = componentName.substring(0, componentName.indexOf(METRICS_INSTANCE_COMPONENT_NAME_SUFFIX));
-                int index = qualifiedEjbName.indexOf(".ear-");
+                String componentName = component.getName();
+                int index = componentName.indexOf(".ear-");
                 // Strip off the EAR filename prefix if there is one, so we end up with just the EJB name.
-                String resourceName = (index != -1) ? qualifiedEjbName.substring(index + ".ear-".length()) : qualifiedEjbName;
+                String resourceName = (index != -1) ? componentName.substring(index + ".ear-".length()) : componentName;
                 String resourceKey = resourceName;
                 String version = null;
 

@@ -75,6 +75,7 @@
 	<classpathentry excluding="**" kind="src" path="modules/enterprise/comm/src/test/resources"/>
 	<classpathentry excluding="**" kind="src" path="modules/enterprise/agent/src/main/resources"/>
 	<classpathentry excluding="**" kind="src" path="modules/enterprise/agent/src/test/resources"/>
+	<classpathentry kind="src" path="modules/enterprise/client/src/main/java"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6">
 		<accessrules>
 			<accessrule kind="accessible" pattern="sun/misc/**"/>
@@ -150,5 +151,6 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/seam/jboss-seam/2.1.0.SP1/jboss-seam-2.1.0.SP1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/seam/jboss-seam-ui/2.1.0.SP1/jboss-seam-ui-2.1.0.SP1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/hibernate/hibernate3/3.2.r14201-2/hibernate3-3.2.r14201-2.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/jline/jline/0.9.94/jline-0.9.94.jar"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

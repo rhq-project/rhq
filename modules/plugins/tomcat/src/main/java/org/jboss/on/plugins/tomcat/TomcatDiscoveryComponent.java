@@ -47,14 +47,13 @@ import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.plugins.jmx.JMXDiscoveryComponent;
-import org.rhq.plugins.platform.PlatformComponent;
 
 /**
  * Discovers JBoss EWS and Apache Tomcat5, Tomcat6 server instances.
  *
  * @author Jay Shaughnessy
  */
-public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent<PlatformComponent> {
+public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent {
     private final Log log = LogFactory.getLog(this.getClass());
 
     /**
@@ -105,7 +104,7 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent<Plat
     public static final String EWS_TOMCAT_6 = "tomcat6";
     public static final String EWS_TOMCAT_5 = "tomcat5";
 
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<PlatformComponent> context) {
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) {
         log.debug("Discovering Tomcat servers...");
 
         Set<DiscoveredResourceDetails> resources = new HashSet<DiscoveredResourceDetails>();
@@ -156,7 +155,7 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent<Plat
      *
      * @return resource object describing the Tomcat server running in the specified process
      */
-    private DiscoveredResourceDetails parseTomcatProcess(ResourceDiscoveryContext<PlatformComponent> context,
+    private DiscoveredResourceDetails parseTomcatProcess(ResourceDiscoveryContext context,
         ProcessScanResult autoDiscoveryResult) {
 
         ProcessInfo processInfo = autoDiscoveryResult.getProcessInfo();
@@ -208,7 +207,7 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent<Plat
      *
      * @return resource object describing the Tomcat server running in the specified process
      */
-    private DiscoveredResourceDetails parsePluginConfig(ResourceDiscoveryContext<PlatformComponent> context,
+    private DiscoveredResourceDetails parsePluginConfig(ResourceDiscoveryContext context,
         Configuration pluginConfiguration) {
 
         String installationPath = pluginConfiguration.getSimpleValue(

@@ -37,10 +37,38 @@
           <groupId>${rhq.groupId}</groupId>
           <artifactId>rhq-enterprise-comm</artifactId>
           <version>${rhq.version}</version>
-          <scope>provided</scope> <!-- by the agent itself -->
+          <scope>provided</scope> <!-- to be bundled in the plugin -->
         </dependency>
    </dependencies>
    
+   <build>
+      <plugins>
+         <plugin>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <version>2.0</version>
+            <executions>
+               <execution>
+                  <id>copy-deps</id>
+                  <phase>process-resources</phase>
+                  <goals>
+                     <goal>copy</goal>
+                  </goals>
+                  <configuration>
+                     <artifactItems>
+                        <artifactItem>
+                           <groupId>${rhq.groupId}</groupId>
+                           <artifactId>rhq-enterprise-comm</artifactId>
+                           <version>${rhq.version}</version>
+                        </artifactItem>
+                     </artifactItems>
+                     <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+      </plugins>
+   </build>
+
    <profiles>
       <profile>
          <id>integration-tests</id>

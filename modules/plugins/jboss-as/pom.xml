@@ -34,14 +34,14 @@
          <groupId>${rhq.groupId}</groupId>
          <artifactId>rhq-core-util</artifactId>
          <version>${rhq.version}</version>
-         <scope>provided</scope>
+         <scope>provided</scope> <!-- by plugin container -->
       </dependency>
 
       <dependency>
          <groupId>${rhq.groupId}</groupId>
          <artifactId>rhq-core-client-api</artifactId>
          <version>${rhq.version}</version>
-         <scope>test</scope>
+         <scope>test</scope> <!-- this is OK. plugins do not have access to clientapi, but this is only for tests so this is OK -->
       </dependency>
       
       <dependency>
@@ -69,14 +69,12 @@
          <groupId>gnu-getopt</groupId>
          <artifactId>getopt</artifactId>
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by PC -->
       </dependency>  
       
       <dependency>
          <groupId>jboss</groupId>
          <artifactId>jboss-common</artifactId>
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by PC -->
       </dependency>
       
       <dependency>
@@ -84,20 +82,7 @@
          <artifactId>jdom</artifactId>
          <version>1.0</version>
       </dependency>
-      
-      <dependency>
-         <groupId>mc4j</groupId>
-         <artifactId>org-mc4j-ems</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-      </dependency>
-      
-      <dependency>
-         <groupId>org.hyperic</groupId>
-         <artifactId>sigar</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by PC -->
-      </dependency>
-              
+
    </dependencies>
 
    <build>      
@@ -115,6 +100,10 @@
                   </goals>
                   <configuration>
                      <artifactItems>
+                        <artifactItem>
+                           <groupId>gnu-getopt</groupId>
+                           <artifactId>getopt</artifactId>
+                        </artifactItem>
                         <artifactItem>
                            <groupId>jdom</groupId>
                            <artifactId>jdom</artifactId>
@@ -152,6 +141,10 @@
                   </goals>
                   <configuration>
                      <artifactItems>
+                       <artifactItem>
+                         <groupId>jboss</groupId>
+                         <artifactId>jboss-common</artifactId>
+                       </artifactItem>
                        <artifactItem>
                          <groupId>jboss</groupId>
                          <artifactId>jbpm</artifactId>

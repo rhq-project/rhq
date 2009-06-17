@@ -48,14 +48,13 @@ import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.plugins.jmx.JMXComponent;
 import org.rhq.plugins.jmx.JMXDiscoveryComponent;
-import org.rhq.plugins.platform.PlatformComponent;
 
 /**
  * Management for an Apache or JBoss EWS Tomcat server
  *
  * @author Jay Shaughnessy
  */
-public class TomcatServerComponent implements JMXComponent<PlatformComponent>, MeasurementFacet, OperationFacet {
+public class TomcatServerComponent implements JMXComponent, MeasurementFacet, OperationFacet {
 
     public enum SupportedOperations {
         /**
@@ -113,7 +112,7 @@ public class TomcatServerComponent implements JMXComponent<PlatformComponent>, M
      */
     private TomcatServerOperationsDelegate operationsDelegate;
 
-    private ResourceContext<PlatformComponent> resourceContext;
+    private ResourceContext resourceContext;
 
     // JMXComponent Implementation  --------------------------------------------
 
@@ -276,7 +275,7 @@ public class TomcatServerComponent implements JMXComponent<PlatformComponent>, M
         }
     }
 
-    public void start(ResourceContext<PlatformComponent> context) throws SQLException {
+    public void start(ResourceContext context) throws SQLException {
         this.resourceContext = context;
         this.operationsDelegate = new TomcatServerOperationsDelegate(this, resourceContext.getSystemInformation());
 

@@ -33,29 +33,7 @@
          <version>${rhq.version}</version>
          <scope>provided</scope>
       </dependency>
-      
-      <dependency>
-         <groupId>${rhq.groupId}</groupId>
-         <artifactId>rhq-platform-plugin</artifactId>
-         <version>${rhq.version}</version>
-         <scope>provided</scope>
-      </dependency>
-
-      <dependency>
-         <groupId>${rhq.groupId}</groupId>
-         <artifactId>rhq-core-client-api</artifactId>
-         <version>${rhq.version}</version>
-         <scope>provided</scope>
-      </dependency>
-
-      <!-- 3rd-party -->
-      
-      <dependency>
-         <groupId>mc4j</groupId>
-         <artifactId>org-mc4j-ems</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-      </dependency>
-              
+  
    </dependencies>
 
    <profiles>

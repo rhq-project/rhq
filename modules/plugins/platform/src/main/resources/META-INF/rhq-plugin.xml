@@ -178,7 +178,7 @@
                <c:description>Tracking of events sent to the Windows Event Logs</c:description>
                <c:simple-property name="eventTrackingEnabled" type="boolean" required="true" default="false" description="Enables the collection of Windows events into the event subsystem"/>
                <c:simple-property name="regularExpression" required="false" description="A regular expression that if not-null must be matched by the event detail for the message to be accepted"/>
-               <c:simple-property name="minimumSeverity" description="The minimum severity event that will be collected">
+               <c:simple-property name="minimumSeverity" default="Warning" description="The minimum severity event that will be collected">
                    <c:property-options>
                        <c:option value="Information"/>
                        <c:option value="Warning" default="true"/>

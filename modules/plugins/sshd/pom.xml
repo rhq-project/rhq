@@ -41,43 +41,6 @@
    </dependencies>
 
 
-   <build>
-
-      <plugins>
-
-         <plugin>
-            <artifactId>maven-dependency-plugin</artifactId>
-            <version>2.0</version>
-            <executions>
-               <execution>
-                  <id>copy-jna-jar</id>
-                  <phase>process-resources</phase>
-                  <goals>
-                     <goal>copy</goal>
-                  </goals>
-                  <configuration>
-                     <artifactItems>
-                        <artifactItem>
-                           <groupId>com.sun.jna</groupId>
-                           <artifactId>jna</artifactId>
-                           <version>3.0.1</version>
-                        </artifactItem>
-                        <artifactItem>
-                            <groupId>net.augeas</groupId>
-                            <artifactId>java-augeas</artifactId>
-                            <version>1.0</version>
-                        </artifactItem>
-                     </artifactItems>
-                     <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
-                  </configuration>
-               </execution>
-            </executions>
-         </plugin>
-
-      </plugins>
-
-   </build>
-
    <profiles>
       <profile>
          <id>integration-tests</id>

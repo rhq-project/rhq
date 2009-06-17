@@ -85,6 +85,7 @@
     <module>postgres</module>
 
     <!--  other, possibly experimental plugins -->
+    <module>augeas</module>
     <module>apt</module>
     <module>cli</module>    
     <module>grub</module>    

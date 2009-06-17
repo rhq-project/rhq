@@ -40,6 +40,7 @@
                               <pathelement path="${test.classpath}" />
                               <pathelement location="../apache/target/rhq-apache-plugin-${project.version}.jar" />
                               <pathelement location="../apt/target/rhq-apt-plugin-${project.version}.jar" />
+                              <pathelement location="../augeas/target/rhq-augeas-plugin-${project.version}.jar" />
                               <pathelement location="../database/target/rhq-database-plugin-${project.version}.jar" />
                               <pathelement location="../grub/target/rhq-grub-plugin-${project.version}.jar" />
                               <!--<pathelement location="../hardware/target/rhq-hardware-plugin-${project.version}.jar" />-->

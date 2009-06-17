@@ -22,16 +22,11 @@
  */
 package org.rhq.plugins.jbossas5;
 
-import java.util.List;
-
+import org.jboss.managed.api.ComponentType;
 import org.jboss.managed.api.ManagedComponent;
-import org.jboss.managed.api.ManagedProperty;
-import org.jboss.metatype.api.values.CompositeValue;
-import org.jboss.metatype.api.values.MetaValue;
 import org.jboss.metatype.api.values.SimpleValue;
-import org.jboss.metatype.api.values.TableValue;
-
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.plugins.jbossas5.util.Ejb2BeanUtils;
 
 /**
  * A discovery component for EJB 1/2 beans.
@@ -39,24 +34,16 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
  */
 public class Ejb2BeanDiscoveryComponent extends ManagedComponentDiscoveryComponent<AbstractManagedDeploymentComponent> {
 
+    private static final ComponentType mdbComponentType = new ComponentType("EJB", "MDB");
+
+    @Override
+    protected String getResourceKey(ManagedComponent component) {
+        return Ejb2BeanUtils.getUniqueBeanIdentificator(component);
+    }
+
     @Override
     protected String getResourceName(ManagedComponent component) {
-        //jboss.j2ee:jndiName=eardeployment/SessionA,service=EJB
-        String fullName = component.getName();
-
-        int jndiNameIdx = fullName.indexOf("jndiName=");
-        jndiNameIdx += 9; // = "jndiName=".length()
-
-        int commaIdx = fullName.indexOf(',', jndiNameIdx);
-        if (commaIdx == -1)
-            commaIdx = fullName.length();
-
-        int slashIdx = fullName.lastIndexOf('/', commaIdx);
-        slashIdx++;
-
-        int startIdx = slashIdx > jndiNameIdx ? slashIdx : jndiNameIdx;
-
-        return fullName.substring(startIdx, commaIdx);
+        return Ejb2BeanUtils.parseResourceName(component);
     }
 
     @Override
@@ -76,5 +63,5 @@ public class Ejb2BeanDiscoveryComponent extends ManagedComponentDiscoveryCompone
             parentDeploymentName = parentDeploymentName.substring(0, parentDeploymentName.length() - 1);
 
         return parentDeploymentName.equals(deploymentName);
-    }    
+    }
 }

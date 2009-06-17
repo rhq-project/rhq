@@ -76,7 +76,7 @@ public class ManagedComponentDiscoveryComponent<P extends ProfileServiceComponen
         for (ManagedComponent component : components) {
             if (accept(discoveryContext, component)) {
                 String resourceName = getResourceName(component);
-                String resourceKey = component.getName();
+                String resourceKey = getResourceKey(component);
                 String version = null; // (ips) I don't think there's anything generic we can do here.
 
                 DiscoveredResourceDetails resource = new DiscoveredResourceDetails(resourceType, resourceKey,
@@ -84,7 +84,7 @@ public class ManagedComponentDiscoveryComponent<P extends ProfileServiceComponen
                         .getDefaultPluginConfiguration(), null);
 
                 resource.getPluginConfiguration().put(
-                    new PropertySimple(ManagedComponentComponent.Config.COMPONENT_NAME, component.getName()));
+                    new PropertySimple(ManagedComponentComponent.Config.COMPONENT_NAME, resourceKey));
 
                 discoveredResources.add(resource);
             }
@@ -100,6 +100,20 @@ public class ManagedComponentDiscoveryComponent<P extends ProfileServiceComponen
     }
 
     protected String getResourceName(ManagedComponent component) {
+        return component.getName();
+    }
+
+    /**
+     * Return the unique resource key for the component.
+     * If you override this method, make sure to override 
+     * {@link ManagedComponentComponent#getManagedComponent()} method as well
+     * because the return value of this method is used as the component name 
+     * ({@link ManagedComponentComponent#getComponentName()}). 
+     *
+     * @param component the component to uniquely identify
+     * @return the unique identificator for the component
+     */
+    protected String getResourceKey(ManagedComponent component) {
         return component.getName();
     }
 

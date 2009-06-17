@@ -22,17 +22,18 @@
 */
 package org.rhq.plugins.jbossas5;
 
-import java.util.Set;
-import java.util.LinkedHashSet;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Date;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import org.jboss.managed.api.ManagedProperty;
+import org.jboss.managed.api.ComponentType;
+import org.jboss.managed.api.ManagedComponent;
 import org.jboss.managed.api.ManagedOperation;
+import org.jboss.managed.api.ManagedProperty;
 import org.jboss.metatype.api.values.CompositeValue;
 import org.jboss.metatype.api.values.SimpleValue;
 import org.rhq.core.domain.configuration.Configuration;
@@ -44,6 +45,7 @@ import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.measurement.calltime.CallTimeData;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.plugins.jbossas5.util.Ejb2BeanUtils;
 
 /**
  * 
@@ -52,6 +54,29 @@ import org.rhq.core.pluginapi.operation.OperationResult;
  */
 public class Ejb2BeanComponent extends ManagedComponentComponent implements OperationFacet {
     private final Log log = LogFactory.getLog(this.getClass());
+
+    private static final ComponentType mdbComponentType = new ComponentType("EJB", "MDB");
+
+    @Override
+    protected ManagedComponent getManagedComponent() {
+        if (mdbComponentType.equals(getComponentType())) {
+            try {
+                Set<ManagedComponent> mdbs = getConnection().getManagementView().getComponentsForType(mdbComponentType);
+
+                for (ManagedComponent mdb : mdbs) {
+                    if (getComponentName().equals(Ejb2BeanUtils.getUniqueBeanIdentificator(mdb))) {
+                        return mdb;
+                    }
+                }
+            } catch (Exception e) {
+                throw new IllegalStateException(e);
+            }
+        } else {
+            return super.getManagedComponent();
+        }
+
+        return null;
+    }
 
     @Override
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) throws Exception {
@@ -65,13 +90,12 @@ public class Ejb2BeanComponent extends ManagedComponentComponent implements Oper
                     if (!invocationStats.methodStats.isEmpty()) {
                         CallTimeData callTimeData = createCallTimeData(request, invocationStats);
                         report.addData(callTimeData);
-                        resetInvocationStats();                        
-                    }                    
+                        resetInvocationStats();
+                    }
                 } else {
                     remainingRequests.add(request);
                 }
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 // Don't let one bad apple spoil the barrel.
                 log.error("Failed to collect metric '" + metricName + "' for " + getResourceDescription() + ".", e);
             }
@@ -92,12 +116,10 @@ public class Ejb2BeanComponent extends ManagedComponentComponent implements Oper
             List<MethodStats> allMethodStats = getInvocationStats().methodStats;
 
             for (MethodStats methodStats : allMethodStats) {
-                PropertyMap method = new PropertyMap("method",
-                        new PropertySimple("methodName", methodStats.name),
-                        new PropertySimple("count", methodStats.count),
-                        new PropertySimple("minTime", methodStats.minTime),
-                        new PropertySimple("maxTime", methodStats.maxTime),
-                        new PropertySimple("totalTime", methodStats.totalTime));
+                PropertyMap method = new PropertyMap("method", new PropertySimple("methodName", methodStats.name),
+                    new PropertySimple("count", methodStats.count), new PropertySimple("minTime", methodStats.minTime),
+                    new PropertySimple("maxTime", methodStats.maxTime), new PropertySimple("totalTime",
+                        methodStats.totalTime));
                 methodList.add(method);
             }
         } else {
@@ -111,35 +133,39 @@ public class Ejb2BeanComponent extends ManagedComponentComponent implements Oper
         List<MethodStats> allMethodStats = new ArrayList<MethodStats>();
         ManagedProperty detypedInvokedStatsProp = this.getManagedComponent().getProperty("DetypedInvocationStatistics");
         invocationStats.endTime = System.currentTimeMillis();
-        CompositeValue detypedInvokeStatsMetaValue = (CompositeValue)detypedInvokedStatsProp.getValue();
+        CompositeValue detypedInvokeStatsMetaValue = (CompositeValue) detypedInvokedStatsProp.getValue();
         CompositeValue allMethodStatsMetaValue = (CompositeValue) detypedInvokeStatsMetaValue.get("methodStats");
         Set<String> methodNames = allMethodStatsMetaValue.getMetaType().keySet();
         for (String methodName : methodNames) {
             CompositeValue methodStatsMetaValue = (CompositeValue) allMethodStatsMetaValue.get(methodName);
             MethodStats methodStats = new MethodStats();
             methodStats.name = methodName;
-            methodStats.count = Long.parseLong(((SimpleValue)methodStatsMetaValue.get("count")).getValue().toString());
-            methodStats.totalTime = Long.parseLong(((SimpleValue)methodStatsMetaValue.get("totalTime")).getValue().toString());
-            methodStats.minTime = Long.parseLong(((SimpleValue)methodStatsMetaValue.get("minTime")).getValue().toString());
-            methodStats.maxTime = Long.parseLong(((SimpleValue)methodStatsMetaValue.get("maxTime")).getValue().toString());
+            methodStats.count = Long.parseLong(((SimpleValue) methodStatsMetaValue.get("count")).getValue().toString());
+            methodStats.totalTime = Long.parseLong(((SimpleValue) methodStatsMetaValue.get("totalTime")).getValue()
+                .toString());
+            methodStats.minTime = Long.parseLong(((SimpleValue) methodStatsMetaValue.get("minTime")).getValue()
+                .toString());
+            methodStats.maxTime = Long.parseLong(((SimpleValue) methodStatsMetaValue.get("maxTime")).getValue()
+                .toString());
             allMethodStats.add(methodStats);
         }
         invocationStats.methodStats = allMethodStats;
 
-        SimpleValue lastResetTimeMetaValue = (SimpleValue) ((CompositeValue) detypedInvokedStatsProp.getValue()).get("lastResetTime");
+        SimpleValue lastResetTimeMetaValue = (SimpleValue) ((CompositeValue) detypedInvokedStatsProp.getValue())
+            .get("lastResetTime");
         invocationStats.beginTime = Long.valueOf(lastResetTimeMetaValue.getValue().toString()); // TODO: handle null value?
 
         return invocationStats;
     }
 
     private CallTimeData createCallTimeData(MeasurementScheduleRequest schedule, InvocationStats invocationStats)
-            throws Exception {
+        throws Exception {
         CallTimeData callTimeData = new CallTimeData(schedule);
         Date beginDate = new Date(invocationStats.beginTime);
         Date endDate = new Date(invocationStats.endTime);
         for (MethodStats methodStats : invocationStats.methodStats) {
             callTimeData.addAggregatedCallData(methodStats.name, beginDate, endDate, methodStats.minTime,
-                    methodStats.maxTime, methodStats.totalTime, methodStats.count);
+                methodStats.maxTime, methodStats.totalTime, methodStats.count);
         }
         return callTimeData;
     }

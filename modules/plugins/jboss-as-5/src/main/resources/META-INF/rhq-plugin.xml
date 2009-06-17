@@ -771,17 +771,17 @@
 '>
 
 <!ENTITY ejb2CommonMetrics '
-   <metric property="CreateCount" displayType="summary" measurementType="trendsup"
+   <metric property="CreateCount" displayName="Create Count" displayType="summary" measurementType="trendsup"
            description="The number of instances of this EJB2 Session Bean that have been created. since server start."/>
            
-   <metric property="RemoveCount" displayType="summary" measurementType="trendsup"
+   <metric property="RemoveCount" displayName="Remove Count" displayType="summary" measurementType="trendsup"
            description="The number of instances of this EJB2 Session Bean that have been removed since server start."/>
 
-<!-- TODO this seems to be missing from PS
-   <metric displayName="Method-Ready Beans"
-           property="methodReadyCount"
-           displayType="summary"/>
--->
+    <metric property="CurrentPoolSize" displayName="Current Pool Size" displayType="summary" measurementType="dynamic"
+            description="The number of beans in the pool."/>
+            
+    <metric property="MaxPoolSize" displayName="Max Pool Size" displayType="summary" measurementType="dynamic"
+            description="The maximum pool size."/>
 '>
 
 <!ENTITY ejb2SessionBeanOperations '
@@ -811,13 +811,7 @@
 '>   
 
 <!ENTITY ejb2StatelessSessionBeanMetrics '
-<!-- TODO this seems to be missing from PS
-   <metric property="CurrentSize" displayName="Current Count"
-           description="The total number of currently pooled instances of this EJB2 Session Bean" />
-           
-   <metric property="MaxSize"
-           description="The maximum number of instances that are allowed to be pooled" />
--->
+    <!-- no additional metrics apart from the common ones are defined for the SLSBs -->
 '>
 
 <!ENTITY ejb2StatefulSessionBeanDefinition '
@@ -829,12 +823,10 @@
 '>
 
 <!ENTITY ejb2StatefulSessionBeanMetrics '
-<!-- TODO this seems to be missing from PS    
    <metric displayName="Passive Beans"
            description="The count of beans in the passivated state"
-           property="passiveCount"
+           property="PassivatedCount"
            displayType="summary"/>
--->
 '>
 
 <!ENTITY ejb2MessageDrivenBeanDefinition '
@@ -843,6 +835,13 @@
         <c:simple-property name="componentSubtype" default="MDB" readOnly="true"/>
         <c:simple-property name="componentName" readOnly="true"/>
     </plugin-configuration>
+'>
+
+<!ENTITY ejb2MessageDrivenBeanMetrics '
+    <metric property="MessageCount" displayName="Message Count"
+            description="The number of messages sent/received"
+            displayType="summary"
+            measurementType="trendsup" />
 '>
 
 <!ENTITY ejb2EntityBeanDefinition '
@@ -854,29 +853,10 @@
 '>
 
 <!ENTITY ejb2EntityBeanMetrics '
-
-<!-- TODO this seems to be missing from PS
-      <metric displayName="Pooled Beans"
-              property="stats.pooledCount.current"
-              displayType="summary"/>
-
-       <metric property="CacheSize"
-               displayName="Cache Size"
-               defaultOn="true"/>
-
-       <metric property="PassivatedCount"
-               displayName="Passivated Count"
-               defaultOn="true"
-               measurementType="trendsup"/>
-
-       <metric property="PoolSize"
-               displayName="Current Size"
-               defaultOn="true"/>
-
-       <metric property="MaxPoolSize"
-               displayName="Max Size"
-               defaultOn="true"/>
--->
+	<metric property="CacheSize"
+	        displayName="Cache Size"
+	        displayType="summary"
+	        defaultOn="true"/>
 '>
 
 ]>
@@ -2440,7 +2420,7 @@
                      description="An EJB2 Message Driven Bean">
                   &ejb2MessageDrivenBeanDefinition;
                   &ejb2CommonMetrics;
-                  <!-- &ejb2MessageDrivenBeanMetrics; -->
+                  &ejb2MessageDrivenBeanMetrics;
             </service>         
 
             <service name="EJB2 Entity Bean"
@@ -2512,7 +2492,7 @@
                      description="An EJB2 Message Driven Bean">
                   &ejb2MessageDrivenBeanDefinition;
                   &ejb2CommonMetrics;
-                  <!-- &ejb2MessageDrivenBeanMetrics; -->
+                  &ejb2MessageDrivenBeanMetrics;
             </service>         
             
             <service name="EJB2 Entity Bean (Embedded)"

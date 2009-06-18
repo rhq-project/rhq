@@ -667,7 +667,7 @@ public class StandaloneContainer {
         ASCAN("as", "", 0, "Triggers an availability scan"), //
         AVAIL("a", " ( id )", 0, "Shows an availability report. If id is given, only shows availability for resource with id id"), //
         CHILDREN("chi","id",1, "Shows the direct children of the resource with the passed id"),//
-        DISCOVER("disc", " s | i |Êall", 1, "Triggers a discovery scan for (s)erver, serv(i)ce or all resources"), //
+        DISCOVER("disc", " s | i | all", 1, "Triggers a discovery scan for (s)erver, serv(i)ce or all resources"), //
         //      EVENT("e", "", 0,  "Pull events"), // TODO needs to be defined
         FIND("find", "r | t  | rt <name>", 2, "Searches a (r)esource, resource (t)ype or resources of (rt)ype. Use * as wildcard.\n"
                 +" Will set $r for the last resource shown."),

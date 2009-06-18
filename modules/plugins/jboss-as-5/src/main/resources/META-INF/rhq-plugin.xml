@@ -36,6 +36,13 @@
             <c:map-property name="result"/>
         </results>
     </operation>
+
+    <operation name="testConnection" displayName="Test Connection" description="Test if a connection can be obtained">
+        <results>
+            <c:notes>Test if a connection can be obtained</c:notes>
+            <c:simple-property type="boolean" name="result" description="Was a connection obtained?"/>
+        </results>
+    </operation>
 '>
 
 <!-- TODO: Use one shared XML entity for datasource and connection factory metrics. -->

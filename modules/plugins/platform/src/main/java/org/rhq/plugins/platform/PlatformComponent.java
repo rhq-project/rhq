@@ -1,32 +1,36 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.plugins.platform;
 
 import java.beans.BeanInfo;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
+import java.lang.management.ManagementFactory;
 import java.util.List;
 import java.util.Set;
+
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -44,7 +48,6 @@ import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
-import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
@@ -221,16 +224,11 @@ public class PlatformComponent implements ResourceComponent, ConfigurationFacet,
 
     public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
         if ("discovery".equals(name)) {
-            long start = System.currentTimeMillis();
-            PluginContainer pc = PluginContainer.getInstance();
-            pc.getInventoryManager().executeServerScanImmediately();
-            boolean detailed = parameters.getSimple("detailedDiscovery").getBooleanValue();
-            if (detailed) {
-                pc.getInventoryManager().executeServiceScanImmediately();
-            }
-
-            return new OperationResult((detailed ? "Full " : "") + "Discovery run in ["
-                + (System.currentTimeMillis() - start) + "]ms");
+            Boolean detailed = parameters.getSimple("detailedDiscovery").getBooleanValue();
+            MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+            String results = (String) mbs.invoke(new ObjectName("rhq.pc:type=PluginContainer"), "executeDiscovery",
+                new Object[] { detailed }, new String[] { Boolean.class.getName() });
+            return new OperationResult(results);
         } else if ("viewProcessList".equals(name)) {
             OperationResult result = new OperationResult();
             List<ProcessInfo> processes = this.resourceContext.getSystemInformation().getAllProcesses();

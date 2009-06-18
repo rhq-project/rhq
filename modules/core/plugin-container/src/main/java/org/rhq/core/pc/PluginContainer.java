@@ -75,6 +75,9 @@ public class PluginContainer implements ContainerService {
 
     private static final Log log = LogFactory.getLog(PluginContainer.class);
 
+    // our management interface
+    private PluginContainerMBeanImpl mbean;
+
     private PluginContainerConfiguration configuration;
     private String version;
     private boolean started = false;
@@ -218,6 +221,9 @@ public class PluginContainer implements ContainerService {
 
                 purgeTmpDirectoryContents();
 
+                mbean = new PluginContainerMBeanImpl(this);
+                mbean.register();
+
                 ResourceContainer.initialize();
 
                 pluginManager = new PluginManager();
@@ -263,6 +269,11 @@ public class PluginContainer implements ContainerService {
             if (started) {
 
                 log.info("Plugin container is being shutdown...");
+
+                if (mbean != null) {
+                    mbean.unregister();
+                    mbean = null;
+                }
 
                 boolean isInsideAgent = configuration.isInsideAgent();
 

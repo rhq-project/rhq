@@ -14,7 +14,7 @@
             <c:simple-property name="detailedDiscovery" description="If true, search for detailed child resources in addition to parent servers." type="boolean"/>
          </parameters>
          <results>
-            <c:simple-property name="operationResult"/>
+            <c:simple-property name="operationResult" type="longString"/>
          </results>
       </operation>
       <operation name="viewProcessList" description="View running processes on this system">

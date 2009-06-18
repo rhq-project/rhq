@@ -28,14 +28,6 @@
 
    <dependencies>
 
-      <!-- TODO: how to get rid of this? -->
-      <dependency>
-         <groupId>${rhq.groupId}</groupId>
-         <artifactId>rhq-core-plugin-container</artifactId>
-         <version>${project.version}</version>
-         <scope>provided</scope> <!-- by PC -->
-      </dependency>
-      
    </dependencies>
 
    <profiles>

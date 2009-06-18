@@ -1224,8 +1224,11 @@ public class AgentConfiguration {
             //
             //defaultRegex.append("(org\\.rhq\\.enterprise\\.agent\\..*)|");
 
-            // Plugins should not be doing anything with the agent-server comm layer - hiding all comm classes.
-            defaultRegex.append("(org\\.rhq\\.enterprise\\.communications\\..*)");
+            // Plugins should not be doing anything with the agent-server comm layer - we hide them.
+            // However, there are some management interfaces here that plugins will want to use/monitor,
+            // allow plugins to access those classes
+            defaultRegex
+                .append("(org\\.rhq\\.enterprise\\.communications\\.(?!command\\.server\\.CommandProcessorMetrics.*).*)");
 
             // Other packages from other jars in the agent lib directory allowed to be used by the plugins.
             // Therefore, they are no excluded here. This includes things like the plugin API and the core domain objects.

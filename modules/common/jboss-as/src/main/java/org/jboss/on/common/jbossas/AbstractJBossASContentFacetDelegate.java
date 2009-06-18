@@ -96,11 +96,15 @@ public abstract class AbstractJBossASContentFacetDelegate implements ContentFace
 
                 try {
                     DeployIndividualPackageResponse response = workflowManager.run(pkg);
-                    individualResponses.add(response);
 
                     if (response.getResult() == ContentResponseResult.FAILURE) {
                         overallResult = ContentResponseResult.FAILURE;
                     }
+                    
+                    // just in case response is null, it would throw NPE on the getResult() check above but the item
+                    // would already be a member in individualResponses; moving the add below the check ensures that
+                    // only non-null instances of individualResponses will ever make it into the List
+                    individualResponses.add(response);
                 } catch (Throwable throwable) {
                     log.error("Error deploying package: " + pkg, throwable);
 

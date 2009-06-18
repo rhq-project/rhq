@@ -641,6 +641,8 @@
                  description="The amount of time this RHQ Agent has spent collecting measurements since it was started"/>
          <metric property="FailedCollections" displayType="summary" measurementType="trendsup"
                  description="The number of individual measurement collections that have failed since this RHQ Agent was started"/>
+         <metric property="LateCollections" displayType="summary" measurementType="trendsup"
+                 description="The number of individual measurement collections that have fallen behind from their desired schedule"/>
 
       </service>
 

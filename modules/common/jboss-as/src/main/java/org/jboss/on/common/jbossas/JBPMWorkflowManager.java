@@ -91,6 +91,7 @@ public class JBPMWorkflowManager {
         // Grab the JBPM process
         byte[] metadataBytes = packageDetails.getMetadata();
         if (metadataBytes == null) {
+            log.debug("metadataBytes were NULL");
             return null;
         }
         String process = new String(metadataBytes);
@@ -132,13 +133,16 @@ public class JBPMWorkflowManager {
 
         // Populate the variables describing the AS instance
         String jbossHomeDir = jbossPaths.getHomeDir();
+        log.debug("jbossHomeDir: " + (jbossHomeDir == null ? " is NULL" : jbossHomeDir));
         jbossHomeDir += File.separator; // Just to make sure it ends with the separator
         context.setVariable(ContextVariables.JBOSS_HOME_DIR, jbossHomeDir);
 
         String jbossClientDir = jbossHomeDir + File.separator + "client" + File.separator;
+        log.debug("jbossClientDir: " + jbossClientDir);
         context.setVariable(ContextVariables.JBOSS_CLIENT_DIR, jbossClientDir);
 
         String jbossServerDir = jbossPaths.getServerDir();
+        log.debug("jbossServerDir: " + (jbossServerDir == null ? " is NULL" : jbossServerDir));
         jbossServerDir += File.separator; // Just to make sure
         context.setVariable(ContextVariables.JBOSS_SERVER_DIR, jbossServerDir);
 

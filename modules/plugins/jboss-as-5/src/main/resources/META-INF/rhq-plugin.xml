@@ -1039,23 +1039,24 @@
 
         <process-scan name="jbossas" query="process|basename|match=^java.*,arg|org.jboss.Main|match=.*"/>
 
-      <operation name="start" displayName="Start"
-                 description="Start this application server. The script used is specified in the Operations group of connection properties.">
+        <operation name="start" displayName="Start"
+                   description="Start this application server. The script used is specified in the Operations group of connection properties.">
           <results><c:simple-property name="operationResult" description="Outcome of starting the server."/></results>
-      </operation>
-      <operation name="shutdown" displayName="Shutdown"
-                 description="Shutdown this application server via script or JMX depending on the settings in the Operations and Advanced groups of connection properties.">
-          <results><c:simple-property name="operationResult" description="Outcome of stopping the server."/></results>
-      </operation>
-      <operation name="restart" displayName="Restart"
-                 description="Shutdown and then start this application server.">
-          <results><c:simple-property name="operationResult" description="Outcome of restarting the server."/></results>
-      </operation>
+        </operation>
 
-          <!--
-          <metric property="partitionName" dataType="trait" displayType="summary"
-                  description="the name of the cluster partition this app server instance belongs to"/>
-          -->
+        <operation name="shutdown" displayName="Shutdown"
+                   description="Shutdown this application server via script or JMX depending on the settings in the Operations and Advanced groups of connection properties.">
+          <results><c:simple-property name="operationResult" description="Outcome of stopping the server."/></results>
+        </operation>
+
+        <operation name="restart" displayName="Restart"
+                   description="Shutdown and then start this application server.">
+          <results><c:simple-property name="operationResult" description="Outcome of restarting the server."/></results>
+        </operation>
+
+          <metric displayName="Partition Name" property="MCBean|ServerConfig|*|partitionName"
+                  dataType="trait" displayType="summary"
+                  description="the name of the cluster partition this server belongs to"/>
 
           <metric displayName="Server Name" property="MCBean|ServerConfig|*|serverName"
                   dataType="trait" displayType="summary"

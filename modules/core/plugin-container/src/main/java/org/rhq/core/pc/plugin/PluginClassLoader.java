@@ -238,8 +238,8 @@ public class PluginClassLoader extends URLClassLoader {
     @Override
     public String toString() {
         if (this.stringValue == null) {
-            StringBuilder stringBuilder = new StringBuilder();
-            stringBuilder.append(this.getClass().getSimpleName()).append("[");
+            StringBuilder stringBuilder = new StringBuilder(this.getClass().getSimpleName());
+            stringBuilder.append('@').append(Integer.toHexString(this.hashCode())).append("[");
             stringBuilder.append("parent=").append(getParent()).append(", ");
             stringBuilder.append("urls=").append(Arrays.asList(getURLs())).append("]");
             this.stringValue = stringBuilder.toString();

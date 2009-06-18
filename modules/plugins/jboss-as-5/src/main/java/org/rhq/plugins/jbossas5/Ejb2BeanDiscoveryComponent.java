@@ -22,7 +22,6 @@
  */
 package org.rhq.plugins.jbossas5;
 
-import org.jboss.managed.api.ComponentType;
 import org.jboss.managed.api.ManagedComponent;
 import org.jboss.metatype.api.values.SimpleValue;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
@@ -33,8 +32,6 @@ import org.rhq.plugins.jbossas5.util.Ejb2BeanUtils;
  * @author Lukas Krejci
  */
 public class Ejb2BeanDiscoveryComponent extends ManagedComponentDiscoveryComponent<AbstractManagedDeploymentComponent> {
-
-    private static final ComponentType mdbComponentType = new ComponentType("EJB", "MDB");
 
     @Override
     protected String getResourceKey(ManagedComponent component) {

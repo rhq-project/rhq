@@ -79,6 +79,14 @@ public class VMHealthCheckThread extends Thread {
     private final float nonheapThreshold;
 
     /**
+     * If <code>true</code>, the thread will explicitly ask for garbage collection to occur when
+     * memory is critical. If <code>false</code>, the thread will merely report when memory is critical,
+     * but it will not attempt to correct the situation itself - it will assume the garabage collector
+     * will trigger at the appropriate time.
+     */
+    private final boolean performGC;
+
+    /**
      * These are names used to identify MemoryPoolMXBeans that are to be monitored.
      */
     private final List<String> memoryPoolsToMonitor;
@@ -107,6 +115,9 @@ public class VMHealthCheckThread extends Thread {
         for (String memoryPoolName : memoryPoolNames.split(",")) {
             this.memoryPoolsToMonitor.add(memoryPoolName.toLowerCase()); // lowercase so our checks are case-insensitive
         }
+
+        String gcProp = System.getProperty("rhq.agent.vm-health-check.perform-gc", "true");
+        this.performGC = Boolean.parseBoolean(gcProp);
 
         return;
     }
@@ -270,8 +281,10 @@ public class VMHealthCheckThread extends Thread {
             if (heapCritical || nonheapCritical) {
                 // uh-oh, we are low on memory, before we say we are truly critical, try to GC
                 try {
-                    LOG.warn(AgentI18NResourceKeys.VM_HEALTH_CHECK_THREAD_GC);
-                    bean.gc();
+                    if (this.performGC) {
+                        LOG.warn(AgentI18NResourceKeys.VM_HEALTH_CHECK_THREAD_GC);
+                        bean.gc();
+                    }
 
                     // let see what our memory usage is now
                     heapCritical = isCriticallyLow(bean.getHeapMemoryUsage(), this.heapThreshold, "VM heap");
@@ -311,8 +324,10 @@ public class VMHealthCheckThread extends Thread {
                     if (critical) {
                         // uh-oh, we are low on memory, before we say we are truly critical, try to GC
                         try {
-                            LOG.warn(AgentI18NResourceKeys.VM_HEALTH_CHECK_THREAD_GC);
-                            memoryMxBean.gc();
+                            if (this.performGC) {
+                                LOG.warn(AgentI18NResourceKeys.VM_HEALTH_CHECK_THREAD_GC);
+                                memoryMxBean.gc();
+                            }
 
                             // let see what our memory usage is now
                             critical = isCriticallyLow(bean.getUsage(), this.heapThreshold, bean.getName());

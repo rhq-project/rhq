@@ -69,6 +69,31 @@
 
       </plugin-configuration>
 
+      <help>
+         <![CDATA[
+         In order to monitor your Java applications via JMX, you need to expose their MBeans to remote JMX clients. In order to do this, you must pass in some system properties when starting your application's Java virtual machine.
+         
+         *  To run a JVM with JMX remoting enabled without authentication, you must pass in the following system properties:
+         ** -Dcom.sun.management.jmxremote.port=19988
+         ** -Dcom.sun.management.jmxremote.ssl=false
+         ** -Dcom.sun.management.jmxremote.authenticate=false
+
+         * You can require your remote JMX endpoint to demand authentication for clients to be able to connect to it. To run a JVM with JMX remoting enabled with password authentication:
+         ** -Dcom.sun.management.jmxremote.port=19988
+         ** -Dcom.sun.management.jmxremote.ssl=false
+         ** -Dcom.sun.management.jmxremote.authenticate=true
+         ** -Dcom.sun.management.jmxremote.password.file=/some/directory/jmxremote.password
+         Note that "jmxremote.password" must be read-only. On Windows, you must use "cacls" command to do this: {{cacls /some/directory/jmxremote.password /P username:R}}
+         A password file template is located at $JRE_HOME/lib/management/jmxremote.password.template.
+         There is also an auth file that you can use to define other roles.
+         For more information on setting this up and setting up SSL, see [http://java.sun.com/j2se/1.5.0/docs/guide/management/agent.html].
+
+         * If you wish to expose your JBossAS 4 application server's MBeans over this remote JMX mechanism, you must pass in these extra properties, in addition to the properties specified above:
+         ** -Djboss.platform.mbeanserver
+         ** -Djavax.management.builder.initial=org.jboss.system.server.jmx.MBeanServerBuilderImpl
+         ]]>
+      </help>
+
       <!-- JVM level services (One service per mbean) -->
       <service name="Operating System" discovery="MBeanResourceDiscoveryComponent" class="MBeanResourceComponent"
                createDeletePolicy="neither" singleton="true">

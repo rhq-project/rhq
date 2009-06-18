@@ -34,6 +34,7 @@
    </properties>
 
    <dependencies>
+      <!-- NOTE: when undefined explicity the version is defined in the root POM's dependencyManagement section. -->
 
       <!-- Required for WS API Clients or generation -->
 
@@ -53,15 +54,13 @@
       <dependency>
          <groupId>org.jboss.jbossas</groupId>
          <artifactId>jboss-as-dist</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
          <type>zip</type>
       </dependency>
 
       <dependency>
          <groupId>jboss</groupId>
          <artifactId>jboss-remoting</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-       </dependency>
+      </dependency>
 
       <dependency>
          <groupId>org.rhq</groupId>
@@ -91,14 +90,12 @@
       <dependency>
          <groupId>commons-logging</groupId>
          <artifactId>commons-logging</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
          <scope>provided</scope>
       </dependency>
 
       <dependency>
          <groupId>gnu-getopt</groupId>
          <artifactId>getopt</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
          <scope>provided</scope>
       </dependency>
 
@@ -109,11 +106,24 @@
          <scope>provided</scope>
       </dependency>
 
+      <!-- TODO This can probably go away after we stop using EJB Exception classes in the remote API -->
+      <dependency>
+         <groupId>jboss</groupId>
+         <artifactId>jboss-j2ee</artifactId>
+         <scope>provided</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>jboss</groupId>
+         <artifactId>jboss-remoting</artifactId>
+         <scope>provided</scope>
+      </dependency>
+
       <dependency>
          <groupId>jline</groupId>
          <artifactId>jline</artifactId>
          <version>${jline.version}</version>
-         
+         <scope>provided</scope>
       </dependency>
 
       <dependency>
@@ -121,6 +131,13 @@
          <artifactId>log4j</artifactId>
          <version>${log4j.version}</version>
          <scope>provided</scope>
+      </dependency>
+
+      <!-- TODO Remove this if and when this is not needed for compilation -->
+      <dependency>
+         <groupId>hibernate-annotations</groupId>
+         <artifactId>hibernate-annotations</artifactId>
+         <scope>compile</scope>
       </dependency>
 
    </dependencies>
@@ -178,11 +195,17 @@
                               name="commons-logging.version"
                               value="${commons-logging.version}" />
                            <property
+                              name="concurrent.version"
+                              value="${concurrent.version}" />
+                           <property
                               name="getopt.version"
                               value="${getopt.version}" />
                            <property
                               name="i18nlog.version"
                               value="${i18nlog.version}" />
+                           <property
+                              name="jboss-common.version"
+                              value="${jboss-common.version}" />
                            <property
                               name="jboss.version"
                               value="${jboss.version}" />
@@ -201,12 +224,15 @@
                            <property
                               name="persistence-api.version"
                               value="${persistence-api.version}" />
+                           <!--  <property
+                              name="rhq.client.build.exclude.cli.jar"
+                              value="${rhq.client.build.exclude.cli.jar}" /> -->
                            <property
+                              name="rhq.client.build.include.client.jar"
+                              value="${rhq.client.build.include.client.jar}" />
+                           <!-- 
                               name="hibernate-all.version"
-                              value="${hibernate-all.version}" />
-                           <property
-                              name="rhq.client.generate.jar"
-                              value="${rhq.client.generate.jar}" />
+                              value="${hibernate-all.version}" />  -->
                         </ant>
                      </tasks>
                   </configuration>
@@ -263,6 +289,53 @@
             </property>
          </activation>
 
+         <dependencies>
+
+            <dependency>
+               <groupId>xerces</groupId>
+               <artifactId>xercesImpl</artifactId>
+               <version>2.8.1</version>
+               <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+               <groupId>jboss</groupId>
+               <artifactId>jboss-j2ee</artifactId>
+               <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+               <scope>provided</scope><!-- by JBossAS -->
+            </dependency>
+
+            <dependency>
+               <groupId>javax.mail</groupId>
+               <artifactId>mail</artifactId>
+               <version>1.3.1</version>
+               <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+               <groupId>jboss</groupId>
+               <artifactId>javassist</artifactId>
+               <scope>provided</scope>
+            </dependency>
+
+            <!--
+               <dependency>
+               <groupId>hibernate-annotations</groupId>
+               <artifactId>hibernate-annotations</artifactId>
+               <scope>provided</scope>
+               </dependency>
+               
+               
+               <dependency>
+               <groupId>jboss.jbossws</groupId>
+               <artifactId>jboss-jaxws</artifactId>
+               <scope>provided</scope>
+               </dependency>
+               
+            -->
+
+         </dependencies>
+
          <build>
             <plugins>
 
@@ -307,25 +380,33 @@
 
                <plugin>
                   <artifactId>maven-surefire-plugin</artifactId>
-                  <configuration>
-                     <groups>ws</groups>
-                     <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
-                     <excludes>
-                        <exclude>com/**/*.java</exclude>
-                     </excludes>
-                     <forkMode>pertest</forkMode>
-                     <argLine>-Xmx512m -Xms128m</argLine>
-                     <systemProperties>
-                        <property>
-                           <name>deploymentDirectory</name>
-                           <value>target/classes</value>
-                        </property>
-                     </systemProperties>
-                     <additionalClasspathElements>
-                        <!-- The below is required for WS Java Client support -->
-                        <additionalClasspathElement>${jbossws-native-home}/deploy/lib/jbossws-client.jar</additionalClasspathElement>
-                     </additionalClasspathElements>
-                  </configuration>
+
+                  <executions>
+                     <execution>
+                        <id>test-TestRemoteInterface</id>
+                        <phase>test</phase>
+
+                        <configuration>
+                           <groups>ws</groups>
+                           <includes>
+                              <include>TestRemoteInterface.java</include>
+                           </includes>
+                           <forkMode>pertest</forkMode>
+                           <argLine>-Xmx512m -Xms128m</argLine>
+                           <additionalClasspathElements>
+                              <!-- The below is required for WS Java Client support -->
+                              <!--                               <additionalClasspathElement>target/jboss-${jboss.version}/client/jbossws-client.jar</additionalClasspathElement>  -->
+                              <additionalClasspathElement>
+                                 C:/Users/jshaughnessy/App/jbossws-native-dist/deploy/lib/jbossws-client.jar
+                              </additionalClasspathElement>
+                           </additionalClasspathElements>
+                        </configuration>
+                        <goals>
+                           <goal>test</goal>
+                        </goals>
+                     </execution>
+                  </executions>
+
                </plugin>
             </plugins>
          </build>
@@ -387,26 +468,24 @@
                   <executions>
 
                      <execution>
-                        <id>test-run</id>
+                        <id>test-ClientMainTest</id>
                         <phase>test</phase>
 
                         <configuration>
                            <groups>ws</groups>
-                           <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
                            <includes>
-                              <include>**/*.java</include>
+                              <include>ClientMainTest.java</include>
                            </includes>
                            <forkMode>pertest</forkMode>
                            <argLine>-Xmx512m -Xms128m</argLine>
-                           <systemProperties>
-                              <property>
-                                 <name>deploymentDirectory</name>
-                                 <value>target/classes</value>
-                              </property>
-                           </systemProperties>
                            <additionalClasspathElements>
                               <!-- The below is required for WS Java Client support -->
-                              <additionalClasspathElement>${project.build.outputDirectory}/lib/${project.build.finalName}.jar</additionalClasspathElement>
+                              <additionalClasspathElement>
+                                 ${project.build.outputDirectory}/lib/rhq-cli-${project.version}.jar
+                              </additionalClasspathElement>
+                              <additionalClasspathElement>
+                                 ${project.build.outputDirectory}/lib/${project.build.finalName}.jar
+                              </additionalClasspathElement>
                            </additionalClasspathElements>
                         </configuration>
                         <goals>
@@ -424,7 +503,7 @@
          <id>dev</id>
 
          <properties>
-            <rhq.client.generate.jar>true</rhq.client.generate.jar>
+            <rhq.client.build.include.client.jar>true</rhq.client.build.include.client.jar>
          </properties>
       </profile>
    </profiles>

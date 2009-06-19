@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<plugin name="JBossCache5"
+        displayName="JBossCache5 Services"
+        package="org.rhq.plugins.jbosscache5"
+        description="Provides monitoring of JBossCache statistics"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <depends plugin="JMX" />
+   <depends plugin="JBossAS5" useClasses="true"/>
+
+   <service name="Jboss Cache"
+           class="JbossCacheComponent"
+           discovery="JbossCacheDiscoveryComponent"
+           description="The JBoss Cache instances on this server">  
+           
+      <runs-inside>
+          <parent-resource-type name="JBossAS Server" plugin="JBossAS5"/>
+      </runs-inside>
+                 
+          <plugin-configuration>
+              <c:simple-property name="service" default="service=Cache"/>
+              <c:simple-property name="domain" default="jboss.cache"/>
+              <c:simple-property name="config" default="config=*"/>
+              <c:simple-property name="jmx-resource" default="jmx-resource=*"/>
+          </plugin-configuration>
+           
+           <operation name="destroy" displayName="destroy"/>         
+           <operation name="stop" displayName="stop"/>         
+           <operation name="create" displayName="create"/>         
+           <operation name="start" displayName="start"/>         
+           <operation name="printLockInfo" displayName="Print Lock Info">
+                  <results><c:simple-property name="details"></c:simple-property></results>
+            </operation>
+            <operation name="printCacheDetails" displayName="Print Cache Details" >
+                  <results><c:simple-property name="details"></c:simple-property></results>
+             </operation>    
+            <operation name="printCacheDetailsAsHtml" displayName="print Cache Details As Html">
+                  <results><c:simple-property name="details"></c:simple-property></results>
+             </operation>  
+            <operation name="printConfigurationAsString" displayName="print Configuration As String.">
+                  <results><c:simple-property name="details"></c:simple-property></results>
+             </operation>  
+            <operation name="printLockInfoAsHtml" displayName="print Configuration As String">
+                  <results><c:simple-property name="details"></c:simple-property></results>
+             </operation>  
+             <operation name="printConfigurationAsHtmlString" displayName="Print Details as HTML.">
+                  <results><c:simple-property name="details"></c:simple-property></results>
+             </operation> 
+          
+            <metric property="LocalAddress" dataType="trait" displayType="summary" displayName="Local Address" 
+            description="local address"  />       
+            <metric property="ClusterConfig" dataType="trait" displayName="Cluster Config" 
+            description="cluster config"  />       
+            <metric property="NodeLockingScheme" dataType="trait" displayName="Node Locking Scheme" />       
+            <metric property="Members" dataType="trait" displayName="Members" />         
+            <metric property="ExposeManagementStatistics" dataType="trait" displayName="Expose Management Statistics" />       
+            <metric property="RegisterJmxResource" dataType="trait" displayName="Register Jmx Resource" />       
+            <metric property="CacheLoaderConfiguration" dataType="trait" displayName="Cache Loader Configuration" />       
+            <metric property="MultiplexerStack" dataType="trait" displayName="Multiplexer Stack" />       
+            <metric property="ReplQueueMaxElements"  displayName="ReplQueueMaxElements" 
+            category="performance"/>       
+            <metric property="NumberOfAttributes"  displayName="Number Of Attributes" 
+            category="performance"/>       
+            <metric property="CacheLoaderConfig" dataType="trait"  displayName="Cache Loader Config" />       
+            <metric property="ClusterName" dataType="trait" displayName="Cluster Name" />       
+            <metric property="InactiveOnStartup"  dataType="trait" displayName="Inactive On Startup" />       
+            <metric property="CacheMode" dataType="trait" displayName="Cache Mode" />            
+            <metric property="IsolationLevel" dataType="trait" displayName="Isolation Level" />       
+            <metric property="ReplicationVersion" dataType="trait" displayName="Replication Version" />       
+            <metric property="FetchInMemoryState" dataType="trait" displayName="Fetch In Memory State" />       
+            <metric property="InitialStateRetrievalTimeout"  displayName="Initial State Retrieval Timeout" 
+            category="performance"/>       
+            <metric property="BuddyReplicationConfig" dataType="trait" displayName="Buddy Replication Config" />       
+            <metric property="ReplQueueInterval"  displayName="Repl Queue Interval" 
+            category="performance"/>       
+            <metric property="UseReplQueue" dataType="trait" displayName="Use Repl Queue" />       
+            <metric property="UseRegionBasedMarshalling" dataType="trait" displayName="Use Region Based Marshalling" />                   
+            <metric property="LockAcquisitionTimeout"  displayName="Lock Acquisition Timeout" 
+            category="performance"/>       
+            <metric property="NumberOfNodes"  displayName="Number Of Nodes" 
+            category="performance"/>       
+            <metric property="CacheStatus" dataType="trait" displayName="Cache Status" />       
+            <metric property="SyncCommitPhase" dataType="trait" displayName="Sync Commit Phase" />       
+            <metric property="SyncReplTimeout"  displayName="Sync Repl Timeout" 
+            category="performance"/>       
+            <metric property="EvictionPolicyConfig" dataType="trait"  displayName="Eviction Policy Config" />       
+            <metric property="State" dataType="trait" displayName="state" />       
+            <metric property="StateRetrievalTimeout"  displayName="State Retrieval Timeout" 
+            category="performance"/>             
+            <metric property="TransactionManagerLookupClass" dataType="trait" displayName="Transaction Manager Lookup Class" />       
+            <metric property="ClusterProperties" dataType="trait" displayName="Cluster Properties" />       
+                                                 
+          <service name="Interceptor"
+                 class="org.rhq.plugins.jbossas5.jbosscache.JbossCacheDetailComponent"
+                 discovery="org.rhq.plugins.jbossas5.jbosscache.JbossCacheDetailDiscoveryComponent"
+                 description="Jboss Cache Interceptor">
+             
+              <plugin-configuration>
+                <c:simple-property name="jmx-resource" default="jmx-resource=CacheMgmtInterceptor"/>
+              </plugin-configuration>
+               
+               <operation name="resetStatistics" displayName="Reset Statistics" description="Resets all statistics" />
+                
+               <metric property="Evictions"  displayName="Evictions" measurementType="trendsup"
+                  description="number of cache eviction operations"  category="performance"/>
+               <metric property="HitMissRatio"  displayName="HitMissRatio" displayType="summary"
+                  description="hit/miss ratio for the cache"/>
+               <metric property="ReadWriteRatio"  displayName="Read/writes ratio for the cacheeadWriteRatio" displayType="summary"
+                  description="hit/miss ratio for the cache"/>
+               <metric property="NumberOfNodes"  displayName="NumberOfNodes" 
+                  description="number of nodes in the cache"  category="performance"/>
+               <metric property="Hits"  displayName="Hits" measurementType="trendsup"
+                  description="number of cache attribute hits"  category="performance"/>
+               <metric property="NumberOfAttributes"  displayName="NumberOfAttributes" 
+                  description="umber of cache attributes"  category="performance"/>
+               <metric property="StatisticsEnabled"  dataType="trait"  displayName="StatisticsEnabled"/>
+               <metric property="ElapsedTime"  displayName="ElapsedTime" 
+                   description="seconds since cache started"  category="utilization" measurementType="trendsup"
+                   units="seconds"/>
+               <metric property="TimeSinceReset"  displayName="TimeSinceReset" category="utilization" 
+                   description="number of seconds since the cache statistics were last reset"
+                   measurementType="trendsup" units="seconds"/>
+               <metric property="Misses"  displayName="Misses"  measurementType="trendsup"
+                   description="number of cache attribute misses"/>
+               <metric property="AverageWriteTime"  displayName="AverageWriteTime" units="milliseconds"
+                   description="average number of milliseconds for a write operation"  category="performance"/>
+               <metric property="Stores"  displayName="Stores" measurementType="trendsup" 
+                   description="number of cache attribute put operations"  category="performance"/>
+               <metric property="AverageReadTime"  displayName="AverageReadTime"  units="milliseconds"
+                   description="average number of milliseconds for a read operation"  category="performance"/>
+               
+           </service>    
+            
+         <service name="DataContainer"
+                 class="org.rhq.plugins.jbossas5.jbosscache.JbossCacheDetailComponent"
+                 discovery="org.rhq.plugins.jbossas5.jbosscache.JbossCacheDetailDiscoveryComponent"
+                 description="Jboss Cache Data Container">
+             
+              <plugin-configuration>
+                <c:simple-property name="jmx-resource" default="jmx-resource=CacheMgmtInterceptor"/>
+              </plugin-configuration>     
+              
+                <operation name="getNumberOfNodes" displayName="Get Number of nodes." description="Returns the number of nodes in the data container">
+                  <results><c:simple-property name="nr"></c:simple-property></results>
+                </operation>
+                <operation name="getNumberOfAttributes" displayName="Get Number of attributes." description="Returns the number of nodes in the data container">
+                  <results><c:simple-property name="nr"></c:simple-property></results>
+                </operation>
+                <operation name="printDetails" displayName="Print Details." description="Prints details of the data container">
+                  <results><c:simple-property name="details"></c:simple-property></results>
+                </operation>
+                <operation name="printDetailsAsHtml" displayName="Print Details as HTML." description="Prints details of the data container, formatted as an HTML String">
+                  <results><c:simple-property name="details"></c:simple-property></results>
+                </operation>       
+                           
+           </service>
+
+         <service name="RPCManager"
+                 class="org.rhq.plugins.jbossas5.jbosscache.JbossCacheDetailComponent"
+                 discovery="org.rhq.plugins.jbossas5.jbosscache.JbossCacheDetailDiscoveryComponent"
+                 description="Jboss Cache RPC Manager">
+
+              <plugin-configuration>
+                <c:simple-property name="jmx-resource" default="jmx-resource=RPCManager"/>
+              </plugin-configuration>   
+                    
+              <operation name="resetStatistics" displayName="Reset Statistics" description="Resets all statistics" />
+                    
+               <metric property="Enabled" dataType="trait"  displayName="RPC Enabled" 
+                 description="whether or not the RPCManager is used in this cache instance"/>
+               <metric property="ReplicationFailures" displayName="ReplicationFailures" 
+                 description="number of failed replications"/>
+               <metric property="LocalAddressString" dataType="trait"  displayName="LocalAddressString" 
+                 description="Local address"/>
+               <metric property="StatisticsEnabled" dataType="trait"  displayName="AverageReadTime" />
+               <metric property="ReplicationCount" displayName="ReplicationCount" 
+                 description="number of successful replications"/>
+               <metric property="SuccessRatio" dataType="trait"  displayName="SuccessRatio" 
+                 description="RPC call success ratio"/>
+               <metric property="MembersString" dataType="trait"  displayName="MembersString" 
+                 description="Cluster view"/>
+                 
+           </service>
+           
+         <service name="RegionManager"
+                 class="org.rhq.plugins.jbossas5.jbosscache.JbossCacheDetailComponent"
+                 discovery="org.rhq.plugins.jbossas5.jbosscache.JbossCacheDetailDiscoveryComponent"
+                 description="Jboss Cache RegionManager">
+
+              <plugin-configuration>
+                <c:simple-property name="jmx-resource" default="jmx-resource=RegionManager"/>
+              </plugin-configuration>              
+               
+             <operation name="dumpRegions" displayName="Dump Regions" description="A String representation of all registered regions">
+                <results><c:simple-property name="dump"></c:simple-property></results>
+             </operation>
+             
+             <metric property="numRegions"  displayName="Number of Regions" 
+                 description="A count of all regions"  category="performance"/>               
+           </service>
+
+         <service name="TransactionTable"
+                 class="org.rhq.plugins.jbossas5.jbosscache.JbossCacheDetailComponent"
+                 discovery="org.rhq.plugins.jbossas5.jbosscache.JbossCacheDetailDiscoveryComponent"
+                 description="Jboss Cache TransactionTable">
+                 
+              <plugin-configuration>
+                <c:simple-property name="jmx-resource" default="jmx-resource=TransactionTable"/>
+              </plugin-configuration>         
+              <operation name="resetStatistics" displayName="Reset Statistics" description="Resets all statistics" />         
+                   
+              <metric property="numberOfRegisteredTransactions"  displayName="Number of transactions" 
+                description="Number of registered transactions"  category="performance"/>
+              <metric property="transactionMap"  dataType="trait" displayName="Transaction map" 
+                description="A String representation of the transaction map"  />
+           </service>
+
+         <service name="TxInterceptor"
+                 class="org.rhq.plugins.jbossas5.jbosscache.JbossCacheDetailComponent"
+                 discovery="org.rhq.plugins.jbossas5.jbosscache.JbossCacheDetailDiscoveryComponent"
+                 description="Jboss Cache TxInterceptor">
+                 
+              <plugin-configuration>
+                <c:simple-property name="jmx-resource" default="jmx-resource=TxInterceptor"/>
+              </plugin-configuration>              
+           
+           <metric property="Commits"  displayName="Commits" 
+            description="number of transaction commits"  category="performance"/>       
+           <metric property="StatisticsEnabled"  dataType="trait" displayName="StatisticsEnabled" 
+            description="A String representation of the transaction map"  />       
+           <metric property="Rollbacks"  displayName="Rollbacks" 
+            description="number of transaction rollbacks"  category="performance"/>        
+           <metric property="Prepares"  displayName="Prepares" 
+            description="number of transaction prepares"  category="performance"/>       
+           <metric property="numberOfSyncsRegistered"  displayName="Number Of Syncs" 
+            description="number of transaction synchronizations currently registered"  category="performance"/>       
+         </service>          
+    </service>
+</plugin>

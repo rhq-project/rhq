@@ -335,6 +335,11 @@
             <scope>provided</scope>
         </dependency>
 
+        <dependency>
+            <groupId>jboss</groupId>
+            <artifactId>jboss-serialization</artifactId>
+            <scope>runtime</scope>
+        </dependency>
     </dependencies>
 
     <build>

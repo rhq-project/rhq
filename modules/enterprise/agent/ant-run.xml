@@ -24,6 +24,12 @@ ANT Script that provides ways to package the agent.
    <path id="run.classpath">
 
       <!-- include our own thirdparty libraries -->
+
+      <!-- WARNING! IF YOU ADD A LIBRARY TO THE AGENT, MAKE SURE YOU ADD
+           THEM (IF APPROPRIATE) TO THE EXCLUDED CLASSES LIST OF THE RootPluginClassLoader's
+           REGULAR EXPRESSION (rhq.agent.plugins.root-plugin-classloader-regex).
+           SEE AgentConfiguration.getPluginContainerConfiguration() -->
+
       <fileset dir="${settings.localRepository}" id="run.classpath.fileset">
          <include name="i18nlog/i18nlog/1.0.9/i18nlog-1.0.9.jar" />
          <include name="log4j/log4j/1.2.14/log4j-1.2.14.jar" />

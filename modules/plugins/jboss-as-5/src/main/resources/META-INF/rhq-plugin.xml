@@ -1610,17 +1610,15 @@
                     &datasourceAndConnectionFactoryAdvancedResourceConfigProps;
                     &connectionFactoryAdvancedResourceConfigProps;
 
-                    <c:simple-property name="track-connection-by-tx"
-                                       type="boolean"
-                                       activationPolicy="immediate"
-                                       displayName="Track Connection By Transaction"
-                                       required="false"
-                                       default="true">
+                    <c:simple-property name="interleaving" type="boolean" required="false" defaultValue="false">
                         <c:description>
-                            Whether the connection should be locked into the transaction. The default is Yes.
+                            If true, enable transaction interleaving if the DB vendor supports it (most do not).
+                            Can only be set to true if XA transactions are enabled.
+                            This property supercedes the "track-connection-by-tx" property from earlier versions of
+                            JBoss AS. The default is false.
                         </c:description>
                     </c:simple-property>
-
+                    
                     <c:simple-property name="xa-resource-timeout"
                                        type="integer"
                                        displayName="XA Resource Timeout"

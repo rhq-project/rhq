@@ -74,10 +74,17 @@ public class PluginComponentFactory implements ContainerService {
             PluginEnvironment pluginEnvironment = pluginManager.getPlugin(resourceType.getPlugin());
             String className = pluginManager.getMetadataManager().getDiscoveryClass(resourceType);
             String typeName = resourceType.getName();
-            log.debug("Creating discovery component [" + className + "] for resource type [" + typeName + "]");
+
+            if (log.isDebugEnabled()) {
+                log.debug("Creating discovery component [" + className + "] for resource type [" + typeName + ']');
+            }
+
             discoveryComponent = (ResourceDiscoveryComponent) instantiateClass(pluginEnvironment, className);
             this.discoveryComponentsCache.put(resourceType, discoveryComponent);
-            log.debug("Created discovery component [" + className + "] for resource type [" + typeName + "]");
+
+            if (log.isDebugEnabled()) {
+                log.debug("Created discovery component [" + className + "] for resource type [" + typeName + ']');
+            }
         }
 
         return discoveryComponent;
@@ -100,8 +107,9 @@ public class PluginComponentFactory implements ContainerService {
         String className = pluginManager.getMetadataManager().getComponentClass(resourceType);
         ResourceComponent component = (ResourceComponent) instantiateClass(pluginEnvironment, className);
 
-        log.debug("Created resource component [" + className + "] of resource type [" + resourceType + "]");
-
+        if (log.isDebugEnabled()) {
+            log.debug("Created resource component [" + className + "] of resource type [" + resourceType + ']');
+        }
         return component;
     }
 
@@ -117,12 +125,18 @@ public class PluginComponentFactory implements ContainerService {
      * @throws PluginContainerException if the class could not be instantiated for some reason
      */
     private Object instantiateClass(PluginEnvironment environment, String className) throws PluginContainerException {
+
         ClassLoader loader = environment.getPluginClassLoader();
-        log.debug("Loading class '" + className + "' via " + loader + "...");
+
+        if (log.isDebugEnabled()) {
+            log.debug("Loading class [" + className + "] via classloader [" + loader + ']');
+        }
 
         try {
             Class<?> clazz = Class.forName(className, true, loader);
-            log.debug("Loaded class: " + clazz);
+            if (log.isDebugEnabled()) {
+                log.debug("Loaded class: " + clazz);
+            }
             return clazz.newInstance();
         } catch (InstantiationException e) {
             throw new PluginContainerException("Could not instantiate plugin class [" + className

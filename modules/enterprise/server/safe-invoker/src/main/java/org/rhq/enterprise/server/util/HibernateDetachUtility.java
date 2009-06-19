@@ -91,65 +91,71 @@ public class HibernateDetachUtility {
         }
     }
 
-    private static void nullOutFieldsByFieldAccess(Object value, Set<Integer> nulledObjects, int depth,
+    @SuppressWarnings("unchecked")
+    private static void nullOutFieldsByFieldAccess(Object object, Set<Integer> nulledObjects, int depth,
         SerializationType serializationType) throws Exception {
 
-        BeanInfo bi = Introspector.getBeanInfo(value.getClass(), Object.class);
+        // BeanInfo bi = Introspector.getBeanInfo(value.getClass(), Object.class);
 
-        Field[] fields = value.getClass().getDeclaredFields();
+        boolean isDomainObject = object.getClass().getName().startsWith("org.rhq.core.domain");
+        Field[] fields = object.getClass().getDeclaredFields();
 
         for (Field field : fields) {
             int mods = field.getModifiers();
             if (Modifier.isStatic(mods) || Modifier.isTransient(mods) || Modifier.isFinal(mods))
                 continue;
-            Object propertyValue = null;
+
+            Object fieldValue = null;
+
             try {
                 field.setAccessible(true);
-                propertyValue = field.get(value);
+                fieldValue = field.get(object);
             } catch (Throwable lie) {
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug("Couldn't load: " + field.getName() + " off of " + value.getClass().getSimpleName(), lie);
+                    LOG
+                        .debug("Couldn't load: " + field.getName() + " off of " + object.getClass().getSimpleName(),
+                            lie);
                 }
-                nullOutField(value, field.getName());
+                nullOutField(object, field.getName());
             }
 
-            if (!Hibernate.isInitialized(propertyValue)) {
-                try {
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("Nulling out: " + field.getName() + " off of " + value.getClass().getSimpleName());
+            if (isDomainObject) {
+                if (!Hibernate.isInitialized(fieldValue)) {
+                    try {
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("Nulling out: " + field.getName() + " off of "
+                                + object.getClass().getSimpleName());
+                        }
+
+                        nullOutField(object, field.getName());
+                    } catch (Exception lie) {
+                        LOG.debug("Couldn't null out: " + field.getName() + " off of "
+                            + object.getClass().getSimpleName() + " trying field access", lie);
                     }
+                } else {
+                    if (null != fieldValue) {
+                        if (fieldValue.getClass().getName().contains("javassist")) {
 
-                    nullOutField(value, field.getName());
+                            Class assistClass = fieldValue.getClass();
+                            Method m = assistClass.getMethod("writeReplace");
+                            Object replacement = m.invoke(fieldValue);
 
-                } catch (Exception lie) {
-                    LOG.debug("Couldn't null out: " + field.getName() + " off of " + value.getClass().getSimpleName()
-                        + " trying field access", lie);
-                }
-            } else {
-                if (propertyValue != null) {
-                    if (propertyValue.getClass().getName().contains("javassist") && Hibernate.isInitialized(propertyValue)) {
+                            setField(object, field.getName(), replacement);
 
-                        Class assistClass = propertyValue.getClass();
-                        Method m = assistClass.getMethod("writeReplace");
-                        Object replacement = m.invoke(propertyValue);
-
-                        setField(value, field.getName(), replacement);
-
-                        String className = propertyValue.getClass().getName();
-                        className = className.substring(0, className.indexOf("_$$_"));
-
-                    } else if (!Hibernate.isInitialized(propertyValue)) {
-
-                        nullOutField(value, field.getName());
-
-                    } else if ((propertyValue instanceof Collection)
-                            || ((propertyValue != null) && propertyValue.getClass().getName().startsWith(
-                            "org.rhq.core.domain"))) {
-                        nullOutUninitializedFields(propertyValue, nulledObjects, depth + 1, serializationType);
+                            String className = fieldValue.getClass().getName();
+                            className = className.substring(0, className.indexOf("_$$_"));
+                        }
                     }
                 }
             }
 
+            // Get the value in case it was updated above. Recurse on any field value that may
+            // itself lead to proxies. That includes any collection and any org.rhq type (like a composite).
+            fieldValue = field.get(object);
+            if ((null != fieldValue)
+                && ((fieldValue instanceof Collection) || fieldValue.getClass().getName().startsWith("org.rhq"))) {
+                nullOutUninitializedFields(fieldValue, nulledObjects, depth + 1, serializationType);
+            }
         }
     }
 

@@ -79,6 +79,7 @@ import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.util.serial.ExternalizableStrategy;
 
 /**
  * Represents a JON managed resource (i.e. a platform, server, or service).
@@ -971,9 +972,12 @@ public class Resource implements Comparable<Resource>, Externalizable {
     }
 
     public Resource( //
-        @NotNull String resourceKey, //
-        @NotNull String name, //
-        @NotNull ResourceType type) {
+        @NotNull
+        String resourceKey, //
+        @NotNull
+        String name, //
+        @NotNull
+        ResourceType type) {
         this.resourceKey = resourceKey;
         this.name = name;
         this.resourceType = type;
@@ -1008,7 +1012,8 @@ public class Resource implements Comparable<Resource>, Externalizable {
         return this.name;
     }
 
-    public void setName(@NotNull String name) {
+    public void setName(@NotNull
+    String name) {
         this.name = name;
         setAgentSynchronizationNeeded();
     }
@@ -1183,7 +1188,8 @@ public class Resource implements Comparable<Resource>, Externalizable {
         return parentResource;
     }
 
-    public void setParentResource(@Nullable Resource parentResource) {
+    public void setParentResource(@Nullable
+    Resource parentResource) {
         this.parentResource = parentResource;
     }
 
@@ -1583,6 +1589,26 @@ public class Resource implements Comparable<Resource>, Externalizable {
     }
 
     public void writeExternal(ObjectOutput out) throws IOException {
+        ExternalizableStrategy.Subsystem strategy = ExternalizableStrategy.getStrategy();
+        out.writeChar(strategy.id());
+
+        if (ExternalizableStrategy.Subsystem.REMOTEAPI == strategy) {
+            writeExternalRemote(out);
+        } else {
+            writeExternalAgent(out);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        if (ExternalizableStrategy.Subsystem.REMOTEAPI.id() == in.readChar()) {
+            readExternalRemote(in);
+        } else {
+            readExternalAgent(in);
+        }
+    }
+
+    public void writeExternalAgent(ObjectOutput out) throws IOException {
         // Note that a Resource may have been constructed with id only. Check for uninitialized fields. 
         out.writeInt(id);
         out.writeUTF(uuid);
@@ -1627,8 +1653,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
         //Set<ResourceGroup> resourceGroups = new HashSet<ResourceGroup>();
     }
 
-    @SuppressWarnings("unchecked")
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+    public void readExternalAgent(ObjectInput in) throws IOException, ClassNotFoundException {
         id = in.readInt();
         uuid = in.readUTF();
         resourceKey = in.readUTF();
@@ -1649,6 +1674,77 @@ public class Resource implements Comparable<Resource>, Externalizable {
         childResources = (Set<Resource>) in.readObject();
 
         pluginConfiguration = (Configuration) in.readObject();
+    }
+
+    // It is assumed that the object is clean of Hibernate proxies (i.e. HibernateDetachUtility has been run if necessary)
+    public void writeExternalRemote(ObjectOutput out) throws IOException {
+        // Note that a Resource may have been constructed with id only. Check for uninitialized fields. 
+        out.writeInt(id);
+        out.writeUTF(uuid);
+        out.writeUTF(resourceKey);
+        out.writeUTF(name);
+        out.writeInt(inventoryStatus.ordinal());
+        out.writeUTF((null == version) ? "" : version);
+        out.writeUTF((null == description) ? "" : description);
+        out.writeLong(ctime);
+        out.writeLong(mtime);
+        out.writeLong(itime);
+        // not supplied by remote: modifiedBy
+        out.writeUTF((null == location) ? "" : location);
+        out.writeObject(resourceType);
+        // making a copy reduces chances of ConcurrentModificationException in a thread iterating the original
+        out.writeObject((null == childResources) ? null : new LinkedHashSet<Resource>(childResources));
+        out.writeObject(parentResource);
+        out.writeObject(resourceConfiguration);
+        out.writeObject(pluginConfiguration);
+        out.writeObject(agent);
+        // not supplied by remote: alertDefinitions        
+        // not supplied by remote: resourceConfigurationUpdates
+        // not supplied by remote: pluginConfigurationUpdates
+        // making a copy reduces chances of ConcurrentModificationException in a thread iterating the original        
+        out.writeObject((null == implicitGroups) ? null : new LinkedHashSet<ResourceGroup>(implicitGroups));
+        // making a copy reduces chances of ConcurrentModificationException in a thread iterating the original
+        out.writeObject((null == explicitGroups) ? null : new LinkedHashSet<ResourceGroup>(explicitGroups));
+        // not supplied by remote: contentServiceRequests
+        // not supplied by remote: createChildResourceRequests
+        // not supplied by remote: deleteResourceRequests
+        // not supplied by remote: operationHistories
+        // not supplied by remote: installedPackages
+        // not supplied by remote: installedPackageHistory
+        // not supplied by remote: resourceChannels
+        // not supplied by remote: schedules
+        out.writeObject(availability);
+        out.writeObject(currentAvailability);
+        out.writeObject(resourceErrors);
+        // not supplied by remote: eventSources        
+        out.writeObject(productVersion);
+    }
+
+    @SuppressWarnings("unchecked")
+    public void readExternalRemote(ObjectInput in) throws IOException, ClassNotFoundException {
+        id = in.readInt();
+        uuid = in.readUTF();
+        resourceKey = in.readUTF();
+        name = in.readUTF();
+        inventoryStatus = InventoryStatus.values()[in.readInt()];
+        version = in.readUTF();
+        description = in.readUTF();
+        ctime = in.readLong();
+        mtime = in.readLong();
+        itime = in.readLong();
+        location = in.readUTF();
+        resourceType = (ResourceType) in.readObject();
+        childResources = (Set<Resource>) in.readObject();
+        parentResource = (Resource) in.readObject();
+        resourceConfiguration = (Configuration) in.readObject();
+        pluginConfiguration = (Configuration) in.readObject();
+        agent = (Agent) in.readObject();
+        implicitGroups = (Set<ResourceGroup>) in.readObject();
+        explicitGroups = (Set<ResourceGroup>) in.readObject();
+        availability = (List<Availability>) in.readObject();
+        currentAvailability = (ResourceAvailability) in.readObject();
+        resourceErrors = (List<ResourceError>) in.readObject();
+        productVersion = (ProductVersion) in.readObject();
     }
 
     public void afterUnmarshal(Unmarshaller u, Object parent) {

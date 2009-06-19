@@ -183,8 +183,8 @@ public interface ResourceManagerLocal {
      * @return the resource, or null if no such resource exists
      */
     @Nullable
-    Resource getResourceByParentAndKey(Subject user, @Nullable Resource parent, String key, String plugin,
-        String typeName);
+    Resource getResourceByParentAndKey(Subject user, @Nullable
+    Resource parent, String key, String plugin, String typeName);
 
     PageList<Resource> getResourceByParentAndInventoryStatus(Subject user, Resource parent, InventoryStatus status,
         PageControl pageControl);
@@ -203,6 +203,14 @@ public interface ResourceManagerLocal {
      * @see ResourceManagerRemote#getResourcesByCategory(Subject, ResourceCategory, InventoryStatus, PageControl)
      */
     PageList<Resource> getResourcesByCategory(Subject user, ResourceCategory category, InventoryStatus inventoryStatus,
+        PageControl pageControl);
+
+    PageList<ResourceComposite> findResourceComposites( //
+        Subject user, //
+        ResourceCategory category, //
+        String typeName, //
+        int parentResourceId, //
+        String searchString, //
         PageControl pageControl);
 
     /**

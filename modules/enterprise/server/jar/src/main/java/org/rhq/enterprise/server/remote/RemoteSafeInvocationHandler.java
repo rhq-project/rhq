@@ -35,12 +35,20 @@ import org.jboss.remoting.ServerInvoker;
 import org.jboss.remoting.callback.InvokerCallbackHandler;
 import org.jboss.remoting.invocation.NameBasedInvocation;
 
+import org.rhq.core.domain.util.serial.ExternalizableStrategy;
 import org.rhq.enterprise.server.util.HibernateDetachUtility;
 
 /**
- * Remoting handler endpoint used to handle remote API invocations over the standard invocation handler.
- *
+ * Handle remote invocations.  Note that we perform only invocations defined in the remote interfaces.
+ * Although, we execute only locals to bypass the serialization performed by a remote invocation. Even
+ * though this handler is co-located, for remotes, remoting will serialize the return data immediately.
+ * This is bad for us because since we return domain objects we ned to scrub the data, removing
+ * hibernate proxies (see {@link HibernateDetachUtility}.  Additionally, we set our serialization
+ * strategy for REMOTEAPI, indicating to classes implementing Externalizable that we need to serialize
+ * all data expected by the remote api (as opposed to say, thin versions for agent-server comm).  
+ * 
  * @author Greg Hinkle
+ * @autor Jay Shaughnessy
  */
 public class RemoteSafeInvocationHandler implements ServerInvocationHandler {
 
@@ -76,12 +84,18 @@ public class RemoteSafeInvocationHandler implements ServerInvocationHandler {
             InitialContext ic = new InitialContext();
 
             NameBasedInvocation nbi = ((NameBasedInvocation) invocationRequest.getParameter());
+            if (null == nbi) {
+                throw new IllegalArgumentException("InvocationRequest did not supply method.");
+            }
+
             methodName = nbi.getMethodName();
             String[] methodInfo = methodName.split(":");
 
-            // String jndiName = "rhq/" + methodInfo[0] + "/local";
-            String jndiName = "rhq/" + methodInfo[0] + "/remote";
-            Object target = ic.lookup(jndiName);
+            // Lookup the remote first, if it doesn't exist exit with error.
+            // This prevents remote clients from accessing the locals.
+            String jndiName = "rhq/" + methodInfo[0];
+            Object target = ic.lookup(jndiName + "/remote");
+            target = ic.lookup(jndiName + "/local");
 
             String[] signature = nbi.getSignature();
             int signatureLength = signature.length;
@@ -101,6 +115,10 @@ public class RemoteSafeInvocationHandler implements ServerInvocationHandler {
             return e;
         } finally {
             if (result != null) {
+                // set the strategy guiding how the return information is serialized
+                ExternalizableStrategy.setStrategy(ExternalizableStrategy.Subsystem.REMOTEAPI);
+
+                // scrub the return data if Hibernate proxies
                 try {
                     HibernateDetachUtility.nullOutUninitializedFields(result,
                         HibernateDetachUtility.SerializationType.SERIALIZATION);

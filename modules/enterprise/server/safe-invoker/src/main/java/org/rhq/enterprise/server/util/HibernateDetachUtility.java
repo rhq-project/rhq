@@ -126,13 +126,31 @@ public class HibernateDetachUtility {
                         + " trying field access", lie);
                 }
             } else {
-                if ((propertyValue instanceof Collection)
-                    || ((propertyValue != null) && propertyValue.getClass().getName().startsWith("org.rhq.core.domain"))) {
-                    nullOutUninitializedFields(propertyValue, nulledObjects, depth + 1, serializationType);
+                if (propertyValue != null) {
+                    if (propertyValue.getClass().getName().contains("javassist") && Hibernate.isInitialized(propertyValue)) {
+
+                        Class assistClass = propertyValue.getClass();
+                        Method m = assistClass.getMethod("writeReplace");
+                        Object replacement = m.invoke(propertyValue);
+
+                        setField(value, field.getName(), replacement);
+
+                        String className = propertyValue.getClass().getName();
+                        className = className.substring(0, className.indexOf("_$$_"));
+
+                    } else if (!Hibernate.isInitialized(propertyValue)) {
+
+                        nullOutField(value, field.getName());
+
+                    } else if ((propertyValue instanceof Collection)
+                            || ((propertyValue != null) && propertyValue.getClass().getName().startsWith(
+                            "org.rhq.core.domain"))) {
+                        nullOutUninitializedFields(propertyValue, nulledObjects, depth + 1, serializationType);
+                    }
                 }
             }
-        }
 
+        }
     }
 
     private static void nullOutFieldsByAccessors(Object value, Set<Integer> nulledObjects, int depth,
@@ -174,6 +192,21 @@ public class HibernateDetachUtility {
                     nullOutUninitializedFields(propertyValue, nulledObjects, depth + 1, serializationType);
                 }
             }
+        }
+    }
+
+    private static void setField(Object object, String fieldName, Object newValue) {
+        try {
+            Field f = object.getClass().getDeclaredField(fieldName);
+            if (f != null) {
+                // try to set the field this way
+                f.setAccessible(true);
+                f.set(object, newValue);
+            }
+        } catch (NoSuchFieldException e) {
+            // ignore this
+        } catch (IllegalAccessException e) {
+            // ignore this
         }
     }
 

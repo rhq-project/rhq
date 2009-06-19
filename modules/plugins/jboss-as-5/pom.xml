@@ -28,17 +28,17 @@
     </scm>
 
     <properties>
-        <scm.module.path>modules/plugins/jboss-as-5/</scm.module.path>                        
-        
-        <!-- NOTE: If you are developing this plugin or using it with a snapshot EAP 5.0 build, 
+        <scm.module.path>modules/plugins/jboss-as-5/</scm.module.path>
+
+        <!-- NOTE: If you are developing this plugin or using it with a snapshot EAP 5.0 build,
                    you should do the following before building the plugin:
-                   
+
                    1) Checkout and build the EAP 5.0 branch
                       (https://svn.jboss.org/repos/jbossas/branches/JBPAPP_5_0/).
                    2) Change the below property to "5.1.0-SNAPSHOT".
                    3) Uncomment the JBoss snapshot repo near the bottom of this POM.
         -->
-        <jbossas.version>5.1.0.GA</jbossas.version>                                
+        <jbossas.version>5.1.0.GA</jbossas.version>
     </properties>
 
     <dependencyManagement>
@@ -59,7 +59,7 @@
           </dependency>
         </dependencies>
     </dependencyManagement>
-    
+
     <dependencies>
 
 		<dependency>
@@ -75,7 +75,7 @@
            <artifactId>jopr-jboss-as-common</artifactId>
            <version>${project.version}</version>
         </dependency>
-              
+
         <!-- Needed for the plugin descriptor generator code -->
         <dependency>
           <groupId>apache-xerces</groupId>
@@ -123,19 +123,19 @@
            referenced when running within Enterprise Jopr. -->
         <dependency>
           <groupId>org.jboss.integration</groupId>
-          <artifactId>jboss-profileservice-spi</artifactId>                              
+          <artifactId>jboss-profileservice-spi</artifactId>
           <!--<scope>provided</scope>-->
         </dependency>
 
         <dependency>
           <groupId>org.jboss.man</groupId>
-          <artifactId>jboss-managed</artifactId>          
+          <artifactId>jboss-managed</artifactId>
           <!--<scope>provided</scope>-->
         </dependency>
 
         <dependency>
           <groupId>org.jboss.man</groupId>
-          <artifactId>jboss-metatype</artifactId>          
+          <artifactId>jboss-metatype</artifactId>
           <!--<scope>provided</scope>-->
         </dependency>
 
@@ -147,13 +147,13 @@
         <!--======= client API jars (temporary) =======-->
         <dependency>
           <groupId>org.jboss.naming</groupId>
-          <artifactId>jnp-client</artifactId>          
+          <artifactId>jnp-client</artifactId>
           <scope>runtime</scope>
         </dependency>
 
         <dependency>
           <groupId>org.jboss.remoting</groupId>
-          <artifactId>jboss-remoting</artifactId>          
+          <artifactId>jboss-remoting</artifactId>
           <scope>runtime</scope>
         </dependency>
 
@@ -167,25 +167,25 @@
 
         <dependency>
           <groupId>trove</groupId>
-          <artifactId>trove</artifactId>          
+          <artifactId>trove</artifactId>
           <scope>runtime</scope>
         </dependency>
 
         <dependency>
           <groupId>javassist</groupId>
-          <artifactId>javassist</artifactId>          
+          <artifactId>javassist</artifactId>
           <scope>runtime</scope>
         </dependency>
 
         <dependency>
           <groupId>org.jboss.security</groupId>
-          <artifactId>jboss-security-spi</artifactId>          
+          <artifactId>jboss-security-spi</artifactId>
           <scope>runtime</scope>
         </dependency>
 
         <dependency>
           <groupId>org.jboss.javaee</groupId>
-          <artifactId>jboss-javaee</artifactId>          
+          <artifactId>jboss-javaee</artifactId>
           <scope>runtime</scope>
         </dependency>
 
@@ -199,26 +199,26 @@
         <!-- aka jboss-client.jar -->
         <dependency>
             <groupId>org.jboss.jbossas</groupId>
-            <artifactId>jboss-as-server</artifactId>            
+            <artifactId>jboss-as-server</artifactId>
             <classifier>client</classifier>
             <scope>runtime</scope>
         </dependency>
 
         <dependency>
           <groupId>org.jboss</groupId>
-          <artifactId>jboss-mdr</artifactId>          
+          <artifactId>jboss-mdr</artifactId>
           <scope>runtime</scope>
         </dependency>
 
         <dependency>
           <groupId>org.jboss.logging</groupId>
-          <artifactId>jboss-logging-spi</artifactId>          
+          <artifactId>jboss-logging-spi</artifactId>
           <scope>runtime</scope>
         </dependency>
 
         <dependency>
           <groupId>org.jboss.logging</groupId>
-          <artifactId>jboss-logging-log4j</artifactId>          
+          <artifactId>jboss-logging-log4j</artifactId>
           <scope>runtime</scope>
         </dependency>
 
@@ -232,20 +232,20 @@
 
         <dependency>
           <groupId>org.jboss.integration</groupId>
-          <artifactId>jboss-transaction-spi</artifactId>          
+          <artifactId>jboss-transaction-spi</artifactId>
           <scope>runtime</scope>
         </dependency>
 
         <dependency>
           <groupId>org.jboss.ejb3</groupId>
-          <artifactId>jboss-ejb3-common</artifactId>          
+          <artifactId>jboss-ejb3-common</artifactId>
           <classifier>client</classifier>
           <scope>runtime</scope>
         </dependency>
 
         <dependency>
           <groupId>org.jboss.ejb3</groupId>
-          <artifactId>jboss-ejb3-core</artifactId>          
+          <artifactId>jboss-ejb3-core</artifactId>
           <classifier>client</classifier>
           <scope>runtime</scope>
         </dependency>
@@ -259,7 +259,7 @@
 
         <dependency>
           <groupId>org.jboss.ejb3</groupId>
-          <artifactId>jboss-ejb3-proxy-spi</artifactId>      
+          <artifactId>jboss-ejb3-proxy-spi</artifactId>
           <!--<version>${jbossas.version}</version>-->
           <classifier>client</classifier>
           <scope>runtime</scope>
@@ -267,7 +267,7 @@
 
         <dependency>
           <groupId>org.jboss.ejb3</groupId>
-          <artifactId>jboss-ejb3-proxy-impl</artifactId>   
+          <artifactId>jboss-ejb3-proxy-impl</artifactId>
           <!--<version>${jbossas.version}</version>-->
           <classifier>client</classifier>
           <scope>runtime</scope>
@@ -275,7 +275,7 @@
 
         <dependency>
           <groupId>org.jboss.ejb3</groupId>
-          <artifactId>jboss-ejb3-security</artifactId>          
+          <artifactId>jboss-ejb3-security</artifactId>
           <classifier>client</classifier>
           <scope>runtime</scope>
         </dependency>
@@ -283,55 +283,55 @@
         <!-- needed by ManagementView.getDeployment() -->
         <dependency>
           <groupId>org.jboss.microcontainer</groupId>
-          <artifactId>jboss-dependency</artifactId>          
+          <artifactId>jboss-dependency</artifactId>
           <scope>runtime</scope>
         </dependency>
-        
-        <!-- The four below deps are needed by the non-EJB proxy but not by the EJB proxy. -->        
+
+        <!-- The four below deps are needed by the non-EJB proxy but not by the EJB proxy. -->
         <dependency>
           <groupId>org.jboss.security</groupId>
-          <artifactId>jbosssx-client</artifactId>          
-          <scope>runtime</scope>          
-        </dependency>       
+          <artifactId>jbosssx-client</artifactId>
+          <scope>runtime</scope>
+        </dependency>
 
         <dependency>
           <groupId>org.jboss.aspects</groupId>
-          <artifactId>jboss-security-aspects</artifactId>          
-          <scope>runtime</scope>                   
+          <artifactId>jboss-security-aspects</artifactId>
+          <scope>runtime</scope>
         </dependency>
-        
+
         <dependency>
           <groupId>org.jboss.aop</groupId>
-          <artifactId>jboss-aop</artifactId>          
-          <classifier>client</classifier>          
-          <scope>runtime</scope>          
-        </dependency>       
-        
+          <artifactId>jboss-aop</artifactId>
+          <classifier>client</classifier>
+          <scope>runtime</scope>
+        </dependency>
+
         <dependency>
           <groupId>org.jboss</groupId>
-          <artifactId>jboss-common-core</artifactId>                    
-        </dependency>       
-                 
-        <!-- Uncomment the below deps if you want to pull down the jboss-profileservice 
+          <artifactId>jboss-common-core</artifactId>
+        </dependency>
+
+        <!-- Uncomment the below deps if you want to pull down the jboss-profileservice
              and jboss-system sources jars for debugging purposes. You will also need
-             to make sure you have the JBoss snapshot repo in this POM or your settings.xml. 
-        -->        
+             to make sure you have the JBoss snapshot repo in this POM or your settings.xml.
+        -->
 
         <dependency>
             <groupId>org.jboss.jbossas</groupId>
-            <artifactId>jboss-as-profileservice</artifactId>              
-            <scope>runtime</scope>            
+            <artifactId>jboss-as-profileservice</artifactId>
+            <scope>runtime</scope>
         </dependency>
 
         <dependency>
             <groupId>org.jboss</groupId>
-            <artifactId>jboss-reflect</artifactId>              
-            <scope>runtime</scope>            
+            <artifactId>jboss-reflect</artifactId>
+            <scope>runtime</scope>
         </dependency>
-        
+
         <dependency>
             <groupId>org.jboss.jbossas</groupId>
-            <artifactId>jboss-as-system</artifactId>              
+            <artifactId>jboss-as-system</artifactId>
             <scope>provided</scope>
         </dependency>
 
@@ -377,6 +377,10 @@
                         <artifactItem>
                            <groupId>com.sun.xml.bind</groupId>
                            <artifactId>jaxb-impl</artifactId>
+                        </artifactItem>
+                        <artifactItem>
+                           <groupId>gnu-getopt</groupId>
+                           <artifactId>getopt</artifactId>
                         </artifactItem>
                      </artifactItems>
                      <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
@@ -424,7 +428,7 @@
                               <artifactId>dom4j</artifactId>
                               <version>1.6.1</version>
                            </artifactItem>
-                         </artifactItems>  
+                         </artifactItems>
                          <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
                       </configuration>
                    </execution>
@@ -504,13 +508,13 @@
                         <id>deploy-jar-meta-inf</id>
                         <phase>package</phase>
                         <configuration>
-                          <tasks>                             
-                             <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />                             
+                          <tasks>
+                             <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
                              <echo>*** Updating META-INF dir in ${deployment.file}...</echo>
                              <unjar src="${project.build.directory}/${project.build.finalName}.jar" dest="${project.build.outputDirectory}">
                                <patternset><include name="META-INF/**" /></patternset>
                              </unjar>
-                             <jar destfile="${deployment.file}" manifest="${project.build.outputDirectory}/META-INF/MANIFEST.MF" update="true">                                
+                             <jar destfile="${deployment.file}" manifest="${project.build.outputDirectory}/META-INF/MANIFEST.MF" update="true">
                              </jar>
                           </tasks>
                         </configuration>
@@ -518,7 +522,7 @@
                           <goal>run</goal>
                         </goals>
                      </execution>
-                     
+
                      <execution>
                         <id>undeploy</id>
                         <phase>clean</phase>
@@ -541,10 +545,10 @@
          </build>
       </profile>
 
-    </profiles>    
-    
-    <repositories>   
-<!--    
+    </profiles>
+
+    <repositories>
+<!--
         <repository>
             <id>jboss-snapshots</id>
             <name>JBoss Snapshot Repository</name>
@@ -566,5 +570,5 @@
       </plugin>
     </plugins>
   </reporting>
-    
+
 </project>

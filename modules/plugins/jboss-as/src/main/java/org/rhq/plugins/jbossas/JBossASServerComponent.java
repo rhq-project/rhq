@@ -85,7 +85,9 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
-import org.rhq.core.pluginapi.snapshot.SnapshotReportFacet;
+import org.rhq.core.pluginapi.support.SnapshotReportRequest;
+import org.rhq.core.pluginapi.support.SnapshotReportResults;
+import org.rhq.core.pluginapi.support.SupportFacet;
 import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.plugins.jbossas.helper.JavaSystemProperties;
 import org.rhq.plugins.jbossas.helper.MainDeployer;
@@ -114,7 +116,7 @@ import com.jboss.jbossnetwork.product.jbpm.handlers.InPluginControlActionFacade;
 * @author Ian Springer
 */
 public class JBossASServerComponent implements MeasurementFacet, OperationFacet, JMXComponent,
-    CreateChildResourceFacet, ApplicationServerComponent, ContentFacet, SnapshotReportFacet {
+    CreateChildResourceFacet, ApplicationServerComponent, ContentFacet, SupportFacet {
     // Constants  --------------------------------------------
 
     private static final String LOCALHOST = "localhost";
@@ -370,16 +372,17 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
         return report;
     }
 
-    // SnapshotReportFacet Implementation  --------------------------------------------
+    // SupportFacet Implementation  --------------------------------------------
 
-    public InputStream getSnapshotReport(String name, String description) throws Exception {
+    public SnapshotReportResults getSnapshotReport(SnapshotReportRequest request) throws Exception {
         Configuration pluginConfig = resourceContext.getPluginConfiguration();
         String tmpDir = resourceContext.getTemporaryDirectory().getAbsolutePath();
-        JBossASSnapshotReport report = new JBossASSnapshotReport(name, description, pluginConfig, this.configPath
+        JBossASSnapshotReport report = new JBossASSnapshotReport(request.getName(), request.getDescription(), pluginConfig, this.configPath
             .getCanonicalPath(), tmpDir);
         File reportFile = report.generate();
         InputStream inputStream = new BufferedInputStream(new FileInputStream(reportFile));
-        return inputStream;
+        SnapshotReportResults results = new SnapshotReportResults(inputStream);
+        return results;
     }
 
     // JMXComponent Implementation  --------------------------------------------

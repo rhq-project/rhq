@@ -54,7 +54,7 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
-import org.rhq.core.pluginapi.snapshot.SnapshotReportFacet;
+import org.rhq.core.pluginapi.support.SnapshotReportFacet;
 import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.util.exception.ExceptionPackage;
 import org.rhq.core.util.exception.Severity;

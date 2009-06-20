@@ -40,7 +40,7 @@ import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
 import org.rhq.core.clientapi.agent.inventory.ResourceFactoryAgentService;
 import org.rhq.core.clientapi.agent.measurement.MeasurementAgentService;
 import org.rhq.core.clientapi.agent.operation.OperationAgentService;
-import org.rhq.core.clientapi.agent.snapshot.SnapshotReportAgentService;
+import org.rhq.core.clientapi.agent.support.SnapshotReportAgentService;
 import org.rhq.core.pc.agent.AgentRegistrar;
 import org.rhq.core.pc.agent.AgentService;
 import org.rhq.core.pc.agent.AgentServiceLifecycleListener;
@@ -55,7 +55,7 @@ import org.rhq.core.pc.measurement.MeasurementManager;
 import org.rhq.core.pc.operation.OperationManager;
 import org.rhq.core.pc.plugin.PluginComponentFactory;
 import org.rhq.core.pc.plugin.PluginManager;
-import org.rhq.core.pc.snapshot.SnapshotReportManager;
+import org.rhq.core.pc.support.SnapshotReportManager;
 import org.rhq.core.pluginapi.util.FileUtils;
 
 /**

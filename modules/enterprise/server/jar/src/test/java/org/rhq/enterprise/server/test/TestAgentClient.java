@@ -36,7 +36,7 @@ import org.rhq.core.clientapi.agent.inventory.ResourceFactoryAgentService;
 import org.rhq.core.clientapi.agent.measurement.MeasurementAgentService;
 import org.rhq.core.clientapi.agent.operation.CancelResults;
 import org.rhq.core.clientapi.agent.operation.OperationAgentService;
-import org.rhq.core.clientapi.agent.snapshot.SnapshotReportAgentService;
+import org.rhq.core.clientapi.agent.support.SnapshotReportAgentService;
 import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
 import org.rhq.core.communications.command.annotation.Asynchronous;
 import org.rhq.core.domain.configuration.Configuration;

@@ -28,7 +28,7 @@ import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.content.ContentFacet;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
-import org.rhq.core.pluginapi.snapshot.SnapshotReportFacet;
+import org.rhq.core.pluginapi.support.SnapshotReportFacet;
 
 /**
  * The plugin component that wraps a {@link Resource}. This component allows you to work with the actual resource, such

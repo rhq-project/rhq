@@ -54,9 +54,9 @@ public class SamplePlugin1BDiscoveryComponent implements ResourceDiscoveryCompon
 
         System.out.println("plugin1-1B cl-facet parent context resource key=" + parentContext.getResourceKey());
         System.out.println("plugin1-1B cl-facet parent context resource type=" + parentContext.getResourceType());
-        System.out.println("plugin1-1B cl-facet parent context CL=" + parentContext.getClass().getClassLoader());
         System.out.println("plugin1-1B cl-facet parent component=" + parentComponent);
         System.out.println("plugin1-1B cl-facet parent component CL=" + parentComponent.getClass().getClassLoader());
+        System.out.println("plugin1-1B discover ctx CL=" + Thread.currentThread().getContextClassLoader());
         System.out.println("~~~~~~~~~~");
 
         return Collections.emptyList();

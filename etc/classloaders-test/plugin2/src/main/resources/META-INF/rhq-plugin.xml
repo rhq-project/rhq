@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<plugin name="Plugin2"
+        displayName="Plugin2"
+        package="org.rhq.plugin2"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+
+   <server name="Plugin2Ashared-runsinside1Ashared"
+           classLoader="shared"
+           discovery="SamplePlugin2ADiscoveryComponent"
+           class="SamplePlugin2AServerComponent">
+      <runs-inside>
+         <parent-resource-type name="Plugin1Ashared" plugin="Plugin1"/>
+      </runs-inside>
+   </server>
+
+   <server name="Plugin2Ainstance-runsinside1Ashared"
+           classLoader="instance"
+           discovery="SamplePlugin2ADiscoveryComponent"
+           class="SamplePlugin2AServerComponent">
+      <runs-inside>
+         <parent-resource-type name="Plugin1Ashared" plugin="Plugin1"/>
+      </runs-inside>
+   </server>
+
+   <server name="Plugin2Bshared-runsinside1Binstance"
+           classLoader="shared"
+           discovery="SamplePlugin2BDiscoveryComponent"
+           class="SamplePlugin2BServerComponent">
+      <runs-inside>
+         <parent-resource-type name="Plugin1Binstance" plugin="Plugin1"/>
+      </runs-inside>
+   </server>
+
+   <server name="Plugin2Binstance-runsinside1Binstance"
+           classLoader="instance"
+           discovery="SamplePlugin2BDiscoveryComponent"
+           class="SamplePlugin2BServerComponent">
+      <runs-inside>
+         <parent-resource-type name="Plugin1Binstance" plugin="Plugin1"/>
+      </runs-inside>
+   </server>
+
+</plugin>

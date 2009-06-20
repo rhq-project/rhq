@@ -54,6 +54,8 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.core.pluginapi.support.SnapshotReportRequest;
+import org.rhq.core.pluginapi.support.SnapshotReportResults;
 import org.rhq.core.pluginapi.support.SupportFacet;
 import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.util.exception.ExceptionPackage;
@@ -246,18 +248,21 @@ public class AgentServerComponent extends JMXServerComponent implements JMXCompo
         return;
     }
 
-    public InputStream getSnapshotReport(String name, String description) throws Exception {
+    public SnapshotReportResults getSnapshotReport(SnapshotReportRequest request) throws Exception {
         AgentManagementMBean mbean = AgentDiscoveryComponent.getAgentManagementMBean();
         ResourceContext resourceContext = getResourceContext();
         Configuration pluginConfig = resourceContext.getPluginConfiguration();
         String installDir = mbean.getAgentHomeDirectory();
         Properties config = mbean.getAgentConfiguration();
         String tmpDir = resourceContext.getTemporaryDirectory().getAbsolutePath();
+        String name = request.getName();
+        String description = request.getDescription();
         AgentSnapshotReport report = new AgentSnapshotReport(name, description, pluginConfig, installDir, config,
             tmpDir);
         File reportFile = report.generate();
         InputStream inputStream = new BufferedInputStream(new FileInputStream(reportFile));
-        return inputStream;
+        SnapshotReportResults results = new SnapshotReportResults(inputStream);
+        return results;
     }
 
 }

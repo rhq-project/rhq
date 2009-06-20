@@ -31,6 +31,8 @@ import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.agent.AgentService;
 import org.rhq.core.pc.util.ComponentUtil;
 import org.rhq.core.pc.util.FacetLockType;
+import org.rhq.core.pluginapi.support.SnapshotReportRequest;
+import org.rhq.core.pluginapi.support.SnapshotReportResults;
 import org.rhq.core.pluginapi.support.SupportFacet;
 
 /**
@@ -57,7 +59,9 @@ public class SupportManager extends AgentService implements SupportAgentService,
 
     public InputStream getSnapshotReport(int resourceId, String name, String description) throws Exception {
         SupportFacet facet = getSupportFacet(resourceId, 600000L); // give it enough time to zip up all the snapshot content 
-        InputStream inputStream = facet.getSnapshotReport(name, description);
+        SnapshotReportRequest request = new SnapshotReportRequest(name, description);
+        SnapshotReportResults results = facet.getSnapshotReport(request);
+        InputStream inputStream = results.getInputStream();
         inputStream = remoteInputStream(inputStream);
         return inputStream;
     }
@@ -73,10 +77,9 @@ public class SupportManager extends AgentService implements SupportAgentService,
      *
      * @throws PluginContainerException on error
      */
-    protected SupportFacet getSupportFacet(int resourceId, long facetMethodTimeout)
-        throws PluginContainerException {
+    protected SupportFacet getSupportFacet(int resourceId, long facetMethodTimeout) throws PluginContainerException {
 
-        return ComponentUtil.getComponent(resourceId, SupportFacet.class, FacetLockType.READ,
-            facetMethodTimeout, false, true);
+        return ComponentUtil.getComponent(resourceId, SupportFacet.class, FacetLockType.READ, facetMethodTimeout,
+            false, true);
     }
 }

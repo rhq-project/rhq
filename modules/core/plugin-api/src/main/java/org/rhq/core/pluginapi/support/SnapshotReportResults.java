@@ -22,21 +22,29 @@
  */
 package org.rhq.core.pluginapi.support;
 
+import java.io.InputStream;
+import java.io.Serializable;
 
 /**
- * Facet that exposes a component's supportability features, such as taking a snapshot report of its logs, config and other data.
+ * Contains the results of a snapshot report, including a stream to the contents of the snapshot.
  * 
  * @author John Mazzitelli
- *
  */
-public interface SupportFacet {
+public class SnapshotReportResults implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    private final InputStream inputStream;
+
     /**
-     * Takes a snapshot and returns the snapshot report content in the given stream. A facet implementation
-     * can support different kinds of snapshots, the given name determines which kind of snapshot to take.
+     * Creates the results object.
      * 
-     * @param request identifies the type of snapshot to take
-     * @return snapshot results, including a stream containing the contents of the snapshot report
-     * @throws Exception if failed to generate the snapshot report
+     * @param inputStream the stream that contains the snapshot report content.
      */
-    SnapshotReportResults getSnapshotReport(SnapshotReportRequest request) throws Exception;
+    public SnapshotReportResults(InputStream inputStream) {
+        this.inputStream = inputStream;
+    }
+
+    public InputStream getInputStream() {
+        return this.inputStream;
+    }
 }

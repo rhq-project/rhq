@@ -16,12 +16,12 @@ public class SamplePlugin2BServerComponent implements ResourceComponent {
     }
 
     public AvailabilityType getAvailability() {
-        System.out.println("plugin2-2B avail Dummy.VERSION=" + Dummy.VERSION);
-        System.out.println("plugin2-2B avail Dummy.getVersion=" + (new Dummy()).getVersion());
-        System.out.println("plugin2-2B avail resourcetype=" + this.context.getResourceType());
-        System.out.println("plugin2-2B avail classloader=" + Dummy.class.getClassLoader());
-        System.out.println("plugin2-2B avail this classloader=" + this.getClass().getClassLoader());
-        System.out.println("plugin2-2B avail ctx classloader=" + Thread.currentThread().getContextClassLoader());
+        System.out.println("* plugin2-2B avail Dummy.VERSION=" + Dummy.VERSION);
+        System.out.println("* plugin2-2B avail Dummy.getVersion=" + (new Dummy()).getVersion());
+        System.out.println("* plugin2-2B avail Dummy classloader=" + Dummy.class.getClassLoader());
+        System.out.println("* plugin2-2B avail resourcetype=" + this.context.getResourceType());
+        System.out.println("* plugin2-2B avail this classloader=" + this.getClass().getClassLoader());
+        System.out.println("* plugin2-2B avail ctx classloader=" + Thread.currentThread().getContextClassLoader());
         System.out.println("==========");
         return AvailabilityType.UP;
     }

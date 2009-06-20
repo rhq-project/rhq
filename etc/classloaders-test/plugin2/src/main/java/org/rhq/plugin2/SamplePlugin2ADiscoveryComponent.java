@@ -26,12 +26,12 @@ public class SamplePlugin2ADiscoveryComponent implements ResourceDiscoveryCompon
 
         set.add(resource);
 
-        System.out.println("plugin2-2A discover Dummy.VERSION=" + Dummy.VERSION);
-        System.out.println("plugin2-2A discover Dummy.getVersion=" + (new Dummy()).getVersion());
-        System.out.println("plugin2-2A discover resourcetype=" + context.getResourceType());
-        System.out.println("plugin2-2A discover classloader=" + Dummy.class.getClassLoader());
-        System.out.println("plugin2-2A discover this classloader=" + this.getClass().getClassLoader());
-        System.out.println("plugin2-2A discover ctx classloader=" + Thread.currentThread().getContextClassLoader());
+        System.out.println("* plugin2-2A discover Dummy.VERSION=" + Dummy.VERSION);
+        System.out.println("* plugin2-2A discover Dummy.getVersion=" + (new Dummy()).getVersion());
+        System.out.println("* plugin2-2A discover Dummy classloader=" + Dummy.class.getClassLoader());
+        System.out.println("* plugin2-2A discover resourcetype=" + context.getResourceType());
+        System.out.println("* plugin2-2A discover this classloader=" + this.getClass().getClassLoader());
+        System.out.println("* plugin2-2A discover ctx classloader=" + Thread.currentThread().getContextClassLoader());
         System.out.println("==========");
 
         return set;

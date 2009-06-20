@@ -36,12 +36,12 @@ public class SamplePlugin1BDiscoveryComponent implements ResourceDiscoveryCompon
 
         set.add(resource);
 
-        System.out.println("plugin1-1B discover Dummy.VERSION=" + Dummy.VERSION);
-        System.out.println("plugin1-1B discover Dummy.getVersion=" + (new Dummy()).getVersion());
-        System.out.println("plugin1-1B discover resourcetype=" + this.context.getResourceType());
-        System.out.println("plugin1-1B discover classloader=" + Dummy.class.getClassLoader());
-        System.out.println("plugin1-1B discover this classloader=" + this.getClass().getClassLoader());
-        System.out.println("plugin1-1B discover ctx classloader=" + Thread.currentThread().getContextClassLoader());
+        System.out.println("+ plugin1-1B discover Dummy.VERSION=" + Dummy.VERSION);
+        System.out.println("+ plugin1-1B discover Dummy.getVersion=" + (new Dummy()).getVersion());
+        System.out.println("+ plugin1-1B discover Dummy classloader=" + Dummy.class.getClassLoader());
+        System.out.println("+ plugin1-1B discover resourcetype=" + this.context.getResourceType());
+        System.out.println("+ plugin1-1B discover this classloader=" + this.getClass().getClassLoader());
+        System.out.println("+ plugin1-1B discover ctx classloader=" + Thread.currentThread().getContextClassLoader());
         System.out.println("==========");
 
         return set;
@@ -52,11 +52,11 @@ public class SamplePlugin1BDiscoveryComponent implements ResourceDiscoveryCompon
         ResourceComponent parentComponent = context.getParentResourceComponent();
         ResourceContext parentContext = context.getParentResourceContext();
 
-        System.out.println("plugin1-1B cl-facet parent context resource key=" + parentContext.getResourceKey());
-        System.out.println("plugin1-1B cl-facet parent context resource type=" + parentContext.getResourceType());
-        System.out.println("plugin1-1B cl-facet parent component=" + parentComponent);
-        System.out.println("plugin1-1B cl-facet parent component CL=" + parentComponent.getClass().getClassLoader());
-        System.out.println("plugin1-1B discover ctx CL=" + Thread.currentThread().getContextClassLoader());
+        System.out.println("+ plugin1-1B cl-facet parent context resource key=" + parentContext.getResourceKey());
+        System.out.println("+ plugin1-1B cl-facet parent context resource type=" + parentContext.getResourceType());
+        System.out.println("+ plugin1-1B cl-facet parent component=" + parentComponent);
+        System.out.println("+ plugin1-1B cl-facet parent component CL=" + parentComponent.getClass().getClassLoader());
+        System.out.println("+ plugin1-1B cl-facet ctx CL=" + Thread.currentThread().getContextClassLoader());
         System.out.println("~~~~~~~~~~");
 
         return Collections.emptyList();

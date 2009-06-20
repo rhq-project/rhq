@@ -30,12 +30,12 @@ public class SamplePlugin1ADiscoveryComponent implements ResourceDiscoveryCompon
 
         set.add(resource);
 
-        System.out.println("plugin1-1A discover Dummy.VERSION=" + Dummy.VERSION);
-        System.out.println("plugin1-1A discover Dummy.getVersion=" + (new Dummy()).getVersion());
-        System.out.println("plugin1-1A discover resourcetype=" + this.context.getResourceType());
-        System.out.println("plugin1-1A discover classloader=" + Dummy.class.getClassLoader());
-        System.out.println("plugin1-1A discover this classloader=" + this.getClass().getClassLoader());
-        System.out.println("plugin1-1A discover ctx classloader=" + Thread.currentThread().getContextClassLoader());
+        System.out.println("+ plugin1-1A discover Dummy.VERSION=" + Dummy.VERSION);
+        System.out.println("+ plugin1-1A discover Dummy.getVersion=" + (new Dummy()).getVersion());
+        System.out.println("+ plugin1-1A discover Dummy classloader=" + Dummy.class.getClassLoader());
+        System.out.println("+ plugin1-1A discover resourcetype=" + this.context.getResourceType());
+        System.out.println("+ plugin1-1A discover this classloader=" + this.getClass().getClassLoader());
+        System.out.println("+ plugin1-1A discover ctx classloader=" + Thread.currentThread().getContextClassLoader());
         System.out.println("==========");
 
         return set;

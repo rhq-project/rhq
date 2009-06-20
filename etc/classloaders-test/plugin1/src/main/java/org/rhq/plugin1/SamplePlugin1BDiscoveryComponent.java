@@ -1,15 +1,21 @@
 package org.rhq.plugin1;
 
+import java.net.URL;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
-import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
-import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+
 import dummy.Dummy;
 
-public class SamplePlugin1BDiscoveryComponent implements ResourceDiscoveryComponent {
+import org.rhq.core.pluginapi.inventory.ClassLoaderFacet;
+import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
+import org.rhq.core.pluginapi.inventory.ResourceComponent;
+import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
+import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+
+public class SamplePlugin1BDiscoveryComponent implements ResourceDiscoveryComponent, ClassLoaderFacet {
 
     private ResourceDiscoveryContext context;
 
@@ -40,4 +46,20 @@ public class SamplePlugin1BDiscoveryComponent implements ResourceDiscoveryCompon
 
         return set;
     }
+
+    @SuppressWarnings("unchecked")
+    public List<URL> getAdditionalClasspathUrls(ResourceDiscoveryContext context, DiscoveredResourceDetails details) {
+        ResourceComponent parentComponent = context.getParentResourceComponent();
+        ResourceContext parentContext = context.getParentResourceContext();
+
+        System.out.println("plugin1-1B cl-facet parent context resource key=" + parentContext.getResourceKey());
+        System.out.println("plugin1-1B cl-facet parent context resource type=" + parentContext.getResourceType());
+        System.out.println("plugin1-1B cl-facet parent context CL=" + parentContext.getClass().getClassLoader());
+        System.out.println("plugin1-1B cl-facet parent component=" + parentComponent);
+        System.out.println("plugin1-1B cl-facet parent component CL=" + parentComponent.getClass().getClassLoader());
+        System.out.println("~~~~~~~~~~");
+
+        return Collections.emptyList();
+    }
+
 }

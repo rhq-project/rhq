@@ -36,7 +36,7 @@ import org.rhq.core.clientapi.agent.inventory.ResourceFactoryAgentService;
 import org.rhq.core.clientapi.agent.measurement.MeasurementAgentService;
 import org.rhq.core.clientapi.agent.operation.CancelResults;
 import org.rhq.core.clientapi.agent.operation.OperationAgentService;
-import org.rhq.core.clientapi.agent.support.SnapshotReportAgentService;
+import org.rhq.core.clientapi.agent.support.SupportAgentService;
 import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
 import org.rhq.core.communications.command.annotation.Asynchronous;
 import org.rhq.core.domain.configuration.Configuration;
@@ -61,7 +61,7 @@ import org.rhq.enterprise.server.agentclient.AgentClient;
 
 public class TestAgentClient implements AgentClient, ContentAgentService, ResourceFactoryAgentService,
     ConfigurationAgentService, DiscoveryAgentService, MeasurementAgentService, OperationAgentService,
-    SnapshotReportAgentService {
+    SupportAgentService {
     private final Agent agent;
     private final TestServerCommunicationsService commService;
 
@@ -98,8 +98,8 @@ public class TestAgentClient implements AgentClient, ContentAgentService, Resour
         return (commService.operationService != null) ? commService.operationService : this;
     }
 
-    public SnapshotReportAgentService getSnapshotReportAgentService() {
-        return (commService.snapshotReportService != null) ? commService.snapshotReportService : this;
+    public SupportAgentService getSupportAgentService() {
+        return (commService.supportService != null) ? commService.supportService : this;
     }
 
     public void startSending() {

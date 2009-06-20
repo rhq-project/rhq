@@ -148,8 +148,8 @@ import org.rhq.enterprise.server.subsystem.ConfigurationSubsystemManagerBean;
 import org.rhq.enterprise.server.subsystem.ConfigurationSubsystemManagerLocal;
 import org.rhq.enterprise.server.subsystem.OperationHistorySubsystemManagerBean;
 import org.rhq.enterprise.server.subsystem.OperationHistorySubsystemManagerLocal;
-import org.rhq.enterprise.server.support.SnapshotReportManagerBean;
-import org.rhq.enterprise.server.support.SnapshotReportManagerLocal;
+import org.rhq.enterprise.server.support.SupportManagerBean;
+import org.rhq.enterprise.server.support.SupportManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerBean;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.test.AccessBean;
@@ -481,8 +481,8 @@ public final class LookupUtil {
         return lookupLocal(CachedConditionProducerBean.class);
     }
 
-    public static SnapshotReportManagerLocal getSnapshotReportManager() {
-        return lookupLocal(SnapshotReportManagerBean.class);
+    public static SupportManagerLocal getSupportManager() {
+        return lookupLocal(SupportManagerBean.class);
     }
 
     //--------------------------------------------

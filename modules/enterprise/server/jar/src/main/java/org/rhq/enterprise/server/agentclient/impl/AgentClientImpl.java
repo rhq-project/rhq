@@ -24,7 +24,7 @@ import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
 import org.rhq.core.clientapi.agent.inventory.ResourceFactoryAgentService;
 import org.rhq.core.clientapi.agent.measurement.MeasurementAgentService;
 import org.rhq.core.clientapi.agent.operation.OperationAgentService;
-import org.rhq.core.clientapi.agent.support.SnapshotReportAgentService;
+import org.rhq.core.clientapi.agent.support.SupportAgentService;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.enterprise.communications.Ping;
 import org.rhq.enterprise.communications.command.client.ClientCommandSender;
@@ -143,7 +143,7 @@ public class AgentClientImpl implements AgentClient {
         return clientRemotePojoFactory.getRemotePojo(ConfigurationAgentService.class);
     }
 
-    public SnapshotReportAgentService getSnapshotReportAgentService() {
-        return clientRemotePojoFactory.getRemotePojo(SnapshotReportAgentService.class);
+    public SupportAgentService getSupportAgentService() {
+        return clientRemotePojoFactory.getRemotePojo(SupportAgentService.class);
     }
 }

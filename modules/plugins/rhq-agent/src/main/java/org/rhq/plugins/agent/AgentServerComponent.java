@@ -54,7 +54,7 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
-import org.rhq.core.pluginapi.support.SnapshotReportFacet;
+import org.rhq.core.pluginapi.support.SupportFacet;
 import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.util.exception.ExceptionPackage;
 import org.rhq.core.util.exception.Severity;
@@ -69,7 +69,7 @@ import org.rhq.plugins.jmx.JMXServerComponent;
  * @author John Mazzitelli
  */
 public class AgentServerComponent extends JMXServerComponent implements JMXComponent, MeasurementFacet, OperationFacet,
-    ConfigurationFacet, SnapshotReportFacet {
+    ConfigurationFacet, SupportFacet {
     private static Log log = LogFactory.getLog(AgentServerComponent.class);
 
     /**

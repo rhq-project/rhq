@@ -25,6 +25,6 @@ import javax.ejb.Local;
 import org.rhq.core.domain.auth.Subject;
 
 @Local
-public interface SnapshotReportManagerLocal {
+public interface SupportManagerLocal {
     URL getSnapshotReport(Subject subject, int resourceId, String name, String description) throws Exception;
 }

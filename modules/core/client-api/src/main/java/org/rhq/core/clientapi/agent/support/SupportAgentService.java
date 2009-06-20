@@ -20,26 +20,25 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.core.pluginapi.support;
+package org.rhq.core.clientapi.agent.support;
 
 import java.io.InputStream;
 
 /**
- * Facet that exposes a component's supportability features, such as taking a snapshot report of its logs, config and other data.
- * 
- * @author John Mazzitelli
- *
+ * The interface to agent's support subsystem which allows the server to request support
+ * tasks to be performed, such as asking a snapshot report to be generated for any resource that supports snapshot reporting.
  */
-public interface SnapshotReportFacet {
+public interface SupportAgentService {
     /**
-     * Takes a snapshot and returns the snapshot report content in the given stream. A facet implementation
+     * Takes a snapshot and returns the snapshot report content in the given stream. A resource
      * can support different kinds of snapshots, the given name determines which kind of snapshot to take.
      * 
+     * @param resourceId identifies the resource that is to take a snapshot
      * @param name identifies the type of snapshot to take
      * @param description a generic description that can be used to identify the specific snapshot being taken or it can
      *                    describe why the snapshot was being taken. This is typically text entered by a user.
      * @return a stream containing the contents of the snapshot report
      * @throws Exception if failed to generate the snapshot report
      */
-    InputStream getSnapshotReport(String name, String description) throws Exception;
+    InputStream getSnapshotReport(int resourceId, String name, String description) throws Exception;
 }

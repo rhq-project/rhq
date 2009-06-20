@@ -28,7 +28,7 @@ import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.content.ContentFacet;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
-import org.rhq.core.pluginapi.support.SnapshotReportFacet;
+import org.rhq.core.pluginapi.support.SupportFacet;
 
 /**
  * The plugin component that wraps a {@link Resource}. This component allows you to work with the actual resource, such
@@ -46,7 +46,7 @@ import org.rhq.core.pluginapi.support.SnapshotReportFacet;
  *   <li>{@link DeleteResourceFacet}</li>
  *   <li>{@link CreateChildResourceFacet}</li>
  *   <li>{@link ContentFacet}</li>
- *   <li>{@link SnapshotReportFacet}</li>
+ *   <li>{@link SupportFacet}</li>
  * </ul>
  *
  * All implementations of this interface must also implement the base {@link AvailabilityFacet}.

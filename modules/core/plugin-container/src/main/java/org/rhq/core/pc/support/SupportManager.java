@@ -25,13 +25,13 @@ package org.rhq.core.pc.support;
 import java.io.InputStream;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
-import org.rhq.core.clientapi.agent.support.SnapshotReportAgentService;
+import org.rhq.core.clientapi.agent.support.SupportAgentService;
 import org.rhq.core.pc.ContainerService;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.agent.AgentService;
 import org.rhq.core.pc.util.ComponentUtil;
 import org.rhq.core.pc.util.FacetLockType;
-import org.rhq.core.pluginapi.support.SnapshotReportFacet;
+import org.rhq.core.pluginapi.support.SupportFacet;
 
 /**
  * Manages the inventory's support subsystem, such as the generation of snapshot reports for all resources across all plugins.
@@ -40,10 +40,10 @@ import org.rhq.core.pluginapi.support.SnapshotReportFacet;
  *
  * @author John Mazzitelli
  */
-public class SnapshotReportManager extends AgentService implements SnapshotReportAgentService, ContainerService {
+public class SupportManager extends AgentService implements SupportAgentService, ContainerService {
 
-    public SnapshotReportManager() {
-        super(SnapshotReportAgentService.class);
+    public SupportManager() {
+        super(SupportAgentService.class);
     }
 
     public void setConfiguration(PluginContainerConfiguration configuration) {
@@ -56,7 +56,7 @@ public class SnapshotReportManager extends AgentService implements SnapshotRepor
     }
 
     public InputStream getSnapshotReport(int resourceId, String name, String description) throws Exception {
-        SnapshotReportFacet facet = getSnapshotReportFacet(resourceId, 600000L); // give it enough time to zip up all the snapshot content 
+        SupportFacet facet = getSupportFacet(resourceId, 600000L); // give it enough time to zip up all the snapshot content 
         InputStream inputStream = facet.getSnapshotReport(name, description);
         inputStream = remoteInputStream(inputStream);
         return inputStream;
@@ -73,10 +73,10 @@ public class SnapshotReportManager extends AgentService implements SnapshotRepor
      *
      * @throws PluginContainerException on error
      */
-    protected SnapshotReportFacet getSnapshotReportFacet(int resourceId, long facetMethodTimeout)
+    protected SupportFacet getSupportFacet(int resourceId, long facetMethodTimeout)
         throws PluginContainerException {
 
-        return ComponentUtil.getComponent(resourceId, SnapshotReportFacet.class, FacetLockType.READ,
+        return ComponentUtil.getComponent(resourceId, SupportFacet.class, FacetLockType.READ,
             facetMethodTimeout, false, true);
     }
 }

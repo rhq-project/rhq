@@ -33,7 +33,7 @@ import javax.management.ObjectName;
 import org.jboss.mx.util.MBeanServerLocator;
 import org.jboss.system.server.ServerConfig;
 
-import org.rhq.core.clientapi.agent.support.SnapshotReportAgentService;
+import org.rhq.core.clientapi.agent.support.SupportAgentService;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.util.ObjectNameFactory;
@@ -43,7 +43,7 @@ import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 
 @Stateless
-public class SnapshotReportManagerBean implements SnapshotReportManagerLocal {
+public class SupportManagerBean implements SupportManagerLocal {
 
     @EJB
     private AgentManagerLocal agentManager;
@@ -55,8 +55,8 @@ public class SnapshotReportManagerBean implements SnapshotReportManagerLocal {
     public URL getSnapshotReport(Subject subject, int resourceId, String name, String description) throws Exception {
 
         AgentClient agentClient = this.agentManager.getAgentClient(resourceId);
-        SnapshotReportAgentService snapshotService = agentClient.getSnapshotReportAgentService();
-        InputStream snapshot = snapshotService.getSnapshotReport(resourceId, name, description);
+        SupportAgentService supportService = agentClient.getSupportAgentService();
+        InputStream snapshot = supportService.getSnapshotReport(resourceId, name, description);
 
         // TODO: not sure what we should really do with it, for now, put it in the downloads location.
         // you can retrieve this by going to http://localhost:7080/downloads

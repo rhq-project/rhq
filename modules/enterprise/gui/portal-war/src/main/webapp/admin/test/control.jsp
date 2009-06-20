@@ -23,7 +23,7 @@
 <%@ page import="org.rhq.enterprise.server.core.AgentManagerLocal" %>
 <%@ page import="org.rhq.enterprise.server.system.SystemManagerLocal" %>
 <%@ page import="org.rhq.enterprise.server.auth.SubjectManagerLocal" %>
-<%@ page import="org.rhq.enterprise.server.snapshot.SnapshotReportManagerLocal" %>
+<%@ page import="org.rhq.enterprise.server.support.SupportManagerLocal" %>
 <%@ page import="org.rhq.enterprise.server.util.LookupUtil" %>
 <%@ page import="org.rhq.enterprise.server.scheduler.jobs.DataPurgeJob"%>
 
@@ -52,7 +52,7 @@
    AgentManagerLocal agentManager;
    SystemManagerLocal systemManager;
    SubjectManagerLocal subjectManager;
-   SnapshotReportManagerLocal snapshotReportManager;
+   SupportManagerLocal supportManager;
 
    coreTestBean = LookupUtil.getCoreTest();
    discoveryTestBean = LookupUtil.getDiscoveryTest();
@@ -66,7 +66,7 @@
    agentManager = LookupUtil.getAgentManager();
    systemManager = LookupUtil.getSystemManager();
    subjectManager = LookupUtil.getSubjectManager();
-   snapshotReportManager = LookupUtil.getSnapshotReportManager();
+   supportManager = LookupUtil.getSupportManager();
 
    String result = null;
    String mode = pageContext.getRequest().getParameter("mode");
@@ -188,7 +188,7 @@
          int resourceId = Integer.parseInt(request.getParameter("resourceId"));
          String name = request.getParameter("name");
          String description = request.getParameter("description");
-         java.net.URL url = snapshotReportManager.getSnapshotReport(subjectManager.getOverlord(), resourceId, name, description);
+         java.net.URL url = supportManager.getSnapshotReport(subjectManager.getOverlord(), resourceId, name, description);
          result = "Snapshot Report is located here: " + url.toString();
       }
    }

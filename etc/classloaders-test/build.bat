@@ -13,3 +13,4 @@ cd %_ROOT_DIR%
 cd ..\..\modules\enterprise\agent\target\rhq-agent\plugins
 copy %_ROOT_DIR%\plugin1\target\plugin-1.0.jar .
 copy %_ROOT_DIR%\plugin2\target\plugin-2.0.jar .
+cd %_ROOT_DIR%

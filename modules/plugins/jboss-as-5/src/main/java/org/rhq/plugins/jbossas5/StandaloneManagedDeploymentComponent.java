@@ -42,7 +42,6 @@ import org.jboss.deployers.spi.management.deploy.DeploymentManager;
 import org.jboss.deployers.spi.management.deploy.DeploymentProgress;
 import org.jboss.deployers.spi.management.deploy.DeploymentStatus;
 import org.jboss.profileservice.spi.NoSuchDeploymentException;
-
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.transfer.ContentResponseResult;
@@ -237,7 +236,7 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
         File deployDir = this.deploymentFile.getParentFile();
         DeploymentManager deploymentManager = getConnection().getDeploymentManager();
         try {
-            DeploymentUtils.deployArchive(deploymentManager, tempFile, deployDir, deployExploded);
+            DeploymentUtils.deployArchive(deploymentManager, tempFile, deployExploded);
         } catch (Exception e) {
             // Deploy failed - rollback to the original app file...
             log.debug("Redeploy failed - rolling back to original archive...", e);
@@ -246,7 +245,7 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
                 // Delete the new app, which failed to deploy.
                 FileUtils.forceDelete(this.deploymentFile);
                 // Need to redeploy the original file - this generally should succeed.
-                DeploymentUtils.deployArchive(deploymentManager, backupOfOriginalFile, deployDir, deployExploded);
+                DeploymentUtils.deployArchive(deploymentManager, backupOfOriginalFile, deployExploded);
                 errorMessage += " ***** ROLLED BACK TO ORIGINAL APPLICATION FILE. *****";
             } catch (Exception e1) {
                 log.debug("Rollback failed!", e1);
@@ -280,8 +279,7 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
         DeploymentManager deploymentManager = getConnection().getDeploymentManager();
         try {
             getManagedDeployment();
-        }
-        catch (NoSuchDeploymentException e) {
+        } catch (NoSuchDeploymentException e) {
             // The deployment no longer exists, so there's nothing for us to do. Someone most likely undeployed it
             // outside of Jopr or EmbJopr, e.g. via the jmx-console or by deleting the app file from the deploy dir.
             return;

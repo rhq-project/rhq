@@ -24,20 +24,19 @@ package org.rhq.plugins.jbossas5.util;
 
 import java.io.File;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.plugins.jbossas5.AbstractManagedDeploymentComponent;
-
 import org.jboss.deployers.spi.management.deploy.DeploymentManager;
 import org.jboss.deployers.spi.management.deploy.DeploymentProgress;
 import org.jboss.deployers.spi.management.deploy.DeploymentStatus;
 import org.jboss.profileservice.spi.DeploymentOption;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.plugins.jbossas5.AbstractManagedDeploymentComponent;
 
 /**
  * @author Ian Springer
@@ -45,14 +44,13 @@ import org.jboss.profileservice.spi.DeploymentOption;
 public class DeploymentUtils {
     private static final Log LOG = LogFactory.getLog(DeploymentUtils.class);
 
-    public static boolean hasCorrectExtension(File archiveFile, ResourceType resourceType) {
+    public static boolean hasCorrectExtension(String archiveFileName, ResourceType resourceType) {
         Configuration defaultPluginConfig = ResourceTypeUtils.getDefaultPluginConfiguration(resourceType);
         String expectedExtension = defaultPluginConfig.getSimple(AbstractManagedDeploymentComponent.EXTENSION_PROPERTY)
             .getStringValue();
         if (expectedExtension == null)
             throw new IllegalStateException("No value was defined for the required '"
                 + AbstractManagedDeploymentComponent.EXTENSION_PROPERTY + "' plugin config prop for " + resourceType);
-        String archiveFileName = archiveFile.getName();
         int lastPeriod = archiveFileName.lastIndexOf(".");
         String extension = (lastPeriod != -1) ? archiveFileName.substring(lastPeriod + 1) : null;
         // Use File.equals() to compare the extensions so case-sensitivity is correct for this platform.
@@ -64,7 +62,6 @@ public class DeploymentUtils {
      *
      * @param deploymentManager
      * @param archiveFile
-     * @param deployDirectory
      * @param deployExploded
      * 
      * @return
@@ -72,7 +69,7 @@ public class DeploymentUtils {
      * @throws Exception if an unrecoverable error occurred during distribution or starting
      */
     public static DeploymentStatus deployArchive(DeploymentManager deploymentManager, File archiveFile,
-        File deployDirectory, boolean deployExploded) throws Exception {
+        boolean deployExploded) throws Exception {
         //if (deployDirectory == null)
         //    throw new IllegalArgumentException("Deploy directory is null.");
         String archiveFileName = archiveFile.getName();
@@ -84,8 +81,8 @@ public class DeploymentUtils {
         if (deployExploded) {
             deploymentOptions.add(DeploymentOption.Explode);
         }
-        DeploymentProgress progress = deploymentManager.distribute(archiveFileName, contentURL,
-                deploymentOptions.toArray(new DeploymentOption[deploymentOptions.size()]));
+        DeploymentProgress progress = deploymentManager.distribute(archiveFileName, contentURL, deploymentOptions
+            .toArray(new DeploymentOption[deploymentOptions.size()]));
         DeploymentStatus distributeStatus = run(progress);
         if (distributeStatus.isFailed()) {
             return distributeStatus;
@@ -97,14 +94,14 @@ public class DeploymentUtils {
         DeploymentStatus startStatus = run(progress);
         if (startStatus.isFailed()) {
             LOG.error("Failed to start deployment " + Arrays.asList(deploymentNames)
-                    + " during initial deployment of '" + archiveFileName + "'. Backing out the deployment...",
-                    startStatus.getFailure());
+                + " during initial deployment of '" + archiveFileName + "'. Backing out the deployment...", startStatus
+                .getFailure());
             // If start failed, the app is invalid, so back out the deployment.
             progress = deploymentManager.remove(deploymentNames);
             DeploymentStatus removeStatus = run(progress);
             if (removeStatus.isFailed()) {
                 throw new Exception("Failed to remove deployment " + Arrays.asList(deploymentNames)
-                        + " after start failure.", removeStatus.getFailure());
+                    + " after start failure.", removeStatus.getFailure());
             }
         }
         return startStatus;

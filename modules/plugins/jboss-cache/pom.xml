@@ -13,8 +13,8 @@
    <artifactId>jopr-jboss-cache-plugin</artifactId>
    <packaging>jar</packaging>
 
-   <name>Jopr JBossCache Plugin</name>
-   <description>A plugin for managing JBossCache services</description>
+   <name>Jopr JBossCache 4.x Plugin</name>
+   <description>A plugin for managing JBossCache 4.x services</description>
 
    <scm>
       <connection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/plugins/jboss-cache/</connection>
@@ -22,7 +22,7 @@
    </scm>
 
    <properties>
-      <scm.module.path>jon/plugins/jboss-cache/</scm.module.path>
+      <scm.module.path>modules/plugins/jboss-cache/</scm.module.path>
    </properties>
    
    <dependencies>
@@ -41,35 +41,6 @@
       </dependency>
    </dependencies>
    
-   <build>
-      <plugins>
-
-         <!-- Used to add dependencies to the plugin lib
-         <plugin>
-            <artifactId>maven-dependency-plugin</artifactId>
-            <version>2.0</version>
-            <executions>
-               <execution>
-                  <id>copy-postgres-jar</id>
-                  <phase>process-resources</phase>
-                  <goals>
-                     <goal>copy</goal>
-                  </goals>
-                  <configuration>
-                     <artifactItems>
-                        <artifactItem>
-                           <groupId>postgresql</groupId>
-                           <artifactId>postgresql</artifactId>
-                           <version>8.1-407.jdbc3</version>
-                        </artifactItem>
-                     </artifactItems>
-                     <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
-                  </configuration>
-               </execution>
-            </executions>
-         </plugin>-->
-      </plugins>
-   </build>
    <profiles>
       <profile>
          <id>integration-tests</id>

@@ -20,14 +20,13 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.plugins.jbossas5.util;
+package org.jboss.jopr.tool.jbas5;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -61,6 +60,10 @@ import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.plugins.jbossas5.connection.RemoteProfileServiceConnectionProvider;
+import org.rhq.plugins.jbossas5.connection.ProfileServiceConnectionProvider;
+import org.rhq.plugins.jbossas5.connection.ProfileServiceConnection;
+import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
 
 import org.jboss.deployers.spi.management.KnownDeploymentTypes;
 import org.jboss.deployers.spi.management.ManagementView;
@@ -97,6 +100,17 @@ public class PluginDescriptorGenerator
         TYPE_MAP.put(PropertySimpleType.LONG_STRING, PropertyType.LONG_STRING);
         TYPE_MAP.put(PropertySimpleType.PASSWORD, PropertyType.PASSWORD);
         TYPE_MAP.put(PropertySimpleType.STRING, PropertyType.STRING);
+    }
+
+    public static void main(String[] args) throws Exception
+    {
+        String namingURL = "jnp://127.0.0.1:1099/";
+        String principal = null;
+        String credentials = null;
+        ProfileServiceConnectionProvider connectionProvider =
+                new RemoteProfileServiceConnectionProvider(namingURL, principal, credentials);
+        ProfileServiceConnection connection = connectionProvider.connect();
+        generatePluginDescriptor(connection.getManagementView(), new File("."));
     }
 
     public static void generatePluginDescriptor(ManagementView managementView, File tempDir) throws Exception

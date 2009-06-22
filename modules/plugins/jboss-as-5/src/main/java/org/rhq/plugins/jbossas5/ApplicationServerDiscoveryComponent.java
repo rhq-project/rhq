@@ -59,7 +59,6 @@ import org.rhq.plugins.jbossas5.helper.JBossInstanceInfo;
 import org.rhq.plugins.jbossas5.helper.JBossProperties;
 import org.rhq.plugins.jbossas5.util.JnpConfig;
 import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
-import org.rhq.plugins.jbossas5.util.PluginDescriptorGenerator;
 
 /**
  * Discovery component for JBoss AS, 5.1.0.CR1 or later, Servers.
@@ -274,7 +273,6 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
         boolean debug = Boolean.getBoolean(JBMANCON_DEBUG_SYSPROP);
         if (debug) {
             //new UnitTestRunner().runUnitTests(connection);
-            generatePluginDescriptor(discoveryContext, connection);
         }
 
         return new DiscoveredResourceDetails(discoveryContext.getResourceType(), resourceKey, resourceName, version,
@@ -412,17 +410,6 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
             PropertyList logEventSources = pluginConfig
                 .getList(LogFileEventResourceComponentHelper.LOG_EVENT_SOURCES_CONFIG_PROP);
             logEventSources.add(serverLogEventSource);
-        }
-    }
-
-    private void generatePluginDescriptor(ResourceDiscoveryContext discoveryContext, ProfileServiceConnection connection) {
-        log.info("Generating RHQ plugin descriptor...");
-        try {
-            ManagementView managementView = connection.getManagementView();
-            File tempDir = discoveryContext.getParentResourceContext().getTemporaryDirectory();
-            PluginDescriptorGenerator.generatePluginDescriptor(managementView, tempDir);
-        } catch (Exception e) {
-            log.error("Failed to generate RHQ plugin descriptor.", e);
         }
     }
 }

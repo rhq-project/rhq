@@ -20,7 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.plugins.jbossas5.util;
+package org.jboss.jopr.tool.jbas5;
 
 import java.io.Serializable;
 import java.util.Comparator;
@@ -50,6 +50,8 @@ import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.StringUtils;
+import org.rhq.plugins.jbossas5.util.MetaTypeUtils;
+import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
 
 import org.jboss.managed.api.ComponentType;
 import org.jboss.managed.api.ManagedComponent;

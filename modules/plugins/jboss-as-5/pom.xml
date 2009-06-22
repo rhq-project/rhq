@@ -62,34 +62,10 @@
 
     <dependencies>
 
-		<dependency>
-        <!-- TODO: REMOVE THIS! plugins do not have access to clientapi jar! -->
-		  <groupId>${rhq.groupId}</groupId>
-		  <artifactId>rhq-core-client-api</artifactId>
-		  <version>${rhq.version}</version>
-          <scope>provided</scope> <!-- by PC -->
-		</dependency>
-
         <dependency>
            <groupId>org.jboss.on</groupId>
            <artifactId>jopr-jboss-as-common</artifactId>
            <version>${project.version}</version>
-        </dependency>
-
-        <!-- Needed for the plugin descriptor generator code -->
-        <dependency>
-          <groupId>apache-xerces</groupId>
-          <artifactId>xml-apis</artifactId>
-          <version>2.9.1</version>
-          <scope>provided</scope>
-        </dependency>
-
-        <!-- Needed for the plugin descriptor generator code -->
-        <dependency>
-          <groupId>sun-jaxb</groupId>
-          <artifactId>jaxb-api</artifactId>
-          <version>2.1.4</version>
-          <scope>provided</scope>
         </dependency>
 
         <dependency>
@@ -112,15 +88,15 @@
           <scope>provided</scope> <!-- by PC -->
         </dependency>
 
-      <dependency>
-         <groupId>${rhq.groupId}</groupId>
-         <artifactId>rhq-jmx-plugin</artifactId>
-         <version>${rhq.version}</version>
-         <scope>provided</scope>
-      </dependency>
+        <dependency>
+          <groupId>${rhq.groupId}</groupId>
+          <artifactId>rhq-jmx-plugin</artifactId>
+          <version>${rhq.version}</version>
+          <scope>provided</scope>
+        </dependency>
 
-      <!-- The below Profile Service API deps can be temporarily set to compile scope, 
-           so they can be referenced when running within Enterprise Jopr. -->
+        <!-- The below Profile Service API deps can be temporarily set to compile scope,
+             so they can be referenced when running within Enterprise Jopr. -->
         <dependency>
           <groupId>org.jboss.integration</groupId>
           <artifactId>jboss-profileservice-spi</artifactId>

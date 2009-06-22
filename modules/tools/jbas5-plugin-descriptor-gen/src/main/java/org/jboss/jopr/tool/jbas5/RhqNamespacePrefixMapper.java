@@ -20,7 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.plugins.jbossas5.util;
+package org.jboss.jopr.tool.jbas5;
 
 import com.sun.xml.bind.marshaller.NamespacePrefixMapper;
 

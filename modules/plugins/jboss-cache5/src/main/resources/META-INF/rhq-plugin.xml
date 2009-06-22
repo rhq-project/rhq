@@ -3,7 +3,7 @@
 <plugin name="JBossCache5"
         displayName="JBossCache5 Services"
         package="org.rhq.plugins.jbosscache5"
-        description="Provides monitoring of JBossCache statistics"
+        description="Provides monitoring of JBossCache 5.x statistics"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
@@ -16,9 +16,9 @@
            discovery="JbossCacheDiscoveryComponent"
            description="The JBoss Cache instances on this server">  
            
-      <runs-inside>
-          <parent-resource-type name="JBossAS Server" plugin="JBossAS5"/>
-      </runs-inside>
+          <runs-inside>
+             <parent-resource-type name="JBossAS Server" plugin="JBossAS5"/>
+          </runs-inside>
                  
           <plugin-configuration>
               <c:simple-property name="service" default="service=Cache"/>
@@ -237,6 +237,8 @@
             description="number of transaction prepares"  category="performance"/>       
            <metric property="numberOfSyncsRegistered"  displayName="Number Of Syncs" 
             description="number of transaction synchronizations currently registered"  category="performance"/>       
-         </service>          
+         </service>     
+         
     </service>
+    
 </plugin>

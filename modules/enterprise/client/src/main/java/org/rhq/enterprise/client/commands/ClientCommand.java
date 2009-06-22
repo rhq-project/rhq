@@ -26,7 +26,8 @@ import org.rhq.enterprise.client.ClientMain;
  */
 public interface ClientCommand {
 
-    public static Class<?>[] COMMANDS = new Class[] {
+    @SuppressWarnings("unchecked")
+    public static Class<ClientCommand>[] COMMANDS = new Class[] {
         FindResourcesCommand.class,
         // FindGroupsCommand.class,
         HelpCommand.class, LoginCommand.class, LogoutCommand.class, CreateUserCommand.class,

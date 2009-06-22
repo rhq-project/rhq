@@ -19,7 +19,7 @@
 package org.rhq.enterprise.client.commands;
 
 import org.rhq.enterprise.client.ClientMain;
-import org.rhq.enterprise.client.RHQRemoteClient;
+import org.rhq.enterprise.client.RemoteClient;
 
 /**
  * @author Greg Hinkle
@@ -46,7 +46,7 @@ public class LoginCommand implements ClientCommand {
             }
             client.setHost(host);
             client.setPort(port);
-            RHQRemoteClient remoteClient = new RHQRemoteClient(host, port);
+            RemoteClient remoteClient = new RemoteClient(host, port);
             client.setRemoteClient(remoteClient);
 
             client.setUser(user);

@@ -18,48 +18,49 @@
  */
 package org.rhq.enterprise.client;
 
-import org.jboss.remoting.invocation.NameBasedInvocation;
-
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
+import org.jboss.remoting.invocation.NameBasedInvocation;
+
+import org.rhq.core.domain.util.serial.ExternalizableStrategy;
+
 /**
  * @author Greg Hinkle
  */
-public class RHQRemoteClientProxy implements InvocationHandler {
+@SuppressWarnings("unchecked")
+public class RemoteClientProxy implements InvocationHandler {
 
-    private RHQRemoteClient client;
-//    private Class targetClass;
-    private String targetClass;
+    private RemoteClient client;
+    private RemoteClient.Manager manager;
 
-//    public RHQRemoteClientProxy(RHQRemoteClient client, Class targetClass) {
-    public RHQRemoteClientProxy(RHQRemoteClient client, String targetClass) {
+    //    public RHQRemoteClientProxy(RHQRemoteClient client, Class targetClass) {
+    public RemoteClientProxy(RemoteClient client, RemoteClient.Manager manager) {
         this.client = client;
-        this.targetClass = targetClass;
+        this.manager = manager;
     }
 
-//    public static <T> T getProcessor(RHQRemoteClient remoteClient, Class targetClass, Class<T> targetInterface) {
-    public static <T> T getProcessor(RHQRemoteClient remoteClient, String targetClass, Class<T> targetInterface) {
+    public static <T> T getProcessor(RemoteClient remoteClient, RemoteClient.Manager manager) {
         try {
-            RHQRemoteClientProxy gpc = new RHQRemoteClientProxy(remoteClient, targetClass);
+            RemoteClientProxy gpc = new RemoteClientProxy(remoteClient, manager);
 
-            return (T) Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(),
-                    new Class[]{targetInterface}, gpc);
+            return (T) Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(), new Class[] { gpc.manager
+                .remote() }, gpc);
         } catch (Exception e) {
-            throw new RuntimeException("Failled to get remote connection proxy", e);
+            throw new RuntimeException("Failed to get remote connection proxy", e);
         }
     }
 
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 
         try {
-//            String methodName = targetClass.getSimpleName() + ":" + method.getName();
-            String methodName = targetClass + ":" + method.getName();
+            // make sure we're serializing in Remote Client mode for rich serialization
+            ExternalizableStrategy.setStrategy(ExternalizableStrategy.Subsystem.REMOTEAPI);
+
+            String methodName = manager.beanName() + ":" + method.getName();
             String[] paramSig = createParamSignature(method.getParameterTypes());
-            NameBasedInvocation request = new NameBasedInvocation(methodName,
-                    args,
-                    paramSig);
+            NameBasedInvocation request = new NameBasedInvocation(methodName, args, paramSig);
 
             Object response = client.getRemotingClient().invoke(request);
 

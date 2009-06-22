@@ -4,7 +4,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.client.ClientMain;
-import org.rhq.enterprise.client.RHQRemoteClient;
+import org.rhq.enterprise.client.RemoteClient;
 import org.rhq.enterprise.server.operation.OperationManagerRemote;
 import org.rhq.enterprise.server.operation.ResourceOperationSchedule;
 import org.rhq.enterprise.server.resource.ResourceManagerRemote;
@@ -27,7 +27,7 @@ public class StopJBossAsCommand implements ClientCommand {
             int asId = Integer.valueOf(applicationServerResourcecId);
 
             // retrieve RHQRegistry object
-            RHQRemoteClient registry = client.getRemoteClient();
+            RemoteClient registry = client.getRemoteClient();
             Subject loggedInUser = client.getSubject();
             // instantiate SLSB
             ResourceManagerRemote res = client.getRemoteClient().getResourceManagerRemote();

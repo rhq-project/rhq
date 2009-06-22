@@ -24,7 +24,7 @@ import javax.script.ScriptException;
 
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.client.ClientMain;
-import org.rhq.enterprise.client.RHQRemoteClient;
+import org.rhq.enterprise.client.RemoteClient;
 import org.rhq.enterprise.client.TabularWriter;
 
 /**
@@ -52,7 +52,7 @@ public class ScriptCommand implements ClientCommand {
 
         // These are prepared on every call in  case the user logs out and logs into another server
         sem.getBindings().put("subject", client.getSubject());
-        sem.getBindings().putAll(client.getRemoteClient().getAllServices());
+        sem.getBindings().putAll(client.getRemoteClient().getAllManagers());
         TabularWriter tw = new TabularWriter(client.getPrintWriter());
         tw.setWidth(client.getConsoleWidth());
         sem.getBindings().put("pretty", tw);
@@ -91,8 +91,8 @@ public class ScriptCommand implements ClientCommand {
 
     public String getDetailedHelp() {
         StringBuilder help = new StringBuilder();
-        help.append("Executes JavaScript commands. You can utilize the following services: "
-            + RHQRemoteClient.SERVICE_NAMES);
+        help.append("Executes JavaScript commands. You can utilize the following service managers: "
+            + RemoteClient.Manager.values());
         return help.toString();
     }
 }

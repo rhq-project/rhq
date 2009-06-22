@@ -3,13 +3,9 @@ package org.rhq.enterprise.client.commands;
 import java.util.ArrayList;
 import java.util.List;
 
-//import org.rhq.client.CliEngine;
-//import org.rhq.client.RHQRemoteRegistry;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.client.ClientMain;
-import org.rhq.enterprise.client.RHQRemoteClient;
-//import org.rhq.enterprise.server.ws.Subject;
-//import org.rhq.enterprise.server.ws.SubjectManagerRemote;
+import org.rhq.enterprise.client.RemoteClient;
 import org.rhq.enterprise.server.auth.SubjectManagerRemote;
 
 public class DeleteUserCommand implements ClientCommand {
@@ -30,7 +26,7 @@ public class DeleteUserCommand implements ClientCommand {
             int userId = Integer.valueOf(userIdValue);
 
             // retrieve RHQRegistry object
-            RHQRemoteClient registry = client.getRemoteClient();
+            RemoteClient registry = client.getRemoteClient();
             Subject loggedInUser = client.getSubject();
             // Now make the connection successfully and store values
             // instantiate SLSB
@@ -38,7 +34,7 @@ public class DeleteUserCommand implements ClientCommand {
             List<Integer> userToDelete = new ArrayList<Integer>();
             userToDelete.add(userId);
             Integer[] usersToDelete = new Integer[userId];
-//            subjectManager.deleteUsers(loggedInUser, userToDelete);
+            //            subjectManager.deleteUsers(loggedInUser, userToDelete);
             subjectManager.deleteUsers(loggedInUser, usersToDelete);
 
             client.getPrintWriter().println("Account deletion successful");

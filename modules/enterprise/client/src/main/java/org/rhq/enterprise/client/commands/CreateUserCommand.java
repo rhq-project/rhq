@@ -2,9 +2,7 @@ package org.rhq.enterprise.client.commands;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.client.ClientMain;
-import org.rhq.enterprise.client.RHQRemoteClient;
-//import org.rhq.enterprise.server.ws.Subject;
-//import org.rhq.enterprise.server.ws.SubjectManagerRemote;
+import org.rhq.enterprise.client.RemoteClient;
 import org.rhq.enterprise.server.auth.SubjectManagerRemote;
 
 public class CreateUserCommand implements ClientCommand {
@@ -29,7 +27,7 @@ public class CreateUserCommand implements ClientCommand {
             String email = args[6] + "";
 
             // retrieve RHQRegistry object
-            RHQRemoteClient registry = client.getRemoteClient();
+            RemoteClient registry = client.getRemoteClient();
             Subject loggedInUser = client.getSubject();
             // Now make the connection successfully and store values
             // instantiate SLSB
@@ -43,7 +41,7 @@ public class CreateUserCommand implements ClientCommand {
             account.setFactive(active.equalsIgnoreCase("active"));
             account.setEmailAddress(email);
             subjectManager.createSubject(loggedInUser, account);
-            // TODO: something wierd here ... :-/
+            // TODO: something weird here ... :-/
             // //Now update the account with the password.
             // subjectManager.changePassword(loggedInUser, user, pass);
 

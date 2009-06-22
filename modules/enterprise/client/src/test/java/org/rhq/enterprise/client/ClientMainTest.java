@@ -64,76 +64,76 @@ public class ClientMainTest extends AssertJUnit {
     private static boolean isWstestUserCreated = false;
     private static String host = "127.0.0.1";
     private static int port = 7080;
-    private static RHQRemoteClient remoteClientRef = null;
+    private static RemoteClient remoteClientRef = null;
 
     @BeforeMethod
     protected void beforeMethod() throws Exception {
-        if(pagecontrol_unlimited!=null){
-          pagecontrol_unlimited = new PageControl();
-          pagecontrol_unlimited.setPageSize(-1);
+        if (pagecontrol_unlimited != null) {
+            pagecontrol_unlimited = new PageControl();
+            pagecontrol_unlimited.setPageSize(-1);
         }
-        if(remoteClientRef==null){
-            remoteClientRef = new RHQRemoteClient(host,port);
+        if (remoteClientRef == null) {
+            remoteClientRef = new RemoteClient(host, port);
         }
-//        //Checks for Ws-test user and creates it if it doesn't exist
-//        if(!isWstestUserCreated){
-//        	//assumes default rhqadmin details are in effect
-////        	SubjectManagerBeanService smService = new SubjectManagerBeanService();
-//        	URL sUrl = Utility.generateRhqRemoteWebserviceURL(SubjectManagerBeanService.class,
-//        			host, port, false);
-//        	QName sQName = Utility.generateRhqRemoteWebserviceQName(SubjectManagerBeanService.class);
-//        	SubjectManagerBeanService smService = new SubjectManagerBeanService(sUrl,sQName);
-//            SubjectManagerRemote subjectManager = smService.getSubjectManagerBeanPort();
-//            Subject user = subjectManager.login("rhqadmin", "rhqadmin");
-//            Subject wsTestUser = subjectManager.findSubjectByName(user, credentials);
-//            if((wsTestUser!=null) &&(wsTestUser.getId()>0)){
-//            	isWstestUserCreated = true;
-//            }
-//            //Create ws-test user
-//        	if(!isWstestUserCreated){
-//                Subject newUser = new Subject();
-//                //        if(logXmlToScreen){displayXml(newUser);}
-//
-//                String fName = "WS";
-//                String lName = "Test";
-//                newUser.setName(credentials);
-//                newUser.setFirstName(fName);
-//                newUser.setLastName(lName);
-//                newUser.setFactive(true);
-//
-//                //Send command to create the new user
-//                subjectManager.createSubject(user, newUser);
-//
-//               //Now locate role and attach
-//                //make connection to Role Bean
-////                RoleManagerBeanService rmService = new RoleManagerBeanService();
-//            	URL rUrl = Utility.generateRhqRemoteWebserviceURL(RoleManagerBeanService.class,
-//            			host, port, false);
-//            	QName rQName = Utility.generateRhqRemoteWebserviceQName(RoleManagerBeanService.class);
-//                RoleManagerBeanService rmService = new RoleManagerBeanService(rUrl,rQName);
-//                RoleManagerRemote roleManager = rmService.getRoleManagerBeanPort();
-//                List<Integer> emptyList = null;
-//                List<Role> roles = null;
-//                roles = roleManager.getAvailableRolesForSubject(user, Integer.valueOf(newUser.getId()),
-//                		emptyList, pagecontrol_unlimited);
-//
-//                //locate 'All Role Id'
-//                int roleId = 0;
-//                for (Role role : roles) {
-//                    if ("all resources role".equalsIgnoreCase(role.getName())) {
-//                        roleId = role.getId();
-//                        break;
-//                    }
-//                }
-//
-//                //assign that role to the subject
-//                List<Integer> roleBag = new ArrayList<Integer>();
-//                roleBag.add(roleId);
-//                roleManager.assignRolesToSubject(user, newUser.getId(), roleBag);
-//
-//        	  isWstestUserCreated = true;
-//        	}
-//        }
+        //        //Checks for Ws-test user and creates it if it doesn't exist
+        //        if(!isWstestUserCreated){
+        //        	//assumes default rhqadmin details are in effect
+        ////        	SubjectManagerBeanService smService = new SubjectManagerBeanService();
+        //        	URL sUrl = Utility.generateRhqRemoteWebserviceURL(SubjectManagerBeanService.class,
+        //        			host, port, false);
+        //        	QName sQName = Utility.generateRhqRemoteWebserviceQName(SubjectManagerBeanService.class);
+        //        	SubjectManagerBeanService smService = new SubjectManagerBeanService(sUrl,sQName);
+        //            SubjectManagerRemote subjectManager = smService.getSubjectManagerBeanPort();
+        //            Subject user = subjectManager.login("rhqadmin", "rhqadmin");
+        //            Subject wsTestUser = subjectManager.findSubjectByName(user, credentials);
+        //            if((wsTestUser!=null) &&(wsTestUser.getId()>0)){
+        //            	isWstestUserCreated = true;
+        //            }
+        //            //Create ws-test user
+        //        	if(!isWstestUserCreated){
+        //                Subject newUser = new Subject();
+        //                //        if(logXmlToScreen){displayXml(newUser);}
+        //
+        //                String fName = "WS";
+        //                String lName = "Test";
+        //                newUser.setName(credentials);
+        //                newUser.setFirstName(fName);
+        //                newUser.setLastName(lName);
+        //                newUser.setFactive(true);
+        //
+        //                //Send command to create the new user
+        //                subjectManager.createSubject(user, newUser);
+        //
+        //               //Now locate role and attach
+        //                //make connection to Role Bean
+        ////                RoleManagerBeanService rmService = new RoleManagerBeanService();
+        //            	URL rUrl = Utility.generateRhqRemoteWebserviceURL(RoleManagerBeanService.class,
+        //            			host, port, false);
+        //            	QName rQName = Utility.generateRhqRemoteWebserviceQName(RoleManagerBeanService.class);
+        //                RoleManagerBeanService rmService = new RoleManagerBeanService(rUrl,rQName);
+        //                RoleManagerRemote roleManager = rmService.getRoleManagerBeanPort();
+        //                List<Integer> emptyList = null;
+        //                List<Role> roles = null;
+        //                roles = roleManager.getAvailableRolesForSubject(user, Integer.valueOf(newUser.getId()),
+        //                		emptyList, pagecontrol_unlimited);
+        //
+        //                //locate 'All Role Id'
+        //                int roleId = 0;
+        //                for (Role role : roles) {
+        //                    if ("all resources role".equalsIgnoreCase(role.getName())) {
+        //                        roleId = role.getId();
+        //                        break;
+        //                    }
+        //                }
+        //
+        //                //assign that role to the subject
+        //                List<Integer> roleBag = new ArrayList<Integer>();
+        //                roleBag.add(roleId);
+        //                roleManager.assignRolesToSubject(user, newUser.getId(), roleBag);
+        //
+        //        	  isWstestUserCreated = true;
+        //        	}
+        //        }
 
     }
 
@@ -269,7 +269,7 @@ public class ClientMainTest extends AssertJUnit {
         }
 
         //assign that role to the subject
-        Integer[] roleBag = new Integer[]{roleId};
+        Integer[] roleBag = new Integer[] { roleId };
         roleManager.assignRolesToSubject(user, Integer.valueOf(newUser.getId()), roleBag);
 
         //check that assignment occurred
@@ -283,7 +283,7 @@ public class ClientMainTest extends AssertJUnit {
         assertTrue(found);
 
         //now cleanup the user and association we just created.
-        Integer[] cleanup = new Integer[]{newUser.getId()};
+        Integer[] cleanup = new Integer[] { newUser.getId() };
         subjectManager.deleteUsers(user, cleanup);
         assertNull(subjectManager.findSubjectByName(user, "ws-test-user"));
 
@@ -408,7 +408,7 @@ public class ClientMainTest extends AssertJUnit {
 
         ResourceType rt = new ResourceType();
         ResourceSubCategory subCat = new ResourceSubCategory();
-           subCat.setDescription("JBoss Application Server");
+        subCat.setDescription("JBoss Application Server");
         rt.setSubCategory(subCat);
 
         //        PageList<ResourceComposite> resources = resourceManager.findResourceComposites(user, null, "JBossAS Server", 0,
@@ -618,7 +618,7 @@ public class ClientMainTest extends AssertJUnit {
         //        configManager.updatePluginConfiguration(user, testAS.getResource().getId(), config);
     }
 
-//    public void testDeployment() throws Exception, ResourceTypeNotFoundException {
+    //    public void testDeployment() throws Exception, ResourceTypeNotFoundException {
     @Test(enabled = TESTS_ENABLED)
     public void testDeployment() throws Exception {
 
@@ -682,7 +682,7 @@ public class ClientMainTest extends AssertJUnit {
         }
         assertNotNull(testChannel);
 
-        int[] bag = new int[]{testChannel.getId()};
+        int[] bag = new int[] { testChannel.getId() };
         channelManager.subscribeResourceToChannels(user, testWar.getResource().getId(), bag);
 
         List<Resource> channelResources = channelManager.getSubscribedResources(user, testChannel.getId(),
@@ -735,7 +735,7 @@ public class ClientMainTest extends AssertJUnit {
         assertNotNull(testPackageVersion);
         assertTrue(testPackageVersion.getId() > 0);
 
-        int[] bag2 = new int[]{testPackageVersion.getId()};
+        int[] bag2 = new int[] { testPackageVersion.getId() };
         channelManager.addPackageVersionsToChannel(user, testChannel.getId(), bag2);
 
         Set<Integer> resourceSet = new HashSet<Integer>(1);
@@ -746,7 +746,7 @@ public class ClientMainTest extends AssertJUnit {
 
         contentManager.deployPackages(user, resourceSet, packageVersionSet);
 
-        int[] chBag = new int[]{testChannel.getId()};
+        int[] chBag = new int[] { testChannel.getId() };
         channelManager.unsubscribeResourceFromChannels(user, testWar.getResource().getId(), chBag);
 
         channelResources = channelManager.getSubscribedResources(user, testChannel.getId(), pagecontrol_unlimited);

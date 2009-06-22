@@ -55,7 +55,7 @@ public class HelpCommand implements ClientCommand {
 
             tw.print(data);
         } else if ("api".equals(args[1])) {
-            Map<String, Object> services = client.getRemoteClient().getAllServices();
+            Map<String, Object> services = client.getRemoteClient().getAllManagers();
             if (args.length == 2) {
                 TabularWriter tw = new TabularWriter(client.getPrintWriter(), "API", "Package");
                 tw.setWidth(client.getConsoleWidth());

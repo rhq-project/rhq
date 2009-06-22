@@ -66,7 +66,7 @@ public class ClientMain {
     private ArrayList<String> notes = new ArrayList<String>();
 
     // reference to the webservice reference factory
-    private RHQRemoteClient remoteClient;
+    private RemoteClient remoteClient;
 
     // The subject that will be used to carry out all requested actions
     private Subject subject;
@@ -96,8 +96,7 @@ public class ClientMain {
         // Initialize JLine console elements.
         consoleReader = new jline.ConsoleReader();
 
-        // Setup the command line completers for listed actions for the user
-        // before login
+        // Setup the command line completers for listed actions for the user before login
         // completes initial commands available
         consoleReader.addCompletor(new SimpleCompletor(commands.keySet().toArray(new String[commands.size()])));
         // completes arguments
@@ -402,24 +401,23 @@ public class ClientMain {
         }
     }
 
-    public RHQRemoteClient getRemoteClient() {
+    public RemoteClient getRemoteClient() {
         return remoteClient;
     }
 
-    public void setRemoteClient(RHQRemoteClient remoteClient) {
-        // connect cli class and remoteClient registry objects
+    public void setRemoteClient(RemoteClient remoteClient) {
         this.remoteClient = remoteClient;
-        this.remoteClient.setCliReference(this);
+
         setHttps(false);
         remoteClient.reinitialize();
         if (remoteClient != null) {
             consoleReader.addCompletor(new ArgumentCompletor(new Completor[] {
                 new SimpleCompletor("help"),
                 new SimpleCompletor("api"),
-                new SimpleCompletor(this.getRemoteClient().getAllServices().keySet().toArray(
-                    new String[this.getRemoteClient().getAllServices().size()])) }));
+                new SimpleCompletor(this.getRemoteClient().getAllManagers().keySet().toArray(
+                    new String[this.getRemoteClient().getAllManagers().size()])) }));
 
-            consoleReader.addCompletor(new ServiceCompletor(this.getRemoteClient().getAllServices()));
+            consoleReader.addCompletor(new ServiceCompletor(this.getRemoteClient().getAllManagers()));
         }
     }
 
@@ -472,10 +470,10 @@ public class ClientMain {
     }
 
     static {
-        for (Class commandClass : ClientCommand.COMMANDS) {
+        for (Class<ClientCommand> commandClass : ClientCommand.COMMANDS) {
             ClientCommand command = null;
             try {
-                command = (ClientCommand) commandClass.newInstance();
+                command = commandClass.newInstance();
                 commands.put(command.getPromptCommandString(), command);
 
             } catch (InstantiationException e) {

@@ -119,32 +119,36 @@
          <scope>provided</scope>
       </dependency>
 
-      <!-- The below Profile Service API deps are temporarily set to compile scope, so they can be
-           referenced when running within Enterprise Jopr. -->
+      <!-- The below Profile Service API deps can be temporarily set to compile scope, 
+           so they can be referenced when running within Enterprise Jopr. -->
         <dependency>
           <groupId>org.jboss.integration</groupId>
           <artifactId>jboss-profileservice-spi</artifactId>
-          <!--<scope>provided</scope>-->
+          <version>5.1.0.SP1</version>
+          <scope>provided</scope>
         </dependency>
 
         <dependency>
           <groupId>org.jboss.man</groupId>
           <artifactId>jboss-managed</artifactId>
-          <!--<scope>provided</scope>-->
+          <version>2.1.1.CR1</version>
+          <scope>provided</scope>
         </dependency>
 
         <dependency>
           <groupId>org.jboss.man</groupId>
           <artifactId>jboss-metatype</artifactId>
-          <!--<scope>provided</scope>-->
+          <version>2.1.1.CR1</version>
+          <scope>provided</scope>
         </dependency>
 
+        <!--======= client API jars (temporary) =======-->
+<!--
         <dependency>
             <groupId>org.jboss.microcontainer</groupId>
             <artifactId>jboss-kernel</artifactId>
         </dependency>
 
-        <!--======= client API jars (temporary) =======-->
         <dependency>
           <groupId>org.jboss.naming</groupId>
           <artifactId>jnp-client</artifactId>
@@ -196,7 +200,7 @@
           <scope>runtime</scope>
         </dependency>
 
-        <!-- aka jboss-client.jar -->
+        <!- - aka jboss-client.jar - ->
         <dependency>
             <groupId>org.jboss.jbossas</groupId>
             <artifactId>jboss-as-server</artifactId>
@@ -259,16 +263,14 @@
 
         <dependency>
           <groupId>org.jboss.ejb3</groupId>
-          <artifactId>jboss-ejb3-proxy-spi</artifactId>
-          <!--<version>${jbossas.version}</version>-->
+          <artifactId>jboss-ejb3-proxy-spi</artifactId>          
           <classifier>client</classifier>
           <scope>runtime</scope>
         </dependency>
 
         <dependency>
           <groupId>org.jboss.ejb3</groupId>
-          <artifactId>jboss-ejb3-proxy-impl</artifactId>
-          <!--<version>${jbossas.version}</version>-->
+          <artifactId>jboss-ejb3-proxy-impl</artifactId>          
           <classifier>client</classifier>
           <scope>runtime</scope>
         </dependency>
@@ -280,14 +282,14 @@
           <scope>runtime</scope>
         </dependency>
 
-        <!-- needed by ManagementView.getDeployment() -->
+        <!- - needed by ManagementView.getDeployment() - ->
         <dependency>
           <groupId>org.jboss.microcontainer</groupId>
           <artifactId>jboss-dependency</artifactId>
           <scope>runtime</scope>
         </dependency>
 
-        <!-- The four below deps are needed by the non-EJB proxy but not by the EJB proxy. -->
+        <!- - The four below deps are needed by the non-EJB proxy but not by the EJB proxy. - ->
         <dependency>
           <groupId>org.jboss.security</groupId>
           <artifactId>jbosssx-client</artifactId>
@@ -312,27 +314,10 @@
           <artifactId>jboss-common-core</artifactId>
         </dependency>
 
-        <!-- Uncomment the below deps if you want to pull down the jboss-profileservice
-             and jboss-system sources jars for debugging purposes. You will also need
-             to make sure you have the JBoss snapshot repo in this POM or your settings.xml.
-        -->
-
-        <dependency>
-            <groupId>org.jboss.jbossas</groupId>
-            <artifactId>jboss-as-profileservice</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-
         <dependency>
             <groupId>org.jboss</groupId>
             <artifactId>jboss-reflect</artifactId>
             <scope>runtime</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jboss.jbossas</groupId>
-            <artifactId>jboss-as-system</artifactId>
-            <scope>provided</scope>
         </dependency>
         
         <dependency>
@@ -351,7 +336,26 @@
             <groupId>org.jboss.deployers</groupId>
             <artifactId>jboss-deployers-client-spi</artifactId>
             <scope>runtime</scope>
+        </dependency>        
+-->
+
+        <!-- Uncomment the below deps if you want to pull down the jboss-profileservice
+             and jboss-system sources jars for debugging purposes. You will also need
+             to make sure you have the JBoss snapshot repo in this POM or your settings.xml.
+        -->
+<!--
+        <dependency>
+            <groupId>org.jboss.jbossas</groupId>
+            <artifactId>jboss-as-profileservice</artifactId>
+            <scope>runtime</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.jboss.jbossas</groupId>
+            <artifactId>jboss-as-system</artifactId>
+            <scope>provided</scope>
+        </dependency>
+-->        
 
     </dependencies>
 

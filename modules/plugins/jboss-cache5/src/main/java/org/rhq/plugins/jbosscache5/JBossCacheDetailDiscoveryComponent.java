@@ -33,10 +33,10 @@ public class JBossCacheDetailDiscoveryComponent implements
 				.getPluginConfiguration();
 
 		String configName = ccon.getSimple(
-				JbossCacheComponent.CACHE_CONFIG_NAME).getStringValue();
-		String domain = ccon.getSimple(JbossCacheComponent.CACHE_DOMAIN_NAME)
+				JBossCacheComponent.CACHE_CONFIG_NAME).getStringValue();
+		String domain = ccon.getSimple(JBossCacheComponent.CACHE_DOMAIN_NAME)
 				.getStringValue();
-		String service = ccon.getSimple(JbossCacheComponent.CACHE_SERVICE_NAME)
+		String service = ccon.getSimple(JBossCacheComponent.CACHE_SERVICE_NAME)
 				.getStringValue();
 		String jmxName;
 
@@ -75,11 +75,11 @@ public class JBossCacheDetailDiscoveryComponent implements
 				if (name != null) {
 					Configuration conf = new Configuration();
 					conf.put(new PropertySimple(
-							JbossCacheDetailComponent.CACHE_DETAIL_BEAN_NAME,
+							JBossCacheDetailComponent.CACHE_DETAIL_BEAN_NAME,
 							bean.getBeanName()));
 					resources.add(new DiscoveredResourceDetails(resourceType,
 							bean.getBeanName().toString(), name, "",
-							"Jboss Cache", conf, null));
+							"JBoss Cache", conf, null));
 				}
 			}
 		}

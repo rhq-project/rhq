@@ -17,7 +17,6 @@ import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.plugins.jbossas5.ProfileServiceComponent;
-import org.rhq.plugins.jbosscache5.JbossCacheComponent;
 import org.rhq.plugins.jmx.ObjectNameQueryUtility;
 
 public class JBossCacheDiscoveryComponent implements
@@ -63,9 +62,9 @@ public class JBossCacheDiscoveryComponent implements
 				Map<String, String> nameMap = bean.getBeanName()
 						.getKeyProperties();
 
-				if (nameMap.containsKey(JbossCacheComponent.CACHE_CONFIG_NAME)) {
+				if (nameMap.containsKey(JBossCacheComponent.CACHE_CONFIG_NAME)) {
 					String configName = nameMap
-							.get(JbossCacheComponent.CACHE_CONFIG_NAME);
+							.get(JBossCacheComponent.CACHE_CONFIG_NAME);
 
 					if (!map.containsKey(configName))
 						map.put(configName, new ArrayList<EmsBean>());
@@ -78,17 +77,17 @@ public class JBossCacheDiscoveryComponent implements
 				Configuration conf = new Configuration();
 
 				conf.put(new PropertySimple(
-						JbossCacheComponent.CACHE_DOMAIN_NAME, domain));
+						JBossCacheComponent.CACHE_DOMAIN_NAME, domain));
 				conf.put(new PropertySimple(
-						JbossCacheComponent.CACHE_SERVICE_NAME, service));
+						JBossCacheComponent.CACHE_SERVICE_NAME, service));
 				conf
 						.put(new PropertySimple(
-								JbossCacheComponent.CACHE_CONFIG_NAME,
+								JBossCacheComponent.CACHE_CONFIG_NAME,
 								"config=" + key));
 
 				ResourceType resourceType = context.getResourceType();
 				resources.add(new DiscoveredResourceDetails(resourceType, key,
-						key, "", "Jboss Cache", conf, null));
+						key, "", "JBoss Cache", conf, null));
 
 			}
 		}
@@ -97,10 +96,10 @@ public class JBossCacheDiscoveryComponent implements
 
 	private String buildSearchString(Configuration config) {
 
-		service = getValue(config, JbossCacheComponent.CACHE_SERVICE_NAME);
-		configName = getValue(config, JbossCacheComponent.CACHE_CONFIG_NAME);
-		jmxName = getValue(config, JbossCacheComponent.CACHE_JMX_NAME);
-		domain = getValue(config, JbossCacheComponent.CACHE_DOMAIN_NAME);
+		service = getValue(config, JBossCacheComponent.CACHE_SERVICE_NAME);
+		configName = getValue(config, JBossCacheComponent.CACHE_CONFIG_NAME);
+		jmxName = getValue(config, JBossCacheComponent.CACHE_JMX_NAME);
+		domain = getValue(config, JBossCacheComponent.CACHE_DOMAIN_NAME);
 
 		return domain + ":" + configName + "," + service + "," + jmxName;
 

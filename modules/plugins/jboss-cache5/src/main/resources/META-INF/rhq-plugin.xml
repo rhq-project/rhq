@@ -11,10 +11,10 @@
    <depends plugin="JMX" />
    <depends plugin="JBossAS5" useClasses="true"/>
 
-   <service name="Jboss Cache"
-           class="JbossCacheComponent"
-           discovery="JbossCacheDiscoveryComponent"
-           description="The JBoss Cache instances on this server">  
+   <service name="JBoss Cache"
+            class="JBossCacheComponent"
+            discovery="JBossCacheDiscoveryComponent"
+            description="The JBoss Cache instances on this server">  
            
           <runs-inside>
              <parent-resource-type name="JBossAS Server" plugin="JBossAS5"/>
@@ -94,9 +94,9 @@
             <metric property="ClusterProperties" dataType="trait" displayName="Cluster Properties" />       
                                                  
           <service name="Interceptor"
-                 class="org.rhq.plugins.jbossas5.jbosscache.JbossCacheDetailComponent"
-                 discovery="org.rhq.plugins.jbossas5.jbosscache.JbossCacheDetailDiscoveryComponent"
-                 description="Jboss Cache Interceptor">
+                   class="JBossCacheDetailComponent"
+                   discovery="JBossCacheDetailDiscoveryComponent"
+                   description="JBoss Cache Interceptor">
              
               <plugin-configuration>
                 <c:simple-property name="jmx-resource" default="jmx-resource=CacheMgmtInterceptor"/>
@@ -134,10 +134,10 @@
                
            </service>    
             
-         <service name="DataContainer"
-                 class="org.rhq.plugins.jbossas5.jbosscache.JbossCacheDetailComponent"
-                 discovery="org.rhq.plugins.jbossas5.jbosscache.JbossCacheDetailDiscoveryComponent"
-                 description="Jboss Cache Data Container">
+           <service name="DataContainer"
+                    class="JBossCacheDetailComponent"
+                    discovery="JBossCacheDetailDiscoveryComponent"
+                    description="JBoss Cache Data Container">
              
               <plugin-configuration>
                 <c:simple-property name="jmx-resource" default="jmx-resource=CacheMgmtInterceptor"/>
@@ -158,10 +158,10 @@
                            
            </service>
 
-         <service name="RPCManager"
-                 class="org.rhq.plugins.jbossas5.jbosscache.JbossCacheDetailComponent"
-                 discovery="org.rhq.plugins.jbossas5.jbosscache.JbossCacheDetailDiscoveryComponent"
-                 description="Jboss Cache RPC Manager">
+           <service name="RPCManager"
+                    class="JBossCacheDetailComponent"
+                    discovery="JBossCacheDetailDiscoveryComponent"
+                    description="JBoss Cache RPC Manager">
 
               <plugin-configuration>
                 <c:simple-property name="jmx-resource" default="jmx-resource=RPCManager"/>
@@ -185,10 +185,10 @@
                  
            </service>
            
-         <service name="RegionManager"
-                 class="org.rhq.plugins.jbossas5.jbosscache.JbossCacheDetailComponent"
-                 discovery="org.rhq.plugins.jbossas5.jbosscache.JbossCacheDetailDiscoveryComponent"
-                 description="Jboss Cache RegionManager">
+           <service name="RegionManager"
+                    class="JBossCacheDetailComponent"
+                    discovery="JBossCacheDetailDiscoveryComponent"
+                    description="JBoss Cache RegionManager">
 
               <plugin-configuration>
                 <c:simple-property name="jmx-resource" default="jmx-resource=RegionManager"/>
@@ -202,10 +202,10 @@
                  description="A count of all regions"  category="performance"/>               
            </service>
 
-         <service name="TransactionTable"
-                 class="org.rhq.plugins.jbossas5.jbosscache.JbossCacheDetailComponent"
-                 discovery="org.rhq.plugins.jbossas5.jbosscache.JbossCacheDetailDiscoveryComponent"
-                 description="Jboss Cache TransactionTable">
+           <service name="TransactionTable"
+                    class="JBossCacheDetailComponent"
+                    discovery="JBossCacheDetailDiscoveryComponent"
+                    description="JBoss Cache TransactionTable">
                  
               <plugin-configuration>
                 <c:simple-property name="jmx-resource" default="jmx-resource=TransactionTable"/>
@@ -218,26 +218,26 @@
                 description="A String representation of the transaction map"  />
            </service>
 
-         <service name="TxInterceptor"
-                 class="org.rhq.plugins.jbossas5.jbosscache.JbossCacheDetailComponent"
-                 discovery="org.rhq.plugins.jbossas5.jbosscache.JbossCacheDetailDiscoveryComponent"
-                 description="Jboss Cache TxInterceptor">
+           <service name="TxInterceptor"
+                    class="JBossCacheDetailComponent"
+                    discovery="JBossCacheDetailDiscoveryComponent"
+                    description="JBoss Cache TxInterceptor">
                  
-              <plugin-configuration>
-                <c:simple-property name="jmx-resource" default="jmx-resource=TxInterceptor"/>
-              </plugin-configuration>              
-           
-           <metric property="Commits"  displayName="Commits" 
-            description="number of transaction commits"  category="performance"/>       
-           <metric property="StatisticsEnabled"  dataType="trait" displayName="StatisticsEnabled" 
-            description="A String representation of the transaction map"  />       
-           <metric property="Rollbacks"  displayName="Rollbacks" 
-            description="number of transaction rollbacks"  category="performance"/>        
-           <metric property="Prepares"  displayName="Prepares" 
-            description="number of transaction prepares"  category="performance"/>       
-           <metric property="numberOfSyncsRegistered"  displayName="Number Of Syncs" 
-            description="number of transaction synchronizations currently registered"  category="performance"/>       
-         </service>     
+               <plugin-configuration>
+                 <c:simple-property name="jmx-resource" default="jmx-resource=TxInterceptor"/>
+               </plugin-configuration>              
+            
+               <metric property="Commits"  displayName="Commits" 
+                description="number of transaction commits"  category="performance"/>       
+               <metric property="StatisticsEnabled"  dataType="trait" displayName="StatisticsEnabled" 
+                description="A String representation of the transaction map"  />       
+               <metric property="Rollbacks"  displayName="Rollbacks" 
+                description="number of transaction rollbacks"  category="performance"/>        
+               <metric property="Prepares"  displayName="Prepares" 
+                description="number of transaction prepares"  category="performance"/>       
+               <metric property="numberOfSyncsRegistered"  displayName="Number Of Syncs" 
+                description="number of transaction synchronizations currently registered"  category="performance"/>       
+           </service>     
          
     </service>
     

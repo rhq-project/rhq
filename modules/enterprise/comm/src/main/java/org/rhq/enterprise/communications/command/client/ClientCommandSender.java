@@ -198,6 +198,11 @@ public class ClientCommandSender {
     private CommandPreprocessor[] m_preprocessors;
 
     /**
+     * SendCallback objects that will have an opportunity to execute just prior and just after commands are send.
+     */
+    private SendCallback[] m_sendCallbacks;
+
+    /**
      * The list of state listeners that will be notified when the sender starts and stops sending.
      */
     private final List<ClientCommandSenderStateListener> m_stateListeners = new ArrayList<ClientCommandSenderStateListener>();
@@ -242,6 +247,7 @@ public class ClientCommandSender {
         m_queue = new CommandQueue(config);
         m_sendThrottle = new SendThrottle(config);
         m_preprocessors = null;
+        m_sendCallbacks = null;
 
         if (config.commandSpoolFileName != null) {
             File cmd_spool_file = new File(config.dataDirectory, config.commandSpoolFileName);
@@ -409,6 +415,30 @@ public class ClientCommandSender {
      */
     public void setCommandPreprocessors(CommandPreprocessor[] preprocs) {
         m_preprocessors = ((preprocs != null) && (preprocs.length > 0)) ? preprocs : null;
+    }
+
+    /**
+     * Returns the list of SendCallbacks that are currently assigned to this sender. These objects are called just
+     * before and just after the send.
+     *
+     * @return the list of SendCallbacks (will never be <code>null</code>)
+     */
+    public SendCallback[] getSendCallbacks() {
+        return (null != m_sendCallbacks) ? m_sendCallbacks : new SendCallback[0];
+    }
+
+    /**
+     * This method sets the list of SendCallback objects this sender will use - these are the objects that will
+     * have an opportunity to execute just prior and just after the command is sent. If <code>null</code> is passed in,
+     * or the list has a size of 0, then this sender will not execute SendCcallbacks on the commands that it sends.
+     * 
+     * The sendCallbacks are executed in the order supplied in the array.
+     *
+     * @param callbacks the objects that will be called pre/post all commands that are to sent by this sender
+     *                 (may be <code>null</code> or empty)
+     */
+    public void setSendCallbacks(SendCallback[] sendCallbacks) {
+        m_sendCallbacks = ((null != sendCallbacks) && (sendCallbacks.length > 0)) ? sendCallbacks : null;
     }
 
     /**
@@ -1000,6 +1030,36 @@ public class ClientCommandSender {
     }
 
     /**
+     * Execute the pre-send callbacks for the given command if this sender was configured with one or more send callbacks.
+     *
+     * @param command the command
+     */
+    public void executePreSendCallbacks(Command command) {
+        if (null != m_sendCallbacks) {
+            for (int i = 0; i < m_sendCallbacks.length; i++) {
+                m_sendCallbacks[i].sending(command);
+            }
+        }
+
+        return;
+    }
+
+    /**
+     * Execute the post-send callbacks for the given command if this sender was configured with one or more send callbacks.
+     *
+     * @param command the command
+     */
+    public CommandResponse executePostSendCallbacks(Command command, CommandResponse response) {
+        if (null != m_sendCallbacks) {
+            for (int i = 0; i < m_sendCallbacks.length; i++) {
+                response = m_sendCallbacks[i].sent(command, response);
+            }
+        }
+
+        return response;
+    }
+
+    /**
      * Actually sends the command using the {@link GenericCommandClient}. This method always sends, regardless of the
      * value of {@link #isSending()}.
      *
@@ -1020,9 +1080,15 @@ public class ClientCommandSender {
         try {
             GenericCommandClient client = new GenericCommandClient(m_remoteCommunicator);
 
+            // Give the pre-send callbacks a chance to execute
+            executePreSendCallbacks(command);
+
             long start = System.currentTimeMillis();
             response = client.invoke(command);
             long elapsed = System.currentTimeMillis() - start;
+
+            // Give the post-send callbacks a chance to execute
+            response = executePostSendCallbacks(command, response);
 
             if ((response != null) && response.isSuccessful()) {
                 long num = m_metrics.successfulCommands.incrementAndGet();

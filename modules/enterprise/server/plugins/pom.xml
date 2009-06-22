@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.rhq</groupId>
     <artifactId>rhq-parent</artifactId>
-    <version>1.3.0-SNAPSHOT</version>
+    <version>1.3.0.EmbJopr.1_3_0-1</version>
   </parent>
 
   <groupId>org.rhq</groupId>
@@ -16,8 +16,8 @@
   <description>RHQ enterprise server plugins parent POM</description>
 
   <scm>
-    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/plugins</connection>
-    <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/plugins/</developerConnection>
+    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_3_0_EmbJopr_1_3_0-1//modules/enterprise/server/plugins</connection>
+    <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_3_0_EmbJopr_1_3_0-1//modules/enterprise/server/plugins</developerConnection>
   </scm>
 
   <properties>

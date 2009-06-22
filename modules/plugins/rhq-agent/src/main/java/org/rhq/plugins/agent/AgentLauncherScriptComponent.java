@@ -95,7 +95,7 @@ public class AgentLauncherScriptComponent implements ResourceComponent<AgentServ
                 result.getComplexResults().put(new PropertySimple("exitCode", exitCode));
                 result.getComplexResults().put(new PropertySimple("output", output.values().toArray()[0]));
             } else if (name.equals("Restart")) {
-                executeLauncherScriptInThread("restart");
+                executeLauncherScriptInThread("quiet-restart");
             } else if (name.equals("Stop")) {
                 executeLauncherScriptInThread("stop");
             } else if (name.equals("Kill")) {

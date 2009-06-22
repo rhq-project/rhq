@@ -292,7 +292,12 @@ case "$1" in
         "${_THIS_SCRIPT}" start
         exit $?
         ;;
-
+        
+'quiet-restart')
+        "${_THIS_SCRIPT}" stop >> /dev/null
+        "${_THIS_SCRIPT}" start >> /dev/null
+        exit $? 
+        ;;
 *)
         echo "Usage: $0 { start | stop | kill | restart | status }"
         exit 1

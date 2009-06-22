@@ -23,7 +23,7 @@ import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.plugins.jbossas5.ProfileServiceComponent;
 import org.rhq.plugins.jbossas5.connection.ProfileServiceConnection;
 
-public class JbossCacheComponent implements MeasurementFacet, OperationFacet,
+public class JBossCacheComponent implements MeasurementFacet, OperationFacet,
 		ProfileServiceComponent<ProfileServiceComponent> {
 
 	public static String CACHE_SERVICE_NAME = "service";

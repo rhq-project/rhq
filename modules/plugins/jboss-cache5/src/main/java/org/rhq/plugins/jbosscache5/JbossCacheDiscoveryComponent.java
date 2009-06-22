@@ -20,7 +20,7 @@ import org.rhq.plugins.jbossas5.ProfileServiceComponent;
 import org.rhq.plugins.jbosscache5.JbossCacheComponent;
 import org.rhq.plugins.jmx.ObjectNameQueryUtility;
 
-public class JbossCacheDiscoveryComponent implements
+public class JBossCacheDiscoveryComponent implements
 		ResourceDiscoveryComponent<ProfileServiceComponent> {
 
 	private ResourceDiscoveryContext<ProfileServiceComponent> context;

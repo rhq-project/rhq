@@ -17,7 +17,7 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.plugins.jbossas5.ProfileServiceComponent;
 import org.rhq.plugins.jmx.ObjectNameQueryUtility;
 
-public class JbossCacheDetailDiscoveryComponent implements
+public class JBossCacheDetailDiscoveryComponent implements
 		ResourceDiscoveryComponent<ProfileServiceComponent> {
 
 	private ProfileServiceComponent parentComponent;

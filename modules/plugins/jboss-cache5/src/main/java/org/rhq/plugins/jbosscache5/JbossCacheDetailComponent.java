@@ -23,7 +23,7 @@ import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.plugins.jbossas5.ProfileServiceComponent;
 import org.rhq.plugins.jbossas5.connection.ProfileServiceConnection;
 
-public class JbossCacheDetailComponent implements MeasurementFacet,
+public class JBossCacheDetailComponent implements MeasurementFacet,
 		OperationFacet, ProfileServiceComponent<ProfileServiceComponent> {
 
 	public static String JMX_NAME = "jmx-name";

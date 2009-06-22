@@ -106,7 +106,8 @@ public class JBossInstallationInfo {
 
     private static String getVersion(Attributes jarManifestAttributes) {
         String implementationVersion = jarManifestAttributes.getValue(Attributes.Name.IMPLEMENTATION_VERSION);
-        // e.g. Implementation-Version: 4.2.2.GA (build: SVNTag=JBoss_4_2_2_GA date=200710221139)
+        // e.g. AS 5.1: "Implementation-Version: 5.1.0.GA (build: SVNTag=JBoss_5_1_0_GA date=200905221634)"
+        // e.g. EAP 5.0: "Implementation-Version: 5.0.0.Beta (build: SVNTag=JBPAPP_5_0_0_Beta date=200906191731)"
         int spaceIndex = validateImplementationVersion(implementationVersion);
         String version = implementationVersion.substring(0, spaceIndex);
         if (version.startsWith(SOA_IMPL_VERSION_PREFIX)) {
@@ -119,9 +120,10 @@ public class JBossInstallationInfo {
     }
 
     private static boolean determineEap(Attributes jarManifestAttributes) {
-        String implementationVersion = jarManifestAttributes.getValue(Attributes.Name.IMPLEMENTATION_VERSION);
-        validateImplementationVersion(implementationVersion);
-        return (implementationVersion.startsWith(EAP_IMPL_VERSION_PREFIX));
+        String implementationTitle = jarManifestAttributes.getValue(Attributes.Name.IMPLEMENTATION_TITLE);
+        // e.g. AS 5.1: "Implementation-Title: JBoss [The Oracle]"
+        // e.g. EAP 5.0: "Implementation-Title: JBoss [EAP]"
+        return implementationTitle.contains("[EAP]");
     }
 
     private static int validateImplementationVersion(String implementationVersion) {

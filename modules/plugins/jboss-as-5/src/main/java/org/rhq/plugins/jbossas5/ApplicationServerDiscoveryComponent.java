@@ -67,7 +67,8 @@ import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
  * @author Mark Spritzler
  */
 public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryComponent {
-    private static final String DEFAULT_RESOURCE_DESCRIPTION = "JBoss Application Server";
+    private static final String DEFAULT_RESOURCE_DESCRIPTION_AS = "JBoss Application Server";
+    private static final String DEFAULT_RESOURCE_DESCRIPTION_EAP = "JBoss Enterprise Application Platform";
     private static final String JBMANCON_DEBUG_SYSPROP = "jbmancon.debug";
     private static final String CHANGE_ME = "***CHANGE_ME***";
     private static final String JBOSS_SERVICE_XML = "conf" + File.separator + "jboss-service.xml";
@@ -262,6 +263,8 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
         resourceName += installInfo.getMajorVersion();
         resourceName += " (" + serverName + ")";
 
+        String description = installInfo.isEap() ? DEFAULT_RESOURCE_DESCRIPTION_EAP : DEFAULT_RESOURCE_DESCRIPTION_AS;
+
         String version = (String) ManagedComponentUtils.getSimplePropertyValue(serverConfigComponent,
             "specificationVersion");
 
@@ -276,7 +279,7 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
         }
 
         return new DiscoveredResourceDetails(discoveryContext.getResourceType(), resourceKey, resourceName, version,
-            DEFAULT_RESOURCE_DESCRIPTION, pluginConfig, null);
+                description, pluginConfig, null);
     }
 
     private DiscoveredResourceDetails createResourceDetails(ResourceDiscoveryContext discoveryContext,

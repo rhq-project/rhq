@@ -368,10 +368,7 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
     }
 
     private static String getJnpURL(JBossInstanceInfo cmdLine, File installHome, File configDir) {
-
-        String path = cmdLine.getSystemProperties().getProperty(JBossProperties.SERVER_NAME) + "/data/jnp-service.url";
-
-        File urlStore = new File(path);
+        File urlStore = new File(configDir, "data/jnp-service.url");
         if (urlStore.exists() && urlStore.canRead()) {
             try {
                 BufferedReader br = new BufferedReader(new FileReader(urlStore));

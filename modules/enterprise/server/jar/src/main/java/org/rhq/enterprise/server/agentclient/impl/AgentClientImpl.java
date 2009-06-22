@@ -26,9 +26,13 @@ import org.rhq.core.clientapi.agent.measurement.MeasurementAgentService;
 import org.rhq.core.clientapi.agent.operation.OperationAgentService;
 import org.rhq.core.clientapi.agent.support.SupportAgentService;
 import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.domain.util.serial.ExternalizableStrategy;
 import org.rhq.enterprise.communications.Ping;
+import org.rhq.enterprise.communications.command.Command;
+import org.rhq.enterprise.communications.command.CommandResponse;
 import org.rhq.enterprise.communications.command.client.ClientCommandSender;
 import org.rhq.enterprise.communications.command.client.ClientRemotePojoFactory;
+import org.rhq.enterprise.communications.command.client.SendCallback;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 
 /**
@@ -80,6 +84,7 @@ public class AgentClientImpl implements AgentClient {
         this.agent = agent;
         this.sender = sender;
         this.clientRemotePojoFactory = sender.getClientRemotePojoFactory();
+        this.sender.setSendCallbacks(new SendCallback[] { new ExternalizableStrategySendCallback() });
         // enforce the restriction (instituted in 1.1 due to multi-server HA concerns) 
         // that no server->agent calls use guaranteedDelivery
         this.clientRemotePojoFactory.setDeliveryGuaranteed(ClientRemotePojoFactory.GuaranteedDelivery.DISABLED);
@@ -145,5 +150,28 @@ public class AgentClientImpl implements AgentClient {
 
     public SupportAgentService getSupportAgentService() {
         return clientRemotePojoFactory.getRemotePojo(SupportAgentService.class);
+    }
+
+    /**
+     * This class is used to ensure that when sending commands from Server to Agent we correctly
+     * set the ExternalizableStrategy to AGENT.  Since the server may share threads with RemoteAPI
+     * processing it's possible that the thread may have a different strategy set.  We serialize
+     * differently for the different strategies, for Agent communication we use much more lightweight
+     * serialization (for performance reasons).
+     *  
+     * @author jshaughnessy
+     */
+    private static class ExternalizableStrategySendCallback implements SendCallback {
+
+        public ExternalizableStrategySendCallback() {
+        };
+
+        public void sending(Command command) {
+            ExternalizableStrategy.setStrategy(ExternalizableStrategy.Subsystem.AGENT);
+        }
+
+        public CommandResponse sent(Command command, CommandResponse response) {
+            return response;
+        }
     }
 }

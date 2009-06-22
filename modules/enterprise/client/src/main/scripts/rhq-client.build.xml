@@ -140,7 +140,7 @@
       </jar>
    </target>
 
-   <target name="prepare-wsdl">
+   <target name="prepare-wsdl" if="include.client.jar">
       <echo>*** Removing old wsdl</echo>
       <delete dir="${wsdl.home}" />
       <echo>*** Creating new wsdl</echo>

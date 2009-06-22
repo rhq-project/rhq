@@ -30,8 +30,10 @@ public class JBossCacheComponent implements MeasurementFacet, OperationFacet,
 	public static String CACHE_DOMAIN_NAME = "domain";
 	public static String CACHE_CONFIG_NAME = "config";
 	public static String CACHE_JMX_NAME = "jmx-resource";
-	private final Log log = LogFactory.getLog(this.getClass());
-	private String service;
+	
+    private final Log log = LogFactory.getLog(this.getClass());
+	
+    private String service;
 	private String domain;
 	private String config;
 
@@ -54,16 +56,15 @@ public class JBossCacheComponent implements MeasurementFacet, OperationFacet,
 		EmsConnection connection = getEmsConnection();
 		String beanName = domain + ":" + config + "," + service;
 		cacheBean = connection.getBean(beanName);
-
+        
+        return;
 	}
 
 	public void stop() {
-		// TODO Auto-generated method stub
-
+		return;
 	}
 
-	public AvailabilityType getAvailability() {
-		// TODO Auto-generated method stub
+	public AvailabilityType getAvailability() {		
 		return AvailabilityType.UP;
 	}
 
@@ -78,17 +79,19 @@ public class JBossCacheComponent implements MeasurementFacet, OperationFacet,
 	public void getValues(MeasurementReport report,
 			Set<MeasurementScheduleRequest> metrics) throws Exception {
 
-		if (cacheBean == null)
+		if (cacheBean == null) {
 			return;
+        }
 
 		for (MeasurementScheduleRequest request : metrics) {
 			String metricName = request.getName();
 			try {
-
 				EmsAttribute atribute = cacheBean.getAttribute(metricName);
-
 				Object value = atribute.getValue();
-
+                if (value == null) {
+                    continue;
+                }
+                
 				if (request.getDataType() == DataType.MEASUREMENT) {
 					Number number = (Number) value;
 					report.addData(new MeasurementDataNumeric(request, number
@@ -100,7 +103,7 @@ public class JBossCacheComponent implements MeasurementFacet, OperationFacet,
 			} catch (Exception e) {
 				log.error(" Failure to collect measurements data from metric "
 						+ metricName + " from bean "
-						+ cacheBean.getBeanName().toString(), e);
+						+ cacheBean.getBeanName(), e);
 			}
 
 		}
@@ -110,17 +113,12 @@ public class JBossCacheComponent implements MeasurementFacet, OperationFacet,
 	public OperationResult invokeOperation(String name, Configuration parameters)
 			throws InterruptedException, Exception {
 
-		if (cacheBean == null)
-			return null;
-
-		OperationResult result = null;
-
+		if (cacheBean == null) {
+			return null;		
+        }
 		EmsOperation operation = cacheBean.getOperation(name);
-
 		String res = String.valueOf(operation.invoke(new Object[] {}));
-
-		result = new OperationResult(res);
-
+		OperationResult result = new OperationResult(res);
 		return result;
 	}
 }

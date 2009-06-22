@@ -50,48 +50,38 @@
                   <results><c:simple-property name="details"></c:simple-property></results>
              </operation> 
           
-            <metric property="LocalAddress" dataType="trait" displayType="summary" displayName="Local Address" 
-            description="local address"  />       
-            <metric property="ClusterConfig" dataType="trait" displayName="Cluster Config" 
-            description="cluster config"  />       
-            <metric property="NodeLockingScheme" dataType="trait" displayName="Node Locking Scheme" />       
-            <metric property="Members" dataType="trait" displayName="Members" />         
-            <metric property="ExposeManagementStatistics" dataType="trait" displayName="Expose Management Statistics" />       
-            <metric property="RegisterJmxResource" dataType="trait" displayName="Register Jmx Resource" />       
-            <metric property="CacheLoaderConfiguration" dataType="trait" displayName="Cache Loader Configuration" />       
-            <metric property="MultiplexerStack" dataType="trait" displayName="Multiplexer Stack" />       
-            <metric property="ReplQueueMaxElements"  displayName="ReplQueueMaxElements" 
-            category="performance"/>       
-            <metric property="NumberOfAttributes"  displayName="Number Of Attributes" 
-            category="performance"/>       
-            <metric property="CacheLoaderConfig" dataType="trait"  displayName="Cache Loader Config" />       
-            <metric property="ClusterName" dataType="trait" displayName="Cluster Name" />       
-            <metric property="InactiveOnStartup"  dataType="trait" displayName="Inactive On Startup" />       
-            <metric property="CacheMode" dataType="trait" displayName="Cache Mode" />            
-            <metric property="IsolationLevel" dataType="trait" displayName="Isolation Level" />       
-            <metric property="ReplicationVersion" dataType="trait" displayName="Replication Version" />       
-            <metric property="FetchInMemoryState" dataType="trait" displayName="Fetch In Memory State" />       
-            <metric property="InitialStateRetrievalTimeout"  displayName="Initial State Retrieval Timeout" 
-            category="performance"/>       
-            <metric property="BuddyReplicationConfig" dataType="trait" displayName="Buddy Replication Config" />       
-            <metric property="ReplQueueInterval"  displayName="Repl Queue Interval" 
-            category="performance"/>       
-            <metric property="UseReplQueue" dataType="trait" displayName="Use Repl Queue" />       
-            <metric property="UseRegionBasedMarshalling" dataType="trait" displayName="Use Region Based Marshalling" />                   
-            <metric property="LockAcquisitionTimeout"  displayName="Lock Acquisition Timeout" 
-            category="performance"/>       
-            <metric property="NumberOfNodes"  displayName="Number Of Nodes" 
-            category="performance"/>       
-            <metric property="CacheStatus" dataType="trait" displayName="Cache Status" />       
-            <metric property="SyncCommitPhase" dataType="trait" displayName="Sync Commit Phase" />       
-            <metric property="SyncReplTimeout"  displayName="Sync Repl Timeout" 
-            category="performance"/>       
-            <metric property="EvictionPolicyConfig" dataType="trait"  displayName="Eviction Policy Config" />       
-            <metric property="State" dataType="trait" displayName="state" />       
-            <metric property="StateRetrievalTimeout"  displayName="State Retrieval Timeout" 
-            category="performance"/>             
-            <metric property="TransactionManagerLookupClass" dataType="trait" displayName="Transaction Manager Lookup Class" />       
-            <metric property="ClusterProperties" dataType="trait" displayName="Cluster Properties" />       
+            <metric property="LocalAddress" dataType="trait" displayType="summary" />       
+            <metric property="ClusterConfig" dataType="trait" />       
+            <metric property="NodeLockingScheme" dataType="trait" />       
+            <metric property="Members" dataType="trait" />         
+            <metric property="ExposeManagementStatistics" dataType="trait" displayName="Expose Management Statistics?" />       
+            <metric property="RegisterJmxResource" dataType="trait" displayName="Register JMX Resource?" />       
+            <metric property="CacheLoaderConfiguration" dataType="trait" />       
+            <metric property="MultiplexerStack" dataType="trait" />       
+            <metric property="ReplQueueMaxElements"  displayName="Replication Queue Max Elements" category="performance"/>       
+            <metric property="NumberOfAttributes"  displayName="Number of Attributes" category="performance"/>       
+            <metric property="CacheLoaderConfig" dataType="trait" />       
+            <metric property="ClusterName" dataType="trait" />       
+            <metric property="InactiveOnStartup"  dataType="trait" displayName="Inactive on Startup?" />       
+            <metric property="CacheMode" dataType="trait" />            
+            <metric property="IsolationLevel" dataType="trait" />       
+            <metric property="ReplicationVersion" dataType="trait" />       
+            <metric property="FetchInMemoryState" dataType="trait" displayName="Fetch In-Memory State?" />       
+            <metric property="InitialStateRetrievalTimeout" category="performance"/>       
+            <metric property="BuddyReplicationConfig" dataType="trait" />       
+            <metric property="ReplQueueInterval"  displayName="Replication Queue Interval" category="performance"/>       
+            <metric property="UseReplQueue" dataType="trait" displayName="Use Replication Queue?" />       
+            <metric property="UseRegionBasedMarshalling" dataType="trait" displayName="Use Region-Based Marshalling?" />                   
+            <metric property="LockAcquisitionTimeout"  displayName="Lock Acquisition Timeout" category="performance" />       
+            <metric property="NumberOfNodes"  displayName="Number of Nodes" category="performance"/>       
+            <metric property="CacheStatus" dataType="trait" />       
+            <metric property="SyncCommitPhase" dataType="trait" displayName="Sync Commit Phase?" />       
+            <metric property="SyncReplTimeout" displayName="Sync Replication Timeout" category="performance"/>       
+            <metric property="EvictionPolicyConfig" dataType="trait" />       
+            <metric property="State" dataType="trait" />       
+            <metric property="StateRetrievalTimeout" category="performance"/>             
+            <metric property="TransactionManagerLookupClass" dataType="trait" />       
+            <metric property="ClusterProperties" dataType="trait" />       
                                                  
           <service name="Interceptor"
                    class="JBossCacheDetailComponent"
@@ -106,35 +96,33 @@
                 
                <metric property="Evictions"  displayName="Evictions" measurementType="trendsup"
                   description="number of cache eviction operations"  category="performance"/>
-               <metric property="HitMissRatio"  displayName="HitMissRatio" displayType="summary"
-                  description="hit/miss ratio for the cache"/>
-               <metric property="ReadWriteRatio"  displayName="Read/writes ratio for the cacheeadWriteRatio" displayType="summary"
-                  description="hit/miss ratio for the cache"/>
+               <metric property="HitMissRatio"  displayName="Hit/Miss Ratio" displayType="summary" />
+               <metric property="ReadWriteRatio"  displayName="Read/Write Ratio" displayType="summary" />
                <metric property="NumberOfNodes"  displayName="NumberOfNodes" 
                   description="number of nodes in the cache"  category="performance"/>
                <metric property="Hits"  displayName="Hits" measurementType="trendsup"
                   description="number of cache attribute hits"  category="performance"/>
-               <metric property="NumberOfAttributes"  displayName="NumberOfAttributes" 
+               <metric property="NumberOfAttributes"
                   description="umber of cache attributes"  category="performance"/>
-               <metric property="StatisticsEnabled"  dataType="trait"  displayName="StatisticsEnabled"/>
-               <metric property="ElapsedTime"  displayName="ElapsedTime" 
+               <metric property="StatisticsEnabled"  dataType="trait" />
+               <metric property="ElapsedTime"
                    description="seconds since cache started"  category="utilization" measurementType="trendsup"
                    units="seconds"/>
-               <metric property="TimeSinceReset"  displayName="TimeSinceReset" category="utilization" 
+               <metric property="TimeSinceReset" category="utilization" 
                    description="number of seconds since the cache statistics were last reset"
                    measurementType="trendsup" units="seconds"/>
-               <metric property="Misses"  displayName="Misses"  measurementType="trendsup"
+               <metric property="Misses" measurementType="trendsup"
                    description="number of cache attribute misses"/>
-               <metric property="AverageWriteTime"  displayName="AverageWriteTime" units="milliseconds"
+               <metric property="AverageWriteTime" units="milliseconds"
                    description="average number of milliseconds for a write operation"  category="performance"/>
-               <metric property="Stores"  displayName="Stores" measurementType="trendsup" 
+               <metric property="Stores" measurementType="trendsup" 
                    description="number of cache attribute put operations"  category="performance"/>
-               <metric property="AverageReadTime"  displayName="AverageReadTime"  units="milliseconds"
+               <metric property="AverageReadTime" units="milliseconds"
                    description="average number of milliseconds for a read operation"  category="performance"/>
                
            </service>    
             
-           <service name="DataContainer"
+           <service name="Data Container"
                     class="JBossCacheDetailComponent"
                     discovery="JBossCacheDetailDiscoveryComponent"
                     description="JBoss Cache Data Container">
@@ -158,7 +146,7 @@
                            
            </service>
 
-           <service name="RPCManager"
+           <service name="RPC Manager"
                     class="JBossCacheDetailComponent"
                     discovery="JBossCacheDetailDiscoveryComponent"
                     description="JBoss Cache RPC Manager">
@@ -169,23 +157,23 @@
                     
               <operation name="resetStatistics" displayName="Reset Statistics" description="Resets all statistics" />
                     
-               <metric property="Enabled" dataType="trait"  displayName="RPC Enabled" 
-                 description="whether or not the RPCManager is used in this cache instance"/>
-               <metric property="ReplicationFailures" displayName="ReplicationFailures" 
+               <metric property="Enabled" dataType="trait"  displayName="RPC Enabled?" 
+                 description="whether or not the RPC Manager is used in this cache instance"/>
+               <metric property="ReplicationFailures" displayName="Failed Replications" 
                  description="number of failed replications"/>
-               <metric property="LocalAddressString" dataType="trait"  displayName="LocalAddressString" 
+               <metric property="LocalAddressString" dataType="trait" displayName="Local Address" 
                  description="Local address"/>
-               <metric property="StatisticsEnabled" dataType="trait"  displayName="AverageReadTime" />
-               <metric property="ReplicationCount" displayName="ReplicationCount" 
+               <metric property="StatisticsEnabled" dataType="trait" />
+               <metric property="ReplicationCount" displayName="Successful Replications"  
                  description="number of successful replications"/>
-               <metric property="SuccessRatio" dataType="trait"  displayName="SuccessRatio" 
+               <metric property="SuccessRatio" dataType="trait"
                  description="RPC call success ratio"/>
-               <metric property="MembersString" dataType="trait"  displayName="MembersString" 
+               <metric property="MembersString" dataType="trait" displayName="Members" 
                  description="Cluster view"/>
                  
            </service>
            
-           <service name="RegionManager"
+           <service name="Region Manager"
                     class="JBossCacheDetailComponent"
                     discovery="JBossCacheDetailDiscoveryComponent"
                     description="JBoss Cache RegionManager">
@@ -202,7 +190,7 @@
                  description="A count of all regions"  category="performance"/>               
            </service>
 
-           <service name="TransactionTable"
+           <service name="Transaction Table"
                     class="JBossCacheDetailComponent"
                     discovery="JBossCacheDetailDiscoveryComponent"
                     description="JBoss Cache TransactionTable">
@@ -212,13 +200,13 @@
               </plugin-configuration>         
               <operation name="resetStatistics" displayName="Reset Statistics" description="Resets all statistics" />         
                    
-              <metric property="numberOfRegisteredTransactions"  displayName="Number of transactions" 
+              <metric property="numberOfRegisteredTransactions"
                 description="Number of registered transactions"  category="performance"/>
-              <metric property="transactionMap"  dataType="trait" displayName="Transaction map" 
+              <metric property="transactionMap"  dataType="trait"
                 description="A String representation of the transaction map"  />
            </service>
 
-           <service name="TxInterceptor"
+           <service name="Tx Interceptor"
                     class="JBossCacheDetailComponent"
                     discovery="JBossCacheDetailDiscoveryComponent"
                     description="JBoss Cache TxInterceptor">
@@ -227,15 +215,15 @@
                  <c:simple-property name="jmx-resource" default="jmx-resource=TxInterceptor"/>
                </plugin-configuration>              
             
-               <metric property="Commits"  displayName="Commits" 
+               <metric property="Commits"
                 description="number of transaction commits"  category="performance"/>       
-               <metric property="StatisticsEnabled"  dataType="trait" displayName="StatisticsEnabled" 
+               <metric property="StatisticsEnabled"  dataType="trait" displayName="Statistics Enabled?" 
                 description="A String representation of the transaction map"  />       
-               <metric property="Rollbacks"  displayName="Rollbacks" 
+               <metric property="Rollbacks"
                 description="number of transaction rollbacks"  category="performance"/>        
-               <metric property="Prepares"  displayName="Prepares" 
+               <metric property="Prepares"
                 description="number of transaction prepares"  category="performance"/>       
-               <metric property="numberOfSyncsRegistered"  displayName="Number Of Syncs" 
+               <metric property="numberOfSyncsRegistered"
                 description="number of transaction synchronizations currently registered"  category="performance"/>       
            </service>     
          

@@ -48,4 +48,13 @@ public class ArrayUtils {
         }
         return output;
     }
+
+    public static Integer[] wrapArray(int[] input) {
+        Integer[] output = new Integer[input.length];
+        for (int i = 0; i < input.length; i++) {
+            output[i] = input[i];
+        }
+        return output;
+    }
+
 }

@@ -41,12 +41,12 @@ public class JBossCacheComponent implements MeasurementFacet, OperationFacet,
 
 		Configuration configuration = context.getPluginConfiguration();
 
-		if (configuration.get(JbossCacheComponent.CACHE_SEARCH_STRING) != null)
+		if (configuration.get(JBossCacheComponent.CACHE_SEARCH_STRING) != null)
 			beanName = configuration.getSimple(
-					JbossCacheComponent.CACHE_SEARCH_STRING).getStringValue();
+					JBossCacheComponent.CACHE_SEARCH_STRING).getStringValue();
 		else
 			throw new InvalidPluginConfigurationException(
-					"Invalid plugin configuration in JbossCache component.");
+					"Invalid plugin configuration in JBossCache component.");
 	}
 
 	public void stop() {

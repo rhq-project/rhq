@@ -44,7 +44,7 @@ public class JBossCacheDiscoveryComponent implements
 		for (Configuration config : configurations) {
 
 			ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(
-					getValue(config, JbossCacheComponent.CACHE_SEARCH_STRING));
+					getValue(config, JBossCacheComponent.CACHE_SEARCH_STRING));
 
 			List<EmsBean> cacheBeans = connection.queryBeans(queryUtility
 					.getTranslatedQuery());
@@ -67,11 +67,11 @@ public class JBossCacheDiscoveryComponent implements
 				Configuration conf = new Configuration();
 
 				conf.put(new PropertySimple(
-						JbossCacheComponent.CACHE_SEARCH_STRING, key));
+						JBossCacheComponent.CACHE_SEARCH_STRING, key));
 
 				ResourceType resourceType = context.getResourceType();
 				resources.add(new DiscoveredResourceDetails(resourceType, key,
-						key, "", "Jboss Cache", conf, null));
+						key, "", "JBoss Cache", conf, null));
 
 			}
 		}

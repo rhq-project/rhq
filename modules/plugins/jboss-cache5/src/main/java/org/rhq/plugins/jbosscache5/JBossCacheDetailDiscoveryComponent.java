@@ -34,12 +34,12 @@ public class JBossCacheDetailDiscoveryComponent implements
 
 		String beanName;
 
-		if (parentConfiguration.get(JbossCacheComponent.CACHE_SEARCH_STRING) != null)
+		if (parentConfiguration.get(JBossCacheComponent.CACHE_SEARCH_STRING) != null)
 			beanName = parentConfiguration.getSimple(
-					JbossCacheComponent.CACHE_SEARCH_STRING).getStringValue();
+					JBossCacheComponent.CACHE_SEARCH_STRING).getStringValue();
 		else
 			throw new InvalidPluginConfigurationException(
-					"Invalid plugin configuration in JbossCache component.");
+					"Invalid plugin configuration in JBossCache component.");
 
 		Configuration defaultConfig = context.getDefaultPluginConfiguration();
 
@@ -78,11 +78,11 @@ public class JBossCacheDetailDiscoveryComponent implements
 				if (name != null) {
 					Configuration conf = new Configuration();
 					conf.put(new PropertySimple(
-							JbossCacheDetailComponent.CACHE_DETAIL_BEAN_NAME,
+							JBossCacheDetailComponent.CACHE_DETAIL_BEAN_NAME,
 							bean.getBeanName()));
 					resources.add(new DiscoveredResourceDetails(resourceType,
 							bean.getBeanName().toString(), name, "",
-							"Jboss Cache", conf, null));
+							"JBoss Cache", conf, null));
 				}
 			}
 		}

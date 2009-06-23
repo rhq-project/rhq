@@ -3,7 +3,7 @@
 <plugin name="JBossCache5"
         displayName="JBossCache5 Services"
         package="org.rhq.plugins.jbosscache5"
-        description="Provides monitoring of JBossCache 5.x statistics"
+        description="Provides monitoring of JBossCache statistics"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
@@ -11,20 +11,17 @@
    <depends plugin="JMX" />
    <depends plugin="JBossAS5" useClasses="true"/>
 
-   <service name="JBoss Cache"
-            class="JBossCacheComponent"
-            discovery="JBossCacheDiscoveryComponent"
-            description="The JBoss Cache instances on this server">  
+   <service name="Jboss Cache"
+           class="JBossCacheComponent"
+           discovery="JBossCacheDiscoveryComponent"
+           description="The JBoss Cache instances on this server">  
            
-          <runs-inside>
-             <parent-resource-type name="JBossAS Server" plugin="JBossAS5"/>
-          </runs-inside>
+      <runs-inside>
+          <parent-resource-type name="JBossAS Server" plugin="JBossAS5"/>
+      </runs-inside>
                  
           <plugin-configuration>
-              <c:simple-property name="service" default="service=Cache"/>
-              <c:simple-property name="domain" default="jboss.cache"/>
-              <c:simple-property name="config" default="config=*"/>
-              <c:simple-property name="jmx-resource" default="jmx-resource=*"/>
+              <c:simple-property name="searchString" default="*:*,jmx-resource=*"/>
           </plugin-configuration>
            
            <operation name="destroy" displayName="destroy"/>         
@@ -84,9 +81,9 @@
             <metric property="ClusterProperties" dataType="trait" />       
                                                  
           <service name="Interceptor"
-                   class="JBossCacheDetailComponent"
-                   discovery="JBossCacheDetailDiscoveryComponent"
-                   description="JBoss Cache Interceptor">
+                 class="JBossCacheDetailComponent"
+                 discovery="JBossCacheDetailDiscoveryComponent"
+                 description="JBoss Cache Interceptor">
              
               <plugin-configuration>
                 <c:simple-property name="jmx-resource" default="jmx-resource=CacheMgmtInterceptor"/>
@@ -122,10 +119,10 @@
                
            </service>    
             
-           <service name="Data Container"
-                    class="JBossCacheDetailComponent"
-                    discovery="JBossCacheDetailDiscoveryComponent"
-                    description="JBoss Cache Data Container">
+         <service name="Data Container"
+                 class="JBossCacheDetailComponent"
+                 discovery="JBossCacheDetailDiscoveryComponent"
+                 description="JBoss Cache Data Container">
              
               <plugin-configuration>
                 <c:simple-property name="jmx-resource" default="jmx-resource=CacheMgmtInterceptor"/>
@@ -150,10 +147,10 @@
                            
            </service>
 
-           <service name="RPC Manager"
-                    class="JBossCacheDetailComponent"
-                    discovery="JBossCacheDetailDiscoveryComponent"
-                    description="JBoss Cache RPC Manager">
+         <service name="RPC Manager"
+                 class="JBossCacheDetailComponent"
+                 discovery="JBossCacheDetailDiscoveryComponent"
+                 description="JBoss Cache RPC Manager">
 
               <plugin-configuration>
                 <c:simple-property name="jmx-resource" default="jmx-resource=RPCManager"/>
@@ -177,10 +174,10 @@
                  
            </service>
            
-           <service name="Region Manager"
-                    class="JBossCacheDetailComponent"
-                    discovery="JBossCacheDetailDiscoveryComponent"
-                    description="JBoss Cache RegionManager">
+         <service name="RegionManager"
+                 class="JBossCacheDetailComponent"
+                 discovery="JBossCacheDetailDiscoveryComponent"
+                 description="JBoss Cache RegionManager">
 
               <plugin-configuration>
                 <c:simple-property name="jmx-resource" default="jmx-resource=RegionManager"/>
@@ -195,10 +192,10 @@
                description="the total number of regions"  category="performance"/>               
            </service>
 
-           <service name="Transaction Table"
-                    class="JBossCacheDetailComponent"
-                    discovery="JBossCacheDetailDiscoveryComponent"
-                    description="JBoss Cache TransactionTable">
+         <service name="Transaction Table"
+                 class="JBossCacheDetailComponent"
+                 discovery="JBossCacheDetailDiscoveryComponent"
+                 description="JBoss Cache TransactionTable">
                  
               <plugin-configuration>
                 <c:simple-property name="jmx-resource" default="jmx-resource=TransactionTable"/>
@@ -211,10 +208,10 @@
                 description="a string representation of the transaction map"  />
            </service>
 
-           <service name="Tx Interceptor"
-                    class="JBossCacheDetailComponent"
-                    discovery="JBossCacheDetailDiscoveryComponent"
-                    description="JBoss Cache TxInterceptor">
+         <service name="Tx Interceptor"
+                 class="JBossCacheDetailComponent"
+                 discovery="JBossCacheDetailDiscoveryComponent"
+                 description="JBoss Cache TxInterceptor">
                  
                <plugin-configuration>
                  <c:simple-property name="jmx-resource" default="jmx-resource=TxInterceptor"/>
@@ -233,5 +230,4 @@
            </service>     
          
     </service>
-    
 </plugin>

@@ -1,10 +1,7 @@
 package org.rhq.plugins.jbosscache5;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.mc4j.ems.connection.EmsConnection;
@@ -24,10 +21,6 @@ public class JBossCacheDiscoveryComponent implements
 
 	private ResourceDiscoveryContext<ProfileServiceComponent> context;
 	private Configuration defaultConfig;
-	private String service;
-	private String configName;
-	private String jmxName;
-	private String domain;
 
 	public Set<DiscoveredResourceDetails> discoverResources(
 			ResourceDiscoveryContext<ProfileServiceComponent> context)
@@ -51,58 +44,38 @@ public class JBossCacheDiscoveryComponent implements
 		for (Configuration config : configurations) {
 
 			ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(
-					buildSearchString(config));
+					getValue(config, JbossCacheComponent.CACHE_SEARCH_STRING));
+
 			List<EmsBean> cacheBeans = connection.queryBeans(queryUtility
 					.getTranslatedQuery());
 
-			HashMap<String, List<EmsBean>> map = new HashMap<String, List<EmsBean>>();
+			HashSet<String> names = new HashSet<String>();
 
 			for (int i = 0; i < cacheBeans.size(); i++) {
 				EmsBean bean = cacheBeans.get(i);
-				Map<String, String> nameMap = bean.getBeanName()
-						.getKeyProperties();
 
-				if (nameMap.containsKey(JBossCacheComponent.CACHE_CONFIG_NAME)) {
-					String configName = nameMap
-							.get(JBossCacheComponent.CACHE_CONFIG_NAME);
+				String beanName = bean.getBeanName().toString();
+				beanName = beanName.substring(0, beanName
+						.indexOf(",jmx-resource"));
 
-					if (!map.containsKey(configName))
-						map.put(configName, new ArrayList<EmsBean>());
-
-					map.get(configName).add(bean);
+				if (!names.contains(beanName)) {
+					names.add(beanName);
 				}
 			}
 
-			for (String key : map.keySet()) {
+			for (String key : names) {
 				Configuration conf = new Configuration();
 
 				conf.put(new PropertySimple(
-						JBossCacheComponent.CACHE_DOMAIN_NAME, domain));
-				conf.put(new PropertySimple(
-						JBossCacheComponent.CACHE_SERVICE_NAME, service));
-				conf
-						.put(new PropertySimple(
-								JBossCacheComponent.CACHE_CONFIG_NAME,
-								"config=" + key));
+						JbossCacheComponent.CACHE_SEARCH_STRING, key));
 
 				ResourceType resourceType = context.getResourceType();
 				resources.add(new DiscoveredResourceDetails(resourceType, key,
-						key, "", "JBoss Cache", conf, null));
+						key, "", "Jboss Cache", conf, null));
 
 			}
 		}
 		return resources;
-	}
-
-	private String buildSearchString(Configuration config) {
-
-		service = getValue(config, JBossCacheComponent.CACHE_SERVICE_NAME);
-		configName = getValue(config, JBossCacheComponent.CACHE_CONFIG_NAME);
-		jmxName = getValue(config, JBossCacheComponent.CACHE_JMX_NAME);
-		domain = getValue(config, JBossCacheComponent.CACHE_DOMAIN_NAME);
-
-		return domain + ":" + configName + "," + service + "," + jmxName;
-
 	}
 
 	private String getValue(Configuration config, String name) {
@@ -112,4 +85,5 @@ public class JBossCacheDiscoveryComponent implements
 		else
 			return defaultConfig.getSimple(name).getStringValue();
 	}
+
 }

@@ -29,16 +29,17 @@ public class JBossCacheDetailDiscoveryComponent implements
 
 		parentComponent = context.getParentResourceComponent();
 
-		Configuration ccon = context.getParentResourceContext()
+		Configuration parentConfiguration = context.getParentResourceContext()
 				.getPluginConfiguration();
 
-		String configName = ccon.getSimple(
-				JBossCacheComponent.CACHE_CONFIG_NAME).getStringValue();
-		String domain = ccon.getSimple(JBossCacheComponent.CACHE_DOMAIN_NAME)
-				.getStringValue();
-		String service = ccon.getSimple(JBossCacheComponent.CACHE_SERVICE_NAME)
-				.getStringValue();
-		String jmxName;
+		String beanName;
+
+		if (parentConfiguration.get(JbossCacheComponent.CACHE_SEARCH_STRING) != null)
+			beanName = parentConfiguration.getSimple(
+					JbossCacheComponent.CACHE_SEARCH_STRING).getStringValue();
+		else
+			throw new InvalidPluginConfigurationException(
+					"Invalid plugin configuration in JbossCache component.");
 
 		Configuration defaultConfig = context.getDefaultPluginConfiguration();
 
@@ -52,11 +53,13 @@ public class JBossCacheDetailDiscoveryComponent implements
 
 		ResourceType resourceType = context.getResourceType();
 
+		String jmxName;
+
 		for (Configuration config : configurations) {
 			jmxName = config.getSimple(CACHE_JMX_NAME).getStringValue();
 
 			ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(
-					domain + ":" + configName + "," + service + "," + jmxName);
+					beanName + "," + jmxName);
 
 			List<EmsBean> cacheBeans = connection.queryBeans(queryUtility
 					.getTranslatedQuery());
@@ -75,11 +78,11 @@ public class JBossCacheDetailDiscoveryComponent implements
 				if (name != null) {
 					Configuration conf = new Configuration();
 					conf.put(new PropertySimple(
-							JBossCacheDetailComponent.CACHE_DETAIL_BEAN_NAME,
+							JbossCacheDetailComponent.CACHE_DETAIL_BEAN_NAME,
 							bean.getBeanName()));
 					resources.add(new DiscoveredResourceDetails(resourceType,
 							bean.getBeanName().toString(), name, "",
-							"JBoss Cache", conf, null));
+							"Jboss Cache", conf, null));
 				}
 			}
 		}

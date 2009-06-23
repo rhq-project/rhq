@@ -26,46 +26,48 @@ import org.rhq.plugins.jbossas5.connection.ProfileServiceConnection;
 public class JBossCacheComponent implements MeasurementFacet, OperationFacet,
 		ProfileServiceComponent<ProfileServiceComponent> {
 
-	public static String CACHE_SERVICE_NAME = "service";
-	public static String CACHE_DOMAIN_NAME = "domain";
-	public static String CACHE_CONFIG_NAME = "config";
-	public static String CACHE_JMX_NAME = "jmx-resource";
-	
-    private final Log log = LogFactory.getLog(this.getClass());
-	
-    private String service;
-	private String domain;
-	private String config;
+	private final Log log = LogFactory.getLog(this.getClass());
+
+	public static String CACHE_SEARCH_STRING = "searchString";
 
 	private ProfileServiceComponent parentComp;
-	private ResourceContext context;
-	private EmsBean cacheBean;
+
+	private String beanName;
 
 	public void start(ResourceContext<ProfileServiceComponent> context)
 			throws InvalidPluginConfigurationException, Exception {
-		this.context = context;
 
 		parentComp = context.getParentResourceComponent();
 
 		Configuration configuration = context.getPluginConfiguration();
 
-		config = configuration.getSimple(CACHE_CONFIG_NAME).getStringValue();
-		service = configuration.getSimple(CACHE_SERVICE_NAME).getStringValue();
-		domain = configuration.getSimple(CACHE_DOMAIN_NAME).getStringValue();
-
-		EmsConnection connection = getEmsConnection();
-		String beanName = domain + ":" + config + "," + service;
-		cacheBean = connection.getBean(beanName);
-        
-        return;
+		if (configuration.get(JbossCacheComponent.CACHE_SEARCH_STRING) != null)
+			beanName = configuration.getSimple(
+					JbossCacheComponent.CACHE_SEARCH_STRING).getStringValue();
+		else
+			throw new InvalidPluginConfigurationException(
+					"Invalid plugin configuration in JbossCache component.");
 	}
 
 	public void stop() {
-		return;
+		// TODO Auto-generated method stub
+
 	}
 
-	public AvailabilityType getAvailability() {		
-		return AvailabilityType.UP;
+	public AvailabilityType getAvailability() {
+		try {
+			EmsConnection connection = parentComp.getEmsConnection();
+			if (connection == null)
+				return AvailabilityType.DOWN;
+
+			boolean up = connection.getBean(beanName).isRegistered();
+			return up ? AvailabilityType.UP : AvailabilityType.DOWN;
+		} catch (Exception e) {
+			if (log.isDebugEnabled())
+				log.debug("Can not determine availability for " + beanName
+						+ ": " + e.getMessage());
+			return AvailabilityType.DOWN;
+		}
 	}
 
 	public ProfileServiceConnection getConnection() {
@@ -76,22 +78,39 @@ public class JBossCacheComponent implements MeasurementFacet, OperationFacet,
 		return parentComp.getEmsConnection();
 	}
 
+	public OperationResult invokeOperation(String name, Configuration parameters)
+			throws InterruptedException, Exception {
+
+		OperationResult result = null;
+
+		try {
+			EmsBean cacheBean = getEmsConnection().getBean(beanName);
+
+			EmsOperation operation = cacheBean.getOperation(name);
+
+			String res = String.valueOf(operation.invoke(new Object[] {}));
+
+			result = new OperationResult(res);
+		} catch (Exception e) {
+			log.error(" Failure to invoke operation " + name + " on bean "
+					+ beanName, e);
+		}
+		return result;
+	}
+
 	public void getValues(MeasurementReport report,
 			Set<MeasurementScheduleRequest> metrics) throws Exception {
 
-		if (cacheBean == null) {
-			return;
-        }
+		EmsBean cacheBean = getEmsConnection().getBean(beanName);
 
 		for (MeasurementScheduleRequest request : metrics) {
 			String metricName = request.getName();
 			try {
+
 				EmsAttribute atribute = cacheBean.getAttribute(metricName);
+
 				Object value = atribute.getValue();
-                if (value == null) {
-                    continue;
-                }
-                
+
 				if (request.getDataType() == DataType.MEASUREMENT) {
 					Number number = (Number) value;
 					report.addData(new MeasurementDataNumeric(request, number
@@ -103,22 +122,9 @@ public class JBossCacheComponent implements MeasurementFacet, OperationFacet,
 			} catch (Exception e) {
 				log.error(" Failure to collect measurements data from metric "
 						+ metricName + " from bean "
-						+ cacheBean.getBeanName(), e);
+						+ cacheBean.getBeanName().toString(), e);
 			}
 
 		}
-
-	}
-
-	public OperationResult invokeOperation(String name, Configuration parameters)
-			throws InterruptedException, Exception {
-
-		if (cacheBean == null) {
-			return null;		
-        }
-		EmsOperation operation = cacheBean.getOperation(name);
-		String res = String.valueOf(operation.invoke(new Object[] {}));
-		OperationResult result = new OperationResult(res);
-		return result;
 	}
 }

@@ -29,7 +29,8 @@ public class JBossCacheDetailComponent implements MeasurementFacet,
 	public static String JMX_NAME = "jmx-name";
 	public static String CACHE_DETAIL_BEAN_NAME = "bean-name";
 	public ProfileServiceComponent parentComponent;
-	public EmsBean detailComponent;
+	private String beanName;
+
 	private final Log log = LogFactory.getLog(this.getClass());
 
 	public void start(ResourceContext<ProfileServiceComponent> context)
@@ -38,9 +39,9 @@ public class JBossCacheDetailComponent implements MeasurementFacet,
 		parentComponent = context.getParentResourceComponent();
 		EmsConnection connection = getEmsConnection();
 
-		String beanName = context.getPluginConfiguration().getSimple(
+		beanName = context.getPluginConfiguration().getSimple(
 				CACHE_DETAIL_BEAN_NAME).getStringValue();
-		detailComponent = connection.getBean(beanName);
+
 	}
 
 	public void stop() {
@@ -49,7 +50,19 @@ public class JBossCacheDetailComponent implements MeasurementFacet,
 	}
 
 	public AvailabilityType getAvailability() {
-		return AvailabilityType.UP;
+		try {
+			EmsConnection connection = parentComponent.getEmsConnection();
+			if (connection == null)
+				return AvailabilityType.DOWN;
+
+			boolean up = connection.getBean(beanName).isRegistered();
+			return up ? AvailabilityType.UP : AvailabilityType.DOWN;
+		} catch (Exception e) {
+			if (log.isDebugEnabled())
+				log.debug("Can not determine availability for " + beanName
+						+ ": " + e.getMessage());
+			return AvailabilityType.DOWN;
+		}
 	}
 
 	public EmsConnection getEmsConnection() {
@@ -63,8 +76,7 @@ public class JBossCacheDetailComponent implements MeasurementFacet,
 	public void getValues(MeasurementReport report,
 			Set<MeasurementScheduleRequest> metrics) throws Exception {
 
-		if (detailComponent == null)
-			return;
+		EmsBean detailComponent = getEmsConnection().getBean(beanName);
 
 		for (MeasurementScheduleRequest request : metrics) {
 
@@ -95,21 +107,23 @@ public class JBossCacheDetailComponent implements MeasurementFacet,
 
 	public OperationResult invokeOperation(String name, Configuration parameters)
 			throws InterruptedException, Exception {
+		OperationResult result = null;
 
-		if (detailComponent == null)
-			return null;
+		try {
+			EmsBean detailComponent = getEmsConnection().getBean(beanName);
 
-		EmsOperation operation = detailComponent.getOperation(name);
+			EmsOperation operation = detailComponent.getOperation(name);
 
-		if (operation == null)
-			return null;
+			Object obj = operation.invoke(new Object[] {});
 
-		Object obj = operation.invoke(new Object[] {});
+			if (obj != null)
+				result = new OperationResult(String.valueOf(obj));
 
-		if (obj != null)
-			return new OperationResult(String.valueOf(obj));
-
-		return null;
+		} catch (Exception e) {
+			log.error(" Failure to invoke operation " + name + " on bean "
+					+ beanName, e);
+		}
+		return result;
 	}
 
 }

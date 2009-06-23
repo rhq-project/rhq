@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.jboss.on</groupId>
         <artifactId>jopr-modules-parent</artifactId>
-        <version>2.3.0.EmbJopr.1.3.0-1</version>
+        <version>2.3.0-SNAPSHOT</version>
     </parent>
 
     <groupId>org.jboss.on</groupId>
@@ -14,8 +14,8 @@
     <description>parent POM for all Jopr common libraries</description>
 
     <scm>
-        <connection>scm:svn:http://svn.jboss.org/repos/jopr/tags/Jopr_2_3_0_EmbJopr_1_3_0-1/modules/common</connection>
-        <developerConnection>scm:svn:https://svn.jboss.org/repos/jopr/tags/Jopr_2_3_0_EmbJopr_1_3_0-1/modules/common</developerConnection>
+        <connection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/common</connection>
+        <developerConnection>scm:svn:https://svn.jboss.org/repos/jopr/trunk/modules/common</developerConnection>
     </scm>
 
     <properties>

@@ -255,8 +255,8 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
          * results to the database; clear out the existing server lists **just** before persisting the new ones 
          * to keep row lock hold time low
          */
-        failoverListManager.clear();
-        failoverListManager.persist(event, agentServerListMap);
+        clear();
+        persist(event, agentServerListMap);
 
         return result;
     }

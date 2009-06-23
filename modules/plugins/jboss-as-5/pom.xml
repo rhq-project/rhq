@@ -93,25 +93,24 @@
           <groupId>org.jboss.integration</groupId>
           <artifactId>jboss-profileservice-spi</artifactId>
           <version>5.1.0.SP1</version>
-          <scope>provided</scope>
+          <!--<scope>provided</scope>-->
         </dependency>
 
         <dependency>
           <groupId>org.jboss.man</groupId>
           <artifactId>jboss-managed</artifactId>
           <version>2.1.1.CR1</version>
-          <scope>provided</scope>
+          <!--<scope>provided</scope>-->
         </dependency>
 
         <dependency>
           <groupId>org.jboss.man</groupId>
           <artifactId>jboss-metatype</artifactId>
           <version>2.1.1.CR1</version>
-          <scope>provided</scope>
+          <!--<scope>provided</scope>-->
         </dependency>
 
         <!--======= client API jars (temporary) =======-->
-<!--
         <dependency>
             <groupId>org.jboss.microcontainer</groupId>
             <artifactId>jboss-kernel</artifactId>
@@ -168,7 +167,7 @@
           <scope>runtime</scope>
         </dependency>
 
-        <!- - aka jboss-client.jar - ->
+        <!-- aka jboss-client.jar -->
         <dependency>
             <groupId>org.jboss.jbossas</groupId>
             <artifactId>jboss-as-server</artifactId>
@@ -250,14 +249,14 @@
           <scope>runtime</scope>
         </dependency>
 
-        <!- - needed by ManagementView.getDeployment() - ->
+        <!-- needed by ManagementView.getDeployment() -->
         <dependency>
           <groupId>org.jboss.microcontainer</groupId>
           <artifactId>jboss-dependency</artifactId>
           <scope>runtime</scope>
         </dependency>
 
-        <!- - The four below deps are needed by the non-EJB proxy but not by the EJB proxy. - ->
+        <!-- The four below deps are needed by the non-EJB proxy but not by the EJB proxy. -->
         <dependency>
           <groupId>org.jboss.security</groupId>
           <artifactId>jbosssx-client</artifactId>
@@ -305,7 +304,6 @@
             <artifactId>jboss-deployers-client-spi</artifactId>
             <scope>runtime</scope>
         </dependency>        
--->
 
         <!-- Uncomment the below deps if you want to pull down the jboss-profileservice
              and jboss-system sources jars for debugging purposes. You will also need

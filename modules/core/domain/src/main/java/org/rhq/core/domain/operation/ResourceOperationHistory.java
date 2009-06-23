@@ -65,7 +65,7 @@ import org.rhq.core.domain.resource.Resource;
         + "  and h.modifiedTime = (select min(h2.modifiedTime) " + "from ResourceOperationHistory h2 "
         + "where h2.resource.id = :resourceId " + "  and h2.status = 'INPROGRESS')"),
     @NamedQuery(name = ResourceOperationHistory.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM ResourceOperationHistory roh "
-        + " WHERE roh.resource IN (:resources))"),
+        + " WHERE roh.resource.id IN ( :resourceIds ) )"),
     @NamedQuery(name = ResourceOperationHistory.QUERY_FIND_ALL_ADMIN, query = "" //
         + "   SELECT new org.rhq.core.domain.operation.composite.ResourceOperationHistoryComposite" // 
         + "        ( roh, parent.id, parent.name ) " //

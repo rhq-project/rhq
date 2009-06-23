@@ -40,7 +40,6 @@ import javax.jws.WebService;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
-import javax.persistence.PersistenceException;
 import javax.persistence.Query;
 
 import org.apache.commons.logging.Log;
@@ -108,7 +107,6 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
-import org.rhq.enterprise.server.cloud.StatusManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
@@ -129,16 +127,11 @@ import org.rhq.enterprise.server.util.ArrayUtils;
 public class ResourceManagerBean implements ResourceManagerLocal, ResourceManagerRemote {
     private final Log log = LogFactory.getLog(ResourceManagerBean.class);
 
-    /** The number of resources that can be deleted in one transaction. */
-    private final int BULK_DELETE_SIZE = 200;
-
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
     @EJB
     private AgentManagerLocal agentManager;
-    @EJB
-    private StatusManagerLocal agentStatusManager;
     @EJB
     private AuthorizationManagerLocal authorizationManager;
     @EJB
@@ -221,7 +214,6 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return entityManager.merge(resource);
     }
 
-    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public List<Integer> deleteResources(Subject user, Integer[] resourceIds) {
         List<Integer> deletedResourceIds = new ArrayList<Integer>();
 
@@ -234,19 +226,17 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return deletedResourceIds;
     }
 
-    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    @SuppressWarnings("unchecked")
     public List<Integer> deleteResource(Subject user, Integer resourceId) {
-        List<Integer> deletedResourceIds = new ArrayList<Integer>();
-
         if (resourceId == null) // sanity check
         {
-            return deletedResourceIds;
+            return Collections.emptyList();
         }
 
         Resource resource = resourceManager.getResourceTree(resourceId, true);
         if (resource == null) {
             log.info("Delete resource not possible, as resource with id [" + resourceId + "] was not found");
-            return deletedResourceIds; // Resource not found. TODO give a nice message to the user
+            return Collections.emptyList(); // Resource not found. TODO give a nice message to the user
         }
 
         // make sure the user is authorized to delete this resource (which implies you can delete all its children)
@@ -259,6 +249,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         Agent doomedAgent = null;
         if (resource.getParentResource() == null) {
             try {
+                // note, this needs to be done before the marking because the agent reference is going to be set to null
                 doomedAgent = agentManager.getAgentByResourceId(resourceId);
             } catch (Exception e) {
                 doomedAgent = null;
@@ -267,7 +258,6 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         }
 
         AgentClient agentClient = null;
-
         try {
             // The test code does not always generate agents for the resources. Catch and log any problem but continue
             agentClient = agentManager.getAgentClient(resourceId);
@@ -276,40 +266,25 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 + "]. Unable to inform agent of inventory removal (this may be ok): " + e);
         }
 
-        // delete the resource and all its children
-        log.info("User [" + user + "] is deleting resource [" + resource + "]");
+        // since we delete the resource asychronously now, we need to make sure we remove things that would cause
+        // system side effects after markForDeletion completed but before the resource was actually removed from the DB
+        Subject overlord = subjectManager.getOverlord();
+        cleanupScheduledOperationsForResource(overlord, resourceId);
 
-        // At times agent activity involving the resources being deleted cause a variety of, typically but not limited to,
-        // locking exceptions.  Retry any type of PersistenceException on the hope that the offending (concurrency)
-        // conflict will not re-occur.
-        // One problem we have seen a JBoss TreeCache locking problem described here:
-        //   http://jira.jboss.org/jira/browse/JBCACHE-1166
-        //   http://jira.jboss.com/jira/browse/JBCACHE-1151
-        //   Optimistic locking may solve this but until we cross that bridge we'll institute a wait/retry
-        //   for our delete attempt, hoping the lock will be released.
-        boolean done = false;
-        int count = 0, max = 20;
-        do {
-            try {
-                // the list must be cleared (simulates rollback), ids could change between attempts
-                deletedResourceIds.clear();
-                deleteResourceRecursive(user, resource, deletedResourceIds);
-                done = true;
-            } catch (RuntimeException e) {
-                if ((++count < max) && isPersistenceException(e)) {
-                    log
-                        .info("Retry# " + count + ": delete resource [" + resource + "] after persistence problem: "
-                            + e);
-                    try {
-                        Thread.sleep(500L);
-                    } catch (InterruptedException ie) {
-                        // ignore
-                    }
-                } else {
-                    throw e;
-                }
-            }
-        } while (!done);
+        // delete the resource and all its children
+        log.info("User [" + user + "] is marking resource [" + resource + "] for asychronous deletion");
+
+        // set agent references null
+        // foobar the resourceKeys
+        // update the inventory status to UNINVENTORY
+        Query toBeDeletedQuery = entityManager.createNamedQuery(Resource.QUERY_FIND_DESCENDENTS);
+        toBeDeletedQuery.setParameter("resourceId", resourceId);
+        List<Integer> toBeDeletedResourceIds = toBeDeletedQuery.getResultList();
+
+        Query markDeletedQuery = entityManager.createNamedQuery(Resource.QUERY_MARK_RESOURCES_FOR_ASYNC_DELETION);
+        markDeletedQuery.setParameter("resourceId", resourceId);
+        markDeletedQuery.setParameter("status", InventoryStatus.UNINVENTORIED);
+        markDeletedQuery.executeUpdate();
 
         // still need to tell the agent about the removed resources so it stops avail reports
         if (agentClient != null) {
@@ -324,74 +299,13 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             agentManager.deleteAgent(doomedAgent);
         }
 
-        return deletedResourceIds;
-    }
-
-    private boolean isPersistenceException(Exception e) {
-        boolean result = false;
-
-        for (Throwable t = e; (!result && (null != t)); t = t.getCause()) {
-            result = t instanceof PersistenceException;
-        }
-
-        return result;
-    }
-
-    private void deleteResourceRecursive(Subject user, Resource resource, List<Integer> deletedResourceIds) {
-
-        List<Resource> resourcesToDelete = new ArrayList<Resource>();
-
-        prepareDeleteResourceRecursive(user, resource, resourcesToDelete, deletedResourceIds);
-
-        Subject overlord = subjectManager.getOverlord();
-
-        for (int size = resourcesToDelete.size(), fromIndex = 0, toIndex = BULK_DELETE_SIZE; (fromIndex < size); fromIndex += BULK_DELETE_SIZE, toIndex += BULK_DELETE_SIZE) {
-
-            if (toIndex > size) {
-                toIndex = size;
-            }
-
-            // call through facade for transaction reasons
-            resourceManager.deleteResourcesInNewTransaction(overlord, resourcesToDelete.subList(fromIndex, toIndex));
-        }
-
-        return;
-    }
-
-    private void prepareDeleteResourceRecursive(Subject overlord, Resource resource, List<Resource> preparedResources,
-        List<Integer> preparedResourceIds) {
-
-        // prepare the children first
-        Set<Resource> children = new HashSet<Resource>(resource.getChildResources());
-        for (Resource child : children) {
-            prepareDeleteResourceRecursive(overlord, child, preparedResources, preparedResourceIds);
-        }
-
-        // Do anything necessary here as long as it does not involve the database
-
-        preparedResources.add(resource);
-        preparedResourceIds.add(resource.getId());
+        return toBeDeletedResourceIds;
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void deleteSingleResourceInNewTransaction(Subject user, Resource resource) {
-
-        List<Resource> resources = new ArrayList<Resource>(1);
-        resources.add(resource);
-        doDeleteResourcesInNewTransaction(user, resources);
-    }
-
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void deleteResourcesInNewTransaction(Subject user, List<Resource> resources) {
-
-        doDeleteResourcesInNewTransaction(user, resources);
-    }
-
-    private void doDeleteResourcesInNewTransaction(Subject user, List<Resource> resources) {
-
-        for (Resource resource : resources) {
-
-            doCacheCleanup(resource);
+    public void deleteSingleResourceInNewTransaction(Subject user, int resourceId) {
+        if (!authorizationManager.isOverlord(user)) {
+            throw new IllegalArgumentException("Only the overlord can execute out-of-band async resource delete method");
         }
 
         /*
@@ -409,204 +323,111 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         entityManager.flush();
         entityManager.clear();
 
-        doBulkDelete(resources);
-
-        for (Resource resource : resources) {
-            resource = entityManager.find(Resource.class, resource.getId());
-
-            if (log.isDebugEnabled()) {
-                log.debug("User [" + user + "] is deleting resource [" + resource + "]");
-            }
-
-            // now we can purge the resource, let cascading do the rest
-            entityManager.remove(resource);
+        boolean hasErrors = doBulkDelete(user, resourceId);
+        if (hasErrors) {
+            return; // return early if there were any errors, because we can't remove the resource yet
         }
+
+        Resource attachedResource = entityManager.find(Resource.class, resourceId);
+        if (log.isDebugEnabled()) {
+            log.debug("Overlord is asynchronously deleting resource [" + attachedResource + "]");
+        }
+
+        // now we can purge the resource, let cascading do the rest
+        entityManager.remove(attachedResource);
 
         return;
     }
 
-    private void doBulkDelete(List<Resource> resources) {
+    private boolean doBulkDelete(Subject overlord, int resourceId) {
+        String[] nativeQueriesToExecute = new String[] { //
+        ResourceGroup.QUERY_DELETE_EXPLICIT_BY_RESOURCE_IDS, // unmap from explicit groups
+            ResourceGroup.QUERY_DELETE_IMPLICIT_BY_RESOURCE_IDS // unmap from implicit groups
+        };
 
-        Query q = null;
+        String[] namedQueriesToExecute = new String[] { //
+        ResourceChannel.DELETE_BY_RESOURCES, //
+            MeasurementBaseline.QUERY_DELETE_BY_RESOURCES, // baseline BEFORE schedules
+            MeasurementDataTrait.QUERY_DELETE_BY_RESOURCES, // traits BEFORE schedules
+            CallTimeDataValue.QUERY_DELETE_BY_RESOURCES, // call time data values BEFORE schedules & call time data keys
+            CallTimeDataKey.QUERY_DELETE_BY_RESOURCES, // call time data keys BEFORE schedules
+            MeasurementOOB.DELETE_FOR_RESOURCES, //
+            MeasurementSchedule.DELETE_BY_RESOURCES, // scheduleS AFTER baselines, traits, and calltime data
+            Availability.QUERY_DELETE_BY_RESOURCES, //
+            ResourceError.QUERY_DELETE_BY_RESOURCES, //
+            Event.DELETE_BY_RESOURCES, //
+            EventSource.QUERY_DELETE_BY_RESOURCES, //
+            PackageInstallationStep.QUERY_DELETE_BY_RESOURCES, // steps BEFORE installed package history
+            InstalledPackageHistory.QUERY_DELETE_BY_RESOURCES, // history BEFORE installed packages & content service requests
+            InstalledPackage.QUERY_DELETE_BY_RESOURCES, //
+            ContentServiceRequest.QUERY_DELETE_BY_RESOURCES, ResourceOperationScheduleEntity.QUERY_DELETE_BY_RESOURCES, //
+            ResourceOperationHistory.QUERY_DELETE_BY_RESOURCES, //
+            DeleteResourceHistory.QUERY_DELETE_BY_RESOURCES, //
+            CreateResourceHistory.QUERY_DELETE_BY_RESOURCES, //
+            ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_1, // _1 BEFORE _2
+            ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_2, //
+            PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_1, // _1 BEFORE _2
+            PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_2, //
+            AlertConditionLog.QUERY_DELETE_BY_RESOURCES, //    Don't 
+            AlertNotificationLog.QUERY_DELETE_BY_RESOURCES, // alter
+            Alert.QUERY_DELETE_BY_RESOURCES, //                order
+            AlertCondition.QUERY_DELETE_BY_RESOURCES, //       of
+            AlertDampeningEvent.QUERY_DELETE_BY_RESOURCES, //  alert-
+            AlertNotification.QUERY_DELETE_BY_RESOURCES, //    related
+            AlertDefinition.QUERY_DELETE_BY_RESOURCES //       deletes
+        };
 
-        // bulk delete: unsubscribe from subscribed channels
-        q = entityManager.createNamedQuery(ResourceChannel.DELETE_BY_RESOURCES);
-        q.setParameter("resources", resources);
-        q.executeUpdate();
+        List<Integer> resourceIds = new ArrayList<Integer>();
+        resourceIds.add(resourceId);
 
-        // bulk delete: unmap from explicit groups
-        // TODO: should this be a NamedQuery to protect the cache? How to do this on a JoinTable(jshaughn)
-        q = entityManager.createNativeQuery(ResourceGroup.QUERY_DELETE_EXPLICIT_BY_RESOURCE_IDS);
-        q.setParameter("resourceIds", resources);
-        q.executeUpdate();
-
-        // bulk delete: unmap from implicit groups
-        // TODO: should this be a NamedQuery to protect the cache? How to do this on a JoinTable(jshaughn)
-        q = entityManager.createNativeQuery(ResourceGroup.QUERY_DELETE_IMPLICIT_BY_RESOURCE_IDS);
-        q.setParameter("resourceIds", resources);
-        q.executeUpdate();
-
-        // bulk delete: measurement baseline, must come before MeasurementSchedule
-        q = entityManager.createNamedQuery(MeasurementBaseline.QUERY_DELETE_BY_RESOURCES);
-        q.setParameter("resources", resources);
-        q.executeUpdate();
-
-        // bulk delete: measurement traits, must come before MeasurementSchedule
-        q = entityManager.createNamedQuery(MeasurementDataTrait.QUERY_DELETE_BY_RESOURCES);
-        q.setParameter("resources", resources);
-        q.executeUpdate();
-
-        // bulk delete: measurement call time data values, must come before MeasurementSchedule and call time data keys
-        q = entityManager.createNamedQuery(CallTimeDataValue.QUERY_DELETE_BY_RESOURCES);
-        q.setParameter("resources", resources);
-        q.executeUpdate();
-
-        // bulk delete: measurement call time data keys, must come before MeasurementSchedule
-        q = entityManager.createNamedQuery(CallTimeDataKey.QUERY_DELETE_BY_RESOURCES);
-        q.setParameter("resources", resources);
-        q.executeUpdate();
-
-        // OOB data
-        q = entityManager.createNamedQuery(MeasurementOOB.DELETE_FOR_RESOURCES);
-        q.setParameter("resources", resources);
-        q.executeUpdate();
-
-        // bulk delete: measurement schedule, must come after measurement baseline, trait, and calltime data
-        q = entityManager.createNamedQuery(MeasurementSchedule.DELETE_BY_RESOURCES);
-        q.setParameter("resources", resources);
-        q.executeUpdate();
-
-        // bulk delete: availability
-        q = entityManager.createNamedQuery(Availability.QUERY_DELETE_BY_RESOURCES);
-        q.setParameter("resources", resources);
-        q.executeUpdate();
-
-        // bulk delete: resource error
-        q = entityManager.createNamedQuery(ResourceError.QUERY_DELETE_BY_RESOURCES);
-        q.setParameter("resources", resources);
-        q.executeUpdate();
-
-        // bulk delete: events
-        q = entityManager.createNamedQuery(Event.DELETE_BY_RESOURCES);
-        q.setParameter("resources", resources);
-        q.executeUpdate();
-
-        // bulk delete: event source
-        q = entityManager.createNamedQuery(EventSource.QUERY_DELETE_BY_RESOURCES);
-        q.setParameter("resources", resources);
-        q.executeUpdate();
-
-        // bulk delete: Installed package history install step, must come before installed package history
-        q = entityManager.createNamedQuery(PackageInstallationStep.QUERY_DELETE_BY_RESOURCES);
-        q.setParameter("resources", resources);
-        q.executeUpdate();
-
-        // bulk delete: Installed package history, must come before installed packages, content request
-        q = entityManager.createNamedQuery(InstalledPackageHistory.QUERY_DELETE_BY_RESOURCES);
-        q.setParameter("resources", resources);
-        q.executeUpdate();
-
-        // bulk delete: Installed packages
-        q = entityManager.createNamedQuery(InstalledPackage.QUERY_DELETE_BY_RESOURCES);
-        q.setParameter("resources", resources);
-        q.executeUpdate();
-
-        // bulk delete: Content service requests
-        q = entityManager.createNamedQuery(ContentServiceRequest.QUERY_DELETE_BY_RESOURCES);
-        q.setParameter("resources", resources);
-        q.executeUpdate();
-
-        // bulk delete: Operation Schedule
-        q = entityManager.createNamedQuery(ResourceOperationScheduleEntity.QUERY_DELETE_BY_RESOURCES);
-        q.setParameter("resources", resources);
-        q.executeUpdate();
-
-        // bulk delete: Operation History
-        q = entityManager.createNamedQuery(ResourceOperationHistory.QUERY_DELETE_BY_RESOURCES);
-        q.setParameter("resources", resources);
-        q.executeUpdate();
-
-        // bulk delete: Delete History
-        q = entityManager.createNamedQuery(DeleteResourceHistory.QUERY_DELETE_BY_RESOURCES);
-        q.setParameter("resources", resources);
-        q.executeUpdate();
-
-        // bulk delete: Create History
-        q = entityManager.createNamedQuery(CreateResourceHistory.QUERY_DELETE_BY_RESOURCES);
-        q.setParameter("resources", resources);
-        q.executeUpdate();
-
-        // bulk delete: Config update (part 1)
-        q = entityManager.createNamedQuery(ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_1);
-        q.setParameter("resources", resources);
-        q.executeUpdate();
-
-        // bulk delete: Config update (part 2)
-        q = entityManager.createNamedQuery(ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_2);
-        q.setParameter("resources", resources);
-        q.executeUpdate();
-
-        // bulk delete: Plugin Config update (part 1)
-        q = entityManager.createNamedQuery(PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_1);
-        q.setParameter("resources", resources);
-        q.executeUpdate();
-
-        // bulk delete: Plugin Config update (part 2)
-        q = entityManager.createNamedQuery(PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_2);
-        q.setParameter("resources", resources);
-        q.executeUpdate();
-
-        // bulk delete: Alert condition log. Do not alter order of alert related deletes
-        q = entityManager.createNamedQuery(AlertConditionLog.QUERY_DELETE_BY_RESOURCES);
-        q.setParameter("resources", resources);
-        q.executeUpdate();
-
-        // bulk delete: Alert Notification Log. Do not alter order of alert related deletes
-        q = entityManager.createNamedQuery(AlertNotificationLog.QUERY_DELETE_BY_RESOURCES);
-        q.setParameter("resources", resources);
-        q.executeUpdate();
-
-        // bulk delete: Alert. Do not alter order of alert related deletes
-        q = entityManager.createNamedQuery(Alert.QUERY_DELETE_BY_RESOURCES);
-        q.setParameter("resources", resources);
-        q.executeUpdate();
-
-        // bulk delete: Alert Condition. Do not alter order of alert related deletes
-        q = entityManager.createNamedQuery(AlertCondition.QUERY_DELETE_BY_RESOURCES);
-        q.setParameter("resources", resources);
-        q.executeUpdate();
-
-        // bulk delete: Alert Dampening. Do not alter order of alert related deletes
-        q = entityManager.createNamedQuery(AlertDampeningEvent.QUERY_DELETE_BY_RESOURCES);
-        q.setParameter("resources", resources);
-        q.executeUpdate();
-
-        // bulk delete: Alert Notification. Do not alter order of alert related deletes
-        q = entityManager.createNamedQuery(AlertNotification.QUERY_DELETE_BY_RESOURCES);
-        q.setParameter("resources", resources);
-        q.executeUpdate();
-
-        // bulk delete: Alert Definition. Do not alter order of alert related deletes
-        q = entityManager.createNamedQuery(AlertDefinition.QUERY_DELETE_BY_RESOURCES);
-        q.setParameter("resources", resources);
-        q.executeUpdate();
-
-        entityManager.flush();
-    }
-
-    /**
-     * Clean any of own caches as necessary. As much as possible this code should not generate
-     * calls to the database.
-     */
-    private void doCacheCleanup(Resource resource) {
-        Subject overlord = subjectManager.getOverlord();
-        int resourceId = resource.getId();
-
-        if (cleanupScheduledOperationsForResource(overlord, resourceId) > 0) {
-            entityManager.flush();
+        boolean hasErrors = false;
+        for (String nativeQueryToExecute : nativeQueriesToExecute) {
+            // execute all in new transactions, continuing on error, but recording whether errors occurred
+            hasErrors |= bulkNativeQueryDeleteInNewTransaction(overlord, nativeQueryToExecute, resourceIds);
+        }
+        for (String namedQueryToExecute : namedQueriesToExecute) {
+            // execute all in new transactions, continuing on error, but recording whether errors occurred
+            hasErrors |= bulkNamedQueryDeleteInNewTransaction(overlord, namedQueryToExecute, resourceIds);
         }
 
-        agentStatusManager.updateByResource(resourceId);
+        entityManager.flush();
+
+        return hasErrors;
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public boolean bulkNativeQueryDeleteInNewTransaction(Subject subject, String nativeQueryString,
+        List<Integer> resourceIds) {
+        if (!authorizationManager.isOverlord(subject)) {
+            throw new IllegalArgumentException("Only the overlord can execute arbitrary native query strings");
+        }
+
+        try {
+            Query nativeQuery = entityManager.createNativeQuery(nativeQueryString);
+            nativeQuery.setParameter("resourceIds", resourceIds);
+            nativeQuery.executeUpdate();
+        } catch (Throwable t) {
+            log.error("Error during bulk native query delete for '" + nativeQueryString + "' for " + resourceIds, t);
+            return true; // had errors
+        }
+        return false;
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public boolean bulkNamedQueryDeleteInNewTransaction(Subject subject, String namedQuery, List<Integer> resourceIds) {
+        if (!authorizationManager.isOverlord(subject)) {
+            throw new IllegalArgumentException("Only the overlord can execute arbitrary named query strings");
+        }
+
+        try {
+            Query nativeQuery = entityManager.createNamedQuery(namedQuery);
+            nativeQuery.setParameter("resourceIds", resourceIds);
+            nativeQuery.executeUpdate();
+        } catch (Throwable t) {
+            log.error("Error during bulk named query delete for '" + namedQuery + "' for " + resourceIds, t);
+            return true; // had errors
+        }
+        return false;
     }
 
     /**
@@ -1130,6 +951,18 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         long count = (Long) queryCount.getSingleResult();
 
         return (int) count;
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<Integer> getResourcesMarkedForAsyncDeletion(Subject user) {
+        if (!authorizationManager.isOverlord(user)) {
+            throw new IllegalArgumentException("Only the overlord can purge resources marked for deletion");
+        }
+
+        Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_RESOURCES_MARKED_FOR_ASYNC_DELETION);
+        List<Integer> results = query.getResultList();
+
+        return results;
     }
 
     @SuppressWarnings("unchecked")

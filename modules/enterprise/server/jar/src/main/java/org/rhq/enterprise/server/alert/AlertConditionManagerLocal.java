@@ -25,6 +25,7 @@ import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.composite.AbstractAlertConditionCategoryComposite;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
@@ -43,5 +44,7 @@ public interface AlertConditionManagerLocal {
 
     PageList<? extends AbstractAlertConditionCategoryComposite> getAlertConditionComposites(Subject user,
         Integer agentId, AlertConditionCategory category, PageControl pageControl);
+
+    InventoryStatus getResourceStatusByConditionId(int alertConditionId);
 
 }

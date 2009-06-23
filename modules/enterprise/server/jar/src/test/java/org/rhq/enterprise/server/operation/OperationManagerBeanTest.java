@@ -338,7 +338,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         PageList<GroupOperationHistory> results;
         results = operationManager.getCompletedGroupOperationHistories(superuser, newGroup.getId(), PageControl
             .getUnlimitedInstance());
-        assert results.size() == 1: "Expected 1 result, but got " + results.size();
+        assert results.size() == 1 : "Expected 1 result, but got " + results.size();
 
         operationManager.deleteOperationHistory(superuser, results.get(0).getId(), false);
 
@@ -1101,10 +1101,9 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
             System.out.println("We did not yet get a result -- waiting some more");
             Thread.sleep(5000L);
             results = operationManager.getCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
-            PageControl.getUnlimitedInstance());
+                PageControl.getUnlimitedInstance());
         }
-        assert results.size() == 1: "Did not get 1 result, but " + results.size();
-
+        assert results.size() == 1 : "Did not get 1 result, but " + results.size();
 
         ResourceOperationHistory history = results.get(0);
         assert history.getErrorMessage() != null : history;
@@ -1641,7 +1640,9 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
                 em = null;
 
                 // then invoke bulk delete on the resource to remove any dependencies not defined in the hibernate entity model
-                resourceManager.deleteSingleResourceInNewTransaction(overlord, resource);
+                // perform in-band and out-of-band work in quick succession
+                resourceManager.deleteResource(overlord, resource.getId());
+                resourceManager.deleteSingleResourceInNewTransaction(overlord, resource.getId());
 
                 // then kill the group via the RG manager, it also handles cleanup of non hibernate model info
                 resourceGroupManager.deleteResourceGroup(overlord, group.getId());

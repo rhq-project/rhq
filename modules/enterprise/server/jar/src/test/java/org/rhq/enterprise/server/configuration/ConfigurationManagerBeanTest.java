@@ -144,8 +144,11 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
             EntityManager em = getEntityManager();
 
             try {
-                resourceManager.deleteSingleResourceInNewTransaction(overlord, newResource1);
-                resourceManager.deleteSingleResourceInNewTransaction(overlord, newResource2);
+                // perform in-band and out-of-band work in quick succession
+                resourceManager.deleteResource(overlord, newResource1.getId());
+                resourceManager.deleteSingleResourceInNewTransaction(overlord, newResource1.getId());
+                resourceManager.deleteResource(overlord, newResource2.getId());
+                resourceManager.deleteSingleResourceInNewTransaction(overlord, newResource2.getId());
             } catch (Exception e) {
                 System.out.println(e);
                 throw e;

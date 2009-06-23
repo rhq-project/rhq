@@ -69,7 +69,7 @@ import org.rhq.core.domain.resource.Resource;
         + "FROM InstalledPackage ip JOIN ip.resource res LEFT JOIN ip.packageVersion pv LEFT JOIN pv.generalPackage gp LEFT JOIN gp.packageType pt "
         + "WHERE res.id = :resourceId " + "  AND gp.id = :generalPackageId"),
     @NamedQuery(name = InstalledPackage.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM InstalledPackage ip "
-        + " WHERE ip.resource IN (:resources))") })
+        + " WHERE ip.resource.id IN ( :resourceIds ) )") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_INSTALLED_PACKAGE_ID_SEQ")
 @Table(name = "RHQ_INSTALLED_PACKAGE")
 public class InstalledPackage implements Serializable {

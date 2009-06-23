@@ -66,6 +66,7 @@ import org.rhq.core.domain.measurement.NumericType;
 import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
 import org.rhq.core.domain.measurement.composite.MeasurementScheduleComposite;
 import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupCategory;
@@ -1129,8 +1130,9 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     public int getScheduledMeasurementsPerMinute() {
         Number rate = 0;
         try {
-            rate = (Number) entityManager.createNamedQuery(MeasurementSchedule.GET_SCHEDULED_MEASUREMENTS_PER_MINUTED)
-                .getSingleResult();
+            Query query = entityManager.createNamedQuery(MeasurementSchedule.GET_SCHEDULED_MEASUREMENTS_PER_MINUTED);
+            query.setParameter("status", InventoryStatus.COMMITTED);
+            rate = (Number) query.getSingleResult();
         } catch (Throwable t) {
             measurementScheduleManager.errorCorrectSchedules();
         }

@@ -92,8 +92,9 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
     public void afterMethod() throws Exception {
         try {
             if (theResource != null) {
-                resourceManager.deleteSingleResourceInNewTransaction(overlord, theResource);
-                //resourceManager.deleteResource(overlord, theResource.getId());
+                // perform in-band and out-of-band work in quick succession
+                resourceManager.deleteResource(overlord, theResource.getId());
+                resourceManager.deleteSingleResourceInNewTransaction(overlord, theResource.getId());
                 theResource = null;
             }
 
@@ -568,7 +569,9 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             // delete all the new resources we added, but don't delete "theResource" (item #0) - afterMethod will do that one
             start = System.currentTimeMillis();
             for (int i = 1; i < allResources.size(); i++) {
-                resourceManager.deleteSingleResourceInNewTransaction(overlord, allResources.get(i));
+                // perform in-band and out-of-band work in quick succession
+                resourceManager.deleteResource(overlord, allResources.get(i).getId());
+                resourceManager.deleteSingleResourceInNewTransaction(overlord, allResources.get(i).getId());
             }
 
             em = null;
@@ -991,7 +994,9 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             // delete all the new resources we added, but don't delete "theResource" (item #0) - afterMethod will do that one
             start = System.currentTimeMillis();
             for (int i = 1; i < allResources.size(); i++) {
-                resourceManager.deleteSingleResourceInNewTransaction(overlord, allResources.get(i));
+                // perform in-band and out-of-band work in quick succession
+                resourceManager.deleteResource(overlord, allResources.get(i).getId());
+                resourceManager.deleteSingleResourceInNewTransaction(overlord, allResources.get(i).getId());
             }
 
             em = null;

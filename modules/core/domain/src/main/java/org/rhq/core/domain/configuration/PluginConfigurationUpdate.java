@@ -79,11 +79,11 @@ import org.rhq.core.domain.resource.Resource;
         + "DELETE FROM Configuration c " //
         + " WHERE c IN ( SELECT pcu.configuration " //
         + "                FROM PluginConfigurationUpdate pcu " //
-        + "               WHERE pcu.resource IN (:resources) " //
+        + "               WHERE pcu.resource.id IN ( :resourceIds ) " //
         + "                 AND NOT pcu.configuration = pcu.resource.pluginConfiguration )"),
     @NamedQuery(name = PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_2, query = "" //
         + "DELETE FROM PluginConfigurationUpdate pcu " //
-        + " WHERE pcu.resource IN ( :resources )"),
+        + " WHERE pcu.resource.id IN ( :resourceIds )"),
     @NamedQuery(name = PluginConfigurationUpdate.QUERY_DELETE_UPDATE_AGGREGATE_BY_GROUP, query = "" //
         + "UPDATE PluginConfigurationUpdate pcu " //
         + "   SET pcu.aggregateConfigurationUpdate = null " //

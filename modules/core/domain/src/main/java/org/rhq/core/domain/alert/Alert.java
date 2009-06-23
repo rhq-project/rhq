@@ -135,7 +135,7 @@ import org.rhq.core.domain.alert.notification.AlertNotificationLog;
         + "DELETE FROM Alert a " //
         + " WHERE a.alertDefinition IN ( SELECT ad " //
         + "                                FROM AlertDefinition ad " //
-        + "                               WHERE ad.resource IN ( :resources ) )"),
+        + "                               WHERE ad.resource.id IN ( :resourceIds ) )"),
     @NamedQuery(name = Alert.QUERY_FIND_ALL_COMPOSITES_ADMIN, query = "" //
         + "   SELECT new org.rhq.core.domain.alert.composite.AlertHistoryComposite" // 
         + "        ( a, parent.id, parent.name ) " //

@@ -159,7 +159,7 @@ public interface AgentManagerLocal {
     Agent getAgentByResourceId(int resourceId);
 
     /**
-     * Given a resource ID, this will return the agent responsible for servicing that resource.
+     * Given a resource ID, this will return the agent id responsible for servicing that resource.
      *
      * @param  resourceId
      *

@@ -131,7 +131,7 @@ public interface AvailabilityManagerLocal {
      * availabilities that have changed since the agent's last sent report. Note that if an agent has been restarted, it
      * will always send a full report as its first. An agent is obliged to sent at least one availability record in the
      * report in order for the server to determine which agent is sending the report (since a record has a Resource in
-     * it and from any Resource we can determine the Agent).
+     * it and from any Resource we can dsetermine the Agent).
      *
      * @param  report the report containing 1 or more availabilities for 1 or more resources.
      *
@@ -166,11 +166,11 @@ public interface AvailabilityManagerLocal {
      * server suspects is down. When an agent is suspect, all of its resources, including the platform, will be
      * backfilled with DOWN availabilities.
      *
-     * @param  agentName the name of the agent
+     * @param  agentId the id of the agent
      *
      * @return <code>true</code> if the agent is a suspect agent and has been backfilled
      */
-    boolean isAgentBackfilled(String agentName);
+    boolean isAgentBackfilled(int agentId);
 
     List<Availability> findAvailabilityWithinInterval(int resourceId, Date startDate, Date endDate);
 

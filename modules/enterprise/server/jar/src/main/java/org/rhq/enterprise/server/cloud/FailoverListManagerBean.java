@@ -27,6 +27,8 @@ import java.util.Map;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
@@ -79,6 +81,9 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
 
     @EJB
     AgentManagerLocal agentManager;
+
+    @EJB
+    FailoverListManagerLocal failoverListManager;
 
     public FailoverListComposite getExistingForSingleAgent(String agentName) {
         Agent agent = agentManager.getAgentByName(agentName);
@@ -153,9 +158,6 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
         List<Server> servers = cloudManager.getAllCloudServers();
         List<Agent> agents = agentManager.getAllAgents();
 
-        // clear out the existing server lists because we're going to generate new ones for all agents        
-        clear();
-
         return getForAgents(event, servers, agents, null);
     }
 
@@ -215,8 +217,7 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
 
                 if (null == bestBucket) {
                     // this should never happen but let's defensively check and log
-                    LogFactory.getLog(FailoverListManagerBean.class).error(
-                        "Unexpected Condition! null bucket in getForAllAgents()");
+                    log.error("Unexpected Condition! null bucket in getForAllAgents()");
                     continue;
                 }
 
@@ -239,9 +240,6 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
             }
         }
 
-        // persist the new server lists
-        persist(event, agentServerListMap);
-
         // generate the result Map
         for (Agent next : agentServerListMap.keySet()) {
             List<ServerEntry> serverEntries = new ArrayList<ServerEntry>(servers.size());
@@ -252,6 +250,13 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
 
             result.put(next, new FailoverListComposite(serverEntries));
         }
+
+        /* now that the intense in-memory manipulation is complete, let's do the stuff that needs to persist the
+         * results to the database; clear out the existing server lists **just** before persisting the new ones 
+         * to keep row lock hold time low
+         */
+        failoverListManager.clear();
+        failoverListManager.persist(event, agentServerListMap);
 
         return result;
     }
@@ -269,31 +274,6 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
                         bucket.assignedLoad = (existingLoad.assignedAgentCount / bucket.computePower);
                         break;
                     }
-                }
-            }
-        }
-    }
-
-    private void persist(PartitionEvent event, Map<Agent, List<ServerBucket>> agentServerListMap) {
-        FailoverList fl = null;
-        FailoverListDetails failoverListDetails = null;
-        PartitionEventDetails eventDetails = null;
-        List<ServerBucket> servers = null;
-
-        for (Agent next : agentServerListMap.keySet()) {
-            fl = new FailoverList(event, next);
-            entityManager.persist(fl);
-
-            servers = agentServerListMap.get(next);
-
-            for (int i = 0, size = servers.size(); (i < size); ++i) {
-                Server server = entityManager.find(Server.class, servers.get(i).server.getId());
-                failoverListDetails = new FailoverListDetails(fl, i, server);
-                entityManager.persist(failoverListDetails);
-                // event details only shows the current primary server topology
-                if (0 == i) {
-                    eventDetails = new PartitionEventDetails(event, next, server);
-                    entityManager.persist(eventDetails);
                 }
             }
         }
@@ -404,86 +384,6 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
         return 1.0;
     }
 
-    private static class ServerBucket {
-        Server server;
-        ServerEntry serverEntry;
-        int computePower;
-        double assignedLoad;
-        List<Agent> assignedAgents;
-
-        ServerBucket(Server server) {
-            this.server = server;
-            this.serverEntry = server.getServerEntry();
-            // TODO get the computePower from the server
-            this.computePower = 1;
-            this.assignedLoad = 0.0;
-            assignedAgents = new ArrayList<Agent>();
-        }
-
-        static ServerBucket getBestBucket(List<ServerBucket> buckets, List<ServerBucket> usedBuckets,
-            AffinityGroup affinityGroup, String preferredServerName) {
-            ServerBucket result = null;
-
-            // if the preferred server is available and does not break affinity, use it
-            if ((null != preferredServerName)
-                && (null == ServerBucket.getBucketByName(usedBuckets, preferredServerName))) {
-                result = ServerBucket.getBucketByName(buckets, preferredServerName);
-                if ((null != result) && (null != affinityGroup)
-                    && (!affinityGroup.equals(result.server.getAffinityGroup()))) {
-                    result = null;
-                }
-            }
-
-            if (null != result)
-                return result;
-
-            for (ServerBucket next : buckets) {
-
-                if (null == ServerBucket.getBucketByName(usedBuckets, next.server.getName())) {
-                    if (null == result) {
-                        // start with the first available candidate                        
-                        result = next;
-                        continue;
-                    }
-
-                    if (null == affinityGroup) {
-                        if (next.assignedLoad < result.assignedLoad) {
-                            result = next;
-                        }
-
-                        continue;
-                    }
-
-                    // affinity logic                    
-                    if (!affinityGroup.equals(result.server.getAffinityGroup())) {
-                        // always prefer affinity
-                        if (affinityGroup.equals(next.server.getAffinityGroup())) {
-                            result = next;
-                        } else if (next.assignedLoad < result.assignedLoad) {
-                            result = next;
-                        }
-                    } else if (affinityGroup.equals(next.server.getAffinityGroup())
-                        && (next.assignedLoad < result.assignedLoad)) {
-
-                        // if affinity is satisfied and assigned load is preferable, use this candidate
-                        result = next;
-                    }
-                }
-            }
-
-            return result;
-        }
-
-        static ServerBucket getBucketByName(List<ServerBucket> buckets, String serverName) {
-            for (ServerBucket next : buckets) {
-                if (next.server.getName().equals(serverName))
-                    return next;
-            }
-
-            return null;
-        }
-    }
-
     @SuppressWarnings("unused")
     private void logServerList(String debugTitle, Map<Agent, List<ServerBucket>> agentServerListMap) {
 
@@ -524,10 +424,37 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
         query.executeUpdate();
     }
 
-    private void clear() {
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public void clear() {
         Query query = entityManager.createNamedQuery(FailoverListDetails.QUERY_TRUNCATE);
         query.executeUpdate();
         query = entityManager.createNamedQuery(FailoverList.QUERY_TRUNCATE);
         query.executeUpdate();
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public void persist(PartitionEvent event, Map<Agent, List<ServerBucket>> agentServerListMap) {
+        FailoverList fl = null;
+        FailoverListDetails failoverListDetails = null;
+        PartitionEventDetails eventDetails = null;
+        List<ServerBucket> servers = null;
+
+        for (Agent next : agentServerListMap.keySet()) {
+            fl = new FailoverList(event, next);
+            entityManager.persist(fl);
+
+            servers = agentServerListMap.get(next);
+
+            for (int i = 0, size = servers.size(); (i < size); ++i) {
+                Server server = entityManager.find(Server.class, servers.get(i).server.getId());
+                failoverListDetails = new FailoverListDetails(fl, i, server);
+                entityManager.persist(failoverListDetails);
+                // event details only shows the current primary server topology
+                if (0 == i) {
+                    eventDetails = new PartitionEventDetails(event, next, server);
+                    entityManager.persist(eventDetails);
+                }
+            }
+        }
     }
 }

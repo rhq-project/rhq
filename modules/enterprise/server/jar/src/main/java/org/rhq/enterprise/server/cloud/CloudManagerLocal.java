@@ -68,4 +68,6 @@ public interface CloudManagerLocal {
     Server updateServer(Subject subject, Server server);
 
     PageList<FailoverListDetails> getFailoverListDetailsByAgentId(int agentId, PageControl pc);
+
+    void markStaleServersDown(Subject subject);
 }

@@ -33,12 +33,15 @@ import org.rhq.core.domain.discovery.InventoryReport;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
+import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.alert.AlertDefinitionCreationException;
 import org.rhq.enterprise.server.alert.AlertTemplateManagerLocal;
+import org.rhq.enterprise.server.cloud.StatusManagerLocal;
+import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
@@ -64,7 +67,16 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
         try {
             syncInfo = discoveryBoss.mergeInventoryReport(report);
         } catch (InvalidInventoryReportException e) {
-            log.error("Received invalid inventory report from agent [" + report.getAgent() + "].", e);
+            Agent agent = report.getAgent();
+            if (log.isDebugEnabled()) {
+                log.error("Received invalid inventory report from agent [" + agent + "]", e);
+            } else {
+                /* 
+                 * this is expected when the platform is uninventoried, because the agent often has in-flight reports
+                 * going to the server at the time the platform's agent is being deleted from the database
+                 */
+                log.error("Received invalid inventory report from agent [" + agent + "]: " + e.getMessage());
+            }
             throw e;
         } catch (RuntimeException e) {
             log.error(
@@ -194,6 +206,8 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
         AlertTemplateManagerLocal alertTemplateManager = LookupUtil.getAlertTemplateManager();
         MeasurementScheduleManagerLocal scheduleManager = LookupUtil.getMeasurementScheduleManager();
+        AgentManagerLocal agentManager = LookupUtil.getAgentManager();
+        StatusManagerLocal statusManager = LookupUtil.getStatusManager();
 
         long start = System.currentTimeMillis();
 
@@ -224,9 +238,20 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
                  * but we'll log it anyway, just in case, so it isn't just swallowed
                  */
                 log.error(adce);
-            } catch (Exception e) {
-                log.debug("Could not apply alert templates for resourceId = " + resourceId, e);
+            } catch (Throwable t) {
+                log.debug("Could not apply alert templates for resourceId = " + resourceId, t);
             }
+        }
+
+        try {
+            if (resourceIds.size() > 0) {
+                // they all come from the same agent, so pick any old one
+                int anyResourceIdFromNewlyCommittedSet = resourceIds.iterator().next();
+                int agentId = agentManager.getAgentIdByResourceId(anyResourceIdFromNewlyCommittedSet);
+                statusManager.updateByAgent(agentId);
+            }
+        } catch (Throwable t) {
+            log.debug("Could not reload caches for newly committed resources", t);
         }
 
         time = (System.currentTimeMillis() - start);

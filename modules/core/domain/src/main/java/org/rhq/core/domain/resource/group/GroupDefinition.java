@@ -44,9 +44,10 @@ import javax.persistence.Table;
 import org.rhq.core.domain.util.StringUtils;
 
 @Entity
-@NamedQueries( { @NamedQuery(name = GroupDefinition.QUERY_FIND_ALL, query = "" //
-    + "SELECT gd " //
-    + "  FROM GroupDefinition AS gd "), //
+@NamedQueries( {
+    @NamedQuery(name = GroupDefinition.QUERY_FIND_ALL, query = "" //
+        + "SELECT gd " //
+        + "  FROM GroupDefinition AS gd "), //
     @NamedQuery(name = GroupDefinition.QUERY_FIND_BY_NAME, query = "" //
         + "SELECT gd " //
         + "  FROM GroupDefinition AS gd " //
@@ -60,7 +61,12 @@ import org.rhq.core.domain.util.StringUtils;
         + "  FROM ResourceGroup rg " //
         + " WHERE rg.groupDefinition IS NOT NULL "), //
     @NamedQuery(name = GroupDefinition.QUERY_FIND_MANAGED_RESOURCE_GROUP_IDS_ADMIN, query = "" //
-        + "SELECT rg.id " + "  FROM ResourceGroup rg " //
+        + "SELECT rg.id " //
+        + "  FROM ResourceGroup rg " //
+        + " WHERE rg.groupDefinition.id = :groupDefinitionId "),
+    @NamedQuery(name = GroupDefinition.QUERY_FIND_MANAGED_RESOURCE_GROUP_SIZE_ADMIN, query = "" //
+        + "SELECT SUM(rg.id) " //
+        + "  FROM ResourceGroup rg " //
         + " WHERE rg.groupDefinition.id = :groupDefinitionId "),
     /*
      * the next recalculation interval is defined as:
@@ -93,6 +99,7 @@ public class GroupDefinition implements Serializable {
     public static final String QUERY_FIND_MEMBERS_count = "GroupDefinition.findMembers_count";
     public static final String QUERY_FIND_ALL_MEMBERS = "GroupDefinition.findAllMembers_admin";
     public static final String QUERY_FIND_MANAGED_RESOURCE_GROUP_IDS_ADMIN = "GroupDefinition.findManagedResourceGroupIds_admin";
+    public static final String QUERY_FIND_MANAGED_RESOURCE_GROUP_SIZE_ADMIN = "GroupDefinition.findManagedResourceGroupSize_admin";
     public static final String QUERY_FIND_IDS_FOR_RECALCULATION = "GroupDefinition.findIdsForRecalculation_admin";
     public static final String QUERY_FIND_ALL_RECALCULATING = "GroupDefinition.findAllRecalculating_admin";
 

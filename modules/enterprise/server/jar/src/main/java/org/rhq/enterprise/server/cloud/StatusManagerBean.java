@@ -37,7 +37,6 @@ import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.resource.Agent;
-import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.cloud.instance.CacheConsistencyManagerBean;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
@@ -135,28 +134,25 @@ public class StatusManagerBean implements StatusManagerLocal {
     }
 
     /* 
-     * is it absolutely necessary to execute this method at all?  caches will eventually be cleaned up
-     * when they need to be reloaded.  do we have to reload caches when we uninventory resources too?
+     * this is used to reload the caches because some resource was just imported by a discovery report,
+     * which requires reloading the cached because alert templates would have been applied to resources;
+     * we know we don't need to call updateByResource(List<Integer> resourceIds) because a discovery report
+     * only ever contains resources from the same agent so we can shortcut the work and call out to update
+     * the agent a single time 
+     * 
+     * the agent status no longer has to be updated when a resource is uninventoried because the out-of-band alerts
+     * processor (AlertsConditionConsumerBean) handles data coming across the line for resources that have either
+     * been deleted or uninventoried.
      */
-    public void updateByResource(int resourceId) {
-        List<Server> servers = cloudManager.getAllServers();
-        for (Server server : servers) {
-            server.addStatus(Server.Status.RESOURCE_HIERARCHY_UPDATED);
-        }
+    public void updateByAgent(int agentId) {
         if (log.isDebugEnabled()) {
             log.debug("Marking status=" + Server.Status.RESOURCE_HIERARCHY_UPDATED + " for all servers in the cloud");
         }
 
-        Resource resource = entityManager.find(Resource.class, resourceId);
-        Agent agent = resource.getAgent();
-        if (agent == null) {
-            //TODO: jmarques - fix ResourceFactoryManagerBeanTest, see rev1202-1204 for examples of the proper fix
-            return; // some unit tests won't always have attached agents for all resources
-        }
+        Agent agent = entityManager.find(Agent.class, agentId);
         agent.addStatus(Agent.Status.RESOURCE_HIERARCHY_UPDATED);
         if (log.isDebugEnabled()) {
-            log.debug("Marking status, agent[id=" + agent.getId() + ", status=" + agent.getStatus()
-                + "] for resource[id=" + resourceId + "]");
+            log.debug("Marking status, agent[id=" + agent.getId() + ", status=" + agent.getStatus() + "]");
         }
     }
 

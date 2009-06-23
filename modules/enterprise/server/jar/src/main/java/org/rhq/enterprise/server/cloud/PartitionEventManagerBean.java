@@ -204,7 +204,6 @@ public class PartitionEventManagerBean implements PartitionEventManagerLocal {
         query.setParameter("details", details);
         countQuery.setParameter("details", details);
 
-        @SuppressWarnings("unchecked")
         List<PartitionEvent> results = query.getResultList();
         long count = (Long) countQuery.getSingleResult();
 

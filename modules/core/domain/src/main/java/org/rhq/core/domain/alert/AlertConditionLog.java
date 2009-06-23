@@ -53,7 +53,7 @@ import javax.persistence.Table;
     @NamedQuery(name = AlertConditionLog.QUERY_DELETE_BY_ALERT_CTIME, query = "DELETE AlertConditionLog acl "
         + "WHERE acl.id IN " + "( SELECT iacl.id " + "FROM AlertConditionLog iacl "
         + "WHERE iacl.alert.ctime BETWEEN :begin AND :end " + ")"),
-    @NamedQuery(name = AlertConditionLog.QUERY_DELETE_BY_RESOURCES, query = "DELETE AlertConditionLog acl WHERE acl.condition IN ( SELECT ac FROM AlertCondition ac WHERE ac.alertDefinition IN ( SELECT ad FROM AlertDefinition ad WHERE ad.resource IN (:resources)))"),
+    @NamedQuery(name = AlertConditionLog.QUERY_DELETE_BY_RESOURCES, query = "DELETE AlertConditionLog acl WHERE acl.condition IN ( SELECT ac FROM AlertCondition ac WHERE ac.alertDefinition IN ( SELECT ad FROM AlertDefinition ad WHERE ad.resource.id IN ( :resourceIds ) ))"),
     @NamedQuery(name = AlertConditionLog.QUERY_DELETE_UNMATCHED_BY_ALERT_DEFINITION_ID, //
     query = "DELETE AlertConditionLog acl" // 
         + "   WHERE acl.id IN ( SELECT iacl.id " //

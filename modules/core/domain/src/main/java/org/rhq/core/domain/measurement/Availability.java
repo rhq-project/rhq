@@ -96,10 +96,10 @@ import org.rhq.core.domain.resource.Resource;
     // gone down is by the check-suspect-agent's backfiller - avail reports never show
     // a downed platform because the platform plugins all return UP for platform availability.
     @NamedQuery(name = Availability.QUERY_IS_AGENT_BACKFILLED, query = "SELECT COUNT(DISTINCT av.availabilityType) FROM Availability av WHERE "
-        + "   av.resource.agent.name = :agentName AND "
+        + "   av.resource.agent.id = :agentId AND "
         + "   av.resource.parentResource IS NULL AND "
         + "   av.endTime IS NULL AND " + "   NOT av.availabilityType = 0"),
-    @NamedQuery(name = Availability.QUERY_DELETE_BY_RESOURCES, query = "DELETE Availability a WHERE a.resource IN ( :resources )") })
+    @NamedQuery(name = Availability.QUERY_DELETE_BY_RESOURCES, query = "DELETE Availability a WHERE a.resource.id IN ( :resourceIds )") })
 @SequenceGenerator(name = "Generator", sequenceName = "RHQ_AVAILABILITY_ID_SEQ")
 @Table(name = "RHQ_AVAILABILITY")
 public class Availability implements Serializable {

@@ -67,7 +67,7 @@ import org.jetbrains.annotations.Nullable;
         + "AND value.beginTime >= :beginTime "
         + "AND value.endTime <= :endTime "
         + "GROUP BY key.callDestination "),
-    @NamedQuery(name = CallTimeDataValue.QUERY_DELETE_BY_RESOURCES, query = "DELETE CallTimeDataValue ctdv WHERE ctdv.key IN ( SELECT ctdk.id FROM CallTimeDataKey ctdk WHERE ctdk.schedule.resource IN ( :resources ) )") })
+    @NamedQuery(name = CallTimeDataValue.QUERY_DELETE_BY_RESOURCES, query = "DELETE CallTimeDataValue ctdv WHERE ctdv.key IN ( SELECT ctdk.id FROM CallTimeDataKey ctdk WHERE ctdk.schedule.resource.id IN ( :resourceIds ) )") })
 @SequenceGenerator(name = "idGenerator", sequenceName = "RHQ_CALLTIME_DATA_VALUE_ID_SEQ")
 @Table(name = "RHQ_CALLTIME_DATA_VALUE")
 public class CallTimeDataValue implements Externalizable {

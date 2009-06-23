@@ -44,6 +44,8 @@ import org.rhq.core.domain.measurement.MeasurementOOB;
 import org.rhq.core.domain.measurement.NumericType;
 import org.rhq.core.domain.resource.CreateResourceHistory;
 import org.rhq.core.domain.resource.DeleteResourceHistory;
+import org.rhq.core.domain.resource.InventoryStatus;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.util.exception.ThrowableUtil;
 
 /**
@@ -70,7 +72,6 @@ public class QueriesTest extends AbstractEJB3Test {
 
         //////////////////////////////////////////
         // ADD YOUR QUERIES WITH THEIR PARAMS HERE
-
         add(PackageVersion.QUERY_FIND_BY_CHANNEL_ID, new Object[] { "channelId", 1 });
         add(PackageVersion.QUERY_FIND_METADATA_BY_RESOURCE_ID, new Object[] { "resourceId", 1 });
         add(PackageVersion.QUERY_FIND_BY_CHANNEL_ID_WITH_PACKAGE, new Object[] { "channelId", 1 });
@@ -141,6 +142,17 @@ public class QueriesTest extends AbstractEJB3Test {
         }
 
         queries.put(queryName, paramsMap);
+    }
+
+    public void testAsyncUninventory() throws Exception {
+        TransactionManager tx = getTransactionManager();
+        tx.begin();
+
+        EntityManager entityManager = getEntityManager();
+        Query q = entityManager.createNamedQuery(Resource.QUERY_MARK_RESOURCES_FOR_ASYNC_DELETION);
+        q.setParameter("resourceId", 1);
+        q.setParameter("status", InventoryStatus.UNINVENTORIED);
+        q.executeUpdate();
     }
 
     public void testLongVarChar() throws Exception {

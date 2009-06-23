@@ -51,12 +51,9 @@ public interface SubjectManagerRemote {
      */
     @WebMethod
     void changePassword( //
-        @WebParam(name = "user")
-        Subject user, //
-        @WebParam(name = "username")
-        String username, //
-        @WebParam(name = "password")
-        String password) //
+        @WebParam(name = "user") Subject user, //
+        @WebParam(name = "username") String username, //
+        @WebParam(name = "password") String password) //
         throws Exception;
 
     /**
@@ -71,12 +68,9 @@ public interface SubjectManagerRemote {
      */
     @WebMethod
     void createPrincipal( //
-        @WebParam(name = "user")
-        Subject user, //
-        @WebParam(name = "username")
-        String username, //
-        @WebParam(name = "password")
-        String password) throws Exception;
+        @WebParam(name = "user") Subject user, //
+        @WebParam(name = "username") String username, //
+        @WebParam(name = "password") String password) throws Exception;
 
     /**
      * Create a a new subject. This <b>ignores</b> the roles in <code>subject</code>. The created subject will not be
@@ -91,10 +85,8 @@ public interface SubjectManagerRemote {
      */
     @WebMethod
     Subject createSubject( //
-        @WebParam(name = "user")
-        Subject user, //
-        @WebParam(name = "subject")
-        Subject subject) throws CreateException;
+        @WebParam(name = "user") Subject user, //
+        @WebParam(name = "subject") Subject subject) throws CreateException;
 
     /**
      * Deletes the given set of users, including both the {@link Subject} and {@link Principal} objects associated with
@@ -107,10 +99,8 @@ public interface SubjectManagerRemote {
      */
     @WebMethod
     void deleteUsers( //
-        @WebParam(name = "user")
-        Subject user, //
-        @WebParam(name = "subjectIds")
-        Integer[] subjectIds) throws Exception;
+        @WebParam(name = "user") Subject user, //
+        @WebParam(name = "subjectIds") Integer[] subjectIds) throws Exception;
 
     /**
      * Looks up the existing of a subject by the given username.
@@ -122,10 +112,8 @@ public interface SubjectManagerRemote {
      */
     @WebMethod
     Subject findSubjectByName( //
-        @WebParam(name = "user")
-        Subject user, //
-        @WebParam(name = "username")
-        String username);
+        @WebParam(name = "user") Subject user, //
+        @WebParam(name = "username") String username);
 
     /**
      * Check if a user is logged in.
@@ -136,8 +124,7 @@ public interface SubjectManagerRemote {
      */
     @WebMethod
     boolean isLoggedIn( //
-        @WebParam(name = "username")
-        String username);
+        @WebParam(name = "username") String username);
 
     /**
      * Logs a user into the system. This will authenticate the given user with the given password. If the user was
@@ -152,10 +139,8 @@ public interface SubjectManagerRemote {
      */
     @WebMethod
     Subject login( //
-        @WebParam(name = "username")
-        String username, //
-        @WebParam(name = "password")
-        String password) //
+        @WebParam(name = "username") String username, //
+        @WebParam(name = "password") String password) //
         throws LoginException;
 
     /**
@@ -165,8 +150,7 @@ public interface SubjectManagerRemote {
      */
     @WebMethod
     void logout( //
-        @WebParam(name = "sessionId")
-        int sessionId);
+        @WebParam(name = "sessionId") int sessionId);
 
     /**
      * Updates an existing subject with new data. This does <b>not</b> cascade any changes to the roles but it will save
@@ -179,9 +163,7 @@ public interface SubjectManagerRemote {
      */
     @WebMethod
     Subject updateSubject( //
-        @WebParam(name = "user")
-        Subject user, //
-        @WebParam(name = "subjectToModify")
-        Subject subjectToModify);
+        @WebParam(name = "user") Subject user, //
+        @WebParam(name = "subjectToModify") Subject subjectToModify);
 
 }

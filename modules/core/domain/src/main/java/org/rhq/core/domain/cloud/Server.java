@@ -78,7 +78,12 @@ import org.rhq.core.domain.resource.Agent;
         + "  FROM Server s " //
         + " WHERE s.affinityGroup IS NULL "), //
     @NamedQuery(name = Server.QUERY_DELETE_BY_ID, query = "" //
-        + "DELETE FROM Server s WHERE s.id = :serverId ") })
+        + "DELETE FROM Server s WHERE s.id = :serverId "), //
+    @NamedQuery(name = Server.QUERY_UPDATE_SET_STALE_DOWN, query = "" //
+        + "UPDATE Server s " //
+        + "   SET s.operationMode = :downMode " //
+        + " WHERE s.operationMode = :normalMode " //
+        + "   AND s.mtime < :staleTime ") })
 @SequenceGenerator(name = "id", sequenceName = "RHQ_SERVER_ID_SEQ")
 @Table(name = "RHQ_SERVER")
 public class Server implements Serializable {
@@ -92,6 +97,7 @@ public class Server implements Serializable {
     public static final String QUERY_FIND_BY_AFFINITY_GROUP = "Server.findByAffinityGroup";
     public static final String QUERY_FIND_WITHOUT_AFFINITY_GROUP = "Server.findWithoutAffinityGroup";
     public static final String QUERY_DELETE_BY_ID = "Server.deleteById";
+    public static final String QUERY_UPDATE_SET_STALE_DOWN = "Server.updateSetStaleDown";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "id")

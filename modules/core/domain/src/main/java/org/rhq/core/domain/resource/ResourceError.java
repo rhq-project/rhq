@@ -52,7 +52,7 @@ import org.jetbrains.annotations.Nullable;
  */
 @Entity
 @NamedQueries( {
-    @NamedQuery(name = ResourceError.QUERY_DELETE_BY_RESOURCES, query = "DELETE From ResourceError re WHERE re.resource IN (:resources)"),
+    @NamedQuery(name = ResourceError.QUERY_DELETE_BY_RESOURCES, query = "DELETE From ResourceError re WHERE re.resource.id IN ( :resourceIds )"),
     @NamedQuery(name = ResourceError.QUERY_FIND_BY_RESOURCE_ID, query = "SELECT re FROM ResourceError re WHERE re.resource.id = :resourceId"),
     @NamedQuery(name = ResourceError.QUERY_FIND_BY_RESOURCE_ID_AND_ERROR_TYPE, query = "SELECT re FROM ResourceError re WHERE re.resource.id = :resourceId AND re.errorType = :errorType") })
 @SequenceGenerator(name = "RHQ_RESOURCE_ERROR_SEQ", sequenceName = "RHQ_RESOURCE_ERROR_ID_SEQ")

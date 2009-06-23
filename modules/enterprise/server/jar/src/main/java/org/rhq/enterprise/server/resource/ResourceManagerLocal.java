@@ -103,17 +103,6 @@ public interface ResourceManagerLocal {
     List<Integer> deleteResource(Subject user, Integer resourceId);
 
     /**
-     * Deletes the given resources (but not their children) in a new transaction. This is normally used only within this
-     * manager bean itself. Clients normally should call {@link #deleteResource(Subject, Integer)}. If you call this
-     * method, make sure you have a specific reason for it; check to see if calling
-     * {@link #deleteResource(Subject, Integer)} would not be more appropriate.
-     *
-     * @param user     the user deleting the resources
-     * @param resources the resources to be deleted
-     */
-    void deleteResourcesInNewTransaction(Subject user, List<Resource> resources);
-
-    /**
      * Deletes the given resource (but not its children) in a new transaction. This is normally used only within this
      * manager bean itself. Clients normally should call {@link #deleteResource(Subject, Integer)}. If you call this
      * method, make sure you have a specific reason for it; check to see if calling
@@ -122,7 +111,11 @@ public interface ResourceManagerLocal {
      * @param user     the user deleting the resource
      * @param resource the resource to be deleted
      */
-    void deleteSingleResourceInNewTransaction(Subject user, Resource resource);
+    void deleteSingleResourceInNewTransaction(Subject user, int resourceId);
+
+    boolean bulkNativeQueryDeleteInNewTransaction(Subject subject, String nativeQueryString, List<Integer> resourceIds);
+
+    boolean bulkNamedQueryDeleteInNewTransaction(Subject subject, String namedQuery, List<Integer> resourceIds);
 
     /**
      * Changes the inventory status of the specified resource and optionally its descendents to the provided inventory
@@ -223,6 +216,8 @@ public interface ResourceManagerLocal {
     int getResourceCountByCategory(Subject user, ResourceCategory category, InventoryStatus status);
 
     int getResourceCountByTypeAndIds(Subject user, ResourceType type, Integer[] resourceIds);
+
+    List<Integer> getResourcesMarkedForAsyncDeletion(Subject user);
 
     /**
      * Gets a list of platforms that were recently added (committed) to inventory.

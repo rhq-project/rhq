@@ -158,7 +158,7 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
 
             try {
                 GroupDefinition groupDefinition = getById(groupDefinitionId);
-                int size = getManagedResourceGroupIdsForGroupDefinition(groupDefinitionId).size();
+                int size = getManagedResourceGroupSizeForGroupDefinition(groupDefinitionId);
                 monitor.updateStatistic(groupDefinition.getName(), size, success, singleEnd - singleStart);
             } catch (Throwable t) {
                 log.error("Error updating DynaGroup statistics GroupDefinition[id=" + groupDefinitionId + "]", t);
@@ -333,7 +333,8 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
              *       is hidden behind the MANAGE_INVENTORY permission, which is sufficient for all operations on a
              *       resource group including creation, deletion, and membership changes 
              */
-            Integer nextResourceGroupId = calculateGroupMembership_helper(subject, groupDefinitionId, result);
+            Integer nextResourceGroupId = groupDefinitionManager.calculateGroupMembership_helper(subject,
+                groupDefinitionId, result);
 
             /*
              * remove all ids returned from the helper.  by the time we're done looping over all
@@ -353,7 +354,7 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
          *       resource group including creation, deletion, and membership changes 
          */
         for (Integer doomedGroupId : doomedResourceGroupIds) {
-            removeManagedResource_helper(subject, groupDefinitionId, doomedGroupId);
+            groupDefinitionManager.removeManagedResource_helper(subject, groupDefinitionId, doomedGroupId);
         }
 
         // re-attach the group, because it was cleared from the session during the callout to the helper
@@ -626,13 +627,21 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
         }
     }
 
-    @SuppressWarnings( { "unchecked" })
+    @SuppressWarnings("unchecked")
     private List<Integer> getManagedResourceGroupIdsForGroupDefinition(int groupDefinitionId) {
         Query query = entityManager.createNamedQuery(GroupDefinition.QUERY_FIND_MANAGED_RESOURCE_GROUP_IDS_ADMIN);
         query.setParameter("groupDefinitionId", groupDefinitionId);
 
         List<Integer> results = query.getResultList();
         return results;
+    }
+
+    private int getManagedResourceGroupSizeForGroupDefinition(int groupDefinitionId) {
+        Query query = entityManager.createNamedQuery(GroupDefinition.QUERY_FIND_MANAGED_RESOURCE_GROUP_SIZE_ADMIN);
+        query.setParameter("groupDefinitionId", groupDefinitionId);
+
+        Number result = (Number) query.getSingleResult();
+        return result.intValue();
     }
 
     private String getDynamicGroupName(String groupDefinitionName, String groupByClause) {

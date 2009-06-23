@@ -28,6 +28,7 @@ import javax.jms.ObjectMessage;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.enterprise.server.alert.AlertConditionManagerLocal;
 import org.rhq.enterprise.server.alert.CachedConditionManagerLocal;
 import org.rhq.enterprise.server.alert.engine.jms.model.AbstractAlertConditionMessage;
@@ -69,6 +70,13 @@ public class AlertConditionConsumerBean implements MessageListener {
                 log.debug("Received message: " + conditionMessage);
 
             int alertConditionId = conditionMessage.getAlertConditionId();
+            InventoryStatus status = alertConditionManager.getResourceStatusByConditionId(alertConditionId);
+            if (status != InventoryStatus.COMMITTED) {
+                log.debug("Resource for AlertCondition[id=" + alertConditionId
+                    + "] is no longer COMMITTED, status was '" + status + "'; this message will be discarded");
+                return;
+            }
+
             definitionId = alertConditionManager.getAlertDefinitionByConditionIdInNewTransaction(alertConditionId);
             if (definitionId == null) {
                 log.info("AlertCondition[id=" + alertConditionId

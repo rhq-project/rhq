@@ -86,9 +86,13 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = MeasurementSchedule.FIND_SCHEDULE_COMPOSITE_FOR_RESOURCE, query = "SELECT new org.rhq.core.domain.measurement.composite.MeasurementScheduleComposite(ms.definition, ms.enabled, ms.interval) "
         + "FROM MeasurementSchedule ms WHERE ms.resource.id = :resourceId "
         + "AND (ms.definition.dataType = :dataType OR :dataType is null) "),
-    @NamedQuery(name = MeasurementSchedule.GET_SCHEDULED_MEASUREMENTS_PER_MINUTED, query = "SELECT SUM(1000.0 / ms.interval) * 60.0 FROM MeasurementSchedule ms WHERE ms.enabled = true"),
+    @NamedQuery(name = MeasurementSchedule.GET_SCHEDULED_MEASUREMENTS_PER_MINUTED, query = "" //
+        + "SELECT SUM(1000.0 / ms.interval) * 60.0 " //
+        + "  FROM MeasurementSchedule ms " //
+        + " WHERE ms.enabled = true " //
+        + "   AND ms.resource.inventoryStatus = :status"),
     @NamedQuery(name = MeasurementSchedule.DISABLE_ALL, query = "UPDATE MeasurementSchedule ms SET ms.enabled = false"),
-    @NamedQuery(name = MeasurementSchedule.DELETE_BY_RESOURCES, query = "DELETE MeasurementSchedule ms WHERE ms.resource IN ( :resources )") })
+    @NamedQuery(name = MeasurementSchedule.DELETE_BY_RESOURCES, query = "DELETE MeasurementSchedule ms WHERE ms.resource.id IN ( :resourceIds )") })
 @SequenceGenerator(name = "RHQ_METRIC_SCHED_ID_SEQ", sequenceName = "RHQ_MEASUREMENT_SCHED_ID_SEQ")
 @Table(name = "RHQ_MEASUREMENT_SCHED", uniqueConstraints = { @UniqueConstraint(columnNames = { "DEFINITION",
     "RESOURCE_ID" }) })

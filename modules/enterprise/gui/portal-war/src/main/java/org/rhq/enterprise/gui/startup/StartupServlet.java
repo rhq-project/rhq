@@ -51,6 +51,7 @@ import org.rhq.enterprise.server.core.plugin.ProductPluginDeployerMBean;
 import org.rhq.enterprise.server.plugin.content.ContentSourcePluginServiceManagement;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
+import org.rhq.enterprise.server.scheduler.jobs.AsyncResourceDeleteJob;
 import org.rhq.enterprise.server.scheduler.jobs.CheckForSuspectedAgentsJob;
 import org.rhq.enterprise.server.scheduler.jobs.CheckForTimedOutConfigUpdatesJob;
 import org.rhq.enterprise.server.scheduler.jobs.CheckForTimedOutContentRequestsJob;
@@ -282,6 +283,15 @@ public class StartupServlet extends HttpServlet {
         LookupUtil.getCacheConsistenyManager().scheduleServerCacheReloader();
         LookupUtil.getSystemManager().scheduleConfigCacheReloader();
 
+        try {
+            // Do not check until we are up at least 1 min, and every 5 minutes thereafter.
+            final long initialDelay = 1000L * 60;
+            final long interval = 1000L * 60 * 5;
+            scheduler.scheduleSimpleRepeatingJob(AsyncResourceDeleteJob.class, true, false, initialDelay, interval);
+        } catch (Exception e) {
+            log("Cannot schedule asynchronous resource deletion job: " + e.getMessage());
+        }
+
         // DynaGroup Auto-Recalculation Job
         try {
             // Do not check until we are up at least 1 min, and every minute thereafter.
@@ -290,7 +300,7 @@ public class StartupServlet extends HttpServlet {
             scheduler.scheduleSimpleRepeatingJob(DynaGroupAutoRecalculationJob.class, true, false, initialDelay,
                 interval);
         } catch (Exception e) {
-            throw new ServletException("Cannot schedule DynaGroup auto-recalculation job", e);
+            log("Cannot schedule DynaGroup auto-recalculation job: " + e.getMessage());
         }
 
         // Cluster Manager Job
@@ -300,7 +310,7 @@ public class StartupServlet extends HttpServlet {
             final long interval = 1000L * 30; // 30 secs
             scheduler.scheduleSimpleRepeatingJob(CloudManagerJob.class, true, false, initialDelay, interval);
         } catch (Exception e) {
-            throw new ServletException("Cannot schedule cloud management job", e);
+            log("Cannot schedule cloud management job: " + e.getMessage());
         }
 
         // Suspected Agents Job
@@ -310,7 +320,7 @@ public class StartupServlet extends HttpServlet {
             final long interval = 1000L * 30; // 30 secs
             scheduler.scheduleSimpleRepeatingJob(CheckForSuspectedAgentsJob.class, true, false, initialDelay, interval);
         } catch (Exception e) {
-            throw new ServletException("Cannot schedule suspected Agents job", e);
+            log("Cannot schedule suspected Agents job: " + e.getMessage());
         }
 
         // Timed Out Operations Job
@@ -320,7 +330,7 @@ public class StartupServlet extends HttpServlet {
             scheduler.scheduleSimpleRepeatingJob(CheckForTimedOutOperationsJob.class, true, false, initialDelay,
                 interval);
         } catch (Exception e) {
-            throw new ServletException("Cannot schedule check-for-timed-out-operations job", e);
+            log("Cannot schedule check-for-timed-out-operations job: " + e.getMessage());
         }
 
         // Timed Out Resource Configuration Update Requests Job
@@ -331,7 +341,7 @@ public class StartupServlet extends HttpServlet {
             scheduler.scheduleSimpleRepeatingJob(CheckForTimedOutConfigUpdatesJob.class, true, false, initialDelay,
                 interval);
         } catch (Exception e) {
-            throw new ServletException("Cannot schedule check-for-timed-out-configuration-update-requests job", e);
+            log("Cannot schedule check-for-timed-out-configuration-update-requests job: " + e.getMessage());
         }
 
         // Timed Out Content Requests Job
@@ -340,7 +350,7 @@ public class StartupServlet extends HttpServlet {
             final long interval = 1000L * 60 * 15; // 15 mins
             scheduler.scheduleSimpleRepeatingJob(CheckForTimedOutContentRequestsJob.class, true, false, 40000L, 60000L);
         } catch (Exception e) {
-            throw new ServletException("Cannot schedule check-for-timed-out-artifact-requests job", e);
+            log("Cannot schedule check-for-timed-out-artifact-requests job: " + e.getMessage());
         }
 
         // Data Purge Job
@@ -353,7 +363,7 @@ public class StartupServlet extends HttpServlet {
             String cronString = "0 0 * * * ?"; // every hour, on the hour
             scheduler.scheduleSimpleCronJob(DataPurgeJob.class, true, false, cronString);
         } catch (Exception e) {
-            throw new ServletException("Cannot schedule data purge job", e);
+            log("Cannot schedule data purge job: " + e.getMessage());
         }
 
         // Content Source Sync Jobs
@@ -366,7 +376,7 @@ public class StartupServlet extends HttpServlet {
                 iface, false);
             mbean.getPluginContainer().scheduleSyncJobs();
         } catch (Exception e) {
-            throw new ServletException("Cannot schedule content source sync jobs", e);
+            log("Cannot schedule content source sync jobs: " + e.getMessage());
         }
     }
 

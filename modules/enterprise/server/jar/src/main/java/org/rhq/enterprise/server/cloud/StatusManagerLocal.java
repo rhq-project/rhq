@@ -34,8 +34,7 @@ public interface StatusManagerLocal {
 
     void updateByMeasurementBaseline(int baselineId);
 
-    void updateByResource(int resourceId);
+    void updateByAgent(int agentId);
 
     void updateByAutoBaselineCalculationJob();
-
 }

@@ -48,7 +48,7 @@ import org.rhq.core.domain.content.transfer.ContentResponseResult;
 @Entity
 @NamedQueries( {
 
-    @NamedQuery(name = PackageInstallationStep.QUERY_DELETE_BY_RESOURCES, query = "DELETE PackageInstallationStep pis WHERE pis.installedPackageHistory IN ( SELECT iph FROM InstalledPackageHistory iph WHERE iph.resource IN ( :resources ) )"),
+    @NamedQuery(name = PackageInstallationStep.QUERY_DELETE_BY_RESOURCES, query = "DELETE PackageInstallationStep pis WHERE pis.installedPackageHistory IN ( SELECT iph FROM InstalledPackageHistory iph WHERE iph.resource.id IN ( :resourceIds ) )"),
     @NamedQuery(name = PackageInstallationStep.QUERY_FIND_BY_INSTALLED_PACKAGE_HISTORY_ID, query = "SELECT pis FROM PackageInstallationStep pis "
         + "WHERE pis.installedPackageHistory.id = :installedPackageHistoryId")
 

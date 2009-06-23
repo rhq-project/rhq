@@ -128,11 +128,11 @@ import org.rhq.core.domain.resource.Resource;
         + "DELETE FROM Configuration c " //
         + " WHERE c IN ( SELECT rcu.configuration " //
         + "                FROM ResourceConfigurationUpdate rcu " //
-        + "               WHERE rcu.resource IN ( :resources ) " //
+        + "               WHERE rcu.resource.id IN ( :resourceIds ) " //
         + "                AND NOT rcu.configuration = rcu.resource.resourceConfiguration )"),
     @NamedQuery(name = ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_2, query = ""
         + "DELETE FROM ResourceConfigurationUpdate rcu " //
-        + " WHERE rcu.resource IN ( :resources )"),
+        + " WHERE rcu.resource.id IN ( :resourceIds )"),
     @NamedQuery(name = ResourceConfigurationUpdate.QUERY_DELETE_UPDATE_AGGREGATE, query = "" //
         + "UPDATE ResourceConfigurationUpdate rcu " //
         + "   SET rcu.aggregateConfigurationUpdate = NULL " //

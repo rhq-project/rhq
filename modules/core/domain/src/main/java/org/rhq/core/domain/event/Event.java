@@ -52,7 +52,7 @@ import org.rhq.core.domain.resource.Resource;
  */
 @NamedQueries( {
     @NamedQuery(name = Event.DELETE_BY_RESOURCES, query = "DELETE FROM Event ev  "
-        + " WHERE ev.source IN ( SELECT evs FROM EventSource evs WHERE evs.resource IN (:resources))"),
+        + " WHERE ev.source IN ( SELECT evs FROM EventSource evs WHERE evs.resource.id IN ( :resourceIds ) )"),
     @NamedQuery(name = Event.DELETE_BY_EVENT_IDS, query = "DELETE FROM Event e WHERE e.id IN ( :eventIds )"),
     @NamedQuery(name = Event.DELETE_ALL_BY_RESOURCE, query = "" //
         + "DELETE FROM Event e " //

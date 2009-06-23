@@ -64,7 +64,7 @@ import org.rhq.core.domain.content.InstalledPackage;
         + "   AND ( crh.ctime > :startTime OR :startTime IS NULL ) " //
         + "   AND ( crh.mtime < :endTime OR :endTime IS NULL ) "),
     @NamedQuery(name = CreateResourceHistory.QUERY_FIND_BY_ID, query = "SELECT crh FROM CreateResourceHistory AS crh WHERE crh.id = :id"),
-    @NamedQuery(name = CreateResourceHistory.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM CreateResourceHistory crh WHERE crh.parentResource IN (:resources))") })
+    @NamedQuery(name = CreateResourceHistory.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM CreateResourceHistory crh WHERE crh.parentResource.id IN ( :resourceIds ) )") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CREATE_RES_HIST_ID_SEQ")
 @Table(name = "RHQ_CREATE_RES_HIST")
 public class CreateResourceHistory implements Serializable {

@@ -92,7 +92,7 @@ import org.rhq.core.domain.resource.ResourceType;
         + " WHERE a.resourceType.id = :typeId " + "       AND a.deleted = false"),
     @NamedQuery(name = AlertDefinition.QUERY_DELETE_BY_RESOURCES, query = "" //
         + "DELETE FROM AlertDefinition ad " //
-        + " WHERE ad.resource IN ( :resources )"), //
+        + " WHERE ad.resource.id IN ( :resourceIds ) "), //
     @NamedQuery(name = AlertDefinition.QUERY_FIND_UNUSED_DEFINITION_IDS, query = "" //
         + "SELECT ad.id " //
         + "  FROM AlertDefinition ad " //

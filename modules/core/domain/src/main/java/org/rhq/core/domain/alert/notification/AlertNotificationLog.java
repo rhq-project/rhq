@@ -56,7 +56,7 @@ import org.rhq.core.domain.alert.AlertDefinition;
     query = "DELETE AlertNotificationLog anl " + //
         "     WHERE anl.id IN ( SELECT a.alertNotificationLog.id " + //
         "                         FROM Alert a " + //
-        "                        WHERE a.alertDefinition.resource IN ( :resources ) )") })
+        "                        WHERE a.alertDefinition.resource.id IN ( :resourceIds ) )") })
 @SequenceGenerator(name = "RHQ_ALERT_NOTIF_LOG_ID_SEQ", sequenceName = "RHQ_ALERT_NOTIF_LOG_ID_SEQ")
 @Table(name = "RHQ_ALERT_NOTIF_LOG")
 public class AlertNotificationLog implements Serializable {

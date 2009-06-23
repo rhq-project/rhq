@@ -419,7 +419,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
         // to skip this report so as not to waste our time and immediately request and process
         // a full report because, obviously, the agent is no longer down but the server thinks
         // it still is down - we need to know the availabilities for all the resources on that agent
-        if (report.isChangesOnlyReport() && isAgentBackfilled(agentName)) {
+        if (report.isChangesOnlyReport() && isAgentBackfilled(agentToUpdate.getId())) {
             askForFullReport = true;
         } else {
             Query q = entityManager.createNamedQuery(Availability.FIND_CURRENT_BY_RESOURCE);
@@ -550,6 +550,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void setAllAgentResourceAvailabilities(int agentId, AvailabilityType availabilityType) {
         String typeString = (availabilityType != null) ? availabilityType.toString() : "unknown";
 
@@ -596,10 +597,10 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
         return;
     }
 
-    public boolean isAgentBackfilled(String agentName) {
+    public boolean isAgentBackfilled(int agentId) {
         // query returns 0 if the agent's platform is DOWN (or does not exist), 1 if not
         Query q = entityManager.createNamedQuery(Availability.QUERY_IS_AGENT_BACKFILLED);
-        q.setParameter("agentName", agentName);
+        q.setParameter("agentId", agentId);
         return ((Number) q.getSingleResult()).intValue() == 0;
     }
 
@@ -752,6 +753,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
         return results;
     }
 
+    @SuppressWarnings("unchecked")
     public PageList<Availability> findByResource(Subject user, int resourceId, PageControl pageControl) {
         pageControl.initDefaultOrderingField("av.startTime", PageOrdering.DESC);
 
@@ -765,7 +767,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
         long count = (Long) countQuery.getSingleResult();
         List<Availability> availabilities = query.getResultList();
 
-        return new PageList(availabilities, (int) count, pageControl);
+        return new PageList<Availability>(availabilities, (int) count, pageControl);
     }
 
     private void notifyAlertConditionCacheManager(String callingMethod, Availability... availabilities) {

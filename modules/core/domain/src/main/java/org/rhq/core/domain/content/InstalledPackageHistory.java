@@ -73,7 +73,7 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = InstalledPackageHistory.QUERY_FIND_BY_ID, query = "SELECT iph FROM InstalledPackageHistory iph "
         + "WHERE iph.id = :id"),
     @NamedQuery(name = InstalledPackageHistory.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM InstalledPackageHistory iph "
-        + " WHERE iph.resource IN (:resources))") })
+        + " WHERE iph.resource.id IN ( :resourceIds ) )") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_INSTALLED_PKG_HIST_ID_SEQ")
 @Table(name = "RHQ_INSTALLED_PKG_HIST")
 public class InstalledPackageHistory implements Serializable {

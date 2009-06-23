@@ -62,6 +62,8 @@ import org.rhq.enterprise.server.cloud.FailoverListManagerBean;
 import org.rhq.enterprise.server.cloud.FailoverListManagerLocal;
 import org.rhq.enterprise.server.cloud.PartitionEventManagerBean;
 import org.rhq.enterprise.server.cloud.PartitionEventManagerLocal;
+import org.rhq.enterprise.server.cloud.StatusManagerBean;
+import org.rhq.enterprise.server.cloud.StatusManagerLocal;
 import org.rhq.enterprise.server.cloud.instance.CacheConsistencyManagerBean;
 import org.rhq.enterprise.server.cloud.instance.CacheConsistencyManagerLocal;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerBean;
@@ -483,6 +485,10 @@ public final class LookupUtil {
 
     public static SupportManagerLocal getSupportManager() {
         return lookupLocal(SupportManagerBean.class);
+    }
+
+    public static StatusManagerLocal getStatusManager() {
+        return lookupLocal(StatusManagerBean.class);
     }
 
     //--------------------------------------------

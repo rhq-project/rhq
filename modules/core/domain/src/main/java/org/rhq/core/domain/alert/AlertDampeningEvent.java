@@ -63,7 +63,7 @@ import javax.persistence.Table;
         + "DELETE AlertDampeningEvent ade " //
         + " WHERE ade.alertDefinition IN " //
         + "       ( SELECT ad FROM AlertDefinition ad " //
-        + "          WHERE ad.resource IN (:resources))"), //
+        + "          WHERE ad.resource.id IN ( :resourceIds ) )"), //
     @NamedQuery(name = AlertDampeningEvent.QUERY_DELETE_BY_TIMESTAMP, // 
     query = "DELETE AlertDampeningEvent ade " //
         + "   WHERE ade.eventTime < :oldest " //

@@ -53,7 +53,7 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
 @NamedQueries( {
     @NamedQuery(name = "AlertCondition.findByTriggerId", query = "SELECT a FROM AlertCondition AS a WHERE a.triggerId = :tid"),
     @NamedQuery(name = "AlertCondition.findAll", query = "SELECT a FROM AlertCondition AS a"),
-    @NamedQuery(name = AlertCondition.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM AlertCondition ac WHERE ac.alertDefinition IN ( SELECT ad FROM AlertDefinition ad WHERE ad.resource IN (:resources))"),
+    @NamedQuery(name = AlertCondition.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM AlertCondition ac WHERE ac.alertDefinition IN ( SELECT ad FROM AlertDefinition ad WHERE ad.resource.id IN ( :resourceIds ) )"),
     @NamedQuery(name = AlertCondition.QUERY_BY_CATEGORY_BASELINE, query = "" //
         + "  SELECT new org.rhq.core.domain.alert.composite.AlertConditionBaselineCategoryComposite " //
         + "       ( " //
@@ -241,7 +241,12 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
         + "     AND ( res.agent.id = :agentId OR :agentId IS NULL ) " //
         + "     AND ad.enabled = TRUE " //
         + "     AND ad.deleted = FALSE " //
-        + "     AND ac.category = :category ") })
+        + "     AND ac.category = :category "),
+    @NamedQuery(name = AlertCondition.QUERY_FIND_RESOURCE_STATUS_BY_CONDITION_ID, query = "" //
+        + "  SELECT res.inventoryStatus " //
+        + "    FROM AlertCondition AS ac " //
+        + "    JOIN ac.alertDefinition ad " //
+        + "    JOIN ad.resource res ") })
 @SequenceGenerator(name = "RHQ_ALERT_CONDITION_ID_SEQ", sequenceName = "RHQ_ALERT_CONDITION_ID_SEQ")
 @Table(name = "RHQ_ALERT_CONDITION")
 public class AlertCondition implements Serializable {
@@ -259,6 +264,8 @@ public class AlertCondition implements Serializable {
 
     public static final String QUERY_BY_CATEGORY_COUNT_BASELINE = "AlertCondition.byCategoryCountBaseline";
     public static final String QUERY_BY_CATEGORY_COUNT_PARAMETERIZED = "AlertCondition.byCategoryCountParameterized";
+
+    public static final String QUERY_FIND_RESOURCE_STATUS_BY_CONDITION_ID = "AlertCondition.findResourceStatus";
 
     public static final String RECOVERY_CONDITIONAL_EXPRESSION = "" //
         + " ( ad.recoveryId = 0 " //

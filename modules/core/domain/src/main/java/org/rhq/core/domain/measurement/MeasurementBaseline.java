@@ -100,7 +100,7 @@ import javax.persistence.Table;
     @NamedQuery(name = MeasurementBaseline.QUERY_DELETE_BY_COMPUTE_TIME, query = "" //
         + "DELETE MeasurementBaseline bl " //
         + " WHERE bl.computeTime < :timestamp "),
-    @NamedQuery(name = MeasurementBaseline.QUERY_DELETE_BY_RESOURCES, query = "DELETE MeasurementBaseline bl WHERE bl.schedule IN ( SELECT ms FROM MeasurementSchedule ms WHERE ms.resource IN ( :resources ) )") })
+    @NamedQuery(name = MeasurementBaseline.QUERY_DELETE_BY_RESOURCES, query = "DELETE MeasurementBaseline bl WHERE bl.schedule IN ( SELECT ms FROM MeasurementSchedule ms WHERE ms.resource.id IN ( :resourceIds ) )") })
 @SequenceGenerator(name = "MEAS_BL_GEN", sequenceName = "RHQ_MEASUREMENT_BLINE_ID_SEQ")
 @SuppressWarnings("unused")
 @Table(name = "RHQ_MEASUREMENT_BLINE")

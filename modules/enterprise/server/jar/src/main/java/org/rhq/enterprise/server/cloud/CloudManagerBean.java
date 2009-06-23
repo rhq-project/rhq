@@ -30,8 +30,6 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.jboss.annotation.IgnoreDependency;
-
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.cloud.FailoverListDetails;
@@ -43,8 +41,8 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
-import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -57,6 +55,10 @@ import org.rhq.enterprise.server.util.LookupUtil;
 @Stateless
 public class CloudManagerBean implements CloudManagerLocal {
     private final Log log = LogFactory.getLog(CloudManagerBean.class);
+
+    // A time sufficient to determine whether a server is down.  Can be based on the initial delay set for the server instance
+    // job updating the server mtimes. See StartupServlet. 
+    private static final long SERVER_DOWN_INTERVAL = 1000L * 2 * 60;
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
@@ -71,8 +73,7 @@ public class CloudManagerBean implements CloudManagerLocal {
     private PartitionEventManagerLocal partitionEventManager;
 
     @EJB
-    @IgnoreDependency
-    private ServerManagerLocal serverManager;
+    private AuthorizationManagerLocal authorizationManager;
 
     public List<Agent> getAgentsByServerName(String serverName) {
         Server server = cloudManager.getServerByName(serverName);
@@ -240,5 +241,23 @@ public class CloudManagerBean implements CloudManagerLocal {
         long count = (Long) countQuery.getSingleResult();
 
         return new PageList<FailoverListDetails>(list, (int) count, pc);
+    }
+
+    public void markStaleServersDown(Subject subject) {
+        if (!authorizationManager.isOverlord(subject)) {
+            throw new IllegalArgumentException("The markStaleServersDown method must be called by the overlord");
+        }
+
+        long staleTime = System.currentTimeMillis() - SERVER_DOWN_INTERVAL;
+
+        Query query = entityManager.createNamedQuery(Server.QUERY_UPDATE_SET_STALE_DOWN);
+        query.setParameter("downMode", Server.OperationMode.DOWN);
+        query.setParameter("normalMode", Server.OperationMode.NORMAL);
+        query.setParameter("staleTime", staleTime);
+        query.executeUpdate();
+
+        // Perform requested partition events. Note that we only need to execute one cloud partition
+        // regardless of the number of pending requests, as the work would be duplicated.
+        partitionEventManager.processRequestedPartitionEvents();
     }
 }

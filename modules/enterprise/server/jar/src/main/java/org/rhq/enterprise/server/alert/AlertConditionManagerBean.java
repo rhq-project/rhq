@@ -37,6 +37,7 @@ import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.composite.AbstractAlertConditionCategoryComposite;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
@@ -150,6 +151,20 @@ public class AlertConditionManagerBean implements AlertConditionManagerLocal {
         LOG.debug("Found " + totalCount + " elements of type '" + category + "', list was size " + list.size());
 
         return new PageList<AbstractAlertConditionCategoryComposite>(list, (int) totalCount, pageControl);
+    }
+
+    public InventoryStatus getResourceStatusByConditionId(int alertConditionId) {
+        try {
+            Query query = entityManager.createNamedQuery(AlertCondition.QUERY_FIND_RESOURCE_STATUS_BY_CONDITION_ID);
+            query.setParameter("alertConditionId", alertConditionId);
+            InventoryStatus status = (InventoryStatus) query.getSingleResult();
+
+            // a resource was marked for asynchronous uninventory, but not actually deleted yet
+            return status;
+        } catch (NoResultException nre) {
+            // the resource was already deleted asynchronously, tell the caller as much
+            return InventoryStatus.UNINVENTORIED;
+        }
     }
 
 }

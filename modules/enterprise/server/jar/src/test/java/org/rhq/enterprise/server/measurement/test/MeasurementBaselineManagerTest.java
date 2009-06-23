@@ -356,8 +356,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
 
             PageControl pc = PageControl.getUnlimitedInstance();
 
-            List<MeasurementOOBComposite> comps = oobManager.getSchedulesWithOOBs(overlord,
-                    null, null, null, pc);
+            List<MeasurementOOBComposite> comps = oobManager.getSchedulesWithOOBs(overlord, null, null, null, pc);
             //         System.out.println("Composites: " + comps);
             assert comps.size() == 2 : "Expected 2 composites, but got " + comps.size();
 
@@ -380,8 +379,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
 
             begin();
 
-            q = entityManager
-                .createQuery("DELETE FROM MeasurementOOB oo WHERE  oo.id = :sched1 OR oo.id = :sched2");
+            q = entityManager.createQuery("DELETE FROM MeasurementOOB oo WHERE  oo.id = :sched1 OR oo.id = :sched2");
             q.setParameter("sched1", measSched.getId());
             q.setParameter("sched2", measSched2.getId());
             q.executeUpdate();
@@ -439,8 +437,11 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
         Object doomed;
 
         try {
-            resourceManager.deleteSingleResourceInNewTransaction(overlord, platform);
-            resourceManager.deleteSingleResourceInNewTransaction(overlord, platform2);
+            // perform in-band and out-of-band work in quick succession
+            resourceManager.deleteResource(overlord, platform.getId());
+            resourceManager.deleteSingleResourceInNewTransaction(overlord, platform.getId());
+            resourceManager.deleteResource(overlord, platform2.getId());
+            resourceManager.deleteSingleResourceInNewTransaction(overlord, platform2.getId());
 
             begin();
 
@@ -543,7 +544,9 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
 
             // delete the resources which will cascade delete all schedules
             for (Resource doomedRes : allResources) {
-                resourceManager.deleteSingleResourceInNewTransaction(overlord, doomedRes);
+                // perform in-band and out-of-band work in quick succession
+                resourceManager.deleteResource(overlord, doomedRes.getId());
+                resourceManager.deleteSingleResourceInNewTransaction(overlord, doomedRes.getId());
             }
 
             if ((doomed = entityManager.find(Agent.class, agent.getId())) != null) {

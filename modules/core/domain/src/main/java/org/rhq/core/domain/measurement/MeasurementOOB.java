@@ -99,7 +99,7 @@ import javax.persistence.Table;
         @NamedQuery(name=MeasurementOOB.DELETE_FOR_RESOURCES,
                 query = "DELETE FROM MeasurementOOB o " +
                         "WHERE o.id IN " +
-                        "      ( SELECT ms.id FROM MeasurementSchedule ms WHERE ms.resource IN ( :resources ) )"
+                        "      ( SELECT ms.id FROM MeasurementSchedule ms WHERE ms.resource.id IN ( :resourceIds ) )"
         ),
         @NamedQuery(name=MeasurementOOB.GET_HIGHEST_FACTORS_FOR_RESOURCE,
                 query = "SELECT new org.rhq.core.domain.measurement.composite.MeasurementOOBComposite(res.name,res.id,def.displayName," +

@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+
+<web-app xmlns="http://java.sun.com/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+         version="2.5">
+
+   <display-name>RHQ WebDav</display-name>
+
+ 
+    <!-- WebDAV support -->
+    <servlet>
+        <servlet-name>WebDAV</servlet-name>
+        <servlet-class>com.bradmcevoy.http.MiltonServlet</servlet-class>
+                <init-param>
+            <param-name>resource.factory.class</param-name>
+            <param-value>org.rhq.gui.webdav.WebDAVResourceFactory</param-value>
+        </init-param>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>WebDAV</servlet-name>
+        <url-pattern>/</url-pattern>
+    </servlet-mapping>
+
+</web-app>
+

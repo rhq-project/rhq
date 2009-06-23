@@ -162,7 +162,14 @@ public class ConversionUtils
                         + metaValue.getMetaType() + "] for ResourceType '" + resourceType.getName() + "'.");
                 continue;
             }
-            Property property = propertyAdapter.convertToProperty(metaValue, propertyDefinition);
+            Property property;
+            try {
+                property = propertyAdapter.convertToProperty(metaValue, propertyDefinition);
+            }
+            catch (RuntimeException e) {
+                throw new RuntimeException("Failed to convert managed property " + managedProperty +
+                        " to RHQ property of type " + propertyDefinition + ".", e);
+            }
             config.put(property);
         }
         return config;

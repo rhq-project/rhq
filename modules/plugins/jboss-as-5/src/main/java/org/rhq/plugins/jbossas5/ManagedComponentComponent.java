@@ -47,6 +47,8 @@ import org.jboss.metatype.api.values.EnumValue;
 import org.jboss.metatype.api.values.MetaValue;
 import org.jboss.metatype.api.values.SimpleValue;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -195,15 +197,16 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
     // ------------------------------------------------------------------------------
 
     /**
-     * The name of the request (i.e. the metric name) can be in one of two forms:
+     * The name of the measurement schedule request (i.e. the metric name) can be in one of two forms:
      * <p/>
      * [prefix'|']simplePropertyName (e.g. "maxTime" or "ThreadPool|currentThreadCount")
      * [prefix'|']compositePropertyName'.'key (e.g. "consumerCount" or "messageStatistics.count")
      *
      * @param managedComponent a managed component
-     * @param request          a metric request
+     * @param request          a measurement schedule request
      * @return the metric value
      */
+    @Nullable
     protected Object getSimpleValue(ManagedComponent managedComponent, MeasurementScheduleRequest request) {
         String metricName = request.getName();
         int pipeIndex = metricName.indexOf(PREFIX_DELIMITER);
@@ -212,6 +215,9 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
         int dotIndex = compositePropName.indexOf('.');
         String metricPropName = (dotIndex == -1) ? compositePropName : compositePropName.substring(0, dotIndex);
         ManagedProperty metricProp = managedComponent.getProperty(metricPropName);
+        if (metricProp == null) {
+            return null;
+        }
         MetaValue metaValue;
         if (dotIndex == -1) {
             metaValue = metricProp.getValue();
@@ -224,6 +230,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
     }
 
     // TODO: Move this to a utility class.
+    @Nullable
     private static Object getInnerValue(MetaValue metaValue) {
         if (metaValue == null) {
             return null;

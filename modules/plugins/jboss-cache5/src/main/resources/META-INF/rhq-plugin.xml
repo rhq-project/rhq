@@ -95,30 +95,30 @@
                <operation name="resetStatistics" displayName="Reset Statistics" description="Resets all statistics" />
                 
                <metric property="Evictions"  displayName="Evictions" measurementType="trendsup"
-                  description="number of cache eviction operations"  category="performance"/>
+                  description="the number of cache eviction operations"  category="performance"/>
                <metric property="HitMissRatio"  displayName="Hit/Miss Ratio" displayType="summary" />
                <metric property="ReadWriteRatio"  displayName="Read/Write Ratio" displayType="summary" />
                <metric property="NumberOfNodes"  displayName="NumberOfNodes" 
-                  description="number of nodes in the cache"  category="performance"/>
+                  description="the number of nodes in the cache"  category="performance"/>
                <metric property="Hits"  displayName="Hits" measurementType="trendsup"
-                  description="number of cache attribute hits"  category="performance"/>
+                  description="the number of cache attribute hits"  category="performance"/>
                <metric property="NumberOfAttributes"
-                  description="umber of cache attributes"  category="performance"/>
+                  description="the number of cache attributes"  category="performance"/>
                <metric property="StatisticsEnabled"  dataType="trait" />
                <metric property="ElapsedTime"
-                   description="seconds since cache started"  category="utilization" measurementType="trendsup"
+                   description="the time elapsed since the cache was started"  category="utilization" measurementType="trendsup"
                    units="seconds"/>
                <metric property="TimeSinceReset" category="utilization" 
-                   description="number of seconds since the cache statistics were last reset"
+                   description="the time elapsed since the cache statistics were last reset"
                    measurementType="trendsup" units="seconds"/>
                <metric property="Misses" measurementType="trendsup"
-                   description="number of cache attribute misses"/>
+                   description="the number of cache attribute misses"/>
                <metric property="AverageWriteTime" units="milliseconds"
-                   description="average number of milliseconds for a write operation"  category="performance"/>
+                   description="the average amount of time per write operation"  category="performance"/>
                <metric property="Stores" measurementType="trendsup" 
-                   description="number of cache attribute put operations"  category="performance"/>
+                   description="the number of cache attribute put operations"  category="performance"/>
                <metric property="AverageReadTime" units="milliseconds"
-                   description="average number of milliseconds for a read operation"  category="performance"/>
+                   description="the average amount of time per read operation"  category="performance"/>
                
            </service>    
             
@@ -131,16 +131,20 @@
                 <c:simple-property name="jmx-resource" default="jmx-resource=CacheMgmtInterceptor"/>
               </plugin-configuration>     
               
-                <operation name="getNumberOfNodes" displayName="Get Number of nodes." description="Returns the number of nodes in the data container">
+                <operation name="getNumberOfNodes" displayName="Get Number of nodes." 
+                           description="Returns the number of nodes in the data container">
                   <results><c:simple-property name="nr"></c:simple-property></results>
                 </operation>
-                <operation name="getNumberOfAttributes" displayName="Get Number of attributes." description="Returns the number of nodes in the data container">
+                <operation name="getNumberOfAttributes" displayName="Get Number of attributes." 
+                           description="Returns the number of nodes in the data container">
                   <results><c:simple-property name="nr"></c:simple-property></results>
                 </operation>
-                <operation name="printDetails" displayName="Print Details." description="Prints details of the data container">
+                <operation name="printDetails" displayName="Print Details." 
+                           description="Prints details about the data container">
                   <results><c:simple-property name="details"></c:simple-property></results>
                 </operation>
-                <operation name="printDetailsAsHtml" displayName="Print Details as HTML." description="Prints details of the data container, formatted as an HTML String">
+                <operation name="printDetailsAsHtml" displayName="Print Details as HTML." 
+                           description="Prints details about the data container, formatted as HTML">
                   <results><c:simple-property name="details"></c:simple-property></results>
                 </operation>       
                            
@@ -160,16 +164,16 @@
                <metric property="Enabled" dataType="trait"  displayName="RPC Enabled?" 
                  description="whether or not the RPC Manager is used in this cache instance"/>
                <metric property="ReplicationFailures" displayName="Failed Replications" 
-                 description="number of failed replications"/>
+                 description="the number of failed replications"/>
                <metric property="LocalAddressString" dataType="trait" displayName="Local Address" 
                  description="Local address"/>
                <metric property="StatisticsEnabled" dataType="trait" />
                <metric property="ReplicationCount" displayName="Successful Replications"  
-                 description="number of successful replications"/>
+                 description="the number of successful replications"/>
                <metric property="SuccessRatio" dataType="trait"
                  description="RPC call success ratio"/>
                <metric property="MembersString" dataType="trait" displayName="Members" 
-                 description="Cluster view"/>
+                 description="cluster view"/>
                  
            </service>
            
@@ -182,12 +186,13 @@
                 <c:simple-property name="jmx-resource" default="jmx-resource=RegionManager"/>
               </plugin-configuration>              
                
-             <operation name="dumpRegions" displayName="Dump Regions" description="A String representation of all registered regions">
+             <operation name="dumpRegions" displayName="Dump Regions" 
+                        description="A String representation of all registered regions">
                 <results><c:simple-property name="dump"></c:simple-property></results>
              </operation>
              
              <metric property="numRegions"  displayName="Number of Regions" 
-                 description="A count of all regions"  category="performance"/>               
+               description="the total number of regions"  category="performance"/>               
            </service>
 
            <service name="Transaction Table"
@@ -201,9 +206,9 @@
               <operation name="resetStatistics" displayName="Reset Statistics" description="Resets all statistics" />         
                    
               <metric property="numberOfRegisteredTransactions"
-                description="Number of registered transactions"  category="performance"/>
+                description="the number of registered transactions"  category="performance"/>
               <metric property="transactionMap"  dataType="trait"
-                description="A String representation of the transaction map"  />
+                description="a string representation of the transaction map"  />
            </service>
 
            <service name="Tx Interceptor"
@@ -216,15 +221,15 @@
                </plugin-configuration>              
             
                <metric property="Commits"
-                description="number of transaction commits"  category="performance"/>       
+                description="the number of transaction commits"  category="performance"/>       
                <metric property="StatisticsEnabled"  dataType="trait" displayName="Statistics Enabled?" 
-                description="A String representation of the transaction map"  />       
+                description="a String representation of the transaction map"  />       
                <metric property="Rollbacks"
-                description="number of transaction rollbacks"  category="performance"/>        
+                description="the number of transaction rollbacks"  category="performance"/>        
                <metric property="Prepares"
-                description="number of transaction prepares"  category="performance"/>       
+                description="the number of transaction prepares"  category="performance"/>       
                <metric property="numberOfSyncsRegistered"
-                description="number of transaction synchronizations currently registered"  category="performance"/>       
+                description="the number of transaction synchronizations currently registered"  category="performance"/>       
            </service>     
          
     </service>

@@ -111,13 +111,15 @@ public class JBossCacheComponent implements MeasurementFacet, OperationFacet,
 
 				Object value = atribute.getValue();
 
-				if (request.getDataType() == DataType.MEASUREMENT) {
-					Number number = (Number) value;
-					report.addData(new MeasurementDataNumeric(request, number
-							.doubleValue()));
-				} else if (request.getDataType() == DataType.TRAIT) {
-					report.addData(new MeasurementDataTrait(request, value
-							.toString()));
+				if (value != null) {
+					if (request.getDataType() == DataType.MEASUREMENT) {
+						Number number = (Number) value;
+						report.addData(new MeasurementDataNumeric(request,
+								number.doubleValue()));
+					} else if (request.getDataType() == DataType.TRAIT)
+						report.addData(new MeasurementDataTrait(request, value
+								.toString()));
+
 				}
 			} catch (Exception e) {
 				log.error(" Failure to collect measurements data from metric "

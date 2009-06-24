@@ -53,7 +53,7 @@ public class TxConnectionFactoryComponent extends ManagedComponentComponent
             {
                 if (request.getName().equals("custom.transactionType"))
                 {
-                    ManagedProperty xaTransactionProp = getManagedProperties().get("xa-transaction");
+                    ManagedProperty xaTransactionProp = getManagedComponent().getProperty("xa-transaction");
                     SimpleValue xaTransactionMetaValue = (SimpleValue)xaTransactionProp.getValue();
                     Boolean xaTransactionValue = (xaTransactionMetaValue != null)
                             ? (Boolean)xaTransactionMetaValue.getValue() : null;

@@ -50,6 +50,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
@@ -60,15 +62,19 @@ import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
+import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.plugins.jbossas5.util.ConversionUtils;
 import org.rhq.plugins.jbossas5.util.DeploymentUtils;
 import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
 import org.rhq.plugins.jbossas5.util.ResourceTypeUtils;
+import org.rhq.plugins.jbossas5.util.ResourceComponentUtils;
+import org.rhq.plugins.jbossas5.util.DebugUtils;
 
 /**
  * Service ResourceComponent for all {@link ManagedComponent}s in a Profile.
@@ -116,6 +122,60 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
         return;
     }
 
+    // ConfigurationComponent Implementation  --------------------------------------------
+
+    public Configuration loadResourceConfiguration()
+    {
+        Configuration resourceConfig;
+        try
+        {
+            Map<String, ManagedProperty> managedProperties = getManagedComponent().getProperties();
+            Map<String, PropertySimple> customProps =
+                    ResourceComponentUtils.getCustomProperties(getResourceContext().getPluginConfiguration());
+            if (this.log.isDebugEnabled()) this.log.debug("*** AFTER LOAD:\n"
+                    + DebugUtils.convertPropertiesToString(managedProperties));
+            resourceConfig = ConversionUtils.convertManagedObjectToConfiguration(managedProperties,
+                    customProps, getResourceContext().getResourceType());
+        }
+        catch (Exception e)
+        {
+            RunState runState = getManagedComponent().getRunState();
+            if (runState == RunState.RUNNING) {
+               this.log.error("Failed to load configuration for " + getResourceDescription() + ".", e);
+            } else {
+               this.log.debug("Failed to load configuration for " + getResourceDescription()
+                            + ", but managed component is not in the RUNNING state.", e);
+            }
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+        return resourceConfig;
+    }
+
+    public void updateResourceConfiguration(ConfigurationUpdateReport configurationUpdateReport)
+    {
+        Configuration resourceConfig = configurationUpdateReport.getConfiguration();
+        Configuration pluginConfig = getResourceContext().getPluginConfiguration();
+        try
+        {
+            Map<String, ManagedProperty> managedProperties = getManagedComponent().getProperties();
+            Map<String, PropertySimple> customProps = ResourceComponentUtils.getCustomProperties(pluginConfig);
+            if (this.log.isDebugEnabled()) this.log.debug("*** BEFORE UPDATE:\n"
+                    + DebugUtils.convertPropertiesToString(managedProperties));
+            ConversionUtils.convertConfigurationToManagedProperties(managedProperties, resourceConfig,
+                    getResourceContext().getResourceType(), customProps);
+            if (this.log.isDebugEnabled()) this.log.debug("*** AFTER UPDATE:\n"
+                    + DebugUtils.convertPropertiesToString(managedProperties));
+            updateComponent();
+            configurationUpdateReport.setStatus(ConfigurationUpdateStatus.SUCCESS);
+        }
+        catch (Exception e)
+        {
+            this.log.error("Failed to update configuration for " + getResourceDescription() + ".", e);
+            configurationUpdateReport.setStatus(ConfigurationUpdateStatus.FAILURE);
+            configurationUpdateReport.setErrorMessage(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
     // DeleteResourceFacet Implementation  --------------------------------------------
 
     public void deleteResource() throws Exception {
@@ -161,29 +221,24 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
         ManagedComponent managedComponent = getManagedComponent();
+        RunState runState = managedComponent.getRunState();
         for (MeasurementScheduleRequest request : metrics) {
             try {
                 if (request.getName().equals("runState")) {
-                    String runState = managedComponent.getRunState().name();
-                    report.addData(new MeasurementDataTrait(request, runState));
+                    report.addData(new MeasurementDataTrait(request, runState.name()));
                 } else {
                     Object value = getSimpleValue(managedComponent, request);
                     addValueToMeasurementReport(report, request, value);
                 }
             } catch (Exception e) {
-                log.error("Failed to collect metric for " + request, e);
+                if (runState == RunState.RUNNING) {
+                    log.error("Failed to collect metric for " + request, e);
+                } else {
+                    log.debug("Failed to collect metric for " + request
+                            + ", but managed component is not in the RUNNING state.", e);
+                }
             }
         }
-    }
-
-    // ------------ AbstractManagedComponent implementation -------------
-
-    protected Map<String, ManagedProperty> getManagedProperties() {
-        return getManagedComponent().getProperties();
-    }
-
-    protected Log getLog() {
-        return this.log;
     }
 
     protected void updateComponent() throws Exception {

@@ -41,7 +41,6 @@ import org.jboss.managed.api.DeploymentState;
 import org.jboss.managed.api.ManagedDeployment;
 import org.jboss.managed.api.ManagedProperty;
 import org.jboss.profileservice.spi.NoSuchDeploymentException;
-import org.mc4j.ems.connection.EmsConnection;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
@@ -54,7 +53,6 @@ import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.plugins.jbossas5.util.DeploymentUtils;
-import org.rhq.plugins.jbossas5.helper.JmxConnectionHelper;
 
 /**
  * ResourceComponent for managing ManagedDeployments (EARs, WARs, etc.).
@@ -73,7 +71,6 @@ public abstract class AbstractManagedDeploymentComponent
     private static final boolean IS_WINDOWS = (File.separatorChar == '\\');
 
     private final Log log = LogFactory.getLog(this.getClass());
-
 
     /**
      * The name of the ManagedDeloyment (e.g.: vfszip:/C:/opt/jboss-5.0.0.GA/server/default/deploy/foo.war).
@@ -194,24 +191,6 @@ public abstract class AbstractManagedDeploymentComponent
     public void progressEvent(ProgressEvent event)
     {
         log.debug(event);
-    }
-
-    // ------------ AbstractManagedComponent implementation -------------
-
-    protected Map<String, ManagedProperty> getManagedProperties() throws Exception
-    {
-        return getManagedDeployment().getProperties();
-    }
-
-    protected Log getLog()
-    {
-        return this.log;
-    }
-
-    protected void updateComponent() throws Exception
-    {
-        ManagementView managementView = getConnection().getManagementView();
-        managementView.process();
     }
 
     // -------------------------------------------------------------

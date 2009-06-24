@@ -304,13 +304,6 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
         managementView.load();
     }
 
-    // ------------ AbstractManagedComponent implementation -------------
-
-    @Override
-    protected Log getLog() {
-        return this.log;
-    }
-
     /**
      * Creates the necessary transfer objects to report a failed application deployment (update).
      *

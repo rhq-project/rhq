@@ -634,29 +634,6 @@
     <operation name="stop" displayName="Stop" description="Stop the destination."/>
 '>
 
-<!ENTITY deploymentResourceConfigProps '
-    <c:simple-property type="boolean" required="false" name="blackList"/>
-    <c:simple-property type="boolean" required="false" name="cache"/>
-    <c:simple-property required="false" name="domain"/>
-    <c:simple-property required="false" name="excluded"/>
-    <c:simple-property required="false" name="excludedExport"/>
-    <c:simple-property required="false" name="exportAll">
-        <c:property-options>
-            <c:option name="all" value="ALL"/>
-            <c:option name="non-empty" value="NON_EMPTY"/>
-        </c:property-options>
-    </c:simple-property>
-    <c:simple-property type="boolean" required="false" name="importAll"/>
-    <c:simple-property required="false" name="included"/>
-    <c:simple-property required="false" name="name"/>
-    <c:simple-property required="false" name="parentDomain"/>
-    <c:simple-property type="boolean" required="false" name="parentFirst"/>
-    <c:simple-property required="false" name="version"/>
-'>
-
-<!--<c:simple-property name="deployDirectory" type="string" required="true" default="deploy"
-                              description="Path of the directory where the EAR should be deployed (e.g. "deploy" or "farm") - relative to the AS configuration set directory (e.g. /opt/jboss-5.1.0.CR1/server/default)."/>-->
-
 <!ENTITY deploymentContentConfigProps '
     <configuration>
         <c:group name="deployment" displayName="Deployment Options">
@@ -771,6 +748,11 @@
     </plugin-configuration>
 '>
 
+<!ENTITY ejb3CommonMetrics '
+    <metric property="name" displayName="EJB Name" dataType="trait" displayType="summary"
+            description="the name of this EJB"/>
+'>
+
 <!ENTITY ejb3SessionBeanMetrics '
     <metric property="availableCount"
             description="The number of pooled instances of this EJB3 Session Bean in the method-ready state"/>
@@ -837,7 +819,6 @@
 '>
 
 <!ENTITY ejbSessionBeanOperations '
-
    <operation name="viewInvocationStats" displayName="View Method Statistics" description="Display detailed method invocation statistics.">
        <results>
            <c:list-property name="methods">
@@ -850,8 +831,7 @@
                </c:map-property>
            </c:list-property>
        </results> 
-   </operation>
-    
+   </operation>    
 '>
 
 <!ENTITY ejb2StatelessSessionBeanDefinition '
@@ -2320,12 +2300,6 @@
             	&deploymentContentConfigProps;
             </content>
 
-            <!--
-            <resource-configuration>
-                &deploymentResourceConfigProps;
-            </resource-configuration>
-            -->
-
         </service>
 
         <service name="WAR"
@@ -2377,12 +2351,6 @@
                 &deploymentContentConfigProps;
             </content>
 
-            <!--
-            <resource-configuration>
-                &deploymentResourceConfigProps;
-            </resource-configuration>
-            -->
-
             <service name="Web Application Context"
                      class="WebApplicationContextComponent"
                      discovery="WebApplicationContextDiscoveryComponent"
@@ -2431,12 +2399,6 @@
                     description="the name of this WAR's parent deployment"/>
 
             &webApplicationMetrics;
-
-            <!--
-            <resource-configuration>
-                &deploymentResourceConfigProps;
-            </resource-configuration>
-            -->
 
             <service name="Embedded Web Application Context"
                      class="WebApplicationContextComponent"
@@ -2502,12 +2464,6 @@
             <content name="file" displayName="EJB JAR File" category="deployable" isCreationType="true">
             	&deploymentContentConfigProps;
             </content>
-
-            <!--
-            <resource-configuration>
-                &deploymentResourceConfigProps;
-            </resource-configuration>
-            -->
 
             <service name="EJB2 Stateless Session Bean"
                      class="Ejb2BeanComponent"
@@ -2584,12 +2540,6 @@
             <metric property="custom.parent" displayName="Parent"
                     dataType="trait" displayType="summary"
                     description="the name of this EJB JAR's parent deployment"/>
-
-            <!--
-            <resource-configuration>
-                &deploymentResourceConfigProps;
-            </resource-configuration>
-            -->
 
             <service name="EJB2 Stateless Session Bean (Embedded)"
                      class="Ejb2BeanComponent"
@@ -2678,18 +2628,13 @@
             	&deploymentContentConfigProps;
             </content>
 
-            <!--
-            <resource-configuration>
-                &deploymentResourceConfigProps;
-            </resource-configuration>
-            -->
-
             <service name="EJB3 Stateless Session Bean"
                      class="Ejb3BeanComponent"
                      discovery="Ejb3BeanDiscoveryComponent"
                      description="An EJB3 Stateless Session Bean (SLSB)">
                 &ejb3StatelessSessionBeanDefinition;
                 &ejbSessionBeanOperations;
+                &ejb3CommonMetrics;
                 &ejb3SessionBeanMetrics;
             </service>
 
@@ -2699,8 +2644,8 @@
                      description="An EJB3 Stateful Session Bean (SFSB)">
                 &ejb3StatefulSessionBeanDefinition;
                 &ejbSessionBeanOperations;
+                &ejb3CommonMetrics;
                 &ejb3SessionBeanMetrics;
-                <!-- SFSBs have a few additional metrics that SLSBs do not have... -->
                 &ejb3StatefulSessionBeanMetrics;
             </service>
 
@@ -2709,6 +2654,7 @@
                      discovery="Ejb3BeanDiscoveryComponent"
                      description="An EJB3 Entity Bean">
                 &ejb3EntityBeanDefinition;
+                &ejb3CommonMetrics;
             </service>
 
             <service name="EJB3 Message-Driven Bean"
@@ -2716,6 +2662,7 @@
                      discovery="Ejb3BeanDiscoveryComponent"
                      description="An EJB3 Message-Driven Bean (MDB)">
                 &ejb3MessageDrivenBeanDefinition;
+                &ejb3CommonMetrics;
                 &ejb3MessageDrivenBeanMetrics;
             </service>
 
@@ -2748,102 +2695,46 @@
                     dataType="trait" displayType="summary"
                     description="the name of this EJB JAR's parent deployment"/>
 
-            <!--
-            <resource-configuration>
-                &deploymentResourceConfigProps;
-            </resource-configuration>
-            -->
-
             <service name="EJB3 Stateless Session Bean (Embedded)"
                      class="Ejb3BeanComponent"
                      discovery="Ejb3BeanDiscoveryComponent"
                      description="An EJB3 Stateless Session Bean (SLSB)">
-
                 &ejb3StatelessSessionBeanDefinition;
                 &ejbSessionBeanOperations;
+                &ejb3CommonMetrics;
                 &ejb3SessionBeanMetrics;
-
             </service>
 
             <service name="EJB3 Stateful Session Bean (Embedded)"
                      class="Ejb3BeanComponent"
                      discovery="Ejb3BeanDiscoveryComponent"
                      description="An EJB3 Stateful Session Bean (SFSB)">
-
                 &ejb3StatefulSessionBeanDefinition;
                 &ejbSessionBeanOperations;
+                &ejb3CommonMetrics;
                 &ejb3SessionBeanMetrics;
-                <!-- SFSBs have a few additional metrics that SLSBs do not have... -->
                 &ejb3StatefulSessionBeanMetrics;
-
             </service>
 
             <service name="EJB3 Entity Bean (Embedded)"
                      class="Ejb3BeanComponent"
                      discovery="Ejb3BeanDiscoveryComponent"
                      description="An EJB3 Entity Bean">
-
                 &ejb3EntityBeanDefinition;
-
-                <!-- TODO -->
-
+                &ejb3CommonMetrics;
             </service>
 
             <service name="EJB3 Message-Driven Bean (Embedded)"
                      class="Ejb3BeanComponent"
                      discovery="Ejb3BeanDiscoveryComponent"
                      description="An EJB3 Message-Driven Bean (MDB)">
-
                 &ejb3MessageDrivenBeanDefinition;
+                &ejb3CommonMetrics;
                 &ejb3MessageDrivenBeanMetrics;
-
             </service>
 
         </service>
 
-<!--
-        <service name="JBoss Service (SAR)"
-                 subCategory="Applications"
-                 class="StandaloneManagedDeploymentComponent"
-                 discovery="StandaloneManagedDeploymentDiscoveryComponent"
-                 description="JBoss Services"
-                 createDeletePolicy="both"
-                 creationDataType="content">
-
-            <plugin-configuration>
-                <c:group name="general" displayName="General">
-                    <c:simple-property name="deploymentName" description="The name of this SAR" readOnly="true"/>
-                    <c:simple-property name="filename" readOnly="true"/>
-                </c:group>
-                <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
-                    <c:simple-property name="extension" default="sar" readOnly="true"/>
-                    <c:simple-property name="descriptionTemplate" default="JBoss Services" readOnly="true"/>
-                    <c:simple-property name="deploymentTypeName" default="JBossServices" readOnly="true">
-                        <c:description>
-                            The name of the item from the org.jboss.deployers.spi.management.KnownDeploymentTypes enum
-                            corresponding to this deployment's type.
-                        </c:description>
-                    </c:simple-property>
-                </c:group>
-            </plugin-configuration>
-
-            <metric property="custom.path" displayName="Path"
-                    dataType="trait" displayType="summary"
-                    description="the absolute path of this SAR file or directory"/>
-
-            <metric property="custom.exploded" displayName="Exploded?"
-                    dataType="trait" displayType="summary"
-                    description="whether this SAR is deployed exploded (i.e. as a directory)"/>
-
-            <content name="file" displayName="Sar File" category="deployable" isCreationType="true">
-            </content>
-
-            <resource-configuration>
-                &deploymentResourceConfigProps;
-            </resource-configuration>
-
-        </service>
--->
         <service name="RAR"
                  subCategory="Applications"
                  class="StandaloneManagedDeploymentComponent"
@@ -2890,12 +2781,6 @@
             	&deploymentContentConfigProps;
             </content>
 
-            <!--
-            <resource-configuration>
-                &deploymentResourceConfigProps;
-            </resource-configuration>
-            -->
-
         </service>
 
         <service name="Embedded RAR"
@@ -2925,57 +2810,9 @@
                     dataType="trait" displayType="summary"
                     description="the name of this RAR's parent deployment"/>
 
-            <!--
-            <resource-configuration>
-                &deploymentResourceConfigProps;
-            </resource-configuration>
-            -->
-
         </service>
-<!--
-        <service name="MC Beans"
-                 subCategory="Applications"
-                 class="StandaloneManagedDeploymentComponent"
-                 discovery="StandaloneManagedDeploymentDiscoveryComponent"
-                 description="Microcontainer Beans"
-                 createDeletePolicy="both"
-                 creationDataType="content">
 
-            <plugin-configuration>
-                <c:group name="general" displayName="General">
-                    <c:simple-property name="deploymentName" description="The name of this MC Beans Archive" readOnly="true"/>
-                    <c:simple-property name="filename" readOnly="true"/>
-                </c:group>
-                <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
-                    <c:simple-property name="extension" default="beans" readOnly="true"/>
-                    <c:simple-property name="descriptionTemplate" default="MC Beans" readOnly="true"/>
-                    <c:simple-property name="deploymentTypeName" default="MCBeans" readOnly="true">
-                        <c:description>
-                            The name of the item from the org.jboss.deployers.spi.management.KnownDeploymentTypes enum
-                            corresponding to this deployment's type.
-                        </c:description>
-                    </c:simple-property>
-                </c:group>
-            </plugin-configuration>
-
-            <metric property="custom.path" displayName="Path"
-                    dataType="trait" displayType="summary"
-                    description="the absolute path of this MC Bean file or directory"/>
-
-            <metric property="custom.exploded" displayName="Exploded?"
-                    dataType="trait" displayType="summary"
-                    description="whether this MC Bean is deployed exploded (i.e. as a directory)"/>
-
-            <content name="file" displayName=".beans File" category="deployable" isCreationType="true">
-            </content>
-
-            <resource-configuration>
-                &deploymentResourceConfigProps;
-            </resource-configuration>
-
-        </service>
--->
-    <service name="Script"
+      <service name="Script"
                discovery="org.rhq.plugins.jbossas5.script.ScriptDiscoveryComponent"
                class="org.rhq.plugins.jbossas5.script.ScriptComponent"
                supportsManualAdd="true"
@@ -3015,7 +2852,7 @@
          </resource-configuration>
       </service>
 
-        <service name="Service Binding Manager"
+      <service name="Service Binding Manager"
                  class="org.rhq.plugins.jbossas5.serviceBinding.ManagerComponent"
                  discovery="ManagedComponentDiscoveryComponent"
                  description="The Service Binding Manager manages the ports of the deployed services">
@@ -3031,7 +2868,6 @@
            </resource-configuration>
 
       </service>
-
 
     </server>
 

@@ -39,6 +39,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
 
 /**
  * Discover EJB3 bean Resources.
@@ -46,8 +47,6 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
  * @author Ian Springer
  */
 public class Ejb3BeanDiscoveryComponent extends ManagedComponentDiscoveryComponent<AbstractManagedDeploymentComponent> {
-    private static final String METRICS_INSTANCE_COMPONENT_NAME_SUFFIX = "-metrics-instance";
-
     private final Log log = LogFactory.getLog(this.getClass());
 
     @Override
@@ -69,18 +68,18 @@ public class Ejb3BeanDiscoveryComponent extends ManagedComponentDiscoveryCompone
         Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
         for (ManagedComponent component : components) {
             if (component.getType().equals(componentType)) {
-                // e.g. "foo.ear-MyEjb" for EJBs inside EARs or "MyEjb" for EJBs within standalone EJB-JARs
-                String componentName = component.getName();
-                int index = componentName.indexOf(".ear-");
-                // Strip off the EAR filename prefix if there is one, so we end up with just the EJB name.
-                String resourceName = (index != -1) ? componentName.substring(index + ".ear-".length()) : componentName;
-                String resourceKey = resourceName;
+                String ejbName = (String)ManagedComponentUtils.getSimplePropertyValue(component, "name");
+                @SuppressWarnings({"UnnecessaryLocalVariable"})
+                String resourceKey = ejbName;
+                @SuppressWarnings({"UnnecessaryLocalVariable"})
+                String resourceName = ejbName;                
                 String version = null;
 
                 Configuration pluginConfig = discoveryContext.getDefaultPluginConfiguration();
-                pluginConfig.put(new PropertySimple(ManagedComponentComponent.Config.COMPONENT_NAME, componentName));
+                pluginConfig.put(new PropertySimple(ManagedComponentComponent.Config.COMPONENT_NAME,
+                        component.getName()));
 
-                DiscoveredResourceDetails resource =
+                @SuppressWarnings({"UnnecessaryLocalVariable"}) DiscoveredResourceDetails resource =
                         new DiscoveredResourceDetails(resourceType,
                                 resourceKey,
                                 resourceName,

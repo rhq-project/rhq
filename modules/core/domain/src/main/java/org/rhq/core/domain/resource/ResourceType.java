@@ -69,6 +69,7 @@ import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.event.EventDefinition;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.operation.OperationDefinition;
+import org.rhq.core.domain.util.serial.ExternalizableStrategy;
 
 /**
  * Defines a type of {@link Resource} (e.g. a Linux platform, a JBossAS server, or a Datasource service).
@@ -262,6 +263,7 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
 
     @Column(name = "DESCRIPTION")
     private String description;
+
     @Column(name = "CATEGORY", nullable = false)
     @Enumerated(EnumType.STRING)
     private ResourceCategory category;
@@ -356,8 +358,9 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
         // Intentionally left blank
     }
 
-    public ResourceType(@NotNull String name, @NotNull String plugin, ResourceCategory category,
-        ResourceType parentResourceType) {
+    public ResourceType(@NotNull
+    String name, @NotNull
+    String plugin, ResourceCategory category, ResourceType parentResourceType) {
         // Do not mark category NotNull. we create just key versions of ResourceTypes to do equals comparisons without a category
 
         assert name != null;
@@ -395,7 +398,8 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
         return this.name;
     }
 
-    public void setName(@NotNull String name) {
+    public void setName(@NotNull
+    String name) {
         this.name = name;
     }
 
@@ -404,7 +408,8 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
         return this.category;
     }
 
-    public void setCategory(@NotNull ResourceCategory category) {
+    public void setCategory(@NotNull
+    ResourceCategory category) {
         this.category = category;
     }
 
@@ -413,7 +418,8 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
         return creationDataType;
     }
 
-    public void setCreationDataType(@NotNull ResourceCreationDataType creationDataType) {
+    public void setCreationDataType(@NotNull
+    ResourceCreationDataType creationDataType) {
         if (creationDataType == null)
             throw new IllegalArgumentException("creationDataType cannot be null");
 
@@ -425,7 +431,8 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
         return createDeletePolicy;
     }
 
-    public void setCreateDeletePolicy(@NotNull CreateDeletePolicy createDeletePolicy) {
+    public void setCreateDeletePolicy(@NotNull
+    CreateDeletePolicy createDeletePolicy) {
         if (createDeletePolicy == null)
             throw new IllegalArgumentException("createDeletePolicy cannot be null");
 
@@ -493,7 +500,8 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
         return this.plugin;
     }
 
-    public void setPlugin(@NotNull String plugin) {
+    public void setPlugin(@NotNull
+    String plugin) {
         this.plugin = plugin;
     }
 
@@ -702,7 +710,8 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
         return helpText;
     }
 
-    public void setHelpText(@Nullable String helpText) {
+    public void setHelpText(@Nullable
+    String helpText) {
         this.helpText = helpText;
     }
 
@@ -744,12 +753,75 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
     }
 
     public void writeExternal(ObjectOutput out) throws IOException {
+        ExternalizableStrategy.Subsystem strategy = ExternalizableStrategy.getStrategy();
+        out.writeChar(strategy.id());
+
+        if (ExternalizableStrategy.Subsystem.REMOTEAPI == strategy) {
+            writeExternalRemote(out);
+        } else {
+            writeExternalAgent(out);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        if (ExternalizableStrategy.Subsystem.REMOTEAPI.id() == in.readChar()) {
+            readExternalRemote(in);
+        } else {
+            readExternalAgent(in);
+        }
+    }
+
+    public void writeExternalAgent(ObjectOutput out) throws IOException {
         out.writeUTF(this.name);
         out.writeUTF(this.plugin);
     }
 
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+    public void readExternalAgent(ObjectInput in) throws IOException, ClassNotFoundException {
         this.name = in.readUTF();
         this.plugin = in.readUTF();
     }
+
+    public void writeExternalRemote(ObjectOutput out) throws IOException {
+        out.writeInt(this.id);
+        out.writeUTF(this.name);
+        out.writeUTF((null == this.description) ? "" : this.description);
+        out.writeObject(this.category);
+        out.writeObject(this.creationDataType);
+        out.writeObject(this.createDeletePolicy);
+        out.writeBoolean(this.supportsManualAdd);
+        out.writeBoolean(this.singleton);
+        out.writeUTF(this.plugin);
+        out.writeLong(this.ctime);
+        out.writeLong(this.mtime);
+        // not supplied by remote: childResourceTypes
+        // not supplied by remote: parentResourceTypes        
+        // not supplied by remote: pluginConfigurationDefinition        
+        // not supplied by remote: resourceConfigurationDefinition        
+        // not supplied by remote: subCategory        
+        // not supplied by remote: metricDefinitions        
+        // not supplied by remote: eventDefinitions        
+        // not supplied by remote: operationDefinitions
+        // not supplied by remote: processScans
+        // not supplied by remote: packageTypes
+        // not supplied by remote: subCategories
+        // not supplied by remote: resources
+        // not supplied by remote: productVersions
+        // not supplied by remote: helpText
+    }
+
+    public void readExternalRemote(ObjectInput in) throws IOException, ClassNotFoundException {
+        this.id = in.readInt();
+        this.name = in.readUTF();
+        this.description = in.readUTF();
+        this.category = (ResourceCategory) in.readObject();
+        this.creationDataType = (ResourceCreationDataType) in.readObject();
+        this.createDeletePolicy = (CreateDeletePolicy) in.readObject();
+        this.supportsManualAdd = in.readBoolean();
+        this.singleton = in.readBoolean();
+        this.plugin = in.readUTF();
+        this.ctime = in.readLong();
+        this.mtime = in.readLong();
+    }
+
 }

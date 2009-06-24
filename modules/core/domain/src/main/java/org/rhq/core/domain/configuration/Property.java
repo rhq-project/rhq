@@ -50,6 +50,8 @@ import javax.xml.bind.annotation.XmlTransient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import org.rhq.core.domain.util.serial.ExternalizableStrategy;
+
 /**
  * The abstract base class for all {@link Configuration} value property types. A property is associated with a specific
  * {@link #getName()} and can contain one or more values. Since a {@link Configuration} represents a hierarchical set of
@@ -141,7 +143,8 @@ public abstract class Property implements Externalizable {
      *
      * @param name the name that this property will be associated with
      */
-    public void setName(@NotNull String name) {
+    public void setName(@NotNull
+    String name) {
         this.name = name;
     }
 
@@ -225,7 +228,8 @@ public abstract class Property implements Externalizable {
         return errorMessage;
     }
 
-    public void setErrorMessage(@Nullable String errorMessage) {
+    public void setErrorMessage(@Nullable
+    String errorMessage) {
         this.errorMessage = (errorMessage != null) ? errorMessage.trim() : errorMessage;
     }
 
@@ -269,10 +273,34 @@ public abstract class Property implements Externalizable {
         return ((this.name != null) ? this.name.hashCode() : 0);
     }
 
+    // It's not clear to me why this class implements Externalizable.  It seems to write out every field
+    // using standard serialization. Also, it's sub-classes seem to write out every field. To be safe I'm leaving
+    // it as is and also applying the new strategy logic, in case there are (future) differences between agent and
+    // remoteAPI serialization. 
+    public void writeExternal(ObjectOutput out) throws IOException {
+        ExternalizableStrategy.Subsystem strategy = ExternalizableStrategy.getStrategy();
+        out.writeChar(strategy.id());
+
+        if (ExternalizableStrategy.Subsystem.REMOTEAPI == strategy) {
+            writeExternalRemote(out);
+        } else {
+            writeExternalAgent(out);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        if (ExternalizableStrategy.Subsystem.REMOTEAPI.id() == in.readChar()) {
+            readExternalRemote(in);
+        } else {
+            readExternalAgent(in);
+        }
+    }
+
     /**
      * @see java.io.Externalizable#writeExternal(java.io.ObjectOutput)
      */
-    public void writeExternal(ObjectOutput out) throws IOException {
+    public void writeExternalAgent(ObjectOutput out) throws IOException {
         out.writeInt(id);
         out.writeObject(configuration);
         out.writeUTF(name);
@@ -284,13 +312,32 @@ public abstract class Property implements Externalizable {
     /**
      * @see java.io.Externalizable#readExternal(java.io.ObjectInput)
      */
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+    public void readExternalAgent(ObjectInput in) throws IOException, ClassNotFoundException {
         id = in.readInt();
         configuration = (Configuration) in.readObject();
         name = in.readUTF();
         parentList = (PropertyList) in.readObject();
         parentMap = (PropertyMap) in.readObject();
         errorMessage = (String) in.readObject();
+    }
+
+    // It is assumed that the object is clean of Hibernate proxies (i.e. HibernateDetachUtility has been run if necessary)
+    public void writeExternalRemote(ObjectOutput out) throws IOException {
+        out.writeInt(id);
+        out.writeObject(configuration);
+        out.writeUTF(name);
+        out.writeObject(errorMessage);
+        out.writeObject(parentList);
+        out.writeObject(parentMap);
+    }
+
+    public void readExternalRemote(ObjectInput in) throws IOException, ClassNotFoundException {
+        id = in.readInt();
+        configuration = (Configuration) in.readObject();
+        name = in.readUTF();
+        errorMessage = (String) in.readObject();
+        parentList = (PropertyList) in.readObject();
+        parentMap = (PropertyMap) in.readObject();
     }
 
     @Override

@@ -61,6 +61,9 @@ import org.hibernate.annotations.Cascade;
 import org.hibernate.annotations.CascadeType;
 import org.jetbrains.annotations.NotNull;
 
+import org.rhq.core.domain.util.serial.ExternalizableStrategy;
+import org.rhq.core.domain.util.serial.HibernateUtil;
+
 /**
  * This is the root object for the storage of a hierarchical value set of data. This data may represent configurations
  * of external systems or the components within ON. The data values supported are the basic primitive types in
@@ -562,17 +565,55 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
         return builder.append("]").toString();
     }
 
+    public void writeExternal(ObjectOutput out) throws IOException {
+        ExternalizableStrategy.Subsystem strategy = ExternalizableStrategy.getStrategy();
+        out.writeChar(strategy.id());
+
+        if (ExternalizableStrategy.Subsystem.REMOTEAPI == strategy) {
+            writeExternalRemote(out);
+        } else {
+            writeExternalAgent(out);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        if (ExternalizableStrategy.Subsystem.REMOTEAPI.id() == in.readChar()) {
+            readExternalRemote(in);
+        } else {
+            readExternalAgent(in);
+        }
+    }
+
     /**
      * @see java.io.Externalizable#writeExternal(java.io.ObjectOutput)
      */
-    public void writeExternal(ObjectOutput out) throws IOException {
+    public void writeExternalAgent(ObjectOutput out) throws IOException {
         out.writeInt(id);
-        if (getMap().getClass().getName().contains("hibernate")) {
-            out.writeObject(new LinkedHashMap<String, Property>(properties));
-        } else {
-            out.writeObject(properties);
-        }
+        out.writeObject(HibernateUtil.safeMap(getMap()));
+        out.writeUTF((notes == null) ? "null" : notes);
+        out.writeLong(version);
+        out.writeLong(ctime);
+        out.writeLong(mtime);
+    }
 
+    /**
+     * @see java.io.Externalizable#readExternal(java.io.ObjectInput)
+     */
+    @SuppressWarnings("unchecked")
+    public void readExternalAgent(ObjectInput in) throws IOException, ClassNotFoundException {
+        id = in.readInt();
+        properties = (HashMap<String, Property>) in.readObject();
+        notes = in.readUTF();
+        version = in.readLong();
+        ctime = in.readLong();
+        mtime = in.readLong();
+    }
+
+    // It is assumed that the object is clean of Hibernate proxies (i.e. HibernateDetachUtility has been run if necessary)
+    public void writeExternalRemote(ObjectOutput out) throws IOException {
+        out.writeInt(id);
+        out.writeObject(HibernateUtil.safeMap(properties));
         out.writeUTF((notes == null) ? "null" : notes);
         out.writeLong(version);
         out.writeLong(ctime);
@@ -580,11 +621,8 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
         // Explicitly do not send the history relationship
     }
 
-    /**
-     * @see java.io.Externalizable#readExternal(java.io.ObjectInput)
-     */
     @SuppressWarnings("unchecked")
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+    public void readExternalRemote(ObjectInput in) throws IOException, ClassNotFoundException {
         id = in.readInt();
         properties = (HashMap<String, Property>) in.readObject();
         notes = in.readUTF();

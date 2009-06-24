@@ -57,6 +57,7 @@ import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.util.serial.ExternalizableStrategy;
 
 /**
  * @author Greg Hinkle
@@ -274,7 +275,8 @@ public class Subject implements Externalizable {
         init();
     }
 
-    public Subject(@NotNull String name, boolean factive, boolean fsystem) {
+    public Subject(@NotNull
+    String name, boolean factive, boolean fsystem) {
         init();
         this.name = name;
         this.factive = factive;
@@ -313,7 +315,8 @@ public class Subject implements Externalizable {
         return this.name;
     }
 
-    public void setName(@NotNull String name) {
+    public void setName(@NotNull
+    String name) {
         this.name = name;
     }
 
@@ -457,14 +460,70 @@ public class Subject implements Externalizable {
     }
 
     public void writeExternal(ObjectOutput out) throws IOException {
+        ExternalizableStrategy.Subsystem strategy = ExternalizableStrategy.getStrategy();
+        out.writeChar(strategy.id());
+
+        if (ExternalizableStrategy.Subsystem.REMOTEAPI == strategy) {
+            writeExternalRemote(out);
+        } else {
+            writeExternalAgent(out);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        if (ExternalizableStrategy.Subsystem.REMOTEAPI.id() == in.readChar()) {
+            readExternalRemote(in);
+        } else {
+            readExternalAgent(in);
+        }
+    }
+
+    public void writeExternalAgent(ObjectOutput out) throws IOException {
         out.writeInt(this.id);
         out.writeUTF(this.name);
         out.writeInt(this.sessionId);
     }
 
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+    public void readExternalAgent(ObjectInput in) throws IOException, ClassNotFoundException {
         this.id = in.readInt();
         this.name = in.readUTF();
         this.sessionId = in.readInt();
     }
+
+    // It is assumed that the object is clean of Hibernate proxies (i.e. HibernateDetachUtility has been run if necessary)
+    public void writeExternalRemote(ObjectOutput out) throws IOException {
+        out.writeInt(this.id);
+        out.writeUTF(this.name);
+        out.writeUTF((null == firstName) ? "" : firstName);
+        out.writeUTF((null == lastName) ? "" : lastName);
+        out.writeUTF((null == emailAddress) ? "" : emailAddress);
+        out.writeUTF((null == smsAddress) ? "" : smsAddress);
+        out.writeUTF((null == phoneNumber) ? "" : phoneNumber);
+        out.writeUTF((null == department) ? "" : department);
+        out.writeBoolean(factive);
+        out.writeBoolean(fsystem);
+        out.writeObject(configuration);
+        out.writeObject(roles);
+        // not supplied by remote: subjectNotifications
+        out.writeInt(this.sessionId);
+    }
+
+    @SuppressWarnings("unchecked")
+    public void readExternalRemote(ObjectInput in) throws IOException, ClassNotFoundException {
+        this.id = in.readInt();
+        this.name = in.readUTF();
+        this.firstName = in.readUTF();
+        this.lastName = in.readUTF();
+        this.emailAddress = in.readUTF();
+        this.smsAddress = in.readUTF();
+        this.phoneNumber = in.readUTF();
+        this.department = in.readUTF();
+        this.factive = in.readBoolean();
+        this.fsystem = in.readBoolean();
+        this.configuration = (Configuration) in.readObject();
+        this.roles = (Set<Role>) in.readObject();
+        this.sessionId = in.readInt();
+    }
+
 }

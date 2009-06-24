@@ -43,6 +43,7 @@ public class PageControl implements Serializable, Cloneable {
     private int pageNumber = 0;
     private int pageSize = PageControl.SIZE_MAX;
     private LinkedList<OrderingField> orderingFields;
+    private String[] optionalData;
 
     public PageControl() {
         this.orderingFields = new LinkedList<OrderingField>();
@@ -233,6 +234,14 @@ public class PageControl implements Serializable, Cloneable {
         setPageNumber(0);
         setPageSize(15);
         this.orderingFields = new LinkedList<OrderingField>();
+    }
+
+    public String[] getOptionalData() {
+        return optionalData;
+    }
+
+    public void setOptionalData(String... optionalData) {
+        this.optionalData = optionalData;
     }
 
     @Override

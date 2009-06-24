@@ -395,10 +395,7 @@
                            <argLine>-Xmx512m -Xms128m</argLine>
                            <additionalClasspathElements>
                               <!-- The below is required for WS Java Client support -->
-                              <!--                               <additionalClasspathElement>target/jboss-${jboss.version}/client/jbossws-client.jar</additionalClasspathElement>  -->
-                              <additionalClasspathElement>
-                                 C:/Users/jshaughnessy/App/jbossws-native-dist/deploy/lib/jbossws-client.jar
-                              </additionalClasspathElement>
+                              <additionalClasspathElement>target/jboss-${jboss.version}/client/jbossws-client.jar</additionalClasspathElement>
                            </additionalClasspathElements>
                         </configuration>
                         <goals>

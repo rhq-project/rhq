@@ -24,7 +24,6 @@
 package org.jboss.on.plugins.tomcat;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -34,13 +33,16 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.jboss.on.plugins.tomcat.helper.TomcatConfig;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.pluginapi.util.ProcessExecutionUtility;
 import org.rhq.core.system.ProcessExecution;
 import org.rhq.core.system.ProcessExecutionResults;
@@ -171,7 +173,7 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent {
             return null;
         }
 
-        String installationPath = determineInstallationPath(processInfo);
+        String installationPath = determineInstallationPath(commandLine);
 
         // Pull out data from the discovery call
         SystemInfo systemInfo = context.getSystemInformation();
@@ -300,40 +302,14 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent {
     }
 
     /**
-     * Looks for tomcat home on the assumption that the process working directory is home/bin.  This may or may not
-     * be a valid assumption, if cwd is not /bin will try {@link determineInstallationPath(String[])}.
+     * Looks for tomcat home in the command line properties. Requires an full path for the catalina.home (preferred)
+     * or catalina.base property. The path may be a symbolic link.
      * 
-     * @param ProcessInfo for the standalone tomcat process. Null if it can't be determined.
-     *
-     * @return
-     */
-    private String determineInstallationPath(ProcessInfo processInfo) {
-        String cwdPath = null;
-        String result = null;
-
-        if (null != processInfo.getExecutable()) {
-            cwdPath = processInfo.getCurrentWorkingDirectory();
-            if (cwdPath.endsWith("bin")) {
-                result = new File(cwdPath).getParent();
-            }
-        }
-
-        if (null == result) {
-            result = determineInstallationPath(processInfo.getCommandLine());
-        }
-
-        return result;
-    }
-
-    /**
-     * Looks for tomcat home in the command line properties.
-     * 
-     * This can be called if we are guaranteed to have an absolute path for the catalina.home property. Otherwise, call
-     * {@link determineInstallationPath(ProcessInfo)}  
-     *
      * @param startup command line
      *
-     * @return
+     * @return A canonical form of the catalina home path set in the command line.  Symbolic links
+     * are not resolved to ensure that we discover the same resource repeatedly for the same symlink
+     * despite changes in the physical path.
      */
     private String determineInstallationPath(String[] cmdLine) {
         String result = null;
@@ -353,8 +329,8 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent {
 
         if (null != result) {
             try {
-                result = new File(result).getCanonicalPath();
-            } catch (IOException e) {
+                result = FileUtils.getCanonicalPath(result);
+            } catch (Exception e) {
                 log.warn("Unexpected standalone Tomcat installation path: " + result);
             }
         }

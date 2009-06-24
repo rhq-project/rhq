@@ -46,11 +46,10 @@
              <operation name="printConfigurationAsHtmlString" displayName="Print Details as HTML.">
                   <results><c:simple-property name="details"></c:simple-property></results>
              </operation> 
-          
-            <metric property="LocalAddress" dataType="trait" displayType="summary" />       
-            <metric property="ClusterConfig" dataType="trait" />       
-            <metric property="NodeLockingScheme" dataType="trait" />       
-            <metric property="Members" dataType="trait" />         
+               
+            <metric property="ClusterConfig" dataType="trait" />     
+            <metric property="TransactionManager" dataType="trait" />  
+            <metric property="NodeLockingScheme" dataType="trait" />            
             <metric property="ExposeManagementStatistics" dataType="trait" displayName="Expose Management Statistics?" />       
             <metric property="RegisterJmxResource" dataType="trait" displayName="Register JMX Resource?" />       
             <metric property="CacheLoaderConfiguration" dataType="trait" />       
@@ -70,8 +69,7 @@
             <metric property="UseReplQueue" dataType="trait" displayName="Use Replication Queue?" />       
             <metric property="UseRegionBasedMarshalling" dataType="trait" displayName="Use Region-Based Marshalling?" />                   
             <metric property="LockAcquisitionTimeout"  displayName="Lock Acquisition Timeout" category="performance" />       
-            <metric property="NumberOfNodes"  displayName="Number of Nodes" category="performance"/>       
-            <metric property="CacheStatus" dataType="trait" />       
+            <metric property="NumberOfNodes"  displayName="Number of Nodes" displayType="summary" category="performance"/>          
             <metric property="SyncCommitPhase" dataType="trait" displayName="Sync Commit Phase?" />       
             <metric property="SyncReplTimeout" displayName="Sync Replication Timeout" category="performance"/>       
             <metric property="EvictionPolicyConfig" dataType="trait" />       
@@ -93,13 +91,13 @@
                 
                <metric property="Evictions"  displayName="Evictions" measurementType="trendsup"
                   description="the number of cache eviction operations"  category="performance"/>
-               <metric property="HitMissRatio"  displayName="Hit/Miss Ratio" displayType="summary" />
-               <metric property="ReadWriteRatio"  displayName="Read/Write Ratio" displayType="summary" />
+               <metric property="HitMissRatio" displayType="summary" displayName="Hit/Miss Ratio"/>
+               <metric property="ReadWriteRatio" displayType="summary" displayName="Read/Write Ratio"/>
                <metric property="NumberOfNodes"  displayName="NumberOfNodes" 
                   description="the number of nodes in the cache"  category="performance"/>
-               <metric property="Hits"  displayName="Hits" measurementType="trendsup"
+               <metric property="Hits" displayType="summary" displayName="Hits" measurementType="trendsup"
                   description="the number of cache attribute hits"  category="performance"/>
-               <metric property="NumberOfAttributes"
+               <metric property="NumberOfAttributes" displayType="summary"
                   description="the number of cache attributes"  category="performance"/>
                <metric property="StatisticsEnabled"  dataType="trait" />
                <metric property="ElapsedTime"
@@ -110,11 +108,11 @@
                    measurementType="trendsup" units="seconds"/>
                <metric property="Misses" measurementType="trendsup"
                    description="the number of cache attribute misses"/>
-               <metric property="AverageWriteTime" units="milliseconds"
+               <metric property="AverageWriteTime" displayType="summary" units="milliseconds"
                    description="the average amount of time per write operation"  category="performance"/>
                <metric property="Stores" measurementType="trendsup" 
                    description="the number of cache attribute put operations"  category="performance"/>
-               <metric property="AverageReadTime" units="milliseconds"
+               <metric property="AverageReadTime" displayType="summary" units="milliseconds"
                    description="the average amount of time per read operation"  category="performance"/>
                
            </service>    
@@ -125,7 +123,7 @@
                  description="JBoss Cache Data Container">
              
               <plugin-configuration>
-                <c:simple-property name="jmx-resource" default="jmx-resource=CacheMgmtInterceptor"/>
+                <c:simple-property name="jmx-resource" default="jmx-resource=DataContainer"/>
               </plugin-configuration>     
               
                 <operation name="getNumberOfNodes" displayName="Get Number of nodes." 
@@ -160,12 +158,12 @@
                     
                <metric property="Enabled" dataType="trait"  displayName="RPC Enabled?" 
                  description="whether or not the RPC Manager is used in this cache instance"/>
-               <metric property="ReplicationFailures" displayName="Failed Replications" 
+               <metric property="ReplicationFailures" displayType="summary" displayName="Failed Replications" 
                  description="the number of failed replications"/>
                <metric property="LocalAddressString" dataType="trait" displayName="Local Address" 
                  description="Local address"/>
                <metric property="StatisticsEnabled" dataType="trait" />
-               <metric property="ReplicationCount" displayName="Successful Replications"  
+               <metric property="ReplicationCount" displayType="summary" displayName="Successful Replications"  
                  description="the number of successful replications"/>
                <metric property="SuccessRatio" dataType="trait"
                  description="RPC call success ratio"/>
@@ -202,7 +200,7 @@
               </plugin-configuration>         
               <operation name="resetStatistics" displayName="Reset Statistics" description="Resets all statistics" />         
                    
-              <metric property="numberOfRegisteredTransactions"
+              <metric property="numberOfRegisteredTransactions" displayType="summary"
                 description="the number of registered transactions"  category="performance"/>
               <metric property="transactionMap"  dataType="trait"
                 description="a string representation of the transaction map"  />
@@ -217,17 +215,31 @@
                  <c:simple-property name="jmx-resource" default="jmx-resource=TxInterceptor"/>
                </plugin-configuration>              
             
-               <metric property="Commits"
+               <metric property="Commits" displayType="summary"
                 description="the number of transaction commits"  category="performance"/>       
                <metric property="StatisticsEnabled"  dataType="trait" displayName="Statistics Enabled?" 
                 description="a String representation of the transaction map"  />       
-               <metric property="Rollbacks"
+               <metric property="Rollbacks" displayType="summary"
                 description="the number of transaction rollbacks"  category="performance"/>        
-               <metric property="Prepares"
+               <metric property="Prepares" displayType="summary"
                 description="the number of transaction prepares"  category="performance"/>       
-               <metric property="numberOfSyncsRegistered"
+               <metric property="numberOfSyncsRegistered" displayType="summary"
                 description="the number of transaction synchronizations currently registered"  category="performance"/>       
-           </service>     
-         
+           </service>   
+           
+           <service name="Lock Manager"
+                     class="JBossCacheDetailComponent"
+                 discovery="JBossCacheDetailDiscoveryComponent"
+                 description="MVCC Lock Manager">
+                 
+                 <plugin-configuration>
+                   <c:simple-property name="jmx-resource" default="jmx-resource=MVCCLockManager"/>
+                 </plugin-configuration>              
+               
+                 <metric property="concurrency level" displayType="summary"
+                description="The concurrency level that the MVCC Lock Manager has been configured with."  category="performance"/>       
+                <metric property="locks held" displayType="summary"
+                description="The number of exclusive locks that are held."  category="performance"/>       
+         </service>
     </service>
 </plugin>

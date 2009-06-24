@@ -47,7 +47,9 @@ import javax.persistence.Table;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 
 /**
- * An alert condition (e.g. ActiveThreads > 100) as configured in a JON alert definition.
+ * An alert condition (e.g. ActiveThreads > 100) as configured in an alert definition.
+ * 
+ * @author Joseph Marques
  */
 @Entity
 @NamedQueries( {

@@ -22,6 +22,8 @@ import java.util.List;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
@@ -159,6 +161,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
         return new PageList<IntegerOptionItem>(list, (int) totalCount, pageControl);
     }
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public int createAlertDefinition(Subject user, AlertDefinition alertDefinition, Integer resourceId)
         throws InvalidAlertDefinitionException {
         checkAlertDefinition(alertDefinition, resourceId);
@@ -211,7 +214,8 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
         }
 
         if (addToCache) {
-            notifyAlertConditionCacheManager("createAlertDefinition", alertDefinition, AlertDefinitionEvent.CREATED);
+            notifyAlertConditionCacheManager("createAlertDefinition", alertDefinition.getId(),
+                AlertDefinitionEvent.CREATED);
         }
 
         return alertDefinition.getId();
@@ -234,7 +238,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
                 isAlertTemplate = (null != alertDefinition.getResourceType());
 
                 if (!isAlertTemplate) {
-                    notifyAlertConditionCacheManager("removeAlertDefinitions", alertDefinition,
+                    notifyAlertConditionCacheManager("removeAlertDefinitions", alertDefinition.getId(),
                         AlertDefinitionEvent.DELETED);
                 }
             }
@@ -256,7 +260,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
                     modifiedCount++;
 
                     // thus, add it to the cache since it (shouldn't) already exist
-                    notifyAlertConditionCacheManager("enableAlertDefinitions", alertDefinition,
+                    notifyAlertConditionCacheManager("enableAlertDefinitions", alertDefinition.getId(),
                         AlertDefinitionEvent.ENABLED);
                 }
             }
@@ -286,7 +290,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
                     modifiedCount++;
 
                     // thus, remove it from the cache since it (should) already exist
-                    notifyAlertConditionCacheManager("disableAlertDefinitions", alertDefinition,
+                    notifyAlertConditionCacheManager("disableAlertDefinitions", alertDefinition.getId(),
                         AlertDefinitionEvent.DISABLED);
                 }
             }
@@ -311,7 +315,8 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
 
                 entityManager.persist(newAlertDefinition);
 
-                notifyAlertConditionCacheManager("copyAlertDefinitions", alertDefinition, AlertDefinitionEvent.CREATED);
+                notifyAlertConditionCacheManager("copyAlertDefinitions", alertDefinition.getId(),
+                    AlertDefinitionEvent.CREATED);
             }
         }
     }
@@ -330,6 +335,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
         return list;
     }
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public AlertDefinition updateAlertDefinition(Subject user, int alertDefinitionId, AlertDefinition alertDefinition,
         boolean purgeInternals) throws InvalidAlertDefinitionException, AlertDefinitionUpdateException {
         if (purgeInternals) {
@@ -378,7 +384,8 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
             for (AlertCondition nextCondition : oldAlertDefinition.getConditions()) {
                 LOG.debug("OldAlertCondition[ id=" + nextCondition.getId() + " ]");
             }
-            notifyAlertConditionCacheManager("updateAlertDefinition", oldAlertDefinition, AlertDefinitionEvent.DELETED);
+            notifyAlertConditionCacheManager("updateAlertDefinition", oldAlertDefinition.getId(),
+                AlertDefinitionEvent.DELETED);
         }
 
         /* 
@@ -418,7 +425,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
                 for (AlertCondition nextCondition : newAlertDefinition.getConditions()) {
                     LOG.debug("NewAlertCondition[ id=" + nextCondition.getId() + " ]");
                 }
-                notifyAlertConditionCacheManager("updateAlertDefinition", newAlertDefinition,
+                notifyAlertConditionCacheManager("updateAlertDefinition", newAlertDefinition.getId(),
                     AlertDefinitionEvent.CREATED);
             }
         }
@@ -471,10 +478,10 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
         return;
     }
 
-    private void notifyAlertConditionCacheManager(String methodName, AlertDefinition alertDefinition,
+    private void notifyAlertConditionCacheManager(String methodName, int alertDefinitionId,
         AlertDefinitionEvent alertDefinitionEvent) {
         LOG.debug("Invoking... " + methodName);
-        agentStatusManager.updateByAlertDefinition(alertDefinition.getId());
+        agentStatusManager.updateByAlertDefinition(alertDefinitionId);
     }
 
     private void purgeInternals(int alertDefinitionId) {

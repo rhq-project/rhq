@@ -37,7 +37,9 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 /**
- * A log record for a triggered JON alert condition.
+ * A log record for a triggered alert condition.
+ * 
+ * @author Joseph Marques
  */
 @Entity
 @NamedQueries( {

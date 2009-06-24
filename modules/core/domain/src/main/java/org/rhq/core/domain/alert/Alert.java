@@ -45,7 +45,7 @@ import javax.persistence.Table;
 import org.rhq.core.domain.alert.notification.AlertNotificationLog;
 
 /**
- * A JON alert.
+ * @author Joseph Marques
  */
 @Entity
 @NamedQueries( {

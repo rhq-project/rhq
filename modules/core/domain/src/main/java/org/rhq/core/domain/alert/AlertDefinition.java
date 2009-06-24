@@ -53,43 +53,58 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 
 /**
- * A JON alert definition.
+ * @author Joseph Marques
  */
 @Entity
-@NamedQueries( {
-    @NamedQuery(name = AlertDefinition.QUERY_FIND_ALL, query = "SELECT a " + "  FROM AlertDefinition a "
-        + " WHERE a.deleted = false " + "       AND a.resource IS NOT NULL"),
-    @NamedQuery(name = AlertDefinition.QUERY_FIND_ALL_WITH_CONDITIONS, query = "SELECT a " //
+@NamedQueries( { //
+@NamedQuery(name = AlertDefinition.QUERY_FIND_ALL, query = "" //
+    + "SELECT a " //
+    + "  FROM AlertDefinition a " //
+    + " WHERE a.deleted = false " //
+    + "   AND a.resource IS NOT NULL"),
+    @NamedQuery(name = AlertDefinition.QUERY_FIND_ALL_WITH_CONDITIONS, query = "" //
+        + "SELECT a " //
         + "  FROM AlertDefinition a " //
-        + "       LEFT JOIN FETCH a.conditions " // 
+        + "  LEFT JOIN FETCH a.conditions " // 
         + " WHERE a.deleted = false " //
-        + "       AND a.enabled = true " //
-        + "       AND a.resource IS NOT NULL " //
-        + "       AND a.resource.agent.id = :agentId "),
-    @NamedQuery(name = AlertDefinition.QUERY_FIND_ALL_BY_RECOVERY_DEFINITION_ID, query = "SELECT a "
-        + "  FROM AlertDefinition a " + "       LEFT JOIN FETCH a.conditions "
-        + " WHERE a.deleted = false AND a.enabled = true " + "       AND a.recoveryId = :recoveryDefinitionId"),
-    @NamedQuery(name = AlertDefinition.QUERY_FIND_BY_ALERT_TEMPLATE_ID, query = "SELECT a.id "
-        + "  FROM AlertDefinition a " + " WHERE a.parentId = :alertTemplateId " + "       AND a.deleted = false"
-        + "       AND a.readOnly=false"),
-    @NamedQuery(name = AlertDefinition.QUERY_FIND_RESOURCE_IDS_WITH_NO_ACTIVE_TEMPLATE_DEFINITION, query = "SELECT res.id "
-        + "  FROM Resource res "
-        + " WHERE res.resourceType.id = :resourceTypeId "
-        + "       AND res.inventoryStatus = :inventoryStatus "
-        + "       AND ( res.alertDefinitions IS EMPTY "
-        + "             OR 0 = ( SELECT COUNT(ad) "
-        + "                        FROM res.alertDefinitions ad "
-        + "                       WHERE ad.parentId = :alertTemplateId "
-        + "                             AND ad.deleted = FALSE ) )"),
+        + "   AND a.enabled = true " //
+        + "   AND a.resource IS NOT NULL " //
+        + "   AND a.resource.agent.id = :agentId "),
+    @NamedQuery(name = AlertDefinition.QUERY_FIND_ALL_BY_RECOVERY_DEFINITION_ID, query = "" //
+        + "SELECT a " //
+        + "  FROM AlertDefinition a " //
+        + "  LEFT JOIN FETCH a.conditions " //
+        + " WHERE a.deleted = false AND a.enabled = true " //
+        + "   AND a.recoveryId = :recoveryDefinitionId"),
+    @NamedQuery(name = AlertDefinition.QUERY_FIND_BY_ALERT_TEMPLATE_ID, query = "" //
+        + "SELECT a.id " //
+        + "  FROM AlertDefinition a " //
+        + " WHERE a.parentId = :alertTemplateId " //
+        + "   AND a.deleted = false" //
+        + "   AND a.readOnly = false"),
+    @NamedQuery(name = AlertDefinition.QUERY_FIND_RESOURCE_IDS_NEEDING_TEMPLATE_APPLICATION, query = "" //
+        + "SELECT res.id " //
+        + "  FROM Resource res " //
+        + " WHERE res.resourceType.id = :resourceTypeId " //
+        + "   AND res.inventoryStatus = :inventoryStatus " //
+        + "   AND NOT EXISTS ( SELECT ad.id " //
+        + "                      FROM AlertDefinition ad " //
+        + "                     WHERE ad.parentId = :alertTemplateId " // find the definitions for this template
+        + "                       AND ad.resource.id = res.id " // correlated to the resource
+        + "                       AND ad.deleted = false ) "), // and not deleted
     @NamedQuery(name = AlertDefinition.QUERY_FIND_OPTION_ITEMS_BY_RESOURCE, //
     query = "SELECT new org.rhq.core.domain.common.composite.IntegerOptionItem(ad.id, ad.name) " //
         + "    FROM AlertDefinition ad " //
         + "   WHERE ad.resource.id = :resourceId " //
-        + "     AND ad.deleted = false"),
-    @NamedQuery(name = AlertDefinition.QUERY_FIND_BY_RESOURCE, query = "SELECT a " + "  FROM AlertDefinition a "
-        + " WHERE a.resource.id = :id " + "       AND a.deleted = false"),
-    @NamedQuery(name = AlertDefinition.QUERY_FIND_BY_RESOURCE_TYPE, query = "SELECT a " + "  FROM AlertDefinition a "
-        + " WHERE a.resourceType.id = :typeId " + "       AND a.deleted = false"),
+        + "     AND ad.deleted = false"), @NamedQuery(name = AlertDefinition.QUERY_FIND_BY_RESOURCE, query = "" //
+        + "SELECT a " //
+        + "  FROM AlertDefinition a " //
+        + " WHERE a.resource.id = :id " //
+        + "   AND a.deleted = false"), @NamedQuery(name = AlertDefinition.QUERY_FIND_BY_RESOURCE_TYPE, query = "" //
+        + "SELECT a " //
+        + "  FROM AlertDefinition a " //
+        + " WHERE a.resourceType.id = :typeId " //
+        + "   AND a.deleted = false"),
     @NamedQuery(name = AlertDefinition.QUERY_DELETE_BY_RESOURCES, query = "" //
         + "DELETE FROM AlertDefinition ad " //
         + " WHERE ad.resource.id IN ( :resourceIds ) "), //
@@ -163,7 +178,7 @@ public class AlertDefinition implements Serializable {
     public static final String QUERY_FIND_ALL_WITH_CONDITIONS = "AlertDefinition.findAllWithConditions";
     public static final String QUERY_FIND_ALL_BY_RECOVERY_DEFINITION_ID = "AlertDefinition.findAllByRecoveryDefinitionId";
     public static final String QUERY_FIND_BY_ALERT_TEMPLATE_ID = "AlertDefinition.findByAlertTemplateId";
-    public static final String QUERY_FIND_RESOURCE_IDS_WITH_NO_ACTIVE_TEMPLATE_DEFINITION = "AlertDefinition.findResourceIdsWithNoDefinition";
+    public static final String QUERY_FIND_RESOURCE_IDS_NEEDING_TEMPLATE_APPLICATION = "AlertDefinition.findResourceIdsNeedingTemplateApplication";
     public static final String QUERY_FIND_OPTION_ITEMS_BY_RESOURCE = "AlertDefinition.findOptionItemsByResource";
     public static final String QUERY_FIND_BY_RESOURCE = "AlertDefinition.findByResource";
     public static final String QUERY_FIND_BY_RESOURCE_TYPE = "AlertDefinition.findByResourceType";

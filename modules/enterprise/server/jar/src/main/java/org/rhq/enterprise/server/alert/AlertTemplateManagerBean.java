@@ -33,7 +33,6 @@ import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.InventoryStatus;
-import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -88,7 +87,7 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
-    private List<Integer> getAlertDefinitionIdsByTemplateId(Subject user, int alertTemplateId) {
+    private List<Integer> getAlertDefinitionIdsForTemplate(Subject user, int alertTemplateId) {
         Query query = entityManager.createNamedQuery(AlertDefinition.QUERY_FIND_BY_ALERT_TEMPLATE_ID);
         query.setParameter("alertTemplateId", alertTemplateId);
 
@@ -97,10 +96,10 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
-    private List<Integer> getCommittedResourceIdsWithNoDefinitionFromThisTemplate(Subject user, int alertTemplateId,
+    private List<Integer> getCommittedResourceIdsNeedingTemplateApplication(Subject user, int alertTemplateId,
         int resourceTypeId) {
         Query query = entityManager
-            .createNamedQuery(AlertDefinition.QUERY_FIND_RESOURCE_IDS_WITH_NO_ACTIVE_TEMPLATE_DEFINITION);
+            .createNamedQuery(AlertDefinition.QUERY_FIND_RESOURCE_IDS_NEEDING_TEMPLATE_APPLICATION);
         query.setParameter("alertTemplateId", alertTemplateId);
         query.setParameter("resourceTypeId", resourceTypeId);
         query.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
@@ -117,33 +116,29 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
         alertTemplate.setResourceType(type); // mark this as an alert "template" definition
         int alertTemplateId = alertDefinitionManager.createAlertDefinition(user, alertTemplate, null);
 
-        try {
-            int definitionCount = 0;
-            for (Resource resource : type.getResources()) {
-                if (resource.getInventoryStatus() != InventoryStatus.COMMITTED) {
-                    continue;
-                }
+        int definitionCount = 0;
+        Subject overlord = subjectManager.getOverlord();
+        List<Integer> resourceIdsForType = getCommittedResourceIdsNeedingTemplateApplication(user, alertTemplateId,
+            resourceTypeId);
 
+        for (Integer resourceId : resourceIdsForType) {
+            try {
                 // make sure we perform the system side-effects as the overlord
-                updateAlertDefinitionsForResource(subjectManager.getOverlord(), alertTemplate, resource.getId());
+                updateAlertDefinitionsForResource(overlord, alertTemplate, resourceId);
 
-                /*
-                 * flush/clear after only 5 definitions (as opposed to a larger batch) because an alert
-                 * definition is actual many objects: the definition, the condition set, the notification
-                 * set, the alert dampening rules
-                 */
+                // rev2804 - flush/clear after 250 definitions for good performance
                 if (++definitionCount % 250 == 0) {
                     entityManager.flush();
                     entityManager.clear();
                 }
+            } catch (AlertDefinitionCreationException adce) {
+                /* should never happen because AlertDefinitionCreationException is only ever
+                 * thrown if updateAlertDefinitionsForResource isn't called as the overlord
+                 *
+                 * but we'll log it anyway, just in case, so it isn't just swallowed
+                 */
+                LOG.error(adce);
             }
-        } catch (AlertDefinitionCreationException adce) {
-            /* should never happen because AlertDefinitionCreationException is only ever
-             * thrown if updateAlertDefinitionsForResource isn't called as the overlord
-             *
-             * but we'll log it anyway, just in case, so it isn't just swallowed
-             */
-            LOG.error(adce);
         }
 
         return alertTemplateId;
@@ -197,33 +192,36 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public void removeAlertTemplates(Subject user, Integer[] alertTemplateIds) {
+        Subject overlord = subjectManager.getOverlord();
         for (Integer alertTemplateId : alertTemplateIds) {
-            alertDefinitionManager.removeAlertDefinitions(user, new Integer[] { alertTemplateId });
+            List<Integer> alertDefinitions = getAlertDefinitionIdsForTemplate(user, alertTemplateId);
 
-            List<Integer> alertDefinitions = getAlertDefinitionIdsByTemplateId(user, alertTemplateId);
-            alertDefinitionManager.removeAlertDefinitions(subjectManager.getOverlord(), alertDefinitions
+            alertDefinitionManager.removeAlertDefinitions(user, new Integer[] { alertTemplateId });
+            alertDefinitionManager.removeAlertDefinitions(overlord, alertDefinitions
                 .toArray(new Integer[alertDefinitions.size()]));
         }
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public void enableAlertTemplates(Subject user, Integer[] alertTemplateIds) {
+        Subject overlord = subjectManager.getOverlord();
         for (Integer alertTemplateId : alertTemplateIds) {
-            alertDefinitionManager.enableAlertDefinitions(user, new Integer[] { alertTemplateId });
+            List<Integer> alertDefinitions = getAlertDefinitionIdsForTemplate(user, alertTemplateId);
 
-            List<Integer> alertDefinitions = getAlertDefinitionIdsByTemplateId(user, alertTemplateId);
-            alertDefinitionManager.enableAlertDefinitions(subjectManager.getOverlord(), alertDefinitions
+            alertDefinitionManager.enableAlertDefinitions(user, new Integer[] { alertTemplateId });
+            alertDefinitionManager.enableAlertDefinitions(overlord, alertDefinitions
                 .toArray(new Integer[alertDefinitions.size()]));
         }
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public void disableAlertTemplates(Subject user, Integer[] alertTemplateIds) {
+        Subject overlord = subjectManager.getOverlord();
         for (Integer alertTemplateId : alertTemplateIds) {
-            alertDefinitionManager.disableAlertDefinitions(user, new Integer[] { alertTemplateId });
+            List<Integer> alertDefinitions = getAlertDefinitionIdsForTemplate(user, alertTemplateId);
 
-            List<Integer> alertDefinitions = getAlertDefinitionIdsByTemplateId(user, alertTemplateId);
-            alertDefinitionManager.disableAlertDefinitions(subjectManager.getOverlord(), alertDefinitions
+            alertDefinitionManager.disableAlertDefinitions(user, new Integer[] { alertTemplateId });
+            alertDefinitionManager.disableAlertDefinitions(overlord, alertDefinitions
                 .toArray(new Integer[alertDefinitions.size()]));
         }
     }
@@ -250,7 +248,7 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
         /*
          * update all of the definitions that were spawned from alert templates
          */
-        List<Integer> alertDefinitions = getAlertDefinitionIdsByTemplateId(overlord, alertTemplate.getId());
+        List<Integer> alertDefinitions = getAlertDefinitionIdsForTemplate(overlord, alertTemplate.getId());
         for (Integer alertDefinitionId : alertDefinitions) {
             try {
 
@@ -272,11 +270,7 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
                 LOG.error("Attempt to update a deleted template " + alertTemplate.toSimpleString());
             }
 
-            /*
-             * flush/clear after only 5 definitions (as opposed to a larger batch) because an alert
-             * definition is actual many objects: the definition, the condition set, the notification
-             * set, the alert dampening rules
-             */
+            // rev2804 - flush/clear after 250 definitions for good performance
             if (++definitionCount % 250 == 0) {
                 entityManager.flush();
                 entityManager.clear();
@@ -286,17 +280,13 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
         /*
          * if the user deleted the alert definition spawned from a template, a cascade update will recreate it
          */
-        List<Integer> resourceIds = getCommittedResourceIdsWithNoDefinitionFromThisTemplate(overlord, alertTemplate
-            .getId(), alertTemplate.getResourceType().getId());
+        List<Integer> resourceIds = getCommittedResourceIdsNeedingTemplateApplication(overlord, alertTemplate.getId(),
+            alertTemplate.getResourceType().getId());
         try {
             for (Integer resourceId : resourceIds) {
                 updateAlertDefinitionsForResource(overlord, alertTemplate, resourceId);
 
-                /*
-                 * flush/clear after only 5 definitions (as opposed to a larger batch) because an alert
-                 * definition is actual many objects: the definition, the condition set, the notification
-                 * set, the alert dampening rules
-                 */
+                // rev2804 - flush/clear after 250 definitions for good performance
                 if (++definitionCount % 250 == 0) {
                     entityManager.flush();
                     entityManager.clear();

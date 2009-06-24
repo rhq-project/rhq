@@ -112,7 +112,7 @@ public class StatusManagerBean implements StatusManagerLocal {
                 + "] for alertDefinition[id=" + alertDefinitionId + "]");
         }
 
-        Agent agent = definition.getResource().getAgent();
+        Agent agent = agentManager.getAgentByResourceId(definition.getResource().getId());
         agent.addStatus(Agent.Status.ALERT_DEFINITION);
         if (log.isDebugEnabled()) {
             log.debug("Marking status, agent[id=" + agent.getId() + ", status=" + agent.getStatus()

@@ -29,7 +29,7 @@ public class StartJBossAsCommand implements ClientCommand {
             OperationManagerRemote operationManager = client.getRemoteClient().getOperationManagerRemote();
             ResourceOperationSchedule schedule = null;
             // check for instance
-            Resource resource = res.getResourceById(client.getSubject(), asId);
+            Resource resource = res.getResource(client.getSubject(), asId);
             if ((resource != null) && (resource.getCurrentAvailability() != null)) {
                 // check for down
                 if (resource.getCurrentAvailability().getAvailabilityType().compareTo(AvailabilityType.DOWN) == 0) {

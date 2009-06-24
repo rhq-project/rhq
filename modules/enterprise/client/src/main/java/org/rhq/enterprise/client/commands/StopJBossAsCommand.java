@@ -34,7 +34,7 @@ public class StopJBossAsCommand implements ClientCommand {
             OperationManagerRemote operationManager = client.getRemoteClient().getOperationManagerRemote();
             ResourceOperationSchedule schedule = null;
             // check for instance
-            Resource resource = res.getResourceById(client.getSubject(), asId);
+            Resource resource = res.getResource(client.getSubject(), asId);
             if ((resource != null) && (resource.getCurrentAvailability() != null)) {
                 // check for up
                 if (resource.getCurrentAvailability().getAvailabilityType().compareTo(AvailabilityType.UP) == 0) {

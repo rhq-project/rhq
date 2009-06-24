@@ -108,6 +108,8 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
+import org.rhq.enterprise.server.exception.DeleteException;
+import org.rhq.enterprise.server.exception.FetchException;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.operation.ResourceOperationSchedule;
@@ -1973,4 +1975,98 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             }
         }
     }
+
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    //
+    // Remote Interface Impl
+    //
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    public Resource getResource(Subject sessionSubject, int resourceId) throws FetchException {
+        Resource result = null;
+
+        try {
+            result = getResourceById(sessionSubject, resourceId);
+        } catch (Exception e) {
+            throw new FetchException(e);
+        }
+
+        return result;
+    }
+
+    public List<Resource> getResourceLineage(Subject sessionSubject, int resourceId) throws FetchException {
+        List<Resource> result = null;
+
+        try {
+            result = getResourceLineage(resourceId);
+
+            for (Resource resource : result) {
+                if (!authorizationManager.canViewResource(sessionSubject, resource.getId())) {
+                    throw new PermissionException("User [" + sessionSubject
+                        + "] does not have permission to view resource [" + resource.getId() + "]");
+                }
+            }
+        } catch (Exception e) {
+            throw new FetchException(e);
+        }
+
+        return result;
+    }
+
+    // THIS IS A TEMPORARY IMPL, THE REAL IMPL WILL USE THE QUERY GENERATOR
+    public PageList<Resource> findResources(Subject sessionSubject, Resource criteria, PageControl pc)
+        throws FetchException {
+
+        PageList<ResourceComposite> pl;
+        List<Resource> resourceList;
+
+        try {
+            pl = findResourceComposites(sessionSubject, null, criteria.getResourceType(), criteria.getParentResource(),
+                ((null == criteria.getName()) ? criteria.getDescription() : criteria.getName()), false, pc);
+
+            resourceList = new ArrayList<Resource>(pl.getValues().hashCode());
+            for (ResourceComposite rc : pl.getValues()) {
+                Resource resource = entityManager.find(Resource.class, rc.getResource().getId());
+
+                // a smattering of optional data support just for testing
+                for (String od : pc.getOptionalData()) {
+                    if (ResourceManagerLocal.DATA_AGENT.equals(od)) {
+                        resource.getAgent();
+                    } else if (ResourceManagerLocal.DATA_RESOURCE_TYPE.equals(od)) {
+                        resource.getResourceType();
+                    } else if (ResourceManagerLocal.DATA_PARENT_RESOURCE.equals(od)) {
+                        resource.getParentResource();
+                    }
+
+                }
+
+                resourceList.add(resource);
+            }
+        } catch (Exception e) {
+            throw new FetchException(e);
+        }
+
+        return new PageList<Resource>(resourceList, pl.getTotalSize(), pc);
+    }
+
+    // THIS IS A TEMPORARY IMPL, THE REAL IMPL WILL USE THE QUERY GENERATOR
+    public PageList<Resource> findResourceChildren(Subject sessionSubject, int resourceId, Resource criteria,
+        PageControl pc) throws FetchException {
+
+        try {
+            Resource resource = entityManager.find(Resource.class, resourceId);
+            return this.getChildResources(sessionSubject, resource, pc);
+        } catch (Exception e) {
+            throw new FetchException(e);
+        }
+    }
+
+    public void uninventoryResources(Subject sessionSubject, int[] resourceIds) throws DeleteException {
+        try {
+            deleteResources(sessionSubject, ArrayUtils.wrapArray(resourceIds));
+        } catch (Exception e) {
+            throw new DeleteException(e);
+        }
+    }
+
 }

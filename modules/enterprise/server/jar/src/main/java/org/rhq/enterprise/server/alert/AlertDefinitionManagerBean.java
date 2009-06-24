@@ -52,7 +52,6 @@ import org.rhq.enterprise.server.alert.engine.AlertDefinitionEvent;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.cloud.StatusManagerLocal;
-import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * @author Joseph Marques
@@ -170,9 +169,10 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
         if (resourceId != null) {
             // don't attach an alert template to any particular resource
             // the template should have already been attached to the resourceType by the template manager
-            Resource resource = LookupUtil.getResourceManager().getResourceById(user, resourceId);
 
-            alertDefinition.setResource(resource);
+            //Resource resource = LookupUtil.getResourceManager().getResourceById(user, resourceId);
+            // use proxy trick to subvert having to load the entire resource into memory
+            alertDefinition.setResource(new Resource(resourceId));
         }
 
         // after the resource is set up (in the case of non-templates), we can use the checkPermission on it

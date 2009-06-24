@@ -71,7 +71,9 @@ public class PluginDependencyGraph {
     /**
      * Returns the name of the plugin who's classloader will be used as the parent of this plugin. If none is explicitly
      * declared, the last one in the dependency list will be used.
-     * @deprecated this method will go away once we implement better classloading and support for multiple plugin deps
+     * 
+     * @param the name of the plugin whose required dependency contains classes that are to be accessible by the plugin
+     * @return the required dependency for the given plugin, or <code>null</code> if there is no required dependency
      */
     public String getUseClassesDependency(String pluginName) {
         PluginDependency last = null;

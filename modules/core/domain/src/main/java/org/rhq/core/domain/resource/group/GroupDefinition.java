@@ -65,7 +65,7 @@ import org.rhq.core.domain.util.StringUtils;
         + "  FROM ResourceGroup rg " //
         + " WHERE rg.groupDefinition.id = :groupDefinitionId "),
     @NamedQuery(name = GroupDefinition.QUERY_FIND_MANAGED_RESOURCE_GROUP_SIZE_ADMIN, query = "" //
-        + "SELECT SUM(rg.id) " //
+        + "SELECT COUNT(rg.id) " //
         + "  FROM ResourceGroup rg " //
         + " WHERE rg.groupDefinition.id = :groupDefinitionId "),
     /*

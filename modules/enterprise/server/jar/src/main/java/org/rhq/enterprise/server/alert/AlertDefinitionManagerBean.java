@@ -195,6 +195,8 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
             alertDefinition.setConditionExpression(BooleanExpression.ANY);
         }
 
+        fixRecoveryId(alertDefinition);
+
         entityManager.persist(alertDefinition);
 
         boolean addToCache = false;
@@ -219,6 +221,24 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
         }
 
         return alertDefinition.getId();
+    }
+
+    private void fixRecoveryId(AlertDefinition definition) {
+        // this was a recovery alert created from a template
+        if (definition.getParentId() != 0 && definition.getRecoveryId() != 0) {
+            // so we need to set the resource-level recovery id properly
+            String findCorrectRecoveryId = "" //
+                + " SELECT toBeRecovered.id " //
+                + "   FROM AlertDefinition toBeRecovered " //
+                + "  WHERE toBeRecovered.resource.id = :resourceId " //
+                + "    AND toBeRecovered.parentId = :parentId ";
+            Query fixRecoveryIdQuery = entityManager.createQuery(findCorrectRecoveryId);
+            fixRecoveryIdQuery.setParameter("resourceId", definition.getResource().getId());
+            // definition.recoveryId current points at the toBeRecovered template, we want the definition
+            fixRecoveryIdQuery.setParameter("parentId", definition.getRecoveryId()); // wrong one to be replaced
+            Integer correctRecoveryId = (Integer) fixRecoveryIdQuery.getSingleResult();
+            definition.setRecoveryId(correctRecoveryId);
+        }
     }
 
     public int removeAlertDefinitions(Subject user, Integer[] alertDefinitionIds) {
@@ -397,6 +417,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
         }
 
         oldAlertDefinition.update(alertDefinition);
+        fixRecoveryId(oldAlertDefinition);
         AlertDefinition newAlertDefinition = entityManager.merge(oldAlertDefinition);
 
         if ((isAlertTemplate == false)

@@ -141,6 +141,9 @@
             <rhq.test.ds.port>5432</rhq.test.ds.port>
             <rhq.test.ds.db-name>rhq</rhq.test.ds.db-name>
             <rhq.test.ds.hibernate-dialect>org.hibernate.dialect.PostgreSQLDialect</rhq.test.ds.hibernate-dialect>
+            <!-- quartz properties -->
+            <rhq.test.quartz.driverDelegateClass>org.quartz.impl.jdbcjobstore.PostgreSQLDelegate</rhq.test.quartz.driverDelegateClass>
+            <rhq.test.quartz.selectWithLockSQL>SELECT * FROM {0}LOCKS ROWLOCK WHERE LOCK_NAME = ? FOR UPDATE</rhq.test.quartz.selectWithLockSQL>
          </properties>
       </profile>
       
@@ -158,6 +161,9 @@
             <rhq.test.ds.db-name>rhq</rhq.test.ds.db-name>
             <!-- This custom dialect is required for proper operation using H2, see class JavaDoc for more info -->
             <rhq.test.ds.hibernate-dialect>org.rhq.core.domain.dialect.H2CustomDialect</rhq.test.ds.hibernate-dialect>
+            <!-- quartz properties -->
+            <rhq.test.quartz.driverDelegateClass>org.quartz.impl.jdbcjobstore.StdJDBCDelegate</rhq.test.quartz.driverDelegateClass>
+            <rhq.test.quartz.selectWithLockSQL>SELECT * FROM {0}LOCKS ROWLOCK WHERE LOCK_NAME = ? FOR UPDATE</rhq.test.quartz.selectWithLockSQL>
          </properties>
       </profile>
       
@@ -174,6 +180,9 @@
             <rhq.test.ds.port>1433</rhq.test.ds.port>
             <rhq.test.ds.db-name>rhq</rhq.test.ds.db-name>
             <rhq.test.ds.hibernate-dialect>org.hibernate.dialect.SQLServerDialect</rhq.test.ds.hibernate-dialect>
+            <!-- quartz properties -->
+            <rhq.test.quartz.driverDelegateClass>org.quartz.impl.jdbcjobstore.MSSQLDelegate</rhq.test.quartz.driverDelegateClass>
+            <rhq.test.quartz.selectWithLockSQL>SELECT * FROM {0}LOCKS ROWLOCK WITH (HOLDLOCK,XLOCK) WHERE LOCK_NAME = ?</rhq.test.quartz.selectWithLockSQL>
          </properties>
       </profile>
 
@@ -190,6 +199,9 @@
             <rhq.test.ds.port></rhq.test.ds.port> <!-- can be left blank, oracle does not use this -->
             <rhq.test.ds.db-name></rhq.test.ds.db-name> <!-- can be left blank, oracle does not use this -->
             <rhq.test.ds.hibernate-dialect>org.hibernate.dialect.Oracle10gDialect</rhq.test.ds.hibernate-dialect>
+            <!-- quartz properties -->
+            <rhq.test.quartz.driverDelegateClass>org.quartz.impl.jdbcjobstore.oracle.OracleDelegate</rhq.test.quartz.driverDelegateClass>
+            <rhq.test.quartz.selectWithLockSQL>SELECT * FROM {0}LOCKS ROWLOCK WHERE LOCK_NAME = ? FOR UPDATE</rhq.test.quartz.selectWithLockSQL>
          </properties>
       </profile>
 

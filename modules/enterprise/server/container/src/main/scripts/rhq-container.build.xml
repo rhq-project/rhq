@@ -15,6 +15,8 @@
   <property name="default.rhq.server.database.server-name" value="127.0.0.1"/>
   <property name="default.rhq.server.database.port" value="5432"/>
   <property name="default.rhq.server.database.db-name" value="rhq"/>
+  <property name="default.rhq.server.quartz.driverDelegateClass" value="org.quartz.impl.jdbcjobstore.PostgreSQLDelegate"/>
+  <property name="default.rhq.server.quartz.selectWithLockSQL" value="SELECT * FROM {0}LOCKS WHERE LOCK_NAME = ? FOR UPDATE"/>
 
   <target name="set-predeploy-prop">
     <condition property="predeploy" value="true">
@@ -37,6 +39,8 @@
      <property name="rhq.server.database.server-name" value="${rhq.test.ds.server-name}"/>
      <property name="rhq.server.database.port" value="${rhq.test.ds.port}"/>
      <property name="rhq.server.database.db-name" value="${rhq.test.ds.db-name}"/>
+     <property name="rhq.server.quartz.driverDelegateClass" value="${rhq.test.quartz.driverDelegateClass}"/>
+     <property name="rhq.server.quartz.selectWithLockSQL" value="${rhq.test.quartz.selectWithLockSQL}"/>
   </target>
 
   <target name="set-default-server-props" unless="predeploy">
@@ -51,6 +55,8 @@
      <property name="rhq.server.database.server-name" value="${default.rhq.server.database.server-name}"/>
      <property name="rhq.server.database.port" value="${default.rhq.server.database.port}"/>
      <property name="rhq.server.database.db-name" value="${default.rhq.server.database.db-name}"/>
+     <property name="rhq.server.quartz.driverDelegateClass" value="${default.rhq.server.quartz.driverDelegateClass}"/>
+     <property name="rhq.server.quartz.selectWithLockSQL" value="${default.rhq.server.quartz.selectWithLockSQL}"/>
   </target>
 
   <target name="initialize" depends="set-predeploy-prop, set-dev-server-props, set-default-server-props">
@@ -366,6 +372,8 @@
        </fileset>
     </move>
 
+    <echo>Replacing quartz-scheduler-service with </echo>
+
   </target>
 
   <target name="package-connectors" if="package-connectors">
@@ -403,6 +411,8 @@ rhq.server.database.server-name=${rhq.server.database.server-name}
 rhq.server.database.port=${rhq.server.database.port}
 rhq.server.database.db-name=${rhq.server.database.db-name}
 hibernate.dialect=${rhq.server.database.hibernate-dialect}
+rhq.server.quartz.driverDelegateClass = ${rhq.server.quartz.driverDelegateClass}
+rhq.server.quartz.selectWithLockSQL = ${rhq.server.quartz.selectWithLockSQL}
 
 # Container configuration
 # ********************************** NOTE ************************************

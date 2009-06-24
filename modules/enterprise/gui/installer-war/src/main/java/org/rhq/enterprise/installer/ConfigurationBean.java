@@ -565,22 +565,33 @@ public class ConfigurationBean {
         try {
             String db = getConfigurationProperty(configuration, ServerProperties.PROP_DATABASE_TYPE).getValue();
             String dialect;
+            String quartzDriverDelegateClass = "org.quartz.impl.jdbcjobstore.StdJDBCDelegate";
+            String quartzSelectWithLockSQL = "SELECT * FROM {0}LOCKS ROWLOCK WHERE LOCK_NAME = ? FOR UPDATE";
 
             if (db.toLowerCase().indexOf("postgres") > -1) {
                 dialect = "org.hibernate.dialect.PostgreSQLDialect";
+                quartzDriverDelegateClass = "org.quartz.impl.jdbcjobstore.PostgreSQLDelegate";
             } else if (db.toLowerCase().indexOf("oracle") > -1) {
                 dialect = "org.hibernate.dialect.Oracle10gDialect";
+                quartzDriverDelegateClass = "org.quartz.impl.jdbcjobstore.oracle.OracleDelegate";
             } else if (db.toLowerCase().indexOf("h2") > -1) {
                 dialect = "org.rhq.core.domain.dialect.H2CustomDialect";
             } else if (db.toLowerCase().indexOf("sqlserver") > -1) {
                 dialect = "org.hibernate.dialect.SQLServerDialect";
+                quartzDriverDelegateClass = "org.quartz.impl.jdbcjobstore.MSSQLDelegate";
+                quartzSelectWithLockSQL = "SELECT * FROM {0}LOCKS ROWLOCK WITH (HOLDLOCK,XLOCK) WHERE LOCK_NAME = ?";
             } else if (db.toLowerCase().indexOf("mysql") > -1) {
                 dialect = "org.hibernate.dialect.MySQL5InnoDBDialect";
+                quartzDriverDelegateClass = "org.quartz.impl.jdbcjobstore.PostgreSQLDelegate";
             } else {
                 throw new Exception("Unknown db type: " + db);
             }
 
             getConfigurationProperty(configuration, ServerProperties.PROP_DATABASE_HIBERNATE_DIALECT).setValue(dialect);
+            getConfigurationProperty(configuration, ServerProperties.PROP_QUARTZ_DRIVER_DELEGATE_CLASS).setValue(
+                quartzDriverDelegateClass);
+            getConfigurationProperty(configuration, ServerProperties.PROP_QUARTZ_SELECT_WITH_LOCK_SQL).setValue(
+                quartzSelectWithLockSQL);
 
         } catch (Exception e) {
             LOG.fatal("Invalid database type", e);

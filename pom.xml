@@ -78,9 +78,6 @@
     <richfaces.version>3.3.0.GA</richfaces.version>
     <sigar.version>1.6.3.68-beta1</sigar.version>
 
-    <!-- misc properties -->
-    <server.quartzDelegate>org.quartz.impl.jdbcjobstore.PostgreSQLDelegate</server.quartzDelegate>
-
     <!-- defaults for datasource used by dbsetup, unit+integration tests, and dev container build -
          these may be overridden in ~/.m2/settings.xml -->
     <rhq.test.ds.connection-url>jdbc:postgresql://127.0.0.1:5432/rhq</rhq.test.ds.connection-url>
@@ -93,6 +90,8 @@
     <rhq.test.ds.port>5432</rhq.test.ds.port>
     <rhq.test.ds.db-name>rhq</rhq.test.ds.db-name>
     <rhq.test.ds.hibernate-dialect>org.hibernate.dialect.PostgreSQLDialect</rhq.test.ds.hibernate-dialect>
+    <rhq.test.quartz.driverDelegateClass>org.quartz.impl.jdbcjobstore.PostgreSQLDelegate</rhq.test.quartz.driverDelegateClass>
+    <rhq.test.quartz.selectWithLockSQL>SELECT * FROM {0}LOCKS ROWLOCK WHERE LOCK_NAME = ? FOR UPDATE</rhq.test.quartz.selectWithLockSQL>
 
      <!-- default port numbers for RHQ server -->
     <rhq.server.http.port>7080</rhq.server.http.port>

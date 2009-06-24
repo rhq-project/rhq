@@ -40,6 +40,8 @@ public class ServerProperties {
     public static final String PROP_DATABASE_PORT = PREFIX_PROP_DATABASE + "port";
     public static final String PROP_DATABASE_DB_NAME = PREFIX_PROP_DATABASE + "db-name";
     public static final String PROP_DATABASE_HIBERNATE_DIALECT = "hibernate.dialect";
+    public static final String PROP_QUARTZ_DRIVER_DELEGATE_CLASS = "rhq.server.quartz.driverDelegateClass";
+    public static final String PROP_QUARTZ_SELECT_WITH_LOCK_SQL = "rhq.server.quartz.selectWithLockSQL";
 
     public static final String PROP_SERVER_BIND_ADDRESS = "jboss.bind.address";
     public static final String PROP_HTTP_PORT = "rhq.server.startup.web.http.port";
@@ -185,6 +187,8 @@ public class ServerProperties {
         new PropertyItem(PROP_DATABASE_PORT, String.class, "", "", false, true, false, true),
         new PropertyItem(PROP_DATABASE_DB_NAME, String.class, "", "", false, true, false, true),
         new PropertyItem(PROP_DATABASE_HIBERNATE_DIALECT, String.class, "", "", false, true, false, true),
+        new PropertyItem(PROP_QUARTZ_DRIVER_DELEGATE_CLASS, String.class, "", "", false, true, false, true),
+        new PropertyItem(PROP_QUARTZ_SELECT_WITH_LOCK_SQL, String.class, "", "", false, true, false, true),
 
         new PropertyItem(PROP_SERVER_BIND_ADDRESS, String.class, InstallerI18NResourceKeys.PROP_SERVER_BIND_ADDRESS,
             InstallerI18NResourceKeys.PROP_SERVER_BIND_ADDRESS_HELP, true, false, false),

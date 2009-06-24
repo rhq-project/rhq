@@ -184,6 +184,8 @@
                   <property name="rhq.test.ds.port" value="${rhq.test.ds.port}" />
                   <property name="rhq.test.ds.db-name" value="${rhq.test.ds.db-name}" />
                   <property name="rhq.test.ds.hibernate-dialect" value="${rhq.test.ds.hibernate-dialect}" />
+                  <property name="rhq.test.quartz.driverDelegateClass" value="${rhq.test.quartz.driverDelegateClass}" />
+                  <property name="rhq.test.quartz.selectWithLockSQL" value="${rhq.test.quartz.selectWithLockSQL}" />
 
                   <!-- default server settings used by installer -->
                   <property name="rhq.server.http.port" value="${rhq.server.http.port}" />

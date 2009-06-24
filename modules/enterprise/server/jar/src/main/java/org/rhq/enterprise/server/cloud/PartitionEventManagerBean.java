@@ -23,12 +23,16 @@ import java.util.Map;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import org.jboss.annotation.IgnoreDependency;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
@@ -73,6 +77,10 @@ public class PartitionEventManagerBean implements PartitionEventManagerLocal {
     @EJB
     FailoverListManagerLocal failoverListManager;
 
+    @EJB
+    @IgnoreDependency
+    PartitionEventManagerLocal partitionEventManager;
+
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public FailoverListComposite agentPartitionEvent(Subject subject, String agentName, PartitionEventType eventType,
         String eventDetail) {
@@ -90,9 +98,15 @@ public class PartitionEventManagerBean implements PartitionEventManagerLocal {
 
         PartitionEvent partitionEvent = new PartitionEvent(subject.getName(), eventType, eventDetail,
             PartitionEvent.ExecutionStatus.IMMEDIATE);
-        entityManager.persist(partitionEvent);
+        partitionEventManager.createPartitionEvent(subject, partitionEvent);
 
         return failoverListManager.getForSingleAgent(partitionEvent, agent.getName());
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public void createPartitionEvent(Subject subject, PartitionEvent partitionEvent) {
+        entityManager.persist(partitionEvent);
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)

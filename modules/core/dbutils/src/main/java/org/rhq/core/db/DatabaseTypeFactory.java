@@ -166,6 +166,8 @@ public class DatabaseTypeFactory {
             } else if (db_name.indexOf("sql server") != -1) {
                 if (db_version.startsWith("09.00") || db_version.startsWith("9.00")) { // SQL Server 2005
                     database_type_class = SQLServer2005DatabaseType.class;
+                } else if (db_version.startsWith("10.00")) { // SQL Server 2008
+                    database_type_class = SQLServer2008DatabaseType.class;
                 }
             }
 

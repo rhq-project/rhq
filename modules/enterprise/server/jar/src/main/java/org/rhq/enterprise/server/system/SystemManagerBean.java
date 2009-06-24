@@ -113,6 +113,7 @@ public class SystemManagerBean implements SystemManagerLocal {
         licenseManager = LicenseManager.instance();
     }
 
+    @SuppressWarnings("unchecked")
     public void scheduleConfigCacheReloader() {
         // each time the webapp is reloaded, we don't want to create duplicate jobs
         Collection<Timer> timers = timerService.getTimers();
@@ -186,10 +187,11 @@ public class SystemManagerBean implements SystemManagerLocal {
         loadSystemConfigurationCache();
     }
 
+    @SuppressWarnings("unchecked")
     public void loadSystemConfigurationCache() {
         // After this is done, the systemConfigurationCache contains the latest config.
-        List<SystemConfiguration> configs;
-        configs = entityManager.createNamedQuery(SystemConfiguration.QUERY_FIND_ALL).getResultList();
+        List<SystemConfiguration> configs = entityManager.createNamedQuery(SystemConfiguration.QUERY_FIND_ALL)
+            .getResultList();
 
         Properties properties = new Properties();
 
@@ -262,7 +264,6 @@ public class SystemManagerBean implements SystemManagerLocal {
      * @param properties the full set of system configurations, in case the changed value needs to be compared against
      *                   other values
      */
-    @SuppressWarnings("deprecation")
     private void verifyNewSystemConfigurationProperty(String name, String value, Properties properties) {
         if (RHQConstants.BaselineDataSet.equals(name)) {
             // 1h table holds at most 14 days worth of data, make sure we don't set a dataset more than that

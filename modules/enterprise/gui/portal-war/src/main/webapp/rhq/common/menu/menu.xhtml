@@ -352,6 +352,48 @@
             <h:outputText value="License"/>
         </rich:menuItem>
     </rich:dropDownMenu>
+    
+    <ui:remove>===== DEBUG =====</ui:remove>
+
+    <rich:dropDownMenu rendered="#{GlobalPermissionsUIBean.superuser and
+                                   GlobalPermissionsUIBean.debugMode}">
+        <f:facet name="label">
+            <h:panelGroup>
+                <h:outputText value="Debug"/>
+            </h:panelGroup>
+        </f:facet>
+        
+        <rich:menuItem submitMode="none" 
+                       onclick="window.open('/admin/test/sql.jsp')"
+                       target="blank_">
+            <h:outputText value="SQL Interface"/>
+        </rich:menuItem>
+        <rich:menuItem submitMode="none" 
+                       onclick="window.open('/admin/test/hibernate.jsp')"
+                       target="blank_">
+            <h:outputText value="JPQL/HQL Interface"/>
+        </rich:menuItem>
+        <rich:menuItem submitMode="none" 
+                       onclick="window.open('/admin/test/browser.jsp')"
+                       target="blank_">
+            <h:outputText value="Hibernate Entity Browser"/>
+        </rich:menuItem>
+        <rich:menuItem submitMode="none" 
+                       onclick="window.open('/admin/test/control.jsp')"
+                       target="blank_">
+            <h:outputText value="Administrative Control"/>
+        </rich:menuItem>
+        <rich:menuItem submitMode="none" 
+                       onclick="window.open('/admin/test/email.jsp')"
+                       target="blank_">
+            <h:outputText value="Test Email Configuration"/>
+        </rich:menuItem>
+v        <rich:menuItem submitMode="none" 
+                       onclick="window.open('/admin/test/agent.jsp')"
+                       target="blank_">
+            <h:outputText value="Test Agent Communications"/>
+        </rich:menuItem>
+    </rich:dropDownMenu>
 
     <ui:remove>===== HELP =====</ui:remove>
 

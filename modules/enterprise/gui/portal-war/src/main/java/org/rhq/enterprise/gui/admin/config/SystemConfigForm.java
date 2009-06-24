@@ -36,6 +36,7 @@ public class SystemConfigForm extends BaseValidatorForm {
     private String agentMaxQuietTimeAllowed = "";
     private String agentMaxQuietTimeAllowedVal = "0";
     private boolean enableAgentAutoUpdate = false;
+    private boolean enableDebugMode = false;
     private String helpUserId = "";
     private String helpPassword = "";
     private String maintIntervalVal = "0";
@@ -85,6 +86,7 @@ public class SystemConfigForm extends BaseValidatorForm {
         buf.append(" baseUrl=").append(baseUrl);
         buf.append(" agentMaxQuietTimeAllowed=").append(agentMaxQuietTimeAllowed);
         buf.append(" enableAgentAutoUpdate=").append(enableAgentAutoUpdate);
+        buf.append(" enableDebugMode=").append(enableDebugMode);
         buf.append(" helpUserId=").append(helpUserId);
         buf.append(" helpPassword=").append(helpPassword);
         buf.append(" ldapEnabled=").append(ldapEnabled);
@@ -124,6 +126,7 @@ public class SystemConfigForm extends BaseValidatorForm {
         agentMaxQuietTimeAllowed = "";
         agentMaxQuietTimeAllowedVal = null;
         enableAgentAutoUpdate = true;
+        enableDebugMode = false;
         helpUserId = "";
         helpPassword = "";
         maintInterval = "";
@@ -180,6 +183,9 @@ public class SystemConfigForm extends BaseValidatorForm {
 
         String enableAgentAutoUpdateStr = prop.getProperty(RHQConstants.EnableAgentAutoUpdate);
         enableAgentAutoUpdate = Boolean.valueOf(enableAgentAutoUpdateStr).booleanValue();
+
+        String enableDebugModeStr = prop.getProperty(RHQConstants.EnableDebugMode);
+        enableDebugMode = Boolean.valueOf(enableDebugModeStr).booleanValue();
 
         String maintIntervalValStr = prop.getProperty(RHQConstants.DataMaintenance);
         Long maintIntervalLong = new Long(maintIntervalValStr);
@@ -311,6 +317,8 @@ public class SystemConfigForm extends BaseValidatorForm {
 
         prop.setProperty(RHQConstants.EnableAgentAutoUpdate, String.valueOf(enableAgentAutoUpdate));
 
+        prop.setProperty(RHQConstants.EnableDebugMode, String.valueOf(enableDebugMode));
+
         long maintIntervalLong = convertToMillisecond(Integer.parseInt(maintIntervalVal), maintInterval);
         prop.setProperty(RHQConstants.DataMaintenance, String.valueOf(maintIntervalLong));
 
@@ -415,6 +423,14 @@ public class SystemConfigForm extends BaseValidatorForm {
 
     public void setEnableAgentAutoUpdate(boolean b) {
         this.enableAgentAutoUpdate = b;
+    }
+
+    public boolean getEnableDebugMode() {
+        return this.enableDebugMode;
+    }
+
+    public void setEnableDebugMode(boolean b) {
+        this.enableDebugMode = b;
     }
 
     public String getMaintIntervalVal() {

@@ -42,10 +42,15 @@ public class Authorization extends ConditionalTagSupport {
     protected boolean condition() throws JspTagException {
         try {
             HttpServletRequest request = (HttpServletRequest) pageContext.getRequest();
+            AuthorizationManagerLocal authorizationManager = LookupUtil.getAuthorizationManager();
+            Subject user = WebUtility.getSubject(request);
+
+            if (isSuperuserCheck()) {
+                return authorizationManager.isSystemSuperuser(user);
+            }
 
             Permission permission = getPermissionEnum();
 
-            Subject user = WebUtility.getSubject(request);
             if (user == null) {
                 return false; // cannot authorize a non-authenticated user
             }
@@ -56,7 +61,6 @@ public class Authorization extends ConditionalTagSupport {
                 context = Context.Resource;
             }
 
-            AuthorizationManagerLocal authorizationManager = LookupUtil.getAuthorizationManager();
             if (context == Context.Resource) {
                 return authorizationManager.hasResourcePermission(user, permission, objectId);
             } else if (context == Context.Global) {
@@ -77,6 +81,10 @@ public class Authorization extends ConditionalTagSupport {
             return 0;
         }
         return id.intValue();
+    }
+
+    private boolean isSuperuserCheck() {
+        return permission != null && permission.toLowerCase().equals("superuser");
     }
 
     private Permission getPermissionEnum() throws JspTagException {

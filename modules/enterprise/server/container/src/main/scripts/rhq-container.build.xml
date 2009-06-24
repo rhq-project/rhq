@@ -372,8 +372,6 @@
        </fileset>
     </move>
 
-    <echo>Replacing quartz-scheduler-service with </echo>
-
   </target>
 
   <target name="package-connectors" if="package-connectors">

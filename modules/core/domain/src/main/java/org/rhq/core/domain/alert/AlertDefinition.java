@@ -168,7 +168,12 @@ import org.rhq.core.domain.resource.ResourceType;
         + "SELECT ad.id " //
         + "  FROM AlertDefinition ad " //
         + " WHERE ad.id = :alertDefinitionId " //
-        + "   AND ad.enabled = true ") })
+        + "   AND ad.enabled = true "), //
+    @NamedQuery(name = AlertDefinition.QUERY_IS_TEMPLATE, query = "" //
+        + "SELECT ad.id " //
+        + "  FROM AlertDefinition ad " //
+        + " WHERE ad.id = :alertDefinitionId " //
+        + "   AND ad.resourceType IS NOT NULL ") })
 @SequenceGenerator(name = "RHQ_ALERT_DEFINITION_ID_SEQ", sequenceName = "RHQ_ALERT_DEFINITION_ID_SEQ", allocationSize = 10)
 @Table(name = "RHQ_ALERT_DEFINITION")
 public class AlertDefinition implements Serializable {
@@ -186,6 +191,7 @@ public class AlertDefinition implements Serializable {
     public static final String QUERY_FIND_UNUSED_DEFINITION_IDS = "AlertDefinition.findUnusedDefinitionIds";
     public static final String QUERY_FIND_DEFINITION_ID_BY_CONDITION_ID = "AlertDefinition.findDefinitionIdByConditionId";
     public static final String QUERY_IS_ENABLED = "AlertDefinition.isEnabled";
+    public static final String QUERY_IS_TEMPLATE = "AlertDefinition.isTemplate";
 
     // for subsystem view
     public static final String QUERY_FIND_ALL_COMPOSITES = "AlertDefinition.findAllComposites";

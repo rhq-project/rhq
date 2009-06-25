@@ -52,6 +52,8 @@ public interface AlertDefinitionManagerLocal {
 
     boolean isEnabled(Integer definitionId);
 
+    boolean isTemplate(Integer definitionId);
+
     int disableAlertDefinitions(Subject user, Integer[] alertDefinitionIds);
 
     List<AlertDefinition> getAllRecoveryDefinitionsById(Subject user, Integer alertDefinitionId);

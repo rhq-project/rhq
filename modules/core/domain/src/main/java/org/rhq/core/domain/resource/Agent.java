@@ -76,7 +76,7 @@ import org.rhq.core.domain.cloud.Server;
         + "SELECT a.id " //
         + "  FROM Agent a " //
         + " WHERE a.status <> 0 "), //
-    @NamedQuery(name = Agent.UPDATE_CLEAR_STATUS_BY_IDS, query = "" //
+    @NamedQuery(name = Agent.QUERY_UPDATE_CLEAR_STATUS_BY_IDS, query = "" //
         + "UPDATE Agent a " //
         + "   SET a.status = 0 " //
         + " WHERE a.id IN ( :agentIds ) "), // 
@@ -87,7 +87,35 @@ import org.rhq.core.domain.cloud.Server;
     @NamedQuery(name = Agent.QUERY_FIND_WITHOUT_AFFINITY_GROUP, query = "" //
         + "SELECT a " //
         + "  FROM Agent a " //
-        + " WHERE a.affinityGroup IS NULL") //        
+        + " WHERE a.affinityGroup IS NULL"), //
+    @NamedQuery(name = Agent.QUERY_UPDATE_STATUS_BY_ALERT_DEFINITION, query = "" //
+        + " UPDATE Agent a " //
+        + "    SET a.status = -1 " // negative numbers so that bitmask strat does not conflict with this one
+        + "  WHERE a.status = 0 " // we only need the first guy to set it
+        + "    AND a.id = ( SELECT resA.id " // only update ourselves;
+        + "                   FROM AlertDefinition ad " //
+        + "                   JOIN ad.resource res " //
+        + "                   JOIN res.agent resA " //
+        + "                  WHERE ad.id = :alertDefinitionId ) "), //
+    @NamedQuery(name = Agent.QUERY_UPDATE_STATUS_BY_MEASUREMENT_BASELINE, query = "" //
+        + " UPDATE Agent a " //
+        + "    SET a.status = -1 " // negative numbers so that bitmask strat does not conflict with this one
+        + "  WHERE a.status = 0 " // we only need the first guy to set it
+        + "    AND a.id = ( SELECT resA.id " // only update ourselves;
+        + "                   FROM MeasurementBaseline mb " //
+        + "                   JOIN mb.schedule ms " //
+        + "                   JOIN ms.resource res " //
+        + "                   JOIN res.agent resA " //
+        + "                  WHERE mb.id = :baselineId ) "), //
+    @NamedQuery(name = Agent.QUERY_UPDATE_STATUS_BY_AGENT, query = "" //
+        + " UPDATE Agent a " //
+        + "    SET a.status = -1 " // negative numbers so that bitmask strat does not conflict with this one
+        + "  WHERE a.status = 0 " // we only need the first guy to set it
+        + "    AND a.id = :agentId "), //
+    @NamedQuery(name = Agent.QUERY_UPDATE_STATUS_FOR_ALL, query = "" //
+        + " UPDATE Agent a " //
+        + "    SET a.status = -1 " // negative numbers so that bitmask strat does not conflict with this one
+        + "  WHERE a.status = 0 ") //
 })
 @SequenceGenerator(name = "id", sequenceName = "RHQ_AGENT_ID_SEQ")
 @Table(name = "RHQ_AGENT")
@@ -110,8 +138,13 @@ public class Agent implements Serializable {
     // HA queries
     public static final String QUERY_FIND_ALL_WITH_STATUS_BY_SERVER = "Agent.findAllWithStatusByServer";
     public static final String QUERY_FIND_ALL_WITH_STATUS = "Agent.findAllWithStatus";
-    public static final String UPDATE_CLEAR_STATUS_BY_IDS = "Agent.updateClearStatusByIds";
+    public static final String QUERY_UPDATE_CLEAR_STATUS_BY_IDS = "Agent.updateClearStatusByIds";
     public static final String QUERY_REMOVE_SERVER_REFERENCE = "Agent.removeServerReference";
+
+    public static final String QUERY_UPDATE_STATUS_BY_ALERT_DEFINITION = "Agent.updateStatusByAlertDefinition";
+    public static final String QUERY_UPDATE_STATUS_BY_MEASUREMENT_BASELINE = "Agent.updateStatusByMeasurementBasleine";
+    public static final String QUERY_UPDATE_STATUS_BY_AGENT = "Agent.updateStatusByAgent";
+    public static final String QUERY_UPDATE_STATUS_FOR_ALL = "Agent.updateStatusForAll";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "id")

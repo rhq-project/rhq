@@ -23,7 +23,6 @@
 package org.rhq.plugins.jbossas5.serviceBinding;
 
 import java.util.Arrays;
-import java.util.Iterator;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -131,16 +130,15 @@ public class ManagerComponent extends ManagedComponentComponent implements Creat
             String updatedActiveBindingSetName = updatedConfiguration.getSimpleValue(
                 Util.ACTIVE_BINDING_SET_NAME_PROPERTY, null);
 
-            if (updatedActiveBindingSetName == null || updatedActiveBindingSetName.trim().isEmpty()) {
+            if (updatedActiveBindingSetName == null || updatedActiveBindingSetName.trim().length() == 0) {
                 configurationUpdateReport.setErrorMessage("Active binding set name must be set.");
                 configurationUpdateReport.setStatus(ConfigurationUpdateStatus.FAILURE);
             }
 
             boolean found = false;
-            Iterator<MetaValue> it = bindingSets.iterator();
-            while (it.hasNext()) {
-                CompositeValue bindingSet = (CompositeValue) it.next();
-                String bindingSetName = Util.getValue(bindingSet, "name", String.class);
+            for (MetaValue bindingSet : bindingSets) {
+                CompositeValue bindingSetComposite = (CompositeValue)bindingSet;
+                String bindingSetName = Util.getValue(bindingSetComposite, "name", String.class);
 
                 if (updatedActiveBindingSetName.equals(bindingSetName)) {
                     found = true;
@@ -150,7 +148,7 @@ public class ManagerComponent extends ManagedComponentComponent implements Creat
 
             if (!found) {
                 configurationUpdateReport
-                    .setErrorMessage("A binding set with provided name does not exists. Cannot set it as active.");
+                    .setErrorMessage("A binding set with the provided name does not exist - cannot set it as active.");
                 configurationUpdateReport.setStatus(ConfigurationUpdateStatus.FAILURE);
                 return;
             }
@@ -188,7 +186,7 @@ public class ManagerComponent extends ManagedComponentComponent implements Creat
 
             configurationUpdateReport.setStatus(ConfigurationUpdateStatus.SUCCESS);
         } catch (Exception e) {
-            log.warn("Failed to update SBM configuration", e);
+            log.warn("Failed to update SBM configuration.", e);
             configurationUpdateReport.setErrorMessageFromThrowable(e);
             configurationUpdateReport.setStatus(ConfigurationUpdateStatus.FAILURE);
         }
@@ -212,21 +210,23 @@ public class ManagerComponent extends ManagedComponentComponent implements Creat
                 CollectionValue bindingSets = (CollectionValue) bindingSetsProperty.getValue();
                 String newBindingSetName = Util.getValue(newBindingSet, "name", String.class);
 
-                Iterator<MetaValue> it = bindingSets.iterator();
-                while (it.hasNext()) {
-                    CompositeValue bindingSet = (CompositeValue) it.next();
-                    String bindingSetName = Util.getValue(bindingSet, "name", String.class);
+                for (MetaValue bindingSet : bindingSets) {
+                    CompositeValue bindingSetComposite = (CompositeValue)bindingSet;
+                    String bindingSetName = Util.getValue(bindingSetComposite, "name", String.class);
 
                     if (newBindingSetName.equals(bindingSetName)) {
-                        report.setErrorMessage("A binding set with provided name already exists.");
+                        report.setErrorMessage("A binding set with the provided name already exists.");
                         report.setStatus(CreateResourceStatus.FAILURE);
                         return report;
                     }
                 }
 
-                int newIndex = bindingSets.getSize();
-                MetaValue[] newBindingSets = Arrays.copyOf(bindingSets.getElements(), newIndex + 1);
-                newBindingSets[newIndex] = newBindingSet;
+                // Create a new array that's one element larger than the original array.
+                MetaValue[] newBindingSets = new MetaValue[bindingSets.getSize() + 1];
+                // Copy the original array into the new array.
+                System.arraycopy(bindingSets.getElements(), 0, newBindingSets, 0, bindingSets.getSize());
+                // Add the new one as the last element of the new array.
+                newBindingSets[bindingSets.getSize()] = newBindingSet;
 
                 CollectionValueSupport newBindingSetsValue = new CollectionValueSupport(bindingSets.getMetaType());
                 newBindingSetsValue.setElements(newBindingSets);

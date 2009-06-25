@@ -34,7 +34,6 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -61,10 +60,6 @@ public abstract class AbstractResourceTest extends AbstractPluginTest {
     protected abstract String getResourceTypeName();
 
     protected abstract Configuration getTestResourceConfiguration();
-    
-    protected ResourceType getServerResourceType() {
-        return new ResourceType("JBossAS Server", getPluginName(), ResourceCategory.SERVER, null);
-    }
 
     protected Set<Resource> getResources() {
         InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();

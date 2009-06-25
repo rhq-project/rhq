@@ -31,13 +31,13 @@ import org.rhq.core.pc.PluginContainer;
 /**
  * @author Ian Springer
  */
-@Test(groups = "as5-plugin")
+@Test(groups = "as5-plugin", enabled = false)
 public class GeneralPluginTest extends AbstractPluginTest {
     @Test
     public void testPluginLoad() {
         PluginManager pluginManager = PluginContainer.getInstance().getPluginManager();
         PluginEnvironment pluginEnvironment = pluginManager.getPlugin(getPluginName());
-        assert (pluginEnvironment != null) : "Null environment - plugin not loaded.";
+        assert (pluginEnvironment != null) : "Null plugin environment - " + getPluginName() + " plugin was not loaded.";
         assert (pluginEnvironment.getPluginName().equals(getPluginName()));
     }
 }

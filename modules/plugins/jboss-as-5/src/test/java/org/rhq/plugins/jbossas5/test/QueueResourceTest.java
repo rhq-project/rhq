@@ -30,7 +30,7 @@ import org.rhq.core.domain.configuration.Configuration;
 /**
  * @author Ian Springer
  */
-@Test(groups = "as5-plugin")
+@Test(groups = "as5-plugin", enabled = false)
 public class QueueResourceTest extends AbstractResourceTest {
     @BeforeTest
     public void setup() {

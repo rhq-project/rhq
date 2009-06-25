@@ -25,8 +25,6 @@ package org.rhq.plugins.jbossas5.test;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
-import org.rhq.core.domain.resource.ResourceCategory;
-import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.configuration.Configuration;
 
 /**
@@ -40,8 +38,8 @@ public class TopicResourceTest extends AbstractResourceTest {
         // TODO: Create a topic, subscribe to it, and send a message to it (i.e. to generate some metrics).
     }
 
-    protected ResourceType getResourceType() {
-        return new ResourceType("Topic", "JBossAS5", ResourceCategory.SERVICE, getServerResourceType());
+    protected String getResourceTypeName() {
+        return "Topic";
     }
 
     protected Configuration getTestResourceConfiguration() {

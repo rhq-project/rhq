@@ -37,30 +37,45 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.pc.PluginContainer;
+import org.rhq.core.pc.plugin.PluginManager;
 import org.rhq.core.pc.configuration.ConfigurationManager;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.util.ComponentUtil;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
+import org.rhq.core.pluginapi.operation.OperationFacet;
+import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
-import org.rhq.core.clientapi.agent.PluginContainerException;
+import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 
 /**
  * @author Ian Springer
  */
 public abstract class AbstractResourceTest extends AbstractPluginTest {
     private static final long MEASUREMENT_FACET_METHOD_TIMEOUT = 3000; // 3 seconds
+    private static final long OPERATION_FACET_METHOD_TIMEOUT = 3000; // 3 seconds
 
-    protected abstract ResourceType getResourceType();
+    protected abstract String getResourceTypeName();
 
+    protected abstract Configuration getTestResourceConfiguration();
+    
     protected ResourceType getServerResourceType() {
         return new ResourceType("JBossAS Server", getPluginName(), ResourceCategory.SERVER, null);
     }
 
     protected Set<Resource> getResources() {
         InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
-        return inventoryManager.getResourcesWithType(getResourceType());
+        ResourceType resourceType = getResourceType();
+        return inventoryManager.getResourcesWithType(resourceType);
+    }
+
+    protected ResourceType getResourceType() {
+        PluginManager pluginManager = PluginContainer.getInstance().getPluginManager();
+        PluginMetadataManager pluginMetadataManager = pluginManager.getMetadataManager();
+        return pluginMetadataManager.getType(getResourceTypeName(), getPluginName());
     }
 
     @Test
@@ -115,6 +130,26 @@ public abstract class AbstractResourceTest extends AbstractPluginTest {
     }
 
     @Test
+    public void testOperations() throws Exception {
+        Set<OperationDefinition> operationDefinitions = getResourceType().getOperationDefinitions();
+        Set<Resource> resources = getResources();
+        for (Resource resource : resources) {
+            System.out.println("Validating operations for " + resource + "...");
+            OperationFacet operationFacet = ComponentUtil.getComponent(resource.getId(), OperationFacet.class,
+                    FacetLockType.WRITE, OPERATION_FACET_METHOD_TIMEOUT, true, true);
+            // TODO: Execute lifecycle operations in a specific order, so they don't break the other operations.
+            //       For example, execute 'restart' first, followed by 'stop', followed by 'start'.
+            for (OperationDefinition operationDefinition : operationDefinitions) {
+                String name = operationDefinition.getName();
+                OperationResult result = operationFacet.invokeOperation(name, getTestOperationParameters(name));
+                System.out.println("Validating operation '" + name + "' result (" + result + ")...");
+                validateOperationResult(name, result);
+            }
+        }
+        return;
+    }
+
+    @Test
     public void testResourceConfigLoad() throws Exception {
         ConfigurationManager configurationManager = PluginContainer.getInstance().getConfigurationManager();
         Set<Resource> resources = getResources();
@@ -150,7 +185,20 @@ public abstract class AbstractResourceTest extends AbstractPluginTest {
         return;
     }
 
-    protected abstract Configuration getTestResourceConfiguration();
+    protected Configuration getTestOperationParameters(String name) {
+        OperationDefinition operationDefinition = getOperationDefinition(name);
+        ConfigurationDefinition parametersConfigDef = operationDefinition.getParametersConfigurationDefinition();
+        if (parametersConfigDef == null || parametersConfigDef.getPropertyDefinitions().isEmpty()) {
+            return new Configuration();
+        } else {
+            // TODO: Return a Configuration auto-populated from the parameters ConfigurationDefinition.
+            throw new IllegalStateException();
+        }
+    }
+
+    protected void validateOperationResult(String name, OperationResult result) {
+        return;
+    }
 
     protected void validateNumericMetricValue(String metricName, Double value) {
         assert value != null;
@@ -158,5 +206,17 @@ public abstract class AbstractResourceTest extends AbstractPluginTest {
 
     protected void validateTraitMetricValue(String metricName, String value) {
         assert value != null;
+    }
+
+    private OperationDefinition getOperationDefinition(String name) {
+        Set<OperationDefinition> operationDefinitions = getResourceType().getOperationDefinitions();
+        OperationDefinition matchingOperationDefinition = null;
+        for (OperationDefinition operationDefinition : operationDefinitions) {
+            if (operationDefinition.getName().equals(name)) {
+                matchingOperationDefinition = operationDefinition;
+                break;
+            }
+        }
+        return matchingOperationDefinition;
     }
 }

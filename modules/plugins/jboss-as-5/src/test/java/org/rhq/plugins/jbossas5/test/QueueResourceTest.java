@@ -20,14 +20,11 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-
 package org.rhq.plugins.jbossas5.test;
 
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
-import org.rhq.core.domain.resource.ResourceCategory;
-import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.configuration.Configuration;
 
 /**
@@ -41,8 +38,8 @@ public class QueueResourceTest extends AbstractResourceTest {
         // TODO: Create a queue and send a message to it (i.e. to generate some metrics).
     }
 
-    protected ResourceType getResourceType() {
-        return new ResourceType("Queue", "JBossAS5", ResourceCategory.SERVICE, getServerResourceType());
+    protected String getResourceTypeName() {
+        return "Queue";
     }
 
     protected Configuration getTestResourceConfiguration() {

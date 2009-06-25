@@ -362,14 +362,15 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             PackageInstallationStep.QUERY_DELETE_BY_RESOURCES, // steps BEFORE installed package history
             InstalledPackageHistory.QUERY_DELETE_BY_RESOURCES, // history BEFORE installed packages & content service requests
             InstalledPackage.QUERY_DELETE_BY_RESOURCES, //
-            ContentServiceRequest.QUERY_DELETE_BY_RESOURCES, ResourceOperationScheduleEntity.QUERY_DELETE_BY_RESOURCES, //
+            ContentServiceRequest.QUERY_DELETE_BY_RESOURCES, //
+            ResourceOperationScheduleEntity.QUERY_DELETE_BY_RESOURCES, //
             ResourceOperationHistory.QUERY_DELETE_BY_RESOURCES, //
             DeleteResourceHistory.QUERY_DELETE_BY_RESOURCES, //
             CreateResourceHistory.QUERY_DELETE_BY_RESOURCES, //
-            ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_1, // _1 BEFORE _2
-            ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_2, //
-            PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_1, // _1 BEFORE _2
-            PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_2, //
+            ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_1, // first delete the config objects
+            ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_2, // then the history objects wrapping those configs
+            PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_1, // first delete the config objects
+            PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_2, // then the history objects wrapping those configs
             AlertConditionLog.QUERY_DELETE_BY_RESOURCES, //    Don't 
             AlertNotificationLog.QUERY_DELETE_BY_RESOURCES, // alter
             Alert.QUERY_DELETE_BY_RESOURCES, //                order
@@ -385,11 +386,13 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         boolean hasErrors = false;
         for (String nativeQueryToExecute : nativeQueriesToExecute) {
             // execute all in new transactions, continuing on error, but recording whether errors occurred
-            hasErrors |= bulkNativeQueryDeleteInNewTransaction(overlord, nativeQueryToExecute, resourceIds);
+            hasErrors |= resourceManager.bulkNativeQueryDeleteInNewTransaction(overlord, nativeQueryToExecute,
+                resourceIds);
         }
         for (String namedQueryToExecute : namedQueriesToExecute) {
             // execute all in new transactions, continuing on error, but recording whether errors occurred
-            hasErrors |= bulkNamedQueryDeleteInNewTransaction(overlord, namedQueryToExecute, resourceIds);
+            hasErrors |= resourceManager.bulkNamedQueryDeleteInNewTransaction(overlord, namedQueryToExecute,
+                resourceIds);
         }
 
         entityManager.flush();
@@ -409,7 +412,12 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             nativeQuery.setParameter("resourceIds", resourceIds);
             nativeQuery.executeUpdate();
         } catch (Throwable t) {
-            log.error("Error during bulk native query delete for '" + nativeQueryString + "' for " + resourceIds, t);
+            if (log.isDebugEnabled()) {
+                log.error("Bulk native query delete error for '" + nativeQueryString + "' for " + resourceIds, t);
+            } else {
+                log.error("Bulk native query delete error for '" + nativeQueryString + "' for " + resourceIds + ": "
+                    + t.getMessage());
+            }
             return true; // had errors
         }
         return false;
@@ -426,7 +434,12 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             nativeQuery.setParameter("resourceIds", resourceIds);
             nativeQuery.executeUpdate();
         } catch (Throwable t) {
-            log.error("Error during bulk named query delete for '" + namedQuery + "' for " + resourceIds, t);
+            if (log.isDebugEnabled()) {
+                log.error("Bulk named query delete error for '" + namedQuery + "' for " + resourceIds, t);
+            } else {
+                log.error("Bulk named query delete error for '" + namedQuery + "' for " + resourceIds + ": "
+                    + t.getMessage());
+            }
             return true; // had errors
         }
         return false;

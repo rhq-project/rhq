@@ -36,9 +36,10 @@ import org.rhq.core.domain.resource.Resource;
 
 @DiscriminatorValue("plugin")
 @Entity
-@NamedQueries( { @NamedQuery(name = PluginConfigurationUpdate.QUERY_FIND_ALL_IN_STATUS, query = "" //
-    + "SELECT cu " //
-    + "  FROM PluginConfigurationUpdate cu "),
+@NamedQueries( {
+    @NamedQuery(name = PluginConfigurationUpdate.QUERY_FIND_ALL_IN_STATUS, query = "" //
+        + "SELECT cu " //
+        + "  FROM PluginConfigurationUpdate cu "),
     @NamedQuery(name = PluginConfigurationUpdate.QUERY_FIND_ALL_BY_RESOURCE_ID, query = "" //
         + "SELECT cu " //
         + "  FROM PluginConfigurationUpdate cu " //
@@ -75,7 +76,8 @@ import org.rhq.core.domain.resource.Resource;
         + "SELECT cu.status " //
         + "  FROM PluginConfigurationUpdate cu " //
         + " WHERE cu.aggregateConfigurationUpdate.id = :aggregateConfigurationUpdateId " //
-        + " GROUP BY cu.status"), @NamedQuery(name = PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_1, query = "" //
+        + " GROUP BY cu.status"), //
+    @NamedQuery(name = PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_1, query = "" //
         + "DELETE FROM Configuration c " //
         + " WHERE c IN ( SELECT pcu.configuration " //
         + "                FROM PluginConfigurationUpdate pcu " //

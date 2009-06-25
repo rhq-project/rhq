@@ -54,7 +54,8 @@ class SQLServerColumn extends Column {
      * So, for now, just prevent creation of all on delete cascade rules 
      */
     protected String getOnDelete() {
-        return null;
+        //return null;
+        return super.getOnDelete();
     }
 
     protected String getSizeCommand(List cmds) {

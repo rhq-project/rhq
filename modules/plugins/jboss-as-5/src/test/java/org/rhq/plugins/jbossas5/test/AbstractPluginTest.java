@@ -36,7 +36,9 @@ import org.rhq.core.pc.plugin.FileSystemPluginFinder;
 /**
  * @author Ian Springer
  */
-public abstract class AbstractPluginTest {    
+public abstract class AbstractPluginTest {
+    protected static final boolean ENABLE_TESTS = false;
+    
     private static final String PLUGIN_NAME = "JBossAS5";
 
     protected String getPluginName() {
@@ -46,11 +48,14 @@ public abstract class AbstractPluginTest {
     @BeforeSuite
     public void start() {
         try {
-            File pluginDir = new File("target/itest/plugins");
             PluginContainerConfiguration pcConfig = new PluginContainerConfiguration();
+            File pluginDir = new File("target/itest/plugins");
             pcConfig.setPluginFinder(new FileSystemPluginFinder(pluginDir));
             pcConfig.setPluginDirectory(pluginDir);
             pcConfig.setInsideAgent(false);
+            File tmpDir = new File("target/itest/tmp");
+            tmpDir.mkdirs();
+            pcConfig.setTemporaryDirectory(tmpDir);
             PluginContainer.getInstance().setConfiguration(pcConfig);
             System.out.println("Starting PC...");
             PluginContainer.getInstance().initialize();

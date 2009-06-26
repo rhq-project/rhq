@@ -38,7 +38,7 @@
                    2) Change the below property to "5.1.0-SNAPSHOT".
                    3) Uncomment the JBoss snapshot repo near the bottom of this POM.
         -->
-        <jbossas.version>5.1.0.GA</jbossas.version>
+        <jbossas.version>5.1.0-SNAPSHOT</jbossas.version>
         <rhq.testng.excludedGroups>as5-plugin</rhq.testng.excludedGroups>
     </properties>
 
@@ -589,7 +589,6 @@
     </profiles>
 
     <repositories>
-<!--
         <repository>
             <id>jboss-snapshots</id>
             <name>JBoss Snapshot Repository</name>
@@ -599,17 +598,16 @@
                 <updatePolicy>always</updatePolicy>
             </snapshots>
         </repository>
--->
     </repositories>
 
     <reporting>
-     <plugins>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>findbugs-maven-plugin</artifactId>
-        <version>2.0.1</version>
-      </plugin>
-     </plugins>
+         <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>findbugs-maven-plugin</artifactId>
+            <version>2.0.1</version>
+          </plugin>
+         </plugins>
     </reporting>
 
 </project>

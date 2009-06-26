@@ -30,9 +30,9 @@ import org.testng.annotations.Test;
 
 import org.jboss.metatype.api.types.MetaType;
 
+@Test
 public class MeasurementAdapterFactoryTest
 {
-    @Test
     public void testGetMeasurementAdapter()
     {
         Map<String, MetaType> metaTypeInstances = ProfileServiceTestUtil.createMetaTypes();
@@ -42,7 +42,6 @@ public class MeasurementAdapterFactoryTest
         assert adapter instanceof SimpleMetaValueMeasurementAdapter : "MeasurementAdapterFactory did not return a Simple adapter as expected";
     }
 
-    @Test
     public void testGetCustomMeasurementAdapter()
     {
         MeasurementAdapter adapter = MeasurementAdapterFactory.getCustomMeasurementPropertyAdapter("messageCounters");

@@ -57,30 +57,14 @@ public abstract class AbstractResourceTest extends AbstractPluginTest {
     private static final long MEASUREMENT_FACET_METHOD_TIMEOUT = 3000; // 3 seconds
     private static final long OPERATION_FACET_METHOD_TIMEOUT = 3000; // 3 seconds
 
-    protected abstract String getResourceTypeName();
-
-    protected abstract Configuration getTestResourceConfiguration();
-
-    protected Set<Resource> getResources() {
-        InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
-        ResourceType resourceType = getResourceType();
-        return inventoryManager.getResourcesWithType(resourceType);
-    }
-
-    protected ResourceType getResourceType() {
-        PluginManager pluginManager = PluginContainer.getInstance().getPluginManager();
-        PluginMetadataManager pluginMetadataManager = pluginManager.getMetadataManager();
-        return pluginMetadataManager.getType(getResourceTypeName(), getPluginName());
-    }
-
-    @Test
+    @Test(enabled = ENABLE_TESTS)
     public void testDiscovery() throws Exception {
         Set<Resource> resources = getResources();
         System.out.println("Found " + resources.size() + " " + getResourceType().getName() + " Resources.");
         assert !resources.isEmpty();
     }
 
-    @Test
+    @Test(enabled = ENABLE_TESTS)
     public void testMetrics() throws Exception {
         Set<MeasurementDefinition> metricDefinitions = getResourceType().getMetricDefinitions();
         Set<Resource> resources = getResources();
@@ -124,7 +108,7 @@ public abstract class AbstractResourceTest extends AbstractPluginTest {
         return;
     }
 
-    @Test
+    @Test(enabled = ENABLE_TESTS)
     public void testOperations() throws Exception {
         Set<OperationDefinition> operationDefinitions = getResourceType().getOperationDefinitions();
         Set<Resource> resources = getResources();
@@ -144,7 +128,7 @@ public abstract class AbstractResourceTest extends AbstractPluginTest {
         return;
     }
 
-    @Test
+    @Test(enabled = ENABLE_TESTS)
     public void testResourceConfigLoad() throws Exception {
         ConfigurationManager configurationManager = PluginContainer.getInstance().getConfigurationManager();
         Set<Resource> resources = getResources();
@@ -160,7 +144,7 @@ public abstract class AbstractResourceTest extends AbstractPluginTest {
         return;
     }
 
-    @Test
+    @Test(enabled = ENABLE_TESTS)
     public void testResourceConfigUpdate() throws Exception {
         ConfigurationManager configurationManager = PluginContainer.getInstance().getConfigurationManager();
         Set<Resource> resources = getResources();
@@ -180,6 +164,22 @@ public abstract class AbstractResourceTest extends AbstractPluginTest {
         return;
     }
 
+    protected abstract String getResourceTypeName();
+
+    protected abstract Configuration getTestResourceConfiguration();
+
+    protected Set<Resource> getResources() {
+        InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
+        ResourceType resourceType = getResourceType();
+        return inventoryManager.getResourcesWithType(resourceType);
+    }
+
+    protected ResourceType getResourceType() {
+        PluginManager pluginManager = PluginContainer.getInstance().getPluginManager();
+        PluginMetadataManager pluginMetadataManager = pluginManager.getMetadataManager();
+        return pluginMetadataManager.getType(getResourceTypeName(), getPluginName());
+    }
+    
     protected Configuration getTestOperationParameters(String name) {
         OperationDefinition operationDefinition = getOperationDefinition(name);
         ConfigurationDefinition parametersConfigDef = operationDefinition.getParametersConfigurationDefinition();

@@ -40,9 +40,9 @@ import org.jboss.metatype.api.values.GenericValueSupport;
 import org.jboss.metatype.api.values.SimpleValue;
 import org.jboss.metatype.api.values.SimpleValueSupport;
 
+@Test
 public class PropertyAdapterFactoryTest
 {
-    @Test
     public void testGetPropertyAdapterFromValue()
     {
         MetaType genericMetaType = ProfileServiceTestUtil.createMetaTypes().get(ProfileServiceTestUtil.GENERIC_TYPE);
@@ -56,7 +56,6 @@ public class PropertyAdapterFactoryTest
 
     }
 
-    @Test
     public void testGetPropertyAdapterFromType()
     {
         Map<String, MetaType> metaTypeInstances = ProfileServiceTestUtil.createMetaTypes();
@@ -86,7 +85,6 @@ public class PropertyAdapterFactoryTest
         //assert adapter6 instanceof PropertyMapToTableValueAdapter : "Should be the PropertyMap to Table adapter";
     }
 
-    @Test
     public void testGetCustomPropertyAdapter()
     {
 

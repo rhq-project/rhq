@@ -158,7 +158,7 @@ public class ClientRemotePojoFactory {
         }
 
         Class[] interfaces = new Class[] { targetInterface };
-        ClassLoader class_loader = Thread.currentThread().getContextClassLoader();
+        ClassLoader class_loader = targetInterface.getClassLoader();
         RemotePojoProxyHandler proxy_handler = new RemotePojoProxyHandler(targetInterface.getName(),
             ignore_annotations, async_mode, async_callback, timeout_millis, guaranteed_delivery, send_throttled);
         T proxy = (T) Proxy.newProxyInstance(class_loader, interfaces, proxy_handler);

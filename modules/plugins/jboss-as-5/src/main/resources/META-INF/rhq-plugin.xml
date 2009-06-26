@@ -2872,7 +2872,7 @@
 	                    <c:simple-property name="port" type="integer" description="The port to use for the binding"/>
 	                    <c:simple-property name="hostname" required="false" description="The host name or string notation IP address to use for the binding"/>
 	                    <c:simple-property name="description" required="false" description="Description of the binding"/>
-	                    <c:simple-property name="fullyQualifiedName" readOnly="true" description="The fully qualified binding name"/>
+	                    <c:simple-property name="fullyQualifiedName" required="false" readOnly="true" description="The fully qualified binding name"/>
 	                    <c:simple-property name="fixedHostName" type="boolean" description="Whether the host name should remain fixed in all binding sets"/>
 	                    <c:simple-property name="fixedPort" type="boolean" description="Whether the port should remain fixed in all binding sets"/>
 	                </c:map-property>
@@ -2891,7 +2891,7 @@
                     <c:list-property name="overrideBindings" description="binding configurations that apply only to this binding set, either non-standard bindings or ones that override standard binding configurations">
                         <c:map-property name="binding">
 		                    <c:simple-property name="serviceName" displayName="Service Name" description="The name of the service to which this binding applies"/>
-		                    <c:simple-property name="bindingName" displayName="Binding Name" description="A qualifier identifying which particular binding within the service this is"/>
+		                    <c:simple-property name="bindingName" required="false" displayName="Binding Name" description="A qualifier identifying which particular binding within the service this is"/>
 		                    <c:simple-property name="port" type="integer" displayName="Port" description="the port to use for the binding"/>
 		                    <c:simple-property name="hostName" required="false" displayName="Host Name" description="The host name or string notation IP address to use for the binding."/>
 		                    <c:simple-property name="description" required="false" displayName="Description" description="Description of the binding"/>

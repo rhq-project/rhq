@@ -409,8 +409,8 @@ rhq.server.database.server-name=${rhq.server.database.server-name}
 rhq.server.database.port=${rhq.server.database.port}
 rhq.server.database.db-name=${rhq.server.database.db-name}
 hibernate.dialect=${rhq.server.database.hibernate-dialect}
-rhq.server.quartz.driverDelegateClass = ${rhq.server.quartz.driverDelegateClass}
-rhq.server.quartz.selectWithLockSQL = ${rhq.server.quartz.selectWithLockSQL}
+rhq.server.quartz.driverDelegateClass=${rhq.server.quartz.driverDelegateClass}
+rhq.server.quartz.selectWithLockSQL=${rhq.server.quartz.selectWithLockSQL}
 
 # Container configuration
 # ********************************** NOTE ************************************

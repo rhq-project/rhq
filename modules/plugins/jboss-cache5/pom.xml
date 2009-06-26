@@ -13,8 +13,8 @@
    <artifactId>jopr-jboss-cache5-plugin</artifactId>
    <packaging>jar</packaging>
 
-   <name>Jopr JBossCache 5.x Plugin</name>
-   <description>A plugin for managing JBossCache 5.x services</description>
+   <name>Jopr JBossCache for AS 5.x Plugin</name>
+   <description>A plugin for managing JBossCache services in AS 5.x</description>
 
    <scm>
       <connection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/plugins/jboss-cache5/</connection>
@@ -24,23 +24,23 @@
    <properties>
       <scm.module.path>modules/plugins/jboss-cache5/</scm.module.path>
    </properties>
-   
+
    <dependencies>
-   
+
      <dependency>
          <groupId>${rhq.groupId}</groupId>
          <artifactId>rhq-jmx-plugin</artifactId>
          <version>${rhq.version}</version>
          <scope>provided</scope>
      </dependency>
-   
+
      <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>jopr-jboss-as-5-plugin</artifactId>
          <version>${project.version}</version>
       </dependency>
    </dependencies>
-   
+
    <profiles>
       <profile>
          <id>integration-tests</id>
@@ -179,13 +179,13 @@
                         <id>deploy-jar-meta-inf</id>
                         <phase>package</phase>
                         <configuration>
-                          <tasks>                             
-                             <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />                             
+                          <tasks>
+                             <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
                              <echo>*** Updating META-INF dir in ${deployment.file}...</echo>
                              <unjar src="${project.build.directory}/${project.build.finalName}.jar" dest="${project.build.outputDirectory}">
                                <patternset><include name="META-INF/**" /></patternset>
                              </unjar>
-                             <jar destfile="${deployment.file}" manifest="${project.build.outputDirectory}/META-INF/MANIFEST.MF" update="true">                                
+                             <jar destfile="${deployment.file}" manifest="${project.build.outputDirectory}/META-INF/MANIFEST.MF" update="true">
                              </jar>
                           </tasks>
                         </configuration>
@@ -193,7 +193,7 @@
                           <goal>run</goal>
                         </goals>
                      </execution>
-               
+
                      <execution>
                         <id>undeploy</id>
                         <phase>clean</phase>

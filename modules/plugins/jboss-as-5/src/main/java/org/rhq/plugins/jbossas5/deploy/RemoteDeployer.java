@@ -65,9 +65,10 @@ public class RemoteDeployer extends AbstractDeployer {
 
     @Override
     protected File prepareArchive(PackageDetailsKey key, ResourceType resourceType) {
-        //we're running in the agent. For JBoss to be able to deploy a file, the file has to be located
-        //somewhere "inside" the running jboss server. So we create a temporary directory in the server's
-        //temporary directory and put the the deployed file the created temp dir.
+        //we're running in the agent. During the development of this functionality, there was
+        //a time when the deployment only worked from within the JBossAS server home.
+        //Further investigation never confirmed the problem again but since we have access to
+        //server home directory anyway, why not stay on the safe side... ;)
         OutputStream os = null;
 
         try {

@@ -106,41 +106,30 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal {
 
     @SuppressWarnings("unchecked")
     public List<ResourceType> getChildResourceTypes(Subject subject, ResourceType parent) {
-        final String queryName = "ResourceType.findChildren";
-
-        //Query queryCount = null;
         Query query = null;
+
         if (authorizationManager.isInventoryManager(subject)) {
-            //queryCount = PersistenceUtility.createCountQuery(entityManager, queryName + "_admin");
-            query = entityManager.createNamedQuery(queryName + "_admin");
+            query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_CHILDREN_admin);
         } else {
-            //queryCount = PersistenceUtility.createCountQuery(entityManager, queryName);
-            //queryCount.setParameter("subject", subject);
-            query = entityManager.createNamedQuery(queryName);
+            query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_CHILDREN);
             query.setParameter("subject", subject);
         }
 
-        //queryCount.setParameter("parent", parent);
-        //long count = (Long)queryCount.getSingleResult();
-
         query.setParameter("parent", parent);
 
-        //PersistenceUtility.setDataPage(query, pageControl.getPageEntityIndex(), pageControl.getPagesize());
         List<ResourceType> results = query.getResultList();
-
-        //return new PageList<Resource>(results, (int)count);
         return results;
     }
 
     @SuppressWarnings("unchecked")
     public List<ResourceType> getChildResourceTypesByCategory(Subject subject, Resource parentResource,
         ResourceCategory category) {
-        final String QUERY_NAME = ResourceType.QUERY_FIND_CHILDREN_BY_CATEGORY;
+
         Query query;
         if (authorizationManager.isInventoryManager(subject)) {
-            query = entityManager.createNamedQuery(QUERY_NAME + "_admin");
+            query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_CHILDREN_BY_CATEGORY_admin);
         } else {
-            query = entityManager.createNamedQuery(QUERY_NAME);
+            query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_CHILDREN_BY_CATEGORY);
             // TODO: Uncomment the below line once the query supports authz.
             //query.setParameter(5, subject.getId());
         }
@@ -157,12 +146,11 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal {
     @SuppressWarnings("unchecked")
     public List<ResourceType> getUtilizedChildResourceTypesByCategory(Subject subject, Resource parentResource,
         ResourceCategory category) {
-        final String QUERY_NAME = ResourceType.QUERY_FIND_UTILIZED_CHILDREN_BY_CATEGORY;
         Query query;
         if (authorizationManager.isInventoryManager(subject)) {
-            query = entityManager.createNamedQuery(QUERY_NAME + "_admin");
+            query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_UTILIZED_CHILDREN_BY_CATEGORY_admin);
         } else {
-            query = entityManager.createNamedQuery(QUERY_NAME);
+            query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_UTILIZED_CHILDREN_BY_CATEGORY);
             query.setParameter("subject", subject);
         }
 
@@ -202,13 +190,12 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal {
     @SuppressWarnings("unchecked")
     public List<ResourceType> getUtilizedResourceTypesByCategory(Subject subject, ResourceCategory category,
         String nameFilter) {
-        final String queryName = ResourceType.QUERY_FIND_UTILIZED_BY_CATEGORY;
 
         Query query = null;
         if (authorizationManager.isInventoryManager(subject)) {
-            query = entityManager.createNamedQuery(queryName + "_admin");
+            query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_UTILIZED_BY_CATEGORY_admin);
         } else {
-            query = entityManager.createNamedQuery(queryName);
+            query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_UTILIZED_BY_CATEGORY);
             query.setParameter("subject", subject);
         }
 
@@ -312,13 +299,11 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal {
 
     @SuppressWarnings("unchecked")
     public List<ResourceType> getResourceTypesForCompatibleGroups(Subject subject) {
-        final String queryName = ResourceType.QUERY_FIND_BY_RESOURCE_GROUP;
-
         Query query = null;
         if (authorizationManager.isInventoryManager(subject)) {
-            query = entityManager.createNamedQuery(queryName + "_admin");
+            query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_BY_RESOURCE_GROUP_admin);
         } else {
-            query = entityManager.createNamedQuery(queryName);
+            query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_BY_RESOURCE_GROUP);
             query.setParameter("subject", subject);
         }
 

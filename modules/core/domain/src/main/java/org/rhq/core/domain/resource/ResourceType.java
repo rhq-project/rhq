@@ -97,7 +97,7 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
     @NamedQuery(name = ResourceType.QUERY_FIND_CHILDREN, query = "SELECT res.resourceType "
         + "FROM Resource res, IN (res.implicitGroups) g, IN (g.roles) r, IN (r.subjects) s " + "WHERE s = :subject "
         + "AND res.parentResource = :parent"),
-    @NamedQuery(name = ResourceType.QUERY_FIND_CHILDREN + "_admin", query = "SELECT res.resourceType "
+    @NamedQuery(name = ResourceType.QUERY_FIND_CHILDREN_admin, query = "SELECT res.resourceType "
         + "FROM Resource res " + "WHERE res.parentResource = :parent"),
     @NamedQuery(name = ResourceType.FIND_CHILDREN_BY_PARENT, query = "SELECT DISTINCT rt FROM ResourceType AS rt "
         + "JOIN FETCH rt.parentResourceTypes AS pa " + // also fetch parents, as we need them later
@@ -120,9 +120,8 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "AND (UPPER(res.name) LIKE :nameFilter OR :nameFilter is null) "
         + "AND (:inventoryStatus = res.inventoryStatus OR :inventoryStatus is null) "
         + "ORDER BY res.resourceType.name "),
-    @NamedQuery(name = ResourceType.QUERY_FIND_UTILIZED_BY_CATEGORY + "_admin", query = "SELECT DISTINCT res.resourceType "
-        + "FROM Resource res "
-        + "WHERE res.resourceType.category = :category "
+    @NamedQuery(name = ResourceType.QUERY_FIND_UTILIZED_BY_CATEGORY_admin, query = "SELECT DISTINCT res.resourceType "
+        + "FROM Resource res " + "WHERE res.resourceType.category = :category "
         + "AND (UPPER(res.name) LIKE :nameFilter OR :nameFilter is null) "
         + "AND (:inventoryStatus = res.inventoryStatus OR :inventoryStatus is null) "
         + "ORDER BY res.resourceType.name "
@@ -134,14 +133,14 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "AND res.parentResource = :parentResource "
         + "AND res.resourceType.category = :category "
         + "AND (:inventoryStatus = res.inventoryStatus OR :inventoryStatus is null) "),
-    @NamedQuery(name = ResourceType.QUERY_FIND_UTILIZED_CHILDREN_BY_CATEGORY + "_admin", query = "SELECT DISTINCT res.resourceType "
+    @NamedQuery(name = ResourceType.QUERY_FIND_UTILIZED_CHILDREN_BY_CATEGORY_admin, query = "SELECT DISTINCT res.resourceType "
         + "FROM Resource res "
         + "WHERE res.parentResource = :parentResource "
         + "AND res.resourceType.category = :category "
         + "AND (:inventoryStatus = res.inventoryStatus OR :inventoryStatus is null) "),
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_RESOURCE_GROUP, query = "SELECT DISTINCT rg.resourceType "
         + "FROM ResourceGroup AS rg, IN (rg.roles) r, IN (r.subjects) s " + "WHERE s = :subject "),
-    @NamedQuery(name = ResourceType.QUERY_FIND_BY_RESOURCE_GROUP + "_admin", query = "SELECT DISTINCT rg.resourceType "
+    @NamedQuery(name = ResourceType.QUERY_FIND_BY_RESOURCE_GROUP_admin, query = "SELECT DISTINCT rg.resourceType "
         + "FROM ResourceGroup AS rg "),
     @NamedQuery(name = ResourceType.QUERY_GET_EXPLICIT_RESOURCE_TYPE_COUNTS_BY_GROUP, query = "SELECT type.id, type.name, COUNT(type.id) "
         + "FROM ResourceGroup rg JOIN rg.explicitResources res JOIN res.resourceType type "
@@ -173,7 +172,8 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + " WHERE ( rt.id = :resourceTypeId OR :resourceTypeId IS NULL )") })
 @NamedNativeQueries( {
     // TODO: Add authz conditions to the below query.
-    @NamedNativeQuery(name = ResourceType.QUERY_FIND_CHILDREN_BY_CATEGORY, query = "(SELECT crt.id, crt.name, crt.category, crt.creation_data_type, crt.create_delete_policy, crt.singleton, crt.supports_manual_add, crt.description, crt.plugin, crt.ctime, crt.mtime, crt.subcategory_id, crt.plugin_config_def_id, crt.res_config_def_id "
+    @NamedNativeQuery(name = ResourceType.QUERY_FIND_CHILDREN_BY_CATEGORY, query = "" //
+        + "(SELECT crt.id, crt.name, crt.category, crt.creation_data_type, crt.create_delete_policy, crt.singleton, crt.supports_manual_add, crt.description, crt.plugin, crt.ctime, crt.mtime, crt.subcategory_id, crt.plugin_config_def_id, crt.res_config_def_id "
         + "FROM RHQ_resource_type crt, RHQ_resource res, RHQ_resource_type rt, RHQ_resource_type_parents rtp "
         + "WHERE res.id = ? "
         + "AND res.resource_type_id = rt.id "
@@ -184,18 +184,17 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         //               "ORDER BY crt.name " +
         "UNION "
         + "SELECT DISTINCT crt2.id, crt2.name, crt2.category, crt2.creation_data_type, crt2.create_delete_policy, crt2.singleton, crt2.supports_manual_add, crt2.description, crt2.plugin, crt2.ctime, crt2.mtime, crt2.subcategory_id, crt2.plugin_config_def_id, crt2.res_config_def_id "
-        + "FROM RHQ_resource_type crt2 "
-        + "WHERE 1 = "
+        + "FROM RHQ_resource_type crt2 " + "WHERE 1 = "
         + "(SELECT COUNT(res2.id) "
         + "FROM RHQ_resource res2, RHQ_resource_type rt2 "
         + "WHERE res2.id = ? "
-        + "AND res2.resource_type_id = rt2.id "
-        + "AND rt2.category = 'PLATFORM') "
+        + "AND res2.resource_type_id = rt2.id " + "AND rt2.category = 'PLATFORM') "
         + "AND 0 = "
         + "(SELECT COUNT(rtp2.resource_type_id) "
         + "FROM RHQ_resource_type_parents rtp2 "
         + "WHERE rtp2.resource_type_id = crt2.id) " + "AND crt2.category = ? " + " ) ORDER BY name", resultSetMapping = ResourceType.MAPPING_FIND_CHILDREN_BY_CATEGORY),
-    @NamedNativeQuery(name = ResourceType.QUERY_FIND_CHILDREN_BY_CATEGORY + "_admin", query = "(SELECT crt.id, crt.name, crt.category, crt.creation_data_type, crt.create_delete_policy, crt.singleton, crt.supports_manual_add, crt.description, crt.plugin, crt.ctime, crt.mtime, crt.subcategory_id, crt.plugin_config_def_id, crt.res_config_def_id "
+    @NamedNativeQuery(name = ResourceType.QUERY_FIND_CHILDREN_BY_CATEGORY_admin, query = "" //
+        + "(SELECT crt.id, crt.name, crt.category, crt.creation_data_type, crt.create_delete_policy, crt.singleton, crt.supports_manual_add, crt.description, crt.plugin, crt.ctime, crt.mtime, crt.subcategory_id, crt.plugin_config_def_id, crt.res_config_def_id "
         + "FROM RHQ_resource_type crt, RHQ_resource res, RHQ_resource_type rt, RHQ_resource_type_parents rtp "
         + "WHERE res.id = ? "
         + "AND res.resource_type_id = rt.id "
@@ -206,13 +205,11 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         //               "ORDER BY crt.name " +
         "UNION "
         + "(SELECT DISTINCT crt2.id, crt2.name, crt2.category, crt2.creation_data_type, crt2.create_delete_policy, crt2.singleton, crt2.supports_manual_add, crt2.description, crt2.plugin, crt2.ctime, crt2.mtime, crt2.subcategory_id, crt2.plugin_config_def_id, crt2.res_config_def_id "
-        + "FROM RHQ_resource_type crt2 "
-        + "WHERE 1 = "
+        + "FROM RHQ_resource_type crt2 " + "WHERE 1 = "
         + "(SELECT COUNT(res2.id) "
         + "FROM RHQ_resource res2, RHQ_resource_type rt2 "
         + "WHERE res2.id = ? "
-        + "AND res2.resource_type_id = rt2.id "
-        + "AND rt2.category = 'PLATFORM') "
+        + "AND res2.resource_type_id = rt2.id " + "AND rt2.category = 'PLATFORM') "
         + "AND 0 = "
         + "(SELECT COUNT(rtp2.resource_type_id) "
         + "FROM RHQ_resource_type_parents rtp2 "
@@ -236,16 +233,21 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
     public static final String QUERY_FIND_BY_ID_WITH_ALL_OPERATIONS = "ResourceType.findByIdWithAllOperations";
     public static final String QUERY_FIND_BY_CATEGORY = "ResourceType.findByCategory";
     public static final String QUERY_FIND_CHILDREN = "ResourceType.findChildren";
+    public static final String QUERY_FIND_CHILDREN_admin = "ResourceType.findChildren_admin";
     /** find child resource types for resource :parentResource and category :category */
     public static final String QUERY_FIND_CHILDREN_BY_CATEGORY = "ResourceType.findChildrenByCategory";
+    public static final String QUERY_FIND_CHILDREN_BY_CATEGORY_admin = "ResourceType.findChildrenByCategory_admin";
     /** find utilized (i.e. represented in inventory) child resource types for resource :parentResource and category :category */
     public static final String QUERY_FIND_UTILIZED_CHILDREN_BY_CATEGORY = "ResourceType.findUtilizedChildrenByCategory";
+    public static final String QUERY_FIND_UTILIZED_CHILDREN_BY_CATEGORY_admin = "ResourceType.findUtilizedChildrenByCategory_admin";
     /** find child resource types for the resource type passed in :resourceType */
     public static final String FIND_CHILDREN_BY_PARENT = "ResourceType.findChildrenByParent";
     public static final String FIND_ALL_TEMPLATE_COUNT_COMPOSITES = "ResourceType.findAllTemplateCountComposites";
     public static final String QUERY_FIND_BY_SUBCATEGORY = "ResourceType.findBySubCategory";
     public static final String QUERY_FIND_UTILIZED_BY_CATEGORY = "ResourceType.findUtilizedByCategory";
+    public static final String QUERY_FIND_UTILIZED_BY_CATEGORY_admin = "ResourceType.findUtilizedByCategory_admin";
     public static final String QUERY_FIND_BY_RESOURCE_GROUP = "ResourceType.findByResourceGroup";
+    public static final String QUERY_FIND_BY_RESOURCE_GROUP_admin = "ResourceType.findByResourceGroup_admin";
 
     public static final String MAPPING_FIND_CHILDREN_BY_CATEGORY = "ResourceType.findChildrenByCategoryMapping";
     public static final String QUERY_FIND_RESOURCE_FACETS = "ResourceType.findResourceFacets";

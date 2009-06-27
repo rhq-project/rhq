@@ -92,8 +92,6 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
     @NamedQuery(name = ResourceType.QUERY_FIND_ALL, query = "SELECT rt FROM ResourceType AS rt"),
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_PARENT_AND_NAME, // TODO: QUERY: Not looking up by the full key, get rid of this query
     query = "SELECT rt FROM ResourceType AS rt WHERE :parent MEMBER OF rt.parentResourceTypes AND rt.name = :name"),
-    @NamedQuery(name = ResourceType.QUERY_FIND_ROOT_TYPE_BY_NAME, // TODO: QUERY: Not looking up by the full key, get rid of this query
-    query = "SELECT rt FROM ResourceType AS rt WHERE rt.parentResourceTypes IS EMPTY AND rt.name = :name"),
 
     /* authz'ed queries for ResourceTypeManagerBean */
     @NamedQuery(name = ResourceType.QUERY_FIND_CHILDREN, query = "SELECT res.resourceType "
@@ -234,7 +232,6 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
     public static final String QUERY_FIND_BY_NAME_AND_PLUGIN = "ResourceType.findByNameAndPlugin";
     public static final String QUERY_FIND_BY_PLUGIN = "ResourceType.findByPlugin";
     public static final String QUERY_FIND_BY_PARENT_AND_NAME = "ResourceType.findByParentAndName";
-    public static final String QUERY_FIND_ROOT_TYPE_BY_NAME = "ResourceType.findRootTypeByName";
     public static final String QUERY_FIND_ALL = "ResourceType.findAll";
     public static final String QUERY_FIND_BY_ID_WITH_ALL_OPERATIONS = "ResourceType.findByIdWithAllOperations";
     public static final String QUERY_FIND_BY_CATEGORY = "ResourceType.findByCategory";
@@ -358,9 +355,8 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
         // Intentionally left blank
     }
 
-    public ResourceType(@NotNull
-    String name, @NotNull
-    String plugin, ResourceCategory category, ResourceType parentResourceType) {
+    public ResourceType(@NotNull String name, @NotNull String plugin, ResourceCategory category,
+        ResourceType parentResourceType) {
         // Do not mark category NotNull. we create just key versions of ResourceTypes to do equals comparisons without a category
 
         assert name != null;
@@ -398,8 +394,7 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
         return this.name;
     }
 
-    public void setName(@NotNull
-    String name) {
+    public void setName(@NotNull String name) {
         this.name = name;
     }
 
@@ -408,8 +403,7 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
         return this.category;
     }
 
-    public void setCategory(@NotNull
-    ResourceCategory category) {
+    public void setCategory(@NotNull ResourceCategory category) {
         this.category = category;
     }
 
@@ -418,8 +412,7 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
         return creationDataType;
     }
 
-    public void setCreationDataType(@NotNull
-    ResourceCreationDataType creationDataType) {
+    public void setCreationDataType(@NotNull ResourceCreationDataType creationDataType) {
         if (creationDataType == null)
             throw new IllegalArgumentException("creationDataType cannot be null");
 
@@ -431,8 +424,7 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
         return createDeletePolicy;
     }
 
-    public void setCreateDeletePolicy(@NotNull
-    CreateDeletePolicy createDeletePolicy) {
+    public void setCreateDeletePolicy(@NotNull CreateDeletePolicy createDeletePolicy) {
         if (createDeletePolicy == null)
             throw new IllegalArgumentException("createDeletePolicy cannot be null");
 
@@ -500,8 +492,7 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
         return this.plugin;
     }
 
-    public void setPlugin(@NotNull
-    String plugin) {
+    public void setPlugin(@NotNull String plugin) {
         this.plugin = plugin;
     }
 
@@ -710,8 +701,7 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
         return helpText;
     }
 
-    public void setHelpText(@Nullable
-    String helpText) {
+    public void setHelpText(@Nullable String helpText) {
         this.helpText = helpText;
     }
 

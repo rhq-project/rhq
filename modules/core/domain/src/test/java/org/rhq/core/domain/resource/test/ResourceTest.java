@@ -248,33 +248,6 @@ public class ResourceTest extends AbstractEJB3Test {
         //getEntityManager().persist(p);
     }
 
-    @SuppressWarnings("unchecked")
-    @Test(groups = "integration.ejb3")
-    public void testGetRootTypes() throws Exception {
-        getTransactionManager().begin();
-        EntityManager em = getEntityManager();
-        try {
-            Query query = em.createNamedQuery(ResourceType.QUERY_FIND_ALL);
-            List<ResourceType> types = query.getResultList();
-
-            System.out.println("\n\n\n************************************");
-            for (ResourceType type : types) {
-                System.out.println(type);
-                if (type.getParentResourceTypes().size() == 0) {
-                    Query query2 = em.createNamedQuery(ResourceType.QUERY_FIND_ROOT_TYPE_BY_NAME);
-                    query2.setParameter("name", type.getName());
-                    ResourceType queriedType = (ResourceType) query2.getSingleResult();
-                    System.out.println("Got top level root type: " + queriedType);
-                    assert queriedType != null;
-                    assert queriedType.getParentResourceTypes().size() == 0;
-                    assert queriedType.getName().equals(type.getName());
-                }
-            }
-        } finally {
-            getTransactionManager().rollback();
-        }
-    }
-
     @Test(groups = "integration.ejb3")
     public void testCreateMultiParentTypes() throws Exception {
         getTransactionManager().begin();

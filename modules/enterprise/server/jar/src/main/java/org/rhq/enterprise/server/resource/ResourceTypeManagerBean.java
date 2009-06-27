@@ -37,8 +37,6 @@ import javax.persistence.Query;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import org.jboss.annotation.IgnoreDependency;
 
@@ -85,32 +83,6 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal {
         }
 
         return resourceType;
-    }
-
-    public ResourceType getResourceTypeByParentAndName(Subject subject, @Nullable ResourceType parent,
-        @NotNull String name) throws ResourceTypeNotFoundException {
-        // TODO: authz check - or does this operation really need to be secured?
-        // TODO: these queries can actually return a set - resource type uniqueness is on parent/name/plugin not just parent/name
-        try {
-            ResourceType resourceType;
-            if (parent != null) {
-                resourceType = (ResourceType) entityManager
-                    .createNamedQuery(ResourceType.QUERY_FIND_BY_PARENT_AND_NAME).setParameter("parent", parent)
-                    .setParameter("name", name).getSingleResult();
-            } else {
-                resourceType = (ResourceType) entityManager.createNamedQuery(ResourceType.QUERY_FIND_ROOT_TYPE_BY_NAME)
-                    .setParameter("name", name).getSingleResult();
-            }
-
-            return resourceType;
-        }
-
-        // NOTE: Sun's JPA Javadocs say getSingleResult() throws a EntityNotFoundException, but JBoss' impl instead
-        //       throws a NoResultException.
-        catch (NoResultException e) {
-            throw new ResourceTypeNotFoundException("Resource type with parent [" + parent + "] and name [" + name
-                + "] does not exist in inventory.");
-        }
     }
 
     /**

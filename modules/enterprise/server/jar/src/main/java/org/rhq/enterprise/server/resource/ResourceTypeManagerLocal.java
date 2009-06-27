@@ -45,9 +45,6 @@ public interface ResourceTypeManagerLocal {
 
     ResourceType getResourceTypeById(Subject subject, int id) throws ResourceTypeNotFoundException;
 
-    ResourceType getResourceTypeByParentAndName(Subject subject, ResourceType parent, String name)
-        throws ResourceTypeNotFoundException;
-
     ResourceType getResourceTypeByNameAndPlugin(String name, String plugin);
 
     /**

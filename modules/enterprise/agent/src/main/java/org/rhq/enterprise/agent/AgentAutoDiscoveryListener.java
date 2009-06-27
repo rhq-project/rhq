@@ -149,6 +149,10 @@ public class AgentAutoDiscoveryListener implements AutoDiscoveryListener {
             CommandResponse genericResponse = client.invoke(new IdentifyCommand());
             IdentifyCommandResponse identifyResponse = new IdentifyCommandResponse(genericResponse);
 
+            if (identifyResponse.getException() != null) {
+                throw identifyResponse.getException();
+            }
+
             return new InvokerLocator(identifyResponse.getIdentification().getInvokerLocator());
         } catch (Throwable ignore) {
             // This probably just means that the server isn't online yet; we can ignore - we'll be called later for another attempt.

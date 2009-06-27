@@ -177,7 +177,7 @@ public class Version {
      */
     public static Properties getVersionProperties() {
         if (propertiesCache == null) {
-            ClassLoader cl = Thread.currentThread().getContextClassLoader();
+            ClassLoader cl = Version.class.getClassLoader();
             InputStream stream = cl.getResourceAsStream("rhq-agent-version.properties");
 
             Properties newProps = new Properties();

@@ -94,13 +94,17 @@ public class AgentManagement implements AgentManagementMBean, MBeanRegistration 
         // first. Therefore, this method must inheritently do its thing asynchronously.
         new Thread(new Runnable() {
             public void run() {
+                ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
                 try {
                     sleep(5000L); // give our restart() caller a chance to return and finish
+                    Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
                     m_agent.shutdown();
                     m_agent.start();
                     m_agent.getAgentRestartCounter().restartedAgent(AgentRestartReason.OPERATION);
                 } catch (Exception e) {
                     e.printStackTrace(); // TODO what do to here?
+                } finally {
+                    Thread.currentThread().setContextClassLoader(originalCL);
                 }
             }
         }, "RHQ Agent Restart Thread").start();
@@ -113,28 +117,54 @@ public class AgentManagement implements AgentManagementMBean, MBeanRegistration 
         // first. Therefore, this method must inheritently do its thing asynchronously.
         new Thread(new Runnable() {
             public void run() {
-                sleep(5000L); // give our shutdown() caller a chance to return and finish
-                m_agent.shutdown();
+                ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
+                try {
+                    sleep(5000L); // give our shutdown() caller a chance to return and finish
+                    Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+                    m_agent.shutdown();
+                } finally {
+                    Thread.currentThread().setContextClassLoader(originalCL);
+                }
             }
         }, "RHQ Agent Shutdown Thread").start();
     }
 
     public void downloadLatestFailoverList() {
-        m_agent.performPrimaryServerSwitchoverCheck();
+        ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+            m_agent.performPrimaryServerSwitchoverCheck();
+        } finally {
+            Thread.currentThread().setContextClassLoader(originalCL);
+        }
     }
 
     public void updatePlugins() {
-        m_agent.updatePlugins();
-        restartPluginContainer();
+        ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+            m_agent.updatePlugins();
+            restartPluginContainer();
+        } finally {
+            Thread.currentThread().setContextClassLoader(originalCL);
+        }
     }
 
     public OperationResult retrieveAllPluginInfo() {
+        List<File> plugins;
+
+        ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+            PluginUpdate updater = getPluginUpdateObject();
+            plugins = updater.getCurrentPluginFiles();
+        } finally {
+            Thread.currentThread().setContextClassLoader(originalCL);
+        }
+
         OperationResult info = new OperationResult();
         PropertyList list = new PropertyList("plugins");
         info.getComplexResults().put(list);
-
-        PluginUpdate updater = getPluginUpdateObject();
-        List<File> plugins = updater.getCurrentPluginFiles();
 
         if (plugins.size() > 0) {
             for (File plugin : plugins) {
@@ -158,8 +188,16 @@ public class AgentManagement implements AgentManagementMBean, MBeanRegistration 
     }
 
     public OperationResult retrievePluginInfo(String pluginName) {
-        PluginUpdate updater = getPluginUpdateObject();
-        List<File> plugins = updater.getCurrentPluginFiles();
+        List<File> plugins;
+
+        ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+            PluginUpdate updater = getPluginUpdateObject();
+            plugins = updater.getCurrentPluginFiles();
+        } finally {
+            Thread.currentThread().setContextClassLoader(originalCL);
+        }
 
         if (plugins.size() > 0) {
             for (File plugin : plugins) {
@@ -189,8 +227,14 @@ public class AgentManagement implements AgentManagementMBean, MBeanRegistration 
         new Thread(new Runnable() {
             public void run() {
                 sleep(5000L); // give our caller a chance to return and finish
-                m_agent.shutdownPluginContainer();
-                m_agent.startPluginContainer(500L);
+                ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
+                try {
+                    Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+                    m_agent.shutdownPluginContainer();
+                    m_agent.startPluginContainer(500L);
+                } finally {
+                    Thread.currentThread().setContextClassLoader(originalCL);
+                }
             }
         }, "RHQ Agent Plugin Container Restart Thread").start();
     }
@@ -198,12 +242,20 @@ public class AgentManagement implements AgentManagementMBean, MBeanRegistration 
     public OperationResult executeAvailabilityScan(Boolean changesOnly) {
         boolean changes = (changesOnly != null) ? changesOnly.booleanValue() : false;
 
+        AvailabilityReport report;
+
         // ask for the report and tell the inventory manager to handle it.  We must hand it off to IM
         // because we need to send the report to the server - otherwise, the "real" availability executor
         // will not send changed resources thinking someone else did.
-        InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
-        AvailabilityReport report = inventoryManager.executeAvailabilityScanImmediately(changes);
-        inventoryManager.handleReport(report);
+        ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+            InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
+            report = inventoryManager.executeAvailabilityScanImmediately(changes);
+            inventoryManager.handleReport(report);
+        } finally {
+            Thread.currentThread().setContextClassLoader(originalCL);
+        }
 
         OperationResult opResult = new OperationResult();
         Configuration complexResults = opResult.getComplexResults();
@@ -245,7 +297,13 @@ public class AgentManagement implements AgentManagementMBean, MBeanRegistration 
     }
 
     public String getVersion() {
-        return Version.getProductVersion();
+        ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+            return Version.getProductVersion();
+        } finally {
+            Thread.currentThread().setContextClassLoader(originalCL);
+        }
     }
 
     public long getCurrentTime() {
@@ -265,110 +323,224 @@ public class AgentManagement implements AgentManagementMBean, MBeanRegistration 
     }
 
     public void setDebugMode(Boolean enabled, Boolean traceMessaging) throws ExecutionException {
-        if (enabled != null && enabled.booleanValue()) {
-            executePromptCommand("debug -f log4j-debug.xml");
-            if (traceMessaging != null && traceMessaging.booleanValue()) {
-                executePromptCommand("debug -c true");
+        ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+            if (enabled != null && enabled.booleanValue()) {
+                executePromptCommand("debug -f log4j-debug.xml");
+                if (traceMessaging != null && traceMessaging.booleanValue()) {
+                    executePromptCommand("debug -c true");
+                } else {
+                    executePromptCommand("debug -c false");
+                }
             } else {
+                executePromptCommand("debug -f log4j.xml");
                 executePromptCommand("debug -c false");
             }
-        } else {
-            executePromptCommand("debug -f log4j.xml");
-            executePromptCommand("debug -c false");
+        } finally {
+            Thread.currentThread().setContextClassLoader(originalCL);
         }
         return;
     }
 
     public String executePromptCommand(String command) throws ExecutionException {
-        CharArrayWriter listener = new CharArrayWriter();
-        AgentPrintWriter apw = m_agent.getOut();
+        ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
         try {
-            apw.addListener(listener);
-            m_agent.executePromptCommand(command); // TODO should we do something if false is returned? (i.e. kill agent?)
-        } catch (Exception e) {
-            throw new ExecutionException(listener.toString(), e); // the message is the output, cause is the thrown exception
-        } finally {
-            apw.removeListener(listener);
-        }
+            Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+            CharArrayWriter listener = new CharArrayWriter();
+            AgentPrintWriter apw = m_agent.getOut();
+            try {
+                apw.addListener(listener);
+                m_agent.executePromptCommand(command); // TODO should we do something if false is returned? (i.e. kill agent?)
+            } catch (Exception e) {
+                throw new ExecutionException(listener.toString(), e); // the message is the output, cause is the thrown exception
+            } finally {
+                apw.removeListener(listener);
+            }
 
-        String output = listener.toString();
-        return output;
+            String output = listener.toString();
+            return output;
+        } finally {
+            Thread.currentThread().setContextClassLoader(originalCL);
+        }
     }
 
     public String getAgentHomeDirectory() {
-        return m_agent.getAgentHomeDirectory();
+        ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+            return m_agent.getAgentHomeDirectory();
+        } finally {
+            Thread.currentThread().setContextClassLoader(originalCL);
+        }
     }
 
     public int getNumberAgentRestarts() {
-        return m_agent.getAgentRestartCounter().getNumberOfRestarts();
+        ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+            return m_agent.getAgentRestartCounter().getNumberOfRestarts();
+        } finally {
+            Thread.currentThread().setContextClassLoader(originalCL);
+        }
     }
 
     public String getReasonForLastRestart() {
-        return m_agent.getAgentRestartCounter().getLastAgentRestartReason().toString();
+        ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+            return m_agent.getAgentRestartCounter().getLastAgentRestartReason().toString();
+        } finally {
+            Thread.currentThread().setContextClassLoader(originalCL);
+        }
     }
 
     public long getAgentServerClockDifference() {
-        return m_agent.getAgentServerClockDifference();
+        ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+            return m_agent.getAgentServerClockDifference();
+        } finally {
+            Thread.currentThread().setContextClassLoader(originalCL);
+        }
     }
 
     public long getUptime() {
-        long start_time = m_agent.getStartTime();
+        ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+            long start_time = m_agent.getStartTime();
 
-        if (start_time > 0) {
-            return (System.currentTimeMillis() - start_time) / 1000L; // we want units in seconds
+            if (start_time > 0) {
+                return (System.currentTimeMillis() - start_time) / 1000L; // we want units in seconds
+            }
+
+            return 0L;
+        } finally {
+            Thread.currentThread().setContextClassLoader(originalCL);
         }
-
-        return 0L;
     }
 
     public long getNumberSuccessfulCommandsReceived() {
-        return getServerSideMetrics().getNumberSuccessfulCommandsReceived();
+        ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+            return getServerSideMetrics().getNumberSuccessfulCommandsReceived();
+        } finally {
+            Thread.currentThread().setContextClassLoader(originalCL);
+        }
     }
 
     public long getNumberFailedCommandsReceived() {
-        return getServerSideMetrics().getNumberFailedCommandsReceived();
+        ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+            return getServerSideMetrics().getNumberFailedCommandsReceived();
+        } finally {
+            Thread.currentThread().setContextClassLoader(originalCL);
+        }
     }
 
     public long getNumberTotalCommandsReceived() {
-        return getServerSideMetrics().getNumberTotalCommandsReceived();
+        ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+            return getServerSideMetrics().getNumberTotalCommandsReceived();
+        } finally {
+            Thread.currentThread().setContextClassLoader(originalCL);
+        }
     }
 
     public long getAverageExecutionTimeReceived() {
-        return getServerSideMetrics().getAverageExecutionTimeReceived();
+        ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+            return getServerSideMetrics().getAverageExecutionTimeReceived();
+        } finally {
+            Thread.currentThread().setContextClassLoader(originalCL);
+        }
     }
 
     public long getAverageExecutionTimeSent() {
-        return getClientSideMetrics().getAverageExecutionTimeSent();
+        ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+            return getClientSideMetrics().getAverageExecutionTimeSent();
+        } finally {
+            Thread.currentThread().setContextClassLoader(originalCL);
+        }
     }
 
     public long getNumberSuccessfulCommandsSent() {
-        return getClientSideMetrics().getNumberSuccessfulCommandsSent();
+        ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+            return getClientSideMetrics().getNumberSuccessfulCommandsSent();
+        } finally {
+            Thread.currentThread().setContextClassLoader(originalCL);
+        }
     }
 
     public long getNumberFailedCommandsSent() {
-        return getClientSideMetrics().getNumberFailedCommandsSent();
+        ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+            return getClientSideMetrics().getNumberFailedCommandsSent();
+        } finally {
+            Thread.currentThread().setContextClassLoader(originalCL);
+        }
     }
 
     public long getNumberTotalCommandsSent() {
-        ClientCommandSenderMetrics metrics = getClientSideMetrics();
-        return metrics.getNumberSuccessfulCommandsSent() + metrics.getNumberFailedCommandsSent();
+        ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+            ClientCommandSenderMetrics metrics = getClientSideMetrics();
+            return metrics.getNumberSuccessfulCommandsSent() + metrics.getNumberFailedCommandsSent();
+        } finally {
+            Thread.currentThread().setContextClassLoader(originalCL);
+        }
     }
 
     public long getNumberCommandsActiveSent() {
-        return getClientSideMetrics().getNumberCommandsActive();
+        ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+            return getClientSideMetrics().getNumberCommandsActive();
+        } finally {
+            Thread.currentThread().setContextClassLoader(originalCL);
+        }
     }
 
     public long getNumberCommandsInQueue() {
-        return getClientSideMetrics().getNumberCommandsInQueue();
+        ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+            return getClientSideMetrics().getNumberCommandsInQueue();
+        } finally {
+            Thread.currentThread().setContextClassLoader(originalCL);
+        }
     }
 
     public long getNumberCommandsSpooled() {
-        return getClientSideMetrics().getNumberCommandsSpooled();
+        ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+            return getClientSideMetrics().getNumberCommandsSpooled();
+        } finally {
+            Thread.currentThread().setContextClassLoader(originalCL);
+        }
     }
 
     public boolean isSending() {
-        ClientCommandSenderMetrics metrics = getClientSideMetrics();
-        return metrics.isSending();
+        ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+            ClientCommandSenderMetrics metrics = getClientSideMetrics();
+            return metrics.isSending();
+        } finally {
+            Thread.currentThread().setContextClassLoader(originalCL);
+        }
     }
 
     public long getJVMFreeMemory() {
@@ -386,40 +558,58 @@ public class AgentManagement implements AgentManagementMBean, MBeanRegistration 
     public Properties getAgentConfiguration() {
         Properties properties = new Properties();
 
+        ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
         try {
-            Preferences prefs = m_agent.getConfiguration().getPreferences();
-            String[] keys = prefs.keys();
-            for (String key : keys) {
-                properties.setProperty(key, prefs.get(key, "<error>"));
+            Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+            try {
+                Preferences prefs = m_agent.getConfiguration().getPreferences();
+                String[] keys = prefs.keys();
+                for (String key : keys) {
+                    properties.setProperty(key, prefs.get(key, "<error>"));
+                }
+            } catch (Exception e) {
+                properties.setProperty("ERROR", e.getMessage()); // this should really never happen
             }
-        } catch (Exception e) {
-            properties.setProperty("ERROR", e.getMessage()); // this should really never happen
+        } finally {
+            Thread.currentThread().setContextClassLoader(originalCL);
         }
 
         return properties;
     }
 
     public void mergeIntoAgentConfiguration(Properties config) {
-        if ((config != null) && (config.size() > 0)) {
-            Preferences prefs = m_agent.getConfiguration().getPreferences();
+        ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+            if ((config != null) && (config.size() > 0)) {
+                Preferences prefs = m_agent.getConfiguration().getPreferences();
 
-            Set<Object> names = config.keySet();
-            for (Object name : names) {
-                Object value = config.get(name);
-                prefs.put(name.toString(), value.toString()); // this persists the new config setting
+                Set<Object> names = config.keySet();
+                for (Object name : names) {
+                    Object value = config.get(name);
+                    prefs.put(name.toString(), value.toString()); // this persists the new config setting
+                }
             }
+        } finally {
+            Thread.currentThread().setContextClassLoader(originalCL);
         }
 
         return;
     }
 
     public void removeFromAgentConfiguration(List<String> preferenceNames) {
-        if ((preferenceNames != null) && (preferenceNames.size() > 0)) {
-            Preferences prefs = m_agent.getConfiguration().getPreferences();
+        ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+            if ((preferenceNames != null) && (preferenceNames.size() > 0)) {
+                Preferences prefs = m_agent.getConfiguration().getPreferences();
 
-            for (String doomedPreferenceName : preferenceNames) {
-                prefs.remove(doomedPreferenceName);
+                for (String doomedPreferenceName : preferenceNames) {
+                    prefs.remove(doomedPreferenceName);
+                }
             }
+        } finally {
+            Thread.currentThread().setContextClassLoader(originalCL);
         }
 
         return;

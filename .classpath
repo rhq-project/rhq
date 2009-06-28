@@ -36,6 +36,7 @@
 	<classpathentry kind="src" path="modules/enterprise/gui/portal-war/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/gui/portal-war/src/test/java"/>
 	<classpathentry kind="src" path="modules/enterprise/gui/installer-war/src/main/java"/>
+	<classpathentry kind="src" path="modules/enterprise/gui/webdav-war/src/main/java"/>
 	<classpathentry kind="src" path="modules/helpers/rtfilter/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/platform/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/rhq-agent/src/main/java"/>
@@ -152,5 +153,6 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/seam/jboss-seam-ui/2.1.0.SP1/jboss-seam-ui-2.1.0.SP1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/hibernate/hibernate3/3.2.r14201-2/hibernate3-3.2.r14201-2.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/jline/jline/0.9.94/jline-0.9.94.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/com/ettrema/milton-api/1.4.1/milton-api-1.4.1.jar"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

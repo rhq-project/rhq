@@ -18,30 +18,25 @@
  */
 package org.rhq.gui.webdav;
 
-import com.bradmcevoy.http.Resource;
-import com.bradmcevoy.http.FolderResource;
-import com.bradmcevoy.http.CollectionResource;
-import com.bradmcevoy.http.Request;
-import com.bradmcevoy.http.Auth;
-import com.bradmcevoy.http.Range;
-import com.bradmcevoy.http.PropFindableResource;
-import com.bradmcevoy.http.PropPatchableResource;
-import com.bradmcevoy.http.PropPatchHandler;
-import com.bradmcevoy.http.exceptions.NotAuthorizedException;
-
-import java.util.List;
-import java.util.Date;
-import java.util.Map;
 import java.util.ArrayList;
-import java.io.InputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.util.Date;
+import java.util.List;
+
+import com.bradmcevoy.http.Auth;
+import com.bradmcevoy.http.CollectionResource;
+import com.bradmcevoy.http.PropFindableResource;
+import com.bradmcevoy.http.PropPatchHandler;
+import com.bradmcevoy.http.PropPatchableResource;
+import com.bradmcevoy.http.Request;
+import com.bradmcevoy.http.Resource;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.resource.InventoryStatus;
+import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
-import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 
 /**
  * @author Greg Hinkle
@@ -51,7 +46,6 @@ public class ResourceFolder implements Resource, CollectionResource, PropFindabl
     private List<Resource> children;
 
     private org.rhq.core.domain.resource.Resource resource;
-
 
     public ResourceFolder(org.rhq.core.domain.resource.Resource resource) {
         this.resource = resource;
@@ -64,10 +58,7 @@ public class ResourceFolder implements Resource, CollectionResource, PropFindabl
 
     }
 
-
-
-
-  public Resource child(String s) {
+    public Resource child(String s) {
         List<? extends Resource> resources = getChildren();
         for (Resource res : resources) {
             if (s.equals(res.getName())) {
@@ -96,6 +87,11 @@ public class ResourceFolder implements Resource, CollectionResource, PropFindabl
                 children.add(new ConfigResource(resource, config));
             }
 
+            MeasurementDataManagerLocal mdm = LookupUtil.getMeasurementDataManager();
+            List<MeasurementDataTrait> traits = mdm.getCurrentTraitsForResource(resource.getId(), null);
+            if (traits != null && traits.size() > 0) {
+                children.add(new TraitsResource(resource, traits));
+            }
 
         }
         return children;
@@ -110,18 +106,18 @@ public class ResourceFolder implements Resource, CollectionResource, PropFindabl
     }
 
     public Object authenticate(String s, String s1) {
-        return "auth";  
+        return "auth";
     }
 
     public boolean authorise(Request request, Request.Method method, Auth auth) {
         if (auth == null) {
             return false;
         }
-        return true;  
+        return true;
     }
 
     public String getRealm() {
-        return "rhq";  
+        return "rhq";
     }
 
     public Date getModifiedDate() {
@@ -129,9 +125,8 @@ public class ResourceFolder implements Resource, CollectionResource, PropFindabl
     }
 
     public String checkRedirect(Request request) {
-        return null;  
+        return null;
     }
-
 
     public Date getCreateDate() {
         return new Date(resource.getCtime());

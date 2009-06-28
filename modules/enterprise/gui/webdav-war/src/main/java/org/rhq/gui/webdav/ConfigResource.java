@@ -114,16 +114,16 @@ public class ConfigResource extends BasicResource implements FileResource {
         return new Long(0);
     }
 
-    public void copyTo(CollectionResource collectionResource, String s) {
-        return; // unsupported
+    public void copyTo(CollectionResource arg0, String arg1) {
+        throw new UnsupportedOperationException("WebDAV users cannot copy resource configuration");
     }
 
     public void delete() {
-        return; // unsupported
+        throw new UnsupportedOperationException("WebDAV users cannot delete resource configuration");
     }
 
-    public void moveTo(CollectionResource collectionResource, String s) {
-        return; // unsupported
+    public void moveTo(CollectionResource arg0, String arg1) {
+        throw new UnsupportedOperationException("WebDAV users cannot move resource configuration");
     }
 
     public String processForm(Map<String, String> stringStringMap, Map<String, FileItem> stringFileItemMap) {

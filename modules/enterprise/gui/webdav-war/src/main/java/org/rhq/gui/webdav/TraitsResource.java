@@ -103,15 +103,15 @@ public class TraitsResource extends BasicResource implements FileResource {
     }
 
     public void copyTo(CollectionResource arg0, String arg1) {
-        return; // no-op
+        throw new UnsupportedOperationException("WebDAV users cannot copy traits");
     }
 
     public void delete() {
-        return; //no-op
+        throw new UnsupportedOperationException("WebDAV users cannot delete traits");
     }
 
     public void moveTo(CollectionResource arg0, String arg1) {
-        return; // no-op
+        throw new UnsupportedOperationException("WebDAV users cannot move traits");
     }
 
     public String processForm(Map<String, String> arg0, Map<String, FileItem> arg1) {

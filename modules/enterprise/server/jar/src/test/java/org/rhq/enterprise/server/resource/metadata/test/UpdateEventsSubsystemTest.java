@@ -229,6 +229,7 @@ public class UpdateEventsSubsystemTest extends UpdateSubsytemTestBase {
 
             Subject overlord = LookupUtil.getSubjectManager().getOverlord();
             resMgr.deleteResource(overlord, testResource.getId());
+            resMgr.deleteSingleResourceInNewTransaction(overlord, testResource.getId());
 
             /* deleting the platform deletes the agent now, so ask the resMgr to do it all for us
             platform = entityManager.getReference(ResourceType.class, platform.getId());

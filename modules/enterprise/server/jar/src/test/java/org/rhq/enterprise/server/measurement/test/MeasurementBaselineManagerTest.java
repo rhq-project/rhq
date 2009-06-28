@@ -130,9 +130,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
             System.out.println(">>>>>>> b) [" + allScheds.size() + "] baselines calculated in ["
                 + (System.currentTimeMillis() - startingTime) + "] ms");
 
-            begin();
             deleteManyResources();
-            commitAndBegin(); // this ensures we delete everything
         } catch (Throwable t) {
             System.out.println("TEST FAILURE STACK TRACE FOLLOWS:");
             t.printStackTrace();
@@ -288,8 +286,6 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
             commit();
 
             deleteResources();
-
-            begin();
         } catch (Throwable t) {
             System.out.println("TEST FAILURE STACK TRACE FOLLOWS:");
             t.printStackTrace();
@@ -411,6 +407,8 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
         platform.setAgent(agent);
 
         platform2 = new Resource("platform2", "testAutoBaseline Platform Two", platformType);
+        // deleteResource removes the agent, so we can't have two direct platforms for it, make one a child of the other
+        platform.addChildResource(platform2);
         em.persist(platform2);
         platform2.setAgent(agent);
 
@@ -438,16 +436,13 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
 
         try {
             // perform in-band and out-of-band work in quick succession
-            resourceManager.deleteResource(overlord, platform.getId());
-            resourceManager.deleteSingleResourceInNewTransaction(overlord, platform.getId());
-            resourceManager.deleteResource(overlord, platform2.getId());
-            resourceManager.deleteSingleResourceInNewTransaction(overlord, platform2.getId());
+            // deleteResource will remove platform and platform2, as well as the agent 
+            List<Integer> deletedIds = resourceManager.deleteResource(overlord, platform.getId());
+            for (Integer deletedResourceId : deletedIds) {
+                resourceManager.deleteSingleResourceInNewTransaction(overlord, deletedResourceId);
+            }
 
             begin();
-
-            if ((doomed = entityManager.find(Agent.class, agent.getId())) != null) {
-                entityManager.remove(doomed);
-            }
 
             deleteMeasurementDataNumeric1H(measSched);
             deleteMeasurementDataNumeric1H(measSched2);
@@ -500,8 +495,14 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
         agent = new Agent("test-agent", "localhost", 1234, "", "randomToken");
         em.persist(agent);
 
+        Resource root = null;
         for (int r = 0; r < resourceCount; r++) {
             Resource resource = new Resource(String.valueOf(r), "testAutoBaselineResource" + r, platformType);
+            if (root == null) {
+                root = resource;
+            } else {
+                root.addChildResource(resource);
+            }
             em.persist(resource);
             allResources.add(resource);
             resource.setAgent(agent);
@@ -534,6 +535,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
 
         try {
             int dataCount = allScheds.size();
+            begin();
             for (MeasurementSchedule doomedSched : allScheds) {
                 deleteMeasurementDataNumeric1H(doomedSched);
                 if ((--dataCount % 1000) == 0) {
@@ -541,17 +543,18 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
                     commitAndBegin();
                 }
             }
+            commit();
 
             // delete the resources which will cascade delete all schedules
-            for (Resource doomedRes : allResources) {
-                // perform in-band and out-of-band work in quick succession
-                resourceManager.deleteResource(overlord, doomedRes.getId());
-                resourceManager.deleteSingleResourceInNewTransaction(overlord, doomedRes.getId());
+            Resource root = allResources.get(0);
+            // perform in-band and out-of-band work in quick succession
+            // this also deletes the agent
+            List<Integer> deletedIds = resourceManager.deleteResource(overlord, root.getId());
+            for (Integer deletedResourceId : deletedIds) {
+                resourceManager.deleteSingleResourceInNewTransaction(overlord, deletedResourceId);
             }
 
-            if ((doomed = entityManager.find(Agent.class, agent.getId())) != null) {
-                entityManager.remove(doomed);
-            }
+            begin();
 
             for (MeasurementDefinition doomedDef : allDefs) {
                 if ((doomed = entityManager.find(MeasurementDefinition.class, doomedDef.getId())) != null) {
@@ -559,12 +562,11 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
                 }
             }
 
-            entityManager.flush();
-            entityManager.clear();
-
             if ((doomed = entityManager.find(ResourceType.class, platformType.getId())) != null) {
                 entityManager.remove(doomed);
             }
+
+            commit();
 
         } catch (Exception e) {
             System.out.println("Cannot delete test resources, database still has test data in it");

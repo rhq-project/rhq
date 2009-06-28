@@ -357,6 +357,7 @@ public class UpdateMeasurementSubsystemTest extends UpdateSubsytemTestBase {
             Subject overlord = LookupUtil.getSubjectManager().getOverlord();
             for (Resource res : resources) {
                 resMgr.deleteResource(overlord, res.getId());
+                resMgr.deleteSingleResourceInNewTransaction(overlord, res.getId());
             }
 
             Set<MeasurementDefinition> defs = platform.getMetricDefinitions();

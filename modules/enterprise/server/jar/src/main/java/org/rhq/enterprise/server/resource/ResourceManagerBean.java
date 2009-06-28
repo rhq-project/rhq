@@ -229,6 +229,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @SuppressWarnings("unchecked")
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public List<Integer> deleteResource(Subject user, Integer resourceId) {
         if (resourceId == null) // sanity check
         {
@@ -263,9 +264,9 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         try {
             // The test code does not always generate agents for the resources. Catch and log any problem but continue
             agentClient = agentManager.getAgentClient(resourceId);
-        } catch (RuntimeException e) {
+        } catch (Throwable t) {
             log.warn("No AgentClient found for resource [" + resource
-                + "]. Unable to inform agent of inventory removal (this may be ok): " + e);
+                + "]. Unable to inform agent of inventory removal (this may be ok): " + t);
         }
 
         // since we delete the resource asychronously now, we need to make sure we remove things that would cause
@@ -286,7 +287,12 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         Query markDeletedQuery = entityManager.createNamedQuery(Resource.QUERY_MARK_RESOURCES_FOR_ASYNC_DELETION);
         markDeletedQuery.setParameter("resourceId", resourceId);
         markDeletedQuery.setParameter("status", InventoryStatus.UNINVENTORIED);
-        markDeletedQuery.executeUpdate();
+        int resourcesDeleted = markDeletedQuery.executeUpdate();
+
+        if (resourcesDeleted != toBeDeletedResourceIds.size()) {
+            log.error("Tried to delete " + toBeDeletedResourceIds.size() + " resources, but actually deleted "
+                + resourcesDeleted);
+        }
 
         // still need to tell the agent about the removed resources so it stops avail reports
         if (agentClient != null) {
@@ -309,21 +315,6 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         if (!authorizationManager.isOverlord(user)) {
             throw new IllegalArgumentException("Only the overlord can execute out-of-band async resource delete method");
         }
-
-        /*
-         * Perform bulk deletes at the beginning of a new transaction only: From bill burke's ejb3 book:
-         * "Be very careful how you use bulk UPDATE and DELETE. It is possible, depending on the vendor impl
-         * to create inconsistencies between the database and entities that are already being managed by
-         * the current persistence context. Vendor impls are required only to execute the update/delete
-         * directly on the database, they do not have to modify the state of any currently managed entity.
-         * For this reason it is recommended that you do these operations within their own transaction or
-         * at the beginning of a transaction (before any entities are access that might be affected by these
-         * bulk op calls). Alternatively, executing entitymanager.flush() and clear() before executing a bulk
-         * op will keep you safe"
-         */
-
-        entityManager.flush();
-        entityManager.clear();
 
         boolean hasErrors = doBulkDelete(user, resourceId);
         if (hasErrors) {
@@ -354,7 +345,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             CallTimeDataValue.QUERY_DELETE_BY_RESOURCES, // call time data values BEFORE schedules & call time data keys
             CallTimeDataKey.QUERY_DELETE_BY_RESOURCES, // call time data keys BEFORE schedules
             MeasurementOOB.DELETE_FOR_RESOURCES, //
-            MeasurementSchedule.DELETE_BY_RESOURCES, // scheduleS AFTER baselines, traits, and calltime data
+            MeasurementSchedule.DELETE_BY_RESOURCES, // schedules AFTER baselines, traits, and calltime data
             Availability.QUERY_DELETE_BY_RESOURCES, //
             ResourceError.QUERY_DELETE_BY_RESOURCES, //
             Event.DELETE_BY_RESOURCES, //
@@ -394,8 +385,6 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             hasErrors |= resourceManager.bulkNamedQueryDeleteInNewTransaction(overlord, namedQueryToExecute,
                 resourceIds);
         }
-
-        entityManager.flush();
 
         return hasErrors;
     }
@@ -455,9 +444,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         int result = 0;
 
         try {
-            List<ResourceOperationSchedule> schedules;
-
-            schedules = operationManager.getScheduledResourceOperations(overlord, resourceId);
+            List<ResourceOperationSchedule> schedules = operationManager.getScheduledResourceOperations(overlord,
+                resourceId);
 
             result = schedules.size();
 
@@ -477,9 +465,9 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                         + "]", ise);
                 }
             }
-        } catch (SchedulerException se) {
+        } catch (Throwable t) {
             log.warn("Failed to get jobs for a resource being deleted [" + resourceId
-                + "]; will not attempt to unschedule anything", se);
+                + "]; will not attempt to unschedule anything", t);
         }
 
         return result;

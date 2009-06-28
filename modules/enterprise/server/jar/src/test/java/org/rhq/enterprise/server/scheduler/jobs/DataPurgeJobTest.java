@@ -76,6 +76,7 @@ import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestServerCommunicationsService;
@@ -126,8 +127,12 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
     public void testPurgeWhenDeleting() throws Throwable {
         addDataToBePurged();
         try {
-            List<Integer> deletedIds = LookupUtil.getResourceManager().deleteResource(
-                LookupUtil.getSubjectManager().getOverlord(), new Integer(newResource.getId()));
+            Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+            ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
+
+            List<Integer> deletedIds = resourceManager.deleteResource(overlord, newResource.getId());
+            resourceManager.deleteSingleResourceInNewTransaction(overlord, newResource.getId());
+
             assert deletedIds.size() == 1 : "didn't delete resource: " + deletedIds;
             assert deletedIds.get(0).intValue() == newResource.getId() : "what was deleted? : " + deletedIds;
 
@@ -541,7 +546,11 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
 
             // delete the resource itself
             Subject overlord = LookupUtil.getSubjectManager().getOverlord();
-            LookupUtil.getResourceManager().deleteResource(overlord, doomedResource.getId());
+            ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
+            List<Integer> deletedIds = resourceManager.deleteResource(overlord, doomedResource.getId());
+            for (Integer deletedResourceId : deletedIds) {
+                resourceManager.deleteSingleResourceInNewTransaction(overlord, deletedResourceId);
+            }
 
             // delete the agent and the type
             getTransactionManager().begin();

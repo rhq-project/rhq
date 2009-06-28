@@ -1003,12 +1003,9 @@ public class Resource implements Comparable<Resource>, Externalizable {
     }
 
     public Resource( //
-        @NotNull
-        String resourceKey, //
-        @NotNull
-        String name, //
-        @NotNull
-        ResourceType type) {
+        @NotNull String resourceKey, //
+        @NotNull String name, //
+        @NotNull ResourceType type) {
         this.resourceKey = resourceKey;
         this.name = name;
         this.resourceType = type;
@@ -1043,8 +1040,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
         return this.name;
     }
 
-    public void setName(@NotNull
-    String name) {
+    public void setName(@NotNull String name) {
         this.name = name;
         setAgentSynchronizationNeeded();
     }
@@ -1219,8 +1215,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
         return parentResource;
     }
 
-    public void setParentResource(@Nullable
-    Resource parentResource) {
+    public void setParentResource(@Nullable Resource parentResource) {
         this.parentResource = parentResource;
     }
 

@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.persistence.EntityManager;
 
@@ -40,6 +41,9 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.server.auth.SessionManager;
 
 public class SessionTestHelper {
+
+    private static AtomicInteger idGenerator = new AtomicInteger(0);
+
     /*
      * supporting methods to help carry out primary tests
      */
@@ -187,7 +191,7 @@ public class SessionTestHelper {
 
     public static Agent createNewAgent(EntityManager em, String agentName) {
         agentName = preprocess(agentName);
-        String address = "localhost";
+        String address = preprocess("localhost");
         int port = 16163;
         String endPoint = "socket://" + address + ":" + port + "/?rhq.communications.connector.rhqtype=agent";
 
@@ -221,6 +225,6 @@ public class SessionTestHelper {
     }
 
     private static String preprocess(String name) {
-        return name += System.currentTimeMillis();
+        return name += (System.currentTimeMillis() + "-" + idGenerator.getAndIncrement());
     }
 }

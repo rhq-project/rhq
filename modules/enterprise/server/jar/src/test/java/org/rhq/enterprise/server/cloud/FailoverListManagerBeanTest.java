@@ -517,7 +517,7 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
 
         setupNewAgents(3);
         List<FailoverListComposite> serverLists = new ArrayList<FailoverListComposite>(3);
-        for (int i = 0; (i < 3); ++i) {
+        for (int i = 0; i < 3; ++i) {
             serverLists.add(failoverListManager.getForSingleAgent(partitionEvent, newAgents.get(i).getName()));
             assert null != serverLists.get(i);
             assert serverLists.get(i).size() == servers.size();
@@ -535,13 +535,13 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
 
         setupNewAgents(3);
         List<FailoverListComposite> serverLists = new ArrayList<FailoverListComposite>(3);
-        for (int i = 0; (i < 3); ++i) {
+        for (int i = 0; i < 3; ++i) {
             serverLists.add(failoverListManager.getForSingleAgent(partitionEvent, newAgents.get(i).getName()));
             assert null != serverLists.get(i);
             assert serverLists.get(i).size() == servers.size();
         }
         assert !serverLists.get(0).equals(serverLists.get(1));
-        assert !serverLists.get(0).equals(serverLists.get(2));
+        assert !serverLists.get(0).equals(serverLists.get(2)) : serverLists.toString();
         assert !serverLists.get(1).equals(serverLists.get(2));
 
     }
@@ -553,7 +553,7 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
 
         setupNewAgents(3);
         List<FailoverListComposite> serverLists = new ArrayList<FailoverListComposite>(3);
-        for (int i = 0; (i < 3); ++i) {
+        for (int i = 0; i < 3; ++i) {
             serverLists.add(failoverListManager.getForSingleAgent(partitionEvent, newAgents.get(i).getName()));
             assert null != serverLists.get(i);
             assert serverLists.get(i).size() == servers.size();

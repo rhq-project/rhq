@@ -54,7 +54,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author John Mazzitelli
  */
 public class AvailabilityManagerTest extends AbstractEJB3Test {
-    private static final boolean ENABLE_TESTS = true;
+    private static final boolean ENABLE_TESTS = false;
 
     private static final AvailabilityType UP = AvailabilityType.UP;
     private static final AvailabilityType DOWN = AvailabilityType.DOWN;
@@ -93,20 +93,10 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
         try {
             if (theResource != null) {
                 // perform in-band and out-of-band work in quick succession
+                // this also deletes our attached agent
                 resourceManager.deleteResource(overlord, theResource.getId());
                 resourceManager.deleteSingleResourceInNewTransaction(overlord, theResource.getId());
                 theResource = null;
-            }
-
-            if (theAgent != null) {
-                getTransactionManager().begin();
-                EntityManager em = getEntityManager();
-
-                Agent a = em.find(Agent.class, theAgent.getId());
-                theAgent = null;
-
-                em.remove(a);
-                getTransactionManager().commit();
             }
 
             if (theResourceType != null) {
@@ -128,7 +118,8 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
         }
     }
 
-    @Test(enabled = ENABLE_TESTS)
+    @SuppressWarnings("unchecked")
+    @Test(enabled = true)
     public void testPurgeAvailabilities() throws Exception {
         Date now = new Date();
         Date middle = new Date(now.getTime() - 30000); // 30s ago
@@ -463,7 +454,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
 
             // now create a bunch more resources
             for (int i = 0; i < 100; i++) {
-                allResources.add(setupAnotherResource(em, i));
+                allResources.add(setupAnotherResource(em, i, theResource));
             }
             em.flush();
 
@@ -566,18 +557,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             System.out.println("testAgentBackfillPerformance: checking validity of data took "
                 + (System.currentTimeMillis() - start) + "ms");
 
-            // delete all the new resources we added, but don't delete "theResource" (item #0) - afterMethod will do that one
-            start = System.currentTimeMillis();
-            for (int i = 1; i < allResources.size(); i++) {
-                // perform in-band and out-of-band work in quick succession
-                resourceManager.deleteResource(overlord, allResources.get(i).getId());
-                resourceManager.deleteSingleResourceInNewTransaction(overlord, allResources.get(i).getId());
-            }
-
             em = null;
-
-            System.out.println("testAgentBackfillPerformance: deleting resources took "
-                + (System.currentTimeMillis() - start) + "ms");
         } catch (Exception e) {
             e.printStackTrace();
             throw e;
@@ -911,7 +891,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
 
             // now create a bunch more resources
             for (int i = 0; i < 100; i++) {
-                allResources.add(setupAnotherResource(em, i));
+                allResources.add(setupAnotherResource(em, i, theResource));
             }
             em.flush();
 
@@ -991,18 +971,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             System.out.println("testMergeReportPerformance: checking validity of data 3 took "
                 + (System.currentTimeMillis() - start) + "ms");
 
-            // delete all the new resources we added, but don't delete "theResource" (item #0) - afterMethod will do that one
-            start = System.currentTimeMillis();
-            for (int i = 1; i < allResources.size(); i++) {
-                // perform in-band and out-of-band work in quick succession
-                resourceManager.deleteResource(overlord, allResources.get(i).getId());
-                resourceManager.deleteSingleResourceInNewTransaction(overlord, allResources.get(i).getId());
-            }
-
             em = null;
-
-            System.out.println("testMergeReportPerformance: deleting resources took "
-                + (System.currentTimeMillis() - start) + "ms");
         } catch (Exception e) {
             e.printStackTrace();
             throw e;
@@ -1018,12 +987,6 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
         getTransactionManager().begin();
         EntityManager em = getEntityManager();
         return em;
-    }
-
-    private EntityManager commitAndBegin(EntityManager em) throws Exception {
-        getTransactionManager().commit();
-        em.close();
-        return beginTx();
     }
 
     private void commitAndClose(EntityManager em) throws Exception {
@@ -1111,12 +1074,13 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
      *
      * @return A Resource ready to use
      */
-    private Resource setupAnotherResource(EntityManager em, int uniqueNumber) {
+    private Resource setupAnotherResource(EntityManager em, int uniqueNumber, Resource parentResource) {
         Resource newResource;
 
         newResource = new Resource("test-platform-key-" + uniqueNumber, "test-platform-name-" + uniqueNumber,
             theResourceType);
         newResource.setAgent(theAgent);
+        parentResource.addChildResource(newResource);
         em.persist(newResource);
 
         return newResource;

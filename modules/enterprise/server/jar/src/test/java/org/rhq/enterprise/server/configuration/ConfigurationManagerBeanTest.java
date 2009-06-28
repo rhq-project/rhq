@@ -119,6 +119,9 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
             newResource2 = SessionTestHelper.createNewResourceForGroup(em, compatibleGroup, "res"
                 + System.currentTimeMillis());
 
+            // set one resource as the child of another, so that they don't both look like platforms under the agent
+            newResource1.addChildResource(newResource2);
+
             agent = SessionTestHelper.createNewAgent(em, "agent-" + getClass().getSimpleName());
             newResource1.setAgent(agent);
             newResource2.setAgent(agent);
@@ -140,26 +143,24 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
     @AfterMethod
     public void afterMethod() throws Exception {
         try {
+            // perform in-band and out-of-band work in quick succession
+            // only need to delete newResource1, which will delete his child newResource2 as well as the agent
+            List<Integer> deletedIds = resourceManager.deleteResource(overlord, newResource1.getId());
+            for (Integer deletedResourceId : deletedIds) {
+                resourceManager.deleteSingleResourceInNewTransaction(overlord, deletedResourceId);
+            }
+        } catch (Exception e) {
+            System.out.println(e);
+            throw e;
+        }
+
+        try {
             getTransactionManager().begin();
             EntityManager em = getEntityManager();
 
             try {
-                // perform in-band and out-of-band work in quick succession
-                resourceManager.deleteResource(overlord, newResource1.getId());
-                resourceManager.deleteSingleResourceInNewTransaction(overlord, newResource1.getId());
-                resourceManager.deleteResource(overlord, newResource2.getId());
-                resourceManager.deleteSingleResourceInNewTransaction(overlord, newResource2.getId());
-            } catch (Exception e) {
-                System.out.println(e);
-                throw e;
-            }
-
-            try {
                 ResourceGroup group = em.find(ResourceGroup.class, compatibleGroup.getId());
-                Agent a = em.find(Agent.class, agent.getId());
-
                 em.remove(group);
-                em.remove(a);
 
                 getTransactionManager().commit();
             } catch (Exception e) {

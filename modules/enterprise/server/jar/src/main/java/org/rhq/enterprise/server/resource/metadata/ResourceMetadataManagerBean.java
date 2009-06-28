@@ -269,7 +269,10 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
                         Iterator<Resource> resIter = resources.iterator();
                         while (resIter.hasNext()) {
                             Resource res = resIter.next();
-                            resourceManager.deleteResource(overlord, res.getId());
+                            List<Integer> deletedIds = resourceManager.deleteResource(overlord, res.getId());
+                            for (Integer deletedResourceId : deletedIds) {
+                                resourceManager.deleteSingleResourceInNewTransaction(overlord, deletedResourceId);
+                            }
                             resIter.remove();
                         }
                     }

@@ -118,7 +118,12 @@ public class AgentManagerBean implements AgentManagerLocal {
         entityManager.remove(agent);
 
         ServerCommunicationsServiceMBean bootstrap = ServerCommunicationsServiceUtil.getService();
-        bootstrap.destroyKnownAgentClient(agent);
+        try {
+            bootstrap.destroyKnownAgentClient(agent);
+        } catch (Exception e) {
+            // certain unit tests won't create the agentClient
+            log.warn("Could not find agentClient for doomedAgent: " + agent);
+        }
 
         log.info("Removed agent: " + agent);
     }
@@ -153,7 +158,8 @@ public class AgentManagerBean implements AgentManagerLocal {
         Agent agent = getAgentByResourceId(resourceId);
 
         if (agent == null) {
-            throw new RuntimeException("Resource [" + resourceId + "] does not exist or has no agent assigned");
+            log.debug("Resource [" + resourceId + "] does not exist or has no agent assigned");
+            return null;
         }
 
         return getAgentClient(agent);

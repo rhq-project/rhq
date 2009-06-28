@@ -54,7 +54,6 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceFactoryManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
@@ -70,7 +69,6 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
     private final Log log = LogFactory.getLog(ResourceFactoryManagerBeanTest.class);
 
     private ResourceFactoryManagerLocal resourceFactoryManager;
-    private ContentManagerLocal contentManager;
     private ResourceManagerLocal resourceManager;
     private Subject overlord;
 
@@ -87,7 +85,6 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
     @BeforeClass
     public void setupBeforeClass() throws Exception {
         resourceFactoryManager = LookupUtil.getResourceFactoryManager();
-        contentManager = LookupUtil.getContentManager();
         resourceManager = LookupUtil.getResourceManager();
         overlord = LookupUtil.getSubjectManager().getOverlord();
 
@@ -473,7 +470,10 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
     private void teardownResourceEnvironment() throws Exception {
         if (parentResource != null) {
 
-            resourceManager.deleteResource(overlord, parentResource.getId());
+            List<Integer> deletedIds = resourceManager.deleteResource(overlord, parentResource.getId());
+            for (Integer deletedResourceId : deletedIds) {
+                resourceManager.deleteSingleResourceInNewTransaction(overlord, deletedResourceId);
+            }
 
             getTransactionManager().begin();
             EntityManager em = getEntityManager();

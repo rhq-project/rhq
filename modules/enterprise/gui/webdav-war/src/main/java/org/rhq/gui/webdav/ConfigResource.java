@@ -18,37 +18,40 @@
  */
 package org.rhq.gui.webdav;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Date;
 import java.util.Map;
-import java.io.OutputStream;
-import java.io.IOException;
-import java.io.ByteArrayOutputStream;
-
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.Property;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 
-import com.bradmcevoy.http.FileResource;
-import com.bradmcevoy.http.Request;
-import com.bradmcevoy.http.Range;
+import com.bradmcevoy.http.Auth;
 import com.bradmcevoy.http.CollectionResource;
 import com.bradmcevoy.http.FileItem;
-import com.bradmcevoy.http.Auth;
+import com.bradmcevoy.http.FileResource;
+import com.bradmcevoy.http.Range;
+import com.bradmcevoy.http.Request;
 import com.bradmcevoy.http.exceptions.NotAuthorizedException;
 
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.util.stream.StreamUtil;
+
 /**
- *
+ * Provides the resource configuration XML for a given resource.
  *
  * @author Greg Hinkle
+ * @author John Mazzitelli
  */
 public class ConfigResource extends BasicResource implements FileResource {
 
     private org.rhq.core.domain.resource.Resource resource;
     private Configuration configuration;
-
     private String content;
 
     public ConfigResource(org.rhq.core.domain.resource.Resource resource, Configuration configuration) {
@@ -56,18 +59,20 @@ public class ConfigResource extends BasicResource implements FileResource {
         this.configuration = configuration;
     }
 
-    private void loadContent() {
-        JAXBContext context = null;
-        try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            context = JAXBContext.newInstance(Configuration.class, Property.class);
-            context.createMarshaller().marshal(configuration, baos);
-            this.content = baos.toString();
-
-        } catch (JAXBException e) {
-            e.printStackTrace();
+    private String loadContent() {
+        if (this.content == null) {
+            try {
+                JAXBContext context = JAXBContext.newInstance(Configuration.class, Property.class);
+                Marshaller marshaller = context.createMarshaller();
+                marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                marshaller.marshal(this.configuration, baos);
+                this.content = baos.toString();
+            } catch (JAXBException e) {
+                throw new RuntimeException("Failed to translate configuration to XML", e);
+            }
         }
-
+        return this.content;
     }
 
     public String getUniqueId() {
@@ -78,16 +83,12 @@ public class ConfigResource extends BasicResource implements FileResource {
         return "resource_configuration.xml";
     }
 
-
     public Date getModifiedDate() {
-        return new Date(configuration.getModifiedTime());
+        return new Date(this.configuration.getModifiedTime());
     }
 
     public Long getContentLength() {
-        if (content == null) {
-            loadContent();
-        }
-        return new Long(content.length());
+        return new Long(loadContent().length());
     }
 
     public String getContentType(String s) {
@@ -95,27 +96,18 @@ public class ConfigResource extends BasicResource implements FileResource {
     }
 
     public String checkRedirect(Request request) {
-        return null;
+        return null; // unsupported
     }
 
+    public void sendContent(OutputStream out, Range range, Map<String, String> map, String str) throws IOException,
+        NotAuthorizedException {
 
-    public void sendContent(OutputStream out) throws IOException {
-        out.write( "hi".getBytes() );
-    }
+        byte[] bytes = loadContent().getBytes();
+        long start = (range != null) ? range.getStart() : 0L;
+        long length = (range != null) ? ((range.getFinish() - start) + 1) : bytes.length;
 
-
-    public void sendContent(OutputStream outputStream, Range range, Map<String, String> stringStringMap, String s) throws IOException {
-
-        JAXBContext context;
-        try {
-            context = JAXBContext.newInstance(Configuration.class, Property.class);
-            Marshaller marshaller = context.createMarshaller();
-            marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true); //JMMarshallerImpl.JAXME_INDENTATION_STRING, "\r\n");
-            marshaller.marshal(configuration, outputStream);
-
-        } catch (JAXBException e) {
-            e.printStackTrace();
-        }
+        InputStream in = new ByteArrayInputStream(bytes);
+        StreamUtil.copy(in, out, start, length);
     }
 
     public Long getMaxAgeSeconds(Auth auth) {
@@ -123,19 +115,22 @@ public class ConfigResource extends BasicResource implements FileResource {
     }
 
     public void copyTo(CollectionResource collectionResource, String s) {
+        return; // unsupported
     }
 
     public void delete() {
+        return; // unsupported
     }
 
     public void moveTo(CollectionResource collectionResource, String s) {
+        return; // unsupported
     }
 
     public String processForm(Map<String, String> stringStringMap, Map<String, FileItem> stringFileItemMap) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return null; // unsupported
     }
 
     public Date getCreateDate() {
-        return new Date(configuration.getCreatedTime());
+        return new Date(this.configuration.getCreatedTime());
     }
 }

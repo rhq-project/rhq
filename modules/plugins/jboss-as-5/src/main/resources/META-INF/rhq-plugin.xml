@@ -1117,14 +1117,14 @@
                   defaultInterval="600000" defaultOn="true" category="utilization"
                   description="Number of transactions commited since last restart"/>
 
-          <metric displayName="Transactions Rolledback" property="MCBean|JTA|*|rollbackCount" measurementType="trendsup"
+          <metric displayName="Transactions Rolled Back" property="MCBean|JTA|*|rollbackCount" measurementType="trendsup"
                   defaultInterval="600000" defaultOn="true" category="utilization"
                   description="Number of transactions commited since last restart"/>
 
           <event name="logEntry" description="an entry in a log file"/>
 
-        <!--<content name="library" displayName="Jar Library" category="deployable"
-                description="Library Jar files deployed in JBoss AS">
+          <content name="library" displayName="Jar Library" category="deployable"
+                    description="Library Jar files deployed in JBoss AS">
              <configuration>
                 <c:simple-property name="version" readOnly="true" description="The version declared by the JAR's manifest."/>
                 <c:simple-property name="title" readOnly="true" description="The title declared by the JAR's manifest."/>
@@ -1133,51 +1133,38 @@
                 <c:simple-property name="classpath" readOnly="true"
                                    description="The classpath declared by the JAR's manifest."/>
                 <c:simple-property name="sealed" readOnly="true" type="boolean" description="True if the JAR is sealed."/>
-            </configuration>
-        </content>-->
+             </configuration>
+          </content>
 
-      <content name="library" displayName="Jar Library" category="deployable"
-                description="Library Jar files deployed in JBoss AS">
-         <configuration>
-            <c:simple-property name="version" readOnly="true" description="The version declared by the JAR's manifest."/>
-            <c:simple-property name="title" readOnly="true" description="The title declared by the JAR's manifest."/>
-            <c:simple-property name="url" readOnly="true" description="The url declared by the JAR's manifest."/>
-            <c:simple-property name="vendor" readOnly="true" description="The vendor declared by the JAR's manifest."/>
-            <c:simple-property name="classpath" readOnly="true"
-                               description="The classpath declared by the JAR's manifest."/>
-            <c:simple-property name="sealed" readOnly="true" type="boolean" description="True if the JAR is sealed."/>
-         </configuration>
-      </content>
-
-      <content name="cumulativePatch" displayName="Cumulative Patch" category="deployable"
-               description="Automatically installable application server patches">
-         <configuration>
-            <c:simple-property name="jiraId"/>
-            <c:simple-property name="distributionStatus"/>
-            <c:simple-property name="downloadUrl"/>
-            <c:simple-property name="instructionCompatibilityVersion"/>
-         </configuration>
-      </content>
+          <content name="cumulativePatch" displayName="Cumulative Patch" category="deployable"
+                   description="Automatically installable application server patches">
+             <configuration>
+                <c:simple-property name="jiraId"/>
+                <c:simple-property name="distributionStatus"/>
+                <c:simple-property name="downloadUrl"/>
+                <c:simple-property name="instructionCompatibilityVersion"/>
+             </configuration>
+          </content>
          
-         <server name="JBoss AS JVM"
-              description="JVM of the JBossAS"
-              sourcePlugin="JMX"
-              sourceType="JMX Server"
-              discovery="org.rhq.plugins.jmx.EmbeddedJMXServerDiscoveryComponent"
-              class="org.rhq.plugins.jmx.JMXServerComponent"
-              singleton="true"/>
+          <server name="JBoss AS JVM"
+                  description="JVM of the JBossAS"
+                  sourcePlugin="JMX"
+                  sourceType="JMX Server"
+                  discovery="org.rhq.plugins.jmx.EmbeddedJMXServerDiscoveryComponent"
+                  class="org.rhq.plugins.jmx.JMXServerComponent"
+                  singleton="true"/>
 
           <service name="JBoss Web"
-                 description="JBoss Web Servlet Container"
-                 subCategory="Resources"
-                 discovery="JBossWebDiscoveryComponent"
-                 class="JBossWebComponent"
-                 singleton="true">
+                   description="JBoss Web Servlet Container"
+                   subCategory="Resources"
+                   discovery="JBossWebDiscoveryComponent"
+                   class="JBossWebComponent"
+                   singleton="true">
 
-           <service name="Connector"
-                    description="a JBoss Web Connector"
-                    discovery="ConnectorDiscoveryComponent"
-                    class="ConnectorComponent">
+            <service name="Connector"
+                     description="a JBoss Web Connector"
+                     discovery="ConnectorDiscoveryComponent"
+                     class="ConnectorComponent">
 
                <plugin-configuration>
                    <c:simple-property name="protocol" type="string" description="this connector's protocol (e.g. jk, ajp, http)" default="http"/>

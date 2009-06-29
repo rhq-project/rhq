@@ -93,7 +93,8 @@ public class WebDAVResourceFactory implements com.bradmcevoy.http.ResourceFactor
                     List<? extends Resource> children;
                     children = ((AuthenticatedCollectionResource) resourceFolder).getChildren(getOverlord());
                     for (Resource child : children) {
-                        if (child.getName().equals(paths[i])) {
+                        String childName = child.getName();
+                        if (childName.equals(paths[i])) {
                             resourceFolder = child;
                             found = true;
                         }

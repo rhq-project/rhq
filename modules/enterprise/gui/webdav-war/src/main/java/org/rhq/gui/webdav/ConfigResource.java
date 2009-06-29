@@ -29,6 +29,8 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * Provides the resource configuration XML for a given resource.
@@ -41,14 +43,12 @@ public class ConfigResource extends GetableBasicResource {
     private Configuration configuration;
     private String content;
 
-    public ConfigResource(Subject subject, Resource managedResource, Configuration configuration) {
-
+    public ConfigResource(Subject subject, Resource managedResource) {
         super(subject, managedResource);
-        this.configuration = configuration;
     }
 
     public String getUniqueId() {
-        return "config_" + this.configuration.getId();
+        return "config_" + getConfiguration().getId();
     }
 
     public String getName() {
@@ -59,14 +59,14 @@ public class ConfigResource extends GetableBasicResource {
      * The modified date is that of the last time the configuration changed.
      */
     public Date getModifiedDate() {
-        return new Date(this.configuration.getModifiedTime());
+        return new Date(getConfiguration().getModifiedTime());
     }
 
     /**
      * The creation date is that of the configuration itself, not of the managed resource.
      */
     public Date getCreateDate() {
-        return new Date(this.configuration.getCreatedTime());
+        return new Date(getConfiguration().getCreatedTime());
     }
 
     protected String loadContent() {
@@ -76,12 +76,20 @@ public class ConfigResource extends GetableBasicResource {
                 Marshaller marshaller = context.createMarshaller();
                 marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                marshaller.marshal(this.configuration, baos);
+                marshaller.marshal(getConfiguration(), baos);
                 this.content = baos.toString();
             } catch (JAXBException e) {
                 throw new RuntimeException("Failed to translate configuration to XML", e);
             }
         }
         return this.content;
+    }
+
+    private Configuration getConfiguration() {
+        if (this.configuration == null) {
+            ConfigurationManagerLocal cm = LookupUtil.getConfigurationManager();
+            this.configuration = cm.getActiveResourceConfiguration(getManagedResource().getId());
+        }
+        return this.configuration;
     }
 }

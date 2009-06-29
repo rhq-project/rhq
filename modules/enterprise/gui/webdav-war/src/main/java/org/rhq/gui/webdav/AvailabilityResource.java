@@ -68,7 +68,7 @@ public class AvailabilityResource extends BasicResource implements PropFindableR
     private Availability getAvailability() {
         if (this.availability == null) {
             AvailabilityManagerLocal am = LookupUtil.getAvailabilityManager();
-            this.availability = am.getCurrentAvailabilityForResource(getOverlord(), getManagedResource().getId());
+            this.availability = am.getCurrentAvailabilityForResource(getSubject(), getManagedResource().getId());
         }
         return this.availability;
     }

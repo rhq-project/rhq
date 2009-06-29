@@ -25,14 +25,12 @@ import java.util.List;
 import com.bradmcevoy.http.Resource;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.resource.InventoryStatus;
+import org.rhq.core.domain.resource.composite.ResourceFacets;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
-import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -56,7 +54,8 @@ public class ResourceFolder extends BasicResource implements AuthenticatedCollec
     }
 
     public String getName() {
-        return getManagedResource().getName();
+        String name = getManagedResource().getName();
+        return SafeEncoder.encode(name);
     }
 
     public Date getModifiedDate() {
@@ -87,6 +86,7 @@ public class ResourceFolder extends BasicResource implements AuthenticatedCollec
             ResourceManagerLocal rm = LookupUtil.getResourceManager();
             childs = rm.getChildResources(subject, getManagedResource(), PageControl.getUnlimitedInstance());
 
+            // inventory
             this.children = new ArrayList<Resource>(childs.size());
             for (org.rhq.core.domain.resource.Resource child : childs) {
                 if (child.getInventoryStatus() == InventoryStatus.COMMITTED) {
@@ -94,19 +94,25 @@ public class ResourceFolder extends BasicResource implements AuthenticatedCollec
                 }
             }
 
-            AvailabilityResource availabilityResource = new AvailabilityResource(subject, getManagedResource());
-            this.children.add(availabilityResource);
+            ResourceTypeManagerLocal rtm = LookupUtil.getResourceTypeManager();
+            ResourceFacets facets = rtm.getResourceFacets(getManagedResource().getResourceType().getId());
 
-            ConfigurationManagerLocal cm = LookupUtil.getConfigurationManager();
-            Configuration config = cm.getActiveResourceConfiguration(getManagedResource().getId());
-            if (config != null && !config.getProperties().isEmpty()) {
-                this.children.add(new ConfigResource(subject, getManagedResource(), config));
+            // availability
+            this.children.add(new AvailabilityResource(subject, getManagedResource()));
+
+            // resource configuration
+            if (facets.isConfiguration()) {
+                this.children.add(new ConfigResource(subject, getManagedResource()));
             }
 
-            MeasurementDataManagerLocal mdm = LookupUtil.getMeasurementDataManager();
-            List<MeasurementDataTrait> traits = mdm.getCurrentTraitsForResource(getManagedResource().getId(), null);
-            if (traits != null && traits.size() > 0) {
-                this.children.add(new TraitsResource(subject, getManagedResource(), traits));
+            // traits
+            if (facets.isMeasurement()) {
+                this.children.add(new TraitsResource(subject, getManagedResource()));
+            }
+
+            // measurement data
+            if (facets.isMeasurement()) {
+                this.children.add(new MeasurementDataResource(subject, getManagedResource()));
             }
         }
         return this.children;

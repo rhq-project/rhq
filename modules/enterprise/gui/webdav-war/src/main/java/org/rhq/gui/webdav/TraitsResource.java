@@ -19,12 +19,15 @@
 
 package org.rhq.gui.webdav;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * The measurement traits resource that provides information on all traits of a managed resource.
@@ -36,9 +39,8 @@ public class TraitsResource extends GetableBasicResource {
     private List<MeasurementDataTrait> traits;
     private String content;
 
-    public TraitsResource(Subject subject, Resource managedResource, List<MeasurementDataTrait> traits) {
+    public TraitsResource(Subject subject, Resource managedResource) {
         super(subject, managedResource);
-        this.traits = traits;
     }
 
     public String getUniqueId() {
@@ -54,7 +56,7 @@ public class TraitsResource extends GetableBasicResource {
      */
     public Date getModifiedDate() {
         long latestTimestamp = 0L;
-        for (MeasurementDataTrait trait : this.traits) {
+        for (MeasurementDataTrait trait : getTraits()) {
             if (latestTimestamp < trait.getTimestamp()) {
                 latestTimestamp = trait.getTimestamp();
             }
@@ -74,7 +76,7 @@ public class TraitsResource extends GetableBasicResource {
             StringBuilder str = new StringBuilder();
             str.append("<?xml version=\"1.0\"?>\n");
             str.append("<traits>\n");
-            for (MeasurementDataTrait trait : this.traits) {
+            for (MeasurementDataTrait trait : getTraits()) {
                 str.append("   <trait>\n");
                 str.append("      <name>").append(trait.getName()).append("</name>\n");
                 str.append("      <value>").append(trait.getValue()).append("</value>\n");
@@ -86,5 +88,18 @@ public class TraitsResource extends GetableBasicResource {
             this.content = str.toString();
         }
         return this.content;
+    }
+
+    private List<MeasurementDataTrait> getTraits() {
+        if (this.traits == null) {
+            MeasurementDataManagerLocal mdm = LookupUtil.getMeasurementDataManager();
+            List<MeasurementDataTrait> traits = mdm.getCurrentTraitsForResource(getManagedResource().getId(), null);
+            if (traits != null) {
+                this.traits = traits;
+            } else {
+                this.traits = new ArrayList<MeasurementDataTrait>();
+            }
+        }
+        return this.traits;
     }
 }

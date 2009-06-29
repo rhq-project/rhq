@@ -19,30 +19,19 @@
 
 package org.rhq.gui.webdav;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
-
-import com.bradmcevoy.http.Auth;
-import com.bradmcevoy.http.GetableResource;
-import com.bradmcevoy.http.Range;
-import com.bradmcevoy.http.exceptions.NotAuthorizedException;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.util.stream.StreamUtil;
 
 /**
  * The measurement traits resource that provides information on all traits of a managed resource.
  * 
  * @author John Mazzitelli
  */
-public class TraitsResource extends BasicResource implements GetableResource {
+public class TraitsResource extends GetableBasicResource {
 
     private List<MeasurementDataTrait> traits;
     private String content;
@@ -80,30 +69,7 @@ public class TraitsResource extends BasicResource implements GetableResource {
         return new Date(getManagedResource().getCtime());
     }
 
-    public Long getContentLength() {
-        return Long.valueOf(loadContent().length());
-    }
-
-    public String getContentType(String accepts) {
-        return "text/xml";
-    }
-
-    public void sendContent(OutputStream out, Range range, Map<String, String> params, String str) throws IOException,
-        NotAuthorizedException {
-
-        byte[] bytes = loadContent().getBytes();
-        long start = (range != null) ? range.getStart() : 0L;
-        long length = (range != null) ? ((range.getFinish() - start) + 1) : bytes.length;
-
-        InputStream in = new ByteArrayInputStream(bytes);
-        StreamUtil.copy(in, out, start, length);
-    }
-
-    public Long getMaxAgeSeconds(Auth auth) {
-        return Long.valueOf(0L);
-    }
-
-    private String loadContent() {
+    protected String loadContent() {
         if (this.content == null) {
             StringBuilder str = new StringBuilder();
             str.append("<?xml version=\"1.0\"?>\n");

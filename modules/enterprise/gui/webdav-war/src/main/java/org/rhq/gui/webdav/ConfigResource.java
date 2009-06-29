@@ -18,28 +18,17 @@
  */
 package org.rhq.gui.webdav;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.Date;
-import java.util.Map;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 
-import com.bradmcevoy.http.Auth;
-import com.bradmcevoy.http.GetableResource;
-import com.bradmcevoy.http.Range;
-import com.bradmcevoy.http.exceptions.NotAuthorizedException;
-
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.util.stream.StreamUtil;
 
 /**
  * Provides the resource configuration XML for a given resource.
@@ -47,7 +36,7 @@ import org.rhq.core.util.stream.StreamUtil;
  * @author Greg Hinkle
  * @author John Mazzitelli
  */
-public class ConfigResource extends BasicResource implements GetableResource {
+public class ConfigResource extends GetableBasicResource {
 
     private Configuration configuration;
     private String content;
@@ -80,30 +69,7 @@ public class ConfigResource extends BasicResource implements GetableResource {
         return new Date(this.configuration.getCreatedTime());
     }
 
-    public Long getContentLength() {
-        return new Long(loadContent().length());
-    }
-
-    public String getContentType(String accepts) {
-        return "text/xml";
-    }
-
-    public void sendContent(OutputStream out, Range range, Map<String, String> params, String str) throws IOException,
-        NotAuthorizedException {
-
-        byte[] bytes = loadContent().getBytes();
-        long start = (range != null) ? range.getStart() : 0L;
-        long length = (range != null) ? ((range.getFinish() - start) + 1) : bytes.length;
-
-        InputStream in = new ByteArrayInputStream(bytes);
-        StreamUtil.copy(in, out, start, length);
-    }
-
-    public Long getMaxAgeSeconds(Auth auth) {
-        return Long.valueOf(0L);
-    }
-
-    private String loadContent() {
+    protected String loadContent() {
         if (this.content == null) {
             try {
                 JAXBContext context = JAXBContext.newInstance(Configuration.class, Property.class);

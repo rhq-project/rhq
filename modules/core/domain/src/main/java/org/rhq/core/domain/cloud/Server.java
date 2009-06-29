@@ -153,6 +153,10 @@ public class Server implements Serializable {
     public Server() {
     }
 
+    public Server(int serverId) {
+        this.id = serverId;
+    }
+
     public int getId() {
         return id;
     }
@@ -260,7 +264,7 @@ public class Server implements Serializable {
     }
 
     public ServerEntry getServerEntry() {
-        return new FailoverListComposite.ServerEntry(address, port, securePort);
+        return new FailoverListComposite.ServerEntry(id, address, port, securePort);
     }
 
     /**

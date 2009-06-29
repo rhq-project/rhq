@@ -27,8 +27,6 @@ import java.util.Map;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
@@ -149,30 +147,46 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
         @SuppressWarnings("unchecked")
         List<FailoverListDetailsComposite> existingLoads = query.getResultList();
 
-        Map<Agent, FailoverListComposite> results = getForAgents(event, servers, agents, existingLoads);
-
-        return (results.get(agent));
+        Map<Agent, FailoverListComposite> agentServerListMap = getForAgents(event, servers, agents, existingLoads);
+        persistComposites(event, agentServerListMap);
+        return (agentServerListMap.get(agent));
     }
 
     public Map<Agent, FailoverListComposite> refresh(PartitionEvent event) {
         List<Server> servers = cloudManager.getAllCloudServers();
         List<Agent> agents = agentManager.getAllAgents();
 
-        return getForAgents(event, servers, agents, null);
+        // persist results immediate, which will be the only writes (as opposed to reads) in this transaction
+        Map<Agent, FailoverListComposite> agentServerListMap = getForAgents(event, servers, agents, null);
+        persistComposites(event, agentServerListMap);
+        return agentServerListMap;
     }
 
     public Map<Agent, FailoverListComposite> refresh(PartitionEvent event, List<Server> servers, List<Agent> agents) {
 
-        // clear out the existing server lists because we're going to generate new ones for all agents
+        // do not persist results immediately, instead return the results and then delete/persist in quick succession
+        Map<Agent, FailoverListComposite> agentServerListMap = getForAgents(event, servers, agents, null);
+
+        /* now that the intense in-memory manipulation is complete, let's do the stuff that needs to persist the
+         * results to the database; clear out the existing server lists **just** before persisting the new ones 
+         * to keep row lock hold time low
+         */
         for (Agent next : agents) {
             deleteServerListsForAgent(next);
         }
+        clear();
+        persistComposites(event, agentServerListMap);
 
-        failoverListManager.clear();
-
-        return getForAgents(event, servers, agents, null);
+        return agentServerListMap;
     }
 
+    /*
+     * NOTE: this method used to persist the agentServerListMap results at the end of processing; however,
+     *       certain callers that performed write operations before calling this method would hold row locks
+     *       too long; so, this method no longer does the persistence, which puts the onus on callers to do so; 
+     *       some callers will immediately persist the results, otherwise may want to perform other updates or
+     *       deletions just prior to persistence - the caller now has that option 
+     */
     private Map<Agent, FailoverListComposite> getForAgents(PartitionEvent event, List<Server> servers,
         List<Agent> agents, List<FailoverListDetailsComposite> existingLoads) {
         Map<Agent, FailoverListComposite> result = new HashMap<Agent, FailoverListComposite>(agents.size());
@@ -252,12 +266,6 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
 
             result.put(next, new FailoverListComposite(serverEntries));
         }
-
-        /* now that the intense in-memory manipulation is complete, let's do the stuff that needs to persist the
-         * results to the database; clear out the existing server lists **just** before persisting the new ones 
-         * to keep row lock hold time low
-         */
-        failoverListManager.persist(event, agentServerListMap);
 
         return result;
     }
@@ -425,16 +433,14 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
         query.executeUpdate();
     }
 
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void clear() {
+    private void clear() {
         Query query = entityManager.createNamedQuery(FailoverListDetails.QUERY_TRUNCATE);
         query.executeUpdate();
         query = entityManager.createNamedQuery(FailoverList.QUERY_TRUNCATE);
         query.executeUpdate();
     }
 
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void persist(PartitionEvent event, Map<Agent, List<ServerBucket>> agentServerListMap) {
+    private void persist(PartitionEvent event, Map<Agent, List<ServerBucket>> agentServerListMap) {
         FailoverList fl = null;
         FailoverListDetails failoverListDetails = null;
         PartitionEventDetails eventDetails = null;
@@ -446,14 +452,46 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
 
             servers = agentServerListMap.get(next);
 
-            for (int i = 0, size = servers.size(); (i < size); ++i) {
-                Server server = entityManager.find(Server.class, servers.get(i).server.getId());
+            boolean first = true;
+            for (int i = 0; i < servers.size(); ++i) {
+                ServerBucket bucket = servers.get(i);
+                Server server = entityManager.find(Server.class, bucket.server.getId());
                 failoverListDetails = new FailoverListDetails(fl, i, server);
                 entityManager.persist(failoverListDetails);
                 // event details only shows the current primary server topology
-                if (0 == i) {
+                if (first) {
                     eventDetails = new PartitionEventDetails(event, next, server);
                     entityManager.persist(eventDetails);
+                    first = false;
+                }
+            }
+        }
+    }
+
+    private void persistComposites(PartitionEvent event, Map<Agent, FailoverListComposite> agentServerListMap) {
+        FailoverList fl = null;
+        FailoverListDetails failoverListDetails = null;
+        PartitionEventDetails eventDetails = null;
+
+        for (Map.Entry<Agent, FailoverListComposite> next : agentServerListMap.entrySet()) {
+
+            Agent nextAgent = next.getKey();
+            FailoverListComposite nextComposite = next.getValue();
+
+            fl = new FailoverList(event, nextAgent);
+            entityManager.persist(fl);
+
+            boolean first = true;
+            for (int i = 0; i < nextComposite.size(); ++i) {
+                ServerEntry serverEntry = nextComposite.get(i);
+                Server server = entityManager.find(Server.class, serverEntry.serverId);
+                failoverListDetails = new FailoverListDetails(fl, i, server);
+                entityManager.persist(failoverListDetails);
+                // event details only shows the current primary server topology
+                if (first) {
+                    eventDetails = new PartitionEventDetails(event, nextAgent, server);
+                    entityManager.persist(eventDetails);
+                    first = false;
                 }
             }
         }

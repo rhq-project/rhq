@@ -55,6 +55,9 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 @Test
 public class FailoverListManagerBeanTest extends AbstractEJB3Test {
+
+    private static final boolean ENABLE_TESTS = true;
+
     private FailoverListManagerLocal failoverListManager;
     private AgentManagerLocal agentManager;
     private PartitionEventManagerLocal partitionEventManager;
@@ -300,6 +303,7 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
         }
     }
 
+    @Test(enabled = ENABLE_TESTS)
     public void testGetForAllAgents1_0() throws Exception {
         setupTest(1, 0);
         Map<Agent, FailoverListComposite> result = failoverListManager.refresh(partitionEvent, servers, agents);
@@ -307,6 +311,7 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
         assert validateBalance(result, 1, 0);
     }
 
+    @Test(enabled = ENABLE_TESTS)
     public void testGetForAllAgents1_1() throws Exception {
         setupTest(1, 1);
         long start = System.currentTimeMillis();
@@ -316,6 +321,7 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
         assert validateBalance(result, 1, 1);
     }
 
+    @Test(enabled = ENABLE_TESTS)
     public void testGetForAllAgents1_2() throws Exception {
         setupTest(1, 2);
         Map<Agent, FailoverListComposite> result = failoverListManager.refresh(partitionEvent, servers, agents);
@@ -323,6 +329,7 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
         assert validateBalance(result, 1, 2);
     }
 
+    @Test(enabled = ENABLE_TESTS)
     public void testGetForAllAgents1_5() throws Exception {
         setupTest(1, 5);
         long start = System.currentTimeMillis();
@@ -332,6 +339,7 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
         assert validateBalance(result, 1, 5);
     }
 
+    @Test(enabled = ENABLE_TESTS)
     public void testGetForAllAgents2_0() throws Exception {
         setupTest(2, 0);
         Map<Agent, FailoverListComposite> result = failoverListManager.refresh(partitionEvent, servers, agents);
@@ -339,6 +347,7 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
         assert validateBalance(result, 2, 0);
     }
 
+    @Test(enabled = ENABLE_TESTS)
     public void testGetForAllAgents2_1() throws Exception {
         setupTest(2, 1);
         Map<Agent, FailoverListComposite> result = failoverListManager.refresh(partitionEvent, servers, agents);
@@ -346,6 +355,7 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
         assert validateBalance(result, 2, 1);
     }
 
+    @Test(enabled = ENABLE_TESTS)
     public void testGetForAllAgents2_2() throws Exception {
         setupTest(2, 2);
         Map<Agent, FailoverListComposite> result = failoverListManager.refresh(partitionEvent, servers, agents);
@@ -353,6 +363,7 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
         assert validateBalance(result, 2, 2);
     }
 
+    @Test(enabled = ENABLE_TESTS)
     public void testGetForAllAgents2_3() throws Exception {
         setupTest(2, 3);
         Map<Agent, FailoverListComposite> result = failoverListManager.refresh(partitionEvent, servers, agents);
@@ -360,6 +371,7 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
         assert validateBalance(result, 2, 3);
     }
 
+    @Test(enabled = ENABLE_TESTS)
     public void testGetForAllAgents2_9() throws Exception {
         setupTest(2, 9);
         Map<Agent, FailoverListComposite> result = failoverListManager.refresh(partitionEvent, servers, agents);
@@ -367,6 +379,7 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
         assert validateBalance(result, 2, 9);
     }
 
+    @Test(enabled = ENABLE_TESTS)
     public void testGetForAllAgents2_10() throws Exception {
         setupTest(2, 10);
         long start = System.currentTimeMillis();
@@ -376,6 +389,7 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
         assert validateBalance(result, 2, 10);
     }
 
+    @Test(enabled = ENABLE_TESTS)
     public void testGetForAllAgents2_15() throws Exception {
         setupTest(2, 15);
         Map<Agent, FailoverListComposite> result = failoverListManager.refresh(partitionEvent, servers, agents);
@@ -383,6 +397,7 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
         assert validateBalance(result, 2, 15);
     }
 
+    @Test(enabled = ENABLE_TESTS)
     public void testGetForAllAgents3_2() throws Exception {
         setupTest(3, 2);
         Map<Agent, FailoverListComposite> result = failoverListManager.refresh(partitionEvent, servers, agents);
@@ -390,6 +405,7 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
         assert validateBalance(result, 3, 2);
     }
 
+    @Test(enabled = ENABLE_TESTS)
     public void testGetForAllAgents3_3() throws Exception {
         setupTest(3, 3);
         Map<Agent, FailoverListComposite> result = failoverListManager.refresh(partitionEvent, servers, agents);
@@ -397,6 +413,7 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
         assert validateBalance(result, 3, 3);
     }
 
+    @Test(enabled = ENABLE_TESTS)
     public void testGetForAllAgents3_4() throws Exception {
         setupTest(3, 4);
         Map<Agent, FailoverListComposite> result = failoverListManager.refresh(partitionEvent, servers, agents);
@@ -404,6 +421,7 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
         assert validateBalance(result, 3, 4);
     }
 
+    @Test(enabled = ENABLE_TESTS)
     public void testGetForAllAgents5_10() throws Exception {
         setupTest(5, 10);
         Map<Agent, FailoverListComposite> result = failoverListManager.refresh(partitionEvent, servers, agents);
@@ -411,6 +429,7 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
         assert validateBalance(result, 5, 10);
     }
 
+    @Test(enabled = ENABLE_TESTS)
     public void testGetForAllAgents5_25() throws Exception {
         setupTest(5, 25);
         long start = System.currentTimeMillis();
@@ -420,6 +439,7 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
         assert validateBalance(result, 5, 25);
     }
 
+    @Test(enabled = ENABLE_TESTS)
     public void testGetForAllAgents5_42() throws Exception {
         setupTest(5, 42);
         Map<Agent, FailoverListComposite> result = failoverListManager.refresh(partitionEvent, servers, agents);
@@ -427,6 +447,7 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
         assert validateBalance(result, 5, 42);
     }
 
+    @Test(enabled = ENABLE_TESTS)
     public void testGetForAllAgents20_1000() throws Exception {
         setupTest(20, 1000);
         long start = System.currentTimeMillis();
@@ -441,6 +462,7 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
         System.out.println("Elapsed 1 NEW 20/1000 = " + (System.currentTimeMillis() - start) + "ms");
     }
 
+    @Test(enabled = ENABLE_TESTS)
     public void testGetForAllAgents2_10_affinity_1_10() throws Exception {
         setupTest(2, 10);
         // set up affinity such that all agents go to a server-1
@@ -454,6 +476,7 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
         validateAffinity(result, 2, 10, 1, 10);
     }
 
+    @Test(enabled = ENABLE_TESTS)
     public void testGetForAllAgents4_20_affinity_2_10() throws Exception {
         setupTest(4, 20);
         // set up affinity such that all agents go to a server-1
@@ -468,6 +491,7 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
         validateAffinity(result, 4, 20, 2, 10);
     }
 
+    @Test(enabled = ENABLE_TESTS)
     public void testGetForAllAgents3_20_affinity_2_10() throws Exception {
         setupTest(3, 20);
         // set up affinity such that all agents go to a server-1
@@ -482,6 +506,7 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
         validateAffinity(result, 3, 20, 2, 10);
     }
 
+    @Test(enabled = ENABLE_TESTS)
     public void testGetForAllAgents3_20_preferred_20() throws Exception {
         setupTest(3, 20);
         for (int i = 0; (i < 10); ++i) {
@@ -496,6 +521,7 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
         validateBalance(result, 3, 20);
     }
 
+    @Test(enabled = ENABLE_TESTS)
     public void testGetForSingleAgent_existing() throws Exception {
         setupTest(2, 4);
         Map<Agent, FailoverListComposite> result = failoverListManager.refresh(partitionEvent, servers, agents);
@@ -510,6 +536,7 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
         }
     }
 
+    @Test(enabled = ENABLE_TESTS)
     public void testGetForSingleAgent_new_1() throws Exception {
         setupTest(2, 4);
         Map<Agent, FailoverListComposite> result = failoverListManager.refresh(partitionEvent, servers, agents);
@@ -525,9 +552,9 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
         assert !serverLists.get(0).equals(serverLists.get(1));
         assert serverLists.get(0).equals(serverLists.get(2));
         assert !serverLists.get(1).equals(serverLists.get(2));
-
     }
 
+    @Test(enabled = ENABLE_TESTS)
     public void testGetForSingleAgent_new_2() throws Exception {
         setupTest(3, 6);
         Map<Agent, FailoverListComposite> result = failoverListManager.refresh(partitionEvent, servers, agents);
@@ -543,9 +570,9 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
         assert !serverLists.get(0).equals(serverLists.get(1));
         assert !serverLists.get(0).equals(serverLists.get(2)) : serverLists.toString();
         assert !serverLists.get(1).equals(serverLists.get(2));
-
     }
 
+    @Test(enabled = ENABLE_TESTS)
     public void testGetForSingleAgent_new_3() throws Exception {
         setupTest(1, 0);
         Map<Agent, FailoverListComposite> result = failoverListManager.refresh(partitionEvent, servers, agents);
@@ -561,7 +588,6 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
         assert serverLists.get(0).equals(serverLists.get(1));
         assert serverLists.get(0).equals(serverLists.get(2));
         assert serverLists.get(1).equals(serverLists.get(2));
-
     }
 
 }

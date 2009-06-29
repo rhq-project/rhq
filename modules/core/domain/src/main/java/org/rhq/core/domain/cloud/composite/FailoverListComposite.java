@@ -45,12 +45,17 @@ public class FailoverListComposite implements Iterator<FailoverListComposite.Ser
 
     public static class ServerEntry {
 
+        public final int serverId;
         public final String address;
         public final int port;
         public final int securePort;
 
         public ServerEntry(String address, int port, int securePort) {
-            super();
+            this(-1, address, port, securePort);
+        }
+
+        public ServerEntry(int serverId, String address, int port, int securePort) {
+            this.serverId = serverId;
             this.address = address;
             this.port = port;
             this.securePort = securePort;

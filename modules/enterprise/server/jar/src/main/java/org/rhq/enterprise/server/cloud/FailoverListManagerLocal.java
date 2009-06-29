@@ -90,8 +90,4 @@ public interface FailoverListManagerLocal {
      */
     Map<Agent, FailoverListComposite> refresh(PartitionEvent event, List<Server> servers, List<Agent> agents);
 
-    void clear();
-
-    void persist(PartitionEvent event, Map<Agent, List<ServerBucket>> agentServerListMap);
-
 }

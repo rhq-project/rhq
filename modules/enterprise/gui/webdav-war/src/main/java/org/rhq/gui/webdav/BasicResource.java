@@ -18,74 +18,72 @@
  */
 package org.rhq.gui.webdav;
 
-import com.bradmcevoy.http.*;
+import com.bradmcevoy.http.Auth;
+import com.bradmcevoy.http.PropFindableResource;
+import com.bradmcevoy.http.Request;
 
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.io.IOException;
-import java.util.Map;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
+ * Represents a basic managed resource. Provides some hooks to the authentication subsystem to
+ * ensure the user is allowed to see the resource.
+ * 
+ * @see ResourceFolder
+ *
  * @author Greg Hinkle
+ * @author John Mazzitelli
  */
-public abstract class BasicResource implements Resource {
+public abstract class BasicResource extends Authenticator implements PropFindableResource {
 
+    private static final Log LOG = LogFactory.getLog(BasicResource.class);
 
-    public Object authenticate(String s, String s1) {
-        return "auth";  
+    private final Resource managedResource;
+
+    public BasicResource(Subject subject, Resource managedResource) {
+        super(subject);
+
+        if (managedResource == null) {
+            throw new NullPointerException("managedResource == null");
+        }
+        this.managedResource = managedResource;
     }
 
+    protected Resource getManagedResource() {
+        return this.managedResource;
+    }
+
+    /**
+     * This implementation of authorise simply assures that the user has authenticated himself
+     * and the user is allowed to view the managed resource. Subclasses may wish to further
+     * restrict the authorization (e.g. deny access if the configuration of the resource
+     * is to be edited but the user is not allowed to change the configuration).
+     */
     public boolean authorise(Request request, Request.Method method, Auth auth) {
-        return true;  
-    }
+        boolean authorized = false;
 
-    public String getRealm() {
-        return "rhq";  
-    }
+        if (auth != null) {
+            Subject subject = (Subject) auth.getTag();
+            if (subject != null) {
+                AuthorizationManagerLocal authorizationManager = LookupUtil.getAuthorizationManager();
+                authorized = authorizationManager.canViewResource(subject, getManagedResource().getId());
+            }
 
-
-
-
- /*   public void sendContent(OutputStream out, Range range, Map<String, String> params) throws IOException {
-        PrintWriter printer = new PrintWriter(out,true);
-        sendContentStart(printer);
-        sendContentMiddle(printer);
-        sendContentFinish(printer);
-    }
-
-    protected  void sendContentMiddle(final PrintWriter printer) {
-        printer.print("rename");
-        printer.print("<form method='POST' action='" + this.getHref() + "'><input type='text' name='name' value='" + this.getName() + "'/><input type='submit'></form>");
-    }
-
-    protected void sendContentFinish(final PrintWriter printer) {
-        printer.print("</body></html>");
-        printer.flush();
-    }
-
-    protected void sendContentStart(final PrintWriter printer) {
-        printer.print("<html><body>");
-        printer.print("<h1>" + getName() + "</h1>");
-        sendContentMenu(printer);
-    }
-
-    protected void sendContentMenu(final PrintWriter printer) {
-        printer.print("<ul>");
-        if (this instanceof CollectionResource) {
-            for( Resource r :  ((CollectionResource)this).getChildren()) {
-                printer.print("<li><a href='" + "moo" + "'>" + r.getName() + "</a>");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("BasicResource [" + getManagedResource() + "], auth=[" + auth.getTag() + "], isAuthorized="
+                    + authorized);
             }
         }
-        printer.print("</ul>");
-    }*/
 
-        public String getHref() {
-            return "/webdav/resource/";
-        }
-
-
-    public int compareTo(com.bradmcevoy.http.Resource res) {
-        return this.getName().compareTo(res.getName());
+        return authorized;
     }
-    
+
+    public String checkRedirect(Request request) {
+        return null; // no-op
+    }
 }

@@ -18,67 +18,39 @@
  */
 package org.rhq.gui.webdav;
 
-import java.util.List;
-import java.util.Date;
-import java.util.Map;
 import java.util.ArrayList;
-import java.io.InputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.util.Date;
+import java.util.List;
 
-import com.bradmcevoy.http.FolderResource;
-import com.bradmcevoy.http.CollectionResource;
-import com.bradmcevoy.http.Resource;
-import com.bradmcevoy.http.Request;
 import com.bradmcevoy.http.Auth;
-import com.bradmcevoy.http.Range;
 import com.bradmcevoy.http.PropFindableResource;
-import com.bradmcevoy.http.exceptions.NotAuthorizedException;
+import com.bradmcevoy.http.Request;
+import com.bradmcevoy.http.Resource;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.composite.ResourceComposite;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
-import org.rhq.core.domain.resource.composite.ResourceComposite;
-import org.rhq.core.domain.resource.ResourceCategory;
-import org.rhq.core.domain.util.PageControl;
 
 /**
+ * This represents the top of the managed environment (i.e. all of the top-level platforms being managed).
+ * 
  * @author Greg Hinkle
+ * @author John Mazzitelli
  */
-public class RootFolder implements Resource, CollectionResource, PropFindableResource {
+public class RootFolder extends Authenticator implements AuthenticatedCollectionResource, PropFindableResource {
 
-    List<ResourceFolder> roots;
+    private static final Log LOG = LogFactory.getLog(RootFolder.class);
 
-    public Resource child(String s) {
-        List<? extends Resource> resources = getChildren();
-        for (Resource res : resources) {
-            if (s.equals(res.getName())) {
-                return res;
-            }
-        }
-        return null;  
-    }
+    private List<ResourceFolder> roots;
 
-    public List<? extends Resource> getChildren() {
-        if (roots == null) {
-            ResourceManagerLocal rm = LookupUtil.getResourceManager();
-
-            List<ResourceComposite> foundRoots =
-                    rm.findResourceComposites(
-                            LookupUtil.getSubjectManager().getOverlord(),
-                            ResourceCategory.PLATFORM,
-                            null,
-                            null,
-                            null,
-                            true,
-                            PageControl.getUnlimitedInstance());
-
-            roots = new ArrayList<ResourceFolder>();
-
-            for (ResourceComposite comp : foundRoots) {
-                roots.add(new ResourceFolder(comp.getResource()));
-            }
-        }
-        return roots;
+    public RootFolder() {
+        super(null);
     }
 
     public String getUniqueId() {
@@ -89,35 +61,60 @@ public class RootFolder implements Resource, CollectionResource, PropFindableRes
         return "/";
     }
 
-    public Object authenticate(String s, String s1) {
-        return "auth";
-    }
-
-    public boolean authorise(Request request, Request.Method method, Auth auth) {
-        return true;
-    }
-
-    public String getRealm() {
-        return "rhq";
-    }
-
     public Date getModifiedDate() {
         return new Date();
     }
-
-
-    public String checkRedirect(Request request) {
-        return null;
-    }
-
-
 
     public Date getCreateDate() {
         return new Date();
     }
 
+    /**
+     * This implementation of authorise simply assures that the user has authenticated himself.
+     * If the user is logged in, <code>true</code> is returned; otherwise, <code>false</code> is returned.
+     */
+    public boolean authorise(Request request, Request.Method method, Auth auth) {
+        boolean authorized = (auth != null) && (auth.getTag() != null);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("RootFolder auth=[" + ((auth != null) ? auth.getTag() : auth) + "], isAuthorized=" + authorized);
+        }
+        return authorized;
+    }
 
-    public Long getMaxAgeSeconds(Auth auth) {
-        return new Long(0);
+    public String checkRedirect(Request request) {
+        return null; // no-op
+    }
+
+    public Resource child(String childName) {
+        List<? extends Resource> children = getChildren();
+        for (Resource child : children) {
+            if (childName.equals(child.getName())) {
+                return child;
+            }
+        }
+        return null;
+    }
+
+    public List<? extends Resource> getChildren() {
+        return getChildren(getSubject());
+    }
+
+    public List<? extends Resource> getChildren(Subject subject) {
+        if (this.roots == null) {
+            ResourceManagerLocal rm = LookupUtil.getResourceManager();
+
+            List<ResourceComposite> foundRoots = rm.findResourceComposites(subject, ResourceCategory.PLATFORM, null,
+                null, null, true, PageControl.getUnlimitedInstance());
+
+            if (foundRoots != null) {
+                this.roots = new ArrayList<ResourceFolder>(foundRoots.size());
+                for (ResourceComposite comp : foundRoots) {
+                    this.roots.add(new ResourceFolder(subject, comp.getResource()));
+                }
+            } else {
+                this.roots = new ArrayList<ResourceFolder>();
+            }
+        }
+        return this.roots;
     }
 }

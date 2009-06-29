@@ -20,48 +20,56 @@ package org.rhq.gui.webdav;
 
 import java.util.Date;
 
-import com.bradmcevoy.http.Request;
-import com.bradmcevoy.http.FileResource;
 import com.bradmcevoy.http.PropFindableResource;
 
-import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.Availability;
-import org.rhq.enterprise.server.measurement.AvailabilityManagerBean;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
+ * The property to indicate if the resource is up or down.
+ * 
  * @author Greg Hinkle
+ * @author John Mazzitelli
  */
 public class AvailabilityResource extends BasicResource implements PropFindableResource {
-
-
-    private Resource resource;
     private Availability availability;
 
-    public AvailabilityResource(Resource resource) {
-        this.resource = resource;
-        AvailabilityManagerLocal availabilityManager = LookupUtil.getAvailabilityManager();
-        this.availability = availabilityManager.getCurrentAvailabilityForResource(LookupUtil.getSubjectManager().getOverlord(), resource.getId());
+    public AvailabilityResource(Subject subject, Resource managedResource) {
+        super(subject, managedResource);
     }
 
     public String getUniqueId() {
-        return "avail_" + availability.getId();
+        return "avail_" + getAvailability().getId();
     }
 
     public String getName() {
-        return "availability_is_" + availability.getAvailabilityType().getName();
+        return "availability_is_" + getAvailability().getAvailabilityType().getName();
     }
 
+    /**
+     * The modified date is that when the current availability took effect.
+     * This is the same as {@link #getCreateDate()}.
+     */
     public Date getModifiedDate() {
-        return availability.getStartTime();
+        return getAvailability().getStartTime();
     }
 
-    public String checkRedirect(Request request) {
-        return null;  
-    }
-
+    /**
+     * The created date is that when the current availability took effect.
+     * This is the same as {@link #getModifiedDate()}.
+     */
     public Date getCreateDate() {
-        return availability.getStartTime();
+        return getModifiedDate();
+    }
+
+    private Availability getAvailability() {
+        if (this.availability == null) {
+            AvailabilityManagerLocal am = LookupUtil.getAvailabilityManager();
+            this.availability = am.getCurrentAvailabilityForResource(getOverlord(), getManagedResource().getId());
+        }
+        return this.availability;
     }
 }

@@ -22,121 +22,93 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import com.bradmcevoy.http.Auth;
-import com.bradmcevoy.http.CollectionResource;
-import com.bradmcevoy.http.PropFindableResource;
-import com.bradmcevoy.http.PropPatchHandler;
-import com.bradmcevoy.http.PropPatchableResource;
-import com.bradmcevoy.http.Request;
 import com.bradmcevoy.http.Resource;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.resource.InventoryStatus;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
+ * Represents a managed resource along with its children resources.
+ * 
+ * @see BasicResource
+ *
  * @author Greg Hinkle
+ * @author John Mazzitelli
  */
-public class ResourceFolder implements Resource, CollectionResource, PropFindableResource, PropPatchableResource {
+public class ResourceFolder extends BasicResource implements AuthenticatedCollectionResource {
 
     private List<Resource> children;
 
-    private org.rhq.core.domain.resource.Resource resource;
-
-    public ResourceFolder(org.rhq.core.domain.resource.Resource resource) {
-        this.resource = resource;
+    public ResourceFolder(Subject subject, org.rhq.core.domain.resource.Resource managedResource) {
+        super(subject, managedResource);
     }
 
-    public ResourceFolder(int resourceId) {
-        ResourceManagerLocal rm = LookupUtil.getResourceManager();
-
-        this.resource = rm.getResourceById(LookupUtil.getSubjectManager().getOverlord(), resourceId);
-
+    public String getUniqueId() {
+        return String.valueOf(getManagedResource().getId());
     }
 
-    public Resource child(String s) {
-        List<? extends Resource> resources = getChildren();
-        for (Resource res : resources) {
-            if (s.equals(res.getName())) {
-                return res;
+    public String getName() {
+        return getManagedResource().getName();
+    }
+
+    public Date getModifiedDate() {
+        return new Date(getManagedResource().getMtime());
+    }
+
+    public Date getCreateDate() {
+        return new Date(getManagedResource().getCtime());
+    }
+
+    public Resource child(String childName) {
+        List<? extends Resource> children = getChildren();
+        for (Resource child : children) {
+            if (childName.equals(child.getName())) {
+                return child;
             }
         }
         return null;
     }
 
     public List<? extends Resource> getChildren() {
-        if (children == null) {
-            ResourceManagerLocal rm = LookupUtil.getResourceManager();
-            List<Integer> childs = rm.getChildrenResourceIds(resource.getId(), InventoryStatus.COMMITTED);
+        return getChildren(getSubject());
+    }
 
-            children = new ArrayList<Resource>();
-            for (Integer childId : childs) {
-                children.add(new ResourceFolder(childId));
+    public List<? extends Resource> getChildren(Subject subject) {
+        if (this.children == null) {
+            PageList<org.rhq.core.domain.resource.Resource> childs;
+            ResourceManagerLocal rm = LookupUtil.getResourceManager();
+            childs = rm.getChildResources(subject, getManagedResource(), PageControl.getUnlimitedInstance());
+
+            this.children = new ArrayList<Resource>(childs.size());
+            for (org.rhq.core.domain.resource.Resource child : childs) {
+                if (child.getInventoryStatus() == InventoryStatus.COMMITTED) {
+                    this.children.add(new ResourceFolder(subject, child));
+                }
             }
 
-            AvailabilityResource availabilityResource = new AvailabilityResource(resource);
-            children.add(availabilityResource);
+            AvailabilityResource availabilityResource = new AvailabilityResource(subject, getManagedResource());
+            this.children.add(availabilityResource);
 
             ConfigurationManagerLocal cm = LookupUtil.getConfigurationManager();
-            Configuration config = cm.getActiveResourceConfiguration(resource.getId());
+            Configuration config = cm.getActiveResourceConfiguration(getManagedResource().getId());
             if (config != null && !config.getProperties().isEmpty()) {
-                children.add(new ConfigResource(resource, config));
+                this.children.add(new ConfigResource(subject, getManagedResource(), config));
             }
 
             MeasurementDataManagerLocal mdm = LookupUtil.getMeasurementDataManager();
-            List<MeasurementDataTrait> traits = mdm.getCurrentTraitsForResource(resource.getId(), null);
+            List<MeasurementDataTrait> traits = mdm.getCurrentTraitsForResource(getManagedResource().getId(), null);
             if (traits != null && traits.size() > 0) {
-                children.add(new TraitsResource(resource, traits));
+                this.children.add(new TraitsResource(subject, getManagedResource(), traits));
             }
-
         }
-        return children;
-    }
-
-    public String getUniqueId() {
-        return String.valueOf(resource.getId());
-    }
-
-    public String getName() {
-        return resource.getName();
-    }
-
-    public Object authenticate(String s, String s1) {
-        return "auth";
-    }
-
-    public boolean authorise(Request request, Request.Method method, Auth auth) {
-        if (auth == null) {
-            return false;
-        }
-        return true;
-    }
-
-    public String getRealm() {
-        return "rhq";
-    }
-
-    public Date getModifiedDate() {
-        return new Date(resource.getMtime());
-    }
-
-    public String checkRedirect(Request request) {
-        return null;
-    }
-
-    public Date getCreateDate() {
-        return new Date(resource.getCtime());
-    }
-
-    public Long getMaxAgeSeconds(Auth auth) {
-        return new Long(0);
-    }
-
-    public void setProperties(PropPatchHandler.Fields fields) {
-        System.out.println("Got some fields: " + fields);
+        return this.children;
     }
 }

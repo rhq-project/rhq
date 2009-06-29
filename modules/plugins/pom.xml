@@ -43,7 +43,7 @@
       <module>rhq-server</module>
       <module>jboss-cache</module>
       <module>jboss-as-5</module>
-      <module>jboss-cache5</module>
+      <module>jboss-cache-v3</module>
 	</modules>
 
 	<build>

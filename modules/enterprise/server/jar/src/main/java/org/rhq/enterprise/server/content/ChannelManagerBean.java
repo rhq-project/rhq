@@ -272,7 +272,7 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
         List<Channel> channels = getChannelByName(c.getName());
 
         if (channels.size() != 0) {
-            throw new ChannelException("There allready is a channel with given name.");
+            throw new ChannelException("There is already a channel with the name of [" + c.getName() + "]");
         }
 
     }

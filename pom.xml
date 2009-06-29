@@ -476,14 +476,59 @@
          </plugin>
          <plugin>
            <groupId>org.codehaus.mojo</groupId>
+           <artifactId>build-helper-maven-plugin</artifactId>
+           <version>1.3</version>         
+         </plugin>
+         <plugin>
+           <groupId>org.codehaus.mojo</groupId>
            <artifactId>buildnumber-maven-plugin</artifactId>
-           <version>1.0-beta-2</version>
+           <version>1.0-beta-3</version>
          </plugin>
        </plugins>
      </pluginManagement>
 
     <plugins>
 
+      <!-- Set the 'maven.version' property to the version of Maven being used, 
+           so we can include the Maven version in the MANIFEST.MF files of all
+           build artifacts. -->
+      <plugin>
+         <groupId>org.codehaus.mojo</groupId>
+         <artifactId>build-helper-maven-plugin</artifactId>        
+         <executions>
+           <execution>
+             <phase>validate</phase>
+             <goals>
+               <goal>maven-version</goal>
+             </goals>
+           </execution>
+         </executions>
+      </plugin>
+    
+      <!-- Set the 'buildNumber' property to the current SVN revision, or to '0'
+           if an SVN revision cannot be determined, so we can include the SVN
+           revision in the MANIFEST.MF files of all build artifacts. -->
+      <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>buildnumber-maven-plugin</artifactId>
+          <executions>
+             <execution>
+                <phase>validate</phase>
+                <goals>
+                   <goal>create</goal>
+                </goals>
+             </execution>
+             </executions>
+             <configuration>
+             <getRevisionOnlyOnce>true</getRevisionOnlyOnce>
+             <revisionOnScmFailure>0</revisionOnScmFailure>             
+             <doCheck>false</doCheck>
+             <doUpdate>false</doUpdate>
+             <timestampFormat>{0, date, long} {0, time, long}</timestampFormat>
+          </configuration>
+      </plugin>
+    
+      <!-- Ensure all code compiles and runs on Java 5 or later. -->
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
@@ -502,7 +547,14 @@
                <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
             </manifest>
             <manifestEntries>
+               <Maven-Version>${maven.version}</Maven-Version>
+               <Java-Version>${java.version}</Java-Version>
+               <Java-Vendor>${java.vendor}</Java-Vendor>
+               <Os-Name>${os.name}</Os-Name>
+               <Os-Arch>${os.arch}</Os-Arch>
+               <Os-Version>${os.version}</Os-Version>
                <Build-Number>${buildNumber}</Build-Number>
+               <Build-Time>${timestamp}</Build-Time>
             </manifestEntries>
           </archive>
         </configuration>
@@ -725,7 +777,7 @@
           </build>
       </profile>
 
-      <!--  use buildnumber plugin only if SVN metadata is present -->
+      <!-- Use buildnumber plugin only if SVN metadata is present. -->
       <profile>
          <id>build-number-generation</id>
          <activation>
@@ -747,6 +799,7 @@
                      </execution>
                      </executions>
                      <configuration>
+                     <getRevisionOnlyOnce>true</getRevisionOnlyOnce>
                      <revisionOnScmFailure>0</revisionOnScmFailure>
                      <doCheck>false</doCheck>
                      <doUpdate>false</doUpdate>
@@ -756,23 +809,6 @@
          </build>
       </profile>
 
-      <!-- If SVN meta data is not configured, set buildNumber to 0 -->
-      <!-- I think this can get removed - before buildnumber-maven-plugin 1.0-beta-2 -->
-      <!-- there was no <revisionOnScmFailure> option, so this was our custom solution. -->
-      <!--
-      <profile>
-         <id>build-number-provided</id>
-         <activation>
-            <file>
-               <missing>.svn</missing>
-            </file>
-         </activation>
-
-         <properties>
-            <buildNumber>0</buildNumber>
-         </properties>
-      </profile>
-      -->
   </profiles>
 
 </project>

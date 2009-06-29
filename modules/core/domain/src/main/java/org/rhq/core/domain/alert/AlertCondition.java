@@ -248,7 +248,8 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
         + "  SELECT res.inventoryStatus " //
         + "    FROM AlertCondition AS ac " //
         + "    JOIN ac.alertDefinition ad " //
-        + "    JOIN ad.resource res ") })
+        + "    JOIN ad.resource res " //
+        + "   WHERE ac.id = :alertConditionId ") })
 @SequenceGenerator(name = "RHQ_ALERT_CONDITION_ID_SEQ", sequenceName = "RHQ_ALERT_CONDITION_ID_SEQ")
 @Table(name = "RHQ_ALERT_CONDITION")
 public class AlertCondition implements Serializable {

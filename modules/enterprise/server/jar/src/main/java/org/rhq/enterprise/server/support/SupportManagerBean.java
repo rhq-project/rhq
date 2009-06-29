@@ -42,27 +42,46 @@ import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 
+/**
+ * Provides some methods that are useful for supporting managed resources. This includes being
+ * able to take a snapshot report of a managed resource, such as its log files, data files, and anything
+ * the managed resource wants to expose.
+ * 
+ * This Support subsystem provides things like snapshot reports that are potentially very sensitive and
+ * gives the user access to far sweeping data, (e.g. they can contain configuration settings, data files
+ * and logs - all of which can contain confidential information). Because of this, most of the methods
+ * in this subsystem will require the user to be an "inventory manager" with {@link Permission#MANAGE_INVENTORY}
+ * permissions.
+ * 
+ * @author John Mazzitelli
+ */
 @Stateless
 public class SupportManagerBean implements SupportManagerLocal {
 
     @EJB
     private AgentManagerLocal agentManager;
 
-    // a snapshot report is potentially very sensitive - it can contain configuration settings, data files and logs - all
-    // of which can contain confidential information. Therefore, because the amount of data the user has access to
-    // is far sweeping, we require the user to be an inventory manager.
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public URL getSnapshotReport(Subject subject, int resourceId, String name, String description) throws Exception {
+    public InputStream getSnapshotReportStream(Subject subject, int resourceId, String name, String description)
+        throws Exception {
 
         AgentClient agentClient = this.agentManager.getAgentClient(resourceId);
         SupportAgentService supportService = agentClient.getSupportAgentService();
-        InputStream snapshot = supportService.getSnapshotReport(resourceId, name, description);
+        InputStream snapshotStream = supportService.getSnapshotReport(resourceId, name, description);
+
+        return snapshotStream;
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public URL getSnapshotReport(Subject subject, int resourceId, String name, String description) throws Exception {
+
+        InputStream snapshotStream = getSnapshotReportStream(subject, resourceId, name, description);
 
         // TODO: not sure what we should really do with it, for now, put it in the downloads location.
         // you can retrieve this by going to http://localhost:7080/downloads
         File dir = getDownloadsDir();
         File downloadFile = File.createTempFile(name + "-" + resourceId + "-", ".zip", dir);
-        StreamUtil.copy(snapshot, new FileOutputStream(downloadFile));
+        StreamUtil.copy(snapshotStream, new FileOutputStream(downloadFile));
 
         return downloadFile.toURI().toURL();
     }
@@ -79,3 +98,4 @@ public class SupportManagerBean implements SupportManagerLocal {
         return downloadDir;
     }
 }
+

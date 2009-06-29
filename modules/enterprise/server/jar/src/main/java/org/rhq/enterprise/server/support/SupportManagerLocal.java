@@ -18,13 +18,25 @@
  */
 package org.rhq.enterprise.server.support;
 
+import java.io.InputStream;
 import java.net.URL;
 
 import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
 
+/**
+ * Provides some methods that are useful for supporting managed resources. This includes being
+ * able to take a snapshot report of a managed resource, such as its log files, data files, and anything
+ * the managed resource wants to expose.
+ * 
+ * @author John Mazzitelli
+ */
 @Local
 public interface SupportManagerLocal {
+    InputStream getSnapshotReportStream(Subject subject, int resourceId, String name, String description)
+        throws Exception;
+
     URL getSnapshotReport(Subject subject, int resourceId, String name, String description) throws Exception;
 }
+

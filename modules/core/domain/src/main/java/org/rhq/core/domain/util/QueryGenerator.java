@@ -82,7 +82,7 @@ public class QueryGenerator {
             if (firstCrit) {
                 firstCrit = false;
             } else {
-                results.append("AND ");
+                results.append(NL).append("AND ");
             }
 
             results.append(alias).append('.').append(critField.getKey() + " = :" + critField.getKey() + " ");
@@ -97,7 +97,7 @@ public class QueryGenerator {
                 }
 
                 if (first) {
-                    results.append("ORDER BY ");
+                    results.append(NL).append("ORDER BY ");
                     first = false;
                 } else {
                     results.append(", ");

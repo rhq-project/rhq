@@ -16,22 +16,24 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.server.util;
+package org.rhq.core.util.collection;
 
 import java.util.List;
 
 /**
  * @author John Mazzitelli
+ * @author Joseph Marques
  */
 public class ArrayUtils {
 
     // similar to Arrays.copyOfRange, but this allows execution on JDK5
-    public static Integer[] copyOfRange(Integer[] arr, int from, int to) {
+    @SuppressWarnings("unchecked")
+    public static <T> T[] copyOfRange(T[] arr, int from, int to) {
         if (to < from) {
             throw new IllegalArgumentException(to + "<" + from);
         }
         int newSize = Math.min(arr.length - from, to - from); // to prevent null items in returned array
-        Integer[] copy = new Integer[newSize];
+        T[] copy = (T[]) new Object[newSize];
         System.arraycopy(arr, from, copy, 0, newSize);
         return copy;
     }

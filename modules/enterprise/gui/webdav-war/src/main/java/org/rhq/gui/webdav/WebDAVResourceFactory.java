@@ -18,7 +18,6 @@
  */
 package org.rhq.gui.webdav;
 
-import java.util.Arrays;
 import java.util.List;
 
 import com.bradmcevoy.http.Resource;
@@ -27,6 +26,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -75,7 +75,7 @@ public class WebDAVResourceFactory implements com.bradmcevoy.http.ResourceFactor
     }
 
     private String[] getSubarray(String[] full, int index) {
-        return Arrays.copyOfRange(full, index, full.length);
+        return ArrayUtils.copyOfRange(full, index, full.length);
     }
 
     public Subject getOverlord() {

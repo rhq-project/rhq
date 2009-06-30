@@ -5,7 +5,6 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -21,6 +20,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.domain.util.PersistenceUtility;
 
 /**
  * A query generator used to generate queries with specific fetch join or sorting requirements,
@@ -36,7 +36,7 @@ public class QueryGenerator {
 
     public EntityAnnotationsMethod entityAnnotationMethod = EntityAnnotationsMethod.FIELD;
     private Object criteriaObject;
-    protected List<OrderingField> orderingFields;
+    protected PageControl pageControl;
     protected Set<String> relationsToFetch;
 
     protected String alias;
@@ -45,11 +45,16 @@ public class QueryGenerator {
 
     public QueryGenerator(Object criteriaObject, String[] relationsToFetch, PageControl pageControl) {
         this.criteriaObject = criteriaObject;
-        if (relationsToFetch != null)
+
+        if (relationsToFetch != null) {
             this.relationsToFetch = new HashSet<String>(Arrays.asList(relationsToFetch));
-        if (pageControl != null)
-            //this.orderBy = new HashSet<String>(Arrays.asList(orderBy));
-            this.orderingFields = pageControl.getOrderingFields();
+        }
+
+        if (pageControl == null) {
+            this.pageControl = PageControl.getUnlimitedInstance();
+        } else {
+            this.pageControl = pageControl;
+        }
 
         className = criteriaObject.getClass().getName();
 
@@ -92,22 +97,20 @@ public class QueryGenerator {
         }
 
         boolean first = true;
-        if (orderingFields != null) {
-            for (OrderingField orderingField : orderingFields) {
-                //verify persistency
-                if (!isEntityFieldPersistence(orderingField.getField())) {
-                    throw new Exception("Can not order by '" + orderingField.getField() + "'.");
-                }
-
-                if (first) {
-                    results.append(NL).append("ORDER BY ");
-                    first = false;
-                } else {
-                    results.append(", ");
-                }
-                results.append(alias).append('.').append(orderingField.getField());
-                results.append(' ').append(orderingField.getOrdering());
+        for (OrderingField orderingField : pageControl.getOrderingFields()) {
+            //verify persistency
+            if (!isEntityFieldPersistence(orderingField.getField())) {
+                throw new Exception("Can not order by '" + orderingField.getField() + "'.");
             }
+
+            if (first) {
+                results.append(NL).append("ORDER BY ");
+                first = false;
+            } else {
+                results.append(", ");
+            }
+            results.append(alias).append('.').append(orderingField.getField());
+            results.append(' ').append(orderingField.getOrdering());
         }
 
         return results.append(NL).toString();
@@ -118,6 +121,7 @@ public class QueryGenerator {
         for (Map.Entry<String, Object> critField : getEntityPersistenceFields(criteriaObject).entrySet()) {
             q.setParameter(critField.getKey(), critField.getValue());
         }
+        PersistenceUtility.setDataPage(q, pageControl);
 
         return q;
     }

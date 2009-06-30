@@ -440,34 +440,6 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
         query.executeUpdate();
     }
 
-    private void persist(PartitionEvent event, Map<Agent, List<ServerBucket>> agentServerListMap) {
-        FailoverList fl = null;
-        FailoverListDetails failoverListDetails = null;
-        PartitionEventDetails eventDetails = null;
-        List<ServerBucket> servers = null;
-
-        for (Agent next : agentServerListMap.keySet()) {
-            fl = new FailoverList(event, next);
-            entityManager.persist(fl);
-
-            servers = agentServerListMap.get(next);
-
-            boolean first = true;
-            for (int i = 0; i < servers.size(); ++i) {
-                ServerBucket bucket = servers.get(i);
-                Server server = entityManager.find(Server.class, bucket.server.getId());
-                failoverListDetails = new FailoverListDetails(fl, i, server);
-                entityManager.persist(failoverListDetails);
-                // event details only shows the current primary server topology
-                if (first) {
-                    eventDetails = new PartitionEventDetails(event, next, server);
-                    entityManager.persist(eventDetails);
-                    first = false;
-                }
-            }
-        }
-    }
-
     private void persistComposites(PartitionEvent event, Map<Agent, FailoverListComposite> agentServerListMap) {
         FailoverList fl = null;
         FailoverListDetails failoverListDetails = null;

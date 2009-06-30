@@ -489,6 +489,7 @@
                           </goals>
                           <configuration>
                              <skip>${maven.test.skip}</skip>
+                             <parallel>false</parallel>
                              <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
                              <useSystemClassLoader>false</useSystemClassLoader>
                              <argLine>-Dorg.hyperic.sigar.path=${basedir}/target/itest/lib</argLine>

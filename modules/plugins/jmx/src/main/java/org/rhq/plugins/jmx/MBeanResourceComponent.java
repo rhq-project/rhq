@@ -546,8 +546,12 @@ public class MBeanResourceComponent<T extends JMXComponent> implements Measureme
                 resultObject = list;
             }
 
-            // put the results object in an operation result
-            resultToReturn = new OperationResult(String.valueOf(resultObject));
+            // put the results object in an operation result if it isn't already one
+            if (resultObject instanceof OperationResult) {
+                resultToReturn = (OperationResult) resultObject;
+            } else {
+                resultToReturn = new OperationResult(String.valueOf(resultObject));
+            }
         }
 
         return resultToReturn;

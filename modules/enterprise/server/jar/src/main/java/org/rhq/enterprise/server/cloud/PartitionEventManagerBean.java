@@ -184,6 +184,7 @@ public class PartitionEventManagerBean implements PartitionEventManagerLocal {
 
                 try {
                     failoverListManager.refresh(next);
+                    completedRequest = true;
                 } catch (Exception e) {
                     LOG.warn("Failed requested partition event. Setting COMPLETED to avoid repeated failure: " + e);
                 }

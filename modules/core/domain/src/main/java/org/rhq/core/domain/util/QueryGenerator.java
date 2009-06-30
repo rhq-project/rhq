@@ -36,6 +36,7 @@ import org.rhq.core.domain.authz.Role;
  * for generating queries with specific fetch join or sorting requirements.  Implementors extend QueryBase
  * and add a mapping for it to the generator.  It is intended for QueryBase to be relatively self-documenting.
  * 
+ * @author Asaf Shakarchi
  * @author Joseph Marques
  */
 public class QueryGenerator {

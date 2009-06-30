@@ -24,6 +24,7 @@ package org.rhq.plugins.jbossas5.deploy;
 
 import java.io.File;
 import java.util.Set;
+import java.util.Collection;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -33,6 +34,8 @@ import org.jboss.deployers.spi.management.deploy.DeploymentManager;
 import org.jboss.deployers.spi.management.deploy.DeploymentStatus;
 import org.jboss.managed.api.ManagedDeployment;
 import org.jboss.profileservice.spi.ProfileService;
+import org.jboss.profileservice.spi.ProfileKey;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
@@ -49,6 +52,8 @@ import org.rhq.plugins.jbossas5.util.DeploymentUtils;
  * @author Lukas Krejci
  */
 public abstract class AbstractDeployer implements Deployer {
+    private static final ProfileKey FARM_PROFILE_KEY = new ProfileKey("farm");
+    private static final ProfileKey APPLICATIONS_PROFILE_KEY = new ProfileKey("applications");
 
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -80,8 +85,38 @@ public abstract class AbstractDeployer implements Deployer {
             @SuppressWarnings( { "ConstantConditions" })
             boolean deployExploded = deployTimeConfig.getSimple("deployExploded").getBooleanValue();
 
-            DeploymentManager deploymentManager = profileService.getDeploymentManager();
-            DeploymentStatus status = DeploymentUtils.deployArchive(deploymentManager, archiveFile, deployExploded);
+            DeploymentManager deploymentManager = this.profileService.getDeploymentManager();
+            boolean deployFarmed = deployTimeConfig.getSimple("deployFarmed").getBooleanValue();
+            if (deployFarmed) {
+                Collection<ProfileKey> profileKeys = deploymentManager.getProfiles();
+                boolean farmSupported = false;
+                for (ProfileKey profileKey : profileKeys) {
+                    if (profileKey.getName().equals(FARM_PROFILE_KEY.getName())) {
+                        farmSupported = true;
+                        break;
+                    }
+                }
+                if (!farmSupported) {
+                    throw new IllegalStateException("This application server instance is not a node in a cluster, "
+                            + "so it does not support farmed deployments. Supported deployment profiles are "
+                            + profileKeys + ".");
+                }
+                if (deployExploded) {
+                    throw new IllegalArgumentException("Deploying farmed applications in exploded form is not supported by the Profile Service.");
+                }
+                deploymentManager.loadProfile(FARM_PROFILE_KEY);
+            }
+
+            DeploymentStatus status;
+            try {
+                status = DeploymentUtils.deployArchive(deploymentManager, archiveFile, deployExploded);
+            }
+            finally {
+                // Make sure to switch back to the 'applications' profile if we switched to the 'farm' profile above.
+                if (deployFarmed) {
+                    deploymentManager.loadProfile(APPLICATIONS_PROFILE_KEY);
+                }
+            }
 
             if (status.getState() == DeploymentStatus.StateType.COMPLETED) {
                 createResourceReport.setResourceName(archiveName);

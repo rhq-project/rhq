@@ -645,13 +645,13 @@
                     Should the archive be deployed in exploded form (i.e. as a directory)?
                 </c:description>
            </c:simple-property>
-           <c:simple-property name="targetProfileName" type="boolean" required="false">
+           <c:simple-property name="deployFarmed" type="boolean" required="true" default="false">
                 <c:description>
-                    The name of the profile to which the application should be deployed; a profile corresponds to an
-                    underlying directory on the filesystem (e.g. `applications` maps to deploy/ and `farm`, if available,
-                    maps to farm/); for a list of available deployment profiles, see the Deployment Profile Names trait
-                    on the JBossAS Server Resource; if no value is specified, the default deployment profile 
-                    (`applications`) will be used.
+                    Should the application be deployed as a farmed deployment (i.e. to the farm directory, rather than
+                    the deploy directory)? This option should only be set to Yes if this application server instance is
+                    a node in a cluster, otherwise the application creation will fail. If set to Yes, the Deploy
+                    Exploded property must be set to No, since exploded deployments to farm via the Profile Service are
+                    currently not supported.
                 </c:description>
            </c:simple-property>
         </c:group>
@@ -1076,10 +1076,6 @@
                    description="Shutdown and then start this application server.">
           <results><c:simple-property name="operationResult" description="Outcome of restarting the server."/></results>
         </operation>
-
-          <metric displayName="Deployment Profile Names" property="deploymentProfileNames"
-                  dataType="trait" displayType="summary"
-                  description="the names of the available deployment profiles (e.g. 'deploy', 'farm')"/>
 
           <metric displayName="Partition Name" property="MCBean|ServerConfig|*|partitionName"
                   dataType="trait" displayType="summary"

@@ -31,7 +31,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.HashSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -40,7 +39,6 @@ import org.apache.commons.logging.LogFactory;
 import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.deployers.spi.management.deploy.ProgressEvent;
 import org.jboss.deployers.spi.management.deploy.ProgressListener;
-import org.jboss.deployers.spi.management.deploy.DeploymentManager;
 import org.jboss.managed.api.ComponentType;
 import org.jboss.managed.api.DeploymentTemplateInfo;
 import org.jboss.managed.api.ManagedComponent;
@@ -49,7 +47,6 @@ import org.jboss.on.common.jbossas.JBPMWorkflowManager;
 import org.jboss.on.common.jbossas.JBossASPaths;
 import org.jboss.profileservice.spi.NoSuchDeploymentException;
 import org.jboss.profileservice.spi.ProfileService;
-import org.jboss.profileservice.spi.ProfileKey;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -143,7 +140,6 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
 
     private ResourceContext resourceContext;
     private ProfileServiceConnection connection;
-    private File deployDirectory;
     private JmxConnectionHelper jmxConnectionHelper;
 
     private ApplicationServerContentFacetDelegate contentFacetDelegate;
@@ -223,7 +219,7 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
 
     public void stop() {
         this.logFileEventDelegate.stopLogFileEventPollers();
-        jmxConnectionHelper.closeConnection();
+        this.jmxConnectionHelper.closeConnection();
     }
 
     // ------------ MeasurementFacet Implementation ------------
@@ -233,47 +229,34 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
         for (MeasurementScheduleRequest request : requests) {
             String metricName = request.getName();
             try {
-                if (metricName.equals("deploymentProfileNames")) {
-                    DeploymentManager deploymentManager = getConnection().getDeploymentManager();
-                    Collection<ProfileKey> profileKeys = deploymentManager.getProfiles();
-                    Set<String> profileNames = new HashSet(profileKeys.size());
-                    for (ProfileKey profileKey : profileKeys) {
-                        String profileName = profileKey.getName();
-                        if (profileName.equals("applications") || profileName.equals("farm")) {
-                            profileNames.add(profileName);
-                        }
-                    }
-                    report.addData(new MeasurementDataTrait(request, profileNames.toString()));
+                // All other metric names are expected to have the following syntax:
+                // "<componentType>|<componentSubType>|<componentName>|<propertyName>"
+                Matcher matcher = METRIC_NAME_PATTERN.matcher(metricName);
+                if (!matcher.matches()) {
+                    log.error("Metric name '" + metricName + "' does not match pattern '" + METRIC_NAME_PATTERN + "'.");
+                    continue;
+                }
+                String componentCategory = matcher.group(1);
+                String componentSubType = matcher.group(2);
+                String componentName = matcher.group(3);
+                String propertyName = matcher.group(4);
+                ComponentType componentType = new ComponentType(componentCategory, componentSubType);
+                ManagedComponent component;
+                if (componentName.equals("*")) {
+                    component = ManagedComponentUtils.getSingletonManagedComponent(managementView, componentType);
                 } else {
-                    // All other metric names are expected to have the following syntax:
-                    // "<componentType>|<componentSubType>|<componentName>|<propertyName>"
-                    Matcher matcher = METRIC_NAME_PATTERN.matcher(metricName);
-                    if (!matcher.matches()) {
-                        log.error("Metric name '" + metricName + "' does not match pattern '" + METRIC_NAME_PATTERN + "'.");
-                        continue;
-                    }
-                    String componentCategory = matcher.group(1);
-                    String componentSubType = matcher.group(2);
-                    String componentName = matcher.group(3);
-                    String propertyName = matcher.group(4);
-                    ComponentType componentType = new ComponentType(componentCategory, componentSubType);
-                    ManagedComponent component;
-                    if (componentName.equals("*")) {
-                        component = ManagedComponentUtils.getSingletonManagedComponent(managementView, componentType);
-                    } else {
-                        component = ManagedComponentUtils.getManagedComponent(managementView, componentType, componentName);
-                    }
-                    Serializable value = ManagedComponentUtils.getSimplePropertyValue(component, propertyName);
-                    if (value == null) {
-                        log.debug("Null value returned for metric '" + metricName + "'.");
-                        continue;
-                    }
-                    if (request.getDataType() == DataType.MEASUREMENT) {
-                        Number number = (Number) value;
-                        report.addData(new MeasurementDataNumeric(request, number.doubleValue()));
-                    } else if (request.getDataType() == DataType.TRAIT) {
-                        report.addData(new MeasurementDataTrait(request, value.toString()));
-                    }
+                    component = ManagedComponentUtils.getManagedComponent(managementView, componentType, componentName);
+                }
+                Serializable value = ManagedComponentUtils.getSimplePropertyValue(component, propertyName);
+                if (value == null) {
+                    log.debug("Null value returned for metric '" + metricName + "'.");
+                    continue;
+                }
+                if (request.getDataType() == DataType.MEASUREMENT) {
+                    Number number = (Number) value;
+                    report.addData(new MeasurementDataNumeric(request, number.doubleValue()));
+                } else if (request.getDataType() == DataType.TRAIT) {
+                    report.addData(new MeasurementDataTrait(request, value.toString()));
                 }
             } catch (RuntimeException e) {
                 log.error("Failed to obtain metric '" + metricName + "'.", e);
@@ -472,7 +455,7 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
         if (runningEmbedded()) {
             return new LocalDeployer(profileService);
         } else {
-            return new RemoteDeployer(profileService, resourceContext);
+            return new RemoteDeployer(profileService, this.resourceContext);
         }
     }
 

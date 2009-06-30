@@ -127,7 +127,7 @@ public class QueryGenerator {
     }
 
     //helper
-    public boolean isEntityCollectionPersistence(String fieldName) throws NoSuchMethodException, NoSuchFieldException {
+    private boolean isEntityCollectionPersistence(String fieldName) throws NoSuchMethodException, NoSuchFieldException {
         if (entityAnnotationMethod == EntityAnnotationsMethod.FIELD) {
             Field field = getFieldOfCriteriaClass(fieldName);
             return ((field.isAnnotationPresent(ManyToMany.class)) || (field.isAnnotationPresent(OneToMany.class)));
@@ -139,27 +139,27 @@ public class QueryGenerator {
         return false;
     }
 
-    public boolean isEntityFieldPersistence(String fieldName) throws NoSuchFieldException {
+    private boolean isEntityFieldPersistence(String fieldName) throws NoSuchFieldException {
         Field field = getFieldOfCriteriaClass(fieldName);
 
         return isEntityFieldPersistence(field);
     }
 
-    public boolean isEntityFieldPersistence(Field field) {
+    private boolean isEntityFieldPersistence(Field field) {
         //TODO: a little bit risk as column is not a must.
         return ((field.isAnnotationPresent(Column.class)));
     }
 
-    public boolean isEntityMethodPersistence(Method method) {
+    private boolean isEntityMethodPersistence(Method method) {
         //TODO: a little bit risk as column is not a must.
         return ((method.isAnnotationPresent(Column.class)));
     }
 
-    public boolean isEntity(Class<?> clazz) {
+    private boolean isEntity(Class<?> clazz) {
         return clazz.isAnnotationPresent(Entity.class);
     }
 
-    public Map<String, Object> getEntityPersistenceFields(Object entityClass) throws Exception {
+    private Map<String, Object> getEntityPersistenceFields(Object entityClass) throws Exception {
         if (!isEntity(entityClass.getClass())) {
             throw new Exception("The specified class is not an EJB3 persistence entity");
         }
@@ -229,11 +229,11 @@ public class QueryGenerator {
         return entityPersistenceProperties;
     }
 
-    public String getBeanPropertyOfGetter(String property) {
+    private String getBeanPropertyOfGetter(String property) {
         return property.substring(3, 4).toLowerCase() + property.substring(4, property.length());
     }
 
-    public String getBeanGetterForProperty(String property) {
+    private String getBeanGetterForProperty(String property) {
         return "get" + property.substring(0, 1).toUpperCase() + property.substring(1, property.length());
     }
 

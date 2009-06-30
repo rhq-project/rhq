@@ -25,30 +25,30 @@ package org.rhq.plugins.jbossas5.test;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.testng.annotations.Test;
-
+import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
+import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.pc.PluginContainer;
-import org.rhq.core.pc.plugin.PluginManager;
 import org.rhq.core.pc.configuration.ConfigurationManager;
 import org.rhq.core.pc.inventory.InventoryManager;
+import org.rhq.core.pc.plugin.PluginManager;
 import org.rhq.core.pc.util.ComponentUtil;
 import org.rhq.core.pc.util.FacetLockType;
+import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
-import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
-import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
+import org.testng.annotations.Test;
 
 /**
  * @author Ian Springer
@@ -66,41 +66,42 @@ public abstract class AbstractResourceTest extends AbstractPluginTest {
 
     @Test(enabled = ENABLE_TESTS)
     public void testMetrics() throws Exception {
-        Set<MeasurementDefinition> metricDefinitions = getResourceType().getMetricDefinitions();
-        Set<Resource> resources = getResources();
-        for (Resource resource : resources) {
-            System.out.println("Validating metrics for " + resource + "...");
-            MeasurementFacet measurementFacet = ComponentUtil.getComponent(resource.getId(), MeasurementFacet.class, FacetLockType.READ,
-                    MEASUREMENT_FACET_METHOD_TIMEOUT, true, true);
-            for (MeasurementDefinition metricDefinition : metricDefinitions) {
-                String name = metricDefinition.getName();
-                DataType dataType = metricDefinition.getDataType();
-                if (dataType == DataType.MEASUREMENT || metricDefinition.getDataType() == DataType.TRAIT) {
-                    MeasurementReport report = new MeasurementReport();
-                    Set<MeasurementScheduleRequest> requests = new HashSet<MeasurementScheduleRequest>();
-                    MeasurementScheduleRequest request = new MeasurementScheduleRequest(1, metricDefinition.getName(),
-                            0, true, metricDefinition.getDataType());
-                    requests.add(request);
-                    measurementFacet.getValues(report, requests);
-                    if (dataType == DataType.MEASUREMENT) {
-                        assert report.getNumericData().isEmpty() || report.getNumericData().size() == 1;
-                        assert report.getTraitData().isEmpty();
-                        assert report.getCallTimeData().isEmpty();
-                        MeasurementDataNumeric dataNumeric = (report.getNumericData().isEmpty()) ?
-                                null : report.getNumericData().iterator().next();
-                        Double value = (dataNumeric != null) ? dataNumeric.getValue() : null;
-                        System.out.println("Validating numeric metric '" + name + "' value (" + value + ")...");
-                        validateNumericMetricValue(metricDefinition.getName(), value);
-                    }
-                    else if (metricDefinition.getDataType() == DataType.TRAIT) {
-                        assert report.getTraitData().isEmpty() || report.getTraitData().size() == 1;
-                        assert report.getNumericData().isEmpty();
-                        assert report.getCallTimeData().isEmpty();
-                        MeasurementDataTrait dataTrait = (report.getTraitData().size() == 1) ?
-                                report.getTraitData().iterator().next() : null;
-                        String value = (dataTrait != null) ? dataTrait.getValue() : null;
-                        System.out.println("Validating trait '" + name + "' value (" + value + ")...");
-                        validateTraitMetricValue(metricDefinition.getName(), value);
+        if (supportsFacet(MeasurementFacet.class)) {
+            Set<MeasurementDefinition> metricDefinitions = getResourceType().getMetricDefinitions();
+            Set<Resource> resources = getResources();
+            for (Resource resource : resources) {
+                System.out.println("Validating metrics for " + resource + "...");
+                MeasurementFacet measurementFacet = ComponentUtil.getComponent(resource.getId(),
+                    MeasurementFacet.class, FacetLockType.READ, MEASUREMENT_FACET_METHOD_TIMEOUT, true, true);
+                for (MeasurementDefinition metricDefinition : metricDefinitions) {
+                    String name = metricDefinition.getName();
+                    DataType dataType = metricDefinition.getDataType();
+                    if (dataType == DataType.MEASUREMENT || metricDefinition.getDataType() == DataType.TRAIT) {
+                        MeasurementReport report = new MeasurementReport();
+                        Set<MeasurementScheduleRequest> requests = new HashSet<MeasurementScheduleRequest>();
+                        MeasurementScheduleRequest request = new MeasurementScheduleRequest(1, metricDefinition
+                            .getName(), 0, true, metricDefinition.getDataType());
+                        requests.add(request);
+                        measurementFacet.getValues(report, requests);
+                        if (dataType == DataType.MEASUREMENT) {
+                            assert report.getNumericData().isEmpty() || report.getNumericData().size() == 1;
+                            assert report.getTraitData().isEmpty();
+                            assert report.getCallTimeData().isEmpty();
+                            MeasurementDataNumeric dataNumeric = (report.getNumericData().isEmpty()) ? null : report
+                                .getNumericData().iterator().next();
+                            Double value = (dataNumeric != null) ? dataNumeric.getValue() : null;
+                            System.out.println("Validating numeric metric '" + name + "' value (" + value + ")...");
+                            validateNumericMetricValue(metricDefinition.getName(), value);
+                        } else if (metricDefinition.getDataType() == DataType.TRAIT) {
+                            assert report.getTraitData().isEmpty() || report.getTraitData().size() == 1;
+                            assert report.getNumericData().isEmpty();
+                            assert report.getCallTimeData().isEmpty();
+                            MeasurementDataTrait dataTrait = (report.getTraitData().size() == 1) ? report
+                                .getTraitData().iterator().next() : null;
+                            String value = (dataTrait != null) ? dataTrait.getValue() : null;
+                            System.out.println("Validating trait '" + name + "' value (" + value + ")...");
+                            validateTraitMetricValue(metricDefinition.getName(), value);
+                        }
                     }
                 }
             }
@@ -110,19 +111,21 @@ public abstract class AbstractResourceTest extends AbstractPluginTest {
 
     @Test(enabled = ENABLE_TESTS)
     public void testOperations() throws Exception {
-        Set<OperationDefinition> operationDefinitions = getResourceType().getOperationDefinitions();
-        Set<Resource> resources = getResources();
-        for (Resource resource : resources) {
-            System.out.println("Validating operations for " + resource + "...");
-            OperationFacet operationFacet = ComponentUtil.getComponent(resource.getId(), OperationFacet.class,
+        if (supportsFacet(OperationFacet.class)) {
+            Set<OperationDefinition> operationDefinitions = getResourceType().getOperationDefinitions();
+            Set<Resource> resources = getResources();
+            for (Resource resource : resources) {
+                System.out.println("Validating operations for " + resource + "...");
+                OperationFacet operationFacet = ComponentUtil.getComponent(resource.getId(), OperationFacet.class,
                     FacetLockType.WRITE, OPERATION_FACET_METHOD_TIMEOUT, true, true);
-            // TODO: Execute lifecycle operations in a specific order, so they don't break the other operations.
-            //       For example, execute 'restart' first, followed by 'stop', followed by 'start'.
-            for (OperationDefinition operationDefinition : operationDefinitions) {
-                String name = operationDefinition.getName();
-                OperationResult result = operationFacet.invokeOperation(name, getTestOperationParameters(name));
-                System.out.println("Validating operation '" + name + "' result (" + result + ")...");
-                validateOperationResult(name, result);
+                // TODO: Execute lifecycle operations in a specific order, so they don't break the other operations.
+                //       For example, execute 'restart' first, followed by 'stop', followed by 'start'.
+                for (OperationDefinition operationDefinition : operationDefinitions) {
+                    String name = operationDefinition.getName();
+                    OperationResult result = operationFacet.invokeOperation(name, getTestOperationParameters(name));
+                    System.out.println("Validating operation '" + name + "' result (" + result + ")...");
+                    validateOperationResult(name, result);
+                }
             }
         }
         return;
@@ -130,15 +133,16 @@ public abstract class AbstractResourceTest extends AbstractPluginTest {
 
     @Test(enabled = ENABLE_TESTS)
     public void testResourceConfigLoad() throws Exception {
-        ConfigurationManager configurationManager = PluginContainer.getInstance().getConfigurationManager();
-        Set<Resource> resources = getResources();
-        for (Resource resource : resources) {
-            try {
-                Configuration resourceConfig = configurationManager.loadResourceConfiguration(resource.getId());
-                // TODO: Validate the properties?
-            }
-            catch (Exception e) {
-                throw new Exception("Failed to load Resource config for " + resource + ".", e);
+        if (supportsFacet(ConfigurationFacet.class)) {
+            ConfigurationManager configurationManager = PluginContainer.getInstance().getConfigurationManager();
+            Set<Resource> resources = getResources();
+            for (Resource resource : resources) {
+                try {
+                    Configuration resourceConfig = configurationManager.loadResourceConfiguration(resource.getId());
+                    // TODO: Validate the properties?
+                } catch (Exception e) {
+                    throw new Exception("Failed to load Resource config for " + resource + ".", e);
+                }
             }
         }
         return;
@@ -146,19 +150,20 @@ public abstract class AbstractResourceTest extends AbstractPluginTest {
 
     @Test(enabled = ENABLE_TESTS)
     public void testResourceConfigUpdate() throws Exception {
-        ConfigurationManager configurationManager = PluginContainer.getInstance().getConfigurationManager();
-        Set<Resource> resources = getResources();
-        for (Resource resource : resources) {
-            try {
-                Configuration testResourceConfig = getTestResourceConfiguration();
-                ConfigurationUpdateRequest configurationUpdateRequest = new ConfigurationUpdateRequest(0,
+        if (supportsFacet(ConfigurationFacet.class)) {
+            ConfigurationManager configurationManager = PluginContainer.getInstance().getConfigurationManager();
+            Set<Resource> resources = getResources();
+            for (Resource resource : resources) {
+                try {
+                    Configuration testResourceConfig = getTestResourceConfiguration();
+                    ConfigurationUpdateRequest configurationUpdateRequest = new ConfigurationUpdateRequest(0,
                         testResourceConfig, resource.getId());
-                configurationManager.updateResourceConfiguration(configurationUpdateRequest);
-                Configuration resourceConfig = configurationManager.loadResourceConfiguration(resource.getId());
-                assert resourceConfig.equals(testResourceConfig);
-            }
-            catch (Exception e) {
-                throw new Exception("Failed to update Resource config for " + resource + ".", e);
+                    configurationManager.updateResourceConfiguration(configurationUpdateRequest);
+                    Configuration resourceConfig = configurationManager.loadResourceConfiguration(resource.getId());
+                    assert resourceConfig.equals(testResourceConfig);
+                } catch (Exception e) {
+                    throw new Exception("Failed to update Resource config for " + resource + ".", e);
+                }
             }
         }
         return;
@@ -179,7 +184,7 @@ public abstract class AbstractResourceTest extends AbstractPluginTest {
         PluginMetadataManager pluginMetadataManager = pluginManager.getMetadataManager();
         return pluginMetadataManager.getType(getResourceTypeName(), getPluginName());
     }
-    
+
     protected Configuration getTestOperationParameters(String name) {
         OperationDefinition operationDefinition = getOperationDefinition(name);
         ConfigurationDefinition parametersConfigDef = operationDefinition.getParametersConfigurationDefinition();
@@ -213,5 +218,16 @@ public abstract class AbstractResourceTest extends AbstractPluginTest {
             }
         }
         return matchingOperationDefinition;
+    }
+
+    private boolean supportsFacet(Class<?> facetInterface) {
+        PluginMetadataManager manager = PluginContainer.getInstance().getPluginManager().getMetadataManager();
+        String componentClass = manager.getComponentClass(getResourceType());
+
+        try {
+            return facetInterface.isAssignableFrom(Class.forName(componentClass));
+        } catch (ClassNotFoundException e) {
+            throw new IllegalStateException("Could not find component class " + componentClass, e);
+        }
     }
 }

@@ -1,4 +1,4 @@
-package org.rhq.core.domain.util;
+package org.rhq.enterprise.server.util;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -18,6 +18,9 @@ import javax.persistence.OneToMany;
 import javax.persistence.Query;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.util.OrderingField;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageOrdering;
 
 /**
  * A query generator used to generate queries with specific fetch join or sorting requirements,

@@ -1,98 +1,55 @@
-/*
- * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
- * All rights reserved.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License, version 2, as
- * published by the Free Software Foundation, and/or the GNU Lesser
- * General Public License, version 2.1, also as published by the Free
- * Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License and the GNU Lesser General Public License
- * for more details.
- *
- * You should have received a copy of the GNU General Public License
- * and the GNU Lesser General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
- */
 package org.rhq.core.domain.util;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EntityManager;
+import javax.persistence.Id;
+import javax.persistence.ManyToMany;
+import javax.persistence.OneToMany;
+import javax.persistence.Query;
+
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.authz.Role;
 
 /**
- * A small proof-of-concept to show one possible method of how someone might expose an abstract strategy
- * for generating queries with specific fetch join or sorting requirements.  Implementors extend QueryBase
- * and add a mapping for it to the generator.  It is intended for QueryBase to be relatively self-documenting.
+ * A query generator used to generate queries with specific fetch join or sorting requirements,
+ * Mainly built for the  generic find methods in local/remote EJBs
  * 
  * @author Asaf Shakarchi
  * @author Joseph Marques
  */
 public class QueryGenerator {
-
-    public static Map<String, QueryBase> mappings = new HashMap<String, QueryBase>();
-    static {
-        mappings.put(Subject.class.getSimpleName(), new SubjectQuery());
-        mappings.put(Role.class.getSimpleName(), new RoleQuery());
+    private enum EntityAnnotationsMethod {
+        METHOD, FIELD
     }
 
-    public static String buildDynamicQuery(Class<?> clazz, String[] fetchJoins, PageControl pc) {
-        String className = clazz.getSimpleName();
-        QueryBase base = mappings.get(className);
-        if (base == null) {
-            throw new IllegalArgumentException("Can not generate query for unsupported type '" + className + "'.");
-        }
-        String queryResult = base.getQuery(fetchJoins, pc.getOrderingFieldsAsArray());
-        return queryResult;
-    }
-
-    public static void main(String[] args) {
-        PageControl subjectPageControl = PageControl.getUnlimitedInstance();
-        subjectPageControl.addDefaultOrderingField("firstName", PageOrdering.ASC);
-        subjectPageControl.addDefaultOrderingField("lastName", PageOrdering.DESC);
-
-        String[] subjectFetchFields = new String[] { "roles", "configuration" };
-
-        String simpleSubjectQuery = QueryGenerator.buildDynamicQuery(Subject.class, subjectFetchFields,
-            subjectPageControl);
-        System.out.println(simpleSubjectQuery);
-
-        // -----
-
-        PageControl rolePageControl = PageControl.getUnlimitedInstance();
-        rolePageControl.addDefaultOrderingField("name", PageOrdering.ASC);
-        rolePageControl.addDefaultOrderingField("id", PageOrdering.ASC);
-
-        String[] roleFetchFields = new String[] { "subjects", "resourceGroups" };
-
-        String roleSubjectQuery = QueryGenerator.buildDynamicQuery(Role.class, roleFetchFields, rolePageControl);
-        System.out.println(roleSubjectQuery);
-    }
-}
-
-abstract class QueryBase {
-
-    private static String NL = System.getProperty("line.separator");
+    public EntityAnnotationsMethod entityAnnotationMethod = EntityAnnotationsMethod.FIELD;
+    private Object criteriaObject;
+    protected List<OrderingField> orderingFields;
+    protected Set<String> relationsToFetch;
 
     protected String alias;
-    protected String className;
+    private static String NL = System.getProperty("line.separator");
+    private String className;
 
-    protected Set<String> canOrderBy;
-    protected Set<String> canJoinOn;
+    public QueryGenerator(Object criteriaObject, String[] relationsToFetch, PageControl pageControl) {
+        this.criteriaObject = criteriaObject;
+        if (relationsToFetch != null)
+            this.relationsToFetch = new HashSet<String>(Arrays.asList(relationsToFetch));
+        if (pageControl != null)
+            //this.orderBy = new HashSet<String>(Arrays.asList(orderBy));
+            this.orderingFields = pageControl.getOrderingFields();
 
-    protected QueryBase(Class<?> criteriaClass, String[] canJoinOn, String[] canOrderBy) {
-        this.className = criteriaClass.getSimpleName();
+        className = criteriaObject.getClass().getName();
+
         StringBuilder aliasBuilder = new StringBuilder();
         for (char c : this.className.toCharArray()) {
             if (Character.isUpperCase(c)) {
@@ -100,63 +57,211 @@ abstract class QueryBase {
             }
         }
         this.alias = aliasBuilder.toString();
-        this.canJoinOn = new HashSet<String>(Arrays.asList(canJoinOn));
-        this.canOrderBy = new HashSet<String>(Arrays.asList(canOrderBy));
     }
 
-    protected String getQuery(String[] fetchFieldNames, OrderingField[] orderingFields) {
-
-        for (String name : fetchFieldNames) {
-            // TODO: handle case-sensitivity properly
-            if (!canJoinOn.contains(name)) {
-                throw new IllegalArgumentException("Can not fetchJoin '" + name + "'.  Valid values are: " + canJoinOn);
-            }
-        }
-
-        for (OrderingField field : orderingFields) {
-            // TODO: handle case-sensitivity properly
-            String name = field.getField();
-            if (!canOrderBy.contains(name)) {
-                throw new IllegalArgumentException("Can not orderBy '" + name + "'.  Valid values are: " + canOrderBy);
-            }
-        }
-
+    public String getQueryString() throws Exception {
         StringBuilder results = new StringBuilder();
         results.append("SELECT ").append(alias).append(NL);
         results.append("FROM ").append(className).append(' ').append(alias).append(NL);
-        for (String fetchJoin : fetchFieldNames) {
+        for (String fetchJoin : relationsToFetch) {
+            if (!isEntityCollectionPersistence(fetchJoin)) {
+                throw new Exception("Can not fetchJoin '" + fetchJoin + "'.");
+            }
+
             results.append("LEFT JOIN FETCH ").append(alias).append('.').append(fetchJoin).append(NL);
         }
 
-        boolean first = true;
-        for (OrderingField orderingField : orderingFields) {
-            if (first) {
-                results.append("ORDER BY ");
-                first = false;
+        boolean firstCrit = true;
+        Map<String, Object> critFields = getEntityPersistenceFields(criteriaObject);
+        //criteria
+
+        if (critFields.size() > 0)
+            results.append("WHERE ");
+
+        for (Map.Entry<String, Object> critField : critFields.entrySet()) {
+            if (firstCrit) {
+                firstCrit = false;
             } else {
-                results.append(", ");
+                results.append("AND ");
             }
-            results.append(alias).append('.').append(orderingField.getField());
-            results.append(' ').append(orderingField.getOrdering());
+
+            results.append(alias).append('.').append(critField.getKey() + " = :" + critField.getKey() + " ");
+        }
+
+        boolean first = true;
+        if (orderingFields != null) {
+            for (OrderingField orderingField : orderingFields) {
+                //verify persistency
+                if (!isEntityFieldPersistence(orderingField.getField())) {
+                    throw new Exception("Can not order by '" + orderingField.getField() + "'.");
+                }
+
+                if (first) {
+                    results.append("ORDER BY ");
+                    first = false;
+                } else {
+                    results.append(", ");
+                }
+                results.append(alias).append('.').append(orderingField.getField());
+                results.append(' ').append(orderingField.getOrdering());
+            }
         }
 
         return results.append(NL).toString();
     }
-}
 
-class SubjectQuery extends QueryBase {
-    public SubjectQuery() {
-        super(Subject.class, //
-            new String[] { "configuration", "roles", "subjectNotifications" }, //
-            new String[] { "id", "name", "firstName", "lastName", "emailAddress", "smsAddress", "phoneNumber",
-                "department" });
+    public Query getQuery(EntityManager em) throws Exception {
+        Query q = em.createQuery(getQueryString());
+        for (Map.Entry<String, Object> critField : getEntityPersistenceFields(criteriaObject).entrySet()) {
+            q.setParameter(critField.getKey(), critField.getValue());
+        }
+
+        return q;
     }
-}
 
-class RoleQuery extends QueryBase {
-    public RoleQuery() {
-        super(Role.class, //
-            new String[] { "subjects", "resourceGroups", "permissions", "roleNotifications" }, //
-            new String[] { "id", "name", "description", "firstName" });
+    //helper
+    public boolean isEntityCollectionPersistence(String fieldName) throws NoSuchMethodException, NoSuchFieldException {
+        if (entityAnnotationMethod == EntityAnnotationsMethod.FIELD) {
+            Field field = getFieldOfCriteriaClass(fieldName);
+            return ((field.isAnnotationPresent(ManyToMany.class)) || (field.isAnnotationPresent(OneToMany.class)));
+        } else if (entityAnnotationMethod == EntityAnnotationsMethod.METHOD) {
+            Method method = getMethodOfCriteriaClass(getBeanGetterForProperty(fieldName));
+            return ((method.isAnnotationPresent(ManyToMany.class)) || (method.isAnnotationPresent(OneToMany.class)));
+        }
+
+        return false;
+    }
+
+    public boolean isEntityFieldPersistence(String fieldName) throws NoSuchFieldException {
+        Field field = getFieldOfCriteriaClass(fieldName);
+
+        return isEntityFieldPersistence(field);
+    }
+
+    public boolean isEntityFieldPersistence(Field field) {
+        //TODO: a little bit risk as column is not a must.
+        return ((field.isAnnotationPresent(Column.class)));
+    }
+
+    public boolean isEntityMethodPersistence(Method method) {
+        //TODO: a little bit risk as column is not a must.
+        return ((method.isAnnotationPresent(Column.class)));
+    }
+
+    public boolean isEntity(Class<?> clazz) {
+        return clazz.isAnnotationPresent(Entity.class);
+    }
+
+    public Map<String, Object> getEntityPersistenceFields(Object entityClass) throws Exception {
+        if (!isEntity(entityClass.getClass())) {
+            throw new Exception("The specified class is not an EJB3 persistence entity");
+        }
+
+        Map<String, Object> entityPersistenceProperties = new HashMap<String, Object>();
+
+        if (entityAnnotationMethod == EntityAnnotationsMethod.FIELD) {
+            for (Field currField : entityClass.getClass().getDeclaredFields()) {
+                if (isEntityFieldPersistence(currField)) {
+                    //get its value
+                    currField.setAccessible(true);
+
+                    Object fieldValue = currField.get(entityClass);
+                    if ((fieldValue != null) && isEntityFieldPersistence(currField)) {
+                        //if field is @id, make sure it's not 0 as most of the entities ID is a primitive int
+                        if (currField.isAnnotationPresent(Id.class)) {
+                            if ((Integer) fieldValue == 0) {
+                                continue;
+                            } else {
+                                entityPersistenceProperties.put(currField.getName(), fieldValue);
+                                continue;
+                            }
+                        }
+
+                        //dirty hack but we have to filter primitives
+                        if (currField.getType().isPrimitive()) {
+                            continue;
+                        }
+
+                        entityPersistenceProperties.put(currField.getName(), fieldValue);
+                    }
+                }
+            }
+        } else if (entityAnnotationMethod == EntityAnnotationsMethod.METHOD) {
+            for (Method currMethod : entityClass.getClass().getDeclaredMethods()) {
+                if (currMethod.getName().startsWith("get")) {
+
+                    if (isEntityMethodPersistence(currMethod)) {
+                        //get its value
+
+                        Object methodValue = currMethod.invoke(entityClass);
+                        if ((methodValue != null) && isEntityMethodPersistence(currMethod)) {
+                            //if field is @id, make sure it's not 0 as most of the entities ID is a primitive int
+                            if (currMethod.isAnnotationPresent(Id.class)) {
+                                if ((Integer) methodValue == 0) {
+                                    continue;
+                                } else {
+                                    entityPersistenceProperties.put(getBeanPropertyOfGetter(currMethod.getName()),
+                                        methodValue);
+                                    continue;
+                                }
+                            }
+
+                            //dirty hack but we have to filter primitives
+                            if (currMethod.getReturnType().isPrimitive()) {
+                                continue;
+                            }
+
+                            entityPersistenceProperties.put(getBeanPropertyOfGetter(currMethod.getName()), methodValue);
+                        }
+                    }
+
+                }
+            }
+        }
+
+        return entityPersistenceProperties;
+    }
+
+    public String getBeanPropertyOfGetter(String property) {
+        return property.substring(3, 4).toLowerCase() + property.substring(4, property.length());
+    }
+
+    public String getBeanGetterForProperty(String property) {
+        return "get" + property.substring(0, 1).toUpperCase() + property.substring(1, property.length());
+    }
+
+    private Method getMethodOfCriteriaClass(String methodName) throws NoSuchMethodException {
+        try {
+            Method method = criteriaObject.getClass().getDeclaredMethod(methodName);
+            return method;
+        } catch (NoSuchMethodException e) {
+            throw e;
+        }
+    }
+
+    private Field getFieldOfCriteriaClass(String fieldName) throws NoSuchFieldException {
+        try {
+            Field field = criteriaObject.getClass().getDeclaredField(fieldName);
+            return field;
+        } catch (NoSuchFieldException e) {
+            throw e;
+        }
+    }
+
+    public static void main(String[] args) throws Exception {
+        PageControl pc = PageControl.getUnlimitedInstance();
+        pc.addDefaultOrderingField("firstName", PageOrdering.ASC);
+        pc.addDefaultOrderingField("lastName", PageOrdering.DESC);
+        String[] rtf = new String[] { "roles", "subjectNotifications" };
+
+        Subject s = new Subject();
+        s.setId(4);
+        s.setFirstName("Asaf");
+        s.setLastName("Sh");
+        s.setSessionId(4);
+
+        QueryGenerator a = new QueryGenerator(s, rtf, pc);
+
+        System.out.println(a.getQueryString());
     }
 }

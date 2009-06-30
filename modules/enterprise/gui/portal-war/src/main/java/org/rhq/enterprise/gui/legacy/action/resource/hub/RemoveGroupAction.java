@@ -33,7 +33,7 @@ import org.apache.struts.action.ActionMessages;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
-import org.rhq.enterprise.server.resource.group.ResourceGroupDeleteException;
+import org.rhq.enterprise.server.exception.DeleteException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -62,12 +62,14 @@ public class RemoveGroupAction extends BaseAction {
             try {
                 groupManager.deleteResourceGroup(subject, new Integer(item));
                 remaining--;
-            } catch (ResourceGroupNotFoundException e) {
-                invalidGroupIds = add(invalidGroupIds, item);
             } catch (NumberFormatException nfe) {
                 invalidIntegers = add(invalidIntegers, item);
-            } catch (ResourceGroupDeleteException rgde) {
-                errorGroupIds = add(errorGroupIds, item);
+            } catch (DeleteException de) {
+                if (de.getCause() instanceof ResourceGroupNotFoundException) {
+                    invalidGroupIds = add(invalidGroupIds, item);
+                } else {
+                    errorGroupIds = add(errorGroupIds, item);
+                }
             }
         }
 

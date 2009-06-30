@@ -154,7 +154,7 @@
 
                <execution>
                   <id>client-distribution</id>
-                  <phase>package</phase>
+                  <phase>compile</phase>
                   <configuration>
                      <tasks>
                         <ant
@@ -241,6 +241,38 @@
                   </goals>
                </execution>
 
+               <execution>
+                  <id>test-build</id>
+                  <phase>test</phase>
+                  <configuration>
+                     <tasks>
+                        <ant
+                           antfile="${basedir}/src/main/scripts/rhq-client.build.xml"
+                           dir="${basedir}"
+                           target="prepare-tests"
+                           inheritAll="false"
+                           inheritRefs="false">
+
+                           <property
+                              name="java.jre.home"
+                              value="${java.home}" />
+                           <property
+                              name="maven.test.classpath"
+                              refid="maven.test.classpath" />
+                           <property
+                              name="project.build.outputDirectory"
+                              value="${project.build.outputDirectory}" />
+                           <property
+                              name="project.version"
+                              value="${project.version}" />
+                        </ant>
+                     </tasks>
+                  </configuration>
+                  <goals>
+                     <goal>run</goal>
+                  </goals>
+               </execution>
+
             </executions>
          </plugin>
 
@@ -258,6 +290,38 @@
                   <phase>package</phase>
                   <goals>
                      <goal>attached</goal>
+                  </goals>
+               </execution>
+            </executions>
+         </plugin>
+
+
+         <plugin>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <!-- Everything but the web service tests, this is the standard test execution -->
+            <executions>
+               <execution>
+                  <id>test-non-ws</id>
+                  <phase>test</phase>
+
+                  <configuration>
+                     <excludedGroups>${rhq.testng.excludedGroups},ws</excludedGroups>
+                     <forkMode>pertest</forkMode>
+                     <argLine>-Xmx512m -Xms128m</argLine>
+                     <additionalClasspathElements>
+                        <!-- The below is required for WS Java Client support -->
+                        <additionalClasspathElement>
+                           ${project.build.outputDirectory}/lib/rhq-cli-${project.version}.jar
+                        </additionalClasspathElement>
+                        <additionalClasspathElement>
+                           ${project.build.outputDirectory}/lib/${project.build.finalName}.jar
+                        </additionalClasspathElement>
+                     </additionalClasspathElements>
+
+                  </configuration>
+
+                  <goals>
+                     <goal>test</goal>
                   </goals>
                </execution>
             </executions>
@@ -340,45 +404,6 @@
             <plugins>
 
                <plugin>
-                  <artifactId>maven-antrun-plugin</artifactId>
-                  <executions>
-
-                     <execution>
-                        <id>test-build</id>
-                        <phase>test</phase>
-                        <configuration>
-                           <tasks>
-                              <ant
-                                 antfile="${basedir}/src/main/scripts/rhq-client.build.xml"
-                                 dir="${basedir}"
-                                 target="prepare-tests"
-                                 inheritAll="false"
-                                 inheritRefs="false">
-
-                                 <property
-                                    name="java.jre.home"
-                                    value="${java.home}" />
-                                 <property
-                                    name="maven.test.classpath"
-                                    refid="maven.test.classpath" />
-                                 <property
-                                    name="project.build.outputDirectory"
-                                    value="${project.build.outputDirectory}" />
-                                 <property
-                                    name="project.version"
-                                    value="${project.version}" />
-                              </ant>
-                           </tasks>
-                        </configuration>
-                        <goals>
-                           <goal>run</goal>
-                        </goals>
-                     </execution>
-
-                  </executions>
-               </plugin>
-
-               <plugin>
                   <artifactId>maven-surefire-plugin</artifactId>
 
                   <executions>
@@ -395,7 +420,9 @@
                            <argLine>-Xmx512m -Xms128m</argLine>
                            <additionalClasspathElements>
                               <!-- The below is required for WS Java Client support -->
-                              <additionalClasspathElement>target/jboss-${jboss.version}/client/jbossws-client.jar</additionalClasspathElement>
+                              <additionalClasspathElement>
+                                 target/jboss-${jboss.version}/client/jbossws-client.jar
+                              </additionalClasspathElement>
                            </additionalClasspathElements>
                         </configuration>
                         <goals>
@@ -421,44 +448,6 @@
 
          <build>
             <plugins>
-               <plugin>
-                  <artifactId>maven-antrun-plugin</artifactId>
-                  <executions>
-
-                     <execution>
-                        <id>test-build</id>
-                        <phase>test</phase>
-                        <configuration>
-                           <tasks>
-                              <ant
-                                 antfile="${basedir}/src/main/scripts/rhq-client.build.xml"
-                                 dir="${basedir}"
-                                 target="prepare-tests"
-                                 inheritAll="false"
-                                 inheritRefs="false">
-
-                                 <property
-                                    name="java.jre.home"
-                                    value="${java.home}" />
-                                 <property
-                                    name="maven.test.classpath"
-                                    refid="maven.test.classpath" />
-                                 <property
-                                    name="project.build.outputDirectory"
-                                    value="${project.build.outputDirectory}" />
-                                 <property
-                                    name="project.version"
-                                    value="${project.version}" />
-                              </ant>
-                           </tasks>
-                        </configuration>
-                        <goals>
-                           <goal>run</goal>
-                        </goals>
-                     </execution>
-
-                  </executions>
-               </plugin>
 
                <plugin>
                   <artifactId>maven-surefire-plugin</artifactId>

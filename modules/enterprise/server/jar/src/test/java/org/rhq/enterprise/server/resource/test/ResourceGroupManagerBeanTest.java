@@ -19,8 +19,10 @@
 package org.rhq.enterprise.server.resource.test;
 
 import javax.persistence.EntityManager;
+
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
@@ -28,6 +30,7 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.server.authz.PermissionException;
+import org.rhq.enterprise.server.exception.UpdateException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupAlreadyExistsException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
@@ -109,8 +112,10 @@ public class ResourceGroupManagerBeanTest extends AbstractEJB3Test {
                 ResourceGroup oldGroup = resourceGroupManager.getResourceGroupById(testSubject, id, null);
                 oldGroup.setDescription("new description goes here ");
                 resourceGroupManager.updateResourceGroup(testSubject, oldGroup);
-            } catch (ResourceGroupAlreadyExistsException ex) {
-                fail("ResourceGroupAlreadyExistsException should NOT have been thrown.");
+            } catch (UpdateException e) {
+                if (e.getCause() instanceof ResourceGroupAlreadyExistsException) {
+                    fail("ResourceGroupAlreadyExistsException should NOT have been thrown.");
+                }
             }
         } finally {
             getTransactionManager().rollback();
@@ -143,8 +148,10 @@ public class ResourceGroupManagerBeanTest extends AbstractEJB3Test {
                 ResourceGroup oldGroup = resourceGroupManager.getResourceGroupById(testSubject, id, null);
                 oldGroup.setName("newGroup1");
                 resourceGroupManager.updateResourceGroup(testSubject, oldGroup);
-            } catch (ResourceGroupAlreadyExistsException ex) {
-                fail("ResourceGroupAlreadyExistsException should NOT have been thrown.");
+            } catch (UpdateException e) {
+                if (e.getCause() instanceof ResourceGroupAlreadyExistsException) {
+                    fail("ResourceGroupAlreadyExistsException should NOT have been thrown.");
+                }
             }
         } finally {
             getTransactionManager().rollback();
@@ -185,8 +192,10 @@ public class ResourceGroupManagerBeanTest extends AbstractEJB3Test {
                 group1Retrieved.setDescription("new description");
                 resourceGroupManager.updateResourceGroup(testSubject, group1Retrieved);
                 fail("ResourceGroupAlreadyExistsException should have been throw");
-            } catch (ResourceGroupAlreadyExistsException ex) {
-                // expected
+            } catch (UpdateException e) {
+                if (e.getCause() instanceof ResourceGroupAlreadyExistsException) {
+                    // expected
+                }
             }
         } finally {
             getTransactionManager().rollback();

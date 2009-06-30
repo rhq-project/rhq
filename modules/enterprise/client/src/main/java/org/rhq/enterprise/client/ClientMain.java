@@ -99,13 +99,12 @@ public class ClientMain {
         // Setup the command line completers for listed actions for the user before login
         // completes initial commands available
         consoleReader.addCompletor(new SimpleCompletor(commands.keySet().toArray(new String[commands.size()])));
-        // completes arguments
+        // completes help arguments (basically, help <command>)
         consoleReader.addCompletor(new ArgumentCompletor(new Completor[] { new SimpleCompletor("help"),
             new SimpleCompletor(commands.keySet().toArray(new String[commands.size()])) }));
 
         // enable pagination
         consoleReader.setUsePagination(true);
-
     }
 
     // ?? what is this again? Might be able to remove this.
@@ -151,13 +150,11 @@ public class ClientMain {
 
         if (input_string != null) {
             // if we are processing a script, show the input that was just read
-            // in
             if (!stdinInput) {
                 outputWriter.println(input_string);
             }
         } else if (!stdinInput) {
-            // if we are processing a script, we hit the EOF, so close the input
-            // stream
+            // if we are processing a script, we hit the EOF, so close the inputstream
             try {
                 inputReader.close();
             } catch (IOException e1) {
@@ -214,14 +211,11 @@ public class ClientMain {
 
                     try {
                         // parse the command into separate arguments and execute
-                        // it
                         String[] cmd_args = parseCommandLine(cmd);
                         boolean can_continue = executePromptCommand(cmd_args);
 
-                        // break the input loop if the prompt command told us to
-                        // exit
-                        // if we are not in daemon mode, this really will end up
-                        // killing the agent
+                        // break the input loop if the prompt command told us to exit
+                        // if we are not in daemon mode, this really will end up killing the agent
                         if (!can_continue) {
                             break;
                         }
@@ -411,13 +405,16 @@ public class ClientMain {
         setHttps(false);
         remoteClient.reinitialize();
         if (remoteClient != null) {
+
+            // change the set of completers for a logged in session, now make available direct
+            // invocation of the remote API.
             consoleReader.addCompletor(new ArgumentCompletor(new Completor[] {
                 new SimpleCompletor("help"),
                 new SimpleCompletor("api"),
-                new SimpleCompletor(this.getRemoteClient().getAllManagers().keySet().toArray(
-                    new String[this.getRemoteClient().getAllManagers().size()])) }));
+                new SimpleCompletor(this.getRemoteClient().getManagers().keySet().toArray(
+                    new String[this.getRemoteClient().getManagers().size()])) }));
 
-            consoleReader.addCompletor(new ServiceCompletor(this.getRemoteClient().getAllManagers()));
+            consoleReader.addCompletor(new ServiceCompletor(this.getRemoteClient().getManagers()));
         }
     }
 

@@ -28,6 +28,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.server.exception.CreateException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupUpdateException;
 import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionManagerLocal;
 import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefinitionException;
@@ -176,6 +177,11 @@ public class EditGroupDefinitionGeneralPropertiesUIBean {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
                 "There was a problem adding one or more resource groups: " + rgue.getMessage());
             log.error("There was a problem adding one or more resource groups: ", rgue);
+            return OUTCOME_FAILURE;
+        } catch (CreateException ce) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
+                "There was a problem creating one or more resource groups: " + ce.getMessage());
+            log.error("There was a problem creating one or more resource groups: ", ce);
             return OUTCOME_FAILURE;
         } catch (Exception e) {
             Throwable t = e.getCause();

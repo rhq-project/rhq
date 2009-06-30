@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<cli>
+   <manager name="ResourceManager">
+      <service name="findResources">
+         <parameter
+            position="1"
+            type="Criteria"
+            name="criteria"
+            package="org.rhq.core.domain.resource"
+            className="Resource">
+            <criteria
+               field="id"
+               display="resourceId" />
+            <criteria
+               field="description"
+               display="descriptionSubstring"
+               prompt="(substring)" />
+            <criteria
+               field="inventoryStatus"
+               prompt="(one of)"
+               displayType="org.rhq.core.domain.resource.InventoryStatus" />
+            <criteria
+               field="name"
+               display="nameSubstring"
+               prompt="(substring)" />
+            <criteria
+               field="parentResource.id"
+               display="parentResourceId" />
+         </parameter>
+         <parameter
+            position="2"
+            type="PageControl"
+            name="pageControl">
+            <optionalData field="agent" />
+            <optionalData field="availability" />
+            <optionalData field="currentAvailability" />
+            <optionalData field="explicitGroups" />
+            <optionalData field="implicitGroups" />
+            <optionalData field="parentResource" />
+            <optionalData field="pluginConfiguration" />
+            <optionalData field="productVersion" />
+            <optionalData field="resourceConfiguration" />
+            <optionalData field="resourceErrors" />
+            <optionalData field="resourceType" />
+            <sortOption field="name" />
+            <sortOption
+               field="iTime"
+               display="inventory status change time" />
+         </parameter>
+      </service>
+      <service name="findResourceChildren">
+         <parameter
+            position="1"
+            type="Criteria"
+            name="criteria"
+            package="org.rhq.core.domain.resource"
+            className="Resource">
+            <criteria
+               field="childResources.id"
+               display="id" />
+            <criteria
+               field="childResources.description"
+               display="descriptionSubstring"
+               prompt="(substring)" />
+            <criteria
+               field="childResources.inventoryStatus"
+               display="inventoryStatus"
+               prompt="(one of)"
+               displayType="enum" />
+            <criteria
+               field="childResources.name"
+               display="nameSubstring"
+               prompt="(substring)" />
+         </parameter>
+         <parameter
+            position="2"
+            type="PageControl"
+            name="pageControl">
+            <optionalData field="agent" />
+            <optionalData field="availability" />
+            <optionalData field="currentAvailability" />
+            <optionalData field="explicitGroups" />
+            <optionalData field="implicitGroups" />
+            <optionalData field="parentResource" />
+            <optionalData field="pluginConfiguration" />
+            <optionalData field="productVersion" />
+            <optionalData field="resourceConfiguration" />
+            <optionalData field="resourceErrors" />
+            <optionalData field="resourceType" />
+            <sortOption field="name" />
+            <sortOption
+               field="iTime"
+               display="inventory status change time" />
+         </parameter>
+      </service>
+   </manager>
+
+   <manager name="SubjectManager">
+      <service name="createSubject">
+         <parameter
+            position="1"
+            type="Update"
+            name="subject"
+            className="org.rhq.core.domain.auth.Subject" />
+      </service>
+      <service name="findSubjects">
+         <parameter
+            position="1"
+            type="Criteria"
+            name="criteria"
+            className="org.rhq.core.domain.auth.Subject">
+            <criteria field="id" />
+            <criteria
+               field="name"
+               prompt="(substring)" />
+         </parameter>
+         <parameter
+            position="2"
+            type="PageControl"
+            name="pageControl">
+            <optionalData field="roles" />
+            <sortOption field="name" />
+            <sortOption field="firstName" />
+            <sortOption field="lastName" />
+         </parameter>
+      </service>
+      <service name="updateSubject">
+         <parameter
+            position="1"
+            type="Update"
+            name="newSubject"
+            className="org.rhq.core.domain.auth.Subject" />
+      </service>
+   </manager>
+</cli>
+

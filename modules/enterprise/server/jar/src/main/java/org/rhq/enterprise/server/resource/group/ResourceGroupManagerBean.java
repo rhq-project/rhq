@@ -82,6 +82,10 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
+import org.rhq.enterprise.server.exception.CreateException;
+import org.rhq.enterprise.server.exception.DeleteException;
+import org.rhq.enterprise.server.exception.FetchException;
+import org.rhq.enterprise.server.exception.UpdateException;
 import org.rhq.enterprise.server.operation.GroupOperationSchedule;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
@@ -98,7 +102,7 @@ import org.rhq.enterprise.server.util.ArrayUtils;
  */
 @Stateless
 @javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
-public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
+public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, ResourceGroupManagerRemote {
     private final Log log = LogFactory.getLog(ResourceGroupManagerBean.class);
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
@@ -138,8 +142,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public int createResourceGroup(Subject user, ResourceGroup group) throws ResourceGroupNotFoundException,
-        ResourceGroupAlreadyExistsException {
+    public ResourceGroup createResourceGroup(Subject user, ResourceGroup group) throws CreateException {
         /*
         GH: We are now allowing Groups where names collide... TODO, should this only be allowed for cluster auto backing groups?
         Query query = entityManager.createNamedQuery(ResourceGroup.QUERY_FIND_BY_NAME);
@@ -158,13 +161,16 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
 
         entityManager.persist(group);
 
-        return group.getId();
+        return group;
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public ResourceGroup updateResourceGroup(Subject user, ResourceGroup group)
-        throws ResourceGroupAlreadyExistsException, ResourceGroupUpdateException {
-        return updateResourceGroup(user, group, null);
+    public ResourceGroup updateResourceGroup(Subject user, ResourceGroup group) throws UpdateException {
+        try {
+            return updateResourceGroup(user, group, null);
+        } catch (Exception e) {
+            throw new UpdateException(e);
+        }
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
@@ -260,57 +266,61 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public void deleteResourceGroup(Subject user, Integer groupId) throws ResourceGroupNotFoundException,
-        ResourceGroupDeleteException {
-        ResourceGroup group = getResourceGroupById(user, groupId, null);
+    public void deleteResourceGroup(Subject user, int groupId) throws DeleteException {
+        try {
+            ResourceGroup group = getResourceGroupById(user, groupId, null);
 
-        // for compatible groups, first recursively remove any referring backing groups for auto-clusters
-        if (group.getGroupCategory() == GroupCategory.COMPATIBLE) {
-            for (ResourceGroup referringGroup : group.getClusterBackingGroups()) {
-                deleteResourceGroup(user, referringGroup.getId());
-            }
-        }
-
-        // unschedule all jobs for this group (only compatible groups have operations, mixed do not)
-        if (group.getGroupCategory() == GroupCategory.COMPATIBLE) {
-            Subject overlord = subjectManager.getOverlord();
-            try {
-                List<GroupOperationSchedule> ops = operationManager.getScheduledGroupOperations(overlord, groupId);
-
-                for (GroupOperationSchedule schedule : ops) {
-                    try {
-                        operationManager.unscheduleGroupOperation(overlord, schedule.getJobId().toString(), groupId);
-                    } catch (SchedulerException e) {
-                        log.warn("Failed to unschedule job [" + schedule + "] for a group being deleted [" + group
-                            + "]", e);
-                    }
+            // for compatible groups, first recursively remove any referring backing groups for auto-clusters
+            if (group.getGroupCategory() == GroupCategory.COMPATIBLE) {
+                for (ResourceGroup referringGroup : group.getClusterBackingGroups()) {
+                    deleteResourceGroup(user, referringGroup.getId());
                 }
-            } catch (SchedulerException e1) {
-                log.warn("Failed to get jobs for a group being deleted [" + group
-                    + "]; will not attempt to unschedule anything", e1);
             }
+
+            // unschedule all jobs for this group (only compatible groups have operations, mixed do not)
+            if (group.getGroupCategory() == GroupCategory.COMPATIBLE) {
+                Subject overlord = subjectManager.getOverlord();
+                try {
+                    List<GroupOperationSchedule> ops = operationManager.getScheduledGroupOperations(overlord, groupId);
+
+                    for (GroupOperationSchedule schedule : ops) {
+                        try {
+                            operationManager
+                                .unscheduleGroupOperation(overlord, schedule.getJobId().toString(), groupId);
+                        } catch (SchedulerException e) {
+                            log.warn("Failed to unschedule job [" + schedule + "] for a group being deleted [" + group
+                                + "]", e);
+                        }
+                    }
+                } catch (SchedulerException e1) {
+                    log.warn("Failed to get jobs for a group being deleted [" + group
+                        + "]; will not attempt to unschedule anything", e1);
+                }
+            }
+
+            for (Role doomedRoleRelationship : group.getRoles()) {
+                group.removeRole(doomedRoleRelationship);
+                entityManager.merge(doomedRoleRelationship);
+            }
+
+            // remove all resources in the group
+            resourceGroupManager.removeAllResourcesFromGroup(user, groupId);
+
+            // break resource and plugin configuration update links in order to preserve individual change history
+            Query q = null;
+
+            q = entityManager.createNamedQuery(ResourceConfigurationUpdate.QUERY_DELETE_UPDATE_AGGREGATE_BY_GROUP);
+            q.setParameter("groupId", groupId);
+            q.executeUpdate();
+
+            q = entityManager.createNamedQuery(PluginConfigurationUpdate.QUERY_DELETE_UPDATE_AGGREGATE_BY_GROUP);
+            q.setParameter("groupId", groupId);
+            q.executeUpdate();
+
+            entityManager.remove(group);
+        } catch (Exception e) {
+            throw new DeleteException(e);
         }
-
-        for (Role doomedRoleRelationship : group.getRoles()) {
-            group.removeRole(doomedRoleRelationship);
-            entityManager.merge(doomedRoleRelationship);
-        }
-
-        // remove all resources in the group
-        resourceGroupManager.removeAllResourcesFromGroup(user, groupId);
-
-        // break resource and plugin configuration update links in order to preserve individual change history
-        Query q = null;
-
-        q = entityManager.createNamedQuery(ResourceConfigurationUpdate.QUERY_DELETE_UPDATE_AGGREGATE_BY_GROUP);
-        q.setParameter("groupId", groupId);
-        q.executeUpdate();
-
-        q = entityManager.createNamedQuery(PluginConfigurationUpdate.QUERY_DELETE_UPDATE_AGGREGATE_BY_GROUP);
-        q.setParameter("groupId", groupId);
-        q.executeUpdate();
-
-        entityManager.remove(group);
     }
 
     public ResourceGroup getResourceGroupById(Subject user, int id, GroupCategory category)
@@ -1229,4 +1239,73 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
             removeResourcesFromGroup(subject, groupId, extraMembers.toArray(new Integer[extraMembers.size()]));
         }
     }
+
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    // Remote interface impl
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    public void addResourcesToGroup( //
+        Subject sessionSubject, //
+        int groupId, //
+        int[] resourceIds) throws UpdateException {
+        throw new UpdateException("Not Yet Implemented");
+    }
+
+    public ResourceGroup getResourceGroup( //
+        Subject sessionSubject, //
+        int groupId) throws FetchException {
+        throw new FetchException("Not Yet Implemented");
+    }
+
+    /* Already in local
+    public ResourceGroupComposite getResourceGroupComposite( //
+        Subject sessionSubject, //
+        int groupId) throws FetchException {
+        throw new FetchException("Not Yet Implemented");
+    }
+    */
+
+    public PageList<ResourceGroup> getResourceGroupsForRole( //
+        Subject sessionSubject, //
+        int roleId, //
+        PageControl pc) throws FetchException {
+        throw new FetchException("Not Yet Implemented");
+    }
+
+    public PageList<ResourceGroup> findResourceGroups( //
+        Subject sessionSubject, //        
+        ResourceGroup criteria, //
+        PageControl pc) throws FetchException {
+        throw new FetchException("Not Yet Implemented");
+    }
+
+    public PageList<ResourceGroupComposite> findResourceGroupComposites( //
+        Subject sessionSubject, //
+        ResourceGroup criteria, //
+        PageControl pc) throws FetchException {
+        throw new FetchException("Not Yet Implemented");
+    }
+
+    public void removeResourcesFromGroup(//
+        Subject sessionSubject, //
+        int groupId, //
+        int[] resourceIds) throws UpdateException {
+        throw new UpdateException("Not Yet Implemented");
+    }
+
+    public void setRecursive( //
+        Subject sessionSubject, //
+        int groupId, //       
+        boolean isRecursive) throws UpdateException {
+        throw new UpdateException("Not Yet Implemented");
+    }
+
+    /* Alread in local
+    public void updateResourceGroup( //
+        Subject sessionSubject, //
+        ResourceGroup newResourceGroup) throws UpdateException {
+        throw new UpdateException("Not Yet Implemented");
+    }
+    */
+
 }

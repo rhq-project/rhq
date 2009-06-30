@@ -27,8 +27,8 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.server.exception.UpdateException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
-import org.rhq.enterprise.server.resource.group.ResourceGroupUpdateException;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class EditGroupGeneralPropertiesUIBean {
@@ -68,9 +68,9 @@ public class EditGroupGeneralPropertiesUIBean {
         try {
             // pass null to let the method try to figure out the change
             this.resourceGroupManager.updateResourceGroup(subject, resourceGroup);
-        } catch (ResourceGroupUpdateException rgue) {
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Problem updating group: " + rgue.getMessage());
-            log.error("Problem updating group: ", rgue);
+        } catch (UpdateException ue) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Problem updating group: " + ue.getMessage());
+            log.error("Problem updating group: ", ue);
             return OUTCOME_FAILURE;
         }
 

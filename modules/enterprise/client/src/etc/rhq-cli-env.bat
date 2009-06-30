@@ -61,7 +61,7 @@ rem                                     is mainly used to augment the CLI's
 rem                                     default set of options. This can be
 rem                                     left unset if it is not needed.
 rem
-rem set RHQ_CLI_ADDITIONAL_JAVA_OPTS=-CLIlib:jdwp=transport=dt_socket,address=9797,server=y,suspend=n
+rem set RHQ_CLI_ADDITIONAL_JAVA_OPTS=-agentlib:jdwp=transport=dt_socket,address=9787,server=y,suspend=n
 
 rem    RHQ_CLI_CMDLINE_OPTS - If this is defined, these are the command line
 rem                             arguments that will be passed to the RHQ CLI.

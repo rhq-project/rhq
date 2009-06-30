@@ -55,7 +55,7 @@ public class HelpCommand implements ClientCommand {
 
             tw.print(data);
         } else if ("api".equals(args[1])) {
-            Map<String, Object> services = client.getRemoteClient().getAllManagers();
+            Map<String, Object> services = client.getRemoteClient().getManagers();
             if (args.length == 2) {
                 TabularWriter tw = new TabularWriter(client.getPrintWriter(), "API", "Package");
                 tw.setWidth(client.getConsoleWidth());
@@ -92,11 +92,15 @@ public class HelpCommand implements ClientCommand {
                         buf.append("(");
 
                         boolean secondary = false;
-                        for (Class<?> paramType : paramTypes) {
+                        for (int j = 0; (j < paramTypes.length); ++j) {
+                            String typeName = paramTypes[j].getSimpleName();
+                            if ((0 == j) && typeName.equals("Subject")) {
+                                continue;
+                            }
                             if (secondary)
                                 buf.append(", ");
                             secondary = true;
-                            buf.append(paramType.getSimpleName());
+                            buf.append(typeName);
                         }
                         buf.append(")");
                         data[i][1] = buf.toString();

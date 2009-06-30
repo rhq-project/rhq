@@ -52,7 +52,7 @@ public class ScriptCommand implements ClientCommand {
 
         // These are prepared on every call in  case the user logs out and logs into another server
         sem.getBindings().put("subject", client.getSubject());
-        sem.getBindings().putAll(client.getRemoteClient().getAllManagers());
+        sem.getBindings().putAll(client.getRemoteClient().getManagers());
         TabularWriter tw = new TabularWriter(client.getPrintWriter());
         tw.setWidth(client.getConsoleWidth());
         sem.getBindings().put("pretty", tw);

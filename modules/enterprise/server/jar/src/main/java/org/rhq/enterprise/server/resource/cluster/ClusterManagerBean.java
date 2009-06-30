@@ -39,7 +39,7 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
-import org.rhq.enterprise.server.resource.group.ResourceGroupAlreadyExistsException;
+import org.rhq.enterprise.server.exception.CreateException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupUpdateException;
 
@@ -108,12 +108,12 @@ public class ClusterManagerBean implements ClusterManagerLocal {
                 // You are allowed to cause the creation of an auto cluster backing group as long as you can
                 // view the parent group. (That check was done above)
                 int id = resourceGroupManager
-                    .createResourceGroup(subjectManager.getOverlord(), autoClusterBackingGroup);
+                    .createResourceGroup(subjectManager.getOverlord(), autoClusterBackingGroup).getId();
                 autoClusterBackingGroup = entityManager.find(ResourceGroup.class, id);
 
-            } catch (ResourceGroupAlreadyExistsException e) {
+            } catch (CreateException e) {
                 // This should not happen since the group name is actually generated
-                log.error("Unexpected Error, group exists: " + e);
+                log.error("Unexpected Error: " + e);
                 return null;
             }
         }

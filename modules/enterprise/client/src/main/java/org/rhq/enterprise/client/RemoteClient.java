@@ -89,9 +89,11 @@ public class RemoteClient {
 
     public void setLoggedIn(boolean value) {
         this.loggedIn = value;
+
     }
 
-    private Map<String, Object> allServices;
+    /** Map K=ManagerName V=RemoteProxy */
+    private Map<String, Object> managers;
     private Subject subject = null;
 
     public RemoteClient(String host, int port) {
@@ -160,22 +162,26 @@ public class RemoteClient {
         this.subject = subject;
     }
 
-    public Map<String, Object> getAllManagers() {
-        if (this.allServices == null) {
+    /**
+     * 
+     * @return Map K=manager name V=remote proxy
+     */
+    public Map<String, Object> getManagers() {
+        if (this.managers == null) {
 
-            this.allServices = new HashMap<String, Object>();
+            this.managers = new HashMap<String, Object>();
 
             for (Manager manager : Manager.values()) {
                 try {
                     Method m = this.getClass().getMethod("get" + manager.remoteName());
-                    this.allServices.put(manager.name(), m.invoke(this));
+                    this.managers.put(manager.name(), m.invoke(this));
                 } catch (Throwable e) {
                     System.out.println("Failed to load manager " + manager + " due to missing class: " + e);
                 }
             }
         }
 
-        return allServices;
+        return managers;
     }
 
     /**

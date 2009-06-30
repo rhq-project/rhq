@@ -32,6 +32,9 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.exception.CreateException;
+import org.rhq.enterprise.server.exception.DeleteException;
+import org.rhq.enterprise.server.exception.UpdateException;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 
 /**
@@ -41,16 +44,14 @@ import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
  */
 @Local
 public interface ResourceGroupManagerLocal {
-    int createResourceGroup(Subject user, ResourceGroup group) throws ResourceGroupAlreadyExistsException;
+    ResourceGroup createResourceGroup(Subject user, ResourceGroup group) throws CreateException;
 
     ResourceGroup updateResourceGroup(Subject user, ResourceGroup group, RecursivityChangeType changeType)
         throws ResourceGroupAlreadyExistsException, ResourceGroupUpdateException;
 
-    ResourceGroup updateResourceGroup(Subject user, ResourceGroup group) throws ResourceGroupAlreadyExistsException,
-        ResourceGroupUpdateException;
+    ResourceGroup updateResourceGroup(Subject user, ResourceGroup group) throws UpdateException;
 
-    void deleteResourceGroup(Subject user, Integer groupId) throws ResourceGroupNotFoundException,
-        ResourceGroupDeleteException;
+    void deleteResourceGroup(Subject user, int groupId) throws DeleteException;
 
     ResourceGroup getResourceGroupById(Subject user, int id, GroupCategory category)
         throws ResourceGroupNotFoundException;

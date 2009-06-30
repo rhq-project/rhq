@@ -250,11 +250,10 @@
 
     <c:simple-property name="no-tx-separate-pools" type="boolean"
                        displayName="No Tx Separate Pools" required="false">
-        <c:description>Whether or not to use separate pools. The default is Yes.</c:description>
-        <c:property-options>
-            <c:option name="True" value="true"/>
-            <c:option name="False" value="false"/>
-        </c:property-options>
+        <c:description>
+            If true, the datasource cannot reuse a connection outside a transaction once enlisted in a global transaction
+            and vice-versa. The default is Yes.
+        </c:description>
     </c:simple-property>
 
     <c:simple-property name="prefill" type="boolean" required="false">
@@ -379,7 +378,8 @@
     <c:simple-property name="exception-sorter-class-name" type="string" activationPolicy="immediate"
                        displayName="Exception Sorter Class Name" required="false">
         <c:description>
-            The fully qualified name of a Java class to use to check if an exception should be broadcast.
+            The fully qualified name of a Java class implementing the org.jboss.resource.adapter.jdbc.ExceptionSorter
+            interface that should be used to check if a JDBC exception should be broadcast.
         </c:description>
     </c:simple-property>
 
@@ -480,7 +480,7 @@
 
     <c:simple-property name="url-selector-strategy-class-name" required="false">
         <c:description>
-             The fully qualified class name of a class that implements the
+             The fully qualified class name of a Java class implementing the
              org.jboss.resource.adapter.jdbc.URLSelectorStrategy interface.
         </c:description>
     </c:simple-property>
@@ -495,7 +495,9 @@
     <c:simple-property name="valid-connection-checker-class-name" type="string"
                        displayName="Valid Connection Checker Class Name" required="false">
         <c:description>
-            Fully qualified name of the Java class used to validate if a connection is valid.
+            The fully qualified name of a Java class implementing the
+            org.jboss.resource.adapter.jdbc.ValidConnectionChecker whose pingDatabase method should be used to check if
+            a connection is still valid before handing it out from the pool.
         </c:description>
     </c:simple-property>
 '>
@@ -637,8 +639,21 @@
 <!ENTITY deploymentContentConfigProps '
     <configuration>
         <c:group name="deployment" displayName="Deployment Options">
-           <c:simple-property name="deployExploded" type="boolean" required="true" default="false"
-                              description="Should the archive be deployed in exploded form (i.e. as a directory)"/>
+           <c:simple-property name="deployExploded" displayName="Deploy Exploded?" type="boolean" required="true" 
+                              default="false">
+                <c:description>
+                    Should the archive be deployed in exploded form (i.e. as a directory)?
+                </c:description>
+           </c:simple-property>
+           <c:simple-property name="targetProfileName" type="boolean" required="false">
+                <c:description>
+                    The name of the profile to which the application should be deployed; a profile corresponds to an
+                    underlying directory on the filesystem (e.g. `applications` maps to deploy/ and `farm`, if available,
+                    maps to farm/); for a list of available deployment profiles, see the Deployment Profile Names trait
+                    on the JBossAS Server Resource; if no value is specified, the default deployment profile 
+                    (`applications`) will be used.
+                </c:description>
+           </c:simple-property>
         </c:group>
     </configuration>
 '>
@@ -646,11 +661,12 @@
 <!ENTITY webApplicationMetrics '
     <metric property="contextRoot"
             dataType="trait" displayType="summary"
-            description="this context root of this WAR - used as a unique path prefix for URLs corresponding to this WAR"/>
+            description="this context root of this WAR (e.g. jmx-console) - used as a unique path prefix for URLs
+                         corresponding to this WAR"/>
 
     <metric property="virtualHosts"
             dataType="trait" displayType="summary"
-            description="the virtual hosts to which this WAR is deployed"/>
+            description="the virtual host(s) to which this WAR is deployed"/>
 '>
 
 <!ENTITY webApplicationContextMetrics '
@@ -1061,6 +1077,10 @@
           <results><c:simple-property name="operationResult" description="Outcome of restarting the server."/></results>
         </operation>
 
+          <metric displayName="Deployment Profile Names" property="deploymentProfileNames"
+                  dataType="trait" displayType="summary"
+                  description="the names of the available deployment profiles (e.g. 'deploy', 'farm')"/>
+
           <metric displayName="Partition Name" property="MCBean|ServerConfig|*|partitionName"
                   dataType="trait" displayType="summary"
                   description="the name of the cluster partition this server belongs to"/>
@@ -1440,7 +1460,8 @@
                     <c:simple-property name="xa-datasource-class" default="oracle.jdbc.xa.client.OracleXADataSource"/>
                     <c:simple-property name="exception-sorter-class-name"
                                        default="org.jboss.resource.adapter.jdbc.vendor.OracleExceptionSorter"/>
-                    <!-- Oracles XA datasource cannot reuse a connection outside a transaction once enlisted in a global transaction and vice-versa -->
+                    <!-- Oracle's XA datasource cannot reuse a connection outside a transaction once enlisted in a
+                         global transaction and vice-versa. -->
                     <c:simple-property name="no-tx-separate-pools" default="true"/>
                     <c:simple-property name="use-try-lock" default="60000"/>
                     <c:map-property name="metadata">
@@ -2813,7 +2834,7 @@
          <operation name="execute" displayName="Execute Script"
                     description="execute the script; NOTE: environment variables to be
                                  passed to the script can be configured via this Script
-                                 service's connection properties (under its Inventory tab)">
+                                 service's connection properties (under its Inventory&gt;Connection tab)">
             <parameters>
                <c:simple-property name="commandLineArguments" type="longString" required="false"
                                   description="the command-line arguments (if any) to pass to the script; each

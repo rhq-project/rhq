@@ -31,9 +31,9 @@ import org.rhq.core.pc.PluginContainer;
 /**
  * @author Ian Springer
  */
-@Test(groups = "as5-plugin", enabled = AbstractPluginTest.ENABLE_TESTS)
-public class GeneralPluginTest extends AbstractPluginTest {    
-    @Test(enabled = ENABLE_TESTS)
+@Test(groups = "as5-plugin")
+public class GeneralPluginTest extends AbstractPluginTest {
+    @Test(groups = "as5-plugin")
     public void testPluginLoad() {
         PluginManager pluginManager = PluginContainer.getInstance().getPluginManager();
         PluginEnvironment pluginEnvironment = pluginManager.getPlugin(getPluginName());

@@ -38,10 +38,14 @@ import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.ResourceCreationDataType;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.configuration.ConfigurationManager;
 import org.rhq.core.pc.inventory.InventoryManager;
-import org.rhq.core.pc.plugin.PluginManager;
+import org.rhq.core.pc.inventory.ResourceFactoryManager;
 import org.rhq.core.pc.util.ComponentUtil;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
@@ -49,6 +53,7 @@ import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.testng.annotations.Test;
+import org.rhq.core.clientapi.agent.inventory.CreateResourceRequest;
 
 /**
  * @author Ian Springer
@@ -57,14 +62,31 @@ public abstract class AbstractResourceTest extends AbstractPluginTest {
     private static final long MEASUREMENT_FACET_METHOD_TIMEOUT = 3000; // 3 seconds
     private static final long OPERATION_FACET_METHOD_TIMEOUT = 3000; // 3 seconds
 
-    @Test(enabled = ENABLE_TESTS)
     public void testDiscovery() throws Exception {
         Set<Resource> resources = getResources();
         System.out.println("Found " + resources.size() + " " + getResourceType().getName() + " Resources.");
         assert !resources.isEmpty();
     }
 
-    @Test(enabled = ENABLE_TESTS)
+    @Test(groups = "as5-plugin")
+    public void testResourceCreation() throws Exception {
+        ResourceType resourceType = getResourceType();
+        if (!resourceType.isCreatable()) {
+            return;
+        }
+        if (resourceType.getCreationDataType() == ResourceCreationDataType.CONFIGURATION) {
+            ResourceFactoryManager resourceFactoryManager = PluginContainer.getInstance().getResourceFactoryManager();
+            new CreateResourceRequest(0, getServerResource().getId(), "My" + getResourceTypeName(),
+                    getResourceTypeName(), getPluginName(), new Configuration(), getTestResourceConfiguration());
+            //resourceFactoryManager.createResource();
+        } else {
+            // TODO
+        }
+
+        return;
+    }
+
+    @Test(groups = "as5-plugin")
     public void testMetrics() throws Exception {
         if (supportsFacet(MeasurementFacet.class)) {
             Set<MeasurementDefinition> metricDefinitions = getResourceType().getMetricDefinitions();
@@ -109,7 +131,7 @@ public abstract class AbstractResourceTest extends AbstractPluginTest {
         return;
     }
 
-    @Test(enabled = ENABLE_TESTS)
+    @Test(groups = "as5-plugin")
     public void testOperations() throws Exception {
         if (supportsFacet(OperationFacet.class)) {
             Set<OperationDefinition> operationDefinitions = getResourceType().getOperationDefinitions();
@@ -131,7 +153,7 @@ public abstract class AbstractResourceTest extends AbstractPluginTest {
         return;
     }
 
-    @Test(enabled = ENABLE_TESTS)
+    @Test(groups = "as5-plugin")
     public void testResourceConfigLoad() throws Exception {
         if (supportsFacet(ConfigurationFacet.class)) {
             ConfigurationManager configurationManager = PluginContainer.getInstance().getConfigurationManager();
@@ -148,7 +170,7 @@ public abstract class AbstractResourceTest extends AbstractPluginTest {
         return;
     }
 
-    @Test(enabled = ENABLE_TESTS)
+    @Test(groups = "as5-plugin")
     public void testResourceConfigUpdate() throws Exception {
         if (supportsFacet(ConfigurationFacet.class)) {
             ConfigurationManager configurationManager = PluginContainer.getInstance().getConfigurationManager();
@@ -183,6 +205,12 @@ public abstract class AbstractResourceTest extends AbstractPluginTest {
         PluginManager pluginManager = PluginContainer.getInstance().getPluginManager();
         PluginMetadataManager pluginMetadataManager = pluginManager.getMetadataManager();
         return pluginMetadataManager.getType(getResourceTypeName(), getPluginName());
+    }
+
+    protected ResourceType getServerResource() {
+        PluginManager pluginManager = PluginContainer.getInstance().getPluginManager();
+        PluginMetadataManager pluginMetadataManager = pluginManager.getMetadataManager();
+        return pluginMetadataManager.getType("JBossAS Server", getPluginName());
     }
 
     protected Configuration getTestOperationParameters(String name) {

@@ -24,10 +24,11 @@
 package org.rhq.plugins.jbossas5.test;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Set;
 
-import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.AfterSuite;
 
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
@@ -36,25 +37,32 @@ import org.rhq.core.pc.plugin.FileSystemPluginFinder;
 /**
  * @author Ian Springer
  */
-public abstract class AbstractPluginTest {
-    protected static final boolean ENABLE_TESTS = false;
-    
+public abstract class AbstractPluginTest {    
     private static final String PLUGIN_NAME = "JBossAS5";
-
-    protected String getPluginName() {
-        return PLUGIN_NAME;
-    }
+    private static final File ITEST_DIR = new File("target/itest");
+    private static final long ONE_WEEK_IN_SECONDS = 60L * 60 * 24;
 
     @BeforeSuite
     public void start() {
         try {
             PluginContainerConfiguration pcConfig = new PluginContainerConfiguration();
-            File pluginDir = new File("target/itest/plugins");
+            File pluginDir = new File(ITEST_DIR, "plugins");
             pcConfig.setPluginFinder(new FileSystemPluginFinder(pluginDir));
             pcConfig.setPluginDirectory(pluginDir);
             pcConfig.setInsideAgent(false);
-            File tmpDir = new File("target/itest/tmp");
+
+            // Set initial delays for all scheduled scans to one week to effectively disable them.
+            pcConfig.setServerDiscoveryInitialDelay(ONE_WEEK_IN_SECONDS);
+            pcConfig.setServiceDiscoveryInitialDelay(ONE_WEEK_IN_SECONDS);
+            pcConfig.setAvailabilityScanInitialDelay(ONE_WEEK_IN_SECONDS);
+            pcConfig.setConfigurationDiscoveryInitialDelay(ONE_WEEK_IN_SECONDS);
+            pcConfig.setContentDiscoveryInitialDelay(ONE_WEEK_IN_SECONDS);
+
+            File tmpDir = new File(ITEST_DIR, "tmp");
             tmpDir.mkdirs();
+            if (!tmpDir.isDirectory() || !tmpDir.canWrite()) {
+                throw new IOException("Failed to create temporary directory: " + tmpDir);
+            }
             pcConfig.setTemporaryDirectory(tmpDir);
             PluginContainer.getInstance().setConfiguration(pcConfig);
             System.out.println("Starting PC...");
@@ -74,4 +82,8 @@ public abstract class AbstractPluginTest {
         PluginContainer.getInstance().shutdown();
         System.out.println("PC stopped.");
     }
+
+    protected String getPluginName() {
+        return PLUGIN_NAME;
+    }    
 }

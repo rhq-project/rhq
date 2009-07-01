@@ -18,6 +18,7 @@
  */
 package org.rhq.core.util.collection;
 
+import java.lang.reflect.Array;
 import java.util.List;
 
 /**
@@ -33,7 +34,7 @@ public class ArrayUtils {
             throw new IllegalArgumentException(to + "<" + from);
         }
         int newSize = Math.min(arr.length - from, to - from); // to prevent null items in returned array
-        T[] copy = (T[]) new Object[newSize];
+        T[] copy = (T[]) Array.newInstance(arr.getClass().getComponentType(), newSize);
         System.arraycopy(arr, from, copy, 0, newSize);
         return copy;
     }

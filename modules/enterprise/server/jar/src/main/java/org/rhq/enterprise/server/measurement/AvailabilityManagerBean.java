@@ -18,8 +18,6 @@
  */
 package org.rhq.enterprise.server.measurement;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -35,7 +33,6 @@ import javax.persistence.NoResultException;
 import javax.persistence.NonUniqueResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -56,7 +53,6 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.core.util.StopWatch;
-import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
@@ -82,9 +78,6 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
-    @javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
-    private DataSource dataSource;
-
     @EJB
     private AvailabilityManagerLocal availabilityManager;
     @EJB
@@ -104,22 +97,16 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     @TransactionTimeout(6 * 60 * 60)
     public int purgeAvailabilities(long oldest) {
-        Connection conn = null;
-        PreparedStatement stmt = null;
-
         try {
-            conn = dataSource.getConnection();
-            stmt = conn.prepareStatement(Availability.NATIVE_QUERY_PURGE);
-            stmt.setLong(1, oldest);
+            Query purgeQuery = entityManager.createNativeQuery(Availability.NATIVE_QUERY_PURGE);
+            purgeQuery.setParameter(1, oldest);
             long startTime = System.currentTimeMillis();
-            int deleted = stmt.executeUpdate();
+            int deleted = purgeQuery.executeUpdate();
             MeasurementMonitor.getMBean().incrementPurgeTime(System.currentTimeMillis() - startTime);
             MeasurementMonitor.getMBean().setPurgedAvailabilities(deleted);
             return deleted;
         } catch (Exception e) {
             throw new RuntimeException("Failed to purge availabilities older than [" + oldest + "]", e);
-        } finally {
-            JDBCUtil.safeClose(conn, stmt, null);
         }
     }
 

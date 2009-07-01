@@ -46,6 +46,7 @@ import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.configuration.ConfigurationManager;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceFactoryManager;
+import org.rhq.core.pc.plugin.PluginManager;
 import org.rhq.core.pc.util.ComponentUtil;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;

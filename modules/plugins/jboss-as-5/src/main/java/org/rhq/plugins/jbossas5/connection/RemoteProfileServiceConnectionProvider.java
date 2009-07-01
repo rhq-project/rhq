@@ -26,6 +26,7 @@ import java.util.Properties;
 
 import javax.naming.Context;
 import javax.naming.InitialContext;
+import javax.naming.NamingException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -63,6 +64,7 @@ public class RemoteProfileServiceConnectionProvider extends AbstractProfileServi
     private String providerURL;
     private String principal;
     private String credentials;
+    private InitialContext initialContext;
 
     public RemoteProfileServiceConnectionProvider(String providerURL, String principal, String credentials) {
         this.providerURL = providerURL;
@@ -81,7 +83,7 @@ public class RemoteProfileServiceConnectionProvider extends AbstractProfileServi
             env.setProperty(Context.SECURITY_PRINCIPAL, this.principal);
             env.setProperty(Context.SECURITY_CREDENTIALS, this.credentials);
             log.debug("Connecting to Profile Service via remote JNDI using env [" + env + "]...");
-            InitialContext initialContext = createInitialContext(env);
+            this.initialContext = createInitialContext(env);
             profileService = (ProfileService) lookup(initialContext, SECURE_PROFILE_SERVICE_JNDI_NAME);
             managementView = (ManagementView) lookup(initialContext, SECURE_MANAGEMENT_VIEW_JNDI_NAME);
             deploymentManager = (DeploymentManager) lookup(initialContext, SECURE_DEPLOYMENT_MANAGER_JNDI_NAME);
@@ -92,7 +94,7 @@ public class RemoteProfileServiceConnectionProvider extends AbstractProfileServi
             env.setProperty("jnp.timeout", String.valueOf(JNP_TIMEOUT));
             env.setProperty("jnp.sotimeout", String.valueOf(JNP_SO_TIMEOUT));
             log.debug("Connecting to Profile Service via remote JNDI using env [" + env + "]...");
-            InitialContext initialContext = createInitialContext(env);
+            this.initialContext = createInitialContext(env);
             profileService = (ProfileService) lookup(initialContext, PROFILE_SERVICE_JNDI_NAME);
             managementView = profileService.getViewManager();
             deploymentManager = profileService.getDeploymentManager();
@@ -101,6 +103,11 @@ public class RemoteProfileServiceConnectionProvider extends AbstractProfileServi
     }
 
     protected void doDisconnect() {
-        return;
+        try {
+            this.initialContext.close();
+        }
+        catch (NamingException e) {
+            log.error("Failed to close JNDI InitialContext.", e);
+        }
     }
 }

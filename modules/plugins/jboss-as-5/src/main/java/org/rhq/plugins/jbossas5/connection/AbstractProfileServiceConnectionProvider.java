@@ -37,25 +37,24 @@ public abstract class AbstractProfileServiceConnectionProvider implements Profil
     private final Log log = LogFactory.getLog(this.getClass());
 
     private ProfileServiceConnectionImpl existingConnection;
-    private boolean connected;
 
     public final ProfileServiceConnection connect() {
-        ProfileServiceConnectionImpl connection = doConnect();
-        this.connected = true;
-        if (this.existingConnection == null)
-            this.existingConnection = connection;
+        this.existingConnection = doConnect();
         return this.existingConnection;
     }
 
     protected abstract ProfileServiceConnectionImpl doConnect();
 
     public boolean isConnected() {
-        return this.connected;
+        // TODO: Ping the connection to make sure it's not defunct?
+        return (this.existingConnection != null);
     }
 
     public final void disconnect() {
-        this.connected = false;
-        doDisconnect();
+        if (isConnected()) {
+            this.existingConnection = null;
+            doDisconnect();
+        }
     }
 
     protected abstract void doDisconnect();

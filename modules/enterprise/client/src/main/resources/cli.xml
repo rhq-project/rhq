@@ -14,16 +14,13 @@
                display="resourceId" />
             <criteria
                field="description"
-               display="descriptionSubstring"
-               prompt="(substring)" />
+               display="descriptionSubstring" />
             <criteria
                field="inventoryStatus"
-               prompt="(one of)"
                displayType="org.rhq.core.domain.resource.InventoryStatus" />
             <criteria
                field="name"
-               display="nameSubstring"
-               prompt="(substring)" />
+               display="nameSubstring" />
             <criteria
                field="parentResource.id"
                display="parentResourceId" />
@@ -61,17 +58,14 @@
                display="id" />
             <criteria
                field="childResources.description"
-               display="descriptionSubstring"
-               prompt="(substring)" />
+               display="descriptionSubstring" />
             <criteria
                field="childResources.inventoryStatus"
                display="inventoryStatus"
-               prompt="(one of)"
                displayType="enum" />
             <criteria
                field="childResources.name"
-               display="nameSubstring"
-               prompt="(substring)" />
+               display="nameSubstring" />
          </parameter>
          <parameter
             position="2"
@@ -111,9 +105,7 @@
             name="criteria"
             className="org.rhq.core.domain.auth.Subject">
             <criteria field="id" />
-            <criteria
-               field="name"
-               prompt="(substring)" />
+            <criteria field="name" />
          </parameter>
          <parameter
             position="2"

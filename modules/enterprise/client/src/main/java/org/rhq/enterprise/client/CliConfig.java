@@ -385,13 +385,11 @@ public class CliConfig {
         public void setSortOptions(List<SortOption> sortOptions) {
             this.sortOptions = sortOptions;
         }
-
     }
 
     public static class Criteria {
         private String field;
         private String display;
-        private String prompt;
         private String displayType;
 
         public Criteria(Attributes attributes) {
@@ -400,7 +398,6 @@ public class CliConfig {
             if (null == this.display) {
                 this.display = this.field;
             }
-            this.prompt = attributes.getValue("prompt");
             this.displayType = attributes.getValue("displayType");
         }
 
@@ -420,14 +417,6 @@ public class CliConfig {
             this.display = displayName;
         }
 
-        public String getPrompt() {
-            return prompt;
-        }
-
-        public void setPrompt(String prompt) {
-            this.prompt = prompt;
-        }
-
         public String getDisplayType() {
             return displayType;
         }
@@ -435,7 +424,6 @@ public class CliConfig {
         public void setDisplayType(String displayType) {
             this.displayType = displayType;
         }
-
     }
 
     public static class OptionalData {

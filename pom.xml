@@ -77,6 +77,7 @@
     <jtds.version>1.2.2</jtds.version>
     <richfaces.version>3.3.0.GA</richfaces.version>
     <sigar.version>1.6.3.68-beta1</sigar.version>
+    <quartz.version>1.6.5</quartz.version>
 
     <!-- defaults for datasource used by dbsetup, unit+integration tests, and dev container build -
          these may be overridden in ~/.m2/settings.xml -->
@@ -315,6 +316,18 @@
         <groupId>oswego-concurrent</groupId>
         <artifactId>concurrent</artifactId>
         <version>${concurrent.version}</version>
+      </dependency>
+      
+      <dependency>
+        <groupId>org.opensymphony.quartz</groupId>
+        <artifactId>quartz</artifactId>
+        <version>${quartz.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.opensymphony.quartz</groupId>
+        <artifactId>quartz-oracle</artifactId>
+        <version>${quartz.version}</version>
       </dependency>
 
       <!-- Postgres JDBC driver -->

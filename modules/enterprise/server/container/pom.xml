@@ -81,8 +81,14 @@
     <dependency>
       <groupId>org.opensymphony.quartz</groupId>
       <artifactId>quartz</artifactId>
-      <version>1.6.5</version>
+      <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
     </dependency>
+    
+     <dependency>
+       <groupId>org.opensymphony.quartz</groupId>
+       <artifactId>quartz-oracle</artifactId>
+       <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+     </dependency>
 
     <dependency>
       <groupId>postgresql</groupId>
@@ -172,6 +178,7 @@
                   <property name="jsf-impl.version" value="${jsf-impl.version}" />
                   <property name="jboss-faces.version" value="${jboss-faces.version}" />
                   <property name="hibernate3.version" value="${hibernate3.version}" />
+                  <property name="quartz.version" value="${quartz.version}" />
 
                   <!-- dev/test DB settings (used to init rhq-server.properties if dev profile is active or developer prop is set) -->
                   <property name="rhq.test.ds.connection-url" value="${rhq.test.ds.connection-url}" />

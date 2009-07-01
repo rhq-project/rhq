@@ -266,7 +266,14 @@
       <dependency>
          <groupId>org.opensymphony.quartz</groupId>
          <artifactId>quartz</artifactId>
-         <version>1.6.5</version>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+         <scope>provided</scope> <!-- by JBossAS itself, which the container build has packaged with 1.6.5 -->
+      </dependency>
+
+      <dependency>
+         <groupId>org.opensymphony.quartz</groupId>
+         <artifactId>quartz-oracle</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
          <scope>provided</scope> <!-- by JBossAS itself, which the container build has packaged with 1.6.5 -->
       </dependency>
 

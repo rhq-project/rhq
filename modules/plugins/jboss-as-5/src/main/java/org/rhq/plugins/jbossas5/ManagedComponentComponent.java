@@ -157,7 +157,8 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
         Configuration pluginConfig = getResourceContext().getPluginConfiguration();
         try
         {
-            Map<String, ManagedProperty> managedProperties = getManagedComponent().getProperties();
+            ManagedComponent managedComponent = getManagedComponent();
+            Map<String, ManagedProperty> managedProperties = managedComponent.getProperties();
             Map<String, PropertySimple> customProps = ResourceComponentUtils.getCustomProperties(pluginConfig);
             if (this.log.isDebugEnabled()) this.log.debug("*** BEFORE UPDATE:\n"
                     + DebugUtils.convertPropertiesToString(managedProperties));
@@ -165,7 +166,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
                     getResourceContext().getResourceType(), customProps);
             if (this.log.isDebugEnabled()) this.log.debug("*** AFTER UPDATE:\n"
                     + DebugUtils.convertPropertiesToString(managedProperties));
-            updateComponent();
+            updateComponent(managedComponent);
             configurationUpdateReport.setStatus(ConfigurationUpdateStatus.SUCCESS);
         }
         catch (Exception e)
@@ -241,8 +242,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
         }
     }
 
-    protected void updateComponent() throws Exception {
-        ManagedComponent managedComponent = getManagedComponent();
+    protected void updateComponent(ManagedComponent managedComponent) throws Exception {
         log.trace("Updating " + getResourceDescription() + " with component " + toString(managedComponent) + "...");
         ManagementView managementView = getConnection().getManagementView();
         managementView.updateComponent(managedComponent);

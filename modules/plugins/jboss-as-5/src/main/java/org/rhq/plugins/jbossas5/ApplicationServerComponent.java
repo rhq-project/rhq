@@ -134,8 +134,6 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
 
     private static final Pattern METRIC_NAME_PATTERN = Pattern.compile("(.*)\\|(.*)\\|(.*)\\|(.*)");
 
-    private static final String JDK5CONNECTOR = "org.mc4j.ems.connection.support.metadata.J2SE5ConnectionTypeDescriptor";
-
     private final Log log = LogFactory.getLog(this.getClass());
 
     private ResourceContext resourceContext;
@@ -147,78 +145,30 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
     private LogFileEventResourceComponentHelper logFileEventDelegate;
 
     public AvailabilityType getAvailability() {
-        connect();
+        connectToProfileService();
         // TODO: Ping the connection to make sure it's not defunct.
         return (this.connection != null) ? AvailabilityType.UP : AvailabilityType.DOWN;
     }
 
     public void start(ResourceContext resourceContext) {
         this.resourceContext = resourceContext;
-        connect();
+
+        // Connect to the JBAS instance's Profile Service and JMX MBeanServer.
+        connectToProfileService();
+        initializeEmsConnection();
+
+        // Now create all our helpers and delegates.
         this.logFileEventDelegate = new LogFileEventResourceComponentHelper(this.resourceContext);
         this.logFileEventDelegate.startLogFileEventPollers();
 
-        JBossASPaths paths = getJBossASPaths();
-        ContentContext contentContext = resourceContext.getContentContext();
-
-        // TODO define the control action facade once we support operations on
-        // the app server.
-        // OperationContext operationContext =
-        // resourceContext.getOperationContext();
-        //
-        // ControlActionFacade controlActionFacade =
-        // new PluginContainerControlActionFacade(operationContext, this);
-        ControlActionFacade controlActionFacade = null;
-
-        JBPMWorkflowManager workflowManager = new JBPMWorkflowManager(contentContext, controlActionFacade, paths);
-
-        Configuration pluginConfig = resourceContext.getPluginConfiguration();
-
-        File configPath = resolvePathRelativeToHomeDir(getRequiredPropertyValue(pluginConfig,
-            PluginConfigPropNames.SERVER_HOME_DIR));
-        if (!configPath.exists()) {
-            throw new InvalidPluginConfigurationException("Configuration path '" + configPath + "' does not exist.");
-        }
-
+        JBPMWorkflowManager workflowManager = createJbpmWorkflowManager(resourceContext);
+        File configPath = getConfigurationPath();
         this.contentFacetDelegate = new ApplicationServerContentFacetDelegate(workflowManager, configPath);
-
-        initializeEmsConnection();
-    }
-
-    private void initializeEmsConnection() {
-        Configuration pluginConfiguration = resourceContext.getPluginConfiguration();
-
-        Configuration jmxConfig = new Configuration();
-
-        String jbossHomeDir = pluginConfiguration.getSimpleValue(PluginConfigPropNames.HOME_DIR, null);
-
-        String connectorDescriptorType;
-        boolean runningEmbedded = runningEmbedded();
-        if (runningEmbedded) {
-            connectorDescriptorType = InternalVMTypeDescriptor.class.getName();
-        } else {
-            String connectorAddress = pluginConfiguration.getSimpleValue(PluginConfigPropNames.NAMING_URL, null);
-            String connectorPrincipal = pluginConfiguration.getSimpleValue(PluginConfigPropNames.PRINCIPAL, null);
-            String connectorCredentials = pluginConfiguration.getSimpleValue(PluginConfigPropNames.CREDENTIALS, null);
-
-            connectorDescriptorType = JBossAS5ConnectionTypeDescriptor.class.getName();
-
-            jmxConfig.put(new PropertySimple(JmxConnectionHelper.CONNECTOR_ADDRESS, connectorAddress));
-            jmxConfig.put(new PropertySimple(JmxConnectionHelper.CONNECTOR_CREDENTIALS, connectorCredentials));
-            jmxConfig.put(new PropertySimple(JmxConnectionHelper.CONNECTOR_PRINCIPAL, connectorPrincipal));
-        }
-        jmxConfig.put(new PropertySimple(JmxConnectionHelper.CONNECTOR_DESCRIPTOR_TYPE, connectorDescriptorType));
-        jmxConfig.put(new PropertySimple(JmxConnectionHelper.JBOSS_HOME_DIR, jbossHomeDir));
-
-        this.jmxConnectionHelper = new JmxConnectionHelper(!runningEmbedded, resourceContext.getTemporaryDirectory());
-        EmsConnection conn = this.jmxConnectionHelper.getEmsConnection(jmxConfig);
-        if (conn != null)
-            log.info("Successfully obtained a JMX connection to "
-                + jmxConfig.getSimpleValue(JmxConnectionHelper.CONNECTOR_ADDRESS, "-n/a-"));
     }
 
     public void stop() {
         this.logFileEventDelegate.stopLogFileEventPollers();
+        disconnectFromProfileService();
         this.jmxConnectionHelper.closeConnection();
     }
 
@@ -300,7 +250,7 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
 
     @Nullable
     public ProfileServiceConnection getConnection() {
-        connect();
+        connectToProfileService();
         return this.connection;
     }
 
@@ -328,7 +278,7 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
 
     // ---------------------------------------------------------------
 
-    private void connect() {
+    private void connectToProfileService() {
         if (this.connection != null)
             return;
         // TODO: Check for a defunct connection and if found try to reconnect.
@@ -347,6 +297,18 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
             this.connection = connectionProvider.connect();
         } catch (RuntimeException e) {
             log.debug("Failed to connect to Profile Service.", e);
+        }
+    }
+
+    private void disconnectFromProfileService() {
+        if (this.connection != null) {
+            try {
+                this.connection.getConnectionProvider().disconnect();
+            } catch (RuntimeException e) {
+                log.debug("Failed to disconnect from Profile Service.", e);
+            } finally {
+                this.connection = null;
+            }
         }
     }
 
@@ -529,15 +491,76 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
     }
 
     public ResourceContext getResourceContext() {
-        return resourceContext;
+        return this.resourceContext;
     }
 
     public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException,
         Exception {
-        if (operationDelegate == null)
-            operationDelegate = new ApplicationServerOperationsDelegate(this, resourceContext.getSystemInformation());
+        if (this.operationDelegate == null) {
+            this.operationDelegate = new ApplicationServerOperationsDelegate(this, resourceContext.getSystemInformation());
+        }
         ApplicationServerSupportedOperations operation = Enum.valueOf(ApplicationServerSupportedOperations.class, name
             .toUpperCase());
-        return operationDelegate.invoke(operation, parameters);
+        return this.operationDelegate.invoke(operation, parameters);
+    }
+
+    private void initializeEmsConnection() {
+        Configuration pluginConfiguration = this.resourceContext.getPluginConfiguration();
+
+        Configuration jmxConfig = new Configuration();
+
+        String jbossHomeDir = pluginConfiguration.getSimpleValue(PluginConfigPropNames.HOME_DIR, null);
+
+        String connectorDescriptorType;
+        boolean runningEmbedded = runningEmbedded();
+        if (runningEmbedded) {
+            connectorDescriptorType = InternalVMTypeDescriptor.class.getName();
+        } else {
+            String connectorAddress = pluginConfiguration.getSimpleValue(PluginConfigPropNames.NAMING_URL, null);
+            String connectorPrincipal = pluginConfiguration.getSimpleValue(PluginConfigPropNames.PRINCIPAL, null);
+            String connectorCredentials = pluginConfiguration.getSimpleValue(PluginConfigPropNames.CREDENTIALS, null);
+
+            connectorDescriptorType = JBossAS5ConnectionTypeDescriptor.class.getName();
+
+            jmxConfig.put(new PropertySimple(JmxConnectionHelper.CONNECTOR_ADDRESS, connectorAddress));
+            jmxConfig.put(new PropertySimple(JmxConnectionHelper.CONNECTOR_CREDENTIALS, connectorCredentials));
+            jmxConfig.put(new PropertySimple(JmxConnectionHelper.CONNECTOR_PRINCIPAL, connectorPrincipal));
+        }
+        jmxConfig.put(new PropertySimple(JmxConnectionHelper.CONNECTOR_DESCRIPTOR_TYPE, connectorDescriptorType));
+        jmxConfig.put(new PropertySimple(JmxConnectionHelper.JBOSS_HOME_DIR, jbossHomeDir));
+
+        this.jmxConnectionHelper = new JmxConnectionHelper(!runningEmbedded, resourceContext.getTemporaryDirectory());
+        EmsConnection conn = this.jmxConnectionHelper.getEmsConnection(jmxConfig);
+        if (conn != null) {
+            log.info("Successfully obtained a JMX connection to "
+                + jmxConfig.getSimpleValue(JmxConnectionHelper.CONNECTOR_ADDRESS, "-n/a-"));
+        }
+    }
+
+    private JBPMWorkflowManager createJbpmWorkflowManager(ResourceContext resourceContext) {
+        ContentContext contentContext = resourceContext.getContentContext();
+        ControlActionFacade controlActionFacade = initControlActionFacade();
+        JBossASPaths paths = getJBossASPaths();
+        JBPMWorkflowManager workflowManager = new JBPMWorkflowManager(contentContext, controlActionFacade, paths);
+        return workflowManager;
+    }
+
+    private ControlActionFacade initControlActionFacade() {
+        // TODO define the control action facade once we support operations on the app server.
+        // OperationContext operationContext = resourceContext.getOperationContext();
+        //
+        // ControlActionFacade controlActionFacade = new PluginContainerControlActionFacade(operationContext, this);
+        ControlActionFacade controlActionFacade = null;
+        return controlActionFacade;
+    }
+
+    private File getConfigurationPath() {
+        Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
+        File configPath = resolvePathRelativeToHomeDir(getRequiredPropertyValue(pluginConfig,
+            PluginConfigPropNames.SERVER_HOME_DIR));
+        if (!configPath.isDirectory()) {
+            throw new InvalidPluginConfigurationException("Configuration path '" + configPath + "' does not exist.");
+        }
+        return configPath;
     }
 }

@@ -61,14 +61,14 @@ import org.rhq.plugins.jbossas5.util.JnpConfig;
 import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
 
 /**
- * Discovery component for JBoss AS, 5.1.0.CR1 or later, Servers.
+ * A Resource discovery component for JBoss AS, 5.1.0.CR1 or later, and JBoss EAP, 5.0.0.Beta or later, Servers.
  *
  * @author Ian Springer
  * @author Mark Spritzler
  */
 public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryComponent {
-    private static final String DEFAULT_RESOURCE_DESCRIPTION_AS = "JBoss Application Server";
-    private static final String DEFAULT_RESOURCE_DESCRIPTION_EAP = "JBoss Enterprise Application Platform";
+    private static final String DEFAULT_RESOURCE_DESCRIPTION_AS = "JBoss Application Server (AS)";
+    private static final String DEFAULT_RESOURCE_DESCRIPTION_EAP = "JBoss Enterprise Application Platform (EAP)";
     private static final String JBMANCON_DEBUG_SYSPROP = "jbmancon.debug";
     private static final String CHANGE_ME = "***CHANGE_ME***";
     private static final String JBOSS_SERVICE_XML = "conf" + File.separator + "jboss-service.xml";
@@ -384,8 +384,9 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
         // Above did not work, so fall back to our previous scheme
         JnpConfig jnpConfig = getJnpConfig(installHome, configDir, cmdLine.getSystemProperties());
         String jnpAddress = (jnpConfig.getJnpAddress() != null) ? jnpConfig.getJnpAddress() : CHANGE_ME;
-        if (jnpAddress.equals(ANY_ADDRESS))
+        if (ANY_ADDRESS.equals(jnpAddress)) {
             jnpAddress = LOCALHOST;
+        }
         String jnpPort = (jnpConfig.getJnpPort() != null) ? String.valueOf(jnpConfig.getJnpPort()) : CHANGE_ME;
         return "jnp://" + jnpAddress + ":" + jnpPort;
     }
@@ -395,8 +396,9 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
         JnpConfig config = JnpConfig.getConfig(installHome, serviceXML, props);
         if ((config == null) || (config.getJnpPort() == null)) {
             File namingServiceFile = new File(configDir, JBOSS_NAMING_SERVICE_XML);
-            if (namingServiceFile.exists())
+            if (namingServiceFile.exists()) {
                 config = JnpConfig.getConfig(installHome, namingServiceFile, props);
+            }
         }
         return config;
     }

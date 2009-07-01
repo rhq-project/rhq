@@ -27,18 +27,17 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Set;
 
-import org.testng.annotations.BeforeSuite;
-import org.testng.annotations.AfterSuite;
-
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.plugin.FileSystemPluginFinder;
+import org.rhq.plugins.jbossas5.test.util.AppServerUtils;
+import org.testng.annotations.AfterSuite;
+import org.testng.annotations.BeforeSuite;
 
 /**
  * @author Ian Springer
  */
-public abstract class AbstractPluginTest {    
-    private static final String PLUGIN_NAME = "JBossAS5";
+public abstract class AbstractPluginTest {
     private static final File ITEST_DIR = new File("target/itest");
     private static final long ONE_WEEK_IN_SECONDS = 60L * 60 * 24;
 
@@ -67,7 +66,8 @@ public abstract class AbstractPluginTest {
             PluginContainer.getInstance().setConfiguration(pcConfig);
             System.out.println("Starting PC...");
             PluginContainer.getInstance().initialize();
-            Set<String> pluginNames = PluginContainer.getInstance().getPluginManager().getMetadataManager().getPluginNames();
+            Set<String> pluginNames = PluginContainer.getInstance().getPluginManager().getMetadataManager()
+                .getPluginNames();
             System.out.println("PC started with the following plugins: " + pluginNames);
             PluginContainer.getInstance().getInventoryManager().executeServerScanImmediately();
             PluginContainer.getInstance().getInventoryManager().executeServiceScanImmediately();
@@ -84,6 +84,6 @@ public abstract class AbstractPluginTest {
     }
 
     protected String getPluginName() {
-        return PLUGIN_NAME;
-    }    
+        return AppServerUtils.PLUGIN_NAME;
+    }
 }

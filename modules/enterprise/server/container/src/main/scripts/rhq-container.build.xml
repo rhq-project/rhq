@@ -274,7 +274,7 @@
     <copy file="${settings.localRepository}/org/jboss/jboss-faces/${jboss-faces.version}/jboss-faces-${jboss-faces.version}.jar"
           tofile="${jsf-libs.dir}/jboss-faces.jar" overwrite="true" verbose="true" />
 
-    <echo>Upgrading quartz.jar to v${jsf-impl.version} ...</echo>
+    <echo>Upgrading quartz.jar to v${quartz.version} ...</echo>
     <copy file="${settings.localRepository}/org/opensymphony/quartz/quartz/${quartz.version}/quartz-${quartz.version}.jar"
           tofile="${jboss.home}/server/default/lib/quartz.jar" overwrite="true" verbose="true" />
     <copy file="${settings.localRepository}/org/opensymphony/quartz/quartz-oracle/${quartz.version}/quartz-oracle-${quartz.version}.jar"

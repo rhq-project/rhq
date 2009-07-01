@@ -81,6 +81,7 @@
       <copy verbose="true" toDir="${bin.home}">
          <fileset dir="${basedir}/src/etc/" includes="rhq-cli*.*" />
       </copy>
+      <chmod dir="${bin.home}" perm="ug+rx" includes="*.sh"/>
    </target>
 
    <target name="prepare-conf-dir">

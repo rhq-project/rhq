@@ -48,7 +48,7 @@ public interface SubjectManagerRemote {
     /**
      * Change the password for a user.
      *
-     * @param  sessionSubject  The logged in user's subject.
+     * @param  subject  The logged in user's subject.
      * @param  username The user whose password will be changed
      * @param  password The new password for the user
      *
@@ -56,7 +56,7 @@ public interface SubjectManagerRemote {
      */
     @WebMethod
     void changePassword( //
-        @WebParam(name = "sessionSubject") Subject sessionSubject, //
+        @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "username") String username, //
         @WebParam(name = "password") String password) //
         throws UpdateException;
@@ -65,7 +65,7 @@ public interface SubjectManagerRemote {
      * Creates a new principal (username and password) in the internal database. The password will be encoded before
      * being stored.
      *
-     * @param  sessionSubject  The logged in user's subject.
+     * @param  subject  The logged in user's subject.
      * @param  username The username part of the principal
      * @param  password The password part ofthe principal
      *
@@ -73,7 +73,7 @@ public interface SubjectManagerRemote {
      */
     @WebMethod
     void createPrincipal( //
-        @WebParam(name = "sessionSubject") Subject sessionSubject, //
+        @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "username") String username, //
         @WebParam(name = "password") String password) throws CreateException;
 
@@ -81,8 +81,8 @@ public interface SubjectManagerRemote {
      * Create a a new subject. This <b>ignores</b> the roles in <code>subject</code>. The created subject will not be
      * assigned to any roles; use the {@link RoleManagerLocal role manager} to assign roles to a subject.
      *
-     * @param  sessionSubject  The logged in user's subject.
-     * @param  subject The subject to be created.
+     * @param  subject         The logged in user's subject.
+     * @param  subjectToCreate The subject to be created.
      *
      * @return the newly persisted {@link Subject}
      *
@@ -90,42 +90,39 @@ public interface SubjectManagerRemote {
      */
     @WebMethod
     Subject createSubject( //
-        @WebParam(name = "sessionSubject") Subject sessionSubject, //
-        @WebParam(name = "subject") Subject subject) throws CreateException;
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "subjectToCreate") Subject subjectToCreate) throws CreateException;
 
     /**
      * Deletes the given set of users, including both the {@link Subject} and {@link Principal} objects associated with
      * those users.
      *
-     * @param  sessionSubject  The logged in user's subject.
+     * @param  subject    The logged in user's subject.
      * @param  subjectIds identifies the subject IDs for all the users that are to be deleted
      *
      * @throws Exception if failed to delete one or more users
      */
     @WebMethod
     void deleteSubjects( //
-        @WebParam(name = "sessionSubject") Subject sessionSubject, //
+        @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "subjectIds") Integer[] subjectIds) //
         throws DeleteException;
 
     /**
      * Looks up the existing of a subject by the given username.
      *
-     * @param  sessionSubject  The logged in user's subject.
      * @param  username the name of the subject to look for
      *
      * @return the subject that was found or <code>null</code> if not found
      */
     @WebMethod
     Subject getSubjectByName( //
-        @WebParam(name = "sessionSubject") Subject sessionSubject, //
-        @WebParam(name = "username") String username) //
-        throws FetchException;
+        @WebParam(name = "username") String username);
 
     /**
      * This find service can be used to find subjects based on various criteria and return various data.
      *
-     * @param sessionSubject The logged in user's subject.
+     * @param subject  The logged in user's subject.
      * @param criteria {@link Resource}, can be null
      * <pre>
      * If provided the Subject object can specify various search criteria as specified below.
@@ -155,7 +152,7 @@ public interface SubjectManagerRemote {
      */
     @WebMethod
     PageList<Subject> findSubjects( //
-        @WebParam(name = "sessionSubject") Subject sessionSubject, //
+        @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "username") Subject criteria, PageControl pc) //
         throws FetchException;
 
@@ -190,24 +187,24 @@ public interface SubjectManagerRemote {
     /**
      * Logs out a user.
      *
-     * @param sessionId The session id for the current user
+     * @param username The username for the current user
      */
     @WebMethod
     void logout( //
-        @WebParam(name = "sessionId") int sessionId);
+        @WebParam(name = "subject") Subject subject);
 
     /**
      * Updates an existing subject with new data. This does <b>not</b> cascade any changes to the roles but it will save
      * the subject's configuration.
      *
-     * @param  sessionSubject  The logged in user's subject.
+     * @param  subject         The logged in user's subject.
      * @param  subjectToModify the subject whose data is to be updated (which may or may not be the same as <code>user</code>)
      *
      * @return the merged subject, which may or may not be the same instance of <code>subjectToModify</code>
      */
     @WebMethod
     Subject updateSubject( //
-        @WebParam(name = "sessionSubject") Subject sessionSubject, //
+        @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "subjectToModify") Subject subjectToModify) //
         throws UpdateException;
 

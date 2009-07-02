@@ -1,6 +1,7 @@
 package org.rhq.core.domain.util;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -63,13 +64,19 @@ public class QueryGenerator {
         this.alias = aliasBuilder.toString();
     }
 
-    public String getQueryString() throws Exception {
+    // for testing purposes only, should use getQuery(EntityManager) or getCountQuery(EntityManager) instead
+    public String getQueryString(boolean countQuery) {
         StringBuilder results = new StringBuilder();
-        results.append("SELECT ").append(alias).append(NL);
+        results.append("SELECT ");
+        if (countQuery) {
+            results.append(" COUNT(").append(alias).append(")").append(NL);
+        } else {
+            results.append(alias).append(NL);
+        }
         results.append("FROM ").append(className).append(' ').append(alias).append(NL);
         for (String fetchJoin : relationsToFetch) {
             if (!isEntityCollectionPersistence(fetchJoin)) {
-                throw new Exception("Can not fetchJoin '" + fetchJoin + "'.");
+                throw new IllegalArgumentException("Can not fetchJoin '" + fetchJoin + "'.");
             }
 
             results.append("LEFT JOIN FETCH ").append(alias).append('.').append(fetchJoin).append(NL);
@@ -92,43 +99,52 @@ public class QueryGenerator {
             results.append(alias).append('.').append(critField.getKey() + " = :" + critField.getKey() + " ");
         }
 
-        boolean first = true;
-        for (OrderingField orderingField : pageControl.getOrderingFields()) {
-            //verify persistency
-            if (!isEntityFieldPersistence(orderingField.getField())) {
-                throw new Exception("Can not order by '" + orderingField.getField() + "'.");
-            }
+        if (countQuery == false) {
+            boolean first = true;
+            for (OrderingField orderingField : pageControl.getOrderingFields()) {
+                //verify persistency
+                if (!isEntityFieldPersistence(orderingField.getField())) {
+                    throw new IllegalArgumentException("Can not order by '" + orderingField.getField() + "'.");
+                }
 
-            if (first) {
-                results.append(NL).append("ORDER BY ");
-                first = false;
-            } else {
-                results.append(", ");
+                if (first) {
+                    results.append(NL).append("ORDER BY ");
+                    first = false;
+                } else {
+                    results.append(", ");
+                }
+                results.append(alias).append('.').append(orderingField.getField());
+                results.append(' ').append(orderingField.getOrdering());
             }
-            results.append(alias).append('.').append(orderingField.getField());
-            results.append(' ').append(orderingField.getOrdering());
         }
 
         return results.append(NL).toString();
     }
 
-    public Query getQuery(EntityManager em) throws Exception {
-        Query q = em.createQuery(getQueryString());
-
-        return getQuery(q);
+    public Query getQuery(EntityManager em) {
+        String queryString = getQueryString(false);
+        Query query = em.createQuery(queryString);
+        setCriteriaValues(query, false);
+        PersistenceUtility.setDataPage(query, pageControl);
+        return query;
     }
 
-    public Query getQuery(Query q) throws Exception {
-        for (Map.Entry<String, Object> critField : getEntityPersistenceFields(criteriaObject).entrySet()) {
-            q.setParameter(critField.getKey(), critField.getValue());
-        }
+    public Query getCountQuery(EntityManager em) {
+        String countQueryString = getQueryString(true);
+        Query query = em.createQuery(countQueryString);
+        setCriteriaValues(query, false);
+        return query;
+    }
 
-        PersistenceUtility.setDataPage(q, pageControl);
-        return q;
+    private void setCriteriaValues(Query query, boolean countQuery) {
+        for (Map.Entry<String, Object> critField : getEntityPersistenceFields(criteriaObject).entrySet()) {
+            query.setParameter(critField.getKey(), critField.getValue());
+        }
     }
 
     //helper
-    private boolean isEntityCollectionPersistence(String fieldName) throws NoSuchMethodException, NoSuchFieldException {
+    private boolean isEntityCollectionPersistence(String fieldName) {
+
         if (entityAnnotationMethod == EntityAnnotationsMethod.FIELD) {
             Field field = getFieldOfCriteriaClass(fieldName);
             return ((field.isAnnotationPresent(ManyToMany.class)) || (field.isAnnotationPresent(OneToMany.class)));
@@ -140,7 +156,7 @@ public class QueryGenerator {
         return false;
     }
 
-    private boolean isEntityFieldPersistence(String fieldName) throws NoSuchFieldException {
+    private boolean isEntityFieldPersistence(String fieldName) {
         Field field = getFieldOfCriteriaClass(fieldName);
 
         return isEntityFieldPersistence(field);
@@ -160,9 +176,9 @@ public class QueryGenerator {
         return clazz.isAnnotationPresent(Entity.class);
     }
 
-    private Map<String, Object> getEntityPersistenceFields(Object entityClass) throws Exception {
+    private Map<String, Object> getEntityPersistenceFields(Object entityClass) {
         if (!isEntity(entityClass.getClass())) {
-            throw new Exception("The specified class is not an EJB3 persistence entity");
+            throw new IllegalArgumentException("The specified class is not an EJB3 persistence entity");
         }
 
         Map<String, Object> entityPersistenceProperties = new HashMap<String, Object>();
@@ -173,7 +189,12 @@ public class QueryGenerator {
                     //get its value
                     currField.setAccessible(true);
 
-                    Object fieldValue = currField.get(entityClass);
+                    Object fieldValue = null;
+                    try {
+                        fieldValue = currField.get(entityClass);
+                    } catch (IllegalAccessException iae) {
+                        throw new RuntimeException(iae);
+                    }
                     if ((fieldValue != null) && isEntityFieldPersistence(currField)) {
                         //if field is @id, make sure it's not 0 as most of the entities ID is a primitive int
                         if (currField.isAnnotationPresent(Id.class)) {
@@ -201,7 +222,14 @@ public class QueryGenerator {
                     if (isEntityMethodPersistence(currMethod)) {
                         //get its value
 
-                        Object methodValue = currMethod.invoke(entityClass);
+                        Object methodValue = null;
+                        try {
+                            methodValue = currMethod.invoke(entityClass);
+                        } catch (IllegalAccessException iae) {
+                            throw new RuntimeException(iae);
+                        } catch (InvocationTargetException ite) {
+                            throw new RuntimeException(ite);
+                        }
                         if ((methodValue != null) && isEntityMethodPersistence(currMethod)) {
                             //if field is @id, make sure it's not 0 as most of the entities ID is a primitive int
                             if (currMethod.isAnnotationPresent(Id.class)) {
@@ -238,25 +266,25 @@ public class QueryGenerator {
         return "get" + property.substring(0, 1).toUpperCase() + property.substring(1, property.length());
     }
 
-    private Method getMethodOfCriteriaClass(String methodName) throws NoSuchMethodException {
+    private Method getMethodOfCriteriaClass(String methodName) {
         try {
             Method method = criteriaObject.getClass().getDeclaredMethod(methodName);
             return method;
-        } catch (NoSuchMethodException e) {
-            throw e;
+        } catch (NoSuchMethodException nsme) {
+            throw new RuntimeException(nsme);
         }
     }
 
-    private Field getFieldOfCriteriaClass(String fieldName) throws NoSuchFieldException {
+    private Field getFieldOfCriteriaClass(String fieldName) {
         try {
             Field field = criteriaObject.getClass().getDeclaredField(fieldName);
             return field;
-        } catch (NoSuchFieldException e) {
-            throw e;
+        } catch (NoSuchFieldException nsfe) {
+            throw new RuntimeException(nsfe);
         }
     }
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         PageControl pc = PageControl.getUnlimitedInstance();
         pc.addDefaultOrderingField("firstName", PageOrdering.ASC);
         pc.addDefaultOrderingField("lastName", PageOrdering.DESC);
@@ -270,6 +298,6 @@ public class QueryGenerator {
 
         QueryGenerator a = new QueryGenerator(s, rtf, pc);
 
-        System.out.println(a.getQueryString());
+        System.out.println(a.getQueryString(false));
     }
 }

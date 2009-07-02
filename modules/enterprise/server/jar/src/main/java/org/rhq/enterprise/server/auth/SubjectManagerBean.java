@@ -116,17 +116,16 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
 
         pc.initDefaultOrderingField("s.name");
 
-        String query_name = Subject.QUERY_FIND_BY_IDS;
-        Query subject_query_count = PersistenceUtility.createCountQuery(entityManager, query_name);
-        Query subject_query = PersistenceUtility.createQueryWithOrderBy(entityManager, query_name, pc);
+        String queryName = Subject.QUERY_FIND_BY_IDS;
+        Query queryCount = PersistenceUtility.createCountQuery(entityManager, queryName);
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, queryName, pc);
 
-        List<Integer> subject_ids_list = Arrays.asList(subjectIds);
-        subject_query_count.setParameter("ids", subject_ids_list);
-        subject_query.setParameter("ids", subject_ids_list);
+        List<Integer> subjectIdsList = Arrays.asList(subjectIds);
+        queryCount.setParameter("ids", subjectIdsList);
+        query.setParameter("ids", subjectIdsList);
 
-        long total_count = (Long) subject_query_count.getSingleResult();
-
-        List<Subject> subjects = subject_query.getResultList();
+        long count = (Long) queryCount.getSingleResult();
+        List<Subject> subjects = query.getResultList();
 
         if (subjects != null) {
             // eagerly load in the members - can't use left-join due to PersistenceUtility usage; perhaps use EAGER
@@ -137,7 +136,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
             subjects = new ArrayList<Subject>();
         }
 
-        return new PageList<Subject>(subjects, (int) total_count, pc);
+        return new PageList<Subject>(subjects, (int) count, pc);
     }
 
     /**
@@ -171,21 +170,13 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     /**
      * @see org.rhq.enterprise.server.auth.SubjectManagerRemote#g(Subject,String)
      */
-    @RequiredPermission(Permission.MANAGE_SECURITY)
-    public Subject getSubjectByName(Subject user, String username) throws FetchException {
-        //TODO: Wrapping 'null' results to 'FetchException' can have big impact, currently 'FetchException' has no meaning but exposed to the remote interface. 
-        return findSubjectByName(username);
-    }
-
-    /**
-     * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#findSubjectByName(String)
-     */
-    public Subject findSubjectByName(String username) {
+    public Subject getSubjectByName(String username) {
         Subject subject;
 
         try {
-            subject = (Subject) entityManager.createNamedQuery(Subject.QUERY_FIND_BY_NAME).setParameter("name",
-                username).getSingleResult();
+            Query query = entityManager.createNamedQuery(Subject.QUERY_FIND_BY_NAME);
+            query.setParameter("name", username);
+            subject = (Subject) query.getSingleResult();
         } catch (NoResultException nre) {
             subject = null;
         }
@@ -196,30 +187,27 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     /** 
      * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#findSubjects(org.rhq.core.domain.auth.Subject, org.rhq.core.domain.auth.Subject, org.rhq.core.domain.util.PageControl)
      */
-    public PageList<Subject> findSubjects(Subject sessionSubject, Subject criteria, PageControl pc)
-        throws FetchException {
+    @SuppressWarnings("unchecked")
+    public PageList<Subject> findSubjects(Subject subject, Subject criteria, PageControl pc) throws FetchException {
         try {
-            QueryGenerator qg = new QueryGenerator(criteria, pc.getOptionalData(), pc);
-            String query_name = qg.getQueryString();
+            QueryGenerator generator = new QueryGenerator(criteria, pc.getOptionalData(), pc);
 
-            Query subject_query_count = PersistenceUtility.createCountQuery(entityManager, query_name);
-            Query subject_query = PersistenceUtility.createQueryWithOrderBy(entityManager, query_name, pc);
-            subject_query_count = qg.getQuery(subject_query_count);
-            subject_query = qg.getQuery(subject_query);
+            Query query = generator.getQuery(entityManager);
+            Query countQuery = generator.getCountQuery(entityManager);
 
-            long total_count = (Long) subject_query_count.getSingleResult();
-            List<Subject> subjects = subject_query.getResultList();
+            long count = (Long) countQuery.getSingleResult();
+            List<Subject> subjects = query.getResultList();
 
             if (subjects != null) {
                 // eagerly load in the members - can't use left-join due to PersistenceUtility usage; perhaps use EAGER
-                for (Subject subject : subjects) {
-                    subject.getRoles().size();
+                for (Subject s : subjects) {
+                    s.getRoles().size();
                 }
             } else {
                 subjects = new ArrayList<Subject>();
             }
 
-            return new PageList<Subject>(subjects, (int) total_count, pc);
+            return new PageList<Subject>(subjects, (int) count, pc);
         } catch (Exception e) {
             throw new FetchException(e.getMessage());
         }
@@ -231,7 +219,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     @RequiredPermission(Permission.MANAGE_SECURITY)
     public Subject createSubject(Subject whoami, Subject subject) throws CreateException {
         // Make sure there's not already a system subject with that name
-        if (findSubjectByName(subject.getName()) != null) {
+        if (getSubjectByName(subject.getName()) != null) {
             throw new CreateException("A user already exists with " + subject.getName());
         }
 
@@ -271,18 +259,11 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     }
 
     /**
-     * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#findSubjectById(int)
-     */
-    public Subject findSubjectById(int id) {
-        Subject subject = entityManager.find(Subject.class, id);
-        return subject;
-    }
-
-    /**
      * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#getSubjectById(org.rhq.core.domain.auth.Subject, int)
      */
-    public Subject getSubjectById(Subject sessionSubject, int id) throws FetchException {
-        return findSubjectById(id);
+    public Subject getSubjectById(int id) {
+        Subject subject = entityManager.find(Subject.class, id);
+        return subject;
     }
 
     /**
@@ -335,7 +316,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
 
         // User is authenticated!
 
-        Subject subject = findSubjectByName(username);
+        Subject subject = getSubjectByName(username);
 
         if (subject != null) {
             if (!subject.getFactive()) {
@@ -378,7 +359,23 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     }
 
     /**
-     * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#logout(int)
+     * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#logout(Subject)
+     */
+    public void logout(Subject subject) {
+        try {
+            int sessionId = sessionManager.getSessionIdFromUsername(subject.getName());
+            sessionManager.invalidate(sessionId);
+        } catch (SessionTimeoutException ste) {
+            // it's ok, logout can be considered successful if the user's session already timed out
+        } catch (SessionNotFoundException snfe) {
+            // it's ok, logout can be considered successful if the user's never logged in to begin with
+        }
+    }
+
+    /**
+     * Logs out a user.
+     *
+     * @param sessionId The sessionId for the user to log out
      */
     public void logout(int sessionId) {
         sessionManager.invalidate(sessionId);
@@ -475,14 +472,14 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     public Subject loginUnauthenticated(String username, boolean reattach) throws LoginException {
         if (reattach) {
             try {
-                int session_id = sessionManager.getSessionIdFromUsername(username);
-                return sessionManager.getSubject(session_id);
+                int sessionId = sessionManager.getSessionIdFromUsername(username);
+                return sessionManager.getSubject(sessionId);
             } catch (SessionException e) {
                 // continue, we'll need to create a session
             }
         }
 
-        Subject subject = findSubjectByName(username);
+        Subject subject = getSubjectByName(username);
 
         if (subject == null) {
             throw new LoginException("User account does not exist. [" + username + "]");
@@ -501,11 +498,11 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
      * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#deleteUsers(Subject, Integer[])
      */
     @RequiredPermission(Permission.MANAGE_SECURITY)
-    public void deleteUsers(Subject sessionSubject, Integer[] subjectIds) throws DeleteException {
+    public void deleteUsers(Subject subject, Integer[] subjectIds) throws DeleteException {
         for (Integer doomedSubjectId : subjectIds) {
-            Subject doomedSubject = findSubjectById(doomedSubjectId);
+            Subject doomedSubject = getSubjectById(doomedSubjectId);
 
-            if (sessionSubject.getName().equals(doomedSubject.getName())) {
+            if (subject.getName().equals(doomedSubject.getName())) {
                 throw new PermissionException("You cannot remove yourself: " + doomedSubject.getName());
             }
 
@@ -527,10 +524,12 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
             try {
                 // if this user was authenticated via JDBC and thus has a principal, remove it
                 if (isUserWithPrincipal(doomedSubject.getName())) {
-                    deletePrincipal(sessionSubject, doomedSubject);
+                    deletePrincipal(subject, doomedSubject);
                 }
 
-                deleteSubject(sessionSubject, doomedSubject);
+                deleteSubject(subject, doomedSubject);
+            } catch (PermissionException pe) {
+                throw pe; // let PermissionExceptions bubble up as themselves
             } catch (Exception e) {
                 throw new DeleteException(e);
             }
@@ -553,10 +552,9 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
      * @param  whoami        the person requesting the deletion
      * @param  doomedSubject identifies the subject to delete
      *
-     * @throws Exception           if failed to delete one or more users
      * @throws PermissionException if caller tried to delete a system superuser
      */
-    private void deleteSubject(Subject whoami, Subject doomedSubject) throws Exception {
+    private void deleteSubject(Subject whoami, Subject doomedSubject) throws PermissionException {
         if (authorizationManager.isSystemSuperuser(doomedSubject)) {
             throw new PermissionException("You cannot delete a system root user - they must always exist");
         }
@@ -572,10 +570,9 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
      * @param  whoami  The subject of the currently logged in user
      * @param  subject The user whose principal is to be deleted
      *
-     * @throws Exception           if failed to delete the user's principal
      * @throws PermissionException if the caller tried to delete a system superuser
      */
-    private void deletePrincipal(Subject whoami, Subject subject) throws Exception {
+    private void deletePrincipal(Subject whoami, Subject subject) throws PermissionException {
         if (authorizationManager.isSystemSuperuser(subject)) {
             throw new PermissionException("You cannot delete the principal for the root user [" + subject.getName()
                 + "]");
@@ -614,36 +611,35 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         Integer[] pendingSubjectIds, PageControl pc) {
         pc.initDefaultOrderingField("s.name");
 
-        String query_name;
+        String queryName;
 
         if ((pendingSubjectIds == null) || (pendingSubjectIds.length == 0)) {
-            query_name = Subject.QUERY_FIND_AVAILABLE_SUBJECTS_FOR_ALERT_DEFINITION;
+            queryName = Subject.QUERY_FIND_AVAILABLE_SUBJECTS_FOR_ALERT_DEFINITION;
         } else {
-            query_name = Subject.QUERY_FIND_AVAILABLE_SUBJECTS_FOR_ALERT_DEFINITION_WITH_EXCLUDES;
+            queryName = Subject.QUERY_FIND_AVAILABLE_SUBJECTS_FOR_ALERT_DEFINITION_WITH_EXCLUDES;
         }
 
-        Query role_query_count = PersistenceUtility.createCountQuery(entityManager, query_name, "distinct s");
-        Query role_query = PersistenceUtility.createQueryWithOrderBy(entityManager, query_name, pc);
+        Query countQuery = PersistenceUtility.createCountQuery(entityManager, queryName, "distinct s");
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, queryName, pc);
 
-        role_query_count.setParameter("alertDefinitionId", alertDefinitionId);
-        role_query.setParameter("alertDefinitionId", alertDefinitionId);
+        countQuery.setParameter("alertDefinitionId", alertDefinitionId);
+        query.setParameter("alertDefinitionId", alertDefinitionId);
 
         if ((pendingSubjectIds != null) && (pendingSubjectIds.length > 0)) {
-            List<Integer> pending_ids_list = Arrays.asList(pendingSubjectIds);
-            role_query_count.setParameter("excludes", pending_ids_list);
-            role_query.setParameter("excludes", pending_ids_list);
+            List<Integer> pendingIdsList = Arrays.asList(pendingSubjectIds);
+            countQuery.setParameter("excludes", pendingIdsList);
+            query.setParameter("excludes", pendingIdsList);
         }
 
-        long total_count = (Long) role_query_count.getSingleResult();
-
-        List<Subject> subjects = role_query.getResultList();
+        long count = (Long) countQuery.getSingleResult();
+        List<Subject> subjects = query.getResultList();
 
         // eagerly load in the roles - can't use left-join due to PersistenceUtility usage; perhaps use EAGER
         for (Subject subject : subjects) {
             subject.getRoles().size();
         }
 
-        return new PageList<Subject>(subjects, (int) total_count, pc);
+        return new PageList<Subject>(subjects, (int) count, pc);
     }
 
     @RequiredPermission(Permission.MANAGE_SECURITY)
@@ -652,35 +648,34 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         PageControl pc) {
         pc.initDefaultOrderingField("s.name");
 
-        String query_name;
+        String queryName;
 
         if ((pendingSubjectIds == null) || (pendingSubjectIds.length == 0)) {
-            query_name = Subject.QUERY_FIND_AVAILABLE_SUBJECTS_FOR_ROLE;
+            queryName = Subject.QUERY_FIND_AVAILABLE_SUBJECTS_FOR_ROLE;
         } else {
-            query_name = Subject.QUERY_FIND_AVAILABLE_SUBJECTS_FOR_ROLE_WITH_EXCLUDES;
+            queryName = Subject.QUERY_FIND_AVAILABLE_SUBJECTS_FOR_ROLE_WITH_EXCLUDES;
         }
 
-        Query role_query_count = PersistenceUtility.createCountQuery(entityManager, query_name, "distinct s");
-        Query role_query = PersistenceUtility.createQueryWithOrderBy(entityManager, query_name, pc);
+        Query countQuery = PersistenceUtility.createCountQuery(entityManager, queryName, "distinct s");
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, queryName, pc);
 
-        role_query_count.setParameter("roleId", roleId);
-        role_query.setParameter("roleId", roleId);
+        countQuery.setParameter("roleId", roleId);
+        query.setParameter("roleId", roleId);
 
         if ((pendingSubjectIds != null) && (pendingSubjectIds.length > 0)) {
-            List<Integer> pending_ids_list = Arrays.asList(pendingSubjectIds);
-            role_query_count.setParameter("excludes", pending_ids_list);
-            role_query.setParameter("excludes", pending_ids_list);
+            List<Integer> pendingIdsList = Arrays.asList(pendingSubjectIds);
+            countQuery.setParameter("excludes", pendingIdsList);
+            query.setParameter("excludes", pendingIdsList);
         }
 
-        long total_count = (Long) role_query_count.getSingleResult();
-
-        List<Subject> subjects = role_query.getResultList();
+        long count = (Long) countQuery.getSingleResult();
+        List<Subject> subjects = query.getResultList();
 
         // eagerly load in the roles - can't use left-join due to PersistenceUtility usage; perhaps use EAGER
         for (Subject subject : subjects) {
             subject.getRoles().size();
         }
 
-        return new PageList<Subject>(subjects, (int) total_count, pc);
+        return new PageList<Subject>(subjects, (int) count, pc);
     }
 }

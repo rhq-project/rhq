@@ -171,7 +171,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     @RequiredPermission(Permission.MANAGE_SECURITY)
     public void assignRolesToSubject(Subject whoami, Integer subjectId, Integer[] roleIds) {
         if (roleIds != null) {
-            Subject subject = subjectManager.findSubjectById(subjectId); // attach it
+            Subject subject = subjectManager.getSubjectById(subjectId); // attach it
 
             if (subject.getFsystem() || (authorizationManager.isSystemSuperuser(subject))) {
                 throw new PermissionException("You cannot assign roles to user [" + subject.getName()
@@ -220,7 +220,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     @RequiredPermission(Permission.MANAGE_SECURITY)
     public void removeRolesFromSubject(Subject whoami, Integer subjectId, Integer[] roleIds) {
         if (roleIds != null) {
-            Subject subject = subjectManager.findSubjectById(subjectId); // attach it
+            Subject subject = subjectManager.getSubjectById(subjectId); // attach it
 
             if (subject.getFsystem() || (authorizationManager.isSystemSuperuser(subject))) {
                 throw new PermissionException("You cannot remove roles from user [" + subject.getName()

@@ -73,7 +73,7 @@ public class AddUserRolesAction extends BaseAction {
             return forward;
         }
 
-        Subject user = LookupUtil.getSubjectManager().findSubjectById(userId);
+        Subject user = LookupUtil.getSubjectManager().getSubjectById(userId);
         if (user == null) {
             throw new NullPointerException("User [" + userId + "] is not known");
         }

@@ -67,28 +67,9 @@ public interface SubjectManagerLocal {
     Subject getOverlord();
 
     /**
-     * Looks up the existing of a subject by the given username.
-     *
-     * @param  username the name of the subject to look for
-     *
-     * @return the subject that was found or <code>null</code> if not found
-     */
-    Subject findSubjectByName(String username);
-
-    /**
      * @see SubjectManagerRemote#getAllSubjects(PageControl)
      */
     PageList<Subject> getAllSubjects(PageControl pageControl);
-
-    /**
-     * Given a subject ID, this will look up that {@link Subject} and return it. If not found, <code>null</code> is
-     * returned.
-     *
-     * @param  id the subject ID to find
-     *
-     * @return the {@link Subject} object that was found with the given ID or <code>null</code> if not found
-     */
-    Subject findSubjectById(int id);
 
     /**
      * Generates a one-time temporary session password for the given session. This can be used to authenticate the user
@@ -226,12 +207,13 @@ public interface SubjectManagerLocal {
     PageList<Subject> getAvailableSubjectsForAlertDefinition(Subject whoami, Integer alertDefinitionId,
         Integer[] pendingSubjectIds, PageControl pc);
 
+    void logout(int sessionId);
+
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
     // The following are shared with the Remote Interface
     //
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    static public final String DATA_ROLES = "roles";
 
     /**
      * #see {@link SubjectManagerRemote#changePassword(Subject, String, String)
@@ -241,32 +223,32 @@ public interface SubjectManagerLocal {
     /**
      * #see {@link SubjectManagerRemote#createPrincipal(Subject, String, String)
      */
-    void createPrincipal(Subject sessionSubject, String username, String password) throws CreateException;
+    void createPrincipal(Subject subject, String username, String password) throws CreateException;
 
     /**
      * #see {@link SubjectManagerRemote#createSubject(Subject, Subject)
      */
-    Subject createSubject(Subject sessionSubject, Subject subject) throws CreateException;
+    Subject createSubject(Subject subject, Subject subjectToCreate) throws CreateException;
 
     /**
      * #see {@link SubjectManagerRemote#deleteSubjects(Subject, Integer[])
      */
-    void deleteSubjects(Subject sessionSubject, Integer[] subjectIds) throws DeleteException;
+    void deleteSubjects(Subject subject, Integer[] subjectIds) throws DeleteException;
 
     /**
      * #see {@link SubjectManagerRemote#getSubjectById(Subject, int)}
      */
-    Subject getSubjectById(Subject sessionSubject, int id) throws FetchException;
+    Subject getSubjectById(int id);
 
     /**
-     * @see {@link SubjectManagerRemote#getSubjectByName(Subject, String)}
+     * @see {@link SubjectManagerRemote#getSubjectByName(String)}
      */
-    Subject getSubjectByName(Subject sessionSubject, String username) throws FetchException;
+    Subject getSubjectByName(String username);
 
     /**
      * @see {@link SubjectManagerRemote#findSubjects(Subject, Subject, PageControl)}
      */
-    PageList<Subject> findSubjects(Subject sessionSubject, Subject criteria, PageControl pc) throws FetchException;
+    PageList<Subject> findSubjects(Subject subject, Subject criteria, PageControl pc) throws FetchException;
 
     /**
      * @see SubjectManagerRemote#isLoggedIn(String)
@@ -278,13 +260,10 @@ public interface SubjectManagerLocal {
      */
     Subject login(String username, String password) throws LoginException;
 
-    /**
-     * @see SubjectManagerRemote#logout(int)
-     */
-    void logout(int sessionId);
+    void logout(Subject subject);
 
     /**
      * @see 
      */
-    Subject updateSubject(Subject sessionSubject, Subject subjectToModify) throws UpdateException;
+    Subject updateSubject(Subject subject, Subject subjectToModify) throws UpdateException;
 }

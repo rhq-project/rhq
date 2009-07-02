@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -201,7 +202,7 @@ public class SessionManager {
 
     public Subject getOverlord() {
         if (overlordSubject == null) {
-            overlordSubject = LookupUtil.getSubjectManager().findSubjectById(OVERLORD_SUBJECT_ID);
+            overlordSubject = LookupUtil.getSubjectManager().getSubjectById(OVERLORD_SUBJECT_ID);
 
             if (overlordSubject == null) {
                 String err = "Cannot find the system's superuser - the database might be corrupted";

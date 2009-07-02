@@ -20,12 +20,14 @@ package org.rhq.enterprise.gui.admin.user;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.tiles.ComponentContext;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.util.PageControl;
@@ -43,7 +45,7 @@ public class ViewRolesAction extends WorkflowPrepareAction {
     public ActionForward workflow(ComponentContext context, ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws Exception {
         Log log = LogFactory.getLog(ViewRolesAction.class.getName());
-        Subject user = LookupUtil.getSubjectManager().findSubjectById(RequestUtils.getUserId(request));
+        Subject user = LookupUtil.getSubjectManager().getSubjectById(RequestUtils.getUserId(request));
 
         log.trace("getting roles for user [" + user + "]");
 

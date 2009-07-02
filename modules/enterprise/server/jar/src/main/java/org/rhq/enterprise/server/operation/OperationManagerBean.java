@@ -426,7 +426,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         sched.setResource(resource);
         sched.setOperationName(operationName);
         sched.setOperationDisplayName(displayName);
-        sched.setSubject(subjectManager.findSubjectById(subjectId));
+        sched.setSubject(subjectManager.getSubjectById(subjectId));
         sched.setParameters(parameters);
         sched.setDescription(description);
 
@@ -489,7 +489,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         sched.setGroup(group);
         sched.setOperationName(operationName);
         sched.setOperationDisplayName(displayName);
-        sched.setSubject(subjectManager.findSubjectById(subjectId));
+        sched.setSubject(subjectManager.getSubjectById(subjectId));
         sched.setParameters(parameters);
         sched.setExecutionOrder(executionOrder);
         sched.setDescription(description);

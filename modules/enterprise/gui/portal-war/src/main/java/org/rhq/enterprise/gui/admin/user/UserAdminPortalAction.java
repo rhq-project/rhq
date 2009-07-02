@@ -175,7 +175,7 @@ public class UserAdminPortalAction extends BaseDispatchAction {
         Integer userId = RequestUtils.getUserId(request);
         ServletContext ctx = getServlet().getServletContext();
         Integer sessionId = RequestUtils.getSessionId(request);
-        Subject user = LookupUtil.getSubjectManager().findSubjectById(userId.intValue());
+        Subject user = LookupUtil.getSubjectManager().getSubjectById(userId.intValue());
 
         // when LDAP authentication is enabled, we may still have
         // users logging in with JDBC. the only way we can

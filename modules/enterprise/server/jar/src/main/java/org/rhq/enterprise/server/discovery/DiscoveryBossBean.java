@@ -336,7 +336,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
         if (existingResource != null) {
             mergeResourceResponse = new MergeResourceResponse(existingResource.getId(), true);
         } else {
-            Subject creator = this.subjectManager.findSubjectById(creatorSubjectId);
+            Subject creator = this.subjectManager.getSubjectById(creatorSubjectId);
             try {
                 creator = this.subjectManager.loginUnauthenticated(creator.getName(), true);
             } catch (LoginException e) {

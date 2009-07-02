@@ -25,23 +25,22 @@ import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.OrderingField;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
-public abstract class AbstractAggregateConfigurationUpdateJob implements Job
-{
+public abstract class AbstractAggregateConfigurationUpdateJob implements Job {
     public static final String DATAMAP_INT_CONFIG_GROUP_UPDATE_ID = "configGroupUpdateId";
     public static final String DATAMAP_INT_SUBJECT_ID = "subjectId";
 
     protected static JobDetail getJobDetail(ResourceGroup group, Subject subject, JobDataMap jobDataMap,
-                                            Class jobClass, String jobNamePrefix)
-    {
+        Class jobClass, String jobNamePrefix) {
         JobDetail jobDetail = new JobDetail();
         jobDetail.setName(createUniqueJobName(group, subject, jobNamePrefix));
         jobDetail.setGroup(createJobGroupName(group, jobNamePrefix));
@@ -53,15 +52,14 @@ public abstract class AbstractAggregateConfigurationUpdateJob implements Job
         return jobDetail;
     }
 
-    public void execute(JobExecutionContext jobContext) throws JobExecutionException
-    {
+    public void execute(JobExecutionContext jobContext) throws JobExecutionException {
         JobDetail jobDetail = jobContext.getJobDetail();
         JobDataMap jobDataMap = jobDetail.getJobDataMap();
 
         Integer configurationGroupUpdateId = jobDataMap.getIntFromString(DATAMAP_INT_CONFIG_GROUP_UPDATE_ID);
 
         Integer subjectId = jobDataMap.getIntFromString(DATAMAP_INT_SUBJECT_ID);
-        Subject subject = LookupUtil.getSubjectManager().findSubjectById(subjectId);
+        Subject subject = LookupUtil.getSubjectManager().getSubjectById(subjectId);
 
         processAggregateConfigurationUpdate(configurationGroupUpdateId, subject);
     }
@@ -72,13 +70,13 @@ public abstract class AbstractAggregateConfigurationUpdateJob implements Job
         String errorMessages = null;
         try {
             long childPluginConfigurationUpdateCount = getConfigurationUpdateCount(aggregateConfigurationUpdateId,
-                    configurationManager);
+                configurationManager);
 
             int rowsProcessed = 0;
             PageControl pc = new PageControl(0, 1000, new OrderingField("cu.id", PageOrdering.ASC));
             while (true) {
                 List<Integer> pagedChildUpdateIds = getConfigurationUpdateIds(aggregateConfigurationUpdateId,
-                        configurationManager, pc);
+                    configurationManager, pc);
                 if (pagedChildUpdateIds.size() <= 0) {
                     break;
                 }
@@ -101,28 +99,24 @@ public abstract class AbstractAggregateConfigurationUpdateJob implements Job
         }
     }
 
-    private static String createUniqueJobName(ResourceGroup group, Subject subject, String jobNamePrefix)
-    {
+    private static String createUniqueJobName(ResourceGroup group, Subject subject, String jobNamePrefix) {
         return createJobGroupName(group, jobNamePrefix) + "-" + subject.getName().hashCode() + "-"
-                + System.currentTimeMillis();
+            + System.currentTimeMillis();
     }
 
-    private static String createJobGroupName(ResourceGroup group, String jobNamePrefix)
-    {
+    private static String createJobGroupName(ResourceGroup group, String jobNamePrefix) {
         return jobNamePrefix + group.getId();
     }
 
     protected abstract List<Integer> getConfigurationUpdateIds(Integer aggregatePluginConfigurationUpdateId,
-                                                             ConfigurationManagerLocal configurationManager,
-                                                             PageControl pc);
+        ConfigurationManagerLocal configurationManager, PageControl pc);
 
     protected abstract long getConfigurationUpdateCount(Integer aggregatePluginConfigurationUpdateId,
-                                                        ConfigurationManagerLocal configurationManager);
+        ConfigurationManagerLocal configurationManager);
 
     protected abstract void executeConfigurationUpdate(ConfigurationManagerLocal configurationManager,
-                                                       Integer childUpdateId, Subject subject);
+        Integer childUpdateId, Subject subject);
 
     protected abstract void completeAggregateConfigurationUpdate(ConfigurationManagerLocal configurationManager,
-                                                                       Integer aggregateConfigurationUpdateId,
-                                                                       String errorMessages);
+        Integer aggregateConfigurationUpdateId, String errorMessages);
 }

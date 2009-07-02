@@ -168,7 +168,7 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
         getTransactionManager().begin();
         try {
             superuser = subjectManager.getOverlord();
-            rhqadmin = subjectManager.findSubjectByName("rhqadmin");
+            rhqadmin = subjectManager.getSubjectByName("rhqadmin");
             createSession(rhqadmin);
 
             try {
@@ -208,7 +208,8 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
         getTransactionManager().begin();
         try {
             superuser = subjectManager.getOverlord();
-            rhqadmin = subjectManager.findSubjectByName("rhqadmin");
+            createSession(superuser);
+            rhqadmin = subjectManager.getSubjectByName("rhqadmin");
             createSession(rhqadmin);
 
             try {
@@ -256,13 +257,13 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
         all_global_perms.add(Permission.MANAGE_SETTINGS);
 
         // get the system super subject
-        Subject superuser = subjectManager.findSubjectById(1);
+        Subject superuser = subjectManager.getSubjectById(1);
         assert superuser.getId() == 1;
         assert superuser.getName().equals("admin");
         assert authorizationManager.getExplicitGlobalPermissions(superuser).containsAll(all_global_perms);
 
         // get the rhqadmin subject
-        Subject rhqadmin = subjectManager.findSubjectByName("rhqadmin");
+        Subject rhqadmin = subjectManager.getSubjectByName("rhqadmin");
         assert rhqadmin.getId() == 2;
         assert rhqadmin.getName().equals("rhqadmin");
         assert authorizationManager.getExplicitGlobalPermissions(rhqadmin).containsAll(all_global_perms);
@@ -338,10 +339,10 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
         getTransactionManager().begin();
 
         // delete the new user
-        assert subjectManager.findSubjectByName(new_user.getName()).equals(new_user);
+        assert subjectManager.getSubjectByName(new_user.getName()).equals(new_user);
         assert subjectManager.isUserWithPrincipal(new_user.getName());
         subjectManager.deleteUsers(rhqadmin, new Integer[] { new_user.getId() });
-        assert subjectManager.findSubjectByName(new_user.getName()) == null;
+        assert subjectManager.getSubjectByName(new_user.getName()) == null;
         assert !subjectManager.isUserWithPrincipal(new_user.getName());
 
         getTransactionManager().commit();

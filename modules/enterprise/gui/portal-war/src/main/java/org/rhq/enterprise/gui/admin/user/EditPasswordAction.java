@@ -61,7 +61,7 @@ public class EditPasswordAction extends BaseAction {
         Subject subject = WebUtility.getSubject(request);
         int subjectSession = subject.getSessionId();
 
-        Subject userToBeModified = subjectManager.findSubjectById(pForm.getId());
+        Subject userToBeModified = subjectManager.getSubjectById(pForm.getId());
 
         String userName = userToBeModified.getName();
         log.debug("Editing password for user [" + userName + "]");

@@ -20,12 +20,14 @@ package org.rhq.enterprise.gui.admin.user;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.tiles.ComponentContext;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.util.PageControl;
@@ -67,7 +69,7 @@ public class AddUserRolesFormPrepareAction extends WorkflowPrepareAction {
         SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
         RoleManagerLocal roleManager = LookupUtil.getRoleManager();
 
-        Subject user = subjectManager.findSubjectById(userId);
+        Subject user = subjectManager.getSubjectById(userId);
         if (user == null) {
             throw new NullPointerException("User [" + userId + "] is not known");
         }

@@ -33,6 +33,7 @@ org.quartz.dataSource.RHQDS.maxConnections     = 10
 org.quartz.jobStore.nonManagedTXDataSource     = NoTxRHQDS
 org.quartz.dataSource.NoTxRHQDS.jndiURL        = java:/NoTxRHQDS
 org.quartz.dataSource.NoTxRHQDS.maxConnections = 10
+org.quartz.jobStore.lockHandler.class          = ${rhq.server.quartz.lockHandlerClass}
     </attribute>
   </mbean>
 </server>

@@ -144,6 +144,7 @@
             <!-- quartz properties -->
             <rhq.test.quartz.driverDelegateClass>org.quartz.impl.jdbcjobstore.PostgreSQLDelegate</rhq.test.quartz.driverDelegateClass>
             <rhq.test.quartz.selectWithLockSQL>SELECT * FROM {0}LOCKS ROWLOCK WHERE LOCK_NAME = ? FOR UPDATE</rhq.test.quartz.selectWithLockSQL>
+            <rhq.test.quartz.lockHandlerClass>org.quartz.impl.jdbcjobstore.StdRowLockSemaphore</rhq.test.quartz.lockHandlerClass>
          </properties>
       </profile>
       
@@ -164,6 +165,7 @@
             <!-- quartz properties -->
             <rhq.test.quartz.driverDelegateClass>org.quartz.impl.jdbcjobstore.StdJDBCDelegate</rhq.test.quartz.driverDelegateClass>
             <rhq.test.quartz.selectWithLockSQL>SELECT * FROM {0}LOCKS ROWLOCK WHERE LOCK_NAME = ? FOR UPDATE</rhq.test.quartz.selectWithLockSQL>
+            <rhq.test.quartz.lockHandlerClass>org.quartz.impl.jdbcjobstore.StdRowLockSemaphore</rhq.test.quartz.lockHandlerClass>
          </properties>
       </profile>
       
@@ -182,7 +184,8 @@
             <rhq.test.ds.hibernate-dialect>org.hibernate.dialect.SQLServerDialect</rhq.test.ds.hibernate-dialect>
             <!-- quartz properties -->
             <rhq.test.quartz.driverDelegateClass>org.quartz.impl.jdbcjobstore.MSSQLDelegate</rhq.test.quartz.driverDelegateClass>
-            <rhq.test.quartz.selectWithLockSQL>SELECT * FROM {0}LOCKS ROWLOCK WITH (HOLDLOCK,XLOCK) WHERE LOCK_NAME = ?</rhq.test.quartz.selectWithLockSQL>
+            <rhq.test.quartz.selectWithLockSQL>UPDATE {0}LOCKS SET LOCK_NAME = LOCK_NAME WHERE LOCK_NAME = ?</rhq.test.quartz.selectWithLockSQL>
+            <rhq.test.quartz.lockHandlerClass>org.quartz.impl.jdbcjobstore.UpdateLockRowSemaphore</rhq.test.quartz.lockHandlerClass>
          </properties>
       </profile>
 
@@ -202,6 +205,7 @@
             <!-- quartz properties -->
             <rhq.test.quartz.driverDelegateClass>org.quartz.impl.jdbcjobstore.oracle.OracleDelegate</rhq.test.quartz.driverDelegateClass>
             <rhq.test.quartz.selectWithLockSQL>SELECT * FROM {0}LOCKS ROWLOCK WHERE LOCK_NAME = ? FOR UPDATE</rhq.test.quartz.selectWithLockSQL>
+            <rhq.test.quartz.lockHandlerClass>org.quartz.impl.jdbcjobstore.StdRowLockSemaphore</rhq.test.quartz.lockHandlerClass>
          </properties>
       </profile>
 

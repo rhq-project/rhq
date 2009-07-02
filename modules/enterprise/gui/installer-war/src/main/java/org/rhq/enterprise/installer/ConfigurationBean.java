@@ -567,6 +567,7 @@ public class ConfigurationBean {
             String dialect;
             String quartzDriverDelegateClass = "org.quartz.impl.jdbcjobstore.StdJDBCDelegate";
             String quartzSelectWithLockSQL = "SELECT * FROM {0}LOCKS ROWLOCK WHERE LOCK_NAME = ? FOR UPDATE";
+            String quartzLockHandlerClass = "org.quartz.impl.jdbcjobstore.StdRowLockSemaphore";
 
             if (db.toLowerCase().indexOf("postgres") > -1) {
                 dialect = "org.hibernate.dialect.PostgreSQLDialect";
@@ -580,6 +581,7 @@ public class ConfigurationBean {
                 dialect = "org.hibernate.dialect.SQLServerDialect";
                 quartzDriverDelegateClass = "org.quartz.impl.jdbcjobstore.MSSQLDelegate";
                 quartzSelectWithLockSQL = "SELECT * FROM {0}LOCKS ROWLOCK WITH (HOLDLOCK,XLOCK) WHERE LOCK_NAME = ?";
+                quartzLockHandlerClass = "org.quartz.impl.jdbcjobstore.UpdateLockRowSemaphore";
             } else if (db.toLowerCase().indexOf("mysql") > -1) {
                 dialect = "org.hibernate.dialect.MySQL5InnoDBDialect";
                 quartzDriverDelegateClass = "org.quartz.impl.jdbcjobstore.PostgreSQLDelegate";
@@ -592,6 +594,8 @@ public class ConfigurationBean {
                 quartzDriverDelegateClass);
             getConfigurationProperty(configuration, ServerProperties.PROP_QUARTZ_SELECT_WITH_LOCK_SQL).setValue(
                 quartzSelectWithLockSQL);
+            getConfigurationProperty(configuration, ServerProperties.PROP_QUARTZ_LOCK_HANDLER_CLASS).setValue(
+                quartzLockHandlerClass);
 
         } catch (Exception e) {
             LOG.fatal("Invalid database type", e);

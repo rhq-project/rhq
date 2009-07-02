@@ -17,6 +17,7 @@
   <property name="default.rhq.server.database.db-name" value="rhq"/>
   <property name="default.rhq.server.quartz.driverDelegateClass" value="org.quartz.impl.jdbcjobstore.PostgreSQLDelegate"/>
   <property name="default.rhq.server.quartz.selectWithLockSQL" value="SELECT * FROM {0}LOCKS WHERE LOCK_NAME = ? FOR UPDATE"/>
+  <property name="default.rhq.server.quartz.lockHandlerClass" value="org.quartz.impl.jdbcjobstore.StdRowLockSemaphore"/>
 
   <target name="set-predeploy-prop">
     <condition property="predeploy" value="true">
@@ -41,6 +42,7 @@
      <property name="rhq.server.database.db-name" value="${rhq.test.ds.db-name}"/>
      <property name="rhq.server.quartz.driverDelegateClass" value="${rhq.test.quartz.driverDelegateClass}"/>
      <property name="rhq.server.quartz.selectWithLockSQL" value="${rhq.test.quartz.selectWithLockSQL}"/>
+     <property name="rhq.server.quartz.lockHandlerClass" value="${rhq.test.quartz.lockHandlerClass}"/>
   </target>
 
   <target name="set-default-server-props" unless="predeploy">
@@ -57,6 +59,7 @@
      <property name="rhq.server.database.db-name" value="${default.rhq.server.database.db-name}"/>
      <property name="rhq.server.quartz.driverDelegateClass" value="${default.rhq.server.quartz.driverDelegateClass}"/>
      <property name="rhq.server.quartz.selectWithLockSQL" value="${default.rhq.server.quartz.selectWithLockSQL}"/>
+     <property name="rhq.server.quartz.lockHandlerClass" value="${default.rhq.server.quartz.lockHandlerClass}"/>
   </target>
 
   <target name="initialize" depends="set-predeploy-prop, set-dev-server-props, set-default-server-props">
@@ -411,8 +414,11 @@ rhq.server.database.server-name=${rhq.server.database.server-name}
 rhq.server.database.port=${rhq.server.database.port}
 rhq.server.database.db-name=${rhq.server.database.db-name}
 hibernate.dialect=${rhq.server.database.hibernate-dialect}
+
+# Quartz
 rhq.server.quartz.driverDelegateClass=${rhq.server.quartz.driverDelegateClass}
 rhq.server.quartz.selectWithLockSQL=${rhq.server.quartz.selectWithLockSQL}
+rhq.server.quartz.lockHandlerClass=${rhq.server.quartz.lockHandlerClass}
 
 # Container configuration
 # ********************************** NOTE ************************************

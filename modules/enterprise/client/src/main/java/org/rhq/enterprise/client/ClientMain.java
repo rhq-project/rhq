@@ -462,6 +462,10 @@ public class ClientMain {
         return outputWriter;
     }
 
+    public void setPrintWriter(PrintWriter writer) {
+        this.outputWriter = writer;
+    }
+
     public int getConsoleWidth() {
         return this.consoleReader.getTermwidth();
     }

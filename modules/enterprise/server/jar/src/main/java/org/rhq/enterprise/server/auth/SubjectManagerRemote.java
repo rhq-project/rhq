@@ -18,13 +18,11 @@
  */
 package org.rhq.enterprise.server.auth;
 
-import javax.ejb.CreateException;
 import javax.ejb.Remote;
 import javax.jws.WebMethod;
 import javax.jws.WebParam;
 import javax.jws.WebService;
 import javax.jws.soap.SOAPBinding;
-import javax.security.auth.login.LoginException;
 import javax.xml.bind.annotation.XmlSeeAlso;
 
 import org.rhq.core.domain.auth.Principal;
@@ -32,7 +30,14 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
+import org.rhq.enterprise.server.exception.CreateException;
+import org.rhq.enterprise.server.exception.DeleteException;
+import org.rhq.enterprise.server.exception.FetchException;
+import org.rhq.enterprise.server.exception.LoginException;
+import org.rhq.enterprise.server.exception.UpdateException;
 
 @SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
 @WebService
@@ -43,24 +48,24 @@ public interface SubjectManagerRemote {
     /**
      * Change the password for a user.
      *
-     * @param  user  The logged in user's subject.
+     * @param  sessionSubject  The logged in user's subject.
      * @param  username The user whose password will be changed
      * @param  password The new password for the user
      *
-     * @throws Exception if the password could not be changed
+     * @throws UpdateException if the password could not be changed
      */
     @WebMethod
     void changePassword( //
-        @WebParam(name = "user") Subject user, //
+        @WebParam(name = "sessionSubject") Subject sessionSubject, //
         @WebParam(name = "username") String username, //
         @WebParam(name = "password") String password) //
-        throws Exception;
+        throws UpdateException;
 
     /**
      * Creates a new principal (username and password) in the internal database. The password will be encoded before
      * being stored.
      *
-     * @param  user  The logged in user's subject.
+     * @param  sessionSubject  The logged in user's subject.
      * @param  username The username part of the principal
      * @param  password The password part ofthe principal
      *
@@ -68,15 +73,15 @@ public interface SubjectManagerRemote {
      */
     @WebMethod
     void createPrincipal( //
-        @WebParam(name = "user") Subject user, //
+        @WebParam(name = "sessionSubject") Subject sessionSubject, //
         @WebParam(name = "username") String username, //
-        @WebParam(name = "password") String password) throws Exception;
+        @WebParam(name = "password") String password) throws CreateException;
 
     /**
      * Create a a new subject. This <b>ignores</b> the roles in <code>subject</code>. The created subject will not be
      * assigned to any roles; use the {@link RoleManagerLocal role manager} to assign roles to a subject.
      *
-     * @param  user  The logged in user's subject.
+     * @param  sessionSubject  The logged in user's subject.
      * @param  subject The subject to be created.
      *
      * @return the newly persisted {@link Subject}
@@ -85,35 +90,74 @@ public interface SubjectManagerRemote {
      */
     @WebMethod
     Subject createSubject( //
-        @WebParam(name = "user") Subject user, //
+        @WebParam(name = "sessionSubject") Subject sessionSubject, //
         @WebParam(name = "subject") Subject subject) throws CreateException;
 
     /**
      * Deletes the given set of users, including both the {@link Subject} and {@link Principal} objects associated with
      * those users.
      *
-     * @param  user  The logged in user's subject.
+     * @param  sessionSubject  The logged in user's subject.
      * @param  subjectIds identifies the subject IDs for all the users that are to be deleted
      *
      * @throws Exception if failed to delete one or more users
      */
     @WebMethod
-    void deleteUsers( //
-        @WebParam(name = "user") Subject user, //
-        @WebParam(name = "subjectIds") Integer[] subjectIds) throws Exception;
+    void deleteSubjects( //
+        @WebParam(name = "sessionSubject") Subject sessionSubject, //
+        @WebParam(name = "subjectIds") Integer[] subjectIds) //
+        throws DeleteException;
 
     /**
      * Looks up the existing of a subject by the given username.
      *
-     * @param  user  The logged in user's subject.
+     * @param  sessionSubject  The logged in user's subject.
      * @param  username the name of the subject to look for
      *
      * @return the subject that was found or <code>null</code> if not found
      */
     @WebMethod
-    Subject findSubjectByName( //
-        @WebParam(name = "user") Subject user, //
-        @WebParam(name = "username") String username);
+    Subject getSubjectByName( //
+        @WebParam(name = "sessionSubject") Subject sessionSubject, //
+        @WebParam(name = "username") String username) //
+        throws FetchException;
+
+    /**
+     * This find service can be used to find subjects based on various criteria and return various data.
+     *
+     * @param sessionSubject The logged in user's subject.
+     * @param criteria {@link Resource}, can be null
+     * <pre>
+     * If provided the Subject object can specify various search criteria as specified below.
+     *   Subject.id : exact match
+     *   Subject.description : case insensitive substring match
+     *   Subject.firstName
+     *   Subject.lastName
+     *   Subject.emailAddress   
+     * </pre>
+     * @param pc {@link PageControl}
+     * <pre>
+     * If provided PageControl specifies page size, requested page, sorting, and optional data.
+     * 
+     * Supported OptionalData
+     *   To specify optional data call pc.setOptionalData() and supply one of more of the DATA_* constants
+     *   defined in this interface.
+     * 
+     * Supported Sorting:
+     *   Possible values to provide PageControl for sorting (PageControl.orderingFields)
+     *     name
+     *     firstName
+     *     lastName
+     *   
+     * </pre>
+     * @return
+     * @throws FetchException
+     */
+    @WebMethod
+    PageList<Subject> findSubjects( //
+        @WebParam(name = "sessionSubject") Subject sessionSubject, //
+        @WebParam(name = "username") Subject criteria, PageControl pc) //
+        throws FetchException;
 
     /**
      * Check if a user is logged in.
@@ -156,14 +200,15 @@ public interface SubjectManagerRemote {
      * Updates an existing subject with new data. This does <b>not</b> cascade any changes to the roles but it will save
      * the subject's configuration.
      *
-     * @param  user  The logged in user's subject.
+     * @param  sessionSubject  The logged in user's subject.
      * @param  subjectToModify the subject whose data is to be updated (which may or may not be the same as <code>user</code>)
      *
      * @return the merged subject, which may or may not be the same instance of <code>subjectToModify</code>
      */
     @WebMethod
     Subject updateSubject( //
-        @WebParam(name = "user") Subject user, //
-        @WebParam(name = "subjectToModify") Subject subjectToModify);
+        @WebParam(name = "sessionSubject") Subject sessionSubject, //
+        @WebParam(name = "subjectToModify") Subject subjectToModify) //
+        throws UpdateException;
 
 }

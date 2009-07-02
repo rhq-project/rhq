@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
-import javax.ejb.CreateException;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.ExcludeDefaultInterceptors;
@@ -36,7 +35,6 @@ import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.security.auth.login.LoginContext;
-import javax.security.auth.login.LoginException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -52,11 +50,17 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.domain.util.QueryGenerator;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.CustomJaasDeploymentServiceMBean;
+import org.rhq.enterprise.server.exception.CreateException;
+import org.rhq.enterprise.server.exception.DeleteException;
+import org.rhq.enterprise.server.exception.FetchException;
+import org.rhq.enterprise.server.exception.LoginException;
+import org.rhq.enterprise.server.exception.UpdateException;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 
 /**
@@ -165,10 +169,11 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     }
 
     /**
-     * @see org.rhq.enterprise.server.auth.SubjectManagerRemote#findSubjectByName(Subject,String)
+     * @see org.rhq.enterprise.server.auth.SubjectManagerRemote#g(Subject,String)
      */
     @RequiredPermission(Permission.MANAGE_SECURITY)
-    public Subject findSubjectByName(Subject user, String username) {
+    public Subject getSubjectByName(Subject user, String username) throws FetchException {
+        //TODO: Wrapping 'null' results to 'FetchException' can have big impact, currently 'FetchException' has no meaning but exposed to the remote interface. 
         return findSubjectByName(username);
     }
 
@@ -186,6 +191,38 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         }
 
         return subject;
+    }
+
+    /** 
+     * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#findSubjects(org.rhq.core.domain.auth.Subject, org.rhq.core.domain.auth.Subject, org.rhq.core.domain.util.PageControl)
+     */
+    public PageList<Subject> findSubjects(Subject sessionSubject, Subject criteria, PageControl pc)
+        throws FetchException {
+        try {
+            QueryGenerator qg = new QueryGenerator(criteria, pc.getOptionalData(), pc);
+            String query_name = qg.getQueryString();
+
+            Query subject_query_count = PersistenceUtility.createCountQuery(entityManager, query_name);
+            Query subject_query = PersistenceUtility.createQueryWithOrderBy(entityManager, query_name, pc);
+            subject_query_count = qg.getQuery(subject_query_count);
+            subject_query = qg.getQuery(subject_query);
+
+            long total_count = (Long) subject_query_count.getSingleResult();
+            List<Subject> subjects = subject_query.getResultList();
+
+            if (subjects != null) {
+                // eagerly load in the members - can't use left-join due to PersistenceUtility usage; perhaps use EAGER
+                for (Subject subject : subjects) {
+                    subject.getRoles().size();
+                }
+            } else {
+                subjects = new ArrayList<Subject>();
+            }
+
+            return new PageList<Subject>(subjects, (int) total_count, pc);
+        } catch (Exception e) {
+            throw new FetchException(e.getMessage());
+        }
     }
 
     /**
@@ -242,6 +279,13 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     }
 
     /**
+     * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#getSubjectById(org.rhq.core.domain.auth.Subject, int)
+     */
+    public Subject getSubjectById(Subject sessionSubject, int id) throws FetchException {
+        return findSubjectById(id);
+    }
+
+    /**
      * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#generateTemporarySessionPassword(int)
      */
     public String generateTemporarySessionPassword(int sessionId) {
@@ -276,11 +320,18 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
 
         // get the configuration properties and use the JAAS modules to perform the login
         Properties config = systemManager.getSystemConfiguration();
-        UsernamePasswordHandler handler = new UsernamePasswordHandler(username, password.toCharArray());
-        LoginContext loginContext = new LoginContext(CustomJaasDeploymentServiceMBean.SECURITY_DOMAIN_NAME, handler);
-        loginContext.login();
-        loginContext.getSubject().getPrincipals().iterator().next();
-        loginContext.logout();
+
+        try {
+            UsernamePasswordHandler handler = new UsernamePasswordHandler(username, password.toCharArray());
+            LoginContext loginContext;
+            loginContext = new LoginContext(CustomJaasDeploymentServiceMBean.SECURITY_DOMAIN_NAME, handler);
+
+            loginContext.login();
+            loginContext.getSubject().getPrincipals().iterator().next();
+            loginContext.logout();
+        } catch (javax.security.auth.login.LoginException e) {
+            throw new LoginException(e.getMessage());
+        }
 
         // User is authenticated!
 
@@ -353,7 +404,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
      * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#createPrincipal(Subject, String, String)
      */
     @RequiredPermission(Permission.MANAGE_SECURITY)
-    public void createPrincipal(Subject whoami, String username, String password) throws Exception {
+    public void createPrincipal(Subject whoami, String username, String password) throws CreateException {
         Principal principal = new Principal(username, Util.createPasswordHash("MD5", "base64", null, null, password));
         entityManager.persist(principal);
     }
@@ -369,7 +420,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     /**
      * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#changePassword(Subject, String, String)
      */
-    public void changePassword(Subject whoami, String username, String password) throws Exception {
+    public void changePassword(Subject whoami, String username, String password) throws UpdateException {
         // a user can change his own password, as can a user with the appropriate permission
         if (!whoami.getName().equals(username)) {
             if (!authorizationManager.hasGlobalPermission(whoami, Permission.MANAGE_SECURITY)) {
@@ -450,11 +501,11 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
      * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#deleteUsers(Subject, Integer[])
      */
     @RequiredPermission(Permission.MANAGE_SECURITY)
-    public void deleteUsers(Subject whoami, Integer[] subjectIds) throws Exception {
+    public void deleteUsers(Subject sessionSubject, Integer[] subjectIds) throws DeleteException {
         for (Integer doomedSubjectId : subjectIds) {
             Subject doomedSubject = findSubjectById(doomedSubjectId);
 
-            if (whoami.getName().equals(doomedSubject.getName())) {
+            if (sessionSubject.getName().equals(doomedSubject.getName())) {
                 throw new PermissionException("You cannot remove yourself: " + doomedSubject.getName());
             }
 
@@ -472,15 +523,28 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
 
             // TODO: we need to reassign ownership of things this user used to own
 
-            // if this user was authenticated via JDBC and thus has a principal, remove it
-            if (isUserWithPrincipal(doomedSubject.getName())) {
-                deletePrincipal(whoami, doomedSubject);
-            }
+            //TODO: deletePrincipal/deleteSubject should throw 'DeleteException' instead of generic 'Exception'.
+            try {
+                // if this user was authenticated via JDBC and thus has a principal, remove it
+                if (isUserWithPrincipal(doomedSubject.getName())) {
+                    deletePrincipal(sessionSubject, doomedSubject);
+                }
 
-            deleteSubject(whoami, doomedSubject);
+                deleteSubject(sessionSubject, doomedSubject);
+            } catch (Exception e) {
+                throw new DeleteException(e);
+            }
         }
 
         return;
+    }
+
+    /**
+     * @see org.rhq.enterprise.server.auth.SubjectManagerRemote#deleteSubjects(org.rhq.core.domain.auth.Subject, java.lang.Integer[])
+     * TODO: A wrapper method for deleteUsers, exposed in remote, both should be merged at some point.
+     */
+    public void deleteSubjects(Subject sessionSubject, Integer[] subjectIds) throws DeleteException {
+        deleteUsers(sessionSubject, subjectIds);
     }
 
     /**

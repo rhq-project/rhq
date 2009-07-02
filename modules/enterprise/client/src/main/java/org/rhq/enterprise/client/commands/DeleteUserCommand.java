@@ -35,7 +35,7 @@ public class DeleteUserCommand implements ClientCommand {
             userToDelete.add(userId);
             Integer[] usersToDelete = new Integer[userId];
             //            subjectManager.deleteUsers(loggedInUser, userToDelete);
-            subjectManager.deleteUsers(loggedInUser, usersToDelete);
+            subjectManager.deleteSubjects(loggedInUser, usersToDelete);
 
             client.getPrintWriter().println("Account deletion successful");
         } catch (Exception e) {

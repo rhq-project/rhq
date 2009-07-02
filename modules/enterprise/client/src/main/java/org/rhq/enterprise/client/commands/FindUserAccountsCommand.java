@@ -26,7 +26,7 @@ public class FindUserAccountsCommand implements ClientCommand {
             // instantiate SLSB
             SubjectManagerRemote subjectManager = registry.getSubjectManagerRemote();
             // DURING POPULATION we should catch some type errors or insert more rigorous checking here
-            Subject located = subjectManager.findSubjectByName(loggedInUser, user);
+            Subject located = subjectManager.getSubjectByName(loggedInUser, user);
 
             client.getPrintWriter().println("Account search successful.");
             if (located != null) {

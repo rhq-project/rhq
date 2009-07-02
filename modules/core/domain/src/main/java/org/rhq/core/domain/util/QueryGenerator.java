@@ -114,11 +114,16 @@ public class QueryGenerator {
 
     public Query getQuery(EntityManager em) throws Exception {
         Query q = em.createQuery(getQueryString());
+
+        return getQuery(q);
+    }
+
+    public Query getQuery(Query q) throws Exception {
         for (Map.Entry<String, Object> critField : getEntityPersistenceFields(criteriaObject).entrySet()) {
             q.setParameter(critField.getKey(), critField.getValue());
         }
-        PersistenceUtility.setDataPage(q, pageControl);
 
+        PersistenceUtility.setDataPage(q, pageControl);
         return q;
     }
 

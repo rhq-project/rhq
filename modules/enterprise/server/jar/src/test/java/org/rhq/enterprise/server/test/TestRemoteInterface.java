@@ -104,10 +104,10 @@ public class TestRemoteInterface extends AssertJUnit {
 
         assertTrue(subjectManager.isLoggedIn("ws-test"));
 
-        Subject newUser = subjectManager.findSubjectByName(user, "ws-test-user");
+        Subject newUser = subjectManager.getSubjectByName(user, "ws-test-user");
 
         if (null != newUser) {
-            subjectManager.deleteUsers(user, new Integer[] { newUser.getId() });
+            subjectManager.deleteSubjects(user, new Integer[] { newUser.getId() });
         }
 
         newUser = new Subject();
@@ -117,7 +117,7 @@ public class TestRemoteInterface extends AssertJUnit {
         newUser.setFactive(true);
         subjectManager.createSubject(user, newUser);
 
-        newUser = subjectManager.findSubjectByName(user, "ws-test-user");
+        newUser = subjectManager.getSubjectByName(user, "ws-test-user");
         assertNotNull(newUser);
         assertTrue("ws-test-user".equals(newUser.getName()));
         assertTrue("first-name".equals(newUser.getFirstName()));
@@ -135,12 +135,12 @@ public class TestRemoteInterface extends AssertJUnit {
         subjectManager.logout(newUser.getSessionId());
         assertFalse(subjectManager.isLoggedIn("ws-test-user"));
 
-        newUser = subjectManager.findSubjectByName(user, "ws-test-user");
+        newUser = subjectManager.getSubjectByName(user, "ws-test-user");
         newUser.setFirstName("updated-first-name");
         newUser.setLastName("updated-last-name");
         subjectManager.updateSubject(user, newUser);
 
-        newUser = subjectManager.findSubjectByName(user, "ws-test-user");
+        newUser = subjectManager.getSubjectByName(user, "ws-test-user");
         assertTrue("ws-test-user".equals(newUser.getName()));
         assertTrue("updated-first-name".equals(newUser.getFirstName()));
         assertTrue("updated-last-name".equals(newUser.getLastName()));
@@ -161,8 +161,8 @@ public class TestRemoteInterface extends AssertJUnit {
         }
         roleManager.assignRolesToSubject(user, newUser.getId(), new Integer[] { roleId });
 
-        subjectManager.deleteUsers(user, new Integer[] { newUser.getId() });
-        assertNull(subjectManager.findSubjectByName(user, "ws-test-user"));
+        subjectManager.deleteSubjects(user, new Integer[] { newUser.getId() });
+        assertNull(subjectManager.getSubjectByName(user, "ws-test-user"));
     }
 
     @Test(enabled = TESTS_ENABLED)

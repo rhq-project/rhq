@@ -20,15 +20,17 @@ package org.rhq.enterprise.server.auth;
 
 import java.util.Collection;
 
-import javax.ejb.CreateException;
 import javax.ejb.Local;
-import javax.security.auth.login.LoginException;
 
 import org.rhq.core.domain.auth.Principal;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.authz.RoleManagerLocal;
+import org.rhq.enterprise.server.exception.CreateException;
+import org.rhq.enterprise.server.exception.DeleteException;
+import org.rhq.enterprise.server.exception.FetchException;
+import org.rhq.enterprise.server.exception.LoginException;
+import org.rhq.enterprise.server.exception.UpdateException;
 
 /**
  * The local EJB interface to the Authentication Boss.
@@ -57,18 +59,6 @@ public interface SubjectManagerLocal {
     PageList<Subject> getSubjectsById(Integer[] subjectIds, PageControl pageControl);
 
     /**
-     * Updates an existing subject with new data. This does <b>not</b> cascade any changes to the roles but it will save
-     * the subject's configuration.
-     *
-     * @param  whoami          the user that wants to make the change
-     * @param  subjectToModify the subject whose data is to be updated (which may or may not be the same as <code>
-     *                         whoami</code>)
-     *
-     * @return the merged subject, which may or may not be the same instance of <code>subjectToModify</code>
-     */
-    Subject updateSubject(Subject whoami, Subject subjectToModify);
-
-    /**
      * This returns the system super user subject that can be used to authorize the caller for any other system call.
      * This must <b>not</b> be exposed to remote clients.
      *
@@ -84,19 +74,6 @@ public interface SubjectManagerLocal {
      * @return the subject that was found or <code>null</code> if not found
      */
     Subject findSubjectByName(String username);
-
-    /**
-     * Create a a new subject. This <b>ignores</b> the roles in <code>subject</code>. The created subject will not be
-     * assigned to any roles; use the {@link RoleManagerLocal role manager} to assign roles to a subject.
-     *
-     * @param  whoami  The current running user.
-     * @param  subject The subject to be created.
-     *
-     * @return the newly persisted {@link Subject}
-     *
-     * @throws CreateException if there is already a subject with the same name
-     */
-    Subject createSubject(Subject whoami, Subject subject) throws CreateException;
 
     /**
      * @see SubjectManagerRemote#getAllSubjects(PageControl)
@@ -139,16 +116,6 @@ public interface SubjectManagerLocal {
     boolean authenticateTemporarySessionPassword(String password) throws Exception;
 
     /**
-     * @see SubjectManagerRemote#login(String, String)
-     */
-    Subject login(String username, String password) throws LoginException;
-
-    /**
-     * @see SubjectManagerRemote#logout(int)
-     */
-    void logout(int sessionId);
-
-    /**
      * Logs in a user without performing any authentication. This method should be used with care and not available to
      * remote clients. Because of the unauthenticated nature of this login, the new login session will have a session
      * timeout of only a few seconds. However, if you pass in <code>true</code> for the "reattach", this method will
@@ -165,27 +132,6 @@ public interface SubjectManagerLocal {
     Subject loginUnauthenticated(String user, boolean reattach) throws LoginException;
 
     /**
-     * Check if a user is logged in.
-     *
-     * @param  username The name of the user.
-     *
-     * @return <code>true</code> if the given user is logged in; <code>false</code> if not.
-     */
-    boolean isLoggedIn(String username);
-
-    /**
-     * Creates a new principal (username and password) in the internal database. The password will be encoded before
-     * being stored.
-     *
-     * @param  subject  The subject of the currently logged in user
-     * @param  username The username to add
-     * @param  password The password for this user
-     *
-     * @throws Exception if the principal could not be added
-     */
-    void createPrincipal(Subject subject, String username, String password) throws Exception;
-
-    /**
      * Creates a new principal (username and password) in the internal database.
      *
      * @param  subject   The subject of the currently logged in user
@@ -194,17 +140,6 @@ public interface SubjectManagerLocal {
      * @throws Exception if the principal could not be added
      */
     void createPrincipal(Subject subject, Principal principal) throws Exception;
-
-    /**
-     * Change the password for a user.
-     *
-     * @param  subject  The subject of the currently logged in user
-     * @param  username The user whose password will be changed
-     * @param  password The new password for the user
-     *
-     * @throws Exception if the password could not be changed
-     */
-    void changePassword(Subject subject, String username, String password) throws Exception;
 
     /**
      * Checks that the user exists <b>and</b> has a {@link Principal} associated with it. This means that the user both
@@ -290,4 +225,66 @@ public interface SubjectManagerLocal {
      */
     PageList<Subject> getAvailableSubjectsForAlertDefinition(Subject whoami, Integer alertDefinitionId,
         Integer[] pendingSubjectIds, PageControl pc);
+
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    //
+    // The following are shared with the Remote Interface
+    //
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    static public final String DATA_ROLES = "roles";
+
+    /**
+     * #see {@link SubjectManagerRemote#changePassword(Subject, String, String)
+     */
+    void changePassword(Subject subject, String username, String password) throws UpdateException;
+
+    /**
+     * #see {@link SubjectManagerRemote#createPrincipal(Subject, String, String)
+     */
+    void createPrincipal(Subject sessionSubject, String username, String password) throws CreateException;
+
+    /**
+     * #see {@link SubjectManagerRemote#createSubject(Subject, Subject)
+     */
+    Subject createSubject(Subject sessionSubject, Subject subject) throws CreateException;
+
+    /**
+     * #see {@link SubjectManagerRemote#deleteSubjects(Subject, Integer[])
+     */
+    void deleteSubjects(Subject sessionSubject, Integer[] subjectIds) throws DeleteException;
+
+    /**
+     * #see {@link SubjectManagerRemote#getSubjectById(Subject, int)}
+     */
+    Subject getSubjectById(Subject sessionSubject, int id) throws FetchException;
+
+    /**
+     * @see {@link SubjectManagerRemote#getSubjectByName(Subject, String)}
+     */
+    Subject getSubjectByName(Subject sessionSubject, String username) throws FetchException;
+
+    /**
+     * @see {@link SubjectManagerRemote#findSubjects(Subject, Subject, PageControl)}
+     */
+    PageList<Subject> findSubjects(Subject sessionSubject, Subject criteria, PageControl pc) throws FetchException;
+
+    /**
+     * @see SubjectManagerRemote#isLoggedIn(String)
+     */
+    boolean isLoggedIn(String username);
+
+    /**
+     * @see SubjectManagerRemote#login(String, String)
+     */
+    Subject login(String username, String password) throws LoginException;
+
+    /**
+     * @see SubjectManagerRemote#logout(int)
+     */
+    void logout(int sessionId);
+
+    /**
+     * @see 
+     */
+    Subject updateSubject(Subject sessionSubject, Subject subjectToModify) throws UpdateException;
 }

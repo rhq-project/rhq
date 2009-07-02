@@ -348,7 +348,8 @@ public class StartupServlet extends HttpServlet {
         try {
             final long initialDelay = 1000L * 60 * 5; // 5 mins
             final long interval = 1000L * 60 * 15; // 15 mins
-            scheduler.scheduleSimpleRepeatingJob(CheckForTimedOutContentRequestsJob.class, true, false, 40000L, 60000L);
+            scheduler.scheduleSimpleRepeatingJob(CheckForTimedOutContentRequestsJob.class, true, false, initialDelay,
+                interval);
         } catch (Exception e) {
             log("Cannot schedule check-for-timed-out-artifact-requests job: " + e.getMessage());
         }

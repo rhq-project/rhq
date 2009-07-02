@@ -2868,7 +2868,10 @@
             </plugin-configuration>
 		
             <resource-configuration>
-                <c:simple-property name="activeBindingSetName" description="the name of the binding set the Service Binding Manager should use when resolving bindings"/>
+                <c:simple-property name="activeBindingSetName"
+                                   activationPolicy="restart" 
+                                   description="The name of the binding set the Service Binding Manager should use when resolving bindings.
+                                                A change to this property takes effect only after the server restart."/>
                 <c:list-property name="standardBindings" description="The standard port bindings inherited by the binding sets.">
 	                <c:map-property name="binding">
                         <c:simple-property name="serviceName" description="The name of the service to which this binding applies"/>

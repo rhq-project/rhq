@@ -26,7 +26,7 @@ package org.rhq.enterprise.server.exception;
  * An exception that should be used to throw an error while trying to delete a certain entity.  
  * @author Asaf Shakarchi
  */
-public class DeleteException extends Exception {
+public class DeleteException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 
     public DeleteException(String message) {

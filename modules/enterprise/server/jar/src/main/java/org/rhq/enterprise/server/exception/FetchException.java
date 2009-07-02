@@ -26,7 +26,7 @@ package org.rhq.enterprise.server.exception;
  * An exception class that should be used to throw an error while trying to fetch entities.  
  * @author Asaf Shakarchi
  */
-public class FetchException extends Exception {
+public class FetchException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 
     public FetchException(String message) {

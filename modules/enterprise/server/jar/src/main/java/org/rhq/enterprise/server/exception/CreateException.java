@@ -26,7 +26,7 @@ package org.rhq.enterprise.server.exception;
  * An exception that should be used to throw an error while trying to create a certain entity.  
  * @author Asaf Shakarchi
  */
-public class CreateException extends Exception {
+public class CreateException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 
     public CreateException(String message) {

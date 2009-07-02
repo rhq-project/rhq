@@ -26,7 +26,7 @@ package org.rhq.enterprise.server.exception;
  * An exception that should be used to throw an error while trying to update a certain entity.  
  * @author Asaf Shakarchi
  */
-public class UpdateException extends Exception {
+public class UpdateException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 
     public UpdateException(String message) {

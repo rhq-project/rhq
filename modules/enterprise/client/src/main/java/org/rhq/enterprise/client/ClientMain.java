@@ -240,7 +240,9 @@ public class ClientMain {
         return;
     }
 
-    private boolean executePromptCommand(String[] args) throws Exception {
+    // private boolean executePromptCommand(String[] args) throws Exception {
+    // public boolean executePromptCommand(String[] args, PrintWriter pw) throws Exception {
+    public boolean executePromptCommand(String[] args) throws Exception {
         String cmd = args[0];
         if (commands.containsKey(cmd)) {
             ClientCommand command = commands.get(cmd);
@@ -284,7 +286,8 @@ public class ClientMain {
      *            the command line
      * @return the array of command line arguments
      */
-    private String[] parseCommandLine(String cmdLine) {
+    public String[] parseCommandLine(String cmdLine) {
+        // private String[] parseCommandLine(String cmdLine) {
         ByteArrayInputStream in = new ByteArrayInputStream(cmdLine.getBytes());
         StreamTokenizer strtok = new StreamTokenizer(new InputStreamReader(in));
         List<String> args = new ArrayList<String>();
@@ -403,9 +406,9 @@ public class ClientMain {
         this.remoteClient = remoteClient;
 
         setHttps(false);
-        remoteClient.reinitialize();
-        if (remoteClient != null) {
 
+        if (remoteClient != null) {
+            remoteClient.reinitialize();
             // change the set of completers for a logged in session, now make available direct
             // invocation of the remote API.
             consoleReader.addCompletor(new ArgumentCompletor(new Completor[] {

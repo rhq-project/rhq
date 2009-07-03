@@ -639,7 +639,7 @@
 <!ENTITY deploymentContentConfigProps '
     <configuration>
         <c:group name="deployment" displayName="Deployment Options">
-           <c:simple-property name="deployExploded" displayName="Deploy Exploded?" type="boolean" required="true" 
+           <c:simple-property name="deployExploded" displayName="Deploy Exploded?" type="boolean" required="true"
                               default="false">
                 <c:description>
                     Should the archive be deployed in exploded form (i.e. as a directory)?
@@ -816,13 +816,13 @@
 <!ENTITY ejb2CommonMetrics '
     <metric property="CreateCount" displayName="Create Count" displayType="summary" measurementType="trendsup"
             description="The number of instances of this EJB2 Session Bean that have been created. since server start."/>
-           
+
     <metric property="RemoveCount" displayName="Remove Count" displayType="summary" measurementType="trendsup"
             description="The number of instances of this EJB2 Session Bean that have been removed since server start."/>
 
     <metric property="CurrentPoolSize" displayName="Current Pool Size" displayType="summary" measurementType="dynamic"
             description="The number of beans in the pool."/>
-            
+
     <metric property="MaxPoolSize" displayName="Max Pool Size" displayType="summary" measurementType="dynamic"
             description="The maximum pool size."/>
 '>
@@ -846,8 +846,8 @@
                    <c:simple-property name="maxTime" displayName="Max Invocation Time" description="The slowest execution of this method."/>
                </c:map-property>
            </c:list-property>
-       </results> 
-   </operation>    
+       </results>
+   </operation>
 '>
 
 <!ENTITY ejb2StatelessSessionBeanDefinition '
@@ -857,7 +857,7 @@
         <c:simple-property name="componentName" readOnly="true"/>
         <c:simple-property name="invocationStatsPropertyName" default="DetypedInvocationStatistics" readOnly="true"/>
     </plugin-configuration>
-'>   
+'>
 
 <!ENTITY ejb2StatelessSessionBeanMetrics '
     <!-- no additional metrics apart from the common ones are defined for the SLSBs -->
@@ -1013,7 +1013,7 @@
                                             address (e.g. 10.11.14.233); specify 0.0.0.0 to tell JBossAS to
                                             bind to all available network interfaces; defaults to '127.0.0.1'."/>
              </c:group>
-             
+
            <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
                      <c:simple-property name="shutdownMbeanName" displayName="Shutdown MBean Name"
                                default="jboss.system:type=Server"
@@ -1161,7 +1161,7 @@
                 <c:simple-property name="instructionCompatibilityVersion"/>
              </configuration>
           </content>
-         
+
           <server name="JBoss AS JVM"
                   description="JVM of the JBossAS"
                   sourcePlugin="JMX"
@@ -1602,7 +1602,7 @@
                             JBoss AS. The default is false.
                         </c:description>
                     </c:simple-property>
-                    
+
                     <c:simple-property name="xa-resource-timeout"
                                        type="integer"
                                        displayName="XA Resource Timeout"
@@ -2320,6 +2320,14 @@
                     <c:simple-property name="filename" readOnly="true"/>
                     <c:simple-property name="contextPath" description="this WAR's context path (e.g. /admin-console" readOnly="true"/>
                 </c:group>
+                <c:group name="ResponseTime">
+                   <c:simple-property name="responseTimeLogFile" required="false"
+                                      description="the full path to the log file containing response-time stats for this webapp"/>
+                   <c:simple-property name="responseTimeUrlExcludes" required="false"
+                                      description="a space-delimited list of regular expressions specifying URLs that should be excluded from response-time stats collection"/>
+                   <c:simple-property name="responseTimeUrlTransforms" required="false"
+                                      description="a space-delimited list of Perl-style substitution expressions that should be applied to all URLs for which response-time stats are collected (e.g. |^/dept/finance/.*|/dept/finance/*|)"/>
+                </c:group>
                 <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
                     <c:simple-property name="extension" default="war" readOnly="true"/>
                     <c:simple-property name="descriptionTemplate" default="a standalone web application (WAR)" readOnly="true"/>
@@ -2384,6 +2392,14 @@
                 <c:group name="general" displayName="General">
                     <c:simple-property name="deploymentName" description="The name of this WAR" readOnly="true"/>
                     <c:simple-property name="contextPath" description="this WAR's context path (e.g. /admin-console" readOnly="true"/>
+                </c:group>
+                <c:group name="ResponseTime">
+                   <c:simple-property name="responseTimeLogFile" required="false"
+                                      description="the full path to the log file containing response-time stats for this webapp"/>
+                   <c:simple-property name="responseTimeUrlExcludes" required="false"
+                                      description="a space-delimited list of regular expressions specifying URLs that should be excluded from response-time stats collection"/>
+                   <c:simple-property name="responseTimeUrlTransforms" required="false"
+                                      description="a space-delimited list of Perl-style substitution expressions that should be applied to all URLs for which response-time stats are collected (e.g. |^/dept/finance/.*|/dept/finance/*|)"/>
                 </c:group>
                 <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
                     <c:simple-property name="extension" default="war" readOnly="true"/>
@@ -2483,12 +2499,12 @@
                         defaultOn="false" defaultInterval="600000" destinationType="Method Name"
                         description="The minimum, maximum, and average invocation times for each of the methods exposed by this EJB"/>
             </service>
-            
+
             <service name="EJB2 Stateful Session Bean"
                      class="Ejb2BeanComponent"
                      discovery="Ejb2BeanDiscoveryComponent"
                      description="An EJB2 Stateful Session Bean">
-                 &ejb2StatefulSessionBeanDefinition;                 
+                 &ejb2StatefulSessionBeanDefinition;
                  &ejbSessionBeanOperations;
                  &ejb2CommonMetrics;
                  &ejb2SessionBeanMetrics;
@@ -2498,7 +2514,7 @@
                         defaultOn="false" defaultInterval="600000" destinationType="Method Name"
                         description="The minimum, maximum, and average invocation times for each of the methods exposed by this EJB"/>
             </service>
-            
+
             <service name="EJB2 Message-Driven Bean"
                      class="Ejb2BeanComponent"
                      discovery="Ejb2BeanDiscoveryComponent"
@@ -2506,16 +2522,16 @@
                   &ejb2MessageDrivenBeanDefinition;
                   &ejb2CommonMetrics;
                   &ejb2MessageDrivenBeanMetrics;
-            </service>         
+            </service>
 
             <service name="EJB2 Entity Bean"
                      class="Ejb2BeanComponent"
                      discovery="Ejb2BeanDiscoveryComponent"
                      description="An EJB2 Entity Bean">
                 &ejb2EntityBeanDefinition;
-                &ejb2CommonMetrics;                
-                &ejb2EntityBeanMetrics;    
-            </service>                     
+                &ejb2CommonMetrics;
+                &ejb2EntityBeanMetrics;
+            </service>
         </service>
 
         <service name="Embedded EJB2 JAR"
@@ -2565,7 +2581,7 @@
                  &ejb2CommonMetrics;
                  &ejb2SessionBeanMetrics;
                  &ejb2StatefulSessionBeanMetrics;
-            </service>         
+            </service>
 
             <service name="EJB2 Message-Driven Bean (Embedded)"
                      class="Ejb2BeanComponent"
@@ -2574,16 +2590,16 @@
                   &ejb2MessageDrivenBeanDefinition;
                   &ejb2CommonMetrics;
                   &ejb2MessageDrivenBeanMetrics;
-            </service>         
-            
+            </service>
+
             <service name="EJB2 Entity Bean (Embedded)"
                      class="Ejb2BeanComponent"
                      discovery="Ejb2BeanDiscoveryComponent"
                      description="An EJB2 Entity Bean">
                 &ejb2EntityBeanDefinition;
                 &ejb2CommonMetrics;
-                &ejb2EntityBeanMetrics;    
-            </service>                     
+                &ejb2EntityBeanMetrics;
+            </service>
         </service>
 
         <service name="EJB3 JAR"
@@ -2860,13 +2876,13 @@
                  class="org.rhq.plugins.jbossas5.serviceBinding.ManagerComponent"
                  discovery="ManagedComponentDiscoveryComponent"
                  description="The Service Binding Manager manages the ports of the deployed services">
-		      
+
             <plugin-configuration>
                 <c:simple-property name="componentType" default="MCBean" readOnly="true"/>
                 <c:simple-property name="componentSubtype" default="ServiceBindingManager" readOnly="true"/>
                 <c:simple-property name="componentName" readOnly="true"/>
             </plugin-configuration>
-		
+
             <resource-configuration>
                 <c:simple-property name="activeBindingSetName"
                                    activationPolicy="restart" 
@@ -2885,12 +2901,12 @@
 	                </c:map-property>
                 </c:list-property>
             </resource-configuration>
-		
+
             <service name="Service Binding Set"
                      class="org.rhq.plugins.jbossas5.serviceBinding.SetComponent"
                      discovery="org.rhq.plugins.jbossas5.serviceBinding.SetDiscoveryComponent"
                      description="The Service Binding Set defines all bindings of a profile" createDeletePolicy="both">
-                     
+
                 <resource-configuration>
                     <c:simple-property name="name" readOnly="true" description="The name of this binding set"/>
                     <c:simple-property name="defaultHostName" description='the host name that should be used for all bindings whose configuration does not specify fixedHostName="true"'/>

@@ -99,13 +99,12 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     public PageList<Role> getAllRoles(PageControl pc) {
         pc.initDefaultOrderingField("r.name");
 
-        String query_name = Role.QUERY_FIND_ALL;
-        Query role_query_count = PersistenceUtility.createCountQuery(entityManager, query_name);
-        Query role_query = PersistenceUtility.createQueryWithOrderBy(entityManager, query_name, pc);
+        String queryName = Role.QUERY_FIND_ALL;
+        Query queryCount = PersistenceUtility.createCountQuery(entityManager, queryName);
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, queryName, pc);
 
-        long total_count = (Long) role_query_count.getSingleResult();
-
-        List<Role> roles = role_query.getResultList();
+        long count = (Long) queryCount.getSingleResult();
+        List<Role> roles = query.getResultList();
 
         if (roles != null) {
             // eagerly load in the members - can't use left-join due to PersistenceUtility usage; perhaps use EAGER
@@ -116,7 +115,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
             roles = new ArrayList<Role>();
         }
 
-        return new PageList<Role>(roles, (int) total_count, pc);
+        return new PageList<Role>(roles, (int) count, pc);
     }
 
     /**
@@ -135,12 +134,12 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     @RequiredPermission(Permission.MANAGE_SECURITY)
     public void deleteRoles(Subject whoami, Integer[] doomedRoleIds) {
         if (doomedRoleIds != null) {
-            for (Integer role_id : doomedRoleIds) {
-                Role doomedRole = entityManager.find(Role.class, role_id);
+            for (Integer roleId : doomedRoleIds) {
+                Role doomedRole = entityManager.find(Role.class, roleId);
 
                 Query deleteNotificationQuery = entityManager
                     .createQuery("DELETE FROM RoleNotification rn WHERE rn.role.id = :roleId");
-                deleteNotificationQuery.setParameter("roleId", role_id);
+                deleteNotificationQuery.setParameter("roleId", roleId);
                 deleteNotificationQuery.executeUpdate(); // discard result, might not have been set for any notifications
 
                 Set<Subject> subjectsToUnhook = new HashSet<Subject>(doomedRole.getSubjects()); // avoid concurrent mod exception
@@ -181,8 +180,8 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
                     + "] - roles are fixed for this user");
             }
 
-            for (Integer role_id : roleIds) {
-                Role role = entityManager.find(Role.class, role_id);
+            for (Integer roleId : roleIds) {
+                Role role = entityManager.find(Role.class, roleId);
                 if (role != null) {
                     role.addSubject(subject);
                 }
@@ -200,8 +199,8 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
         if (subjectIds != null) {
             Role role = findRoleById(roleId); // attach it
 
-            for (Integer subject_id : subjectIds) {
-                Subject subject = entityManager.find(Subject.class, subject_id);
+            for (Integer subjectId : subjectIds) {
+                Subject subject = entityManager.find(Subject.class, subjectId);
 
                 if (subject != null) {
                     if (subject.getFsystem() || (authorizationManager.isSystemSuperuser(subject))) {
@@ -230,8 +229,8 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
                     + "] - roles are fixed for this user");
             }
 
-            for (Integer role_id : roleIds) {
-                Role role = entityManager.find(Role.class, role_id);
+            for (Integer roleId : roleIds) {
+                Role role = entityManager.find(Role.class, roleId);
                 if (role != null) {
                     role.removeSubject(subject);
                 }
@@ -255,9 +254,9 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     @RequiredPermission(Permission.MANAGE_SECURITY)
     public void setPermissions(Subject whoami, Integer roleId, Set<Permission> permissions) {
         Role role = entityManager.find(Role.class, roleId);
-        Set<Permission> role_permissions = role.getPermissions();
-        role_permissions.clear();
-        role_permissions.addAll(permissions);
+        Set<Permission> rolePermissions = role.getPermissions();
+        rolePermissions.clear();
+        rolePermissions.addAll(permissions);
         entityManager.merge(role);
         entityManager.flush();
         return;
@@ -268,8 +267,8 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
      */
     public Set<Permission> getPermissions(Integer roleId) {
         Role role = entityManager.find(Role.class, roleId);
-        Set<Permission> role_permissions = role.getPermissions();
-        return role_permissions;
+        Set<Permission> rolePermissions = role.getPermissions();
+        return rolePermissions;
     }
 
     /**
@@ -284,7 +283,6 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     /**
      * @see org.rhq.enterprise.server.authz.RoleManagerRemote#getRoleSubjects(Subject,Integer,PageControl)
      */
-    @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_SECURITY)
     public PageList<Subject> getRoleSubjects(Subject subject, Integer roleId, PageControl pc) {
         return getRoleSubjects(roleId, pc);
@@ -297,18 +295,17 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     public PageList<Subject> getRoleSubjects(Integer roleId, PageControl pc) {
         pc.initDefaultOrderingField("s.name");
 
-        String query_name = Subject.QUERY_GET_SUBJECTS_ASSIGNED_TO_ROLE;
-        Query role_query_count = PersistenceUtility.createCountQuery(entityManager, query_name);
-        Query role_query = PersistenceUtility.createQueryWithOrderBy(entityManager, query_name, pc);
+        String queryName = Subject.QUERY_GET_SUBJECTS_ASSIGNED_TO_ROLE;
+        Query queryCount = PersistenceUtility.createCountQuery(entityManager, queryName);
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, queryName, pc);
 
-        role_query_count.setParameter("id", roleId);
-        role_query.setParameter("id", roleId);
+        queryCount.setParameter("id", roleId);
+        query.setParameter("id", roleId);
 
-        long total_count = (Long) role_query_count.getSingleResult();
+        long count = (Long) queryCount.getSingleResult();
+        List<Subject> subjects = query.getResultList();
 
-        List<Subject> subjects = role_query.getResultList();
-
-        return new PageList<Subject>(subjects, (int) total_count, pc);
+        return new PageList<Subject>(subjects, (int) count, pc);
     }
 
     /**
@@ -318,18 +315,17 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     public PageList<ResourceGroup> getRoleResourceGroups(Integer roleId, PageControl pc) {
         pc.initDefaultOrderingField("rg.name");
 
-        String query_name = ResourceGroup.QUERY_GET_RESOURCE_GROUPS_ASSIGNED_TO_ROLE;
-        Query role_query_count = PersistenceUtility.createCountQuery(entityManager, query_name);
-        Query role_query = PersistenceUtility.createQueryWithOrderBy(entityManager, query_name, pc);
+        String queryName = ResourceGroup.QUERY_GET_RESOURCE_GROUPS_ASSIGNED_TO_ROLE;
+        Query queryCount = PersistenceUtility.createCountQuery(entityManager, queryName);
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, queryName, pc);
 
-        role_query_count.setParameter("id", roleId);
-        role_query.setParameter("id", roleId);
+        queryCount.setParameter("id", roleId);
+        query.setParameter("id", roleId);
 
-        long total_count = (Long) role_query_count.getSingleResult();
+        long count = (Long) queryCount.getSingleResult();
+        List<ResourceGroup> groups = query.getResultList();
 
-        List<ResourceGroup> groups = role_query.getResultList();
-
-        return new PageList<ResourceGroup>(groups, (int) total_count, pc);
+        return new PageList<ResourceGroup>(groups, (int) count, pc);
     }
 
     /**
@@ -343,24 +339,23 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
 
         pc.initDefaultOrderingField("r.name");
 
-        String query_name = Role.QUERY_FIND_BY_IDS;
-        Query role_query_count = PersistenceUtility.createCountQuery(entityManager, query_name);
-        Query role_query = PersistenceUtility.createQueryWithOrderBy(entityManager, query_name, pc);
+        String queryName = Role.QUERY_FIND_BY_IDS;
+        Query queryCount = PersistenceUtility.createCountQuery(entityManager, queryName);
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, queryName, pc);
 
-        List<Integer> role_ids_list = Arrays.asList(roleIds);
-        role_query_count.setParameter("ids", role_ids_list);
-        role_query.setParameter("ids", role_ids_list);
+        List<Integer> roleIdsList = Arrays.asList(roleIds);
+        queryCount.setParameter("ids", roleIdsList);
+        query.setParameter("ids", roleIdsList);
 
-        long total_count = (Long) role_query_count.getSingleResult();
-
-        List<Role> roles = role_query.getResultList();
+        long count = (Long) queryCount.getSingleResult();
+        List<Role> roles = query.getResultList();
 
         // eagerly load in the members - can't use left-join due to PersistenceUtility usage; perhaps use EAGER
         for (Role role : roles) {
             role.getMemberCount();
         }
 
-        return new PageList<Role>(roles, (int) total_count, pc);
+        return new PageList<Role>(roles, (int) count, pc);
     }
 
     @RequiredPermission(Permission.MANAGE_SECURITY)
@@ -369,40 +364,38 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
         PageControl pc) {
         pc.initDefaultOrderingField("r.name");
 
-        String query_name;
+        String queryName;
 
         if ((pendingRoleIds == null) || (pendingRoleIds.length == 0)) {
-            query_name = Role.QUERY_FIND_AVAILABLE_ROLES;
+            queryName = Role.QUERY_FIND_AVAILABLE_ROLES;
         } else {
-            query_name = Role.QUERY_FIND_AVAILABLE_ROLES_WITH_EXCLUDES;
+            queryName = Role.QUERY_FIND_AVAILABLE_ROLES_WITH_EXCLUDES;
         }
 
-        Query role_query_count = PersistenceUtility.createCountQuery(entityManager, query_name, "distinct r");
-        Query role_query = PersistenceUtility.createQueryWithOrderBy(entityManager, query_name, pc);
+        Query queryCount = PersistenceUtility.createCountQuery(entityManager, queryName, "distinct r");
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, queryName, pc);
 
-        role_query_count.setParameter("subjectId", subjectId);
-        role_query.setParameter("subjectId", subjectId);
+        queryCount.setParameter("subjectId", subjectId);
+        query.setParameter("subjectId", subjectId);
 
         if ((pendingRoleIds != null) && (pendingRoleIds.length > 0)) {
-            List<Integer> pending_ids_list = Arrays.asList(pendingRoleIds);
-            role_query_count.setParameter("excludes", pending_ids_list);
-            role_query.setParameter("excludes", pending_ids_list);
+            List<Integer> pendingIdsList = Arrays.asList(pendingRoleIds);
+            queryCount.setParameter("excludes", pendingIdsList);
+            query.setParameter("excludes", pendingIdsList);
         }
 
-        long total_count = (Long) role_query_count.getSingleResult();
-
-        List<Role> roles = role_query.getResultList();
+        long count = (Long) queryCount.getSingleResult();
+        List<Role> roles = query.getResultList();
 
         // eagerly load in the members - can't use left-join due to PersistenceUtility usage; perhaps use EAGER
         for (Role role : roles) {
             role.getMemberCount();
         }
 
-        return new PageList<Role>(roles, (int) total_count, pc);
+        return new PageList<Role>(roles, (int) count, pc);
     }
 
     @RequiredPermission(Permission.MANAGE_SECURITY)
-    @SuppressWarnings("unchecked")
     public PageList<Role> getSubjectUnassignedRoles(Subject subject, int subjectId, PageControl pc) {
         return getAvailableRolesForSubject(subject, subjectId, null, pc);
     }
@@ -412,36 +405,35 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
         Integer[] pendingRoleIds, PageControl pc) {
         pc.initDefaultOrderingField("r.name");
 
-        String query_name;
+        String queryName;
 
         if ((pendingRoleIds == null) || (pendingRoleIds.length == 0)) {
-            query_name = Role.QUERY_FIND_AVAILABLE_ROLES_FOR_ALERT_DEFINITION;
+            queryName = Role.QUERY_FIND_AVAILABLE_ROLES_FOR_ALERT_DEFINITION;
         } else {
-            query_name = Role.QUERY_FIND_AVAILABLE_ROLES_FOR_ALERT_DEFINITION_WITH_EXCLUDES;
+            queryName = Role.QUERY_FIND_AVAILABLE_ROLES_FOR_ALERT_DEFINITION_WITH_EXCLUDES;
         }
 
-        Query role_query_count = PersistenceUtility.createCountQuery(entityManager, query_name, "distinct r");
-        Query role_query = PersistenceUtility.createQueryWithOrderBy(entityManager, query_name, pc);
+        Query queryCount = PersistenceUtility.createCountQuery(entityManager, queryName, "distinct r");
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, queryName, pc);
 
-        role_query_count.setParameter("alertDefinitionId", alertDefinitionId);
-        role_query.setParameter("alertDefinitionId", alertDefinitionId);
+        queryCount.setParameter("alertDefinitionId", alertDefinitionId);
+        query.setParameter("alertDefinitionId", alertDefinitionId);
 
         if ((pendingRoleIds != null) && (pendingRoleIds.length > 0)) {
-            List<Integer> pending_ids_list = Arrays.asList(pendingRoleIds);
-            role_query_count.setParameter("excludes", pending_ids_list);
-            role_query.setParameter("excludes", pending_ids_list);
+            List<Integer> pendingidslist = Arrays.asList(pendingRoleIds);
+            queryCount.setParameter("excludes", pendingidslist);
+            query.setParameter("excludes", pendingidslist);
         }
 
-        long total_count = (Long) role_query_count.getSingleResult();
-
-        List<Role> roles = role_query.getResultList();
+        long count = (Long) queryCount.getSingleResult();
+        List<Role> roles = query.getResultList();
 
         // eagerly load in the members - can't use left-join due to PersistenceUtility usage; perhaps use EAGER
         for (Role role : roles) {
             role.getMemberCount();
         }
 
-        return new PageList<Role>(roles, (int) total_count, pc);
+        return new PageList<Role>(roles, (int) count, pc);
     }
 
     /**
@@ -453,8 +445,8 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
             Role role = entityManager.find(Role.class, roleId);
             role.getResourceGroups().size(); // load them in
 
-            for (Integer group_id : pendingGroupIds) {
-                ResourceGroup group = entityManager.find(ResourceGroup.class, group_id);
+            for (Integer groupid : pendingGroupIds) {
+                ResourceGroup group = entityManager.find(ResourceGroup.class, groupid);
                 role.addResourceGroup(group);
             }
         }
@@ -471,8 +463,8 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
             Role role = entityManager.find(Role.class, roleId);
             role.getResourceGroups().size(); // load them in
 
-            for (Integer group_id : groupIds) {
-                ResourceGroup group = entityManager.find(ResourceGroup.class, group_id);
+            for (Integer groupid : groupIds) {
+                ResourceGroup group = entityManager.find(ResourceGroup.class, groupid);
                 role.removeResourceGroup(group);
             }
         }
@@ -498,6 +490,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
         //TODO: Implement, currently no references for this method.
     }
 
+    @SuppressWarnings("unchecked")
     public PageList<Role> findRoles(Subject subject, Role criteria, PageControl pc) throws FetchException {
         try {
             QueryGenerator generator = new QueryGenerator(criteria, pc.getOptionalData(), pc);

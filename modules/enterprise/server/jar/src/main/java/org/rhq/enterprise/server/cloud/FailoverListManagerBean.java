@@ -158,7 +158,14 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
 
         // persist results immediate, which will be the only writes (as opposed to reads) in this transaction
         Map<Agent, FailoverListComposite> agentServerListMap = getForAgents(event, servers, agents, null);
+
+        /* now that the intense in-memory manipulation is complete, let's do the stuff that needs to persist the
+         * results to the database; clear out the existing lists **just** before persisting the new ones to keep 
+         * row lock hold time low
+         */
+        clear(); // clear out the existing server lists because we're going to generate new ones for all agents
         persistComposites(event, agentServerListMap);
+
         return agentServerListMap;
     }
 
@@ -168,13 +175,13 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
         Map<Agent, FailoverListComposite> agentServerListMap = getForAgents(event, servers, agents, null);
 
         /* now that the intense in-memory manipulation is complete, let's do the stuff that needs to persist the
-         * results to the database; clear out the existing server lists **just** before persisting the new ones 
-         * to keep row lock hold time low
+         * results to the database; clear out the existing lists **just** before persisting the new ones to keep 
+         * row lock hold time low
          */
         for (Agent next : agents) {
+            // clear out the existing server lists because we're going to generate new ones for all agents
             deleteServerListsForAgent(next);
         }
-        clear();
         persistComposites(event, agentServerListMap);
 
         return agentServerListMap;

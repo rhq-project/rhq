@@ -42,12 +42,12 @@ public interface RoleManagerLocal {
     /**
      * This returns a page list of all the roles that a subject is authorized to access.
      *
-     * @param  subject the subject whose roles are to be returned
+     * @param  subjectId the id of the subject whose roles are to be returned
      * @param  pc
      *
      * @return page list of all subject's roles
      */
-    PageList<Role> getRoles(Subject subject, PageControl pc);
+    PageList<Role> getRoles(int subjectId, PageControl pc);
 
     /**
      * Returns a list of all roles in the system.

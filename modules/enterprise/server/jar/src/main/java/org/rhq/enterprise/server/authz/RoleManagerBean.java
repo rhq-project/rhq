@@ -66,11 +66,12 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     /**
      * @see org.rhq.enterprise.server.authz.RoleManagerLocal#getRoles(Subject,PageControl)
      */
+    @SuppressWarnings("unchecked")
     // the first param, subject, is not the subject making the request, its the subject whose roles are to be returned.
     // therefore, we won't want our security interceptor to check this method since the subject won't have a session associated with it
     @ExcludeDefaultInterceptors
-    public PageList<Role> getRoles(Subject subject, PageControl pc) {
-        subject = entityManager.find(Subject.class, subject.getId()); // attach it
+    public PageList<Role> getRoles(int subjectId, PageControl pc) {
+        Subject subject = entityManager.find(Subject.class, subjectId); // attach it
         PageList<Role> roles = PersistenceUtility.createPaginationFilter(entityManager, subject.getRoles(), pc);
 
         if (roles != null) {
@@ -86,7 +87,6 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     /**
      * @see org.rhq.enterprise.server.authz.RoleManagerRemote#getAllRoles(Subject,PageControl)
      */
-    @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_SECURITY)
     public PageList<Role> getAllRoles(Subject subject, PageControl pc) {
         return getAllRoles(pc);

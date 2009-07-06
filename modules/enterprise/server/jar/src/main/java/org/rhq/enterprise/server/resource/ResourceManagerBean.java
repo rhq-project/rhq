@@ -339,7 +339,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         };
 
         String[] namedQueriesToExecute = new String[] { //
-        ResourceChannel.DELETE_BY_RESOURCES, //
+            ResourceChannel.DELETE_BY_RESOURCES, //
             MeasurementBaseline.QUERY_DELETE_BY_RESOURCES, // baseline BEFORE schedules
             MeasurementDataTrait.QUERY_DELETE_BY_RESOURCES, // traits BEFORE schedules
             CallTimeDataValue.QUERY_DELETE_BY_RESOURCES, // call time data values BEFORE schedules & call time data keys
@@ -358,8 +358,10 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             ResourceOperationHistory.QUERY_DELETE_BY_RESOURCES, //
             DeleteResourceHistory.QUERY_DELETE_BY_RESOURCES, //
             CreateResourceHistory.QUERY_DELETE_BY_RESOURCES, //
+            ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_0,
             ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_1, // first delete the config objects
             ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_2, // then the history objects wrapping those configs
+            PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_0,
             PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_1, // first delete the config objects
             PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_2, // then the history objects wrapping those configs
             AlertConditionLog.QUERY_DELETE_BY_RESOURCES, //    Don't 

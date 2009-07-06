@@ -51,7 +51,7 @@ public class ViewRolesAction extends WorkflowPrepareAction {
 
         PageControl pc = WebUtility.getPageControl(request);
 
-        PageList<Role> roles = LookupUtil.getRoleManager().getRoles(user, pc);
+        PageList<Role> roles = LookupUtil.getRoleManager().getRoles(user.getId(), pc);
         request.setAttribute(Constants.USER_ROLES_ATTR, roles);
 
         return null;

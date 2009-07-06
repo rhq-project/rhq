@@ -28,6 +28,7 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
+import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.action.BaseValidatorForm;
@@ -69,13 +70,14 @@ public class AddUsersAction extends BaseAction {
         log.debug("getting role [" + roleId + "]");
 
         log.debug("getting pending user list");
-        Integer[] pendingUserIds = SessionUtils.getList(request.getSession(), Constants.PENDING_USERS_SES_ATTR);
+        int[] pendingUserIds = ArrayUtils.unwrapArray(SessionUtils.getList(request.getSession(),
+            Constants.PENDING_USERS_SES_ATTR));
         for (int i = 0; i < pendingUserIds.length; i++) {
             log.debug("adding user [" + pendingUserIds[i] + "] for role [" + roleId + "]");
         }
 
         try {
-            LookupUtil.getRoleManager().assignSubjectsToRole(RequestUtils.getSubject(request), roleId, pendingUserIds);
+            LookupUtil.getRoleManager().addSubjectsToRole(RequestUtils.getSubject(request), roleId, pendingUserIds);
         } catch (PermissionException pe) {
             RequestUtils.setError(request, "admin.role.error.StaticRole");
             return returnFailure(request, mapping, Constants.ROLE_PARAM, roleId);

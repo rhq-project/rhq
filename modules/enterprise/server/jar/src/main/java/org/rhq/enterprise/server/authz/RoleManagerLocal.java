@@ -19,13 +19,17 @@
 package org.rhq.enterprise.server.authz;
 
 import java.util.Set;
+
 import javax.ejb.Local;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.exception.FetchException;
+import org.rhq.enterprise.server.exception.UpdateException;
 
 /**
  * The local interface to the role manager that provides the API to manipulate the security rules within the JON Server.
@@ -75,34 +79,6 @@ public interface RoleManagerLocal {
     void deleteRoles(Subject whoami, Integer[] doomedRoleIds);
 
     /**
-     * Assigns a set of roles to a subject which authorizes the subject to do anything the roles permit.
-     *
-     * @param whoami    the user attempting to assign the roles to the subject
-     * @param subjectId the subject who is to be authorized with the given roles
-     * @param roleIds   the roles to assign
-     */
-    void assignRolesToSubject(Subject whoami, Integer subjectId, Integer[] roleIds);
-
-    /**
-     * Assigns a set of subjects to a role which authorizes the subjects to do anything the role permits.
-     *
-     * @param whoami     the user attempting to assign the roles to the subject
-     * @param roleId     the role who will authorized with the given subjects
-     * @param subjectIds the subjects to assign the role
-     */
-    void assignSubjectsToRole(Subject whoami, Integer roleId, Integer[] subjectIds);
-
-    /**
-     * Disassociates particular roles from a subject. Once complete, the subject will no longer be authorized with the
-     * given roles.
-     *
-     * @param whoami    the user that is attempting to perform the remove
-     * @param subjectId the user that is to have the roles unassigned from it
-     * @param roleIds   list of role IDs that are to be removed from user
-     */
-    void removeRolesFromSubject(Subject whoami, Integer subjectId, Integer[] roleIds);
-
-    /**
      * Sets the permissions for the specified role. Any currently existing role permissions are overwritten - that is,
      * <code>permissions</code> will be the complete set of permissions the role will now be authorized with.
      *
@@ -132,13 +108,14 @@ public interface RoleManagerLocal {
     Role updateRole(Subject whoami, Role role);
 
     /**
-     * Returns the role with the given ID
+     * Given a set of role Ids, this returns a list of all the roles.
      *
-     * @param  roleId
+     * @param  roleIds
+     * @param  pc
      *
-     * @return the role or <code>null</code> if it wasn't found
+     * @return all the roles with the given ID
      */
-    Role findRoleById(Integer roleId);
+    PageList<Role> getRolesById(Integer[] roleIds, PageControl pc);
 
     /**
      * Get all subjects that have been assigned the given role.
@@ -159,16 +136,6 @@ public interface RoleManagerLocal {
      * @return list of all groups that this role has
      */
     PageList<ResourceGroup> getRoleResourceGroups(Integer roleId, PageControl pc);
-
-    /**
-     * Given a set of role Ids, this returns a list of all the roles.
-     *
-     * @param  roleIds
-     * @param  pc
-     *
-     * @return all the roles with the given ID
-     */
-    PageList<Role> getRolesById(Integer[] roleIds, PageControl pc);
 
     /**
      * This returns a list of roles that are available to be assigned to a given subject but not yet assigned to that
@@ -201,14 +168,69 @@ public interface RoleManagerLocal {
     PageList<Role> getAvailableRolesForAlertDefinition(Subject whoami, Integer alertDefinitionId,
         Integer[] pendingRoleIds, PageControl pc);
 
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    //
+    // The following are shared with the Remote Interface
+    //
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    /**
+     * Returns the role with the given ID
+     *
+     * @param  roleId
+     *
+     * @return the role or <code>null</code> if it wasn't found
+     */
+    @Deprecated
+    // Use getRole instead
+    Role findRoleById(Integer roleId);
+
+    Role getRole(Subject sessionSubject, int roleId) throws FetchException;
+
+    PageList<Role> getSubjectAssignedRoles(Subject sessionSubject, int subjectId, PageControl pc) throws FetchException;
+
+    //This is a proxy of getAvailableRolesForSubject but without pendingRoleIds as required by remote spec 
+    PageList<Role> getSubjectUnassignedRoles(Subject sessionSubject, int subjectId, PageControl pc)
+        throws FetchException;
+
+    PageList<Role> findRoles(Subject sessionSubject, Role criteria, PageControl pc) throws FetchException;
+
+    /**
+     * Assigns a set of roles to a subject which authorizes the subject to do anything the roles permit.
+     *
+     * @param whoami    the user attempting to assign the roles to the subject
+     * @param subjectId the subject who is to be authorized with the given roles
+     * @param roleIds   the roles to assign
+     * @throws UpdateException TODO
+     */
+    void addRolesToSubject(Subject whoami, int subjectId, int[] roleIds) throws UpdateException;
+
+    /**
+     * Disassociates particular roles from a subject. Once complete, the subject will no longer be authorized with the
+     * given roles.
+     *
+     * @param whoami    the user that is attempting to perform the remove
+     * @param subjectId the user that is to have the roles unassigned from it
+     * @param roleIds   list of role IDs that are to be removed from user
+     * @throws UpdateException TODO
+     */
+    void removeRolesFromSubject(Subject whoami, int subjectId, int[] roleIds) throws UpdateException;
+
+    void addSubjectsToRole(Subject whoami, int roleId, int[] subjectIds) throws UpdateException;
+
+    void removeSubjectsFromRole(Subject sessionSubject, int roleId, int[] subjectIds) throws UpdateException;
+
     /**
      * Adds the given resource groups to the given role.
      *
      * @param whoami          user attempting to add the groups to the role
      * @param roleId
      * @param pendingGroupIds
+     * @throws UpdateException TODO
      */
-    void addResourceGroupsToRole(Subject whoami, Integer roleId, Integer[] pendingGroupIds);
+    void addResourceGroupsToRole(Subject whoami, int roleId, int[] pendingGroupIds) throws UpdateException;
+
+    void addRolesToResourceGroup(Subject sessionSubject, int groupId, int[] roleIds) throws UpdateException;
 
     /**
      * Removes the given resource groups from the given role.
@@ -216,6 +238,9 @@ public interface RoleManagerLocal {
      * @param whoami   user attempting to remove the groups from the role
      * @param roleId
      * @param groupIds
+     * @throws UpdateException TODO
      */
-    void removeResourceGroupsFromRole(Subject whoami, Integer roleId, Integer[] groupIds);
+    void removeResourceGroupsFromRole(Subject whoami, int roleId, int[] groupIds) throws UpdateException;
+
+    void removeRolesFromResourceGroup(Subject sessionSubject, int groupId, int[] roleIds) throws UpdateException;
 }

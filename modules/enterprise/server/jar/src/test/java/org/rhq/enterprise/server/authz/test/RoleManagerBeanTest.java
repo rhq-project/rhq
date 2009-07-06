@@ -20,8 +20,10 @@ package org.rhq.enterprise.server.authz.test;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
@@ -176,7 +178,7 @@ public class RoleManagerBeanTest extends AbstractEJB3Test {
             assert !roles.contains(new_role);
             assert !roles.contains(new_role2);
 
-            roleManager.assignRolesToSubject(superuser, subject.getId(), new Integer[] { new_role.getId() });
+            roleManager.addRolesToSubject(superuser, subject.getId(), new int[] { new_role.getId() });
             roles = roleManager.getAvailableRolesForSubject(superuser, subject.getId(), new Integer[0], PageControl
                 .getUnlimitedInstance());
             assert (roles.size() + 1) == all_roles.size() : "All but one role should be available for this subject";
@@ -229,10 +231,10 @@ public class RoleManagerBeanTest extends AbstractEJB3Test {
             role = roleManager.createRole(superuser, role);
             assert roleManager.getRoles(new_subject, PageControl.getUnlimitedInstance()).size() == 0 : "Role should not be assigned yet";
 
-            roleManager.assignRolesToSubject(superuser, new_subject.getId(), new Integer[] { role.getId() });
+            roleManager.addRolesToSubject(superuser, new_subject.getId(), new int[] { role.getId() });
             assert roleManager.getRoles(new_subject, PageControl.getUnlimitedInstance()).size() == 1 : "Role should be assigned";
 
-            roleManager.removeRolesFromSubject(superuser, new_subject.getId(), new Integer[] { role.getId() });
+            roleManager.removeRolesFromSubject(superuser, new_subject.getId(), new int[] { role.getId() });
             assert roleManager.getRoles(new_subject, PageControl.getUnlimitedInstance()).size() == 0 : "Role should have been unassigned";
 
             roleManager.deleteRoles(superuser, new Integer[] { role.getId() });

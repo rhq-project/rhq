@@ -150,7 +150,7 @@ public interface SubjectManagerLocal {
      *
      * @throws Exception if failed to delete one or more users
      */
-    void deleteUsers(Subject subject, Integer[] subjectIds) throws Exception;
+    void deleteUsers(Subject subject, int[] subjectIds) throws Exception;
 
     /**
      * Returns the actual {@link Subject} for the given session.
@@ -231,9 +231,9 @@ public interface SubjectManagerLocal {
     Subject createSubject(Subject subject, Subject subjectToCreate) throws CreateException;
 
     /**
-     * #see {@link SubjectManagerRemote#deleteSubjects(Subject, Integer[])
+     * #see {@link SubjectManagerRemote#deleteSubjects(Subject, int[])
      */
-    void deleteSubjects(Subject subject, Integer[] subjectIds) throws DeleteException;
+    void deleteSubjects(Subject subject, int[] subjectIds) throws DeleteException;
 
     /**
      * #see {@link SubjectManagerRemote#getSubjectById(Subject, int)}

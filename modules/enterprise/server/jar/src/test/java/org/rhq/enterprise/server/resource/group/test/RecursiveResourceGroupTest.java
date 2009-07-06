@@ -289,7 +289,7 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
                 Subject overlord = subjectManager.getOverlord();
 
                 if (null != subject) {
-                    subjectManager.deleteUsers(overlord, new Integer[] { subject.getId() });
+                    subjectManager.deleteUsers(overlord, new int[] { subject.getId() });
                 }
                 if (null != role) {
                     roleManager.deleteRoles(overlord, new Integer[] { role.getId() });

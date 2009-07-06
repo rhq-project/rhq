@@ -39,8 +39,11 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.domain.util.QueryGenerator;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.exception.FetchException;
+import org.rhq.enterprise.server.exception.UpdateException;
 
 /**
  * This bean provides functionality to manipulate the security rules. That is, adding/modifying/deleting roles and their
@@ -166,10 +169,10 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     }
 
     /**
-     * @see org.rhq.enterprise.server.authz.RoleManagerLocal#assignRolesToSubject(Subject, Integer, Integer[])
+     * @see org.rhq.enterprise.server.authz.RoleManagerLocal#addRolesToSubject(Subject, int, int[])
      */
     @RequiredPermission(Permission.MANAGE_SECURITY)
-    public void assignRolesToSubject(Subject whoami, Integer subjectId, Integer[] roleIds) {
+    public void addRolesToSubject(Subject whoami, int subjectId, int[] roleIds) throws UpdateException {
         if (roleIds != null) {
             Subject subject = subjectManager.getSubjectById(subjectId); // attach it
 
@@ -190,10 +193,10 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     }
 
     /**
-     * @see org.rhq.enterprise.server.authz.RoleManagerLocal#assignSubjectsToRole(Subject, Integer, Integer[])
+     * @see org.rhq.enterprise.server.authz.RoleManagerLocal#addSubjectsToRole(Subject, int, int[])
      */
     @RequiredPermission(Permission.MANAGE_SECURITY)
-    public void assignSubjectsToRole(Subject whoami, Integer roleId, Integer[] subjectIds) {
+    public void addSubjectsToRole(Subject whoami, int roleId, int[] subjectIds) throws UpdateException {
         if (subjectIds != null) {
             Role role = findRoleById(roleId); // attach it
 
@@ -215,10 +218,10 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     }
 
     /**
-     * @see org.rhq.enterprise.server.authz.RoleManagerLocal#removeRolesFromSubject(Subject, Integer, Integer[])
+     * @see org.rhq.enterprise.server.authz.RoleManagerLocal#removeRolesFromSubject(Subject, int, int[])
      */
     @RequiredPermission(Permission.MANAGE_SECURITY)
-    public void removeRolesFromSubject(Subject whoami, Integer subjectId, Integer[] roleIds) {
+    public void removeRolesFromSubject(Subject whoami, int subjectId, int[] roleIds) throws UpdateException {
         if (roleIds != null) {
             Subject subject = subjectManager.getSubjectById(subjectId); // attach it
 
@@ -398,6 +401,12 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
         return new PageList<Role>(roles, (int) total_count, pc);
     }
 
+    @RequiredPermission(Permission.MANAGE_SECURITY)
+    @SuppressWarnings("unchecked")
+    public PageList<Role> getSubjectUnassignedRoles(Subject sessionSubject, int subjectId, PageControl pc) {
+        return getAvailableRolesForSubject(sessionSubject, subjectId, null, pc);
+    }
+
     @SuppressWarnings("unchecked")
     public PageList<Role> getAvailableRolesForAlertDefinition(Subject whoami, Integer alertDefinitionId,
         Integer[] pendingRoleIds, PageControl pc) {
@@ -436,10 +445,10 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     }
 
     /**
-     * @see org.rhq.enterprise.server.authz.RoleManagerLocal#addResourceGroupsToRole(Subject, Integer, Integer[])
+     * @see org.rhq.enterprise.server.authz.RoleManagerLocal#addResourceGroupsToRole(Subject, int, int[])
      */
     @RequiredPermission(Permission.MANAGE_SECURITY)
-    public void addResourceGroupsToRole(Subject whoami, Integer roleId, Integer[] pendingGroupIds) {
+    public void addResourceGroupsToRole(Subject whoami, int roleId, int[] pendingGroupIds) throws UpdateException {
         if ((pendingGroupIds != null) && (pendingGroupIds.length > 0)) {
             Role role = entityManager.find(Role.class, roleId);
             role.getResourceGroups().size(); // load them in
@@ -454,10 +463,10 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     }
 
     /**
-     * @see org.rhq.enterprise.server.authz.RoleManagerLocal#removeResourceGroupsFromRole(Subject, Integer, Integer[])
+     * @see org.rhq.enterprise.server.authz.RoleManagerLocal#removeResourceGroupsFromRole(Subject, int, int[])
      */
     @RequiredPermission(Permission.MANAGE_SECURITY)
-    public void removeResourceGroupsFromRole(Subject whoami, Integer roleId, Integer[] groupIds) {
+    public void removeResourceGroupsFromRole(Subject whoami, int roleId, int[] groupIds) throws UpdateException {
         if ((groupIds != null) && (groupIds.length > 0)) {
             Role role = entityManager.find(Role.class, roleId);
             role.getResourceGroups().size(); // load them in
@@ -478,4 +487,44 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
             role.getPermissions().addAll(Arrays.asList(Permission.values()));
         }
     }
+
+    //Specifically added for remove interface
+    public PageList<Role> getSubjectAssignedRoles(Subject sessionSubject, int subjectId, PageControl pc)
+        throws FetchException {
+        //TODO: Implement, currently no references for this method.
+        return null;
+    }
+
+    public void removeSubjectsFromRole(Subject sessionSubject, int roleId, int[] subjectIds) throws UpdateException {
+        //TODO: Implement, currently no references for this method.
+    }
+
+    public PageList<Role> findRoles(Subject sessionSubject, Role criteria, PageControl pc) throws FetchException {
+        try {
+            QueryGenerator generator = new QueryGenerator(criteria, pc.getOptionalData(), pc);
+
+            Query query = generator.getQuery(entityManager);
+            Query countQuery = generator.getCountQuery(entityManager);
+
+            long count = (Long) countQuery.getSingleResult();
+            List<Role> roles = query.getResultList();
+
+            return new PageList<Role>(roles, (int) count, pc);
+        } catch (Exception e) {
+            throw new FetchException(e.getMessage());
+        }
+    }
+
+    public void removeRolesFromResourceGroup(Subject sessionSubject, int groupId, int[] roleIds) throws UpdateException {
+        //TODO: Implement, currently no references for this method.
+    }
+
+    public Role getRole(Subject sessionSubject, int roleId) throws FetchException {
+        return entityManager.find(Role.class, roleId);
+    }
+
+    public void addRolesToResourceGroup(Subject sessionSubject, int groupId, int[] roleIds) throws UpdateException {
+        //TODO: Implement, currently no references for this method.
+    }
+
 }

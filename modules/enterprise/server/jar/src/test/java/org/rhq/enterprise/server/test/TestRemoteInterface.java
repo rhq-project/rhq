@@ -107,7 +107,7 @@ public class TestRemoteInterface extends AssertJUnit {
         Subject newUser = subjectManager.getSubjectByName("ws-test-user");
 
         if (null != newUser) {
-            subjectManager.deleteSubjects(user, new Integer[] { newUser.getId() });
+            subjectManager.deleteSubjects(user, new int[] { newUser.getId() });
         }
 
         newUser = new Subject();
@@ -150,7 +150,7 @@ public class TestRemoteInterface extends AssertJUnit {
         service = Service.create(wsdlURL, serviceName);
         RoleManagerRemote roleManager = service.getPort(RoleManagerRemote.class);
 
-        PageList<Role> roles = roleManager.getAvailableRolesForSubject(user, newUser.getId(), null, PageControl
+        PageList<Role> roles = roleManager.getSubjectUnassignedRoles(user, newUser.getId(), PageControl
             .getUnlimitedInstance());
         Integer roleId = 0;
         for (Role role : roles) {
@@ -159,9 +159,9 @@ public class TestRemoteInterface extends AssertJUnit {
                 break;
             }
         }
-        roleManager.assignRolesToSubject(user, newUser.getId(), new Integer[] { roleId });
+        roleManager.addRolesToSubject(user, newUser.getId(), new int[] { roleId });
 
-        subjectManager.deleteSubjects(user, new Integer[] { newUser.getId() });
+        subjectManager.deleteSubjects(user, new int[] { newUser.getId() });
         assertNull(subjectManager.getSubjectByName("ws-test-user"));
     }
 

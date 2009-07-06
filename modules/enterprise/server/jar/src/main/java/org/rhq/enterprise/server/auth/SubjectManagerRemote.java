@@ -105,7 +105,7 @@ public interface SubjectManagerRemote {
     @WebMethod
     void deleteSubjects( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "subjectIds") Integer[] subjectIds) //
+        @WebParam(name = "subjectIds") int[] subjectIds) //
         throws DeleteException;
 
     /**

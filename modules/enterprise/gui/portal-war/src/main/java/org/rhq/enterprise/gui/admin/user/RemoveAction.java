@@ -20,9 +20,12 @@ package org.rhq.enterprise.gui.admin.user;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+
+import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -35,7 +38,7 @@ public class RemoveAction extends BaseAction {
     public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {
         RemoveForm nwForm = (RemoveForm) form;
-        Integer[] users = nwForm.getUsers();
+        int[] users = ArrayUtils.unwrapArray(nwForm.getUsers());
 
         if ((users == null) || (users.length == 0)) {
             return returnSuccess(request, mapping);

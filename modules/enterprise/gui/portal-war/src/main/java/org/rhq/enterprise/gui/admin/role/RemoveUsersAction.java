@@ -20,11 +20,13 @@ package org.rhq.enterprise.gui.admin.role;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
@@ -45,7 +47,7 @@ public class RemoveUsersAction extends BaseAction {
         Integer[] users = rmForm.getUsers();
         log.trace("removing users " + users + "] from role [" + roleId + "]");
 
-        Integer[] role_array = new Integer[] { roleId };
+        int[] role_array = new int[] { roleId };
         RoleManagerLocal roleManager = LookupUtil.getRoleManager();
 
         for (Integer user : users) {

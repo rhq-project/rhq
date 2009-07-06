@@ -20,11 +20,14 @@ package org.rhq.enterprise.gui.admin.role;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+
+import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
@@ -39,8 +42,8 @@ public class RemoveResourceGroupsAction extends BaseAction {
         Log log = LogFactory.getLog(RemoveResourceGroupsAction.class.getName());
 
         RemoveResourceGroupsForm rmForm = (RemoveResourceGroupsForm) form;
-        Integer roleId = rmForm.getR();
-        Integer[] groupIds = rmForm.getGroups();
+        int roleId = rmForm.getR();
+        int[] groupIds = ArrayUtils.unwrapArray(rmForm.getGroups());
 
         log.debug("removing groups " + groupIds + "] for role [" + roleId + "]");
         LookupUtil.getRoleManager().removeResourceGroupsFromRole(RequestUtils.getSubject(request), roleId, groupIds);

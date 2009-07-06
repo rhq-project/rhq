@@ -913,7 +913,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
             }
         } finally {
             LookupUtil.getSubjectManager().deleteUsers(LookupUtil.getSubjectManager().getOverlord(),
-                new Integer[] { noPermSubject.getId() });
+                new int[] { noPermSubject.getId() });
         }
     }
 

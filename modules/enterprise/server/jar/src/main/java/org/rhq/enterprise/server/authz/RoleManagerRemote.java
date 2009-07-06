@@ -28,6 +28,8 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.exception.FetchException;
+import org.rhq.enterprise.server.exception.UpdateException;
 
 /**
  * The remote interface to the role manager, providing a restricted set of Role Management services. that provides the API to manipulate the security rules within the JON Server.
@@ -39,89 +41,158 @@ import org.rhq.core.domain.util.PageList;
 @Remote
 public interface RoleManagerRemote {
 
+    //available as getRoleById
+    /**
+     * Returns the role with the given ID
+     *
+     * @param sessionSubject
+     * @param roleId
+     *
+     * @return the role or <code>null</code> if it wasn't found
+     */
+    @WebMethod
+    Role getRole( //
+        @WebParam(name = "sessionSubject") Subject sessionSubject, //
+        @WebParam(name = "roleId") int roleId) //
+        throws FetchException;
+
+    //not avialable
+    /**
+     * Get all roles assigned for a certain subject
+     * 
+     * @param sessionSubject The logged in user's subject
+     * @param subjectId The subject ID to find the associated roles for 
+     * @param pc PageControl
+     * @return A page list of assigned
+     */
+    @WebMethod
+    PageList<Role> getSubjectAssignedRoles( //
+        @WebParam(name = "sessionSubject") Subject sessionSubject, //
+        @WebParam(name = "subjectId") int subjectId, //
+        @WebParam(name = "pc") PageControl pc) //
+        throws FetchException;
+
+    //Available as getAvailableRolesForSubject, but better proxy!
+    @WebMethod
+    PageList<Role> getSubjectUnassignedRoles( //
+        @WebParam(name = "sessionSubject") Subject sessionSubject, //
+        @WebParam(name = "subjectId") int subjectId, //
+        @WebParam(name = "pc") PageControl pc) //
+        throws FetchException;
+
+    //does not exist
+    @WebMethod
+    PageList<Role> findRoles( //
+        @WebParam(name = "sessionSubject") Subject sessionSubject, //
+        @WebParam(name = "criteria") Role criteria, //
+        @WebParam(name = "pc") PageControl pc) //
+        throws FetchException;
+
+    //available as: assignRolesToSubject
     /**
      * Assigns a set of roles to a subject which authorizes the subject to do anything the roles permit.
      *
-     * @param user The logged in user's subject.
+     * @param sessionSubject The logged in user's subject.
      * @param subjectId the subject who is to be authorized with the given roles
      * @param roleIds   the roles to assign
      */
-    void assignRolesToSubject( //
-        @WebParam(name = "user")
-        Subject user, //
-        @WebParam(name = "subjectId")
-        Integer subjectId, //
-        @WebParam(name = "roleIds")
-        Integer[] roleIds);
-
-    /**
-     * Returns a list of all roles in the system.
-     *
-     * @param user The logged in user's subject.
-     * @param  pc
-     *
-     * @return list of all roles
-     */
     @WebMethod
-    PageList<Role> getAllRoles( //
-        @WebParam(name = "user")
-        Subject user, //
-        @WebParam(name = "pc")
-        PageControl pc);
+    void addRolesToSubject( //
+        @WebParam(name = "sessionSubject") Subject sessionSubject, //
+        @WebParam(name = "subjectId") int subjectId, //
+        @WebParam(name = "roleIds") int[] roleIds) //
+        throws UpdateException;
 
-    /**
-     * This returns a list of roles that are available to be assigned to a given subject but not yet assigned to that
-     * subject. This excludes roles already assigned to the subject. The returned list will not include the roles
-     * identified by <code>pendingRoleIds</code> since it is assumed the pending roles will be assigned to the user.
-     *
-     * @param user The logged in user's subject.
-     * @param  subjectId      the subject whose list of available roles are to be returned
-     * @param  pendingRoleIds the list of roles that are planned to be given to the subject
-     * @param  pc
-     *
-     * @return the list of roles that can be assigned to the given user, not including the pending roles
-     */
-    PageList<Role> getAvailableRolesForSubject( //
-        @WebParam(name = "user")
-        Subject user, // 
-        @WebParam(name = "subjectId")
-        Integer subjectId, // 
-        @WebParam(name = "pendingRoleIds")
-        Integer[] pendingRoleIds, //
-        @WebParam(name = "pc")
-        PageControl pc);
-
-    /**
-     * Get all subjects that have been assigned the given role.
-     * 
-     * @param user The logged in user's subject.
-     * @param  roleId
-     * @param  pc
-     *
-     * @return list of all subjects assigned the role
-     */
-    PageList<Subject> getRoleSubjects( //
-        @WebParam(name = "user")
-        Subject user, //
-        @WebParam(name = "roleId")
-        Integer roleId, //
-        @WebParam(name = "pc")
-        PageControl pc);
-
+    //avaialble 
     /**
      * Disassociates particular roles from a subject. Once complete, the subject will no longer be authorized with the
      * given roles.
      *
-     * @param user The logged in user's subject.
+     * @param sessionSubject The logged in user's subject.
      * @param subjectId the user that is to have the roles unassigned from it
      * @param roleIds   list of role IDs that are to be removed from user
      */
+    @WebMethod
     void removeRolesFromSubject( //
-        @WebParam(name = "user")
-        Subject user, //
-        @WebParam(name = "subjectId")
-        Integer subjectId, //
-        @WebParam(name = "roleIds")
-        Integer[] roleIds);
+        @WebParam(name = "sessionSubject") Subject sessionSubject, //
+        @WebParam(name = "subjectId") int subjectId, //
+        @WebParam(name = "roleIds") int[] roleIds) //
+        throws UpdateException;
+
+    //available as assignSubjectsToRole
+    /**
+     * Assigns a set of subjects to a role which authorizes the subjects to do anything the role permits.
+     *
+     * @param sessionSubject     the user attempting to assign the roles to the subject
+     * @param roleId     the role who will authorized with the given subjects
+     * @param subjectIds the subjects to assign the role
+     */
+    @WebMethod
+    void addSubjectsToRole( //
+        @WebParam(name = "sessionSubject") Subject sessionSubject, //
+        @WebParam(name = "roleId") int roleId, //
+        @WebParam(name = "subjectIds") int[] subjectIds) //
+        throws UpdateException;
+
+    //does not exist
+    /**
+     * Dissociate particular subjects from a role.
+     * 
+     * @param sessionSubject The logged in user's subject.
+     * @param roleId The role ID to dissociate the roles from
+     * @param subjectIds The IDs of the subjects to remove from the specified Role
+     */
+    @WebMethod
+    void removeSubjectsFromRole( //
+        @WebParam(name = "sessionSubject") Subject sessionSubject, //
+        @WebParam(name = "roleId") int roleId, //
+        @WebParam(name = "subjectIds") int[] subjectIds) //
+        throws UpdateException;
+
+    //available!
+    /**
+     * Adds the given resource groups to the given role.
+     *
+     * @param sessionSubject The logged in user's subject.
+     * @param roleId
+     * @param pendingGroupIds
+     */
+    @WebMethod
+    void addResourceGroupsToRole( //
+        @WebParam(name = "sessionSubject") Subject sessionSubject, //
+        @WebParam(name = "roleId") int roleId, //
+        @WebParam(name = "pendingGroupIds") int[] pendingGroupIds) //
+        throws UpdateException;
+
+    //does not exist
+    @WebMethod
+    void addRolesToResourceGroup( //
+        @WebParam(name = "sessionSubject") Subject sessionSubject, //
+        @WebParam(name = "groupId") int groupId, //
+        @WebParam(name = "roleIds") int[] roleIds) //
+        throws UpdateException;
+
+    //available!
+    /**
+     * Removes the given resource groups from the given role.
+     *
+     * @param sessionSubject user attempting to remove the groups from the role
+     * @param roleId
+     * @param groupIds
+     */
+    @WebMethod
+    void removeResourceGroupsFromRole( //
+        @WebParam(name = "sessionSubject") Subject sessionSubject, //
+        @WebParam(name = "roleId") int roleId, //
+        @WebParam(name = "groupIds") int[] groupIds) //
+        throws UpdateException;
+
+    //not available
+    @WebMethod
+    void removeRolesFromResourceGroup( //
+        @WebParam(name = "sessionSubject") Subject sessionSubject, //
+        @WebParam(name = "groupId") int groupId, //
+        @WebParam(name = "roleIds") int[] roleIds) //
+        throws UpdateException;
 
 }

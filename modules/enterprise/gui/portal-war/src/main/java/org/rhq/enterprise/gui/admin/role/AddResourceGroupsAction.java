@@ -21,11 +21,14 @@ package org.rhq.enterprise.gui.admin.role;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+
+import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.action.BaseValidatorForm;
@@ -65,7 +68,8 @@ public class AddResourceGroupsAction extends BaseAction {
         }
 
         log.debug("getting pending group list");
-        Integer[] pendingGroupIds = SessionUtils.getList(session, Constants.PENDING_RESGRPS_SES_ATTR);
+        int[] pendingGroupIds = ArrayUtils.unwrapArray(SessionUtils
+            .getList(session, Constants.PENDING_RESGRPS_SES_ATTR));
         for (int i = 0; i < pendingGroupIds.length; i++) {
             log.debug("adding group [" + pendingGroupIds[i] + "] for role [" + roleId + "]");
         }

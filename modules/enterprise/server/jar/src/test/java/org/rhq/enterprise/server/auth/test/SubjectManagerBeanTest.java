@@ -213,7 +213,7 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
             createSession(rhqadmin);
 
             try {
-                subjectManager.deleteUsers(superuser, new Integer[] { rhqadmin.getId() });
+                subjectManager.deleteUsers(superuser, new int[] { rhqadmin.getId() });
                 assert false : "You should not be able to delete the rhqadmin user";
             } catch (PermissionException se) {
             }
@@ -224,7 +224,7 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
         getTransactionManager().begin();
         try {
             try {
-                subjectManager.deleteUsers(rhqadmin, new Integer[] { superuser.getId() });
+                subjectManager.deleteUsers(rhqadmin, new int[] { superuser.getId() });
                 assert false : "You should not be able to delete the superuser";
             } catch (PermissionException se) {
             }
@@ -328,7 +328,7 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
         assert authorizationManager.getExplicitGlobalPermissions(new_user).size() == 0;
 
         try {
-            subjectManager.deleteUsers(new_user, new Integer[] { new_user.getId() });
+            subjectManager.deleteUsers(new_user, new int[] { new_user.getId() });
             assert false : "The new user should not have had the permission to delete itself";
         } catch (PermissionException e) {
         } finally {
@@ -341,7 +341,7 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
         // delete the new user
         assert subjectManager.getSubjectByName(new_user.getName()).equals(new_user);
         assert subjectManager.isUserWithPrincipal(new_user.getName());
-        subjectManager.deleteUsers(rhqadmin, new Integer[] { new_user.getId() });
+        subjectManager.deleteUsers(rhqadmin, new int[] { new_user.getId() });
         assert subjectManager.getSubjectByName(new_user.getName()) == null;
         assert !subjectManager.isUserWithPrincipal(new_user.getName());
 
@@ -426,8 +426,8 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
             new_role = roleManager.createRole(overlord, new_role);
 
             //            new_user.addRole(new_role);
-            Integer[] subjectIds = new Integer[] { new_user.getId() };
-            roleManager.assignSubjectsToRole(overlord, new_role.getId(), subjectIds);
+            int[] subjectIds = new int[] { new_user.getId() };
+            roleManager.addSubjectsToRole(overlord, new_role.getId(), subjectIds);
             assert new_role.getSubjects().contains(new_user) : "New_role does not contain new_user";
             int count = new_role.getSubjects().size();
 

@@ -198,15 +198,6 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
             long count = (Long) countQuery.getSingleResult();
             List<Subject> subjects = query.getResultList();
 
-            if (subjects != null) {
-                // eagerly load in the members - can't use left-join due to PersistenceUtility usage; perhaps use EAGER
-                for (Subject s : subjects) {
-                    s.getRoles().size();
-                }
-            } else {
-                subjects = new ArrayList<Subject>();
-            }
-
             return new PageList<Subject>(subjects, (int) count, pc);
         } catch (Exception e) {
             throw new FetchException(e.getMessage());
@@ -495,10 +486,10 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     }
 
     /**
-     * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#deleteUsers(Subject, Integer[])
+     * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#deleteUsers(Subject, int[])
      */
     @RequiredPermission(Permission.MANAGE_SECURITY)
-    public void deleteUsers(Subject subject, Integer[] subjectIds) throws DeleteException {
+    public void deleteUsers(Subject subject, int[] subjectIds) throws DeleteException {
         for (Integer doomedSubjectId : subjectIds) {
             Subject doomedSubject = getSubjectById(doomedSubjectId);
 
@@ -539,10 +530,10 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     }
 
     /**
-     * @see org.rhq.enterprise.server.auth.SubjectManagerRemote#deleteSubjects(org.rhq.core.domain.auth.Subject, java.lang.Integer[])
+     * @see org.rhq.enterprise.server.auth.SubjectManagerRemote#deleteSubjects(org.rhq.core.domain.auth.Subject, int[])
      * TODO: A wrapper method for deleteUsers, exposed in remote, both should be merged at some point.
      */
-    public void deleteSubjects(Subject sessionSubject, Integer[] subjectIds) throws DeleteException {
+    public void deleteSubjects(Subject sessionSubject, int[] subjectIds) throws DeleteException {
         deleteUsers(sessionSubject, subjectIds);
     }
 

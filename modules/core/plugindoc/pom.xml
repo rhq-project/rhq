@@ -98,7 +98,7 @@
         <executions>
 
           <execution>
-            <id>agent-distro-package</id>
+            <id>plugindoc-distro-package</id>
             <phase>install</phase>
             <configuration>
               <tasks>

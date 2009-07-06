@@ -43,7 +43,7 @@
          <fileset dir="${basedir}/src/etc"
                   includes="*.bat,*.sh"/>
       </copy>
-      <chmod dir="${agent.distro.dir}/bin" perm="ug+rx" includes="*.sh"/>
+      <chmod dir="${plugindoc.distro.dir}/bin" perm="ug+rx" includes="*.sh"/>
 
       <copy todir="${plugindoc.distro.dir}/lib"
             flatten="true">

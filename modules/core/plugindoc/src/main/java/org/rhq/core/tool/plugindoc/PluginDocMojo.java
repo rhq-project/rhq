@@ -76,7 +76,6 @@ public class PluginDocMojo extends AbstractMojo {
      */
     private String confluencePassword;
 
-    @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         PluginDocGenerator generator = new PluginDocGenerator();
         generator.setConfluenceProperties(confluenceUrl, confluenceSpace, confluenceParentPageTitle,

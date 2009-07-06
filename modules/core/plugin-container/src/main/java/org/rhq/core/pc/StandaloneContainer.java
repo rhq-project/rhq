@@ -77,10 +77,9 @@ public class StandaloneContainer {
     /** Holder for the command history */
     List<String> history = new ArrayList<String>(10);
     /** Map of resource plugin configurations */
-    Map<Integer,Configuration> resConfigMap = new HashMap<Integer,Configuration>();
+    Map<Integer, Configuration> resConfigMap = new HashMap<Integer, Configuration>();
     /** variable set by find() and which can be used in set() */
     int dollarR = 0;
-
 
     private static final String HISTORY_HELP = "!! : repeat the last action\n" + //
         "!? : show the history of commands issued\n" + //
@@ -88,7 +87,6 @@ public class StandaloneContainer {
         "!nn : repeat history item with number nn\n" + //
         "!w fileName : write history to file with name fileName\n" + //
         "!dnn : delete history item with number nn";
-
 
     public static void main(String[] argv) {
         StandaloneContainer sc = new StandaloneContainer();
@@ -123,12 +121,15 @@ public class StandaloneContainer {
         System.out.println("\nStarting the plugin container.");
         pc = PluginContainer.getInstance();
         File pluginDir = new File("plugins");
+        File dataDir = new File("data");
         PluginContainerConfiguration pcConfig = new PluginContainerConfiguration();
         pcConfig.setPluginFinder(new FileSystemPluginFinder(pluginDir));
         pcConfig.setPluginDirectory(pluginDir);
-
+        pcConfig.setDataDirectory(dataDir);
         pcConfig.setInsideAgent(false);
+        pcConfig.setServerServices(new ServerServices());
         pc.setConfiguration(pcConfig);
+
         System.out.println("Loading plugins");
         pc.initialize();
         for (String plugin : pc.getPluginManager().getMetadataManager().getPluginNames()) {
@@ -363,19 +364,17 @@ public class StandaloneContainer {
         opId++;
 
         Configuration config = null;
-        if (tokens.length>2)
-                config=createConfigurationFromString(tokens[2]);
+        if (tokens.length > 2)
+            config = createConfigurationFromString(tokens[2]);
 
         OperationServicesResult res = operationServices.invokeOperation(operationContext, tokens[1], config, 2000);
         if (res.getResultCode() == OperationServicesResultCode.FAILURE) {
             System.err.println("Failure executing the operation: \n" + res.getErrorStackTrace());
-        }
-        else if (res.getResultCode() == OperationServicesResultCode.TIMED_OUT) {
+        } else if (res.getResultCode() == OperationServicesResultCode.TIMED_OUT) {
             System.err.println("Operation timed out ");
-        }
-        else {
+        } else {
             Configuration result = res.getComplexResults();
-            if (res==null)
+            if (res == null)
                 System.out.println("Operation did not return a result");
             else
                 System.out.println(result.getProperties());
@@ -436,12 +435,12 @@ public class StandaloneContainer {
         Set<Resource> resources = getResources();
 
         int id = 0;
-        if (tokens.length>1) {
+        if (tokens.length > 1) {
             id = Integer.valueOf(tokens[1]);
         }
 
         for (Resource res : resources) {
-            if (id==0 || (id != 0 && res.getId()==id)) {
+            if (id == 0 || (id != 0 && res.getId() == id)) {
                 Availability availability = inventoryManager.getCurrentAvailability(res);
                 System.out.println(res.getName() + "( " + res.getId() + " ):" + availability.getAvailabilityType());
             }
@@ -488,11 +487,11 @@ public class StandaloneContainer {
      */
     private void find(String[] tokens) {
         String pattern = tokens[2];
-        pattern = pattern.replaceAll("\\*","\\.\\*");
+        pattern = pattern.replaceAll("\\*", "\\.\\*");
 
         if (tokens[1].equals("r")) {
             Set<Resource> resources = getResources();
-            for (Resource res: resources) {
+            for (Resource res : resources) {
                 if (res.getName().matches(pattern)) {
                     System.out.println(res.getId() + ": " + res.getName() + " ( " + res.getParentResource() + " )");
                     dollarR = res.getId();
@@ -500,7 +499,7 @@ public class StandaloneContainer {
             }
         } else if (tokens[1].equals("t")) {
             Set<ResourceType> types = pc.getPluginManager().getMetadataManager().getAllTypes();
-            for (ResourceType type : types ) {
+            for (ResourceType type : types) {
                 if (type.getName().matches(pattern)) {
                     System.out.println(type.getId() + ": " + type.getName() + " (" + type.getPlugin() + " )");
                 }
@@ -508,11 +507,12 @@ public class StandaloneContainer {
         } else if (tokens[1].equals("rt")) {
             Set<ResourceType> types = pc.getPluginManager().getMetadataManager().getAllTypes();
             Set<Resource> resources = getResources();
-            for (ResourceType type : types ) {
+            for (ResourceType type : types) {
                 if (type.getName().matches(pattern)) {
                     for (Resource res : resources) {
                         if (res.getResourceType().equals(type)) {
-                            System.out.println(res.getId() + ": " + res.getName() + " ( " + res.getParentResource() + " )");
+                            System.out.println(res.getId() + ": " + res.getName() + " ( " + res.getParentResource()
+                                + " )");
                             dollarR = res.getId();
                         }
                     }
@@ -540,8 +540,7 @@ public class StandaloneContainer {
             try {
                 if (arg.equals("$r")) {
                     resourceId = dollarR;
-                }
-                else
+                } else
                     resourceId = Integer.valueOf(arg);
             } catch (NumberFormatException nfe) {
                 System.err.println("Sorry, but [" + arg + "] is no valid number");
@@ -573,8 +572,7 @@ public class StandaloneContainer {
         else if (what.startsWith("all")) {
             pc.getInventoryManager().executeServerScanImmediately();
             pc.getInventoryManager().executeServiceScanImmediately();
-        }
-        else {
+        } else {
             System.err.println("Unknown option. Only 's' and 'i' are applicable");
             return;
         }
@@ -654,7 +652,7 @@ public class StandaloneContainer {
         String[] pairs = input.split("\\|\\|");
         for (String pair : pairs) {
             String[] kv = pair.split("=");
-            PropertySimple ps = new PropertySimple(kv[0],kv[1]);
+            PropertySimple ps = new PropertySimple(kv[0], kv[1]);
             config.put(ps);
         }
         return config;
@@ -665,19 +663,21 @@ public class StandaloneContainer {
      */
     private enum Command {
         ASCAN("as", "", 0, "Triggers an availability scan"), //
-        AVAIL("a", " ( id )", 0, "Shows an availability report. If id is given, only shows availability for resource with id id"), //
-        CHILDREN("chi","id",1, "Shows the direct children of the resource with the passed id"),//
+        AVAIL("a", " ( id )", 0,
+            "Shows an availability report. If id is given, only shows availability for resource with id id"), //
+        CHILDREN("chi", "id", 1, "Shows the direct children of the resource with the passed id"), //
         DISCOVER("disc", " s | i | all", 1, "Triggers a discovery scan for (s)erver, serv(i)ce or all resources"), //
         //      EVENT("e", "", 0,  "Pull events"), // TODO needs to be defined
-        FIND("find", "r | t  | rt <name>", 2, "Searches a (r)esource, resource (t)ype or resources of (rt)ype. Use * as wildcard.\n"
-                +" Will set $r for the last resource shown."),
-        HELP("h", "", 0, "Shows this help"), //
+        FIND("find", "r | t  | rt <name>", 2,
+            "Searches a (r)esource, resource (t)ype or resources of (rt)ype. Use * as wildcard.\n"
+                + " Will set $r for the last resource shown."), HELP("h", "", 0, "Shows this help"), //
         INVOKE("i", "operation [params]", 1, "Triggers running an operation"), //
         MEASURE("m", "datatype property+", 2, "Triggers getting metric values. All need to be of the same data type"), //
         NATIVE("n", "e | d | s", 1, "Enables/disables native system or shows native status"), //
         QUIT("quit", "", 0, "Terminates the application"), //
         RESOURCES("res", "", 0, "Shows the discovere resources"), //
-        SET("set", "resourceId n", 2, "Sets the resource id to work with. N can be a number or '$r' as result of last find resource call"), //
+        SET("set", "resourceId n", 2,
+            "Sets the resource id to work with. N can be a number or '$r' as result of last find resource call"), //
         WAIT("w", "milliseconds", 1, "Waits the given amount of time");
 
         private String abbrev;

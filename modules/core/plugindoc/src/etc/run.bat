@@ -1,10 +1,14 @@
 @echo off
 
+setlocal
+
 rem ----------------------------------------------------------------------
 rem Prepare the classpath
 rem ----------------------------------------------------------------------
 
-SET RHQ_PLUGINDOC_HOME=..
+set RHQ_PLUGINDOC_BIN_DIR=%~dp0
+cd "%RHQ_PLUGINDOC_BIN_DIR%\.."
+set RHQ_PLUGINDOC_HOME=%CD%
 
 set CLASSPATH=
 call :append_classpath "%RHQ_PLUGINDOC_HOME%\conf"
@@ -30,5 +34,7 @@ if not defined CLASSPATH (
    set CLASSPATH=%CLASSPATH%;%_entry:"=%
 )
 goto :eof
+
+endlocal
 
 exit /B 0

@@ -1,6 +1,15 @@
 #!/bin/sh
 
 # ----------------------------------------------------------------------
+# Determine what specific platform we are running on.
+# Set some platform-specific variables.
+# ----------------------------------------------------------------------
+case "`uname`" in
+   CYGWIN*) _CYGWIN=true
+            ;;
+esac
+
+# ----------------------------------------------------------------------
 # Prepare the classpath (take into account possible spaces in dir names)
 # ----------------------------------------------------------------------
 
@@ -17,6 +26,11 @@ done
 
 RHQ_PLUGINDOC_CMDLINE_OPTS=$*
 RHQ_PLUGINDOC_MAINCLASS=org.rhq.core.tool.plugindoc.PluginDocGenerator
+
+# convert some of the paths if we are on Windows
+if [ "x$_CYGWIN" != "x" ]; then
+   CLASSPATH=`cygpath --windows --path "$CLASSPATH"`
+fi
 
 CMD="java -cp \"${CLASSPATH}\" ${RHQ_PLUGINDOC_MAINCLASS} ${RHQ_PLUGINDOC_CMDLINE_OPTS}"
 echo $CMD > cmd.log

@@ -8,7 +8,6 @@ import javax.naming.NamingException;
 
 import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.deployers.spi.management.deploy.DeploymentManager;
-import org.jboss.managed.api.DeploymentTemplateInfo;
 import org.jboss.profileservice.spi.ProfileService;
 
 public class EjbClient
@@ -24,7 +23,9 @@ public class EjbClient
    
    public static void main(String[] args)
       throws Exception
-   {                 
+   {
+      //System.setProperty("org.jboss.security.SecurityAssociation.ThreadLocal", "false");
+
       Properties env = new Properties();
       env.setProperty(Context.PROVIDER_URL, "jnp://127.0.0.1:1099/");
       env.setProperty(Context.INITIAL_CONTEXT_FACTORY, JNDI_LOGIN_INITIAL_CONTEXT_FACTORY);
@@ -41,10 +42,18 @@ public class EjbClient
       managementView.load();
       managementView.getDeploymentNames();  
       deploymentManager.getProfiles();      
-      
-      DeploymentTemplateInfo template = managementView.getTemplate("NoTxDataSourceTemplate");
-      managementView.applyTemplate("MyNoTxDs", template);
-      managementView.process();
+
+      Worker worker = new Worker(managementView);
+      worker.run();
+      for (int i = 0; i < 50; i++) {
+          Thread.sleep(100);
+          worker = new Worker(managementView);
+          Thread thread = new Thread(worker);
+          thread.start();          
+      }
+      Thread.sleep(50);
+      worker = new Worker(managementView);
+      worker.run();       
    }
    
     private static InitialContext createInitialContext(Properties env) throws NamingException

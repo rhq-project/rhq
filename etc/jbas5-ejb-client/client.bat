@@ -46,6 +46,9 @@ rem only include jbossall-client.jar in classpath, if
 rem JBOSS_CLASSPATH was not yet set
 if not "%JBOSS_CLASSPATH%" == "" goto HAVE_JB_CP
 set JBOSS_CLASSPATH=%JBOSS_HOME%\client\jbossall-client.jar
+set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\lib\jboss-dependency.jar
+rem Below is temporary!!!
+set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\common\lib\jboss-profileservice.jar
 goto HAVE_JB_CP
 
 rem For the call to new InitialContext() (using org.jnp.interfaces.NamingContextFactory)...
@@ -77,6 +80,10 @@ set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\client\jboss-mdr.jar
 set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\lib\jboss-managed.jar
 set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\lib\jboss-metatype.jar
 
+set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\lib\jboss-dependency.jar
+rem Below is temporary!!!
+set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\common\lib\jboss-profileservice.jar
+
 :HAVE_JB_CP
 
 set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%MAIN_JAR%
@@ -85,6 +92,6 @@ rem Setup JBoss sepecific properties
 set JBOSS_ENDORSED_DIRS=%JBOSS_HOME%\lib\endorsed
 
 @echo on
-"%JAVA%" %JAVA_OPTS% "-Djava.endorsed.dirs=%JBOSS_ENDORSED_DIRS%" -classpath "%JBOSS_CLASSPATH%" %MAIN_CLASS% %*
+"%JAVA%" %JAVA_OPTS% -Xmx200M "-Djava.endorsed.dirs=%JBOSS_ENDORSED_DIRS%" -classpath "%JBOSS_CLASSPATH%" %MAIN_CLASS% %*
 
 :END

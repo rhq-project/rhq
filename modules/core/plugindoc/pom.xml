@@ -26,13 +26,31 @@
          <artifactId>rhq-core-client-api</artifactId>
          <version>${project.version}</version>
       </dependency>
-      
+
       <dependency>
          <groupId>commons-logging</groupId>
          <artifactId>commons-logging</artifactId>
-         <version>1.1.0.jboss</version>         
-      </dependency>     
-      
+         <version>1.1.0.jboss</version>
+      </dependency>
+
+      <dependency>
+         <groupId>commons-collections</groupId>
+         <artifactId>commons-collections</artifactId>
+         <version>3.2</version>
+      </dependency>
+
+      <dependency>
+         <groupId>oro</groupId>
+         <artifactId>oro</artifactId>
+         <version>2.0.7</version>
+      </dependency>
+
+      <dependency>
+         <groupId>commons-lang</groupId>
+         <artifactId>commons-lang</artifactId>
+         <version>2.4</version>
+      </dependency>
+
       <dependency>
          <groupId>hibernate-annotations</groupId>
          <artifactId>hibernate-annotations</artifactId>
@@ -71,5 +89,33 @@
       </dependency>
       
    </dependencies>
+   
+  <build>
+    <plugins>
+
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <executions>
+
+          <execution>
+            <id>agent-distro-package</id>
+            <phase>install</phase>
+            <configuration>
+              <tasks>
+                <ant antfile="${basedir}/ant-run.xml" dir="${basedir}" target="package-dist" inheritAll="false" inheritRefs="false">
+                   <property name="settings.localRepository" value="${settings.localRepository}" />
+                   <property name="project.version" value="${project.version}" />
+                </ant>
+              </tasks>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+    </plugins>
+  </build>
 
 </project>

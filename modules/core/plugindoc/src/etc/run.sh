@@ -4,6 +4,8 @@
 # Prepare the classpath (take into account possible spaces in dir names)
 # ----------------------------------------------------------------------
 
+RHQ_PLUGINDOC_BIN_DIR=`dirname $0`
+cd ${RHQ_PLUGINDOC_BIN_DIR}/..
 RHQ_PLUGINDOC_HOME=`pwd`
 
 CLASSPATH="${RHQ_PLUGINDOC_HOME}/conf"

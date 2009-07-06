@@ -207,9 +207,7 @@ if [ "x$RHQ_AGENT_MAINCLASS" = "x" ]; then
 fi
 
 # Build the command line that starts the VM
-# This is ony used if we need to emit debug message - but make sure
-# this is kept in sync with the real command executed below.
-CMD="\"${RHQ_AGENT_JAVA_EXE_FILE_PATH}\" ${_JAVA_ENDORSED_DIRS_OPT} ${_JAVA_LIBRARY_PATH_OPT} ${RHQ_AGENT_JAVA_OPTS} ${RHQ_AGENT_ADDITIONAL_JAVA_OPTS} ${_LOG_CONFIG} -cp \"${CLASSPATH}\" $RHQ_AGENT_MAINCLASS ${RHQ_AGENT_CMDLINE_OPTS}"
+CMD="\"${RHQ_AGENT_JAVA_EXE_FILE_PATH}\" ${_JAVA_ENDORSED_DIRS_OPT} ${_JAVA_LIBRARY_PATH_OPT} ${RHQ_AGENT_JAVA_OPTS} ${RHQ_AGENT_ADDITIONAL_JAVA_OPTS} ${_LOG_CONFIG} -cp \"${CLASSPATH}\" ${RHQ_AGENT_MAINCLASS} ${RHQ_AGENT_CMDLINE_OPTS}"
 
 debug_msg "Executing the agent with this command line:"
 debug_msg "$CMD"

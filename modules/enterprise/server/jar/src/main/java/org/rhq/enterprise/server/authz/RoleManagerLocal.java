@@ -47,7 +47,7 @@ public interface RoleManagerLocal {
      *
      * @return page list of all subject's roles
      */
-    PageList<Role> getRoles(int subjectId, PageControl pc);
+    PageList<Role> findRolesBySubject(int subjectId, PageControl pc);
 
     /**
      * Returns a list of all roles in the system.
@@ -56,7 +56,7 @@ public interface RoleManagerLocal {
      *
      * @return list of all roles
      */
-    PageList<Role> getAllRoles(PageControl pc);
+    PageList<Role> findRoles(PageControl pc);
 
     /**
      * Persists the new role to the database. The subjects assigned to the role are ignored - this only creates the role
@@ -115,7 +115,7 @@ public interface RoleManagerLocal {
      *
      * @return all the roles with the given ID
      */
-    PageList<Role> getRolesById(Integer[] roleIds, PageControl pc);
+    PageList<Role> findRolesByIds(Integer[] roleIds, PageControl pc);
 
     /**
      * Get all subjects that have been assigned the given role.
@@ -125,7 +125,7 @@ public interface RoleManagerLocal {
      *
      * @return list of all subjects assigned the role
      */
-    PageList<Subject> getRoleSubjects(Integer roleId, PageControl pc);
+    PageList<Subject> findSubjectsByRole(Integer roleId, PageControl pc);
 
     /**
      * Gets all resource groups that are attached to the given role.
@@ -135,7 +135,7 @@ public interface RoleManagerLocal {
      *
      * @return list of all groups that this role has
      */
-    PageList<ResourceGroup> getRoleResourceGroups(Integer roleId, PageControl pc);
+    PageList<ResourceGroup> findResourceGroupsByRole(Integer roleId, PageControl pc);
 
     /**
      * This returns a list of roles that are available to be assigned to a given subject but not yet assigned to that
@@ -149,7 +149,7 @@ public interface RoleManagerLocal {
      *
      * @return the list of roles that can be assigned to the given user, not including the pending roles
      */
-    PageList<Role> getAvailableRolesForSubject(Subject whoami, Integer subjectId, Integer[] pendingRoleIds,
+    PageList<Role> findAvailableRolesForSubject(Subject whoami, Integer subjectId, Integer[] pendingRoleIds,
         PageControl pc);
 
     /**
@@ -165,7 +165,7 @@ public interface RoleManagerLocal {
      *
      * @return the list of roles that can be assigned to the given alert definition, not including the pending roles
      */
-    PageList<Role> getAvailableRolesForAlertDefinition(Subject whoami, Integer alertDefinitionId,
+    PageList<Role> findAvailableRolesForAlertDefinition(Subject whoami, Integer alertDefinitionId,
         Integer[] pendingRoleIds, PageControl pc);
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -183,11 +183,11 @@ public interface RoleManagerLocal {
      */
     @Deprecated
     // Use getRole instead
-    Role findRoleById(Integer roleId);
+    Role getRoleById(Integer roleId);
 
     Role getRole(Subject subject, int roleId) throws FetchException;
 
-    PageList<Role> getSubjectAssignedRoles(Subject subject, int subjectId, PageControl pc) throws FetchException;
+    PageList<Role> findSubjectAssignedRoles(Subject subject, int subjectId, PageControl pc) throws FetchException;
 
     //This is a proxy of getAvailableRolesForSubject but without pendingRoleIds as required by remote spec 
     PageList<Role> getSubjectUnassignedRoles(Subject subject, int subjectId, PageControl pc) throws FetchException;

@@ -185,7 +185,7 @@ public class RoleAdminPortalAction extends BaseDispatchAction {
         }
 
         RoleManagerLocal roleManager = LookupUtil.getRoleManager();
-        Role role = roleManager.findRoleById(roleId);
+        Role role = roleManager.getRoleById(roleId);
 
         request.setAttribute(Constants.ROLE_ATTR, role);
         request.setAttribute(Constants.TITLE_PARAM_ATTR, role.getName());

@@ -171,7 +171,7 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
 
         Set<AlertNotification> notifications = alertDefinition.getAlertNotifications();
 
-        List<Role> roles = roleManager.getRolesById(roleIds, PageControl.getUnlimitedInstance());
+        List<Role> roles = roleManager.findRolesByIds(roleIds, PageControl.getUnlimitedInstance());
 
         int added = 0;
         for (Role role : roles) {

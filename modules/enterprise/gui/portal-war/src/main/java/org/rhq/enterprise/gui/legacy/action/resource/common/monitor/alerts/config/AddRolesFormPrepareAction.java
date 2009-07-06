@@ -66,14 +66,14 @@ public class AddRolesFormPrepareAction extends TilesAction {
         Integer[] pendingIds = SessionUtils.getList(request.getSession(), Constants.PENDING_ROLES_SES_ATTR);
 
         log.trace("getting pending roles for alert definition [" + addForm.getAd() + "]");
-        PageList<Role> pendingUsers = roleManager.getRolesById(pendingIds, pcp);
+        PageList<Role> pendingUsers = roleManager.findRolesByIds(pendingIds, pcp);
         request.setAttribute(Constants.PENDING_ROLES_ATTR, pendingUsers);
 
         /*
          * available users are all users in the system that are _not_ associated with the definition and are not pending
          */
         log.trace("getting available roles for alert definition [" + addForm.getAd() + "]");
-        PageList<Role> availableUsers = roleManager.getAvailableRolesForAlertDefinition(subject, addForm.getAd(),
+        PageList<Role> availableUsers = roleManager.findAvailableRolesForAlertDefinition(subject, addForm.getAd(),
             pendingIds, pca);
         request.setAttribute(Constants.AVAIL_ROLES_ATTR, availableUsers);
 

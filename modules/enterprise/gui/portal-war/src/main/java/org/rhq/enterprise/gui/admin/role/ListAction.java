@@ -43,7 +43,7 @@ public class ListAction extends TilesAction {
         log.trace("getting all roles");
 
         PageControl pc = WebUtility.getPageControl(request);
-        PageList roles = LookupUtil.getRoleManager().getAllRoles(pc);
+        PageList roles = LookupUtil.getRoleManager().findRoles(pc);
         request.setAttribute(Constants.ALL_ROLES_ATTR, roles);
 
         return null;

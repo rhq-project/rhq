@@ -53,8 +53,7 @@ public interface RoleManagerRemote {
     @WebMethod
     Role getRole( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "roleId") int roleId) //
-        throws FetchException;
+        @WebParam(name = "roleId") int roleId);
 
     //not avialable
     /**
@@ -66,7 +65,7 @@ public interface RoleManagerRemote {
      * @return A page list of assigned
      */
     @WebMethod
-    PageList<Role> getSubjectAssignedRoles( //
+    PageList<Role> findSubjectAssignedRoles( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "subjectId") int subjectId, //
         @WebParam(name = "pc") PageControl pc) //

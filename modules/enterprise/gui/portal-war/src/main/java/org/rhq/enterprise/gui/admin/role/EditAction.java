@@ -57,7 +57,7 @@ public class EditAction extends BaseAction {
         log.trace("getting role [" + roleId + "]");
 
         RoleManagerLocal roleManager = LookupUtil.getRoleManager();
-        Role role = roleManager.findRoleById(roleId);
+        Role role = roleManager.getRoleById(roleId);
         role.setName(editForm.getName());
         role.setDescription(editForm.getDescription());
         role.setPermissions(new HashSet<Permission>(editForm.getPermissions()));

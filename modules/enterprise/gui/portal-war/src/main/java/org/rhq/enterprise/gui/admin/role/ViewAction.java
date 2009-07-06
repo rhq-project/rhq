@@ -83,12 +83,12 @@ public class ViewAction extends WorkflowPrepareAction {
 
         // get the subjects attached to the role
         log.trace("getting users for role [" + roleId + "]");
-        PageList<Subject> users = roleManager.getRoleSubjects(roleId, pcu);
+        PageList<Subject> users = roleManager.findSubjectsByRole(roleId, pcu);
         request.setAttribute(Constants.ROLE_USERS_ATTR, users);
 
         // get the groups attached to the role
         log.trace("getting resource groups for role [" + roleId + "]");
-        PageList<ResourceGroup> groups = roleManager.getRoleResourceGroups(roleId, pcg);
+        PageList<ResourceGroup> groups = roleManager.findResourceGroupsByRole(roleId, pcg);
         request.setAttribute(Constants.ROLE_RESGRPS_ATTR, groups);
         if (groups == null) {
             request.setAttribute(Constants.NUM_RESGRPS_ATTR, new Integer(0));

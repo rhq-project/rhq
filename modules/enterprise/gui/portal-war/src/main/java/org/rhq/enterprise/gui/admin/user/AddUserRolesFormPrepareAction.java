@@ -82,14 +82,14 @@ public class AddUserRolesFormPrepareAction extends WorkflowPrepareAction {
         Integer[] pendingRoleIds = SessionUtils.getList(request.getSession(), Constants.PENDING_ROLES_SES_ATTR);
 
         log.trace("getting pending roles for user [" + userId + "]");
-        PageList<Role> pendingRoles = roleManager.getRolesById(pendingRoleIds, pcp);
+        PageList<Role> pendingRoles = roleManager.findRolesByIds(pendingRoleIds, pcp);
         request.setAttribute(Constants.PENDING_ROLES_ATTR, pendingRoles);
 
         /*
          * available roles are all roles in the system that are not associated with the user and are not pending
          */
         log.trace("getting available roles for user [" + userId + "]");
-        PageList<Role> availableRoles = roleManager.getAvailableRolesForSubject(RequestUtils.getSubject(request),
+        PageList<Role> availableRoles = roleManager.findAvailableRolesForSubject(RequestUtils.getSubject(request),
             userId, pendingRoleIds, pca);
         request.setAttribute(Constants.AVAIL_ROLES_ATTR, availableRoles);
 

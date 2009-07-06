@@ -64,13 +64,13 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     private AuthorizationManagerLocal authorizationManager;
 
     /**
-     * @see org.rhq.enterprise.server.authz.RoleManagerLocal#getRoles(Subject,PageControl)
+     * @see org.rhq.enterprise.server.authz.RoleManagerLocal#findRolesBySubject(Subject,PageControl)
      */
     @SuppressWarnings("unchecked")
     // the first param, subject, is not the subject making the request, its the subject whose roles are to be returned.
     // therefore, we won't want our security interceptor to check this method since the subject won't have a session associated with it
     @ExcludeDefaultInterceptors
-    public PageList<Role> getRoles(int subjectId, PageControl pc) {
+    public PageList<Role> findRolesBySubject(int subjectId, PageControl pc) {
         Subject subject = entityManager.find(Subject.class, subjectId); // attach it
         PageList<Role> roles = PersistenceUtility.createPaginationFilter(entityManager, subject.getRoles(), pc);
 
@@ -85,18 +85,10 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     }
 
     /**
-     * @see org.rhq.enterprise.server.authz.RoleManagerRemote#getAllRoles(Subject,PageControl)
-     */
-    @RequiredPermission(Permission.MANAGE_SECURITY)
-    public PageList<Role> getAllRoles(Subject subject, PageControl pc) {
-        return getAllRoles(pc);
-    }
-
-    /**
-     * @see org.rhq.enterprise.server.authz.RoleManagerLocal#getAllRoles(PageControl)
+     * @see org.rhq.enterprise.server.authz.RoleManagerLocal#findRoles(PageControl)
      */
     @SuppressWarnings("unchecked")
-    public PageList<Role> getAllRoles(PageControl pc) {
+    public PageList<Role> findRoles(PageControl pc) {
         pc.initDefaultOrderingField("r.name");
 
         String queryName = Role.QUERY_FIND_ALL;
@@ -197,7 +189,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     @RequiredPermission(Permission.MANAGE_SECURITY)
     public void addSubjectsToRole(Subject whoami, int roleId, int[] subjectIds) throws UpdateException {
         if (subjectIds != null) {
-            Role role = findRoleById(roleId); // attach it
+            Role role = getRoleById(roleId); // attach it
 
             for (Integer subjectId : subjectIds) {
                 Subject subject = entityManager.find(Subject.class, subjectId);
@@ -241,9 +233,9 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     }
 
     /**
-     * @see org.rhq.enterprise.server.authz.RoleManagerLocal#findRoleById(Integer)
+     * @see org.rhq.enterprise.server.authz.RoleManagerLocal#getRoleById(Integer)
      */
-    public Role findRoleById(Integer roleId) {
+    public Role getRoleById(Integer roleId) {
         Role role = entityManager.find(Role.class, roleId);
         return role;
     }
@@ -281,18 +273,17 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     }
 
     /**
-     * @see org.rhq.enterprise.server.authz.RoleManagerRemote#getRoleSubjects(Subject,Integer,PageControl)
+     * @see org.rhq.enterprise.server.authz.RoleManagerRemote#findSubjectsByRole(Subject,Integer,PageControl)
      */
-    @RequiredPermission(Permission.MANAGE_SECURITY)
-    public PageList<Subject> getRoleSubjects(Subject subject, Integer roleId, PageControl pc) {
-        return getRoleSubjects(roleId, pc);
+    public PageList<Subject> findSubjectsByRole(Subject subject, Integer roleId, PageControl pc) {
+        return findSubjectsByRole(roleId, pc);
     }
 
     /**
-     * @see org.rhq.enterprise.server.authz.RoleManagerLocal#getRoleSubjects(Integer,PageControl)
+     * @see org.rhq.enterprise.server.authz.RoleManagerLocal#findSubjectsByRole(Integer,PageControl)
      */
     @SuppressWarnings("unchecked")
-    public PageList<Subject> getRoleSubjects(Integer roleId, PageControl pc) {
+    public PageList<Subject> findSubjectsByRole(Integer roleId, PageControl pc) {
         pc.initDefaultOrderingField("s.name");
 
         String queryName = Subject.QUERY_GET_SUBJECTS_ASSIGNED_TO_ROLE;
@@ -309,10 +300,10 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     }
 
     /**
-     * @see org.rhq.enterprise.server.authz.RoleManagerLocal#getRoleResourceGroups(Integer,PageControl)
+     * @see org.rhq.enterprise.server.authz.RoleManagerLocal#findResourceGroupsByRole(Integer,PageControl)
      */
     @SuppressWarnings("unchecked")
-    public PageList<ResourceGroup> getRoleResourceGroups(Integer roleId, PageControl pc) {
+    public PageList<ResourceGroup> findResourceGroupsByRole(Integer roleId, PageControl pc) {
         pc.initDefaultOrderingField("rg.name");
 
         String queryName = ResourceGroup.QUERY_GET_RESOURCE_GROUPS_ASSIGNED_TO_ROLE;
@@ -329,10 +320,10 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     }
 
     /**
-     * @see org.rhq.enterprise.server.authz.RoleManagerLocal#getRolesById(Integer[],PageControl)
+     * @see org.rhq.enterprise.server.authz.RoleManagerLocal#findRolesByIds(Integer[],PageControl)
      */
     @SuppressWarnings("unchecked")
-    public PageList<Role> getRolesById(Integer[] roleIds, PageControl pc) {
+    public PageList<Role> findRolesByIds(Integer[] roleIds, PageControl pc) {
         if ((roleIds == null) || (roleIds.length == 0)) {
             return new PageList<Role>(pc);
         }
@@ -360,7 +351,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
 
     @RequiredPermission(Permission.MANAGE_SECURITY)
     @SuppressWarnings("unchecked")
-    public PageList<Role> getAvailableRolesForSubject(Subject whoami, Integer subjectId, Integer[] pendingRoleIds,
+    public PageList<Role> findAvailableRolesForSubject(Subject whoami, Integer subjectId, Integer[] pendingRoleIds,
         PageControl pc) {
         pc.initDefaultOrderingField("r.name");
 
@@ -397,11 +388,11 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
 
     @RequiredPermission(Permission.MANAGE_SECURITY)
     public PageList<Role> getSubjectUnassignedRoles(Subject subject, int subjectId, PageControl pc) {
-        return getAvailableRolesForSubject(subject, subjectId, null, pc);
+        return findAvailableRolesForSubject(subject, subjectId, null, pc);
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<Role> getAvailableRolesForAlertDefinition(Subject whoami, Integer alertDefinitionId,
+    public PageList<Role> findAvailableRolesForAlertDefinition(Subject whoami, Integer alertDefinitionId,
         Integer[] pendingRoleIds, PageControl pc) {
         pc.initDefaultOrderingField("r.name");
 
@@ -481,7 +472,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     }
 
     //Specifically added for remove interface
-    public PageList<Role> getSubjectAssignedRoles(Subject subject, int subjectId, PageControl pc) throws FetchException {
+    public PageList<Role> findSubjectAssignedRoles(Subject subject, int subjectId, PageControl pc) throws FetchException {
         //TODO: Implement, currently no references for this method.
         return null;
     }
@@ -511,7 +502,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
         //TODO: Implement, currently no references for this method.
     }
 
-    public Role getRole(Subject subject, int roleId) throws FetchException {
+    public Role getRole(Subject subject, int roleId) {
         return entityManager.find(Role.class, roleId);
     }
 

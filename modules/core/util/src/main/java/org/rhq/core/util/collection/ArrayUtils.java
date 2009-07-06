@@ -40,11 +40,17 @@ public class ArrayUtils {
     }
 
     public static int[] unwrapList(List<Integer> input) {
+        if (input == null) {
+            return null;
+        }
         Integer[] intermediate = input.toArray(new Integer[input.size()]);
         return unwrapArray(intermediate);
     }
 
     public static int[] unwrapArray(Integer[] input) {
+        if (input == null) {
+            return null;
+        }
         int[] output = new int[input.length];
         for (int i = 0; i < input.length; i++) {
             output[i] = input[i];
@@ -53,6 +59,9 @@ public class ArrayUtils {
     }
 
     public static Integer[] wrapArray(int[] input) {
+        if (input == null) {
+            return null;
+        }
         Integer[] output = new Integer[input.length];
         for (int i = 0; i < input.length; i++) {
             output[i] = input[i];

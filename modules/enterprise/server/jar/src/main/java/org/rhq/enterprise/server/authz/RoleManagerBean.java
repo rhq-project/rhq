@@ -403,8 +403,8 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
 
     @RequiredPermission(Permission.MANAGE_SECURITY)
     @SuppressWarnings("unchecked")
-    public PageList<Role> getSubjectUnassignedRoles(Subject sessionSubject, int subjectId, PageControl pc) {
-        return getAvailableRolesForSubject(sessionSubject, subjectId, null, pc);
+    public PageList<Role> getSubjectUnassignedRoles(Subject subject, int subjectId, PageControl pc) {
+        return getAvailableRolesForSubject(subject, subjectId, null, pc);
     }
 
     @SuppressWarnings("unchecked")
@@ -489,17 +489,16 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     }
 
     //Specifically added for remove interface
-    public PageList<Role> getSubjectAssignedRoles(Subject sessionSubject, int subjectId, PageControl pc)
-        throws FetchException {
+    public PageList<Role> getSubjectAssignedRoles(Subject subject, int subjectId, PageControl pc) throws FetchException {
         //TODO: Implement, currently no references for this method.
         return null;
     }
 
-    public void removeSubjectsFromRole(Subject sessionSubject, int roleId, int[] subjectIds) throws UpdateException {
+    public void removeSubjectsFromRole(Subject subject, int roleId, int[] subjectIds) throws UpdateException {
         //TODO: Implement, currently no references for this method.
     }
 
-    public PageList<Role> findRoles(Subject sessionSubject, Role criteria, PageControl pc) throws FetchException {
+    public PageList<Role> findRoles(Subject subject, Role criteria, PageControl pc) throws FetchException {
         try {
             QueryGenerator generator = new QueryGenerator(criteria, pc.getOptionalData(), pc);
 
@@ -515,15 +514,15 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
         }
     }
 
-    public void removeRolesFromResourceGroup(Subject sessionSubject, int groupId, int[] roleIds) throws UpdateException {
+    public void removeRolesFromResourceGroup(Subject subject, int groupId, int[] roleIds) throws UpdateException {
         //TODO: Implement, currently no references for this method.
     }
 
-    public Role getRole(Subject sessionSubject, int roleId) throws FetchException {
+    public Role getRole(Subject subject, int roleId) throws FetchException {
         return entityManager.find(Role.class, roleId);
     }
 
-    public void addRolesToResourceGroup(Subject sessionSubject, int groupId, int[] roleIds) throws UpdateException {
+    public void addRolesToResourceGroup(Subject subject, int groupId, int[] roleIds) throws UpdateException {
         //TODO: Implement, currently no references for this method.
     }
 

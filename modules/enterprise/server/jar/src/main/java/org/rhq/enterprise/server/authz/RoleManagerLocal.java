@@ -185,15 +185,14 @@ public interface RoleManagerLocal {
     // Use getRole instead
     Role findRoleById(Integer roleId);
 
-    Role getRole(Subject sessionSubject, int roleId) throws FetchException;
+    Role getRole(Subject subject, int roleId) throws FetchException;
 
-    PageList<Role> getSubjectAssignedRoles(Subject sessionSubject, int subjectId, PageControl pc) throws FetchException;
+    PageList<Role> getSubjectAssignedRoles(Subject subject, int subjectId, PageControl pc) throws FetchException;
 
     //This is a proxy of getAvailableRolesForSubject but without pendingRoleIds as required by remote spec 
-    PageList<Role> getSubjectUnassignedRoles(Subject sessionSubject, int subjectId, PageControl pc)
-        throws FetchException;
+    PageList<Role> getSubjectUnassignedRoles(Subject subject, int subjectId, PageControl pc) throws FetchException;
 
-    PageList<Role> findRoles(Subject sessionSubject, Role criteria, PageControl pc) throws FetchException;
+    PageList<Role> findRoles(Subject subject, Role criteria, PageControl pc) throws FetchException;
 
     /**
      * Assigns a set of roles to a subject which authorizes the subject to do anything the roles permit.
@@ -203,7 +202,7 @@ public interface RoleManagerLocal {
      * @param roleIds   the roles to assign
      * @throws UpdateException TODO
      */
-    void addRolesToSubject(Subject whoami, int subjectId, int[] roleIds) throws UpdateException;
+    void addRolesToSubject(Subject subject, int subjectId, int[] roleIds) throws UpdateException;
 
     /**
      * Disassociates particular roles from a subject. Once complete, the subject will no longer be authorized with the
@@ -214,33 +213,33 @@ public interface RoleManagerLocal {
      * @param roleIds   list of role IDs that are to be removed from user
      * @throws UpdateException TODO
      */
-    void removeRolesFromSubject(Subject whoami, int subjectId, int[] roleIds) throws UpdateException;
+    void removeRolesFromSubject(Subject subject, int subjectId, int[] roleIds) throws UpdateException;
 
-    void addSubjectsToRole(Subject whoami, int roleId, int[] subjectIds) throws UpdateException;
+    void addSubjectsToRole(Subject subject, int roleId, int[] subjectIds) throws UpdateException;
 
-    void removeSubjectsFromRole(Subject sessionSubject, int roleId, int[] subjectIds) throws UpdateException;
+    void removeSubjectsFromRole(Subject subject, int roleId, int[] subjectIds) throws UpdateException;
 
     /**
      * Adds the given resource groups to the given role.
      *
-     * @param whoami          user attempting to add the groups to the role
+     * @param subject          user attempting to add the groups to the role
      * @param roleId
      * @param pendingGroupIds
      * @throws UpdateException TODO
      */
-    void addResourceGroupsToRole(Subject whoami, int roleId, int[] pendingGroupIds) throws UpdateException;
+    void addResourceGroupsToRole(Subject subject, int roleId, int[] pendingGroupIds) throws UpdateException;
 
-    void addRolesToResourceGroup(Subject sessionSubject, int groupId, int[] roleIds) throws UpdateException;
+    void addRolesToResourceGroup(Subject subject, int groupId, int[] roleIds) throws UpdateException;
 
     /**
      * Removes the given resource groups from the given role.
      *
-     * @param whoami   user attempting to remove the groups from the role
+     * @param subject   user attempting to remove the groups from the role
      * @param roleId
      * @param groupIds
      * @throws UpdateException TODO
      */
-    void removeResourceGroupsFromRole(Subject whoami, int roleId, int[] groupIds) throws UpdateException;
+    void removeResourceGroupsFromRole(Subject subject, int roleId, int[] groupIds) throws UpdateException;
 
-    void removeRolesFromResourceGroup(Subject sessionSubject, int groupId, int[] roleIds) throws UpdateException;
+    void removeRolesFromResourceGroup(Subject subject, int groupId, int[] roleIds) throws UpdateException;
 }

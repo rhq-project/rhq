@@ -1,8 +1,6 @@
 package org.rhq.core.domain.util;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -14,10 +12,11 @@ import javax.persistence.Entity;
 import javax.persistence.EntityManager;
 import javax.persistence.Id;
 import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Query;
 
-import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.alert.AlertDefinition;
 
 /**
  * A query generator used to generate queries with specific fetch join or sorting requirements,
@@ -27,14 +26,16 @@ import org.rhq.core.domain.auth.Subject;
  * @author Joseph Marques
  */
 public class QueryGenerator {
-    private enum EntityAnnotationsMethod {
-        METHOD, FIELD
+    public enum AuthorizationTokenType {
+        RESOURCE, // specifies the resource alias to join on for standard res-group-role-subject authorization checking 
+        GROUP; // specifies the group alias to join on for standard group-role-subject authorization checking
     }
 
-    public EntityAnnotationsMethod entityAnnotationMethod = EntityAnnotationsMethod.FIELD;
     private Object criteriaObject;
     protected PageControl pageControl;
     protected Set<String> relationsToFetch;
+    protected String authorizationJoinFragment;
+    protected int authorizationSubjectId;
 
     protected String alias;
     private static String NL = System.getProperty("line.separator");
@@ -65,38 +66,78 @@ public class QueryGenerator {
         this.alias = aliasBuilder.toString();
     }
 
+    public void setAuthorizationResourceFragment(AuthorizationTokenType type, int subjectId) {
+        String defaultFragment = null;
+        if (type == AuthorizationTokenType.RESOURCE) {
+            defaultFragment = "resource";
+        } else if (type == AuthorizationTokenType.GROUP) {
+            defaultFragment = "group";
+        }
+        setAuthorizationResourceFragment(type, defaultFragment, subjectId);
+    }
+
+    public void setAuthorizationResourceFragment(AuthorizationTokenType type, String fragment, int subjectId) {
+        this.authorizationSubjectId = subjectId;
+        if (type == AuthorizationTokenType.RESOURCE) {
+            this.authorizationJoinFragment = "" //
+                + "JOIN " + alias + "." + fragment + " authRes " + NL // 
+                + "JOIN authRes.implicitGroup authGroup " + NL //
+                + "JOIN authGroup.roles authRole " + NL //
+                + "JOIN authRole.subject authSubject " + NL;
+        } else if (type == AuthorizationTokenType.GROUP) {
+            this.authorizationJoinFragment = "" //
+                + "JOIN " + alias + "." + fragment + " authGroup " + NL //
+                + "JOIN authGroup.roles authRole " + NL //
+                + "JOIN authRole.subject authSubject " + NL;
+        } else {
+            throw new IllegalArgumentException(this.getClass().getSimpleName()
+                + " does not yet support generating queries for '" + type + "' token types");
+        }
+    }
+
     // for testing purposes only, should use getQuery(EntityManager) or getCountQuery(EntityManager) instead
     public String getQueryString(boolean countQuery) {
         StringBuilder results = new StringBuilder();
         results.append("SELECT ");
         if (countQuery) {
-            results.append(" COUNT(").append(alias).append(")").append(NL);
+            results.append("COUNT(").append(alias).append(")").append(NL);
         } else {
             results.append(alias).append(NL);
         }
         results.append("FROM ").append(className).append(' ').append(alias).append(NL);
         for (String fetchJoin : relationsToFetch) {
-            if (!isEntityCollectionPersistence(fetchJoin)) {
-                throw new IllegalArgumentException("Can not fetchJoin '" + fetchJoin + "'.");
+            Field field = null;
+            try {
+                field = getFieldOfCriteriaClass(fetchJoin);
+            } catch (NoSuchFieldException nsfe) {
+                throw new IllegalArgumentException("Can not fetchJoin non-existent relationship '" + fetchJoin + "'");
+            }
+            if (!isEntityRelationshipPersistence(field)) {
+                throw new IllegalArgumentException("Relationship '" + fetchJoin + "' is not available for fetchJoin");
             }
 
             results.append("LEFT JOIN FETCH ").append(alias).append('.').append(fetchJoin).append(NL);
         }
+        if (authorizationJoinFragment != null) {
+            results.append(authorizationJoinFragment);
+        }
 
-        boolean firstCrit = true;
+        // critieria
         Map<String, Object> critFields = getEntityPersistenceFields(criteriaObject);
-        //criteria
+        if (authorizationJoinFragment != null) {
+            critFields.put("authSubjectId", authorizationSubjectId);
+        }
 
-        if (critFields.size() > 0)
+        if (critFields.size() > 0) {
             results.append("WHERE ");
-
+        }
+        boolean firstCrit = true;
         for (Map.Entry<String, Object> critField : critFields.entrySet()) {
             if (firstCrit) {
                 firstCrit = false;
             } else {
                 results.append(NL).append("AND ");
             }
-
             results.append(alias).append('.').append(critField.getKey() + " = :" + critField.getKey() + " ");
         }
 
@@ -104,8 +145,17 @@ public class QueryGenerator {
             boolean first = true;
             for (OrderingField orderingField : pageControl.getOrderingFields()) {
                 //verify persistency
-                if (!isEntityFieldPersistence(orderingField.getField())) {
-                    throw new IllegalArgumentException("Can not order by '" + orderingField.getField() + "'.");
+                String fieldName = orderingField.getField();
+                Field field = null;
+                try {
+                    field = getFieldOfCriteriaClass(fieldName);
+                } catch (NoSuchFieldException nsfe) {
+                    throw new IllegalArgumentException("Can not order results by non-existent field '" + fieldName
+                        + "'");
+                }
+                if (!isEntityFieldPersistence(field)) {
+                    throw new IllegalArgumentException("Field '" + fieldName
+                        + "' is not available for results ordering");
                 }
 
                 if (first) {
@@ -143,24 +193,9 @@ public class QueryGenerator {
         }
     }
 
-    //helper
-    private boolean isEntityCollectionPersistence(String fieldName) {
-
-        if (entityAnnotationMethod == EntityAnnotationsMethod.FIELD) {
-            Field field = getFieldOfCriteriaClass(fieldName);
-            return ((field.isAnnotationPresent(ManyToMany.class)) || (field.isAnnotationPresent(OneToMany.class)));
-        } else if (entityAnnotationMethod == EntityAnnotationsMethod.METHOD) {
-            Method method = getMethodOfCriteriaClass(getBeanGetterForProperty(fieldName));
-            return ((method.isAnnotationPresent(ManyToMany.class)) || (method.isAnnotationPresent(OneToMany.class)));
-        }
-
-        return false;
-    }
-
-    private boolean isEntityFieldPersistence(String fieldName) {
-        Field field = getFieldOfCriteriaClass(fieldName);
-
-        return isEntityFieldPersistence(field);
+    private boolean isEntityRelationshipPersistence(Field field) {
+        return (field.isAnnotationPresent(ManyToMany.class) || field.isAnnotationPresent(OneToMany.class) || field
+            .isAnnotationPresent(ManyToOne.class));
     }
 
     private boolean isEntityFieldPersistence(Field field) {
@@ -168,90 +203,40 @@ public class QueryGenerator {
         return ((field.isAnnotationPresent(Column.class)));
     }
 
-    private boolean isEntityMethodPersistence(Method method) {
-        //TODO: a little bit risk as column is not a must.
-        return ((method.isAnnotationPresent(Column.class)));
-    }
-
-    private boolean isEntity(Class<?> clazz) {
-        return clazz.isAnnotationPresent(Entity.class);
-    }
-
     private Map<String, Object> getEntityPersistenceFields(Object entityClass) {
-        if (!isEntity(entityClass.getClass())) {
+        if (!entityClass.getClass().isAnnotationPresent(Entity.class)) {
             throw new IllegalArgumentException("The specified class is not an EJB3 persistence entity");
         }
 
         Map<String, Object> entityPersistenceProperties = new HashMap<String, Object>();
 
-        if (entityAnnotationMethod == EntityAnnotationsMethod.FIELD) {
-            for (Field currField : entityClass.getClass().getDeclaredFields()) {
-                if (isEntityFieldPersistence(currField)) {
-                    //get its value
-                    currField.setAccessible(true);
+        for (Field currField : entityClass.getClass().getDeclaredFields()) {
+            if (isEntityFieldPersistence(currField)) {
+                //get its value
+                currField.setAccessible(true);
 
-                    Object fieldValue = null;
-                    try {
-                        fieldValue = currField.get(entityClass);
-                    } catch (IllegalAccessException iae) {
-                        throw new RuntimeException(iae);
-                    }
-                    if ((fieldValue != null) && isEntityFieldPersistence(currField)) {
-                        //if field is @id, make sure it's not 0 as most of the entities ID is a primitive int
-                        if (currField.isAnnotationPresent(Id.class)) {
-                            if ((Integer) fieldValue == 0) {
-                                continue;
-                            } else {
-                                entityPersistenceProperties.put(currField.getName(), fieldValue);
-                                continue;
-                            }
-                        }
-
-                        //dirty hack but we have to filter primitives
-                        if (currField.getType().isPrimitive()) {
+                Object fieldValue = null;
+                try {
+                    fieldValue = currField.get(entityClass);
+                } catch (IllegalAccessException iae) {
+                    throw new RuntimeException(iae);
+                }
+                if ((fieldValue != null)) {
+                    //if field is @id, make sure it's not 0 as most of the entities ID is a primitive int
+                    if (currField.isAnnotationPresent(Id.class)) {
+                        if ((Integer) fieldValue == 0) {
+                            continue;
+                        } else {
+                            entityPersistenceProperties.put(currField.getName(), fieldValue);
                             continue;
                         }
-
-                        entityPersistenceProperties.put(currField.getName(), fieldValue);
-                    }
-                }
-            }
-        } else if (entityAnnotationMethod == EntityAnnotationsMethod.METHOD) {
-            for (Method currMethod : entityClass.getClass().getDeclaredMethods()) {
-                if (currMethod.getName().startsWith("get")) {
-
-                    if (isEntityMethodPersistence(currMethod)) {
-                        //get its value
-
-                        Object methodValue = null;
-                        try {
-                            methodValue = currMethod.invoke(entityClass);
-                        } catch (IllegalAccessException iae) {
-                            throw new RuntimeException(iae);
-                        } catch (InvocationTargetException ite) {
-                            throw new RuntimeException(ite);
-                        }
-                        if ((methodValue != null) && isEntityMethodPersistence(currMethod)) {
-                            //if field is @id, make sure it's not 0 as most of the entities ID is a primitive int
-                            if (currMethod.isAnnotationPresent(Id.class)) {
-                                if ((Integer) methodValue == 0) {
-                                    continue;
-                                } else {
-                                    entityPersistenceProperties.put(getBeanPropertyOfGetter(currMethod.getName()),
-                                        methodValue);
-                                    continue;
-                                }
-                            }
-
-                            //dirty hack but we have to filter primitives
-                            if (currMethod.getReturnType().isPrimitive()) {
-                                continue;
-                            }
-
-                            entityPersistenceProperties.put(getBeanPropertyOfGetter(currMethod.getName()), methodValue);
-                        }
                     }
 
+                    //dirty hack but we have to filter primitives
+                    if (currField.getType().isPrimitive()) {
+                        continue;
+                    }
+                    entityPersistenceProperties.put(currField.getName(), fieldValue);
                 }
             }
         }
@@ -259,46 +244,29 @@ public class QueryGenerator {
         return entityPersistenceProperties;
     }
 
-    private String getBeanPropertyOfGetter(String property) {
-        return property.substring(3, 4).toLowerCase() + property.substring(4, property.length());
-    }
-
-    private String getBeanGetterForProperty(String property) {
-        return "get" + property.substring(0, 1).toUpperCase() + property.substring(1, property.length());
-    }
-
-    private Method getMethodOfCriteriaClass(String methodName) {
-        try {
-            Method method = criteriaObject.getClass().getDeclaredMethod(methodName);
-            return method;
-        } catch (NoSuchMethodException nsme) {
-            throw new RuntimeException(nsme);
-        }
-    }
-
-    private Field getFieldOfCriteriaClass(String fieldName) {
-        try {
-            Field field = criteriaObject.getClass().getDeclaredField(fieldName);
-            return field;
-        } catch (NoSuchFieldException nsfe) {
-            throw new RuntimeException(nsfe);
-        }
+    private Field getFieldOfCriteriaClass(String fieldName) throws NoSuchFieldException {
+        Field field = criteriaObject.getClass().getDeclaredField(fieldName);
+        return field;
     }
 
     public static void main(String[] args) {
         PageControl pc = PageControl.getUnlimitedInstance();
-        pc.addDefaultOrderingField("firstName", PageOrdering.ASC);
-        pc.addDefaultOrderingField("lastName", PageOrdering.DESC);
-        pc.setOptionalData(new String[] { "roles", "subjectNotifications" });
+        pc.addDefaultOrderingField("priority", PageOrdering.DESC);
+        pc.addDefaultOrderingField("name", PageOrdering.ASC);
+        pc.setOptionalData(new String[] { "resourceType" });
 
-        Subject s = new Subject();
-        s.setId(4);
-        s.setFirstName("Asaf");
-        s.setLastName("Sh");
-        s.setSessionId(4);
+        AlertDefinition ad = new AlertDefinition();
+        ad.setId(4);
+        ad.setName("JBoss");
 
-        QueryGenerator a = new QueryGenerator(s, pc);
+        QueryGenerator generator = new QueryGenerator(ad, pc);
 
-        System.out.println(a.getQueryString(false));
+        System.out.println(generator.getQueryString(false));
+        System.out.println(generator.getQueryString(true));
+
+        generator.setAuthorizationResourceFragment(AuthorizationTokenType.RESOURCE, 1);
+
+        System.out.println(generator.getQueryString(false));
+        System.out.println(generator.getQueryString(true));
     }
 }

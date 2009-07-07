@@ -38,7 +38,7 @@ public class ListAction extends TilesAction {
     public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws Exception {
         PageControl pc = WebUtility.getPageControl(request);
-        PageList users = LookupUtil.getSubjectManager().getAllSubjects(pc);
+        PageList users = LookupUtil.getSubjectManager().findAllSubjects(pc);
         request.setAttribute(Constants.ALL_USERS_ATTR, users);
 
         return null;

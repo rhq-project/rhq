@@ -271,14 +271,14 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
         createSession(rhqadmin); // our test needs to ensure the rhqadmin user has a session
 
         // check the subjects that do and do not have principals
-        Collection<String> all_users_with_principals = subjectManager.getAllUsersWithPrincipals();
+        Collection<String> all_users_with_principals = subjectManager.findAllUsersWithPrincipals();
         assert !all_users_with_principals.contains(superuser.getName());
         assert all_users_with_principals.contains(rhqadmin.getName());
         assert !subjectManager.isUserWithPrincipal(superuser.getName());
         assert subjectManager.isUserWithPrincipal(rhqadmin.getName());
 
         // get all subjects, whether or not they have a principal
-        PageList<Subject> all_subjects = subjectManager.getAllSubjects(PageControl.getUnlimitedInstance());
+        PageList<Subject> all_subjects = subjectManager.findAllSubjects(PageControl.getUnlimitedInstance());
         assert all_subjects.size() >= 1 : "There must be at least rhqadmin user";
         assert !all_subjects.contains(superuser) : "The superuser should not have been returned in the list";
         assert all_subjects.contains(rhqadmin) : "Missing user [" + rhqadmin + "] from: " + all_subjects;

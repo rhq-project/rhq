@@ -56,7 +56,7 @@ public interface SubjectManagerLocal {
      *
      * @return all the subjects with the given ID
      */
-    PageList<Subject> getSubjectsById(Integer[] subjectIds, PageControl pageControl);
+    PageList<Subject> findSubjectsById(Integer[] subjectIds, PageControl pageControl);
 
     /**
      * This returns the system super user subject that can be used to authorize the caller for any other system call.
@@ -67,9 +67,9 @@ public interface SubjectManagerLocal {
     Subject getOverlord();
 
     /**
-     * @see SubjectManagerRemote#getAllSubjects(PageControl)
+     * @see SubjectManagerRemote#findAllSubjects(PageControl)
      */
-    PageList<Subject> getAllSubjects(PageControl pageControl);
+    PageList<Subject> findAllSubjects(PageControl pageControl);
 
     /**
      * Generates a one-time temporary session password for the given session. This can be used to authenticate the user
@@ -139,7 +139,7 @@ public interface SubjectManagerLocal {
      *
      * @return collection of all user names that have principals
      */
-    Collection<String> getAllUsersWithPrincipals();
+    Collection<String> findAllUsersWithPrincipals();
 
     /**
      * Deletes the given set of users, including both the {@link Subject} and {@link Principal} objects associated with
@@ -187,7 +187,7 @@ public interface SubjectManagerLocal {
      *
      * @return the list of subjects that can be assigned to the given role, not including the pending subjects
      */
-    PageList<Subject> getAvailableSubjectsForRole(Subject whoami, Integer roleId, Integer[] pendingSubjectIds,
+    PageList<Subject> findAvailableSubjectsForRole(Subject whoami, Integer roleId, Integer[] pendingSubjectIds,
         PageControl pc);
 
     /**
@@ -204,7 +204,7 @@ public interface SubjectManagerLocal {
      * @return the list of subjects that can be assigned to the given alert definition, not including the pending
      *         subjects
      */
-    PageList<Subject> getAvailableSubjectsForAlertDefinition(Subject whoami, Integer alertDefinitionId,
+    PageList<Subject> findAvailableSubjectsForAlertDefinition(Subject whoami, Integer alertDefinitionId,
         Integer[] pendingSubjectIds, PageControl pc);
 
     void logout(int sessionId);

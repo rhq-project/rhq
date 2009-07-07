@@ -67,14 +67,14 @@ public class AddUsersFormPrepareAction extends TilesAction {
         Integer[] pendingIds = SessionUtils.getList(request.getSession(), Constants.PENDING_USERS_SES_ATTR);
 
         log.trace("getting pending users for alert definition [" + addForm.getAd() + "]");
-        PageList<Subject> pendingUsers = subjectManager.getSubjectsById(pendingIds, pcp);
+        PageList<Subject> pendingUsers = subjectManager.findSubjectsById(pendingIds, pcp);
         request.setAttribute(Constants.PENDING_USERS_ATTR, pendingUsers);
 
         /*
          * available users are all users in the system that are _not_ associated with the definition and are not pending
          */
         log.trace("getting available users for alert definition [" + addForm.getAd() + "]");
-        PageList<Subject> availableUsers = subjectManager.getAvailableSubjectsForAlertDefinition(subject, addForm
+        PageList<Subject> availableUsers = subjectManager.findAvailableSubjectsForAlertDefinition(subject, addForm
             .getAd(), pendingIds, pca);
         request.setAttribute(Constants.AVAIL_USERS_ATTR, availableUsers);
 

@@ -75,14 +75,14 @@ public class AddUsersFormPrepareAction extends TilesAction {
         Integer[] pendingUserIds = SessionUtils.getList(request.getSession(), Constants.PENDING_USERS_SES_ATTR);
 
         log.trace("getting pending users for role [" + roleId + "]");
-        PageList<Subject> pendingUsers = subjectManager.getSubjectsById(pendingUserIds, pcp);
+        PageList<Subject> pendingUsers = subjectManager.findSubjectsById(pendingUserIds, pcp);
         request.setAttribute(Constants.PENDING_USERS_ATTR, pendingUsers);
 
         /*
          * available users are all users in the system that are /not/ associated with the role and are not pending
          */
         log.trace("getting available users for role [" + roleId + "]");
-        PageList<Subject> availableUsers = subjectManager.getAvailableSubjectsForRole(RequestUtils.getSubject(request),
+        PageList<Subject> availableUsers = subjectManager.findAvailableSubjectsForRole(RequestUtils.getSubject(request),
             roleId, pendingUserIds, pca);
         request.setAttribute(Constants.AVAIL_USERS_ATTR, availableUsers);
 

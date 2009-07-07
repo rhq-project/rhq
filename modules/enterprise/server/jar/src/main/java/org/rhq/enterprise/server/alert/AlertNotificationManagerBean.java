@@ -264,7 +264,7 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
 
         Set<AlertNotification> notifications = alertDefinition.getAlertNotifications();
 
-        List<Subject> subjects = subjectManager.getSubjectsById(subjectIds, PageControl.getUnlimitedInstance());
+        List<Subject> subjects = subjectManager.findSubjectsById(subjectIds, PageControl.getUnlimitedInstance());
 
         int added = 0;
         for (Subject subject : subjects) {

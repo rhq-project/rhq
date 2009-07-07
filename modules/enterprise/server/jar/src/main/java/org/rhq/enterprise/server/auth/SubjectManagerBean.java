@@ -106,10 +106,10 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     }
 
     /**
-     * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#getSubjectsById(Integer[],PageControl)
+     * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#findSubjectsById(Integer[],PageControl)
      */
     @SuppressWarnings("unchecked")
-    public PageList<Subject> getSubjectsById(Integer[] subjectIds, PageControl pc) {
+    public PageList<Subject> findSubjectsById(Integer[] subjectIds, PageControl pc) {
         if ((subjectIds == null) || (subjectIds.length == 0)) {
             return new PageList<Subject>(pc);
         }
@@ -232,10 +232,10 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     }
 
     /**
-     * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#getAllSubjects(PageControl)
+     * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#findAllSubjects(PageControl)
      */
     @SuppressWarnings("unchecked")
-    public PageList<Subject> getAllSubjects(PageControl pc) {
+    public PageList<Subject> findAllSubjects(PageControl pc) {
         pc.initDefaultOrderingField("s.name");
 
         String queryName = Subject.QUERY_FIND_ALL;
@@ -441,10 +441,10 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     }
 
     /**
-     * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#getAllUsersWithPrincipals()
+     * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#findAllUsersWithPrincipals()
      */
     @SuppressWarnings("unchecked")
-    public Collection<String> getAllUsersWithPrincipals() {
+    public Collection<String> findAllUsersWithPrincipals() {
         Query q = entityManager.createNamedQuery(Principal.QUERY_FIND_ALL_USERS);
         List<Principal> principals = q.getResultList();
 
@@ -598,7 +598,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<Subject> getAvailableSubjectsForAlertDefinition(Subject whoami, Integer alertDefinitionId,
+    public PageList<Subject> findAvailableSubjectsForAlertDefinition(Subject whoami, Integer alertDefinitionId,
         Integer[] pendingSubjectIds, PageControl pc) {
         pc.initDefaultOrderingField("s.name");
 
@@ -635,7 +635,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
 
     @RequiredPermission(Permission.MANAGE_SECURITY)
     @SuppressWarnings("unchecked")
-    public PageList<Subject> getAvailableSubjectsForRole(Subject whoami, Integer roleId, Integer[] pendingSubjectIds,
+    public PageList<Subject> findAvailableSubjectsForRole(Subject whoami, Integer roleId, Integer[] pendingSubjectIds,
         PageControl pc) {
         pc.initDefaultOrderingField("s.name");
 

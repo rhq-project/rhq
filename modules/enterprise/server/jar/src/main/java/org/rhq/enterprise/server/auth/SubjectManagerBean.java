@@ -190,7 +190,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     @SuppressWarnings("unchecked")
     public PageList<Subject> findSubjects(Subject subject, Subject criteria, PageControl pc) throws FetchException {
         try {
-            QueryGenerator generator = new QueryGenerator(criteria, pc.getOptionalData(), pc);
+            QueryGenerator generator = new QueryGenerator(criteria, pc);
 
             Query query = generator.getQuery(entityManager);
             Query countQuery = generator.getCountQuery(entityManager);

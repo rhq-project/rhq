@@ -40,9 +40,10 @@ public class QueryGenerator {
     private static String NL = System.getProperty("line.separator");
     private String className;
 
-    public QueryGenerator(Object criteriaObject, String[] relationsToFetch, PageControl pageControl) {
+    public QueryGenerator(Object criteriaObject, PageControl pageControl) {
         this.criteriaObject = criteriaObject;
 
+        String[] relationsToFetch = pageControl.getOptionalData();
         if (relationsToFetch != null) {
             this.relationsToFetch = new HashSet<String>(Arrays.asList(relationsToFetch));
         }
@@ -288,7 +289,7 @@ public class QueryGenerator {
         PageControl pc = PageControl.getUnlimitedInstance();
         pc.addDefaultOrderingField("firstName", PageOrdering.ASC);
         pc.addDefaultOrderingField("lastName", PageOrdering.DESC);
-        String[] rtf = new String[] { "roles", "subjectNotifications" };
+        pc.setOptionalData(new String[] { "roles", "subjectNotifications" });
 
         Subject s = new Subject();
         s.setId(4);
@@ -296,7 +297,7 @@ public class QueryGenerator {
         s.setLastName("Sh");
         s.setSessionId(4);
 
-        QueryGenerator a = new QueryGenerator(s, rtf, pc);
+        QueryGenerator a = new QueryGenerator(s, pc);
 
         System.out.println(a.getQueryString(false));
     }

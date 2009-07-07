@@ -472,7 +472,8 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     }
 
     //Specifically added for remove interface
-    public PageList<Role> findSubjectAssignedRoles(Subject subject, int subjectId, PageControl pc) throws FetchException {
+    public PageList<Role> findSubjectAssignedRoles(Subject subject, int subjectId, PageControl pc)
+        throws FetchException {
         //TODO: Implement, currently no references for this method.
         return null;
     }
@@ -484,7 +485,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     @SuppressWarnings("unchecked")
     public PageList<Role> findRoles(Subject subject, Role criteria, PageControl pc) throws FetchException {
         try {
-            QueryGenerator generator = new QueryGenerator(criteria, pc.getOptionalData(), pc);
+            QueryGenerator generator = new QueryGenerator(criteria, pc);
 
             Query query = generator.getQuery(entityManager);
             Query countQuery = generator.getCountQuery(entityManager);

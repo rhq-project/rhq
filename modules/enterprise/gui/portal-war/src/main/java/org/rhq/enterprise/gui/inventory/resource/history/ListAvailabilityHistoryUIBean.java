@@ -65,7 +65,7 @@ public class ListAvailabilityHistoryUIBean extends PagedDataTableUIBean {
         public PageList<Availability> fetchPage(PageControl pageControl) {
             int resourceId = EnterpriseFacesContextUtility.getResource().getId();
             PageList<Availability> availabilities = this.availabilityManager
-                .findByResource(EnterpriseFacesContextUtility.getSubject(), resourceId, pageControl);
+                .findAvailabilityForResource(EnterpriseFacesContextUtility.getSubject(), resourceId, pageControl);
             return availabilities;
         }
     }

@@ -60,6 +60,7 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.common.EntityContext;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
+import org.rhq.enterprise.server.exception.FetchException;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.resource.ResourceAvailabilityManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
@@ -72,7 +73,7 @@ import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
  * @author John Mazzitelli
  */
 @Stateless
-public class AvailabilityManagerBean implements AvailabilityManagerLocal {
+public class AvailabilityManagerBean implements AvailabilityManagerLocal, AvailabilityManagerRemote {
     private final Log log = LogFactory.getLog(AvailabilityManagerBean.class);
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
@@ -110,73 +111,76 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
         }
     }
 
-    public AvailabilityType getCurrentAvailabilityTypeForResource(Subject whoami, int resourceId) {
-        return resourceAvailabilityManager.getLatestAvailabilityType(whoami, resourceId);
+    public AvailabilityType getCurrentAvailabilityTypeForResource(Subject subject, int resourceId) {
+        return resourceAvailabilityManager.getLatestAvailabilityType(subject, resourceId);
     }
 
-    public Availability getCurrentAvailabilityForResource(Subject whoami, int resourceId) {
+    public Availability getCurrentAvailabilityForResource(Subject subject, int resourceId) throws FetchException {
         Availability retAvailability;
-
         try {
-            Query q = entityManager.createNamedQuery(Availability.FIND_CURRENT_BY_RESOURCE);
-            q.setParameter("resourceId", resourceId);
-            retAvailability = (Availability) q.getSingleResult();
+            try {
+                Query q = entityManager.createNamedQuery(Availability.FIND_CURRENT_BY_RESOURCE);
+                q.setParameter("resourceId", resourceId);
+                retAvailability = (Availability) q.getSingleResult();
 
-            // make sure user has permissions to even view this resource
-            Resource resource = retAvailability.getResource();
-            if (!authorizationManager.canViewResource(whoami, resource.getId())) {
-                throw new PermissionException("User [" + whoami.getName()
-                    + "] does not have permission to view resource");
+                // make sure user has permissions to even view this resource
+                Resource resource = retAvailability.getResource();
+                if (!authorizationManager.canViewResource(subject, resource.getId())) {
+                    throw new PermissionException("User [" + subject.getName()
+                        + "] does not have permission to view resource");
+                }
+            } catch (NoResultException nre) {
+                // Fall back to searching for the one with the latest start date, but most likely it doesn't exist
+                Resource resource = resourceManager.getResourceById(subject, resourceId);
+                List<Availability> availList = resource.getAvailability();
+                if ((availList != null) && (availList.size() > 0)) {
+                    log
+                        .warn("Could not query for latest avail but found one - missing null end time (this should never happen)");
+                    retAvailability = availList.get(availList.size() - 1);
+                } else {
+                    retAvailability = new Availability(resource, new Date(), null);
+                }
             }
-        } catch (NoResultException nre) {
-            // Fall back to searching for the one with the latest start date, but most likely it doesn't exist
-            Resource resource = resourceManager.getResourceById(whoami, resourceId);
-            List<Availability> availList = resource.getAvailability();
-            if ((availList != null) && (availList.size() > 0)) {
-                log
-                    .warn("Could not query for latest avail but found one - missing null end time (this should never happen)");
-                retAvailability = availList.get(availList.size() - 1);
-            } else {
-                retAvailability = new Availability(resource, new Date(), null);
-            }
+
+            return retAvailability;
+        } catch (Exception e) {
+            throw new FetchException(e);
         }
-
-        return retAvailability;
     }
 
-    public List<AvailabilityPoint> getAvailabilitiesForResource(Subject whoami, int resourceId,
+    public List<AvailabilityPoint> getAvailabilitiesForResource(Subject subject, int resourceId,
         long fullRangeBeginTime, long fullRangeEndTime, int numberOfPoints, boolean withCurrentAvailability) {
         EntityContext context = new EntityContext(resourceId, -1, -1, -1);
-        return getAvailabilitiesForContext(whoami, context, fullRangeBeginTime, fullRangeEndTime, numberOfPoints,
+        return getAvailabilitiesForContext(subject, context, fullRangeBeginTime, fullRangeEndTime, numberOfPoints,
             withCurrentAvailability);
     }
 
-    public List<AvailabilityPoint> getAvailabilitiesForResourceGroup(Subject whoami, int groupId,
+    public List<AvailabilityPoint> getAvailabilitiesForResourceGroup(Subject subject, int groupId,
         long fullRangeBeginTime, long fullRangeEndTime, int numberOfPoints, boolean withCurrentAvailability) {
         EntityContext context = new EntityContext(-1, groupId, -1, -1);
-        return getAvailabilitiesForContext(whoami, context, fullRangeBeginTime, fullRangeEndTime, numberOfPoints,
+        return getAvailabilitiesForContext(subject, context, fullRangeBeginTime, fullRangeEndTime, numberOfPoints,
             withCurrentAvailability);
     }
 
-    public List<AvailabilityPoint> getAvailabilitiesForAutoGroup(Subject whoami, int parentResourceId,
+    public List<AvailabilityPoint> getAvailabilitiesForAutoGroup(Subject subject, int parentResourceId,
         int resourceTypeId, long fullRangeBeginTime, long fullRangeEndTime, int numberOfPoints,
         boolean withCurrentAvailability) {
         EntityContext context = new EntityContext(-1, -1, parentResourceId, resourceTypeId);
-        return getAvailabilitiesForContext(whoami, context, fullRangeBeginTime, fullRangeEndTime, numberOfPoints,
+        return getAvailabilitiesForContext(subject, context, fullRangeBeginTime, fullRangeEndTime, numberOfPoints,
             withCurrentAvailability);
     }
 
-    private List<AvailabilityPoint> getAvailabilitiesForContext(Subject whoami, EntityContext context,
+    private List<AvailabilityPoint> getAvailabilitiesForContext(Subject subject, EntityContext context,
         long fullRangeBeginTime, long fullRangeEndTime, int numberOfPoints, boolean withCurrentAvailability) {
 
         if (context.category == EntityContext.Category.Resource) {
-            if (!authorizationManager.canViewResource(whoami, context.resourceId)) {
-                throw new PermissionException("User [" + whoami.getName() + "] does not have permission to view "
+            if (!authorizationManager.canViewResource(subject, context.resourceId)) {
+                throw new PermissionException("User [" + subject.getName() + "] does not have permission to view "
                     + context.toShortString());
             }
         } else if (context.category == EntityContext.Category.ResourceGroup) {
-            if (!authorizationManager.canViewGroup(whoami, context.groupId)) {
-                throw new PermissionException("User [" + whoami.getName() + "] does not have permission to view "
+            if (!authorizationManager.canViewGroup(subject, context.groupId)) {
+                throw new PermissionException("User [" + subject.getName() + "] does not have permission to view "
                     + context.toShortString());
             }
         } else {
@@ -344,9 +348,9 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
             AvailabilityPoint oldFirstAvailabilityPoint = availabilityPoints.remove(availabilityPoints.size() - 1);
             AvailabilityType newFirstAvailabilityType = oldFirstAvailabilityPoint.getAvailabilityType();
             if (context.category == EntityContext.Category.Resource) {
-                newFirstAvailabilityType = getCurrentAvailabilityTypeForResource(whoami, context.resourceId);
+                newFirstAvailabilityType = getCurrentAvailabilityTypeForResource(subject, context.resourceId);
             } else if (context.category == EntityContext.Category.ResourceGroup) {
-                ResourceGroupComposite composite = resourceGroupManager.getResourceGroupComposite(whoami,
+                ResourceGroupComposite composite = resourceGroupManager.getResourceGroupComposite(subject,
                     context.groupId);
                 Double firstAvailability = composite.getExplicitAvail();
                 newFirstAvailabilityType = firstAvailability == null ? null
@@ -741,20 +745,26 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<Availability> findByResource(Subject user, int resourceId, PageControl pageControl) {
-        pageControl.initDefaultOrderingField("av.startTime", PageOrdering.DESC);
+    public PageList<Availability> findAvailabilityForResource(Subject subject, int resourceId, PageControl pageControl)
+        throws FetchException {
+        try {
+            pageControl.initDefaultOrderingField("av.startTime", PageOrdering.DESC);
 
-        Query countQuery = PersistenceUtility.createCountQuery(entityManager, Availability.FIND_BY_RESOURCE_NO_SORT);
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, Availability.FIND_BY_RESOURCE_NO_SORT,
-            pageControl);
+            Query countQuery = PersistenceUtility
+                .createCountQuery(entityManager, Availability.FIND_BY_RESOURCE_NO_SORT);
+            Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+                Availability.FIND_BY_RESOURCE_NO_SORT, pageControl);
 
-        countQuery.setParameter("resourceId", resourceId);
-        query.setParameter("resourceId", resourceId);
+            countQuery.setParameter("resourceId", resourceId);
+            query.setParameter("resourceId", resourceId);
 
-        long count = (Long) countQuery.getSingleResult();
-        List<Availability> availabilities = query.getResultList();
+            long count = (Long) countQuery.getSingleResult();
+            List<Availability> availabilities = query.getResultList();
 
-        return new PageList<Availability>(availabilities, (int) count, pageControl);
+            return new PageList<Availability>(availabilities, (int) count, pageControl);
+        } catch (Exception e) {
+            throw new FetchException(e);
+        }
     }
 
     private void notifyAlertConditionCacheManager(String callingMethod, Availability... availabilities) {

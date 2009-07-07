@@ -29,6 +29,7 @@ import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.exception.FetchException;
 import org.rhq.enterprise.server.resource.ResourceAvailabilityManagerLocal;
 
 /**
@@ -53,34 +54,17 @@ public interface AvailabilityManagerLocal {
     /**
      * Indicates if the given resource is currently up (i.e. available) or down.
      *
-     * @param  whoami
+     * @param  subject
      * @param  resourceId
      *
      * @return the current status of the resource
      */
-    AvailabilityType getCurrentAvailabilityTypeForResource(Subject whoami, int resourceId);
-
-    /**
-     * Gets the last known Availability for the given resource - which includes whether it is currently up (i.e.
-     * available) or down and the last time it was known to have changed to that state.
-     * <b>Note:</b> only use this method if you really need to know the additional RLE information that
-     * comes with the Availabilty entity.  If you really only need to know whether a resource is UP or DOWN,
-     * then use the more efficient method {@link #getCurrentAvailabilityTypeForResource(Subject, int)}.
-     * 
-     * @param  whoami
-     * @param  resourceId
-     *
-     * @return the full and current status of the resource
-     * 
-     * @see #getCurrentAvailabilityTypeForResource(Subject, int)
-     * @see ResourceAvailabilityManagerLocal
-     */
-    Availability getCurrentAvailabilityForResource(Subject whoami, int resourceId);
+    AvailabilityType getCurrentAvailabilityTypeForResource(Subject subject, int resourceId);
 
     /**
      * Get the individual availability data points for the given resource.
      *
-     * @param  whoami
+     * @param  subject
      * @param  resourceId              PK of the resource wanted
      * @param  begin                   start time for data we are interested in
      * @param  end                     end time for data we are interested in
@@ -90,13 +74,13 @@ public interface AvailabilityManagerLocal {
      *
      * @return the availabilities over the given time span in a list
      */
-    List<AvailabilityPoint> getAvailabilitiesForResource(Subject whoami, int resourceId, long begin, long end,
+    List<AvailabilityPoint> getAvailabilitiesForResource(Subject subject, int resourceId, long begin, long end,
         int points, boolean withCurrentAvailability);
 
     /**
      * Get the individual availability data points for the given resource group.
      *
-     * @param  whoami
+     * @param  subject
      * @param  groupId                 PK of the resource group wanted
      * @param  begin                   start time for data we are interested in
      * @param  end                     end time for data we are interested in
@@ -106,13 +90,13 @@ public interface AvailabilityManagerLocal {
      *
      * @return the availabilities over the given time span in a list
      */
-    List<AvailabilityPoint> getAvailabilitiesForResourceGroup(Subject whoami, int groupId, long begin, long end,
+    List<AvailabilityPoint> getAvailabilitiesForResourceGroup(Subject subject, int groupId, long begin, long end,
         int points, boolean withCurrentAvailability);
 
     /**
      * Get the individual availability data points for the given auto group.
      *
-     * @param  whoami
+     * @param  subject
      * @param  parentResourceId        PK of the parent resource of the auto group wanted
      * @param  resourceTypeId          PK of the resource type of the auto group wanted
      * @param  begin                   start time for data we are interested in
@@ -123,7 +107,7 @@ public interface AvailabilityManagerLocal {
      *
      * @return the availabilities over the given time span in a list
      */
-    List<AvailabilityPoint> getAvailabilitiesForAutoGroup(Subject whoami, int parentResourceId, int resourceTypeId,
+    List<AvailabilityPoint> getAvailabilitiesForAutoGroup(Subject subject, int parentResourceId, int resourceTypeId,
         long begin, long end, int points, boolean withCurrentAvailability);
 
     /**
@@ -174,6 +158,23 @@ public interface AvailabilityManagerLocal {
 
     List<Availability> findAvailabilityWithinInterval(int resourceId, Date startDate, Date endDate);
 
-    PageList<Availability> findByResource(Subject user, int resourceId, PageControl pageControl);
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    //
+    // The following are shared with the Remote Interface
+    //
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+    /**
+     * #see {@link AvailabilityManagerRemote#getAvailabilityForResource(Subject, int, PageControl)
+     */
+    PageList<Availability> findAvailabilityForResource(Subject subject, int resourceId, PageControl pc)
+        throws FetchException;
+
+    /**
+     * #see {@link AvailabilityManagerRemote#getCurrentAvailabilityForResource(Subject, int)
+     * @throws FetchException TODO
+     * @see #getCurrentAvailabilityTypeForResource(Subject, int)
+     * @see ResourceAvailabilityManagerLocal
+     */
+    Availability getCurrentAvailabilityForResource(Subject subject, int resourceId) throws FetchException;
 }

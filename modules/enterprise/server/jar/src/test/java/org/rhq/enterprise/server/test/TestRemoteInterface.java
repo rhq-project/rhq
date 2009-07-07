@@ -150,7 +150,7 @@ public class TestRemoteInterface extends AssertJUnit {
         service = Service.create(wsdlURL, serviceName);
         RoleManagerRemote roleManager = service.getPort(RoleManagerRemote.class);
 
-        PageList<Role> roles = roleManager.getSubjectUnassignedRoles(user, newUser.getId(), PageControl
+        PageList<Role> roles = roleManager.findSubjectUnassignedRoles(user, newUser.getId(), PageControl
             .getUnlimitedInstance());
         Integer roleId = 0;
         for (Role role : roles) {

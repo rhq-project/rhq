@@ -190,7 +190,7 @@ public interface RoleManagerLocal {
     PageList<Role> findSubjectAssignedRoles(Subject subject, int subjectId, PageControl pc) throws FetchException;
 
     //This is a proxy of getAvailableRolesForSubject but without pendingRoleIds as required by remote spec 
-    PageList<Role> getSubjectUnassignedRoles(Subject subject, int subjectId, PageControl pc) throws FetchException;
+    PageList<Role> findSubjectUnassignedRoles(Subject subject, int subjectId, PageControl pc) throws FetchException;
 
     PageList<Role> findRoles(Subject subject, Role criteria, PageControl pc) throws FetchException;
 

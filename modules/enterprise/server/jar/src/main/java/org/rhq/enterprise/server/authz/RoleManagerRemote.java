@@ -73,7 +73,7 @@ public interface RoleManagerRemote {
 
     //Available as getAvailableRolesForSubject, but better proxy!
     @WebMethod
-    PageList<Role> getSubjectUnassignedRoles( //
+    PageList<Role> findSubjectUnassignedRoles( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "subjectId") int subjectId, //
         @WebParam(name = "pc") PageControl pc) //

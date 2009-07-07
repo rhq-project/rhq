@@ -15,7 +15,7 @@
   <description>RHQ Plugin</description>
 
   <properties>        
-    <rhq.version>1.0.0.GA</rhq.version>
+    <rhq.version>1.2.0.GA</rhq.version>
   </properties>    
   
   <dependencies>

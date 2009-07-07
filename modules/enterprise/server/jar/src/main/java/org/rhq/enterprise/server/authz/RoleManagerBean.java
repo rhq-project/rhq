@@ -119,7 +119,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
      * @see org.rhq.enterprise.server.authz.RoleManagerLocal#createRole(Subject, Role)
      */
     @RequiredPermission(Permission.MANAGE_SECURITY)
-    public Role createRole(Subject whoami, Role newRole) {
+    public Role createRole(Subject subject, Role newRole) {
         processDependentPermissions(newRole);
         entityManager.persist(newRole);
         return newRole;
@@ -129,7 +129,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
      * @see org.rhq.enterprise.server.authz.RoleManagerLocal#deleteRoles(Subject, Integer[])
      */
     @RequiredPermission(Permission.MANAGE_SECURITY)
-    public void deleteRoles(Subject whoami, Integer[] doomedRoleIds) {
+    public void deleteRoles(Subject subject, Integer[] doomedRoleIds) {
         if (doomedRoleIds != null) {
             for (Integer roleId : doomedRoleIds) {
                 Role doomedRole = entityManager.find(Role.class, roleId);
@@ -168,19 +168,19 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
      * @see org.rhq.enterprise.server.authz.RoleManagerLocal#addRolesToSubject(Subject, int, int[])
      */
     @RequiredPermission(Permission.MANAGE_SECURITY)
-    public void addRolesToSubject(Subject whoami, int subjectId, int[] roleIds) throws UpdateException {
+    public void addRolesToSubject(Subject subject, int subjectId, int[] roleIds) throws UpdateException {
         if (roleIds != null) {
-            Subject subject = subjectManager.getSubjectById(subjectId); // attach it
-            if (subject == null) {
+            Subject subjectToModify = subjectManager.getSubjectById(subjectId); // attach it
+            if (subjectToModify == null) {
                 throw new UpdateException("Could not find subject[" + subjectId + "] to add roles to");
             }
 
-            if (subject.getFsystem() || (authorizationManager.isSystemSuperuser(subject))) {
-                throw new PermissionException("You cannot assign roles to user [" + subject.getName()
+            if (subjectToModify.getFsystem() || (authorizationManager.isSystemSuperuser(subjectToModify))) {
+                throw new PermissionException("You cannot assign roles to user [" + subjectToModify.getName()
                     + "] - roles are fixed for this user");
             }
 
-            subject.getRoles().size();
+            subjectToModify.getRoles().size();
 
             for (Integer roleId : roleIds) {
                 Role role = entityManager.find(Role.class, roleId);
@@ -188,7 +188,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
                     throw new UpdateException("Tried to add role[" + roleId + "] to subject[" + subjectId
                         + "], but role was not found");
                 }
-                role.addSubject(subject);
+                role.addSubject(subjectToModify);
             }
         }
 
@@ -199,7 +199,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
      * @see org.rhq.enterprise.server.authz.RoleManagerLocal#addSubjectsToRole(Subject, int, int[])
      */
     @RequiredPermission(Permission.MANAGE_SECURITY)
-    public void addSubjectsToRole(Subject whoami, int roleId, int[] subjectIds) throws UpdateException {
+    public void addSubjectsToRole(Subject subject, int roleId, int[] subjectIds) throws UpdateException {
         if (subjectIds != null) {
             Role role = getRoleById(roleId); // attach it
             if (role == null) {
@@ -207,18 +207,18 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
             }
 
             for (Integer subjectId : subjectIds) {
-                Subject subject = entityManager.find(Subject.class, subjectId);
-                if (subject == null) {
+                Subject newSubject = entityManager.find(Subject.class, subjectId);
+                if (newSubject == null) {
                     throw new UpdateException("Tried to add subject[" + subjectId + "] to role[" + roleId
                         + "], but subject was not found");
                 }
 
-                if (subject.getFsystem() || (authorizationManager.isSystemSuperuser(subject))) {
-                    throw new PermissionException("You cannot alter the roles for user [" + subject.getName()
+                if (newSubject.getFsystem() || (authorizationManager.isSystemSuperuser(newSubject))) {
+                    throw new PermissionException("You cannot alter the roles for user [" + newSubject.getName()
                         + "] - roles are fixed for this user");
                 }
 
-                role.addSubject(subject);
+                role.addSubject(newSubject);
 
             }
         }
@@ -230,19 +230,19 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
      * @see org.rhq.enterprise.server.authz.RoleManagerLocal#removeRolesFromSubject(Subject, int, int[])
      */
     @RequiredPermission(Permission.MANAGE_SECURITY)
-    public void removeRolesFromSubject(Subject whoami, int subjectId, int[] roleIds) throws UpdateException {
+    public void removeRolesFromSubject(Subject subject, int subjectId, int[] roleIds) throws UpdateException {
         if (roleIds != null) {
-            Subject subject = subjectManager.getSubjectById(subjectId); // attach it
+            Subject subjectToModify = subjectManager.getSubjectById(subjectId); // attach it
 
-            if (subject.getFsystem() || (authorizationManager.isSystemSuperuser(subject))) {
-                throw new PermissionException("You cannot remove roles from user [" + subject.getName()
+            if (subjectToModify.getFsystem() || (authorizationManager.isSystemSuperuser(subjectToModify))) {
+                throw new PermissionException("You cannot remove roles from user [" + subjectToModify.getName()
                     + "] - roles are fixed for this user");
             }
 
             for (Integer roleId : roleIds) {
                 Role role = entityManager.find(Role.class, roleId);
                 if (role != null) {
-                    role.removeSubject(subject);
+                    role.removeSubject(subjectToModify);
                 }
             }
         }
@@ -262,7 +262,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
      * @see org.rhq.enterprise.server.authz.RoleManagerLocal#setPermissions(Subject, Integer, Set)
      */
     @RequiredPermission(Permission.MANAGE_SECURITY)
-    public void setPermissions(Subject whoami, Integer roleId, Set<Permission> permissions) {
+    public void setPermissions(Subject subject, Integer roleId, Set<Permission> permissions) {
         Role role = entityManager.find(Role.class, roleId);
         Set<Permission> rolePermissions = role.getPermissions();
         rolePermissions.clear();
@@ -285,7 +285,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
      * @see org.rhq.enterprise.server.authz.RoleManagerLocal#updateRole(Subject, Role)
      */
     @RequiredPermission(Permission.MANAGE_SECURITY)
-    public Role updateRole(Subject whoami, Role role) {
+    public Role updateRole(Subject subject, Role role) {
         processDependentPermissions(role);
         return entityManager.merge(role);
     }
@@ -369,7 +369,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
 
     @RequiredPermission(Permission.MANAGE_SECURITY)
     @SuppressWarnings("unchecked")
-    public PageList<Role> findAvailableRolesForSubject(Subject whoami, Integer subjectId, Integer[] pendingRoleIds,
+    public PageList<Role> findAvailableRolesForSubject(Subject subject, Integer subjectId, Integer[] pendingRoleIds,
         PageControl pc) {
         pc.initDefaultOrderingField("r.name");
 
@@ -410,7 +410,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<Role> findAvailableRolesForAlertDefinition(Subject whoami, Integer alertDefinitionId,
+    public PageList<Role> findAvailableRolesForAlertDefinition(Subject subject, Integer alertDefinitionId,
         Integer[] pendingRoleIds, PageControl pc) {
         pc.initDefaultOrderingField("r.name");
 
@@ -449,7 +449,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
      * @see org.rhq.enterprise.server.authz.RoleManagerLocal#addResourceGroupsToRole(Subject, int, int[])
      */
     @RequiredPermission(Permission.MANAGE_SECURITY)
-    public void addResourceGroupsToRole(Subject whoami, int roleId, int[] groupIds) throws UpdateException {
+    public void addResourceGroupsToRole(Subject subject, int roleId, int[] groupIds) throws UpdateException {
         if ((groupIds != null) && (groupIds.length > 0)) {
             Role role = entityManager.find(Role.class, roleId);
             if (role == null) {
@@ -474,7 +474,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
      * @see org.rhq.enterprise.server.authz.RoleManagerLocal#removeResourceGroupsFromRole(Subject, int, int[])
      */
     @RequiredPermission(Permission.MANAGE_SECURITY)
-    public void removeResourceGroupsFromRole(Subject whoami, int roleId, int[] groupIds) throws UpdateException {
+    public void removeResourceGroupsFromRole(Subject subject, int roleId, int[] groupIds) throws UpdateException {
         if ((groupIds != null) && (groupIds.length > 0)) {
             Role role = entityManager.find(Role.class, roleId);
             if (role == null) {

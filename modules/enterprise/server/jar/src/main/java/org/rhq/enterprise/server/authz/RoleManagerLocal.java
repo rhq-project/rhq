@@ -62,31 +62,31 @@ public interface RoleManagerLocal {
      * Persists the new role to the database. The subjects assigned to the role are ignored - this only creates the role
      * entity with 0 subjects initially assigned to it.
      *
-     * @param  whoami  the user attempting to create the role
+     * @param  subject the user attempting to create the role
      * @param  newRole the new role to persist
      *
      * @return the persisted role with the primary key populated
      */
-    Role createRole(Subject whoami, Role newRole);
+    Role createRole(Subject subject, Role newRole);
 
     /**
      * Removes a set of roles from the database. The subjects assigned to the roles are no longer authorized with the
      * deleted roles. Groups attached to the deleted roles are left alone.
      *
-     * @param whoami        the user attempting to delete the role
+     * @param subject       the user attempting to delete the role
      * @param doomedRoleIds the IDs of the roles to delete
      */
-    void deleteRoles(Subject whoami, Integer[] doomedRoleIds);
+    void deleteRoles(Subject subject, Integer[] doomedRoleIds);
 
     /**
      * Sets the permissions for the specified role. Any currently existing role permissions are overwritten - that is,
      * <code>permissions</code> will be the complete set of permissions the role will now be authorized with.
      *
-     * @param whoami      the user attempting to peform the set
+     * @param subject     the user attempting to peform the set
      * @param roleId      the ID of the role to modify
      * @param permissions a set of permissions to give to the role
      */
-    void setPermissions(Subject whoami, Integer roleId, Set<Permission> permissions);
+    void setPermissions(Subject subject, Integer roleId, Set<Permission> permissions);
 
     /**
      * Given a role ID, this will return the complete set of authorized permissions for that role.
@@ -100,12 +100,12 @@ public interface RoleManagerLocal {
     /**
      * Updates the given role, excluding the subjects and groups. This updates permissions, name, description, etc.
      *
-     * @param  whoami user asking to update the role
+     * @param  subject user asking to update the role
      * @param  role
      *
      * @return the updated role
      */
-    Role updateRole(Subject whoami, Role role);
+    Role updateRole(Subject subject, Role role);
 
     /**
      * Given a set of role Ids, this returns a list of all the roles.
@@ -142,14 +142,14 @@ public interface RoleManagerLocal {
      * subject. This excludes roles already assigned to the subject. The returned list will not include the roles
      * identified by <code>pendingRoleIds</code> since it is assumed the pending roles will be assigned to the user.
      *
-     * @param  whoami         user attempting to make this call
+     * @param  subject        user attempting to make this call
      * @param  subjectId      the subject whose list of available roles are to be returned
      * @param  pendingRoleIds the list of roles that are planned to be given to the subject
      * @param  pc
      *
      * @return the list of roles that can be assigned to the given user, not including the pending roles
      */
-    PageList<Role> findAvailableRolesForSubject(Subject whoami, Integer subjectId, Integer[] pendingRoleIds,
+    PageList<Role> findAvailableRolesForSubject(Subject subject, Integer subjectId, Integer[] pendingRoleIds,
         PageControl pc);
 
     /**
@@ -158,14 +158,14 @@ public interface RoleManagerLocal {
      * not include the roles identified by <code>pendingRoleIds</code> since it is assumed the pending roles will be
      * assigned to the alert definition.
      *
-     * @param  whoami            user attempting to make this call
+     * @param  subject           user attempting to make this call
      * @param  alertDefinitionId the alert definition whose list of available roles are to be returned
      * @param  pendingRoleIds    the list of roles that are planned to be given to the alert definition
      * @param  pc
      *
      * @return the list of roles that can be assigned to the given alert definition, not including the pending roles
      */
-    PageList<Role> findAvailableRolesForAlertDefinition(Subject whoami, Integer alertDefinitionId,
+    PageList<Role> findAvailableRolesForAlertDefinition(Subject subject, Integer alertDefinitionId,
         Integer[] pendingRoleIds, PageControl pc);
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -197,7 +197,7 @@ public interface RoleManagerLocal {
     /**
      * Assigns a set of roles to a subject which authorizes the subject to do anything the roles permit.
      *
-     * @param whoami    the user attempting to assign the roles to the subject
+     * @param subject   the user attempting to assign the roles to the subject
      * @param subjectId the subject who is to be authorized with the given roles
      * @param roleIds   the roles to assign
      * @throws UpdateException TODO
@@ -208,7 +208,7 @@ public interface RoleManagerLocal {
      * Disassociates particular roles from a subject. Once complete, the subject will no longer be authorized with the
      * given roles.
      *
-     * @param whoami    the user that is attempting to perform the remove
+     * @param subject   the user that is attempting to perform the remove
      * @param subjectId the user that is to have the roles unassigned from it
      * @param roleIds   list of role IDs that are to be removed from user
      * @throws UpdateException TODO

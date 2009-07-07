@@ -33,6 +33,9 @@ import org.jboss.metatype.api.values.SimpleValueSupport;
 import org.jboss.metatype.api.types.SimpleMetaType;
 import org.jboss.security.SecurityAssociation;
 import org.jboss.security.SimplePrincipal;
+import org.jboss.security.SecurityContextAssociation;
+import org.jboss.security.SecurityContext;
+import org.jboss.security.SecurityIdentity;
 
 /**
  * @author Ian Springer
@@ -114,14 +117,16 @@ public class Worker implements Runnable
                 + ", credential=" + SecurityAssociation.getCredential()
                 + ", callerPrincipal=" + SecurityAssociation.getCallerPrincipal()
                 + ", subject=" + SecurityAssociation.getSubject()
-                + ", runAsIdentity=" + SecurityAssociation.peekRunAsIdentity());
-        SecurityAssociation.clear();
+                + ", runAsIdentity=" + SecurityAssociation.peekRunAsIdentity()
+                + ", securityContext=" + SecurityContextAssociation.getSecurityContext());
+        //SecurityAssociation.clear();
         SecurityAssociation.setPrincipal(new SimplePrincipal("admin"));
         SecurityAssociation.setCredential("admin");
         System.out.println("AFTER RESET: principal=" + SecurityAssociation.getPrincipal() 
                 + ", credential=" + SecurityAssociation.getCredential()
                 + ", callerPrincipal=" + SecurityAssociation.getCallerPrincipal()
                 + ", subject=" + SecurityAssociation.getSubject()
-                + ", runAsIdentity=" + SecurityAssociation.peekRunAsIdentity());
+                + ", runAsIdentity=" + SecurityAssociation.peekRunAsIdentity()
+                + ", securityContext=" + SecurityContextAssociation.getSecurityContext());
     }
 }

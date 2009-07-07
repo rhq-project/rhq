@@ -40,6 +40,18 @@
     <dependencies>
 
         <dependency>
+          <groupId>commons-logging</groupId>
+          <artifactId>commons-logging</artifactId>
+          <scope>runtime</scope>                 
+        </dependency>
+
+        <dependency>
+          <groupId>log4j</groupId>
+          <artifactId>log4j</artifactId>
+          <scope>runtime</scope>                 
+        </dependency>
+        
+        <dependency>
           <groupId>org.jboss.naming</groupId>
           <artifactId>jnp-client</artifactId>
           <scope>runtime</scope>                 
@@ -99,7 +111,7 @@
         <dependency>
           <groupId>org.jboss.security</groupId>
           <artifactId>jboss-security-spi</artifactId>
-          <scope>runtime</scope>          
+          <scope>compile</scope>          
         </dependency>       
         
         <dependency>

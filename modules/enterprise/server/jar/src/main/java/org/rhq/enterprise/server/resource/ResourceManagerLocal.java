@@ -424,9 +424,7 @@ public interface ResourceManagerLocal {
      * @return the resource
      * @throws FetchException on any issue. Wraps ResourceNotFoundException when necessary.
      */
-    Resource getResource( //
-        Subject subject, //
-        int resourceId) throws FetchException;
+    Resource getResource(Subject subject, int resourceId) throws FetchException;
 
     /**
      * Returns the lineage of the Resource with the specified id. The lineage is represented as a List of Resources,
@@ -440,9 +438,7 @@ public interface ResourceManagerLocal {
      * @return the lineage of the Resource with the specified id
      * @throws FetchException on any issue. Wraps ResourceNotFoundException when necessary. 
      */
-    List<Resource> getResourceLineage( //
-        Subject subject, //
-        int resourceId) throws FetchException;
+    List<Resource> getResourceLineage(Subject subject, int resourceId) throws FetchException;
 
     /**
      * This find service can be used to find resources based on various criteria and return various data.
@@ -475,10 +471,7 @@ public interface ResourceManagerLocal {
      * @return
      * @throws FetchException
      */
-    PageList<Resource> findResources( //
-        Subject subject, //
-        Resource criteria, //
-        PageControl pc) throws FetchException;
+    PageList<Resource> findResources(Subject subject, Resource criteria, PageControl pc) throws FetchException;
 
     /**
      * This find service can be used to find child resources for the specified resource,
@@ -513,11 +506,8 @@ public interface ResourceManagerLocal {
      * @return
      * @throws FetchException
      */
-    PageList<Resource> findResourceChildren( //
-        Subject subject, //
-        int resourceId, //
-        Resource criteria, //
-        PageControl pc) throws FetchException;
+    PageList<Resource> findResourceChildren(Subject subject, int resourceId, Resource criteria, PageControl pc)
+        throws FetchException;
 
     /**
      * Removes these resources from inventory.  The resources may subsequently be rediscovered.  Note that for
@@ -528,8 +518,6 @@ public interface ResourceManagerLocal {
      * @param resourceIds The resources to uninventory.
      * @throws DeleteException
      */
-    void uninventoryResources( //
-        Subject subject, //
-        int[] resourceIds) throws DeleteException;
+    void uninventoryResources(Subject subject, int[] resourceIds) throws DeleteException;
 
 }

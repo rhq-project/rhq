@@ -62,7 +62,7 @@ public class PrepareAction extends TilesAction {
         PageControl pageControl = WebUtility.getPageControl(request);
 
         ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
-        PageList<Resource> resources = resourceManager.getResourceByIds(user.getSubject(), alertPrefs.asArray(), false,
+        PageList<Resource> resources = resourceManager.findResourceByIds(user.getSubject(), alertPrefs.asArray(), false,
             pageControl);
 
         request.setAttribute("criticalAlertsList", resources);

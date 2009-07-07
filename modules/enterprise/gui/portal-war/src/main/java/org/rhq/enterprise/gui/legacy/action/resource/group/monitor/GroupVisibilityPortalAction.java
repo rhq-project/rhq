@@ -169,7 +169,7 @@ public class GroupVisibilityPortalAction extends GroupController {
 
         // implicit is the "real" membership of the group, explicit is only used to keep implicit membership correct
         PageList<ResourceWithAvailability> healths = LookupUtil.getResourceManager()
-            .getImplicitResourceWithAvailabilityByResourceGroup(subject, group, pageControl);
+            .findImplicitResourceWithAvailabilityByResourceGroup(subject, group, pageControl);
 
         if (log.isTraceEnabled()) {
             log.trace("got " + healths.size() + " ResourceTypeDisplays getting group member's health");

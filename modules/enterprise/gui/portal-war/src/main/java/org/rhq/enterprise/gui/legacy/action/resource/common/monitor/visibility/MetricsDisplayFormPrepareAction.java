@@ -141,7 +141,7 @@ public abstract class MetricsDisplayFormPrepareAction extends MetricsControlForm
 
             //getResourceCurrentHealths  GroupMemberHealthSummaries
             ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
-            PageList<ResourceHealthComposite> groupMemberHealthSummaries = resourceManager.getResourceHealth(user
+            PageList<ResourceHealthComposite> groupMemberHealthSummaries = resourceManager.findResourceHealth(user
                 .getSubject(), resourceIds, new PageControl());
             request.setAttribute(AttrConstants.GROUP_MEMBER_HEALTH_SUMMARIES_ATTR, groupMemberHealthSummaries);
 

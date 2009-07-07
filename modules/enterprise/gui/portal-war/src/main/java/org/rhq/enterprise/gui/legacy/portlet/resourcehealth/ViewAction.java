@@ -65,7 +65,7 @@ public class ViewAction extends TilesAction {
                 .getFavoriteResourcePortletPreferences();
 
             ResourceManagerLocal manager = LookupUtil.getResourceManager();
-            list = manager.getResourceHealth(user.getSubject(), favoriteResourcePreferences.asArray(), pc);
+            list = manager.findResourceHealth(user.getSubject(), favoriteResourcePreferences.asArray(), pc);
             showAvailability = favoriteResourcePreferences.showAvailability;
             showAlerts = favoriteResourcePreferences.showAlerts;
         } catch (Exception e) {

@@ -68,7 +68,7 @@ public class ResourceGroupMetricsTableUIBean extends PagedDataTableUIBean {
         public PageList<ResourceHealthComposite> fetchPage(PageControl pageControl) {
             WebUser user = EnterpriseFacesContextUtility.getWebUser();
 
-            PageList<ResourceHealthComposite> groupMemberHealthSummaries = resourceManager.getResourceHealth(user
+            PageList<ResourceHealthComposite> groupMemberHealthSummaries = resourceManager.findResourceHealth(user
                 .getSubject(), metricsTableUIBean.getResourceGroupMemberIds(user), pageControl);
 
             return groupMemberHealthSummaries;

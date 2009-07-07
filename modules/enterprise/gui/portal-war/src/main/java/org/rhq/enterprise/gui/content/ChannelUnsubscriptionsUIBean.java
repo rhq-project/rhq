@@ -123,7 +123,7 @@ public class ChannelUnsubscriptionsUIBean extends PagedDataTableUIBean {
                 categoryEnum = ResourceCategory.valueOf(category);
             }
 
-            PageList<Resource> results = manager.getAvailableResourcesForChannel(subject, channelId, search,
+            PageList<Resource> results = manager.findAvailableResourcesForChannel(subject, channelId, search,
                 categoryEnum, pc);
 
             //PageList<ResourceComposite> results = manager.findResourceComposites(subject, categoryEnum, null, null, search, pc);

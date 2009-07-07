@@ -42,7 +42,7 @@ public class AsyncResourceDeleteJob extends AbstractStatefulJob {
         int deletedSuccessfully = 0;
         int deletedWithFailure = 0;
         long time = 0;
-        List<Integer> toBeRemovedIds = resourceManager.getResourcesMarkedForAsyncDeletion(overlord);
+        List<Integer> toBeRemovedIds = resourceManager.findResourcesMarkedForAsyncDeletion(overlord);
         for (Integer doomedResourceId : toBeRemovedIds) {
             try {
                 log.debug("Before asynchronous deletion of resource[id=" + doomedResourceId + "]");

@@ -80,7 +80,7 @@ public class ResourceTreeModelUIBean {
 
         start = System.currentTimeMillis();
         monitorId = HibernatePerformanceMonitor.get().start();
-        List<Resource> resources = resourceManager.getResourcesByAgent(user, agent.getId(), PageControl
+        List<Resource> resources = resourceManager.findResourcesByAgent(user, agent.getId(), PageControl
             .getUnlimitedInstance());
         end = System.currentTimeMillis();
         HibernatePerformanceMonitor.get().stop(monitorId, "ResourceTree agent resource");

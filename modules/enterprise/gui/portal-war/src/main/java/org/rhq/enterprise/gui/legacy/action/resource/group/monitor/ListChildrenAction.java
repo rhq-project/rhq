@@ -82,7 +82,7 @@ public class ListChildrenAction extends TilesAction {
 
         ResourceGroup group = groupManager.getResourceGroupById(subject, groupId, null);
         PageList<ResourceWithAvailability> resources = resourceManager
-            .getImplicitResourceWithAvailabilityByResourceGroup(subject, group, new PageControl());
+            .findImplicitResourceWithAvailabilityByResourceGroup(subject, group, new PageControl());
 
         Map<Integer, List<MetricDisplaySummary>> meDis = metricsMgr.getNarrowedMetricsDisplaySummaryForCompGroup(
             subject, group, begin, end);

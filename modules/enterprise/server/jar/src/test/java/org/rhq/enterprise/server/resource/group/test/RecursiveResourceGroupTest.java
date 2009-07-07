@@ -81,7 +81,7 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
             List<Resource> resourcesFromTreeA = ResourceTreeHelper.getSubtree(nodeA);
 
             resourceGroupManager.addResourcesToGroup(subject, recursiveGroup.getId(), new int[] { nodeA.getId() });
-            List<Resource> initialExplicitResources = resourceManager.getExplicitResourcesByResourceGroup(subject,
+            List<Resource> initialExplicitResources = resourceManager.findExplicitResourcesByResourceGroup(subject,
                 recursiveGroup, PageControl.getUnlimitedInstance());
 
             assert initialExplicitResources.size() == 1 : "Failed: initial explicit resources, size was "
@@ -89,7 +89,7 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
             assert initialExplicitResources.get(0).getId() == nodeA.getId() : "Failed: initial explicit resources id, found "
                 + initialExplicitResources.get(0).getId() + ", expected " + nodeA.getId();
 
-            List<Resource> initialImplicitResources = resourceManager.getImplicitResourcesByResourceGroup(subject,
+            List<Resource> initialImplicitResources = resourceManager.findImplicitResourcesByResourceGroup(subject,
                 recursiveGroup, PageControl.getUnlimitedInstance());
             verifyEqualByIds("Failed: initial implicit resources", resourcesFromTreeA, initialImplicitResources);
 
@@ -98,7 +98,7 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
 
             resourceManager.createResource(subject, newChildOfNodeA, nodeA.getId());
 
-            List<Resource> updatedImplicitResources = resourceManager.getImplicitResourcesByResourceGroup(subject,
+            List<Resource> updatedImplicitResources = resourceManager.findImplicitResourcesByResourceGroup(subject,
                 recursiveGroup, PageControl.getUnlimitedInstance());
 
             resourcesFromTreeA.add(newChildOfNodeA);
@@ -153,7 +153,7 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
                 // adding nodeLittleA should give us the subtree under nodeLittleA
                 expectedImplicit = ResourceTreeHelper.getSubtree(nodeLittleA);
                 implicitGroupMembershipAddHelper(subject, recursiveGroup, nodeLittleA, expectedImplicit);
-                resultsExplicit = resourceManager.getExplicitResourcesByResourceGroup(subject, recursiveGroup,
+                resultsExplicit = resourceManager.findExplicitResourcesByResourceGroup(subject, recursiveGroup,
                     PageControl.getUnlimitedInstance());
                 expectedExplicit.add(nodeLittleA);
                 verifyEqualByIds("explicit add 1", expectedExplicit, resultsExplicit);
@@ -161,7 +161,7 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
                 // adding nodeThree should give us the union of the subtrees under nodeLittleA and nodeThree
                 expectedImplicit.add(nodeThree);
                 implicitGroupMembershipAddHelper(subject, recursiveGroup, nodeThree, expectedImplicit);
-                resultsExplicit = resourceManager.getExplicitResourcesByResourceGroup(subject, recursiveGroup,
+                resultsExplicit = resourceManager.findExplicitResourcesByResourceGroup(subject, recursiveGroup,
                     PageControl.getUnlimitedInstance());
                 expectedExplicit.add(nodeThree);
                 verifyEqualByIds("explicit add 2", expectedExplicit, resultsExplicit);
@@ -170,21 +170,21 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
                 expectedImplicit = ResourceTreeHelper.getSubtree(nodeBigA);
                 expectedImplicit.addAll(ResourceTreeHelper.getSubtree(nodeThree));
                 implicitGroupMembershipAddHelper(subject, recursiveGroup, nodeBigA, expectedImplicit);
-                resultsExplicit = resourceManager.getExplicitResourcesByResourceGroup(subject, recursiveGroup,
+                resultsExplicit = resourceManager.findExplicitResourcesByResourceGroup(subject, recursiveGroup,
                     PageControl.getUnlimitedInstance());
                 expectedExplicit.add(nodeBigA);
                 verifyEqualByIds("explicit add 3", expectedExplicit, resultsExplicit);
 
                 // adding nodeOne, which is a child of nodeBigA, shouldn't effect the expected results
                 implicitGroupMembershipAddHelper(subject, recursiveGroup, nodeOne, expectedImplicit);
-                resultsExplicit = resourceManager.getExplicitResourcesByResourceGroup(subject, recursiveGroup,
+                resultsExplicit = resourceManager.findExplicitResourcesByResourceGroup(subject, recursiveGroup,
                     PageControl.getUnlimitedInstance());
                 expectedExplicit.add(nodeOne);
                 verifyEqualByIds("explicit add 4", expectedExplicit, resultsExplicit);
 
                 // adding nodeTripleLittleI shouldn't effect the expected results either
                 implicitGroupMembershipAddHelper(subject, recursiveGroup, nodeTripleLittleI, expectedImplicit);
-                resultsExplicit = resourceManager.getExplicitResourcesByResourceGroup(subject, recursiveGroup,
+                resultsExplicit = resourceManager.findExplicitResourcesByResourceGroup(subject, recursiveGroup,
                     PageControl.getUnlimitedInstance());
                 expectedExplicit.add(nodeTripleLittleI);
                 verifyEqualByIds("explicit add 5", expectedExplicit, resultsExplicit);
@@ -279,7 +279,7 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
 
             getTransactionManager().begin();
             try {
-                resultsExplicit = resourceManager.getExplicitResourcesByResourceGroup(subject, recursiveGroup,
+                resultsExplicit = resourceManager.findExplicitResourcesByResourceGroup(subject, recursiveGroup,
                     PageControl.getUnlimitedInstance());
                 verifyEqualByIds("explicit remove 0", new ArrayList<Resource>(), resultsExplicit);
             } catch (Throwable t) {
@@ -321,9 +321,9 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
     }
 
     private void printGroup(String prefix, Subject subject, ResourceGroup group) {
-        print(prefix + ": exp", resourceManager.getExplicitResourcesByResourceGroup(subject, group, PageControl
+        print(prefix + ": exp", resourceManager.findExplicitResourcesByResourceGroup(subject, group, PageControl
             .getUnlimitedInstance()));
-        print(prefix + ": imp", resourceManager.getImplicitResourcesByResourceGroup(subject, group, PageControl
+        print(prefix + ": imp", resourceManager.findImplicitResourcesByResourceGroup(subject, group, PageControl
             .getUnlimitedInstance()));
     }
 
@@ -342,7 +342,7 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
         resourceGroupManager.addResourcesToGroup(subject, recursiveGroup.getId(), new int[] { node.getId() });
         printGroup("complex implicit after add: node = " + node.getName() + " [" + node.getId() + "]", subject,
             recursiveGroup);
-        List<Resource> implicitResources = resourceManager.getImplicitResourcesByResourceGroup(subject, recursiveGroup,
+        List<Resource> implicitResources = resourceManager.findImplicitResourcesByResourceGroup(subject, recursiveGroup,
             PageControl.getUnlimitedInstance());
         verifyEqualByIds("Failed: complex implicit add: node = " + node.getName() + " [" + node.getId() + "]",
             expectedResults, implicitResources);
@@ -355,7 +355,7 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
         resourceGroupManager.removeResourcesFromGroup(subject, recursiveGroup.getId(), new int[] { node.getId() });
         printGroup("complex implicit after remove: node = " + node.getName() + " [" + node.getId() + "]", subject,
             recursiveGroup);
-        List<Resource> implicitResources = resourceManager.getImplicitResourcesByResourceGroup(subject, recursiveGroup,
+        List<Resource> implicitResources = resourceManager.findImplicitResourcesByResourceGroup(subject, recursiveGroup,
             PageControl.getUnlimitedInstance());
         verifyEqualByIds("Failed: complex implicit remove: node = " + node.getName() + " [" + node.getId() + "]",
             expectedResults, implicitResources);

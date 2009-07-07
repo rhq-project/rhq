@@ -373,7 +373,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         clearImplicitResources(groupId);
 
         // step 2: prepare the list of resources to be used to pass to the method that does the recursive logic
-        List<Integer> explicitResourceIdList = resourceManager.getExplicitResourceIdsByResourceGroup(groupId);
+        List<Integer> explicitResourceIdList = resourceManager.findExplicitResourceIdsByResourceGroup(groupId);
 
         // step 3: add the explicit resources back, this time with the recursive bit flipped on
         addResourcesToGroupImplicit(subject, groupId, explicitResourceIdList, false, true);
@@ -1172,7 +1172,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
 
     public void ensureMembershipMatches(Subject subject, int groupId, int[] resourceIds) throws UpdateException {
         //throws ResourceGroupUpdateException {
-        List<Integer> currentMembers = resourceManager.getExplicitResourceIdsByResourceGroup(groupId);
+        List<Integer> currentMembers = resourceManager.findExplicitResourceIdsByResourceGroup(groupId);
 
         List<Integer> newMembers = ArrayUtils.wrapInList(resourceIds); // members needing addition
         newMembers.removeAll(currentMembers);

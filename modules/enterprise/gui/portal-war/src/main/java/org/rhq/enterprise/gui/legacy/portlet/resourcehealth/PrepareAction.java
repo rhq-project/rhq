@@ -56,7 +56,7 @@ public class PrepareAction extends TilesAction {
             .getFavoriteResourcePortletPreferences();
         pForm.setFavoriteResourcePortletPreferences(favoriteResourcePreferences);
 
-        PageList<Resource> resources = LookupUtil.getResourceManager().getResourceByIds(user.getSubject(),
+        PageList<Resource> resources = LookupUtil.getResourceManager().findResourceByIds(user.getSubject(),
             favoriteResourcePreferences.asArray(), false, pc);
 
         request.setAttribute("resourceHealthList", resources);

@@ -655,7 +655,7 @@ public class WebUserPreferences extends SubjectPreferencesBase {
     private boolean removeDeletedResources(List<Integer> resourceIds) {
         ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
         int[] ids = ArrayUtils.unwrapCollection(resourceIds);
-        List<ResourceIdFlyWeight> flyWeights = resourceManager.getFlyWeights(ids);
+        List<ResourceIdFlyWeight> flyWeights = resourceManager.findFlyWeights(ids);
         boolean removed = false;
         for (int i = resourceIds.size() - 1; i >= 0; i--) {
             Integer resourceIdToVerify = resourceIds.get(i);

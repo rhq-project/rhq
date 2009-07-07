@@ -105,7 +105,7 @@ public class AddGroupResourcesFormPrepareAction extends Action {
 
         log.trace("getting pending resources for group [" + groupId + "]");
         // pass true so that the parent is each resource is connected
-        PageList<Resource> pendingResources = resourceManager.getResourceByIds(user, pendingResourceIds, true,
+        PageList<Resource> pendingResources = resourceManager.findResourceByIds(user, pendingResourceIds, true,
             pcPending);
 
         request.setAttribute(Constants.PENDING_RESOURCES_ATTR, pendingResources);
@@ -122,11 +122,11 @@ public class AddGroupResourcesFormPrepareAction extends Action {
         PageList<Resource> availableResources = null;
         if (resourceGroup.getGroupCategory() == GroupCategory.COMPATIBLE) {
             ResourceType compatibleTypeFilter = resourceGroup.getResourceType();
-            availableResources = resourceManager.getAvailableResourcesForResourceGroup(user, groupId,
+            availableResources = resourceManager.findAvailableResourcesForResourceGroup(user, groupId,
                 compatibleTypeFilter, null, nameFilter, pendingResourceIds, pcAvail);
         } else if (resourceGroup.getGroupCategory() == GroupCategory.MIXED) {
             ResourceCategory resourceCategory = getResourceCategory(addForm.getFilterBy());
-            availableResources = resourceManager.getAvailableResourcesForResourceGroup(user, groupId, null,
+            availableResources = resourceManager.findAvailableResourcesForResourceGroup(user, groupId, null,
                 resourceCategory, nameFilter, pendingResourceIds, pcAvail);
             addForm.setAvailResourceTypes(buildResourceTypes());
         } else {

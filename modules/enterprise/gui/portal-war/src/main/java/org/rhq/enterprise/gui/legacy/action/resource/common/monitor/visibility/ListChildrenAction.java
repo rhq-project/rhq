@@ -198,7 +198,7 @@ public class ListChildrenAction extends TilesAction {
 
     private List<AutoGroupComposite> getResourceChildren(Resource resource, Subject subject) {
         ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
-        List<AutoGroupComposite> children = resourceManager.getChildrenAutoGroups(subject, resource.getId());
+        List<AutoGroupComposite> children = resourceManager.findChildrenAutoGroups(subject, resource.getId());
 
         AutoGroupComposite resourceGroupComposite = resourceManager.getResourceAutoGroup(subject, resource.getId());
         if (resourceGroupComposite != null)
@@ -249,7 +249,7 @@ public class ListChildrenAction extends TilesAction {
         if ((resourceType != null) && (parentResource != null)) {
 
             // first get the resources in the autogroup
-            List<ResourceWithAvailability> resourcesForAutoGroup = resourceManager.getResourcesByParentAndType(subject,
+            List<ResourceWithAvailability> resourcesForAutoGroup = resourceManager.findResourcesByParentAndType(subject,
                 parentResource, resourceType);
 
             int i = 0;
@@ -260,7 +260,7 @@ public class ListChildrenAction extends TilesAction {
             }
 
             // And then the composite to return
-            List<AutoGroupComposite> composites = resourceManager.getResourcesAutoGroups(subject, resourceIds);
+            List<AutoGroupComposite> composites = resourceManager.findResourcesAutoGroups(subject, resourceIds);
 
             return composites;
         }

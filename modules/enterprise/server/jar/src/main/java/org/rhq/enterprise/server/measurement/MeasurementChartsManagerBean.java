@@ -535,7 +535,7 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
     public Map<MeasurementDefinition, List<MetricDisplaySummary>> getMetricDisplaySummariesForMetricsCompare(
         Subject subject, Integer[] resourceIds, int[] definitionIds, long begin, long end) throws MeasurementException {
         // Getting all the Resource objects in one call, and caching here for the rest of this method
-        PageList<Resource> resources = resourceManager.getResourceByIds(subject, ArrayUtils.unwrapArray(resourceIds),
+        PageList<Resource> resources = resourceManager.findResourceByIds(subject, ArrayUtils.unwrapArray(resourceIds),
             true, PageControl.getUnlimitedInstance());
 
         // I want to only get the definition objects once for each ID, and cache here for the rest of this method

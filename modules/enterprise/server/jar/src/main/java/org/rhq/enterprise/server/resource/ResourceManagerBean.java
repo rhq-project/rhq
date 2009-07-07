@@ -550,7 +550,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @SuppressWarnings("unchecked")
-    public List<ResourceWithAvailability> getResourcesByParentAndType(Subject user, Resource parent, ResourceType type) {
+    public List<ResourceWithAvailability> findResourcesByParentAndType(Subject user, Resource parent, ResourceType type) {
 
         Query query;
         if (authorizationManager.isInventoryManager(user)) {
@@ -608,6 +608,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         }
     }
 
+    // lineage is a getXXX (not findXXX) because it logically returns a single object, but modeled as a list here
     public List<Integer> getResourceIdLineage(int resourceId) {
         List<Integer> lineage = new ArrayList<Integer>();
 
@@ -621,7 +622,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return lineage;
     }
 
-    @NotNull
+    // lineage is a getXXX (not findXXX) because it logically returns a single object, but modeled as a list here
     public List<Resource> getResourceLineage(int resourceId) {
         LinkedList<Resource> resourceLineage = new LinkedList<Resource>();
         Resource resource = entityManager.find(Resource.class, resourceId);
@@ -649,7 +650,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<Resource> getResourceByParentAndInventoryStatus(Subject user, Resource parent,
+    public PageList<Resource> findResourceByParentAndInventoryStatus(Subject user, Resource parent,
         InventoryStatus inventoryStatus, PageControl pageControl) {
         pageControl.initDefaultOrderingField("res.name");
 
@@ -680,7 +681,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<Resource> getChildResources(Subject user, Resource parent, PageControl pageControl) {
+    public PageList<Resource> findChildResources(Subject user, Resource parent, PageControl pageControl) {
         pageControl.initDefaultOrderingField("res.name");
 
         Query queryCount;
@@ -705,7 +706,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @SuppressWarnings("unchecked")
-    public List<Integer> getChildrenResourceIds(int parentResourceId, InventoryStatus status) {
+    public List<Integer> findChildrenResourceIds(int parentResourceId, InventoryStatus status) {
         Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_CHILDREN_IDS_ADMIN);
         query.setParameter("parentResourceId", parentResourceId);
         query.setParameter("inventoryStatus", status);
@@ -715,7 +716,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<Resource> getChildResourcesByCategoryAndInventoryStatus(Subject user, Resource parent,
+    public PageList<Resource> findChildResourcesByCategoryAndInventoryStatus(Subject user, Resource parent,
         ResourceCategory category, InventoryStatus status, PageControl pageControl) {
         pageControl.initDefaultOrderingField("res.name");
 
@@ -748,7 +749,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<Resource> getResourcesByCategory(Subject user, ResourceCategory category,
+    public PageList<Resource> findResourcesByCategory(Subject user, ResourceCategory category,
         InventoryStatus inventoryStatus, PageControl pageControl) {
         pageControl.initDefaultOrderingField("res.name");
 
@@ -876,7 +877,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
      *
      * @return
      */
-    public PageList<ResourceComposite> getResourceCompositeForParentAndTypeAndCategory(Subject user,
+    public PageList<ResourceComposite> findResourceCompositeForParentAndTypeAndCategory(Subject user,
         ResourceCategory category, int resourceTypeId, Resource parentResource, PageControl pageControl) {
         // pageControl.initDefaultOrderingField(); // not needed since findResourceComposites will set it
 
@@ -893,7 +894,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<Resource> getResourcesByType(Subject user, ResourceType resourceType, PageControl pageControl) {
+    public PageList<Resource> findResourcesByType(Subject user, ResourceType resourceType, PageControl pageControl) {
         pageControl.initDefaultOrderingField("res.name");
 
         Query queryCount;
@@ -956,7 +957,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @SuppressWarnings("unchecked")
-    public List<Integer> getResourcesMarkedForAsyncDeletion(Subject user) {
+    public List<Integer> findResourcesMarkedForAsyncDeletion(Subject user) {
         if (!authorizationManager.isOverlord(user)) {
             throw new IllegalArgumentException("Only the overlord can purge resources marked for deletion");
         }
@@ -968,7 +969,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @SuppressWarnings("unchecked")
-    public List<RecentlyAddedResourceComposite> getRecentlyAddedPlatforms(Subject user, long ctime, int maxItems) {
+    public List<RecentlyAddedResourceComposite> findRecentlyAddedPlatforms(Subject user, long ctime, int maxItems) {
         Query query;
 
         if (authorizationManager.isInventoryManager(user)) {
@@ -984,7 +985,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @SuppressWarnings("unchecked")
-    public List<RecentlyAddedResourceComposite> getRecentlyAddedServers(Subject user, long ctime, int platformId) {
+    public List<RecentlyAddedResourceComposite> findRecentlyAddedServers(Subject user, long ctime, int platformId) {
         Query query;
 
         if (authorizationManager.isInventoryManager(user)) {
@@ -1033,7 +1034,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return result;
     }
 
-    public List<AutoGroupComposite> getResourcesAutoGroups(Subject subject, int[] resourceIds) {
+    public List<AutoGroupComposite> findResourcesAutoGroups(Subject subject, int[] resourceIds) {
         List<AutoGroupComposite> results = new ArrayList<AutoGroupComposite>();
         List<Integer> ids = ArrayUtils.wrapInList(resourceIds);
         if ((ids == null) || (ids.size() == 0)) {
@@ -1086,7 +1087,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @SuppressWarnings("unchecked")
-    public List<AutoGroupComposite> getChildrenAutoGroups(Subject user, int parentResourceId, int[] resourceTypeIds) {
+    public List<AutoGroupComposite> findChildrenAutoGroups(Subject user, int parentResourceId, int[] resourceTypeIds) {
         Query query;
 
         List<Integer> typeIds = ArrayUtils.wrapInList(resourceTypeIds);
@@ -1150,8 +1151,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return fullComposites;
     }
 
-    public List<AutoGroupComposite> getChildrenAutoGroups(Subject user, int parentResourceId) {
-        return getChildrenAutoGroups(user, parentResourceId, (int[]) null);
+    public List<AutoGroupComposite> findChildrenAutoGroups(Subject user, int parentResourceId) {
+        return findChildrenAutoGroups(user, parentResourceId, (int[]) null);
     }
 
     private void calculateSubcategorySummary(Resource parentResource, List<ResourceSubCategory> subcategories,
@@ -1204,7 +1205,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<Resource> getExplicitResourcesByResourceGroup(Subject user, ResourceGroup group,
+    public PageList<Resource> findExplicitResourcesByResourceGroup(Subject user, ResourceGroup group,
         PageControl pageControl) {
         pageControl.initDefaultOrderingField("res.name");
 
@@ -1233,7 +1234,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @SuppressWarnings("unchecked")
-    public List<Integer> getExplicitResourceIdsByResourceGroup(int resourceGroupId) {
+    public List<Integer> findExplicitResourceIdsByResourceGroup(int resourceGroupId) {
         Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_EXPLICIT_IDS_BY_RESOURCE_GROUP_ADMIN);
         query.setParameter("groupId", resourceGroupId);
 
@@ -1242,7 +1243,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @SuppressWarnings("unchecked")
-    public List<ResourceIdFlyWeight> getFlyWeights(int[] resourceIds) {
+    public List<ResourceIdFlyWeight> findFlyWeights(int[] resourceIds) {
         Integer[] ids = ArrayUtils.wrapInArray(resourceIds);
         if (ids.length == 0) {
             return new ArrayList<ResourceIdFlyWeight>();
@@ -1263,7 +1264,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<Resource> getImplicitResourcesByResourceGroup(Subject user, ResourceGroup group,
+    public PageList<Resource> findImplicitResourcesByResourceGroup(Subject user, ResourceGroup group,
         PageControl pageControl) {
         pageControl.initDefaultOrderingField("res.name");
 
@@ -1293,7 +1294,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
     @SuppressWarnings("unchecked")
     // RHQ-796, queries now return the parent resource attached
-    public PageList<ResourceWithAvailability> getExplicitResourceWithAvailabilityByResourceGroup(Subject subject,
+    public PageList<ResourceWithAvailability> findExplicitResourceWithAvailabilityByResourceGroup(Subject subject,
         ResourceGroup group, PageControl pageControl) {
         pageControl.initDefaultOrderingField("res.name");
 
@@ -1324,7 +1325,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
     @SuppressWarnings("unchecked")
     // RHQ-796, queries now return the parent resource attached
-    public PageList<ResourceWithAvailability> getImplicitResourceWithAvailabilityByResourceGroup(Subject subject,
+    public PageList<ResourceWithAvailability> findImplicitResourceWithAvailabilityByResourceGroup(Subject subject,
         ResourceGroup group, PageControl pageControl) {
         pageControl.initDefaultOrderingField("res.name");
 
@@ -1354,7 +1355,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<ResourceHealthComposite> getResourceHealth(Subject user, int[] resourceIds, PageControl pc) {
+    public PageList<ResourceHealthComposite> findResourceHealth(Subject user, int[] resourceIds, PageControl pc) {
         pc.initDefaultOrderingField("res.name");
 
         List<Integer> resourceIdList = ArrayUtils.wrapInList(resourceIds);
@@ -1397,7 +1398,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     @SuppressWarnings("unchecked")
     // note: this method also eagerly loads the parent resource, so that more context info is displayed for each record
-    public PageList<Resource> getAvailableResourcesForResourceGroup(Subject user, int groupId, ResourceType type,
+    public PageList<Resource> findAvailableResourcesForResourceGroup(Subject user, int groupId, ResourceType type,
         ResourceCategory category, String nameFilter, int[] excludeIds, PageControl pageControl) {
         pageControl.initDefaultOrderingField("res.name");
 
@@ -1453,7 +1454,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<Resource> getAvailableResourcesForChannel(Subject user, int channelId, String search,
+    public PageList<Resource> findAvailableResourcesForChannel(Subject user, int channelId, String search,
         ResourceCategory category, PageControl pageControl) {
         pageControl.initDefaultOrderingField("res.name");
 
@@ -1484,7 +1485,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
     @SuppressWarnings("unchecked")
     // note, typeId can be null
-    public PageList<Resource> getAvailableResourcesForDashboardPortlet(Subject user, Integer typeId,
+    public PageList<Resource> findAvailableResourcesForDashboardPortlet(Subject user, Integer typeId,
         ResourceCategory category, int[] excludeIds, PageControl pageControl) {
         pageControl.initDefaultOrderingField("res.name");
 
@@ -1526,7 +1527,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<Resource> getResourceByIds(Subject subject, int[] resourceIds, boolean attachParentResource,
+    public PageList<Resource> findResourceByIds(Subject subject, int[] resourceIds, boolean attachParentResource,
         PageControl pageControl) {
         pageControl.initDefaultOrderingField("res.name");
 
@@ -1594,7 +1595,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
     @NotNull
     @SuppressWarnings("unchecked")
-    public List<ResourceError> getResourceErrors(Subject user, int resourceId, ResourceErrorType errorType) {
+    public List<ResourceError> findResourceErrors(Subject user, int resourceId, ResourceErrorType errorType) {
         // do authz check
         if (!authorizationManager.canViewResource(user, resourceId)) {
             throw new PermissionException("User [" + user + "] does not have permission to view resource ["
@@ -1720,7 +1721,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @SuppressWarnings("unchecked")
-    public List<Resource> getResourcesByAgent(Subject user, int agentId, PageControl unlimitedInstance) {
+    public List<Resource> findResourcesByAgent(Subject user, int agentId, PageControl unlimitedInstance) {
         // Note: I didn't put these queries in as named queries since they have very specific prefeching
         // for this use case.
 
@@ -1878,7 +1879,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @SuppressWarnings("unchecked")
-    public List<Resource> getResourcesByCompatibleGroup(Subject user, int compatibleGroupId, PageControl pageControl) {
+    public List<Resource> findResourcesByCompatibleGroup(Subject user, int compatibleGroupId, PageControl pageControl) {
         // Note: I didn't put these queries in as named queries since they have very specific prefeching
         // for this use case.
 
@@ -1992,6 +1993,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return result;
     }
 
+    // lineage is a getXXX (not findXXX) because it logically returns a single object, but modeled as a list here
     public List<Resource> getResourceLineage(Subject subject, int resourceId) throws FetchException {
         List<Resource> result = null;
 

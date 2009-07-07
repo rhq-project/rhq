@@ -89,7 +89,7 @@ public class ClusterManagerBeanTest extends AbstractEJB3Test {
             resourceGroupManager.addResourcesToGroup(subject, clusterGroup.getId(), new int[] { nodeA.getId(),
                 nodeB.getId() });
 
-            PageList<Resource> AChildren = resourceManager.getChildResources(subject, nodeA, PageControl
+            PageList<Resource> AChildren = resourceManager.findChildResources(subject, nodeA, PageControl
                 .getUnlimitedInstance());
             assert !AChildren.isEmpty() : "Expected Children for Node A";
 
@@ -122,7 +122,7 @@ public class ClusterManagerBeanTest extends AbstractEJB3Test {
             assertEquals(backingGroup.getClusterResourceGroup(), clusterGroup);
             //Set<Resource> backingGroupResources = backingGroup.getExplicitResources();
             // explicitResources for backingGroup is lazy, so we need to hit resourceManager for the answer 
-            List<Resource> backingGroupResources = resourceManager.getExplicitResourcesByResourceGroup(subject,
+            List<Resource> backingGroupResources = resourceManager.findExplicitResourcesByResourceGroup(subject,
                 backingGroup, PageControl.getUnlimitedInstance());
             assertEquals(backingGroupResources.size(), resources.size());
             for (Resource resource : backingGroupResources) {
@@ -165,7 +165,7 @@ public class ClusterManagerBeanTest extends AbstractEJB3Test {
             resourceGroupManager.addResourcesToGroup(subject, clusterGroup.getId(), new int[] { nodeA.getId(),
                 nodeB.getId() });
 
-            PageList<Resource> AChildren = resourceManager.getChildResources(subject, nodeA, PageControl
+            PageList<Resource> AChildren = resourceManager.findChildResources(subject, nodeA, PageControl
                 .getUnlimitedInstance());
             assert !AChildren.isEmpty() : "Expected Children for Node A";
 
@@ -173,7 +173,7 @@ public class ClusterManagerBeanTest extends AbstractEJB3Test {
             int AChildResourceTypeId = AChild.getResourceType().getId();
             String AChildResourceKey = AChild.getResourceKey();
 
-            PageList<Resource> AGrandChildren = resourceManager.getChildResources(subject, AChild, PageControl
+            PageList<Resource> AGrandChildren = resourceManager.findChildResources(subject, AChild, PageControl
                 .getUnlimitedInstance());
 
             Resource AGrandChild = AGrandChildren.get(0);

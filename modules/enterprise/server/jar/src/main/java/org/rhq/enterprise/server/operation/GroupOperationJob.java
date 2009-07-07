@@ -118,7 +118,7 @@ public class GroupOperationJob extends OperationJob {
             } else {
                 ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
                 PageControl pageControl = PageControl.getUnlimitedInstance();
-                resourcesToOperateOn = resourceManager.getExplicitResourcesByResourceGroup(user, group, pageControl);
+                resourcesToOperateOn = resourceManager.findExplicitResourcesByResourceGroup(user, group, pageControl);
             }
 
             // now create detail composites from the resource list

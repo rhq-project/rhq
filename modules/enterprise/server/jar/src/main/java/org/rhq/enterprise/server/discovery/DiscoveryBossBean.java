@@ -205,7 +205,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public List<Resource> getQueuedPlatformChildServers(Subject user, InventoryStatus status, Resource platform) {
-        PageList<Resource> childServers = resourceManager.getChildResourcesByCategoryAndInventoryStatus(user, platform,
+        PageList<Resource> childServers = resourceManager.findChildResourcesByCategoryAndInventoryStatus(user, platform,
             ResourceCategory.SERVER, status, PageControl.getUnlimitedInstance());
 
         return childServers;

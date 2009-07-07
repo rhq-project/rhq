@@ -62,7 +62,7 @@ public class RSSAction extends BaseRSSAction {
             FavoriteResourcePortletPreferences favoriteResourcePreferences = preferences
                 .getFavoriteResourcePortletPreferences();
 
-            PageList<ResourceHealthComposite> results = manager.getResourceHealth(user.getSubject(),
+            PageList<ResourceHealthComposite> results = manager.findResourceHealth(user.getSubject(),
                 favoriteResourcePreferences.asArray(), PageControl.getUnlimitedInstance());
 
             if ((results != null) && (results.size() > 0)) {

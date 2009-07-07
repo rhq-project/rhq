@@ -101,7 +101,7 @@ public class ResourceUIBean {
         if (parent != null)
             this.canShowParent = this.authorizationManager.canViewResource(subject, parent.getId());
 
-        List<ResourceError> errors = this.resourceManager.getResourceErrors(subject, this.resource.getId(),
+        List<ResourceError> errors = this.resourceManager.findResourceErrors(subject, this.resource.getId(),
             ResourceErrorType.INVALID_PLUGIN_CONFIGURATION);
         if (errors.size() == 1) {
             this.invalidPluginConfigurationError = errors.get(0);

@@ -74,7 +74,7 @@ public class ViewAction extends TilesAction {
                 ts = System.currentTimeMillis() - (range * 60 * 60 * 1000);
             }
 
-            platformList = resourceManager.getRecentlyAddedPlatforms(subject, ts, recentlyApprovedPreferences.range);
+            platformList = resourceManager.findRecentlyAddedPlatforms(subject, ts, recentlyApprovedPreferences.range);
 
             Map<Integer, RecentlyAddedResourceComposite> platformMap;
             platformMap = new HashMap<Integer, RecentlyAddedResourceComposite>();
@@ -99,7 +99,7 @@ public class ViewAction extends TilesAction {
                 if (miniPlatform != null) {
                     miniPlatform.setShowChildren(true);
                     miniPlatform.setChildren(resourceManager
-                        .getRecentlyAddedServers(subject, ts, platformId.intValue()));
+                        .findRecentlyAddedServers(subject, ts, platformId.intValue()));
                 } else {
                     removeExpandedPlatforms.add(expandedPlatform);
                 }

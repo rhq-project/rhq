@@ -125,7 +125,7 @@ public class AutoGroupTreeContextMenuUIBean extends TreeContextMenuBase {
     }
 
     private AutoGroupComposite getAutoGroupForResourceType(Subject subject, int parentId, int resourceTypeId) {
-        List<AutoGroupComposite> autogroups = resourceManager.getChildrenAutoGroups(subject, parentId,
+        List<AutoGroupComposite> autogroups = resourceManager.findChildrenAutoGroups(subject, parentId,
             new int[] { resourceTypeId });
         if (autogroups == null || autogroups.size() == 0) {
             return null;

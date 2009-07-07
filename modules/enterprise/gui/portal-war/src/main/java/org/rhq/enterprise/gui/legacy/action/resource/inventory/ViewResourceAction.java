@@ -78,11 +78,11 @@ public class ViewResourceAction extends TilesAction {
         try {
             ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
 
-            PageList<Resource> childServers = resourceManager.getChildResourcesByCategoryAndInventoryStatus(subject,
+            PageList<Resource> childServers = resourceManager.findChildResourcesByCategoryAndInventoryStatus(subject,
                 resource, ResourceCategory.SERVER, InventoryStatus.COMMITTED, PageControl.getUnlimitedInstance());
             request.setAttribute(Constants.CHILD_SERVERS_ATTR, childServers);
 
-            PageList<Resource> childServices = resourceManager.getChildResourcesByCategoryAndInventoryStatus(subject,
+            PageList<Resource> childServices = resourceManager.findChildResourcesByCategoryAndInventoryStatus(subject,
                 resource, ResourceCategory.SERVICE, InventoryStatus.COMMITTED, PageControl.getUnlimitedInstance());
             request.setAttribute(Constants.CHILD_SERVICES_ATTR, childServices);
 

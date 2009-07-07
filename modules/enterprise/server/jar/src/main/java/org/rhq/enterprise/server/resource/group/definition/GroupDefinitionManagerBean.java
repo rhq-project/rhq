@@ -401,7 +401,7 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
          * use resourceManager.getExplicitResourceIdsByResourceGroup instead of resourceGroup.getExplicitResources to keep
          * the data we need to pull across the line from the database as small as possible
          */
-        Collection<Integer> existingResourceIds = resourceManager.getExplicitResourceIdsByResourceGroup(resourceGroup
+        Collection<Integer> existingResourceIds = resourceManager.findExplicitResourceIdsByResourceGroup(resourceGroup
             .getId());
 
         Set<Integer> idsToAdd = new HashSet<Integer>(result.getData());

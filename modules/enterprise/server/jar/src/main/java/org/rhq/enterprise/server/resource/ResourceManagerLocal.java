@@ -181,23 +181,23 @@ public interface ResourceManagerLocal {
     Resource getResourceByParentAndKey(Subject user, @Nullable Resource parent, String key, String plugin,
         String typeName);
 
-    PageList<Resource> getResourceByParentAndInventoryStatus(Subject user, Resource parent, InventoryStatus status,
+    PageList<Resource> findResourceByParentAndInventoryStatus(Subject user, Resource parent, InventoryStatus status,
         PageControl pageControl);
 
-    List<ResourceWithAvailability> getResourcesByParentAndType(Subject user, Resource parent, ResourceType type);
+    List<ResourceWithAvailability> findResourcesByParentAndType(Subject user, Resource parent, ResourceType type);
 
-    PageList<Resource> getChildResources(Subject user, Resource parent, PageControl pageControl);
+    PageList<Resource> findChildResources(Subject user, Resource parent, PageControl pageControl);
 
-    List<Integer> getChildrenResourceIds(int parentResourceId, InventoryStatus status);
+    List<Integer> findChildrenResourceIds(int parentResourceId, InventoryStatus status);
 
-    PageList<Resource> getChildResourcesByCategoryAndInventoryStatus(Subject user, Resource parent,
+    PageList<Resource> findChildResourcesByCategoryAndInventoryStatus(Subject user, Resource parent,
         ResourceCategory category, InventoryStatus status, PageControl pageControl);
 
     /**
      * 
-     * @see ResourceManagerRemote#getResourcesByCategory(Subject, ResourceCategory, InventoryStatus, PageControl)
+     * @see ResourceManagerRemote#findResourcesByCategory(Subject, ResourceCategory, InventoryStatus, PageControl)
      */
-    PageList<Resource> getResourcesByCategory(Subject user, ResourceCategory category, InventoryStatus inventoryStatus,
+    PageList<Resource> findResourcesByCategory(Subject user, ResourceCategory category, InventoryStatus inventoryStatus,
         PageControl pageControl);
 
     PageList<ResourceComposite> findResourceComposites( //
@@ -219,7 +219,7 @@ public interface ResourceManagerLocal {
 
     int getResourceCountByTypeAndIds(Subject user, ResourceType type, int[] resourceIds);
 
-    List<Integer> getResourcesMarkedForAsyncDeletion(Subject user);
+    List<Integer> findResourcesMarkedForAsyncDeletion(Subject user);
 
     /**
      * Gets a list of platforms that were recently added (committed) to inventory.
@@ -230,7 +230,7 @@ public interface ResourceManagerLocal {
      *
      * @return list of all platforms that were added since or at <code>ctime</code>
      */
-    List<RecentlyAddedResourceComposite> getRecentlyAddedPlatforms(Subject user, long ctime, int maxItems);
+    List<RecentlyAddedResourceComposite> findRecentlyAddedPlatforms(Subject user, long ctime, int maxItems);
 
     /**
      * Gets a list of servers that are children of the given platform that were recently added (committed) to inventory.
@@ -241,47 +241,47 @@ public interface ResourceManagerLocal {
      * @return list of all servers (that are children of the given platforms) that were added since or at <code>
      *         ctime</code>
      */
-    List<RecentlyAddedResourceComposite> getRecentlyAddedServers(Subject user, long ctime, int platformId);
+    List<RecentlyAddedResourceComposite> findRecentlyAddedServers(Subject user, long ctime, int platformId);
 
-    List<Integer> getExplicitResourceIdsByResourceGroup(int resourceGroupId);
+    List<Integer> findExplicitResourceIdsByResourceGroup(int resourceGroupId);
 
-    List<ResourceIdFlyWeight> getFlyWeights(int[] resourceIds);
-
-    /**
-     * @throws ResourceGroupNotFoundException if the specified {@link ResourceGroup} does not exist
-     */
-    PageList<Resource> getExplicitResourcesByResourceGroup(Subject subject, ResourceGroup group, PageControl pageControl);
+    List<ResourceIdFlyWeight> findFlyWeights(int[] resourceIds);
 
     /**
      * @throws ResourceGroupNotFoundException if the specified {@link ResourceGroup} does not exist
      */
-    PageList<Resource> getImplicitResourcesByResourceGroup(Subject user, ResourceGroup group, PageControl pageControl);
+    PageList<Resource> findExplicitResourcesByResourceGroup(Subject subject, ResourceGroup group, PageControl pageControl);
 
     /**
      * @throws ResourceGroupNotFoundException if the specified {@link ResourceGroup} does not exist
      */
-    PageList<ResourceWithAvailability> getExplicitResourceWithAvailabilityByResourceGroup(Subject subject,
+    PageList<Resource> findImplicitResourcesByResourceGroup(Subject user, ResourceGroup group, PageControl pageControl);
+
+    /**
+     * @throws ResourceGroupNotFoundException if the specified {@link ResourceGroup} does not exist
+     */
+    PageList<ResourceWithAvailability> findExplicitResourceWithAvailabilityByResourceGroup(Subject subject,
         ResourceGroup group, PageControl pageControl);
 
     /**
      * @throws ResourceGroupNotFoundException if the specified {@link ResourceGroup} does not exist
      */
-    PageList<ResourceWithAvailability> getImplicitResourceWithAvailabilityByResourceGroup(Subject subject,
+    PageList<ResourceWithAvailability> findImplicitResourceWithAvailabilityByResourceGroup(Subject subject,
         ResourceGroup group, PageControl pageControl);
 
     /**
      * @throws ResourceGroupNotFoundException if no {@link ResourceGroup} exists with the specified id
      */
-    PageList<Resource> getAvailableResourcesForResourceGroup(Subject user, int groupId, ResourceType type,
+    PageList<Resource> findAvailableResourcesForResourceGroup(Subject user, int groupId, ResourceType type,
         ResourceCategory category, String nameFilter, int[] excludeIds, PageControl pageControl);
 
-    PageList<Resource> getAvailableResourcesForChannel(Subject user, int channelId, String search,
+    PageList<Resource> findAvailableResourcesForChannel(Subject user, int channelId, String search,
         ResourceCategory category, PageControl pageControl);
 
-    PageList<Resource> getAvailableResourcesForDashboardPortlet(Subject user, Integer typeId,
+    PageList<Resource> findAvailableResourcesForDashboardPortlet(Subject user, Integer typeId,
         ResourceCategory category, int[] excludeIds, PageControl pageControl);
 
-    PageList<Resource> getResourceByIds(Subject subject, int[] resourceIds, boolean attachParentResource,
+    PageList<Resource> findResourceByIds(Subject subject, int[] resourceIds, boolean attachParentResource,
         PageControl pageControl);
 
     /**
@@ -300,7 +300,7 @@ public interface ResourceManagerLocal {
      *
      * @return
      */
-    PageList<ResourceComposite> getResourceCompositeForParentAndTypeAndCategory(Subject user,
+    PageList<ResourceComposite> findResourceCompositeForParentAndTypeAndCategory(Subject user,
         ResourceCategory category, int resourceTypeId, Resource parentResource, PageControl pageControl);
 
     /**
@@ -313,7 +313,7 @@ public interface ResourceManagerLocal {
      * @return the list of resource errors
      */
     @NotNull
-    List<ResourceError> getResourceErrors(Subject user, int resourceId, ResourceErrorType errorType);
+    List<ResourceError> findResourceErrors(Subject user, int resourceId, ResourceErrorType errorType);
 
     /**
      * Indicates an error occurred on a resource. The given error will be associated with the resource found in the
@@ -331,9 +331,9 @@ public interface ResourceManagerLocal {
      */
     void deleteResourceError(Subject user, int resourceErrorId);
 
-    List<AutoGroupComposite> getChildrenAutoGroups(Subject user, int parentResourceId);
+    List<AutoGroupComposite> findChildrenAutoGroups(Subject user, int parentResourceId);
 
-    List<AutoGroupComposite> getChildrenAutoGroups(Subject user, int parentResourceId, int[] resourceTypeIds);
+    List<AutoGroupComposite> findChildrenAutoGroups(Subject user, int parentResourceId, int[] resourceTypeIds);
 
     AutoGroupComposite getResourceAutoGroup(Subject user, int resourceId);
 
@@ -357,9 +357,9 @@ public interface ResourceManagerLocal {
      *
      * @return the health information on the resources
      */
-    PageList<ResourceHealthComposite> getResourceHealth(Subject user, int[] resourceIds, PageControl pc);
+    PageList<ResourceHealthComposite> findResourceHealth(Subject user, int[] resourceIds, PageControl pc);
 
-    public List<AutoGroupComposite> getResourcesAutoGroups(Subject subject, int[] resourceIds);
+    public List<AutoGroupComposite> findResourcesAutoGroups(Subject subject, int[] resourceIds);
 
     /**
      * Clears errors of type {@link ResourceErrorType}.INVALID_PLUGIN_CONFIGURATION
@@ -391,9 +391,9 @@ public interface ResourceManagerLocal {
      * @param pageControl the filter for the resources
      * @return the list of all resources on a platform
      */
-    List<Resource> getResourcesByAgent(Subject user, int agentId, PageControl pageControl);
+    List<Resource> findResourcesByAgent(Subject user, int agentId, PageControl pageControl);
 
-    List<Resource> getResourcesByCompatibleGroup(Subject user, int compatibleGroupId, PageControl pageControl);
+    List<Resource> findResourcesByCompatibleGroup(Subject user, int compatibleGroupId, PageControl pageControl);
 
     ResourceAvailabilitySummary getAvailabilitySummary(Subject user, int resourceId);
 

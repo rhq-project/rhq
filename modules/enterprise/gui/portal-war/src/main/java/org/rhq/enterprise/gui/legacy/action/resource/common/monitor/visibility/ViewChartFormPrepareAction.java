@@ -268,7 +268,7 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
                 resIds[i] = Integer.parseInt(r[i]);
             }
 
-            allResources = resMgr.getResourceByIds(subject, resIds, false, PageControl.getUnlimitedInstance());
+            allResources = resMgr.findResourceByIds(subject, resIds, false, PageControl.getUnlimitedInstance());
             resources.add(allResources);
 
             // now see which ones are checked

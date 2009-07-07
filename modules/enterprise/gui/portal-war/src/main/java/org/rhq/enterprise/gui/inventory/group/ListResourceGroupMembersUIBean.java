@@ -127,10 +127,10 @@ public class ListResourceGroupMembersUIBean extends PagedDataTableUIBean {
         public PageList<ResourceWithAvailability> fetchPage(PageControl pageControl) {
             PageList<ResourceWithAvailability> results = null;
             if (getShowRecursiveMembers()) {
-                results = resourceManager.getImplicitResourceWithAvailabilityByResourceGroup(LookupUtil
+                results = resourceManager.findImplicitResourceWithAvailabilityByResourceGroup(LookupUtil
                     .getSubjectManager().getOverlord(), getResourceGroup(), pageControl);
             } else {
-                results = resourceManager.getExplicitResourceWithAvailabilityByResourceGroup(LookupUtil
+                results = resourceManager.findExplicitResourceWithAvailabilityByResourceGroup(LookupUtil
                     .getSubjectManager().getOverlord(), getResourceGroup(), pageControl);
             }
             for (ResourceWithAvailability composite : results) {

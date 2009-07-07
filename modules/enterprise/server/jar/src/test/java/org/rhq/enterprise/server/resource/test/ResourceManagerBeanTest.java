@@ -77,7 +77,7 @@ public class ResourceManagerBeanTest extends UpdateSubsytemTestBase {
         List<ResourceError> errors;
         DiscoveryServerServiceImpl serverService = new DiscoveryServerServiceImpl();
 
-        errors = resourceManager.getResourceErrors(superuser, newResource.getId(),
+        errors = resourceManager.findResourceErrors(superuser, newResource.getId(),
             ResourceErrorType.INVALID_PLUGIN_CONFIGURATION);
         assert errors.size() == 0;
 
@@ -87,7 +87,7 @@ public class ResourceManagerBeanTest extends UpdateSubsytemTestBase {
         // simulate the agent notifying the server about an error
         // this will exercise the addResourceError in the SLSB
         serverService.setResourceError(error);
-        errors = resourceManager.getResourceErrors(superuser, newResource.getId(),
+        errors = resourceManager.findResourceErrors(superuser, newResource.getId(),
             ResourceErrorType.INVALID_PLUGIN_CONFIGURATION);
         assert errors.size() == 1;
         error = errors.get(0);
@@ -105,7 +105,7 @@ public class ResourceManagerBeanTest extends UpdateSubsytemTestBase {
         error.setSummary("another summary");
         error.setDetail("another detail");
         serverService.setResourceError(error);
-        errors = resourceManager.getResourceErrors(superuser, newResource.getId(),
+        errors = resourceManager.findResourceErrors(superuser, newResource.getId(),
             ResourceErrorType.INVALID_PLUGIN_CONFIGURATION);
         assert errors.size() == 1;
         error = errors.get(0);
@@ -116,7 +116,7 @@ public class ResourceManagerBeanTest extends UpdateSubsytemTestBase {
         assert error.getTimeOccurred() == 567890;
 
         resourceManager.deleteResourceError(superuser, error.getId());
-        errors = resourceManager.getResourceErrors(superuser, newResource.getId(),
+        errors = resourceManager.findResourceErrors(superuser, newResource.getId(),
             ResourceErrorType.INVALID_PLUGIN_CONFIGURATION);
         assert errors.size() == 0;
     }

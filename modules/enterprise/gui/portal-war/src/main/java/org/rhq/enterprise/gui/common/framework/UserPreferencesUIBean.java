@@ -93,7 +93,7 @@ public class UserPreferencesUIBean {
             WebUserPreferences.FavoriteResourcePortletPreferences favoriteResources = user.getWebPreferences()
                 .getFavoriteResourcePortletPreferences();
 
-            resourceFavorites = resourceManager.getResourceByIds(getSubject(), favoriteResources.asArray(), false,
+            resourceFavorites = resourceManager.findResourceByIds(getSubject(), favoriteResources.asArray(), false,
                 PageControl.getUnlimitedInstance());
         }
         return resourceFavorites;

@@ -405,7 +405,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     }
 
     @RequiredPermission(Permission.MANAGE_SECURITY)
-    public PageList<Role> getSubjectUnassignedRoles(Subject subject, int subjectId, PageControl pc) {
+    public PageList<Role> findSubjectUnassignedRoles(Subject subject, int subjectId, PageControl pc) {
         return findAvailableRolesForSubject(subject, subjectId, null, pc);
     }
 

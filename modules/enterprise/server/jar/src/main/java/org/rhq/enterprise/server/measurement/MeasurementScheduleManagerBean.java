@@ -379,7 +379,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         int childType, PageControl pageControl) {
         // pageControl.initDefaultOrderingField(); // this is ignored, as this method eventually uses native queries
 
-        List<Resource> resources = resourceGroupManager.getResourcesForAutoGroup(subject, parentId, childType);
+        List<Resource> resources = resourceGroupManager.findResourcesForAutoGroup(subject, parentId, childType);
         ResourceType resType;
         try {
             resType = resourceTypeManager.getResourceTypeById(subject, childType);
@@ -786,7 +786,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     public void updateMeasurementSchedulesForAutoGroup(Subject subject, int[] measurementDefinitionIds,
         int parentResourceId, int childResourceType, long collectionInterval) {
         // don't verify minimum collection interval here, it will be caught by updateMeasurementSchedules callee
-        List<Resource> resources = resourceGroupManager.getResourcesForAutoGroup(subject, parentResourceId,
+        List<Resource> resources = resourceGroupManager.findResourcesForAutoGroup(subject, parentResourceId,
             childResourceType);
         for (Resource resource : resources) {
             updateMeasurementSchedules(subject, measurementDefinitionIds, resource.getId(), collectionInterval);
@@ -839,7 +839,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
      */
     public void disableMeasurementSchedulesForAutoGroup(Subject subject, int[] measurementDefinitionIds,
         int parentResourceId, int childResourceType) {
-        List<Resource> resources = resourceGroupManager.getResourcesForAutoGroup(subject, parentResourceId,
+        List<Resource> resources = resourceGroupManager.findResourcesForAutoGroup(subject, parentResourceId,
             childResourceType);
         for (Resource resource : resources) {
             disableMeasurementSchedules(subject, measurementDefinitionIds, resource.getId());

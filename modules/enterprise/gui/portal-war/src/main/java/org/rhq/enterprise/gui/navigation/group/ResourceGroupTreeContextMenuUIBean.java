@@ -160,7 +160,7 @@ public class ResourceGroupTreeContextMenuUIBean extends TreeContextMenuBase {
             resources = clusterManager.getAutoClusterResources(EnterpriseFacesContextUtility.getSubject(), ClusterKey
                 .valueOf(currentResourceGroup.getClusterKey()));
         } else {
-            resources = groupManager.getResourcesForResourceGroup(EnterpriseFacesContextUtility.getSubject(),
+            resources = groupManager.findResourcesForResourceGroup(EnterpriseFacesContextUtility.getSubject(),
                 currentResourceGroup.getId(), null);
         }
 

@@ -152,7 +152,7 @@ public class MetricsTableUIBean {
     }
 
     public int[] getResourceGroupMemberIds(WebUser user) {
-        List<Resource> resources = resourceGroupManager.getResourcesForResourceGroup(user.getSubject(),
+        List<Resource> resources = resourceGroupManager.findResourcesForResourceGroup(user.getSubject(),
             context.groupId, GroupCategory.COMPATIBLE);
 
         int[] resourceIds = new int[resources.size()];

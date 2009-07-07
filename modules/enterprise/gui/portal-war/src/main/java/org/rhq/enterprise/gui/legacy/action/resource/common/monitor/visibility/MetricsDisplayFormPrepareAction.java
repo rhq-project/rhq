@@ -77,7 +77,7 @@ public abstract class MetricsDisplayFormPrepareAction extends MetricsControlForm
         groupId = WebUtility.getOptionalIntRequestParameter(request, ParamConstants.GROUP_ID_PARAM, -1);
         if (groupId > 0) {
             ResourceGroupManagerLocal resGrpMgr = LookupUtil.getResourceGroupManager();
-            List<Resource> resources = resGrpMgr.getResourcesForResourceGroup(user.getSubject(), groupId,
+            List<Resource> resources = resGrpMgr.findResourcesForResourceGroup(user.getSubject(), groupId,
                 GroupCategory.COMPATIBLE);
 
             // Can we put the ResourceType in the Request so we don't need another EJB call in MetricsControlFormPrepareAction.java

@@ -21,14 +21,17 @@ package org.rhq.enterprise.gui.admin.role;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.tiles.ComponentContext;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
@@ -41,6 +44,7 @@ import org.rhq.enterprise.gui.legacy.action.WorkflowPrepareAction;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
+import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -69,6 +73,7 @@ public class ViewAction extends WorkflowPrepareAction {
         log.trace("group page control: " + pcg);
 
         RoleManagerLocal roleManager = LookupUtil.getRoleManager();
+        ResourceGroupManagerLocal groupManager = LookupUtil.getResourceGroupManager();
 
         // get all the role permissions
         Set<Permission> permissions = roleManager.getPermissions(roleId);
@@ -88,7 +93,7 @@ public class ViewAction extends WorkflowPrepareAction {
 
         // get the groups attached to the role
         log.trace("getting resource groups for role [" + roleId + "]");
-        PageList<ResourceGroup> groups = roleManager.findResourceGroupsByRole(roleId, pcg);
+        PageList<ResourceGroup> groups = groupManager.findResourceGroupsForRole(whoami, roleId, pcg);
         request.setAttribute(Constants.ROLE_RESGRPS_ATTR, groups);
         if (groups == null) {
             request.setAttribute(Constants.NUM_RESGRPS_ATTR, new Integer(0));

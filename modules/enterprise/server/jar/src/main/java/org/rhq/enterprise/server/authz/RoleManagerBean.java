@@ -318,26 +318,6 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     }
 
     /**
-     * @see org.rhq.enterprise.server.authz.RoleManagerLocal#findResourceGroupsByRole(Integer,PageControl)
-     */
-    @SuppressWarnings("unchecked")
-    public PageList<ResourceGroup> findResourceGroupsByRole(Integer roleId, PageControl pc) {
-        pc.initDefaultOrderingField("rg.name");
-
-        String queryName = ResourceGroup.QUERY_GET_RESOURCE_GROUPS_ASSIGNED_TO_ROLE;
-        Query queryCount = PersistenceUtility.createCountQuery(entityManager, queryName);
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, queryName, pc);
-
-        queryCount.setParameter("id", roleId);
-        query.setParameter("id", roleId);
-
-        long count = (Long) queryCount.getSingleResult();
-        List<ResourceGroup> groups = query.getResultList();
-
-        return new PageList<ResourceGroup>(groups, (int) count, pc);
-    }
-
-    /**
      * @see org.rhq.enterprise.server.authz.RoleManagerLocal#findRolesByIds(Integer[],PageControl)
      */
     @SuppressWarnings("unchecked")

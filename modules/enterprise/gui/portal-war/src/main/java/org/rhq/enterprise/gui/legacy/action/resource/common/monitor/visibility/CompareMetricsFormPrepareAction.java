@@ -61,7 +61,7 @@ public class CompareMetricsFormPrepareAction extends WorkflowPrepareAction {
         MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
 
         if ((cform.childResourceIds != null) && (cform.childResourceIds.length > 0)) {
-            int[] definitionIds = LookupUtil.getResourceGroupManager().getDefinitionsForCompatibleGroup(
+            int[] definitionIds = LookupUtil.getResourceGroupManager().findDefinitionsForCompatibleGroup(
                 user.getSubject(), cform.getGroupId(), false);
             Locale userLocale = request.getLocale();
             cform.setMetrics(getMetrics(user.getSubject(), cform.childResourceIds, definitionIds,

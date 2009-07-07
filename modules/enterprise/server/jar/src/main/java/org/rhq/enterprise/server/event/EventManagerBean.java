@@ -253,7 +253,7 @@ public class EventManagerBean implements EventManagerLocal {
     public PageList<EventComposite> getEventsForAutoGroup(Subject subject, int parent, int type, long begin,
         long endDate, EventSeverity[] severities, PageControl pc) {
 
-        List<Resource> resources = resGrpMgr.getResourcesForAutoGroup(subject, parent, type);
+        List<Resource> resources = resGrpMgr.findResourcesForAutoGroup(subject, parent, type);
         int[] resourceIds = new int[resources.size()];
         int i = 0;
         for (Resource res : resources)
@@ -266,7 +266,7 @@ public class EventManagerBean implements EventManagerLocal {
     public PageList<EventComposite> getEventsForAutoGroup(Subject subject, int parent, int type, long begin,
         long endDate, EventSeverity[] severities, int eventId, String source, String searchString, PageControl pc) {
 
-        List<Resource> resources = resGrpMgr.getResourcesForAutoGroup(subject, parent, type);
+        List<Resource> resources = resGrpMgr.findResourcesForAutoGroup(subject, parent, type);
         int[] resourceIds = new int[resources.size()];
         int i = 0;
         for (Resource res : resources)
@@ -281,7 +281,7 @@ public class EventManagerBean implements EventManagerLocal {
     public PageList<EventComposite> getEventsForCompGroup(Subject subject, int groupId, long begin, long endDate,
         EventSeverity[] severities, PageControl pc) {
 
-        List<Resource> resources = resGrpMgr.getResourcesForResourceGroup(subject, groupId, GroupCategory.COMPATIBLE);
+        List<Resource> resources = resGrpMgr.findResourcesForResourceGroup(subject, groupId, GroupCategory.COMPATIBLE);
         int[] resourceIds = new int[resources.size()];
         int i = 0;
         for (Resource res : resources)
@@ -294,7 +294,7 @@ public class EventManagerBean implements EventManagerLocal {
     public PageList<EventComposite> getEventsForCompGroup(Subject subject, int groupId, long begin, long endDate,
         EventSeverity[] severities, int eventId, String source, String searchString, PageControl pc) {
 
-        List<Resource> resources = resGrpMgr.getResourcesForResourceGroup(subject, groupId, GroupCategory.COMPATIBLE);
+        List<Resource> resources = resGrpMgr.findResourcesForResourceGroup(subject, groupId, GroupCategory.COMPATIBLE);
         int[] resourceIds = new int[resources.size()];
         int i = 0;
         for (Resource res : resources)
@@ -340,7 +340,7 @@ public class EventManagerBean implements EventManagerLocal {
     public EventSeverity[] getSeverityBucketsForAutoGroup(Subject subject, int parentId, int type, long begin,
         long end, int numBuckets) {
 
-        List<Resource> resources = resGrpMgr.getResourcesForAutoGroup(subject, parentId, type);
+        List<Resource> resources = resGrpMgr.findResourcesForAutoGroup(subject, parentId, type);
         return getSeverityBucketsForResources(subject, resources, begin, end, numBuckets);
 
     }
@@ -348,7 +348,7 @@ public class EventManagerBean implements EventManagerLocal {
     public EventSeverity[] getSeverityBucketsForCompGroup(Subject subject, int groupId, long begin, long end,
         int numBuckets) {
 
-        List<Resource> resources = resGrpMgr.getResourcesForResourceGroup(subject, groupId, GroupCategory.COMPATIBLE);
+        List<Resource> resources = resGrpMgr.findResourcesForResourceGroup(subject, groupId, GroupCategory.COMPATIBLE);
         return getSeverityBucketsForResources(subject, resources, begin, end, numBuckets);
 
     }

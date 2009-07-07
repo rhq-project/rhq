@@ -44,109 +44,81 @@ public interface ResourceGroupManagerRemote {
 
     @WebMethod
     void addResourcesToGroup( //
-        @WebParam(name = "sessionSubject")
-        Subject sessionSubject, //
-        @WebParam(name = "groupId")
-        int groupId, //
-        @WebParam(name = "resourceIds")
-        int[] resourceIds) throws UpdateException;
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "groupId") int groupId, //
+        @WebParam(name = "resourceIds") int[] resourceIds) throws UpdateException;
 
     /**
      * 
-     * @param sessionSubject
+     * @param subject
      * @param resourceGroup
      * @throws CreateException May wrap (ResourceGroupNotFoundException, ResourceGroupAlreadyExistsException)
      */
     @WebMethod
     ResourceGroup createResourceGroup( //
-        @WebParam(name = "sessionSubject")
-        Subject sessionSubject, //
-        @WebParam(name = "resourceGroup")
-        ResourceGroup resourceGroup) throws CreateException;
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "resourceGroup") ResourceGroup resourceGroup) throws CreateException;
 
     /**
      * 
-     * @param sessionSubject
+     * @param subject
      * @param groupId
      * @throws DeleteException Possible Causes (ResourceGroupNotFoundException, ResourceGroupDeleteException)
      */
     @WebMethod
     void deleteResourceGroup( //
-        @WebParam(name = "sessionSubject")
-        Subject sessionSubject, //
-        @WebParam(name = "groupId")
-        int groupId) throws DeleteException;
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "groupId") int groupId) throws DeleteException;
 
     @WebMethod
     ResourceGroup getResourceGroup( //
-        @WebParam(name = "sessionSubject")
-        Subject sessionSubject, //
-        @WebParam(name = "groupId")
-        int groupId) throws FetchException;
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "groupId") int groupId) throws FetchException;
 
     @WebMethod
     ResourceGroupComposite getResourceGroupComposite( //
-        @WebParam(name = "sessionSubject")
-        Subject sessionSubject, //
-        @WebParam(name = "groupId")
-        int groupId) throws FetchException;
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "groupId") int groupId) throws FetchException;
 
     @WebMethod
-    PageList<ResourceGroup> getResourceGroupsForRole( //
-        @WebParam(name = "sessionSubject")
-        Subject sessionSubject, //
-        @WebParam(name = "roleId")
-        int roleId, //
-        @WebParam(name = "pc")
-        PageControl pc) throws FetchException;
+    PageList<ResourceGroup> findResourceGroupsForRole( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "roleId") int roleId, //
+        @WebParam(name = "pc") PageControl pc) throws FetchException;
 
     @WebMethod
     PageList<ResourceGroup> findResourceGroups( //
-        @WebParam(name = "sessionSubject")
-        Subject sessionSubject, //        
-        @WebParam(name = "criteria")
-        ResourceGroup criteria, //
-        @WebParam(name = "pc")
-        PageControl pc) throws FetchException;
+        @WebParam(name = "subject") Subject subject, //        
+        @WebParam(name = "criteria") ResourceGroup criteria, //
+        @WebParam(name = "pc") PageControl pc) throws FetchException;
 
     @WebMethod
     PageList<ResourceGroupComposite> findResourceGroupComposites( //
-        @WebParam(name = "sessionSubject")
-        Subject sessionSubject, //
-        @WebParam(name = "criteria")
-        ResourceGroup criteria, //
-        @WebParam(name = "pc")
-        PageControl pc) throws FetchException;
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "criteria") ResourceGroup criteria, //
+        @WebParam(name = "pc") PageControl pc) throws FetchException;
 
     @WebMethod
     void removeResourcesFromGroup(//
-        @WebParam(name = "sessionSubject")
-        Subject sessionSubject, //
-        @WebParam(name = "groupId")
-        int groupId, //
-        @WebParam(name = "resourceIds")
-        int[] resourceIds) throws UpdateException;
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "groupId") int groupId, //
+        @WebParam(name = "resourceIds") int[] resourceIds) throws UpdateException;
 
     @WebMethod
     void setRecursive( //
-        @WebParam(name = "sessionSubject")
-        Subject sessionSubject, //
-        @WebParam(name = "groupId")
-        int groupId, //
-        @WebParam(name = "isRecursive")
-        boolean isRecursive) throws UpdateException;
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "groupId") int groupId, //
+        @WebParam(name = "isRecursive") boolean isRecursive) throws UpdateException;
 
     /**
      * 
-     * @param sessionSubject
+     * @param subject
      * @param newResourceGroup
      * @return updatedResourceGroup
      * @throws UpdateException Possible Causes (ResourceGroupAlreadyExistsException, ResourceGroupUpdateException)
      */
     @WebMethod
     ResourceGroup updateResourceGroup( //
-        @WebParam(name = "sessionSubject")
-        Subject sessionSubject, //
-        @WebParam(name = "newResourceGroup")
-        ResourceGroup newResourceGroup) throws UpdateException;
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "newResourceGroup") ResourceGroup newResourceGroup) throws UpdateException;
 }

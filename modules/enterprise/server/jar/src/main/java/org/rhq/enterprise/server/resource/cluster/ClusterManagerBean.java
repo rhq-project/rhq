@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.server.resource.cluster;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.ejb.EJB;
@@ -40,8 +39,8 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.exception.CreateException;
+import org.rhq.enterprise.server.exception.UpdateException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
-import org.rhq.enterprise.server.resource.group.ResourceGroupUpdateException;
 
 /**
  * 
@@ -123,9 +122,10 @@ public class ClusterManagerBean implements ClusterManagerLocal {
                 resources = getAutoClusterResources(subject, clusterKey);
             }
 
-            List<Integer> resourceIds = new ArrayList<Integer>();
+            int i = 0;
+            int[] resourceIds = new int[resources.size()];
             for (Resource res : resources) {
-                resourceIds.add(res.getId());
+                resourceIds[i++] = res.getId();
             }
 
             try {
@@ -133,8 +133,8 @@ public class ClusterManagerBean implements ClusterManagerLocal {
                 // view the parent group. (That check was done above)
                 resourceGroupManager.ensureMembershipMatches(subjectManager.getOverlord(), autoClusterBackingGroup
                     .getId(), resourceIds);
-            } catch (ResourceGroupUpdateException e) {
-                log.error("Could not add resources to group:" + e);
+            } catch (UpdateException ue) {
+                log.error("Could not add resources to group:" + ue.getCause().getMessage());
             }
         }
 

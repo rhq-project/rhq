@@ -35,9 +35,9 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
+import org.rhq.enterprise.server.exception.UpdateException;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
-import org.rhq.enterprise.server.resource.group.ResourceGroupUpdateException;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.ResourceTreeHelper;
@@ -80,7 +80,7 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
 
             List<Resource> resourcesFromTreeA = ResourceTreeHelper.getSubtree(nodeA);
 
-            resourceGroupManager.addResourcesToGroup(subject, recursiveGroup.getId(), new Integer[] { nodeA.getId() });
+            resourceGroupManager.addResourcesToGroup(subject, recursiveGroup.getId(), new int[] { nodeA.getId() });
             List<Resource> initialExplicitResources = resourceManager.getExplicitResourcesByResourceGroup(subject,
                 recursiveGroup, PageControl.getUnlimitedInstance());
 
@@ -233,7 +233,7 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
                     implicitGroupMembershipRemoveHelper(subject, recursiveGroup, nodeBigA, ResourceTreeHelper
                         .getSubtree(nodeLittleA));
                     assert false : "Failed: removed non-existent successfully: node = " + nodeBigA.getName();
-                } catch (ResourceGroupUpdateException rgue) {
+                } catch (Throwable t) {
                     // expected
                 }
             } catch (Throwable t) {
@@ -265,11 +265,8 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
                     implicitGroupMembershipRemoveHelper(subject, recursiveGroup, nodeBigB, ResourceTreeHelper
                         .getSubtree(nodeBigA));
                     assert false : "Failed: removed non-existent successfully: node = " + nodeBigB.getName();
-                } catch (ResourceGroupUpdateException rgue) {
+                } catch (Throwable t) {
                     // expected
-                    resultsExplicit = resourceManager.getExplicitResourcesByResourceGroup(subject, recursiveGroup,
-                        PageControl.getUnlimitedInstance());
-                    verifyEqualByIds("explicit remove 0", new ArrayList<Resource>(), resultsExplicit);
                 }
             } catch (Throwable t) {
                 t.printStackTrace();
@@ -278,6 +275,18 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
                 // throwing the RGUE will already mark this xaction for rollback
                 //getTransactionManager().commit();
                 getTransactionManager().rollback();
+            }
+
+            getTransactionManager().begin();
+            try {
+                resultsExplicit = resourceManager.getExplicitResourcesByResourceGroup(subject, recursiveGroup,
+                    PageControl.getUnlimitedInstance());
+                verifyEqualByIds("explicit remove 0", new ArrayList<Resource>(), resultsExplicit);
+            } catch (Throwable t) {
+                t.printStackTrace();
+                throw t;
+            } finally {
+                getTransactionManager().commit();
             }
 
         } finally {
@@ -330,7 +339,7 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
         List<Resource> expectedResults) throws Exception {
         printGroup("complex implicit before add: node = " + node.getName() + " [" + node.getId() + "]", subject,
             recursiveGroup);
-        resourceGroupManager.addResourcesToGroup(subject, recursiveGroup.getId(), new Integer[] { node.getId() });
+        resourceGroupManager.addResourcesToGroup(subject, recursiveGroup.getId(), new int[] { node.getId() });
         printGroup("complex implicit after add: node = " + node.getName() + " [" + node.getId() + "]", subject,
             recursiveGroup);
         List<Resource> implicitResources = resourceManager.getImplicitResourcesByResourceGroup(subject, recursiveGroup,
@@ -340,10 +349,10 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
     }
 
     private void implicitGroupMembershipRemoveHelper(Subject subject, ResourceGroup recursiveGroup, Resource node,
-        List<Resource> expectedResults) throws Exception {
+        List<Resource> expectedResults) throws UpdateException {
         printGroup("complex implicit before remove: node = " + node.getName() + " [" + node.getId() + "]", subject,
             recursiveGroup);
-        resourceGroupManager.removeResourcesFromGroup(subject, recursiveGroup.getId(), new Integer[] { node.getId() });
+        resourceGroupManager.removeResourcesFromGroup(subject, recursiveGroup.getId(), new int[] { node.getId() });
         printGroup("complex implicit after remove: node = " + node.getName() + " [" + node.getId() + "]", subject,
             recursiveGroup);
         List<Resource> implicitResources = resourceManager.getImplicitResourcesByResourceGroup(subject, recursiveGroup,

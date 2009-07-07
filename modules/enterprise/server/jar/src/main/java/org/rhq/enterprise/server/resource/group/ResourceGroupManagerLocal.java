@@ -34,8 +34,8 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.exception.CreateException;
 import org.rhq.enterprise.server.exception.DeleteException;
+import org.rhq.enterprise.server.exception.FetchException;
 import org.rhq.enterprise.server.exception.UpdateException;
-import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 
 /**
  * A manager that provides methods for creating, updating, deleting, and querying {@link ResourceGroup}s.
@@ -58,28 +58,27 @@ public interface ResourceGroupManagerLocal {
 
     int getResourceGroupCountByCategory(Subject subject, GroupCategory category);
 
-    void enableRecursivityForGroup(Subject subject, Integer groupId) throws ResourceGroupNotFoundException,
+    void enableRecursivityForGroup(Subject subject, int groupId) throws ResourceGroupNotFoundException,
         ResourceGroupUpdateException;
 
-    void addResourcesToGroup(Subject subject, Integer groupId, Integer[] resourceIds)
-        throws ResourceGroupNotFoundException, ResourceGroupUpdateException;
+    void addResourcesToGroup(Subject subject, int groupId, int[] resourceIds) throws ResourceGroupNotFoundException,
+        ResourceGroupUpdateException;
 
-    void removeResourcesFromGroup(Subject subject, Integer groupId, Integer[] resourceIds)
-        throws ResourceGroupUpdateException;
+    void removeResourcesFromGroup(Subject subject, int groupId, int[] resourceIds) throws UpdateException;
 
-    void removeAllResourcesFromGroup(Subject subject, Integer groupId) throws ResourceGroupDeleteException;
+    void removeAllResourcesFromGroup(Subject subject, int groupId) throws ResourceGroupDeleteException;
 
-    PageList<ResourceGroup> getAvailableResourceGroupsForRole(Subject subject, Integer roleId, Integer[] excludeIds,
+    PageList<ResourceGroup> findAvailableResourceGroupsForRole(Subject subject, int roleId, int[] excludeIds,
         PageControl pageControl);
 
-    PageList<ResourceGroup> getResourceGroupByIds(Subject subject, Integer[] resourceGroupIds, PageControl pageControl);
+    PageList<ResourceGroup> findResourceGroupByIds(Subject subject, int[] resourceGroupIds, PageControl pageControl);
 
     void updateImplicitGroupMembership(Subject subject, Resource resource);
 
-    List<Resource> getResourcesForAutoGroup(Subject subject, int autoGroupParentResourceId,
+    List<Resource> findResourcesForAutoGroup(Subject subject, int autoGroupParentResourceId,
         int autoGroupChildResourceTypeId);
 
-    List<Resource> getResourcesForResourceGroup(Subject subject, int groupId, GroupCategory category);
+    List<Resource> findResourcesForResourceGroup(Subject subject, int groupId, GroupCategory category);
 
     /**
      * Return the {@link MeasurementDefinition}s for the passed comatible group
@@ -90,7 +89,7 @@ public interface ResourceGroupManagerLocal {
      *
      * @return a set of Definitions, which is empty for an invalid groupId
      */
-    int[] getDefinitionsForCompatibleGroup(Subject subject, int groupId, boolean displayTypeSummaryOnly);
+    int[] findDefinitionsForCompatibleGroup(Subject subject, int groupId, boolean displayTypeSummaryOnly);
 
     /**
      * Get the {@link MeasurementDefinition}s for the passed autogroup
@@ -102,7 +101,7 @@ public interface ResourceGroupManagerLocal {
      *
      * @return a set of Definitions which is empty for an invalid autoGroupChildResourceType
      */
-    int[] getDefinitionsForAutoGroup(Subject subject, int autoGroupParentResourceId, int autoGroupChildResourceTypeId,
+    int[] findDefinitionsForAutoGroup(Subject subject, int autoGroupParentResourceId, int autoGroupChildResourceTypeId,
         boolean displayTypeSummaryOnly);
 
     /**
@@ -116,18 +115,20 @@ public interface ResourceGroupManagerLocal {
      */
     ResourceGroupComposite getResourceGroupComposite(Subject subject, int groupId);
 
-    ResourceGroup findByGroupDefinitionAndGroupByClause(int groupDefinitionId, String groupByClause);
+    ResourceGroup getByGroupDefinitionAndGroupByClause(int groupDefinitionId, String groupByClause);
 
-    void setResourceType(int resourceGroupId) throws ResourceTypeNotFoundException;
+    void setResourceType(int resourceGroupId);
 
     int getImplicitGroupMemberCount(int resourceGroupId);
 
-    PageList<ResourceGroupComposite> getResourceGroupsFiltered(Subject subject, GroupCategory groupCategory,
+    PageList<ResourceGroupComposite> findResourceGroupComposites(Subject subject, GroupCategory groupCategory,
         ResourceCategory resourceCategory, ResourceType resourceType, String nameFilter, Integer resourceId,
         Integer groupId, PageControl pc);
 
-    List<Integer> getDeletedResourceGroupIds(List<Integer> groupIds);
+    List<Integer> findDeletedResourceGroupIds(int[] groupIds);
 
-    void ensureMembershipMatches(Subject subject, Integer groupId, List<Integer> resourceIds)
-        throws ResourceGroupUpdateException;
+    void ensureMembershipMatches(Subject subject, int groupId, int[] resourceIds) throws ResourceGroupUpdateException;
+
+    PageList<ResourceGroup> findResourceGroupsForRole(Subject subject, int roleId, PageControl pc)
+        throws FetchException;
 }

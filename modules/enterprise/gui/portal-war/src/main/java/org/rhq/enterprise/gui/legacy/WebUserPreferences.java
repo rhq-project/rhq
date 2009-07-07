@@ -332,8 +332,8 @@ public class WebUserPreferences extends SubjectPreferencesBase {
         public boolean showAvailability;
         private List<Integer> groupIds;
 
-        public Integer[] asArray() {
-            return groupIds.toArray(new Integer[groupIds.size()]);
+        public int[] asArray() {
+            return ArrayUtils.unwrapCollection(groupIds);
         }
 
         public void removeFavorite(int groupId) {
@@ -677,7 +677,7 @@ public class WebUserPreferences extends SubjectPreferencesBase {
 
     private boolean removeDeletedGroups(List<Integer> groupIds) {
         ResourceGroupManagerLocal groupManager = LookupUtil.getResourceGroupManager();
-        List<Integer> deletedGroupIds = groupManager.getDeletedResourceGroupIds(groupIds);
+        List<Integer> deletedGroupIds = groupManager.findDeletedResourceGroupIds(ArrayUtils.unwrapCollection(groupIds));
 
         for (Integer deletedGroupId : deletedGroupIds) {
             groupIds.remove((Object) deletedGroupId);

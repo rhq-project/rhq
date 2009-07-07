@@ -91,12 +91,12 @@ public class ResourceMetricsFormPrepareAction extends MetricsDisplayFormPrepareA
         //  GH: Why are we only getting the first one? --> single resource case
         if (myGroupId > 0) {
             ResourceGroupManagerLocal resGrpMgr = LookupUtil.getResourceGroupManager();
-            int[] definitionIds = resGrpMgr.getDefinitionsForCompatibleGroup(subject, myGroupId, false);
+            int[] definitionIds = resGrpMgr.findDefinitionsForCompatibleGroup(subject, myGroupId, false);
             metricSummaries = chartsManager.getMetricDisplaySummariesForCompatibleGroup(subject, myGroupId,
                 definitionIds, begin, end, false);
         } else if ((parent > 0) && (type > 0)) {
             ResourceGroupManagerLocal resGrpMgr = LookupUtil.getResourceGroupManager();
-            int[] definitionIds = resGrpMgr.getDefinitionsForAutoGroup(subject, parent, type, false);
+            int[] definitionIds = resGrpMgr.findDefinitionsForAutoGroup(subject, parent, type, false);
             metricSummaries = chartsManager.getMetricDisplaySummariesForAutoGroup(subject, parent, type, definitionIds,
                 begin, end, false);
         } else if ((resourceIds != null) && (resourceIds.length > 0)) {

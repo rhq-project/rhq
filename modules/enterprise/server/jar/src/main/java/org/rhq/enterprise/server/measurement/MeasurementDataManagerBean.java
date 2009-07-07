@@ -422,7 +422,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
     public List<List<MeasurementDataNumericHighLowComposite>> getMeasurementDataForAutoGroup(Subject subject,
         int autoGroupParentResourceId, int autoGroupChildResourceTypeId, int measurementDefinitionId, long beginTime,
         long endTime, int numberOfDataPoints, boolean aggregateOverAutoGroup) {
-        List<Resource> resources = resourceGroupManager.getResourcesForAutoGroup(subject, autoGroupParentResourceId,
+        List<Resource> resources = resourceGroupManager.findResourcesForAutoGroup(subject, autoGroupParentResourceId,
             autoGroupChildResourceTypeId);
         int[] resourceIds = new int[resources.size()];
         int i = 0;
@@ -559,7 +559,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
 
     public Map<Integer, List<MetricDisplaySummary>> getNarrowedMetricsDisplaySummaryForAutoGroup(Subject subject,
         int parentId, int cType, long beginTime, long endTime) {
-        List<Resource> resources = resourceGroupManager.getResourcesForAutoGroup(subject, parentId, cType);
+        List<Resource> resources = resourceGroupManager.findResourcesForAutoGroup(subject, parentId, cType);
         Set<Resource> resSet = new HashSet<Resource>(resources.size());
 
         Map<Integer, List<MetricDisplaySummary>> resMap = getNarrowedMetricDisplaySummaryForCompatibleResources(

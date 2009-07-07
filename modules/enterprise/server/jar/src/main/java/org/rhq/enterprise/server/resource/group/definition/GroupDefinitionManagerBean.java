@@ -60,15 +60,16 @@ import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.exception.CreateException;
+import org.rhq.enterprise.server.exception.UpdateException;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
-import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.resource.group.RecursivityChangeType;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupUpdateException;
@@ -370,14 +371,14 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public Integer calculateGroupMembership_helper(Subject overlord, int groupDefinitionId,
-        ExpressionEvaluator.Result result) throws CreateException, GroupDefinitionNotFoundException,
-        ResourceGroupUpdateException, GroupDefinitionNotFoundException {
+        ExpressionEvaluator.Result result) throws CreateException, UpdateException, GroupDefinitionNotFoundException,
+        GroupDefinitionNotFoundException {
         long startTime = System.currentTimeMillis();
 
         GroupDefinition groupDefinition = getById(groupDefinitionId);
 
         String groupByClause = result.getGroupByClause();
-        ResourceGroup resourceGroup = resourceGroupManager.findByGroupDefinitionAndGroupByClause(groupDefinition
+        ResourceGroup resourceGroup = resourceGroupManager.getByGroupDefinitionAndGroupByClause(groupDefinition
             .getId(), groupByClause);
         int resourceGroupId = 0;
         if (resourceGroup == null) {
@@ -409,17 +410,11 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
         Set<Integer> idsToRemove = new HashSet<Integer>(existingResourceIds);
         idsToRemove.removeAll(result.getData());
 
-        resourceGroupManager.addResourcesToGroup(overlord, resourceGroupId, idsToAdd.toArray(new Integer[idsToAdd
-            .size()]));
-        resourceGroupManager.removeResourcesFromGroup(overlord, resourceGroupId, idsToRemove
-            .toArray(new Integer[idsToRemove.size()]));
+        resourceGroupManager.addResourcesToGroup(overlord, resourceGroupId, ArrayUtils.unwrapCollection(idsToAdd));
+        resourceGroupManager.removeResourcesFromGroup(overlord, resourceGroupId, ArrayUtils
+            .unwrapCollection(idsToRemove));
 
-        try {
-            resourceGroupManager.setResourceType(resourceGroupId);
-        } catch (ResourceTypeNotFoundException rtnfe) {
-            throw new ResourceGroupUpdateException("Could not set resourceType filter for this compatible group: ",
-                rtnfe);
-        }
+        resourceGroupManager.setResourceType(resourceGroupId);
 
         entityManager.flush();
         entityManager.clear();

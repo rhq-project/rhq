@@ -178,9 +178,9 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
             allResources = resources.get(0);
         } else if ((groupId > 0) || (parent > 0)) {
             if (groupId > 0) {
-                allResources = resGrpMgr.getResourcesForResourceGroup(subject, groupId, GroupCategory.COMPATIBLE);
+                allResources = resGrpMgr.findResourcesForResourceGroup(subject, groupId, GroupCategory.COMPATIBLE);
             } else {
-                allResources = resGrpMgr.getResourcesForAutoGroup(subject, parent, type);
+                allResources = resGrpMgr.findResourcesForAutoGroup(subject, parent, type);
             }
 
             List<Resource> checked = new ArrayList<Resource>(DEFAULT_MAX_RESOURCES);

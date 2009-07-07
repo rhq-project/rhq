@@ -18,7 +18,7 @@
  */
 package org.rhq.enterprise.server.resource.group;
 
-public class ResourceGroupUpdateException extends Exception {
+public class ResourceGroupUpdateException extends RuntimeException {
     private static final long serialVersionUID = 9079807311008826697L;
 
     public ResourceGroupUpdateException() {

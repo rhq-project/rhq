@@ -23,13 +23,16 @@
 package org.rhq.enterprise.gui.legacy.action.resource.group.inventory;
 
 import java.util.HashMap;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.gui.legacy.HubConstants;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
@@ -70,9 +73,9 @@ public class RemoveAction extends BaseAction {
                 return returnSuccess(request, mapping, forwardParams);
             }
 
-            Integer[] resourceIds = new Integer[resourceIdStrings.length];
+            int[] resourceIds = new int[resourceIdStrings.length];
             for (int i = 0; i < resourceIds.length; i++) {
-                resourceIds[i] = Integer.valueOf(resourceIdStrings[i]);
+                resourceIds[i] = Integer.parseInt(resourceIdStrings[i]);
             }
 
             ResourceGroupManagerLocal groupManager = LookupUtil.getResourceGroupManager();

@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.inventory.group;
 
 import javax.faces.application.FacesMessage;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.gui.util.FacesContextUtility;
@@ -34,11 +35,12 @@ public class DeleteResourcesFromGroupUIBean {
 
         int i = 0;
         if ((selectedResources == null) || (selectedResources.length == 0)) {
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN, "Nothing deleted, as no group members were selected");
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN,
+                "Nothing deleted, as no group members were selected");
             return "successOrFailure";
         }
 
-        Integer[] selectedResourceInts = new Integer[selectedResources.length];
+        int[] selectedResourceInts = new int[selectedResources.length];
         for (String resourceIdString : selectedResources) {
             selectedResourceInts[i++] = Integer.parseInt(resourceIdString);
         }

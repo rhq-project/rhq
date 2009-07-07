@@ -86,7 +86,7 @@ public class ClusterManagerBeanTest extends AbstractEJB3Test {
             Resource nodeA = ResourceTreeHelper.findNode(treeA, "A");
             Resource nodeB = ResourceTreeHelper.findNode(treeB, "B");
 
-            resourceGroupManager.addResourcesToGroup(subject, clusterGroup.getId(), new Integer[] { nodeA.getId(),
+            resourceGroupManager.addResourcesToGroup(subject, clusterGroup.getId(), new int[] { nodeA.getId(),
                 nodeB.getId() });
 
             PageList<Resource> AChildren = resourceManager.getChildResources(subject, nodeA, PageControl
@@ -162,7 +162,7 @@ public class ClusterManagerBeanTest extends AbstractEJB3Test {
             Resource nodeA = ResourceTreeHelper.findNode(treeA, "A");
             Resource nodeB = ResourceTreeHelper.findNode(treeB, "B");
 
-            resourceGroupManager.addResourcesToGroup(subject, clusterGroup.getId(), new Integer[] { nodeA.getId(),
+            resourceGroupManager.addResourcesToGroup(subject, clusterGroup.getId(), new int[] { nodeA.getId(),
                 nodeB.getId() });
 
             PageList<Resource> AChildren = resourceManager.getChildResources(subject, nodeA, PageControl

@@ -105,7 +105,7 @@ public class UserPreferencesUIBean {
             WebUserPreferences.FavoriteGroupPortletPreferences favoriteGroups = user.getWebPreferences()
                 .getFavoriteGroupPortletPreferences();
 
-            groupFavorites = groupManager.getResourceGroupByIds(getSubject(), favoriteGroups.asArray(), PageControl
+            groupFavorites = groupManager.findResourceGroupByIds(getSubject(), favoriteGroups.asArray(), PageControl
                 .getUnlimitedInstance());
         }
         return groupFavorites;

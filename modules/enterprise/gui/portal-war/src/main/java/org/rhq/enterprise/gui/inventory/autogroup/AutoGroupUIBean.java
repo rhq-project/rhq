@@ -90,7 +90,7 @@ public class AutoGroupUIBean {
             return true;
         }
 
-        List<Resource> resources = LookupUtil.getResourceGroupManager().getResourcesForAutoGroup(this.subject, this.getParentResourceId(),
+        List<Resource> resources = LookupUtil.getResourceGroupManager().findResourcesForAutoGroup(this.subject, this.getParentResourceId(),
             this.getChildResourceTypeId());
         // Note, authManager does offer a single query solution for this but it has limits and is inefficient, for now let's
         // opt for more round trips on the assumption that the AG size is typically small.          

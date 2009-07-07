@@ -25,7 +25,6 @@ import javax.ejb.Local;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
-import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.exception.FetchException;
@@ -126,16 +125,6 @@ public interface RoleManagerLocal {
      * @return list of all subjects assigned the role
      */
     PageList<Subject> findSubjectsByRole(Integer roleId, PageControl pc);
-
-    /**
-     * Gets all resource groups that are attached to the given role.
-     *
-     * @param  roleId
-     * @param  pc
-     *
-     * @return list of all groups that this role has
-     */
-    PageList<ResourceGroup> findResourceGroupsByRole(Integer roleId, PageControl pc);
 
     /**
      * This returns a list of roles that are available to be assigned to a given subject but not yet assigned to that

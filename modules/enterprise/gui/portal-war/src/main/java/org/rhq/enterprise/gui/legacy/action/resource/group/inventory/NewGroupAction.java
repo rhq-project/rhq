@@ -34,6 +34,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.HubConstants;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
@@ -108,7 +109,7 @@ public class NewGroupAction extends BaseAction {
         }
 
         // Check for resources
-        Integer groupId = newGroup.getId();
+        int groupId = newGroup.getId();
         Integer[] newResourceIds = newForm.getResourceIds();
         if ((newResourceIds != null) && (newResourceIds.length > 0)) {
             // Clean up after ourselves first
@@ -117,7 +118,7 @@ public class NewGroupAction extends BaseAction {
             session.removeAttribute(Constants.RESOURCE_TYPE_ATTR);
 
             // Now add the new entities to group
-            resourceGroupManager.addResourcesToGroup(subject, groupId, newResourceIds);
+            resourceGroupManager.addResourcesToGroup(subject, groupId, ArrayUtils.unwrapArray(newResourceIds));
         }
 
         RequestUtils.setConfirmation(request, "resource.group.inventory.confirm.CreateGroup", newGroupName);

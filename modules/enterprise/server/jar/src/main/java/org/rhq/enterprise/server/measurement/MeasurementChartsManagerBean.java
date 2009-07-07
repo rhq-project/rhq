@@ -99,7 +99,7 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
     public List<MetricDisplaySummary> getMetricDisplaySummariesForAutoGroup(Subject subject,
         int autoGroupParentResourceId, int autoGroupChildResourceTypeId, int[] measurementDefinitionIds, long begin,
         long end, boolean enabledOnly) throws MeasurementException {
-        List<Resource> resources = resourceGroupManager.getResourcesForAutoGroup(subject, autoGroupParentResourceId,
+        List<Resource> resources = resourceGroupManager.findResourcesForAutoGroup(subject, autoGroupParentResourceId,
             autoGroupChildResourceTypeId);
         List<MetricDisplaySummary> ret = getAggregateMetricDisplaySummaries(subject, resources,
             measurementDefinitionIds, begin, end, enabledOnly);
@@ -140,7 +140,7 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
             measurementDefinitionIds = fillDefinitionIdsFromUserPreferences(context, viewName, subject);
         } catch (IllegalArgumentException iae) {
             // If we can't get stuff from preferences, get the defaults.
-            measurementDefinitionIds = resourceGroupManager.getDefinitionsForAutoGroup(subject, parent, type, true);
+            measurementDefinitionIds = resourceGroupManager.findDefinitionsForAutoGroup(subject, parent, type, true);
         }
         // now that we have the definitions, we can get the data from the backend.
         List<MetricDisplaySummary> summaries;
@@ -172,7 +172,7 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
             measurementDefinitionIds = fillDefinitionIdsFromUserPreferences(context, viewName, subject);
         } catch (IllegalArgumentException iae) {
             // If we can't get stuff from preferences, get the defaults.
-            measurementDefinitionIds = resourceGroupManager.getDefinitionsForCompatibleGroup(subject, groupId, true);
+            measurementDefinitionIds = resourceGroupManager.findDefinitionsForCompatibleGroup(subject, groupId, true);
         }
 
         List<MetricDisplaySummary> summaries;

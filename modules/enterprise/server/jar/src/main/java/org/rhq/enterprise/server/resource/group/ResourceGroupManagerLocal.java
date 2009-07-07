@@ -44,14 +44,9 @@ import org.rhq.enterprise.server.exception.UpdateException;
  */
 @Local
 public interface ResourceGroupManagerLocal {
-    ResourceGroup createResourceGroup(Subject user, ResourceGroup group) throws CreateException;
 
     ResourceGroup updateResourceGroup(Subject user, ResourceGroup group, RecursivityChangeType changeType)
         throws ResourceGroupAlreadyExistsException, ResourceGroupUpdateException;
-
-    ResourceGroup updateResourceGroup(Subject user, ResourceGroup group) throws UpdateException;
-
-    void deleteResourceGroup(Subject user, int groupId) throws DeleteException;
 
     ResourceGroup getResourceGroupById(Subject user, int id, GroupCategory category)
         throws ResourceGroupNotFoundException;
@@ -60,11 +55,6 @@ public interface ResourceGroupManagerLocal {
 
     void enableRecursivityForGroup(Subject subject, int groupId) throws ResourceGroupNotFoundException,
         ResourceGroupUpdateException;
-
-    void addResourcesToGroup(Subject subject, int groupId, int[] resourceIds) throws ResourceGroupNotFoundException,
-        ResourceGroupUpdateException;
-
-    void removeResourcesFromGroup(Subject subject, int groupId, int[] resourceIds) throws UpdateException;
 
     void removeAllResourcesFromGroup(Subject subject, int groupId) throws ResourceGroupDeleteException;
 
@@ -104,17 +94,6 @@ public interface ResourceGroupManagerLocal {
     int[] findDefinitionsForAutoGroup(Subject subject, int autoGroupParentResourceId, int autoGroupChildResourceTypeId,
         boolean displayTypeSummaryOnly);
 
-    /**
-     * Get the ResourceGroup and Availability by id.
-     *
-     * @param  subject {@link Subject} of the calling user
-     * @param  groupId id to search by
-     *
-     * @return ResourceGroupComposite composite object with the ResourceGroup and availability, as well as the count of
-     *         resources in the group
-     */
-    ResourceGroupComposite getResourceGroupComposite(Subject subject, int groupId);
-
     ResourceGroup getByGroupDefinitionAndGroupByClause(int groupDefinitionId, String groupByClause);
 
     void setResourceType(int resourceGroupId);
@@ -129,6 +108,41 @@ public interface ResourceGroupManagerLocal {
 
     void ensureMembershipMatches(Subject subject, int groupId, int[] resourceIds) throws ResourceGroupUpdateException;
 
+    /*
+     * Methods also in the remote interface
+     */
+    void addResourcesToGroup(Subject subject, int groupId, int[] resourceIds) throws ResourceGroupNotFoundException,
+        ResourceGroupUpdateException;
+
+    ResourceGroup createResourceGroup(Subject user, ResourceGroup group) throws CreateException;
+
+    void deleteResourceGroup(Subject user, int groupId) throws DeleteException;
+
+    ResourceGroup getResourceGroup(Subject subject, int groupId) throws FetchException;
+
+    /**
+     * Get the ResourceGroup and Availability by id.
+     *
+     * @param  subject {@link Subject} of the calling user
+     * @param  groupId id to search by
+     *
+     * @return ResourceGroupComposite composite object with the ResourceGroup and availability, as well as the count of
+     *         resources in the group
+     */
+    ResourceGroupComposite getResourceGroupComposite(Subject subject, int groupId);
+
     PageList<ResourceGroup> findResourceGroupsForRole(Subject subject, int roleId, PageControl pc)
         throws FetchException;
+
+    PageList<ResourceGroup> findResourceGroups(Subject subject, ResourceGroup criteria, PageControl pc)
+        throws FetchException;
+
+    PageList<ResourceGroupComposite> findResourceGroupComposites(Subject subject, ResourceGroup criteria, PageControl pc)
+        throws FetchException;
+
+    void removeResourcesFromGroup(Subject subject, int groupId, int[] resourceIds) throws UpdateException;
+
+    void setRecursive(Subject subject, int groupId, boolean isRecursive) throws UpdateException;
+
+    ResourceGroup updateResourceGroup(Subject user, ResourceGroup group) throws UpdateException;
 }

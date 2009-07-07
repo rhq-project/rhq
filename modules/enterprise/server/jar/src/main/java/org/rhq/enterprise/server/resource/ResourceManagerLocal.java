@@ -197,8 +197,8 @@ public interface ResourceManagerLocal {
      * 
      * @see ResourceManagerRemote#findResourcesByCategory(Subject, ResourceCategory, InventoryStatus, PageControl)
      */
-    PageList<Resource> findResourcesByCategory(Subject user, ResourceCategory category, InventoryStatus inventoryStatus,
-        PageControl pageControl);
+    PageList<Resource> findResourcesByCategory(Subject user, ResourceCategory category,
+        InventoryStatus inventoryStatus, PageControl pageControl);
 
     PageList<ResourceComposite> findResourceComposites( //
         Subject user, //
@@ -250,7 +250,8 @@ public interface ResourceManagerLocal {
     /**
      * @throws ResourceGroupNotFoundException if the specified {@link ResourceGroup} does not exist
      */
-    PageList<Resource> findExplicitResourcesByResourceGroup(Subject subject, ResourceGroup group, PageControl pageControl);
+    PageList<Resource> findExplicitResourcesByResourceGroup(Subject subject, ResourceGroup group,
+        PageControl pageControl);
 
     /**
      * @throws ResourceGroupNotFoundException if the specified {@link ResourceGroup} does not exist
@@ -415,109 +416,35 @@ public interface ResourceManagerLocal {
     static public final String DATA_RESOURCE_ERRORS = "resourceErrors";
     static public final String DATA_RESOURCE_TYPE = "resourceType";
 
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    //
+    // The following are shared with the Remote Interface
+    //
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
     /**
-     * Returns the Resource with the specified id.
-     *
-     * @param  subject The logged in user's subject.
-     * @param  resourceId the id of a {@link Resource} in inventory.
-     *
-     * @return the resource
-     * @throws FetchException on any issue. Wraps ResourceNotFoundException when necessary.
+     * #see {@link ResourceManagerRemote#getResource(Subject, int)
      */
     Resource getResource(Subject subject, int resourceId) throws FetchException;
 
     /**
-     * Returns the lineage of the Resource with the specified id. The lineage is represented as a List of Resources,
-     * with the first item being the root of the Resource's ancestry (or the Resource itself if it is a root Resource
-     * (i.e. a platform)) and the last item being the Resource itself. Since the lineage includes the Resource itself,
-     * the returned List will always contain at least one item.
-     *
-     * @param  subject The logged in user's subject.
-     * @param  resourceId the id of a {@link Resource} in inventory
-     *
-     * @return the lineage of the Resource with the specified id
-     * @throws FetchException on any issue. Wraps ResourceNotFoundException when necessary. 
+     * #see {@link ResourceManagerRemote#findResourceLineage(Subject, int)
      */
-    List<Resource> getResourceLineage(Subject subject, int resourceId) throws FetchException;
+    List<Resource> findResourceLineage(Subject subject, int resourceId) throws FetchException;
 
     /**
-     * This find service can be used to find resources based on various criteria and return various data.
-     *
-     * @param subject The logged in user's subject.
-     * @param criteria {@link Resource}, can be null
-     * <pre>
-     * If provided the Resource object can specify various search criteria as specified below.
-     *   Resource.id : exact match
-     *   Resource.description : case insensitive substring match   
-     *   Resource.inventoryStatus : exact match
-     *   Resource.name : case insensitive substring match   
-     *   Resource.parentResource.id : exact match
-     *   Resource.resourceKey : case insensitive substring match   
-     *   Resource.resourceType.id : exact match
-     * All other fields are ignored:
-     * </pre>
-     * @param pc {@link PageControl}
-     * <pre>
-     * If provided PageControl specifies page size, requested page, sorting, and optional data.
-     * 
-     * Supported OptionalData
-     *   To specify optional data call pc.setOptionalData() and supply one of more of the DATA_* constants
-     *   defined in this interface.
-     * 
-     * Supported Sorting:
-     *   ?? This needs to be defined ??
-     *   
-     * </pre>
-     * @return
-     * @throws FetchException
+     * #see {@link ResourceManagerRemote#findResources(Subject, Resource, PageControl)
      */
     PageList<Resource> findResources(Subject subject, Resource criteria, PageControl pc) throws FetchException;
 
     /**
-     * This find service can be used to find child resources for the specified resource,
-     * based on various criteria and return various data.
-     *
-     * @param subject The logged in user's subject.
-     * @param  resourceId the id of a {@link Resource} in inventory. 
-     * @param criteria {@link Resource}, can be null
-     * <pre>
-     * If provided the Resource object can specify various search criteria as specified below.
-     * These criteria are applied to the children resources!
-     *   Resource.id : exact match
-     *   Resource.description : case insensitive substring match   
-     *   Resource.inventoryStatus : exact match
-     *   Resource.name : case insensitive substring match   
-     *   Resource.resourceKey : case insensitive substring match   
-     *   Resource.resourceType.id : exact match
-     * All other fields are ignored:
-     * </pre>
-     * @param pc {@link PageControl}
-     * <pre>
-     * If provided PageControl specifies page size, requested page, sorting, and optional data.
-     * 
-     * Supported OptionalData
-     *   To specify optional data call pc.setOptionalData() and supply one of more of the DATA_* constants
-     *   defined in this interface.
-     * 
-     * Supported Sorting:
-     *   ?? This needs to be defined ??
-     *   
-     * </pre>
-     * @return
-     * @throws FetchException
+     * #see {@link ResourceManagerRemote#findResourceChildren(Subject, int, Resource, PageControl)
      */
     PageList<Resource> findResourceChildren(Subject subject, int resourceId, Resource criteria, PageControl pc)
         throws FetchException;
 
     /**
-     * Removes these resources from inventory.  The resources may subsequently be rediscovered.  Note that for
-     * each specified resource all children will also be removed, it it not necessary or recommended to
-     * specify more than one resource in the same ancestry line.
-     * 
-     * @param subject The logged in user's subject.
-     * @param resourceIds The resources to uninventory.
-     * @throws DeleteException
+     * #see {@link ResourceManagerRemote#uninventoryResources(Subject, int)
      */
     void uninventoryResources(Subject subject, int[] resourceIds) throws DeleteException;
-
 }

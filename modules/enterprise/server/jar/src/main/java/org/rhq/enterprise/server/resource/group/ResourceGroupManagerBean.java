@@ -144,23 +144,27 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public ResourceGroup createResourceGroup(Subject user, ResourceGroup group) throws CreateException {
-        /*
-        GH: We are now allowing Groups where names collide... TODO, should this only be allowed for cluster auto backing groups?
-        Query query = entityManager.createNamedQuery(ResourceGroup.QUERY_FIND_BY_NAME);
-        query.setParameter("name", group.getName());
+        try {
+            /*
+            GH: We are now allowing Groups where names collide... TODO, should this only be allowed for cluster auto backing groups?
+            Query query = entityManager.createNamedQuery(ResourceGroup.QUERY_FIND_BY_NAME);
+            query.setParameter("name", group.getName());
 
-        List<ResourceGroup> groups = query.getResultList();
-        if (groups.size() != 0) {
-            throw new ResourceGroupAlreadyExistsException("ResourceGroup with name " + group.getName()
-                + " already exists");
-        }*/
+            List<ResourceGroup> groups = query.getResultList();
+            if (groups.size() != 0) {
+                throw new ResourceGroupAlreadyExistsException("ResourceGroup with name " + group.getName()
+                    + " already exists");
+            }*/
 
-        long time = System.currentTimeMillis();
-        group.setCtime(time);
-        group.setMtime(time);
-        group.setModifiedBy(user);
+            long time = System.currentTimeMillis();
+            group.setCtime(time);
+            group.setMtime(time);
+            group.setModifiedBy(user);
 
-        entityManager.persist(group);
+            entityManager.persist(group);
+        } catch (Exception e) {
+            throw new CreateException(e);
+        }
 
         return group;
     }
@@ -1223,79 +1227,88 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
     }
 
     @SuppressWarnings("unchecked")
-    public ResourceGroupComposite getResourceGroupComposite(Subject subject, int groupId) {
-        // Auto cluster backing groups have a special security allowance that let's a non-inventory-manager
-        // view them even if they aren't directly in one of their roles, by nature of the fact that the user has
-        // the parent cluster group in one of its roles.
+    public ResourceGroupComposite getResourceGroupComposite(Subject subject, int groupId) throws FetchException {
+        try {
+            // Auto cluster backing groups have a special security allowance that let's a non-inventory-manager
+            // view them even if they aren't directly in one of their roles, by nature of the fact that the user has
+            // the parent cluster group in one of its roles.
 
-        if (!authorizationManager.canViewGroup(subject, groupId)) {
-            throw new PermissionException("You do not have permission to view this resource group");
+            if (!authorizationManager.canViewGroup(subject, groupId)) {
+                throw new PermissionException("You do not have permission to view this resource group");
+            }
+
+            String queryString = "SELECT \n" //
+                + "  (SELECT count(er) "
+                + "       FROM ResourceGroup g JOIN g.explicitResources er where g.id = :groupId),\n"
+                + "  (SELECT avg(er.currentAvailability.availabilityType) "
+                + "       FROM ResourceGroup g JOIN g.explicitResources er where g.id = :groupId) AS eavail,\n"
+                + "  (SELECT count(ir) "
+                + "       FROM ResourceGroup g JOIN g.implicitResources ir where g.id = :groupId),\n"
+                + "  (SELECT avg(ir.currentAvailability.availabilityType) "
+                + "       FROM ResourceGroup g JOIN g.implicitResources ir where g.id = :groupId), g \n"
+                + "FROM ResourceGroup g where g.id = :groupId";
+
+            Query query = entityManager.createQuery(queryString);
+            query.setParameter("groupId", groupId);
+            List<Object[]> results = (List<Object[]>) query.getResultList();
+
+            if (results.size() == 0) {
+                throw new ResourceGroupNotFoundException(groupId);
+            }
+
+            Object[] data = results.get(0);
+
+            ResourceGroup group = (ResourceGroup) data[4];
+            ResourceType type = group.getResourceType();
+            ResourceFacets facets;
+            if (type == null) {
+                // mixed group
+                facets = ResourceFacets.NONE;
+            } else {
+                // compatible group
+                facets = resourceTypeManager.getResourceFacets(group.getResourceType().getId());
+            }
+
+            ResourceGroupComposite composite = null;
+            if (((Number) data[2]).longValue() > 0) {
+                composite = new ResourceGroupComposite( //
+                    ((Number) data[0]).longValue(), //
+                    ((Number) data[1]).doubleValue(), //
+                    ((Number) data[2]).longValue(), //
+                    ((Number) data[3]).doubleValue(), //
+                    group, facets);
+            } else {
+                composite = new ResourceGroupComposite(0, 0, 0, 0, group, facets);
+            }
+            group.getModifiedBy().getFirstName();
+
+            return composite;
+        } catch (Exception e) {
+            throw new FetchException(e);
         }
-
-        String queryString = "SELECT \n" //
-            + "  (SELECT count(er) "
-            + "       FROM ResourceGroup g JOIN g.explicitResources er where g.id = :groupId),\n"
-            + "  (SELECT avg(er.currentAvailability.availabilityType) "
-            + "       FROM ResourceGroup g JOIN g.explicitResources er where g.id = :groupId) AS eavail,\n"
-            + "  (SELECT count(ir) "
-            + "       FROM ResourceGroup g JOIN g.implicitResources ir where g.id = :groupId),\n"
-            + "  (SELECT avg(ir.currentAvailability.availabilityType) "
-            + "       FROM ResourceGroup g JOIN g.implicitResources ir where g.id = :groupId), g \n"
-            + "FROM ResourceGroup g where g.id = :groupId";
-
-        Query query = entityManager.createQuery(queryString);
-        query.setParameter("groupId", groupId);
-        List<Object[]> results = (List<Object[]>) query.getResultList();
-
-        if (results.size() == 0) {
-            throw new ResourceGroupNotFoundException(groupId);
-        }
-
-        Object[] data = results.get(0);
-
-        ResourceGroup group = (ResourceGroup) data[4];
-        ResourceType type = group.getResourceType();
-        ResourceFacets facets;
-        if (type == null) {
-            // mixed group
-            facets = ResourceFacets.NONE;
-        } else {
-            // compatible group
-            facets = resourceTypeManager.getResourceFacets(group.getResourceType().getId());
-        }
-
-        ResourceGroupComposite composite = null;
-        if (((Number) data[2]).longValue() > 0) {
-            composite = new ResourceGroupComposite( //
-                ((Number) data[0]).longValue(), //
-                ((Number) data[1]).doubleValue(), //
-                ((Number) data[2]).longValue(), //
-                ((Number) data[3]).doubleValue(), //
-                group, facets);
-        } else {
-            composite = new ResourceGroupComposite(0, 0, 0, 0, group, facets);
-        }
-        group.getModifiedBy().getFirstName();
-
-        return composite;
     }
 
     @SuppressWarnings("unchecked")
     public PageList<ResourceGroup> findResourceGroupsForRole(Subject subject, int roleId, PageControl pc)
         throws FetchException {
-        pc.initDefaultOrderingField("rg.name");
+        try {
+            pc.initDefaultOrderingField("rg.name");
 
-        String queryName = ResourceGroup.QUERY_GET_RESOURCE_GROUPS_ASSIGNED_TO_ROLE;
-        Query queryCount = PersistenceUtility.createCountQuery(entityManager, queryName);
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, queryName, pc);
+            String queryName = ResourceGroup.QUERY_GET_RESOURCE_GROUPS_ASSIGNED_TO_ROLE;
+            Query queryCount = PersistenceUtility.createCountQuery(entityManager, queryName);
+            Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, queryName, pc);
 
-        queryCount.setParameter("id", roleId);
-        query.setParameter("id", roleId);
+            queryCount.setParameter("id", roleId);
+            query.setParameter("id", roleId);
 
-        long count = (Long) queryCount.getSingleResult();
-        List<ResourceGroup> groups = query.getResultList();
+            long count = (Long) queryCount.getSingleResult();
+            List<ResourceGroup> groups = query.getResultList();
 
-        return new PageList<ResourceGroup>(groups, (int) count, pc);
+            return new PageList<ResourceGroup>(groups, (int) count, pc);
+        } catch (Exception e) {
+            throw new FetchException(e);
+        }
+
     }
 
     @SuppressWarnings("unchecked")
@@ -1350,9 +1363,9 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public ResourceGroup updateResourceGroup(Subject user, ResourceGroup group) throws UpdateException {
+    public ResourceGroup updateResourceGroup(Subject subject, ResourceGroup group) throws UpdateException {
         try {
-            return updateResourceGroup(user, group, null);
+            return updateResourceGroup(subject, group, null);
         } catch (Exception e) {
             throw new UpdateException(e);
         }

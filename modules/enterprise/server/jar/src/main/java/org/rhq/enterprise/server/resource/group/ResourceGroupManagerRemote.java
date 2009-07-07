@@ -42,6 +42,11 @@ import org.rhq.enterprise.server.exception.UpdateException;
 @Remote
 public interface ResourceGroupManagerRemote {
 
+    //optional data for findResourceGroups and findResourceGroupComposites
+    static public final String DATA_IMPLICIT_RESOURCES = "implicitResource";
+    static public final String DATA_EXPLICIT_RESOURCES = "explicitResources";
+    static public final String DATA_ROLES = "roles";
+
     @WebMethod
     void addResourcesToGroup( //
         @WebParam(name = "subject") Subject subject, //
@@ -75,6 +80,16 @@ public interface ResourceGroupManagerRemote {
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "groupId") int groupId) throws FetchException;
 
+    /**
+     * Get the ResourceGroup and Availability by id.
+     *
+     * @param  subject {@link Subject} of the calling user
+     * @param  groupId id to search by
+     *
+     * @return ResourceGroupComposite composite object with the ResourceGroup and availability, as well as the count of
+     *         resources in the group
+     * @throws FetchException TODO
+     */
     @WebMethod
     ResourceGroupComposite getResourceGroupComposite( //
         @WebParam(name = "subject") Subject subject, //

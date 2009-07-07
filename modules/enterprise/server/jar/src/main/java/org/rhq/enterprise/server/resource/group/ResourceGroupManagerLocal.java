@@ -110,11 +110,18 @@ public interface ResourceGroupManagerLocal {
 
     void ensureMembershipMatches(Subject subject, int groupId, int[] resourceIds) throws ResourceGroupUpdateException;
 
-    /*
-     * Methods also in the remote interface
-     */
-    void addResourcesToGroup(Subject subject, int groupId, int[] resourceIds) throws ResourceGroupNotFoundException,
-        ResourceGroupUpdateException;
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    //
+    // The following are shared with the Remote Interface
+    //
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    //optional data for findResourceGroups and findResourceGroupComposites
+    static public final String DATA_IMPLICIT_RESOURCES = "implicitResource";
+    static public final String DATA_EXPLICIT_RESOURCES = "explicitResources";
+    static public final String DATA_ROLES = "roles";
+
+    void addResourcesToGroup(Subject subject, int groupId, int[] resourceIds) throws UpdateException;
 
     ResourceGroup createResourceGroup(Subject user, ResourceGroup group) throws CreateException;
 
@@ -122,16 +129,7 @@ public interface ResourceGroupManagerLocal {
 
     ResourceGroup getResourceGroup(Subject subject, int groupId) throws FetchException;
 
-    /**
-     * Get the ResourceGroup and Availability by id.
-     *
-     * @param  subject {@link Subject} of the calling user
-     * @param  groupId id to search by
-     *
-     * @return ResourceGroupComposite composite object with the ResourceGroup and availability, as well as the count of
-     *         resources in the group
-     */
-    ResourceGroupComposite getResourceGroupComposite(Subject subject, int groupId);
+    ResourceGroupComposite getResourceGroupComposite(Subject subject, int groupId) throws FetchException;
 
     PageList<ResourceGroup> findResourceGroupsForRole(Subject subject, int roleId, PageControl pc)
         throws FetchException;
@@ -146,5 +144,5 @@ public interface ResourceGroupManagerLocal {
 
     void setRecursive(Subject subject, int groupId, boolean isRecursive) throws UpdateException;
 
-    ResourceGroup updateResourceGroup(Subject user, ResourceGroup group) throws UpdateException;
+    ResourceGroup updateResourceGroup(Subject subject, ResourceGroup group) throws UpdateException;
 }

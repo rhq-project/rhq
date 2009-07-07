@@ -1994,7 +1994,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     // lineage is a getXXX (not findXXX) because it logically returns a single object, but modeled as a list here
-    public List<Resource> getResourceLineage(Subject subject, int resourceId) throws FetchException {
+    public List<Resource> findResourceLineage(Subject subject, int resourceId) throws FetchException {
         List<Resource> result = null;
 
         try {
@@ -2033,9 +2033,13 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     public PageList<Resource> findResourceChildren(Subject subject, int resourceId, Resource criteria, PageControl pc)
         throws FetchException {
 
-        // finding the children is equivalent to filtering on the parent
-        Resource parentResourceFlyWeight = new Resource(resourceId);
-        criteria.setParentResource(parentResourceFlyWeight);
+        try {
+            // finding the children is equivalent to filtering on the parent
+            Resource parentResourceFlyWeight = new Resource(resourceId);
+            criteria.setParentResource(parentResourceFlyWeight);
+        } catch (Exception e) {
+            throw new FetchException(e);
+        }
 
         return findResources(subject, criteria, pc);
     }

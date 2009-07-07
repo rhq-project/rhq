@@ -65,6 +65,7 @@ public interface ResourceManagerRemote {
     static public final String DATA_RESOURCE_TYPE = "resourceType";
 
     /**
+     * Returns the Resource with the specified id.
      *
      * @param  subject The logged in user's subject.
      * @param  resourceId the id of a {@link Resource} in inventory.
@@ -91,7 +92,7 @@ public interface ResourceManagerRemote {
      * @throws FetchException on any issue. Wraps ResourceNotFoundException when necessary. 
      */
     @WebMethod
-    List<Resource> getResourceLineage( //
+    List<Resource> findResourceLineage( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceId") int resourceId) throws FetchException;
 

@@ -65,20 +65,18 @@ public interface ResourceManagerRemote {
     static public final String DATA_RESOURCE_TYPE = "resourceType";
 
     /**
-     * Returns the Resource with the specified id.
      *
-     * @param  sessionSubject The logged in user's subject.
+     * @param  subject The logged in user's subject.
      * @param  resourceId the id of a {@link Resource} in inventory.
      *
      * @return the resource
-     * @throws FetchException on any issue. Wraps ResourceNotFoundException when necessary.
+     * @throws FetchException if the resource represented by the resourceId parameter does not exist, or if the
+     *                        passed subject does not have permission to view this resource.
      */
     @WebMethod
     Resource getResource( //
-        @WebParam(name = "sessionSubject")
-        Subject sessionSubject, //
-        @WebParam(name = "resourceId")
-        int resourceId) throws FetchException;
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "resourceId") int resourceId) throws FetchException;
 
     /**
      * Returns the lineage of the Resource with the specified id. The lineage is represented as a List of Resources,
@@ -86,7 +84,7 @@ public interface ResourceManagerRemote {
      * (i.e. a platform)) and the last item being the Resource itself. Since the lineage includes the Resource itself,
      * the returned List will always contain at least one item.
      *
-     * @param  sessionSubject The logged in user's subject.
+     * @param  subject The logged in user's subject.
      * @param  resourceId the id of a {@link Resource} in inventory
      *
      * @return the lineage of the Resource with the specified id
@@ -94,15 +92,13 @@ public interface ResourceManagerRemote {
      */
     @WebMethod
     List<Resource> getResourceLineage( //
-        @WebParam(name = "sessionSubject")
-        Subject sessionSubject, //
-        @WebParam(name = "resourceId")
-        int resourceId) throws FetchException;
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "resourceId") int resourceId) throws FetchException;
 
     /**
      * This find service can be used to find resources based on various criteria and return various data.
      *
-     * @param sessionSubject The logged in user's subject.
+     * @param subject The logged in user's subject.
      * @param criteria {@link Resource}, can be null
      * <pre>
      * If provided the Resource object can specify various search criteria as specified below.
@@ -132,19 +128,16 @@ public interface ResourceManagerRemote {
      */
     @WebMethod
     PageList<Resource> findResources( //
-        @WebParam(name = "sessionSubject")
-        Subject sessionSubject, //
-        @WebParam(name = "criteria")
-        Resource criteria, //
-        @WebParam(name = "pc")
-        PageControl pc) throws FetchException;
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "criteria") Resource criteria, //
+        @WebParam(name = "pc") PageControl pc) throws FetchException;
 
     /**
      * This find service can be used to find child resources for the specified resource,
      * based on various criteria and return various data.
      *
-     * @param sessionSubject The logged in user's subject.
-     * @param  resourceId the id of a {@link Resource} in inventory. 
+     * @param subject The logged in user's subject.
+     * @param resourceId the id of a {@link Resource} in inventory. 
      * @param criteria {@link Resource}, can be null
      * <pre>
      * If provided the Resource object can specify various search criteria as specified below.
@@ -174,44 +167,33 @@ public interface ResourceManagerRemote {
      */
     @WebMethod
     PageList<Resource> findResourceChildren( //
-        @WebParam(name = "sessionSubject")
-        Subject sessionSubject, //
-        @WebParam(name = "resourceId")
-        int resourceId, @WebParam(name = "criteria")
-        Resource criteria, //
-        @WebParam(name = "pc")
-        PageControl pc) throws FetchException;
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "resourceId") int resourceId, //
+        @WebParam(name = "criteria") Resource criteria, //
+        @WebParam(name = "pc") PageControl pc) throws FetchException;
 
     /**
      * Removes these resources from inventory.  The resources may subsequently be rediscovered.  Note that for
      * each specified resource all children will also be removed, it it not necessary or recommended to
      * specify more than one resource in the same ancestry line.
      * 
-     * @param sessionSubject The logged in user's subject.
+     * @param subject The logged in user's subject.
      * @param resourceIds The resources to uninventory.
      * @throws DeleteException
      */
     @WebMethod
     void uninventoryResources( //
-        @WebParam(name = "sessionSubject")
-        Subject sessionSubject, //
-        @WebParam(name = "resourceIds")
-        int[] resourceIds) throws DeleteException;
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "resourceIds") int[] resourceIds) throws DeleteException;
 
     // THIS WILL BE REMOVED
     @WebMethod
     PageList<ResourceComposite> findResourceComposites( //
-        @WebParam(name = "user")
-        Subject user, //
-        @WebParam(name = "category")
-        ResourceCategory category, //
-        @WebParam(name = "typeName")
-        String typeName, //
-        @WebParam(name = "parentResourceId")
-        int parentResourceId, //
-        @WebParam(name = "searchString")
-        String searchString, //
-        @WebParam(name = "pageControl")
-        PageControl pageControl);
+        @WebParam(name = "user") Subject user, //
+        @WebParam(name = "category") ResourceCategory category, //
+        @WebParam(name = "typeName") String typeName, //
+        @WebParam(name = "parentResourceId") int parentResourceId, //
+        @WebParam(name = "searchString") String searchString, //
+        @WebParam(name = "pageControl") PageControl pageControl);
 
 }

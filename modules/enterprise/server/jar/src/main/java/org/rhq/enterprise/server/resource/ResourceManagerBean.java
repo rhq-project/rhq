@@ -101,6 +101,7 @@ import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.domain.util.QueryGenerator;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
@@ -216,7 +217,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return entityManager.merge(resource);
     }
 
-    public List<Integer> deleteResources(Subject user, Integer[] resourceIds) {
+    public List<Integer> deleteResources(Subject user, int[] resourceIds) {
         List<Integer> deletedResourceIds = new ArrayList<Integer>();
 
         for (Integer resourceId : resourceIds) {
@@ -230,12 +231,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
     @SuppressWarnings("unchecked")
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public List<Integer> deleteResource(Subject user, Integer resourceId) {
-        if (resourceId == null) // sanity check
-        {
-            return Collections.emptyList();
-        }
-
+    public List<Integer> deleteResource(Subject user, int resourceId) {
         Resource resource = resourceManager.getResourceTree(resourceId, true);
         if (resource == null) {
             log.info("Delete resource not possible, as resource with id [" + resourceId + "] was not found");
@@ -441,7 +437,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
      * @param resourceId
      * @return The number of scheduled operations for the resourceId
      */
-    private int cleanupScheduledOperationsForResource(Subject overlord, Integer resourceId) {
+    private int cleanupScheduledOperationsForResource(Subject overlord, int resourceId) {
 
         int result = 0;
 
@@ -515,17 +511,18 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @SuppressWarnings("unchecked")
-    public Resource getResourceById(Subject user, int id) {
+    public Resource getResourceById(Subject user, int resourceId) {
         Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_BY_ID);
-        query.setParameter("resourceId", id);
+        query.setParameter("resourceId", resourceId);
         List<Resource> resources = query.getResultList();
 
         if (resources.size() != 1) {
-            throw new ResourceNotFoundException(id);
+            throw new ResourceNotFoundException(resourceId);
         }
 
-        if (!authorizationManager.canViewResource(user, id)) {
-            throw new PermissionException("User [" + user + "] does not have permission to view resource [" + id + "]");
+        if (!authorizationManager.canViewResource(user, resourceId)) {
+            throw new PermissionException("User [" + user + "] does not have permission to view resource ["
+                + resourceId + "]");
         }
 
         return resources.get(0);
@@ -939,7 +936,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return (int) count;
     }
 
-    public int getResourceCountByTypeAndIds(Subject user, ResourceType type, Integer[] resourceIds) {
+    public int getResourceCountByTypeAndIds(Subject user, ResourceType type, int[] resourceIds) {
         Query queryCount;
         if (authorizationManager.isInventoryManager(user)) {
             queryCount = PersistenceUtility.createCountQuery(entityManager, Resource.QUERY_FIND_BY_TYPE_AND_IDS_ADMIN);
@@ -948,7 +945,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             queryCount.setParameter("subject", user);
         }
 
-        List<Integer> resourceList = Arrays.asList(resourceIds);
+        List<Integer> resourceList = ArrayUtils.wrapInList(resourceIds);
         queryCount.setParameter("ids", resourceList);
 
         queryCount.setParameter("type", type);
@@ -1036,10 +1033,10 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return result;
     }
 
-    public List<AutoGroupComposite> getResourcesAutoGroups(Subject subject, List<Integer> resourceIds) {
+    public List<AutoGroupComposite> getResourcesAutoGroups(Subject subject, int[] resourceIds) {
         List<AutoGroupComposite> results = new ArrayList<AutoGroupComposite>();
-
-        if ((resourceIds == null) || (resourceIds.size() == 0)) {
+        List<Integer> ids = ArrayUtils.wrapInList(resourceIds);
+        if ((ids == null) || (ids.size() == 0)) {
             return results;
         }
 
@@ -1052,7 +1049,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             query.setParameter("subject", subject);
         }
 
-        query.setParameter("ids", resourceIds);
+        query.setParameter("ids", ids);
 
         AutoGroupComposite oneComp;
         try {
@@ -1068,7 +1065,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             query.setParameter("subject", subject);
         }
 
-        query.setParameter("ids", resourceIds);
+        query.setParameter("ids", ids);
 
         // We are not doing a query with constructor here, as this would fire a select per
         // resource and row. So we need to construct the ResourceWithAvailability objects ourselves.
@@ -1089,17 +1086,19 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @SuppressWarnings("unchecked")
-    public List<AutoGroupComposite> getChildrenAutoGroups(Subject user, int parentResourceId, Integer[] resourceTypeIds) {
+    public List<AutoGroupComposite> getChildrenAutoGroups(Subject user, int parentResourceId, int[] resourceTypeIds) {
         Query query;
 
-        if (null != resourceTypeIds) {
+        List<Integer> typeIds = ArrayUtils.wrapInList(resourceTypeIds);
+
+        if (null != typeIds) {
             if (authorizationManager.isInventoryManager(user)) {
                 query = entityManager.createNamedQuery(Resource.QUERY_FIND_CHILDREN_AUTOGROUP_COMPOSITES_BY_TYPE_ADMIN);
             } else {
                 query = entityManager.createNamedQuery(Resource.QUERY_FIND_CHILDREN_AUTOGROUP_COMPOSITES_BY_TYPE);
                 query.setParameter("subject", user);
             }
-            query.setParameter("resourceTypeIds", Arrays.asList(resourceTypeIds));
+            query.setParameter("resourceTypeIds", typeIds);
         } else {
             if (authorizationManager.isInventoryManager(user)) {
                 query = entityManager.createNamedQuery(Resource.QUERY_FIND_CHILDREN_AUTOGROUP_COMPOSITES_ADMIN);
@@ -1152,7 +1151,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     public List<AutoGroupComposite> getChildrenAutoGroups(Subject user, int parentResourceId) {
-        return getChildrenAutoGroups(user, parentResourceId, (Integer[]) null);
+        return getChildrenAutoGroups(user, parentResourceId, (int[]) null);
     }
 
     private void calculateSubcategorySummary(Resource parentResource, List<ResourceSubCategory> subcategories,
@@ -1243,32 +1242,23 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @SuppressWarnings("unchecked")
-    public List<ResourceIdFlyWeight> getFlyWeights(Integer[] resourceIds) {
-        if (resourceIds.length == 0) {
+    public List<ResourceIdFlyWeight> getFlyWeights(int[] resourceIds) {
+        Integer[] ids = ArrayUtils.wrapInArray(resourceIds);
+        if (ids.length == 0) {
             return new ArrayList<ResourceIdFlyWeight>();
         }
 
         List<ResourceIdFlyWeight> results = new ArrayList<ResourceIdFlyWeight>();
 
-        Arrays.sort(resourceIds); // likely that ids in close proximity are co-located physically (data block-wise)
+        Arrays.sort(ids); // likely that ids in close proximity are co-located physically (data block-wise)
         Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_FLY_WEIGHTS_BY_RESOURCE_IDS);
-        for (int i = 0; i < resourceIds.length; i += 1000) {
-            Integer[] batchRange = ArrayUtils.copyOfRange(resourceIds, i, i + 1000);
+        for (int i = 0; i < ids.length; i += 1000) {
+            Integer[] batchRange = ArrayUtils.copyOfRange(ids, i, i + 1000);
             query.setParameter("resourceIds", Arrays.asList(batchRange));
             List<ResourceIdFlyWeight> batchResults = query.getResultList();
             results.addAll(batchResults);
         }
 
-        return results;
-    }
-
-    @SuppressWarnings("unchecked")
-    public List<ResourceIdFlyWeight> getChildrenFlyWeights(Integer parentResourceId, InventoryStatus status) {
-        Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_FLY_WEIGHTS_BY_PARENT_RESOURCE_ID);
-        query.setParameter("parentId", parentResourceId);
-        query.setParameter("status", status);
-
-        List<ResourceIdFlyWeight> results = query.getResultList();
         return results;
     }
 
@@ -1364,10 +1354,12 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<ResourceHealthComposite> getResourceHealth(Subject user, Integer[] resourceIds, PageControl pc) {
+    public PageList<ResourceHealthComposite> getResourceHealth(Subject user, int[] resourceIds, PageControl pc) {
         pc.initDefaultOrderingField("res.name");
 
-        if ((resourceIds == null) || (resourceIds.length == 0)) {
+        List<Integer> resourceIdList = ArrayUtils.wrapInList(resourceIds);
+
+        if ((resourceIdList == null) || (resourceIdList.size() == 0)) {
             return new PageList<ResourceHealthComposite>(pc);
         }
 
@@ -1376,9 +1368,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
             Resource.QUERY_GET_RESOURCE_HEALTH_BY_IDS, pc);
 
-        List<Integer> resourceIdsList = Arrays.asList(resourceIds);
-        queryCount.setParameter("resourceIds", resourceIdsList);
-        query.setParameter("resourceIds", resourceIdsList);
+        queryCount.setParameter("resourceIds", resourceIdList);
+        query.setParameter("resourceIds", resourceIdList);
 
         // because of the use of the GROUP BY clause, the query count will be returned as
         // the number of rows not as a single number
@@ -1407,8 +1398,10 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     @SuppressWarnings("unchecked")
     // note: this method also eagerly loads the parent resource, so that more context info is displayed for each record
     public PageList<Resource> getAvailableResourcesForResourceGroup(Subject user, int groupId, ResourceType type,
-        ResourceCategory category, String nameFilter, Integer[] excludeIds, PageControl pageControl) {
+        ResourceCategory category, String nameFilter, int[] excludeIds, PageControl pageControl) {
         pageControl.initDefaultOrderingField("res.name");
+
+        List<Integer> excludeList = ArrayUtils.wrapInList(excludeIds);
 
         Query queryCount;
         Query query;
@@ -1418,7 +1411,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
          * you'll get the error "query specified join fetching, but the owner of the fetched association
          * was not present in the select list"
          */
-        if ((excludeIds != null) && (excludeIds.length != 0)) {
+        if ((excludeList != null) && (excludeList.size() != 0)) {
             queryCount = PersistenceUtility.createCountQuery(entityManager,
                 Resource.QUERY_GET_AVAILABLE_RESOURCES_FOR_RESOURCE_GROUP_WITH_EXCLUDES);
             query = PersistenceUtility.createQueryWithOrderBy(entityManager,
@@ -1430,8 +1423,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 Resource.QUERY_GET_AVAILABLE_RESOURCES_WITH_PARENT_FOR_RESOURCE_GROUP, pageControl);
         }
 
-        if ((excludeIds != null) && (excludeIds.length != 0)) {
-            List<Integer> excludeList = Arrays.asList(excludeIds);
+        if ((excludeList != null) && (excludeList.size() != 0)) {
             queryCount.setParameter("excludeIds", excludeList);
             query.setParameter("excludeIds", excludeList);
         }
@@ -1461,7 +1453,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<Resource> getAvailableResourcesForChannel(Subject user, Integer channelId, String search,
+    public PageList<Resource> getAvailableResourcesForChannel(Subject user, int channelId, String search,
         ResourceCategory category, PageControl pageControl) {
         pageControl.initDefaultOrderingField("res.name");
 
@@ -1491,13 +1483,16 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @SuppressWarnings("unchecked")
+    // note, typeId can be null
     public PageList<Resource> getAvailableResourcesForDashboardPortlet(Subject user, Integer typeId,
-        ResourceCategory category, Integer[] excludeIds, PageControl pageControl) {
+        ResourceCategory category, int[] excludeIds, PageControl pageControl) {
         pageControl.initDefaultOrderingField("res.name");
+
+        List<Integer> excludeList = ArrayUtils.wrapInList(excludeIds);
 
         Query queryCount;
         Query query;
-        if ((excludeIds != null) && (excludeIds.length != 0)) {
+        if ((excludeList != null) && (excludeList.size() != 0)) {
             queryCount = PersistenceUtility.createCountQuery(entityManager,
                 Resource.QUERY_GET_AVAILABLE_RESOURCES_FOR_DASHBOARD_PORTLET_WITH_EXCLUDES);
             query = PersistenceUtility.createQueryWithOrderBy(entityManager,
@@ -1509,8 +1504,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 Resource.QUERY_GET_AVAILABLE_RESOURCES_FOR_DASHBOARD_PORTLET, pageControl);
         }
 
-        if ((excludeIds != null) && (excludeIds.length != 0)) {
-            List<Integer> excludeList = Arrays.asList(excludeIds);
+        if ((excludeList != null) && (excludeList.size() != 0)) {
             queryCount.setParameter("excludeIds", excludeList);
             query.setParameter("excludeIds", excludeList);
         }
@@ -1532,11 +1526,13 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<Resource> getResourceByIds(Subject subject, Integer[] resourceIds, boolean attachParentResource,
+    public PageList<Resource> getResourceByIds(Subject subject, int[] resourceIds, boolean attachParentResource,
         PageControl pageControl) {
         pageControl.initDefaultOrderingField("res.name");
 
-        if ((resourceIds == null) || (resourceIds.length == 0)) {
+        List<Integer> idList = ArrayUtils.wrapInList(resourceIds);
+
+        if ((idList == null) || (idList.size() == 0)) {
             return new PageList<Resource>(Collections.EMPTY_LIST, 0, pageControl);
         }
 
@@ -1574,9 +1570,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             query.setParameter("subject", subject);
         }
 
-        List<Integer> resourceList = Arrays.asList(resourceIds);
-        queryCount.setParameter("ids", resourceList);
-        query.setParameter("ids", resourceList);
+        queryCount.setParameter("ids", idList);
+        query.setParameter("ids", idList);
 
         long count = (Long) queryCount.getSingleResult();
         List<Resource> resources = query.getResultList();
@@ -1985,11 +1980,11 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     //
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    public Resource getResource(Subject sessionSubject, int resourceId) throws FetchException {
+    public Resource getResource(Subject subject, int resourceId) throws FetchException {
         Resource result = null;
 
         try {
-            result = getResourceById(sessionSubject, resourceId);
+            result = getResourceById(subject, resourceId);
         } catch (Exception e) {
             throw new FetchException(e);
         }
@@ -1997,16 +1992,16 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return result;
     }
 
-    public List<Resource> getResourceLineage(Subject sessionSubject, int resourceId) throws FetchException {
+    public List<Resource> getResourceLineage(Subject subject, int resourceId) throws FetchException {
         List<Resource> result = null;
 
         try {
             result = getResourceLineage(resourceId);
 
             for (Resource resource : result) {
-                if (!authorizationManager.canViewResource(sessionSubject, resource.getId())) {
-                    throw new PermissionException("User [" + sessionSubject
-                        + "] does not have permission to view resource [" + resource.getId() + "]");
+                if (!authorizationManager.canViewResource(subject, resource.getId())) {
+                    throw new PermissionException("User [" + subject + "] does not have permission to view resource ["
+                        + resource.getId() + "]");
                 }
             }
         } catch (Exception e) {
@@ -2016,57 +2011,36 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return result;
     }
 
-    // THIS IS A TEMPORARY IMPL, THE REAL IMPL WILL USE THE QUERY GENERATOR
-    public PageList<Resource> findResources(Subject sessionSubject, Resource criteria, PageControl pc)
+    @SuppressWarnings("unchecked")
+    public PageList<Resource> findResources(Subject subject, Resource criteria, PageControl pc) throws FetchException {
+        try {
+            QueryGenerator generator = new QueryGenerator(criteria, pc);
+
+            Query query = generator.getQuery(entityManager);
+            Query countQuery = generator.getCountQuery(entityManager);
+
+            long count = (Long) countQuery.getSingleResult();
+            List<Resource> results = query.getResultList();
+
+            return new PageList<Resource>(results, (int) count, pc);
+        } catch (Exception e) {
+            throw new FetchException(e);
+        }
+    }
+
+    public PageList<Resource> findResourceChildren(Subject subject, int resourceId, Resource criteria, PageControl pc)
         throws FetchException {
 
-        PageList<ResourceComposite> pl;
-        List<Resource> resourceList;
+        // finding the children is equivalent to filtering on the parent
+        Resource parentResourceFlyWeight = new Resource(resourceId);
+        criteria.setParentResource(parentResourceFlyWeight);
 
-        try {
-            pl = findResourceComposites(sessionSubject, null, criteria.getResourceType(), criteria.getParentResource(),
-                ((null == criteria.getName()) ? criteria.getDescription() : criteria.getName()), false, pc);
-
-            resourceList = new ArrayList<Resource>(pl.getValues().hashCode());
-            for (ResourceComposite rc : pl.getValues()) {
-                Resource resource = entityManager.find(Resource.class, rc.getResource().getId());
-
-                // a smattering of optional data support just for testing
-                for (String od : pc.getOptionalData()) {
-                    if (ResourceManagerLocal.DATA_AGENT.equals(od)) {
-                        resource.getAgent();
-                    } else if (ResourceManagerLocal.DATA_RESOURCE_TYPE.equals(od)) {
-                        resource.getResourceType();
-                    } else if (ResourceManagerLocal.DATA_PARENT_RESOURCE.equals(od)) {
-                        resource.getParentResource();
-                    }
-
-                }
-
-                resourceList.add(resource);
-            }
-        } catch (Exception e) {
-            throw new FetchException(e);
-        }
-
-        return new PageList<Resource>(resourceList, pl.getTotalSize(), pc);
+        return findResources(subject, criteria, pc);
     }
 
-    // THIS IS A TEMPORARY IMPL, THE REAL IMPL WILL USE THE QUERY GENERATOR
-    public PageList<Resource> findResourceChildren(Subject sessionSubject, int resourceId, Resource criteria,
-        PageControl pc) throws FetchException {
-
+    public void uninventoryResources(Subject subject, int[] resourceIds) throws DeleteException {
         try {
-            Resource resource = entityManager.find(Resource.class, resourceId);
-            return this.getChildResources(sessionSubject, resource, pc);
-        } catch (Exception e) {
-            throw new FetchException(e);
-        }
-    }
-
-    public void uninventoryResources(Subject sessionSubject, int[] resourceIds) throws DeleteException {
-        try {
-            deleteResources(sessionSubject, ArrayUtils.wrapArray(resourceIds));
+            deleteResources(subject, resourceIds);
         } catch (Exception e) {
             throw new DeleteException(e);
         }

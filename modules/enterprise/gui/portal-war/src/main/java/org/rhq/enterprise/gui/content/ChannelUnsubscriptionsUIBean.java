@@ -105,11 +105,10 @@ public class ChannelUnsubscriptionsUIBean extends PagedDataTableUIBean {
         }
 
         @Override
-        @SuppressWarnings("unchecked")
         public PageList<Resource> fetchPage(PageControl pc) {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
             ResourceManagerLocal manager = LookupUtil.getResourceManager();
-            Integer channelId = Integer.valueOf(FacesContextUtility.getRequiredRequestParameter("id"));
+            int channelId = Integer.parseInt(FacesContextUtility.getRequiredRequestParameter("id"));
             String search = FacesContextUtility
                 .getOptionalRequestParameter("channelUnsubscriptionsListForm:searchStringFilter");
             String category = FacesContextUtility

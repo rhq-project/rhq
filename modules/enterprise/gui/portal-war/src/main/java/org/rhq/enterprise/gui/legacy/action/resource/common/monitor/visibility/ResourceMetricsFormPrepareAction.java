@@ -32,7 +32,6 @@ import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.enterprise.gui.util.WebUtility;
 import org.rhq.enterprise.server.measurement.MeasurementChartsManagerLocal;
-import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
@@ -71,7 +70,7 @@ public class ResourceMetricsFormPrepareAction extends MetricsDisplayFormPrepareA
      * @return Map keyed on the category (String), values are List's of MetricDisplaySummary beans
      */
     @Override
-    protected List<MetricDisplaySummary> getMetrics(HttpServletRequest request, Integer[] resourceIds, long filters,
+    protected List<MetricDisplaySummary> getMetrics(HttpServletRequest request, int[] resourceIds, long filters,
         String keyword, Long begin, Long end) throws Exception {
         Subject subject = WebUtility.getSubject(request);
 
@@ -80,7 +79,6 @@ public class ResourceMetricsFormPrepareAction extends MetricsDisplayFormPrepareA
         int myGroupId = WebUtility.getOptionalIntRequestParameter(request, "groupId", -1);
 
         MeasurementScheduleManagerLocal scheduleManager = LookupUtil.getMeasurementScheduleManager();
-        MeasurementDataManagerLocal dataManager = LookupUtil.getMeasurementDataManager();
         MeasurementChartsManagerLocal chartsManager = LookupUtil.getMeasurementChartsManager();
 
         if (log.isTraceEnabled()) {

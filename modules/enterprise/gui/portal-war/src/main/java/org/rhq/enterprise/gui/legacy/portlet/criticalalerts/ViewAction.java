@@ -33,6 +33,7 @@ import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences.AlertsPortletPreferences;
@@ -64,8 +65,8 @@ public class ViewAction extends TilesAction {
             PageControl pageControl = new PageControl(0, alertPrefs.count);
             AlertManagerLocal alertManager = LookupUtil.getAlertManager();
             alerts = alertManager.findAlerts(user.getSubject(), ("all".equals(alertPrefs.displayAll) ? null
-                : alertPrefs.asArray()), AlertPriority.getByLegacyIndex(alertPrefs.priority), alertPrefs.timeRange,
-                pageControl);
+                : ArrayUtils.wrapInArray(alertPrefs.asArray())), AlertPriority.getByLegacyIndex(alertPrefs.priority),
+                alertPrefs.timeRange, pageControl);
         } catch (Exception e) {
             if (log.isDebugEnabled()) {
                 log.debug("Dashboard Portlet [CriticalAlerts] experienced an error: " + e.getMessage(), e);

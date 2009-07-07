@@ -97,7 +97,7 @@ public class AddResourcesPrepareAction extends Action {
 
         // get the resources, so we can display name & description in the UI
         log.debug("get page of pending resources selected by user");
-        Integer[] pendingResourceArray = StringUtility.getIntegerArray(pendingResourceList);
+        int[] pendingResourceArray = StringUtility.getIntArray(pendingResourceList);
         PageList<Resource> pendingResources = resourceManager.getResourceByIds(subject, pendingResourceArray, false,
             pcPending);
 
@@ -113,7 +113,7 @@ public class AddResourcesPrepareAction extends Action {
         ResourceCategory categoryFilter = (addForm.getCategory() != null) ? ResourceCategory.valueOf(addForm
             .getCategory().toUpperCase()) : ResourceCategory.PLATFORM;
 
-        Integer[] excludeIds = StringUtility.getIntegerArray(pendingResourceList);
+        int[] excludeIds = StringUtility.getIntArray(pendingResourceList);
         PageList<Resource> availableResources = null;
 
         availableResources = resourceManager.getAvailableResourcesForDashboardPortlet(subject, typeIdFilter,

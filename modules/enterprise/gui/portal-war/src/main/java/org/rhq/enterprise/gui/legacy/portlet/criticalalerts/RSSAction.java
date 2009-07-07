@@ -39,6 +39,7 @@ import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences.AlertsPortletPreferences;
@@ -68,7 +69,8 @@ public class RSSAction extends BaseRSSAction {
             PageControl pageControl = new PageControl(0, prefs.count);
 
             PageList<Alert> alerts = alertManager.findAlerts(user.getSubject(), ("all".equals(prefs.displayAll) ? null
-                : prefs.asArray()), AlertPriority.getByLegacyIndex(prefs.priority), prefs.timeRange, pageControl);
+                : ArrayUtils.wrapInArray(prefs.asArray())), AlertPriority.getByLegacyIndex(prefs.priority),
+                prefs.timeRange, pageControl);
 
             if ((alerts != null) && (alerts.size() > 0)) {
                 for (Alert alert : alerts) {

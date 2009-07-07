@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.legacy.portlet.criticalalerts;
 
 import java.util.Arrays;
 
+import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences.AlertsPortletPreferences;
 import org.rhq.enterprise.gui.legacy.portlet.DashboardBaseForm;
 
@@ -73,7 +74,7 @@ public class PropertiesForm extends DashboardBaseForm {
     }
 
     public Integer[] getIds() {
-        return this.prefs.asArray();
+        return ArrayUtils.wrapInArray(this.prefs.asArray());
     }
 
     public void setIds(Integer[] ids) {

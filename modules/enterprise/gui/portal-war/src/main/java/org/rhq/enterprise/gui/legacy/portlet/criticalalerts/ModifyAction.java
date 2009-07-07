@@ -18,8 +18,6 @@
  */
 package org.rhq.enterprise.gui.legacy.portlet.criticalalerts;
 
-import java.util.Arrays;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -27,6 +25,7 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
+import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.RetCodeConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
@@ -56,9 +55,9 @@ public class ModifyAction extends BaseAction {
             forwardStr = "review";
         } else if (pForm.isOkClicked()) {
             AlertsPortletPreferences alertPrefs = preferences.getAlertsPortletPreferences();
-            Integer[] savedResourceIds = alertPrefs.asArray();
+            int[] savedResourceIds = alertPrefs.asArray();
             alertPrefs = pForm.getAlertsPortletPreferences();
-            alertPrefs.setResource(Arrays.asList(savedResourceIds));
+            alertPrefs.setResource(ArrayUtils.wrapInList(savedResourceIds));
             preferences.setAlertsPortletPreferences(alertPrefs);
         }
 

@@ -87,4 +87,18 @@ public class StringUtility {
 
         return results;
     }
+
+    public static int[] getIntArray(List<String> list) {
+        if (list == null) {
+            return new int[0];
+        }
+
+        int[] results = new int[list.size()];
+        int i = 0;
+        for (String item : list) {
+            results[i++] = Integer.valueOf(item);
+        }
+
+        return results;
+    }
 }

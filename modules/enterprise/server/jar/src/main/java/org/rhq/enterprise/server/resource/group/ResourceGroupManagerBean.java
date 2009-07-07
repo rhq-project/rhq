@@ -415,7 +415,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             // everybody was already a member
             return;
         }
-        int[] resourceIdsToAdd = ArrayUtils.unwrapList(nonMemberResources);
+        int[] resourceIdsToAdd = ArrayUtils.unwrapCollection(nonMemberResources);
 
         Connection conn = null;
         PreparedStatement insertExplicitStatement = null;
@@ -455,9 +455,9 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
                 // everybody was already a member
                 return;
             }
-            resourceIdsToAdd = ArrayUtils.unwrapList(nonMemberResources);
+            resourceIdsToAdd = ArrayUtils.unwrapCollection(nonMemberResources);
         } else {
-            resourceIdsToAdd = ArrayUtils.unwrapList(resourceIds);
+            resourceIdsToAdd = ArrayUtils.unwrapCollection(resourceIds);
         }
 
         Connection conn = null;

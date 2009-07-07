@@ -13,6 +13,7 @@ import org.rhq.core.domain.resource.composite.ResourceIdFlyWeight;
 import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.legacy.action.resource.hub.HubView;
 import org.rhq.enterprise.gui.legacy.util.DashboardUtils;
@@ -176,8 +177,8 @@ public class WebUserPreferences extends SubjectPreferencesBase {
         public String displayAll;
         private List<Integer> resourceIds;
 
-        public Integer[] asArray() {
-            return resourceIds.toArray(new Integer[resourceIds.size()]);
+        public int[] asArray() {
+            return ArrayUtils.unwrapCollection(resourceIds);
         }
 
         public void removeResource(int resourceId) {
@@ -296,8 +297,8 @@ public class WebUserPreferences extends SubjectPreferencesBase {
         public boolean showAlerts;
         private List<Integer> resourceIds;
 
-        public Integer[] asArray() {
-            return resourceIds.toArray(new Integer[resourceIds.size()]);
+        public int[] asArray() {
+            return ArrayUtils.unwrapCollection(resourceIds);
         }
 
         public void removeFavorite(int resourceId) {
@@ -653,8 +654,8 @@ public class WebUserPreferences extends SubjectPreferencesBase {
 
     private boolean removeDeletedResources(List<Integer> resourceIds) {
         ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
-        List<ResourceIdFlyWeight> flyWeights = resourceManager.getFlyWeights(resourceIds
-            .toArray(new Integer[resourceIds.size()]));
+        int[] ids = ArrayUtils.unwrapCollection(resourceIds);
+        List<ResourceIdFlyWeight> flyWeights = resourceManager.getFlyWeights(ids);
         boolean removed = false;
         for (int i = resourceIds.size() - 1; i >= 0; i--) {
             Integer resourceIdToVerify = resourceIds.get(i);

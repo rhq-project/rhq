@@ -51,6 +51,7 @@ import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.common.EntityContext;
@@ -534,8 +535,8 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
     public Map<MeasurementDefinition, List<MetricDisplaySummary>> getMetricDisplaySummariesForMetricsCompare(
         Subject subject, Integer[] resourceIds, int[] definitionIds, long begin, long end) throws MeasurementException {
         // Getting all the Resource objects in one call, and caching here for the rest of this method
-        PageList<Resource> resources = resourceManager.getResourceByIds(subject, resourceIds, true, PageControl
-            .getUnlimitedInstance());
+        PageList<Resource> resources = resourceManager.getResourceByIds(subject, ArrayUtils.unwrapArray(resourceIds),
+            true, PageControl.getUnlimitedInstance());
 
         // I want to only get the definition objects once for each ID, and cache here for the rest of this method
         Map<Integer, MeasurementDefinition> measurementDefinitionsMap = new HashMap<Integer, MeasurementDefinition>(

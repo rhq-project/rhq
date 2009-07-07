@@ -377,11 +377,6 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "SELECT new org.rhq.core.domain.resource.composite.ResourceIdFlyWeight(res.id, res.uuid) " //
         + "  FROM Resource res " //
         + " WHERE res.id IN ( :resourceIds ) "),
-    @NamedQuery(name = Resource.QUERY_FIND_FLY_WEIGHTS_BY_PARENT_RESOURCE_ID, query = "" //
-        + "SELECT new org.rhq.core.domain.resource.composite.ResourceIdFlyWeight(res.id, res.uuid) " //
-        + "  FROM Resource res " //
-        + " WHERE res.parentResource.id = :parentId " //
-        + " AND res.inventoryStatus = :status "),
     @NamedQuery(name = Resource.QUERY_FIND_BY_EXPLICIT_RESOURCE_GROUP, query = "" //
         + "SELECT DISTINCT res " //
         + "  FROM ResourceGroup rg JOIN rg.roles r JOIN r.subjects s JOIN rg.explicitResources res " //
@@ -771,7 +766,6 @@ public class Resource implements Comparable<Resource>, Externalizable {
     public static final String QUERY_FIND_EXPLICIT_IDS_BY_RESOURCE_GROUP_ADMIN = "Resource.findExplicitIdsByResourceGroup_admin";
 
     public static final String QUERY_FIND_FLY_WEIGHTS_BY_RESOURCE_IDS = "Resource.findFlyWeights";
-    public static final String QUERY_FIND_FLY_WEIGHTS_BY_PARENT_RESOURCE_ID = "Resource.findFlyWeightsByResourceParentId";
 
     public static final String QUERY_FIND_BY_EXPLICIT_RESOURCE_GROUP = "Resource.findByExplicitResourceGroup";
     public static final String QUERY_FIND_BY_EXPLICIT_RESOURCE_GROUP_ADMIN = "Resource.findByExplicitResourceGroup_admin";

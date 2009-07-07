@@ -95,9 +95,9 @@ public class AddGroupResourcesFormPrepareAction extends Action {
          */
         List<String> pendingResourceIdStrings = SessionUtils.getListAsListStr(request.getSession(),
             Constants.PENDING_RESOURCES_SES_ATTR);
-        Integer[] pendingResourceIds = new Integer[pendingResourceIdStrings.size()];
+        int[] pendingResourceIds = new int[pendingResourceIdStrings.size()];
         for (int i = 0, sz = pendingResourceIdStrings.size(); i < sz; i++) {
-            pendingResourceIds[i] = Integer.valueOf(pendingResourceIdStrings.get(i));
+            pendingResourceIds[i] = Integer.parseInt(pendingResourceIdStrings.get(i));
         }
 
         ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();

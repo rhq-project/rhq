@@ -89,7 +89,7 @@ public interface ResourceManagerLocal {
      * @return the list of all resources that were deleted - in effect, this will contain <code>resourceIds</code> and
      *         their childrens' IDs
      */
-    List<Integer> deleteResources(Subject user, Integer[] resourceIds);
+    List<Integer> deleteResources(Subject user, int[] resourceIds);
 
     /**
      * This will delete the resource with the given ID along with all of its child resources. This method will not
@@ -102,13 +102,13 @@ public interface ResourceManagerLocal {
      * @return the list of all resources that were deleted - in effect, this will contain <code>resourceId</code> and
      *         its children's IDs
      */
-    List<Integer> deleteResource(Subject user, Integer resourceId);
+    List<Integer> deleteResource(Subject user, int resourceId);
 
     /**
      * Deletes the given resource (but not its children) in a new transaction. This is normally used only within this
-     * manager bean itself. Clients normally should call {@link #deleteResource(Subject, Integer)}. If you call this
+     * manager bean itself. Clients normally should call {@link #deleteResource(Subject, int)}. If you call this
      * method, make sure you have a specific reason for it; check to see if calling
-     * {@link #deleteResource(Subject, Integer)} would not be more appropriate.
+     * {@link #deleteResource(Subject, int)} would not be more appropriate.
      *
      * @param user     the user deleting the resource
      * @param resource the resource to be deleted
@@ -178,8 +178,8 @@ public interface ResourceManagerLocal {
      * @return the resource, or null if no such resource exists
      */
     @Nullable
-    Resource getResourceByParentAndKey(Subject user, @Nullable
-    Resource parent, String key, String plugin, String typeName);
+    Resource getResourceByParentAndKey(Subject user, @Nullable Resource parent, String key, String plugin,
+        String typeName);
 
     PageList<Resource> getResourceByParentAndInventoryStatus(Subject user, Resource parent, InventoryStatus status,
         PageControl pageControl);
@@ -217,7 +217,7 @@ public interface ResourceManagerLocal {
     // TODO GH: This would be more useful if it used a groupby to return a map of categories to their size
     int getResourceCountByCategory(Subject user, ResourceCategory category, InventoryStatus status);
 
-    int getResourceCountByTypeAndIds(Subject user, ResourceType type, Integer[] resourceIds);
+    int getResourceCountByTypeAndIds(Subject user, ResourceType type, int[] resourceIds);
 
     List<Integer> getResourcesMarkedForAsyncDeletion(Subject user);
 
@@ -245,9 +245,7 @@ public interface ResourceManagerLocal {
 
     List<Integer> getExplicitResourceIdsByResourceGroup(int resourceGroupId);
 
-    List<ResourceIdFlyWeight> getFlyWeights(Integer[] resourceIds);
-
-    List<ResourceIdFlyWeight> getChildrenFlyWeights(Integer parentResourceId, InventoryStatus status);
+    List<ResourceIdFlyWeight> getFlyWeights(int[] resourceIds);
 
     /**
      * @throws ResourceGroupNotFoundException if the specified {@link ResourceGroup} does not exist
@@ -275,15 +273,15 @@ public interface ResourceManagerLocal {
      * @throws ResourceGroupNotFoundException if no {@link ResourceGroup} exists with the specified id
      */
     PageList<Resource> getAvailableResourcesForResourceGroup(Subject user, int groupId, ResourceType type,
-        ResourceCategory category, String nameFilter, Integer[] excludeIds, PageControl pageControl);
+        ResourceCategory category, String nameFilter, int[] excludeIds, PageControl pageControl);
 
-    PageList<Resource> getAvailableResourcesForChannel(Subject user, Integer channelId, String search,
+    PageList<Resource> getAvailableResourcesForChannel(Subject user, int channelId, String search,
         ResourceCategory category, PageControl pageControl);
 
     PageList<Resource> getAvailableResourcesForDashboardPortlet(Subject user, Integer typeId,
-        ResourceCategory category, Integer[] excludeIds, PageControl pageControl);
+        ResourceCategory category, int[] excludeIds, PageControl pageControl);
 
-    PageList<Resource> getResourceByIds(Subject subject, Integer[] resourceIds, boolean attachParentResource,
+    PageList<Resource> getResourceByIds(Subject subject, int[] resourceIds, boolean attachParentResource,
         PageControl pageControl);
 
     /**
@@ -335,7 +333,7 @@ public interface ResourceManagerLocal {
 
     List<AutoGroupComposite> getChildrenAutoGroups(Subject user, int parentResourceId);
 
-    List<AutoGroupComposite> getChildrenAutoGroups(Subject user, int parentResourceId, Integer[] resourceTypeIds);
+    List<AutoGroupComposite> getChildrenAutoGroups(Subject user, int parentResourceId, int[] resourceTypeIds);
 
     AutoGroupComposite getResourceAutoGroup(Subject user, int resourceId);
 
@@ -359,9 +357,9 @@ public interface ResourceManagerLocal {
      *
      * @return the health information on the resources
      */
-    PageList<ResourceHealthComposite> getResourceHealth(Subject user, Integer[] resourceIds, PageControl pc);
+    PageList<ResourceHealthComposite> getResourceHealth(Subject user, int[] resourceIds, PageControl pc);
 
-    public List<AutoGroupComposite> getResourcesAutoGroups(Subject subject, List<Integer> resourceIds);
+    public List<AutoGroupComposite> getResourcesAutoGroups(Subject subject, int[] resourceIds);
 
     /**
      * Clears errors of type {@link ResourceErrorType}.INVALID_PLUGIN_CONFIGURATION
@@ -420,14 +418,14 @@ public interface ResourceManagerLocal {
     /**
      * Returns the Resource with the specified id.
      *
-     * @param  sessionSubject The logged in user's subject.
+     * @param  subject The logged in user's subject.
      * @param  resourceId the id of a {@link Resource} in inventory.
      *
      * @return the resource
      * @throws FetchException on any issue. Wraps ResourceNotFoundException when necessary.
      */
     Resource getResource( //
-        Subject sessionSubject, //
+        Subject subject, //
         int resourceId) throws FetchException;
 
     /**
@@ -436,20 +434,20 @@ public interface ResourceManagerLocal {
      * (i.e. a platform)) and the last item being the Resource itself. Since the lineage includes the Resource itself,
      * the returned List will always contain at least one item.
      *
-     * @param  sessionSubject The logged in user's subject.
+     * @param  subject The logged in user's subject.
      * @param  resourceId the id of a {@link Resource} in inventory
      *
      * @return the lineage of the Resource with the specified id
      * @throws FetchException on any issue. Wraps ResourceNotFoundException when necessary. 
      */
     List<Resource> getResourceLineage( //
-        Subject sessionSubject, //
+        Subject subject, //
         int resourceId) throws FetchException;
 
     /**
      * This find service can be used to find resources based on various criteria and return various data.
      *
-     * @param sessionSubject The logged in user's subject.
+     * @param subject The logged in user's subject.
      * @param criteria {@link Resource}, can be null
      * <pre>
      * If provided the Resource object can specify various search criteria as specified below.
@@ -478,7 +476,7 @@ public interface ResourceManagerLocal {
      * @throws FetchException
      */
     PageList<Resource> findResources( //
-        Subject sessionSubject, //
+        Subject subject, //
         Resource criteria, //
         PageControl pc) throws FetchException;
 
@@ -486,7 +484,7 @@ public interface ResourceManagerLocal {
      * This find service can be used to find child resources for the specified resource,
      * based on various criteria and return various data.
      *
-     * @param sessionSubject The logged in user's subject.
+     * @param subject The logged in user's subject.
      * @param  resourceId the id of a {@link Resource} in inventory. 
      * @param criteria {@link Resource}, can be null
      * <pre>
@@ -516,7 +514,7 @@ public interface ResourceManagerLocal {
      * @throws FetchException
      */
     PageList<Resource> findResourceChildren( //
-        Subject sessionSubject, //
+        Subject subject, //
         int resourceId, //
         Resource criteria, //
         PageControl pc) throws FetchException;
@@ -526,12 +524,12 @@ public interface ResourceManagerLocal {
      * each specified resource all children will also be removed, it it not necessary or recommended to
      * specify more than one resource in the same ancestry line.
      * 
-     * @param sessionSubject The logged in user's subject.
+     * @param subject The logged in user's subject.
      * @param resourceIds The resources to uninventory.
      * @throws DeleteException
      */
     void uninventoryResources( //
-        Subject sessionSubject, //
+        Subject subject, //
         int[] resourceIds) throws DeleteException;
 
 }

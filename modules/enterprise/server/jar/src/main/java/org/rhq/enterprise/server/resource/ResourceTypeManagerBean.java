@@ -49,6 +49,7 @@ import org.rhq.core.domain.resource.composite.ResourceFacets;
 import org.rhq.core.domain.resource.composite.ResourceTypeTemplateCountComposite;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 
@@ -333,7 +334,7 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal {
         throws ResourceTypeNotFoundException {
         Set<Integer> uniqueIds = new HashSet<Integer>();
         uniqueIds.addAll(Arrays.asList(resourceIds));
-        Integer[] ids = uniqueIds.toArray(new Integer[0]);
+        int[] ids = ArrayUtils.unwrapCollection(uniqueIds);
         ResourceType type = this.getResourceTypeById(subject, resourceTypeId);
         int count = resourceManager.getResourceCountByTypeAndIds(subject, type, ids);
         return (count == ids.length);

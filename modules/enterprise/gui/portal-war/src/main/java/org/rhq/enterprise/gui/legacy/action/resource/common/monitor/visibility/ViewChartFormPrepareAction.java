@@ -263,7 +263,7 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
 
             int length = r.length;
             resources = new ArrayList<List<Resource>>(2);
-            Integer[] resIds = new Integer[length];
+            int[] resIds = new int[length];
             for (int i = 0; i < length; i++) {
                 resIds[i] = Integer.parseInt(r[i]);
             }

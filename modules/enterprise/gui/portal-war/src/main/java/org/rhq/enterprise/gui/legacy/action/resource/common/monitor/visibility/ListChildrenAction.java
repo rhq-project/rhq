@@ -252,10 +252,11 @@ public class ListChildrenAction extends TilesAction {
             List<ResourceWithAvailability> resourcesForAutoGroup = resourceManager.getResourcesByParentAndType(subject,
                 parentResource, resourceType);
 
-            List<Integer> resourceIds = new ArrayList<Integer>();
+            int i = 0;
+            int[] resourceIds = new int[resourcesForAutoGroup.size()];
             for (ResourceWithAvailability resourceInAutoGroup : resourcesForAutoGroup) {
                 int id = resourceInAutoGroup.getResource().getId();
-                resourceIds.add(id);
+                resourceIds[i++] = id;
             }
 
             // And then the composite to return

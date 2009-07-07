@@ -58,13 +58,13 @@ public abstract class WebUtility {
         return resourceId;
     }
 
-    public static Integer[] getResourceIds(ServletRequest request) {
+    public static int[] getResourceIds(ServletRequest request) {
         String[] resourceIdStrings = request.getParameterValues(ParamConstants.RESOURCE_ID_PARAM);
-        Integer[] ids;
+        int[] ids;
         if (resourceIdStrings == null) {
-            ids = new Integer[0];
+            ids = new int[0];
         } else {
-            ids = new Integer[resourceIdStrings.length];
+            ids = new int[resourceIdStrings.length];
             for (int i = 0; i < resourceIdStrings.length; i++) {
                 ids[i] = Integer.parseInt(resourceIdStrings[i]);
             }

@@ -73,7 +73,7 @@ public abstract class MetricsDisplayFormPrepareAction extends MetricsControlForm
         displayForm.setShowMetricSource(getShowMetricSource());
         WebUser user = SessionUtils.getWebUser(request.getSession());
 
-        Integer[] resourceIds;
+        int[] resourceIds;
         groupId = WebUtility.getOptionalIntRequestParameter(request, ParamConstants.GROUP_ID_PARAM, -1);
         if (groupId > 0) {
             ResourceGroupManagerLocal resGrpMgr = LookupUtil.getResourceGroupManager();
@@ -86,7 +86,7 @@ public abstract class MetricsDisplayFormPrepareAction extends MetricsControlForm
                 request.setAttribute(AttrConstants.RESOURCE_TYPE_ATTR, resourceType);
             }
 
-            resourceIds = new Integer[resources.size()];
+            resourceIds = new int[resources.size()];
             int i = 0;
             for (Resource res : resources) {
                 resourceIds[i] = res.getId();
@@ -202,7 +202,7 @@ public abstract class MetricsDisplayFormPrepareAction extends MetricsControlForm
      *
      * @return Map keyed on the category (String), values are List's of MetricDisplaySummary beans
      */
-    protected abstract List<MetricDisplaySummary> getMetrics(HttpServletRequest request, Integer[] resourceIds,
+    protected abstract List<MetricDisplaySummary> getMetrics(HttpServletRequest request, int[] resourceIds,
         long filters, String keyword, Long begin, Long end) throws Exception;
 
     private void prepareForm(HttpServletRequest request, MetricsDisplayForm form) throws IllegalArgumentException {

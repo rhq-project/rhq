@@ -1196,7 +1196,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
 
         // first get all the resources, which is needed to get the agent mappings
         Subject overlord = subjectManager.getOverlord();
-        Integer[] resourceIdArray = resourceIds.toArray(new Integer[resourceIds.size()]);
+        int[] resourceIdArray = ArrayUtils.unwrapCollection(resourceIds);
         PageList<Resource> resources = resourceManager.getResourceByIds(overlord, resourceIdArray, false, PageControl
             .getUnlimitedInstance());
 

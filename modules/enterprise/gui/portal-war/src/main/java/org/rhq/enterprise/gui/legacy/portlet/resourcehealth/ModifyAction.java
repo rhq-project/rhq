@@ -18,8 +18,6 @@
  */
 package org.rhq.enterprise.gui.legacy.portlet.resourcehealth;
 
-import java.util.Arrays;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -27,6 +25,7 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
+import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.RetCodeConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
@@ -58,9 +57,9 @@ public class ModifyAction extends BaseAction {
         } else if (pForm.isOkClicked()) {
             FavoriteResourcePortletPreferences favoriteResourcePreferences = preferences
                 .getFavoriteResourcePortletPreferences();
-            Integer[] savedResourceIds = favoriteResourcePreferences.asArray();
+            int[] savedResourceIds = favoriteResourcePreferences.asArray();
             favoriteResourcePreferences = pForm.getFavoriteResourcePortletPreferences();
-            favoriteResourcePreferences.setFavorites(Arrays.asList(savedResourceIds));
+            favoriteResourcePreferences.setFavorites(ArrayUtils.wrapInList(savedResourceIds));
             preferences.setFavoriteResourcePortletPreferences(favoriteResourcePreferences);
         }
 

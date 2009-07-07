@@ -20,8 +20,10 @@ package org.rhq.enterprise.gui.legacy.action.resource.hub;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionErrors;
@@ -30,7 +32,9 @@ import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.action.ActionMessage;
 import org.apache.struts.action.ActionMessages;
+
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
@@ -64,8 +68,8 @@ public class RemoveResourceAction extends BaseAction {
 
         // ask the server to delete the doomed resources
         ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
-        List<Integer> deletedResourceIds = resourceManager.deleteResources(subject, doomedResourceIds
-            .toArray(new Integer[0]));
+        List<Integer> deletedResourceIds = resourceManager.deleteResources(subject, ArrayUtils
+            .unwrapCollection(doomedResourceIds));
 
         // a doomed resource is one that we asked to be deleted.
         // a deleted resource is one that was actually deleted.

@@ -19,6 +19,8 @@
 package org.rhq.core.util.collection;
 
 import java.lang.reflect.Array;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -39,7 +41,7 @@ public class ArrayUtils {
         return copy;
     }
 
-    public static int[] unwrapList(List<Integer> input) {
+    public static int[] unwrapCollection(Collection<Integer> input) {
         if (input == null) {
             return null;
         }
@@ -58,7 +60,7 @@ public class ArrayUtils {
         return output;
     }
 
-    public static Integer[] wrapArray(int[] input) {
+    public static Integer[] wrapInArray(int[] input) {
         if (input == null) {
             return null;
         }
@@ -67,6 +69,14 @@ public class ArrayUtils {
             output[i] = input[i];
         }
         return output;
+    }
+
+    public static List<Integer> wrapInList(int[] input) {
+        if (input == null) {
+            return null;
+        }
+        Integer[] intermediate = wrapInArray(input);
+        return Arrays.asList(intermediate);
     }
 
 }

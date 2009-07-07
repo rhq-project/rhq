@@ -123,15 +123,17 @@ public class QueryGenerator {
         }
 
         // critieria
-        Map<String, Object> critFields = getEntityPersistenceFields(criteriaObject);
+        boolean firstCrit = true;
         if (authorizationJoinFragment != null) {
-            critFields.put("authSubjectId", authorizationSubjectId);
+            results.append("WHERE authSubject.id = " + authorizationSubjectId + " ");
+            firstCrit = false;
         }
 
-        if (critFields.size() > 0) {
+        Map<String, Object> critFields = getEntityPersistenceFields(criteriaObject);
+        if (critFields.size() > 0 && firstCrit) {
             results.append("WHERE ");
         }
-        boolean firstCrit = true;
+
         for (Map.Entry<String, Object> critField : critFields.entrySet()) {
             if (firstCrit) {
                 firstCrit = false;

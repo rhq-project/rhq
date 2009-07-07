@@ -64,7 +64,8 @@ import org.rhq.core.domain.util.serial.HibernateUtil;
 public class PropertyMap extends Property implements AbstractPropertyMap {
     private static final long serialVersionUID = 1L;
 
-    @Cascade( { CascadeType.ALL, CascadeType.DELETE_ORPHAN })
+    // CascadeType.REMOVE has been omitted, the cascade delete has been moved to the data model for performance 
+    @Cascade( { CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.DELETE_ORPHAN })
     @MapKey(name = "name")
     @OneToMany(mappedBy = "parentMap", fetch = FetchType.EAGER)
     private Map<String, Property> map;

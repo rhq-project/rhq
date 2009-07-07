@@ -82,8 +82,8 @@
         <column name="DTYPE" type="VARCHAR2" required="true" size="10"/>
         <!-- Recursive cascade path to RHQ_CONFIG_PROPERTY causes constraint creation errors on SQL Server, see
              http://support.microsoft.com/kb/321843 -->
-        <column name="PARENT_LIST_ID" type="INTEGER" required="false" references="RHQ_CONFIG_PROPERTY" />
-        <column name="PARENT_MAP_ID" type="INTEGER" required="false" references="RHQ_CONFIG_PROPERTY" />
+        <column name="PARENT_LIST_ID" type="INTEGER" required="false" references="RHQ_CONFIG_PROPERTY" ondelete="cascade" />
+        <column name="PARENT_MAP_ID" type="INTEGER" required="false" references="RHQ_CONFIG_PROPERTY" ondelete="cascade" />
         <column name="LIST_INDEX" type="INTEGER"/>
         <column name="ERROR_MESSAGE" type="LONGVARCHAR" required="false"/>
         <index name="RHQ_CONFIG_PROP_idx_prop_key" unique="false">

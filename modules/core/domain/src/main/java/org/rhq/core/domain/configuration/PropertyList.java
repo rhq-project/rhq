@@ -64,7 +64,8 @@ import org.rhq.core.domain.util.serial.HibernateUtil;
 public class PropertyList extends Property {
     private static final long serialVersionUID = 1L;
 
-    @Cascade(value = { CascadeType.ALL, CascadeType.DELETE_ORPHAN })
+    // CascadeType.REMOVE has been omitted, the cascade delete has been moved to the data model for performance 
+    @Cascade( { CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.DELETE_ORPHAN })
     @OneToMany(mappedBy = "parentList", targetEntity = Property.class, fetch = FetchType.EAGER)
     //@IndexColumn(name = "list_index")  TODO GH: This seems broken
     private List<Property> list;

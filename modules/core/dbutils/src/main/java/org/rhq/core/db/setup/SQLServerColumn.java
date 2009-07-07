@@ -48,13 +48,15 @@ class SQLServerColumn extends Column {
     }
 
     /* 
-     * Dual cascade path to RHQ_CONFIG_PROPERTY causes constraint creation errors on SQL Server, see
+     * Recursive cascade path to RHQ_CONFIG_PROPERTY causes constraint creation errors on SQL Server, see
      *    http://support.microsoft.com/kb/321843
      *
-     * So, for now, just prevent creation of all on delete cascade rules 
+     * So, prevent creation of recursive cascades, which will require more code in the SLSBs to handle logic properly 
      */
     protected String getOnDelete() {
-        //return null;
+        if (m_strTableName.equalsIgnoreCase(getReferences())) {
+            return null;
+        }
         return super.getOnDelete();
     }
 

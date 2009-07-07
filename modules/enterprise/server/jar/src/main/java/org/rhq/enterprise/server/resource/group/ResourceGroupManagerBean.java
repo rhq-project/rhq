@@ -802,6 +802,27 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
 
     /* (non-Javadoc)
      * @see
+     * org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal#findResourcesForAutoGroup(org.jboss.on.domain.auth.Subject,
+     * int)
+     */
+    @SuppressWarnings("unchecked")
+    public List<Resource> findResourcesForAutoGroup(Subject subject, int autoGroupParentResourceId) {
+        List<Resource> resources;
+        try {
+            Query q = entityManager.createNamedQuery(Resource.QUERY_FIND_FOR_AUTOGROUP_WITHOUT_TYPE);
+            q.setParameter("parent", autoGroupParentResourceId);
+            q.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
+            //         q.setParameter("subject", subject);
+            resources = q.getResultList();
+        } catch (PersistenceException pe) {
+            return new ArrayList<Resource>();
+        }
+
+        return resources;
+    }
+
+    /* (non-Javadoc)
+     * @see
      * org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal#findResourcesForResourceGroup(org.jboss.on.domain.auth.Subject,
      * int)
      */

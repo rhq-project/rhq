@@ -68,6 +68,8 @@ public interface ResourceGroupManagerLocal {
     List<Resource> findResourcesForAutoGroup(Subject subject, int autoGroupParentResourceId,
         int autoGroupChildResourceTypeId);
 
+    List<Resource> findResourcesForAutoGroup(Subject subject, int autoGroupParentResourceId);
+
     List<Resource> findResourcesForResourceGroup(Subject subject, int groupId, GroupCategory category);
 
     /**

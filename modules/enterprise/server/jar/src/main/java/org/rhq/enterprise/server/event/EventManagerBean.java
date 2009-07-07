@@ -69,6 +69,7 @@ import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
+import org.rhq.enterprise.server.exception.FetchException;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 
@@ -79,7 +80,7 @@ import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
  */
 @Stateless
 @javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
-public class EventManagerBean implements EventManagerLocal {
+public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
 
     // NOTE: We need to do the fancy subselects to figure out the event def id, because the PC does not know the id's of
     //       metadata objects such as EventDefinition (ips, 02/20/08).
@@ -326,7 +327,8 @@ public class EventManagerBean implements EventManagerLocal {
         return buckets;
     }
 
-    public EventSeverity[] getSeverityBuckets(Subject subject, int resourceId, long begin, long end, int numBuckets) {
+    public EventSeverity[] getSeverityBuckets(Subject subject, int resourceId, long begin, long end, int numBuckets)
+        throws FetchException {
         try {
             Resource res = entityManager.find(Resource.class, resourceId);
             List<Resource> resources = new ArrayList<Resource>(1);
@@ -346,7 +348,7 @@ public class EventManagerBean implements EventManagerLocal {
     }
 
     public EventSeverity[] getSeverityBucketsForCompGroup(Subject subject, int groupId, long begin, long end,
-        int numBuckets) {
+        int numBuckets) throws FetchException {
 
         List<Resource> resources = resGrpMgr.findResourcesForResourceGroup(subject, groupId, GroupCategory.COMPATIBLE);
         return getSeverityBucketsForResources(subject, resources, begin, end, numBuckets);
@@ -628,6 +630,55 @@ public class EventManagerBean implements EventManagerLocal {
             results.put(severity, (int) count);
         }
         return results;
+    }
+
+    //Especially added for remote interface
+    public PageList<EventComposite> getEventsForResource(Subject subject, int resourceId, long startDate, long endDate,
+        EventSeverity severity, String source, String detail, PageControl pc) throws FetchException {
+
+        EventSeverity[] severities = { severity };
+        PageList<EventComposite> comp = getEvents(subject, new int[] { resourceId }, startDate, endDate, severities,
+            source, detail, pc);
+        return comp;
+    }
+
+    public PageList<EventComposite> getEventsForCompGroup(Subject subject, int groupId, long begin, long endDate,
+        EventSeverity severity, int eventId, String source, String searchString, PageControl pc) throws FetchException {
+
+        EventSeverity[] severities = { severity };
+
+        return getEventsForCompGroup(subject, groupId, begin, endDate, severities, eventId, source, searchString, pc);
+    }
+
+    //TODO: This is impossible currently to implement, Query generator does not support 'in between'
+    /*
+    public PageList<EventComposite> findEvents(Subject subject, long begin, long end, Event criteria, PageControl pc)
+        throws FetchException {
+        
+        return null;
+    }
+    */
+
+    public EventSeverity[] getSeverityBucketsForAutoGroup(Subject subject, int parentId, long begin, long end,
+        int numBuckets) throws FetchException {
+
+        List<Resource> resources = resGrpMgr.findResourcesForAutoGroup(subject, parentId);
+        return getSeverityBucketsForResources(subject, resources, begin, end, numBuckets);
+    }
+
+    public PageList<EventComposite> getEventsForAutoGroup(Subject subject, int groupId, long begin, long end,
+        EventSeverity severity, int parentId, String source, String detail, PageControl pc) throws FetchException {
+
+        List<Resource> resources = resGrpMgr.findResourcesForAutoGroup(subject, parentId);
+        int[] resourceIds = new int[resources.size()];
+        int i = 0;
+        for (Resource res : resources)
+            resourceIds[i++] = res.getId();
+
+        EventSeverity[] severities = { severity };
+
+        PageList<EventComposite> comp = getEvents(subject, resourceIds, begin, end, severities, null, null, pc);
+        return comp;
     }
 
 }

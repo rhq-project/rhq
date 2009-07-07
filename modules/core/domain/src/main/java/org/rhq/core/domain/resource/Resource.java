@@ -158,6 +158,11 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + " WHERE res.parentResource.id = :parent " //
         + "   AND res.resourceType.id = :type " //
         + "   AND res.inventoryStatus = :inventoryStatus "),
+    @NamedQuery(name = Resource.QUERY_FIND_FOR_AUTOGROUP_WITHOUT_TYPE, query = "" //
+        + "SELECT res " //
+        + "  FROM Resource res " //
+        + " WHERE res.parentResource.id = :parent " //
+        + "   AND res.inventoryStatus = :inventoryStatus "),
     @NamedQuery(name = Resource.QUERY_FIND_BY_PARENT_AND_INVENTORY_STATUS, query = "" //
         + "SELECT res "
         + "  FROM Resource res " //
@@ -713,6 +718,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
     public static final String QUERY_FIND_BY_PARENT_AND_TYPE = "Resource.findByParentAndType";
     public static final String QUERY_FIND_BY_PARENT_AND_TYPE_ADMIN = "Resource.findByParentAndType_admin";
     public static final String QUERY_FIND_FOR_AUTOGROUP = "Resource.findForAutogroup";
+    public static final String QUERY_FIND_FOR_AUTOGROUP_WITHOUT_TYPE = "Resource.findForAutogroupWithoutType";
 
     public static final String QUERY_FIND_BY_PARENT_AND_INVENTORY_STATUS = "Resource.findByParentAndInventoryStatus";
     public static final String QUERY_FIND_BY_PARENT_AND_INVENTORY_STATUS_ADMIN = "Resource.findByParentAndInventoryStatus_admin";

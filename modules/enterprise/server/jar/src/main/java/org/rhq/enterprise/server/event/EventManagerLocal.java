@@ -36,6 +36,7 @@ import org.rhq.core.domain.event.composite.EventComposite;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.exception.FetchException;
 
 /**
  * Interface for the Event Manager
@@ -113,29 +114,6 @@ public interface EventManagerLocal {
     /**
      * Provide the buckets for a timeline with the (most severe) severity for each bucket.
      * @param subject    Subject of the caller
-     * @param resourceId Id of the resource for which we want to know the data
-     * @param begin      Begin date
-     * @param end        End date
-     * @param numBuckets Number of buckets to distribute into.
-     * @return
-     */
-    public EventSeverity[] getSeverityBuckets(Subject subject, int resourceId, long begin, long end, int numBuckets);
-
-    /**
-     * Provide the buckets for a timeline with the (most severe) severity for each bucket.
-     * @param subject    Subject of the caller
-     * @param groupId    Id of the compatible group for which we want to know the data
-     * @param begin      Begin date
-     * @param end        End date
-     * @param numBuckets Number of buckets to distribute into.
-     * @return
-     */
-    public EventSeverity[] getSeverityBucketsForCompGroup(Subject subject, int groupId, long begin, long end,
-        int numBuckets);
-
-    /**
-     * Provide the buckets for a timeline with the (most severe) severity for each bucket.
-     * @param subject    Subject of the caller
      * @param parentId   Id of the parent of the autogroup for which we want to know the data
      * @param type       Id of the children type of the autogroup
      * @param begin      Begin date
@@ -179,4 +157,47 @@ public interface EventManagerLocal {
 
     public int getEventDefinitionCountForResourceType(int resourceTypeId);
 
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    //
+    // The following are shared with the Remote Interface
+    //
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    public PageList<EventComposite> getEventsForResource(Subject subject, int resourceId, long startDate, long endDate,
+        EventSeverity severity, String source, String detail, PageControl pc) throws FetchException;
+
+    public PageList<EventComposite> getEventsForAutoGroup(Subject subject, int groupId, long begin, long end,
+        EventSeverity severity, int parentId, String source, String detail, PageControl pc) throws FetchException;
+
+    public PageList<EventComposite> getEventsForCompGroup(Subject subject, int groupId, long begin, long endDate,
+        EventSeverity severity, int eventId, String source, String searchString, PageControl pc) throws FetchException;
+
+    /**
+     * Provide the buckets for a timeline with the (most severe) severity for each bucket.
+     * @param subject    Subject of the caller
+     * @param resourceId Id of the resource for which we want to know the data
+     * @param begin      Begin date
+     * @param end        End date
+     * @param numBuckets Number of buckets to distribute into.
+     * @return
+     * @throws FetchException TODO
+     */
+    public EventSeverity[] getSeverityBuckets(Subject subject, int resourceId, long begin, long end, int numBuckets)
+        throws FetchException;
+
+    public EventSeverity[] getSeverityBucketsForAutoGroup(Subject subject, int parentId, long begin, long end,
+        int numBuckets) throws FetchException;
+
+    /**
+     * Provide the buckets for a timeline with the (most severe) severity for each bucket.
+     * @param subject    Subject of the caller
+     * @param groupId    Id of the compatible group for which we want to know the data
+     * @param begin      Begin date
+     * @param end        End date
+     * @param numBuckets Number of buckets to distribute into.
+     * @return
+     * @throws FetchException TODO
+     */
+    public EventSeverity[] getSeverityBucketsForCompGroup(Subject subject, int groupId, long begin, long end,
+        int numBuckets) throws FetchException;
 }

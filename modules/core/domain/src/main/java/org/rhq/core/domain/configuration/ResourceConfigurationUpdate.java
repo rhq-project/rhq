@@ -124,6 +124,14 @@ import org.rhq.core.domain.resource.Resource;
         + "      AND (cu.createdTime > :startTime OR :startTime IS NULL) " //
         + "      AND (cu.modifiedTime < :endTime OR :endTime IS NULL) " //
         + "      AND (cu.status LIKE :status OR :status IS NULL) "),
+    @NamedQuery(name = ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_0, query = "" //
+        + "UPDATE Property p " //
+        + "   SET p.parentMap = NULL, " //
+        + "       p.parentList = NULL " //
+        + " WHERE p.configuration IN ( SELECT rcu.configuration " //
+        + "                              FROM ResourceConfigurationUpdate rcu " //
+        + "                             WHERE rcu.resource.id IN ( :resourceIds ) " //
+        + "                           AND NOT rcu.configuration = rcu.resource.resourceConfiguration )"),
     @NamedQuery(name = ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_1, query = "" //
         + "DELETE FROM Configuration c " //
         + " WHERE c IN ( SELECT rcu.configuration " //
@@ -162,6 +170,7 @@ public class ResourceConfigurationUpdate extends AbstractResourceConfigurationUp
     public static final String QUERY_FIND_ALL_COMPOSITES_ADMIN = "ResourceConfigurationUpdate.findAllComposites_admin";
 
     // for efficient object cleanup/purge
+    public static final String QUERY_DELETE_BY_RESOURCES_0 = "ResourceConfigurationUpdate.deleteByResources0";
     public static final String QUERY_DELETE_BY_RESOURCES_1 = "ResourceConfigurationUpdate.deleteByResources1";
     public static final String QUERY_DELETE_BY_RESOURCES_2 = "ResourceConfigurationUpdate.deleteByResources2";
     public static final String QUERY_DELETE_UPDATE_AGGREGATE = "ResourceConfigurationUpdate.deleteUpdateAggregate";

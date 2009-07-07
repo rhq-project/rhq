@@ -146,8 +146,7 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
     @Id
     private int id;
 
-    // CascadeType.REMOVE has been omitted, the cascade delete has been moved to the data model for performance 
-    @Cascade( { CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.DELETE_ORPHAN })
+    @Cascade( { CascadeType.ALL, CascadeType.DELETE_ORPHAN })
     @MapKey(name = "name")
     @OneToMany(mappedBy = "configuration", fetch = FetchType.EAGER)
     @XmlTransient

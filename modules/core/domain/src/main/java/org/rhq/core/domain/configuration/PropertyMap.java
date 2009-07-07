@@ -64,8 +64,7 @@ import org.rhq.core.domain.util.serial.HibernateUtil;
 public class PropertyMap extends Property implements AbstractPropertyMap {
     private static final long serialVersionUID = 1L;
 
-    // CascadeType.REMOVE has been omitted, the cascade delete has been moved to the data model for performance
-    @Cascade( { CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.DELETE_ORPHAN })
+    @Cascade( { CascadeType.ALL, CascadeType.DELETE_ORPHAN })
     @MapKey(name = "name")
     @OneToMany(mappedBy = "parentMap", fetch = FetchType.EAGER)
     private Map<String, Property> map;
@@ -81,8 +80,7 @@ public class PropertyMap extends Property implements AbstractPropertyMap {
      *
      * @param name the name of the map itself
      */
-    public PropertyMap(@NotNull
-    String name) {
+    public PropertyMap(@NotNull String name) {
         setName(name);
     }
 
@@ -94,8 +92,7 @@ public class PropertyMap extends Property implements AbstractPropertyMap {
      * @param name               the name of the map itself
      * @param startingProperties a set of properties to be immediately added to this map
      */
-    public PropertyMap(@NotNull
-    String name, Property... startingProperties) {
+    public PropertyMap(@NotNull String name, Property... startingProperties) {
         this(name);
         for (Property property : startingProperties) {
             put(property);
@@ -140,8 +137,7 @@ public class PropertyMap extends Property implements AbstractPropertyMap {
      *
      * @param property the property to add to this map.
      */
-    public void put(@NotNull
-    Property property) {
+    public void put(@NotNull Property property) {
         getMap().put(property.getName(), property);
         property.setParentMap(this);
     }

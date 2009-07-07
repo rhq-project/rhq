@@ -80,7 +80,7 @@
         <column name="OVERRIDE" type="BOOLEAN" required="false"/>
         <column name="NAME" type="VARCHAR2" required="true" size="100"/>
         <column name="DTYPE" type="VARCHAR2" required="true" size="10"/>
-        <!-- Dual cascade path to RHQ_CONFIG_PROPERTY causes constraint creation errors on SQL Server, see
+        <!-- Recursive cascade path to RHQ_CONFIG_PROPERTY causes constraint creation errors on SQL Server, see
              http://support.microsoft.com/kb/321843 -->
         <column name="PARENT_LIST_ID" type="INTEGER" required="false" references="RHQ_CONFIG_PROPERTY" />
         <column name="PARENT_MAP_ID" type="INTEGER" required="false" references="RHQ_CONFIG_PROPERTY" />

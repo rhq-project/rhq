@@ -64,8 +64,7 @@ import org.rhq.core.domain.util.serial.HibernateUtil;
 public class PropertyList extends Property {
     private static final long serialVersionUID = 1L;
 
-    // CascadeType.REMOVE has been omitted, the cascade delete has been moved to the data model for performance
-    @Cascade(value = { CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.DELETE_ORPHAN })
+    @Cascade(value = { CascadeType.ALL, CascadeType.DELETE_ORPHAN })
     @OneToMany(mappedBy = "parentList", targetEntity = Property.class, fetch = FetchType.EAGER)
     //@IndexColumn(name = "list_index")  TODO GH: This seems broken
     private List<Property> list;
@@ -82,8 +81,7 @@ public class PropertyList extends Property {
      *
      * @param name the name of the list itself
      */
-    public PropertyList(@NotNull
-    String name) {
+    public PropertyList(@NotNull String name) {
         setName(name);
     }
 
@@ -95,9 +93,7 @@ public class PropertyList extends Property {
      * @param name         the name of the list itself
      * @param startingList a list of properties to be immediately added to this list
      */
-    public PropertyList(@NotNull
-    String name, @NotNull
-    Property... startingList) {
+    public PropertyList(@NotNull String name, @NotNull Property... startingList) {
         this(name);
         for (Property property : startingList) {
             add(property);
@@ -145,8 +141,7 @@ public class PropertyList extends Property {
      *
      * @param property the property to add to this list
      */
-    public void add(@NotNull
-    Property property) {
+    public void add(@NotNull Property property) {
         if (this.memberPropertyName == null) {
             this.memberPropertyName = property.getName();
         }

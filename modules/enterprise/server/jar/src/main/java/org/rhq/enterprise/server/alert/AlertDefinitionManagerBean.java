@@ -47,18 +47,20 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.domain.util.QueryGenerator;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.engine.AlertDefinitionEvent;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.cloud.StatusManagerLocal;
+import org.rhq.enterprise.server.exception.FetchException;
 
 /**
  * @author Joseph Marques
  */
 
 @Stateless
-public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
+public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, AlertDefinitionManagerRemote {
 
     private static final Log LOG = LogFactory.getLog(AlertDefinitionManagerBean.class);
 
@@ -105,7 +107,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<AlertDefinition> getAlertDefinitions(Subject user, int resourceId, PageControl pageControl) {
+    public PageList<AlertDefinition> getAlertDefinitions(Subject subject, int resourceId, PageControl pageControl) {
         pageControl.initDefaultOrderingField("ctime", PageOrdering.DESC);
 
         Query queryCount = PersistenceUtility.createCountQuery(entityManager, AlertDefinition.QUERY_FIND_BY_RESOURCE);
@@ -121,7 +123,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
         return new PageList<AlertDefinition>(list, (int) totalCount, pageControl);
     }
 
-    public AlertDefinition getAlertDefinitionById(Subject user, int alertDefinitionId) {
+    public AlertDefinition getAlertDefinitionById(Subject subject, int alertDefinitionId) {
         //LOG.debug("AlertDefinitionManager.getAlertDefinitionById(" + user + ", " + alertDefinitionId + ")");
         AlertDefinition alertDefinition = entityManager.find(AlertDefinition.class, alertDefinitionId);
         if (alertDefinition != null) {
@@ -142,7 +144,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
-    public List<IntegerOptionItem> getAlertDefinitionOptionItems(Subject user, int resourceId) {
+    public List<IntegerOptionItem> getAlertDefinitionOptionItems(Subject subject, int resourceId) {
         PageControl pageControl = PageControl.getUnlimitedInstance();
         pageControl.initDefaultOrderingField("ad.name", PageOrdering.ASC);
 
@@ -161,7 +163,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public int createAlertDefinition(Subject user, AlertDefinition alertDefinition, Integer resourceId)
+    public int createAlertDefinition(Subject subject, AlertDefinition alertDefinition, Integer resourceId)
         throws InvalidAlertDefinitionException {
         checkAlertDefinition(alertDefinition, resourceId);
 
@@ -176,13 +178,13 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
         }
 
         // after the resource is set up (in the case of non-templates), we can use the checkPermission on it
-        if (checkPermission(user, alertDefinition) == false) {
+        if (checkPermission(subject, alertDefinition) == false) {
             if (resourceId != null) {
-                throw new PermissionException("User [" + user.getName()
+                throw new PermissionException("User [" + subject.getName()
                     + "] does not have permission to create alert definitions" + "for resource ["
                     + alertDefinition.getResource() + "]");
             } else {
-                throw new PermissionException("User [" + user.getName()
+                throw new PermissionException("User [" + subject.getName()
                     + "] does not have permission to create alert templates");
             }
         }
@@ -206,7 +208,8 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
             // if this is a recovery alert
             if (alertDefinition.getRecoveryId() != 0) {
                 // only add to the cache if the to-be-recovered definition is disabled, and thus needs recovering
-                AlertDefinition toBeRecoveredDefinition = getAlertDefinitionById(user, alertDefinition.getRecoveryId());
+                AlertDefinition toBeRecoveredDefinition = getAlertDefinitionById(subject, alertDefinition
+                    .getRecoveryId());
                 if (toBeRecoveredDefinition.getEnabled() == false) {
                     addToCache = true;
                 }
@@ -241,7 +244,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
         }
     }
 
-    public int removeAlertDefinitions(Subject user, Integer[] alertDefinitionIds) {
+    public int removeAlertDefinitions(Subject subject, Integer[] alertDefinitionIds) {
         int modifiedCount = 0;
         boolean isAlertTemplate = false;
 
@@ -249,7 +252,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
             AlertDefinition alertDefinition = entityManager.find(AlertDefinition.class, alertDefId);
 
             // TODO GH: Can be more efficient
-            if (checkPermission(user, alertDefinition)) {
+            if (checkPermission(subject, alertDefinition)) {
                 alertDefinition.setDeleted(true);
                 modifiedCount++;
 
@@ -267,13 +270,13 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
         return modifiedCount;
     }
 
-    public int enableAlertDefinitions(Subject user, Integer[] alertDefinitionIds) {
+    public int enableAlertDefinitions(Subject subject, Integer[] alertDefinitionIds) {
         int modifiedCount = 0;
         for (int alertDefId : alertDefinitionIds) {
             AlertDefinition alertDefinition = entityManager.find(AlertDefinition.class, alertDefId);
 
             // TODO GH: Can be more efficient
-            if (checkPermission(user, alertDefinition)) {
+            if (checkPermission(subject, alertDefinition)) {
                 // only enable an alert if it's not currently enabled
                 if (alertDefinition.getEnabled() == false) {
                     alertDefinition.setEnabled(true);
@@ -305,13 +308,13 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
         return (resultIds.size() == 1);
     }
 
-    public int disableAlertDefinitions(Subject user, Integer[] alertDefinitionIds) {
+    public int disableAlertDefinitions(Subject subject, Integer[] alertDefinitionIds) {
         int modifiedCount = 0;
         for (int alertDefId : alertDefinitionIds) {
             AlertDefinition alertDefinition = entityManager.find(AlertDefinition.class, alertDefId);
 
             // TODO GH: Can be more efficient
-            if (checkPermission(user, alertDefinition)) {
+            if (checkPermission(subject, alertDefinition)) {
                 // only disable an alert if it's currently enabled
                 if (alertDefinition.getEnabled() == true) {
                     alertDefinition.setEnabled(false);
@@ -327,12 +330,12 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
         return modifiedCount;
     }
 
-    public void copyAlertDefinitions(Subject user, Integer[] alertDefinitionIds) {
+    public void copyAlertDefinitions(Subject subject, Integer[] alertDefinitionIds) {
         for (int alertDefId : alertDefinitionIds) {
             AlertDefinition alertDefinition = entityManager.find(AlertDefinition.class, alertDefId);
 
             // TODO GH: Can be more efficient
-            if (checkPermission(user, alertDefinition)) {
+            if (checkPermission(subject, alertDefinition)) {
                 AlertDefinition newAlertDefinition = new AlertDefinition(alertDefinition);
                 newAlertDefinition.setEnabled(false);
 
@@ -350,9 +353,9 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
-    public List<AlertDefinition> getAllRecoveryDefinitionsById(Subject user, Integer alertDefinitionId) {
-        if (authorizationManager.isOverlord(user) == false) {
-            throw new PermissionException("User [" + user.getName() + "] does not have permission to call "
+    public List<AlertDefinition> getAllRecoveryDefinitionsById(Subject subject, Integer alertDefinitionId) {
+        if (authorizationManager.isOverlord(subject) == false) {
+            throw new PermissionException("User [" + subject.getName() + "] does not have permission to call "
                 + "getAllRecoveryDefinitionsById; only the overlord has that right");
         }
 
@@ -364,8 +367,9 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public AlertDefinition updateAlertDefinition(Subject user, int alertDefinitionId, AlertDefinition alertDefinition,
-        boolean purgeInternals) throws InvalidAlertDefinitionException, AlertDefinitionUpdateException {
+    public AlertDefinition updateAlertDefinition(Subject subject, int alertDefinitionId,
+        AlertDefinition alertDefinition, boolean purgeInternals) throws InvalidAlertDefinitionException,
+        AlertDefinitionUpdateException {
         if (purgeInternals) {
             purgeInternals(alertDefinitionId);
         }
@@ -374,11 +378,11 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
          * Method for catching ENABLE / DISABLE changes will use switch logic off of the delta instead of calling out to
          * the enable/disable functions
          */
-        AlertDefinition oldAlertDefinition = getAlertDefinitionById(user, alertDefinitionId);
+        AlertDefinition oldAlertDefinition = getAlertDefinitionById(subject, alertDefinitionId);
 
         boolean isAlertTemplate = (oldAlertDefinition.getResourceType() != null);
 
-        if (checkPermission(user, oldAlertDefinition) == false) {
+        if (checkPermission(subject, oldAlertDefinition) == false) {
             if (isAlertTemplate) {
                 throw new PermissionException("You do not have permission to modify this alert template");
             } else {
@@ -439,7 +443,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
             // if this was a recovery alert, or was recently turned into one
             if (newAlertDefinition.getRecoveryId() != 0) {
                 // only add to the cache if the to-be-recovered definition is disabled, and thus needs recovering
-                AlertDefinition toBeRecoveredDefinition = getAlertDefinitionById(user, newAlertDefinition
+                AlertDefinition toBeRecoveredDefinition = getAlertDefinitionById(subject, newAlertDefinition
                     .getRecoveryId());
                 if (toBeRecoveredDefinition.getEnabled() == false) {
                     addToCache = true;
@@ -554,5 +558,32 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
         }
 
         return removed;
+    }
+
+    public AlertDefinition getAlertDefinition(Subject subject, int alertDefinitionId) throws FetchException {
+        try {
+            return getAlertDefinitionById(subject, alertDefinitionId);
+        } catch (FetchException e) {
+            throw new FetchException(e);
+        }
+    }
+
+    public PageList<AlertDefinition> findAlertDefinitions(Subject subject, AlertDefinition criteria, PageControl pc)
+        throws FetchException {
+
+        try {
+            QueryGenerator generator = new QueryGenerator(criteria, pc);
+
+            Query query = generator.getQuery(entityManager);
+            Query countQuery = generator.getCountQuery(entityManager);
+
+            long count = (Long) countQuery.getSingleResult();
+            List<AlertDefinition> alertDefinitions = query.getResultList();
+
+            return new PageList<AlertDefinition>(alertDefinitions, (int) count, pc);
+        } catch (Exception e) {
+            throw new FetchException(e.getMessage());
+        }
+
     }
 }

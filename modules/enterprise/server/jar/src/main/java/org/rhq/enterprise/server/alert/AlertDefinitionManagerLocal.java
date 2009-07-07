@@ -27,6 +27,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.composite.IntegerOptionItem;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.exception.FetchException;
 
 /**
  * all methods that aren't getters appropriately update the contents of the AlertConditionCache
@@ -37,31 +38,42 @@ import org.rhq.core.domain.util.PageList;
 public interface AlertDefinitionManagerLocal {
     List<AlertDefinition> getAllAlertDefinitionsWithConditions(int agentId, Subject user);
 
-    PageList<AlertDefinition> getAlertDefinitions(Subject user, int resourceId, PageControl pageControl);
+    PageList<AlertDefinition> getAlertDefinitions(Subject subject, int resourceId, PageControl pageControl);
 
-    AlertDefinition getAlertDefinitionById(Subject user, int alertDefinitionId);
+    AlertDefinition getAlertDefinitionById(Subject subject, int alertDefinitionId);
 
-    List<IntegerOptionItem> getAlertDefinitionOptionItems(Subject user, int resourceId);
+    List<IntegerOptionItem> getAlertDefinitionOptionItems(Subject subject, int resourceId);
 
-    int createAlertDefinition(Subject user, AlertDefinition alertDefinition, Integer resourceId)
+    int createAlertDefinition(Subject subject, AlertDefinition alertDefinition, Integer resourceId)
         throws InvalidAlertDefinitionException;
 
-    int removeAlertDefinitions(Subject user, Integer[] alertDefinitionIds);
+    int removeAlertDefinitions(Subject subject, Integer[] alertDefinitionIds);
 
-    int enableAlertDefinitions(Subject user, Integer[] alertDefinitionIds);
+    int enableAlertDefinitions(Subject subject, Integer[] alertDefinitionIds);
 
     boolean isEnabled(Integer definitionId);
 
     boolean isTemplate(Integer definitionId);
 
-    int disableAlertDefinitions(Subject user, Integer[] alertDefinitionIds);
+    int disableAlertDefinitions(Subject subject, Integer[] alertDefinitionIds);
 
-    List<AlertDefinition> getAllRecoveryDefinitionsById(Subject user, Integer alertDefinitionId);
+    List<AlertDefinition> getAllRecoveryDefinitionsById(Subject subject, Integer alertDefinitionId);
 
-    void copyAlertDefinitions(Subject user, Integer[] alertDefinitionIds);
+    void copyAlertDefinitions(Subject subject, Integer[] alertDefinitionIds);
 
-    AlertDefinition updateAlertDefinition(Subject user, int alertDefinitionId, AlertDefinition alertDefinition,
+    AlertDefinition updateAlertDefinition(Subject subject, int alertDefinitionId, AlertDefinition alertDefinition,
         boolean updateInternals) throws InvalidAlertDefinitionException, AlertDefinitionUpdateException;
 
     int purgeUnusedAlertDefinition();
+
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    //
+    // The following are shared with the Remote Interface
+    //
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    AlertDefinition getAlertDefinition(Subject subject, int alertDefinitionId) throws FetchException;
+
+    PageList<AlertDefinition> findAlertDefinitions(Subject subject, AlertDefinition criteria, PageControl pc)
+        throws FetchException;
 }

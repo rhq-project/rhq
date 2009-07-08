@@ -38,7 +38,7 @@
                    2) Change the below property to "5.1.0-SNAPSHOT".
                    3) Uncomment the JBoss snapshot repo near the bottom of this POM.
         -->
-        <jbossas.version>5.1.0.GA</jbossas.version>
+        <jbossas.version>5.1.0-SNAPSHOT</jbossas.version>
     </properties>
 
     <dependencyManagement>
@@ -113,20 +113,17 @@
            so they can be referenced when running within Enterprise Jopr. -->
         <dependency>
           <groupId>org.jboss.integration</groupId>
-          <artifactId>jboss-profileservice-spi</artifactId>
-          <version>5.1.0.SP1</version>
+          <artifactId>jboss-profileservice-spi</artifactId>          
         </dependency>
 
         <dependency>
           <groupId>org.jboss.man</groupId>
-          <artifactId>jboss-managed</artifactId>
-          <version>2.1.1.CR1</version>
+          <artifactId>jboss-managed</artifactId>         
         </dependency>
 
         <dependency>
           <groupId>org.jboss.man</groupId>
-          <artifactId>jboss-metatype</artifactId>
-          <version>2.1.1.CR1</version>
+          <artifactId>jboss-metatype</artifactId>          
         </dependency>
 
         <!--======= client API jars (temporary) =======-->
@@ -150,7 +147,7 @@
         <dependency>
           <groupId>org.jboss.jbossas</groupId>
           <artifactId>jboss-as-aspects</artifactId>
-          <version>5.1.0.CR1</version>
+          <version>${jbossas.version}</version>
           <classifier>jboss-aspect-jdk50-client</classifier>
           <scope>runtime</scope>
         </dependency>
@@ -215,7 +212,7 @@
         <dependency>
           <groupId>org.jboss.jbossas</groupId>
           <artifactId>jboss-as-security</artifactId>
-          <version>5.1.0.CR1</version>
+          <version>${jbossas.version}</version>
           <classifier>client</classifier>
           <scope>runtime</scope>
         </dependency>
@@ -275,6 +272,14 @@
           <scope>runtime</scope>
         </dependency>
 
+        <dependency>
+          <groupId>org.jboss.jbossas</groupId>
+          <artifactId>jboss-as-profileservice</artifactId>
+          <classifier>client</classifier>
+          <scope>runtime</scope>
+          <version>${jbossas.version}</version>
+        </dependency>
+        
         <!-- The four below deps are needed by the non-EJB proxy but not by the EJB proxy. -->
         <dependency>
           <groupId>org.jboss.security</groupId>

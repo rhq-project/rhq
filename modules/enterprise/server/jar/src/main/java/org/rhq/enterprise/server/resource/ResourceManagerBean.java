@@ -46,7 +46,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.quartz.SchedulerException;
 
 import org.jboss.annotation.IgnoreDependency;
 
@@ -112,6 +111,7 @@ import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.exception.DeleteException;
 import org.rhq.enterprise.server.exception.FetchException;
+import org.rhq.enterprise.server.exception.UnscheduleException;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.operation.ResourceOperationSchedule;
@@ -458,7 +458,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                      * unschedule it here, except that the jobid will no longer be known
                      */
                     operationManager.unscheduleResourceOperation(overlord, schedule.getJobId().toString(), resourceId);
-                } catch (SchedulerException ise) {
+                } catch (UnscheduleException ise) {
                     log.warn("Failed to unschedule job [" + schedule + "] for a resource being deleted [" + resourceId
                         + "]", ise);
                 }

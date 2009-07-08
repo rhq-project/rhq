@@ -87,6 +87,7 @@ import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.exception.CreateException;
 import org.rhq.enterprise.server.exception.DeleteException;
 import org.rhq.enterprise.server.exception.FetchException;
+import org.rhq.enterprise.server.exception.UnscheduleException;
 import org.rhq.enterprise.server.exception.UpdateException;
 import org.rhq.enterprise.server.operation.GroupOperationSchedule;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
@@ -283,7 +284,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
                         try {
                             operationManager
                                 .unscheduleGroupOperation(overlord, schedule.getJobId().toString(), groupId);
-                        } catch (SchedulerException e) {
+                        } catch (UnscheduleException e) {
                             log.warn("Failed to unschedule job [" + schedule + "] for a group being deleted [" + group
                                 + "]", e);
                         }

@@ -31,7 +31,6 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.composite.IntegerOptionItem;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.operation.GroupOperationHistory;
-import org.rhq.core.domain.operation.HistoryJobId;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.OperationHistory;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
@@ -43,6 +42,11 @@ import org.rhq.core.domain.operation.composite.ResourceOperationScheduleComposit
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.exception.DeleteException;
+import org.rhq.enterprise.server.exception.FetchException;
+import org.rhq.enterprise.server.exception.ScheduleException;
+import org.rhq.enterprise.server.exception.UnscheduleException;
+import org.rhq.enterprise.server.exception.UpdateException;
 
 @Local
 public interface OperationManagerLocal {
@@ -51,7 +55,7 @@ public interface OperationManagerLocal {
     /**
      * Schedules an operation for execution on the given resource.
      *
-     * @param  whoami        the user who is asking to schedule the job
+     * @param  subject        the user who is asking to schedule the job
      * @param  resourceId    the resource that is the target of the operation
      * @param  operationName the actual operation to invoke
      * @param  parameters    optional parameters to pass into the operation
@@ -63,34 +67,13 @@ public interface OperationManagerLocal {
      *
      * @throws SchedulerException if failed to schedule the operation
      */
-    ResourceOperationSchedule scheduleResourceOperation(Subject whoami, int resourceId, String operationName,
+    ResourceOperationSchedule scheduleResourceOperation(Subject subject, int resourceId, String operationName,
         Configuration parameters, Trigger trigger, String description) throws SchedulerException;
-
-    /**
-     * Schedules an operation for execution on the given resource.
-     *
-     * @param  user           The logged in user's subject.
-     * @param  resourceId     the resource that is the target of the operation
-     * @param  operationName  the actual operation to invoke
-     * @param  delay          the number of milliseconds to delay this operation, 0 for immediate start.
-     * @param  repeatInterval the number of milliseconds after completion to repeat this operation. 0 for no repeat.
-     * @param  repeatCount    the number of times to repeat this operation. -1 infinite, 0 for no repeat. 
-     * @param  timeout        the number of seconds before this operation will fail due to timeout. 0 for no timeout.
-     * @param  parameters     the names parameters for the operation. 
-     * @param  description    user-entered description of the job to be scheduled
-     *
-     * @return the information on the new schedule
-     *
-     * @throws Exception if failed to schedule the operation
-     */
-    ResourceOperationSchedule scheduleResourceOperation(Subject user, int resourceId, String operationName, long delay,
-        long repeatInterval, int repeatCount, int timeout, Configuration parameters, String description)
-        throws Exception;
 
     /**
      * Schedules an operation for execution on members of the given group.
      *
-     * @param  whoami                    the user who is asking to schedule the job
+     * @param  subject                    the user who is asking to schedule the job
      * @param  groupId                   the group whose member resources are the target of the operation
      * @param  executionOrderResourceIds optional order of exection - if not<code>null</code>, these are group members
      *                                   resource IDs in the order in which the operations are invoked
@@ -110,31 +93,9 @@ public interface OperationManagerLocal {
      *
      * @throws SchedulerException if failed to schedule the operation
      */
-    GroupOperationSchedule scheduleGroupOperation(Subject whoami, int groupId, int[] executionOrderResourceIds,
+    GroupOperationSchedule scheduleGroupOperation(Subject subject, int groupId, int[] executionOrderResourceIds,
         boolean haltOnFailure, String operationName, Configuration parameters, Trigger trigger, String description)
         throws SchedulerException;
-
-    /**
-     * Unschedules the resource operation identified with the given job ID.
-     *
-     * @param  whoami     the user who is asking to unschedule the operation
-     * @param  jobId      identifies the operation to unschedule
-     * @param  resourceId the ID of the resource whose operation is getting unscheduled
-     *
-     * @throws SchedulerException
-     */
-    void unscheduleResourceOperation(Subject whoami, String jobId, int resourceId) throws SchedulerException;
-
-    /**
-     * Unschedules the group operation identified with the given job ID.
-     *
-     * @param  whoami          the user who is asking to unschedule the operation
-     * @param  jobId           identifies the operation to unschedule
-     * @param  resourceGroupId the ID of the group whose operation is getting unscheduled
-     *
-     * @throws SchedulerException
-     */
-    void unscheduleGroupOperation(Subject whoami, String jobId, int resourceGroupId) throws SchedulerException;
 
     /**
      * This will delete an operation schedule entity identified with the given job ID. Note that this does <b>not</b>
@@ -168,14 +129,14 @@ public interface OperationManagerLocal {
      * individual resource - it will not include schedules from groups, even if the resource is a member of a group that
      * has scheduled jobs.
      *
-     * @param  whoami
+     * @param  subject
      * @param  resourceId
      *
      * @return resource scheduled operations
      *
      * @throws SchedulerException
      */
-    List<ResourceOperationSchedule> getScheduledResourceOperations(Subject whoami, int resourceId)
+    List<ResourceOperationSchedule> getScheduledResourceOperations(Subject subject, int resourceId)
         throws SchedulerException;
 
     /**
@@ -183,14 +144,14 @@ public interface OperationManagerLocal {
      * on the group; it will not include individually scheduled resource operations, even if the resource is a member of
      * the group.
      *
-     * @param  whoami
+     * @param  subject
      * @param  groupId
      *
      * @return group scheduled operations
      *
      * @throws SchedulerException
      */
-    List<GroupOperationSchedule> getScheduledGroupOperations(Subject whoami, int groupId) throws SchedulerException;
+    List<GroupOperationSchedule> getScheduledGroupOperations(Subject subject, int groupId) throws SchedulerException;
 
     /**
      * Given a resource job's details, this returns the schedule for that resource job.
@@ -237,54 +198,30 @@ public interface OperationManagerLocal {
     GroupOperationSchedule getGroupOperationSchedule(Subject subject, String jobId) throws SchedulerException;
 
     /**
-     * Get the operation history for a given history ID. Note that the history ID is <b>not</b> the same thing as the
-     * job ID. See {@link #getOperationHistoryByJobId(Subject, String)} for obtaining a history if you have the job ID
-     * string.
-     *
-     * @param  whoami    the user that wants to see the history
-     * @param  historyId ID of the history to retrieve
-     *
-     * @return the history
-     */
-    OperationHistory getOperationHistoryByHistoryId(Subject whoami, int historyId);
-
-    /**
      * Get the paged resource operation histories for a given group history.
      *
-     * @param  whoami    the user that wants to see the history
+     * @param  subject    the user that wants to see the history
      * @param  historyId ID of the history to retrieve
      * @param  pc        the page control used for sorting and paging of results
      *
      * @return the requested page of sorted resource operation history results for the given group history
      */
-    public PageList<ResourceOperationHistory> getResourceOperationHistoriesByGroupHistoryId(Subject whoami,
+    public PageList<ResourceOperationHistory> getResourceOperationHistoriesByGroupHistoryId(Subject subject,
         int historyId, PageControl pc);
-
-    /**
-     * Get the operation history for a job ID. Note that the job ID is <b>not</b> the same thing as the history ID. See
-     * {@link #getOperationHistoryByHistoryId(Subject, int)} for obtaining a history if you have the history ID. The
-     * <code>historyJobId</code> is the job ID string as obtained via {@link HistoryJobId#toString()}.
-     *
-     * @param  whoami       the user that wants to see the history
-     * @param  historyJobId ID of the job whose history is to be retrieved
-     *
-     * @return the history
-     */
-    OperationHistory getOperationHistoryByJobId(Subject whoami, String historyJobId);
 
     /**
      * Returns the list of completed operation histories for the given resource. This will return all items that are no
      * longer INPROGRESS that were invoked as part of a group operation to which this resource belongs or on the
      * resource directly.
      *
-     * @param  whoami
+     * @param  subject
      * @param  resourceId
      * @param  beginDate filter used to show only results occurring after this epoch millis parameter, nullable
      * @param  endDate   filter used to show only results occurring before this epoch millis parameter, nullable
      * @param  pc
      * @return all operation histories for the given resource
      */
-    PageList<ResourceOperationHistory> getCompletedResourceOperationHistories(Subject whoami, int resourceId,
+    PageList<ResourceOperationHistory> getCompletedResourceOperationHistories(Subject subject, int resourceId,
         Long startDate, Long endDate, PageControl pc);
 
     /**
@@ -292,13 +229,13 @@ public interface OperationManagerLocal {
      * INPROGRESS that were invoked as part of a group operation to which this resource belongs or on the resource
      * directly.
      *
-     * @param  whoami
+     * @param  subject
      * @param  resourceId
      * @param  pc
      *
      * @return all operation histories for the given resource
      */
-    PageList<ResourceOperationHistory> getPendingResourceOperationHistories(Subject whoami, int resourceId,
+    PageList<ResourceOperationHistory> getPendingResourceOperationHistories(Subject subject, int resourceId,
         PageControl pc);
 
     /**
@@ -307,13 +244,13 @@ public interface OperationManagerLocal {
      * individual resource operation histories for the group member invocation results. See
      * {@link #getCompletedResourceOperationHistories(Subject, int, Long, Long, PageControl)} for that.
      *
-     * @param  whoami
+     * @param  subject
      * @param  groupId
      * @param  pc
      *
      * @return all group histories
      */
-    PageList<GroupOperationHistory> getCompletedGroupOperationHistories(Subject whoami, int groupId, PageControl pc);
+    PageList<GroupOperationHistory> getCompletedGroupOperationHistories(Subject subject, int groupId, PageControl pc);
 
     /**
      * Returns the list of pending operation histories for the group resource. This will return all items that are still
@@ -321,13 +258,13 @@ public interface OperationManagerLocal {
      * resource operation histories for the group member invocation results. See
      * {@link #getPendingResourceOperationHistories(Subject, int, PageControl)} for that.
      *
-     * @param  whoami
+     * @param  subject
      * @param  groupId
      * @param  pc
      *
      * @return all group histories
      */
-    PageList<GroupOperationHistory> getPendingGroupOperationHistories(Subject whoami, int groupId, PageControl pc);
+    PageList<GroupOperationHistory> getPendingGroupOperationHistories(Subject subject, int groupId, PageControl pc);
 
     /**
      * This is called by the jobs so they can update the history. The job will pass in an updated history object, this
@@ -342,12 +279,12 @@ public interface OperationManagerLocal {
      * group to finish, the group status will be updated. This will trigger a second check against the
      * AlertConditionCacheManager using that corresponding group history element.</p>
      *
-     * @param  whoami  the user that the job is executing under
+     * @param  subject  the user that the job is executing under
      * @param  history the history with the data to be updated
      *
      * @return the updated history
      */
-    OperationHistory updateOperationHistory(Subject whoami, OperationHistory history);
+    OperationHistory updateOperationHistory(Subject subject, OperationHistory history);
 
     /**
      * This is, for all intents and purposes, and internal method.  It should be called just after updating any
@@ -368,82 +305,47 @@ public interface OperationManagerLocal {
     void checkForCompletedGroupOperation(int historyId);
 
     /**
-     * Cancels a currently in-progress operation. Doing this will attempt to stop the invocation if it is currently
-     * running on the agent.
-     *
-     * <p>Note that this method will handle canceling a resource or group history - depending on what the given <code>
-     * historyId</code> refers to. If it refers to a group history, it will cancel all the resource invocations for that
-     * group invocation.</p>
-     *
-     * <p>If the cancel request succeeds, the history element will be checked against the
-     * AlertConditionCacheManager.</p>
-     *
-     * @param whoami            the user that wants to cancel the operation
-     * @param historyId         the ID of the history item identifying the in-progress operation
-     * @param ignoreAgentErrors if <code>true</code> this will still flag the history items in the database as canceled,
-     *                          even if the method failed to notify the agent(s) that the operation should be canceled.
-     *                          If <code>false</code>, this method will not update the history status unless it could
-     *                          successfully tell the agent(s) to cancel the operation.
-     */
-    void cancelOperationHistory(Subject whoami, int historyId, boolean ignoreAgentErrors);
-
-    /**
-     * Purges the history from the database. Doing this loses all audit trails of the invoked operation. This can handle
-     * deleting a group or resource history.
-     *
-     * <p>Note that this method will handle deleting a resource or group history - depending on what the given <code>
-     * historyId</code> refers to.</p>
-     *
-     * @param whoami          the user that wants to delete the history
-     * @param historyId       the ID of the history to be deleted
-     * @param purgeInProgress if <code>true</code>, even if the operation is in progress, the history entity will be
-     *                        deleted. You normally do not want to purge operation histories until they are completed,
-     *                        so you normally pass in <code>false</code>, but a user might want to force it to be
-     *                        purged, in which case the UI will want to pass in <code>true</code>
-     */
-    void deleteOperationHistory(Subject whoami, int historyId, boolean purgeInProgress);
-
-    /**
      * Returns the definitions of all the operations supported by the given resource.
      *
-     * @param  whoami
+     * @param  subject
      * @param  resourceId
      * @param  eagerLoaded if true the parametersConfigurationDefinition, resultsConfigurationDefinition, and
      *         resourceType fields are eagerly loaded, otherwise they are left as null references
      *
      * @return the operation definitions for the resource
      */
-    List<OperationDefinition> getSupportedResourceOperations(Subject whoami, int resourceId, boolean eagerLoaded);
+    List<OperationDefinition> getSupportedResourceOperations(Subject subject, int resourceId, boolean eagerLoaded);
 
     /**
      * Returns the definitions of all the operations supported by the given resource type.
      *
-     * @param  whoami
+     * @param  subject
      * @param  resourceTypeId
      * @param  eagerLoaded if true the parametersConfigurationDefinition, resultsConfigurationDefinition, and
      *         resourceType fields are eagerly loaded, otherwise they are left as null references
      *
      * @return the operation definitions for the resource type
      */
-    List<OperationDefinition> getSupportedResourceTypeOperations(Subject whoami, int resourceTypeId, boolean eagerLoaded);
+    List<OperationDefinition> getSupportedResourceTypeOperations(Subject subject, int resourceTypeId,
+        boolean eagerLoaded);
 
     /**
      * Returns the definitions of all the operations supported by the given group.
      *
-     * @param  whoami
+     * @param  subject
      * @param  compatibleGroupId
      * @param  eagerLoaded if true the parametersConfigurationDefinition, resultsConfigurationDefinition, and
      *         resourceType fields are eagerly loaded, otherwise they are left as null references
      *
      * @return the operation definitions for the group
      */
-    List<OperationDefinition> getSupportedGroupOperations(Subject whoami, int compatibleGroupId, boolean eagerLoaded);
+    List<OperationDefinition> getSupportedGroupOperations(Subject subject, int compatibleGroupId, boolean eagerLoaded);
 
     /**
      * Returns the definition of the named operation supported by the given resource. If the operation is not valid for
      * the resource, an exception is thrown.
      *
-     * @param  whoami
+     * @param  subject
      * @param  resourceId
      * @param  operationName
      * @param  eagerLoaded if true the parametersConfigurationDefinition, resultsConfigurationDefinition, and
@@ -451,14 +353,14 @@ public interface OperationManagerLocal {
      *
      * @return the named operation definition for the resource
      */
-    OperationDefinition getSupportedResourceOperation(Subject whoami, int resourceId, String operationName,
+    OperationDefinition getSupportedResourceOperation(Subject subject, int resourceId, String operationName,
         boolean eagerLoaded);
 
     /**
      * Returns the definition of the named operation supported by the given group. If the operation is not valid for the
      * group, an exception is thrown.
      *
-     * @param  whoami
+     * @param  subject
      * @param  compatibleGroupId
      * @param  operationName
      * @param  eagerLoaded if true the parametersConfigurationDefinition, resultsConfigurationDefinition, and
@@ -466,28 +368,28 @@ public interface OperationManagerLocal {
      *
      * @return the named operation definition for the group
      */
-    OperationDefinition getSupportedGroupOperation(Subject whoami, int compatibleGroupId, String operationName,
+    OperationDefinition getSupportedGroupOperation(Subject subject, int compatibleGroupId, String operationName,
         boolean eagerLoaded);
 
     /**
      * Determines if the given resource has at least one operation.
      *
-     * @param  whoami
+     * @param  subject
      * @param  resourceId
      *
      * @return <code>true</code> if the resource has at least one operation
      */
-    boolean isResourceOperationSupported(Subject whoami, int resourceId);
+    boolean isResourceOperationSupported(Subject subject, int resourceId);
 
     /**
      * Determines if the given group has at least one operation.
      *
-     * @param  whoami
+     * @param  subject
      * @param  resourceGroupId
      *
      * @return <code>true</code> if the group has at least one operation
      */
-    boolean isGroupOperationSupported(Subject whoami, int resourceGroupId);
+    boolean isGroupOperationSupported(Subject subject, int resourceGroupId);
 
     /**
      * Will check to see if any in progress operation jobs are taking too long to finish and if so marks their histories
@@ -509,27 +411,27 @@ public interface OperationManagerLocal {
      * resource has had no operations performed against it yet (or if all previously performed operations have been
      * deleted from the history). Returns the result of the operation as it is known on the server-side in the database.
      *
-     * @param  whoami     the user who wants to see the information
+     * @param  subject     the user who wants to see the information
      * @param  resourceId a {@link Resource} id
      *
      * @return the most recent operation performed against the {@link Resource} with the given id, or <code>null</code>
      *         if the resource has had no operations performed against it yet.
      */
     @Nullable
-    ResourceOperationHistory getLatestCompletedResourceOperation(Subject whoami, int resourceId);
+    ResourceOperationHistory getLatestCompletedResourceOperation(Subject subject, int resourceId);
 
     /**
      * Get the oldest operation still in progress for the {@link Resource} with the given id, or <code>null</code> if
      * the resource has no operations being performed against it. Returns the INPROCESS element with empty results.
      *
-     * @param  whoami     the user who wants to see the information
+     * @param  subject     the user who wants to see the information
      * @param  resourceId a {@link Resource} id
      *
      * @return the oldest operation still in progress for the {@link Resource} with the given id, or <code>null</code>
      *         if the resource has no operations being performed against it.
      */
     @Nullable
-    ResourceOperationHistory getOldestInProgressResourceOperation(Subject whoami, int resourceId);
+    ResourceOperationHistory getOldestInProgressResourceOperation(Subject subject, int resourceId);
 
     /**
      * Get the OperationDefinition object that corresponds to this operationId
@@ -605,4 +507,106 @@ public interface OperationManagerLocal {
      * @return the list of scheduled group operations
      */
     PageList<GroupOperationScheduleComposite> getCurrentlyScheduledGroupOperations(Subject subject, PageControl pc);
+
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    //
+    // The following are shared with the Remote Interface
+    //
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    /**
+     * Cancels a currently in-progress operation. Doing this will attempt to stop the invocation if it is currently
+     * running on the agent.
+     *
+     * <p>Note that this method will handle canceling a resource or group history - depending on what the given <code>
+     * historyId</code> refers to. If it refers to a group history, it will cancel all the resource invocations for that
+     * group invocation.</p>
+     *
+     * <p>If the cancel request succeeds, the history element will be checked against the
+     * AlertConditionCacheManager.</p>
+     *
+     * @param subject            the user that wants to cancel the operation
+     * @param historyId         the ID of the history item identifying the in-progress operation
+     * @param ignoreAgentErrors if <code>true</code> this will still flag the history items in the database as canceled,
+     *                          even if the method failed to notify the agent(s) that the operation should be canceled.
+     *                          If <code>false</code>, this method will not update the history status unless it could
+     *                          successfully tell the agent(s) to cancel the operation.
+     * @throws UpdateException
+     */
+    void cancelOperationHistory(Subject subject, int historyId, boolean ignoreAgentErrors) throws UpdateException;
+
+    /**
+     * Purges the history from the database. Doing this loses all audit trails of the invoked operation. This can handle
+     * deleting a group or resource history.
+     *
+     * <p>Note that this method will handle deleting a resource or group history - depending on what the given <code>
+     * historyId</code> refers to.</p>
+     *
+     * @param subject          the user that wants to delete the history
+     * @param historyId       the ID of the history to be deleted
+     * @param purgeInProgress if <code>true</code>, even if the operation is in progress, the history entity will be
+     *                        deleted. You normally do not want to purge operation histories until they are completed,
+     *                        so you normally pass in <code>false</code>, but a user might want to force it to be
+     *                        purged, in which case the UI will want to pass in <code>true</code>
+     * @throws DeleteException
+     */
+    void deleteOperationHistory(Subject subject, int historyId, boolean purgeInProgress) throws DeleteException;
+
+    /**
+     * Schedules an operation for execution on the given resource.
+     *
+     * @param  subject           The logged in user's subject.
+     * @param  resourceId     the resource that is the target of the operation
+     * @param  operationName  the actual operation to invoke
+     * @param  delay          the number of milliseconds to delay this operation, 0 for immediate start.
+     * @param  repeatInterval the number of milliseconds after completion to repeat this operation. 0 for no repeat.
+     * @param  repeatCount    the number of times to repeat this operation. -1 infinite, 0 for no repeat. 
+     * @param  timeout        the number of seconds before this operation will fail due to timeout. 0 for no timeout.
+     * @param  parameters     the names parameters for the operation. 
+     * @param  description    user-entered description of the job to be scheduled
+     *
+     * @return the information on the new schedule
+     * @throws ScheduleException TODO
+     */
+    ResourceOperationSchedule scheduleResourceOperation(Subject subject, int resourceId, String operationName,
+        long delay, long repeatInterval, int repeatCount, int timeout, Configuration parameters, String description)
+        throws ScheduleException;
+
+    /**
+     * Unschedules the resource operation identified with the given job ID.
+     *
+     * @param  subject     the user who is asking to unschedule the operation
+     * @param  jobId      identifies the operation to unschedule
+     * @param  resourceId the ID of the resource whose operation is getting unscheduled
+     * @throws UnscheduleException TODO
+     */
+    void unscheduleResourceOperation(Subject subject, String jobId, int resourceId) throws UnscheduleException;
+
+    /**
+     * #see {@link OperationManagerRemote#unscheduleGroupOperation(Subject, String, PageControl)
+     */
+    void unscheduleGroupOperation(Subject subject, String jobId, int resourceGroupId) throws UnscheduleException;
+
+    /**
+     * #see {@link OperationManagerRemote#scheduleGroupOperation
+     */
+    GroupOperationSchedule scheduleGroupOperation(Subject subject, int groupId, int[] executionOrderResourceIds,
+        boolean haltOnFailure, String operationName, Configuration parameters, long delay, long repeatInterval,
+        int repeatCount, int timeout, String description) throws ScheduleException;
+
+    /**
+     * #see {@link OperationManagerRemote#getOperationHistoryByHistoryId
+     */
+    OperationHistory getOperationHistoryByHistoryId(Subject subject, int historyId) throws FetchException;
+
+    /**
+     * #see {@link OperationManagerRemote#getOperationHistoryByJobId
+     */
+    OperationHistory getOperationHistoryByJobId(Subject subject, String historyJobId) throws FetchException;
+
+    /**
+     * #see {@link OperationManagerRemote#findOperationHistories
+     */
+    PageList<ResourceOperationHistory> findOperationHistories(Subject subject, ResourceOperationHistory criteria,
+        PageControl pc) throws FetchException;
 }

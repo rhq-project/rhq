@@ -69,6 +69,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.domain.util.QueryGenerator;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
@@ -78,6 +79,11 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
+import org.rhq.enterprise.server.exception.DeleteException;
+import org.rhq.enterprise.server.exception.FetchException;
+import org.rhq.enterprise.server.exception.ScheduleException;
+import org.rhq.enterprise.server.exception.UnscheduleException;
+import org.rhq.enterprise.server.exception.UpdateException;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
@@ -124,35 +130,39 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return results;
     }
 
-    public ResourceOperationSchedule scheduleResourceOperation(Subject whoami, int resourceId, String operationName,
+    public ResourceOperationSchedule scheduleResourceOperation(Subject subject, int resourceId, String operationName,
         long delay, long repeatInterval, int repeatCount, int timeout, Configuration parameters, String notes)
-        throws SchedulerException {
+        throws ScheduleException {
+        try {
 
-        SimpleTrigger trigger = new SimpleTrigger();
-        if (delay < 0L) {
-            delay = 0L;
-        }
-        trigger.setRepeatCount((repeatCount < 0) ? SimpleTrigger.REPEAT_INDEFINITELY : repeatCount);
-        trigger.setRepeatInterval((repeatInterval < 0L) ? 0L : repeatInterval);
-        trigger.setStartTime(new Date(System.currentTimeMillis() + delay));
+            SimpleTrigger trigger = new SimpleTrigger();
+            if (delay < 0L) {
+                delay = 0L;
+            }
+            trigger.setRepeatCount((repeatCount < 0) ? SimpleTrigger.REPEAT_INDEFINITELY : repeatCount);
+            trigger.setRepeatInterval((repeatInterval < 0L) ? 0L : repeatInterval);
+            trigger.setStartTime(new Date(System.currentTimeMillis() + delay));
 
-        // if the user set a timeout, add it to our configuration
-        if (timeout > 0L) {
-            if (null == parameters) {
-                parameters = new Configuration();
+            // if the user set a timeout, add it to our configuration
+            if (timeout > 0L) {
+                if (null == parameters) {
+                    parameters = new Configuration();
+                }
+
+                parameters.put(new PropertySimple(OperationDefinition.TIMEOUT_PARAM_NAME, timeout));
             }
 
-            parameters.put(new PropertySimple(OperationDefinition.TIMEOUT_PARAM_NAME, timeout));
+            return scheduleResourceOperation(subject, resourceId, operationName, parameters, trigger, notes);
+        } catch (Exception e) {
+            throw new ScheduleException(e);
         }
-
-        return scheduleResourceOperation(whoami, resourceId, operationName, parameters, trigger, notes);
     }
 
-    public ResourceOperationSchedule scheduleResourceOperation(Subject whoami, int resourceId, String operationName,
+    public ResourceOperationSchedule scheduleResourceOperation(Subject subject, int resourceId, String operationName,
         Configuration parameters, Trigger trigger, String notes) throws SchedulerException {
-        Resource resource = getResourceIfAuthorized(whoami, resourceId);
+        Resource resource = getResourceIfAuthorized(subject, resourceId);
 
-        ensureControlPermission(whoami, resource);
+        ensureControlPermission(subject, resource);
 
         String uniqueJobId = createUniqueJobName(resource, operationName);
 
@@ -168,7 +178,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
             jobDataMap.putAsString(ResourceOperationJob.DATAMAP_INT_PARAMETERS_ID, parameters.getId());
         }
 
-        jobDataMap.putAsString(ResourceOperationJob.DATAMAP_INT_SUBJECT_ID, whoami.getId());
+        jobDataMap.putAsString(ResourceOperationJob.DATAMAP_INT_SUBJECT_ID, subject.getId());
         jobDataMap.putAsString(ResourceOperationJob.DATAMAP_INT_RESOURCE_ID, resource.getId());
 
         JobDetail jobDetail = new JobDetail();
@@ -194,7 +204,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
 
         // now actually schedule it
         Date next = scheduler.scheduleJob(jobDetail, trigger);
-        ResourceOperationSchedule newSchedule = getResourceOperationSchedule(whoami, jobDetail);
+        ResourceOperationSchedule newSchedule = getResourceOperationSchedule(subject, jobDetail);
 
         LOG.debug("Scheduled resource operation [" + newSchedule + "] - next fire time is [" + next + "]");
 
@@ -211,12 +221,12 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         }
     }
 
-    public GroupOperationSchedule scheduleGroupOperation(Subject whoami, int compatibleGroupId,
+    public GroupOperationSchedule scheduleGroupOperation(Subject subject, int compatibleGroupId,
         int[] executionOrderResourceIds, boolean haltOnFailure, String operationName, Configuration parameters,
         Trigger trigger, String notes) throws SchedulerException {
-        ResourceGroup group = getCompatibleGroupIfAuthorized(whoami, compatibleGroupId);
+        ResourceGroup group = getCompatibleGroupIfAuthorized(subject, compatibleGroupId);
 
-        ensureControlPermission(whoami, group);
+        ensureControlPermission(subject, group);
 
         JobDataMap jobDataMap = new JobDataMap();
         jobDataMap.put(GroupOperationJob.DATAMAP_STRING_OPERATION_NAME, operationName);
@@ -230,7 +240,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
             jobDataMap.putAsString(ResourceOperationJob.DATAMAP_INT_PARAMETERS_ID, parameters.getId());
         }
 
-        jobDataMap.putAsString(GroupOperationJob.DATAMAP_INT_SUBJECT_ID, whoami.getId());
+        jobDataMap.putAsString(GroupOperationJob.DATAMAP_INT_SUBJECT_ID, subject.getId());
         jobDataMap.putAsString(GroupOperationJob.DATAMAP_INT_GROUP_ID, group.getId());
         jobDataMap.putAsString(GroupOperationJob.DATAMAP_BOOL_HALT_ON_FAILURE, haltOnFailure);
 
@@ -268,62 +278,70 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
 
         // now actually schedule it
         Date next = scheduler.scheduleJob(jobDetail, trigger);
-        GroupOperationSchedule newSchedule = getGroupOperationSchedule(whoami, jobDetail);
+        GroupOperationSchedule newSchedule = getGroupOperationSchedule(subject, jobDetail);
 
         LOG.debug("Scheduled group operation [" + newSchedule + "] - next fire time is [" + next + "]");
 
         return newSchedule;
     }
 
-    public void unscheduleResourceOperation(Subject whoami, String jobId, int resourceId) throws SchedulerException {
-        // checks for view permissions
-        Resource resource = getResourceIfAuthorized(whoami, resourceId);
+    public void unscheduleResourceOperation(Subject subject, String jobId, int resourceId) throws UnscheduleException {
+        try {
+            // checks for view permissions
+            Resource resource = getResourceIfAuthorized(subject, resourceId);
 
-        ensureControlPermission(whoami, resource);
+            ensureControlPermission(subject, resource);
 
-        ResourceOperationSchedule schedule = getResourceOperationSchedule(whoami, jobId);
-        if (schedule.getParameters() != null) {
-            Integer configId = schedule.getParameters().getId();
-            Configuration parameters = configurationManager.getConfigurationById(configId);
-            entityManager.remove(parameters);
-        }
+            ResourceOperationSchedule schedule = getResourceOperationSchedule(subject, jobId);
+            if (schedule.getParameters() != null) {
+                Integer configId = schedule.getParameters().getId();
+                Configuration parameters = configurationManager.getConfigurationById(configId);
+                entityManager.remove(parameters);
+            }
 
-        ScheduleJobId jobIdObject = new ScheduleJobId(jobId);
-        String jobName = jobIdObject.getJobName();
-        String jobGroup = jobIdObject.getJobGroup();
+            ScheduleJobId jobIdObject = new ScheduleJobId(jobId);
+            String jobName = jobIdObject.getJobName();
+            String jobGroup = jobIdObject.getJobGroup();
 
-        boolean deleted = scheduler.deleteJob(jobName, jobGroup);
+            boolean deleted = scheduler.deleteJob(jobName, jobGroup);
 
-        if (deleted) {
-            deleteOperationScheduleEntity(jobIdObject);
+            if (deleted) {
+                deleteOperationScheduleEntity(jobIdObject);
+            }
+        } catch (Exception e) {
+            throw new UnscheduleException(e);
         }
 
         return;
     }
 
-    public void unscheduleGroupOperation(Subject whoami, String jobId, int resourceGroupId) throws SchedulerException {
-        ResourceGroup group = resourceGroupManager.getResourceGroupById(whoami, resourceGroupId,
-            GroupCategory.COMPATIBLE);
+    public void unscheduleGroupOperation(Subject subject, String jobId, int resourceGroupId) throws UnscheduleException {
+        try {
+            ResourceGroup group = resourceGroupManager.getResourceGroupById(subject, resourceGroupId,
+                GroupCategory.COMPATIBLE);
 
-        ensureControlPermission(whoami, group);
+            ensureControlPermission(subject, group);
 
-        getCompatibleGroupIfAuthorized(whoami, resourceGroupId); // just want to do this to check for permissions
+            getCompatibleGroupIfAuthorized(subject, resourceGroupId); // just want to do this to check for permissions
 
-        GroupOperationSchedule schedule = getGroupOperationSchedule(whoami, jobId);
-        if (schedule.getParameters() != null) {
-            Integer configId = schedule.getParameters().getId();
-            Configuration parameters = configurationManager.getConfigurationById(configId);
-            entityManager.remove(parameters);
-        }
+            GroupOperationSchedule schedule = getGroupOperationSchedule(subject, jobId);
+            if (schedule.getParameters() != null) {
+                Integer configId = schedule.getParameters().getId();
+                Configuration parameters = configurationManager.getConfigurationById(configId);
+                entityManager.remove(parameters);
+            }
 
-        ScheduleJobId jobIdObject = new ScheduleJobId(jobId);
-        String jobName = jobIdObject.getJobName();
-        String jobGroup = jobIdObject.getJobGroup();
+            ScheduleJobId jobIdObject = new ScheduleJobId(jobId);
+            String jobName = jobIdObject.getJobName();
+            String jobGroup = jobIdObject.getJobGroup();
 
-        boolean deleted = scheduler.deleteJob(jobName, jobGroup);
+            boolean deleted = scheduler.deleteJob(jobName, jobGroup);
 
-        if (deleted) {
-            deleteOperationScheduleEntity(jobIdObject);
+            if (deleted) {
+                deleteOperationScheduleEntity(jobIdObject);
+            }
+        } catch (Exception e) {
+            throw new UnscheduleException(e);
         }
 
         return;
@@ -349,9 +367,9 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return;
     }
 
-    public List<ResourceOperationSchedule> getScheduledResourceOperations(Subject whoami, int resourceId)
+    public List<ResourceOperationSchedule> getScheduledResourceOperations(Subject subject, int resourceId)
         throws SchedulerException {
-        Resource resource = getResourceIfAuthorized(whoami, resourceId);
+        Resource resource = getResourceIfAuthorized(subject, resourceId);
 
         List<ResourceOperationSchedule> operationSchedules = new ArrayList<ResourceOperationSchedule>();
 
@@ -360,7 +378,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
 
         for (String jobName : jobNames) {
             JobDetail jobDetail = scheduler.getJobDetail(jobName, groupName);
-            ResourceOperationSchedule sched = getResourceOperationSchedule(whoami, jobDetail);
+            ResourceOperationSchedule sched = getResourceOperationSchedule(subject, jobDetail);
 
             if (resourceId != sched.getResource().getId()) {
                 throw new IllegalStateException("Somehow a different resource [" + sched.getResource()
@@ -373,9 +391,9 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return operationSchedules;
     }
 
-    public List<GroupOperationSchedule> getScheduledGroupOperations(Subject whoami, int groupId)
+    public List<GroupOperationSchedule> getScheduledGroupOperations(Subject subject, int groupId)
         throws SchedulerException {
-        ResourceGroup group = getCompatibleGroupIfAuthorized(whoami, groupId);
+        ResourceGroup group = getCompatibleGroupIfAuthorized(subject, groupId);
 
         List<GroupOperationSchedule> operationSchedules = new ArrayList<GroupOperationSchedule>();
 
@@ -384,7 +402,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
 
         for (String jobName : jobNames) {
             JobDetail jobDetail = scheduler.getJobDetail(jobName, groupName);
-            GroupOperationSchedule sched = getGroupOperationSchedule(whoami, jobDetail);
+            GroupOperationSchedule sched = getGroupOperationSchedule(subject, jobDetail);
 
             if (groupId != sched.getGroup().getId()) {
                 throw new IllegalStateException("Somehow a different group [" + sched.getGroup()
@@ -504,31 +522,37 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return getGroupOperationSchedule(subject, jobDetail);
     }
 
-    public OperationHistory getOperationHistoryByHistoryId(Subject whoami, int historyId) {
-        OperationHistory history = entityManager.find(OperationHistory.class, historyId);
+    public OperationHistory getOperationHistoryByHistoryId(Subject subject, int historyId) throws FetchException {
+        try {
+            OperationHistory history = entityManager.find(OperationHistory.class, historyId);
 
-        if (history == null) {
-            throw new RuntimeException("Cannot get history - it does not exist: " + historyId);
-        }
-
-        if (history.getParameters() != null) {
-            history.getParameters().getId(); // eagerly load it
-        }
-
-        if (history instanceof ResourceOperationHistory) {
-            ResourceOperationHistory resourceHistory = (ResourceOperationHistory) history;
-            if (resourceHistory.getResults() != null) {
-                resourceHistory.getResults().getId(); // eagerly load it
+            if (history == null) {
+                throw new RuntimeException("Cannot get history - it does not exist: " + historyId);
             }
+
+            if (history.getParameters() != null) {
+                history.getParameters().getId(); // eagerly load it
+            }
+
+            if (history instanceof ResourceOperationHistory) {
+                ResourceOperationHistory resourceHistory = (ResourceOperationHistory) history;
+                if (resourceHistory.getResults() != null) {
+                    resourceHistory.getResults().getId(); // eagerly load it
+                }
+            }
+
+            ensureViewPermission(subject, history);
+
+            return history;
+
+        } catch (Exception e) {
+            throw new FetchException(e);
         }
 
-        ensureViewPermission(whoami, history);
-
-        return history;
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<ResourceOperationHistory> getResourceOperationHistoriesByGroupHistoryId(Subject whoami,
+    public PageList<ResourceOperationHistory> getResourceOperationHistoriesByGroupHistoryId(Subject subject,
         int historyId, PageControl pc) {
         pc.initDefaultOrderingField("h.createdTime", PageOrdering.DESC);
 
@@ -547,33 +571,37 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return pagedResourceHistories;
     }
 
-    public OperationHistory getOperationHistoryByJobId(Subject whoami, String historyJobId) {
-        HistoryJobId jobIdObject = new HistoryJobId(historyJobId);
-
-        Query query = entityManager.createNamedQuery(OperationHistory.QUERY_FIND_BY_JOB_ID);
-        query.setParameter("jobName", jobIdObject.getJobName());
-        query.setParameter("jobGroup", jobIdObject.getJobGroup());
-        query.setParameter("createdTime", jobIdObject.getCreatedTime());
-
-        OperationHistory history;
-
+    public OperationHistory getOperationHistoryByJobId(Subject subject, String historyJobId) throws FetchException {
         try {
-            history = (OperationHistory) query.getSingleResult();
+            HistoryJobId jobIdObject = new HistoryJobId(historyJobId);
+
+            Query query = entityManager.createNamedQuery(OperationHistory.QUERY_FIND_BY_JOB_ID);
+            query.setParameter("jobName", jobIdObject.getJobName());
+            query.setParameter("jobGroup", jobIdObject.getJobGroup());
+            query.setParameter("createdTime", jobIdObject.getCreatedTime());
+
+            OperationHistory history;
+
+            try {
+                history = (OperationHistory) query.getSingleResult();
+            } catch (Exception e) {
+                history = null;
+            }
+
+            if (history == null) {
+                throw new RuntimeException("Cannot get history - it does not exist: " + historyJobId);
+            }
+
+            ensureViewPermission(subject, history);
+
+            return history;
         } catch (Exception e) {
-            history = null;
+            throw new FetchException(e);
         }
-
-        if (history == null) {
-            throw new RuntimeException("Cannot get history - it does not exist: " + historyJobId);
-        }
-
-        ensureViewPermission(whoami, history);
-
-        return history;
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<ResourceOperationHistory> getCompletedResourceOperationHistories(Subject whoami, int resourceId,
+    public PageList<ResourceOperationHistory> getCompletedResourceOperationHistories(Subject subject, int resourceId,
         Long beginDate, Long endDate, PageControl pc) {
         pc.initDefaultOrderingField("h.createdTime", PageOrdering.DESC);
 
@@ -601,7 +629,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         // if there is at least one history - get its group and make sure the user has permissions to see
         if ((list != null) && (list.size() > 0)) {
             ResourceOperationHistory resourceHistory = list.get(0);
-            ensureViewPermission(whoami, resourceHistory);
+            ensureViewPermission(subject, resourceHistory);
         }
 
         PageList<ResourceOperationHistory> pageList;
@@ -610,7 +638,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<ResourceOperationHistory> getPendingResourceOperationHistories(Subject whoami, int resourceId,
+    public PageList<ResourceOperationHistory> getPendingResourceOperationHistories(Subject subject, int resourceId,
         PageControl pc) {
         pc.initDefaultOrderingField("h.createdTime", PageOrdering.ASC);
 
@@ -632,7 +660,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         // if there is at least one history - get its group and make sure the user has permissions to see
         if ((list != null) && (list.size() > 0)) {
             ResourceOperationHistory resourceHistory = list.get(0);
-            ensureViewPermission(whoami, resourceHistory);
+            ensureViewPermission(subject, resourceHistory);
         }
 
         PageList<ResourceOperationHistory> pageList;
@@ -641,7 +669,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<GroupOperationHistory> getCompletedGroupOperationHistories(Subject whoami, int groupId,
+    public PageList<GroupOperationHistory> getCompletedGroupOperationHistories(Subject subject, int groupId,
         PageControl pc) {
         pc.initDefaultOrderingField("h.createdTime", PageOrdering.DESC);
 
@@ -663,7 +691,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         // if there is at least one history - get its group and make sure the user has permissions to see
         if ((list != null) && (list.size() > 0)) {
             GroupOperationHistory groupHistory = list.get(0);
-            ensureViewPermission(whoami, groupHistory);
+            ensureViewPermission(subject, groupHistory);
         }
 
         PageList<GroupOperationHistory> pageList;
@@ -672,7 +700,8 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<GroupOperationHistory> getPendingGroupOperationHistories(Subject whoami, int groupId, PageControl pc) {
+    public PageList<GroupOperationHistory> getPendingGroupOperationHistories(Subject subject, int groupId,
+        PageControl pc) {
         pc.initDefaultOrderingField("h.createdTime", PageOrdering.ASC);
 
         String queryName = GroupOperationHistory.QUERY_FIND_BY_GROUP_ID_AND_STATUS;
@@ -693,7 +722,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         // if there is at least one history - get its group and make sure the user has permissions to see
         if ((list != null) && (list.size() > 0)) {
             GroupOperationHistory groupHistory = list.get(0);
-            ensureViewPermission(whoami, groupHistory);
+            ensureViewPermission(subject, groupHistory);
         }
 
         PageList<GroupOperationHistory> pageList;
@@ -701,14 +730,14 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return pageList;
     }
 
-    public OperationHistory updateOperationHistory(Subject whoami, OperationHistory history) {
+    public OperationHistory updateOperationHistory(Subject subject, OperationHistory history) {
         /*
          * either the user wants to execute an operation on some resource or some group, or the OperationServerService
          * just got the results of the operation from the agent is needs to update this method.  thus, we only need to
          * ensure control permissions if the user isn't the overlord.
          */
-        if (!authorizationManager.isOverlord(whoami)) {
-            ensureControlPermission(whoami, history);
+        if (!authorizationManager.isOverlord(subject)) {
+            ensureControlPermission(subject, history);
         }
 
         // we do not cascade add the param config (we probably can add that but), so let's persist it now
@@ -727,18 +756,23 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return history;
     }
 
-    public void cancelOperationHistory(Subject whoami, int historyId, boolean ignoreAgentErrors) {
-        OperationHistory doomedHistory = getOperationHistoryByHistoryId(whoami, historyId); // this also checks authorization so we don't have to do it again
+    public void cancelOperationHistory(Subject subject, int historyId, boolean ignoreAgentErrors)
+        throws UpdateException {
+        try {
+            OperationHistory doomedHistory = getOperationHistoryByHistoryId(subject, historyId); // this also checks authorization so we don't have to do it again
 
-        ensureControlPermission(whoami, doomedHistory);
+            ensureControlPermission(subject, doomedHistory);
 
-        // Do different things depending whether this is a group or resource history being canceled.
-        // If group history - cancel all individual resource invocations that are part of that group.
-        // If resource history - tell the agent to cancel it
-        if (doomedHistory instanceof GroupOperationHistory) {
-            cancelGroupOperation(whoami, (GroupOperationHistory) doomedHistory, ignoreAgentErrors);
-        } else {
-            cancelResourceOperation(whoami, (ResourceOperationHistory) doomedHistory, ignoreAgentErrors);
+            // Do different things depending whether this is a group or resource history being canceled.
+            // If group history - cancel all individual resource invocations that are part of that group.
+            // If resource history - tell the agent to cancel it
+            if (doomedHistory instanceof GroupOperationHistory) {
+                cancelGroupOperation(subject, (GroupOperationHistory) doomedHistory, ignoreAgentErrors);
+            } else {
+                cancelResourceOperation(subject, (ResourceOperationHistory) doomedHistory, ignoreAgentErrors);
+            }
+        } catch (Exception e) {
+            throw new UpdateException(e);
         }
 
         return;
@@ -763,14 +797,14 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
      * <p>It is assumed the caller of this private method has already verified that the user is authorized to perform
      * the cancelation.</p>
      *
-     * @param  whoami            the user who is canceling the operation
+     * @param  subject            the user who is canceling the operation
      * @param  doomedHistory     identifies the group operation (and all its resource operations) to cancel
      * @param  ignoreAgentErrors indicates how agent errors are handled
      *
      * @throws IllegalStateException if the operation history status is not in the
      *                               {@link OperationRequestStatus#INPROGRESS} state
      */
-    private void cancelGroupOperation(Subject whoami, GroupOperationHistory doomedHistory, boolean ignoreAgentErrors) {
+    private void cancelGroupOperation(Subject subject, GroupOperationHistory doomedHistory, boolean ignoreAgentErrors) {
         if (doomedHistory.getStatus() != OperationRequestStatus.INPROGRESS) {
             throw new IllegalStateException("The group job is no longer in-progress - cannot cancel it: "
                 + doomedHistory);
@@ -781,7 +815,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         List<ResourceOperationHistory> doomedResourceHistories = doomedHistory.getResourceOperationHistories();
         for (ResourceOperationHistory doomedResourceHistory : doomedResourceHistories) {
             try {
-                CancelResults results = cancelResourceOperation(whoami, doomedResourceHistory, ignoreAgentErrors);
+                CancelResults results = cancelResourceOperation(subject, doomedResourceHistory, ignoreAgentErrors);
                 if (results == null) {
                     hadAgentError = true;
                 }
@@ -811,7 +845,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
      * <p>It is assumed the caller of this private method has already verified that the user is authorized to perform
      * the cancelation.</p>
      *
-     * @param  whoami            the user who is canceling the operation
+     * @param  subject            the user who is canceling the operation
      * @param  doomedHistory     identifies the resource operation to cancel
      * @param  ignoreAgentErrors indicates how agent errors are handled
      *
@@ -821,7 +855,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
      * @throws IllegalStateException if the operation history status is not in the
      *                               {@link OperationRequestStatus#INPROGRESS} state
      */
-    private CancelResults cancelResourceOperation(Subject whoami, ResourceOperationHistory doomedHistory,
+    private CancelResults cancelResourceOperation(Subject subject, ResourceOperationHistory doomedHistory,
         boolean ignoreAgentErrors) throws IllegalStateException {
         if (doomedHistory.getStatus() != OperationRequestStatus.INPROGRESS) {
             throw new IllegalStateException("The job is no longer in-progress - cannot cancel it: " + doomedHistory);
@@ -918,25 +952,29 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return results;
     }
 
-    public void deleteOperationHistory(Subject whoami, int historyId, boolean purgeInProgress) {
-        OperationHistory doomedHistory = getOperationHistoryByHistoryId(whoami, historyId); // this also checks authorization so we don't have to do it again
+    public void deleteOperationHistory(Subject subject, int historyId, boolean purgeInProgress) throws DeleteException {
+        try {
+            OperationHistory doomedHistory = getOperationHistoryByHistoryId(subject, historyId); // this also checks authorization so we don't have to do it again
 
-        ensureControlPermission(whoami, doomedHistory);
+            ensureControlPermission(subject, doomedHistory);
 
-        if ((doomedHistory.getStatus() == OperationRequestStatus.INPROGRESS) && !purgeInProgress) {
-            throw new IllegalStateException(
-                "The job is still in the in-progress state. Please wait for it to complete: " + doomedHistory);
-        }
-
-        if (doomedHistory instanceof GroupOperationHistory) {
-            List<ResourceOperationHistory> resourceHistories = ((GroupOperationHistory) doomedHistory)
-                .getResourceOperationHistories();
-            for (ResourceOperationHistory child : resourceHistories) {
-                deleteOperationHistory_helper(child.getId());
+            if ((doomedHistory.getStatus() == OperationRequestStatus.INPROGRESS) && !purgeInProgress) {
+                throw new IllegalStateException(
+                    "The job is still in the in-progress state. Please wait for it to complete: " + doomedHistory);
             }
-        }
 
-        deleteOperationHistory_helper(doomedHistory.getId());
+            if (doomedHistory instanceof GroupOperationHistory) {
+                List<ResourceOperationHistory> resourceHistories = ((GroupOperationHistory) doomedHistory)
+                    .getResourceOperationHistories();
+                for (ResourceOperationHistory child : resourceHistories) {
+                    deleteOperationHistory_helper(child.getId());
+                }
+            }
+
+            deleteOperationHistory_helper(doomedHistory.getId());
+        } catch (Exception e) {
+            throw new DeleteException(e);
+        }
 
         return;
     }
@@ -965,9 +1003,9 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     }
 
     @SuppressWarnings("unchecked")
-    public List<OperationDefinition> getSupportedResourceOperations(Subject whoami, int resourceId, boolean eagerLoaded) {
-        if (!authorizationManager.canViewResource(whoami, resourceId)) {
-            throw new PermissionException("User [" + whoami + "] does not have permission to view resource ["
+    public List<OperationDefinition> getSupportedResourceOperations(Subject subject, int resourceId, boolean eagerLoaded) {
+        if (!authorizationManager.canViewResource(subject, resourceId)) {
+            throw new PermissionException("User [" + subject + "] does not have permission to view resource ["
                 + resourceId + "]");
         }
 
@@ -987,7 +1025,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     }
 
     @SuppressWarnings("unchecked")
-    public List<OperationDefinition> getSupportedResourceTypeOperations(Subject whoami, int resourceTypeId,
+    public List<OperationDefinition> getSupportedResourceTypeOperations(Subject subject, int resourceTypeId,
         boolean eagerLoaded) {
         try {
             String queryName = eagerLoaded ? OperationDefinition.QUERY_FIND_BY_TYPE_AND_NAME
@@ -1006,10 +1044,10 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     }
 
     @SuppressWarnings( { "unchecked" })
-    public List<OperationDefinition> getSupportedGroupOperations(Subject whoami, int compatibleGroupId,
+    public List<OperationDefinition> getSupportedGroupOperations(Subject subject, int compatibleGroupId,
         boolean eagerLoaded) {
-        if (!authorizationManager.canViewGroup(whoami, compatibleGroupId)) {
-            throw new PermissionException("User [" + whoami + "] does not have permission to view group ["
+        if (!authorizationManager.canViewGroup(subject, compatibleGroupId)) {
+            throw new PermissionException("User [" + subject + "] does not have permission to view group ["
                 + compatibleGroupId + "]");
         }
 
@@ -1029,10 +1067,10 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     }
 
     @SuppressWarnings("unchecked")
-    public OperationDefinition getSupportedResourceOperation(Subject whoami, int resourceId, String operationName,
+    public OperationDefinition getSupportedResourceOperation(Subject subject, int resourceId, String operationName,
         boolean eagerLoaded) {
-        if (!authorizationManager.canViewResource(whoami, resourceId)) {
-            throw new PermissionException("User [" + whoami + "] does not have permission to view resource ["
+        if (!authorizationManager.canViewResource(subject, resourceId)) {
+            throw new PermissionException("User [" + subject + "] does not have permission to view resource ["
                 + resourceId + "]");
         }
 
@@ -1053,10 +1091,10 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     }
 
     @SuppressWarnings("unchecked")
-    public OperationDefinition getSupportedGroupOperation(Subject whoami, int compatibleGroupId, String operationName,
+    public OperationDefinition getSupportedGroupOperation(Subject subject, int compatibleGroupId, String operationName,
         boolean eagerLoaded) {
-        if (!authorizationManager.canViewGroup(whoami, compatibleGroupId)) {
-            throw new PermissionException("User [" + whoami + "] does not have permission to view group ["
+        if (!authorizationManager.canViewGroup(subject, compatibleGroupId)) {
+            throw new PermissionException("User [" + subject + "] does not have permission to view group ["
                 + compatibleGroupId + "]");
         }
 
@@ -1076,11 +1114,11 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return results.get(0);
     }
 
-    public boolean isResourceOperationSupported(Subject whoami, int resourceId) {
+    public boolean isResourceOperationSupported(Subject subject, int resourceId) {
         Resource resource;
 
         try {
-            resource = getResourceIfAuthorized(whoami, resourceId);
+            resource = getResourceIfAuthorized(subject, resourceId);
         } catch (PermissionException e) {
             // notice we caught this exception before propogating it up to the EJB layer, so
             // our transaction is not rolled back
@@ -1096,11 +1134,11 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return (defs != null) && (defs.size() > 0);
     }
 
-    public boolean isGroupOperationSupported(Subject whoami, int resourceGroupId) {
+    public boolean isGroupOperationSupported(Subject subject, int resourceGroupId) {
         ResourceGroup group;
 
         try {
-            group = resourceGroupManager.getResourceGroupById(whoami, resourceGroupId, null);
+            group = resourceGroupManager.getResourceGroupById(subject, resourceGroupId, null);
             if (group.getGroupCategory() == GroupCategory.MIXED) {
                 return false;
             }
@@ -1114,7 +1152,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
             return false;
         }
 
-        if (!authorizationManager.hasGroupPermission(whoami, Permission.CONTROL, group.getId())) {
+        if (!authorizationManager.hasGroupPermission(subject, Permission.CONTROL, group.getId())) {
             LOG.debug("isGroupOperationSupported: User cannot control group: " + group);
             return false;
         }
@@ -1562,12 +1600,12 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return timeout * 1000L;
     }
 
-    private Resource getResourceIfAuthorized(Subject whoami, int resourceId) {
+    private Resource getResourceIfAuthorized(Subject subject, int resourceId) {
         Resource resource;
 
         try {
             // resourceManager will test for necessary permissions too
-            resource = resourceManager.getResourceById(whoami, resourceId);
+            resource = resourceManager.getResourceById(subject, resourceId);
         } catch (ResourceNotFoundException e) {
             throw new RuntimeException("Cannot get support operations for unknown resource [" + resourceId + "]: " + e,
                 e);
@@ -1576,12 +1614,12 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return resource;
     }
 
-    private ResourceGroup getCompatibleGroupIfAuthorized(Subject whoami, int compatibleGroupId) {
+    private ResourceGroup getCompatibleGroupIfAuthorized(Subject subject, int compatibleGroupId) {
         ResourceGroup group;
 
         try {
             // resourceGroupManager will test for necessary permissions too
-            group = resourceGroupManager.getResourceGroupById(whoami, compatibleGroupId, GroupCategory.COMPATIBLE);
+            group = resourceGroupManager.getResourceGroupById(subject, compatibleGroupId, GroupCategory.COMPATIBLE);
         } catch (ResourceGroupNotFoundException e) {
             throw new RuntimeException("Cannot get support operations for unknown group [" + compatibleGroupId + "]: "
                 + e, e);
@@ -1590,41 +1628,41 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return group;
     }
 
-    private void ensureControlPermission(Subject whoami, OperationHistory history) throws PermissionException {
+    private void ensureControlPermission(Subject subject, OperationHistory history) throws PermissionException {
         if (history instanceof GroupOperationHistory) {
             ResourceGroup group = ((GroupOperationHistory) history).getGroup();
-            ensureControlPermission(whoami, group);
+            ensureControlPermission(subject, group);
         } else {
             Resource resource = ((ResourceOperationHistory) history).getResource();
-            ensureControlPermission(whoami, resource);
+            ensureControlPermission(subject, resource);
         }
     }
 
-    private void ensureControlPermission(Subject whoami, ResourceGroup group) throws PermissionException {
-        if (!authorizationManager.hasGroupPermission(whoami, Permission.CONTROL, group.getId())) {
-            throw new PermissionException("User [" + whoami.getName() + "] does not have permission to control group ["
-                + group + "]");
+    private void ensureControlPermission(Subject subject, ResourceGroup group) throws PermissionException {
+        if (!authorizationManager.hasGroupPermission(subject, Permission.CONTROL, group.getId())) {
+            throw new PermissionException("User [" + subject.getName()
+                + "] does not have permission to control group [" + group + "]");
         }
     }
 
-    private void ensureControlPermission(Subject whoami, Resource resource) throws PermissionException {
-        if (!authorizationManager.hasResourcePermission(whoami, Permission.CONTROL, resource.getId())) {
-            throw new PermissionException("User [" + whoami.getName()
+    private void ensureControlPermission(Subject subject, Resource resource) throws PermissionException {
+        if (!authorizationManager.hasResourcePermission(subject, Permission.CONTROL, resource.getId())) {
+            throw new PermissionException("User [" + subject.getName()
                 + "] does not have permission to control resource [" + resource + "]");
         }
     }
 
-    private void ensureViewPermission(Subject whoami, OperationHistory history) throws PermissionException {
+    private void ensureViewPermission(Subject subject, OperationHistory history) throws PermissionException {
         if (history instanceof GroupOperationHistory) {
             ResourceGroup group = ((GroupOperationHistory) history).getGroup();
-            if (!authorizationManager.canViewGroup(whoami, group.getId())) {
-                throw new PermissionException("User [" + whoami.getName()
+            if (!authorizationManager.canViewGroup(subject, group.getId())) {
+                throw new PermissionException("User [" + subject.getName()
                     + "] does not have permission to view group [" + group + "]");
             }
         } else {
             Resource resource = ((ResourceOperationHistory) history).getResource();
-            if (!authorizationManager.canViewResource(whoami, resource.getId())) {
-                throw new PermissionException("User [" + whoami.getName()
+            if (!authorizationManager.canViewResource(subject, resource.getId())) {
+                throw new PermissionException("User [" + subject.getName()
                     + "] does not have permission to view resource [" + resource + "]");
             }
         }
@@ -1647,7 +1685,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     }
 
     @Nullable
-    public ResourceOperationHistory getLatestCompletedResourceOperation(Subject whoami, int resourceId) {
+    public ResourceOperationHistory getLatestCompletedResourceOperation(Subject subject, int resourceId) {
         LOG.debug("Getting latest completed operation for resource [" + resourceId + "]");
 
         ResourceOperationHistory result;
@@ -1666,7 +1704,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     }
 
     @Nullable
-    public ResourceOperationHistory getOldestInProgressResourceOperation(Subject whoami, int resourceId) {
+    public ResourceOperationHistory getOldestInProgressResourceOperation(Subject subject, int resourceId) {
         LOG.debug("Getting oldest in-progress operation for resource [" + resourceId + "]");
 
         ResourceOperationHistory result;
@@ -1728,5 +1766,54 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     private OperationScheduleEntity findOperationScheduleEntity(ScheduleJobId jobId) {
         OperationScheduleEntity entity = entityManager.find(OperationScheduleEntity.class, jobId);
         return entity;
+    }
+
+    public GroupOperationSchedule scheduleGroupOperation(Subject subject, int groupId, int[] executionOrderResourceIds,
+        boolean haltOnFailure, String operationName, Configuration parameters, long delay, long repeatInterval,
+        int repeatCount, int timeout, String description) throws ScheduleException {
+
+        try {
+
+            SimpleTrigger trigger = new SimpleTrigger();
+            if (delay < 0L) {
+                delay = 0L;
+            }
+            trigger.setRepeatCount((repeatCount < 0) ? SimpleTrigger.REPEAT_INDEFINITELY : repeatCount);
+            trigger.setRepeatInterval((repeatInterval < 0L) ? 0L : repeatInterval);
+            trigger.setStartTime(new Date(System.currentTimeMillis() + delay));
+
+            // if the user set a timeout, add it to our configuration
+            if (timeout > 0L) {
+                if (null == parameters) {
+                    parameters = new Configuration();
+                }
+
+                parameters.put(new PropertySimple(OperationDefinition.TIMEOUT_PARAM_NAME, timeout));
+            }
+
+            return scheduleGroupOperation(subject, groupId, executionOrderResourceIds, haltOnFailure, operationName,
+                parameters, trigger, description);
+        } catch (Exception e) {
+            throw new ScheduleException(e);
+        }
+    }
+
+    //@SuppressWarnings("unchecked")
+    public PageList<ResourceOperationHistory> findOperationHistories(Subject subject,
+        ResourceOperationHistory criteria, PageControl pc) throws FetchException {
+        try {
+            QueryGenerator generator = new QueryGenerator(criteria, pc);
+
+            Query query = generator.getQuery(entityManager);
+            Query countQuery = generator.getCountQuery(entityManager);
+
+            long count = (Long) countQuery.getSingleResult();
+            List<ResourceOperationHistory> results = query.getResultList();
+
+            return new PageList<ResourceOperationHistory>(results, (int) count, pc);
+        } catch (Exception e) {
+            throw new FetchException(e);
+        }
+
     }
 }

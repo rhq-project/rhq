@@ -213,13 +213,13 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
             }
 
             if (context.category == EntityContext.Category.Resource) {
-                results = eventManager.getEvents(getSubject(), new int[] { context.resourceId },
+                results = eventManager.findEvents(getSubject(), new int[] { context.resourceId },
                     rangePreferences.begin, rangePreferences.end, severities, source, search, pc);
             } else if (context.category == EntityContext.Category.ResourceGroup) {
-                results = eventManager.getEventsForCompGroup(getSubject(), context.groupId, rangePreferences.begin,
+                results = eventManager.findEventsForCompGroup(getSubject(), context.groupId, rangePreferences.begin,
                     rangePreferences.end, severities, source, search, pc);
             } else if (context.category == EntityContext.Category.AutoGroup) {
-                results = eventManager.getEventsForAutoGroup(getSubject(), context.parentResourceId,
+                results = eventManager.findEventsForAutoGroup(getSubject(), context.parentResourceId,
                     context.resourceTypeId, rangePreferences.begin, rangePreferences.end, severities, source, search,
                     pc);
             } else {

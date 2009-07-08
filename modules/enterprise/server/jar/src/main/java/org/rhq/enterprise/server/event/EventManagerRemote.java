@@ -36,7 +36,7 @@ import org.rhq.enterprise.server.exception.FetchException;
 @Remote
 public interface EventManagerRemote {
     @WebMethod
-    PageList<EventComposite> getEventsForResource( //
+    PageList<EventComposite> findEventsForResource( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceId") int resourceId, //
         @WebParam(name = "begin") long begin, //
@@ -48,7 +48,7 @@ public interface EventManagerRemote {
         throws FetchException;
 
     @WebMethod
-    PageList<EventComposite> getEventsForAutoGroup( //
+    PageList<EventComposite> findEventsForAutoGroup( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "parentResourceId") int parentResourceId, //
         @WebParam(name = "resourceTypeId") int resourceTypeId, //
@@ -61,7 +61,7 @@ public interface EventManagerRemote {
         throws FetchException;
 
     @WebMethod
-    PageList<EventComposite> getEventsForCompGroup( //
+    PageList<EventComposite> findEventsForCompGroup( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceGroupId") int resourceGroupId, //
         @WebParam(name = "begin") long begin, //

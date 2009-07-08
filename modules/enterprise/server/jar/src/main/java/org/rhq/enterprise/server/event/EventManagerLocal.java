@@ -69,7 +69,7 @@ public interface EventManagerLocal {
      * @param endDate End time of interest
      * @return List of Events for that time frame.
      */
-    public List<Event> getEventsForResources(Subject subject, List<Resource> resources, long startDate, long endDate);
+    public List<Event> findEventsForResources(Subject subject, List<Resource> resources, long startDate, long endDate);
 
     /**
      * Retrieve the events for the given resource that happened in the given time frame.
@@ -81,19 +81,19 @@ public interface EventManagerLocal {
      * @param pc TODO
      * @return
      */
-    public PageList<EventComposite> getEventsForResource(Subject subject, int resourceId, long startDate, long endDate,
-        EventSeverity[] severities, PageControl pc);
-
-    public PageList<EventComposite> getEventsForCompGroup(Subject subject, int groupId, long begin, long endDate,
-        EventSeverity[] severities, PageControl pc);
-
-    public PageList<EventComposite> getEventsForCompGroup(Subject subject, int groupId, long begin, long endDate,
-        EventSeverity[] severities, String source, String searchString, PageControl pc);
-
-    public PageList<EventComposite> getEventsForAutoGroup(Subject subject, int parent, int type, long begin,
+    public PageList<EventComposite> findEventsForResource(Subject subject, int resourceId, long startDate,
         long endDate, EventSeverity[] severities, PageControl pc);
 
-    public PageList<EventComposite> getEventsForAutoGroup(Subject subject, int parent, int type, long begin,
+    public PageList<EventComposite> findEventsForCompGroup(Subject subject, int groupId, long begin, long endDate,
+        EventSeverity[] severities, PageControl pc);
+
+    public PageList<EventComposite> findEventsForCompGroup(Subject subject, int groupId, long begin, long endDate,
+        EventSeverity[] severities, String source, String searchString, PageControl pc);
+
+    public PageList<EventComposite> findEventsForAutoGroup(Subject subject, int parent, int type, long begin,
+        long endDate, EventSeverity[] severities, PageControl pc);
+
+    public PageList<EventComposite> findEventsForAutoGroup(Subject subject, int parent, int type, long begin,
         long endDate, EventSeverity[] severities, String source, String searchString, PageControl pc);
 
     public Map<EventSeverity, Integer> getEventCountsBySeverity(Subject subject, int resourceId, long startDate,
@@ -136,7 +136,7 @@ public interface EventManagerLocal {
      * @param pc         {@link PageControl} to specify the list size
      * @return           List of Events
      */
-    public PageList<EventComposite> getEvents(Subject subject, int[] resourceIds, long begin, long end,
+    public PageList<EventComposite> findEvents(Subject subject, int[] resourceIds, long begin, long end,
         EventSeverity[] severities, String source, String searchString, PageControl pc);
 
     /**
@@ -163,14 +163,14 @@ public interface EventManagerLocal {
     //
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    public PageList<EventComposite> getEventsForResource(Subject subject, int resourceId, long startDate, long endDate,
-        EventSeverity severity, String source, String detail, PageControl pc) throws FetchException;
+    public PageList<EventComposite> findEventsForResource(Subject subject, int resourceId, long startDate,
+        long endDate, EventSeverity severity, String source, String detail, PageControl pc) throws FetchException;
 
-    PageList<EventComposite> getEventsForAutoGroup(Subject subject, int parentResourceId, int resourceTypeId,
+    PageList<EventComposite> findEventsForAutoGroup(Subject subject, int parentResourceId, int resourceTypeId,
         long begin, long end, EventSeverity severity, String source, String detail, PageControl pc)
         throws FetchException;
 
-    public PageList<EventComposite> getEventsForCompGroup(Subject subject, int groupId, long begin, long endDate,
+    public PageList<EventComposite> findEventsForCompGroup(Subject subject, int groupId, long begin, long endDate,
         EventSeverity severity, String source, String searchString, PageControl pc) throws FetchException;
 
     /**

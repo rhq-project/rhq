@@ -91,13 +91,13 @@ public class EventDetailsAction extends BaseAction {
 
             Subject subject = user.getSubject();
             if (resourceId > -1) {
-                events = eventManager.getEventsForResource(subject, resourceId, begin, begin + interval, null,
+                events = eventManager.findEventsForResource(subject, resourceId, begin, begin + interval, null,
                     new PageControl(0, MAX_EVENTS_PER_DOT));
             } else if (groupId > -1) {
-                events = eventManager.getEventsForCompGroup(subject, groupId, begin, begin + interval, null,
+                events = eventManager.findEventsForCompGroup(subject, groupId, begin, begin + interval, null,
                     new PageControl(0, MAX_EVENTS_PER_DOT));
             } else if (parent > -1 && type > -1) {
-                events = eventManager.getEventsForAutoGroup(subject, parent, type, begin, begin + interval, null,
+                events = eventManager.findEventsForAutoGroup(subject, parent, type, begin, begin + interval, null,
                     new PageControl(0, MAX_EVENTS_PER_DOT));
             } else {
                 log.error("Unknown input combination, can't compute events for input");

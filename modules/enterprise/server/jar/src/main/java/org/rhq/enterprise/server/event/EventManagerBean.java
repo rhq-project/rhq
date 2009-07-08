@@ -235,7 +235,7 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
 
     @NotNull
     @SuppressWarnings("unchecked")
-    public List<Event> getEventsForResources(Subject subject, List<Resource> resources, long startDate, long endDate) {
+    public List<Event> findEventsForResources(Subject subject, List<Resource> resources, long startDate, long endDate) {
 
         if (resources == null || resources.size() == 0)
             return new ArrayList<Event>();
@@ -251,7 +251,7 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
         return ret;
     }
 
-    public PageList<EventComposite> getEventsForAutoGroup(Subject subject, int parent, int type, long begin,
+    public PageList<EventComposite> findEventsForAutoGroup(Subject subject, int parent, int type, long begin,
         long endDate, EventSeverity[] severities, PageControl pc) {
 
         List<Resource> resources = resGrpMgr.findResourcesForAutoGroup(subject, parent, type);
@@ -260,48 +260,51 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
         for (Resource res : resources)
             resourceIds[i++] = res.getId();
 
-        PageList<EventComposite> comp = getEvents(subject, resourceIds, begin, endDate, severities, null, null, pc);
+        PageList<EventComposite> comp = findEvents(subject, resourceIds, begin, endDate, severities, null, null, pc);
         return comp;
     }
 
-    public PageList<EventComposite> getEventsForAutoGroup(Subject subject, int parent, int type, long begin,
+    public PageList<EventComposite> findEventsForAutoGroup(Subject subject, int parent, int type, long begin,
         long endDate, EventSeverity[] severities, String source, String searchString, PageControl pc) {
 
         List<Resource> resources = resGrpMgr.findResourcesForAutoGroup(subject, parent, type);
         int[] resourceIds = new int[resources.size()];
         int i = 0;
-        for (Resource res : resources)
+        for (Resource res : resources) {
             resourceIds[i++] = res.getId();
+        }
 
-        PageList<EventComposite> comp = getEvents(subject, resourceIds, begin, endDate, severities, source,
+        PageList<EventComposite> comp = findEvents(subject, resourceIds, begin, endDate, severities, source,
             searchString, pc);
 
         return comp;
     }
 
-    public PageList<EventComposite> getEventsForCompGroup(Subject subject, int groupId, long begin, long endDate,
+    public PageList<EventComposite> findEventsForCompGroup(Subject subject, int groupId, long begin, long endDate,
         EventSeverity[] severities, PageControl pc) {
 
         List<Resource> resources = resGrpMgr.findResourcesForResourceGroup(subject, groupId, GroupCategory.COMPATIBLE);
         int[] resourceIds = new int[resources.size()];
         int i = 0;
-        for (Resource res : resources)
+        for (Resource res : resources) {
             resourceIds[i++] = res.getId();
+        }
 
-        PageList<EventComposite> comp = getEvents(subject, resourceIds, begin, endDate, severities, null, null, pc);
+        PageList<EventComposite> comp = findEvents(subject, resourceIds, begin, endDate, severities, null, null, pc);
         return comp;
     }
 
-    public PageList<EventComposite> getEventsForCompGroup(Subject subject, int groupId, long begin, long endDate,
+    public PageList<EventComposite> findEventsForCompGroup(Subject subject, int groupId, long begin, long endDate,
         EventSeverity[] severities, String source, String searchString, PageControl pc) {
 
         List<Resource> resources = resGrpMgr.findResourcesForResourceGroup(subject, groupId, GroupCategory.COMPATIBLE);
         int[] resourceIds = new int[resources.size()];
         int i = 0;
-        for (Resource res : resources)
+        for (Resource res : resources) {
             resourceIds[i++] = res.getId();
+        }
 
-        PageList<EventComposite> comp = getEvents(subject, resourceIds, begin, endDate, severities, source,
+        PageList<EventComposite> comp = findEvents(subject, resourceIds, begin, endDate, severities, source,
             searchString, pc);
 
         return comp;
@@ -312,7 +315,7 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
         int[] buckets = new int[numBuckets];
 
         // TODO possibly rewrite query so that the db calculates the buckets (?)
-        List<EventComposite> events = getEventsForResource(subject, resourceId, begin, end, null, null);
+        List<EventComposite> events = findEventsForResource(subject, resourceId, begin, end, null, null);
 
         long timeDiff = end - begin;
         long timePerBucket = timeDiff / numBuckets;
@@ -372,7 +375,7 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
         }
 
         // TODO possibly rewrite query so that the db calculates the buckets (?)
-        List<Event> events = getEventsForResources(subject, resources, begin, end);
+        List<Event> events = findEventsForResources(subject, resources, begin, end);
 
         long timeDiff = end - begin;
         long timePerBucket = timeDiff / numBuckets;
@@ -381,23 +384,24 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
             long evTime = event.getTimestamp();
             evTime = evTime - begin;
             int bucket = (int) (evTime / timePerBucket);
-            if (event.getSeverity().isMoreSevereThan(buckets[bucket]))
+            if (event.getSeverity().isMoreSevereThan(buckets[bucket])) {
                 buckets[bucket] = event.getSeverity();
+            }
         }
 
         return buckets;
     }
 
     @NotNull
-    public PageList<EventComposite> getEventsForResource(Subject subject, int resourceId, long startDate, long endDate,
-        EventSeverity[] severities, PageControl pc) {
+    public PageList<EventComposite> findEventsForResource(Subject subject, int resourceId, long startDate,
+        long endDate, EventSeverity[] severities, PageControl pc) {
 
-        PageList<EventComposite> comp = getEvents(subject, new int[] { resourceId }, startDate, endDate, severities,
+        PageList<EventComposite> comp = findEvents(subject, new int[] { resourceId }, startDate, endDate, severities,
             null, null, pc);
         return comp;
     }
 
-    public PageList<EventComposite> getEvents(Subject subject, int[] resourceIds, long begin, long end,
+    public PageList<EventComposite> findEvents(Subject subject, int[] resourceIds, long begin, long end,
         EventSeverity[] severities, String source, String searchString, PageControl pc) {
 
         if (pc == null) {
@@ -633,21 +637,21 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
     }
 
     //Especially added for remote interface
-    public PageList<EventComposite> getEventsForResource(Subject subject, int resourceId, long startDate, long endDate,
-        EventSeverity severity, String source, String detail, PageControl pc) throws FetchException {
+    public PageList<EventComposite> findEventsForResource(Subject subject, int resourceId, long startDate,
+        long endDate, EventSeverity severity, String source, String detail, PageControl pc) throws FetchException {
 
         EventSeverity[] severities = { severity };
-        PageList<EventComposite> comp = getEvents(subject, new int[] { resourceId }, startDate, endDate, severities,
+        PageList<EventComposite> comp = findEvents(subject, new int[] { resourceId }, startDate, endDate, severities,
             source, detail, pc);
         return comp;
     }
 
-    public PageList<EventComposite> getEventsForCompGroup(Subject subject, int groupId, long begin, long endDate,
+    public PageList<EventComposite> findEventsForCompGroup(Subject subject, int groupId, long begin, long endDate,
         EventSeverity severity, String source, String searchString, PageControl pc) throws FetchException {
 
         EventSeverity[] severities = { severity };
 
-        return getEventsForCompGroup(subject, groupId, begin, endDate, severities, source, searchString, pc);
+        return findEventsForCompGroup(subject, groupId, begin, endDate, severities, source, searchString, pc);
     }
 
     //TODO: This is impossible currently to implement, Query generator does not support 'in between'
@@ -659,13 +663,13 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
     }
     */
 
-    public PageList<EventComposite> getEventsForAutoGroup(Subject subject, int parentResourceId, int resourceTypeId,
+    public PageList<EventComposite> findEventsForAutoGroup(Subject subject, int parentResourceId, int resourceTypeId,
         long begin, long end, EventSeverity severity, String source, String detail, PageControl pc)
         throws FetchException {
 
         EventSeverity[] severities = { severity };
 
-        PageList<EventComposite> comp = getEventsForAutoGroup(subject, parentResourceId, resourceTypeId, begin, end,
+        PageList<EventComposite> comp = findEventsForAutoGroup(subject, parentResourceId, resourceTypeId, begin, end,
             severities, source, detail, pc);
         return comp;
     }

@@ -156,13 +156,13 @@ public class EventManagerTest extends AbstractEJB3Test {
             assert bucketCounts : "Expected bucket counts were [0 1 0] Received [" + buckets[0] + " " + buckets[1]
                 + " " + buckets[2] + "]";
 
-            List<EventComposite> res = eventManager.getEventsForResource(null, resourceId, t1, t2, null,
+            List<EventComposite> res = eventManager.findEventsForResource(null, resourceId, t1, t2, null,
                 new PageControl());
             assert res.size() == 1 : "Expected 1 Event, got " + res.size();
-            res = eventManager.getEventsForResource(null, resourceId, t1, t2,
+            res = eventManager.findEventsForResource(null, resourceId, t1, t2,
                 new EventSeverity[] { EventSeverity.INFO }, null);
             assert res.size() == 1 : "Expected 1 Event, got " + res.size();
-            res = eventManager.getEventsForResource(null, resourceId, t1, t2,
+            res = eventManager.findEventsForResource(null, resourceId, t1, t2,
                 new EventSeverity[] { EventSeverity.WARN }, null);
             assert res.size() == 0 : "Expected 0 Events, got " + res.size();
 

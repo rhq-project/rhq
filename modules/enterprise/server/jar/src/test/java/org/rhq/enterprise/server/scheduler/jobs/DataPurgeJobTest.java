@@ -402,7 +402,7 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
 
         EventManagerLocal mgr = LookupUtil.getEventManager();
         mgr.addEventData(eventMap);
-        PageList<EventComposite> persistedEvents = mgr.getEvents(LookupUtil.getSubjectManager().getOverlord(),
+        PageList<EventComposite> persistedEvents = mgr.findEvents(LookupUtil.getSubjectManager().getOverlord(),
             new int[] { res.getId() }, timestamp - 1L, timestamp + count + 1L,
             new EventSeverity[] { EventSeverity.DEBUG }, null, null, new PageControl());
         assert persistedEvents.getTotalSize() == count : "did not persist all events, only persisted: "

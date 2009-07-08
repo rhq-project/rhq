@@ -74,7 +74,7 @@ public interface AvailabilityManagerLocal {
      *
      * @return the availabilities over the given time span in a list
      */
-    List<AvailabilityPoint> getAvailabilitiesForResource(Subject subject, int resourceId, long begin, long end,
+    List<AvailabilityPoint> findAvailabilitiesForResource(Subject subject, int resourceId, long begin, long end,
         int points, boolean withCurrentAvailability);
 
     /**
@@ -90,7 +90,7 @@ public interface AvailabilityManagerLocal {
      *
      * @return the availabilities over the given time span in a list
      */
-    List<AvailabilityPoint> getAvailabilitiesForResourceGroup(Subject subject, int groupId, long begin, long end,
+    List<AvailabilityPoint> findAvailabilitiesForResourceGroup(Subject subject, int groupId, long begin, long end,
         int points, boolean withCurrentAvailability);
 
     /**
@@ -107,7 +107,7 @@ public interface AvailabilityManagerLocal {
      *
      * @return the availabilities over the given time span in a list
      */
-    List<AvailabilityPoint> getAvailabilitiesForAutoGroup(Subject subject, int parentResourceId, int resourceTypeId,
+    List<AvailabilityPoint> findAvailabilitiesForAutoGroup(Subject subject, int parentResourceId, int resourceTypeId,
         long begin, long end, int points, boolean withCurrentAvailability);
 
     /**

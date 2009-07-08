@@ -118,17 +118,15 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
     public Availability getCurrentAvailabilityForResource(Subject subject, int resourceId) throws FetchException {
         Availability retAvailability;
         try {
+            if (authorizationManager.canViewResource(subject, resourceId) == false) {
+                throw new PermissionException("User [" + subject
+                    + "] does not have permission to view current availability for resource[id=" + resourceId + "]");
+            }
+
             try {
                 Query q = entityManager.createNamedQuery(Availability.FIND_CURRENT_BY_RESOURCE);
                 q.setParameter("resourceId", resourceId);
                 retAvailability = (Availability) q.getSingleResult();
-
-                // make sure user has permissions to even view this resource
-                Resource resource = retAvailability.getResource();
-                if (!authorizationManager.canViewResource(subject, resource.getId())) {
-                    throw new PermissionException("User [" + subject.getName()
-                        + "] does not have permission to view resource");
-                }
             } catch (NoResultException nre) {
                 // Fall back to searching for the one with the latest start date, but most likely it doesn't exist
                 Resource resource = resourceManager.getResourceById(subject, resourceId);
@@ -148,21 +146,21 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         }
     }
 
-    public List<AvailabilityPoint> getAvailabilitiesForResource(Subject subject, int resourceId,
+    public List<AvailabilityPoint> findAvailabilitiesForResource(Subject subject, int resourceId,
         long fullRangeBeginTime, long fullRangeEndTime, int numberOfPoints, boolean withCurrentAvailability) {
         EntityContext context = new EntityContext(resourceId, -1, -1, -1);
         return getAvailabilitiesForContext(subject, context, fullRangeBeginTime, fullRangeEndTime, numberOfPoints,
             withCurrentAvailability);
     }
 
-    public List<AvailabilityPoint> getAvailabilitiesForResourceGroup(Subject subject, int groupId,
+    public List<AvailabilityPoint> findAvailabilitiesForResourceGroup(Subject subject, int groupId,
         long fullRangeBeginTime, long fullRangeEndTime, int numberOfPoints, boolean withCurrentAvailability) {
         EntityContext context = new EntityContext(-1, groupId, -1, -1);
         return getAvailabilitiesForContext(subject, context, fullRangeBeginTime, fullRangeEndTime, numberOfPoints,
             withCurrentAvailability);
     }
 
-    public List<AvailabilityPoint> getAvailabilitiesForAutoGroup(Subject subject, int parentResourceId,
+    public List<AvailabilityPoint> findAvailabilitiesForAutoGroup(Subject subject, int parentResourceId,
         int resourceTypeId, long fullRangeBeginTime, long fullRangeEndTime, int numberOfPoints,
         boolean withCurrentAvailability) {
         EntityContext context = new EntityContext(-1, -1, parentResourceId, resourceTypeId);
@@ -748,6 +746,11 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
     public PageList<Availability> findAvailabilityForResource(Subject subject, int resourceId, PageControl pageControl)
         throws FetchException {
         try {
+            if (authorizationManager.canViewResource(subject, resourceId) == false) {
+                throw new PermissionException("User [" + subject
+                    + "] does not have permission to view Availability history for resource[id=" + resourceId + "]");
+            }
+
             pageControl.initDefaultOrderingField("av.startTime", PageOrdering.DESC);
 
             Query countQuery = PersistenceUtility

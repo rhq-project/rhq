@@ -199,7 +199,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
 
             AvailabilityReport report = new AvailabilityReport(false, theAgent.getName());
 
-            availPoints = availabilityManager.getAvailabilitiesForResource(overlord, theResource.getId(), 1, System
+            availPoints = availabilityManager.findAvailabilitiesForResource(overlord, theResource.getId(), 1, System
                 .currentTimeMillis(), 3, false);
             assert availPoints.size() == 3 : "There is no avail data, but should still get 3 availability points";
             assert availPoints.get(0).getValue() == DOWN.ordinal(); // aka unknown
@@ -213,7 +213,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             availabilityManager.mergeAvailabilityReport(report);
 
             // our avail data point is right on the start edge
-            availPoints = availabilityManager.getAvailabilitiesForResource(overlord, theResource.getId(), startMillis,
+            availPoints = availabilityManager.findAvailabilitiesForResource(overlord, theResource.getId(), startMillis,
                 startMillis + 10000, 3, false);
             assert availPoints.size() == 3 : "There is 1 avail data, but should still get 3 availability points";
             assert availPoints.get(0).getValue() == UP.ordinal();
@@ -221,7 +221,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             assert availPoints.get(2).getValue() == UP.ordinal();
 
             // our avail data point is right on the end edge
-            availPoints = availabilityManager.getAvailabilitiesForResource(overlord, theResource.getId(),
+            availPoints = availabilityManager.findAvailabilitiesForResource(overlord, theResource.getId(),
                 startMillis - 3, startMillis, 3, false);
             assert availPoints.size() == 3 : "There is 1 avail data, but should still get 3 availability points";
             assert availPoints.get(0).getValue() == DOWN.ordinal(); // aka unknown
@@ -231,7 +231,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             assert availPoints.get(2).getValue() == DOWN.ordinal(); // aka unknown
             assert !availPoints.get(2).isKnown() : availPoints;
 
-            availPoints = availabilityManager.getAvailabilitiesForResource(overlord, theResource.getId(),
+            availPoints = availabilityManager.findAvailabilitiesForResource(overlord, theResource.getId(),
                 startMillis - 20000, startMillis + 10000, 3, false);
             assert availPoints.size() == 3 : "There is 1 avail data, but should still get 3 availability points";
             assert availPoints.get(0).getValue() == DOWN.ordinal(); // aka unknown
@@ -240,7 +240,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             assert !availPoints.get(1).isKnown() : availPoints;
             assert availPoints.get(2).getValue() == UP.ordinal();
 
-            availPoints = availabilityManager.getAvailabilitiesForResource(overlord, theResource.getId(),
+            availPoints = availabilityManager.findAvailabilitiesForResource(overlord, theResource.getId(),
                 startMillis - 10000, startMillis + 20000, 3, false);
             assert availPoints.size() == 3 : "There is 1 avail data, but should still get 3 availability points";
             assert availPoints.get(0).getValue() == DOWN.ordinal(); // aka unknown
@@ -249,7 +249,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             assert availPoints.get(1).isKnown() : availPoints;
             assert availPoints.get(2).getValue() == UP.ordinal();
 
-            availPoints = availabilityManager.getAvailabilitiesForResource(overlord, theResource.getId(),
+            availPoints = availabilityManager.findAvailabilitiesForResource(overlord, theResource.getId(),
                 startMillis - 20000, startMillis + 20000, 10, false);
             assert availPoints.size() == 10 : "There is 1 avail data, but should still get 10 availability points";
             assert availPoints.get(0).getValue() == DOWN.ordinal() : availPoints; // aka unknown
@@ -281,7 +281,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             report.addAvailability(new Availability(theResource, new Date(startDate.getTime() + 30000), DOWN));
             availabilityManager.mergeAvailabilityReport(report);
 
-            availPoints = availabilityManager.getAvailabilitiesForResource(overlord, theResource.getId(),
+            availPoints = availabilityManager.findAvailabilitiesForResource(overlord, theResource.getId(),
                 startMillis - 15000, startMillis + 35000, 5, false);
             assert availPoints.size() == 5 : "There is 1 avail data, but should still get 5 availability points";
             assert availPoints.get(0).getValue() == DOWN.ordinal() : availPoints; // 45000-55000 == unknown=down
@@ -296,7 +296,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             assert availPoints.get(3).getValue() == DOWN.ordinal() : availPoints; // 75000-85000, 0.5 == down
             assert availPoints.get(4).getValue() == DOWN.ordinal() : availPoints; // 85000-95000, 0.5 == down
 
-            availPoints = availabilityManager.getAvailabilitiesForResource(overlord, theResource.getId(),
+            availPoints = availabilityManager.findAvailabilitiesForResource(overlord, theResource.getId(),
                 startMillis - 30000, startMillis + 30000, 10, false);
             assert availPoints.size() == 10 : "There is 1 avail data, but should still get 10 availability points";
             assert availPoints.get(0).getValue() == DOWN.ordinal() : availPoints;
@@ -783,7 +783,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             avail = new Availability(theResource, date6, AvailabilityType.DOWN);
             persistAvailability(avail);
 
-            List<AvailabilityPoint> points = availabilityManager.getAvailabilitiesForResource(overlord, theResource
+            List<AvailabilityPoint> points = availabilityManager.findAvailabilitiesForResource(overlord, theResource
                 .getId(), date1.getTime(), date6.getTime(), 5, false);
             assert points.size() == 5;
             assert points.get(0).getValue() == 1;
@@ -995,7 +995,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
     }
 
     private AvailabilityType getPointInTime(Date time) {
-        List<AvailabilityPoint> list = availabilityManager.getAvailabilitiesForResource(overlord, theResource.getId(),
+        List<AvailabilityPoint> list = availabilityManager.findAvailabilitiesForResource(overlord, theResource.getId(),
             time.getTime(), time.getTime() + 1, 1, false);
         assert list != null;
         assert list.size() == 1 : "Should have returned a single point";

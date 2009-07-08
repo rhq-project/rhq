@@ -30,23 +30,18 @@ import org.rhq.core.domain.content.composite.ChannelComposite;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.exception.CreateException;
+import org.rhq.enterprise.server.exception.DeleteException;
+import org.rhq.enterprise.server.exception.FetchException;
+import org.rhq.enterprise.server.exception.UpdateException;
 
 @Local
 public interface ChannelManagerLocal {
-    /**
-     * @see ChannelManagerRemote#deleteChannel(Subject, int)
-     */
-    void deleteChannel(Subject subject, int channelId);
 
     /**
      * @see ChannelManagerRemote#getAllChannels(Subject, PageControl)
      */
     PageList<Channel> getAllChannels(Subject subject, PageControl pc);
-
-    /**
-     * @see ChannelManagerRemote#getChannel(Subject, int)
-     */
-    Channel getChannel(Subject subject, int channelId);
 
     /**
      * @see ChannelManagerRemote#getAssociatedContentSources(Subject, int, PageControl)
@@ -120,19 +115,9 @@ public interface ChannelManagerLocal {
     Channel updateChannel(Subject subject, Channel channel) throws ChannelException;
 
     /**
-     * @see ChannelManagerRemote#createChannel(Subject, Channel)
-     */
-    Channel createChannel(Subject subject, Channel channel) throws ChannelException;
-
-    /**
      * @see ChannelManagerRemote#addContentSourcesToChannel(Subject, int, int[])
      */
     void addContentSourcesToChannel(Subject subject, int channelId, int[] contentSourceIds) throws Exception;
-
-    /**
-     * @see ChannelManagerRemote#addPackageVersionsToChannel(Subject, int, int[])
-     */
-    void addPackageVersionsToChannel(Subject subject, int channelId, int[] packageVersionIds) throws Exception;
 
     /**
      * @see ChannelManagerRemote#removeContentSourcesFromChannel(Subject, int, int[])
@@ -153,4 +138,45 @@ public interface ChannelManagerLocal {
      * @see ChannelManagerRemote#getPackageVersionCountFromChannel(Subject, String, int)
      */
     long getPackageVersionCountFromChannel(Subject subject, int channelId);
+
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    //
+    // The following are shared with the Remote Interface
+    //
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    /**
+     * @throws UpdateException TODO
+     * @see ChannelManagerRemote#addPackageVersionsToChannel(Subject, int, int[])
+     */
+    void addPackageVersionsToChannel(Subject subject, int channelId, int[] packageVersionIds) throws UpdateException;
+
+    /**
+     * @throws CreateException TODO
+     * @see ChannelManagerRemote#createChannel(Subject, Channel)
+     */
+    Channel createChannel(Subject subject, Channel channel) throws CreateException;
+
+    /**
+     * @throws DeleteException TODO
+     * @see ChannelManagerRemote#deleteChannel(Subject, int)
+     */
+    void deleteChannel(Subject subject, int channelId) throws DeleteException;
+
+    /**
+     * @throws FetchException TODO
+     * @see ChannelManagerRemote#getChannel(Subject, int)
+     */
+    Channel getChannel(Subject subject, int channelId) throws FetchException;
+
+    /**
+     * @see ChannelManagerRemote#findChannels(Subject, Channel, PageControl)
+     */
+    public PageList<Channel> findChannels(Subject subject, Channel criteria, PageControl pc) throws FetchException;
+
+    /**
+     * @see ChannelManagerRemote#findPackageVersionsInChannel(Subject, int, PackageVersion, PageControl)
+     */
+    public PageList<PackageVersion> findPackageVersionsInChannel(Subject subject, int channelId,
+        PackageVersion criteria, PageControl pc) throws FetchException;
 }

@@ -19,12 +19,13 @@
 package org.rhq.enterprise.gui.content;
 
 import javax.faces.application.FacesMessage;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.Channel;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.content.ChannelManagerLocal;
-import org.rhq.enterprise.server.content.ContentException;
+import org.rhq.enterprise.server.exception.CreateException;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class CreateChannelUIBean {
@@ -41,12 +42,12 @@ public class CreateChannelUIBean {
     public String save() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         ChannelManagerLocal manager = LookupUtil.getChannelManagerLocal();
-        
+
         try {
             Channel created = manager.createChannel(subject, newChannel);
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Saved [" + created.getName() + "] with the ID of ["
-                + created.getId() + "]");
-        } catch (ContentException ce) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Saved [" + created.getName()
+                + "] with the ID of [" + created.getId() + "]");
+        } catch (CreateException ce) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Error: " + ce.getMessage());
             return "failed";
         }

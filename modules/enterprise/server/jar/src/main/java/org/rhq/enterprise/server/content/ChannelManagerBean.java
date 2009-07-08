@@ -47,10 +47,15 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.domain.util.QueryGenerator;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
+import org.rhq.enterprise.server.exception.CreateException;
+import org.rhq.enterprise.server.exception.DeleteException;
+import org.rhq.enterprise.server.exception.FetchException;
+import org.rhq.enterprise.server.exception.UpdateException;
 import org.rhq.enterprise.server.plugin.content.ContentSourcePluginContainer;
 
 @Stateless
@@ -67,7 +72,7 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
     private ContentSourceManagerLocal contentSourceManager;
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public void deleteChannel(Subject subject, int channelId) {
+    public void deleteChannel(Subject subject, int channelId) throws DeleteException {
         log.debug("User [" + subject + "] is deleting channel [" + channelId + "]");
 
         // bulk delete m-2-m mappings to the doomed channel
@@ -113,7 +118,7 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public Channel getChannel(Subject subject, int channelId) {
+    public Channel getChannel(Subject subject, int channelId) throws FetchException {
         Channel channel = entityManager.find(Channel.class, channelId);
 
         if ((channel != null) && (channel.getChannelContentSources() != null)) {
@@ -278,14 +283,18 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public Channel createChannel(Subject subject, Channel channel) throws ChannelException {
-        validateChannel(channel);
+    public Channel createChannel(Subject subject, Channel channel) throws CreateException {
+        try {
+            validateChannel(channel);
 
-        log.debug("User [" + subject + "] is creating channel [" + channel + "]");
-        entityManager.persist(channel);
-        log.debug("User [" + subject + "] created channel [" + channel + "]");
+            log.debug("User [" + subject + "] is creating channel [" + channel + "]");
+            entityManager.persist(channel);
+            log.debug("User [" + subject + "] created channel [" + channel + "]");
 
-        return channel; // now has the ID set
+            return channel; // now has the ID set
+        } catch (Exception e) {
+            throw new CreateException(e);
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -348,16 +357,20 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public void addPackageVersionsToChannel(Subject subject, int channelId, int[] packageVersionIds) throws Exception {
-        Channel channel = entityManager.find(Channel.class, channelId);
+    public void addPackageVersionsToChannel(Subject subject, int channelId, int[] packageVersionIds)
+        throws UpdateException {
+        try {
+            Channel channel = entityManager.find(Channel.class, channelId);
 
-        for (int packageVersionId : packageVersionIds) {
-            PackageVersion packageVersion = entityManager.find(PackageVersion.class, packageVersionId);
+            for (int packageVersionId : packageVersionIds) {
+                PackageVersion packageVersion = entityManager.find(PackageVersion.class, packageVersionId);
 
-            ChannelPackageVersion mapping = new ChannelPackageVersion(channel, packageVersion);
-            entityManager.persist(mapping);
+                ChannelPackageVersion mapping = new ChannelPackageVersion(channel, packageVersion);
+                entityManager.persist(mapping);
+            }
+        } catch (Exception e) {
+            throw new UpdateException(e);
         }
-
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
@@ -493,4 +506,40 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
     public long getPackageVersionCountFromChannel(Subject subject, int channelId) {
         return getPackageVersionCountFromChannel(subject, null, channelId);
     }
+
+    public PageList<Channel> findChannels(Subject subject, Channel criteria, PageControl pc) throws FetchException {
+        try {
+            QueryGenerator generator = new QueryGenerator(criteria, pc);
+
+            Query query = generator.getQuery(entityManager);
+            Query countQuery = generator.getCountQuery(entityManager);
+
+            long count = (Long) countQuery.getSingleResult();
+            List<Channel> channels = query.getResultList();
+
+            return new PageList<Channel>(channels, (int) count, pc);
+        } catch (Exception e) {
+            throw new FetchException(e.getMessage());
+        }
+    }
+
+    //TODO: incomplete, support channelId with the standard criteria, requires to extend the QueryGenerator
+    public PageList<PackageVersion> findPackageVersionsInChannel(Subject subject, int channelId,
+        PackageVersion criteria, PageControl pc) throws FetchException {
+
+        try {
+            QueryGenerator generator = new QueryGenerator(criteria, pc);
+
+            Query query = generator.getQuery(entityManager);
+            Query countQuery = generator.getCountQuery(entityManager);
+
+            long count = (Long) countQuery.getSingleResult();
+            List<PackageVersion> packageVersions = query.getResultList();
+
+            return new PageList<PackageVersion>(packageVersions, (int) count, pc);
+        } catch (Exception e) {
+            throw new FetchException(e.getMessage());
+        }
+    }
+
 }

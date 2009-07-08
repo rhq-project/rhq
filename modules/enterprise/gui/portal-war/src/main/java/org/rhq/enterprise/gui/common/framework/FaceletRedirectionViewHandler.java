@@ -65,15 +65,21 @@ public class FaceletRedirectionViewHandler extends FaceletViewHandler {
         HibernatePerformanceMonitor.get().stop(monitorId, "URL " + viewToRender.getViewId());
     }
 
-    @Override
-    protected void handleRenderException(FacesContext context, Exception ex) throws IOException, ELException,
+    protected void handleRnderException(FacesContext context, Exception ex) throws IOException, ELException,
         FacesException {
         try {
             if (context.getViewRoot().getViewId().equals("/rhq/common/error.xhtml")) {
+                /*
+                 * This is to protect from infinite redirects if the error page itself 
+                 * has an error; in this case, revert to the default error handling, 
+                 * which should provide extra context information to debug the issue
+                 */
                 log.error("Redirected back to ourselves, there must be a problem with the error.xhtml page", ex);
-                return;
+                super.handleRenderException(context, ex); // normal, ugly error page used to diagnose the issue
+                return; // return early, to prevent infinite redirects back to ourselves
             }
 
+            // squirrel the exception away in the session so it's maintained across the redirect boundary
             FacesContext facesContext = FacesContext.getCurrentInstance();
             ExternalContext externalContext = facesContext.getExternalContext();
             Map<String, Object> sessionMap = externalContext.getSessionMap();

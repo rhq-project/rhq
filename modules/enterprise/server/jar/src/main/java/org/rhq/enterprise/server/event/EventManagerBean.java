@@ -265,7 +265,7 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
     }
 
     public PageList<EventComposite> getEventsForAutoGroup(Subject subject, int parent, int type, long begin,
-        long endDate, EventSeverity[] severities, int eventId, String source, String searchString, PageControl pc) {
+        long endDate, EventSeverity[] severities, String source, String searchString, PageControl pc) {
 
         List<Resource> resources = resGrpMgr.findResourcesForAutoGroup(subject, parent, type);
         int[] resourceIds = new int[resources.size()];
@@ -293,7 +293,7 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
     }
 
     public PageList<EventComposite> getEventsForCompGroup(Subject subject, int groupId, long begin, long endDate,
-        EventSeverity[] severities, int eventId, String source, String searchString, PageControl pc) {
+        EventSeverity[] severities, String source, String searchString, PageControl pc) {
 
         List<Resource> resources = resGrpMgr.findResourcesForResourceGroup(subject, groupId, GroupCategory.COMPATIBLE);
         int[] resourceIds = new int[resources.size()];
@@ -643,11 +643,11 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
     }
 
     public PageList<EventComposite> getEventsForCompGroup(Subject subject, int groupId, long begin, long endDate,
-        EventSeverity severity, int eventId, String source, String searchString, PageControl pc) throws FetchException {
+        EventSeverity severity, String source, String searchString, PageControl pc) throws FetchException {
 
         EventSeverity[] severities = { severity };
 
-        return getEventsForCompGroup(subject, groupId, begin, endDate, severities, eventId, source, searchString, pc);
+        return getEventsForCompGroup(subject, groupId, begin, endDate, severities, source, searchString, pc);
     }
 
     //TODO: This is impossible currently to implement, Query generator does not support 'in between'
@@ -659,25 +659,14 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
     }
     */
 
-    public EventSeverity[] getSeverityBucketsForAutoGroup(Subject subject, int parentId, long begin, long end,
-        int numBuckets) throws FetchException {
-
-        List<Resource> resources = resGrpMgr.findResourcesForAutoGroup(subject, parentId);
-        return getSeverityBucketsForResources(subject, resources, begin, end, numBuckets);
-    }
-
-    public PageList<EventComposite> getEventsForAutoGroup(Subject subject, int groupId, long begin, long end,
-        EventSeverity severity, int parentId, String source, String detail, PageControl pc) throws FetchException {
-
-        List<Resource> resources = resGrpMgr.findResourcesForAutoGroup(subject, parentId);
-        int[] resourceIds = new int[resources.size()];
-        int i = 0;
-        for (Resource res : resources)
-            resourceIds[i++] = res.getId();
+    public PageList<EventComposite> getEventsForAutoGroup(Subject subject, int parentResourceId, int resourceTypeId,
+        long begin, long end, EventSeverity severity, String source, String detail, PageControl pc)
+        throws FetchException {
 
         EventSeverity[] severities = { severity };
 
-        PageList<EventComposite> comp = getEvents(subject, resourceIds, begin, end, severities, null, null, pc);
+        PageList<EventComposite> comp = getEventsForAutoGroup(subject, parentResourceId, resourceTypeId, begin, end,
+            severities, source, detail, pc);
         return comp;
     }
 

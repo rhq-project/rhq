@@ -88,13 +88,13 @@ public interface EventManagerLocal {
         EventSeverity[] severities, PageControl pc);
 
     public PageList<EventComposite> getEventsForCompGroup(Subject subject, int groupId, long begin, long endDate,
-        EventSeverity[] severities, int eventId, String source, String searchString, PageControl pc);
+        EventSeverity[] severities, String source, String searchString, PageControl pc);
 
     public PageList<EventComposite> getEventsForAutoGroup(Subject subject, int parent, int type, long begin,
         long endDate, EventSeverity[] severities, PageControl pc);
 
     public PageList<EventComposite> getEventsForAutoGroup(Subject subject, int parent, int type, long begin,
-        long endDate, EventSeverity[] severities, int eventId, String source, String searchString, PageControl pc);
+        long endDate, EventSeverity[] severities, String source, String searchString, PageControl pc);
 
     public Map<EventSeverity, Integer> getEventCountsBySeverity(Subject subject, int resourceId, long startDate,
         long endDate);
@@ -166,11 +166,12 @@ public interface EventManagerLocal {
     public PageList<EventComposite> getEventsForResource(Subject subject, int resourceId, long startDate, long endDate,
         EventSeverity severity, String source, String detail, PageControl pc) throws FetchException;
 
-    public PageList<EventComposite> getEventsForAutoGroup(Subject subject, int groupId, long begin, long end,
-        EventSeverity severity, int parentId, String source, String detail, PageControl pc) throws FetchException;
+    PageList<EventComposite> getEventsForAutoGroup(Subject subject, int parentResourceId, int resourceTypeId,
+        long begin, long end, EventSeverity severity, String source, String detail, PageControl pc)
+        throws FetchException;
 
     public PageList<EventComposite> getEventsForCompGroup(Subject subject, int groupId, long begin, long endDate,
-        EventSeverity severity, int eventId, String source, String searchString, PageControl pc) throws FetchException;
+        EventSeverity severity, String source, String searchString, PageControl pc) throws FetchException;
 
     /**
      * Provide the buckets for a timeline with the (most severe) severity for each bucket.
@@ -184,9 +185,6 @@ public interface EventManagerLocal {
      */
     public EventSeverity[] getSeverityBuckets(Subject subject, int resourceId, long begin, long end, int numBuckets)
         throws FetchException;
-
-    public EventSeverity[] getSeverityBucketsForAutoGroup(Subject subject, int parentId, long begin, long end,
-        int numBuckets) throws FetchException;
 
     /**
      * Provide the buckets for a timeline with the (most severe) severity for each bucket.

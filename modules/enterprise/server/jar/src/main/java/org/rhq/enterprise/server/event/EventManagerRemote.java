@@ -23,12 +23,8 @@ import javax.jws.WebMethod;
 import javax.jws.WebParam;
 import javax.jws.WebService;
 import javax.jws.soap.SOAPBinding;
-import javax.xml.bind.annotation.XmlSeeAlso;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.configuration.PropertyList;
-import org.rhq.core.domain.configuration.PropertyMap;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.event.composite.EventComposite;
 import org.rhq.core.domain.util.PageControl;
@@ -38,7 +34,6 @@ import org.rhq.enterprise.server.exception.FetchException;
 @SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
 @WebService
 @Remote
-@XmlSeeAlso( { PropertySimple.class, PropertyList.class, PropertyMap.class })
 public interface EventManagerRemote {
     @WebMethod
     PageList<EventComposite> getEventsForResource( //
@@ -55,11 +50,11 @@ public interface EventManagerRemote {
     @WebMethod
     PageList<EventComposite> getEventsForAutoGroup( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "groupId") int groupId, //
+        @WebParam(name = "parentResourceId") int parentResourceId, //
+        @WebParam(name = "resourceTypeId") int resourceTypeId, //
         @WebParam(name = "begin") long begin, //
         @WebParam(name = "end") long end, //
         @WebParam(name = "severity") EventSeverity severity, //
-        @WebParam(name = "parentId") int parentId, //
         @WebParam(name = "source") String source, //
         @WebParam(name = "detail") String detail, //
         @WebParam(name = "pc") PageControl pc) //
@@ -68,11 +63,10 @@ public interface EventManagerRemote {
     @WebMethod
     PageList<EventComposite> getEventsForCompGroup( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "groupId") int groupId, //
+        @WebParam(name = "resourceGroupId") int resourceGroupId, //
         @WebParam(name = "begin") long begin, //
         @WebParam(name = "end") long end, //
         @WebParam(name = "severity") EventSeverity severity, //
-        @WebParam(name = "eventId") int eventId, //
         @WebParam(name = "source") String source, //
         @WebParam(name = "detail") String detail, //
         @WebParam(name = "pc") PageControl pc) //
@@ -90,7 +84,8 @@ public interface EventManagerRemote {
     @WebMethod
     EventSeverity[] getSeverityBucketsForAutoGroup( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "parentId") int parentId, //
+        @WebParam(name = "parentResourceId") int parentResourceId, //
+        @WebParam(name = "resourceTypeId") int resourceTypeId, //
         @WebParam(name = "begin") long begin, //
         @WebParam(name = "end") long end, //
         @WebParam(name = "numBuckets") int numBuckets) //
@@ -99,7 +94,7 @@ public interface EventManagerRemote {
     @WebMethod
     EventSeverity[] getSeverityBucketsForCompGroup( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "groupId") int groupId, //
+        @WebParam(name = "resourceGroupId") int resourceGroupId, //
         @WebParam(name = "begin") long begin, //
         @WebParam(name = "end") long end, //
         @WebParam(name = "numBuckets") int numBuckets) //

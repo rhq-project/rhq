@@ -63,7 +63,8 @@ public class EventsFormPrepareAction extends MetricsControlFormPrepareAction {
 
         eventManager = LookupUtil.getEventManager();
 
-        int eventId = WebUtility.getOptionalIntRequestParameter(request, "eventId", -1);
+        // eventId never seemed to be used in the impl of the SLSB methods it was passed to
+        //int eventId = WebUtility.getOptionalIntRequestParameter(request, "eventId", -1);
         int resourceId = WebUtility.getOptionalIntRequestParameter(request, ParamConstants.RESOURCE_ID_PARAM, -1);
         int groupId = WebUtility.getOptionalIntRequestParameter(request, ParamConstants.GROUP_ID_PARAM, -1);
         int parent = WebUtility.getOptionalIntRequestParameter(request, "parent", -1);
@@ -114,12 +115,12 @@ public class EventsFormPrepareAction extends MetricsControlFormPrepareAction {
             events = eventManager.getEvents(subject, new int[] { resourceId }, begin, end, filters, sourceFilter,
                 searchString, pc);
         } else if (groupId > 0) {
-            events = eventManager.getEventsForCompGroup(subject, groupId, begin, end, filters, eventId, sourceFilter,
-                searchString, pc);
+            events = eventManager.getEventsForCompGroup(subject, groupId, begin, end, filters, /*eventId,*/
+                sourceFilter, searchString, pc);
 
         } else if (parent > 0 && type > 0) {
-            events = eventManager.getEventsForAutoGroup(subject, parent, type, begin, end, filters, eventId,
-                sourceFilter, searchString, pc);
+            events = eventManager.getEventsForAutoGroup(subject, parent, type, begin, end, filters, /*eventId,*/
+            sourceFilter, searchString, pc);
         } else {
             log.warn("Invalid input combination - can not list events ");
             return null;

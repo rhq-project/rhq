@@ -217,11 +217,11 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
                     rangePreferences.begin, rangePreferences.end, severities, source, search, pc);
             } else if (context.category == EntityContext.Category.ResourceGroup) {
                 results = eventManager.getEventsForCompGroup(getSubject(), context.groupId, rangePreferences.begin,
-                    rangePreferences.end, severities, -1, source, search, pc);
+                    rangePreferences.end, severities, source, search, pc);
             } else if (context.category == EntityContext.Category.AutoGroup) {
                 results = eventManager.getEventsForAutoGroup(getSubject(), context.parentResourceId,
-                    context.resourceTypeId, rangePreferences.begin, rangePreferences.end, severities, -1, source,
-                    search, pc);
+                    context.resourceTypeId, rangePreferences.begin, rangePreferences.end, severities, source, search,
+                    pc);
             } else {
                 log.error(context.getUnknownContextMessage());
             }

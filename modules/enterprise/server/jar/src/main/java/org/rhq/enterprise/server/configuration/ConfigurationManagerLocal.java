@@ -24,7 +24,6 @@ import java.util.Map;
 import javax.ejb.Local;
 
 import org.jetbrains.annotations.Nullable;
-import org.quartz.SchedulerException;
 
 import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
 import org.rhq.core.domain.auth.Subject;
@@ -44,6 +43,8 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.configuration.job.AggregatePluginConfigurationUpdateJob;
+import org.rhq.enterprise.server.exception.FetchException;
+import org.rhq.enterprise.server.exception.UpdateException;
 
 /**
  * The configuration manager which allows you to request resource configuration changes, view current resource
@@ -54,31 +55,6 @@ import org.rhq.enterprise.server.configuration.job.AggregatePluginConfigurationU
  */
 @Local
 public interface ConfigurationManagerLocal {
-    /**
-     * Get the current plugin configuration for the {@link Resource} with the given id, or <code>null</code> if the
-     * resource's plugin configuration is not yet initialized.
-     *
-     * @param  whoami     the user who wants to see the information
-     * @param  resourceId a {@link Resource} id
-     *
-     * @return the current plugin configuration for the {@link Resource} with the given id, or <code>null</code> if the
-     *         resource's configuration is not yet initialized
-     */
-    @Nullable
-    Configuration getCurrentPluginConfiguration(Subject whoami, int resourceId);
-
-    /**
-     * Updates the plugin configuration used to connect and communicate with the resource. The given <code>
-     * newConfiguration</code> is usually a modified version of a configuration returned by
-     * {@link #getCurrentPluginConfiguration(Subject, int)}.
-     *
-     * @param  whoami           the user who wants to see the information
-     * @param  resourceId       a {@link Resource} id
-     * @param  newConfiguration the new plugin configuration
-     *
-     * @return the plugin configuration update item corresponding to this request
-     */
-    PluginConfigurationUpdate updatePluginConfiguration(Subject whoami, int resourceId, Configuration newConfiguration);
 
     /**
      * Updates the plugin configuration used to connect and communicate with the resource using the information in the
@@ -94,50 +70,22 @@ public interface ConfigurationManagerLocal {
     void completePluginConfigurationUpdate(Integer updateId);
 
     /** This does not perform permission checks and should be used internally only. In general, use
-     * {@link #getCurrentPluginConfiguration(Subject, int)}.
+     * {@link #getPluginConfiguration(Subject, int)}.
      */
-    Configuration getActivePluginConfiguration(int resourceId);
+    Configuration getPluginConfiguration(int resourceId);
 
     /** This does not perform permission checks and should be used internally only. In general, use
      * {@link #getCurrentResourceConfiguration}.
+     * @throws FetchException TODO
      */
-    Configuration getActiveResourceConfiguration(int resourceId);
-
-    /**
-     * Get the latest resource configuration for the {@link Resource} with the given id, or <code>null</code> if the
-     * resource's configuration is not yet initialized and for some reason we can't get its current live configuration
-     * (e.g. in the case the agent or resource is down). Returns the configuration as it is known on the server-side in
-     * the database. The database will be sync'ed with the live values, if the currently live configuration is actually
-     * different than the latest configuration update found in history.
-     *
-     * @param  whoami     the user who wants to see the information
-     * @param  resourceId a {@link Resource} id
-     *
-     * @return the current configuration (along with additional information about the configuration) for the
-     *         {@link Resource} with the given id, or <code>null</code> if the resource's configuration is not yet
-     *         initialized and its live configuration could not be determined
-     */
-    @Nullable
-    ResourceConfigurationUpdate getLatestResourceConfigurationUpdate(Subject whoami, int resourceId);
-
-    /**
-     * Get the latest plugin configuration for the {@link Resource} with the given id. Returns the configuration as it
-     * is known on the server-side in the database.
-     *
-     * @param  whoami     the user who wants to see the information
-     * @param  resourceId a {@link Resource} id
-     *
-     * @return the current plugin configuration (along with additional information about the configuration) for the
-     *         {@link Resource} with the given id
-     */
-    PluginConfigurationUpdate getLatestPluginConfigurationUpdate(Subject whoami, int resourceId);
+    Configuration getResourceConfiguration(int resourceId) throws FetchException;
 
     /**
      * Get the currently live resource configuration for the {@link Resource} with the given id. This actually asks for
      * the up-to-date configuration directly from the agent. An exception will be thrown if communications with the
      * agent cannot be made.
      *
-     * @param  whoami     the user who wants to see the information
+     * @param  subject     the user who wants to see the information
      * @param  resourceId a {@link Resource} id
      * @param  pingAgentFirst true if the underlying Agent should be pinged successfully before attempting to retrieve
      *                        the configuration, or false otherwise
@@ -146,9 +94,10 @@ public interface ConfigurationManagerLocal {
      *
      * @throws Exception if failed to get the configuration from the agent
      */
-    Configuration getLiveResourceConfiguration(Subject whoami, int resourceId, boolean pingAgentFirst) throws Exception;
+    Configuration getLiveResourceConfiguration(Subject subject, int resourceId, boolean pingAgentFirst)
+        throws Exception;
 
-    PageList<PluginConfigurationUpdate> getPluginConfigurationUpdates(Subject whoami, int resourceId, Long beginDate,
+    PageList<PluginConfigurationUpdate> getPluginConfigurationUpdates(Subject subject, int resourceId, Long beginDate,
         Long endDate, PageControl pc);
 
     /**
@@ -157,7 +106,7 @@ public interface ConfigurationManagerLocal {
      * configuration version to later rollback to that version via
      * {@link #updateResourceConfiguration(Subject, int, Configuration)}.
      *
-     * @param  whoami         the user who wants to see the information
+     * @param  subject         the user who wants to see the information
      * @param  resourceId     the resource whose update requests are to be returned, if null will not filter by resourceId
      * @param  beginDate      filter used to show only results occurring after this epoch millis parameter, nullable
      * @param  endDate        filter used to show only results occurring before this epoch millis parameter, nullable
@@ -166,39 +115,20 @@ public interface ConfigurationManagerLocal {
      *
      * @return the resource's complete list of updates (will be empty (not <code>null</code>) if none)
      */
-    PageList<ResourceConfigurationUpdate> getResourceConfigurationUpdates(Subject whoami, Integer resourceId,
+    PageList<ResourceConfigurationUpdate> getResourceConfigurationUpdates(Subject subject, Integer resourceId,
         Long beginDate, Long endDate, boolean suppressOldest, PageControl pc);
 
-    PluginConfigurationUpdate getPluginConfigurationUpdate(Subject whoami, int configurationUpdateId);
+    PluginConfigurationUpdate getPluginConfigurationUpdate(Subject subject, int configurationUpdateId);
 
     /**
      * Returns a single resource configuration update
      *
-     * @param  whoami                the user who wants to see the information
+     * @param  subject                the user who wants to see the information
      * @param  configurationUpdateId the ID of the configuration update entity to return
      *
      * @return the resource configuration update
      */
-    ResourceConfigurationUpdate getResourceConfigurationUpdate(Subject whoami, int configurationUpdateId);
-
-    /**
-     * This method is called when a user has requested to change the resource configuration for an existing resource. If
-     * the user does not have the proper permissions to change the resource's configuration, an exception is thrown.
-     *
-     * <p>This will not wait for the agent to finish the configuration update. This will return after the request is
-     * sent. Once the agent finishes with the request, it will send the completed request information to
-     * {@link #completeResourceConfigurationUpdate}.</p>
-     *
-     * @param  whoami           the user who is requesting the update
-     * @param  resourceId       identifies the resource to be updated
-     * @param  newConfiguration the resource's desired new configuration
-     *
-     * @return the resource configuration update item corresponding to this request. null 
-     * if newConfiguration is equal to the existing configuration.
-     */
-    @Nullable
-    ResourceConfigurationUpdate updateResourceConfiguration(Subject whoami, int resourceId,
-        Configuration newConfiguration);
+    ResourceConfigurationUpdate getResourceConfigurationUpdate(Subject subject, int configurationUpdateId);
 
     /**
      * This method is called when a user has requested to change the resource configuration for an existing resource to
@@ -209,13 +139,13 @@ public interface ConfigurationManagerLocal {
      * sent. Once the agent finishes with the request, it will send the completed request information to
      * {@link #completeResourceConfigurationUpdate}.</p>
      *
-     * @param  whoami          the user who is requesting the update
+     * @param  subject          the user who is requesting the update
      * @param  resourceId      identifies the resource to be updated
      * @param  configHistoryId the id of the resource's previous configuration to rollback to
      *
      * @throws ConfigurationUpdateException if the configHistoryId does not exist
      */
-    void rollbackResourceConfiguration(Subject whoami, int resourceId, int configHistoryId)
+    void rollbackResourceConfiguration(Subject subject, int resourceId, int configHistoryId)
         throws ConfigurationUpdateException;
 
     /**
@@ -225,7 +155,7 @@ public interface ConfigurationManagerLocal {
      * {@link #getLatestResourceConfigurationUpdate(Subject, int)} and
      * {@link #scheduleAggregateResourceConfigurationUpdate}.
      *
-     * @param  whoami
+     * @param  subject
      * @param  resourceId
      * @param  newConfiguration
      * @param  newStatus
@@ -236,7 +166,7 @@ public interface ConfigurationManagerLocal {
      *         currently persisted Configuration
      */
     @Nullable
-    ResourceConfigurationUpdate persistNewResourceConfigurationUpdateHistory(Subject whoami, int resourceId,
+    ResourceConfigurationUpdate persistNewResourceConfigurationUpdateHistory(Subject subject, int resourceId,
         Configuration newConfiguration, ConfigurationUpdateStatus newStatus, String newSubject,
         boolean isPartofAggregateUpdate);
 
@@ -255,7 +185,7 @@ public interface ConfigurationManagerLocal {
 
     ConfigurationUpdateResponse executePluginConfigurationUpdate(PluginConfigurationUpdate update);
 
-    public void purgePluginConfigurationUpdate(Subject whoami, int configurationUpdateId, boolean purgeInProgress);
+    public void purgePluginConfigurationUpdate(Subject subject, int configurationUpdateId, boolean purgeInProgress);
 
     /**
      * This deletes the update information belonging to the {@link AbstractResourceConfigurationUpdate} object with the
@@ -268,62 +198,62 @@ public interface ConfigurationManagerLocal {
      * you should pass <code>true</code> in for the <code>purgeInProgress</code> parameter to tell this method to delete
      * the request even if it says it is in-progress.
      *
-     * @param whoami                the user who is requesting the purge
+     * @param subject                the user who is requesting the purge
      * @param configurationUpdateId identifies the update record to be deleted
      * @param purgeInProgress       if <code>true</code>, delete it even if its
      *                              {@link ConfigurationUpdateStatus#INPROGRESS in progress}
      */
-    void purgeResourceConfigurationUpdate(Subject whoami, int configurationUpdateId, boolean purgeInProgress);
+    void purgeResourceConfigurationUpdate(Subject subject, int configurationUpdateId, boolean purgeInProgress);
 
     /**
      * This deletes one or more configuration updates from the resource's configuration history.
      *
-     * @param whoami                 the user who is requesting the purge
+     * @param subject                 the user who is requesting the purge
      * @param configurationUpdateIds identifies the update records to be deleted
      * @param purgeInProgress        if <code>true</code>, delete those even if
      *                               {@link ConfigurationUpdateStatus#INPROGRESS in progress}
      */
-    void purgeResourceConfigurationUpdates(Subject whoami, int[] configurationUpdateIds, boolean purgeInProgress);
+    void purgeResourceConfigurationUpdates(Subject subject, int[] configurationUpdateIds, boolean purgeInProgress);
 
     /**
      * Return the resource configuration definition for the {@link org.rhq.core.domain.resource.ResourceType} with the
      * specified id.
      *
-     * @param  whoami         the user who is requesting the resource configuration definition
+     * @param  subject         the user who is requesting the resource configuration definition
      * @param  resourceTypeId identifies the resource type whose resource configuration definition is being requested
      *
      * @return the resource configuration definition for the {@link org.rhq.core.domain.resource.ResourceType} with the
      *         specified id, or <code>null</code> if the ResourceType does not define a resource configuration
      */
     @Nullable
-    ConfigurationDefinition getResourceConfigurationDefinitionForResourceType(Subject whoami, int resourceTypeId);
+    ConfigurationDefinition getResourceConfigurationDefinitionForResourceType(Subject subject, int resourceTypeId);
 
     /**
      * Return the resource configuration definition for the {@link org.rhq.core.domain.resource.ResourceType} with the
      * specified id. The templates will be loaded in the definition returned from this call.
      *
-     * @param  whoami         the user who is requesting the resource configuration definition
+     * @param  subject         the user who is requesting the resource configuration definition
      * @param  resourceTypeId identifies the resource type whose resource configuration definition is being requested
      *
      * @return the resource configuration definition for the {@link org.rhq.core.domain.resource.ResourceType} with the
      *         specified id, or <code>null</code> if the ResourceType does not define a resource configuration
      */
     @Nullable
-    ConfigurationDefinition getResourceConfigurationDefinitionWithTemplatesForResourceType(Subject whoami,
+    ConfigurationDefinition getResourceConfigurationDefinitionWithTemplatesForResourceType(Subject subject,
         int resourceTypeId);
 
     /**
      * Return the plugin configuration definition for the {@link org.rhq.core.domain.resource.ResourceType} with the
      * specified id.
      *
-     * @param  whoami         the user who is requesting the plugin configuration definition
+     * @param  subject         the user who is requesting the plugin configuration definition
      * @param  resourceTypeId identifies the resource type whose plugin configuration definition is being requested
      *
      * @return the plugin configuration definition for the {@link org.rhq.core.domain.resource.ResourceType} with the
      *         specified id, or <code>null</code> if the ResourceType does not define a plugin configuration
      */
     @Nullable
-    ConfigurationDefinition getPluginConfigurationDefinitionForResourceType(Subject whoami, int resourceTypeId);
+    ConfigurationDefinition getPluginConfigurationDefinitionForResourceType(Subject subject, int resourceTypeId);
 
     /**
      * Merge the specified configuration update into the DB.
@@ -359,8 +289,6 @@ public interface ConfigurationManagerLocal {
      */
     Configuration getConfigurationFromDefaultTemplate(ConfigurationDefinition definition);
 
-    boolean isResourceConfigurationUpdateInProgress(Subject whoami, int resourceId);
-
     AggregatePluginConfigurationUpdate getAggregatePluginConfigurationById(int configurationUpdateId);
 
     PageList<ConfigurationUpdateComposite> getPluginConfigurationUpdateCompositesByParentId(int configurationUpdateId,
@@ -375,8 +303,8 @@ public interface ConfigurationManagerLocal {
 
     int createAggregateConfigurationUpdate(AbstractAggregateConfigurationUpdate update);
 
-    int scheduleAggregatePluginConfigurationUpdate(Subject whoami, int compatibleGroupId,
-        Map<Integer, Configuration> pluginConfigurationUpdate) throws SchedulerException, ConfigurationUpdateException;
+    int scheduleAggregatePluginConfigurationUpdate(Subject subject, int compatibleGroupId,
+        Map<Integer, Configuration> pluginConfigurationUpdate) throws UpdateException;
 
     PageList<AggregatePluginConfigurationUpdate> getAggregatePluginConfigurationUpdatesByGroupId(int groupId,
         PageControl pc);
@@ -406,30 +334,25 @@ public interface ConfigurationManagerLocal {
 
     AggregateResourceConfigurationUpdate getAggregateResourceConfigurationById(int configurationUpdateId);
 
-    int scheduleAggregateResourceConfigurationUpdate(Subject whoami, int compatibleGroupId,
-        Map<Integer, Configuration> memberConfigurations) throws Exception;
-
     Map<Integer, Configuration> getResourceConfigurationMapForAggregateUpdate(
         Integer aggregateResourceConfigurationUpdateId);
 
     Map<Integer, Configuration> getResourceConfigurationMapForCompatibleGroup(ResourceGroup compatibleGroup);
 
-    boolean isAggregateResourceConfigurationUpdateInProgress(Subject whoami, int groupId);
-
     /**
      * Returns the current Resource configurations for the members in the specified compatible group.
      *
-     * @param whoami the current subject
+     * @param subject the current subject
      * @param groupId the id of the compatible group
      * @return
      * @throws ConfigurationUpdateInProgressException if config updates, for the group or any member, are in progress, 
      * @throws Exception if 1) one or more of the group's members are DOWN, or 2) we fail to retrieve one or more member
      *         live configs from the corresponding Agents
      */
-    Map<Integer, Configuration> getResourceConfigurationsForCompatibleGroup(Subject whoami, int groupId)
+    Map<Integer, Configuration> getResourceConfigurationsForCompatibleGroup(Subject subject, int groupId)
         throws ConfigurationUpdateStillInProgressException, Exception;
 
-    Map<Integer, Configuration> getPluginConfigurationsForCompatibleGroup(Subject whoami, int groupId)
+    Map<Integer, Configuration> getPluginConfigurationsForCompatibleGroup(Subject subject, int groupId)
         throws ConfigurationUpdateStillInProgressException, Exception;
 
     Map<Integer, Configuration> getPluginConfigurationMapForAggregateUpdate(Integer aggregatePluginConfigurationUpdateId);
@@ -445,4 +368,106 @@ public interface ConfigurationManagerLocal {
      * timed out).
      */
     void checkForTimedOutConfigurationUpdateRequests();
+
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    //
+    // The following are shared with the Remote Interface
+    //
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    public AggregatePluginConfigurationUpdate getAggregatePluginConfigurationUpdate(Subject subject,
+        int configurationUpdateId) throws FetchException;
+
+    public AggregateResourceConfigurationUpdate getAggregateResourceConfigurationUpdate(Subject subject,
+        int configurationUpdateId) throws FetchException;
+
+    public Configuration getConfiguration(Subject subject, int configurationId) throws FetchException;
+
+    /**
+     * Get the current plugin configuration for the {@link Resource} with the given id, or <code>null</code> if the
+     * resource's plugin configuration is not yet initialized.
+     *
+     * @param  subject     the user who wants to see the information
+     * @param  resourceId a {@link Resource} id
+     *
+     * @return the current plugin configuration for the {@link Resource} with the given id, or <code>null</code> if the
+     *         resource's configuration is not yet initialized
+     * @throws FetchException TODO
+     */
+    @Nullable
+    Configuration getPluginConfiguration(Subject subject, int resourceId) throws FetchException;
+
+    /**
+     * Get the latest plugin configuration for the {@link Resource} with the given id. Returns the configuration as it
+     * is known on the server-side in the database.
+     *
+     * @param  subject     the user who wants to see the information
+     * @param  resourceId a {@link Resource} id
+     *
+     * @return the current plugin configuration (along with additional information about the configuration) for the
+     *         {@link Resource} with the given id
+     * @throws FetchException TODO
+     */
+    PluginConfigurationUpdate getLatestPluginConfigurationUpdate(Subject subject, int resourceId) throws FetchException;
+
+    /**
+     * Get the latest resource configuration for the {@link Resource} with the given id, or <code>null</code> if the
+     * resource's configuration is not yet initialized and for some reason we can't get its current live configuration
+     * (e.g. in the case the agent or resource is down). Returns the configuration as it is known on the server-side in
+     * the database. The database will be sync'ed with the live values, if the currently live configuration is actually
+     * different than the latest configuration update found in history.
+     *
+     * @param  subject     the user who wants to see the information
+     * @param  resourceId a {@link Resource} id
+     *
+     * @return the current configuration (along with additional information about the configuration) for the
+     *         {@link Resource} with the given id, or <code>null</code> if the resource's configuration is not yet
+     *         initialized and its live configuration could not be determined
+     * @throws FetchException TODO
+     */
+    @Nullable
+    ResourceConfigurationUpdate getLatestResourceConfigurationUpdate(Subject subject, int resourceId)
+        throws FetchException;
+
+    boolean isResourceConfigurationUpdateInProgress(Subject subject, int resourceId) throws FetchException;
+
+    boolean isAggregateResourceConfigurationUpdateInProgress(Subject subject, int groupId) throws FetchException;
+
+    int scheduleAggregateResourceConfigurationUpdate(Subject subject, int compatibleGroupId,
+        Map<Integer, Configuration> newResourceConfigurationMap) throws UpdateException;
+
+    /**
+     * Updates the plugin configuration used to connect and communicate with the resource. The given <code>
+     * newConfiguration</code> is usually a modified version of a configuration returned by
+     * {@link #getPluginConfiguration(Subject, int)}.
+     *
+     * @param  subject           the user who wants to see the information
+     * @param  resourceId       a {@link Resource} id
+     * @param  newConfiguration the new plugin configuration
+     *
+     * @return the plugin configuration update item corresponding to this request
+     * @throws UpdateException TODO
+     */
+    PluginConfigurationUpdate updatePluginConfiguration(Subject subject, int resourceId, Configuration newConfiguration)
+        throws UpdateException;
+
+    /**
+     * This method is called when a user has requested to change the resource configuration for an existing resource. If
+     * the user does not have the proper permissions to change the resource's configuration, an exception is thrown.
+     *
+     * <p>This will not wait for the agent to finish the configuration update. This will return after the request is
+     * sent. Once the agent finishes with the request, it will send the completed request information to
+     * {@link #completeResourceConfigurationUpdate}.</p>
+     *
+     * @param  subject           the user who is requesting the update
+     * @param  resourceId       identifies the resource to be updated
+     * @param  newConfiguration the resource's desired new configuration
+     *
+     * @return the resource configuration update item corresponding to this request. null 
+     * if newConfiguration is equal to the existing configuration.
+     * @throws UpdateException TODO
+     */
+    @Nullable
+    ResourceConfigurationUpdate updateResourceConfiguration(Subject subject, int resourceId,
+        Configuration newConfiguration) throws UpdateException;
 }

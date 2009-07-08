@@ -59,8 +59,8 @@ public class ConnectionPropertiesUIBean extends AbstractConfigurationUIBean {
 
     @Nullable
     protected Configuration lookupConfiguration() {
-        Configuration configuration = this.configurationManager.getCurrentPluginConfiguration(
-            EnterpriseFacesContextUtility.getSubject(), EnterpriseFacesContextUtility.getResource().getId());
+        Configuration configuration = this.configurationManager.getPluginConfiguration(EnterpriseFacesContextUtility
+            .getSubject(), EnterpriseFacesContextUtility.getResource().getId());
         if (configuration != null) {
             ConfigurationMaskingUtility.maskConfiguration(configuration, getConfigurationDefinition());
         }

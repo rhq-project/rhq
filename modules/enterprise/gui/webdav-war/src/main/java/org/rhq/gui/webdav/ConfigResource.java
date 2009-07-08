@@ -88,7 +88,7 @@ public class ConfigResource extends GetableBasicResource {
     private Configuration getConfiguration() {
         if (this.configuration == null) {
             ConfigurationManagerLocal cm = LookupUtil.getConfigurationManager();
-            this.configuration = cm.getActiveResourceConfiguration(getManagedResource().getId());
+            this.configuration = cm.getResourceConfiguration(getManagedResource().getId());
         }
         return this.configuration;
     }

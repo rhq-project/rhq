@@ -427,7 +427,7 @@ public class TestRemoteInterface extends AssertJUnit {
         service = Service.create(wsdlURL, serviceName);
         ConfigurationManagerRemote configManager = service.getPort(ConfigurationManagerRemote.class);
 
-        Configuration config = configManager.getCurrentResourceConfiguration(user, testAgent.getResource().getId());
+        Configuration config = configManager.getResourceConfiguration(user, testAgent.getResource().getId());
         assertNotNull(config);
         assertEquals("plugins", config.getSimpleProperties().get("rhq.agent.plugins.directory").getStringValue());
 
@@ -442,7 +442,7 @@ public class TestRemoteInterface extends AssertJUnit {
             fail("Config Update not completed, may need to fix property manually");
         }
 
-        config = configManager.getCurrentResourceConfiguration(user, testAgent.getResource().getId());
+        config = configManager.getResourceConfiguration(user, testAgent.getResource().getId());
         assertNotNull(config);
         assertEquals("plugins/../plugins", config.getSimpleProperties().get("rhq.agent.plugins.directory")
             .getStringValue());
@@ -487,7 +487,7 @@ public class TestRemoteInterface extends AssertJUnit {
         service = Service.create(wsdlURL, serviceName);
         ConfigurationManagerRemote configManager = service.getPort(ConfigurationManagerRemote.class);
 
-        Configuration config = configManager.getCurrentPluginConfiguration(user, testAS.getResource().getId());
+        Configuration config = configManager.getPluginConfiguration(user, testAS.getResource().getId());
         assertNotNull(config);
         assertTrue(config.getSimpleProperties().get("startScript").getStringValue().endsWith("run.bat"));
 
@@ -496,7 +496,7 @@ public class TestRemoteInterface extends AssertJUnit {
         config.getSimpleProperties().get("startScript").setStringValue(newString);
         configManager.updatePluginConfiguration(user, testAS.getResource().getId(), config);
 
-        config = configManager.getCurrentPluginConfiguration(user, testAS.getResource().getId());
+        config = configManager.getPluginConfiguration(user, testAS.getResource().getId());
         assertNotNull(config);
         assertTrue(config.getSimpleProperties().get("startScript").getStringValue().endsWith("batter.run"));
 

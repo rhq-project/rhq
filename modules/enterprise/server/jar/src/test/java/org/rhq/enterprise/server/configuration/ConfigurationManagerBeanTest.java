@@ -284,18 +284,18 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
 
         Configuration current;
 
-        current = configurationManager.getCurrentPluginConfiguration(overlord, resource.getId());
+        current = configurationManager.getPluginConfiguration(overlord, resource.getId());
         assert current != null;
         assert current.getProperties().size() == 0 : current; // there is no plugin config settings yet
 
         configurationManager.updatePluginConfiguration(overlord, resource.getId(), configuration1);
-        current = configurationManager.getCurrentPluginConfiguration(overlord, resource.getId());
+        current = configurationManager.getPluginConfiguration(overlord, resource.getId());
         assert current != null;
         assert current.getProperties().size() == 1 : current;
         assert current.getSimple("foo").getIntegerValue() == 1 : current;
 
         configurationManager.updatePluginConfiguration(overlord, resource.getId(), configuration2);
-        current = configurationManager.getCurrentPluginConfiguration(overlord, resource.getId());
+        current = configurationManager.getPluginConfiguration(overlord, resource.getId());
         assert current != null;
         assert current.getProperties().size() == 1 : current;
         assert current.getSimple("bar").getIntegerValue() == 2 : current;
@@ -305,7 +305,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         assert current.remove("bar") != null : current; // again just test the remove method
         current.put(new PropertySimple("hello", "3"));
         configurationManager.updatePluginConfiguration(overlord, resource.getId(), current);
-        current = configurationManager.getCurrentPluginConfiguration(overlord, resource.getId());
+        current = configurationManager.getPluginConfiguration(overlord, resource.getId());
         assert current != null;
         assert current.getProperties().size() == 1 : current;
         assert current.getSimple("hello").getIntegerValue() == 3 : current;
@@ -325,7 +325,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
 
         Configuration current;
 
-        current = configurationManager.getCurrentPluginConfiguration(overlord, resource.getId());
+        current = configurationManager.getPluginConfiguration(overlord, resource.getId());
         assert current != null;
         assert current.getProperties().size() == 0 : current; // there is no plugin config settings yet
 
@@ -335,7 +335,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
             + "but instead received no error.";
 
         // Even if a plugin container exception occurs, the plugin configuration should still be updated.
-        current = configurationManager.getCurrentPluginConfiguration(overlord, resource.getId());
+        current = configurationManager.getPluginConfiguration(overlord, resource.getId());
         assert current != null;
         assert current.getProperties().size() != 0 : current.toString();
     }
@@ -428,10 +428,10 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
                 .getId(), configuration2);
             assert update2.getErrorMessage() == null : "We weren't expecting a failure here";
 
-            Configuration updatedConfiguration1 = configurationManager.getCurrentPluginConfiguration(overlord,
-                resource1.getId());
-            Configuration updatedConfiguration2 = configurationManager.getCurrentPluginConfiguration(overlord,
-                resource2.getId());
+            Configuration updatedConfiguration1 = configurationManager.getPluginConfiguration(overlord, resource1
+                .getId());
+            Configuration updatedConfiguration2 = configurationManager.getPluginConfiguration(overlord, resource2
+                .getId());
 
             assert updatedConfiguration1.equals(configuration1) : "configuration1 was: " + updatedConfiguration1 + ", "
                 + "expected was: " + configuration1;
@@ -500,9 +500,9 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
                 i++;
             }
 
-            Configuration configurationAfterAggregate1 = configurationManager.getCurrentPluginConfiguration(overlord,
+            Configuration configurationAfterAggregate1 = configurationManager.getPluginConfiguration(overlord,
                 resource1.getId());
-            Configuration configurationAfterAggregate2 = configurationManager.getCurrentPluginConfiguration(overlord,
+            Configuration configurationAfterAggregate2 = configurationManager.getPluginConfiguration(overlord,
                 resource2.getId());
 
             ConfigurationUpdateStatus expectedResultStatus = null;
@@ -788,10 +788,10 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         ResourceConfigurationUpdate up;
         up = configurationManager.updateResourceConfiguration(overlord, resource.getId(), configuration1);
         Thread.sleep(2000); // wait for the test agent to complete the request
-        assert configuration1.equals(configurationManager.getActiveResourceConfiguration(resource.getId()));
+        assert configuration1.equals(configurationManager.getResourceConfiguration(resource.getId()));
         up = configurationManager.updateResourceConfiguration(overlord, resource.getId(), configuration2);
         Thread.sleep(2000); // wait for the test agent to complete the request
-        assert configuration2.equals(configurationManager.getActiveResourceConfiguration(resource.getId()));
+        assert configuration2.equals(configurationManager.getResourceConfiguration(resource.getId()));
 
         // at this point in time, the round trip messaging is done and we have the agent response
         List<ResourceConfigurationUpdate> requests;
@@ -830,19 +830,19 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         Configuration configuration2 = new Configuration();
         configuration2.put(new PropertySimple("myboolean", "true"));
 
-        Configuration activeConfigurationBefore = configurationManager.getActiveResourceConfiguration(resource.getId());
+        Configuration activeConfigurationBefore = configurationManager.getResourceConfiguration(resource.getId());
 
         configurationManager.updateResourceConfiguration(overlord, resource.getId(), configuration1);
         Thread.sleep(4000); // wait for the test agent to complete the request
 
-        Configuration activeConfigurationAfter = configurationManager.getActiveResourceConfiguration(resource.getId());
+        Configuration activeConfigurationAfter = configurationManager.getResourceConfiguration(resource.getId());
         assert activeConfigurationBefore.equals(activeConfigurationAfter) : "ActiveResourceConfiguration was not supposed to change for a failed update -- old was: "
             + activeConfigurationBefore + ", new was: " + activeConfigurationAfter;
 
         configurationManager.updateResourceConfiguration(overlord, resource.getId(), configuration2);
         Thread.sleep(4000); // wait for the test agent to complete the request
 
-        Configuration activeConfiguration = configurationManager.getActiveResourceConfiguration(resource.getId());
+        Configuration activeConfiguration = configurationManager.getResourceConfiguration(resource.getId());
         assert activeConfiguration != null : "ActiveResourceConfiguration was not updated with configuration2";
         Map<String, PropertySimple> activeProperties = activeConfiguration.getSimpleProperties();
         assert activeProperties.size() == 1;

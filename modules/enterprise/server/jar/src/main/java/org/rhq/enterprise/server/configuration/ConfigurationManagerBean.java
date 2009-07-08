@@ -85,6 +85,8 @@ import org.rhq.enterprise.server.configuration.job.AbstractAggregateConfiguratio
 import org.rhq.enterprise.server.configuration.job.AggregatePluginConfigurationUpdateJob;
 import org.rhq.enterprise.server.configuration.job.AggregateResourceConfigurationUpdateJob;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
+import org.rhq.enterprise.server.exception.FetchException;
+import org.rhq.enterprise.server.exception.UpdateException;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
@@ -124,7 +126,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     private SubjectManagerLocal subjectManager;
 
     @Nullable
-    public Configuration getCurrentPluginConfiguration(Subject whoami, int resourceId) {
+    public Configuration getPluginConfiguration(Subject subject, int resourceId) throws FetchException {
         log.debug("Getting current plugin configuration for resource [" + resourceId + "]");
 
         Resource resource = entityManager.find(Resource.class, resourceId);
@@ -132,12 +134,12 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             throw new IllegalStateException("Cannot retrieve plugin config for unknown resource [" + resourceId + "]");
         }
 
-        if (!authorizationManager.canViewResource(whoami, resourceId)) {
-            throw new PermissionException("User [" + whoami.getName()
+        if (!authorizationManager.canViewResource(subject, resourceId)) {
+            throw new PermissionException("User [" + subject.getName()
                 + "] does not have permission to view plugin configuration for [" + resource + "]");
         }
 
-        Configuration pluginConfiguration = configurationManager.getActivePluginConfiguration(resourceId);
+        Configuration pluginConfiguration = configurationManager.getPluginConfiguration(resourceId);
 
         return pluginConfiguration;
     }
@@ -146,7 +148,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     // yet been loaded by Hibernate.  We want the query to return a non-proxied configuration,
     // this is critical for remote API use.
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public Configuration getActivePluginConfiguration(int resourceId) {
+    public Configuration getPluginConfiguration(int resourceId) {
         // Ensure that we return a non-proxied Configuration object that can survive after the
         // Hibernate session goes away.
         Query query = entityManager.createNamedQuery(Configuration.QUERY_GET_PLUGIN_CONFIG_BY_RESOURCE_ID);
@@ -220,21 +222,21 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return response;
     }
 
-    public PluginConfigurationUpdate updatePluginConfiguration(Subject whoami, int resourceId,
-        Configuration configuration) {
+    public PluginConfigurationUpdate updatePluginConfiguration(Subject subject, int resourceId,
+        Configuration configuration) throws UpdateException {
         Subject overlord = subjectManager.getOverlord();
         Resource resource;
         try {
             resource = resourceManager.getResourceById(overlord, resourceId);
         } catch (ResourceNotFoundException rfne) {
-            throw new IllegalStateException("Cannot update plugin config for unknown resource [" + resourceId + "]");
+            throw new UpdateException("Cannot update plugin config for unknown resource [" + resourceId + "]");
         }
 
         // make sure the user has the proper permissions to do this
-        ensureModifyPermission(whoami, resource);
+        ensureModifyPermission(subject, resource);
 
         // create our new update request and assign it to our resource - its status will initially be "in progress"
-        PluginConfigurationUpdate update = new PluginConfigurationUpdate(resource, configuration, whoami.getName());
+        PluginConfigurationUpdate update = new PluginConfigurationUpdate(resource, configuration, subject.getName());
 
         update.setStatus(ConfigurationUpdateStatus.SUCCESS);
         entityManager.persist(update);
@@ -252,28 +254,32 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return update;
     }
 
-    public Configuration getCurrentResourceConfiguration(Subject user, int resourceId) {
-        Resource resource = entityManager.find(Resource.class, resourceId);
+    public Configuration getResourceConfiguration(Subject subject, int resourceId) throws FetchException {
+        try {
+            Resource resource = entityManager.find(Resource.class, resourceId);
 
-        if (resource == null) {
-            throw new NoResultException("Cannot get live configuration for unknown resource [" + resourceId + "]");
+            if (resource == null) {
+                throw new NoResultException("Cannot get live configuration for unknown resource [" + resourceId + "]");
+            }
+
+            if (!authorizationManager.canViewResource(subject, resource.getId())) {
+                throw new PermissionException("User [" + subject.getName()
+                    + "] does not have permission to view resource configuration for [" + resource + "]");
+            }
+
+            Configuration result = configurationManager.getResourceConfiguration(resourceId);
+
+            return result;
+        } catch (Exception e) {
+            throw new FetchException(e);
         }
-
-        if (!authorizationManager.canViewResource(user, resource.getId())) {
-            throw new PermissionException("User [" + user.getName()
-                + "] does not have permission to view resource configuration for [" + resource + "]");
-        }
-
-        Configuration result = configurationManager.getActiveResourceConfiguration(resourceId);
-
-        return result;
     }
 
     // Use new transaction because this only works if the resource in question has not
     // yet been loaded by Hibernate.  We want the query to return a non-proxied configuration,
     // this is critical for remote API use.
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public Configuration getActiveResourceConfiguration(int resourceId) {
+    public Configuration getResourceConfiguration(int resourceId) throws FetchException {
         // Ensure that we return a non-proxied Configuration object that can survive after the
         // Hibernate session goes away.
         Query query = entityManager.createNamedQuery(Configuration.QUERY_GET_RESOURCE_CONFIG_BY_RESOURCE_ID);
@@ -284,7 +290,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     @Nullable
-    public ResourceConfigurationUpdate getLatestResourceConfigurationUpdate(Subject whoami, int resourceId) {
+    public ResourceConfigurationUpdate getLatestResourceConfigurationUpdate(Subject subject, int resourceId)
+        throws FetchException {
         log.debug("Getting current resource configuration for resource [" + resourceId + "]");
 
         Resource resource;
@@ -308,8 +315,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             }
         }
 
-        if (!authorizationManager.canViewResource(whoami, resource.getId())) {
-            throw new PermissionException("User [" + whoami.getName()
+        if (!authorizationManager.canViewResource(subject, resource.getId())) {
+            throw new PermissionException("User [" + subject.getName()
                 + "] does not have permission to view resource configuration for [" + resource + "]");
         }
 
@@ -378,7 +385,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return update;
     }
 
-    public PluginConfigurationUpdate getLatestPluginConfigurationUpdate(Subject whoami, int resourceId) {
+    public PluginConfigurationUpdate getLatestPluginConfigurationUpdate(Subject subject, int resourceId)
+        throws FetchException {
         log.debug("Getting current plugin configuration for resource [" + resourceId + "]");
 
         Resource resource;
@@ -401,22 +409,22 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             }
         }
 
-        if (!authorizationManager.canViewResource(whoami, resource.getId())) {
-            throw new PermissionException("User [" + whoami.getName()
+        if (!authorizationManager.canViewResource(subject, resource.getId())) {
+            throw new PermissionException("User [" + subject.getName()
                 + "] does not have permission to view plugin configuration for [" + resource + "]");
         }
 
         return current;
     }
 
-    public boolean isResourceConfigurationUpdateInProgress(Subject whoami, int resourceId) {
+    public boolean isResourceConfigurationUpdateInProgress(Subject subject, int resourceId) throws FetchException {
         boolean updateInProgress;
         try {
             Query query = entityManager.createNamedQuery(ResourceConfigurationUpdate.QUERY_FIND_LATEST_BY_RESOURCE_ID);
             query.setParameter("resourceId", resourceId);
             ResourceConfigurationUpdate latestConfigUpdate = (ResourceConfigurationUpdate) query.getSingleResult();
-            if (!authorizationManager.canViewResource(whoami, latestConfigUpdate.getResource().getId())) {
-                throw new PermissionException("User [" + whoami.getName()
+            if (!authorizationManager.canViewResource(subject, latestConfigUpdate.getResource().getId())) {
+                throw new PermissionException("User [" + subject.getName()
                     + "] does not have permission to view Resource configuration for ["
                     + latestConfigUpdate.getResource() + "]");
             }
@@ -428,14 +436,14 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return updateInProgress;
     }
 
-    public boolean isPluginConfigurationUpdateInProgress(Subject whoami, int resourceId) {
+    public boolean isPluginConfigurationUpdateInProgress(Subject subject, int resourceId) {
         boolean updateInProgress;
         try {
             Query query = entityManager.createNamedQuery(PluginConfigurationUpdate.QUERY_FIND_LATEST_BY_RESOURCE_ID);
             query.setParameter("resourceId", resourceId);
             PluginConfigurationUpdate latestConfigUpdate = (PluginConfigurationUpdate) query.getSingleResult();
-            if (!authorizationManager.canViewResource(whoami, latestConfigUpdate.getResource().getId())) {
-                throw new PermissionException("User [" + whoami.getName()
+            if (!authorizationManager.canViewResource(subject, latestConfigUpdate.getResource().getId())) {
+                throw new PermissionException("User [" + subject.getName()
                     + "] does not have permission to view plugin configuration for ["
                     + latestConfigUpdate.getResource() + "]");
             }
@@ -447,7 +455,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return updateInProgress;
     }
 
-    public boolean isAggregateResourceConfigurationUpdateInProgress(Subject whoami, int groupId) {
+    public boolean isAggregateResourceConfigurationUpdateInProgress(Subject subject, int groupId) throws FetchException {
         boolean updateInProgress;
         try {
             Query query = entityManager
@@ -455,8 +463,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             query.setParameter("groupId", groupId);
             AggregateResourceConfigurationUpdate latestConfigGroupUpdate = (AggregateResourceConfigurationUpdate) query
                 .getSingleResult();
-            if (!authorizationManager.canViewGroup(whoami, latestConfigGroupUpdate.getGroup().getId())) {
-                throw new PermissionException("User [" + whoami.getName()
+            if (!authorizationManager.canViewGroup(subject, latestConfigGroupUpdate.getGroup().getId())) {
+                throw new PermissionException("User [" + subject.getName()
                     + "] does not have permission to view group Resource configuration for ["
                     + latestConfigGroupUpdate.getGroup() + "]");
             }
@@ -470,7 +478,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return updateInProgress;
     }
 
-    public boolean isAggregatePluginConfigurationUpdateInProgress(Subject whoami, int groupId) {
+    public boolean isAggregatePluginConfigurationUpdateInProgress(Subject subject, int groupId) {
         boolean updateInProgress;
         try {
             Query query = entityManager
@@ -478,8 +486,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             query.setParameter("groupId", groupId);
             AggregatePluginConfigurationUpdate latestConfigGroupUpdate = (AggregatePluginConfigurationUpdate) query
                 .getSingleResult();
-            if (!authorizationManager.canViewGroup(whoami, latestConfigGroupUpdate.getGroup().getId())) {
-                throw new PermissionException("User [" + whoami.getName()
+            if (!authorizationManager.canViewGroup(subject, latestConfigGroupUpdate.getGroup().getId())) {
+                throw new PermissionException("User [" + subject.getName()
                     + "] does not have permission to view group plugin configuration for ["
                     + latestConfigGroupUpdate.getGroup() + "]");
             }
@@ -493,10 +501,10 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return updateInProgress;
     }
 
-    public Map<Integer, Configuration> getResourceConfigurationsForCompatibleGroup(Subject whoami, int groupId)
+    public Map<Integer, Configuration> getResourceConfigurationsForCompatibleGroup(Subject subject, int groupId)
         throws ConfigurationUpdateStillInProgressException, Exception {
         // The below call will also handle the check to see if the subject has perms to view the group.
-        ResourceGroupComposite groupComposite = this.resourceGroupManager.getResourceGroupComposite(whoami, groupId);
+        ResourceGroupComposite groupComposite = this.resourceGroupManager.getResourceGroupComposite(subject, groupId);
 
         // if the group is empty (has no members) the availability will be null
         if (groupComposite.getExplicitAvail() == null) {
@@ -517,7 +525,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         // If we got this far, no updates are in progress. Now try to obtain the live configs from the Agents.
         // If any of the requests for live configs fail (e.g. because an Agent is down) or if all of the live
         // configs can't be obtained within the specified timeout, this call will throw an exception.
-        int userPreferencesTimeout = new SubjectPreferences(whoami).getGroupConfigurationTimeoutPeriod();
+        int userPreferencesTimeout = new SubjectPreferences(subject).getGroupConfigurationTimeoutPeriod();
         Set<Resource> groupMembers = group.getExplicitResources();
         Map<Integer, Configuration> liveConfigs = LiveConfigurationLoader.getInstance().loadLiveResourceConfigurations(
             groupMembers, userPreferencesTimeout);
@@ -544,10 +552,11 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return currentPersistedConfigs;
     }
 
-    public Map<Integer, Configuration> getPluginConfigurationsForCompatibleGroup(Subject whoami, int groupId)
+    public Map<Integer, Configuration> getPluginConfigurationsForCompatibleGroup(Subject subject, int groupId)
         throws ConfigurationUpdateStillInProgressException, Exception {
         // The below call will also handle the check to see if the subject has perms to view the group.
-        ResourceGroup group = this.resourceGroupManager.getResourceGroupById(whoami, groupId, GroupCategory.COMPATIBLE);
+        ResourceGroup group = this.resourceGroupManager
+            .getResourceGroupById(subject, groupId, GroupCategory.COMPATIBLE);
 
         // Check to make sure no config updates, aggregate or individual, are in progress.
         ensureNoPluginConfigurationUpdatesInProgress(group);
@@ -679,7 +688,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return results;
     }
 
-    public Configuration getLiveResourceConfiguration(Subject whoami, int resourceId, boolean pingAgentFirst)
+    public Configuration getLiveResourceConfiguration(Subject subject, int resourceId, boolean pingAgentFirst)
         throws Exception {
         Resource resource = entityManager.find(Resource.class, resourceId);
 
@@ -687,8 +696,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             throw new NoResultException("Cannot get live configuration for unknown resource [" + resourceId + "]");
         }
 
-        if (!authorizationManager.canViewResource(whoami, resource.getId())) {
-            throw new PermissionException("User [" + whoami.getName()
+        if (!authorizationManager.canViewResource(subject, resource.getId())) {
+            throw new PermissionException("User [" + subject.getName()
                 + "] does not have permission to view resource configuration for [" + resource + "]");
         }
 
@@ -763,7 +772,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<PluginConfigurationUpdate> getPluginConfigurationUpdates(Subject whoami, int resourceId,
+    public PageList<PluginConfigurationUpdate> getPluginConfigurationUpdates(Subject subject, int resourceId,
         Long beginDate, Long endDate, PageControl pc) {
 
         Resource resource = entityManager.find(Resource.class, resourceId);
@@ -793,14 +802,14 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         if ((updates == null) || (updates.size() == 0)) {
             // there is no configuration yet - get the latest from the agent, if possible
             updates = new ArrayList<PluginConfigurationUpdate>();
-            PluginConfigurationUpdate latest = getLatestPluginConfigurationUpdate(whoami, resourceId);
+            PluginConfigurationUpdate latest = getLatestPluginConfigurationUpdate(subject, resourceId);
             if (latest != null) {
                 updates.add(latest);
             }
         } else if (updates.size() > 0) {
             resource = updates.get(0).getResource();
-            if (!authorizationManager.canViewResource(whoami, resource.getId())) {
-                throw new PermissionException("User [" + whoami.getName()
+            if (!authorizationManager.canViewResource(subject, resource.getId())) {
+                throw new PermissionException("User [" + subject.getName()
                     + "] does not have permission to view resource [" + resource + "]");
             }
         }
@@ -809,11 +818,11 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<ResourceConfigurationUpdate> getResourceConfigurationUpdates(Subject whoami, Integer resourceId,
+    public PageList<ResourceConfigurationUpdate> getResourceConfigurationUpdates(Subject subject, Integer resourceId,
         Long beginDate, Long endDate, boolean suppressOldest, PageControl pc) {
 
-        if (!authorizationManager.canViewResource(whoami, resourceId)) {
-            throw new PermissionException("User [" + whoami.getName()
+        if (!authorizationManager.canViewResource(subject, resourceId)) {
+            throw new PermissionException("User [" + subject.getName()
                 + "] does not have permission to view resource[id=" + resourceId + "]");
         }
 
@@ -848,7 +857,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         if (suppressOldest == false && updates.size() == 0) {
             // there is no configuration yet - get the latest from the agent, if possible
             updates = new ArrayList<ResourceConfigurationUpdate>();
-            ResourceConfigurationUpdate latest = getLatestResourceConfigurationUpdate(whoami, resourceId);
+            ResourceConfigurationUpdate latest = getLatestResourceConfigurationUpdate(subject, resourceId);
             if (latest != null) {
                 updates.add(latest);
             }
@@ -857,11 +866,11 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return new PageList<ResourceConfigurationUpdate>(updates, (int) totalCount, pc);
     }
 
-    public PluginConfigurationUpdate getPluginConfigurationUpdate(Subject whoami, int configurationUpdateId) {
+    public PluginConfigurationUpdate getPluginConfigurationUpdate(Subject subject, int configurationUpdateId) {
         PluginConfigurationUpdate update = entityManager.find(PluginConfigurationUpdate.class, configurationUpdateId);
 
-        if (!authorizationManager.canViewResource(whoami, update.getResource().getId())) {
-            throw new PermissionException("User [" + whoami.getName()
+        if (!authorizationManager.canViewResource(subject, update.getResource().getId())) {
+            throw new PermissionException("User [" + subject.getName()
                 + "] does not have permission to view plugin configuration update for [" + update.getResource() + "]");
         }
 
@@ -870,12 +879,12 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return update;
     }
 
-    public ResourceConfigurationUpdate getResourceConfigurationUpdate(Subject whoami, int configurationUpdateId) {
+    public ResourceConfigurationUpdate getResourceConfigurationUpdate(Subject subject, int configurationUpdateId) {
         ResourceConfigurationUpdate update = entityManager.find(ResourceConfigurationUpdate.class,
             configurationUpdateId);
 
-        if (!authorizationManager.canViewResource(whoami, update.getResource().getId())) {
-            throw new PermissionException("User [" + whoami.getName()
+        if (!authorizationManager.canViewResource(subject, update.getResource().getId())) {
+            throw new PermissionException("User [" + subject.getName()
                 + "] does not have permission to view resource configuration update for [" + update.getResource() + "]");
         }
 
@@ -884,7 +893,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return update;
     }
 
-    public void purgePluginConfigurationUpdate(Subject whoami, int configurationUpdateId, boolean purgeInProgress) {
+    public void purgePluginConfigurationUpdate(Subject subject, int configurationUpdateId, boolean purgeInProgress) {
         PluginConfigurationUpdate doomedRequest = entityManager.find(PluginConfigurationUpdate.class,
             configurationUpdateId);
 
@@ -901,8 +910,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
         // make sure the user has the proper permissions to do this
         Resource resource = doomedRequest.getResource();
-        if (!authorizationManager.hasResourcePermission(whoami, Permission.CONFIGURE, resource.getId())) {
-            throw new PermissionException("User [" + whoami.getName()
+        if (!authorizationManager.hasResourcePermission(subject, Permission.CONFIGURE, resource.getId())) {
+            throw new PermissionException("User [" + subject.getName()
                 + "] does not have permission to purge a plugin configuration update audit trail for resource ["
                 + resource + "]");
         }
@@ -914,7 +923,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return;
     }
 
-    public void purgeResourceConfigurationUpdate(Subject whoami, int configurationUpdateId, boolean purgeInProgress) {
+    public void purgeResourceConfigurationUpdate(Subject subject, int configurationUpdateId, boolean purgeInProgress) {
         ResourceConfigurationUpdate doomedRequest = entityManager.find(ResourceConfigurationUpdate.class,
             configurationUpdateId);
 
@@ -931,8 +940,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
         // make sure the user has the proper permissions to do this
         Resource resource = doomedRequest.getResource();
-        if (!authorizationManager.hasResourcePermission(whoami, Permission.CONFIGURE, resource.getId())) {
-            throw new PermissionException("User [" + whoami.getName()
+        if (!authorizationManager.hasResourcePermission(subject, Permission.CONFIGURE, resource.getId())) {
+            throw new PermissionException("User [" + subject.getName()
                 + "] does not have permission to purge a configuration update audit trail for resource [" + resource
                 + "]");
         }
@@ -944,22 +953,22 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return;
     }
 
-    public void purgeResourceConfigurationUpdates(Subject whoami, int[] configurationUpdateIds, boolean purgeInProgress) {
+    public void purgeResourceConfigurationUpdates(Subject subject, int[] configurationUpdateIds, boolean purgeInProgress) {
         if ((configurationUpdateIds == null) || (configurationUpdateIds.length == 0)) {
             return;
         }
 
         // TODO [mazz]: ugly - let's make this more efficient, just getting this to work first
         for (int configurationUpdateId : configurationUpdateIds) {
-            purgeResourceConfigurationUpdate(whoami, configurationUpdateId, purgeInProgress);
+            purgeResourceConfigurationUpdate(subject, configurationUpdateId, purgeInProgress);
         }
 
         return;
     }
 
     @Nullable
-    public ResourceConfigurationUpdate updateResourceConfiguration(Subject whoami, int resourceId,
-        Configuration newConfiguration) {
+    public ResourceConfigurationUpdate updateResourceConfiguration(Subject subject, int resourceId,
+        Configuration newConfiguration) throws UpdateException {
         // must do this in a separate transaction so it is committed prior to sending the agent request
         // (consider synchronizing to avoid the condition where someone calls this method twice quickly
         // in two different txs which would put two updates in INPROGRESS and cause havoc)
@@ -967,8 +976,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
         // here we call ourself, but we do so via the EJB interface so we pick up the REQUIRES_NEW semantics
         // this can return null if newConfiguration is not actually different.
-        newUpdate = configurationManager.persistNewResourceConfigurationUpdateHistory(whoami, resourceId,
-            newConfiguration, ConfigurationUpdateStatus.INPROGRESS, whoami.getName(), false);
+        newUpdate = configurationManager.persistNewResourceConfigurationUpdateHistory(subject, resourceId,
+            newConfiguration, ConfigurationUpdateStatus.INPROGRESS, subject.getName(), false);
 
         executeResourceConfigurationUpdate(newUpdate);
 
@@ -1003,7 +1012,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         }
     }
 
-    public void rollbackResourceConfiguration(Subject whoami, int resourceId, int configHistoryId)
+    public void rollbackResourceConfiguration(Subject subject, int resourceId, int configHistoryId)
         throws ConfigurationUpdateException {
         ResourceConfigurationUpdate configurationUpdateHistory = entityManager.find(ResourceConfigurationUpdate.class,
             configHistoryId);
@@ -1013,19 +1022,19 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 + configHistoryId + "'");
         }
 
-        updateResourceConfiguration(whoami, resourceId, configuration);
+        updateResourceConfiguration(subject, resourceId, configuration);
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public ResourceConfigurationUpdate persistNewResourceConfigurationUpdateHistory(Subject whoami, int resourceId,
+    public ResourceConfigurationUpdate persistNewResourceConfigurationUpdateHistory(Subject subject, int resourceId,
         Configuration newConfiguration, ConfigurationUpdateStatus newStatus, String newSubject,
         boolean isPartofAggregateUpdate) throws ConfigurationUpdateStillInProgressException {
         // get the resource that we will be updating
         Resource resource = entityManager.find(Resource.class, resourceId);
 
         // make sure the user has the proper permissions to do this
-        if (!authorizationManager.hasResourcePermission(whoami, Permission.CONFIGURE, resource.getId())) {
-            throw new PermissionException("User [" + whoami.getName()
+        if (!authorizationManager.hasResourcePermission(subject, Permission.CONFIGURE, resource.getId())) {
+            throw new PermissionException("User [" + subject.getName()
                 + "] does not have permission to modify configuration for resource [" + resource + "]");
         }
 
@@ -1195,7 +1204,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     @Nullable
-    public ConfigurationDefinition getResourceConfigurationDefinitionForResourceType(Subject whoami, int resourceTypeId) {
+    public ConfigurationDefinition getResourceConfigurationDefinitionForResourceType(Subject subject, int resourceTypeId) {
         Query query = entityManager.createNamedQuery(ConfigurationDefinition.QUERY_FIND_RESOURCE_BY_RESOURCE_TYPE_ID);
         query.setParameter("resourceTypeId", resourceTypeId);
         ConfigurationDefinition configurationDefinition = null;
@@ -1212,7 +1221,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     @Nullable
-    public ConfigurationDefinition getResourceConfigurationDefinitionWithTemplatesForResourceType(Subject whoami,
+    public ConfigurationDefinition getResourceConfigurationDefinitionWithTemplatesForResourceType(Subject subject,
         int resourceTypeId) {
         Query query = entityManager.createNamedQuery(ConfigurationDefinition.QUERY_FIND_RESOURCE_BY_RESOURCE_TYPE_ID);
         query.setParameter("resourceTypeId", resourceTypeId);
@@ -1245,7 +1254,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     @Nullable
-    public ConfigurationDefinition getPluginConfigurationDefinitionForResourceType(Subject whoami, int resourceTypeId) {
+    public ConfigurationDefinition getPluginConfigurationDefinitionForResourceType(Subject subject, int resourceTypeId) {
         Query query = entityManager.createNamedQuery(ConfigurationDefinition.QUERY_FIND_PLUGIN_BY_RESOURCE_TYPE_ID);
         query.setParameter("resourceTypeId", resourceTypeId);
         ConfigurationDefinition configurationDefinition = null;
@@ -1323,6 +1332,14 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return entityManager.find(Configuration.class, id);
     }
 
+    public Configuration getConfiguration(Subject subject, int configurationId) throws FetchException {
+        try {
+            return getConfigurationById(configurationId);
+        } catch (Exception e) {
+            throw new FetchException(e);
+        }
+    }
+
     public Configuration getConfigurationFromDefaultTemplate(ConfigurationDefinition definition) {
         ConfigurationDefinition managedDefinition = entityManager.find(ConfigurationDefinition.class, definition
             .getId());
@@ -1336,7 +1353,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         this.resourceManager.addResourceError(invalidPluginConfigError);
     }
 
-    private void removeAnyExistingInvalidPluginConfigurationErrors(Subject whoami, Resource resource) {
+    private void removeAnyExistingInvalidPluginConfigurationErrors(Subject subject, Resource resource) {
 
         this.resourceManager.clearResourceConfigError(resource.getId());
 
@@ -1348,67 +1365,72 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return update.getId();
     }
 
-    public int scheduleAggregatePluginConfigurationUpdate(Subject whoami, int compatibleGroupId,
-        Map<Integer, Configuration> memberPluginConfigurations) throws SchedulerException, ConfigurationUpdateException {
-        if (memberPluginConfigurations == null) {
-            throw new IllegalArgumentException(
-                "AggregatePluginConfigurationUpdate must have non-null member configurations.");
+    public int scheduleAggregatePluginConfigurationUpdate(Subject subject, int compatibleGroupId,
+        Map<Integer, Configuration> memberPluginConfigurations) throws UpdateException {
+        //Wrapping all possible exceptions as UpdateException for remote interface compatibility
+        try {
+            if (memberPluginConfigurations == null) {
+                throw new IllegalArgumentException(
+                    "AggregatePluginConfigurationUpdate must have non-null member configurations.");
+            }
+
+            ResourceGroup group = getCompatibleGroupIfAuthorized(subject, compatibleGroupId);
+
+            ensureModifyResourcePermission(subject, group);
+
+            /*
+             * we need to create and persist the aggregate in a new/separate transaction before the rest of the
+             * processing of this method; if we try to create and attach the PluginConfigurationUpdate children
+             * to the parent aggregate before the aggregate is actually persisted, we'll get StaleStateExceptions
+             * from Hibernate because of our use of flush/clear (we're trying to update the aggregate before it
+             * actually exists); this is also why we need to retrieve the aggregate and overlord fresh in the loop
+             * TODO (ips, 02/16/09): Oops, I removed the fresh retrieval in the loop - add it back if needed.
+             */
+            AggregatePluginConfigurationUpdate aggregateUpdate = new AggregatePluginConfigurationUpdate(group, subject
+                .getName());
+            int updateId = configurationManager.createAggregateConfigurationUpdate(aggregateUpdate);
+
+            // Create and persist updates for each of the members.
+            for (Integer resourceId : memberPluginConfigurations.keySet()) {
+                Configuration memberResourceConfiguration = memberPluginConfigurations.get(resourceId);
+                Resource flyWeight = new Resource(resourceId);
+                PluginConfigurationUpdate memberUpdate = new PluginConfigurationUpdate(flyWeight,
+                    memberResourceConfiguration, subject.getName());
+                memberUpdate.setAggregateConfigurationUpdate(aggregateUpdate);
+                entityManager.persist(memberUpdate);
+            }
+
+            JobDataMap jobDataMap = new JobDataMap();
+            jobDataMap
+                .putAsString(AbstractAggregateConfigurationUpdateJob.DATAMAP_INT_CONFIG_GROUP_UPDATE_ID, updateId);
+            jobDataMap.putAsString(AbstractAggregateConfigurationUpdateJob.DATAMAP_INT_SUBJECT_ID, subject.getId());
+
+            /*
+             * acquire quartz objects and schedule the aggregate update, but deferred the execution for 10 seconds
+             * because we need this transaction to complete so that the data is available when the quartz job triggers
+             */
+            JobDetail jobDetail = AggregatePluginConfigurationUpdateJob.getJobDetail(group, subject, jobDataMap);
+            Trigger trigger = QuartzUtil.getFireOnceOffsetTrigger(jobDetail, 10000);
+            scheduler.scheduleJob(jobDetail, trigger);
+
+            log.debug("Scheduled plugin configuration update against compatibleGroup[id=" + compatibleGroupId + "]");
+
+            return updateId;
+        } catch (Exception e) {
+            throw new UpdateException(e);
         }
-
-        ResourceGroup group = getCompatibleGroupIfAuthorized(whoami, compatibleGroupId);
-
-        ensureModifyResourcePermission(whoami, group);
-
-        /*
-         * we need to create and persist the aggregate in a new/separate transaction before the rest of the
-         * processing of this method; if we try to create and attach the PluginConfigurationUpdate children
-         * to the parent aggregate before the aggregate is actually persisted, we'll get StaleStateExceptions
-         * from Hibernate because of our use of flush/clear (we're trying to update the aggregate before it
-         * actually exists); this is also why we need to retrieve the aggregate and overlord fresh in the loop
-         * TODO (ips, 02/16/09): Oops, I removed the fresh retrieval in the loop - add it back if needed.
-         */
-        AggregatePluginConfigurationUpdate aggregateUpdate = new AggregatePluginConfigurationUpdate(group, whoami
-            .getName());
-        int updateId = configurationManager.createAggregateConfigurationUpdate(aggregateUpdate);
-
-        // Create and persist updates for each of the members.
-        for (Integer resourceId : memberPluginConfigurations.keySet()) {
-            Configuration memberResourceConfiguration = memberPluginConfigurations.get(resourceId);
-            Resource flyWeight = new Resource(resourceId);
-            PluginConfigurationUpdate memberUpdate = new PluginConfigurationUpdate(flyWeight,
-                memberResourceConfiguration, whoami.getName());
-            memberUpdate.setAggregateConfigurationUpdate(aggregateUpdate);
-            entityManager.persist(memberUpdate);
-        }
-
-        JobDataMap jobDataMap = new JobDataMap();
-        jobDataMap.putAsString(AbstractAggregateConfigurationUpdateJob.DATAMAP_INT_CONFIG_GROUP_UPDATE_ID, updateId);
-        jobDataMap.putAsString(AbstractAggregateConfigurationUpdateJob.DATAMAP_INT_SUBJECT_ID, whoami.getId());
-
-        /*
-         * acquire quartz objects and schedule the aggregate update, but deferred the execution for 10 seconds
-         * because we need this transaction to complete so that the data is available when the quartz job triggers
-         */
-        JobDetail jobDetail = AggregatePluginConfigurationUpdateJob.getJobDetail(group, whoami, jobDataMap);
-        Trigger trigger = QuartzUtil.getFireOnceOffsetTrigger(jobDetail, 10000);
-        scheduler.scheduleJob(jobDetail, trigger);
-
-        log.debug("Scheduled plugin configuration update against compatibleGroup[id=" + compatibleGroupId + "]");
-
-        return updateId;
     }
 
-    public int scheduleAggregateResourceConfigurationUpdate(Subject whoami, int compatibleGroupId,
-        Map<Integer, Configuration> memberResourceConfigurations) throws Exception {
-        if (memberResourceConfigurations == null) {
-            throw new IllegalArgumentException(
-                "AggregateResourceConfigurationUpdate must have non-null member configurations.");
+    public int scheduleAggregateResourceConfigurationUpdate(Subject subject, int compatibleGroupId,
+        Map<Integer, Configuration> newResourceConfigurationMap) throws UpdateException {
+        if (newResourceConfigurationMap == null) {
+            throw new UpdateException("AggregateResourceConfigurationUpdate must have non-null member configurations.");
         }
 
-        ResourceGroup group = getCompatibleGroupIfAuthorized(whoami, compatibleGroupId);
+        ResourceGroup group = getCompatibleGroupIfAuthorized(subject, compatibleGroupId);
 
-        if (!authorizationManager.hasGroupPermission(whoami, Permission.CONFIGURE, group.getId())) {
-            throw new PermissionException("User [" + whoami.getName() + "] does not have permission "
+        if (!authorizationManager.hasGroupPermission(subject, Permission.CONFIGURE, group.getId())) {
+            throw new PermissionException("User [" + subject.getName() + "] does not have permission "
                 + "to modify Resource configurations for members of group [" + group + "].");
         }
 
@@ -1422,31 +1444,35 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
          * actually exists); this is also why we need to retrieve the aggregate as overlord fresh in the loop.
          * TODO (ips, 02/16/09): Oops, I removed the fresh retrieval in the loop - add it back if needed.
          */
-        AggregateResourceConfigurationUpdate aggregateUpdate = new AggregateResourceConfigurationUpdate(group, whoami
+        AggregateResourceConfigurationUpdate aggregateUpdate = new AggregateResourceConfigurationUpdate(group, subject
             .getName());
         int updateId = configurationManager.createAggregateConfigurationUpdate(aggregateUpdate);
 
         // Create and persist updates for each of the members.
-        for (Integer resourceId : memberResourceConfigurations.keySet()) {
-            Configuration memberResourceConfiguration = memberResourceConfigurations.get(resourceId);
+        for (Integer resourceId : newResourceConfigurationMap.keySet()) {
+            Configuration memberResourceConfiguration = newResourceConfigurationMap.get(resourceId);
             Resource flyWeight = new Resource(resourceId);
             ResourceConfigurationUpdate memberUpdate = new ResourceConfigurationUpdate(flyWeight,
-                memberResourceConfiguration, whoami.getName());
+                memberResourceConfiguration, subject.getName());
             memberUpdate.setAggregateConfigurationUpdate(aggregateUpdate);
             entityManager.persist(memberUpdate);
         }
 
         JobDataMap jobDataMap = new JobDataMap();
         jobDataMap.putAsString(AbstractAggregateConfigurationUpdateJob.DATAMAP_INT_CONFIG_GROUP_UPDATE_ID, updateId);
-        jobDataMap.putAsString(AbstractAggregateConfigurationUpdateJob.DATAMAP_INT_SUBJECT_ID, whoami.getId());
+        jobDataMap.putAsString(AbstractAggregateConfigurationUpdateJob.DATAMAP_INT_SUBJECT_ID, subject.getId());
 
         /*
          * Acquire Quartz objects and schedule the aggregate update, but defer the execution for 10 seconds,
          * because we need this transaction to complete so that the data is available when the Quartz job triggers.
          */
-        JobDetail jobDetail = AggregateResourceConfigurationUpdateJob.getJobDetail(group, whoami, jobDataMap);
+        JobDetail jobDetail = AggregateResourceConfigurationUpdateJob.getJobDetail(group, subject, jobDataMap);
         Trigger trigger = QuartzUtil.getFireOnceOffsetTrigger(jobDetail, 10000);
-        scheduler.scheduleJob(jobDetail, trigger);
+        try {
+            scheduler.scheduleJob(jobDetail, trigger);
+        } catch (SchedulerException e) {
+            throw new UpdateException("Could not schedule job: " + e.getMessage());
+        }
 
         log.debug("Scheduled Resource configuration update against compatible ResourceGroup[id=" + compatibleGroupId
             + "].");
@@ -1454,12 +1480,12 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return updateId;
     }
 
-    private ResourceGroup getCompatibleGroupIfAuthorized(Subject whoami, int compatibleGroupId) {
+    private ResourceGroup getCompatibleGroupIfAuthorized(Subject subject, int compatibleGroupId) {
         ResourceGroup group;
 
         try {
             // resourceGroupManager will test for necessary permissions too
-            group = resourceGroupManager.getResourceGroupById(whoami, compatibleGroupId, GroupCategory.COMPATIBLE);
+            group = resourceGroupManager.getResourceGroupById(subject, compatibleGroupId, GroupCategory.COMPATIBLE);
         } catch (ResourceGroupNotFoundException e) {
             throw new RuntimeException("Cannot get support operations for unknown group [" + compatibleGroupId + "]: "
                 + e, e);
@@ -1468,16 +1494,16 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return group;
     }
 
-    private void ensureModifyPermission(Subject whoami, Resource resource) throws PermissionException {
-        if (!authorizationManager.hasResourcePermission(whoami, Permission.MODIFY_RESOURCE, resource.getId())) {
-            throw new PermissionException("User [" + whoami.getName() + "] does not have permission "
+    private void ensureModifyPermission(Subject subject, Resource resource) throws PermissionException {
+        if (!authorizationManager.hasResourcePermission(subject, Permission.MODIFY_RESOURCE, resource.getId())) {
+            throw new PermissionException("User [" + subject.getName() + "] does not have permission "
                 + "to modify plugin configuration for resource [" + resource + "]");
         }
     }
 
-    private void ensureModifyResourcePermission(Subject whoami, ResourceGroup group) throws PermissionException {
-        if (!authorizationManager.hasGroupPermission(whoami, Permission.MODIFY_RESOURCE, group.getId())) {
-            throw new PermissionException("User [" + whoami.getName() + "] does not have permission "
+    private void ensureModifyResourcePermission(Subject subject, ResourceGroup group) throws PermissionException {
+        if (!authorizationManager.hasGroupPermission(subject, Permission.MODIFY_RESOURCE, group.getId())) {
+            throw new PermissionException("User [" + subject.getName() + "] does not have permission "
                 + "to modify plugin configuration for members of group [" + group + "]");
         }
     }
@@ -1773,5 +1799,24 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
         propertiesQuery.executeUpdate();
         configurationsQuery.executeUpdate();
+    }
+
+    //Added especially for remote interface
+    public AggregatePluginConfigurationUpdate getAggregatePluginConfigurationUpdate(Subject subject,
+        int configurationUpdateId) throws FetchException {
+        try {
+            return getAggregatePluginConfigurationById(configurationUpdateId);
+        } catch (Exception e) {
+            throw new FetchException(e);
+        }
+    }
+
+    public AggregateResourceConfigurationUpdate getAggregateResourceConfigurationUpdate(Subject subject,
+        int configurationUpdateId) throws FetchException {
+        try {
+            return getAggregateResourceConfigurationById(configurationUpdateId);
+        } catch (Exception e) {
+            throw new FetchException(e);
+        }
     }
 }

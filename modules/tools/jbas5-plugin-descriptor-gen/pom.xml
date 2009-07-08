@@ -96,6 +96,12 @@
           <artifactId>jaxb-api</artifactId>
           <version>2.1.4</version>          
         </dependency>
+        
+        <dependency>
+          <groupId>sun-jaxb</groupId>
+          <artifactId>jaxb-impl</artifactId>
+          <version>2.1.4</version>          
+        </dependency>        
 <!--
         <dependency>
           <groupId>org.apache.commons</groupId>

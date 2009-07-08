@@ -23,13 +23,9 @@ import javax.jws.WebMethod;
 import javax.jws.WebParam;
 import javax.jws.WebService;
 import javax.jws.soap.SOAPBinding;
-import javax.xml.bind.annotation.XmlSeeAlso;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.configuration.PropertyList;
-import org.rhq.core.domain.configuration.PropertyMap;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.exception.FetchException;
@@ -37,7 +33,6 @@ import org.rhq.enterprise.server.exception.FetchException;
 @SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
 @WebService
 @Remote
-@XmlSeeAlso( { PropertySimple.class, PropertyList.class, PropertyMap.class })
 public interface AlertDefinitionManagerRemote {
     @WebMethod
     AlertDefinition getAlertDefinition( //

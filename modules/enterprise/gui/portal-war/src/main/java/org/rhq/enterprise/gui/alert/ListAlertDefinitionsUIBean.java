@@ -20,8 +20,9 @@ package org.rhq.enterprise.gui.alert;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
-import org.rhq.core.domain.auth.Subject;
+
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -138,7 +139,7 @@ public class ListAlertDefinitionsUIBean extends PagedDataTableUIBean {
             }
 
             PageList<AlertDefinition> results = null;
-            results = manager.getAlertDefinitions(subject, requestResource.getId(), pc);
+            results = manager.findAlertDefinitions(subject, requestResource.getId(), pc);
             return results;
         }
     }

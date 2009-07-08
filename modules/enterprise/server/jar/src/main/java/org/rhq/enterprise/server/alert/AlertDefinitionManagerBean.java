@@ -94,7 +94,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
     }
 
     @SuppressWarnings("unchecked")
-    public List<AlertDefinition> getAllAlertDefinitionsWithConditions(int agentId, Subject user) {
+    public List<AlertDefinition> findAllAlertDefinitionsWithConditions(int agentId, Subject user) {
         if (authorizationManager.isOverlord(user) == false) {
             throw new PermissionException("User [" + user.getName() + "] does not have permission to call "
                 + "getAllAlertDefinitionsWithConditions; only the overlord has that right");
@@ -108,7 +108,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<AlertDefinition> getAlertDefinitions(Subject subject, int resourceId, PageControl pageControl) {
+    public PageList<AlertDefinition> findAlertDefinitions(Subject subject, int resourceId, PageControl pageControl) {
         pageControl.initDefaultOrderingField("ctime", PageOrdering.DESC);
 
         Query queryCount = PersistenceUtility.createCountQuery(entityManager, AlertDefinition.QUERY_FIND_BY_RESOURCE);
@@ -145,7 +145,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
     }
 
     @SuppressWarnings("unchecked")
-    public List<IntegerOptionItem> getAlertDefinitionOptionItems(Subject subject, int resourceId) {
+    public List<IntegerOptionItem> findAlertDefinitionOptionItems(Subject subject, int resourceId) {
         PageControl pageControl = PageControl.getUnlimitedInstance();
         pageControl.initDefaultOrderingField("ad.name", PageOrdering.ASC);
 
@@ -354,7 +354,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
     }
 
     @SuppressWarnings("unchecked")
-    public List<AlertDefinition> getAllRecoveryDefinitionsById(Subject subject, Integer alertDefinitionId) {
+    public List<AlertDefinition> findAllRecoveryDefinitionsById(Subject subject, Integer alertDefinitionId) {
         if (authorizationManager.isOverlord(subject) == false) {
             throw new PermissionException("User [" + subject.getName() + "] does not have permission to call "
                 + "getAllRecoveryDefinitionsById; only the overlord has that right");

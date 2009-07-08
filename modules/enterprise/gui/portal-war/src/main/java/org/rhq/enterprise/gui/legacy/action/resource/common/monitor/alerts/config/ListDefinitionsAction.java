@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.conf
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
@@ -27,8 +28,9 @@ import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.tiles.ComponentContext;
 import org.apache.struts.tiles.actions.TilesAction;
-import org.rhq.core.domain.auth.Subject;
+
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.legacy.Constants;
@@ -58,7 +60,7 @@ public class ListDefinitionsAction extends TilesAction {
 
         int resourceId = RequestUtils.getResourceId(request);
 
-        PageList<AlertDefinition> alertDefinitions = alertManager.getAlertDefinitions(subject, resourceId, pc);
+        PageList<AlertDefinition> alertDefinitions = alertManager.findAlertDefinitions(subject, resourceId, pc);
 
         // TODO GH: Deal with when its by type... i guess for the template setup
 

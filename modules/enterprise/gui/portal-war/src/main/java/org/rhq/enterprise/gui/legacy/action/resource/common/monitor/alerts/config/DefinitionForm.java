@@ -454,7 +454,7 @@ public final class DefinitionForm extends ResourceForm {
                 AlertDefinitionManagerLocal alertDefinitionManager = LookupUtil.getAlertDefinitionManager();
                 Integer resourceId = RequestUtils.getResourceId(request);
 
-                alertDefinitions = alertDefinitionManager.getAlertDefinitions(subject, resourceId, PageControl
+                alertDefinitions = alertDefinitionManager.findAlertDefinitions(subject, resourceId, PageControl
                     .getUnlimitedInstance());
             } else {
                 AlertTemplateManagerLocal alertTemplateManager = LookupUtil.getAlertTemplateManager();

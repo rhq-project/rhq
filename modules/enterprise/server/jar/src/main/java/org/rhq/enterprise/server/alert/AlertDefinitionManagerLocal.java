@@ -36,13 +36,13 @@ import org.rhq.enterprise.server.exception.FetchException;
  */
 @Local
 public interface AlertDefinitionManagerLocal {
-    List<AlertDefinition> getAllAlertDefinitionsWithConditions(int agentId, Subject user);
+    List<AlertDefinition> findAllAlertDefinitionsWithConditions(int agentId, Subject user);
 
-    PageList<AlertDefinition> getAlertDefinitions(Subject subject, int resourceId, PageControl pageControl);
+    PageList<AlertDefinition> findAlertDefinitions(Subject subject, int resourceId, PageControl pageControl);
 
     AlertDefinition getAlertDefinitionById(Subject subject, int alertDefinitionId);
 
-    List<IntegerOptionItem> getAlertDefinitionOptionItems(Subject subject, int resourceId);
+    List<IntegerOptionItem> findAlertDefinitionOptionItems(Subject subject, int resourceId);
 
     int createAlertDefinition(Subject subject, AlertDefinition alertDefinition, Integer resourceId)
         throws InvalidAlertDefinitionException;
@@ -57,7 +57,7 @@ public interface AlertDefinitionManagerLocal {
 
     int disableAlertDefinitions(Subject subject, Integer[] alertDefinitionIds);
 
-    List<AlertDefinition> getAllRecoveryDefinitionsById(Subject subject, Integer alertDefinitionId);
+    List<AlertDefinition> findAllRecoveryDefinitionsById(Subject subject, Integer alertDefinitionId);
 
     void copyAlertDefinitions(Subject subject, Integer[] alertDefinitionIds);
 

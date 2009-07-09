@@ -139,12 +139,6 @@
          <artifactId>hibernate-annotations</artifactId>
          <scope>compile</scope>
       </dependency>
-      
-      <dependency>
-         <groupId>org.jboss</groupId>
-         <artifactId>jbossws-spi</artifactId>
-         <version>1.0.2.GA</version>
-      </dependency>
 
    </dependencies>
 

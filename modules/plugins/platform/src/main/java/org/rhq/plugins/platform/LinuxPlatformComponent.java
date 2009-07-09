@@ -74,6 +74,8 @@ public class LinuxPlatformComponent extends PlatformComponent implements Content
     private boolean enableContentDiscovery = false;
     private boolean enableInternalYumServer = false;
 
+    SyslogListenerEventLogDelegate listenerEventDelegate;
+
     @Override
     public void start(ResourceContext context) {
         super.start(context);
@@ -104,10 +106,20 @@ public class LinuxPlatformComponent extends PlatformComponent implements Content
         }
 
         startWithContentContext(context.getContentContext());
+
+        if (pluginConfiguration.getSimple("eventTrackingEnabled").getBooleanValue()) {
+            if (pluginConfiguration.getSimpleValue("type","listener").equals("listener")) {
+                // Start up the syslog listener
+                listenerEventDelegate = new SyslogListenerEventLogDelegate(context);
+            }
+        }
     }
 
     @Override
     public void stop() {
+        if (listenerEventDelegate != null) {
+            listenerEventDelegate.shutdown();
+        }
         yumServer.halt();
         super.stop();
     }

@@ -257,6 +257,27 @@
                </c:constraint>
             </c:simple-property>
          </c:group>
+          <c:group name="Event Logs">
+               <c:description>Tracking of syslog events</c:description>
+               <c:simple-property name="eventTrackingEnabled" type="boolean" required="true" default="false" description="Enables the collection of syslog events"/>
+               <c:simple-property name="regularExpression" required="false" description="A regular expression that if not-null must be matched by the event detail for the message to be accepted"/>
+               <c:simple-property name="minimumSeverity" description="The minimum severity event that will be collected">
+                   <c:property-options>
+                       <c:option value="Information"/>
+                       <c:option value="Warning" default="true"/>
+                       <c:option value="Error"/>
+                   </c:property-options>
+               </c:simple-property>
+               <c:simple-property name="type" required="true" default="file">
+                   <c:property-options>
+                       <c:option value="file" default="true"/>
+                       <c:option value="listener"/>
+                   </c:property-options>
+               </c:simple-property>
+               <c:simple-property name="port" type="integer" default="514" description="Port that the syslog listener will run on if using listener style"/>
+               <c:simple-property name="bindAddress" type="string" default="localhost" description="Address that the syslog listener will bind to if using listener style"/>
+               <c:simple-property name="filePath" type="file" default="/var/log/messages" description="File path or paths to watch for log events"/>
+           </c:group>
       </plugin-configuration>
       
       &platformOperations;
@@ -279,6 +300,9 @@
               dataType="trait"
               displayType="summary"
               defaultOn="true" />
+
+      <event name="Event Log" description="Syslog event logs" displayName="Event Log"/>
+
 
       <content name="rpm" displayName="RPM File" category="deployable" description="Red Hat installable package">
          <configuration>
@@ -498,6 +522,53 @@
       -->
 
    </service>
+
+
+   <service name="Process" class="ProcessComponent" discovery="ProcessDiscoveryComponent" supportsManualAdd="true"
+           description="A generic process monitoring service to track native process information based on a pid file or process query">
+
+      <runs-inside>
+         <parent-resource-type name="Windows"  plugin="Platforms"/>
+         <parent-resource-type name="Linux"    plugin="Platforms"/>
+         <parent-resource-type name="Solaris"  plugin="Platforms"/>
+         <parent-resource-type name="HP-UX"    plugin="Platforms"/>
+         <parent-resource-type name="AIX"      plugin="Platforms"/>
+         <parent-resource-type name="FreeBSD"  plugin="Platforms"/>
+         <parent-resource-type name="Mac OS X" plugin="Platforms"/>
+         <!--we know the CPU services are only natively supported - so not in Java platform-->
+      </runs-inside>
+
+       <plugin-configuration>
+           <c:simple-property name="type" description="Choice of using a pid file or a PIQL query to find the process to monitor">
+               <c:property-options>
+                   <c:option value="pidFile" default="true" name="Pid File"/>
+                   <c:option value="piql" name="Process Query"/>
+               </c:property-options>
+           </c:simple-property>
+           <c:simple-property name="pidFile" required="false" description="Fully qualified path to the pid file for the process to monitor"/>
+           <c:simple-property name="piql" required="false" description="Process Information Query Language for process to monitor"/>
+
+           <c:simple-property name="fullProcessTree" default="true" type="boolean" description="If true, the entire process tree will be monitored"/>
+       </plugin-configuration>
+
+
+       <metric displayName="User Time" property="Process.aggregateCpu.user" measurementType="trendsup" units="milliseconds" displayType="summary"
+               description="The aggregate amount of CPU user time spent by all postgres processes"/>
+       <metric displayName="Kernel Time" property="Process.aggregateCpu.sys" measurementType="trendsup" units="milliseconds" displayType="summary"
+               description="The aggregate amount of CPU kernel time spent by all postgres processes"/>
+       <metric displayName="CPU Percentage" property="Process.aggregateCpu.percent" measurementType="dynamic" units="percentage" displayType="summary"
+               description="The percentage of CPU currently being used by all postgres processes"/>
+       <metric displayName="Physical Memory" property="Process.aggregateMemory.resident" measurementType="dynamic" units="bytes" displayType="summary"
+               description="The aggregate amount of resident memory used by all postgres processes"/>
+       <metric displayName="Virtual Memory" property="Process.aggregateMemory.size" measurementType="dynamic" units="bytes" displayType="summary"
+               description="The aggregate amount of virtual memory used by all postgres processes"/>
+       <metric displayName="Open File Descriptors" property="Process.aggregateFileDescriptor.total" measurementType="dynamic" displayType="summary"
+               description="The aggregate number of file descriptors open by all postgres processes"/>
+
+
+
+   </service>
+
 
    <help>
       This plugin handles interaction with the operating system and is the base on which other plugins run. It is

@@ -270,7 +270,8 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
 
         Configuration pluginConfig = discoveryContext.getDefaultPluginConfiguration();
         pluginConfig.put(new PropertySimple(ApplicationServerComponent.PluginConfigPropNames.HOME_DIR, homeDir));
-        pluginConfig.put(new PropertySimple(ApplicationServerComponent.PluginConfigPropNames.SERVER_HOME_DIR, serverHomeDir));
+        pluginConfig.put(new PropertySimple(ApplicationServerComponent.PluginConfigPropNames.SERVER_HOME_DIR,
+            serverHomeDir));
         pluginConfig.put(new PropertySimple(ApplicationServerComponent.PluginConfigPropNames.SERVER_NAME, serverName));
 
         boolean debug = Boolean.getBoolean(JBMANCON_DEBUG_SYSPROP);
@@ -279,7 +280,7 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
         }
 
         return new DiscoveredResourceDetails(discoveryContext.getResourceType(), resourceKey, resourceName, version,
-                description, pluginConfig, null);
+            description, pluginConfig, null);
     }
 
     private DiscoveredResourceDetails createResourceDetails(ResourceDiscoveryContext discoveryContext,
@@ -368,18 +369,24 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
         }
     }
 
-    private static String getJnpURL(JBossInstanceInfo cmdLine, File installHome, File configDir) {
+    private String getJnpURL(JBossInstanceInfo cmdLine, File installHome, File configDir) {
         File urlStore = new File(configDir, "data/jnp-service.url");
         if (urlStore.exists() && urlStore.canRead()) {
             try {
                 BufferedReader br = new BufferedReader(new FileReader(urlStore));
                 String jnpUrl = br.readLine();
-                if (jnpUrl != null)
+                if (jnpUrl != null) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Read JNP URL from jnp-service.url file: " + jnpUrl);
+                    }
                     return jnpUrl;
+                }
             } catch (IOException ioe) {
                 // Nothing to do
             }
         }
+
+        log.warn("Failed to read jnp-service.url from " + configDir + "/data");
 
         // Above did not work, so fall back to our previous scheme
         JnpConfig jnpConfig = getJnpConfig(installHome, configDir, cmdLine.getSystemProperties());

@@ -186,6 +186,9 @@
          <fileset dir="${settings.localRepository}/javax/persistence/persistence-api/${persistence-api.version}/">
             <include name="persistence-api-${persistence-api.version}.jar" />
          </fileset>
+         <fileset dir="${settings.localRepository}/org/jboss/jbossws-spi/1.0.2.GA/">
+            <include name="jbossws-spi-1.0.2.GA.jar" />
+         </fileset>
 
          <!--  Add support for wsconsume -->
          <fileset dir="${jboss.home}/client">

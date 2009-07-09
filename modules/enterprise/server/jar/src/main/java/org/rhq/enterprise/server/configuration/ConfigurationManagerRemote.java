@@ -18,8 +18,6 @@
  */
 package org.rhq.enterprise.server.configuration;
 
-import java.util.Map;
-
 import javax.ejb.Remote;
 import javax.jws.WebMethod;
 import javax.jws.WebParam;
@@ -130,12 +128,15 @@ public interface ConfigurationManagerRemote {
         @WebParam(name = "resourceGroupId") int resourceGroupId) //
         throws FetchException;
 
+    /* this currently doesn't build because jaxws requires a default, no-arg constructor from all objects in the graph
+     * in order to perform serialization correctly, and java.util.Map does not have one (because it's an interface)
     @WebMethod
     int scheduleAggregateResourceConfigurationUpdate(//
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "compatibleGroupId") int compatibleGroupId, //
         @WebParam(name = "newResourceConfigurationMap") Map<Integer, Configuration> newResourceConfigurationMap) //
         throws UpdateException;
+        */
 
     /**
      * Updates the plugin configuration used to connect and communicate with the resource. The given <code>

@@ -66,7 +66,7 @@ public class LatchedServiceController {
 
         try {
             // and then wait for all of them to complete
-            while (!serviceCompletionLatch.await(60, TimeUnit.SECONDS)) {
+            while (!serviceCompletionLatch.await(90, TimeUnit.SECONDS)) {
                 boolean stillRunning = false;
                 for (Thread thread : threads) {
                     if (thread.isAlive()) {
@@ -177,6 +177,7 @@ public class LatchedServiceController {
                 try {
                     Thread.sleep(1000L);
                 } catch (InterruptedException e) {
+                    // ignore
                 }
 
                 // avoid a deadlock (this is just more paranoia)

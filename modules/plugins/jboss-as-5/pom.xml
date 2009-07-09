@@ -306,26 +306,30 @@
             <scope>runtime</scope>
         </dependency>        
 
+        <dependency>
+            <groupId>org.jboss.jbossas</groupId>
+            <artifactId>jboss-as-profileservice</artifactId>
+            <classifier>client</classifier>            
+            <version>${jbossas.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        
         <!-- Uncomment the below deps if you want to pull down the jboss-profileservice
              and jboss-system sources jars for debugging purposes. You will also need
              to make sure you have the JBoss snapshot repo in this POM or your settings.xml.
         -->
-
-        <!-- *** TODO: jboss-as-profileservice.jar is commented out as a temporary workaround for 
-                       https://jira.jboss.org/jira/browse/JBAS-7052 *** -->
+<!--
         <dependency>
             <groupId>org.jboss.jbossas</groupId>
             <artifactId>jboss-as-profileservice</artifactId>
-            <scope>runtime</scope>
+            <scope>provided</scope>
         </dependency>
-<!--
         <dependency>
             <groupId>org.jboss.jbossas</groupId>
             <artifactId>jboss-as-system</artifactId>
             <scope>provided</scope>
         </dependency>
 -->        
-
     </dependencies>
 
     <build>

@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.common.framework;
 
 import java.util.List;
+import java.util.Enumeration;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -50,6 +51,7 @@ public class UserPreferencesUIBean {
     private ResourceGroupManagerLocal groupManager = LookupUtil.getResourceGroupManager();
     private List<Resource> resourceFavorites;
     private List<ResourceGroup> groupFavorites;
+    private String refreshPath;
 
     public Subject getSubject() {
         return EnterpriseFacesContextUtility.getSubject();
@@ -69,6 +71,51 @@ public class UserPreferencesUIBean {
         WebUser webUser = EnterpriseFacesContextUtility.getWebUser();
         WebUserPreferences preferences = webUser.getWebPreferences();
         preferences.setPreference(LEFT_RESOURCE_NAV_SHOWING, state);
+    }
+
+    public void setRefreshPath(String path) {
+        if (path != null && path.length() != 0) {
+            this.refreshPath = path;
+        }
+    }
+
+    public String getRefreshPath() {
+        return refreshPath;
+    }
+
+    public void setPageRefresh(int refresh) {
+        String path = this.refreshPath;
+        if (path == null) {
+            path = FacesContextUtility.getRequest().getParameter("originalPath");
+        }
+        if (path == null) {
+            path = FacesContextUtility.getRequest().getRequestURI();
+        }
+        setPageRefresh(refresh, path);
+    }
+
+    public void setPageRefresh(int refresh, String path) {
+        WebUser webUser = EnterpriseFacesContextUtility.getWebUser();
+        WebUserPreferences preferences = webUser.getWebPreferences();
+
+        preferences.setPreference("PATH_REFRESH." + path, refresh);
+    }
+
+
+
+    public int getPageRefresh() {
+        WebUser webUser = EnterpriseFacesContextUtility.getWebUser();
+        WebUserPreferences preferences = webUser.getWebPreferences();
+
+        String path = (String) FacesContextUtility.getRequest().getAttribute("javax.servlet.forward.request_uri");
+        if (path == null) {
+            path = FacesContextUtility.getRequest().getParameter("originalPath");
+        }
+        if (path == null) {
+            path = FacesContextUtility.getRequest().getRequestURI();
+        }
+
+        return preferences.getPreference("PATH_REFRESH." + path, 0);
     }
 
     public void updateSummaryPanelDisplayState(javax.faces.event.ActionEvent event) {

@@ -14,13 +14,14 @@
 
 <f:loadBundle basename="ApplicationResources" var="msg"/>
 
+
 <rich:toolBar styleClass="topMenu">
 <rich:toolBarGroup location="left">
 
     <ui:remove>===== LOGO TO HOME PAGE =====</ui:remove>
 
     <h:outputLink value="/">
-        <h:graphicImage value="/images/logo_icon.png"/>
+        <h:graphicImage value="/images/JBossLogo_small.png"/>
     </h:outputLink>
 
     <ui:remove>===== OVERVIEW =====</ui:remove>
@@ -70,9 +71,7 @@
     <rich:dropDownMenu id="resourcesMenu">
         <f:facet name="label">
             <h:panelGroup>
-                <h:outputLink value="/ResourceHub.do">
-                    <h:outputText value="Resources"/>
-                </h:outputLink>
+                <h:outputText value="Resources"/>
             </h:panelGroup>
         </f:facet>
 
@@ -160,9 +159,7 @@
     <rich:dropDownMenu id="groupsMenu">
         <f:facet name="label">
             <h:panelGroup>
-                <h:outputLink value="/GroupHub.do">
-                    <h:outputText value="Groups"/>
-                </h:outputLink>
+                <h:outputText value="Groups"/>
             </h:panelGroup>
         </f:facet>
 
@@ -346,6 +343,15 @@
             </rich:menuItem>
         </rich:menuGroup>
 
+
+        <rich:menuGroup value="Reports">
+            <rich:menuItem submitMode="none" onclick="window.location = '/rhq/admin/report/resourceInstallReport.xhtml'">
+                <h:outputText value="Resource Version Inventory Report"/>
+            </rich:menuItem>
+
+        </rich:menuGroup>
+
+
         <rich:menuItem submitMode="none"
                        onclick="window.location = '/admin/license/LicenseAdmin.do?mode=view'"
                        rendered="#{GlobalPermissionsUIBean.settings}">
@@ -439,7 +445,53 @@ v        <rich:menuItem submitMode="none"
         </f:facet>
     </a4j:status>
 
+
+
+
+
+    <rich:dropDownMenu rendered="#{request.method == 'GET'}">
+        <f:facet name="label">
+            <h:panelGroup>
+                <h:graphicImage value="/images/refreshRunning.gif" rendered="#{UserPreferencesUIBean.pageRefresh != 0}"/>
+                <h:graphicImage value="/images/refreshStopped.gif" rendered="#{UserPreferencesUIBean.pageRefresh == 0}"/>
+                <span id="refreshTimeLeft" style="width: 0px;"><h:outputText value="#{UserPreferencesUIBean.pageRefresh}" rendered="#{UserPreferencesUIBean.pageRefresh != 0}"/></span>
+                
+            </h:panelGroup>
+        </f:facet>
+
+        <ui:remove>***** Logged in as > EDIT DETAILS *****</ui:remove>
+
+
+
+            <rich:menuItem submitMode="none"  onclick="updatePageRefresh('#{request.getAttribute('javax.servlet.forward.request_uri')}', 0)">
+                <h:outputText value="Stop"/>
+                <f:facet name="icon">
+                    <h:graphicImage value="/images/#{UserPreferencesUIBean.pageRefresh == 0 ? 'check.png' : 'spacer.gif'}" width="16" height="16"/>
+                </f:facet>
+            </rich:menuItem>
+            <rich:menuItem submitMode="none" onclick="updatePageRefresh('#{request.getAttribute('javax.servlet.forward.request_uri')}',10)">
+                <h:outputText value="Refresh every 10 seconds"/>
+                <f:facet name="icon">
+                    <h:graphicImage value="/images/#{UserPreferencesUIBean.pageRefresh == 10 ? 'check.png' : 'spacer.gif'}" width="16" height="16"/>
+                </f:facet>
+            </rich:menuItem>
+            <rich:menuItem submitMode="none" onclick="updatePageRefresh('#{request.getAttribute('javax.servlet.forward.request_uri')}',30)">
+                <h:outputText value="Refresh every 30 seconds"/>
+                <f:facet name="icon">
+                    <h:graphicImage value="/images/#{UserPreferencesUIBean.pageRefresh == 30 ? 'check.png' : 'spacer.gif'}" width="16" height="16"/>
+                </f:facet>
+            </rich:menuItem>
+            <rich:menuItem submitMode="none" onclick="updatePageRefresh('#{request.getAttribute('javax.servlet.forward.request_uri')}',60)">
+                <h:outputText value="Refresh every 60 seconds"/>
+                <f:facet name="icon">
+                    <h:graphicImage value="/images/#{UserPreferencesUIBean.pageRefresh == 60 ? 'check.png' : 'spacer.gif'}" width="16" height="16"/>
+                </f:facet>
+            </rich:menuItem>
+
+    </rich:dropDownMenu>
+
     <ui:remove>===== LOGGED IN AS =====</ui:remove>
+
 
     <rich:dropDownMenu>
         <f:facet name="label">
@@ -516,10 +568,48 @@ v        <rich:menuItem submitMode="none"
         </ui:remove>
     </p>
 
+
     <input type="button" value="Close" onclick="Richfaces.hideModalPanel('aboutPanel');"/>
 </rich:modalPanel>
 
 </h:form>
 
-</a4j:region>
+
+<a4j:region renderRegionOnly="true" selfRendered="true">
+
+
+    <script type="text/javascript">
+
+        function refresh() {
+
+            timeLeft = timeLeft - 1;
+            document.getElementById("refreshTimeLeft").innerHTML = timeLeft;
+
+            if (timeLeft &lt; 1) {
+                window.location.href = window.location.href;
+            }
+            setTimeout("refresh()", 1000);
+        }
+
+        var refreshTime = <h:outputText value="#{UserPreferencesUIBean.pageRefresh}"/>;
+        var timeLeft = refreshTime;
+
+        if (refreshTime > 0) {
+            setTimeout("refresh()", 1000);
+        }
+
         
+
+    </script>
+
+    <a4j:form>
+        <a4j:jsFunction name="updatePageRefresh" status="commonStatus" oncomplete="window.location.href = window.location.href;">
+            <a4j:actionparam name="param1" assignTo="#{UserPreferencesUIBean.refreshPath}"/>
+            <a4j:actionparam name="param2" assignTo="#{UserPreferencesUIBean.pageRefresh}"/>
+        </a4j:jsFunction>
+    </a4j:form>
+</a4j:region>
+
+
+
+</a4j:region>

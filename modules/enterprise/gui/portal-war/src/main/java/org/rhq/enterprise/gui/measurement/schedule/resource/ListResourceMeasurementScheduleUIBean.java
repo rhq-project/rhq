@@ -43,6 +43,21 @@ public class ListResourceMeasurementScheduleUIBean extends PagedDataTableUIBean 
         return "success";
     }
 
+    public String enableSelected() {
+        int resourceId = FacesContextUtility.getRequiredRequestParameter("id", Integer.class);
+        int[] measurementDefinitionIds = getSelectedResourceScheduleList();
+        try {
+            measurementScheduleManager.enableMeasurementSchedules(getSubject(), measurementDefinitionIds, resourceId);
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Enabled " + measurementDefinitionIds.length
+                + " schedules.");
+        } catch (Exception e) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to enable selected schedules.", e);
+        }
+        return "success";
+    }
+
+
+
     public String enableAndSetSelected() {
         long collectionInterval = duration.getMillis();
         int resourceId = FacesContextUtility.getRequiredRequestParameter("id", Integer.class);

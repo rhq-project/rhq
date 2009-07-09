@@ -44,6 +44,20 @@ public class ListResourceGroupMeasurementScheduleUIBean extends PagedDataTableUI
         return "success";
     }
 
+    public String enableSelected() {
+        int groupId = FacesContextUtility.getRequiredRequestParameter("groupId", Integer.class);
+        int[] measurementDefinitionIds = getSelectedResourceGroupScheduleList();
+        try {
+            measurementScheduleManager.enableMeasurementSchedulesForCompatGroup(getSubject(),
+                measurementDefinitionIds, groupId);
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Enabled " + measurementDefinitionIds.length
+                + " schedules.");
+        } catch (Exception e) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to enable selected schedules.", e);
+        }
+        return "success";
+    }
+
     public String enableAndSetSelected() {
         long collectionInterval = duration.getMillis();
         int groupId = FacesContextUtility.getRequiredRequestParameter("groupId", Integer.class);

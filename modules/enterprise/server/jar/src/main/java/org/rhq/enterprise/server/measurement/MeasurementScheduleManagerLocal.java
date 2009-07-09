@@ -207,6 +207,17 @@ public interface MeasurementScheduleManagerLocal {
      */
     void disableMeasurementSchedules(Subject subject, int[] measurementDefinitionIds, int resourceId);
 
+
+    /**
+     * Enable the schedules for the provided definitions and resource
+     * @param subject
+     * @param measurementDefinitionIds
+     * @param resourceId
+     */
+    void enableMeasurementSchedules(Subject subject, int[] measurementDefinitionIds, int resourceId);
+
+
+
     /**
      * Disables all collection schedules for all measurement definitions. This only disables the "templates", it does
      * not disable actual schedules. For that capability, see {@link #disableAllMeasurementSchedules(Subject)}.
@@ -307,6 +318,12 @@ public interface MeasurementScheduleManagerLocal {
      */
     public void disableMeasurementSchedulesForCompatGroup(Subject subject, int[] measurementDefinitionIds, int groupId);
 
+
+    /**
+     * Enable the measurement schedules for the passed definitions for the resources of the passed compatible group.
+     */
+    public void enableMeasurementSchedulesForCompatGroup(Subject subject, int[] measurementDefinitionIds, int groupId);
+
     /**
      * Disable the measurement schedules for the passed definitions of the rsource ot the passed auto group.
      *
@@ -316,6 +333,18 @@ public interface MeasurementScheduleManagerLocal {
      * @param childResourceType
      */
     public void disableMeasurementSchedulesForAutoGroup(Subject subject, int[] measurementDefinitionIds,
+        int parentResourceId, int childResourceType);
+
+
+    /**
+     * Enable the measurement schedules for the passed definitions of the resource ot the passed auto group.
+     *
+     * @param subject
+     * @param measurementDefinitionIds
+     * @param parentResourceId
+     * @param childResourceType
+     */
+    public void enableMeasurementSchedulesForAutoGroup(Subject subject, int[] measurementDefinitionIds,
         int parentResourceId, int childResourceType);
 
     public PageList<MeasurementScheduleComposite> getMeasurementSchedulesForCompatGroup(Subject subject, int groupId,

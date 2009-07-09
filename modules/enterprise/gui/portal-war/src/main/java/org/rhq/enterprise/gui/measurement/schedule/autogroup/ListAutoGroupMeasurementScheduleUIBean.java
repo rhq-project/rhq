@@ -44,6 +44,21 @@ public class ListAutoGroupMeasurementScheduleUIBean extends PagedDataTableUIBean
         return "success";
     }
 
+    public String enableSelected() {
+        int parentResourceId = FacesContextUtility.getRequiredRequestParameter("parent", Integer.class);
+        int childResourceType = FacesContextUtility.getRequiredRequestParameter("type", Integer.class);
+        int[] measurementDefinitionIds = getSelectedAutoGroupScheduleList();
+        try {
+            measurementScheduleManager.enableMeasurementSchedulesForAutoGroup(getSubject(), measurementDefinitionIds, parentResourceId,
+                childResourceType);
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Enabled " + measurementDefinitionIds.length + " schedules.");
+        } catch (Exception e) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to enable selected schedules.", e);
+        }
+        return "success";
+    }
+
+
     public String enableAndSetSelected() {
         long collectionInterval = duration.getMillis();
         int parentResourceId = FacesContextUtility.getRequiredRequestParameter("parent", Integer.class);

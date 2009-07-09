@@ -93,13 +93,12 @@
                <rich:column
                  style="background-color: #{item.enabled  ? '#E2F2E6' : '#E2D2D2'}">
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="ms.definition.category">
-                        <h:outputText styleClass="headerText" value="Category" />
+                     <onc:sortableColumnHeader sort="ms.definition.dataType">
+                        <h:outputText styleClass="headerText" value="Type" />
                      </onc:sortableColumnHeader>
                   </f:facet>
                
-                  <h:outputText value="trait" rendered="#{item.definition.dataType eq 'TRAIT'}" />
-                  <h:outputText value="#{item.definition.category}" rendered="#{item.definition.dataType ne 'TRAIT'}" />
+                  <h:outputText value="#{item.definition.dataType}" />
                </rich:column>
                
                <rich:column
@@ -129,27 +128,39 @@
                <f:facet name="footer" rendered="false">
                   <rich:columnGroup>
                      <rich:column colspan="6">
-                        <h:panelGrid columns="4" rendered="#{ResourceUIBean.permissions.measure}">
-                           <onc:selectCommandButton id="disableSelectedSchedules"
+                        <h:panelGrid columns="5" width="100%" rendered="#{ResourceUIBean.permissions.measure}">
+                            <onc:selectCommandButton id="enableSelectedSchedules"
+                                                    name="enableSelectedSchedules"
+                                                    action="#{ListResourceMeasurementScheduleUIBean.enableSelected}"
+                                                    value="ENABLE" target="selectedResourceSchedules" 
+                                                    styleClass="on-pager-button buttonsmall"
+                                                    rendered="#{ResourceUIBean.permissions.measure}" />
+
+                            <onc:selectCommandButton id="disableSelectedSchedules"
                                                     name="disableSelectedSchedules"
                                                     action="#{ListResourceMeasurementScheduleUIBean.disableSelected}"
                                                     value="DISABLE" target="selectedResourceSchedules" 
                                                     styleClass="on-pager-button buttonsmall"
-                                                    rendered="#{ResourceUIBean.permissions.measure}" />
-                           <h:outputText value="&nbsp;&nbsp;&nbsp;Collection Interval: " />
-                           <onc:duration binding="#{ListResourceMeasurementScheduleUIBean.duration}"
-                                         optionList="s,m,h" />
-                           <onc:selectCommandButton id="enableAndSetSelectedSchedules"
-                                                    name="enableAndSetSelectedSchedules"
-                                                    action="#{ListResourceMeasurementScheduleUIBean.enableAndSetSelected}"
-                                                    value="SET" target="selectedResourceSchedules"
-                                                    styleClass="on-pager-button buttonsmall"
-                                                    rendered="#{ResourceUIBean.permissions.measure}" />
-                        </h:panelGrid>
+                                                    rendered="#{ResourceUIBean.permissions.measure}"/>
+                            <h:panelGrid columns="3">
+                                <h:outputText value="Collection Interval: "/>
+                                <onc:duration binding="#{ListResourceMeasurementScheduleUIBean.duration}"
+                                              optionList="s,m,h"/>
+                                <onc:selectCommandButton id="enableAndSetSelectedSchedules"
+                                                         name="enableAndSetSelectedSchedules"
+                                                         action="#{ListResourceMeasurementScheduleUIBean.enableAndSetSelected}"
+                                                         value="SET" target="selectedResourceSchedules"
+                                                         styleClass="on-pager-button buttonsmall"
+                                                         rendered="#{ResourceUIBean.permissions.measure}"/>
+                            </h:panelGrid>
+
+                            <rich:spacer/>
+
                         <ui:param name="paginationDataTableName" value="resourceSchedulesDataTable"/>
                         <ui:param name="paginationDataModel" value="#{resourceSchedulesDataModel}"/>
                         <ui:param name="paginationPageControl" value="#{PageControl.ResourceMeasurementScheduleList}"/>
                         <ui:include src="/rhq/resource/include/pagination.xhtml"/>
+                         </h:panelGrid>
                      </rich:column>
                   </rich:columnGroup>
                </f:facet>

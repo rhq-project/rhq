@@ -63,7 +63,7 @@
                   <onc:paginationControl id="AutoGroupMeasurementScheduleList" />
                </f:facet>
 
-               <rich:column>
+               <rich:column style="background-color: #{item.collectionEnabled ? '#E2F2E6' : '#E2D2D2'}">
                   <f:facet name="header">
                      <onc:allSelect target="selectedAutoGroupSchedules" />
                   </f:facet>
@@ -71,15 +71,17 @@
                   <onc:select name="selectedAutoGroupSchedules" value="#{item.measurementDefinition.id}" />
                </rich:column>
 
-               <rich:column>
+               <rich:column style="background-color: #{item.collectionEnabled ? '#E2F2E6' : '#E2D2D2'}">
                   <f:facet name="header">
-                     <h:outputText styleClass="headerText" value="Metric" />
+                     <onc:sortableColumnHeader sort="ms.definition.displayName">
+                        <h:outputText styleClass="headerText" value="Metric" />
+                     </onc:sortableColumnHeader>
                   </f:facet>
 
                   <h:outputText value="#{item.measurementDefinition.displayName}"/>
                </rich:column>
 
-               <rich:column>
+               <rich:column style="background-color: #{item.collectionEnabled ? '#E2F2E6' : '#E2D2D2'}">
                   <f:facet name="header">
                      <h:outputText styleClass="headerText" value="Description" />
                   </f:facet>
@@ -87,23 +89,22 @@
                   <h:outputText value="#{item.measurementDefinition.description}"/>
                </rich:column>
 
-               <rich:column>
+               <rich:column style="background-color: #{item.collectionEnabled ? '#E2F2E6' : '#E2D2D2'}">
                   <f:facet name="header">
-                     <h:outputText styleClass="headerText" value="Category" />
+                     <h:outputText styleClass="headerText" value="Type" />
                   </f:facet>
 
-                  <h:outputText value="trait" rendered="#{item.measurementDefinition.dataType eq 'TRAIT'}" />
-                  <h:outputText value="#{item.measurementDefinition.category}" rendered="#{item.measurementDefinition.dataType ne 'TRAIT'}" />
+                  <h:outputText value="#{item.measurementDefinition.dataType}"/>
                </rich:column>
 
-               <rich:column>
+               <rich:column style="background-color: #{item.collectionEnabled ? '#E2F2E6' : '#E2D2D2'}">
                   <f:facet name="header">
                      <h:outputText styleClass="headerText" value="Enabled" />
                   </f:facet>
                   <h:outputText value="#{(empty item.collectionEnabled) ? 'SOME' : (item.collectionEnabled ? 'Yes' : 'No')}" />
                </rich:column>
 
-               <rich:column>
+               <rich:column style="background-color: #{item.collectionEnabled ? '#E2F2E6' : '#E2D2D2'}">
                   <f:facet name="header">
                      <h:outputText styleClass="headerText" value="Collection Interval" />
                   </f:facet>
@@ -117,27 +118,38 @@
                <f:facet name="footer" rendered="false">
                   <rich:columnGroup>
                      <rich:column colspan="6">
-                        <h:panelGrid columns="4" rendered="#{AutoGroupUIBean.measurementManager}">
+                        <h:panelGrid columns="5" width="100%" rendered="#{AutoGroupUIBean.measurementManager}">
+                            <onc:selectCommandButton id="enableSelectedSchedules"
+                                                     name="enableSelectedSchedules"
+                                                     action="#{ListAutoGroupMeasurementScheduleUIBean.enableSelected}"
+                                                     value="ENABLE" target="selectedAutoGroupSchedules"
+                                                     styleClass="on-pager-button buttonsmall"
+                                                     rendered="#{AutoGroupUIBean.measurementManager}" />
+
                            <onc:selectCommandButton id="disableSelectedSchedules"
                                                     name="disableSelectedSchedules"
                                                     action="#{ListAutoGroupMeasurementScheduleUIBean.disableSelected}"
                                                     value="DISABLE" target="selectedAutoGroupSchedules"
                                                     styleClass="on-pager-button buttonsmall"
                                                     rendered="#{AutoGroupUIBean.measurementManager}" />
-                           <h:outputText value="&nbsp;&nbsp;&nbsp;Collection Interval: " />
-                           <onc:duration binding="#{ListAutoGroupMeasurementScheduleUIBean.duration}"
-                                         optionList="s,m,h" />
-                           <onc:selectCommandButton id="enableAndSetSelectedSchedules"
-                                                    name="enableAndSetSelectedSchedules"
-                                                    action="#{ListAutoGroupMeasurementScheduleUIBean.enableAndSetSelected}"
-                                                    value="SET" target="selectedAutoGroupSchedules"
-                                                    styleClass="on-pager-button buttonsmall"
-                                                    rendered="#{AutoGroupUIBean.measurementManager}" />
+                           <h:panelGrid columns="3">
+                               <h:outputText value="Collection Interval: "/>
+                               <onc:duration binding="#{ListAutoGroupMeasurementScheduleUIBean.duration}"
+                                             optionList="s,m,h"/>
+                               <onc:selectCommandButton id="enableAndSetSelectedSchedules"
+                                                        name="enableAndSetSelectedSchedules"
+                                                        action="#{ListAutoGroupMeasurementScheduleUIBean.enableAndSetSelected}"
+                                                        value="SET" target="selectedAutoGroupSchedules"
+                                                        styleClass="on-pager-button buttonsmall"
+                                                        rendered="#{AutoGroupUIBean.measurementManager}"/>
+                           </h:panelGrid>
+                            <rich:spacer/>
+                            <ui:param name="paginationDataTableName" value="autoGroupSchedulesDataTable"/>
+                            <ui:param name="paginationDataModel" value="#{autoGroupSchedulesDataModel}"/>
+                            <ui:param name="paginationPageControl"
+                                      value="#{PageControl.AutoGroupMeasurementScheduleList}"/>
+                            <ui:include src="/rhq/resource/include/pagination.xhtml"/>
                         </h:panelGrid>
-                        <ui:param name="paginationDataTableName" value="autoGroupSchedulesDataTable"/>
-                        <ui:param name="paginationDataModel" value="#{autoGroupSchedulesDataModel}"/>
-                        <ui:param name="paginationPageControl" value="#{PageControl.AutoGroupMeasurementScheduleList}"/>
-                        <ui:include src="/rhq/resource/include/pagination.xhtml"/>
                      </rich:column>
                   </rich:columnGroup>
                </f:facet>

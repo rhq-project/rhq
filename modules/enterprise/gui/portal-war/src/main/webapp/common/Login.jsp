@@ -83,18 +83,18 @@ input.button_submit {
     <jsp:include page="/rhq/common/ie6/ie6fix.xhtml"/>
 <div id="PageHeader">
 
-<table width="100%" border="0" cellpadding="5" cellspacing="0" height="70px">
-    <tr valign="top">
-        <td align="left">
+<table width="100%" border="0" cellpadding="20" cellspacing="0" height="70px">
+    <tr valign="bottom">
+        <td align="left" rowspan="2">
             <fmt:message var="urlDomain" key="product.url.domain" />
             <fmt:message var="productName" key="product.fullName" />
             <a href="#" onclick="openAbout(aboutWindowTitle)">
-                <img src="/images/logo_header.png" title="${productName}" alt="Jopr" />
+                <img src="/images/logo_header.png" title="${productName}" />
             </a>
         </td>
-        <td align="right">
-            <a href="http://jboss.org/">
-                <img src="/images/jboss_logo.png" alt="JBoss Homepage" title="JBoss by Red Hat" height="55" />
+        <td valign="top" align="right">
+            <a href="http://www.jboss.org">
+                <img src="/images/JBossLogo.png"  border="0" />
             </a>
         </td>
     </tr>

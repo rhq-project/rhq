@@ -7,11 +7,14 @@
 <%@ taglib uri="/WEB-INF/tld/hq.tld" prefix="hq" %>
 <script language="JavaScript" type="text/javascript">
   var headerPath = "<html:rewrite page="/images/"/>";
-  var help = "<hq:help/>";
 </script>
 
+
 <div id="PageHeader">
-    <jsp:include page="/rhq/common/menu/menu.xhtml"/>
+    <jsp:include page="/rhq/common/menu/menu.xhtml">
+        <jsp:param name="originalPath" value="${pageContext.request.requestURI}}"/>
+        <jsp:param name="originalMethod" value="${pageContext.request.method}}"/>
+    </jsp:include>
 
 </div>
 

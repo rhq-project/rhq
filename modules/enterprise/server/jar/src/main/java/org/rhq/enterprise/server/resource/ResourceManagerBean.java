@@ -95,6 +95,7 @@ import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceHealthComposite;
 import org.rhq.core.domain.resource.composite.ResourceIdFlyWeight;
 import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
+import org.rhq.core.domain.resource.composite.ResourceInstallCount;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
 import org.rhq.core.domain.util.PageControl;
@@ -2050,6 +2051,26 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         } catch (Exception e) {
             throw new DeleteException(e);
         }
+    }
+
+
+
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public List<ResourceInstallCount> findResourceInstallCounts(Subject subject, boolean groupByVersions) {
+
+        Query query = null;
+
+        if (!groupByVersions) {
+            query = entityManager.createNamedQuery(Resource.QUERY_RESOURCE_REPORT);
+        } else {
+            query = entityManager.createNamedQuery(Resource.QUERY_RESOURCE_VERSION_REPORT);
+        }
+
+        List<ResourceInstallCount> results = query.getResultList();
+
+        return results;
+
     }
 
 }

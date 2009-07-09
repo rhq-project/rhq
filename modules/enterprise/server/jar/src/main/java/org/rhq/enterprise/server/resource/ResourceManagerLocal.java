@@ -34,12 +34,7 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceErrorType;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
-import org.rhq.core.domain.resource.composite.ResourceAvailabilitySummary;
-import org.rhq.core.domain.resource.composite.ResourceComposite;
-import org.rhq.core.domain.resource.composite.ResourceHealthComposite;
-import org.rhq.core.domain.resource.composite.ResourceIdFlyWeight;
-import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
+import org.rhq.core.domain.resource.composite.*;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
 import org.rhq.core.domain.util.PageControl;
@@ -447,4 +442,6 @@ public interface ResourceManagerLocal {
      * #see {@link ResourceManagerRemote#uninventoryResources(Subject, int)
      */
     void uninventoryResources(Subject subject, int[] resourceIds) throws DeleteException;
+
+    List<ResourceInstallCount> findResourceInstallCounts(Subject subject, boolean groupByVersions);
 }

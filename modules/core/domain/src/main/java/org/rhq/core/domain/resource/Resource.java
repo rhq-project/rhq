@@ -59,6 +59,7 @@ import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlTransient;
+import javax.xml.bind.annotation.XmlRootElement;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -700,10 +701,27 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "    OR r.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.parentResource.parentResource.parentResource.parentResource.parentResource p6 WHERE p6.id = :resourceId) "
         + "   "), //
     @NamedQuery(name = Resource.QUERY_FIND_RESOURCES_MARKED_FOR_ASYNC_DELETION, query = "" //
-        + "SELECT r.id FROM Resource AS r WHERE r.agent IS NULL") })
+        + "SELECT r.id FROM Resource AS r WHERE r.agent IS NULL"),
+
+    @NamedQuery(name = Resource.QUERY_RESOURCE_REPORT, query = ""
+        + "SELECT new org.rhq.core.domain.resource.composite.ResourceInstallCount(  "
+        + "r.resourceType.name, r.resourceType.plugin, r.resourceType.category, r.resourceType.id, count(r))\n "
+        + "FROM Resource r\n "
+        + "GROUP BY r.resourceType.name, r.resourceType.plugin, r.resourceType.category, r.resourceType.id\n "
+        + "ORDER BY r.resourceType.category, r.resourceType.plugin, r.resourceType.name"),
+
+    @NamedQuery(name = Resource.QUERY_RESOURCE_VERSION_REPORT, query = ""
+        + "SELECT new org.rhq.core.domain.resource.composite.ResourceInstallCount( "
+        + "r.resourceType.name, r.resourceType.plugin, r.resourceType.category, r.resourceType.id, count(r), r.version)\n "
+        + "FROM Resource r\n "
+        + "GROUP BY r.resourceType.name, r.resourceType.plugin, r.resourceType.category, r.resourceType.id, r.version\n "
+        + "ORDER BY r.resourceType.category, r.resourceType.plugin, r.resourceType.name, r.version")
+
+        })
 @SequenceGenerator(name = "RHQ_RESOURCE_SEQ", sequenceName = "RHQ_RESOURCE_ID_SEQ")
 @Table(name = "RHQ_RESOURCE")
 @XmlAccessorType(XmlAccessType.FIELD)
+@XmlRootElement
 public class Resource implements Comparable<Resource>, Externalizable {
     public static final String QUERY_FIND_PROBLEM_RESOURCES_ALERT = "Resource.findProblemResourcesAlert";
     public static final String QUERY_FIND_PROBLEM_RESOURCES_ALERT_ADMIN = "Resource.findProblemResourcesAlert_admin";
@@ -823,6 +841,10 @@ public class Resource implements Comparable<Resource>, Externalizable {
     public static final String QUERY_FIND_DESCENDENTS = "Resource.findDescendents";
     public static final String QUERY_MARK_RESOURCES_FOR_ASYNC_DELETION = "Resource.markResourcesForAsyncDeletion";
     public static final String QUERY_FIND_RESOURCES_MARKED_FOR_ASYNC_DELETION = "Resource.findResourcesMarkedForAsyncDeletion";
+
+    public static final String QUERY_RESOURCE_REPORT = "Resource.findResourceReport";
+    public static final String QUERY_RESOURCE_VERSION_REPORT = "Resource.findResourceVersionReport";
+
 
     private static final long serialVersionUID = 1L;
 

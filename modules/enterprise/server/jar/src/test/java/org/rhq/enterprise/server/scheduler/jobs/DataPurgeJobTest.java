@@ -240,6 +240,7 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
         getTransactionManager().begin();
         EntityManager em = getEntityManager();
         try {
+            Subject overlord = LookupUtil.getSubjectManager().getOverlord();
             Resource res = em.find(Resource.class, newResource.getId());
 
             // check alerts
@@ -268,8 +269,7 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
             }
             assert calltimeScheduleId > 0 : "why don't we have a calltime schedule?";
             PageList<CallTimeDataComposite> calltimeData = LookupUtil.getCallTimeDataManager()
-                .getCallTimeDataForResource(LookupUtil.getSubjectManager().getOverlord(), calltimeScheduleId, 0,
-                    Long.MAX_VALUE, new PageControl());
+                .getCallTimeDataForResource(overlord, calltimeScheduleId, 0, Long.MAX_VALUE, new PageControl());
             assert calltimeData.getTotalSize() == 0 : "didn't purge all calltime data";
 
             // check trait data
@@ -282,8 +282,8 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
             }
             assert traitSchedule != null : "why don't we have a trait schedule?";
 
-            List<MeasurementDataTrait> persistedTraits = LookupUtil.getMeasurementDataManager()
-                .getAllTraitDataForResourceAndDefinition(res.getId(), traitSchedule.getDefinition().getId());
+            List<MeasurementDataTrait> persistedTraits = LookupUtil.getMeasurementDataManager().findTraits(overlord,
+                res.getId(), traitSchedule.getDefinition().getId());
             assert persistedTraits.size() == 1 : "bad purge of trait data: " + persistedTraits.size();
 
         } finally {
@@ -349,8 +349,8 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
         }
         mgr.addTraitData(dataset);
 
-        List<MeasurementDataTrait> persistedTraits = mgr.getAllTraitDataForResourceAndDefinition(res.getId(),
-            traitSchedule.getDefinition().getId());
+        List<MeasurementDataTrait> persistedTraits = mgr.findTraits(LookupUtil.getSubjectManager().getOverlord(), res
+            .getId(), traitSchedule.getDefinition().getId());
         assert persistedTraits.size() == count : "did not persist trait data:" + persistedTraits.size() + ":"
             + persistedTraits;
     }

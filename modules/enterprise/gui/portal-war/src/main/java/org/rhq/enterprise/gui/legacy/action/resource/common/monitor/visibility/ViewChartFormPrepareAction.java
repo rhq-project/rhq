@@ -505,9 +505,8 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
         long startDate = chartForm.getStartDate().getTime();
         long endDate = chartForm.getEndDate().getTime();
         for (Resource resource : resources) {
-            List<List<MeasurementDataNumericHighLowComposite>> metricDataPointsList = dataManager
-                .getMeasurementDataForResource(subject, resource.getId(), metricDefinitionIds, startDate, endDate,
-                    NUMBER_OF_DATA_POINTS);
+            List<List<MeasurementDataNumericHighLowComposite>> metricDataPointsList = dataManager.findDataForResource(
+                subject, resource.getId(), metricDefinitionIds, startDate, endDate, NUMBER_OF_DATA_POINTS);
             if (log.isDebugEnabled()) {
                 log.debug("Found " + metricDataPointsList.size() + " data points.");
                 if (log.isTraceEnabled()) {

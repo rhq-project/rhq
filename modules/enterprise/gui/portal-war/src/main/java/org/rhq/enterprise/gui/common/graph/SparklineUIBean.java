@@ -39,11 +39,10 @@ public class SparklineUIBean {
 
     public void paint(Graphics2D g2d, Object obj) {
 
-        String[] keys = ((String)obj).split(":");
+        String[] keys = ((String) obj).split(":");
 
         int resourceId = Integer.parseInt(keys[0]);
         int scheduleDefId = Integer.parseInt(keys[1]);
-
 
         List<MeasurementDataNumericHighLowComposite> data = getData(resourceId, scheduleDefId);
 
@@ -59,24 +58,23 @@ public class SparklineUIBean {
 
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        double heightScale = max-min != 0 ? (18d / (max - min)) : 0;
+        double heightScale = max - min != 0 ? (18d / (max - min)) : 0;
 
         int i = 1;
         g2d.setStroke(new BasicStroke(0.6f));
         Polygon p = new Polygon();
-        p.addPoint(0,18);
+        p.addPoint(0, 18);
         for (MeasurementDataNumericHighLowComposite d : data) {
 
             if (!Double.isNaN(d.getValue())) {
-                   p.addPoint(i,18 - (int)(heightScale * (d.getValue() - min)));
+                p.addPoint(i, 18 - (int) (heightScale * (d.getValue() - min)));
             }
             i++;
         }
-        p.addPoint(60,18);
+        p.addPoint(60, 18);
 
-        g2d.setPaint(new GradientPaint(0,18, Color.lightGray , 0,0, Color.darkGray));
+        g2d.setPaint(new GradientPaint(0, 18, Color.lightGray, 0, 0, Color.darkGray));
         g2d.fillPolygon(p);
-
 
         g2d.setColor(Color.lightGray);
         g2d.drawPolygon(p);
@@ -84,18 +82,13 @@ public class SparklineUIBean {
     }
 
     private List<MeasurementDataNumericHighLowComposite> getData(int resourceId, int scheduleDefId) {
-        
-        List<List<MeasurementDataNumericHighLowComposite>> dl =
-                LookupUtil.getMeasurementDataManager().getMeasurementDataForResource(
-                        EnterpriseFacesContextUtility.getSubject(),
-                        resourceId,
-                        new int[] {scheduleDefId},
-                        System.currentTimeMillis() - (1000L * 60 * 60 * 8),
-                        System.currentTimeMillis(),
-                        60);
+
+        List<List<MeasurementDataNumericHighLowComposite>> dl = LookupUtil.getMeasurementDataManager()
+            .findDataForResource(EnterpriseFacesContextUtility.getSubject(), resourceId, new int[] { scheduleDefId },
+                System.currentTimeMillis() - (1000L * 60 * 60 * 8), System.currentTimeMillis(), 60);
 
         List<MeasurementDataNumericHighLowComposite> data = dl.get(0);
-                
+
         return data;
     }
 }

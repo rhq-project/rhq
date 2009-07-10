@@ -158,7 +158,7 @@ public class HighLowChartServlet extends ChartServlet implements SingleThreadMod
                 if (log.isDebugEnabled())
                     log.debug("Plotting a high-low chart data for metric " + schedule.getDefinition().getName()
                         + " on resource " + schedule.getResource().getName() + "...");
-                dataPoints = dataManager.getMeasurementDataForResource(subject, schedule.getResource().getId(),
+                dataPoints = dataManager.findDataForResource(subject, schedule.getResource().getId(),
                     new int[] { schedule.getDefinition().getId() }, beginTime, endTime, NUMBER_OF_DATA_POINTS).get(0);
             } else {
                 log.debug("Passed scheduleId " + scheduleId + " has no schedule attached, ignoring");
@@ -172,11 +172,11 @@ public class HighLowChartServlet extends ChartServlet implements SingleThreadMod
          */
         else if ((groupId > 0) && (definitionId > 0)) // compatible group
         {
-            dataPoints = dataManager.getMeasurementDataForCompatibleGroup(subject, groupId, definitionId, beginTime,
-                endTime, NUMBER_OF_DATA_POINTS, true).get(0);
+            dataPoints = dataManager.findDataForCompatibleGroup(subject, groupId, definitionId, beginTime, endTime,
+                NUMBER_OF_DATA_POINTS, true).get(0);
         } else if ((parentId > 0) && (childTypeId > 0) && (definitionId > 0)) //  autogroup
         {
-            dataPoints = dataManager.getMeasurementDataForAutoGroup(subject, parentId, childTypeId, definitionId,
+            dataPoints = dataManager.findDataForAutoGroup(subject, parentId, childTypeId, definitionId,
                 beginTime, endTime, NUMBER_OF_DATA_POINTS, true).get(0);
         } else {
             if (log.isDebugEnabled()) {

@@ -20,6 +20,8 @@ package org.rhq.enterprise.gui.measurement;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
@@ -46,9 +48,10 @@ public class TraitListBean {
 
     }
 
-    private  void load() {
+    private void load() {
         int resourceId = EnterpriseFacesContextUtility.getResource().getId();
-        List<MeasurementDataTrait> traits = this.dataManager.getCurrentTraitsForResource(resourceId,
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+        List<MeasurementDataTrait> traits = this.dataManager.findCurrentTraitsForResource(subject, resourceId,
             DisplayType.SUMMARY);
         this.totalTraits = traits.size();
         int middleIndex = (this.totalTraits + 1) / 2;
@@ -83,7 +86,7 @@ public class TraitListBean {
 
     public int getTotalTraits() {
         if (this.traitPairs == null)
-                    load();
+            load();
         return this.totalTraits;
     }
 }

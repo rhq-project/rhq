@@ -123,7 +123,7 @@ public class ListChildrenAction extends TilesAction {
 
                 // Map<ResourceId, List<Summaries for that resource>
                 Map<Integer, List<MetricDisplaySummary>> summaries = dataManager
-                    .getNarrowedMetricDisplaySummariesForResourcesAndParent(subject, resourceTypeId, parentId,
+                    .findNarrowedMetricDisplaySummariesForResourcesAndParent(subject, resourceTypeId, parentId,
                         resourceIds, begin, end);
                 for (AutoGroupComposite child : children) {
                     if (parentComposite != null)
@@ -183,7 +183,7 @@ public class ListChildrenAction extends TilesAction {
             }
 
             Map<Integer, List<MetricDisplaySummary>> sumMap = dataManager
-                .getNarrowedMetricDisplaySummaryForCompatibleResources(subject, res, beginTime, endTime);
+                .findNarrowedMetricDisplaySummariesForCompatibleResources(subject, res, beginTime, endTime);
             metricSummaries = sumMap.values().iterator().next();
 
             // fill in some data that does not come from the backend

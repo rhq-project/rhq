@@ -47,7 +47,6 @@ public class ResourceMetricsTableUIBean extends MetricsTableUIBean {
     private List<MeasurementDataTrait> traitHistory;
 
     public ResourceMetricsTableUIBean() {
-
         super();
 
         Subject subject = EnterpriseFacesContextUtility.getSubject();
@@ -75,7 +74,7 @@ public class ResourceMetricsTableUIBean extends MetricsTableUIBean {
 
         if (definitionId != -1) {
             MeasurementDataManagerLocal dataManager = LookupUtil.getMeasurementDataManager();
-            traitHistory = dataManager.getAllTraitDataForResourceAndDefinition(resource.getId(), definitionId);
+            traitHistory = dataManager.findTraits(subject, resource.getId(), definitionId);
         }
     }
 

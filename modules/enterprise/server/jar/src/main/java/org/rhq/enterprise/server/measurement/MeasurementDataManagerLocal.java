@@ -25,8 +25,6 @@ import java.util.Set;
 
 import javax.ejb.Local;
 
-import org.jetbrains.annotations.NotNull;
-
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementData;
@@ -39,6 +37,7 @@ import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowCo
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.enterprise.server.exception.FetchException;
 import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
 
 /**
@@ -56,33 +55,6 @@ public interface MeasurementDataManagerLocal {
     void addTraitData(Set<MeasurementDataTrait> data);
 
     /**
-     * Get the aggregate values of the numerical values for a given schedule This can only provide aggregates for data
-     * in the "live" table
-     *
-     * @param  sched The Schedule for which this data is
-     * @param  start the start time
-     * @param  end   the end time
-     *
-     * @return MeasurementAggregate bean with the data
-     *
-     * @throws org.rhq.enterprise.server.measurement.MeasurementException is the Schedule does not reference numerical
-     *                                                                    data
-     */
-    MeasurementAggregate getAggregate(MeasurementSchedule sched, long start, long end) throws MeasurementException;
-
-    /**
-     * Get live metrics for a given MeasurementSchedule
-     *
-     * @param  sched MeasurementSchedule to obtain the data for
-     *
-     * @return MeasurementData for this Schedule
-     */
-    Set<MeasurementData> getLiveData(int resourceId, Set<Integer> definitionIds);
-
-    List<List<MeasurementDataNumericHighLowComposite>> getMeasurementDataForResource(Subject subject, int resourceId,
-        int[] measurementDefinitionIds, long beginTime, long endTime, int dataPoints);
-
-    /**
      * Returns a list of numeric data point lists for the given measurement definition - one per specified resource.
      *
      * @param  subject
@@ -95,27 +67,8 @@ public interface MeasurementDataManagerLocal {
      *
      * @return
      */
-    List<List<MeasurementDataNumericHighLowComposite>> getMeasurementDataForSiblingResources(Subject subject,
+    List<List<MeasurementDataNumericHighLowComposite>> findDataForSiblingResources(Subject subject,
         int[] resourceIds, int measurementDefinitionId, long beginTime, long endTime, int numberOfdataPoints);
-
-    /**
-     * Returns a list of numeric data point lists for the given compatible group - one per specified measurement
-     * definition. The data points represent the average min/avg/max values of the members of the group.
-     *
-     * @param  subject
-     * @param  compatibleGroupId
-     * @param  measurementDefinitionId measurement definition id for numeric metric associated with the given compatible
-     *                                 group
-     * @param  beginTime
-     * @param  endTime
-     * @param  numberOfDataPoints
-     * @param  aggregateOverGroup      TODO
-     *
-     * @return
-     */
-    List<List<MeasurementDataNumericHighLowComposite>> getMeasurementDataForCompatibleGroup(Subject subject,
-        int compatibleGroupId, int measurementDefinitionId, long beginTime, long endTime, int numberOfDataPoints,
-        boolean aggregateOverGroup);
 
     /**
      * Returns a list of numeric data point lists for the given auto group - one per specified measurement definition.
@@ -133,22 +86,9 @@ public interface MeasurementDataManagerLocal {
      *
      * @return
      */
-    List<List<MeasurementDataNumericHighLowComposite>> getMeasurementDataForAutoGroup(Subject subject,
+    List<List<MeasurementDataNumericHighLowComposite>> findDataForAutoGroup(Subject subject,
         int autoGroupParentResourceId, int autoGroupChildResourceTypeId, int measurementDefinitionId, long beginTime,
         long endTime, int numberOfDataPoints, boolean aggregateOverAutoGroup);
-
-    /**
-     * Return the Traits for the passed resource. This method will for each trait only return the 'youngest' entry. If
-     * there are no traits found for that resource, an empty list is returned. If displayType is null, no displayType is
-     * honoured, else the traits will be filtered for the given displayType
-     *
-     * @param  resourceId  Id of the resource we are interested in
-     * @param  displayType A display type for filtering or null for all traits.
-     *
-     * @return a List of MeasurementDataTrait
-     */
-    @NotNull
-    public List<MeasurementDataTrait> getCurrentTraitsForResource(int resourceId, DisplayType displayType);
 
     /**
      * Return the current trait value for the passed schedule
@@ -169,16 +109,6 @@ public interface MeasurementDataManagerLocal {
     public MeasurementDataNumeric getCurrentNumericForSchedule(int scheduleId);
 
     /**
-     * Return all known trait data for the passed schedule, defined by resourceId and definitionId
-     *
-     * @param  resourceId   PK of a {@link Resource}
-     * @param  definitionId PK of a {@link MeasurementDefinition}
-     *
-     * @return a List of {@link MeasurementDataTrait} objects.
-     */
-    public List<MeasurementDataTrait> getAllTraitDataForResourceAndDefinition(int resourceId, int definitionId);
-
-    /**
      * Get metric display summaries for the resources of the passed compatible group, where the
      * {@link MetricDisplaySummary} only contains the metric name and number of alerts. All other fields
      * are not set.
@@ -188,7 +118,7 @@ public interface MeasurementDataManagerLocal {
      *
      * @return a Map of resource id, List of summaries for this resource
      */
-    Map<Integer, List<MetricDisplaySummary>> getNarrowedMetricsDisplaySummaryForCompGroup(Subject subject,
+    Map<Integer, List<MetricDisplaySummary>> findNarrowedMetricsDisplaySummariesForCompGroup(Subject subject,
         ResourceGroup group, long beginTime, long endTime);
 
     /**
@@ -196,10 +126,10 @@ public interface MeasurementDataManagerLocal {
      * {@link ResourceType}. Summaries only contain a basic selection of fields for the purpose of filling the Child
      * resource popups.
      */
-    public Map<Integer, List<MetricDisplaySummary>> getNarrowedMetricDisplaySummaryForCompatibleResources(
+    public Map<Integer, List<MetricDisplaySummary>> findNarrowedMetricDisplaySummariesForCompatibleResources(
         Subject subject, Collection<Resource> resources, long beginTime, long endTime);
 
-    public Map<Integer, List<MetricDisplaySummary>> getNarrowedMetricsDisplaySummaryForAutoGroup(Subject subject,
+    public Map<Integer, List<MetricDisplaySummary>> findNarrowedMetricsDisplaySummariesForAutoGroup(Subject subject,
         int parentId, int cType, long beginTime, long endTime);
 
     /**
@@ -213,6 +143,73 @@ public interface MeasurementDataManagerLocal {
      * @param begin          begin time
      * @param end            end time
      */
-    public Map<Integer, List<MetricDisplaySummary>> getNarrowedMetricDisplaySummariesForResourcesAndParent(
+    public Map<Integer, List<MetricDisplaySummary>> findNarrowedMetricDisplaySummariesForResourcesAndParent(
         Subject subject, int resourceTypeId, int parentId, List<Integer> resourceIds, long begin, long end);
+
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    //
+    // The following are shared with the Remote Interface
+    //
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    /**
+     * Get the aggregate values of the numerical values for a given schedule.  This can only provide aggregates for data
+     * in the "live" table
+     *
+     * @param subject    the user requesting the aggregate
+     * @param scheduleId the id of the {@link MeasurementSchedule} for which this aggregate is being requested
+     * @param start      the start time
+     * @param end        the end time
+     *
+     * @return MeasurementAggregate bean with the data
+     *
+     * @throws FetchException if the schedule does not reference numerical data or if the user is not allowed to view
+     *                        the {@link Resource} corresponding to this scheduleId
+     */
+    MeasurementAggregate getAggregate(Subject subject, int scheduleId, long startTime, long endTime)
+        throws FetchException;
+
+    /**
+     * Return all known trait data for the passed schedule, defined by resourceId and definitionId
+     *
+     * @param  resourceId   PK of a {@link Resource}
+     * @param  definitionId PK of a {@link MeasurementDefinition}
+     *
+     * @return a List of {@link MeasurementDataTrait} objects.
+     */
+    List<MeasurementDataTrait> findTraits(Subject subject, int resourceId, int definitionId) throws FetchException;
+
+    List<MeasurementDataTrait> findCurrentTraitsForResource(Subject subject, int resourceId, DisplayType displayType)
+        throws FetchException;
+
+    /**
+     * Get live metrics for a given MeasurementSchedule
+     *
+     * @param  sched MeasurementSchedule to obtain the data for
+     *
+     * @return MeasurementData for this Schedule
+     */
+    Set<MeasurementData> findLiveData(Subject subject, int resourceId, int[] definitionIds) throws FetchException;
+
+    /**
+     * Returns a list of numeric data point lists for the given compatible group - one per specified measurement
+     * definition. The data points represent the average min/avg/max values of the members of the group.
+     *
+     * @param  subject
+     * @param  compatibleGroupId
+     * @param  measurementDefinitionId measurement definition id for numeric metric associated with the given compatible
+     *                                 group
+     * @param  beginTime
+     * @param  endTime
+     * @param  numberOfDataPoints
+     * @param  aggregateOverGroup      TODO
+     *
+     * @return
+     */
+    List<List<MeasurementDataNumericHighLowComposite>> findDataForCompatibleGroup(Subject subject, int groupId,
+        int definitionId, long beginTime, long endTime, int numPoints, boolean groupAggregateOnly)
+        throws FetchException;
+
+    List<List<MeasurementDataNumericHighLowComposite>> findDataForResource(Subject subject, int resourceId,
+        int[] definitionIds, long beginTime, long endTime, int numPoints) throws FetchException;
 }

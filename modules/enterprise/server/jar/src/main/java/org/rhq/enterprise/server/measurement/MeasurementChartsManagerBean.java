@@ -225,7 +225,7 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
                 throw new MeasurementException(mnfe);
             }
 
-            MetricDisplaySummary summary = getMetricDisplaySummary(schedule, beginTime, endTime, false);
+            MetricDisplaySummary summary = getMetricDisplaySummary(subject, schedule, beginTime, endTime, false);
             if (summary != null) {
                 summary.setUnits(schedule.getDefinition().getUnits().name());
                 // TODO: jmarques - should we add summary.setResourceId(resourceId) here?
@@ -304,7 +304,7 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
         List<Integer> scheduleIds = new ArrayList<Integer>(scheds.size());
 
         for (MeasurementSchedule schedule : scheds) {
-            MetricDisplaySummary summary = getMetricDisplaySummary(schedule, begin, end, narrowed);
+            MetricDisplaySummary summary = getMetricDisplaySummary(subject, schedule, begin, end, narrowed);
             if (summary != null) {
                 summary.setResourceId(resourceId);
                 summaries.add(summary);
@@ -325,8 +325,8 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
      *
      * @param narrowed if true, don't obtain the metrical values  NOTE: alertCounts need to be set by the caller.
      */
-    private MetricDisplaySummary getMetricDisplaySummary(MeasurementSchedule schedule, long begin, long end,
-        boolean narrowed) throws MeasurementException {
+    private MetricDisplaySummary getMetricDisplaySummary(Subject subject, MeasurementSchedule schedule, long begin,
+        long end, boolean narrowed) throws MeasurementException {
         MetricDisplaySummary summary = new MetricDisplaySummary();
         summary.setScheduleId(schedule.getId());
         summary.setBeginTimeFrame(begin);
@@ -374,7 +374,7 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
             summary.setCollectionType(collectionType);
 
             if (!narrowed) {
-                MeasurementAggregate compositeHighLow = dataManager.getAggregate(schedule, begin, end);
+                MeasurementAggregate compositeHighLow = dataManager.getAggregate(subject, schedule.getId(), begin, end);
                 if (compositeHighLow.isEmpty()) {
                     summary.setValuesPresent(false);
                 }

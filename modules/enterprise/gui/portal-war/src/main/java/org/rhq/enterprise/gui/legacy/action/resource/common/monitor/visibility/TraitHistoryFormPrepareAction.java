@@ -19,12 +19,16 @@
 package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility;
 
 import java.util.List;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.tiles.actions.TilesAction;
+
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.enterprise.gui.util.WebUtility;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
@@ -46,10 +50,11 @@ public class TraitHistoryFormPrepareAction extends TilesAction {
         HttpServletResponse response) throws Exception {
         MeasurementDataManagerLocal mgr = LookupUtil.getMeasurementDataManager();
 
+        Subject subject = WebUtility.getSubject(request);
         int resourceId = WebUtility.getResourceId(request);
         int definitionId = WebUtility.getRequiredIntRequestParameter(request, "m");
 
-        List<MeasurementDataTrait> traits = mgr.getAllTraitDataForResourceAndDefinition(resourceId, definitionId);
+        List<MeasurementDataTrait> traits = mgr.findTraits(subject, resourceId, definitionId);
 
         if (traits.size() > 0) {
             MeasurementDataTrait mdt = traits.get(0);

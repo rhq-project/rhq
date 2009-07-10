@@ -93,7 +93,8 @@ public class TraitsResource extends GetableBasicResource {
     private List<MeasurementDataTrait> getTraits() {
         if (this.traits == null) {
             MeasurementDataManagerLocal mdm = LookupUtil.getMeasurementDataManager();
-            List<MeasurementDataTrait> traits = mdm.getCurrentTraitsForResource(getManagedResource().getId(), null);
+            List<MeasurementDataTrait> traits = mdm.findCurrentTraitsForResource(getSubject(), getManagedResource()
+                .getId(), null);
             if (traits != null) {
                 this.traits = traits;
             } else {

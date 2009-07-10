@@ -388,8 +388,8 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
         MeasurementAggregate agg;
 
         try {
-            agg = dataManager.getAggregate(schedule, startDate, endDate);
-        } catch (MeasurementException e) {
+            agg = dataManager.getAggregate(subjectManager.getOverlord(), schedule.getId(), startDate, endDate);
+        } catch (FetchException e) {
             throw new DataNotAvailableException(e);
         }
 

@@ -63,7 +63,7 @@ public interface AlertManagerRemote {
      * @throws FetchException
      */
     @WebMethod
-    PageList<Alert> findAlertDefinitions( //
+    PageList<Alert> findAlerts( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "name") Alert criteria, //
         @WebParam(name = "priority") AlertPriority priority, //

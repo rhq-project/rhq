@@ -827,8 +827,8 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<Alert> findAlertDefinitions(Subject subject, Alert criteria, AlertPriority priority,
-        int[] resourceIds, long beginTime, long endTime, PageControl pc) throws FetchException {
+    public PageList<Alert> findAlerts(Subject subject, Alert criteria, AlertPriority priority, int[] resourceIds,
+        long beginTime, long endTime, PageControl pc) throws FetchException {
 
         try {
             QueryGenerator generator = new QueryGenerator(criteria, pc);

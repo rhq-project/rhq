@@ -41,7 +41,12 @@ public class Ejb2BeanComponent extends AbstractEjbBeanComponent {
     protected ManagedComponent getManagedComponent() {
         if (MDB_COMPONENT_TYPE.equals(getComponentType())) {
             try {
-                Set<ManagedComponent> mdbs = getConnection().getManagementView().getComponentsForType(MDB_COMPONENT_TYPE);
+                //we need to reload the management view here, because the MDBs might have changed since
+                //the last call, because the @object-id is part of their names.
+                getConnection().getManagementView().load();
+
+                Set<ManagedComponent> mdbs = getConnection().getManagementView().getComponentsForType(
+                    MDB_COMPONENT_TYPE);
 
                 for (ManagedComponent mdb : mdbs) {
                     if (getComponentName().equals(Ejb2BeanUtils.getUniqueBeanIdentificator(mdb))) {

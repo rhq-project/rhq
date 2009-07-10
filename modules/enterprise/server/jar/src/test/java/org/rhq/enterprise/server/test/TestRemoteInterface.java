@@ -194,7 +194,7 @@ public class TestRemoteInterface extends AssertJUnit {
         OperationManagerRemote operationManager = service.getPort(OperationManagerRemote.class);
 
         // Remove any pending histories
-        PageList<ResourceOperationHistory> history = operationManager.getPendingResourceOperationHistories(user,
+        PageList<ResourceOperationHistory> history = operationManager.findPendingResourceOperationHistories(user,
             testPlatform.getResource().getId(), PageControl.getUnlimitedInstance());
 
         if (!history.isEmpty()) {
@@ -202,13 +202,13 @@ public class TestRemoteInterface extends AssertJUnit {
                 operationManager.deleteOperationHistory(user, roh.getId(), true);
             }
 
-            history = operationManager.getPendingResourceOperationHistories(user, testPlatform.getResource().getId(),
+            history = operationManager.findPendingResourceOperationHistories(user, testPlatform.getResource().getId(),
                 PageControl.getUnlimitedInstance());
             assertTrue(history.isEmpty());
         }
 
         // remove any completed histories
-        history = operationManager.getCompletedResourceOperationHistories(user, testPlatform.getResource().getId(),
+        history = operationManager.findCompletedResourceOperationHistories(user, testPlatform.getResource().getId(),
             null, null, PageControl.getUnlimitedInstance());
 
         if (!history.isEmpty()) {
@@ -216,7 +216,7 @@ public class TestRemoteInterface extends AssertJUnit {
                 operationManager.deleteOperationHistory(user, roh.getId(), true);
             }
 
-            history = operationManager.getCompletedResourceOperationHistories(user, testPlatform.getResource().getId(),
+            history = operationManager.findCompletedResourceOperationHistories(user, testPlatform.getResource().getId(),
                 null, null, PageControl.getUnlimitedInstance());
             assertTrue(history.isEmpty());
         }
@@ -227,20 +227,20 @@ public class TestRemoteInterface extends AssertJUnit {
         assertNotNull(schedule);
 
         // wait to finish, or try to cancel after a minute.
-        history = operationManager.getPendingResourceOperationHistories(user, testPlatform.getResource().getId(),
+        history = operationManager.findPendingResourceOperationHistories(user, testPlatform.getResource().getId(),
             PageControl.getUnlimitedInstance());
         assertTrue(history.isEmpty() || history.size() == 1);
 
         long now = System.currentTimeMillis();
         do {
-            history = operationManager.getPendingResourceOperationHistories(user, testPlatform.getResource().getId(),
+            history = operationManager.findPendingResourceOperationHistories(user, testPlatform.getResource().getId(),
                 PageControl.getUnlimitedInstance());
         } while (!history.isEmpty() && (System.currentTimeMillis() < (now + 60000L)));
         if (!history.isEmpty()) {
             operationManager.cancelOperationHistory(user, history.get(0).getId(), true);
         }
 
-        history = operationManager.getCompletedResourceOperationHistories(user, testPlatform.getResource().getId(),
+        history = operationManager.findCompletedResourceOperationHistories(user, testPlatform.getResource().getId(),
             null, null, PageControl.getUnlimitedInstance());
         assertEquals(1, history.size());
 
@@ -313,7 +313,7 @@ public class TestRemoteInterface extends AssertJUnit {
         OperationManagerRemote operationManager = service.getPort(OperationManagerRemote.class);
 
         // Remove any pending histories
-        PageList<ResourceOperationHistory> history = operationManager.getPendingResourceOperationHistories(user, testAS
+        PageList<ResourceOperationHistory> history = operationManager.findPendingResourceOperationHistories(user, testAS
             .getResource().getId(), PageControl.getUnlimitedInstance());
 
         if (!history.isEmpty()) {
@@ -321,13 +321,13 @@ public class TestRemoteInterface extends AssertJUnit {
                 operationManager.deleteOperationHistory(user, roh.getId(), true);
             }
 
-            history = operationManager.getPendingResourceOperationHistories(user, testAS.getResource().getId(),
+            history = operationManager.findPendingResourceOperationHistories(user, testAS.getResource().getId(),
                 PageControl.getUnlimitedInstance());
             assertTrue(history.isEmpty());
         }
 
         // remove any completed histories
-        history = operationManager.getCompletedResourceOperationHistories(user, testAS.getResource().getId(), null,
+        history = operationManager.findCompletedResourceOperationHistories(user, testAS.getResource().getId(), null,
             null, PageControl.getUnlimitedInstance());
 
         if (!history.isEmpty()) {
@@ -335,7 +335,7 @@ public class TestRemoteInterface extends AssertJUnit {
                 operationManager.deleteOperationHistory(user, roh.getId(), true);
             }
 
-            history = operationManager.getCompletedResourceOperationHistories(user, testAS.getResource().getId(), null,
+            history = operationManager.findCompletedResourceOperationHistories(user, testAS.getResource().getId(), null,
                 null, PageControl.getUnlimitedInstance());
             assertTrue(history.isEmpty());
         }
@@ -345,20 +345,20 @@ public class TestRemoteInterface extends AssertJUnit {
             .getId(), "shutdown", 0L, 0L, 0, 0, null, "unit test - shutdown operation");
 
         // wait to finish, or try to cancel after a minute.
-        history = operationManager.getPendingResourceOperationHistories(user, testAS.getResource().getId(), PageControl
+        history = operationManager.findPendingResourceOperationHistories(user, testAS.getResource().getId(), PageControl
             .getUnlimitedInstance());
         assertTrue(history.isEmpty() || history.size() == 1);
 
         long now = System.currentTimeMillis();
         do {
-            history = operationManager.getPendingResourceOperationHistories(user, testAS.getResource().getId(),
+            history = operationManager.findPendingResourceOperationHistories(user, testAS.getResource().getId(),
                 PageControl.getUnlimitedInstance());
         } while (!history.isEmpty() && (System.currentTimeMillis() < (now + 60000L)));
         if (!history.isEmpty()) {
             operationManager.cancelOperationHistory(user, history.get(0).getId(), true);
         }
 
-        history = operationManager.getCompletedResourceOperationHistories(user, testAS.getResource().getId(), null,
+        history = operationManager.findCompletedResourceOperationHistories(user, testAS.getResource().getId(), null,
             null, PageControl.getUnlimitedInstance());
         assertEquals(1, history.size());
 

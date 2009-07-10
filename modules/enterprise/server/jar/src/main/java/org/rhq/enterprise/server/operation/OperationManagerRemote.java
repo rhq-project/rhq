@@ -267,7 +267,7 @@ public interface OperationManagerRemote {
      * @return all operation histories for the given resource
      */
     @WebMethod
-    PageList<ResourceOperationHistory> getCompletedResourceOperationHistories( //
+    PageList<ResourceOperationHistory> findCompletedResourceOperationHistories( //
         @WebParam(name = "user") Subject user, //
         @WebParam(name = "resourceId") int resourceId, //
         @WebParam(name = "startDate") Long startDate, //
@@ -287,7 +287,7 @@ public interface OperationManagerRemote {
      * @return all operation histories for the given resource
      */
     @WebMethod
-    PageList<ResourceOperationHistory> getPendingResourceOperationHistories( //
+    PageList<ResourceOperationHistory> findPendingResourceOperationHistories( //
         @WebParam(name = "user") Subject user, //
         @WebParam(name = "resourceId") int resourceId, //
         @WebParam(name = "pc") PageControl pc);

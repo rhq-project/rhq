@@ -552,7 +552,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<ResourceOperationHistory> getResourceOperationHistoriesByGroupHistoryId(Subject subject,
+    public PageList<ResourceOperationHistory> findResourceOperationHistoriesByGroupHistoryId(Subject subject,
         int historyId, PageControl pc) {
         pc.initDefaultOrderingField("h.createdTime", PageOrdering.DESC);
 
@@ -601,7 +601,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<ResourceOperationHistory> getCompletedResourceOperationHistories(Subject subject, int resourceId,
+    public PageList<ResourceOperationHistory> findCompletedResourceOperationHistories(Subject subject, int resourceId,
         Long beginDate, Long endDate, PageControl pc) {
         pc.initDefaultOrderingField("h.createdTime", PageOrdering.DESC);
 
@@ -638,7 +638,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<ResourceOperationHistory> getPendingResourceOperationHistories(Subject subject, int resourceId,
+    public PageList<ResourceOperationHistory> findPendingResourceOperationHistories(Subject subject, int resourceId,
         PageControl pc) {
         pc.initDefaultOrderingField("h.createdTime", PageOrdering.ASC);
 
@@ -669,7 +669,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<GroupOperationHistory> getCompletedGroupOperationHistories(Subject subject, int groupId,
+    public PageList<GroupOperationHistory> findCompletedGroupOperationHistories(Subject subject, int groupId,
         PageControl pc) {
         pc.initDefaultOrderingField("h.createdTime", PageOrdering.DESC);
 
@@ -700,7 +700,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<GroupOperationHistory> getPendingGroupOperationHistories(Subject subject, int groupId,
+    public PageList<GroupOperationHistory> findPendingGroupOperationHistories(Subject subject, int groupId,
         PageControl pc) {
         pc.initDefaultOrderingField("h.createdTime", PageOrdering.ASC);
 
@@ -1336,7 +1336,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<ResourceOperationLastCompletedComposite> getRecentlyCompletedResourceOperations(Subject subject,
+    public PageList<ResourceOperationLastCompletedComposite> findRecentlyCompletedResourceOperations(Subject subject,
         Integer resourceId, PageControl pageControl) {
         pageControl.initDefaultOrderingField("ro.createdTime", PageOrdering.ASC);
 
@@ -1367,7 +1367,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<GroupOperationLastCompletedComposite> getRecentlyCompletedGroupOperations(Subject subject,
+    public PageList<GroupOperationLastCompletedComposite> findRecentlyCompletedGroupOperations(Subject subject,
         PageControl pageControl) {
         pageControl.initDefaultOrderingField("go.createdTime", PageOrdering.ASC);
 
@@ -1395,7 +1395,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<ResourceOperationScheduleComposite> getCurrentlyScheduledResourceOperations(Subject subject,
+    public PageList<ResourceOperationScheduleComposite> findCurrentlyScheduledResourceOperations(Subject subject,
         PageControl pageControl) {
         pageControl.initDefaultOrderingField("ro.nextFireTime", PageOrdering.DESC);
         Query query;
@@ -1449,7 +1449,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<GroupOperationScheduleComposite> getCurrentlyScheduledGroupOperations(Subject subject,
+    public PageList<GroupOperationScheduleComposite> findCurrentlyScheduledGroupOperations(Subject subject,
         PageControl pageControl) {
         pageControl.initDefaultOrderingField("go.nextFireTime", PageOrdering.DESC);
         Query query;
@@ -1798,7 +1798,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         }
     }
 
-    //@SuppressWarnings("unchecked")
+    @SuppressWarnings("unchecked")
     public PageList<ResourceOperationHistory> findOperationHistories(Subject subject,
         ResourceOperationHistory criteria, PageControl pc) throws FetchException {
         try {

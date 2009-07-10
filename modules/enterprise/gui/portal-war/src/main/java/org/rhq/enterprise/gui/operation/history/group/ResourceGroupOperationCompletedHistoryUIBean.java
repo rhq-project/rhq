@@ -116,7 +116,7 @@ public class ResourceGroupOperationCompletedHistoryUIBean extends PagedDataTable
             }
 
             PageList<GroupOperationHistory> results;
-            results = manager.getCompletedGroupOperationHistories(subject, resourceGroup.getId(), pc);
+            results = manager.findCompletedGroupOperationHistories(subject, resourceGroup.getId(), pc);
             return results;
         }
     }

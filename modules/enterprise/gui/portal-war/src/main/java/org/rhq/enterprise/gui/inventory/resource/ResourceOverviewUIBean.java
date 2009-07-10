@@ -44,7 +44,7 @@ public class ResourceOverviewUIBean {
     private List<ResourceOperationLastCompletedComposite> getOperations(Subject subject, int resourceId, int count) {
         PageControl lastFive = new PageControl(0, count);
         lastFive.initDefaultOrderingField("ro.createdTime", PageOrdering.DESC);
-        return LookupUtil.getOperationManager().getRecentlyCompletedResourceOperations(subject, resourceId, lastFive);
+        return LookupUtil.getOperationManager().findRecentlyCompletedResourceOperations(subject, resourceId, lastFive);
     }
 
     private List<ResourceConfigurationUpdate> getConfigUpdates(Subject subject, int resourceId, int count) {

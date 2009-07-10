@@ -137,7 +137,7 @@ public class ResourceGroupOperationPendingHistoryUIBean extends PagedDataTableUI
             }
 
             PageList<GroupOperationHistory> results;
-            results = manager.getPendingGroupOperationHistories(subject, requestGroup.getId(), pc);
+            results = manager.findPendingGroupOperationHistories(subject, requestGroup.getId(), pc);
             return results;
         }
     }

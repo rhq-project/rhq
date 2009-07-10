@@ -88,7 +88,7 @@ public class ResourceGroupOperationHistoryDetailsUIBean extends PagedDataTableUI
             GroupOperationHistory groupHistory = getHistory();
 
             PageList<ResourceOperationHistory> resourceHistories = null;
-            resourceHistories = operationManager.getResourceOperationHistoriesByGroupHistoryId(subject, groupHistory
+            resourceHistories = operationManager.findResourceOperationHistoriesByGroupHistoryId(subject, groupHistory
                 .getId(), pc);
 
             return resourceHistories;

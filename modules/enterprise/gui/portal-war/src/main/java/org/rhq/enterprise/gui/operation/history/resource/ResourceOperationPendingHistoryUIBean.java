@@ -126,7 +126,7 @@ public class ResourceOperationPendingHistoryUIBean extends PagedDataTableUIBean 
             OperationManagerLocal manager = LookupUtil.getOperationManager();
 
             PageList<ResourceOperationHistory> results;
-            results = manager.getPendingResourceOperationHistories(getSubject(), getResource().getId(), pc);
+            results = manager.findPendingResourceOperationHistories(getSubject(), getResource().getId(), pc);
             return results;
         }
     }

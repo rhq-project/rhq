@@ -131,7 +131,7 @@ public class ResourceOperationCompletedHistoryUIBean extends PagedDataTableUIBea
             OperationManagerLocal manager = LookupUtil.getOperationManager();
 
             PageList<ResourceOperationHistory> results;
-            results = manager.getCompletedResourceOperationHistories(getSubject(), getResource().getId(), null, null,
+            results = manager.findCompletedResourceOperationHistories(getSubject(), getResource().getId(), null, null,
                 pc);
             return results;
         }

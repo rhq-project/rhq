@@ -206,7 +206,7 @@ public interface OperationManagerLocal {
      *
      * @return the requested page of sorted resource operation history results for the given group history
      */
-    public PageList<ResourceOperationHistory> getResourceOperationHistoriesByGroupHistoryId(Subject subject,
+    public PageList<ResourceOperationHistory> findResourceOperationHistoriesByGroupHistoryId(Subject subject,
         int historyId, PageControl pc);
 
     /**
@@ -221,7 +221,7 @@ public interface OperationManagerLocal {
      * @param  pc
      * @return all operation histories for the given resource
      */
-    PageList<ResourceOperationHistory> getCompletedResourceOperationHistories(Subject subject, int resourceId,
+    PageList<ResourceOperationHistory> findCompletedResourceOperationHistories(Subject subject, int resourceId,
         Long startDate, Long endDate, PageControl pc);
 
     /**
@@ -235,14 +235,14 @@ public interface OperationManagerLocal {
      *
      * @return all operation histories for the given resource
      */
-    PageList<ResourceOperationHistory> getPendingResourceOperationHistories(Subject subject, int resourceId,
+    PageList<ResourceOperationHistory> findPendingResourceOperationHistories(Subject subject, int resourceId,
         PageControl pc);
 
     /**
      * Returns the list of completed operation histories for the group resource. This will return all items that are no
      * longer INPROGRESS that were invoked on this group. This only returns the "aggregate" history item - not the
      * individual resource operation histories for the group member invocation results. See
-     * {@link #getCompletedResourceOperationHistories(Subject, int, Long, Long, PageControl)} for that.
+     * {@link #findCompletedResourceOperationHistories(Subject, int, Long, Long, PageControl)} for that.
      *
      * @param  subject
      * @param  groupId
@@ -250,13 +250,13 @@ public interface OperationManagerLocal {
      *
      * @return all group histories
      */
-    PageList<GroupOperationHistory> getCompletedGroupOperationHistories(Subject subject, int groupId, PageControl pc);
+    PageList<GroupOperationHistory> findCompletedGroupOperationHistories(Subject subject, int groupId, PageControl pc);
 
     /**
      * Returns the list of pending operation histories for the group resource. This will return all items that are still
      * INPROGRESS that were invoked on this group. This only returns the "aggregate" history item - not the individual
      * resource operation histories for the group member invocation results. See
-     * {@link #getPendingResourceOperationHistories(Subject, int, PageControl)} for that.
+     * {@link #findPendingResourceOperationHistories(Subject, int, PageControl)} for that.
      *
      * @param  subject
      * @param  groupId
@@ -264,7 +264,7 @@ public interface OperationManagerLocal {
      *
      * @return all group histories
      */
-    PageList<GroupOperationHistory> getPendingGroupOperationHistories(Subject subject, int groupId, PageControl pc);
+    PageList<GroupOperationHistory> findPendingGroupOperationHistories(Subject subject, int groupId, PageControl pc);
 
     /**
      * This is called by the jobs so they can update the history. The job will pass in an updated history object, this
@@ -471,7 +471,7 @@ public interface OperationManagerLocal {
      *
      * @return the list of recently completed resource operations
      */
-    PageList<ResourceOperationLastCompletedComposite> getRecentlyCompletedResourceOperations(Subject subject,
+    PageList<ResourceOperationLastCompletedComposite> findRecentlyCompletedResourceOperations(Subject subject,
         Integer resourceId, PageControl pc);
 
     /**
@@ -484,7 +484,7 @@ public interface OperationManagerLocal {
      *
      * @return the list of recently completed group operations
      */
-    PageList<GroupOperationLastCompletedComposite> getRecentlyCompletedGroupOperations(Subject subject, PageControl pc);
+    PageList<GroupOperationLastCompletedComposite> findRecentlyCompletedGroupOperations(Subject subject, PageControl pc);
 
     /**
      * Gets a list of all currently scheduled resource operations (that is, scheduled but not yet invoked and/or
@@ -495,7 +495,7 @@ public interface OperationManagerLocal {
      *
      * @return the list of scheduled resource operations
      */
-    PageList<ResourceOperationScheduleComposite> getCurrentlyScheduledResourceOperations(Subject subject, PageControl pc);
+    PageList<ResourceOperationScheduleComposite> findCurrentlyScheduledResourceOperations(Subject subject, PageControl pc);
 
     /**
      * Gets a list of all currently scheduled group operations (that is, scheduled but not yet invoked and/or
@@ -506,7 +506,7 @@ public interface OperationManagerLocal {
      *
      * @return the list of scheduled group operations
      */
-    PageList<GroupOperationScheduleComposite> getCurrentlyScheduledGroupOperations(Subject subject, PageControl pc);
+    PageList<GroupOperationScheduleComposite> findCurrentlyScheduledGroupOperations(Subject subject, PageControl pc);
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //

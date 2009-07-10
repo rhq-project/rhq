@@ -164,7 +164,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         operationManager.checkForTimedOutOperations(superuser);
 
         PageList<ResourceOperationHistory> results;
-        results = operationManager.getCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
+        results = operationManager.findCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
             PageControl.getUnlimitedInstance());
         ResourceOperationHistory history = results.get(0);
         System.out.println("~~~~~~~~~~~~~~~~~" + history);
@@ -175,7 +175,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         operationManager.deleteOperationHistory(superuser, history.getId(), false);
 
         // make sure it was purged
-        results = operationManager.getCompletedResourceOperationHistories(superuser, newResource.getId(), null, null,
+        results = operationManager.findCompletedResourceOperationHistories(superuser, newResource.getId(), null, null,
             PageControl.getUnlimitedInstance());
         assert results != null;
         assert results.size() == 0;
@@ -222,13 +222,13 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
             .getGroup().getId());
 
         PageList<GroupOperationHistory> results;
-        results = operationManager.getCompletedGroupOperationHistories(superuser, newGroup.getId(), PageControl
+        results = operationManager.findCompletedGroupOperationHistories(superuser, newGroup.getId(), PageControl
             .getUnlimitedInstance());
         assert results.size() == 0;
 
         // should be no resource histories that belong to it
         PageList<ResourceOperationHistory> results2;
-        results2 = operationManager.getCompletedResourceOperationHistories(superuser, newResource.getId(), null, null,
+        results2 = operationManager.findCompletedResourceOperationHistories(superuser, newResource.getId(), null, null,
             PageControl.getUnlimitedInstance());
         assert results2 != null;
         assert results2.size() == 0;
@@ -274,7 +274,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert returnedSchedule.getDescription().equals("desc");
 
         PageList<GroupOperationScheduleComposite> list;
-        list = operationManager.getCurrentlyScheduledGroupOperations(superuser, PageControl.getUnlimitedInstance());
+        list = operationManager.findCurrentlyScheduledGroupOperations(superuser, PageControl.getUnlimitedInstance());
         assert list.size() == 1;
         assert list.get(0).getGroupId() == newGroup.getId();
         assert list.get(0).getGroupName().equals(newGroup.getName());
@@ -284,17 +284,17 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         operationManager.unscheduleGroupOperation(superuser, returnedSchedule.getJobId().toString(), returnedSchedule
             .getGroup().getId());
 
-        list = operationManager.getCurrentlyScheduledGroupOperations(superuser, PageControl.getUnlimitedInstance());
+        list = operationManager.findCurrentlyScheduledGroupOperations(superuser, PageControl.getUnlimitedInstance());
         assert list.size() == 0;
 
         PageList<GroupOperationHistory> results;
-        results = operationManager.getCompletedGroupOperationHistories(superuser, newGroup.getId(), PageControl
+        results = operationManager.findCompletedGroupOperationHistories(superuser, newGroup.getId(), PageControl
             .getUnlimitedInstance());
         assert results.size() == 0;
 
         // should be no resource histories that belong to it
         PageList<ResourceOperationHistory> results2;
-        results2 = operationManager.getCompletedResourceOperationHistories(superuser, newResource.getId(), null, null,
+        results2 = operationManager.findCompletedResourceOperationHistories(superuser, newResource.getId(), null, null,
             PageControl.getUnlimitedInstance());
         assert results2 != null;
         assert results2.size() == 0;
@@ -336,19 +336,19 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         Thread.sleep(9000L); // wait for it to be triggered and finish
 
         PageList<GroupOperationHistory> results;
-        results = operationManager.getCompletedGroupOperationHistories(superuser, newGroup.getId(), PageControl
+        results = operationManager.findCompletedGroupOperationHistories(superuser, newGroup.getId(), PageControl
             .getUnlimitedInstance());
         assert results.size() == 1 : "Expected 1 result, but got " + results.size();
 
         operationManager.deleteOperationHistory(superuser, results.get(0).getId(), false);
 
-        results = operationManager.getCompletedGroupOperationHistories(superuser, newGroup.getId(), PageControl
+        results = operationManager.findCompletedGroupOperationHistories(superuser, newGroup.getId(), PageControl
             .getUnlimitedInstance());
         assert results.size() == 0;
 
         // purging group history purges all resource histories that belong to it
         PageList<ResourceOperationHistory> results2;
-        results2 = operationManager.getCompletedResourceOperationHistories(superuser, newResource.getId(), null, null,
+        results2 = operationManager.findCompletedResourceOperationHistories(superuser, newResource.getId(), null, null,
             PageControl.getUnlimitedInstance());
         assert results2 != null;
         assert results2.size() == 0;
@@ -377,7 +377,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         // wait for it to be triggered so we get a history item
         for (int i = 0; i < 5; i++) {
             Thread.sleep(1000L);
-            results = operationManager.getPendingGroupOperationHistories(superuser, newGroup.getId(), PageControl
+            results = operationManager.findPendingGroupOperationHistories(superuser, newGroup.getId(), PageControl
                 .getUnlimitedInstance());
             if ((results != null) && (results.size() > 0)) {
                 break; // operation was triggered - got the history item
@@ -394,7 +394,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
 
         for (int i = 0; i < 5; i++) {
             Thread.sleep(1000L);
-            results2 = operationManager.getPendingResourceOperationHistories(superuser, newResource.getId(),
+            results2 = operationManager.findPendingResourceOperationHistories(superuser, newResource.getId(),
                 PageControl.getUnlimitedInstance());
             if ((results2 != null) && (results2.size() > 0)) {
                 break; // operation was triggered - got the history item
@@ -408,12 +408,12 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
 
         // cancel the group history - which cancels all the resource histories
         operationManager.cancelOperationHistory(superuser, history.getId(), false);
-        results = operationManager.getCompletedGroupOperationHistories(superuser, newGroup.getId(), PageControl
+        results = operationManager.findCompletedGroupOperationHistories(superuser, newGroup.getId(), PageControl
             .getUnlimitedInstance());
         assert results != null;
         assert results.size() == 1;
         assert results.get(0).getStatus() == OperationRequestStatus.CANCELED : results.get(0);
-        results2 = operationManager.getCompletedResourceOperationHistories(superuser, newResource.getId(), null, null,
+        results2 = operationManager.findCompletedResourceOperationHistories(superuser, newResource.getId(), null, null,
             PageControl.getUnlimitedInstance());
         assert results2.size() == 1 : "Should have had 1 resource history result: " + results2;
         assert results2.get(0).getStatus() == OperationRequestStatus.CANCELED : results2.get(0);
@@ -428,13 +428,13 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
 
         // purge the group history
         operationManager.deleteOperationHistory(superuser, history.getId(), false);
-        results = operationManager.getCompletedGroupOperationHistories(superuser, newGroup.getId(), PageControl
+        results = operationManager.findCompletedGroupOperationHistories(superuser, newGroup.getId(), PageControl
             .getUnlimitedInstance());
         assert results != null;
         assert results.size() == 0; // none left, we purged the only group history there was
 
         // purging group history purges all resource histories that belong to it
-        results2 = operationManager.getCompletedResourceOperationHistories(superuser, newResource.getId(), null, null,
+        results2 = operationManager.findCompletedResourceOperationHistories(superuser, newResource.getId(), null, null,
             PageControl.getUnlimitedInstance());
         assert results2 != null;
         assert results2.size() == 0;
@@ -464,7 +464,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         // wait for it to be triggered so we get a history item
         for (int i = 0; i < 5; i++) {
             Thread.sleep(1000L);
-            results = operationManager.getPendingGroupOperationHistories(superuser, newGroup.getId(), PageControl
+            results = operationManager.findPendingGroupOperationHistories(superuser, newGroup.getId(), PageControl
                 .getUnlimitedInstance());
             if ((results != null) && (results.size() > 0)) {
                 break; // operation was triggered - got the history item
@@ -478,7 +478,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
 
         // get the one resource history from the group
         PageList<ResourceOperationHistory> results2;
-        results2 = operationManager.getPendingResourceOperationHistories(superuser, newResource.getId(), PageControl
+        results2 = operationManager.findPendingResourceOperationHistories(superuser, newResource.getId(), PageControl
             .getUnlimitedInstance());
         assert results2.size() == 1 : "Should have had 1 resource history result: " + results2;
 
@@ -489,33 +489,33 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         // this doesn't actually cancel the FINISHED resource operation.  This simulates the fact that
         // the agent couldn't cancel the resource op since it already finished.
         operationManager.cancelOperationHistory(superuser, history.getId(), false);
-        results = operationManager.getCompletedGroupOperationHistories(superuser, newGroup.getId(), PageControl
+        results = operationManager.findCompletedGroupOperationHistories(superuser, newGroup.getId(), PageControl
             .getUnlimitedInstance());
         assert results.size() == 1;
         assert results.get(0).getStatus() == OperationRequestStatus.CANCELED : results.get(0);
 
-        results = operationManager.getPendingGroupOperationHistories(superuser, newGroup.getId(), PageControl
+        results = operationManager.findPendingGroupOperationHistories(superuser, newGroup.getId(), PageControl
             .getUnlimitedInstance());
         assert results.size() == 0;
 
         // still pending - our operation wasn't really canceled - waiting for the agent to tell us its finished
-        results2 = operationManager.getCompletedResourceOperationHistories(superuser, newResource.getId(), null, null,
+        results2 = operationManager.findCompletedResourceOperationHistories(superuser, newResource.getId(), null, null,
             PageControl.getUnlimitedInstance());
         assert results2.size() == 0;
-        results2 = operationManager.getPendingResourceOperationHistories(superuser, newResource.getId(), PageControl
+        results2 = operationManager.findPendingResourceOperationHistories(superuser, newResource.getId(), PageControl
             .getUnlimitedInstance());
         assert results2.size() == 1;
         assert results2.get(0).getStatus() == OperationRequestStatus.INPROGRESS : results2.get(0);
 
         // purge the group history (note we tell it to even purge those in progress)
         operationManager.deleteOperationHistory(superuser, history.getId(), true);
-        results = operationManager.getCompletedGroupOperationHistories(superuser, newGroup.getId(), PageControl
+        results = operationManager.findCompletedGroupOperationHistories(superuser, newGroup.getId(), PageControl
             .getUnlimitedInstance());
         assert results != null;
         assert results.size() == 0; // none left, we purged the only group history there was
 
         // purging group history purges all resource histories that belong to it
-        results2 = operationManager.getCompletedResourceOperationHistories(superuser, newResource.getId(), null, null,
+        results2 = operationManager.findCompletedResourceOperationHistories(superuser, newResource.getId(), null, null,
             PageControl.getUnlimitedInstance());
         assert results2 != null;
         assert results2.size() == 0;
@@ -542,7 +542,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         Thread.sleep(4000L); // wait for it to finish, should be fast
 
         PageList<GroupOperationHistory> results;
-        results = operationManager.getCompletedGroupOperationHistories(superuser, newGroup.getId(), PageControl
+        results = operationManager.findCompletedGroupOperationHistories(superuser, newGroup.getId(), PageControl
             .getUnlimitedInstance());
         assert results != null;
         assert results.size() == 1;
@@ -556,7 +556,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert history.getSubjectName().equals(superuser.getName()) : history;
 
         PageList<GroupOperationLastCompletedComposite> list;
-        list = operationManager.getRecentlyCompletedGroupOperations(superuser, PageControl.getUnlimitedInstance());
+        list = operationManager.findRecentlyCompletedGroupOperations(superuser, PageControl.getUnlimitedInstance());
         assert list.size() == 1;
         assert list.get(0).getOperationHistoryId() == history.getId();
         assert list.get(0).getGroupId() == newGroup.getId();
@@ -565,7 +565,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
 
         // get the one resource history from the group
         PageList<ResourceOperationHistory> results2;
-        results2 = operationManager.getCompletedResourceOperationHistories(superuser, newResource.getId(), null, null,
+        results2 = operationManager.findCompletedResourceOperationHistories(superuser, newResource.getId(), null, null,
             PageControl.getUnlimitedInstance());
         assert results2.size() == 1 : "Should have had 1 result: " + results2;
 
@@ -579,18 +579,18 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert rHistory.getSubjectName().equals(superuser.getName()) : rHistory;
 
         operationManager.deleteOperationHistory(superuser, history.getId(), false);
-        results = operationManager.getCompletedGroupOperationHistories(superuser, newGroup.getId(), PageControl
+        results = operationManager.findCompletedGroupOperationHistories(superuser, newGroup.getId(), PageControl
             .getUnlimitedInstance());
         assert results != null;
         assert results.size() == 0; // none left, we purged the only group history there was
 
         // purging group history purges all resource histories that belong to it
-        results2 = operationManager.getCompletedResourceOperationHistories(superuser, newResource.getId(), null, null,
+        results2 = operationManager.findCompletedResourceOperationHistories(superuser, newResource.getId(), null, null,
             PageControl.getUnlimitedInstance());
         assert results2 != null;
         assert results2.size() == 0;
 
-        list = operationManager.getRecentlyCompletedGroupOperations(superuser, PageControl.getUnlimitedInstance());
+        list = operationManager.findRecentlyCompletedGroupOperations(superuser, PageControl.getUnlimitedInstance());
         assert list.size() == 0;
     }
 
@@ -615,7 +615,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         Thread.sleep(4000L); // wait for it to finish, should be fast
 
         PageList<GroupOperationHistory> results;
-        results = operationManager.getCompletedGroupOperationHistories(superuser, newGroup.getId(), PageControl
+        results = operationManager.findCompletedGroupOperationHistories(superuser, newGroup.getId(), PageControl
             .getUnlimitedInstance());
 
         // the group job executed twice
@@ -642,7 +642,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
 
         // get the one resource's two history items from the group (resource executed once per group trigger)
         PageList<ResourceOperationHistory> results2;
-        results2 = operationManager.getCompletedResourceOperationHistories(superuser, newResource.getId(), null, null,
+        results2 = operationManager.findCompletedResourceOperationHistories(superuser, newResource.getId(), null, null,
             PageControl.getUnlimitedInstance());
         assert results2.size() == 2 : "Should have had 2 results since it was triggered twice: " + results2;
 
@@ -671,13 +671,13 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
 
         operationManager.deleteOperationHistory(superuser, history0.getId(), false);
         operationManager.deleteOperationHistory(superuser, history1.getId(), false);
-        results = operationManager.getCompletedGroupOperationHistories(superuser, newGroup.getId(), PageControl
+        results = operationManager.findCompletedGroupOperationHistories(superuser, newGroup.getId(), PageControl
             .getUnlimitedInstance());
         assert results != null;
         assert results.size() == 0 : results; // none left, we purged the two group histories
 
         // purging group history purges all resource histories that belong to it
-        results2 = operationManager.getCompletedResourceOperationHistories(superuser, newResource.getId(), null, null,
+        results2 = operationManager.findCompletedResourceOperationHistories(superuser, newResource.getId(), null, null,
             PageControl.getUnlimitedInstance());
         assert results2 != null;
         assert results2.size() == 0;
@@ -720,7 +720,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         Thread.sleep(4000L); // wait for it to finish, should be fast
 
         PageList<GroupOperationHistory> results;
-        results = operationManager.getCompletedGroupOperationHistories(superuser, newGroup.getId(), PageControl
+        results = operationManager.findCompletedGroupOperationHistories(superuser, newGroup.getId(), PageControl
             .getUnlimitedInstance());
         assert results != null;
         assert results.size() == 1;
@@ -740,7 +740,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
 
         // get the one resource history from the group
         PageList<ResourceOperationHistory> results2;
-        results2 = operationManager.getCompletedResourceOperationHistories(superuser, newResource.getId(), null, null,
+        results2 = operationManager.findCompletedResourceOperationHistories(superuser, newResource.getId(), null, null,
             PageControl.getUnlimitedInstance());
         ResourceOperationHistory rHistory = results2.get(0);
         assert rHistory.getId() > 0 : rHistory;
@@ -761,13 +761,13 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert rHistory.getParameters().getId() != history.getParameters().getId() : "params should be copies - not shared";
 
         operationManager.deleteOperationHistory(superuser, history.getId(), false);
-        results = operationManager.getCompletedGroupOperationHistories(superuser, newGroup.getId(), PageControl
+        results = operationManager.findCompletedGroupOperationHistories(superuser, newGroup.getId(), PageControl
             .getUnlimitedInstance());
         assert results != null;
         assert results.size() == 0; // none left, we purged the only group history there was
 
         // purging group history purges all resource histories that belong to it
-        results2 = operationManager.getCompletedResourceOperationHistories(superuser, newResource.getId(), null, null,
+        results2 = operationManager.findCompletedResourceOperationHistories(superuser, newResource.getId(), null, null,
             PageControl.getUnlimitedInstance());
         assert results2 != null;
         assert results2.size() == 0;
@@ -793,7 +793,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         Thread.sleep(4000L); // wait for it to finish, should be fast
 
         PageList<GroupOperationHistory> results;
-        results = operationManager.getCompletedGroupOperationHistories(superuser, newGroup.getId(), PageControl
+        results = operationManager.findCompletedGroupOperationHistories(superuser, newGroup.getId(), PageControl
             .getUnlimitedInstance());
         assert results != null;
         assert results.size() == 1 : "Did not get 1 result back, but " + results.size();
@@ -809,7 +809,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
 
         // get the one resource history from the group
         PageList<ResourceOperationHistory> results2;
-        results2 = operationManager.getCompletedResourceOperationHistories(superuser, newResource.getId(), null, null,
+        results2 = operationManager.findCompletedResourceOperationHistories(superuser, newResource.getId(), null, null,
             PageControl.getUnlimitedInstance());
         ResourceOperationHistory rHistory = results2.get(0);
         assert rHistory.getId() > 0 : rHistory;
@@ -822,13 +822,13 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert rHistory.getSubjectName().equals(superuser.getName()) : rHistory;
 
         operationManager.deleteOperationHistory(superuser, history.getId(), false);
-        results = operationManager.getCompletedGroupOperationHistories(superuser, newGroup.getId(), PageControl
+        results = operationManager.findCompletedGroupOperationHistories(superuser, newGroup.getId(), PageControl
             .getUnlimitedInstance());
         assert results != null;
         assert results.size() == 0; // none left, we purged the only group history there was
 
         // purging group history purges all resource histories that belong to it
-        results2 = operationManager.getCompletedResourceOperationHistories(superuser, newResource.getId(), null, null,
+        results2 = operationManager.findCompletedResourceOperationHistories(superuser, newResource.getId(), null, null,
             PageControl.getUnlimitedInstance());
         assert results2 != null;
         assert results2.size() == 0;
@@ -854,7 +854,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         Thread.sleep(4000L); // wait for it to finish, should be fast
 
         PageList<GroupOperationHistory> results;
-        results = operationManager.getCompletedGroupOperationHistories(superuser, newGroup.getId(), PageControl
+        results = operationManager.findCompletedGroupOperationHistories(superuser, newGroup.getId(), PageControl
             .getUnlimitedInstance());
         assert results != null;
         assert results.size() == 1;
@@ -870,7 +870,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
 
         // get the one resource history from the group
         PageList<ResourceOperationHistory> results2;
-        results2 = operationManager.getCompletedResourceOperationHistories(superuser, newResource.getId(), null, null,
+        results2 = operationManager.findCompletedResourceOperationHistories(superuser, newResource.getId(), null, null,
             PageControl.getUnlimitedInstance());
         ResourceOperationHistory rHistory = results2.get(0);
         assert rHistory.getId() > 0 : rHistory;
@@ -883,13 +883,13 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert rHistory.getSubjectName().equals(superuser.getName()) : rHistory;
 
         operationManager.deleteOperationHistory(superuser, history.getId(), false);
-        results = operationManager.getCompletedGroupOperationHistories(superuser, newGroup.getId(), PageControl
+        results = operationManager.findCompletedGroupOperationHistories(superuser, newGroup.getId(), PageControl
             .getUnlimitedInstance());
         assert results != null;
         assert results.size() == 0; // none left, we purged the only group history there was
 
         // purging group history purges all resource histories that belong to it
-        results2 = operationManager.getCompletedResourceOperationHistories(superuser, newResource.getId(), null, null,
+        results2 = operationManager.findCompletedResourceOperationHistories(superuser, newResource.getId(), null, null,
             PageControl.getUnlimitedInstance());
         assert results2 != null;
         assert results2.size() == 0;
@@ -925,7 +925,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert returnedSchedule.getDescription().equals("desc");
 
         PageList<ResourceOperationScheduleComposite> list;
-        list = operationManager.getCurrentlyScheduledResourceOperations(superuser, PageControl.getUnlimitedInstance());
+        list = operationManager.findCurrentlyScheduledResourceOperations(superuser, PageControl.getUnlimitedInstance());
         assert list.size() == 1;
         assert list.get(0).getResourceId() == resource.getId();
         assert list.get(0).getResourceName().equals(resource.getName());
@@ -935,12 +935,12 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         operationManager.unscheduleResourceOperation(superuser, returnedSchedule.getJobId().toString(),
             returnedSchedule.getResource().getId());
 
-        list = operationManager.getCurrentlyScheduledResourceOperations(superuser, PageControl.getUnlimitedInstance());
+        list = operationManager.findCurrentlyScheduledResourceOperations(superuser, PageControl.getUnlimitedInstance());
         assert list.size() == 0;
 
         // history should never have existed - we unscheduled faster than its trigger
         PageList<ResourceOperationHistory> results;
-        results = operationManager.getCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
+        results = operationManager.findCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
             PageControl.getUnlimitedInstance());
         assert results != null;
         assert results.size() == 0;
@@ -991,7 +991,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
 
         // history should never have existed - we unscheduled faster than its trigger
         PageList<ResourceOperationHistory> results;
-        results = operationManager.getCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
+        results = operationManager.findCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
             PageControl.getUnlimitedInstance());
         assert results != null;
         assert results.size() == 0;
@@ -1033,14 +1033,14 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         Thread.sleep(9000L); // wait for it to be triggered and complete
 
         PageList<ResourceOperationHistory> results;
-        results = operationManager.getCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
+        results = operationManager.findCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
             PageControl.getUnlimitedInstance());
 
         assert results != null : "Results were unexpectedly empty";
         if (results.isEmpty()) {
             System.out.println("We did not yet get a result -- waiting some more");
             Thread.sleep(5000L);
-            results = operationManager.getCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
+            results = operationManager.findCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
                 PageControl.getUnlimitedInstance());
         }
 
@@ -1050,7 +1050,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         operationManager.deleteOperationHistory(superuser, results.get(0).getId(), false);
 
         // make sure it was purged
-        results = operationManager.getCompletedResourceOperationHistories(superuser, newResource.getId(), null, null,
+        results = operationManager.findCompletedResourceOperationHistories(superuser, newResource.getId(), null, null,
             PageControl.getUnlimitedInstance());
         assert results != null;
         assert results.size() == 0;
@@ -1093,14 +1093,14 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         Thread.sleep(9000L); // wait for it to be triggered and complete
 
         PageList<ResourceOperationHistory> results;
-        results = operationManager.getCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
+        results = operationManager.findCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
             PageControl.getUnlimitedInstance());
 
         assert results != null;
         if (results.isEmpty()) {
             System.out.println("We did not yet get a result -- waiting some more");
             Thread.sleep(5000L);
-            results = operationManager.getCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
+            results = operationManager.findCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
                 PageControl.getUnlimitedInstance());
         }
         assert results.size() == 1 : "Did not get 1 result, but " + results.size();
@@ -1113,7 +1113,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         operationManager.deleteOperationHistory(superuser, history.getId(), false);
 
         // make sure it was purged
-        results = operationManager.getCompletedResourceOperationHistories(superuser, newResource.getId(), null, null,
+        results = operationManager.findCompletedResourceOperationHistories(superuser, newResource.getId(), null, null,
             PageControl.getUnlimitedInstance());
         assert results != null;
         assert results.size() == 0;
@@ -1151,13 +1151,13 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         Thread.sleep(9000L); // wait for it to be triggered and complete
 
         PageList<ResourceOperationHistory> results;
-        results = operationManager.getCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
+        results = operationManager.findCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
             PageControl.getUnlimitedInstance());
         assert results != null;
         if (results.isEmpty()) {
             System.out.println("We did not yet get a result -- waiting some more");
             Thread.sleep(5000L);
-            results = operationManager.getCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
+            results = operationManager.findCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
                 PageControl.getUnlimitedInstance());
         }
         assert results.size() == 1 : "Did not get 1 result but " + results.size();
@@ -1170,7 +1170,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         operationManager.deleteOperationHistory(superuser, history.getId(), false);
 
         // make sure it was purged
-        results = operationManager.getCompletedResourceOperationHistories(superuser, newResource.getId(), null, null,
+        results = operationManager.findCompletedResourceOperationHistories(superuser, newResource.getId(), null, null,
             PageControl.getUnlimitedInstance());
         assert results != null;
         assert results.size() == 0 : "Did not get 0 result but " + results.size();
@@ -1194,7 +1194,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         // wait for it to be triggered so we get a history item
         for (int i = 0; i < 5; i++) {
             Thread.sleep(1000L);
-            results = operationManager.getPendingResourceOperationHistories(superuser, resource.getId(), PageControl
+            results = operationManager.findPendingResourceOperationHistories(superuser, resource.getId(), PageControl
                 .getUnlimitedInstance());
             if ((results != null) && (results.size() > 0)) {
                 break; // operation was triggered - got the history item
@@ -1207,7 +1207,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert history.getStatus() == OperationRequestStatus.INPROGRESS : history;
 
         operationManager.cancelOperationHistory(superuser, history.getId(), false);
-        results = operationManager.getCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
+        results = operationManager.findCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
             PageControl.getUnlimitedInstance());
         assert results != null;
         assert results.size() == 1;
@@ -1224,7 +1224,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         }
 
         operationManager.deleteOperationHistory(superuser, history.getId(), false);
-        results = operationManager.getCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
+        results = operationManager.findCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
             PageControl.getUnlimitedInstance());
         assert results != null;
         assert results.size() == 0;
@@ -1254,7 +1254,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         // wait for it to be triggered so we get a history item
         for (int i = 0; i < 5; i++) {
             Thread.sleep(1000L);
-            results = operationManager.getPendingResourceOperationHistories(superuser, resource.getId(), PageControl
+            results = operationManager.findPendingResourceOperationHistories(superuser, resource.getId(), PageControl
                 .getUnlimitedInstance());
             if ((results != null) && (results.size() > 0)) {
                 break; // operation was triggered - got the history item
@@ -1269,13 +1269,13 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         operationManager.cancelOperationHistory(superuser, history.getId(), false);
 
         // show that there are still no completed operations yet
-        results = operationManager.getCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
+        results = operationManager.findCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
             PageControl.getUnlimitedInstance());
         assert results != null;
         assert results.size() == 0;
 
         // still pending - our operation wasn't really canceled - waiting for the agent to tell us its finished
-        results = operationManager.getPendingResourceOperationHistories(superuser, resource.getId(), PageControl
+        results = operationManager.findPendingResourceOperationHistories(superuser, resource.getId(), PageControl
             .getUnlimitedInstance());
         assert results != null;
         assert results.size() == 1;
@@ -1288,7 +1288,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         System.out.println("test: Uncancelable resource history: " + history);
 
         operationManager.deleteOperationHistory(superuser, history.getId(), true);
-        results = operationManager.getCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
+        results = operationManager.findCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
             PageControl.getUnlimitedInstance());
         assert results != null;
         assert results.size() == 0;
@@ -1316,7 +1316,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         Thread.sleep(4000L); // wait for it to finish, should be very quick
 
         PageList<ResourceOperationHistory> results;
-        results = operationManager.getCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
+        results = operationManager.findCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
             PageControl.getUnlimitedInstance());
         assert results != null;
         assert results.size() == 1;
@@ -1330,7 +1330,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert history.getSubjectName().equals(superuser.getName()) : history;
 
         PageList<ResourceOperationLastCompletedComposite> list;
-        list = operationManager.getRecentlyCompletedResourceOperations(superuser, null, PageControl
+        list = operationManager.findRecentlyCompletedResourceOperations(superuser, null, PageControl
             .getUnlimitedInstance());
         assert list.size() == 1;
         assert list.get(0).getOperationHistoryId() == history.getId();
@@ -1339,12 +1339,12 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert list.get(0).getOperationName().equals("Test Operation");
 
         operationManager.deleteOperationHistory(superuser, history.getId(), false);
-        results = operationManager.getCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
+        results = operationManager.findCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
             PageControl.getUnlimitedInstance());
         assert results != null;
         assert results.size() == 0;
 
-        list = operationManager.getRecentlyCompletedResourceOperations(superuser, null, PageControl
+        list = operationManager.findRecentlyCompletedResourceOperations(superuser, null, PageControl
             .getUnlimitedInstance());
         assert list.size() == 0;
     }
@@ -1371,7 +1371,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         Thread.sleep(4000L); // wait for it to finish, should be very quick
 
         PageList<ResourceOperationHistory> results;
-        results = operationManager.getCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
+        results = operationManager.findCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
             PageControl.getUnlimitedInstance());
         assert results != null;
         assert results.size() == 2 : "Should have had multiple results: " + results;
@@ -1402,7 +1402,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
 
         operationManager.deleteOperationHistory(superuser, history0.getId(), false);
         operationManager.deleteOperationHistory(superuser, history1.getId(), false);
-        results = operationManager.getCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
+        results = operationManager.findCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
             PageControl.getUnlimitedInstance());
         assert results != null;
         assert results.size() == 0;
@@ -1436,7 +1436,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         Thread.sleep(4000L); // wait for it to finish, should be very quick
 
         PageList<ResourceOperationHistory> results;
-        results = operationManager.getCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
+        results = operationManager.findCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
             PageControl.getUnlimitedInstance());
         assert results != null;
         assert results.size() == 1 : "size was " + results.size();
@@ -1457,7 +1457,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert history.getParameters().getId() != scheduleParamId : "params should be copies - not shared";
 
         operationManager.deleteOperationHistory(superuser, history.getId(), false);
-        results = operationManager.getCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
+        results = operationManager.findCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
             PageControl.getUnlimitedInstance());
         assert results != null;
         assert results.size() == 0;

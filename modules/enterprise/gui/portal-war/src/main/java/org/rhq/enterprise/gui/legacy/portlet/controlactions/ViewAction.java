@@ -78,21 +78,21 @@ public class ViewAction extends TilesAction {
             if (operationPreferences.useLastCompleted) {
                 PageControl pageControl = new PageControl(0, operationPreferences.lastCompleted);
                 pageControl.initDefaultOrderingField("ro.createdTime", PageOrdering.DESC);
-                lastCompletedResourceOps = manager.getRecentlyCompletedResourceOperations(user.getSubject(), null,
+                lastCompletedResourceOps = manager.findRecentlyCompletedResourceOperations(user.getSubject(), null,
                     pageControl);
 
                 pageControl = new PageControl(0, operationPreferences.lastCompleted);
                 pageControl.initDefaultOrderingField("go.createdTime", PageOrdering.DESC);
-                lastCompletedGroupOps = manager.getRecentlyCompletedGroupOperations(user.getSubject(), pageControl);
+                lastCompletedGroupOps = manager.findRecentlyCompletedGroupOperations(user.getSubject(), pageControl);
             }
 
             if (operationPreferences.useNextScheduled) {
                 PageControl pageControl = new PageControl(0, operationPreferences.nextScheduled);
-                nextScheduledResourceOps = manager.getCurrentlyScheduledResourceOperations(user.getSubject(),
+                nextScheduledResourceOps = manager.findCurrentlyScheduledResourceOperations(user.getSubject(),
                     pageControl);
 
                 pageControl = new PageControl(0, operationPreferences.nextScheduled);
-                nextScheduledGroupOps = manager.getCurrentlyScheduledGroupOperations(user.getSubject(), pageControl);
+                nextScheduledGroupOps = manager.findCurrentlyScheduledGroupOperations(user.getSubject(), pageControl);
             }
         } catch (Exception e) {
             if (log.isDebugEnabled()) {

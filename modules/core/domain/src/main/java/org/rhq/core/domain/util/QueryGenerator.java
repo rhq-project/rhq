@@ -1,9 +1,11 @@
 package org.rhq.core.domain.util;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -25,21 +27,27 @@ import org.rhq.core.domain.alert.AlertDefinition;
  * @author Asaf Shakarchi
  * @author Joseph Marques
  */
-public class QueryGenerator {
+public final class QueryGenerator {
     public enum AuthorizationTokenType {
         RESOURCE, // specifies the resource alias to join on for standard res-group-role-subject authorization checking 
         GROUP; // specifies the group alias to join on for standard group-role-subject authorization checking
     }
 
-    private Object criteriaObject;
-    protected PageControl pageControl;
-    protected Set<String> relationsToFetch;
-    protected String authorizationJoinFragment;
-    protected int authorizationSubjectId;
+    private static final String argPrefix = ":arg";
+    private int argumentCounter = 0;
+    private List<String> filterExpressions = new ArrayList<String>();
+    private List<Object> filterValues = new ArrayList<Object>();
 
-    protected String alias;
-    private static String NL = System.getProperty("line.separator");
+    private Object criteriaObject;
+    private PageControl pageControl;
+    private Set<String> relationsToFetch;
+
+    private String authorizationJoinFragment;
+    private int authorizationSubjectId;
+
+    private String alias;
     private String className;
+    private static String NL = System.getProperty("line.separator");
 
     public QueryGenerator(Object criteriaObject, PageControl pageControl) {
         this.criteriaObject = criteriaObject;
@@ -74,6 +82,34 @@ public class QueryGenerator {
             defaultFragment = "group";
         }
         setAuthorizationResourceFragment(type, defaultFragment, subjectId);
+    }
+
+    /**
+     * Supports and arbitrarily style for adding more WHERE conditions. Use a question mark as a 
+     * place holder for where you want values to be inserted.  You should include as many values
+     * as you do question marks in the expression.  For example, if your criteria object contained
+     * a field called 'grams', the call to this method might look like:
+     * 
+     *    addFilter("grams between ? and ?", 100, 1000); 
+     * 
+     * @param propertyExpression an expression contained question marks that should be parameter
+     *                           replaced during query generation time
+     * @param values             a list of objects that should replace the question marks in the
+     *                           propertyExpression during query generation
+     */
+    public void addFilter(String expression, Object... values) {
+        int argumentsFound = 0;
+        while (expression.indexOf('?') != -1) {
+            expression = expression.replaceFirst("\\?", argPrefix + String.valueOf(argumentCounter++));
+            argumentsFound++;
+        }
+        if (argumentsFound != values.length) {
+            throw new IllegalArgumentException("Passed an expression with " + argumentsFound
+                + " placeholders, but provided " + values.length + " arguments");
+        }
+
+        filterExpressions.add(this.alias + "." + expression);
+        filterValues.addAll(Arrays.asList(values));
     }
 
     public void setAuthorizationResourceFragment(AuthorizationTokenType type, String fragment, int subjectId) {
@@ -122,18 +158,13 @@ public class QueryGenerator {
             results.append(authorizationJoinFragment);
         }
 
-        // critieria
-        boolean firstCrit = true;
-        if (authorizationJoinFragment != null) {
-            results.append("WHERE authSubject.id = " + authorizationSubjectId + " ");
-            firstCrit = false;
-        }
-
         Map<String, Object> critFields = getEntityPersistenceFields(criteriaObject);
-        if (critFields.size() > 0 && firstCrit) {
+        if (critFields.size() > 0 || filterExpressions.size() > 0 || authorizationJoinFragment != null) {
             results.append("WHERE ");
         }
 
+        // criteria
+        boolean firstCrit = true;
         for (Map.Entry<String, Object> critField : critFields.entrySet()) {
             if (firstCrit) {
                 firstCrit = false;
@@ -142,6 +173,24 @@ public class QueryGenerator {
             }
             results.append(alias).append('.').append(critField.getKey() + " = :" + critField.getKey() + " ");
         }
+
+        // custom filters
+        for (String filter : filterExpressions) {
+            if (firstCrit) {
+                firstCrit = false;
+            } else {
+                results.append(NL).append("AND ");
+            }
+            results.append(filter);
+        }
+
+        // authorization
+        if (firstCrit) {
+            firstCrit = false;
+        } else {
+            results.append(NL).append("AND ");
+        }
+        results.append("authSubject.id = " + authorizationSubjectId + " ");
 
         if (countQuery == false) {
             boolean first = true;
@@ -177,7 +226,7 @@ public class QueryGenerator {
     public Query getQuery(EntityManager em) {
         String queryString = getQueryString(false);
         Query query = em.createQuery(queryString);
-        setCriteriaValues(query, false);
+        setBindValues(query, false);
         PersistenceUtility.setDataPage(query, pageControl);
         return query;
     }
@@ -185,13 +234,17 @@ public class QueryGenerator {
     public Query getCountQuery(EntityManager em) {
         String countQueryString = getQueryString(true);
         Query query = em.createQuery(countQueryString);
-        setCriteriaValues(query, false);
+        setBindValues(query, false);
         return query;
     }
 
-    private void setCriteriaValues(Query query, boolean countQuery) {
+    private void setBindValues(Query query, boolean countQuery) {
         for (Map.Entry<String, Object> critField : getEntityPersistenceFields(criteriaObject).entrySet()) {
             query.setParameter(critField.getKey(), critField.getValue());
+        }
+        for (int i = 0; i < filterValues.size(); i++) {
+            String argumentName = argPrefix + i;
+            query.setParameter(argumentName, filterValues.get(i));
         }
     }
 
@@ -267,6 +320,11 @@ public class QueryGenerator {
         System.out.println(generator.getQueryString(true));
 
         generator.setAuthorizationResourceFragment(AuthorizationTokenType.RESOURCE, 1);
+
+        System.out.println(generator.getQueryString(false));
+        System.out.println(generator.getQueryString(true));
+
+        generator.addFilter("mtime between ? and ?", 0, 1);
 
         System.out.println(generator.getQueryString(false));
         System.out.println(generator.getQueryString(true));

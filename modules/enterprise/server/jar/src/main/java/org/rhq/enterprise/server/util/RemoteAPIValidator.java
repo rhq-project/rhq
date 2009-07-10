@@ -94,6 +94,7 @@ public class RemoteAPIValidator {
                         + format(remoteMethod) + "' which wasn't found in the local interface");
                 }
             }
+            System.out.println(managerBean.getSimpleName() + " is valid");
         }
     }
 

@@ -100,7 +100,8 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 @Stateless
 @javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
-public class MeasurementScheduleManagerBean implements MeasurementScheduleManagerLocal {
+public class MeasurementScheduleManagerBean implements MeasurementScheduleManagerLocal,
+    MeasurementScheduleManagerRemote {
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
@@ -356,7 +357,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     /**
      * Get the MeasurementSchedule composites for a compatible group.
      */
-    public PageList<MeasurementScheduleComposite> findSchedulesForCompatGroup(Subject subject, int groupId,
+    public PageList<MeasurementScheduleComposite> findSchedulesForCompatibleGroup(Subject subject, int groupId,
         PageControl pageControl) {
         // pageControl.initDefaultOrderingField(); // this is ignored, as this method eventually uses native queries
 
@@ -504,16 +505,9 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         return new PageList<MeasurementScheduleComposite>(results, pageControl);
     }
 
-    @SuppressWarnings("unchecked")
-    public PageList<MeasurementSchedule> findSchedulesForResource(Subject subject, int resourceId,
+    public PageList<MeasurementScheduleComposite> findSchedulesForResource(Subject subject, int resourceId,
         PageControl pageControl) {
-        pageControl.addDefaultOrderingField("ms.id");
-
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-            MeasurementSchedule.FIND_ALL_FOR_RESOURCE_ID, pageControl);
-        query.setParameter("resourceId", resourceId);
-        List<MeasurementSchedule> results = query.getResultList();
-        return new PageList<MeasurementSchedule>(results, pageControl);
+        return findScheduleCompositesForResource(subject, resourceId, null, pageControl);
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
@@ -801,7 +795,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     /**
      * Disable the measurement schedules for the passed definitions for the resources of the passed compatible group.
      */
-    public void disableSchedulesForCompatGroup(Subject subject, int groupId, int[] measurementDefinitionIds) {
+    public void disableSchedulesForCompatibleGroup(Subject subject, int groupId, int[] measurementDefinitionIds) {
         ResourceGroup group = resourceGroupManager.getResourceGroupById(subject, groupId, GroupCategory.COMPATIBLE);
         Set<Resource> resources = group.getExplicitResources();
 
@@ -813,7 +807,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     /**
      * Enable the measurement schedules for the passed definitions for the resources of the passed compatible group.
      */
-    public void enableSchedulesForCompatGroup(Subject subject, int groupId, int[] measurementDefinitionIds) {
+    public void enableSchedulesForCompatibleGroup(Subject subject, int groupId, int[] measurementDefinitionIds) {
         ResourceGroup group = resourceGroupManager.getResourceGroupById(subject, groupId, GroupCategory.COMPATIBLE);
         Set<Resource> resources = group.getExplicitResources();
 

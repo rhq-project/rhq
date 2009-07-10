@@ -86,7 +86,7 @@ public interface MeasurementScheduleManagerRemote {
         @WebParam(name = "pc") PageControl pageControl);
 
     @WebMethod
-    PageList<MeasurementScheduleComposite> findSchedulesForCompatGroup(//
+    PageList<MeasurementScheduleComposite> findSchedulesForCompatibleGroup(//
         @WebParam(name = "subject") Subject subject,//
         @WebParam(name = "groupId") int groupId,//
         @WebParam(name = "pc") PageControl pageControl);
@@ -98,8 +98,8 @@ public interface MeasurementScheduleManagerRemote {
         @WebParam(name = "pc") PageControl pageControl);
 
     @WebMethod
-    List<MeasurementSchedule> findSchedulesByIds(//
+    MeasurementSchedule getScheduleById(//
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "scheduleIds") int[] scheduleIds);
+        @WebParam(name = "scheduleId") int scheduleId);
 
 }

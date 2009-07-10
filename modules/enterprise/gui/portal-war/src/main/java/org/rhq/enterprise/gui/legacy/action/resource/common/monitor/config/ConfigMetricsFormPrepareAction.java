@@ -121,7 +121,7 @@ public class ConfigMetricsFormPrepareAction extends TilesAction {
                 request.setAttribute(AttrConstants.MONITOR_ENABLED_ATTR, true); // TODO change true -> monitoringConfigured
                 if (monitoringConfigured) {
                     log.debug("Obtaining metric schedules for comp group " + groupId + "...");
-                    measurementSchedules = scheduleManager.findSchedulesForCompatGroup(subject, groupId,
+                    measurementSchedules = scheduleManager.findSchedulesForCompatibleGroup(subject, groupId,
                         pageControl);
                     request.setAttribute(AttrConstants.GROUP_ID, groupId);
                 }

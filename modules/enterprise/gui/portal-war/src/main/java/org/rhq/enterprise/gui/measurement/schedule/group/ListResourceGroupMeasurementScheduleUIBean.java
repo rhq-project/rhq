@@ -34,7 +34,7 @@ public class ListResourceGroupMeasurementScheduleUIBean extends PagedDataTableUI
         int groupId = FacesContextUtility.getRequiredRequestParameter("groupId", Integer.class);
         int[] measurementDefinitionIds = getSelectedResourceGroupScheduleList();
         try {
-            measurementScheduleManager.disableSchedulesForCompatGroup(getSubject(), groupId,
+            measurementScheduleManager.disableSchedulesForCompatibleGroup(getSubject(), groupId,
                 measurementDefinitionIds);
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Disabled " + measurementDefinitionIds.length
                 + " schedules.");
@@ -48,7 +48,7 @@ public class ListResourceGroupMeasurementScheduleUIBean extends PagedDataTableUI
         int groupId = FacesContextUtility.getRequiredRequestParameter("groupId", Integer.class);
         int[] measurementDefinitionIds = getSelectedResourceGroupScheduleList();
         try {
-            measurementScheduleManager.enableSchedulesForCompatGroup(getSubject(), groupId,
+            measurementScheduleManager.enableSchedulesForCompatibleGroup(getSubject(), groupId,
                 measurementDefinitionIds);
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Enabled " + measurementDefinitionIds.length
                 + " schedules.");
@@ -93,7 +93,7 @@ public class ListResourceGroupMeasurementScheduleUIBean extends PagedDataTableUI
         @Override
         public PageList<MeasurementScheduleComposite> fetchPage(PageControl pc) {
             int groupId = FacesContextUtility.getRequiredRequestParameter("groupId", Integer.class);
-            return measurementScheduleManager.findSchedulesForCompatGroup(getSubject(), groupId, pc);
+            return measurementScheduleManager.findSchedulesForCompatibleGroup(getSubject(), groupId, pc);
         }
     }
 

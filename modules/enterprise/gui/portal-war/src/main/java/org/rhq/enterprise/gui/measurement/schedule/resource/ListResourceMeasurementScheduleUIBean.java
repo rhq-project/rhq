@@ -3,7 +3,7 @@ package org.rhq.enterprise.gui.measurement.schedule.resource;
 import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
 
-import org.rhq.core.domain.measurement.MeasurementSchedule;
+import org.rhq.core.domain.measurement.composite.MeasurementScheduleComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
@@ -82,13 +82,13 @@ public class ListResourceMeasurementScheduleUIBean extends PagedDataTableUIBean 
         return dataModel;
     }
 
-    private class ListResourceMeasurementScheduleDataModel extends PagedListDataModel<MeasurementSchedule> {
+    private class ListResourceMeasurementScheduleDataModel extends PagedListDataModel<MeasurementScheduleComposite> {
         public ListResourceMeasurementScheduleDataModel(PageControlView view, String beanName) {
             super(view, beanName);
         }
 
         @Override
-        public PageList<MeasurementSchedule> fetchPage(PageControl pc) {
+        public PageList<MeasurementScheduleComposite> fetchPage(PageControl pc) {
             int resourceId = FacesContextUtility.getRequiredRequestParameter("id", Integer.class);
             return measurementScheduleManager.findSchedulesForResource(getSubject(), resourceId, pc);
         }

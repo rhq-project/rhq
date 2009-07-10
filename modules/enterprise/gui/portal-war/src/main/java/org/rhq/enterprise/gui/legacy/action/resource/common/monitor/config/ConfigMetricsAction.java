@@ -131,7 +131,7 @@ public class ConfigMetricsAction extends BaseAction {
                 }
 
                 case COMPGROUP: {
-                    scheduleManager.disableSchedulesForCompatGroup(subject, groupId,
+                    scheduleManager.disableSchedulesForCompatibleGroup(subject, groupId,
                         measurementDefinitionIdsToUpdate);
                     break;
                 }

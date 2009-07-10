@@ -273,8 +273,8 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
             scheds = tmp;
         } catch (MeasurementViewException mve) {
             // No metrics in preferences? Use defaults for the resource (DisplayType==SUMMARY)
-            scheds = scheduleManager.findSchedulesForResourceAndType(subject, resourceId,
-                DataType.MEASUREMENT, DisplayType.SUMMARY, false);
+            scheds = scheduleManager.findSchedulesForResourceAndType(subject, resourceId, DataType.MEASUREMENT,
+                DisplayType.SUMMARY, false);
         }
 
         int[] scheduleIds = new int[scheds.size()];
@@ -451,8 +451,8 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
         // Loop over the definitions, find matching schedules and create a MetricDisplaySummary for each definition
         for (int definitionId : measurementDefinitionIds) {
             int collecting = 0;
-            List<MeasurementSchedule> schedules = scheduleManager.findSchedulesByResourceIdsAndDefinitionId(
-                subject, resourceIds, definitionId);
+            List<MeasurementSchedule> schedules = scheduleManager.findSchedulesByResourceIdsAndDefinitionId(subject,
+                resourceIds, definitionId);
             int[] scheduleIds = new int[schedules.size()];
             for (int i = 0; i < schedules.size(); i++) {
                 MeasurementSchedule schedule = schedules.get(i);
@@ -605,8 +605,8 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
 
     private boolean isMetricCollecting(Subject subject, int[] resourceIds, int definitionId) {
         boolean isCollecting = false;
-        List<MeasurementSchedule> schedules = scheduleManager.findSchedulesByResourceIdsAndDefinitionId(
-            subject, resourceIds, definitionId);
+        List<MeasurementSchedule> schedules = scheduleManager.findSchedulesByResourceIdsAndDefinitionId(subject,
+            resourceIds, definitionId);
         for (MeasurementSchedule schedule : schedules) {
             if (schedule.isEnabled()) {
                 isCollecting = true;

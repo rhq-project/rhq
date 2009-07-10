@@ -289,7 +289,7 @@ public interface MeasurementScheduleManagerLocal {
     /**
      * Disable the measurement schedules for the passed definitions for the resources of the passed compatible group.
      */
-    void disableSchedulesForCompatGroup(Subject subject, int groupId, int[] measurementDefinitionIds);
+    void disableSchedulesForCompatibleGroup(Subject subject, int groupId, int[] measurementDefinitionIds);
 
     /**
      * Enable the schedules for the provided definitions and resource
@@ -302,7 +302,7 @@ public interface MeasurementScheduleManagerLocal {
     /**
      * Enable the measurement schedules for the passed definitions for the resources of the passed compatible group.
      */
-    void enableSchedulesForCompatGroup(Subject subject, int groupId, int[] measurementDefinitionIds);
+    void enableSchedulesForCompatibleGroup(Subject subject, int groupId, int[] measurementDefinitionIds);
 
     /**
      * Retrieves the default metric collection schedules for the given resource type.
@@ -350,7 +350,7 @@ public interface MeasurementScheduleManagerLocal {
     PageList<MeasurementScheduleComposite> findSchedulesForAutoGroup(Subject subject, int parentId, int childType,
         PageControl pageControl);
 
-    PageList<MeasurementScheduleComposite> findSchedulesForCompatGroup(Subject subject, int groupId,
+    PageList<MeasurementScheduleComposite> findSchedulesForCompatibleGroup(Subject subject, int groupId,
         PageControl pageControl);
 
     /**
@@ -362,6 +362,7 @@ public interface MeasurementScheduleManagerLocal {
      *
      * @return the metric collection schedules for the given resource
      */
-    PageList<MeasurementSchedule> findSchedulesForResource(Subject subject, int resourceId, PageControl pageControl);
+    PageList<MeasurementScheduleComposite> findSchedulesForResource(Subject subject, int resourceId,
+        PageControl pageControl);
 
 }

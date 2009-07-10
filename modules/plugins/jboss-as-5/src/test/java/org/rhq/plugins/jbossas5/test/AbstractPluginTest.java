@@ -23,16 +23,22 @@
 
 package org.rhq.plugins.jbossas5.test;
 
+import static org.testng.Assert.fail;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Set;
 
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.plugin.FileSystemPluginFinder;
 import org.rhq.plugins.jbossas5.test.util.AppServerUtils;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
 
 /**
  * @author Ian Springer
@@ -69,10 +75,42 @@ public abstract class AbstractPluginTest {
             Set<String> pluginNames = PluginContainer.getInstance().getPluginManager().getMetadataManager()
                 .getPluginNames();
             System.out.println("PC started with the following plugins: " + pluginNames);
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail("Failed to start the plugin container", e);
+        }
+    }
+
+    @BeforeSuite(dependsOnMethods = "start")
+    @Parameters( { "principal", "credentials" })
+    public void configureASResource(@Optional String principal, @Optional String credentials) {
+        try {
+            System.out.println("Configuring AS connection properties.");
+            if (principal != null) {
+                //we need to have the AS5 resource to be able to configure it
+                PluginContainer.getInstance().getInventoryManager().executeServerScanImmediately();
+
+                Configuration newConfig = AppServerUtils.getASResource().getPluginConfiguration();
+                newConfig.put(new PropertySimple("principal", principal));
+                newConfig.put(new PropertySimple("credentials", credentials));
+
+                int asResourceId = AppServerUtils.getASResource().getId();
+
+                PluginContainer.getInstance().getInventoryManager().updatePluginConfiguration(asResourceId, newConfig);
+            }
+        } catch (Exception e) {
+            fail("Failed to configure the AS resource", e);
+        }
+    }
+
+    @BeforeSuite(dependsOnMethods = "configureASResource")
+    public void scanInventory() {
+        try {
+            System.out.println("Issuing inventory scan.");
             PluginContainer.getInstance().getInventoryManager().executeServerScanImmediately();
             PluginContainer.getInstance().getInventoryManager().executeServiceScanImmediately();
         } catch (Exception e) {
-            e.printStackTrace();
+            fail("Failed to scan the inventory", e);
         }
     }
 

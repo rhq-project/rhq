@@ -305,7 +305,7 @@
             <artifactId>jboss-deployers-client-spi</artifactId>
             <scope>runtime</scope>
         </dependency>        
-
+<!-- The profile service client is not ready yet...
         <dependency>
             <groupId>org.jboss.jbossas</groupId>
             <artifactId>jboss-as-profileservice</artifactId>
@@ -313,12 +313,12 @@
             <version>${jbossas.version}</version>
             <scope>runtime</scope>
         </dependency>
-        
+-->        
         <!-- Uncomment the below deps if you want to pull down the jboss-profileservice
              and jboss-system sources jars for debugging purposes. You will also need
              to make sure you have the JBoss snapshot repo in this POM or your settings.xml.
         -->
-<!--
+
         <dependency>
             <groupId>org.jboss.jbossas</groupId>
             <artifactId>jboss-as-profileservice</artifactId>
@@ -329,7 +329,19 @@
             <artifactId>jboss-as-system</artifactId>
             <scope>provided</scope>
         </dependency>
--->        
+        
+        <dependency>
+            <groupId>jboss.messaging</groupId>
+            <artifactId>jboss-messaging-client</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Change this to profile service client once it is usable -->
+        <dependency>
+            <groupId>org.jboss.jbossas</groupId>
+            <artifactId>jboss-as-profileservice</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -397,9 +409,12 @@
                         </goals>
                         <configuration>
                             <skip>${maven.test.skip}</skip>
+                            <parallel>false</parallel>
                             <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
                             <useSystemClassLoader>false</useSystemClassLoader>
-
+                            <additionalClasspathElements>
+                                <additionalClasspathElement>${project.build.testSourceDirectory}/../jars/ejb2-test.jar</additionalClasspathElement>
+                            </additionalClasspathElements>
                             <systemProperties>
                                 <property>
                                     <name>project.artifactId</name>
@@ -409,6 +424,20 @@
                                     <name>project.version</name>
                                     <value>${project.version}</value>
                                 </property>
+                                <property>
+                                    <name>ejb2.test.jar.path</name>
+                                    <value>${project.build.testSourceDirectory}/../jars/ejb2-test.jar</value>
+                                </property>
+                                <!-- Commented out until we solve the authenticated connections issues 
+                                <property>
+                                    <name>principal</name>
+                                    <value>admin</value>
+                                </property>
+                                <property>
+                                    <name>credentials</name>
+                                    <value>admin</value>
+                                </property>
+                                -->
                             </systemProperties>
                         </configuration>
                     </execution>
@@ -495,18 +524,35 @@
                              <skip>${maven.test.skip}</skip>
                              <parallel>false</parallel>                             
                              <useSystemClassLoader>false</useSystemClassLoader>
-                             <excludedGroups>as5-plugin</excludedGroups>
+                             <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
                              <argLine>-Dorg.hyperic.sigar.path=${basedir}/target/itest/lib</argLine>
                              <!--<argLine>-Dorg.hyperic.sigar.path=${basedir}/target/itest/lib -Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</argLine>-->
+                             <additionalClasspathElements>
+                                 <additionalClasspathElement>${project.build.testSourceDirectory}/../jars/ejb2-test.jar</additionalClasspathElement>
+                             </additionalClasspathElements>
                              <systemProperties>
+                                 <property>
+                                     <name>project.artifactId</name>
+                                     <value>${project.artifactId}</value>
+                                 </property>
+                                 <property>
+                                     <name>project.version</name>
+                                     <value>${project.version}</value>
+                                 </property>
+                                 <property>
+                                     <name>ejb2.test.jar.path</name>
+                                     <value>${project.build.testSourceDirectory}/../jars/ejb2-test.jar</value>
+                                 </property>
+                                <!-- Commented out until we solve the authenticated connections issues 
                                 <property>
-                                   <name>project.artifactId</name>
-                                   <value>${project.artifactId}</value>
+                                    <name>principal</name>
+                                    <value>admin</value>
                                 </property>
                                 <property>
-                                   <name>project.version</name>
-                                   <value>${project.version}</value>
+                                    <name>credentials</name>
+                                    <value>admin</value>
                                 </property>
+                                -->
                              </systemProperties>
                           </configuration>
                        </execution>

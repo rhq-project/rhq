@@ -20,13 +20,19 @@ package org.rhq.enterprise.server.measurement;
 
 import java.util.List;
 
+import javax.ejb.Remote;
 import javax.jws.WebMethod;
 import javax.jws.WebParam;
+import javax.jws.WebService;
+import javax.jws.soap.SOAPBinding;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.enterprise.server.exception.FetchException;
 
+@SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
+@WebService
+@Remote
 public interface MeasurementBaselineManagerRemote {
 
     @WebMethod

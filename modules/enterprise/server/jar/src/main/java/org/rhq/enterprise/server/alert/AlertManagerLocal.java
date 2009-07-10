@@ -29,6 +29,7 @@ import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.exception.FetchException;
 
 /**
  * @author Joseph Marques
@@ -71,8 +72,17 @@ public interface AlertManagerLocal {
 
     void triggerOperation(AlertDefinition alertDefinition);
 
-    public int getAlertCountByMeasurementDefinitionAndResources(int measurementDefinitionId, int[] resources,
-        long beginDate, long endDate);
+    int getAlertCountByMeasurementDefinitionAndResources(int measurementDefinitionId, int[] resources, long beginDate,
+        long endDate);
 
-    public Map<Integer, Integer> getAlertCountForSchedules(long begin, long end, List<Integer> scheduleIds);
+    Map<Integer, Integer> getAlertCountForSchedules(long begin, long end, List<Integer> scheduleIds);
+
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    //
+    // The following are shared with the Remote Interface
+    //
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    PageList<Alert> findAlertDefinitions(Subject subject, Alert criteria, AlertPriority priority, int[] resourceIds,
+        long beginTime, long endTime, PageControl pc) throws FetchException;
 }

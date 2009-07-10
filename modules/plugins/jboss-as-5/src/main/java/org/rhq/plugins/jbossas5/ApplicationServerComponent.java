@@ -146,8 +146,20 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
 
     public AvailabilityType getAvailability() {
         connectToProfileService();
-        // TODO: Ping the connection to make sure it's not defunct.
-        return (this.connection != null) ? AvailabilityType.UP : AvailabilityType.DOWN;
+        AvailabilityType availability;
+        if (this.connection != null) {
+            try {
+                // Ping the connection to make sure it's not defunct.
+                this.connection.getManagementView().getComponentTypes();
+                availability = AvailabilityType.UP;
+            }
+            catch (Exception e) {
+                availability = AvailabilityType.DOWN;
+            }
+        } else {
+            availability = AvailabilityType.DOWN;
+        }
+        return availability;
     }
 
     public void start(ResourceContext resourceContext) {

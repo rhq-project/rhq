@@ -455,6 +455,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal, Cont
         return contentSource;
     }
 
+    @SuppressWarnings("unchecked")
     private void validateContentSource(ContentSource cs) throws ContentSourceException {
 
         String name = cs.getName();
@@ -470,7 +471,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal, Cont
         q.setParameter("name", name);
         q.setParameter("typeName", type.getName());
 
-        List existingMatchingContentSources = q.getResultList();
+        List<ContentSource> existingMatchingContentSources = q.getResultList();
         if (existingMatchingContentSources.size() > 0) {
             throw new ContentSourceException("Content source with name [" + name + "] and of type [" + type.getName()
                 + "] already exists, please specify a different name.");
@@ -1046,7 +1047,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal, Cont
             pv.setLongDescription(newDetails.getLongDescription());
             pv.setMD5(newDetails.getMD5());
             pv.setMetadata(newDetails.getMetadata());
-            pv.setSHA256(newDetails.getSHA265());
+            pv.setSHA256(newDetails.getSHA256());
             pv.setShortDescription(newDetails.getShortDescription());
 
             q = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY);
@@ -1184,7 +1185,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal, Cont
             pv.setLongDescription(updatedDetails.getLongDescription());
             pv.setMD5(updatedDetails.getMD5());
             pv.setMetadata(updatedDetails.getMetadata());
-            pv.setSHA256(updatedDetails.getSHA265());
+            pv.setSHA256(updatedDetails.getSHA256());
             pv.setShortDescription(updatedDetails.getShortDescription());
 
             // we normally would want to do this:
@@ -1284,7 +1285,6 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal, Cont
             packageVersion.getId());
     }
 
-    @SuppressWarnings("unchecked")
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     @TransactionTimeout(45 * 60)
     public long outputPackageVersionBitsRangeGivenResource(int resourceId, PackageDetailsKey packageDetailsKey,
@@ -1310,6 +1310,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal, Cont
             packageVersionId);
     }
 
+    @SuppressWarnings("unchecked")
     private long outputPackageVersionBitsRangeHelper(int resourceId, PackageDetailsKey packageDetailsKey,
         OutputStream outputStream, long startByte, long endByte, int packageVersionId) {
 

@@ -412,8 +412,8 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
                 assert Arrays.equals(packageVersionX.getMetadata(), package4.getMetadata()) : "Incorrect metadata on package version.";
                 assert packageVersionX.getPackageBits() == null : "Non-null package bits specified for package version: "
                     + packageVersionX.getPackageBits();
-                assert packageVersionX.getSHA256().equals(package4.getSHA265()) : "Incorrect SHA256 for package version. Expected: "
-                    + package4.getSHA265() + ", Found: " + packageVersionX.getSHA256();
+                assert packageVersionX.getSHA256().equals(package4.getSHA256()) : "Incorrect SHA256 for package version. Expected: "
+                    + package4.getSHA256() + ", Found: " + packageVersionX.getSHA256();
                 assert packageVersionX.getShortDescription().equals(package4.getShortDescription()) : "Incorrect short description. Expected: "
                     + package4.getShortDescription() + ", Found: " + packageVersionX.getShortDescription();
                 assert packageVersionX.getVersion().equals(package4.getVersion()) : "Incorrect version. Expected: "
@@ -1021,6 +1021,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Test(enabled = ENABLE_TESTS)
     public void testLoadDependencies() throws Exception {
         // Setup  --------------------------------------------
@@ -1123,10 +1124,8 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
         // Setup  --------------------------------------------
         Subject overlord = subjectManager.getOverlord();
 
-        Set<Integer> deleteUs = new HashSet<Integer>(1);
-
         // Delete installed package for package4
-        deleteUs.add(installedPackage1.getId());
+        int[] deleteUs = new int[] { installedPackage1.getId() };
 
         // Leave package5 installed
 
@@ -1243,10 +1242,8 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
         // Setup  --------------------------------------------
         Subject overlord = subjectManager.getOverlord();
 
-        Set<Integer> deleteUs = new HashSet<Integer>(1);
-
         // Delete installed package for package4
-        deleteUs.add(installedPackage1.getId());
+        int[] deleteUs = new int[] { installedPackage1.getId() };
 
         // Leave package5 installed
 

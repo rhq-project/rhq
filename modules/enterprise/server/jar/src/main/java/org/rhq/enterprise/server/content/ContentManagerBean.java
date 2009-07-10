@@ -236,7 +236,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 packageVersion.setLongDescription(resourcePackage.getLongDescription());
                 packageVersion.setMD5(resourcePackage.getMD5());
                 packageVersion.setMetadata(resourcePackage.getMetadata());
-                packageVersion.setSHA256(resourcePackage.getSHA265());
+                packageVersion.setSHA256(resourcePackage.getSHA256());
                 packageVersion.setShortDescription(resourcePackage.getShortDescription());
                 packageVersion.setExtraProperties(resourcePackage.getExtraProperties());
 
@@ -313,26 +313,25 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             + (System.currentTimeMillis() - start) + "ms");
     }
 
-    public void deployPackages(Subject user, Set<Integer> resourceIds, Set<Integer> packageVersionIds) {
-        for (Integer rid : resourceIds) {
+    public void deployPackages(Subject user, int[] resourceIds, int[] packageVersionIds) {
+        for (int resourceId : resourceIds) {
             Set<ResourcePackageDetails> packages = new HashSet<ResourcePackageDetails>();
-            for (Integer pid : packageVersionIds) {
-                PackageVersion pv = entityManager.find(PackageVersion.class, pid);
-                if (pid == null) {
-                    throw new IllegalArgumentException("PackageVersion ID passed in was null");
+            for (int packageVersionId : packageVersionIds) {
+                PackageVersion packageVersion = entityManager.find(PackageVersion.class, packageVersionId);
+                if (packageVersion == null) {
+                    throw new IllegalArgumentException("PackageVersion: [" + packageVersionId + "] not found!");
                 }
 
-                if (pv == null) {
-                    throw new IllegalArgumentException("PackageVersion: [" + pid + "] not found!");
-                }
-
-                PackageDetailsKey key = new PackageDetailsKey(pv.getGeneralPackage().getName(), pv.getVersion(), pv
-                    .getGeneralPackage().getPackageType().getName(), pv.getArchitecture().getName());
+                PackageDetailsKey key = new PackageDetailsKey( //
+                    packageVersion.getGeneralPackage().getName(), //
+                    packageVersion.getVersion(), //
+                    packageVersion.getGeneralPackage().getPackageType().getName(), //
+                    packageVersion.getArchitecture().getName());
                 ResourcePackageDetails details = new ResourcePackageDetails(key);
                 packages.add(details);
             }
 
-            deployPackages(user, rid, packages, null);
+            deployPackages(user, resourceId, packages, null);
         }
     }
 
@@ -544,21 +543,21 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         }
     }
 
-    public void deletePackages(Subject user, Set<Integer> resourceIds, Set<Integer> installedPackageIds) {
-        for (Integer rid : resourceIds) {
-            deletePackages(user, rid, installedPackageIds, null);
+    public void deletePackages(Subject user, int[] resourceIds, int[] installedPackageIds) {
+        for (int resourceId : resourceIds) {
+            deletePackages(user, resourceId, installedPackageIds, null);
         }
     }
 
     @SuppressWarnings("unchecked")
-    public void deletePackages(Subject user, int resourceId, Set<Integer> installedPackageIds, String requestNotes) {
+    public void deletePackages(Subject user, int resourceId, int[] installedPackageIds, String requestNotes) {
         if (installedPackageIds == null) {
             throw new IllegalArgumentException("installedPackages cannot be null");
         }
 
-        log.info("Deleting " + installedPackageIds.size() + " from resource ID [" + resourceId + "]");
+        log.info("Deleting " + installedPackageIds.length + " from resource ID [" + resourceId + "]");
 
-        if (installedPackageIds.size() == 0) {
+        if (installedPackageIds.length == 0) {
             return;
         }
 
@@ -609,7 +608,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public ContentServiceRequest createRemoveRequest(int resourceId, String username, Set<Integer> installedPackageIds,
+    public ContentServiceRequest createRemoveRequest(int resourceId, String username, int[] installedPackageIds,
         String requestNotes) {
         Resource resource = entityManager.find(Resource.class, resourceId);
 
@@ -620,7 +619,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
         long timestamp = System.currentTimeMillis();
 
-        for (Integer installedPackageId : installedPackageIds) {
+        for (int installedPackageId : installedPackageIds) {
             // Load the InstalledPackage to get its package version for the relationship
             InstalledPackage ip = entityManager.find(InstalledPackage.class, installedPackageId);
             PackageVersion packageVersion = ip.getPackageVersion();
@@ -641,7 +640,6 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         return persistedRequest;
     }
 
-    @SuppressWarnings("unchecked")
     public void completeDeletePackageRequest(RemovePackagesResponse response) {
         log.info("Completing delete package response: " + response);
 
@@ -1003,7 +1001,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
     }
 
     @SuppressWarnings("unchecked")
-    public List<Architecture> getArchitectures(Subject subject) {
+    public List<Architecture> findArchitectures(Subject subject) {
         Query q = entityManager.createNamedQuery(Architecture.QUERY_FIND_ALL);
         List<Architecture> architectures = q.getResultList();
 
@@ -1011,7 +1009,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
     }
 
     @SuppressWarnings("unchecked")
-    public List<PackageType> getPackageTypes(Subject subject, String resourceTypeName, String pluginName)
+    public List<PackageType> findPackageTypes(Subject subject, String resourceTypeName, String pluginName)
         throws ResourceTypeNotFoundException {
 
         ResourceType rt = resourceTypeManager.getResourceTypeByNameAndPlugin(resourceTypeName, pluginName);
@@ -1192,6 +1190,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         return pv;
     }
 
+    @SuppressWarnings("unchecked")
     public PackageVersion persistOrMergePackageVersionSafely(PackageVersion pv) {
         PackageVersion persisted = null;
         RuntimeException error = null;
@@ -1254,6 +1253,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         return pkg;
     }
 
+    @SuppressWarnings("unchecked")
     public Package persistOrMergePackageSafely(Package pkg) {
         Package persisted = null;
         RuntimeException error = null;

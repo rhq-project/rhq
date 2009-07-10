@@ -228,18 +228,8 @@ public class PackageDetails implements Serializable {
         this.MD5 = MD5;
     }
 
-    /** @deprecated */
-    public String getSHA265() {
-        return SHA256;
-    }
-
     public String getSHA256() {
         return SHA256;
-    }
-
-    /** @deprecated */
-    public void setSHA265(String sha) {
-        this.SHA256 = sha;
     }
 
     public void setSHA256(String sha) {

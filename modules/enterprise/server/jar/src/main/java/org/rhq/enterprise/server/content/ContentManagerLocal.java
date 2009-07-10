@@ -19,8 +19,8 @@
 package org.rhq.enterprise.server.content;
 
 import java.io.InputStream;
-import java.util.Set;
 import java.util.List;
+import java.util.Set;
 
 import javax.ejb.Local;
 
@@ -31,10 +31,10 @@ import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.transfer.ContentDiscoveryReport;
+import org.rhq.core.domain.content.transfer.DeployPackageStep;
 import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
 import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
-import org.rhq.core.domain.content.transfer.DeployPackageStep;
 
 /**
  * EJB interface to the server content subsystem.
@@ -66,7 +66,7 @@ public interface ContentManagerLocal {
      * @param installedPackageIds identifies all of the packages to be deleted
      * @param requestNotes        user-specified notes on what is contained in this request 
      */
-    void deletePackages(Subject user, int resourceId, Set<Integer> installedPackageIds, String requestNotes);
+    void deletePackages(Subject user, int resourceId, int[] installedPackageIds, String requestNotes);
 
     /**
      * Deletes the specified package from the resource.
@@ -75,7 +75,7 @@ public interface ContentManagerLocal {
      * @param resourceIds         identifies the resources from which the packages should be deleted
      * @param installedPackageIds identifies all of the packages to be deleted
      */
-    void deletePackages(Subject user, Set<Integer> resourceIds, Set<Integer> installedPackageIds);
+    void deletePackages(Subject user, int[] resourceIds, int[] installedPackageIds);
 
     /**
      * Deploys packages on the specified resources. Each installed package entry should be populated with the <code>
@@ -86,7 +86,7 @@ public interface ContentManagerLocal {
      * @param resourceIds       identifies the resources against which the package will be deployed
      * @param packageVersionIds packageVersions we want to install
      */
-    void deployPackages(Subject user, Set<Integer> resourceIds, Set<Integer> packageVersionIds);
+    void deployPackages(Subject user, int[] resourceIds, int[] packageVersionIds);
 
     /**
      * Requests the plugin load and send the actual bits for the specified package.
@@ -160,7 +160,8 @@ public interface ContentManagerLocal {
      *
      * @return request entity after being persisted to the database (it's ID will be populated)
      */
-    ContentServiceRequest createDeployRequest(int resourceId, String username, Set<ResourcePackageDetails> packages, String requestNotes);
+    ContentServiceRequest createDeployRequest(int resourceId, String username, Set<ResourcePackageDetails> packages,
+        String requestNotes);
 
     /**
      * For internal use only - Adds a request entry to the database to track the deleting of currently installed
@@ -174,7 +175,8 @@ public interface ContentManagerLocal {
      *
      * @return request entity after being persisted to the database (it's ID will be populated)
      */
-    ContentServiceRequest createRemoveRequest(int resourceId, String username, Set<Integer> installedPackageIds, String requestNotes);
+    ContentServiceRequest createRemoveRequest(int resourceId, String username, int[] installedPackageIds,
+        String requestNotes);
 
     /**
      * For internal use only - Adds a request entry to the database to track the request for a package's bits. This will

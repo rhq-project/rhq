@@ -27,17 +27,14 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.clientapi.server.content.ContentServerService;
 import org.rhq.core.clientapi.server.content.ContentServiceResponse;
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.composite.PackageVersionMetadataComposite;
 import org.rhq.core.domain.content.transfer.ContentDiscoveryReport;
 import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
 import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
-import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.communications.command.annotation.LimitedConcurrency;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -92,10 +89,11 @@ public class ContentServerServiceImpl implements ContentServerService {
         return manager.outputPackageVersionBitsGivenResource(resourceId, packageDetailsKey, outputStream);
     }
 
-    public long downloadPackageBitsForChildResource(int parentResourceId, String resourceTypeName, PackageDetailsKey packageDetailsKey, OutputStream outputStream) {
+    public long downloadPackageBitsForChildResource(int parentResourceId, String resourceTypeName,
+        PackageDetailsKey packageDetailsKey, OutputStream outputStream) {
         ContentSourceManagerLocal manager = LookupUtil.getContentSourceManager();
-        return manager.outputPackageBitsForChildResource(parentResourceId, resourceTypeName,
-            packageDetailsKey, outputStream);
+        return manager.outputPackageBitsForChildResource(parentResourceId, resourceTypeName, packageDetailsKey,
+            outputStream);
     }
 
     public long downloadPackageBitsRangeGivenResource(int resourceId, PackageDetailsKey packageDetailsKey,

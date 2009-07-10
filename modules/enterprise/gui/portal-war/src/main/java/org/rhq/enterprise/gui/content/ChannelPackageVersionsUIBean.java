@@ -18,9 +18,7 @@
  */
 package org.rhq.enterprise.gui.content;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
@@ -57,25 +55,23 @@ public class ChannelPackageVersionsUIBean extends PagedDataTableUIBean {
         ChannelManagerLocal channelManager = LookupUtil.getChannelManagerLocal();
         ContentManagerLocal contentManager = LookupUtil.getContentManager();
 
-        Set<Integer> resourceIds = new HashSet<Integer>();
-        Set<Integer> packageIds = new HashSet<Integer>();
-
-        for (String packageIdString : selectedPackages) {
-            int packageId = Integer.parseInt(packageIdString);
-            packageIds.add(packageId);
+        int[] packageIds = new int[selectedPackages.length];
+        for (int i = 0; i < packageIds.length; i++) {
+            packageIds[i] = Integer.parseInt(selectedPackages[i]);
         }
 
         try {
             List<Resource> resources = channelManager.findSubscribedResources(subject, channelId, PageControl
                 .getUnlimitedInstance());
-            for (Resource resource : resources) {
-                resourceIds.add(resource.getId());
+            int[] resourceIds = new int[resources.size()];
+            for (int i = 0; i < resourceIds.length; i++) {
+                resourceIds[i] = resources.get(i).getId();
             }
 
             contentManager.deployPackages(subject, resourceIds, packageIds);
         } catch (Exception e) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to deploy packages: " + packageIds
-                + " to resources: " + resourceIds + " Error: " + e.getMessage());
+                + " to resources subscribed to channel: " + channelId + " Error: " + e.getMessage());
         }
     }
 
@@ -101,7 +97,6 @@ public class ChannelPackageVersionsUIBean extends PagedDataTableUIBean {
         }
 
         @Override
-        @SuppressWarnings("unchecked")
         public PageList<PackageVersion> fetchPage(PageControl pc) {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
             int id = Integer.valueOf(FacesContextUtility.getRequiredRequestParameter("id"));

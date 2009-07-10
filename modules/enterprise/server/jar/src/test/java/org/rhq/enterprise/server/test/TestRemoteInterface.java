@@ -5,7 +5,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.HashSet;
 import java.util.List;
 
 import javax.xml.namespace.QName;
@@ -594,7 +593,7 @@ public class TestRemoteInterface extends AssertJUnit {
 
         reportHeap("contentManager");
 
-        List<PackageType> packageTypes = contentManager.getPackageTypes(user, "Web Application (WAR)", "JBossAS");
+        List<PackageType> packageTypes = contentManager.findPackageTypes(user, "Web Application (WAR)", "JBossAS");
         assertNotNull(packageTypes);
         assertEquals(1, packageTypes.size());
         PackageType testPackageType = null;
@@ -606,7 +605,7 @@ public class TestRemoteInterface extends AssertJUnit {
         }
         assertNotNull(testPackageType);
 
-        List<Architecture> architectures = contentManager.getArchitectures(user);
+        List<Architecture> architectures = contentManager.findArchitectures(user);
         assertNotNull(architectures);
         Architecture testArch = null;
         for (Architecture arch : architectures) {
@@ -637,12 +636,10 @@ public class TestRemoteInterface extends AssertJUnit {
 
         channelManager.addPackageVersionsToChannel(user, testChannel.getId(), new int[] { testPackageVersion.getId() });
 
-        HashSet<Integer> resourceSet = new HashSet<Integer>(1);
-        HashSet<Integer> packageVersionSet = new HashSet<Integer>(1);
-        resourceSet.add(testWar.getResource().getId());
-        packageVersionSet.add(testPackageVersion.getId());
+        int[] resourceIds = new int[] { testWar.getResource().getId() };
+        int[] packageVersionIds = new int[] { testPackageVersion.getId() };
 
-        contentManager.deployPackages(user, resourceSet, packageVersionSet);
+        contentManager.deployPackages(user, resourceIds, packageVersionIds);
 
         channelManager.unsubscribeResourceFromChannels(user, testWar.getResource().getId(), new int[] { testChannel
             .getId() });

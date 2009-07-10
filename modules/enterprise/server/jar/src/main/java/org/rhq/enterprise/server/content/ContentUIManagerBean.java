@@ -57,6 +57,7 @@ import org.rhq.enterprise.server.RHQConstants;
 public class ContentUIManagerBean implements ContentUIManagerLocal {
     // Attributes  --------------------------------------------
 
+    @SuppressWarnings("unused")
     private final Log log = LogFactory.getLog(this.getClass());
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
@@ -186,7 +187,7 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
             search = "%" + search.toUpperCase() + "%";
         }
 
-        queryCount.setParameter("search", search );
+        queryCount.setParameter("search", search);
         query.setParameter("search", search);
 
         long totalCount = (Long) queryCount.getSingleResult();

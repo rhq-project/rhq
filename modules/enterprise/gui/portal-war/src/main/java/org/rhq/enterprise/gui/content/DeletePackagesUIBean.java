@@ -18,22 +18,23 @@
  */
 package org.rhq.enterprise.gui.content;
 
-import java.util.List;
 import java.util.ArrayList;
-import java.util.Set;
-import java.util.HashSet;
 import java.util.Collections;
+import java.util.List;
+
+import javax.faces.application.FacesMessage;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
-import javax.faces.application.FacesMessage;
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.content.*;
-import org.rhq.core.domain.content.Package;
+
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.content.InstalledPackage;
+import org.rhq.core.domain.content.Package;
+import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.server.content.ContentUIManagerLocal;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
+import org.rhq.enterprise.server.content.ContentUIManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -54,20 +55,20 @@ public class DeletePackagesUIBean {
     public String deleteSelectedInstalledPackages() {
 
         if (notes != null && notes.length() > 512) {
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Package notes must be 512 characters or less.");
+            FacesContextUtility
+                .addMessage(FacesMessage.SEVERITY_ERROR, "Package notes must be 512 characters or less.");
             return null;
         }
 
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         resource = EnterpriseFacesContextUtility.getResource();
-        String[] selectedPackages =
-            (String[])FacesContextUtility.getRequest().getSession().getAttribute("packageIdsToDelete");
+        String[] selectedPackages = (String[]) FacesContextUtility.getRequest().getSession().getAttribute(
+            "packageIdsToDelete");
 
         // Load installed packages for call to EJB
-        Set<Integer> installedPackageIds = new HashSet<Integer>(selectedPackages.length);
-        for (String installedPackageIdString : selectedPackages) {
-            int deleteMeId = Integer.parseInt(installedPackageIdString);
-            installedPackageIds.add(deleteMeId);
+        int[] installedPackageIds = new int[selectedPackages.length];
+        for (int i = 0; i < selectedPackages.length; i++) {
+            installedPackageIds[i] = Integer.parseInt(selectedPackages[i]);
         }
 
         // Execute the delete
@@ -87,7 +88,6 @@ public class DeletePackagesUIBean {
 
         return "successOrFailure";
     }
-
 
     public Resource getResource() {
         if (resource == null) {
@@ -132,9 +132,8 @@ public class DeletePackagesUIBean {
         if (request.getParameterValues("selectedPackages") != null) {
             packageIdsToDelete = request.getParameterValues("selectedPackages");
             session.setAttribute("packageIdsToDelete", packageIdsToDelete);
-        }
-        else {
-            packageIdsToDelete = (String[])session.getAttribute("packageIdsToDelete");
+        } else {
+            packageIdsToDelete = (String[]) session.getAttribute("packageIdsToDelete");
         }
 
         return packageIdsToDelete;
@@ -154,8 +153,8 @@ public class DeletePackagesUIBean {
                 PackageVersion packageVersion = installedPackage.getPackageVersion();
                 Package generalPackage = packageVersion.getGeneralPackage();
 
-                String version = packageVersion.getDisplayVersion() != null ?
-                    packageVersion.getDisplayVersion() : packageVersion.getVersion();
+                String version = packageVersion.getDisplayVersion() != null ? packageVersion.getDisplayVersion()
+                    : packageVersion.getVersion();
 
                 String packageToAppend = generalPackage.getName() + " " + version;
 
@@ -171,8 +170,7 @@ public class DeletePackagesUIBean {
                     // If we are at the last package, see if this one will fit, otherwise add ...
                     if (sb.toString().length() + packageToAppend.length() <= 511) {
                         sb.append(packageToAppend);
-                    }
-                    else {
+                    } else {
                         sb.append("...");
                     }
 

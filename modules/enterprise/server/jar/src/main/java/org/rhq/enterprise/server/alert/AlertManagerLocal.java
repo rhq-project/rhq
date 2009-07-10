@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.server.alert;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -28,7 +27,6 @@ import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
@@ -48,8 +46,6 @@ public interface AlertManagerLocal {
     int deleteAlerts(long beginTime, long endTime);
 
     Alert getById(int alertId);
-
-    int getAlertCount(Integer alertDefId);
 
     int getAlertCountByMeasurementDefinitionId(Integer measurementDefinitionId, long begin, long end);
 
@@ -75,8 +71,8 @@ public interface AlertManagerLocal {
 
     void triggerOperation(AlertDefinition alertDefinition);
 
-    public int getAlertCountByMeasurementDefinitionAndResources(int measurementDefinitionId,
-        Collection<Resource> resources, long beginDate, long endDate);
+    public int getAlertCountByMeasurementDefinitionAndResources(int measurementDefinitionId, int[] resources,
+        long beginDate, long endDate);
 
     public Map<Integer, Integer> getAlertCountForSchedules(long begin, long end, List<Integer> scheduleIds);
 }

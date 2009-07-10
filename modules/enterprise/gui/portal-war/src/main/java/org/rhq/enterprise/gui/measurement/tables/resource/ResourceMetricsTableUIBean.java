@@ -55,7 +55,7 @@ public class ResourceMetricsTableUIBean extends MetricsTableUIBean {
         MeasurementPreferences.MetricRangePreferences range = user.getMeasurementPreferences()
             .getMetricRangePreferences();
 
-        List<MeasurementSchedule> traitSchedules = scheduleManager.getMeasurementSchedulesForResourceAndType(subject,
+        List<MeasurementSchedule> traitSchedules = scheduleManager.findMeasurementSchedulesForResourceAndType(subject,
             resource.getId(), DataType.TRAIT, null, true); //null -> don't filter, we want everything, false -> not only enabled
 
         int[] traitScheduleIds = new int[traitSchedules.size()];

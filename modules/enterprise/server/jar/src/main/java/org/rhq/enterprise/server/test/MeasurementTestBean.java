@@ -20,7 +20,6 @@ package org.rhq.enterprise.server.test;
 
 import java.util.Calendar;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.Set;
 
 import javax.ejb.EJB;
@@ -70,9 +69,8 @@ public class MeasurementTestBean implements MeasurementTestLocal {
     public void sendTestMeasurementReport() {
         Resource res = setupFakePlatformIfNeeded();
         Set<ResourceMeasurementScheduleRequest> scheds;
-        Set<Integer> resourceIds = new HashSet<Integer>();
-        resourceIds.add(res.getId());
-        scheds = measurementScheduleManager.getSchedulesForResourceAndItsDescendants(resourceIds, false);
+        int[] resourceIds = new int[] { res.getId() };
+        scheds = measurementScheduleManager.findSchedulesForResourceAndItsDescendants(resourceIds, false);
 
         Date now = new Date();
         MeasurementReport report = new MeasurementReport();
@@ -119,7 +117,7 @@ public class MeasurementTestBean implements MeasurementTestLocal {
     private Resource setupFakePlatformIfNeeded() {
         Resource res;
         try {
-            Query q = entityManager.createNamedQuery("Resource.findByName");
+            Query q = entityManager.createQuery("SELECT res FROM Resource res WHERE res.name = :name");
             q.setParameter("name", FAKE_PLATFORM_NAME);
             res = (Resource) q.getSingleResult();
         } catch (NoResultException nre) {

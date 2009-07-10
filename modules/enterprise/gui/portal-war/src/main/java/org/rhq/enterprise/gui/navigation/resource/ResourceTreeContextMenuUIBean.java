@@ -50,7 +50,7 @@ public class ResourceTreeContextMenuUIBean extends TreeContextMenuBase {
 
             currentResource = resourceManager.getResourceById(subject, resourceId);
 
-            List<MeasurementSchedule> schedules = measurementScheduleManager.getMeasurementSchedulesForResourceAndType(
+            List<MeasurementSchedule> schedules = measurementScheduleManager.findMeasurementSchedulesForResourceAndType(
                 subject, resourceId, DataType.MEASUREMENT, null, true);
 
             // operations menu, lazy-loaded entries because only name/id are needed for display 

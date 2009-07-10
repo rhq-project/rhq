@@ -131,8 +131,8 @@ public class ViewChartAction extends MetricDisplayRangeAction {
         } else if (chartForm.isSaveBaselineClicked()) {
 
             // get the derived measurement in question
-            MeasurementSchedule schedule = scheduleManager.getMeasurementSchedule(subject, chartForm.getM()[0],
-                chartForm.getId(), true);
+            MeasurementSchedule schedule = scheduleManager.getMeasurementSchedule(subject, chartForm.getId(), chartForm
+                .getM()[0], true);
             boolean baselineWasNull = (schedule.getBaseline() == null);
 
             baselineManager.calculateAutoBaseline(subject, schedule.getId(), chartForm.getStartDate().getTime(),

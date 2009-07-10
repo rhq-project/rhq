@@ -147,8 +147,8 @@ public abstract class DefinitionFormPrepareAction extends TilesAction {
 
         if (resource != null) {
             for (MeasurementDefinition definition : dataDefinitions) {
-                MeasurementSchedule schedule = scheduleManager.getMeasurementSchedule(subject, definition.getId(),
-                    resource.getId(), false);
+                MeasurementSchedule schedule = scheduleManager.getMeasurementSchedule(subject, resource.getId(),
+                    definition.getId(), false);
 
                 RelatedOptionBean rob = new RelatedOptionBean(definition.getName(), String.valueOf(definition.getId()),
                     getBaselineList(schedule));

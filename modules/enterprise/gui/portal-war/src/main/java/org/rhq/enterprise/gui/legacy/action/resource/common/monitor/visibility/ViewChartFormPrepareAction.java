@@ -579,8 +579,8 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
             int[] metricScheduleIds = new int[metricDefinitionIds.length];
             for (int i = 0; i < metricDefinitionIds.length; i++) {
                 int definitionId = metricDefinitionIds[i];
-                MeasurementSchedule schedule = scheduleManager.getMeasurementSchedule(subject, definitionId, resource
-                    .getId(), false);
+                MeasurementSchedule schedule = scheduleManager.getMeasurementSchedule(subject, resource.getId(),
+                    definitionId, false);
                 metricScheduleIds[i] = schedule.getId();
             }
 
@@ -624,7 +624,7 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
 
         // This tile is only present in single-metric, single-resource mode and for dynamic, numeric metrics.
         if (chartForm.getMode().equals(ParamConstants.MODE_MON_CHART_SMSR) && (metricId != 0)) {
-            MeasurementSchedule schedule = scheduleManager.getMeasurementSchedule(subject, metricId, resource.getId(),
+            MeasurementSchedule schedule = scheduleManager.getMeasurementSchedule(subject, resource.getId(), metricId,
                 true);
             if (schedule.getDefinition().getNumericType() != NumericType.DYNAMIC) {
                 chartForm.setSuppressBaselineSection(true);

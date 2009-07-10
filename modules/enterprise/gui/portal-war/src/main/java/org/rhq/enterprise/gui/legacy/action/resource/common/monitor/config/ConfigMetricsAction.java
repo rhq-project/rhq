@@ -126,19 +126,19 @@ public class ConfigMetricsAction extends BaseAction {
                 }
 
                 case RESOURCE: {
-                    scheduleManager.disableMeasurementSchedules(subject, measurementDefinitionIdsToUpdate, resourceId);
+                    scheduleManager.disableMeasurementSchedules(subject, resourceId, measurementDefinitionIdsToUpdate);
                     break;
                 }
 
                 case COMPGROUP: {
-                    scheduleManager.disableMeasurementSchedulesForCompatGroup(subject,
-                        measurementDefinitionIdsToUpdate, groupId);
+                    scheduleManager.disableMeasurementSchedulesForCompatGroup(subject, groupId,
+                        measurementDefinitionIdsToUpdate);
                     break;
                 }
 
                 case AUTOGROUP: {
-                    scheduleManager.disableMeasurementSchedulesForAutoGroup(subject, measurementDefinitionIdsToUpdate,
-                        parent, resourceTypeId);
+                    scheduleManager.disableMeasurementSchedulesForAutoGroup(subject, parent, resourceTypeId,
+                        measurementDefinitionIdsToUpdate);
                     break;
                 }
                 }
@@ -161,20 +161,20 @@ public class ConfigMetricsAction extends BaseAction {
         }
 
         case RESOURCE: {
-            scheduleManager.updateMeasurementSchedules(subject, measurementDefinitionIdsToUpdate, resourceId,
+            scheduleManager.updateMeasurementSchedules(subject, resourceId, measurementDefinitionIdsToUpdate,
                 newCollectionInterval);
             break;
         }
 
         case COMPGROUP: {
-            scheduleManager.updateMeasurementSchedulesForCompatGroup(subject, measurementDefinitionIdsToUpdate,
-                groupId, newCollectionInterval);
+            scheduleManager.updateMeasurementSchedulesForCompatGroup(subject, groupId,
+                measurementDefinitionIdsToUpdate, newCollectionInterval);
             break;
         }
 
         case AUTOGROUP: {
-            scheduleManager.updateMeasurementSchedulesForAutoGroup(subject, measurementDefinitionIdsToUpdate, parent,
-                resourceTypeId, newCollectionInterval);
+            scheduleManager.updateMeasurementSchedulesForAutoGroup(subject, parent, resourceTypeId,
+                measurementDefinitionIdsToUpdate, newCollectionInterval);
             break;
         }
         }

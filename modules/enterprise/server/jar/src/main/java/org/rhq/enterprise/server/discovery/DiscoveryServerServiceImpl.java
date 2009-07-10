@@ -37,6 +37,7 @@ import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
+import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.alert.AlertDefinitionCreationException;
 import org.rhq.enterprise.server.alert.AlertTemplateManagerLocal;
@@ -212,8 +213,8 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
         long start = System.currentTimeMillis();
 
         // do this in one fell swoop, instead of one resource at a time
-        Set<ResourceMeasurementScheduleRequest> results = scheduleManager.getSchedulesForResourceAndItsDescendants(
-            resourceIds, false);
+        Set<ResourceMeasurementScheduleRequest> results = scheduleManager.findSchedulesForResourceAndItsDescendants(
+            ArrayUtils.unwrapCollection(resourceIds), false);
 
         long time = (System.currentTimeMillis() - start);
 

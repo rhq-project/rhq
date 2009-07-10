@@ -30,7 +30,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
-import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -94,8 +93,8 @@ import org.rhq.core.domain.resource.composite.ResourceAvailabilitySummary;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceHealthComposite;
 import org.rhq.core.domain.resource.composite.ResourceIdFlyWeight;
-import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
 import org.rhq.core.domain.resource.composite.ResourceInstallCount;
+import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
 import org.rhq.core.domain.util.PageControl;
@@ -191,9 +190,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         // defined. These are needed before applying alert templates for the resource type.
         // This call will create the schedules as necessary and, as a side effect, apply the templates.
         // TODO: jshaughn - This fails for resource types without metric definitions
-        Set<Integer> ids = new HashSet<Integer>();
-        ids.add(resource.getId());
-        measurementScheduleManager.getSchedulesForResourceAndItsDescendants(ids, false);
+        int[] resourceIds = new int[] { resource.getId() };
+        measurementScheduleManager.findSchedulesForResourceAndItsDescendants(resourceIds, false);
     }
 
     private void updateImplicitMembership(Subject subject, Resource resource) {
@@ -2052,9 +2050,6 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             throw new DeleteException(e);
         }
     }
-
-
-
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public List<ResourceInstallCount> findResourceInstallCounts(Subject subject, boolean groupByVersions) {

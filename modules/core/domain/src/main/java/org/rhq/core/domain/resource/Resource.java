@@ -58,8 +58,8 @@ import javax.persistence.Table;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -717,7 +717,7 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "GROUP BY r.resourceType.name, r.resourceType.plugin, r.resourceType.category, r.resourceType.id, r.version\n "
         + "ORDER BY r.resourceType.category, r.resourceType.plugin, r.resourceType.name, r.version")
 
-        })
+})
 @SequenceGenerator(name = "RHQ_RESOURCE_SEQ", sequenceName = "RHQ_RESOURCE_ID_SEQ")
 @Table(name = "RHQ_RESOURCE")
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -844,7 +844,6 @@ public class Resource implements Comparable<Resource>, Externalizable {
 
     public static final String QUERY_RESOURCE_REPORT = "Resource.findResourceReport";
     public static final String QUERY_RESOURCE_VERSION_REPORT = "Resource.findResourceVersionReport";
-
 
     private static final long serialVersionUID = 1L;
 
@@ -1641,7 +1640,6 @@ public class Resource implements Comparable<Resource>, Externalizable {
         }
     }
 
-    @SuppressWarnings("unchecked")
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         if (ExternalizableStrategy.Subsystem.REMOTEAPI.id() == in.readChar()) {
             readExternalRemote(in);
@@ -1695,6 +1693,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
         //Set<ResourceGroup> resourceGroups = new HashSet<ResourceGroup>();
     }
 
+    @SuppressWarnings("unchecked")
     public void readExternalAgent(ObjectInput in) throws IOException, ClassNotFoundException {
         id = in.readInt();
         uuid = in.readUTF();

@@ -24,7 +24,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -47,8 +46,6 @@ import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.NumericType;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.group.GroupCategory;
-import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.collection.ArrayUtils;
@@ -101,7 +98,12 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
         long end, boolean enabledOnly) throws MeasurementException {
         List<Resource> resources = resourceGroupManager.findResourcesForAutoGroup(subject, autoGroupParentResourceId,
             autoGroupChildResourceTypeId);
-        List<MetricDisplaySummary> ret = getAggregateMetricDisplaySummaries(subject, resources,
+        int[] resourceIds = new int[resources.size()];
+        for (int i = 0; i < resourceIds.length; i++) {
+            resourceIds[i] = resources.get(i).getId();
+        }
+
+        List<MetricDisplaySummary> ret = getAggregateMetricDisplaySummaries(subject, resourceIds,
             measurementDefinitionIds, begin, end, enabledOnly);
         for (MetricDisplaySummary tmp : ret) {
             tmp.setParentId(autoGroupParentResourceId);
@@ -113,13 +115,10 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
 
     public List<MetricDisplaySummary> getMetricDisplaySummariesForCompatibleGroup(Subject subject, int groupId,
         int[] measurementDefinitionIds, long begin, long end, boolean enabledOnly) throws MeasurementException {
-        ResourceGroup group = resourceGroupManager.getResourceGroupById(subject, groupId, GroupCategory.COMPATIBLE);
-        Set<Resource> resources = group.getExplicitResources();
-        List<Resource> resList = new ArrayList<Resource>(resources.size());
-        resList.addAll(resources);
+        List<Integer> resourceIds = resourceManager.findExplicitResourceIdsByResourceGroup(groupId);
 
-        List<MetricDisplaySummary> ret = getAggregateMetricDisplaySummaries(subject, resList, measurementDefinitionIds,
-            begin, end, enabledOnly);
+        List<MetricDisplaySummary> ret = getAggregateMetricDisplaySummaries(subject, ArrayUtils
+            .unwrapCollection(resourceIds), measurementDefinitionIds, begin, end, enabledOnly);
         for (MetricDisplaySummary tmp : ret) {
             tmp.setGroupId(groupId);
         }
@@ -252,13 +251,14 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
             EntityContext context = new EntityContext(resourceId, -1, -1, -1);
             List<String> charts = viewManager.getCharts(subject, context, viewName);
 
-            List<Integer> schIds = new ArrayList<Integer>(charts.size());
+            int[] schIds = new int[charts.size()];
+            int i = 0;
             for (String metric : charts) {
                 metric = metric.split(",")[1];
                 int schedId = Integer.parseInt(metric);
-                schIds.add(schedId);
+                schIds[i++] = schedId;
             }
-            scheds = scheduleManager.getSchedulesByIds(schIds);
+            scheds = scheduleManager.findSchedulesByIds(schIds);
             // sort the schedules returned in the order they had in the tokens.
             // the backend unfortunately looses that information
             List<MeasurementSchedule> tmp = new ArrayList<MeasurementSchedule>(scheds.size());
@@ -273,7 +273,7 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
             scheds = tmp;
         } catch (MeasurementViewException mve) {
             // No metrics in preferences? Use defaults for the resource (DisplayType==SUMMARY)
-            scheds = scheduleManager.getMeasurementSchedulesForResourceAndType(subject, resourceId,
+            scheds = scheduleManager.findMeasurementSchedulesForResourceAndType(subject, resourceId,
                 DataType.MEASUREMENT, DisplayType.SUMMARY, false);
         }
 
@@ -298,7 +298,7 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
         DataType dataType, long begin, long end, boolean narrowed, boolean enabledOnly) throws MeasurementException {
         List<MetricDisplaySummary> summaries = new ArrayList<MetricDisplaySummary>();
 
-        List<MeasurementSchedule> scheds = scheduleManager.getMeasurementSchedulesForResourceAndType( // TODO only get ids
+        List<MeasurementSchedule> scheds = scheduleManager.findMeasurementSchedulesForResourceAndType( // TODO only get ids
             subject, resourceId, dataType, null, enabledOnly); //null -> don't filter, we want everything
 
         List<Integer> scheduleIds = new ArrayList<Integer>(scheds.size());
@@ -423,7 +423,7 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
      * Get the group display summaries for the passed resources that belong to a (auto)group
      *
      * @param  subject
-     * @param  resources
+     * @param  resourceIds
      * @param  measurementDefinitionIds
      * @param  begin
      * @param  end
@@ -433,13 +433,13 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
      *
      * @throws MeasurementException
      */
-    private List<MetricDisplaySummary> getAggregateMetricDisplaySummaries(Subject subject, List<Resource> resources,
+    private List<MetricDisplaySummary> getAggregateMetricDisplaySummaries(Subject subject, int[] resourceIds,
         int[] measurementDefinitionIds, long begin, long end, boolean enabledOnly) throws MeasurementException {
 
         List<MetricDisplaySummary> data = new ArrayList<MetricDisplaySummary>(measurementDefinitionIds.length);
 
         // nothing to do, as we have no resources in that group
-        if (resources.isEmpty()) {
+        if (resourceIds == null || resourceIds.length == 0) {
             return data;
         }
         if (measurementDefinitionIds.length == 0) {
@@ -451,8 +451,8 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
         // Loop over the definitions, find matching schedules and create a MetricDisplaySummary for each definition
         for (int definitionId : measurementDefinitionIds) {
             int collecting = 0;
-            List<MeasurementSchedule> schedules = scheduleManager.getMeasurementSchedulesByDefinitionIdAndResources(
-                subject, definitionId, resources);
+            List<MeasurementSchedule> schedules = scheduleManager.findMeasurementSchedulesByResourceIdsAndDefinitionId(
+                subject, resourceIds, definitionId);
             int[] scheduleIds = new int[schedules.size()];
             for (int i = 0; i < schedules.size(); i++) {
                 MeasurementSchedule schedule = schedules.get(i);
@@ -483,7 +483,7 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
             summary.setDefinitionId(definitionId);
             summary.setBeginTimeFrame(begin);
             summary.setAlertCount(alertManager.getAlertCountByMeasurementDefinitionAndResources(definitionId,
-                resources, begin, end));
+                resourceIds, begin, end));
             summary.setEndTimeFrame(end);
 
             MeasurementDefinition definition = entityManager.find(MeasurementDefinition.class, definitionId);
@@ -501,7 +501,7 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
             MeasurementAggregate aggregate;
             if (scheduleIds.length == 0) {
                 aggregate = new MeasurementAggregate(null, null, null);
-                log.warn("No metric schedules found for def=[" + definition + "] and resources [" + resources
+                log.warn("No metric schedules found for def=[" + definition + "] and resources [" + resourceIds
                     + "], using empty aggregate");
             } else {
                 aggregate = dataUtil.getAggregateByScheduleIds(begin, end, scheduleIds);
@@ -533,10 +533,10 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
     }
 
     public Map<MeasurementDefinition, List<MetricDisplaySummary>> getMetricDisplaySummariesForMetricsCompare(
-        Subject subject, Integer[] resourceIds, int[] definitionIds, long begin, long end) throws MeasurementException {
+        Subject subject, int[] resourceIds, int[] definitionIds, long begin, long end) throws MeasurementException {
         // Getting all the Resource objects in one call, and caching here for the rest of this method
-        PageList<Resource> resources = resourceManager.findResourceByIds(subject, ArrayUtils.unwrapArray(resourceIds),
-            true, PageControl.getUnlimitedInstance());
+        PageList<Resource> resources = resourceManager.findResourceByIds(subject, resourceIds, true, PageControl
+            .getUnlimitedInstance());
 
         // I want to only get the definition objects once for each ID, and cache here for the rest of this method
         Map<Integer, MeasurementDefinition> measurementDefinitionsMap = new HashMap<Integer, MeasurementDefinition>(
@@ -545,7 +545,7 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
         // Eliminate definitions not collecting 
         List<Integer> collectingDefIdList = new ArrayList<Integer>();
         for (int definitionId : definitionIds) {
-            if (isMetricCollecting(subject, resources, definitionId)) {
+            if (isMetricCollecting(subject, resourceIds, definitionId)) {
                 collectingDefIdList.add(definitionId);
             }
         }
@@ -565,8 +565,8 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
 
         Map<MeasurementDefinition, List<MetricDisplaySummary>> compareMetrics = new HashMap<MeasurementDefinition, List<MetricDisplaySummary>>();
         for (Resource resource : resources) {
-            List<MeasurementSchedule> scheds = scheduleManager.getSchedulesByDefinitionIdsAndResourceId(
-                collectingDefIdArr, resource.getId());
+            List<MeasurementSchedule> scheds = scheduleManager.findSchedulesByResourceIdAndDefinitionIds(resource
+                .getId(), collectingDefIdArr);
             int[] schedIds = new int[scheds.size()];
             for (int i = 0; (i < schedIds.length); ++i) {
                 schedIds[i] = scheds.get(i).getId();
@@ -603,10 +603,10 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
         return compareMetrics;
     }
 
-    private boolean isMetricCollecting(Subject subject, List<Resource> resources, int definitionId) {
+    private boolean isMetricCollecting(Subject subject, int[] resourceIds, int definitionId) {
         boolean isCollecting = false;
-        List<MeasurementSchedule> schedules = scheduleManager.getMeasurementSchedulesByDefinitionIdAndResources(
-            subject, definitionId, resources);
+        List<MeasurementSchedule> schedules = scheduleManager.findMeasurementSchedulesByResourceIdsAndDefinitionId(
+            subject, resourceIds, definitionId);
         for (MeasurementSchedule schedule : schedules) {
             if (schedule.isEnabled()) {
                 isCollecting = true;

@@ -228,7 +228,7 @@ public class DiscoveryTestBean implements DiscoveryTestLocal {
     }
 
     private Resource getTestPlatform() {
-        return (Resource) entityManager.createNamedQuery("Platform.findByName")
+        return (Resource) entityManager.createQuery("SELECT res FROM Resource res WHERE res.name = :name")
             .setParameter("name", TEST_PLATFORM_NAME).getSingleResult();
     }
 

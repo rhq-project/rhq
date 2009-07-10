@@ -20,7 +20,6 @@ package org.rhq.enterprise.server.alert;
 
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -262,17 +261,6 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         return alert;
     }
 
-    /**
-     * Get the number of alerts for the specified alert definition id.
-     */
-    @SuppressWarnings("unchecked")
-    public int getAlertCount(Integer alertDefId) {
-        Query query = entityManager.createNamedQuery("Alert.findByAlertDefinition");
-        query.setParameter("id", alertDefId);
-        List alerts = query.getResultList();
-        return alerts.size();
-    }
-
     public int getAlertCountByMeasurementDefinitionId(Integer measurementDefinitionId, long begin, long end) {
         Query query = PersistenceUtility.createCountQuery(entityManager, Alert.QUERY_FIND_BY_MEASUREMENT_DEFINITION_ID);
         query.setParameter("measurementDefinitionId", measurementDefinitionId);
@@ -282,13 +270,13 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         return (int) count;
     }
 
-    public int getAlertCountByMeasurementDefinitionAndResources(int measurementDefinitionId,
-        Collection<Resource> resources, long beginDate, long endDate) {
+    public int getAlertCountByMeasurementDefinitionAndResources(int measurementDefinitionId, int[] resourceIds,
+        long beginDate, long endDate) {
         Query query = PersistenceUtility.createCountQuery(entityManager, Alert.QUERY_FIND_BY_MEAS_DEF_ID_AND_RESOURCES);
         query.setParameter("measurementDefinitionId", measurementDefinitionId);
         query.setParameter("startDate", beginDate);
         query.setParameter("endDate", endDate);
-        query.setParameter("resources", resources);
+        query.setParameter("resourceIds", ArrayUtils.wrapInList(resourceIds));
         long count = (Long) query.getSingleResult();
         return (int) count;
     }

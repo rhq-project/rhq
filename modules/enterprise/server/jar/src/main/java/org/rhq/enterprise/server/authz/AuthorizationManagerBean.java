@@ -172,14 +172,11 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
             return true;
         }
 
-        //Query query = entityManager.createNamedQuery("Subject.hasResourceListPermission");
         Query query = entityManager.createNamedQuery(Subject.QUERY_GET_RESOURCES_BY_PERMISSION);
         query.setParameter("subject", subject);
         query.setParameter("permission", permission);
 
-        //query.setParameter("resourceList", resources);
         List<Integer> results = query.getResultList();
-
         return results.containsAll(resourceIds);
     }
 

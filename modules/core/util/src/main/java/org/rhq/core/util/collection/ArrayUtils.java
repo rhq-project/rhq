@@ -41,6 +41,16 @@ public class ArrayUtils {
         return copy;
     }
 
+    public static int[] copyOfRange(int[] arr, int from, int to) {
+        if (to < from) {
+            throw new IllegalArgumentException(to + "<" + from);
+        }
+        int newSize = Math.min(arr.length - from, to - from); // to prevent null items in returned array
+        int[] copy = new int[newSize];
+        System.arraycopy(arr, from, copy, 0, newSize);
+        return copy;
+    }
+
     public static int[] unwrapCollection(Collection<Integer> input) {
         if (input == null) {
             return null;

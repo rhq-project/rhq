@@ -78,7 +78,8 @@ import org.rhq.core.domain.alert.notification.AlertNotificationLog;
     @NamedQuery(name = Alert.QUERY_FIND_BY_MEAS_DEF_ID_AND_RESOURCES, query = "SELECT a " + "  FROM Alert AS a "
         + "  JOIN a.alertDefinition definition " + "  JOIN definition.conditions condition "
         + " WHERE condition.measurementDefinition.id = :measurementDefinitionId "
-        + "   AND definition.resource IN (:resources) " + "   AND (a.ctime BETWEEN :startDate AND :endDate)"),
+        + "   AND definition.resource.id IN (:resourceIds) " //
+        + "   AND (a.ctime BETWEEN :startDate AND :endDate)"),
     @NamedQuery(name = Alert.QUERY_FIND_BY_MEAS_DEF_ID_AND_RESOURCEGROUP, query = "" //
         + "SELECT a " //
         + "  FROM Alert AS a " //

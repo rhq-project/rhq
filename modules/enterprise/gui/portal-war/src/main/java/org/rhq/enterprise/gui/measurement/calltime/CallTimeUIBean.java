@@ -75,7 +75,7 @@ public class CallTimeUIBean extends PagedDataTableUIBean {
             if (context.category == EntityContext.Category.Resource) {
                 int resourceId = getResource().getId();
                 List<MeasurementSchedule> callTimeSchedules = scheduleManager
-                    .getMeasurementSchedulesForResourceAndType(subject, resourceId, DataType.CALLTIME, null, false);
+                    .findMeasurementSchedulesForResourceAndType(subject, resourceId, DataType.CALLTIME, null, false);
                 if (callTimeSchedules.size() == 0) {
                     FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN,
                         "This resource does not support response time metrics.");

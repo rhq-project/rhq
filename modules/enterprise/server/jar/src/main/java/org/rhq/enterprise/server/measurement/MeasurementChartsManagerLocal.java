@@ -101,6 +101,6 @@ public interface MeasurementChartsManagerLocal {
      * @throws MeasurementException throws Measurement exception
      */
     Map<MeasurementDefinition, List<MetricDisplaySummary>> getMetricDisplaySummariesForMetricsCompare(Subject subject,
-        Integer[] resourceIds, int[] measurementDefinitionIds, long begin, long end) throws MeasurementException;
+        int[] resourceIds, int[] measurementDefinitionIds, long begin, long end) throws MeasurementException;
 
 }

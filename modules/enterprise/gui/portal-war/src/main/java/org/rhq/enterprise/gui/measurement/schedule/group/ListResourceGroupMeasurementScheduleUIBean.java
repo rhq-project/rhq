@@ -34,8 +34,8 @@ public class ListResourceGroupMeasurementScheduleUIBean extends PagedDataTableUI
         int groupId = FacesContextUtility.getRequiredRequestParameter("groupId", Integer.class);
         int[] measurementDefinitionIds = getSelectedResourceGroupScheduleList();
         try {
-            measurementScheduleManager.disableMeasurementSchedulesForCompatGroup(getSubject(),
-                measurementDefinitionIds, groupId);
+            measurementScheduleManager.disableMeasurementSchedulesForCompatGroup(getSubject(), groupId,
+                measurementDefinitionIds);
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Disabled " + measurementDefinitionIds.length
                 + " schedules.");
         } catch (Exception e) {
@@ -48,8 +48,8 @@ public class ListResourceGroupMeasurementScheduleUIBean extends PagedDataTableUI
         int groupId = FacesContextUtility.getRequiredRequestParameter("groupId", Integer.class);
         int[] measurementDefinitionIds = getSelectedResourceGroupScheduleList();
         try {
-            measurementScheduleManager.enableMeasurementSchedulesForCompatGroup(getSubject(),
-                measurementDefinitionIds, groupId);
+            measurementScheduleManager.enableMeasurementSchedulesForCompatGroup(getSubject(), groupId,
+                measurementDefinitionIds);
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Enabled " + measurementDefinitionIds.length
                 + " schedules.");
         } catch (Exception e) {
@@ -63,8 +63,8 @@ public class ListResourceGroupMeasurementScheduleUIBean extends PagedDataTableUI
         int groupId = FacesContextUtility.getRequiredRequestParameter("groupId", Integer.class);
         int[] measurementDefinitionIds = getSelectedResourceGroupScheduleList();
         try {
-            measurementScheduleManager.updateMeasurementSchedulesForCompatGroup(getSubject(), measurementDefinitionIds,
-                groupId, collectionInterval);
+            measurementScheduleManager.updateMeasurementSchedulesForCompatGroup(getSubject(), groupId,
+                measurementDefinitionIds, collectionInterval);
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Enabled and set "
                 + measurementDefinitionIds.length + " schedules.");
         } catch (Exception e) {
@@ -93,7 +93,7 @@ public class ListResourceGroupMeasurementScheduleUIBean extends PagedDataTableUI
         @Override
         public PageList<MeasurementScheduleComposite> fetchPage(PageControl pc) {
             int groupId = FacesContextUtility.getRequiredRequestParameter("groupId", Integer.class);
-            return measurementScheduleManager.getMeasurementSchedulesForCompatGroup(getSubject(), groupId, pc);
+            return measurementScheduleManager.findMeasurementSchedulesForCompatGroup(getSubject(), groupId, pc);
         }
     }
 

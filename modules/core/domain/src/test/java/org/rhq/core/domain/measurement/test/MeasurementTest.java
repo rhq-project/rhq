@@ -25,6 +25,7 @@
 package org.rhq.core.domain.measurement.test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -50,6 +51,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.test.AbstractEJB3Test;
+import org.rhq.core.util.collection.ArrayUtils;
 
 /**
  * @author Heiko W. Rupp
@@ -127,8 +129,8 @@ public class MeasurementTest extends AbstractEJB3Test {
 
             List<MeasurementSchedule> l;
 
-            Query qu = em.createNamedQuery("MeasurementSchedule.findForDefinition");
-            qu.setParameter("definition", d);
+            Query qu = em.createNamedQuery(MeasurementSchedule.FIND_ALL_FOR_DEFINITIONS);
+            qu.setParameter("definitions", Arrays.asList(d));
             l = qu.getResultList();
 
             assert l != null;
@@ -216,23 +218,17 @@ public class MeasurementTest extends AbstractEJB3Test {
             MeasurementSchedule sched = schedules.get(0);
             Resource res = sched.getResource();
 
-            Query q = em.createNamedQuery(MeasurementSchedule.FIND_BY_DEFINITION_ID_AND_RESOURCE_IDS);
-            q.setParameter("definitionId", def.getId());
-            q.setParameter("resourceIds", res.getId());
-            @SuppressWarnings("unused")
+            Query q = em.createNamedQuery(MeasurementSchedule.FIND_BY_RESOURCE_IDS_AND_DEFINITION_IDS);
+            q.setParameter("definitionIds", ArrayUtils.wrapInList(new int[] { def.getId() }));
+            q.setParameter("resourceIds", ArrayUtils.wrapInList(new int[] { res.getId() }));
             List<MeasurementSchedule> scheds = q.getResultList();
 
             assert scheds.size() == 1 : "Did not find 1 schedule, but " + scheds.size();
 
-            List<Integer> resourceIds = new ArrayList<Integer>();
-            resourceIds.add(res.getId());
-            resourceIds.add(res.getId());
-            resourceIds.add(res.getId());
-            resourceIds.add(res.getId());
-
-            q = em.createNamedQuery(MeasurementSchedule.FIND_BY_DEFINITION_ID_AND_RESOURCE_IDS);
-            q.setParameter("definitionId", def.getId());
-            q.setParameter("resourceIds", resourceIds);
+            int rid = res.getId();
+            q = em.createNamedQuery(MeasurementSchedule.FIND_BY_RESOURCE_IDS_AND_DEFINITION_IDS);
+            q.setParameter("definitionIds", ArrayUtils.wrapInList(new int[] { def.getId() }));
+            q.setParameter("resourceIds", ArrayUtils.wrapInList(new int[] { rid, rid, rid, rid }));
             scheds = q.getResultList();
 
             assert scheds.size() == 1 : "Did not find 1 schedule, but " + scheds.size();

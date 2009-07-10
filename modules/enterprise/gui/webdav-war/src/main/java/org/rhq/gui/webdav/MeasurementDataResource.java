@@ -110,7 +110,7 @@ public class MeasurementDataResource extends GetableBasicResource {
 
             // get all the enabled measurement schedules
             MeasurementScheduleManagerLocal sm = LookupUtil.getMeasurementScheduleManager();
-            List<MeasurementSchedule> measurementSchedules = sm.getMeasurementSchedulesForResourceAndType(getSubject(),
+            List<MeasurementSchedule> measurementSchedules = sm.findMeasurementSchedulesForResourceAndType(getSubject(),
                 resourceId, DataType.MEASUREMENT, null, true);
             int[] scheduleIds = new int[measurementSchedules.size()];
             int i = 0;

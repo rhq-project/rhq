@@ -36,6 +36,7 @@ import org.apache.struts.tiles.ComponentContext;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.MeasurementCategory;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.action.WorkflowPrepareAction;
 import org.rhq.enterprise.gui.legacy.util.MonitorUtils;
@@ -64,8 +65,8 @@ public class CompareMetricsFormPrepareAction extends WorkflowPrepareAction {
             int[] definitionIds = LookupUtil.getResourceGroupManager().findDefinitionsForCompatibleGroup(
                 user.getSubject(), cform.getGroupId(), false);
             Locale userLocale = request.getLocale();
-            cform.setMetrics(getMetrics(user.getSubject(), cform.childResourceIds, definitionIds,
-                rangePreferences.begin, rangePreferences.end, userLocale));
+            cform.setMetrics(getMetrics(user.getSubject(), ArrayUtils.unwrapArray(cform.childResourceIds),
+                definitionIds, rangePreferences.begin, rangePreferences.end, userLocale));
             cform.setRb(rangePreferences.begin);
             cform.setRe(rangePreferences.end);
         }
@@ -74,10 +75,10 @@ public class CompareMetricsFormPrepareAction extends WorkflowPrepareAction {
     }
 
     private Map<MeasurementCategory, Map<MeasurementDefinition, List<MetricDisplaySummary>>> getMetrics(
-        Subject subject, Integer[] rids, int[] definitionIds, long begin, long end, Locale locale) {
+        Subject subject, int[] resourceIds, int[] definitionIds, long begin, long end, Locale locale) {
         MeasurementChartsManagerLocal chartsManager = LookupUtil.getMeasurementChartsManager();
         Map<MeasurementDefinition, List<MetricDisplaySummary>> data = chartsManager
-            .getMetricDisplaySummariesForMetricsCompare(subject, rids, definitionIds, begin, end);
+            .getMetricDisplaySummariesForMetricsCompare(subject, resourceIds, definitionIds, begin, end);
         Map<MeasurementCategory, Map<MeasurementDefinition, List<MetricDisplaySummary>>> compareMetrics = new HashMap<MeasurementCategory, Map<MeasurementDefinition, List<MetricDisplaySummary>>>();
         for (MeasurementDefinition definition : data.keySet()) {
             MeasurementCategory category = definition.getCategory();

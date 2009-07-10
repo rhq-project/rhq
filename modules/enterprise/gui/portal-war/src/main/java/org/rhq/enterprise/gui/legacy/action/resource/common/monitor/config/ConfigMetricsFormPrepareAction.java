@@ -89,7 +89,7 @@ public class ConfigMetricsFormPrepareAction extends TilesAction {
         if (configuringDefaultSchedules) {
             int resourceTypeId = type;
             log.debug("Obtaining default metric schedules for resource type " + resourceTypeId + "...");
-            measurementSchedules = scheduleManager.getDefaultMeasurementSchedulesForResourceType(subject,
+            measurementSchedules = scheduleManager.findMeasurementScheduleDefaultsForResourceType(subject,
                 resourceTypeId, pageControl);
             request.setAttribute(AttrConstants.MONITOR_ENABLED_ATTR, Boolean.FALSE);
             ResourceType rType = rtManager.getResourceTypeById(subject, resourceTypeId);
@@ -100,7 +100,7 @@ public class ConfigMetricsFormPrepareAction extends TilesAction {
             int resourceId = WebUtility.getOptionalIntRequestParameter(request, "id", -1);
             if ((parent > 0) && (type > 0)) {
                 request.setAttribute(AttrConstants.MONITOR_ENABLED_ATTR, true);
-                measurementSchedules = scheduleManager.getMeasurementSchedulesForAutoGroup(subject, parent, type,
+                measurementSchedules = scheduleManager.findMeasurementSchedulesForAutoGroup(subject, parent, type,
                     pageControl);
 
                 request.setAttribute("type", type);
@@ -113,7 +113,7 @@ public class ConfigMetricsFormPrepareAction extends TilesAction {
                 request.setAttribute(AttrConstants.MONITOR_ENABLED_ATTR, monitoringConfigured);
                 if (monitoringConfigured) {
                     log.debug("Obtaining metric schedules for resource " + resourceId + "...");
-                    measurementSchedules = scheduleManager.getMeasurementScheduleCompositesForResource(subject, resourceId,
+                    measurementSchedules = scheduleManager.findMeasurementScheduleCompositesForResource(subject, resourceId,
                         null, pageControl);
                 }
             } else if (groupId > 0) {
@@ -121,7 +121,7 @@ public class ConfigMetricsFormPrepareAction extends TilesAction {
                 request.setAttribute(AttrConstants.MONITOR_ENABLED_ATTR, true); // TODO change true -> monitoringConfigured
                 if (monitoringConfigured) {
                     log.debug("Obtaining metric schedules for comp group " + groupId + "...");
-                    measurementSchedules = scheduleManager.getMeasurementSchedulesForCompatGroup(subject, groupId,
+                    measurementSchedules = scheduleManager.findMeasurementSchedulesForCompatGroup(subject, groupId,
                         pageControl);
                     request.setAttribute(AttrConstants.GROUP_ID, groupId);
                 }

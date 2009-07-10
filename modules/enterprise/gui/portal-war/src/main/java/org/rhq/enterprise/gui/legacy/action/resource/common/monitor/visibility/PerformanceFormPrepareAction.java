@@ -84,7 +84,7 @@ public class PerformanceFormPrepareAction extends MetricsControlFormPrepareActio
         Subject subject = WebUtility.getSubject(request);
         Resource resource = (Resource) request.getAttribute(AttrConstants.RESOURCE_ATTR);
         MeasurementScheduleManagerLocal scheduleManager = LookupUtil.getMeasurementScheduleManager();
-        List<MeasurementSchedule> callTimeSchedules = scheduleManager.getMeasurementSchedulesForResourceAndType(
+        List<MeasurementSchedule> callTimeSchedules = scheduleManager.findMeasurementSchedulesForResourceAndType(
             subject, resource.getId(), DataType.CALLTIME, null, false);
 
         PerformanceForm perfForm = (PerformanceForm) form;

@@ -275,8 +275,7 @@ public class Subject implements Externalizable {
         init();
     }
 
-    public Subject(@NotNull
-    String name, boolean factive, boolean fsystem) {
+    public Subject(@NotNull String name, boolean factive, boolean fsystem) {
         init();
         this.name = name;
         this.factive = factive;
@@ -315,8 +314,7 @@ public class Subject implements Externalizable {
         return this.name;
     }
 
-    public void setName(@NotNull
-    String name) {
+    public void setName(@NotNull String name) {
         this.name = name;
     }
 
@@ -470,7 +468,6 @@ public class Subject implements Externalizable {
         }
     }
 
-    @SuppressWarnings("unchecked")
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         if (ExternalizableStrategy.Subsystem.REMOTEAPI.id() == in.readChar()) {
             readExternalRemote(in);

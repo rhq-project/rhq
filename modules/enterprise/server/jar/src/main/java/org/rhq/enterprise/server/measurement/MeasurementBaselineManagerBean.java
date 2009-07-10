@@ -340,8 +340,8 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
 
         Subject overlord = subjectManager.getOverlord();
         try {
-            MeasurementSchedule schedule = measurementScheduleManager.getMeasurementSchedule(overlord,
-                measurementDefinitionId, resourceId, true);
+            MeasurementSchedule schedule = measurementScheduleManager.getMeasurementSchedule(overlord, resourceId,
+                measurementDefinitionId, true);
 
             /*
              * Use all available data from the epoch until now to calculate the baseline (we don't need to start from

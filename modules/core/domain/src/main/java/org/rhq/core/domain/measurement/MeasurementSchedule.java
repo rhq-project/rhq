@@ -45,54 +45,72 @@ import javax.persistence.UniqueConstraint;
 import org.rhq.core.domain.resource.Resource;
 
 @Entity
-@NamedQueries( {
-    @NamedQuery(name = MeasurementSchedule.FIND_ALL_FOR_DEFINITIONS, query = "SELECT ms FROM MeasurementSchedule ms WHERE ms.definition IN (:definitions) "),
-    /** Find all Schedules for a given Definition */
-    @NamedQuery(name = "MeasurementSchedule.findForDefinition", query = "SELECT ms FROM MeasurementSchedule ms WHERE ms.definition = :definition"),
-    @NamedQuery(name = "MeasurementSchedule.findByCategory", query = "SELECT ms FROM MeasurementSchedule ms WHERE ms.definition.category = :cat"),
-    @NamedQuery(name = "MeasurementSchedule.findByDefinitionAndEnablement", query = "SELECT ms FROM MeasurementSchedule ms WHERE ms.definition = :def and ms.enabled = :enabled"),
-    @NamedQuery(name = "MeasurementSchedule.enableSchedules", query = "UPDATE MeasurementSchedule ms SET ms.enabled = :enabled WHERE ms IN(:scheds)"),
-    @NamedQuery(name = "MeasurementSchedule.findByIds", query = "SELECT ms FROM MeasurementSchedule ms WHERE ms.id IN ( :ids )"),
-    @NamedQuery(name = MeasurementSchedule.FIND_BY_DEFINITION_ID_AND_RESOURCE_IDS, query = "SELECT ms FROM MeasurementSchedule ms WHERE ms.definition.id = :definitionId AND (ms.resource.id IN (:resourceIds))"),
-    @NamedQuery(name = MeasurementSchedule.FIND_BY_DEFINITION_ID_AND_RESOURCE_ID, query = "SELECT ms FROM MeasurementSchedule ms WHERE ms.definition.id = :definitionId AND ms.resource.id = :resourceId"),
-    @NamedQuery(name = MeasurementSchedule.FIND_ENABLED_BY_RESOURCES_AND_RESOURCE_TYPE, query = "SELECT ms.id, res.id, def.id "
-        + "  FROM MeasurementSchedule ms "
-        + "  JOIN ms.definition def "
-        + "  JOIN ms.resource res "
-        + " WHERE def.resourceType = :resourceType "
-        + "   AND ms.definition = def "
-        + "   AND res IN (:resources) "
-        + "   AND ms.enabled = true" + "   AND (def.dataType = :dataType OR :dataType is null )"),
-    @NamedQuery(name = MeasurementSchedule.FIND_ENABLED_BY_RESOURCE_IDS_AND_RESOURCE_TYPE_ID, query = "SELECT ms.id, res.id, def.id "
-        + "  FROM MeasurementSchedule ms "
-        + "  JOIN ms.definition def "
-        + "  JOIN ms.resource res "
-        + " WHERE def.resourceType.id = :resourceTypeId "
-        + "   AND ms.definition = def "
-        + "   AND res.id IN (:resourceIds) " + "   AND ms.enabled = true"),
-    @NamedQuery(name = "MeasurementSchedule.findByEnablementForResource", query = "SELECT ms FROM MeasurementSchedule ms WHERE ms.enabled = :enabled AND ms.resource = :resource "),
-    @NamedQuery(name = MeasurementSchedule.FIND_SCHEDULES_WITH_BASLINES_TO_CALC, query = "SELECT ms FROM MeasurementSchedule ms "
-        + "WHERE ms.enabled = true AND ms.definition.numericType = :measType "
-        + "AND ms.baseline.computeTime < :ctime AND ms.baseline.userEntered = false"),
+@NamedQueries( { //
+@NamedQuery(name = MeasurementSchedule.FIND_ALL_FOR_DEFINITIONS, query = "" //
+    + "SELECT ms "//
+    + "  FROM MeasurementSchedule ms " //
+    + " WHERE ms.definition IN (:definitions) "), //
+    @NamedQuery(name = MeasurementSchedule.FIND_BY_IDS, query = "" //
+        + "SELECT ms " //
+        + "  FROM MeasurementSchedule ms " //
+        + " WHERE ms.id IN ( :ids )"), //
+    @NamedQuery(name = MeasurementSchedule.FIND_ENABLED_BY_RESOURCES_AND_RESOURCE_TYPE, query = "" //
+        + "SELECT ms.id, res.id, def.id " //
+        + "  FROM MeasurementSchedule ms " //
+        + "  JOIN ms.definition def " //
+        + "  JOIN ms.resource res " //
+        + " WHERE def.resourceType = :resourceType " //
+        + "   AND ms.definition = def " //
+        + "   AND res IN (:resources) " //
+        + "   AND ms.enabled = true" //
+        + "   AND (def.dataType = :dataType OR :dataType is null )"), //
+    @NamedQuery(name = MeasurementSchedule.FIND_ENABLED_BY_RESOURCE_IDS_AND_RESOURCE_TYPE_ID, query = ""//
+        + "SELECT ms.id, res.id, def.id "//
+        + "  FROM MeasurementSchedule ms "//
+        + "  JOIN ms.definition def "//
+        + "  JOIN ms.resource res "//
+        + " WHERE def.resourceType.id = :resourceTypeId " //
+        + "   AND ms.definition = def "//
+        + "   AND res.id IN (:resourceIds) " //
+        + "   AND ms.enabled = true"),//
+    @NamedQuery(name = MeasurementSchedule.FIND_SCHEDULES_WITH_BASLINES_TO_CALC, query = "" //
+        + "SELECT ms FROM MeasurementSchedule ms " //
+        + " WHERE ms.enabled = true " //
+        + "   AND ms.definition.numericType = :measType " //
+        + "   AND ms.baseline.computeTime < :ctime " //
+        + "   AND ms.baseline.userEntered = false"), //
     @NamedQuery(name = MeasurementSchedule.FIND_ALL_FOR_RESOURCE_ID, query = "" //
         + "    SELECT ms " //
         + "      FROM MeasurementSchedule ms " //
         + "JOIN FETCH ms.definition " //
         + "     WHERE ms.resource.id = :resourceId " //
-        + "       AND (ms.definition.dataType = :dataType OR :dataType is null) "
-        + "       AND (ms.definition.displayType = :displayType OR :displayType is null) "
-        + "       AND (ms.enabled = :enabled OR :enabled is null) "),
-    @NamedQuery(name = MeasurementSchedule.FIND_BY_DEFINITION_IDS_AND_RESOURCE_ID, query = "SELECT ms FROM MeasurementSchedule ms WHERE ms.definition.id IN (:definitionIds) AND ms.resource.id = :resourceId"),
-    @NamedQuery(name = MeasurementSchedule.FIND_SCHEDULE_COMPOSITE_FOR_RESOURCE, query = "SELECT new org.rhq.core.domain.measurement.composite.MeasurementScheduleComposite(ms.definition, ms.enabled, ms.interval) "
-        + "FROM MeasurementSchedule ms WHERE ms.resource.id = :resourceId "
-        + "AND (ms.definition.dataType = :dataType OR :dataType is null) "),
+        + "       AND (ms.definition.dataType = :dataType OR :dataType is null) " //
+        + "       AND (ms.definition.displayType = :displayType OR :displayType is null) " //
+        + "       AND (ms.enabled = :enabled OR :enabled is null) "), //
+    @NamedQuery(name = MeasurementSchedule.FIND_BY_RESOURCE_IDS_AND_DEFINITION_IDS, query = "" //
+        + "SELECT ms " //
+        + "  FROM MeasurementSchedule ms " //
+        + " WHERE ms.definition.id IN (:definitionIds) " //
+        + "   AND ms.resource.id IN (:resourceIds)"), //
+    @NamedQuery(name = MeasurementSchedule.FIND_SCHEDULE_COMPOSITE_FOR_RESOURCE, query = "" //
+        + "SELECT new org.rhq.core.domain.measurement.composite.MeasurementScheduleComposite" //
+        + "     ( ms.definition, " //
+        + "       ms.enabled, " //
+        + "       ms.interval ) " //
+        + "  FROM MeasurementSchedule ms " //
+        + " WHERE ms.resource.id = :resourceId " //
+        + "   AND (ms.definition.dataType = :dataType OR :dataType is null) "), //
     @NamedQuery(name = MeasurementSchedule.GET_SCHEDULED_MEASUREMENTS_PER_MINUTED, query = "" //
         + "SELECT SUM(1000.0 / ms.interval) * 60.0 " //
         + "  FROM MeasurementSchedule ms " //
         + " WHERE ms.enabled = true " //
-        + "   AND ms.resource.inventoryStatus = :status"),
-    @NamedQuery(name = MeasurementSchedule.DISABLE_ALL, query = "UPDATE MeasurementSchedule ms SET ms.enabled = false"),
-    @NamedQuery(name = MeasurementSchedule.DELETE_BY_RESOURCES, query = "DELETE MeasurementSchedule ms WHERE ms.resource.id IN ( :resourceIds )") })
+        + "   AND ms.resource.inventoryStatus = :status"), //
+    @NamedQuery(name = MeasurementSchedule.DISABLE_ALL, query = "" //
+        + "UPDATE MeasurementSchedule ms " //
+        + "   SET ms.enabled = false"), //
+    @NamedQuery(name = MeasurementSchedule.DELETE_BY_RESOURCES, query = "" //
+        + "DELETE MeasurementSchedule ms " //
+        + " WHERE ms.resource.id IN ( :resourceIds )") })
 @SequenceGenerator(name = "RHQ_METRIC_SCHED_ID_SEQ", sequenceName = "RHQ_MEASUREMENT_SCHED_ID_SEQ")
 @Table(name = "RHQ_MEASUREMENT_SCHED", uniqueConstraints = { @UniqueConstraint(columnNames = { "DEFINITION",
     "RESOURCE_ID" }) })
@@ -114,19 +132,9 @@ public class MeasurementSchedule implements Serializable {
     public static final String FIND_ALL_FOR_RESOURCE_ID = "MeasurementSchedule.FIND_ALL_FOR_RESOURCE_ID";
 
     /**
-     * Find schedules by definition and resources. Definition is in :definitionId, resource ids are in :resourceIds
-     */
-    public static final String FIND_BY_DEFINITION_ID_AND_RESOURCE_IDS = "MeasurementSchedule.findByDefinitionIdAndResourceIds";
-
-    /**
-     * Find schedules by definition and resource. Definition is in :definitionId, resource id is in :resourceId
-     */
-    public static final String FIND_BY_DEFINITION_ID_AND_RESOURCE_ID = "MeasurementSchedule.findByDefinitionIdAndResourceId";
-
-    /**
      * Find schedules by definitions and resource. Definitions are in :definitionIds, resource id is in :resourceId
      */
-    public static final String FIND_BY_DEFINITION_IDS_AND_RESOURCE_ID = "MeasurementSchedule.findByDefinitionIdsAndResourceId";
+    public static final String FIND_BY_RESOURCE_IDS_AND_DEFINITION_IDS = "MeasurementSchedule.findByResourceIdsAndDefinitionIds";
 
     /**
      * Find MeasureScheduleComposites for a resource. Resource id is passed in :resourceId
@@ -139,6 +147,8 @@ public class MeasurementSchedule implements Serializable {
     public static final String FIND_ENABLED_BY_RESOURCE_IDS_AND_RESOURCE_TYPE_ID = "MeasurementSchedule.FIND_ENABLED_BY_ResourceIds_AND_RESOURCE_TYPE";
     public static final String DELETE_BY_RESOURCES = "MeasurementSchedule.deleteByResources";
     public static final String FIND_ALL_FOR_DEFINITIONS = "MeasurementSchedule.FIND_ALL_FOR_DEFINITIONS";
+
+    public static final String FIND_BY_IDS = "MeasurementSchedule.findByIds";
 
     public static final String NATIVE_QUERY_REPORTING_RESOURCE_MEASUREMENT_SCHEDULE_REQUEST = "" //
         + "SELECT ms.RESOURCE_ID, ms.ID, def.NAME, ms.COLL_INTERVAL, ms.ENABLED, def.DATA_TYPE, def.RAW_NUMERIC_TYPE " //

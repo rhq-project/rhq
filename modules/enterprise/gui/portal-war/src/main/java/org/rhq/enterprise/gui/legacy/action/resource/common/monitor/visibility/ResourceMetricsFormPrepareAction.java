@@ -102,7 +102,7 @@ public class ResourceMetricsFormPrepareAction extends MetricsDisplayFormPrepareA
         } else if ((resourceIds != null) && (resourceIds.length > 0)) {
             int resourceId = resourceIds[0];
 
-            List<MeasurementSchedule> scheds = scheduleManager.getMeasurementSchedulesForResourceAndType(subject,
+            List<MeasurementSchedule> scheds = scheduleManager.findMeasurementSchedulesForResourceAndType(subject,
                 resourceId, null, null, false); //null -> don't filter, we want everything, false -> not only enabled
 
             int metricOrTraitCount = 0;

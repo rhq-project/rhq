@@ -27,6 +27,7 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.clientapi.server.measurement.MeasurementServerService;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
+import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -55,7 +56,7 @@ public class MeasurementServerServiceImpl implements MeasurementServerService {
 
         long start = System.currentTimeMillis();
         Set<ResourceMeasurementScheduleRequest> results = measurementScheduleManager
-            .getSchedulesForResourceAndItsDescendants(resourceIds, getChildSchedules);
+            .findSchedulesForResourceAndItsDescendants(ArrayUtils.unwrapCollection(resourceIds), getChildSchedules);
         long time = (System.currentTimeMillis() - start);
 
         if (time >= 10000L) {

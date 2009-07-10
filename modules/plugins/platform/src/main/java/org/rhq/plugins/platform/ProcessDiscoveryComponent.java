@@ -18,46 +18,55 @@
  */
 package org.rhq.plugins.platform;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
-import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
-import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.system.ProcessInfo;
-
-import java.util.Set;
-import java.util.List;
-import java.util.HashSet;
+import org.rhq.core.system.SystemInfo;
 
 /**
+ * Discovers generic processes to manage based on process queries or pidfiles.
+ *  
  * @author Greg Hinkle
  */
 public class ProcessDiscoveryComponent implements ResourceDiscoveryComponent {
 
-    public Set discoverResources(ResourceDiscoveryContext resourceDiscoveryContext) throws InvalidPluginConfigurationException, Exception {
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext resourceDiscoveryContext)
+        throws InvalidPluginConfigurationException, Exception {
 
-        List<Configuration> configs = resourceDiscoveryContext.getPluginConfigurations();
+        SystemInfo systemInformation = resourceDiscoveryContext.getSystemInformation();
 
         Set<DiscoveredResourceDetails> results = new HashSet<DiscoveredResourceDetails>();
 
+        // the configs for the manually added processes to discover
+        List<Configuration> configs = resourceDiscoveryContext.getPluginConfigurations();
         for (Configuration config : configs) {
 
-            ProcessInfo p = ProcessComponent.getProcessForConfiguration(config, resourceDiscoveryContext.getSystemInformation());
+            ProcessInfo processInfo = ProcessComponent.getProcessForConfiguration(config, systemInformation);
 
+            String type = config.getSimpleValue("type", "pidFile");
+            String resourceKey = config.getSimpleValue(type, null);
+            if (resourceKey == null || resourceKey.length() == 0) {
+                throw new InvalidPluginConfigurationException("Invalid type [" + type + "] value [" + resourceKey + "]");
+            }
 
-            DiscoveredResourceDetails detail =
-                    new DiscoveredResourceDetails(
-                            resourceDiscoveryContext.getResourceType(),
-                            config.getSimpleValue("type","pidFile").equals("pidFile") ? config.getSimpleValue("pidFile","") : config.getSimpleValue("piql",""),
-                            p.getBaseName(),
-                            null,
-                            null,
-                            config,
-                            p);
+            ResourceType resourceType = resourceDiscoveryContext.getResourceType();
+            String resourceName = processInfo.getBaseName();
+            String resourceVersion = null;
+            String resourceDescription = null;
+
+            DiscoveredResourceDetails detail = new DiscoveredResourceDetails(resourceType, resourceKey, resourceName,
+                resourceVersion, resourceDescription, config, processInfo);
 
             results.add(detail);
         }
-
 
         return results;
     }

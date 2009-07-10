@@ -307,10 +307,10 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
 
             // create a channel
             pc = PageControl.getUnlimitedInstance();
-            int origChannelCount = channelManager.getAllChannels(overlord, pc).size();
+            int origChannelCount = channelManager.findChannels(overlord, pc).size();
             Channel channel = new Channel("testMergeSyncReportChannel");
             channel = channelManager.createChannel(overlord, channel);
-            assert (origChannelCount + 1) == channelManager.getAllChannels(overlord, pc).size();
+            assert (origChannelCount + 1) == channelManager.findChannels(overlord, pc).size();
             channelId = channel.getId();
 
             // see that the resource sees no metadata yet - not subscribed yet
@@ -339,7 +339,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             List<PackageVersionContentSource> inContentSource;
 
             pc = PageControl.getUnlimitedInstance();
-            inChannel = channelManager.getPackageVersionsInChannel(overlord, channelId, pc);
+            inChannel = channelManager.findPackageVersionsInChannel(overlord, channelId, pc);
             pc = PageControl.getUnlimitedInstance();
             inContentSources = contentSourceManager.getPackageVersionsFromContentSources(overlord,
                 new int[] { contentSourceId }, pc);
@@ -878,7 +878,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             contentSourceManager.mergeContentSourceSyncReport(contentSource, report, previous, results);
 
             List<PackageVersion> inChannel;
-            inChannel = channelManager.getPackageVersionsInChannel(overlord, channel.getId(), PageControl
+            inChannel = channelManager.findPackageVersionsInChannel(overlord, channel.getId(), PageControl
                 .getUnlimitedInstance());
             assert inChannel != null;
             assert inChannel.size() == 1;

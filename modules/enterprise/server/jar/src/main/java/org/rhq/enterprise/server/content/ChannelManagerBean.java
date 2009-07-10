@@ -105,7 +105,7 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
 
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public PageList<Channel> getAllChannels(Subject subject, PageControl pc) {
+    public PageList<Channel> findChannels(Subject subject, PageControl pc) {
         pc.initDefaultOrderingField("c.name");
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, Channel.QUERY_FIND_ALL, pc);
@@ -132,7 +132,7 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
 
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public PageList<ContentSource> getAssociatedContentSources(Subject subject, int channelId, PageControl pc) {
+    public PageList<ContentSource> findAssociatedContentSources(Subject subject, int channelId, PageControl pc) {
         pc.initDefaultOrderingField("cs.id");
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, ContentSource.QUERY_FIND_BY_CHANNEL_ID,
@@ -150,7 +150,7 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
 
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public PageList<Resource> getSubscribedResources(Subject subject, int channelId, PageControl pc) {
+    public PageList<Resource> findSubscribedResources(Subject subject, int channelId, PageControl pc) {
         pc.initDefaultOrderingField("rc.resource.id");
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, Channel.QUERY_FIND_SUBSCRIBER_RESOURCES,
@@ -168,7 +168,7 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
 
     @SuppressWarnings("unchecked")
     // current resource subscriptions should be viewing, but perhaps available ones shouldn't
-    public PageList<ChannelComposite> getResourceSubscriptions(Subject subject, int resourceId, PageControl pc) {
+    public PageList<ChannelComposite> findResourceSubscriptions(Subject subject, int resourceId, PageControl pc) {
         pc.initDefaultOrderingField("c.id");
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
@@ -186,7 +186,7 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
 
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public PageList<ChannelComposite> getAvailableResourceSubscriptions(Subject subject, int resourceId, PageControl pc) {
+    public PageList<ChannelComposite> findAvailableResourceSubscriptions(Subject subject, int resourceId, PageControl pc) {
         pc.initDefaultOrderingField("c.id");
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
@@ -214,7 +214,7 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
     }
 
     @SuppressWarnings("unchecked")
-    public List<ChannelComposite> getAvailableResourceSubscriptions(int resourceId) {
+    public List<ChannelComposite> findAvailableResourceSubscriptions(int resourceId) {
         Query query = entityManager.createNamedQuery(Channel.QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID);
 
         query.setParameter("resourceId", resourceId);
@@ -225,7 +225,7 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
 
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public PageList<PackageVersion> getPackageVersionsInChannel(Subject subject, int channelId, PageControl pc) {
+    public PageList<PackageVersion> findPackageVersionsInChannel(Subject subject, int channelId, PageControl pc) {
         pc.initDefaultOrderingField("pv.generalPackage.name, pv.version");
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
@@ -241,7 +241,7 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
 
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public PageList<PackageVersion> getPackageVersionsInChannel(Subject subject, int channelId, String filter,
+    public PageList<PackageVersion> findPackageVersionsInChannel(Subject subject, int channelId, String filter,
         PageControl pc) {
         pc.initDefaultOrderingField("pv.generalPackage.name, pv.version");
 
@@ -507,6 +507,7 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
         return getPackageVersionCountFromChannel(subject, null, channelId);
     }
 
+    @SuppressWarnings("unchecked")
     public PageList<Channel> findChannels(Subject subject, Channel criteria, PageControl pc) throws FetchException {
         try {
             QueryGenerator generator = new QueryGenerator(criteria, pc);
@@ -524,6 +525,7 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
     }
 
     //TODO: incomplete, support channelId with the standard criteria, requires to extend the QueryGenerator
+    @SuppressWarnings("unchecked")
     public PageList<PackageVersion> findPackageVersionsInChannel(Subject subject, int channelId,
         PackageVersion criteria, PageControl pc) throws FetchException {
 

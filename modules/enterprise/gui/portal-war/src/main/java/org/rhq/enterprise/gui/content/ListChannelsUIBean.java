@@ -85,7 +85,7 @@ public class ListChannelsUIBean extends PagedDataTableUIBean {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
             ChannelManagerLocal manager = LookupUtil.getChannelManagerLocal();
 
-            PageList<Channel> results = manager.getAllChannels(subject, pc);
+            PageList<Channel> results = manager.findChannels(subject, pc);
             return results;
         }
     }

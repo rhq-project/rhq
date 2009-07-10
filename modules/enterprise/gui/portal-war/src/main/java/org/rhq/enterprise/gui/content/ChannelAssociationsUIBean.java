@@ -52,7 +52,7 @@ public class ChannelAssociationsUIBean extends PagedDataTableUIBean {
             int id = Integer.valueOf(FacesContextUtility.getRequiredRequestParameter("id"));
             ChannelManagerLocal manager = LookupUtil.getChannelManagerLocal();
 
-            PageList<ContentSource> results = manager.getAssociatedContentSources(subject, id, PageControl
+            PageList<ContentSource> results = manager.findAssociatedContentSources(subject, id, PageControl
                 .getUnlimitedInstance());
             associatedList = new HashMap<Integer, Boolean>(results.getTotalSize());
             for (ContentSource contentSource : results) {
@@ -106,7 +106,7 @@ public class ChannelAssociationsUIBean extends PagedDataTableUIBean {
             int id = Integer.valueOf(FacesContextUtility.getRequiredRequestParameter("id"));
             ChannelManagerLocal manager = LookupUtil.getChannelManagerLocal();
 
-            PageList<ContentSource> results = manager.getAssociatedContentSources(subject, id, pc);
+            PageList<ContentSource> results = manager.findAssociatedContentSources(subject, id, pc);
             return results;
         }
     }

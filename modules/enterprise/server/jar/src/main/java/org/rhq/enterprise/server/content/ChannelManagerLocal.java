@@ -39,19 +39,14 @@ import org.rhq.enterprise.server.exception.UpdateException;
 public interface ChannelManagerLocal {
 
     /**
-     * @see ChannelManagerRemote#getAllChannels(Subject, PageControl)
+     * @see ChannelManagerRemote#findChannels(Subject, PageControl)
      */
-    PageList<Channel> getAllChannels(Subject subject, PageControl pc);
+    PageList<Channel> findChannels(Subject subject, PageControl pc);
 
     /**
-     * @see ChannelManagerRemote#getAssociatedContentSources(Subject, int, PageControl)
+     * @see ChannelManagerRemote#findAssociatedContentSources(Subject, int, PageControl)
      */
-    PageList<ContentSource> getAssociatedContentSources(Subject subject, int channelId, PageControl pc);
-
-    /**
-     * @see ChannelManagerRemote#getSubscribedResources(Subject, int, PageControl)
-     */
-    PageList<Resource> getSubscribedResources(Subject subject, int channelId, PageControl pc);
+    PageList<ContentSource> findAssociatedContentSources(Subject subject, int channelId, PageControl pc);
 
     /**
      * Gets all channels that are subscribed to by the given resource.
@@ -62,7 +57,7 @@ public interface ChannelManagerLocal {
      *
      * @return the list of subscriptions
      */
-    PageList<ChannelComposite> getResourceSubscriptions(Subject subject, int resourceId, PageControl pc);
+    PageList<ChannelComposite> findResourceSubscriptions(Subject subject, int resourceId, PageControl pc);
 
     /**
      * Gets all channels that aren't subscribed to for the given resource.
@@ -73,7 +68,7 @@ public interface ChannelManagerLocal {
      *
      * @return the list of available channels for the given resource
      */
-    PageList<ChannelComposite> getAvailableResourceSubscriptions(Subject subject, int resourceId, PageControl pc);
+    PageList<ChannelComposite> findAvailableResourceSubscriptions(Subject subject, int resourceId, PageControl pc);
 
     /**
      * Gets all channels that are subscribed to by the given resource.
@@ -91,7 +86,7 @@ public interface ChannelManagerLocal {
      *
      * @return the list of available channels for the given resource
      */
-    List<ChannelComposite> getAvailableResourceSubscriptions(int resourceId);
+    List<ChannelComposite> findAvailableResourceSubscriptions(int resourceId);
 
     /**
      * Returns the set of package versions that can currently be accessed via the given channel.
@@ -102,17 +97,12 @@ public interface ChannelManagerLocal {
      *
      * @return the package versions that are available in the channel
      */
-    PageList<PackageVersion> getPackageVersionsInChannel(Subject subject, int channelId, PageControl pc);
+    PageList<PackageVersion> findPackageVersionsInChannel(Subject subject, int channelId, PageControl pc);
 
     /**
      * @see ChannelManagerRemote#getPackageVersionsInChannel(Subject, int, String, PageControl)
      */
-    PageList<PackageVersion> getPackageVersionsInChannel(Subject subject, int channelId, String filter, PageControl pc);
-
-    /**
-     * @see ChannelManagerRemote#updateChannel(Subject, Channel)
-     */
-    Channel updateChannel(Subject subject, Channel channel) throws ChannelException;
+    PageList<PackageVersion> findPackageVersionsInChannel(Subject subject, int channelId, String filter, PageControl pc);
 
     /**
      * @see ChannelManagerRemote#addContentSourcesToChannel(Subject, int, int[])
@@ -123,16 +113,6 @@ public interface ChannelManagerLocal {
      * @see ChannelManagerRemote#removeContentSourcesFromChannel(Subject, int, int[])
      */
     void removeContentSourcesFromChannel(Subject subject, int channelId, int[] contentSourceIds) throws Exception;
-
-    /**
-     * @see ChannelManagerRemote#subscribeResourceToChannels(Subject, int, int[])
-     */
-    void subscribeResourceToChannels(Subject subject, int resourceId, int[] channelIds);
-
-    /**
-     * @see ChannelManagerRemote#unsubscribeResourceFromChannels(Subject, int, int[])
-     */
-    void unsubscribeResourceFromChannels(Subject subject, int resourceId, int[] channelIds);
 
     /**
      * @see ChannelManagerRemote#getPackageVersionCountFromChannel(Subject, String, int)
@@ -179,4 +159,25 @@ public interface ChannelManagerLocal {
      */
     public PageList<PackageVersion> findPackageVersionsInChannel(Subject subject, int channelId,
         PackageVersion criteria, PageControl pc) throws FetchException;
+
+    /**
+     * @see ChannelManagerRemote#subscribeResourceToChannels(Subject, int, int[])
+     */
+    void subscribeResourceToChannels(Subject subject, int resourceId, int[] channelIds);
+
+    /**
+     * @see ChannelManagerRemote#unsubscribeResourceFromChannels(Subject, int, int[])
+     */
+    void unsubscribeResourceFromChannels(Subject subject, int resourceId, int[] channelIds);
+
+    /**
+     * @see ChannelManagerRemote#findSubscribedResources(Subject, int, PageControl)
+     */
+    PageList<Resource> findSubscribedResources(Subject subject, int channelId, PageControl pc);
+
+    /**
+     * @see ChannelManagerRemote#updateChannel(Subject, Channel)
+     */
+    Channel updateChannel(Subject subject, Channel channel) throws ChannelException;
+
 }

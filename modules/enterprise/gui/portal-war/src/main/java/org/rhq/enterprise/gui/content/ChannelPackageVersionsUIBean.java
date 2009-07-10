@@ -66,7 +66,7 @@ public class ChannelPackageVersionsUIBean extends PagedDataTableUIBean {
         }
 
         try {
-            List<Resource> resources = channelManager.getSubscribedResources(subject, channelId, PageControl
+            List<Resource> resources = channelManager.findSubscribedResources(subject, channelId, PageControl
                 .getUnlimitedInstance());
             for (Resource resource : resources) {
                 resourceIds.add(resource.getId());
@@ -110,7 +110,7 @@ public class ChannelPackageVersionsUIBean extends PagedDataTableUIBean {
             ChannelManagerLocal manager = LookupUtil.getChannelManagerLocal();
 
             PageList<PackageVersion> results;
-            results = manager.getPackageVersionsInChannel(subject, id, getPackageFilter(), pc);
+            results = manager.findPackageVersionsInChannel(subject, id, getPackageFilter(), pc);
             return results;
         }
     }

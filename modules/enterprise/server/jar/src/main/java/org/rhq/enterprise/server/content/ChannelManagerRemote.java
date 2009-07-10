@@ -120,20 +120,6 @@ public interface ChannelManagerRemote {
         @WebParam(name = "user") Subject user, //
         @WebParam(name = "channel") Channel channel) throws ChannelException;
 
-    //Exposed methods that are not in remote specification
-    /**
-     * Returns all {@link Channel} objects that are configured in the system.
-     *
-     * @param  user           The logged in user's subject.
-     * @param  pc      pagination controls
-     *
-     * @return all channels sources
-     */
-    @WebMethod
-    PageList<Channel> getAllChannels( //
-        @WebParam(name = "user") Subject user, //
-        @WebParam(name = "pc") PageControl pc);
-
     /**
      * Returns the set of package versions that can currently be accessed via the given channel.
      *
@@ -145,11 +131,18 @@ public interface ChannelManagerRemote {
      * @return the package versions that are available in the channel
      */
     @WebMethod
-    PageList<PackageVersion> getPackageVersionsInChannel( //
+    PageList<PackageVersion> findPackageVersionsInChannel( //
         @WebParam(name = "user") Subject user, //
         @WebParam(name = "channelId") int channelId, //
         @WebParam(name = "filter") String filter, //
         @WebParam(name = "pc") PageControl pc);
+
+    //Exposed methods that are not in remote specification
+    @WebMethod
+    PageList<Channel> findChannels( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "pc") PageControl pc) //
+        throws FetchException;
 
     /**
      * Gets all resources that are subscribed to the given channel.
@@ -161,7 +154,7 @@ public interface ChannelManagerRemote {
      * @return the list of subscribers
      */
     @WebMethod
-    PageList<Resource> getSubscribedResources( //
+    PageList<Resource> findSubscribedResources( //
         @WebParam(name = "user") Subject user, //
         @WebParam(name = "channelId") int channelId, //
         @WebParam(name = "pc") PageControl pc);

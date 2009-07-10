@@ -89,7 +89,7 @@ public class ChannelSubscriptionsUIBean extends PagedDataTableUIBean {
             int id = Integer.valueOf(FacesContextUtility.getRequiredRequestParameter("id"));
             ChannelManagerLocal manager = LookupUtil.getChannelManagerLocal();
 
-            PageList<Resource> results = manager.getSubscribedResources(subject, id, pc);
+            PageList<Resource> results = manager.findSubscribedResources(subject, id, pc);
             return results;
         }
     }

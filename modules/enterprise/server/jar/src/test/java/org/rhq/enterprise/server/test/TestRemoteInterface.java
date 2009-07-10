@@ -216,8 +216,8 @@ public class TestRemoteInterface extends AssertJUnit {
                 operationManager.deleteOperationHistory(user, roh.getId(), true);
             }
 
-            history = operationManager.findCompletedResourceOperationHistories(user, testPlatform.getResource().getId(),
-                null, null, PageControl.getUnlimitedInstance());
+            history = operationManager.findCompletedResourceOperationHistories(user,
+                testPlatform.getResource().getId(), null, null, PageControl.getUnlimitedInstance());
             assertTrue(history.isEmpty());
         }
 
@@ -313,8 +313,8 @@ public class TestRemoteInterface extends AssertJUnit {
         OperationManagerRemote operationManager = service.getPort(OperationManagerRemote.class);
 
         // Remove any pending histories
-        PageList<ResourceOperationHistory> history = operationManager.findPendingResourceOperationHistories(user, testAS
-            .getResource().getId(), PageControl.getUnlimitedInstance());
+        PageList<ResourceOperationHistory> history = operationManager.findPendingResourceOperationHistories(user,
+            testAS.getResource().getId(), PageControl.getUnlimitedInstance());
 
         if (!history.isEmpty()) {
             for (ResourceOperationHistory roh : history) {
@@ -335,8 +335,8 @@ public class TestRemoteInterface extends AssertJUnit {
                 operationManager.deleteOperationHistory(user, roh.getId(), true);
             }
 
-            history = operationManager.findCompletedResourceOperationHistories(user, testAS.getResource().getId(), null,
-                null, PageControl.getUnlimitedInstance());
+            history = operationManager.findCompletedResourceOperationHistories(user, testAS.getResource().getId(),
+                null, null, PageControl.getUnlimitedInstance());
             assertTrue(history.isEmpty());
         }
 
@@ -345,8 +345,8 @@ public class TestRemoteInterface extends AssertJUnit {
             .getId(), "shutdown", 0L, 0L, 0, 0, null, "unit test - shutdown operation");
 
         // wait to finish, or try to cancel after a minute.
-        history = operationManager.findPendingResourceOperationHistories(user, testAS.getResource().getId(), PageControl
-            .getUnlimitedInstance());
+        history = operationManager.findPendingResourceOperationHistories(user, testAS.getResource().getId(),
+            PageControl.getUnlimitedInstance());
         assertTrue(history.isEmpty() || history.size() == 1);
 
         long now = System.currentTimeMillis();
@@ -554,7 +554,7 @@ public class TestRemoteInterface extends AssertJUnit {
 
         reportHeap("channelManager");
 
-        PageList<Channel> channels = channelManager.getAllChannels(user, PageControl.getUnlimitedInstance());
+        PageList<Channel> channels = channelManager.findChannels(user, PageControl.getUnlimitedInstance());
 
         for (Channel channel : channels) {
             if ("ws-test-channel".equals(channel.getName())) {
@@ -566,7 +566,7 @@ public class TestRemoteInterface extends AssertJUnit {
         assertNotNull(testChannel);
         assertEquals("ws-test-channel", testChannel.getName());
 
-        channels = channelManager.getAllChannels(user, PageControl.getUnlimitedInstance());
+        channels = channelManager.findChannels(user, PageControl.getUnlimitedInstance());
 
         testChannel = null;
         for (Channel channel : channels) {
@@ -580,7 +580,7 @@ public class TestRemoteInterface extends AssertJUnit {
         channelManager.subscribeResourceToChannels(user, testWar.getResource().getId(),
             new int[] { testChannel.getId() });
 
-        PageList<Resource> channelResources = channelManager.getSubscribedResources(user, testChannel.getId(),
+        PageList<Resource> channelResources = channelManager.findSubscribedResources(user, testChannel.getId(),
             PageControl.getUnlimitedInstance());
 
         assertNotNull(channelResources);
@@ -647,7 +647,7 @@ public class TestRemoteInterface extends AssertJUnit {
         channelManager.unsubscribeResourceFromChannels(user, testWar.getResource().getId(), new int[] { testChannel
             .getId() });
 
-        channelResources = channelManager.getSubscribedResources(user, testChannel.getId(), PageControl
+        channelResources = channelManager.findSubscribedResources(user, testChannel.getId(), PageControl
             .getUnlimitedInstance());
 
         assertNotNull(channelResources);

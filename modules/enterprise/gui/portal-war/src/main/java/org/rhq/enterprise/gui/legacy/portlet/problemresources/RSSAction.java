@@ -31,6 +31,7 @@ import org.apache.struts.util.MessageResources;
 
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.gui.common.tag.FunctionTagLibrary;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
@@ -61,13 +62,14 @@ public class RSSAction extends BaseRSSAction {
             long begin = 0; // beginning of time, unless configured otherwise
 
             if (preferences.hours > 0) {
-                List bounds = MeasurementUtils.calculateTimeFrame(preferences.hours, MeasurementUtils.UNIT_HOURS);
+                List<Long> bounds = MeasurementUtils.calculateTimeFrame(preferences.hours, MeasurementUtils.UNIT_HOURS);
                 begin = (Long) bounds.get(0);
             }
 
             MeasurementProblemManagerLocal problemManager = LookupUtil.getMeasurementProblemManager();
             List<ProblemResourceComposite> results;
-            results = problemManager.findProblemResources(user.getSubject(), begin, preferences.range);
+            results = problemManager.findProblemResources(user.getSubject(), begin, new PageControl(0,
+                preferences.range));
 
             if ((results != null) && (results.size() > 0)) {
                 for (ProblemResourceComposite problem : results) {

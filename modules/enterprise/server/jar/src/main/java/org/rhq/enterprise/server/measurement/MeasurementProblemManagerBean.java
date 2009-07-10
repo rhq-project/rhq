@@ -42,7 +42,7 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
  * A manager for working with problems such as out-of-bounds measurements.
  */
 @Stateless
-public class MeasurementProblemManagerBean implements MeasurementProblemManagerLocal {
+public class MeasurementProblemManagerBean implements MeasurementProblemManagerLocal, MeasurementProblemManagerRemote {
     @SuppressWarnings("unused")
     private final Log log = LogFactory.getLog(MeasurementProblemManagerBean.class);
 
@@ -52,25 +52,20 @@ public class MeasurementProblemManagerBean implements MeasurementProblemManagerL
     @EJB
     private AuthorizationManagerLocal authorizationManager;
 
-    public PageList<ProblemResourceComposite> findProblemResources(Subject subject, long oldestDate, int maxResources) {
-        return findProblemResourcesAlert(subject, oldestDate, new PageControl(0, maxResources));
-    }
-
     @SuppressWarnings("unchecked")
-    private PageList<ProblemResourceComposite> findProblemResourcesAlert(Subject subject, long oldestDate,
-        PageControl pageControl) {
-        pageControl.initDefaultOrderingField("res.name");
+    public PageList<ProblemResourceComposite> findProblemResources(Subject subject, long oldestDate, PageControl pc) {
+        pc.initDefaultOrderingField("res.name");
 
         Query queryCount;
         Query query;
         if (authorizationManager.isInventoryManager(subject)) {
             queryCount = entityManager.createNamedQuery(Resource.QUERY_FIND_PROBLEM_RESOURCES_ALERT_COUNT_ADMIN);
             query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-                Resource.QUERY_FIND_PROBLEM_RESOURCES_ALERT_ADMIN, pageControl);
+                Resource.QUERY_FIND_PROBLEM_RESOURCES_ALERT_ADMIN, pc);
         } else {
             queryCount = entityManager.createNamedQuery(Resource.QUERY_FIND_PROBLEM_RESOURCES_ALERT_COUNT);
             query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-                Resource.QUERY_FIND_PROBLEM_RESOURCES_ALERT, pageControl);
+                Resource.QUERY_FIND_PROBLEM_RESOURCES_ALERT, pc);
             queryCount.setParameter("subject", subject);
             query.setParameter("subject", subject);
         }
@@ -81,7 +76,7 @@ public class MeasurementProblemManagerBean implements MeasurementProblemManagerL
         long count = (Long) queryCount.getSingleResult();
         List<ProblemResourceComposite> results = query.getResultList();
 
-        return new PageList<ProblemResourceComposite>(results, (int) count, pageControl);
+        return new PageList<ProblemResourceComposite>(results, (int) count, pc);
     }
 
 }

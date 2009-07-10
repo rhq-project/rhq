@@ -37,6 +37,7 @@ import org.apache.struts.tiles.actions.TilesAction;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences.ProblemResourcesPortletPreferences;
@@ -88,7 +89,8 @@ public class ViewAction extends TilesAction {
             try {
                 MeasurementProblemManagerLocal problemManager = LookupUtil.getMeasurementProblemManager();
                 long start = System.currentTimeMillis();
-                list = problemManager.findProblemResources(subject, begin, problemResourcePreferences.range);
+                list = problemManager.findProblemResources(subject, begin, new PageControl(0,
+                    problemResourcePreferences.range));
                 long end = System.currentTimeMillis();
                 log.debug("Performance: Took [" + (end - start) + "]ms to find " + problemResourcePreferences.range
                     + " problem resources");

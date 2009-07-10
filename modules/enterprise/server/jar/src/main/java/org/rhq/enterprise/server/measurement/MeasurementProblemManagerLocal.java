@@ -23,6 +23,7 @@ import javax.ejb.Local;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
 /**
@@ -50,6 +51,6 @@ public interface MeasurementProblemManagerLocal {
      * 
      * @return the problems resources (only those resources visible to the user will be returned)
      */
-    PageList<ProblemResourceComposite> findProblemResources(Subject subject, long oldestDate, int maxResources);
+    PageList<ProblemResourceComposite> findProblemResources(Subject subject, long oldestDate, PageControl pc);
 
 }

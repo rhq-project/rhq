@@ -24,7 +24,7 @@
 
     ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
     PageList<ResourceConfigurationUpdate> configurationUpdates = configurationManager
-            .getResourceConfigurationUpdates(subject, resourceId, begin, end,  true, new PageControl(0,100));
+            .findResourceConfigurationUpdates(subject, resourceId, begin, end,  true, new PageControl(0,100));
 %>
 
 

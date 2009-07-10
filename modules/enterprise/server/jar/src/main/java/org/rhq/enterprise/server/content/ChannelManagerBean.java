@@ -524,13 +524,13 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
         }
     }
 
-    //TODO: incomplete, support channelId with the standard criteria, requires to extend the QueryGenerator
     @SuppressWarnings("unchecked")
     public PageList<PackageVersion> findPackageVersionsInChannel(Subject subject, int channelId,
         PackageVersion criteria, PageControl pc) throws FetchException {
 
         try {
             QueryGenerator generator = new QueryGenerator(criteria, pc);
+            generator.addRelationshipFilter("channelPackageVersions", "channel.id = ?", channelId);
 
             Query query = generator.getQuery(entityManager);
             Query countQuery = generator.getCountQuery(entityManager);

@@ -34,7 +34,7 @@ public class ListResourceMeasurementScheduleUIBean extends PagedDataTableUIBean 
         int resourceId = FacesContextUtility.getRequiredRequestParameter("id", Integer.class);
         int[] measurementDefinitionIds = getSelectedResourceScheduleList();
         try {
-            measurementScheduleManager.disableMeasurementSchedules(getSubject(), resourceId, measurementDefinitionIds);
+            measurementScheduleManager.disableSchedules(getSubject(), resourceId, measurementDefinitionIds);
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Disabled " + measurementDefinitionIds.length
                 + " schedules.");
         } catch (Exception e) {
@@ -47,7 +47,7 @@ public class ListResourceMeasurementScheduleUIBean extends PagedDataTableUIBean 
         int resourceId = FacesContextUtility.getRequiredRequestParameter("id", Integer.class);
         int[] measurementDefinitionIds = getSelectedResourceScheduleList();
         try {
-            measurementScheduleManager.enableMeasurementSchedules(getSubject(), resourceId, measurementDefinitionIds);
+            measurementScheduleManager.enableSchedules(getSubject(), resourceId, measurementDefinitionIds);
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Enabled " + measurementDefinitionIds.length
                 + " schedules.");
         } catch (Exception e) {
@@ -61,7 +61,7 @@ public class ListResourceMeasurementScheduleUIBean extends PagedDataTableUIBean 
         int resourceId = FacesContextUtility.getRequiredRequestParameter("id", Integer.class);
         int[] measurementDefinitionIds = getSelectedResourceScheduleList();
         try {
-            measurementScheduleManager.updateMeasurementSchedules(getSubject(), resourceId, measurementDefinitionIds,
+            measurementScheduleManager.updateSchedules(getSubject(), resourceId, measurementDefinitionIds,
                 collectionInterval);
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Enabled and set "
                 + measurementDefinitionIds.length + " schedules.");
@@ -90,7 +90,7 @@ public class ListResourceMeasurementScheduleUIBean extends PagedDataTableUIBean 
         @Override
         public PageList<MeasurementSchedule> fetchPage(PageControl pc) {
             int resourceId = FacesContextUtility.getRequiredRequestParameter("id", Integer.class);
-            return measurementScheduleManager.findMeasurementSchedulesForResource(getSubject(), resourceId, null, null,
+            return measurementScheduleManager.findSchedulesForResource(getSubject(), resourceId, null, null,
                 null, pc);
         }
     }

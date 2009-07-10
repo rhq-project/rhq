@@ -131,7 +131,7 @@ public class ViewChartAction extends MetricDisplayRangeAction {
         } else if (chartForm.isSaveBaselineClicked()) {
 
             // get the derived measurement in question
-            MeasurementSchedule schedule = scheduleManager.getMeasurementSchedule(subject, chartForm.getId(), chartForm
+            MeasurementSchedule schedule = scheduleManager.getSchedule(subject, chartForm.getId(), chartForm
                 .getM()[0], true);
             boolean baselineWasNull = (schedule.getBaseline() == null);
 
@@ -153,7 +153,7 @@ public class ViewChartAction extends MetricDisplayRangeAction {
         } else if (chartForm.isSaveHighRangeClicked()) {
             // get the derived measurement in question
 
-            MeasurementSchedule schedule = scheduleManager.getMeasurementSchedule(subject, chartForm.getM()[0],
+            MeasurementSchedule schedule = scheduleManager.getSchedule(subject, chartForm.getM()[0],
                 chartForm.getId(), true);
 
             // we do some validation here rather than in
@@ -194,7 +194,7 @@ public class ViewChartAction extends MetricDisplayRangeAction {
                     "resource.common.monitor.visibility.chart.confirm.HighRangeCleared");
             }
 
-            scheduleManager.updateMeasurementSchedule(subject, schedule);
+            scheduleManager.updateSchedule(subject, schedule);
             request.setAttribute("editHighRange", Boolean.FALSE);
             request.setAttribute("justSavedHighRange", Boolean.TRUE);
 
@@ -207,7 +207,7 @@ public class ViewChartAction extends MetricDisplayRangeAction {
             return returnRedraw(request, mapping, forwardParams);
         } else if (chartForm.isSaveLowRangeClicked()) {
             // get the derived measurement in question
-            MeasurementSchedule schedule = scheduleManager.getMeasurementSchedule(subject, chartForm.getM()[0],
+            MeasurementSchedule schedule = scheduleManager.getSchedule(subject, chartForm.getM()[0],
                 chartForm.getId(), true);
 
             if (chartForm.getLowRange().length() > 0) {
@@ -245,7 +245,7 @@ public class ViewChartAction extends MetricDisplayRangeAction {
                     "resource.common.monitor.visibility.chart.confirm.LowRangeCleared");
             }
 
-            scheduleManager.updateMeasurementSchedule(subject, schedule);
+            scheduleManager.updateSchedule(subject, schedule);
             request.setAttribute("editLowRange", Boolean.FALSE);
             request.setAttribute("justSavedLowRange", Boolean.TRUE);
 

@@ -340,7 +340,7 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
 
         Subject overlord = subjectManager.getOverlord();
         try {
-            MeasurementSchedule schedule = measurementScheduleManager.getMeasurementSchedule(overlord, resourceId,
+            MeasurementSchedule schedule = measurementScheduleManager.getSchedule(overlord, resourceId,
                 measurementDefinitionId, true);
 
             /*

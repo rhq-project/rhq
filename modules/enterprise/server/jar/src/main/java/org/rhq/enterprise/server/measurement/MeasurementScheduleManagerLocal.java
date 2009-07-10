@@ -94,7 +94,7 @@ public interface MeasurementScheduleManagerLocal {
      *
      * @return a MeasurementSchedule or null if the session or the scheduleId are invalid
      */
-    MeasurementSchedule getMeasurementScheduleById(Subject subject, int scheduleId);
+    MeasurementSchedule getScheduleById(Subject subject, int scheduleId);
 
     /**
      * Reattach a Schedule to a PersitenceContext after a successful check for a valid session
@@ -104,7 +104,7 @@ public interface MeasurementScheduleManagerLocal {
      *
      * @return The updated MeasurementSchedule
      */
-    MeasurementSchedule updateMeasurementSchedule(Subject subject, MeasurementSchedule schedule);
+    MeasurementSchedule updateSchedule(Subject subject, MeasurementSchedule schedule);
 
     /**
      * Find MeasurementSchedules that are attached to a certain definition and some resources
@@ -115,7 +115,7 @@ public interface MeasurementScheduleManagerLocal {
      *
      * @return a List of MeasurementSchedules
      */
-    List<MeasurementSchedule> findMeasurementSchedulesByResourceIdsAndDefinitionId(Subject subject, int[] resourceIds,
+    List<MeasurementSchedule> findSchedulesByResourceIdsAndDefinitionId(Subject subject, int[] resourceIds,
         int definitionId);
 
     /**
@@ -128,7 +128,7 @@ public interface MeasurementScheduleManagerLocal {
      *
      * @return the MeasurementSchedule of the given definition for the given resource
      */
-    MeasurementSchedule getMeasurementSchedule(Subject subject, int resourceId, int definitionId, boolean attachBaseline)
+    MeasurementSchedule getSchedule(Subject subject, int resourceId, int definitionId, boolean attachBaseline)
         throws MeasurementNotFoundException;
 
     /**
@@ -140,7 +140,7 @@ public interface MeasurementScheduleManagerLocal {
      *
      * @return the default metric collection schedules for the given resource type
      */
-    PageList<MeasurementScheduleComposite> findMeasurementScheduleDefaultsForResourceType(Subject subject,
+    PageList<MeasurementScheduleComposite> findScheduleDefaultsForResourceType(Subject subject,
         int resourceTypeId, PageControl pageControl);
 
     /**
@@ -153,7 +153,7 @@ public interface MeasurementScheduleManagerLocal {
      *
      * @return the metric collection schedules for the given resource
      */
-    PageList<MeasurementScheduleComposite> findMeasurementScheduleCompositesForResource(Subject subject,
+    PageList<MeasurementScheduleComposite> findScheduleCompositesForResource(Subject subject,
         int resourceId, @Nullable DataType dataType, PageControl pageControl);
 
     /**
@@ -168,14 +168,14 @@ public interface MeasurementScheduleManagerLocal {
      *
      * @return the metric collection schedules for the given resource
      */
-    PageList<MeasurementSchedule> findMeasurementSchedulesForResource(Subject subject, int resourceId,
+    PageList<MeasurementSchedule> findSchedulesForResource(Subject subject, int resourceId,
         @Nullable DataType dataType, @Nullable DisplayType displayType, @Nullable Boolean enabled,
         PageControl pageControl);
 
     /**
      * Disables all collection schedules in the given measurement definition IDs. This only disables the "templates", it
      * does not disable actual schedules. For that capability, see
-     * {@link #disableMeasurementSchedules(Subject, int[], int)}.
+     * {@link #disableSchedules(Subject, int[], int)}.
      *
      * @param subject
      * @param measurementDefinitionIds
@@ -192,7 +192,7 @@ public interface MeasurementScheduleManagerLocal {
      * @param measurementDefinitionIds
      * @param resourceId
      */
-    void disableMeasurementSchedules(Subject subject, int resourceId, int[] measurementDefinitionIds);
+    void disableSchedules(Subject subject, int resourceId, int[] measurementDefinitionIds);
 
     /**
      * Enable the schedules for the provided definitions and resource
@@ -200,7 +200,7 @@ public interface MeasurementScheduleManagerLocal {
      * @param measurementDefinitionIds
      * @param resourceId
      */
-    void enableMeasurementSchedules(Subject subject, int resourceId, int[] measurementDefinitionIds);
+    void enableSchedules(Subject subject, int resourceId, int[] measurementDefinitionIds);
 
     /**
      * Disables all collection schedules for all measurement definitions. This only disables the "templates", it does
@@ -223,7 +223,7 @@ public interface MeasurementScheduleManagerLocal {
      *
      * @param subject user that must have global inventory and setting rights
      */
-    void disableAllMeasurementSchedules(Subject subject);
+    void disableAllSchedules(Subject subject);
 
     /**
      * (Re-)Enables all collection schedules in the given measurement definition IDs and sets their collection
@@ -247,7 +247,7 @@ public interface MeasurementScheduleManagerLocal {
      * @param resourceId
      * @param collectionInterval
      */
-    void updateMeasurementSchedules(Subject subject, int resourceId, int[] measurementDefinitionIds,
+    void updateSchedules(Subject subject, int resourceId, int[] measurementDefinitionIds,
         long collectionInterval);
 
     /**
@@ -260,7 +260,7 @@ public interface MeasurementScheduleManagerLocal {
      * @param groupId                  ID of the group
      * @param collectionInterval       the new interval
      */
-    void updateMeasurementSchedulesForCompatGroup(Subject subject, int groupId, int[] measurementDefinitionIds,
+    void updateSchedulesForCompatGroup(Subject subject, int groupId, int[] measurementDefinitionIds,
         long collectionInterval);
 
     /**
@@ -274,7 +274,7 @@ public interface MeasurementScheduleManagerLocal {
      * @param childResourceType        the ID of the {@link ResourceType} of the children that form the autogroup
      * @param collectionInterval       the new interval
      */
-    void updateMeasurementSchedulesForAutoGroup(Subject subject, int parentResourceId, int childResourceType,
+    void updateSchedulesForAutoGroup(Subject subject, int parentResourceId, int childResourceType,
         int[] measurementDefinitionIds, long collectionInterval);
 
     /**
@@ -289,7 +289,7 @@ public interface MeasurementScheduleManagerLocal {
      *
      * @return List of MeasuremenSchedules for the given resource
      */
-    List<MeasurementSchedule> findMeasurementSchedulesForResourceAndType(Subject subject, int resourceId,
+    List<MeasurementSchedule> findSchedulesForResourceAndType(Subject subject, int resourceId,
         DataType dataType, DisplayType displayType, boolean enabledOnly);
 
     /**
@@ -300,12 +300,12 @@ public interface MeasurementScheduleManagerLocal {
     /**
      * Disable the measurement schedules for the passed definitions for the resources of the passed compatible group.
      */
-    public void disableMeasurementSchedulesForCompatGroup(Subject subject, int groupId, int[] measurementDefinitionIds);
+    public void disableSchedulesForCompatGroup(Subject subject, int groupId, int[] measurementDefinitionIds);
 
     /**
      * Enable the measurement schedules for the passed definitions for the resources of the passed compatible group.
      */
-    public void enableMeasurementSchedulesForCompatGroup(Subject subject, int groupId, int[] measurementDefinitionIds);
+    public void enableSchedulesForCompatGroup(Subject subject, int groupId, int[] measurementDefinitionIds);
 
     /**
      * Disable the measurement schedules for the passed definitions of the rsource ot the passed auto group.
@@ -315,7 +315,7 @@ public interface MeasurementScheduleManagerLocal {
      * @param parentResourceId
      * @param childResourceType
      */
-    public void disableMeasurementSchedulesForAutoGroup(Subject subject, int parentResourceId, int childResourceType,
+    public void disableSchedulesForAutoGroup(Subject subject, int parentResourceId, int childResourceType,
         int[] measurementDefinitionIds);
 
     /**
@@ -326,10 +326,10 @@ public interface MeasurementScheduleManagerLocal {
      * @param parentResourceId
      * @param childResourceType
      */
-    public void enableMeasurementSchedulesForAutoGroup(Subject subject, int parentResourceId, int childResourceType,
+    public void enableSchedulesForAutoGroup(Subject subject, int parentResourceId, int childResourceType,
         int[] measurementDefinitionIds);
 
-    public PageList<MeasurementScheduleComposite> findMeasurementSchedulesForCompatGroup(Subject subject, int groupId,
+    public PageList<MeasurementScheduleComposite> findSchedulesForCompatGroup(Subject subject, int groupId,
         PageControl pageControl);
 
     /**
@@ -342,7 +342,7 @@ public interface MeasurementScheduleManagerLocal {
      *
      * @return
      */
-    public PageList<MeasurementScheduleComposite> findMeasurementSchedulesForAutoGroup(Subject subject, int parentId,
+    public PageList<MeasurementScheduleComposite> findSchedulesForAutoGroup(Subject subject, int parentId,
         int childType, PageControl pageControl);
 
     /**

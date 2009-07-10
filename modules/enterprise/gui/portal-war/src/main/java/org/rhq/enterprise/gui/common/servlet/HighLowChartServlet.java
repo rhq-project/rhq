@@ -152,7 +152,7 @@ public class HighLowChartServlet extends ChartServlet implements SingleThreadMod
 
         if (scheduleId > 0) // single resource
         {
-            MeasurementSchedule schedule = scheduleManager.getMeasurementScheduleById(subject, scheduleId);
+            MeasurementSchedule schedule = scheduleManager.getScheduleById(subject, scheduleId);
 
             if (schedule != null) {
                 if (log.isDebugEnabled())
@@ -199,7 +199,7 @@ public class HighLowChartServlet extends ChartServlet implements SingleThreadMod
 
     private MeasurementUnits getUnitsFromScheduleId(Subject subject, int measurementScheduleId) {
         MeasurementScheduleManagerLocal scheduleManager = LookupUtil.getMeasurementScheduleManager();
-        MeasurementSchedule schedule = scheduleManager.getMeasurementScheduleById(subject, measurementScheduleId);
+        MeasurementSchedule schedule = scheduleManager.getScheduleById(subject, measurementScheduleId);
         return schedule.getDefinition().getUnits();
     }
 

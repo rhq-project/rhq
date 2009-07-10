@@ -204,7 +204,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
      *
      * @return a MeasurementSchedule or null, if there is 
      */
-    public MeasurementSchedule getMeasurementScheduleById(Subject subject, int scheduleId) {
+    public MeasurementSchedule getScheduleById(Subject subject, int scheduleId) {
         MeasurementSchedule schedule = entityManager.find(MeasurementSchedule.class, scheduleId);
         if (schedule == null) {
             return null;
@@ -229,7 +229,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
      *
      * @return The updated MeasurementSchedule
      */
-    public MeasurementSchedule updateMeasurementSchedule(Subject subject, MeasurementSchedule schedule) {
+    public MeasurementSchedule updateSchedule(Subject subject, MeasurementSchedule schedule) {
         // attach it so we can navigate to its resource object for authz check
         MeasurementSchedule attached = entityManager.find(MeasurementSchedule.class, schedule.getId());
         if (authorizationManager.hasResourcePermission(subject, Permission.MANAGE_MEASUREMENTS, attached.getResource()
@@ -265,7 +265,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
      *
      * @return a List of MeasurementSchedules
      */
-    public List<MeasurementSchedule> findMeasurementSchedulesByResourceIdsAndDefinitionId(Subject subject,
+    public List<MeasurementSchedule> findSchedulesByResourceIdsAndDefinitionId(Subject subject,
         int[] resourceIds, int definitionId) {
         return findSchedulesByResourcesAndDefinitions(resourceIds, new int[] { definitionId });
     }
@@ -290,7 +290,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
      *
      * @return the MeasurementSchedule of the given definition for the given resource
      */
-    public MeasurementSchedule getMeasurementSchedule(Subject subject, int resourceId, int definitionId,
+    public MeasurementSchedule getSchedule(Subject subject, int resourceId, int definitionId,
         boolean attachBaseline) throws MeasurementNotFoundException {
         try {
             List<MeasurementSchedule> results = findSchedulesByResourcesAndDefinitions(new int[] { resourceId },
@@ -312,7 +312,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<MeasurementScheduleComposite> findMeasurementScheduleDefaultsForResourceType(Subject subject,
+    public PageList<MeasurementScheduleComposite> findScheduleDefaultsForResourceType(Subject subject,
         int resourceTypeId, PageControl pageControl) {
         pageControl.initDefaultOrderingField("md.id");
 
@@ -333,7 +333,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
      *
      * @return
      */
-    public PageList<MeasurementScheduleComposite> findMeasurementSchedulesForAutoGroup(Subject subject, int parentId,
+    public PageList<MeasurementScheduleComposite> findSchedulesForAutoGroup(Subject subject, int parentId,
         int childType, PageControl pageControl) {
         // pageControl.initDefaultOrderingField(); // this is ignored, as this method eventually uses native queries
 
@@ -356,7 +356,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     /**
      * Get the MeasurementSchedule composites for a compatible group.
      */
-    public PageList<MeasurementScheduleComposite> findMeasurementSchedulesForCompatGroup(Subject subject, int groupId,
+    public PageList<MeasurementScheduleComposite> findSchedulesForCompatGroup(Subject subject, int groupId,
         PageControl pageControl) {
         // pageControl.initDefaultOrderingField(); // this is ignored, as this method eventually uses native queries
 
@@ -492,7 +492,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<MeasurementScheduleComposite> findMeasurementScheduleCompositesForResource(Subject subject,
+    public PageList<MeasurementScheduleComposite> findScheduleCompositesForResource(Subject subject,
         int resourceId, @Nullable DataType dataType, PageControl pageControl) {
         pageControl.addDefaultOrderingField("ms.id");
 
@@ -505,7 +505,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<MeasurementSchedule> findMeasurementSchedulesForResource(Subject subject, int resourceId,
+    public PageList<MeasurementSchedule> findSchedulesForResource(Subject subject, int resourceId,
         @Nullable DataType dataType, @Nullable DisplayType displayType, @Nullable Boolean enabled,
         PageControl pageControl) {
         pageControl.addDefaultOrderingField("ms.id");
@@ -528,7 +528,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         return;
     }
 
-    public void disableMeasurementSchedules(Subject subject, int resourceId, int[] measurementDefinitionIds) {
+    public void disableSchedules(Subject subject, int resourceId, int[] measurementDefinitionIds) {
         Resource resource = resourceManager.getResourceById(subject, resourceId);
         if (!authorizationManager.hasResourcePermission(subject, Permission.MANAGE_MEASUREMENTS, resourceId)) {
             throw new PermissionException("You do not have permission to change resource [" + resource
@@ -556,7 +556,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         return;
     }
 
-    public void enableMeasurementSchedules(Subject subject, int resourceId, int[] measurementDefinitionIds) {
+    public void enableSchedules(Subject subject, int resourceId, int[] measurementDefinitionIds) {
         Resource resource = resourceManager.getResourceById(subject, resourceId);
         if (!authorizationManager.hasResourcePermission(subject, Permission.MANAGE_MEASUREMENTS, resourceId)) {
             throw new PermissionException("You do not have permission to change resource [" + resource
@@ -592,7 +592,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
 
     @RequiredPermissions( { @RequiredPermission(Permission.MANAGE_INVENTORY),
         @RequiredPermission(Permission.MANAGE_SETTINGS) })
-    public void disableAllMeasurementSchedules(Subject subject) {
+    public void disableAllSchedules(Subject subject) {
         entityManager.createNamedQuery(MeasurementSchedule.DISABLE_ALL).executeUpdate();
         // TODO: how do we ensure the agents sync their schedules now so they turn off everything?
     }
@@ -724,7 +724,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         log.info("" + updateCount + " resources mtime fields were updated as a result of this metric template update");
     }
 
-    public void updateMeasurementSchedules(Subject subject, int resourceId, int[] measurementDefinitionIds,
+    public void updateSchedules(Subject subject, int resourceId, int[] measurementDefinitionIds,
         long collectionInterval) {
         collectionInterval = verifyMinimumCollectionInterval(collectionInterval);
         Resource resource = resourceManager.getResourceById(subject, resourceId);
@@ -766,16 +766,16 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
      * @param childResourceType        the ID of the {@link ResourceType} of the children that form the autogroup
      * @param collectionInterval       the new interval
      *
-     * @see   org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal#updateMeasurementSchedulesForAutoGroup(org.rhq.core.domain.auth.Subject,
+     * @see   org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal#updateSchedulesForAutoGroup(org.rhq.core.domain.auth.Subject,
      *        int[], int, int, long)
      */
-    public void updateMeasurementSchedulesForAutoGroup(Subject subject, int parentResourceId, int childResourceType,
+    public void updateSchedulesForAutoGroup(Subject subject, int parentResourceId, int childResourceType,
         int[] measurementDefinitionIds, long collectionInterval) {
         // don't verify minimum collection interval here, it will be caught by updateMeasurementSchedules callee
         List<Resource> resources = resourceGroupManager.findResourcesForAutoGroup(subject, parentResourceId,
             childResourceType);
         for (Resource resource : resources) {
-            updateMeasurementSchedules(subject, resource.getId(), measurementDefinitionIds, collectionInterval);
+            updateSchedules(subject, resource.getId(), measurementDefinitionIds, collectionInterval);
         }
     }
 
@@ -789,41 +789,41 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
      * @param groupId                  ID of the group
      * @param collectionInterval       the new interval
      *
-     * @see   org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal#updateMeasurementSchedulesForCompatGroup(org.rhq.core.domain.auth.Subject,
+     * @see   org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal#updateSchedulesForCompatGroup(org.rhq.core.domain.auth.Subject,
      *        int[], int, long)
      */
-    public void updateMeasurementSchedulesForCompatGroup(Subject subject, int groupId, int[] measurementDefinitionIds,
+    public void updateSchedulesForCompatGroup(Subject subject, int groupId, int[] measurementDefinitionIds,
         long collectionInterval) {
         // don't verify minimum collection interval here, it will be caught by updateMeasurementSchedules callee
         ResourceGroup group = resourceGroupManager.getResourceGroupById(subject, groupId, GroupCategory.COMPATIBLE);
         Set<Resource> resources = group.getExplicitResources();
 
         for (Resource resource : resources) {
-            updateMeasurementSchedules(subject, resource.getId(), measurementDefinitionIds, collectionInterval);
+            updateSchedules(subject, resource.getId(), measurementDefinitionIds, collectionInterval);
         }
     }
 
     /**
      * Disable the measurement schedules for the passed definitions for the resources of the passed compatible group.
      */
-    public void disableMeasurementSchedulesForCompatGroup(Subject subject, int groupId, int[] measurementDefinitionIds) {
+    public void disableSchedulesForCompatGroup(Subject subject, int groupId, int[] measurementDefinitionIds) {
         ResourceGroup group = resourceGroupManager.getResourceGroupById(subject, groupId, GroupCategory.COMPATIBLE);
         Set<Resource> resources = group.getExplicitResources();
 
         for (Resource resource : resources) {
-            disableMeasurementSchedules(subject, resource.getId(), measurementDefinitionIds);
+            disableSchedules(subject, resource.getId(), measurementDefinitionIds);
         }
     }
 
     /**
      * Enable the measurement schedules for the passed definitions for the resources of the passed compatible group.
      */
-    public void enableMeasurementSchedulesForCompatGroup(Subject subject, int groupId, int[] measurementDefinitionIds) {
+    public void enableSchedulesForCompatGroup(Subject subject, int groupId, int[] measurementDefinitionIds) {
         ResourceGroup group = resourceGroupManager.getResourceGroupById(subject, groupId, GroupCategory.COMPATIBLE);
         Set<Resource> resources = group.getExplicitResources();
 
         for (Resource resource : resources) {
-            enableMeasurementSchedules(subject, resource.getId(), measurementDefinitionIds);
+            enableSchedules(subject, resource.getId(), measurementDefinitionIds);
         }
     }
 
@@ -835,12 +835,12 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
      * @param parentResourceId
      * @param childResourceType
      */
-    public void disableMeasurementSchedulesForAutoGroup(Subject subject, int parentResourceId, int childResourceType,
+    public void disableSchedulesForAutoGroup(Subject subject, int parentResourceId, int childResourceType,
         int[] measurementDefinitionIds) {
         List<Resource> resources = resourceGroupManager.findResourcesForAutoGroup(subject, parentResourceId,
             childResourceType);
         for (Resource resource : resources) {
-            disableMeasurementSchedules(subject, resource.getId(), measurementDefinitionIds);
+            disableSchedules(subject, resource.getId(), measurementDefinitionIds);
         }
     }
 
@@ -852,12 +852,12 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
      * @param parentResourceId
      * @param childResourceType
      */
-    public void enableMeasurementSchedulesForAutoGroup(Subject subject, int parentResourceId, int childResourceType,
+    public void enableSchedulesForAutoGroup(Subject subject, int parentResourceId, int childResourceType,
         int[] measurementDefinitionIds) {
         List<Resource> resources = resourceGroupManager.findResourcesForAutoGroup(subject, parentResourceId,
             childResourceType);
         for (Resource resource : resources) {
-            enableMeasurementSchedules(subject, resource.getId(), measurementDefinitionIds);
+            enableSchedules(subject, resource.getId(), measurementDefinitionIds);
         }
     }
 
@@ -873,7 +873,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
      * @return List of MeasuremenSchedules for the given resource
      */
     @SuppressWarnings("unchecked")
-    public List<MeasurementSchedule> findMeasurementSchedulesForResourceAndType(Subject subject, int resourceId,
+    public List<MeasurementSchedule> findSchedulesForResourceAndType(Subject subject, int resourceId,
         DataType dataType, DisplayType displayType, boolean enabledOnly) {
         OrderingField sortOrder = new OrderingField("ms.definition.displayName", PageOrdering.ASC);
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,

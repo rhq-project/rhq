@@ -58,7 +58,7 @@ public class EditMetricBaselineFormPrepareAction extends BaseAction {
         MeasurementScheduleManagerLocal scheduleManager = LookupUtil.getMeasurementScheduleManager();
 
         MeasurementBaseline metricValue = new MeasurementBaseline();
-        MeasurementSchedule schedule = scheduleManager.getMeasurementScheduleById(subject, scheduleId);
+        MeasurementSchedule schedule = scheduleManager.getScheduleById(subject, scheduleId);
 
         if ((schedule != null) && (schedule.getBaseline() != null)) {
             metricValue = schedule.getBaseline();

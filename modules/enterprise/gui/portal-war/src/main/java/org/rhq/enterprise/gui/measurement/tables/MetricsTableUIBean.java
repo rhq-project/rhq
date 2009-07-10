@@ -88,7 +88,7 @@ public class MetricsTableUIBean {
 
         if (context.category == EntityContext.Category.Resource) {
             //null -> don't filter, we want everything, false -> not only enabled
-            List<MeasurementSchedule> measurementSchedules = scheduleManager.findMeasurementSchedulesForResourceAndType(
+            List<MeasurementSchedule> measurementSchedules = scheduleManager.findSchedulesForResourceAndType(
                 user.getSubject(), context.resourceId, DataType.MEASUREMENT, null, true);
 
             int[] scheduleIds = new int[measurementSchedules.size()];

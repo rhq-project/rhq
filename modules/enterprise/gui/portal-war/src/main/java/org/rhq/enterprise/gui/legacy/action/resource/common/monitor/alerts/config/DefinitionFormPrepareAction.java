@@ -147,7 +147,7 @@ public abstract class DefinitionFormPrepareAction extends TilesAction {
 
         if (resource != null) {
             for (MeasurementDefinition definition : dataDefinitions) {
-                MeasurementSchedule schedule = scheduleManager.getMeasurementSchedule(subject, resource.getId(),
+                MeasurementSchedule schedule = scheduleManager.getSchedule(subject, resource.getId(),
                     definition.getId(), false);
 
                 RelatedOptionBean rob = new RelatedOptionBean(definition.getName(), String.valueOf(definition.getId()),
@@ -158,7 +158,7 @@ public abstract class DefinitionFormPrepareAction extends TilesAction {
             }
 
             for (MeasurementDefinition definition : traitDefinitions) {
-                MeasurementSchedule schedule = scheduleManager.getMeasurementSchedule(subject, definition.getId(),
+                MeasurementSchedule schedule = scheduleManager.getSchedule(subject, definition.getId(),
                     resource.getId(), false);
                 setDisabledName(schedule, definition);
             }

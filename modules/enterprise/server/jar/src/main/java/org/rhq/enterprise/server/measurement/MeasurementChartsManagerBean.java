@@ -218,7 +218,7 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
         for (int measurementScheduleId : measurementScheduleIds) {
             MeasurementSchedule schedule = null;
             try {
-                schedule = scheduleManager.getMeasurementScheduleById(subject, measurementScheduleId);
+                schedule = scheduleManager.getScheduleById(subject, measurementScheduleId);
                 scheduleIds.add(schedule.getId());
             } catch (MeasurementNotFoundException mnfe) {
                 throw new MeasurementException(mnfe);
@@ -273,7 +273,7 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
             scheds = tmp;
         } catch (MeasurementViewException mve) {
             // No metrics in preferences? Use defaults for the resource (DisplayType==SUMMARY)
-            scheds = scheduleManager.findMeasurementSchedulesForResourceAndType(subject, resourceId,
+            scheds = scheduleManager.findSchedulesForResourceAndType(subject, resourceId,
                 DataType.MEASUREMENT, DisplayType.SUMMARY, false);
         }
 
@@ -298,7 +298,7 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
         DataType dataType, long begin, long end, boolean narrowed, boolean enabledOnly) throws MeasurementException {
         List<MetricDisplaySummary> summaries = new ArrayList<MetricDisplaySummary>();
 
-        List<MeasurementSchedule> scheds = scheduleManager.findMeasurementSchedulesForResourceAndType( // TODO only get ids
+        List<MeasurementSchedule> scheds = scheduleManager.findSchedulesForResourceAndType( // TODO only get ids
             subject, resourceId, dataType, null, enabledOnly); //null -> don't filter, we want everything
 
         List<Integer> scheduleIds = new ArrayList<Integer>(scheds.size());
@@ -451,7 +451,7 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
         // Loop over the definitions, find matching schedules and create a MetricDisplaySummary for each definition
         for (int definitionId : measurementDefinitionIds) {
             int collecting = 0;
-            List<MeasurementSchedule> schedules = scheduleManager.findMeasurementSchedulesByResourceIdsAndDefinitionId(
+            List<MeasurementSchedule> schedules = scheduleManager.findSchedulesByResourceIdsAndDefinitionId(
                 subject, resourceIds, definitionId);
             int[] scheduleIds = new int[schedules.size()];
             for (int i = 0; i < schedules.size(); i++) {
@@ -605,7 +605,7 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
 
     private boolean isMetricCollecting(Subject subject, int[] resourceIds, int definitionId) {
         boolean isCollecting = false;
-        List<MeasurementSchedule> schedules = scheduleManager.findMeasurementSchedulesByResourceIdsAndDefinitionId(
+        List<MeasurementSchedule> schedules = scheduleManager.findSchedulesByResourceIdsAndDefinitionId(
             subject, resourceIds, definitionId);
         for (MeasurementSchedule schedule : schedules) {
             if (schedule.isEnabled()) {

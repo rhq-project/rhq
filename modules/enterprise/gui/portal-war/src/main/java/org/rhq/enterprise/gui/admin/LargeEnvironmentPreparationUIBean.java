@@ -19,8 +19,10 @@
 package org.rhq.enterprise.gui.admin;
 
 import javax.faces.application.FacesMessage;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.core.util.exception.ThrowableUtil;
@@ -65,7 +67,7 @@ public class LargeEnvironmentPreparationUIBean {
         log.warn(subject.getName() + " has requested to disable current measurement schedules.");
 
         try {
-            measurementScheduleManager.disableAllMeasurementSchedules(subject);
+            measurementScheduleManager.disableAllSchedules(subject);
 
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO,
                 "Collection intervals for all current resources in inventory have been disabled. "

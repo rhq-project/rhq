@@ -126,18 +126,18 @@ public class ConfigMetricsAction extends BaseAction {
                 }
 
                 case RESOURCE: {
-                    scheduleManager.disableMeasurementSchedules(subject, resourceId, measurementDefinitionIdsToUpdate);
+                    scheduleManager.disableSchedules(subject, resourceId, measurementDefinitionIdsToUpdate);
                     break;
                 }
 
                 case COMPGROUP: {
-                    scheduleManager.disableMeasurementSchedulesForCompatGroup(subject, groupId,
+                    scheduleManager.disableSchedulesForCompatGroup(subject, groupId,
                         measurementDefinitionIdsToUpdate);
                     break;
                 }
 
                 case AUTOGROUP: {
-                    scheduleManager.disableMeasurementSchedulesForAutoGroup(subject, parent, resourceTypeId,
+                    scheduleManager.disableSchedulesForAutoGroup(subject, parent, resourceTypeId,
                         measurementDefinitionIdsToUpdate);
                     break;
                 }
@@ -161,19 +161,19 @@ public class ConfigMetricsAction extends BaseAction {
         }
 
         case RESOURCE: {
-            scheduleManager.updateMeasurementSchedules(subject, resourceId, measurementDefinitionIdsToUpdate,
+            scheduleManager.updateSchedules(subject, resourceId, measurementDefinitionIdsToUpdate,
                 newCollectionInterval);
             break;
         }
 
         case COMPGROUP: {
-            scheduleManager.updateMeasurementSchedulesForCompatGroup(subject, groupId,
+            scheduleManager.updateSchedulesForCompatGroup(subject, groupId,
                 measurementDefinitionIdsToUpdate, newCollectionInterval);
             break;
         }
 
         case AUTOGROUP: {
-            scheduleManager.updateMeasurementSchedulesForAutoGroup(subject, parent, resourceTypeId,
+            scheduleManager.updateSchedulesForAutoGroup(subject, parent, resourceTypeId,
                 measurementDefinitionIdsToUpdate, newCollectionInterval);
             break;
         }

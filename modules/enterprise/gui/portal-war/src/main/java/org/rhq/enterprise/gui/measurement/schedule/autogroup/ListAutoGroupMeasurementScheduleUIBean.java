@@ -35,7 +35,7 @@ public class ListAutoGroupMeasurementScheduleUIBean extends PagedDataTableUIBean
         int childResourceType = FacesContextUtility.getRequiredRequestParameter("type", Integer.class);
         int[] measurementDefinitionIds = getSelectedAutoGroupScheduleList();
         try {
-            measurementScheduleManager.disableMeasurementSchedulesForAutoGroup(getSubject(), parentResourceId,
+            measurementScheduleManager.disableSchedulesForAutoGroup(getSubject(), parentResourceId,
                 childResourceType, measurementDefinitionIds);
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Disabled " + measurementDefinitionIds.length
                 + " schedules.");
@@ -50,7 +50,7 @@ public class ListAutoGroupMeasurementScheduleUIBean extends PagedDataTableUIBean
         int childResourceType = FacesContextUtility.getRequiredRequestParameter("type", Integer.class);
         int[] measurementDefinitionIds = getSelectedAutoGroupScheduleList();
         try {
-            measurementScheduleManager.enableMeasurementSchedulesForAutoGroup(getSubject(), parentResourceId,
+            measurementScheduleManager.enableSchedulesForAutoGroup(getSubject(), parentResourceId,
                 childResourceType, measurementDefinitionIds);
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Enabled " + measurementDefinitionIds.length
                 + " schedules.");
@@ -66,7 +66,7 @@ public class ListAutoGroupMeasurementScheduleUIBean extends PagedDataTableUIBean
         int childResourceType = FacesContextUtility.getRequiredRequestParameter("type", Integer.class);
         int[] measurementDefinitionIds = getSelectedAutoGroupScheduleList();
         try {
-            measurementScheduleManager.updateMeasurementSchedulesForAutoGroup(getSubject(), parentResourceId,
+            measurementScheduleManager.updateSchedulesForAutoGroup(getSubject(), parentResourceId,
                 childResourceType, measurementDefinitionIds, collectionInterval);
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Enabled and set "
                 + measurementDefinitionIds.length + " schedules.");
@@ -96,7 +96,7 @@ public class ListAutoGroupMeasurementScheduleUIBean extends PagedDataTableUIBean
         public PageList<MeasurementScheduleComposite> fetchPage(PageControl pc) {
             int parentResourceId = FacesContextUtility.getRequiredRequestParameter("parent", Integer.class);
             int childResourceType = FacesContextUtility.getRequiredRequestParameter("type", Integer.class);
-            return measurementScheduleManager.findMeasurementSchedulesForAutoGroup(getSubject(), parentResourceId,
+            return measurementScheduleManager.findSchedulesForAutoGroup(getSubject(), parentResourceId,
                 childResourceType, pc);
         }
     }

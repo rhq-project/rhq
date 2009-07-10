@@ -32,7 +32,7 @@ import org.rhq.core.domain.configuration.Configuration;
  */
 @Test(groups = "as5-plugin")
 public class QueueResourceTest extends AbstractResourceTest {
-    @BeforeTest
+    @BeforeTest(groups = "as5-plugin")
     public void setup() {
         System.out.println("Running Queue test...");
         // TODO: Create a queue and send a message to it (i.e. to generate some metrics).

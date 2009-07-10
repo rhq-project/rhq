@@ -260,23 +260,23 @@
           <c:group name="Event Logs">
                <c:description>Tracking of syslog events</c:description>
                <c:simple-property name="eventTrackingEnabled" type="boolean" required="true" default="false" description="Enables the collection of syslog events"/>
-               <c:simple-property name="regularExpression" required="false" description="A regular expression that if not-null must be matched by the event detail for the message to be accepted"/>
-               <c:simple-property name="minimumSeverity" default="Warning" description="The minimum severity event that will be collected">
+               <c:simple-property name="eventTrackingRegularExpression" displayName="Regular Expression" required="false" description="A regular expression that if not-null must be matched by the event detail for the message to be accepted"/>
+               <c:simple-property name="eventTrackingMinimumSeverity" displayName="Minimum Severity" default="Warning" description="The minimum severity event that will be collected">
                    <c:property-options>
                        <c:option value="Information"/>
                        <c:option value="Warning" default="true"/>
                        <c:option value="Error"/>
                    </c:property-options>
                </c:simple-property>
-               <c:simple-property name="type" required="true" default="file">
+               <c:simple-property name="eventTrackingType" displayName="Event Tracking Type" required="true" default="file">
                    <c:property-options>
                        <c:option value="file" default="true"/>
                        <c:option value="listener"/>
                    </c:property-options>
                </c:simple-property>
-               <c:simple-property name="port" type="integer" default="514" description="Port that the syslog listener will run on if using listener style"/>
-               <c:simple-property name="bindAddress" type="string" default="localhost" description="Address that the syslog listener will bind to if using listener style"/>
-               <c:simple-property name="filePath" type="file" default="/var/log/messages" description="File path or paths to watch for log events"/>
+               <c:simple-property name="eventTrackingPort" displayName="Syslog Listener Port" type="integer" default="514" description="Port that the syslog listener will run on if using listener style"/>
+               <c:simple-property name="eventTrackingBindAddress" displayName="Syslog Listener Bind Address" type="string" default="127.0.0.1" description="Address that the syslog listener will bind to if using listener style"/>
+               <c:simple-property name="eventTrackingFilePath" displayName="Syslog File Path" type="file" default="/var/log/messages" description="File path or paths to watch for log events"/>
            </c:group>
       </plugin-configuration>
       

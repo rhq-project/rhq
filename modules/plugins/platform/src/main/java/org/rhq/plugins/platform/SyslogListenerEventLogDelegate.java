@@ -59,8 +59,8 @@ public class SyslogListenerEventLogDelegate implements Runnable {
 
         this.eventContext = resourceContext.getEventContext();
 
-        this.host = resourceContext.getPluginConfiguration().getSimpleValue("host", "127.0.0.1");
-        this.port = resourceContext.getPluginConfiguration().getSimple("port").getIntegerValue();
+        this.host = resourceContext.getPluginConfiguration().getSimpleValue("eventTrackingBindAddress", "127.0.0.1");
+        this.port = resourceContext.getPluginConfiguration().getSimple("eventTrackingPort").getIntegerValue();
 
         try {
             this.thread = new Thread(this);

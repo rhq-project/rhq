@@ -74,7 +74,11 @@ public class LinuxPlatformComponent extends PlatformComponent implements Content
     private boolean enableContentDiscovery = false;
     private boolean enableInternalYumServer = false;
 
-    SyslogListenerEventLogDelegate listenerEventDelegate;
+    private enum EventTrackingType {
+        listener, file
+    };
+
+    private SyslogListenerEventLogDelegate listenerEventDelegate;
 
     @Override
     public void start(ResourceContext context) {
@@ -108,11 +112,24 @@ public class LinuxPlatformComponent extends PlatformComponent implements Content
         startWithContentContext(context.getContentContext());
 
         if (pluginConfiguration.getSimple("eventTrackingEnabled").getBooleanValue()) {
-            if (pluginConfiguration.getSimpleValue("type","listener").equals("listener")) {
+            if (getEventTrackingType(pluginConfiguration) == EventTrackingType.listener) {
                 // Start up the syslog listener
                 listenerEventDelegate = new SyslogListenerEventLogDelegate(context);
             }
         }
+    }
+
+    private EventTrackingType getEventTrackingType(Configuration pluginConfiguration) {
+        // default is "file" as described in plugin descriptor
+        String type = pluginConfiguration.getSimpleValue("eventTrackingType", EventTrackingType.file.name());
+        EventTrackingType typeEnum;
+        try {
+            typeEnum = EventTrackingType.valueOf(type.toLowerCase());
+        } catch (Exception e) {
+            typeEnum = EventTrackingType.file;
+            log.warn("event tracking type is invalid [" + type + "], defaulting to: " + typeEnum);
+        }
+        return typeEnum;
     }
 
     @Override

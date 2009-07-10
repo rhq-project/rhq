@@ -46,10 +46,10 @@ import org.rhq.core.domain.resource.Resource;
 
 @Entity
 @NamedQueries( { //
-@NamedQuery(name = MeasurementSchedule.FIND_ALL_FOR_DEFINITIONS, query = "" //
-    + "SELECT ms "//
-    + "  FROM MeasurementSchedule ms " //
-    + " WHERE ms.definition IN (:definitions) "), //
+    @NamedQuery(name = MeasurementSchedule.FIND_ALL_FOR_DEFINITIONS, query = "" //
+        + "SELECT ms "//
+        + "  FROM MeasurementSchedule ms " //
+        + " WHERE ms.definition IN (:definitions) "), //
     @NamedQuery(name = MeasurementSchedule.FIND_BY_IDS, query = "" //
         + "SELECT ms " //
         + "  FROM MeasurementSchedule ms " //
@@ -83,7 +83,10 @@ import org.rhq.core.domain.resource.Resource;
         + "    SELECT ms " //
         + "      FROM MeasurementSchedule ms " //
         + "JOIN FETCH ms.definition " //
-        + "     WHERE ms.resource.id = :resourceId "), //
+        + "     WHERE ms.resource.id = :resourceId " //
+        + "       AND (ms.definition.dataType = :dataType OR :dataType is null) "
+        + "       AND (ms.definition.displayType = :displayType OR :displayType is null) "
+        + "       AND (ms.enabled = :enabled OR :enabled is null) "), //
     @NamedQuery(name = MeasurementSchedule.FIND_BY_RESOURCE_IDS_AND_DEFINITION_IDS, query = "" //
         + "SELECT ms " //
         + "  FROM MeasurementSchedule ms " //

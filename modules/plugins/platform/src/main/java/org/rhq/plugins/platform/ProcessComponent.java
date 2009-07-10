@@ -18,7 +18,6 @@
  */
 package org.rhq.plugins.platform;
 
-import java.beans.BeanInfo;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.io.BufferedReader;
@@ -183,6 +182,7 @@ public class ProcessComponent implements ResourceComponent, MeasurementFacet {
                 }
             }
         }
+        return;
     }
 
     private String convertPropertyName(String propertyName, ProcessInfo theProcess) {
@@ -209,8 +209,10 @@ public class ProcessComponent implements ResourceComponent, MeasurementFacet {
                 }
             }
         } catch (Exception e) {
-            //            log.debug("Unable to read property from measurement attribute [" + searchProperty + "] not found on ["
-            //                    + this.resourceContext.getResourceKey() + "]");
+            if (log.isDebugEnabled()) {
+                log.debug("Unable to read property [" + property + "]; measurement attribute [" + searchProperty
+                    + "] not found on [" + this.resourceContext.getResourceKey() + "]. Cause: " + e);
+            }
         }
 
         if (ps.length > 1) {
@@ -219,20 +221,4 @@ public class ProcessComponent implements ResourceComponent, MeasurementFacet {
 
         return value;
     }
-
-    private double getObjectProperty(Object object, String name) {
-        try {
-            BeanInfo info = Introspector.getBeanInfo(object.getClass());
-            for (PropertyDescriptor pd : info.getPropertyDescriptors()) {
-                if (pd.getName().equals(name)) {
-                    return ((Number) pd.getReadMethod().invoke(object)).doubleValue();
-                }
-            }
-        } catch (Exception e) {
-            //            log.error("Error occurred while retrieving property '" + name + "' from object [" + object + "]", e);
-        }
-
-        return Double.NaN;
-    }
-
 }

@@ -38,6 +38,10 @@ public final class QueryGenerator {
     private List<String> filterExpressions = new ArrayList<String>();
     private List<Object> filterValues = new ArrayList<Object>();
 
+    private static final String relationshipPrefix = "rel";
+    private int relationshipCounter = 0;
+    private List<String> joinExpressions = new ArrayList<String>();
+
     private Object criteriaObject;
     private PageControl pageControl;
     private Set<String> relationsToFetch;
@@ -98,6 +102,25 @@ public final class QueryGenerator {
      *                           propertyExpression during query generation
      */
     public void addFilter(String expression, Object... values) {
+        addFilterWithAlias(this.alias, expression, values);
+    }
+
+    /**
+     * Supports and arbitrarily style for adding related JOIN and WHERE conditions. The relationship
+     * is what you want to join on, and the expression and value arguments follow the semantics laid
+     * out in {@link QueryGenerator#addFilter(String, Object...)}.  For example, if you criteria
+     * object contained a relationship called 'children', and if each of the child objects contained
+     * a field called 'height', the call to this method might look like:
+     * 
+     *     addRelationshipFilter("children", "height between ? and ?", 42, 111);
+     */
+    public void addRelationshipFilter(String relationship, String expression, Object... values) {
+        String relationshipName = relationshipPrefix + String.valueOf(relationshipCounter++);
+        joinExpressions.add(this.alias + "." + relationship + " " + relationshipName);
+        addFilterWithAlias(relationshipName, expression, values);
+    }
+
+    private void addFilterWithAlias(String alias, String expression, Object... values) {
         int argumentsFound = 0;
         while (expression.indexOf('?') != -1) {
             expression = expression.replaceFirst("\\?", argPrefix + String.valueOf(argumentCounter++));
@@ -108,7 +131,7 @@ public final class QueryGenerator {
                 + " placeholders, but provided " + values.length + " arguments");
         }
 
-        filterExpressions.add(this.alias + "." + expression);
+        filterExpressions.add(alias + "." + expression);
         filterValues.addAll(Arrays.asList(values));
     }
 
@@ -156,6 +179,9 @@ public final class QueryGenerator {
         }
         if (authorizationJoinFragment != null) {
             results.append(authorizationJoinFragment);
+        }
+        for (String customJoinFragment : joinExpressions) {
+            results.append("JOIN " + customJoinFragment).append(NL);
         }
 
         Map<String, Object> critFields = getEntityPersistenceFields(criteriaObject);
@@ -325,6 +351,11 @@ public final class QueryGenerator {
         System.out.println(generator.getQueryString(true));
 
         generator.addFilter("mtime between ? and ?", 0, 1);
+
+        System.out.println(generator.getQueryString(false));
+        System.out.println(generator.getQueryString(true));
+
+        generator.addRelationshipFilter("conditions", "name like ?", "coolCondition");
 
         System.out.println(generator.getQueryString(false));
         System.out.println(generator.getQueryString(true));

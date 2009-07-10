@@ -101,15 +101,6 @@ public interface MeasurementBaselineManagerLocal {
     void enableAutoBaselineCalculation(Subject subject, Integer[] resourceIds, Integer[] definitionIds);
 
     /**
-     * Return a list of {@link MeasurementBaseline} objects for the given {@link Resource}.
-     *
-     * @param  resource the resource whose baselines are to be returned
-     *
-     * @return a list of baselines for all measurements scheduled on the given resource
-     */
-    List<MeasurementBaseline> findBaselinesForResource(Resource resource);
-
-    /**
      * Returns the baseline for a measurement identified by its measurement definition and the resource whose
      * measurement it is.
      *
@@ -121,4 +112,20 @@ public interface MeasurementBaselineManagerLocal {
      */
     MeasurementBaseline findBaselineForResourceAndMeasurementDefinition(Subject subject, Integer resource,
         Integer measurementDefinitionId);
+
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    //
+    // The following are shared with the Remote Interface
+    //
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    /**
+     * Return a list of {@link MeasurementBaseline} objects for the {@link Resource} represented by the given id.
+     *
+     * @param subject    the user request to view the baseline history for the given resource 
+     * @param resourceId the id of the resource whose baselines are to be returned
+     *
+     * @return a list of baselines for all measurements scheduled on the given resource
+     */
+    List<MeasurementBaseline> findBaselinesForResource(Subject subject, int resourceId);
 }

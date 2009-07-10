@@ -54,6 +54,7 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.cloud.StatusManagerLocal;
+import org.rhq.enterprise.server.exception.FetchException;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 
@@ -65,7 +66,8 @@ import org.rhq.enterprise.server.system.SystemManagerLocal;
  * @author Joseph Marques
  */
 @Stateless
-public class MeasurementBaselineManagerBean implements MeasurementBaselineManagerLocal {
+public class MeasurementBaselineManagerBean implements MeasurementBaselineManagerLocal,
+    MeasurementBaselineManagerRemote {
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
@@ -242,6 +244,7 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
         }
     }
 
+    @SuppressWarnings("unused")
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     //@TransactionTimeout( 60 * 60 )
     private int _calculateAutoBaselinesDELETE_HQL(long startTime, long endTime) throws Exception {
@@ -255,6 +258,7 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
         return rowsModified;
     }
 
+    @SuppressWarnings("unused")
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     //@TransactionTimeout( 60 * 60 )
     private int _calculateAutoBaselinesINSERT_HQL(long startTime, long endTime, long computeTime) throws Exception {
@@ -319,14 +323,6 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
 
             bl.setUserEntered(false);
         }
-    }
-
-    @SuppressWarnings("unchecked")
-    public List<MeasurementBaseline> findBaselinesForResource(Resource res) {
-        Query q = entityManager.createNamedQuery(MeasurementBaseline.QUERY_FIND_BY_RESOURCE);
-        q.setParameter("resourceId", res.getId());
-        List<MeasurementBaseline> ret = q.getResultList();
-        return ret;
     }
 
     public MeasurementBaseline findBaselineForResourceAndMeasurementDefinition(Subject subject, Integer resourceId,
@@ -441,5 +437,22 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
         agentStatusManager.updateByMeasurementBaseline(baseline.getId());
 
         log.debug("Invoking... " + callingMethod);
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<MeasurementBaseline> findBaselinesForResource(Subject subject, int resourceId) throws FetchException {
+        try {
+            if (authorizationManager.canViewResource(subject, resourceId) == false) {
+                throw new PermissionException("User[" + subject.getName()
+                    + " ] does not have permission to view baselines for resource[id=" + resourceId + "]");
+            }
+
+            Query query = entityManager.createNamedQuery(MeasurementBaseline.QUERY_FIND_BY_RESOURCE);
+            query.setParameter("resourceId", resourceId);
+            List<MeasurementBaseline> results = query.getResultList();
+            return results;
+        } catch (Exception e) {
+            throw new FetchException(e);
+        }
     }
 }

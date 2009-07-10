@@ -247,7 +247,7 @@ public class Alert implements Serializable {
     /**
      * Creates a new alert. (required by EJB3 spec, but not used)
      */
-    protected Alert() {
+    public Alert() {
     }
 
     /**

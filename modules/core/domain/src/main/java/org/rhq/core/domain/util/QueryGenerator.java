@@ -3,6 +3,7 @@ package org.rhq.core.domain.util;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -18,7 +19,9 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Query;
 
+import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.util.jdbc.JDBCUtil;
 
 /**
  * A query generator used to generate queries with specific fetch join or sorting requirements,
@@ -59,6 +62,8 @@ public final class QueryGenerator {
         String[] relationsToFetch = pageControl.getOptionalData();
         if (relationsToFetch != null) {
             this.relationsToFetch = new HashSet<String>(Arrays.asList(relationsToFetch));
+        } else {
+            this.relationsToFetch = Collections.emptySet();
         }
 
         if (pageControl == null) {
@@ -341,23 +346,31 @@ public final class QueryGenerator {
         ad.setName("JBoss");
 
         QueryGenerator generator = new QueryGenerator(ad, pc);
-
         System.out.println(generator.getQueryString(false));
         System.out.println(generator.getQueryString(true));
 
         generator.setAuthorizationResourceFragment(AuthorizationTokenType.RESOURCE, 1);
-
         System.out.println(generator.getQueryString(false));
         System.out.println(generator.getQueryString(true));
 
         generator.addFilter("mtime between ? and ?", 0, 1);
-
         System.out.println(generator.getQueryString(false));
         System.out.println(generator.getQueryString(true));
 
         generator.addRelationshipFilter("conditions", "name like ?", "coolCondition");
-
         System.out.println(generator.getQueryString(false));
         System.out.println(generator.getQueryString(true));
+
+        //
+
+        Alert alert = new Alert();
+        Integer[] definitionIds = new Integer[] { 1, 2, 3 };
+
+        QueryGenerator alertGenerator = new QueryGenerator(alert, PageControl.getUnlimitedInstance());
+
+        String expression = "definition.resource.id IN ( " + JDBCUtil.generateInBinds(definitionIds.length) + " )";
+        alertGenerator.addFilter(expression, (Object[]) definitionIds);
+
+        System.out.println(alertGenerator.getQueryString(false));
     }
 }

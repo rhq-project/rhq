@@ -67,6 +67,10 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.domain.util.QueryGenerator;
+import org.rhq.core.domain.util.QueryGenerator.AuthorizationTokenType;
+import org.rhq.core.util.collection.ArrayUtils;
+import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.i18n.AlertI18NFactory;
 import org.rhq.enterprise.server.alert.i18n.AlertI18NResourceKeys;
@@ -74,6 +78,7 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.core.EmailManagerLocal;
+import org.rhq.enterprise.server.exception.FetchException;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.measurement.util.MeasurementFormatter;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
@@ -86,7 +91,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Ian Springer
  */
 @Stateless
-public class AlertManagerBean implements AlertManagerLocal {
+public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
@@ -831,5 +836,38 @@ public class AlertManagerBean implements AlertManagerLocal {
              * update the cache indirectly via the status field on the owning agent and the periodic job that checks it. 
              */
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    public PageList<Alert> findAlertDefinitions(Subject subject, Alert criteria, AlertPriority priority,
+        int[] resourceIds, long beginTime, long endTime, PageControl pc) throws FetchException {
+
+        try {
+            QueryGenerator generator = new QueryGenerator(criteria, pc);
+            if (authorizationManager.isInventoryManager(subject) == false) {
+                generator.setAuthorizationResourceFragment(AuthorizationTokenType.RESOURCE, "definition.resource",
+                    subject.getId());
+            }
+            if (priority != null) {
+                generator.addRelationshipFilter("definition", "priority = ?", priority.name());
+            }
+            if (resourceIds != null && resourceIds.length != 0) {
+                String expression = "definition.resource.id IN (" + JDBCUtil.generateInBinds(resourceIds.length) + ")";
+                Object[] varargs = (Object[]) ArrayUtils.wrapInArray(resourceIds);
+                generator.addFilter(expression, varargs);
+            }
+            generator.addFilter("ctime between ? and ?", beginTime, endTime);
+
+            Query query = generator.getQuery(entityManager);
+            Query countQuery = generator.getCountQuery(entityManager);
+
+            long count = (Long) countQuery.getSingleResult();
+            List<Alert> alertDefinitions = query.getResultList();
+
+            return new PageList<Alert>(alertDefinitions, (int) count, pc);
+        } catch (Exception e) {
+            throw new FetchException(e.getMessage());
+        }
+
     }
 }

@@ -265,8 +265,8 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
      *
      * @return a List of MeasurementSchedules
      */
-    public List<MeasurementSchedule> findSchedulesByResourceIdsAndDefinitionId(Subject subject,
-        int[] resourceIds, int definitionId) {
+    public List<MeasurementSchedule> findSchedulesByResourceIdsAndDefinitionId(Subject subject, int[] resourceIds,
+        int definitionId) {
         return findSchedulesByResourcesAndDefinitions(resourceIds, new int[] { definitionId });
     }
 
@@ -290,8 +290,8 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
      *
      * @return the MeasurementSchedule of the given definition for the given resource
      */
-    public MeasurementSchedule getSchedule(Subject subject, int resourceId, int definitionId,
-        boolean attachBaseline) throws MeasurementNotFoundException {
+    public MeasurementSchedule getSchedule(Subject subject, int resourceId, int definitionId, boolean attachBaseline)
+        throws MeasurementNotFoundException {
         try {
             List<MeasurementSchedule> results = findSchedulesByResourcesAndDefinitions(new int[] { resourceId },
                 new int[] { definitionId });
@@ -492,8 +492,8 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<MeasurementScheduleComposite> findScheduleCompositesForResource(Subject subject,
-        int resourceId, @Nullable DataType dataType, PageControl pageControl) {
+    public PageList<MeasurementScheduleComposite> findScheduleCompositesForResource(Subject subject, int resourceId,
+        @Nullable DataType dataType, PageControl pageControl) {
         pageControl.addDefaultOrderingField("ms.id");
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
@@ -506,16 +506,12 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
 
     @SuppressWarnings("unchecked")
     public PageList<MeasurementSchedule> findSchedulesForResource(Subject subject, int resourceId,
-        @Nullable DataType dataType, @Nullable DisplayType displayType, @Nullable Boolean enabled,
         PageControl pageControl) {
         pageControl.addDefaultOrderingField("ms.id");
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
             MeasurementSchedule.FIND_ALL_FOR_RESOURCE_ID, pageControl);
         query.setParameter("resourceId", resourceId);
-        query.setParameter("dataType", dataType);
-        query.setParameter("displayType", displayType);
-        query.setParameter("enabled", enabled);
         List<MeasurementSchedule> results = query.getResultList();
         return new PageList<MeasurementSchedule>(results, pageControl);
     }
@@ -724,8 +720,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         log.info("" + updateCount + " resources mtime fields were updated as a result of this metric template update");
     }
 
-    public void updateSchedules(Subject subject, int resourceId, int[] measurementDefinitionIds,
-        long collectionInterval) {
+    public void updateSchedules(Subject subject, int resourceId, int[] measurementDefinitionIds, long collectionInterval) {
         collectionInterval = verifyMinimumCollectionInterval(collectionInterval);
         Resource resource = resourceManager.getResourceById(subject, resourceId);
         if (!authorizationManager.hasResourcePermission(subject, Permission.MANAGE_MEASUREMENTS, resourceId)) {

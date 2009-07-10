@@ -90,8 +90,7 @@ public class ListResourceMeasurementScheduleUIBean extends PagedDataTableUIBean 
         @Override
         public PageList<MeasurementSchedule> fetchPage(PageControl pc) {
             int resourceId = FacesContextUtility.getRequiredRequestParameter("id", Integer.class);
-            return measurementScheduleManager.findSchedulesForResource(getSubject(), resourceId, null, null,
-                null, pc);
+            return measurementScheduleManager.findSchedulesForResource(getSubject(), resourceId, pc);
         }
     }
 

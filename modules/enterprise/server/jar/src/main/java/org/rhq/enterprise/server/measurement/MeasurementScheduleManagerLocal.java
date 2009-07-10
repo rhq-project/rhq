@@ -68,15 +68,6 @@ public interface MeasurementScheduleManagerLocal {
     AgentClient getAgentClientForSchedule(MeasurementSchedule sched);
 
     /**
-     * Return a list of MeasurementSchedules for the given ids
-     *
-     * @param  ids PrimaryKeys of the schedules searched
-     *
-     * @return a list of Schedules
-     */
-    List<MeasurementSchedule> findSchedulesByIds(int[] ids);
-
-    /**
      * Return a list of MeasurementSchedules for the given definition ids and resource id.
      *
      * @param  definitionIds
@@ -107,18 +98,6 @@ public interface MeasurementScheduleManagerLocal {
     MeasurementSchedule updateSchedule(Subject subject, MeasurementSchedule schedule);
 
     /**
-     * Find MeasurementSchedules that are attached to a certain definition and some resources
-     *
-     * @param  subject      A session id that must be valid
-     * @param  definitionId The primary key of a MeasurementDefinition
-     * @param  resourceIds  primary of Resources wanted
-     *
-     * @return a List of MeasurementSchedules
-     */
-    List<MeasurementSchedule> findSchedulesByResourceIdsAndDefinitionId(Subject subject, int[] resourceIds,
-        int definitionId);
-
-    /**
      * Find MeasurementSchedules that are attached to a certain definition and a resource
      *
      * @param  subject
@@ -132,18 +111,6 @@ public interface MeasurementScheduleManagerLocal {
         throws MeasurementNotFoundException;
 
     /**
-     * Retrieves the default metric collection schedules for the given resource type.
-     *
-     * @param  subject        the current user
-     * @param  resourceTypeId a {@link org.rhq.core.domain.resource.ResourceType} id
-     * @param  pageControl    the page control for the results
-     *
-     * @return the default metric collection schedules for the given resource type
-     */
-    PageList<MeasurementScheduleComposite> findScheduleDefaultsForResourceType(Subject subject,
-        int resourceTypeId, PageControl pageControl);
-
-    /**
      * Retrieves the metric collection schedules for the given resource.
      *
      * @param  subject     the current user
@@ -153,24 +120,8 @@ public interface MeasurementScheduleManagerLocal {
      *
      * @return the metric collection schedules for the given resource
      */
-    PageList<MeasurementScheduleComposite> findScheduleCompositesForResource(Subject subject,
-        int resourceId, @Nullable DataType dataType, PageControl pageControl);
-
-    /**
-     * Retrieves the metric collection schedules for the given resource.
-     *
-     * @param  subject     the current user
-     * @param  resourceId  a {@link Resource} id
-     * @param  dataType    the data type to limit results to, or null to not limit results to a particular data type
-     * @param  dataType    the display type to limit results to, or null to not limit results to a particular display type
-     * @param  enable      limit the results by enabled state, or null to not limit results by enabled state
-     * @param  pageControl the page control for the results
-     *
-     * @return the metric collection schedules for the given resource
-     */
-    PageList<MeasurementSchedule> findSchedulesForResource(Subject subject, int resourceId,
-        @Nullable DataType dataType, @Nullable DisplayType displayType, @Nullable Boolean enabled,
-        PageControl pageControl);
+    PageList<MeasurementScheduleComposite> findScheduleCompositesForResource(Subject subject, int resourceId,
+        @Nullable DataType dataType, PageControl pageControl);
 
     /**
      * Disables all collection schedules in the given measurement definition IDs. This only disables the "templates", it
@@ -183,24 +134,6 @@ public interface MeasurementScheduleManagerLocal {
      */
     void disableDefaultCollectionForMeasurementDefinitions(Subject subject, int[] measurementDefinitionIds,
         boolean updateSchedules);
-
-    /**
-     * Disables all collection schedules attached to the given resource whose schedules are based off the given
-     * definitions. This does not disable the "templates" (aka definitions).
-     *
-     * @param subject
-     * @param measurementDefinitionIds
-     * @param resourceId
-     */
-    void disableSchedules(Subject subject, int resourceId, int[] measurementDefinitionIds);
-
-    /**
-     * Enable the schedules for the provided definitions and resource
-     * @param subject
-     * @param measurementDefinitionIds
-     * @param resourceId
-     */
-    void enableSchedules(Subject subject, int resourceId, int[] measurementDefinitionIds);
 
     /**
      * Disables all collection schedules for all measurement definitions. This only disables the "templates", it does
@@ -247,8 +180,7 @@ public interface MeasurementScheduleManagerLocal {
      * @param resourceId
      * @param collectionInterval
      */
-    void updateSchedules(Subject subject, int resourceId, int[] measurementDefinitionIds,
-        long collectionInterval);
+    void updateSchedules(Subject subject, int resourceId, int[] measurementDefinitionIds, long collectionInterval);
 
     /**
      * Enables all collection schedules attached to the given compatible group whose schedules are based off the given
@@ -289,23 +221,13 @@ public interface MeasurementScheduleManagerLocal {
      *
      * @return List of MeasuremenSchedules for the given resource
      */
-    List<MeasurementSchedule> findSchedulesForResourceAndType(Subject subject, int resourceId,
-        DataType dataType, DisplayType displayType, boolean enabledOnly);
+    List<MeasurementSchedule> findSchedulesForResourceAndType(Subject subject, int resourceId, DataType dataType,
+        DisplayType displayType, boolean enabledOnly);
 
     /**
      * @return a rounded count of the average number of metrics that are scheduled per minute
      */
     int getScheduledMeasurementsPerMinute();
-
-    /**
-     * Disable the measurement schedules for the passed definitions for the resources of the passed compatible group.
-     */
-    public void disableSchedulesForCompatGroup(Subject subject, int groupId, int[] measurementDefinitionIds);
-
-    /**
-     * Enable the measurement schedules for the passed definitions for the resources of the passed compatible group.
-     */
-    public void enableSchedulesForCompatGroup(Subject subject, int groupId, int[] measurementDefinitionIds);
 
     /**
      * Disable the measurement schedules for the passed definitions of the rsource ot the passed auto group.
@@ -315,7 +237,7 @@ public interface MeasurementScheduleManagerLocal {
      * @param parentResourceId
      * @param childResourceType
      */
-    public void disableSchedulesForAutoGroup(Subject subject, int parentResourceId, int childResourceType,
+    void disableSchedulesForAutoGroup(Subject subject, int parentResourceId, int childResourceType,
         int[] measurementDefinitionIds);
 
     /**
@@ -326,14 +248,97 @@ public interface MeasurementScheduleManagerLocal {
      * @param parentResourceId
      * @param childResourceType
      */
-    public void enableSchedulesForAutoGroup(Subject subject, int parentResourceId, int childResourceType,
+    void enableSchedulesForAutoGroup(Subject subject, int parentResourceId, int childResourceType,
         int[] measurementDefinitionIds);
 
-    public PageList<MeasurementScheduleComposite> findSchedulesForCompatGroup(Subject subject, int groupId,
+    /**
+     * Create {@link MeasurementSchedule}s for existing resources hanging on newType.
+     * @param type The {@link ResourceType} for which we want to add schedules
+     * @param newDefinition The {@link MeasurementDefinition} where we derive the schedules from
+     */
+    void createSchedulesForExistingResources(ResourceType type, MeasurementDefinition newDefinition);
+
+    int insertSchedulesFor(int[] batchIds) throws Exception;
+
+    int returnSchedulesFor(int[] batchIds, Set<ResourceMeasurementScheduleRequest> allSchedules) throws Exception;
+
+    /**
+     * This method should be called when it is determined that the data in the measurement schedule table might be
+     * corrupt. This happens when the schedules get a collection interval of less than 30 seconds. Execution of this
+     * method will automatically correct that situation, and update the mtime's of the corresponding resources whose
+     * schedules were corrupt, to cause the agent to synchronize those schedules.
+     */
+    void errorCorrectSchedules();
+
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    //
+    // The following are shared with the Remote Interface
+    //
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    /**
+     * Disables all collection schedules attached to the given resource whose schedules are based off the given
+     * definitions. This does not disable the "templates" (aka definitions).
+     *
+     * @param subject
+     * @param measurementDefinitionIds
+     * @param resourceId
+     */
+    void disableSchedules(Subject subject, int resourceId, int[] measurementDefinitionIds);
+
+    /**
+     * Disable the measurement schedules for the passed definitions for the resources of the passed compatible group.
+     */
+    void disableSchedulesForCompatGroup(Subject subject, int groupId, int[] measurementDefinitionIds);
+
+    /**
+     * Enable the schedules for the provided definitions and resource
+     * @param subject
+     * @param measurementDefinitionIds
+     * @param resourceId
+     */
+    void enableSchedules(Subject subject, int resourceId, int[] measurementDefinitionIds);
+
+    /**
+     * Enable the measurement schedules for the passed definitions for the resources of the passed compatible group.
+     */
+    void enableSchedulesForCompatGroup(Subject subject, int groupId, int[] measurementDefinitionIds);
+
+    /**
+     * Retrieves the default metric collection schedules for the given resource type.
+     *
+     * @param  subject        the current user
+     * @param  resourceTypeId a {@link org.rhq.core.domain.resource.ResourceType} id
+     * @param  pageControl    the page control for the results
+     *
+     * @return the default metric collection schedules for the given resource type
+     */
+    PageList<MeasurementScheduleComposite> findScheduleDefaultsForResourceType(Subject subject, int resourceTypeId,
         PageControl pageControl);
 
     /**
-     * Get the MeasurementSchedule composits for an autogroup
+     * Return a list of MeasurementSchedules for the given ids
+     *
+     * @param  ids PrimaryKeys of the schedules searched
+     *
+     * @return a list of Schedules
+     */
+    List<MeasurementSchedule> findSchedulesByIds(int[] ids);
+
+    /**
+     * Find MeasurementSchedules that are attached to a certain definition and some resources
+     *
+     * @param  subject      A session id that must be valid
+     * @param  definitionId The primary key of a MeasurementDefinition
+     * @param  resourceIds  primary of Resources wanted
+     *
+     * @return a List of MeasurementSchedules
+     */
+    List<MeasurementSchedule> findSchedulesByResourceIdsAndDefinitionId(Subject subject, int[] resourceIds,
+        int definitionId);
+
+    /**
+     * Get the MeasurementSchedule composites for an autogroup
      *
      * @param  subject
      * @param  parentId
@@ -342,26 +347,21 @@ public interface MeasurementScheduleManagerLocal {
      *
      * @return
      */
-    public PageList<MeasurementScheduleComposite> findSchedulesForAutoGroup(Subject subject, int parentId,
-        int childType, PageControl pageControl);
+    PageList<MeasurementScheduleComposite> findSchedulesForAutoGroup(Subject subject, int parentId, int childType,
+        PageControl pageControl);
+
+    PageList<MeasurementScheduleComposite> findSchedulesForCompatGroup(Subject subject, int groupId,
+        PageControl pageControl);
 
     /**
-     * Create {@link MeasurementSchedule}s for existing resources hanging on newType.
-     * @param type The {@link ResourceType} for which we want to add schedules
-     * @param newDefinition The {@link MeasurementDefinition} where we derive the schedules from
+     * Retrieves the metric collection schedules for the given resource.
+     *
+     * @param  subject     the current user
+     * @param  resourceId  a {@link Resource} id
+     * @param  pageControl the page control for the results
+     *
+     * @return the metric collection schedules for the given resource
      */
-    public void createSchedulesForExistingResources(ResourceType type, MeasurementDefinition newDefinition);
+    PageList<MeasurementSchedule> findSchedulesForResource(Subject subject, int resourceId, PageControl pageControl);
 
-    public int insertSchedulesFor(int[] batchIds) throws Exception;
-
-    public int returnSchedulesFor(int[] batchIds, Set<ResourceMeasurementScheduleRequest> allSchedules)
-        throws Exception;
-
-    /**
-     * This method should be called when it is determined that the data in the measurement schedule table might be
-     * corrupt. This happens when the schedules get a collection interval of less than 30 seconds. Execution of this
-     * method will automatically correct that situation, and update the mtime's of the corresponding resources whose
-     * schedules were corrupt, to cause the agent to synchronize those schedules.
-     */
-    public void errorCorrectSchedules();
 }

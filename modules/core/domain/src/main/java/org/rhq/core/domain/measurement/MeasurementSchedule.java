@@ -83,10 +83,7 @@ import org.rhq.core.domain.resource.Resource;
         + "    SELECT ms " //
         + "      FROM MeasurementSchedule ms " //
         + "JOIN FETCH ms.definition " //
-        + "     WHERE ms.resource.id = :resourceId " //
-        + "       AND (ms.definition.dataType = :dataType OR :dataType is null) " //
-        + "       AND (ms.definition.displayType = :displayType OR :displayType is null) " //
-        + "       AND (ms.enabled = :enabled OR :enabled is null) "), //
+        + "     WHERE ms.resource.id = :resourceId "), //
     @NamedQuery(name = MeasurementSchedule.FIND_BY_RESOURCE_IDS_AND_DEFINITION_IDS, query = "" //
         + "SELECT ms " //
         + "  FROM MeasurementSchedule ms " //

@@ -48,7 +48,12 @@ if not "%JBOSS_CLASSPATH%" == "" goto HAVE_JB_CP
 set JBOSS_CLASSPATH=%JBOSS_HOME%\client\jbossall-client.jar
 set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\lib\jboss-dependency.jar
 rem Below is temporary!!!
+if not "%USE_PROFILESERVICE_CLIENT%" == "" goto USE_FULL_PROFILESERVICE
+set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\client\jboss-profileservice-client.jar
+goto DONE_WITH_PROFILE_SERVICE
+:USE_FULL_PROFILESERVICE
 set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\common\lib\jboss-profileservice.jar
+:DONE_WITH_PROFILESERVICE
 goto HAVE_JB_CP
 
 rem For the call to new InitialContext() (using org.jnp.interfaces.NamingContextFactory)...

@@ -1,5 +1,6 @@
 package test;
 
+import java.io.File;
 import java.util.Properties;
 
 import javax.naming.Context;
@@ -8,7 +9,17 @@ import javax.naming.NamingException;
 
 import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.deployers.spi.management.deploy.DeploymentManager;
+import org.jboss.deployers.spi.management.deploy.DeploymentProgress;
+import org.jboss.deployers.spi.management.deploy.DeploymentStatus;
+import org.jboss.profileservice.spi.DeploymentOption;
 import org.jboss.profileservice.spi.ProfileService;
+
+import java.net.URL;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 
 public class EjbClient
 {   
@@ -43,6 +54,8 @@ public class EjbClient
       managementView.getDeploymentNames();  
       deploymentManager.getProfiles();      
 
+      tryToDeploySomething(deploymentManager);
+      
       Worker worker = new Worker(managementView);
       worker.run();
       for (int i = 0; i < 50; i++) {
@@ -71,4 +84,40 @@ public class EjbClient
         System.out.println("Found Object: " + obj);
         return obj;
     }   
+    
+    private static void tryToDeploySomething(DeploymentManager deploymentManager) {
+        File tmpFile = null;
+        
+        try {
+            tmpFile = File.createTempFile("ejb-client-test", ".war");
+            InputStream dummyWar = EjbClient.class.getClassLoader().getResourceAsStream("dummy.war");
+            BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(tmpFile));
+            byte[] buffer = new byte[16384];
+            
+            int cnt = 0;
+            while ((cnt = dummyWar.read(buffer)) >= 0) {
+                out.write(buffer, 0, cnt);
+            }
+            dummyWar.close();
+            out.close();
+        } catch (IOException e) {
+            return;
+        }
+        try {
+            URL url = tmpFile.toURI().toURL();
+            DeploymentProgress progress = deploymentManager.distribute(tmpFile.getName(), url, new DeploymentOption[] {});
+            progress.run();
+            
+            if (!progress.getDeploymentStatus().isFailed()) {
+                String[] deploymentNames = progress.getDeploymentID().getRepositoryNames();
+                progress = deploymentManager.start(deploymentNames);
+                progress.run();
+            }
+        } catch (Exception e) {
+            System.out.println("Deployment failed");
+            e.printStackTrace();
+        } finally {
+            tmpFile.delete();
+        }
+    }
 }

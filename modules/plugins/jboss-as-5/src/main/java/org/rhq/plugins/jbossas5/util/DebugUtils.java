@@ -76,24 +76,27 @@ public abstract class DebugUtils
         StringBuilder buf = new StringBuilder();
         List<ManagedProperty> props = new ArrayList<ManagedProperty>(managedProps.values());
         Collections.sort(props, new ManagedPropertyComparator()); // sort by name
-        for (ManagedProperty managedProperty : props)
-        {
-            if (managedProperty.isMandatory())
-                buf.append("* ");
-            else
-                buf.append("  ");
-            buf.append("name=").append(managedProperty.getName());
-            if (!managedProperty.getName().equals(managedProperty.getMappedName()))
-                buf.append(", mappedName=").append(managedProperty.getMappedName());
-            EnumSet<ViewUse> viewUses = ManagedComponentUtils.getViewUses(managedProperty);
-            buf.append(", viewUses=").append(viewUses);
-            buf.append(", readOnly=").append(managedProperty.isReadOnly());
-            buf.append(", mandatory=").append(managedProperty.isMandatory());
-            buf.append(", removed=").append(managedProperty.isRemoved());
-            MetaValue value = managedProperty.getValue();
-            if (value == null)
-                buf.append(", type=").append(managedProperty.getMetaType());
-            buf.append(", value=").append(convertMetaValueToString(value));
+        try {
+            for (ManagedProperty managedProperty : props) {
+                if (managedProperty.isMandatory())
+                    buf.append("* ");
+                else
+                    buf.append("  ");
+                buf.append("name=").append(managedProperty.getName());
+                if (!managedProperty.getName().equals(managedProperty.getMappedName()))
+                    buf.append(", mappedName=").append(managedProperty.getMappedName());
+                EnumSet<ViewUse> viewUses = ManagedComponentUtils.getViewUses(managedProperty);
+                buf.append(", viewUses=").append(viewUses);
+                buf.append(", readOnly=").append(managedProperty.isReadOnly());
+                buf.append(", mandatory=").append(managedProperty.isMandatory());
+                buf.append(", removed=").append(managedProperty.isRemoved());
+                MetaValue value = managedProperty.getValue();
+                if (value == null)
+                    buf.append(", type=").append(managedProperty.getMetaType());
+                buf.append(", value=").append(convertMetaValueToString(value));
+            }
+        } catch (Exception e) {
+            buf.append(" ... Failed to convert properties to string: " + e.getMessage());
         }
         return buf.toString();
     }

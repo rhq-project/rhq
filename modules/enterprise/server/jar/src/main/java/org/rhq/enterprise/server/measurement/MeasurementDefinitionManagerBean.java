@@ -38,8 +38,12 @@ import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.QueryGenerator;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.exception.FetchException;
 
 /**
  * A manager for {@link MeasurementDefinition}s.
@@ -52,35 +56,15 @@ public class MeasurementDefinitionManagerBean implements MeasurementDefinitionMa
     private EntityManager entityManager;
 
     @EJB
-    private MeasurementDataManagerLocal measurementDataManager;
-
-    @EJB
-    private MeasurementScheduleManagerLocal scheduleManager;
-
-    @EJB
     private MeasurementOOBManagerLocal oobManager;
 
     @EJB
     private SubjectManagerLocal subjectManager;
 
-    public MeasurementDefinition getMeasurementDefinitionById(Subject subject, int id) {
-        // TODO: AUTHZ CHECK
-        MeasurementDefinition definition = entityManager.find(MeasurementDefinition.class, id);
+    public MeasurementDefinition getMeasurementDefinition(Subject subject, int definitionId) {
+        // no authz check, this is basically interrogating a plugin, logged in auth should be enough
+        MeasurementDefinition definition = entityManager.find(MeasurementDefinition.class, definitionId);
         return definition;
-    }
-
-    // needed because schedule->definition is a lazy relationship
-    public MeasurementDefinition getMeasurementDefinitionByScheduleId(Subject subject, int id) {
-        // TODO: AUTHZ CHECK
-        MeasurementSchedule schedule = entityManager.find(MeasurementSchedule.class, id);
-
-        if (schedule == null) {
-            return null;
-        }
-
-        schedule.getDefinition().getId(); // because definition is lazily loaded
-
-        return schedule.getDefinition();
     }
 
     /**
@@ -139,6 +123,7 @@ public class MeasurementDefinitionManagerBean implements MeasurementDefinitionMa
         return results;
     }
 
+    @SuppressWarnings("unchecked")
     public List<MeasurementDefinition> getMeasurementDefinitionsByIds(Subject subject,
         Integer[] measurementDefinitionIds) {
         Query query = entityManager.createNamedQuery(MeasurementDefinition.FIND_BY_IDS);
@@ -147,5 +132,26 @@ public class MeasurementDefinitionManagerBean implements MeasurementDefinitionMa
 
         List<MeasurementDefinition> results = query.getResultList();
         return results;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public PageList<MeasurementDefinition> findMeasurementDefinitions(Subject subject, MeasurementDefinition criteria,
+        PageControl pc) throws FetchException {
+
+        try {
+            QueryGenerator generator = new QueryGenerator(criteria, pc);
+
+            Query query = generator.getQuery(entityManager);
+            Query countQuery = generator.getCountQuery(entityManager);
+
+            long count = (Long) countQuery.getSingleResult();
+            List<MeasurementDefinition> alertDefinitions = query.getResultList();
+
+            return new PageList<MeasurementDefinition>(alertDefinitions, (int) count, pc);
+        } catch (Exception e) {
+            throw new FetchException(e.getMessage());
+        }
+
     }
 }

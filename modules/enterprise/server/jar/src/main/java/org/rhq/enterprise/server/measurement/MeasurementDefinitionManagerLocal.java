@@ -19,36 +19,22 @@
 package org.rhq.enterprise.server.measurement;
 
 import java.util.List;
+
 import javax.ejb.Local;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.exception.FetchException;
 
 /**
  * A manager for {@link MeasurementDefinition}s.
  */
 @Local
 public interface MeasurementDefinitionManagerLocal {
-    /**
-     * Returns a MeasurementDefinition by its id or null.
-     *
-     * @param  subject user that is calling this method
-     * @param  id      id of the desired Definition
-     *
-     * @return the MeasurementDefinition or null if not found
-     */
-    MeasurementDefinition getMeasurementDefinitionById(Subject subject, int id);
-
-    /**
-     * Returns a MeasurementDefinition for the MeasurementSchedule having the passed id.
-     *
-     * @param  subject user that is calling this method
-     * @param  id      id of the desired MeasurementSchedule to which this definition is related
-     *
-     * @return the MeasurementDefinition or null if not found
-     */
-    MeasurementDefinition getMeasurementDefinitionByScheduleId(Subject subject, int id);
 
     /**
      * Remove the given definition with its attached schedules and MeasurementData
@@ -79,4 +65,23 @@ public interface MeasurementDefinitionManagerLocal {
      * @return List<MeasurementDefinition> list of definitions found
      */
     List<MeasurementDefinition> getMeasurementDefinitionsByIds(Subject subject, Integer[] measurementDefinitionIds);
+
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    //
+    // The following are shared with the Remote Interface
+    //
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    /**
+     * Returns a MeasurementDefinition by its id or null.
+     *
+     * @param  subject      user that is calling this method
+     * @param  definitionId id of the desired {@link MeasurementDefinition} to fetch
+     *
+     * @return the MeasurementDefinition or null if not found
+     */
+    MeasurementDefinition getMeasurementDefinition(Subject subject, int definitionId);
+
+    PageList<MeasurementDefinition> findMeasurementDefinitions(Subject sessionSubject, MeasurementDefinition criteria,
+        PageControl pc) throws FetchException;
 }

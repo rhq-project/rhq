@@ -176,8 +176,8 @@ public class HighLowChartServlet extends ChartServlet implements SingleThreadMod
                 NUMBER_OF_DATA_POINTS, true).get(0);
         } else if ((parentId > 0) && (childTypeId > 0) && (definitionId > 0)) //  autogroup
         {
-            dataPoints = dataManager.findDataForAutoGroup(subject, parentId, childTypeId, definitionId,
-                beginTime, endTime, NUMBER_OF_DATA_POINTS, true).get(0);
+            dataPoints = dataManager.findDataForAutoGroup(subject, parentId, childTypeId, definitionId, beginTime,
+                endTime, NUMBER_OF_DATA_POINTS, true).get(0);
         } else {
             if (log.isDebugEnabled()) {
                 log.debug("No valid input found for HighLowChart: [schedId=" + scheduleId + ", defId=" + definitionId
@@ -205,8 +205,7 @@ public class HighLowChartServlet extends ChartServlet implements SingleThreadMod
 
     private MeasurementUnits getUnitsFromDefinitionId(Subject subject, int measurementDefinitionId) {
         MeasurementDefinitionManagerLocal definitionManager = LookupUtil.getMeasurementDefinitionManager();
-        MeasurementDefinition definition = definitionManager.getMeasurementDefinitionById(subject,
-            measurementDefinitionId);
+        MeasurementDefinition definition = definitionManager.getMeasurementDefinition(subject, measurementDefinitionId);
         return definition.getUnits();
     }
 }

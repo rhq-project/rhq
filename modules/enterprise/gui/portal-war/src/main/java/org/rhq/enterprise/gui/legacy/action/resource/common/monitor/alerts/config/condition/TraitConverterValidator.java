@@ -20,9 +20,10 @@ package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.conf
 
 import org.apache.struts.action.ActionErrors;
 import org.apache.struts.action.ActionMessage;
-import org.rhq.core.domain.auth.Subject;
+
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.ConditionBean;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
@@ -36,8 +37,7 @@ class TraitConverterValidator implements ConditionBeanConverterValidator {
     }
 
     public void exportProperties(Subject subject, ConditionBean fromBean, AlertCondition toCondition) {
-        MeasurementDefinition definition = definitionManager.getMeasurementDefinitionById(subject, fromBean
-            .getTraitId());
+        MeasurementDefinition definition = definitionManager.getMeasurementDefinition(subject, fromBean.getTraitId());
         toCondition.setMeasurementDefinition(definition);
 
         toCondition.setCategory(AlertConditionCategory.TRAIT);

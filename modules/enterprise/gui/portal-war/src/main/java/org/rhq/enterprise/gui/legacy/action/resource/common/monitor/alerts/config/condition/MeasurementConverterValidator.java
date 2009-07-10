@@ -47,10 +47,8 @@ class MeasurementConverterValidator implements ConditionBeanConverterValidator {
         definitionManager = LookupUtil.getMeasurementDefinitionManager();
     }
 
-    @SuppressWarnings("deprecation")
     public void exportProperties(Subject subject, ConditionBean fromBean, AlertCondition toCondition) {
-        MeasurementDefinition definition = definitionManager.getMeasurementDefinitionById(subject, fromBean
-            .getMetricId());
+        MeasurementDefinition definition = definitionManager.getMeasurementDefinition(subject, fromBean.getMetricId());
         toCondition.setMeasurementDefinition(definition);
 
         if (fromBean.getThresholdType().equals(TYPE_ABS)) {

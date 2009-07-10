@@ -470,4 +470,6 @@ public interface ConfigurationManagerLocal {
     @Nullable
     ResourceConfigurationUpdate updateResourceConfiguration(Subject subject, int resourceId,
         Configuration newConfiguration) throws UpdateException;
+
+    Configuration getResourceConfiguration(Subject subject, int resourceId) throws FetchException;
 }

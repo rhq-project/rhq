@@ -49,7 +49,8 @@ import org.rhq.enterprise.server.exception.FetchException;
  * A manager for {@link MeasurementDefinition}s.
  */
 @Stateless
-public class MeasurementDefinitionManagerBean implements MeasurementDefinitionManagerLocal {
+public class MeasurementDefinitionManagerBean implements MeasurementDefinitionManagerLocal,
+    MeasurementDefinitionManagerRemote {
     private Log log = LogFactory.getLog(MeasurementDefinitionManagerBean.class);
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)

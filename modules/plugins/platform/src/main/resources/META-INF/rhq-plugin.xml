@@ -261,7 +261,7 @@
                <c:description>Tracking of syslog events</c:description>
                <c:simple-property name="eventTrackingEnabled" type="boolean" required="true" default="false" description="Enables the collection of syslog events"/>
                <c:simple-property name="regularExpression" required="false" description="A regular expression that if not-null must be matched by the event detail for the message to be accepted"/>
-               <c:simple-property name="minimumSeverity" description="The minimum severity event that will be collected">
+               <c:simple-property name="minimumSeverity" default="Warning" description="The minimum severity event that will be collected">
                    <c:property-options>
                        <c:option value="Information"/>
                        <c:option value="Warning" default="true"/>
@@ -539,7 +539,7 @@
       </runs-inside>
 
        <plugin-configuration>
-           <c:simple-property name="type" description="Choice of using a pid file or a PIQL query to find the process to monitor">
+           <c:simple-property name="type" default="pidFile" description="Choice of using a pid file or a PIQL query to find the process to monitor">
                <c:property-options>
                    <c:option value="pidFile" default="true" name="Pid File"/>
                    <c:option value="piql" name="Process Query"/>
@@ -564,8 +564,6 @@
                description="The aggregate amount of virtual memory used by all postgres processes"/>
        <metric displayName="Open File Descriptors" property="Process.aggregateFileDescriptor.total" measurementType="dynamic" displayType="summary"
                description="The aggregate number of file descriptors open by all postgres processes"/>
-
-
 
    </service>
 

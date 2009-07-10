@@ -50,6 +50,7 @@ import org.rhq.core.util.exception.ThrowableUtil;
  * Monitors a generic process.
  *
  * @author Greg Hinkle
+ * @author John Mazzitelli
  */
 public class ProcessComponent implements ResourceComponent, MeasurementFacet {
 
@@ -169,18 +170,29 @@ public class ProcessComponent implements ResourceComponent, MeasurementFacet {
     }
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) {
-        if (process != null) {
-            process.refresh();
+        if (this.process != null) {
+            this.process.refresh();
             for (MeasurementScheduleRequest request : metrics) {
-                if (request.getName().startsWith("Process.")) {
-
-                    Object val = lookupAttributeProperty(process, request.getName().substring("Process.".length()));
+                String propertyName = request.getName();
+                if (propertyName.startsWith("Process.")) {
+                    propertyName = convertPropertyName(propertyName, this.process);
+                    Object val = lookupAttributeProperty(this.process, propertyName.substring("Process.".length()));
                     if (val != null && val instanceof Number) {
                         report.addData(new MeasurementDataNumeric(request, ((Number) val).doubleValue()));
                     }
                 }
             }
         }
+    }
+
+    private String convertPropertyName(String propertyName, ProcessInfo theProcess) {
+        // if its an aggregate process info, the bean property name is different
+        if (theProcess instanceof AggregateProcessInfo) {
+            propertyName = propertyName.replace(".cpu.", ".aggregateCpu.");
+            propertyName = propertyName.replace(".memory.", ".aggregateMemory.");
+            propertyName = propertyName.replace(".fileDescriptor.", ".aggregateFileDescriptor.");
+        }
+        return propertyName;
     }
 
     private Object lookupAttributeProperty(Object value, String property) {

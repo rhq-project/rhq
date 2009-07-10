@@ -551,18 +551,17 @@
            <c:simple-property name="fullProcessTree" default="true" type="boolean" description="If true, the entire process tree will be monitored"/>
        </plugin-configuration>
 
-
-       <metric displayName="User Time" property="Process.aggregateCpu.user" measurementType="trendsup" units="milliseconds" displayType="summary"
+       <metric displayName="User Time" property="Process.cpu.user" measurementType="trendsup" units="milliseconds" displayType="summary"
                description="The aggregate amount of CPU user time spent by all postgres processes"/>
-       <metric displayName="Kernel Time" property="Process.aggregateCpu.sys" measurementType="trendsup" units="milliseconds" displayType="summary"
+       <metric displayName="Kernel Time" property="Process.cpu.sys" measurementType="trendsup" units="milliseconds" displayType="summary"
                description="The aggregate amount of CPU kernel time spent by all postgres processes"/>
-       <metric displayName="CPU Percentage" property="Process.aggregateCpu.percent" measurementType="dynamic" units="percentage" displayType="summary"
+       <metric displayName="CPU Percentage" property="Process.cpu.percent" measurementType="dynamic" units="percentage" displayType="summary"
                description="The percentage of CPU currently being used by all postgres processes"/>
-       <metric displayName="Physical Memory" property="Process.aggregateMemory.resident" measurementType="dynamic" units="bytes" displayType="summary"
+       <metric displayName="Physical Memory" property="Process.memory.resident" measurementType="dynamic" units="bytes" displayType="summary"
                description="The aggregate amount of resident memory used by all postgres processes"/>
-       <metric displayName="Virtual Memory" property="Process.aggregateMemory.size" measurementType="dynamic" units="bytes" displayType="summary"
+       <metric displayName="Virtual Memory" property="Process.memory.size" measurementType="dynamic" units="bytes" displayType="summary"
                description="The aggregate amount of virtual memory used by all postgres processes"/>
-       <metric displayName="Open File Descriptors" property="Process.aggregateFileDescriptor.total" measurementType="dynamic" displayType="summary"
+       <metric displayName="Open File Descriptors" property="Process.fileDescriptor.total" measurementType="dynamic" displayType="summary"
                description="The aggregate number of file descriptors open by all postgres processes"/>
 
    </service>

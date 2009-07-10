@@ -125,21 +125,6 @@ public interface OperationManagerLocal {
     void updateOperationScheduleEntity(ScheduleJobId jobId, long nextFireTime);
 
     /**
-     * Returns the list of scheduled operations for the given resource. This only includes scheduled jobs on the
-     * individual resource - it will not include schedules from groups, even if the resource is a member of a group that
-     * has scheduled jobs.
-     *
-     * @param  subject
-     * @param  resourceId
-     *
-     * @return resource scheduled operations
-     *
-     * @throws SchedulerException
-     */
-    List<ResourceOperationSchedule> getScheduledResourceOperations(Subject subject, int resourceId)
-        throws SchedulerException;
-
-    /**
      * Returns the list of schedules for the group itself. The returned schedules will only be for operations scheduled
      * on the group; it will not include individually scheduled resource operations, even if the resource is a member of
      * the group.
@@ -210,35 +195,6 @@ public interface OperationManagerLocal {
         int historyId, PageControl pc);
 
     /**
-     * Returns the list of completed operation histories for the given resource. This will return all items that are no
-     * longer INPROGRESS that were invoked as part of a group operation to which this resource belongs or on the
-     * resource directly.
-     *
-     * @param  subject
-     * @param  resourceId
-     * @param  beginDate filter used to show only results occurring after this epoch millis parameter, nullable
-     * @param  endDate   filter used to show only results occurring before this epoch millis parameter, nullable
-     * @param  pc
-     * @return all operation histories for the given resource
-     */
-    PageList<ResourceOperationHistory> findCompletedResourceOperationHistories(Subject subject, int resourceId,
-        Long startDate, Long endDate, PageControl pc);
-
-    /**
-     * Returns the list of pending operation histories for the given resource. This will return all items that are still
-     * INPROGRESS that were invoked as part of a group operation to which this resource belongs or on the resource
-     * directly.
-     *
-     * @param  subject
-     * @param  resourceId
-     * @param  pc
-     *
-     * @return all operation histories for the given resource
-     */
-    PageList<ResourceOperationHistory> findPendingResourceOperationHistories(Subject subject, int resourceId,
-        PageControl pc);
-
-    /**
      * Returns the list of completed operation histories for the group resource. This will return all items that are no
      * longer INPROGRESS that were invoked on this group. This only returns the "aggregate" history item - not the
      * individual resource operation histories for the group member invocation results. See
@@ -303,18 +259,6 @@ public interface OperationManagerLocal {
      * @param historyId the integer id of the OperationHistory entity that needs to be checked
      */
     void checkForCompletedGroupOperation(int historyId);
-
-    /**
-     * Returns the definitions of all the operations supported by the given resource.
-     *
-     * @param  subject
-     * @param  resourceId
-     * @param  eagerLoaded if true the parametersConfigurationDefinition, resultsConfigurationDefinition, and
-     *         resourceType fields are eagerly loaded, otherwise they are left as null references
-     *
-     * @return the operation definitions for the resource
-     */
-    List<OperationDefinition> getSupportedResourceOperations(Subject subject, int resourceId, boolean eagerLoaded);
 
     /**
      * Returns the definitions of all the operations supported by the given resource type.
@@ -495,7 +439,8 @@ public interface OperationManagerLocal {
      *
      * @return the list of scheduled resource operations
      */
-    PageList<ResourceOperationScheduleComposite> findCurrentlyScheduledResourceOperations(Subject subject, PageControl pc);
+    PageList<ResourceOperationScheduleComposite> findCurrentlyScheduledResourceOperations(Subject subject,
+        PageControl pc);
 
     /**
      * Gets a list of all currently scheduled group operations (that is, scheduled but not yet invoked and/or
@@ -553,6 +498,85 @@ public interface OperationManagerLocal {
     void deleteOperationHistory(Subject subject, int historyId, boolean purgeInProgress) throws DeleteException;
 
     /**
+     * Returns the list of completed operation histories for the given resource. This will return all items that are no
+     * longer INPROGRESS that were invoked as part of a group operation to which this resource belongs or on the
+     * resource directly.
+     *
+     * @param  subject
+     * @param  resourceId
+     * @param  beginDate filter used to show only results occurring after this epoch millis parameter, nullable
+     * @param  endDate   filter used to show only results occurring before this epoch millis parameter, nullable
+     * @param  pc
+     * @return all operation histories for the given resource
+     */
+    PageList<ResourceOperationHistory> findCompletedResourceOperationHistories(Subject subject, int resourceId,
+        Long startDate, Long endDate, PageControl pc);
+
+    /**
+     * #see {@link OperationManagerRemote#findOperationHistories
+     */
+    PageList<ResourceOperationHistory> findOperationHistories(Subject subject, ResourceOperationHistory criteria,
+        PageControl pc) throws FetchException;
+
+    /**
+     * Returns the list of pending operation histories for the given resource. This will return all items that are still
+     * INPROGRESS that were invoked as part of a group operation to which this resource belongs or on the resource
+     * directly.
+     *
+     * @param  subject
+     * @param  resourceId
+     * @param  pc
+     *
+     * @return all operation histories for the given resource
+     */
+    PageList<ResourceOperationHistory> findPendingResourceOperationHistories(Subject subject, int resourceId,
+        PageControl pc);
+
+    /**
+     * #see {@link OperationManagerRemote#getOperationHistoryByHistoryId
+     */
+    OperationHistory getOperationHistoryByHistoryId(Subject subject, int historyId) throws FetchException;
+
+    /**
+     * #see {@link OperationManagerRemote#getOperationHistoryByJobId
+     */
+    OperationHistory getOperationHistoryByJobId(Subject subject, String historyJobId) throws FetchException;
+
+    /**
+     * Returns the list of scheduled operations for the given resource. This only includes scheduled jobs on the
+     * individual resource - it will not include schedules from groups, even if the resource is a member of a group that
+     * has scheduled jobs.
+     *
+     * @param  subject
+     * @param  resourceId
+     *
+     * @return resource scheduled operations
+     *
+     * @throws SchedulerException
+     */
+    List<ResourceOperationSchedule> getScheduledResourceOperations(Subject subject, int resourceId)
+        throws SchedulerException;
+
+    /**
+     * Returns the definitions of all the operations supported by the given resource.
+     *
+     * @param  subject
+     * @param  resourceId
+     * @param  eagerLoaded if true the parametersConfigurationDefinition, resultsConfigurationDefinition, and
+     *         resourceType fields are eagerly loaded, otherwise they are left as null references
+     *
+     * @return the operation definitions for the resource
+     */
+    List<OperationDefinition> getSupportedResourceOperations(Subject subject, int resourceId, boolean eagerLoaded);
+
+    /**
+     * #see {@link OperationManagerRemote#scheduleGroupOperation
+     */
+    GroupOperationSchedule scheduleGroupOperation(Subject subject, int groupId, int[] executionOrderResourceIds,
+        boolean haltOnFailure, String operationName, Configuration parameters, long delay, long repeatInterval,
+        int repeatCount, int timeout, String description) throws ScheduleException;
+
+    /**
      * Schedules an operation for execution on the given resource.
      *
      * @param  subject           The logged in user's subject.
@@ -587,26 +611,4 @@ public interface OperationManagerLocal {
      */
     void unscheduleGroupOperation(Subject subject, String jobId, int resourceGroupId) throws UnscheduleException;
 
-    /**
-     * #see {@link OperationManagerRemote#scheduleGroupOperation
-     */
-    GroupOperationSchedule scheduleGroupOperation(Subject subject, int groupId, int[] executionOrderResourceIds,
-        boolean haltOnFailure, String operationName, Configuration parameters, long delay, long repeatInterval,
-        int repeatCount, int timeout, String description) throws ScheduleException;
-
-    /**
-     * #see {@link OperationManagerRemote#getOperationHistoryByHistoryId
-     */
-    OperationHistory getOperationHistoryByHistoryId(Subject subject, int historyId) throws FetchException;
-
-    /**
-     * #see {@link OperationManagerRemote#getOperationHistoryByJobId
-     */
-    OperationHistory getOperationHistoryByJobId(Subject subject, String historyJobId) throws FetchException;
-
-    /**
-     * #see {@link OperationManagerRemote#findOperationHistories
-     */
-    PageList<ResourceOperationHistory> findOperationHistories(Subject subject, ResourceOperationHistory criteria,
-        PageControl pc) throws FetchException;
 }

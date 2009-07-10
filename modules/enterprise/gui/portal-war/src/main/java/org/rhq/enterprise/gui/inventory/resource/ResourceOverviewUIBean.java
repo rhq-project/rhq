@@ -50,7 +50,7 @@ public class ResourceOverviewUIBean {
     private List<ResourceConfigurationUpdate> getConfigUpdates(Subject subject, int resourceId, int count) {
         PageControl lastFive = new PageControl(0, count);
         lastFive.initDefaultOrderingField("cu.createdTime", PageOrdering.DESC);
-        return LookupUtil.getConfigurationManager().getResourceConfigurationUpdates(subject, resourceId, null, null,
+        return LookupUtil.getConfigurationManager().findResourceConfigurationUpdates(subject, resourceId, null, null,
             true, lastFive);
     }
 

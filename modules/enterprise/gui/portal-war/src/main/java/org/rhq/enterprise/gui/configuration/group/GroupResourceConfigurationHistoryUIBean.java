@@ -77,7 +77,7 @@ public class GroupResourceConfigurationHistoryUIBean extends PagedDataTableUIBea
 
         @Override
         public PageList<AggregateResourceConfigurationUpdate> fetchPage(PageControl pc) {
-            return configurationManager.getAggregateResourceConfigurationUpdatesByGroupId(getResourceGroup().getId(),
+            return configurationManager.findAggregateResourceConfigurationUpdatesByGroupId(getResourceGroup().getId(),
                 pc);
         }
     }

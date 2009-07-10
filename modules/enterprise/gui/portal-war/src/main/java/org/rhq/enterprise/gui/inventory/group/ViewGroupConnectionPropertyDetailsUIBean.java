@@ -96,7 +96,7 @@ public class ViewGroupConnectionPropertyDetailsUIBean extends PagedDataTableUIBe
             int aggregatePluginConfigurationUpdateId = FacesContextUtility.getRequiredRequestParameter("apcuId",
                 Integer.class);
             PageList<ConfigurationUpdateComposite> childUpdates = configurationManager
-                .getPluginConfigurationUpdateCompositesByParentId(aggregatePluginConfigurationUpdateId, pc);
+                .findPluginConfigurationUpdateCompositesByParentId(aggregatePluginConfigurationUpdateId, pc);
 
             return childUpdates;
         }

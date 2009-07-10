@@ -772,7 +772,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<PluginConfigurationUpdate> getPluginConfigurationUpdates(Subject subject, int resourceId,
+    public PageList<PluginConfigurationUpdate> findPluginConfigurationUpdates(Subject subject, int resourceId,
         Long beginDate, Long endDate, PageControl pc) {
 
         Resource resource = entityManager.find(Resource.class, resourceId);
@@ -818,7 +818,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<ResourceConfigurationUpdate> getResourceConfigurationUpdates(Subject subject, Integer resourceId,
+    public PageList<ResourceConfigurationUpdate> findResourceConfigurationUpdates(Subject subject, Integer resourceId,
         Long beginDate, Long endDate, boolean suppressOldest, PageControl pc) {
 
         if (!authorizationManager.canViewResource(subject, resourceId)) {
@@ -1521,7 +1521,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<ConfigurationUpdateComposite> getPluginConfigurationUpdateCompositesByParentId(
+    public PageList<ConfigurationUpdateComposite> findPluginConfigurationUpdateCompositesByParentId(
         int configurationUpdateId, PageControl pageControl) {
         pageControl.initDefaultOrderingField("cu.modifiedTime");
 
@@ -1537,7 +1537,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<ConfigurationUpdateComposite> getResourceConfigurationUpdateCompositesByParentId(
+    public PageList<ConfigurationUpdateComposite> findResourceConfigurationUpdateCompositesByParentId(
         int configurationUpdateId, PageControl pageControl) {
         pageControl.initDefaultOrderingField("cu.modifiedTime");
 
@@ -1553,7 +1553,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<Integer> getPluginConfigurationUpdatesByParentId(int configurationUpdateId, PageControl pageControl) {
+    public PageList<Integer> findPluginConfigurationUpdatesByParentId(int configurationUpdateId, PageControl pageControl) {
         pageControl.initDefaultOrderingField("cu.modifiedTime");
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
@@ -1575,7 +1575,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<Integer> getResourceConfigurationUpdatesByParentId(int aggregateConfigurationUpdateId,
+    public PageList<Integer> findResourceConfigurationUpdatesByParentId(int aggregateConfigurationUpdateId,
         PageControl pageControl) {
         pageControl.initDefaultOrderingField("cu.modifiedTime");
 
@@ -1655,7 +1655,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<AggregatePluginConfigurationUpdate> getAggregatePluginConfigurationUpdatesByGroupId(int groupId,
+    public PageList<AggregatePluginConfigurationUpdate> findAggregatePluginConfigurationUpdatesByGroupId(int groupId,
         PageControl pc) {
         pc.initDefaultOrderingField("modifiedTime", PageOrdering.DESC);
 
@@ -1675,7 +1675,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<AggregateResourceConfigurationUpdate> getAggregateResourceConfigurationUpdatesByGroupId(
+    public PageList<AggregateResourceConfigurationUpdate> findAggregateResourceConfigurationUpdatesByGroupId(
         int groupId, PageControl pc) {
         pc.initDefaultOrderingField("modifiedTime", PageOrdering.DESC);
 

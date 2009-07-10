@@ -45,7 +45,7 @@ public class AggregateResourceConfigurationUpdateJob extends AbstractAggregateCo
 
     protected List<Integer> getConfigurationUpdateIds(Integer aggregatePluginConfigurationUpdateId,
         ConfigurationManagerLocal configurationManager, PageControl pc) {
-        List<Integer> pagedChildUpdateIds = configurationManager.getResourceConfigurationUpdatesByParentId(
+        List<Integer> pagedChildUpdateIds = configurationManager.findResourceConfigurationUpdatesByParentId(
             aggregatePluginConfigurationUpdateId, pc);
         return pagedChildUpdateIds;
     }

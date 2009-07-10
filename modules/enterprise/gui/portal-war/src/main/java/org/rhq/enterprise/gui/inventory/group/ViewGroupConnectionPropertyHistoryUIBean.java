@@ -100,7 +100,7 @@ public class ViewGroupConnectionPropertyHistoryUIBean extends PagedDataTableUIBe
             }
 
             PageList<AggregatePluginConfigurationUpdate> results = null;
-            results = configurationManager.getAggregatePluginConfigurationUpdatesByGroupId(
+            results = configurationManager.findAggregatePluginConfigurationUpdatesByGroupId(
                 requestResourceGroup.getId(), pc);
             return results;
         }

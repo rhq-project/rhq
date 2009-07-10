@@ -89,7 +89,7 @@ public class GroupResourceConfigurationHistoryDetailsUIBean extends PagedDataTab
         public PageList<ConfigurationUpdateComposite> fetchPage(PageControl pc) {
             int groupResourceConfigurationUpdateId = getGroupResourceConfigurationUpdateId();
             PageList<ConfigurationUpdateComposite> childUpdates = configurationManager
-                .getResourceConfigurationUpdateCompositesByParentId(groupResourceConfigurationUpdateId, pc);
+                .findResourceConfigurationUpdateCompositesByParentId(groupResourceConfigurationUpdateId, pc);
 
             return childUpdates;
         }

@@ -97,7 +97,7 @@ public interface ConfigurationManagerLocal {
     Configuration getLiveResourceConfiguration(Subject subject, int resourceId, boolean pingAgentFirst)
         throws Exception;
 
-    PageList<PluginConfigurationUpdate> getPluginConfigurationUpdates(Subject subject, int resourceId, Long beginDate,
+    PageList<PluginConfigurationUpdate> findPluginConfigurationUpdates(Subject subject, int resourceId, Long beginDate,
         Long endDate, PageControl pc);
 
     /**
@@ -115,7 +115,7 @@ public interface ConfigurationManagerLocal {
      *
      * @return the resource's complete list of updates (will be empty (not <code>null</code>) if none)
      */
-    PageList<ResourceConfigurationUpdate> getResourceConfigurationUpdates(Subject subject, Integer resourceId,
+    PageList<ResourceConfigurationUpdate> findResourceConfigurationUpdates(Subject subject, Integer resourceId,
         Long beginDate, Long endDate, boolean suppressOldest, PageControl pc);
 
     PluginConfigurationUpdate getPluginConfigurationUpdate(Subject subject, int configurationUpdateId);
@@ -291,13 +291,13 @@ public interface ConfigurationManagerLocal {
 
     AggregatePluginConfigurationUpdate getAggregatePluginConfigurationById(int configurationUpdateId);
 
-    PageList<ConfigurationUpdateComposite> getPluginConfigurationUpdateCompositesByParentId(int configurationUpdateId,
+    PageList<ConfigurationUpdateComposite> findPluginConfigurationUpdateCompositesByParentId(int configurationUpdateId,
         PageControl pageControl);
 
-    PageList<ConfigurationUpdateComposite> getResourceConfigurationUpdateCompositesByParentId(
+    PageList<ConfigurationUpdateComposite> findResourceConfigurationUpdateCompositesByParentId(
         int configurationUpdateId, PageControl pageControl);
 
-    PageList<Integer> getPluginConfigurationUpdatesByParentId(int configurationUpdateId, PageControl pageControl);
+    PageList<Integer> findPluginConfigurationUpdatesByParentId(int configurationUpdateId, PageControl pageControl);
 
     long getPluginConfigurationUpdateCountByParentId(int configurationUpdateId);
 
@@ -306,10 +306,10 @@ public interface ConfigurationManagerLocal {
     int scheduleAggregatePluginConfigurationUpdate(Subject subject, int compatibleGroupId,
         Map<Integer, Configuration> pluginConfigurationUpdate) throws UpdateException;
 
-    PageList<AggregatePluginConfigurationUpdate> getAggregatePluginConfigurationUpdatesByGroupId(int groupId,
+    PageList<AggregatePluginConfigurationUpdate> findAggregatePluginConfigurationUpdatesByGroupId(int groupId,
         PageControl pc);
 
-    PageList<AggregateResourceConfigurationUpdate> getAggregateResourceConfigurationUpdatesByGroupId(int groupId,
+    PageList<AggregateResourceConfigurationUpdate> findAggregateResourceConfigurationUpdatesByGroupId(int groupId,
         PageControl pc);
 
     ConfigurationUpdateStatus updateAggregatePluginConfigurationUpdateStatus(int aggregatePluginConfigurationUpdateId,
@@ -325,7 +325,7 @@ public interface ConfigurationManagerLocal {
 
     void deleteConfigurations(List<Integer> configurationIds);
 
-    PageList<Integer> getResourceConfigurationUpdatesByParentId(int aggregateConfigurationUpdateId,
+    PageList<Integer> findResourceConfigurationUpdatesByParentId(int aggregateConfigurationUpdateId,
         PageControl pageControl);
 
     long getResourceConfigurationUpdateCountByParentId(int aggregateConfigurationUpdateId);

@@ -367,6 +367,7 @@ public final class QueryGenerator {
         Integer[] definitionIds = new Integer[] { 1, 2, 3 };
 
         QueryGenerator alertGenerator = new QueryGenerator(alert, PageControl.getUnlimitedInstance());
+        alertGenerator.setAuthorizationResourceFragment(AuthorizationTokenType.RESOURCE, "definition.resource", 1);
 
         String expression = "definition.resource.id IN ( " + JDBCUtil.generateInBinds(definitionIds.length) + " )";
         alertGenerator.addFilter(expression, (Object[]) definitionIds);

@@ -79,6 +79,7 @@ import org.rhq.core.domain.content.transfer.RetrievePackageBitsRequest;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.RHQConstants;
@@ -578,7 +579,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
         // Package into transfer object
         Query query = entityManager.createNamedQuery(InstalledPackage.QUERY_FIND_BY_SET_OF_IDS);
-        query.setParameter("packageIds", installedPackageIds);
+        query.setParameter("packageIds", ArrayUtils.wrapInList(installedPackageIds));
 
         List<InstalledPackage> installedPackageList = query.getResultList();
         Set<ResourcePackageDetails> transferPackages = new HashSet<ResourcePackageDetails>(installedPackageList.size());

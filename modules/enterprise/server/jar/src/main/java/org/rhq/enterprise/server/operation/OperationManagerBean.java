@@ -70,6 +70,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.core.domain.util.QueryGenerator;
+import org.rhq.core.domain.util.QueryGenerator.AuthorizationTokenType;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
@@ -1803,6 +1804,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         ResourceOperationHistory criteria, PageControl pc) throws FetchException {
         try {
             QueryGenerator generator = new QueryGenerator(criteria, pc);
+            generator.setAuthorizationResourceFragment(AuthorizationTokenType.RESOURCE, subject.getId());
 
             Query query = generator.getQuery(entityManager);
             Query countQuery = generator.getCountQuery(entityManager);

@@ -56,6 +56,7 @@ import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.exception.FetchException;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 
 /**
@@ -133,7 +134,7 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal {
 
     @SuppressWarnings("unchecked")
     public PageList<CallTimeDataComposite> getCallTimeDataForResource(Subject subject, int scheduleId, long beginTime,
-        long endTime, PageControl pageControl) {
+        long endTime, PageControl pageControl) throws FetchException {
         pageControl.initDefaultOrderingField("SUM(value.total)/SUM(value.count)", PageOrdering.DESC); // only set if no ordering yet specified
         pageControl.addDefaultOrderingField("key.callDestination", PageOrdering.ASC); // add this to sort, if not already specified
 

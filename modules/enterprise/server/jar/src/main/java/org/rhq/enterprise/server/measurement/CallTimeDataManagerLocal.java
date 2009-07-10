@@ -21,12 +21,15 @@ package org.rhq.enterprise.server.measurement;
 import java.sql.SQLException;
 import java.util.Date;
 import java.util.Set;
+
 import javax.ejb.Local;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.calltime.CallTimeData;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.exception.FetchException;
 
 /**
  * The manager for call-time metric data.
@@ -36,10 +39,10 @@ public interface CallTimeDataManagerLocal {
     void addCallTimeData(Set<CallTimeData> callTimeDataSet);
 
     PageList<CallTimeDataComposite> getCallTimeDataForResource(Subject subject, int scheduleId, long beginTime,
-        long endTime, PageControl pageControl);
+        long endTime, PageControl pageControl) throws FetchException;;
 
     PageList<CallTimeDataComposite> getCallTimeDataForCompatibleGroup(Subject subject, int groupId,
-        int measurementDefinitionId, long beginTime, long endTime, PageControl pageControl);
+        int measurementDefinitionId, long beginTime, long endTime, PageControl pageControl) throws FetchException;
 
     PageList<CallTimeDataComposite> getCallTimeDataForAutoGroup(Subject subject, int parentResourceId,
         int childResourceTypeId, int measurementDefinitionId, long beginTime, long endTime, PageControl pageControl);

@@ -196,10 +196,10 @@
          </fileset>
       </path>
 
-      <echo>*** Providing ChannelManagerRemote wsdl...</echo>
       <taskdef name="wsprovide" classname="org.jboss.wsf.spi.tools.ant.WSProvideTask" classpathref="jbossws.native.classpath" />
       <taskdef name="wsconsume" classname="org.jboss.wsf.spi.tools.ant.WSConsumeTask" classpathref="jbossws.native.classpath" />
 
+      <echo>*** Providing ChannelManagerRemote wsdl...</echo>
       <wsprovide fork="true" destdir="${wsprovide.home}" resourcedestdir="${wsdl.home}" genwsdl="true" sei="org.rhq.enterprise.server.content.ChannelManagerBean">
          <classpath>
             <pathelement path="${maven.runtime.classpath}" />

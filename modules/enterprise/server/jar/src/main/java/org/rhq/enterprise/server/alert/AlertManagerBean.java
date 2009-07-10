@@ -850,9 +850,9 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
             Query countQuery = generator.getCountQuery(entityManager);
 
             long count = (Long) countQuery.getSingleResult();
-            List<Alert> alertDefinitions = query.getResultList();
+            List<Alert> alerts = query.getResultList();
 
-            return new PageList<Alert>(alertDefinitions, (int) count, pc);
+            return new PageList<Alert>(alerts, (int) count, pc);
         } catch (Exception e) {
             throw new FetchException(e.getMessage());
         }

@@ -72,34 +72,49 @@ public class RemoteProfileServiceConnectionProvider extends AbstractProfileServi
         this.credentials = credentials;
     }
 
-    protected ProfileServiceConnectionImpl doConnect() {
+    public String getPrincipal() {
+        return principal;
+    }
+
+    public String getCredentials() {
+        return credentials;
+    }
+
+    protected AbstractProfileServiceConnection doConnect() {
         Properties env = new Properties();
         env.setProperty(Context.PROVIDER_URL, this.providerURL);
         ProfileService profileService;
         ManagementView managementView;
         DeploymentManager deploymentManager;
+
+        // Always use the non-login context factory, since we'll use JAAS for authentication if a username/password was
+        // provided.
+        env.setProperty(Context.INITIAL_CONTEXT_FACTORY, NAMING_CONTEXT_FACTORY);
+
+        // Make sure the timeout always happens, even if the JBoss server is hung.
+        env.setProperty("jnp.timeout", String.valueOf(JNP_TIMEOUT));
+        env.setProperty("jnp.sotimeout", String.valueOf(JNP_SO_TIMEOUT));
+
+        env.setProperty(JNP_DISABLE_DISCOVERY_JNP_INIT_PROP, "true");
+        
+        log.debug("Connecting to Profile Service via remote JNDI using env [" + env + "]...");
+        this.initialContext = createInitialContext(env);
+
+        AbstractProfileServiceConnection profileServiceConnection;
         if (this.principal != null) {
-            env.setProperty(Context.INITIAL_CONTEXT_FACTORY, JNDI_LOGIN_INITIAL_CONTEXT_FACTORY);
-            env.setProperty(Context.SECURITY_PRINCIPAL, this.principal);
-            env.setProperty(Context.SECURITY_CREDENTIALS, this.credentials);
-            log.debug("Connecting to Profile Service via remote JNDI using env [" + env + "]...");
-            this.initialContext = createInitialContext(env);
             profileService = (ProfileService) lookup(initialContext, SECURE_PROFILE_SERVICE_JNDI_NAME);
             managementView = (ManagementView) lookup(initialContext, SECURE_MANAGEMENT_VIEW_JNDI_NAME);
             deploymentManager = (DeploymentManager) lookup(initialContext, SECURE_DEPLOYMENT_MANAGER_JNDI_NAME);
+            profileServiceConnection = new JaasAuthenticationProxyProfileServiceConnection(this, profileService,
+                    managementView, deploymentManager);
         } else {
-            env.setProperty(Context.INITIAL_CONTEXT_FACTORY, NAMING_CONTEXT_FACTORY);
-            env.setProperty(JNP_DISABLE_DISCOVERY_JNP_INIT_PROP, "true");
-            // Make sure the timeout always happens, even if the JBoss server is hung.
-            env.setProperty("jnp.timeout", String.valueOf(JNP_TIMEOUT));
-            env.setProperty("jnp.sotimeout", String.valueOf(JNP_SO_TIMEOUT));
-            log.debug("Connecting to Profile Service via remote JNDI using env [" + env + "]...");
-            this.initialContext = createInitialContext(env);
             profileService = (ProfileService) lookup(initialContext, PROFILE_SERVICE_JNDI_NAME);
             managementView = profileService.getViewManager();
             deploymentManager = profileService.getDeploymentManager();
+            profileServiceConnection = new BasicProfileServiceConnection(this, profileService,
+                    managementView, deploymentManager);
         }
-        return new ProfileServiceConnectionImpl(this, profileService, managementView, deploymentManager);
+        return profileServiceConnection;
     }
 
     protected void doDisconnect() {

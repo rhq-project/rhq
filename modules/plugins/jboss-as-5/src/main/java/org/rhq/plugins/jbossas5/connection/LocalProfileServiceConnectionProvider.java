@@ -39,13 +39,13 @@ public class LocalProfileServiceConnectionProvider extends AbstractProfileServic
 
     private final Log log = LogFactory.getLog(this.getClass());
 
-    protected ProfileServiceConnectionImpl doConnect() {
+    protected BasicProfileServiceConnection doConnect() {
         log.debug("Connecting to Profile Service via local JNDI...");
         InitialContext initialContext = createInitialContext(null);
         ProfileService profileService = (ProfileService) lookup(initialContext, PROFILE_SERVICE_JNDI_NAME);
         ManagementView managementView = profileService.getViewManager();
         DeploymentManager deploymentManager = profileService.getDeploymentManager();
-        return new ProfileServiceConnectionImpl(this, profileService, managementView, deploymentManager);
+        return new BasicProfileServiceConnection(this, profileService, managementView, deploymentManager);
     }
 
     protected void doDisconnect() {

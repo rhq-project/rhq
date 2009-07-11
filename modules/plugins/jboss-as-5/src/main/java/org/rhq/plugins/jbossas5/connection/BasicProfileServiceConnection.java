@@ -29,14 +29,28 @@ import org.jboss.profileservice.spi.ProfileService;
 /**
  * @author Ian Springer
  */
-public interface ProfileServiceConnection {
-    void init();
-    
-    ProfileServiceConnectionProvider getConnectionProvider();
+public class BasicProfileServiceConnection extends AbstractProfileServiceConnection {
+    private ProfileService profileService;
+    private ManagementView managementView;
+    private DeploymentManager deploymentManager;
 
-    ProfileService getProfileService();
+    protected BasicProfileServiceConnection(AbstractProfileServiceConnectionProvider connectionProvider,
+        ProfileService profileService, ManagementView managementView, DeploymentManager deploymentManager) {
+        super(connectionProvider);
+        this.profileService = profileService;
+        this.managementView = managementView;
+        this.deploymentManager = deploymentManager;
+    }
 
-    ManagementView getManagementView();
+    public ProfileService getProfileService() {
+        return this.profileService;
+    }
 
-    DeploymentManager getDeploymentManager();
+    public ManagementView getManagementView() {
+        return this.managementView;
+    }
+
+    public DeploymentManager getDeploymentManager() {
+        return this.deploymentManager;
+    }
 }

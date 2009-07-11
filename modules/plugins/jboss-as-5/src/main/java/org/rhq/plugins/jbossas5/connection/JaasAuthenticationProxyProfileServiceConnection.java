@@ -22,40 +22,41 @@
  */
 package org.rhq.plugins.jbossas5.connection;
 
+import java.lang.reflect.Proxy;
+
 import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.deployers.spi.management.deploy.DeploymentManager;
-import org.jboss.profileservice.spi.ProfileKey;
 import org.jboss.profileservice.spi.ProfileService;
 
 /**
  * @author Ian Springer
  */
-public class ProfileServiceConnectionImpl implements ProfileServiceConnection {
-    private static final ProfileKey DEFAULT_PROFILE_KEY = new ProfileKey(ProfileKey.DEFAULT);
-
-    private AbstractProfileServiceConnectionProvider connectionProvider;
+public class JaasAuthenticationProxyProfileServiceConnection extends AbstractProfileServiceConnection {    
     private ProfileService profileService;
     private ManagementView managementView;
     private DeploymentManager deploymentManager;
 
-    protected ProfileServiceConnectionImpl(AbstractProfileServiceConnectionProvider connectionProvider,
+    protected JaasAuthenticationProxyProfileServiceConnection(RemoteProfileServiceConnectionProvider connectionProvider,
         ProfileService profileService, ManagementView managementView, DeploymentManager deploymentManager) {
-        this.connectionProvider = connectionProvider;
-        this.profileService = profileService;
-        this.managementView = managementView;
-        this.managementView.load();
-        this.deploymentManager = deploymentManager;
-        // Load and associate the given profile with the DeploymentManager for future operations. This is mandatory
-        // in order for us to be able to successfully invoke the various DeploymentManager methods.
-        try {
-            this.deploymentManager.loadProfile(DEFAULT_PROFILE_KEY);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
+        super(connectionProvider);
 
-    public ProfileServiceConnectionProvider getConnectionProvider() {
-        return this.connectionProvider;
+        JaasAuthenticationInvocationHandler profileServiceInvocationHandler =
+                new JaasAuthenticationInvocationHandler(profileService,
+                    connectionProvider.getPrincipal(), connectionProvider.getCredentials());
+        this.profileService = (ProfileService)Proxy.newProxyInstance(this.getClass().getClassLoader(),
+                new Class[] {ProfileService.class}, profileServiceInvocationHandler);
+
+        JaasAuthenticationInvocationHandler managementViewInvocationHandler =
+                new JaasAuthenticationInvocationHandler(managementView,
+                    connectionProvider.getPrincipal(), connectionProvider.getCredentials());
+        this.managementView = (ManagementView)Proxy.newProxyInstance(this.getClass().getClassLoader(),
+                new Class[] {ManagementView.class}, managementViewInvocationHandler);
+
+        JaasAuthenticationInvocationHandler deploymentManagerInvocationHandler =
+                new JaasAuthenticationInvocationHandler(deploymentManager,
+                    connectionProvider.getPrincipal(), connectionProvider.getCredentials());
+        this.deploymentManager = (DeploymentManager)Proxy.newProxyInstance(this.getClass().getClassLoader(),
+                new Class[] {DeploymentManager.class}, deploymentManagerInvocationHandler);
     }
 
     public ProfileService getProfileService() {

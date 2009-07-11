@@ -36,14 +36,15 @@ import org.apache.commons.logging.LogFactory;
 public abstract class AbstractProfileServiceConnectionProvider implements ProfileServiceConnectionProvider {
     private final Log log = LogFactory.getLog(this.getClass());
 
-    private ProfileServiceConnectionImpl existingConnection;
+    private ProfileServiceConnection existingConnection;
 
     public final ProfileServiceConnection connect() {
         this.existingConnection = doConnect();
+        this.existingConnection.init();
         return this.existingConnection;
     }
 
-    protected abstract ProfileServiceConnectionImpl doConnect();
+    protected abstract ProfileServiceConnection doConnect();
 
     public boolean isConnected() {
         // TODO: Ping the connection to make sure it's not defunct?

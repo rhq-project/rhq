@@ -72,6 +72,8 @@ public interface MeasurementBaselineManagerLocal {
      */
     int _calculateAutoBaselinesINSERT(long amountOfData) throws Exception;
 
+    MeasurementBaseline getBaselineIfEqual(Subject subject, int groupId, int definitionId);
+
     /**
      * Calculate a baseline value for the given metric based on the specified date range, optionally setting the
      * metric's baseline to the calculated value.
@@ -88,6 +90,9 @@ public interface MeasurementBaselineManagerLocal {
      * @throws MeasurementNotFoundException
      */
     MeasurementBaseline calculateAutoBaseline(Subject subject, Integer measurementScheduleId, long startDate,
+        long endDate, boolean save) throws BaselineCreationException, MeasurementNotFoundException;
+
+    MeasurementBaseline calculateAutoBaseline(Subject subject, int groupId, int definitionId, long startDate,
         long endDate, boolean save) throws BaselineCreationException, MeasurementNotFoundException;
 
     /**

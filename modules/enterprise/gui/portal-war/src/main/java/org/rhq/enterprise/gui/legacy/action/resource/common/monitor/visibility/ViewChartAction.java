@@ -22,6 +22,7 @@ import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -48,6 +49,7 @@ import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -55,6 +57,10 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class ViewChartAction extends MetricDisplayRangeAction {
     private final Log log = LogFactory.getLog(ViewChartAction.class.getName());
+
+    MeasurementScheduleManagerLocal scheduleManager = LookupUtil.getMeasurementScheduleManager();
+    MeasurementBaselineManagerLocal baselineManager = LookupUtil.getMeasurementBaselineManager();
+    ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
 
     /**
      * Modify the metric chart as specified in the given <code>@{link
@@ -66,9 +72,6 @@ public class ViewChartAction extends MetricDisplayRangeAction {
 
         ViewChartForm chartForm = (ViewChartForm) form;
         Subject subject = SessionUtils.getWebUser(request.getSession()).getSubject();
-
-        MeasurementScheduleManagerLocal scheduleManager = LookupUtil.getMeasurementScheduleManager();
-        MeasurementBaselineManagerLocal baselineManager = LookupUtil.getMeasurementBaselineManager();
 
         Integer[] resourceIds = chartForm.getResourceIds();
 
@@ -130,13 +133,24 @@ public class ViewChartAction extends MetricDisplayRangeAction {
             return returnRedraw(request, mapping, forwardParams);
         } else if (chartForm.isSaveBaselineClicked()) {
 
-            // get the derived measurement in question
-            MeasurementSchedule schedule = scheduleManager.getSchedule(subject, chartForm.getId(), chartForm
-                .getM()[0], true);
-            boolean baselineWasNull = (schedule.getBaseline() == null);
+            Boolean baselineWasNull = null;
+            if (chartForm.getMode().equals(ParamConstants.MODE_MON_CHART_SMSR)) {
+                // get the derived measurement in question
+                MeasurementSchedule schedule = scheduleManager.getSchedule(subject, chartForm.getId(),
+                    chartForm.getM()[0], true);
+                baselineWasNull = (schedule.getBaseline() == null);
 
-            baselineManager.calculateAutoBaseline(subject, schedule.getId(), chartForm.getStartDate().getTime(),
-                chartForm.getEndDate().getTime(), true /* save */);
+                baselineManager.calculateAutoBaseline(subject, schedule.getId(), chartForm.getStartDate().getTime(),
+                    chartForm.getEndDate().getTime(), true /* save */);
+            } else if (chartForm.getMode().equals(ParamConstants.MODE_MON_CHART_SMMR)) {
+                MeasurementBaseline baselineIfEqual = baselineManager.getBaselineIfEqual(subject, chartForm
+                    .getGroupId(), chartForm.getM()[0]);
+
+                baselineWasNull = (baselineIfEqual == null);
+
+                baselineManager.calculateAutoBaseline(subject, chartForm.getGroupId(), chartForm.getM()[0], chartForm
+                    .getStartDate().getTime(), chartForm.getEndDate().getTime(), true /* save */);
+            }
             request.setAttribute("editBaseline", Boolean.FALSE);
             request.setAttribute("justSavedBaseline", Boolean.TRUE);
             request.setAttribute("baselineWasNull", Boolean.valueOf(baselineWasNull));
@@ -152,49 +166,25 @@ public class ViewChartAction extends MetricDisplayRangeAction {
             return returnRedraw(request, mapping, forwardParams);
         } else if (chartForm.isSaveHighRangeClicked()) {
             // get the derived measurement in question
-
-            MeasurementSchedule schedule = scheduleManager.getSchedule(subject, chartForm.getM()[0],
-                chartForm.getId(), true);
-
-            // we do some validation here rather than in
-            // ViewChartForm.validate() because we don't want to parse
-            // the number twice
-            if (chartForm.getHighRange().length() > 0) {
-                try {
-                    double highRange = MeasurementConverter.parse(chartForm.getHighRange(), schedule).getValue();
-
-                    MeasurementBaseline baseline = schedule.getBaseline();
-
-                    if (baseline != null) {
-                        if (null != baseline.getMin()) {
-                            if (highRange <= baseline.getMin()) {
-                                RequestUtils.setError(request,
-                                    "resource.common.monitor.visibility.error.HighGreaterLow", "highRange");
-                                request.setAttribute("editHighRange", Boolean.TRUE);
-                                return returnFailure(request, mapping, forwardParams);
-                            }
-                        }
-                    } else {
-                        baseline = new MeasurementBaseline();
-                        baseline.setSchedule(schedule); // add relationship both ways
-                    }
-
-                    baseline.setMax(highRange);
-                    baseline.setUserEntered(true);
-                    RequestUtils.setConfirmation(request,
-                        "resource.common.monitor.visibility.chart.confirm.HighRangeSet");
-                } catch (MeasurementConversionException mce) {
-                    RequestUtils.setError(request, "resource.common.monitor.visibility.error.RangeParseException",
-                        "highRange");
-                    request.setAttribute("editHighRange", Boolean.TRUE);
+            if (chartForm.getMode().equals(ParamConstants.MODE_MON_CHART_SMSR)) {
+                int definitionId = chartForm.getM()[0];
+                int resourceId = chartForm.getId();
+                boolean success = setBaselineMax(subject, request, resourceId, definitionId, chartForm.getHighRange());
+                if (!success) {
                     return returnFailure(request, mapping, forwardParams);
                 }
-            } else {
-                RequestUtils.setConfirmation(request,
-                    "resource.common.monitor.visibility.chart.confirm.HighRangeCleared");
+            } else if (chartForm.getMode().equals(ParamConstants.MODE_MON_CHART_SMMR)) {
+                int groupId = chartForm.getGroupId();
+                int definitionId = chartForm.getM()[0];
+                List<Integer> groupMemberIds = resourceManager.findImplicitResourceIdsByResourceGroup(groupId);
+                for (int resourceMemberId : groupMemberIds) {
+                    boolean success = setBaselineMax(subject, request, resourceMemberId, definitionId, chartForm
+                        .getHighRange());
+                    if (!success) {
+                        return returnFailure(request, mapping, forwardParams);
+                    }
+                }
             }
-
-            scheduleManager.updateSchedule(subject, schedule);
             request.setAttribute("editHighRange", Boolean.FALSE);
             request.setAttribute("justSavedHighRange", Boolean.TRUE);
 
@@ -207,45 +197,26 @@ public class ViewChartAction extends MetricDisplayRangeAction {
             return returnRedraw(request, mapping, forwardParams);
         } else if (chartForm.isSaveLowRangeClicked()) {
             // get the derived measurement in question
-            MeasurementSchedule schedule = scheduleManager.getSchedule(subject, chartForm.getM()[0],
-                chartForm.getId(), true);
-
-            if (chartForm.getLowRange().length() > 0) {
-                try {
-                    double lowRange = MeasurementConverter.parse(chartForm.getLowRange(), schedule).getValue();
-
-                    MeasurementBaseline baseline = schedule.getBaseline();
-
-                    if (baseline != null) {
-                        if (null != baseline.getMax()) {
-                            if (lowRange >= baseline.getMax()) {
-                                RequestUtils.setError(request,
-                                    "resource.common.monitor.visibility.error.HighGreaterLow", "lowRange");
-                                request.setAttribute("editLowRange", Boolean.TRUE);
-                                return returnFailure(request, mapping, forwardParams);
-                            }
-                        }
-                    } else {
-                        baseline = new MeasurementBaseline();
-                        baseline.setSchedule(schedule); // add relationship both ways
-                    }
-
-                    baseline.setMin(lowRange);
-                    baseline.setUserEntered(true);
-                    RequestUtils.setConfirmation(request,
-                        "resource.common.monitor.visibility.chart.confirm.LowRangeSet");
-                } catch (MeasurementConversionException mce) {
-                    RequestUtils.setError(request, "resource.common.monitor.visibility.error.RangeParseException",
-                        "lowRange");
-                    request.setAttribute("editLowRange", Boolean.TRUE);
+            if (chartForm.getMode().equals(ParamConstants.MODE_MON_CHART_SMSR)) {
+                int definitionId = chartForm.getM()[0];
+                int resourceId = chartForm.getId();
+                boolean success = setBaselineMin(subject, request, resourceId, definitionId, chartForm.getLowRange());
+                if (!success) {
                     return returnFailure(request, mapping, forwardParams);
                 }
-            } else {
-                RequestUtils.setConfirmation(request,
-                    "resource.common.monitor.visibility.chart.confirm.LowRangeCleared");
+            } else if (chartForm.getMode().equals(ParamConstants.MODE_MON_CHART_SMMR)) {
+                int groupId = chartForm.getGroupId();
+                int definitionId = chartForm.getM()[0];
+                List<Integer> groupMemberIds = resourceManager.findImplicitResourceIdsByResourceGroup(groupId);
+                for (int resourceMemberId : groupMemberIds) {
+                    boolean success = setBaselineMax(subject, request, resourceMemberId, definitionId, chartForm
+                        .getLowRange());
+                    if (!success) {
+                        return returnFailure(request, mapping, forwardParams);
+                    }
+                }
             }
 
-            scheduleManager.updateSchedule(subject, schedule);
             request.setAttribute("editLowRange", Boolean.FALSE);
             request.setAttribute("justSavedLowRange", Boolean.TRUE);
 
@@ -296,6 +267,92 @@ public class ViewChartAction extends MetricDisplayRangeAction {
             }
         }
 
+    }
+
+    private boolean setBaselineMax(Subject subject, HttpServletRequest request, int resourceId, int definitionId,
+        String highRangeStr) throws Exception {
+        MeasurementSchedule schedule = scheduleManager.getSchedule(subject, resourceId, definitionId, true);
+
+        // validate here rather than in ViewChartForm.validate() because we don't want to parse the number twice
+        if (highRangeStr.length() > 0) {
+            try {
+                double highRange = MeasurementConverter.parse(highRangeStr, schedule).getValue();
+
+                MeasurementBaseline baseline = schedule.getBaseline();
+
+                if (baseline != null) {
+                    if (null != baseline.getMin()) {
+                        if (highRange <= baseline.getMin()) {
+                            RequestUtils.setError(request, "resource.common.monitor.visibility.error.HighGreaterLow",
+                                "highRange");
+                            request.setAttribute("editHighRange", Boolean.TRUE);
+                            return false;
+                        }
+                    }
+                } else {
+                    baseline = new MeasurementBaseline();
+                    baseline.setSchedule(schedule); // add relationship both ways
+                }
+
+                baseline.setMax(highRange);
+                baseline.setUserEntered(true);
+                RequestUtils.setConfirmation(request, "resource.common.monitor.visibility.chart.confirm.HighRangeSet");
+            } catch (MeasurementConversionException mce) {
+                RequestUtils.setError(request, "resource.common.monitor.visibility.error.RangeParseException",
+                    "highRange");
+                request.setAttribute("editHighRange", Boolean.TRUE);
+                return false;
+            }
+        } else {
+            RequestUtils.setConfirmation(request, "resource.common.monitor.visibility.chart.confirm.HighRangeCleared");
+        }
+
+        scheduleManager.updateSchedule(subject, schedule);
+
+        return true;
+    }
+
+    private boolean setBaselineMin(Subject subject, HttpServletRequest request, int resourceId, int definitionId,
+        String lowRangeStr) throws Exception {
+        MeasurementSchedule schedule = scheduleManager.getSchedule(subject, resourceId, definitionId, true);
+
+        // validate here rather than in ViewChartForm.validate() because we don't want to parse the number twice
+        if (lowRangeStr.length() > 0) {
+            try {
+                double lowRange = MeasurementConverter.parse(lowRangeStr, schedule).getValue();
+
+                MeasurementBaseline baseline = schedule.getBaseline();
+
+                if (baseline != null) {
+                    if (null != baseline.getMax()) {
+                        if (lowRange >= baseline.getMax()) {
+                            RequestUtils.setError(request, "resource.common.monitor.visibility.error.HighGreaterLow",
+                                "lowRange");
+                            request.setAttribute("editLowRange", Boolean.TRUE);
+                            return false;
+                        }
+                    }
+                } else {
+                    baseline = new MeasurementBaseline();
+                    baseline.setSchedule(schedule); // add relationship both ways
+                }
+
+                baseline.setMin(lowRange);
+                baseline.setUserEntered(true);
+                RequestUtils.setConfirmation(request, "resource.common.monitor.visibility.chart.confirm.LowRangeSet");
+            } catch (MeasurementConversionException mce) {
+                RequestUtils.setError(request, "resource.common.monitor.visibility.error.RangeParseException",
+                    "lowRange");
+                request.setAttribute("editLowRange", Boolean.TRUE);
+                return false;
+            }
+        } else {
+            RequestUtils.setConfirmation(request, "resource.common.monitor.visibility.chart.confirm.LowRangeCleared");
+        }
+
+        scheduleManager.updateSchedule(subject, schedule);
+
+        return true;
     }
 
     public ActionForward returnRedraw(HttpServletRequest request, ActionMapping mapping, Map params) throws Exception {

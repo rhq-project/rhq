@@ -420,6 +420,38 @@ public class MeasurementDataManagerUtility {
         }
     }
 
+    public MeasurementAggregate getAggregateByGroupAndDefinition(long beginTime, long endTime, int groupId,
+        int definitionId) throws MeasurementNotFoundException {
+        Connection myConnection = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        try {
+            myConnection = getConnection();
+            String condition = " AND d.schedule_id IN ( SELECT m_sched.id \n" //
+                + "                                       FROM rhq_measurement_sched m_sched, \n" //
+                + "                                            rhq_resource_group_res_imp_map imp_map \n" //
+                + "                                      WHERE m_sched.resource_id = imp_map.resource_id \n" //
+                + "                                        AND imp_map.resource_group_id = ? \n" //
+                + "                                        AND m_sched.definition = ? ) \n";
+
+            ps = getFullQuery(myConnection, beginTime, endTime, 1, "", condition, groupId, definitionId);
+
+            rs = ps.executeQuery();
+            if (rs.next()) {
+                MeasurementAggregate measurementAggregate = fillAggregateFromResultSet(rs);
+                return measurementAggregate;
+            }
+
+            throw new MeasurementNotFoundException("Data not found");
+        } catch (SQLException e) {
+            throw new MeasurementNotFoundException(e);
+        } finally {
+            JDBCUtil.safeClose(myConnection, ps, rs);
+            connection = null; // the close above invalidates the member
+        }
+    }
+
     /**
      * @param  rs
      *

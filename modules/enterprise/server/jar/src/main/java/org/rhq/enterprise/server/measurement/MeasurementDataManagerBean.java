@@ -687,6 +687,34 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         }
     }
 
+    public MeasurementAggregate getAggregate(Subject subject, int groupId, int definitionId, long startTime,
+        long endTime) throws FetchException {
+
+        if (authorizationManager.canViewGroup(subject, groupId) == false) {
+            throw new PermissionException("User[" + subject.getName()
+                + "] does not have permission to calculate measurement aggregate for group[id=" + groupId
+                + "], definition[id=" + definitionId + "]");
+        }
+
+        MeasurementDefinition def = measurementDefinitionManager.getMeasurementDefinition(subject, definitionId);
+        if (def.getDataType() != DataType.MEASUREMENT) {
+            throw new FetchException(def + " is not about numerical values. Can't compute aggregates");
+        }
+
+        if (startTime > endTime) {
+            throw new FetchException("Start date " + startTime + " is not before " + endTime);
+        }
+
+        try {
+            MeasurementDataManagerUtility utility = MeasurementDataManagerUtility.getInstance(rhqDs);
+            MeasurementAggregate aggregate = utility.getAggregateByGroupAndDefinition(startTime, endTime, groupId,
+                definitionId);
+            return aggregate;
+        } catch (Exception e) {
+            throw new FetchException(e);
+        }
+    }
+
     /**
      * Return the Traits for the passed resource. This method will for each trait only return the 'youngest' entry. If
      * there are no traits found for that resource, an empty list is returned. If displayType is null, no displayType is

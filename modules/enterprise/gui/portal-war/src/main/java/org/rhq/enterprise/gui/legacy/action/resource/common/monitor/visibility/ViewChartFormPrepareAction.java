@@ -38,6 +38,7 @@ import org.rhq.core.clientapi.util.ArrayUtil;
 import org.rhq.core.clientapi.util.StringUtil;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.NumericType;
@@ -70,6 +71,7 @@ import org.rhq.enterprise.server.measurement.BaselineCreationException;
 import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementChartsManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementNotFoundException;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.measurement.uibean.BaseMetricDisplay;
@@ -249,7 +251,7 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
             // TODO fill in the right ones depending on what was selected
             request.setAttribute("checkedResources", checked.toArray(new Resource[checked.size()]));
             request.setAttribute("checkedResourcesSize", checked.size());
-        } else if (((r != null) && (r.length > 0)) || ((resourceIdsParam != null) && (resourceIdsParam.length > 0))) // multiple scathered resources
+        } else if (((r != null) && (r.length > 0)) || ((resourceIdsParam != null) && (resourceIdsParam.length > 0))) // multiple scattered resources
         {
             /*
              * We have different paths to get here. One is that only r or only resourceIds are filled. In that case,
@@ -317,7 +319,7 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
         request.setAttribute("canSaveChart", "true");
 
         _setupPageData(request, chartForm, allResources, subject);
-        _setupBaselineExpectedRange(request, chartForm, allResources.get(0), subject);
+        _setupBaselineExpectedRange(request, chartForm, allResources, subject);
 
         _setupParentResources(request, subject);
 
@@ -579,8 +581,8 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
             int[] metricScheduleIds = new int[metricDefinitionIds.length];
             for (int i = 0; i < metricDefinitionIds.length; i++) {
                 int definitionId = metricDefinitionIds[i];
-                MeasurementSchedule schedule = scheduleManager.getSchedule(subject, resource.getId(),
-                    definitionId, false);
+                MeasurementSchedule schedule = scheduleManager.getSchedule(subject, resource.getId(), definitionId,
+                    false);
                 metricScheduleIds[i] = schedule.getId();
             }
 
@@ -616,16 +618,18 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
      * Populates the form properties that are needed for the BaselineExpectedRangeParams.jsp tile, which is only
      * included in SMSR mode.
      */
-    private void _setupBaselineExpectedRange(HttpServletRequest request, ViewChartForm chartForm, Resource resource,
-        Subject subject) throws Exception {
+    private void _setupBaselineExpectedRange(HttpServletRequest request, ViewChartForm chartForm,
+        List<Resource> resources, Subject subject) throws Exception {
+        MeasurementDefinitionManagerLocal definitionManager = LookupUtil.getMeasurementDefinitionManager();
         MeasurementScheduleManagerLocal scheduleManager = LookupUtil.getMeasurementScheduleManager();
         MeasurementBaselineManagerLocal baselineManager = LookupUtil.getMeasurementBaselineManager();
         int metricId = chartForm.getM()[0];
 
-        // This tile is only present in single-metric, single-resource mode and for dynamic, numeric metrics.
+        // This tile is only present for dynamic, numeric metrics in either in single-metric, single-resource mode or
+        // single-metric, multiple-resource mode.
         if (chartForm.getMode().equals(ParamConstants.MODE_MON_CHART_SMSR) && (metricId != 0)) {
-            MeasurementSchedule schedule = scheduleManager.getSchedule(subject, resource.getId(), metricId,
-                true);
+            Resource resource = resources.get(0);
+            MeasurementSchedule schedule = scheduleManager.getSchedule(subject, resource.getId(), metricId, true);
             if (schedule.getDefinition().getNumericType() != NumericType.DYNAMIC) {
                 chartForm.setSuppressBaselineSection(true);
                 return;
@@ -657,58 +661,111 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
                 chartForm.setNewBaselineRaw(String.valueOf(newBLValue.getMean()));
             }
 
-            MeasurementBaseline baselineValue = schedule.getBaseline();
-            if (baselineValue != null) {
-                if (baselineValue.getMean() != null) {
-                    chartForm.setBaseline(MeasurementConverter.format(baselineValue.getMean(), schedule.getDefinition()
-                        .getUnits(), true));
-                    chartForm.setBaselineRaw(String.valueOf(baselineValue.getMean()));
-                }
+            setBaselineValues(schedule.getDefinition(), schedule.getBaseline(), chartForm);
 
-                if (baselineValue.getMax() != null) {
-                    chartForm.setHighRange(MeasurementConverter.format(baselineValue.getMax(), schedule.getDefinition()
-                        .getUnits(), true));
-                    chartForm.setHighRangeRaw(String.valueOf(baselineValue.getMax()));
-                }
+            postProcessBaselines(request, chartForm);
 
-                if (baselineValue.getMin() != null) {
-                    chartForm.setLowRange(MeasurementConverter.format(baselineValue.getMin(), schedule.getDefinition()
-                        .getUnits(), true));
-                    chartForm.setLowRangeRaw(String.valueOf(baselineValue.getMin()));
+        } else if (chartForm.getMode().equals(ParamConstants.MODE_MON_CHART_SMMR) && (metricId != 0)) {
+            MeasurementDefinition definition = definitionManager.getMeasurementDefinition(subject, metricId);
+            if (definition.getNumericType() != NumericType.DYNAMIC) {
+                chartForm.setSuppressBaselineSection(true);
+                return;
+            }
+
+            // Format the baseline, old baseline, high and low ranges.
+            MeasurementBaseline newBaseline = null;
+            try {
+                newBaseline = baselineManager.calculateAutoBaseline(LookupUtil.getSubjectManager().getOverlord(),
+                    chartForm.getGroupId(), chartForm.getM()[0], chartForm.getStartDate().getTime(), chartForm
+                        .getEndDate().getTime(), false);
+            } catch (BaselineCreationException e) {
+                log.debug("Baseline could not be calculated, possibly " + " due to lack of data", e);
+            }
+
+            if (newBaseline != null) {
+                chartForm.setNewBaseline(MeasurementConverter
+                    .format(newBaseline.getMean(), definition.getUnits(), true));
+                chartForm.setNewBaselineRaw(String.valueOf(newBaseline.getMean()));
+            }
+
+            MeasurementBaseline baselineIfEqual = baselineManager.getBaselineIfEqual(subject, chartForm.getGroupId(),
+                metricId);
+
+            setBaselineValues(definition, baselineIfEqual, chartForm);
+
+            postProcessBaselines(request, chartForm);
+        }
+    }
+
+    private void setBaselineValues(MeasurementDefinition definition, MeasurementBaseline baseline,
+        ViewChartForm chartForm) {
+        if (baseline != null) {
+            if (baseline.getMean() != null) {
+                // group baselines will be -1 if values are mixed
+                if (Math.abs(baseline.getMean() + 1.0) < 1e-9) {
+                    chartForm.setBaseline("Multiple Values");
+                    chartForm.setBaselineRaw("Multiple Values");
+                } else {
+                    chartForm.setBaseline(MeasurementConverter.format(baseline.getMean(), definition.getUnits(), true));
+                    chartForm.setBaselineRaw(String.valueOf(baseline.getMean()));
                 }
             }
 
-            if ((chartForm.getBaseline() == null) || (chartForm.getBaseline().length() == 0)) {
-                chartForm.setShowBaseline(false);
-            } else {
-                Boolean justSavedBaseline = (Boolean) request.getAttribute("justSavedBaseline");
-                if ((justSavedBaseline != null) && justSavedBaseline) {
-                    chartForm.setShowBaseline(true);
-
-                    Boolean baselineWasNull = (Boolean) request.getAttribute("baselineWasNull");
-                    if ((baselineWasNull != null) && baselineWasNull) {
-                        chartForm.setShowLowRange(true);
-                        chartForm.setShowHighRange(true);
-                    }
+            if (baseline.getMax() != null) {
+                // group baselines will be -1 if values are mixed
+                if (Math.abs(baseline.getMax() + 1.0) < 1e-9) {
+                    chartForm.setHighRange("Multiple Values");
+                    chartForm.setHighRangeRaw("Multiple Values");
+                } else {
+                    chartForm.setHighRange(MeasurementConverter.format(baseline.getMax(), definition.getUnits(), true));
+                    chartForm.setHighRangeRaw(String.valueOf(baseline.getMax()));
                 }
             }
 
-            if ((chartForm.getHighRange() == null) || (chartForm.getHighRange().length() == 0)) {
-                chartForm.setShowHighRange(false);
-            } else {
-                Boolean justSavedHighRange = (Boolean) request.getAttribute("justSavedHighRange");
-                if ((justSavedHighRange != null) && justSavedHighRange) {
+            if (baseline.getMin() != null) {
+                // group baselines will be -1 if values are mixed
+                if (Math.abs(baseline.getMin() + 1.0) < 1e-9) {
+                    chartForm.setLowRange("Multiple Values");
+                    chartForm.setLowRangeRaw("Multiple Values");
+                } else {
+                    chartForm.setLowRange(MeasurementConverter.format(baseline.getMin(), definition.getUnits(), true));
+                    chartForm.setLowRangeRaw(String.valueOf(baseline.getMin()));
+                }
+            }
+        }
+    }
+
+    private void postProcessBaselines(HttpServletRequest request, ViewChartForm chartForm) {
+        if ((chartForm.getBaseline() == null) || (chartForm.getBaseline().length() == 0)) {
+            chartForm.setShowBaseline(false);
+        } else {
+            Boolean justSavedBaseline = (Boolean) request.getAttribute("justSavedBaseline");
+            if ((justSavedBaseline != null) && justSavedBaseline) {
+                chartForm.setShowBaseline(true);
+
+                Boolean baselineWasNull = (Boolean) request.getAttribute("baselineWasNull");
+                if ((baselineWasNull != null) && baselineWasNull) {
+                    chartForm.setShowLowRange(true);
                     chartForm.setShowHighRange(true);
                 }
             }
+        }
 
-            if ((chartForm.getLowRange() == null) || (chartForm.getLowRange().length() == 0)) {
-                chartForm.setShowLowRange(false);
-            } else {
-                Boolean justSavedLowRange = (Boolean) request.getAttribute("justSavedLowRange");
-                if ((justSavedLowRange != null) && justSavedLowRange) {
-                    chartForm.setShowLowRange(true);
-                }
+        if ((chartForm.getHighRange() == null) || (chartForm.getHighRange().length() == 0)) {
+            chartForm.setShowHighRange(false);
+        } else {
+            Boolean justSavedHighRange = (Boolean) request.getAttribute("justSavedHighRange");
+            if ((justSavedHighRange != null) && justSavedHighRange) {
+                chartForm.setShowHighRange(true);
+            }
+        }
+
+        if ((chartForm.getLowRange() == null) || (chartForm.getLowRange().length() == 0)) {
+            chartForm.setShowLowRange(false);
+        } else {
+            Boolean justSavedLowRange = (Boolean) request.getAttribute("justSavedLowRange");
+            if ((justSavedLowRange != null) && justSavedLowRange) {
+                chartForm.setShowLowRange(true);
             }
         }
     }

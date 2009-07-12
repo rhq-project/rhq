@@ -374,6 +374,10 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "SELECT res.id " //
         + "  FROM ResourceGroup rg, IN (rg.explicitResources) res " //
         + " WHERE rg.id = :groupId "),
+    @NamedQuery(name = Resource.QUERY_FIND_IMPLICIT_IDS_BY_RESOURCE_GROUP_ADMIN, query = "" //
+        + "SELECT res.id " //
+        + "  FROM ResourceGroup rg, IN (rg.implicitResources) res " //
+        + " WHERE rg.id = :groupId "),
     @NamedQuery(name = Resource.QUERY_FIND_FLY_WEIGHTS_BY_RESOURCE_IDS, query = "" //
         + "SELECT new org.rhq.core.domain.resource.composite.ResourceIdFlyWeight(res.id, res.uuid) " //
         + "  FROM Resource res " //
@@ -782,6 +786,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
     public static final String QUERY_FIND_BY_PARENT_AND_KEY = "Resource.findByParentAndKey";
 
     public static final String QUERY_FIND_EXPLICIT_IDS_BY_RESOURCE_GROUP_ADMIN = "Resource.findExplicitIdsByResourceGroup_admin";
+    public static final String QUERY_FIND_IMPLICIT_IDS_BY_RESOURCE_GROUP_ADMIN = "Resource.findImplicitIdsByResourceGroup_admin";
 
     public static final String QUERY_FIND_FLY_WEIGHTS_BY_RESOURCE_IDS = "Resource.findFlyWeights";
 

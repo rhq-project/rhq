@@ -1242,6 +1242,15 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @SuppressWarnings("unchecked")
+    public List<Integer> findImplicitResourceIdsByResourceGroup(int resourceGroupId) {
+        Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_IMPLICIT_IDS_BY_RESOURCE_GROUP_ADMIN);
+        query.setParameter("groupId", resourceGroupId);
+
+        List<Integer> results = query.getResultList();
+        return results;
+    }
+
+    @SuppressWarnings("unchecked")
     public List<ResourceIdFlyWeight> findFlyWeights(int[] resourceIds) {
         Integer[] ids = ArrayUtils.wrapInArray(resourceIds);
         if (ids.length == 0) {

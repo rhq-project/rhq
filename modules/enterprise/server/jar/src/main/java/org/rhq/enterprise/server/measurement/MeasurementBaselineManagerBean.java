@@ -49,6 +49,7 @@ import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.NumericType;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
@@ -56,6 +57,7 @@ import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.cloud.StatusManagerLocal;
 import org.rhq.enterprise.server.exception.FetchException;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 
 /**
@@ -90,6 +92,8 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
     private SystemManagerLocal systemManager;
     @EJB
     private SubjectManagerLocal subjectManager;
+    @EJB
+    private ResourceManagerLocal resourceManager;
 
     private final Log log = LogFactory.getLog(MeasurementBaselineManagerBean.class);
 
@@ -273,6 +277,57 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
         return rowsModified;
     }
 
+    /**
+     * If the measurement baselines for the corresponding resources are the same, that value will be returned;
+     * otherwise null will be returned
+     */
+    public MeasurementBaseline getBaselineIfEqual(Subject subject, int groupId, int definitionId) {
+        Query query = entityManager.createQuery("" //
+            + "SELECT MIN(mb.baselineMin),  MAX(mb.baselineMin), " //
+            + "       MIN(mb.baselineMean), MAX(mb.baselineMean), " //
+            + "       MIN(mb.baselineMax),  MAX(mb.baselineMax), " //
+            + "       COUNT(mb.id) " //
+            + "  FROM MeasurementBaseline mb " //
+            + "  JOIN mb.schedule ms " //
+            + "  JOIN ms.resource res " //
+            + "  JOIN res.implicitGroups rg " //
+            + " WHERE rg.id = :groupId " //
+            + "   AND ms.definition.id = :definitionId ");
+        query.setParameter("groupId", groupId);
+        query.setParameter("definitionId", definitionId);
+        Object[] results = (Object[]) query.getSingleResult();
+
+        MeasurementBaseline baseline = new MeasurementBaseline();
+        if ((Long) results[6] == 0) {
+            // no baselines calculated yet, return null to indicate that
+            return null;
+        }
+
+        // there was at least one baseline, so one or more of min/mean/max might be non-null
+        if (results[0] == null || results[1] == null) {
+            baseline.setMin(null);
+        } else if (Math.abs((Double) results[0] - (Double) results[1]) < 1e-9) {
+            baseline.setMin((Double) results[0]); // they are close enough to being equal
+        } else {
+            baseline.setMin(-1.0); // use negative to represent mixed, because we currently don't support graphing negs
+        }
+        if (results[2] == null || results[3] == null) {
+            baseline.setMean(null);
+        } else if (Math.abs((Double) results[2] - (Double) results[3]) < 1e-9) {
+            baseline.setMean((Double) results[2]); // they are close enough to being equal
+        } else {
+            baseline.setMean(-1.0); // use negative to represent mixed, because we currently don't support graphing negs
+        }
+        if (results[4] == null || results[5] == null) {
+            baseline.setMax(null);
+        } else if (Math.abs((Double) results[4] - (Double) results[5]) < 1e-9) {
+            baseline.setMax((Double) results[4]); // they are close enough to being equal
+        } else {
+            baseline.setMax(-1.0); // use negative to represent mixed, because we currently don't support graphing negs
+        }
+        return baseline;
+    }
+
     public MeasurementBaseline calculateAutoBaseline(Subject subject, Integer measurementScheduleId, long startDate,
         long endDate, boolean save) throws BaselineCreationException, MeasurementNotFoundException {
 
@@ -301,8 +356,36 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
                 oobManager.removeOOBsForSchedule(subject, sched);
             }
         } catch (DataNotAvailableException e) {
-            throw new BaselineCreationException("Error fetching data for baseline calculation: "
-                + measurementScheduleId);
+            throw new BaselineCreationException(
+                "Error fetching data for baseline calculation for measurementSchedule[id=" + measurementScheduleId
+                    + "]");
+        }
+
+        return baseline;
+    }
+
+    //calculateAutoBaseline(LookupUtil.getSubjectManager().getOverlord(),
+    //chartForm.getGroupId(), chartForm.getM()[0], chartForm.getStartDate().getTime(), chartForm
+    //.getEndDate().getTime(), false);
+
+    public MeasurementBaseline calculateAutoBaseline(Subject subject, int groupId, int definitionId, long startDate,
+        long endDate, boolean save) throws BaselineCreationException, MeasurementNotFoundException {
+
+        if (save && !authorizationManager.hasGroupPermission(subject, Permission.MANAGE_MEASUREMENTS, groupId)) {
+            throw new PermissionException("User[" + subject.getName()
+                + "] does not have permission to calculate and set baselines for group[id=" + groupId + "]");
+        }
+
+        MeasurementBaseline baseline;
+        try {
+            baseline = calculateBaseline(groupId, definitionId, true, startDate, endDate, save);
+            if (save) {
+                // We have changed the baseline information for the schedule, so remove the now outdated OOB info.
+                oobManager.removeOOBsForGroupAndDefinition(subject, groupId, definitionId);
+            }
+        } catch (DataNotAvailableException e) {
+            throw new BaselineCreationException("Error fetching data for baseline calculation for group[id=" + groupId
+                + "], definition[id=" + definitionId + "]");
         }
 
         return baseline;
@@ -430,6 +513,65 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
             notifyAlertConditionCacheManager("calculateBaseline", baseline);
         }
 
+        return baseline;
+    }
+
+    public MeasurementBaseline calculateBaseline(int groupId, int definitionId, boolean userEntered, long startDate,
+        long endDate, boolean save) throws DataNotAvailableException, BaselineCreationException {
+
+        MeasurementAggregate agg = null;
+
+        try {
+            agg = dataManager.getAggregate(subjectManager.getOverlord(), groupId, definitionId, startDate, endDate);
+        } catch (FetchException e) {
+            throw new DataNotAvailableException(e);
+        }
+
+        Subject overlord = subjectManager.getOverlord();
+        List<Integer> resourceIds = resourceManager.findImplicitResourceIdsByResourceGroup(groupId);
+        List<MeasurementSchedule> schedules = measurementScheduleManager.findSchedulesByResourceIdsAndDefinitionId(
+            overlord, ArrayUtils.unwrapCollection(resourceIds), definitionId);
+
+        MeasurementBaseline baseline = null;
+        for (MeasurementSchedule schedule : schedules) {
+            // attach the entity, so we can find the baseline
+            schedule = entityManager.merge(schedule);
+
+            if (save && (schedule.getBaseline() != null)) {
+                /*
+                 * If saving, make sure we're updating the existing one, if it exists
+                 */
+                baseline = schedule.getBaseline();
+            } else {
+                /*
+                 * Otherwise, if we're not saving or if the the schedule doesn't have a current baseline, we create a new
+                 * baseline object
+                 */
+                baseline = new MeasurementBaseline();
+
+                if (save) {
+                    /*
+                     * But, if we *are* in save mode, then set the relationship so when we merge the schedule below it
+                     * persists this new baseline too
+                     */
+                    baseline.setSchedule(schedule);
+                }
+            }
+
+            baseline.setUserEntered(userEntered);
+            baseline.setMean(agg.getAvg());
+            baseline.setMin(agg.getMin());
+            baseline.setMax(agg.getMax());
+
+            if (save) {
+                entityManager.persist(baseline);
+                entityManager.merge(schedule);
+
+                notifyAlertConditionCacheManager("calculateBaseline", baseline);
+            }
+        }
+
+        // all baselines should be the same
         return baseline;
     }
 

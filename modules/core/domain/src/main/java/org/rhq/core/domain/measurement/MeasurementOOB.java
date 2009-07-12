@@ -71,12 +71,12 @@ import javax.persistence.Table;
         + "LEFT JOIN sched.definition def " //
         + "LEFT JOIN sched.resource res " //
         + "LEFT JOIN res.parentResource parent " //
-        + "WHERE o.id = sched.id " //
-        + "  AND sched.definition = def " //
-        + "  AND sched.resource = res " //
-        + "  AND (UPPER(def.displayName ) LIKE :metricName OR :metricName is null ) " //
-        + "  AND (UPPER(res.name) LIKE :resourceName OR :resourceName is null ) " //
-        + "  AND (UPPER(parent.name) LIKE :parentName OR :parentName is null ) "), //
+        + "    WHERE o.id = sched.id " //
+        + "      AND sched.definition = def " //
+        + "      AND sched.resource = res " //
+        + "      AND (UPPER(def.displayName ) LIKE :metricName OR :metricName is null ) " //
+        + "      AND (UPPER(res.name) LIKE :resourceName OR :resourceName is null ) " //
+        + "      AND (UPPER(parent.name) LIKE :parentName OR :parentName is null ) "), //
     @NamedQuery(name = MeasurementOOB.DELETE_OUTDATED, query = "" //
         + "DELETE FROM MeasurementOOB o " //
         + "      WHERE o.id IN ( SELECT b.schedule.id " //
@@ -89,6 +89,14 @@ import javax.persistence.Table;
     @NamedQuery(name = MeasurementOOB.DELETE_FOR_SCHEDULE, query = "" //
         + "DELETE FROM MeasurementOOB o " //
         + "      WHERE o.id = :id"), //
+    @NamedQuery(name = MeasurementOOB.DELETE_FOR_GROUP_AND_DEFINITION, query = "" //
+        + "DELETE FROM MeasurementOOB o " //
+        + "      WHERE o.id IN ( SELECT ms.id " //
+        + "                        FROM MeasurementSchedule ms " //
+        + "                        JOIN ms.resource res " //
+        + "                        JOIN res.implicitGroups rg " //
+        + "                       WHERE rg.id = :groupId " //
+        + "                         AND ms.definition.id = :definitionId )"), //
     @NamedQuery(name = MeasurementOOB.DELETE_FOR_RESOURCES, query = "" //
         + "DELETE FROM MeasurementOOB o " //
         + "      WHERE o.id IN ( SELECT ms.id " //
@@ -117,6 +125,7 @@ public class MeasurementOOB {
     public static final String DELETE_OUTDATED = "DeleteOutdatedOOBs";
     public static final String COUNT_FOR_DATE = "CountOOBForDate";
     public static final String GET_HIGHEST_FACTORS_FOR_RESOURCE = "GetHighestOOBFactorForResource";
+    public static final String DELETE_FOR_GROUP_AND_DEFINITION = "DeleteOOBForGroupAndDefinition";
     public static final String DELETE_FOR_SCHEDULE = "DeleteOOBForSchedule";
 
     public static final String DELETE_FOR_RESOURCES = "DeleteOOBForResurces";

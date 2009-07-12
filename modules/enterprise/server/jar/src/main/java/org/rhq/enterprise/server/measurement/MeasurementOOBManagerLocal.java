@@ -63,9 +63,7 @@ public interface MeasurementOOBManagerLocal {
      * @param pc PageControl to do pagination
      */
     PageList<MeasurementOOBComposite> getSchedulesWithOOBs(Subject subject, String metricNameFilter,
-                                                           String resourceNameFilter, String parentNameFilter,
-                                                           PageControl pc
-    );
+        String resourceNameFilter, String parentNameFilter, PageControl pc);
 
     /**
      * Computes the OOBs for the last hour.
@@ -93,6 +91,8 @@ public interface MeasurementOOBManagerLocal {
      * @param sched the schedule for which we want to clean out the data
      */
     void removeOOBsForSchedule(Subject subject, MeasurementSchedule sched);
+
+    void removeOOBsForGroupAndDefinition(Subject subject, int resourceGroupId, int measurementDefinitionId);
 
     /**
      * Returns the highest n OOBs for the passed resource id within the last 72h

@@ -264,6 +264,13 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
         q.executeUpdate();
     }
 
+    public void removeOOBsForGroupAndDefinition(Subject subject, int resourceGroupId, int measurementDefinitionId) {
+        Query query = entityManager.createNamedQuery(MeasurementOOB.DELETE_FOR_GROUP_AND_DEFINITION);
+        query.setParameter("groupId", resourceGroupId);
+        query.setParameter("definitionId", measurementDefinitionId);
+        query.executeUpdate();
+    }
+
     /**
      * Return OOB Composites that contain all information about the OOBs in a given time as aggregates.
      * @param subject The caller

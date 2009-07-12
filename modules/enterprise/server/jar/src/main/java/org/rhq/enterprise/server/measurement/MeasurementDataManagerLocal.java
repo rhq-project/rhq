@@ -67,8 +67,8 @@ public interface MeasurementDataManagerLocal {
      *
      * @return
      */
-    List<List<MeasurementDataNumericHighLowComposite>> findDataForSiblingResources(Subject subject,
-        int[] resourceIds, int measurementDefinitionId, long beginTime, long endTime, int numberOfdataPoints);
+    List<List<MeasurementDataNumericHighLowComposite>> findDataForSiblingResources(Subject subject, int[] resourceIds,
+        int measurementDefinitionId, long beginTime, long endTime, int numberOfdataPoints);
 
     /**
      * Returns a list of numeric data point lists for the given auto group - one per specified measurement definition.
@@ -167,6 +167,9 @@ public interface MeasurementDataManagerLocal {
      *                        the {@link Resource} corresponding to this scheduleId
      */
     MeasurementAggregate getAggregate(Subject subject, int scheduleId, long startTime, long endTime)
+        throws FetchException;
+
+    MeasurementAggregate getAggregate(Subject subject, int groupId, int definitionId, long startTime, long endTime)
         throws FetchException;
 
     /**

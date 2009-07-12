@@ -276,7 +276,6 @@
     <definition name=".dashboard.admin.layout" 
                 extends=".main.layout"
                 controllerUrl="/DashboardAdminController.do">
-      <put name="breadcrumb"    value="/portlet/PortletHeader.jsp" />
     </definition>
     <!---->
 

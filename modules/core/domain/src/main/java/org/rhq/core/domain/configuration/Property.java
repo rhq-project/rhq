@@ -39,6 +39,8 @@ import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.xml.bind.annotation.XmlAccessType;
@@ -81,6 +83,9 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
  */
 @DiscriminatorColumn(name = "DTYPE")
 @Entity
+@NamedQueries( { //
+@NamedQuery(name = Property.QUERY_DELETE_BY_PROPERTY_IDS, query = "" //
+    + "DELETE FROM Property p WHERE p.id IN ( :propertyIds ) ") })
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CONFIG_PROPERTY_ID_SEQ")
 @Table(name = "RHQ_CONFIG_PROPERTY")
@@ -89,6 +94,8 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
 @XmlSeeAlso( { PropertySimple.class, PropertyList.class, PropertyMap.class })
 public abstract class Property implements Externalizable {
     private static final long serialVersionUID = 1L;
+
+    public static final String QUERY_DELETE_BY_PROPERTY_IDS = "Property.deleteByPropertyIds";
 
     @Column(name = "ID")
     @GeneratedValue(generator = "SEQ", strategy = GenerationType.AUTO)
@@ -143,8 +150,7 @@ public abstract class Property implements Externalizable {
      *
      * @param name the name that this property will be associated with
      */
-    public void setName(@NotNull
-    String name) {
+    public void setName(@NotNull String name) {
         this.name = name;
     }
 
@@ -228,8 +234,7 @@ public abstract class Property implements Externalizable {
         return errorMessage;
     }
 
-    public void setErrorMessage(@Nullable
-    String errorMessage) {
+    public void setErrorMessage(@Nullable String errorMessage) {
         this.errorMessage = (errorMessage != null) ? errorMessage.trim() : errorMessage;
     }
 

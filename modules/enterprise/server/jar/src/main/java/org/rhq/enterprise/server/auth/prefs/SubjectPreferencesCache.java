@@ -3,8 +3,6 @@ package org.rhq.enterprise.server.auth.prefs;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.persistence.Query;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -14,6 +12,7 @@ import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.common.EntityManagerFacadeLocal;
+import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class SubjectPreferencesCache {
@@ -26,11 +25,13 @@ public class SubjectPreferencesCache {
 
     private SubjectManagerLocal subjectManager;
     private EntityManagerFacadeLocal entityManagerFacade;
+    private ConfigurationManagerLocal configurationManager;
 
     private SubjectPreferencesCache() {
         subjectPreferences = new HashMap<Integer, Configuration>();
         subjectManager = LookupUtil.getSubjectManager();
         entityManagerFacade = LookupUtil.getEntityManagerFacade();
+        configurationManager = LookupUtil.getConfigurationManager();
     }
 
     public static SubjectPreferencesCache getInstance() {
@@ -105,10 +106,7 @@ public class SubjectPreferencesCache {
         // it's possible property was already removed, and thus this operation becomes a no-op to the backing store
         if (property != null && property.getId() != 0) {
             try {
-                // no need to delete this through the entity manager, which first requires reloading if detached
-                Query query = entityManagerFacade.createQuery("DELETE FROM Property p WHERE p.id = :propertyId");
-                query.setParameter("propertyId", property.getId());
-                query.executeUpdate();
+                configurationManager.deleteProperties(new int[] { property.getId() });
             } catch (Throwable t) {
                 log.error("Could not remove " + property, t);
             }

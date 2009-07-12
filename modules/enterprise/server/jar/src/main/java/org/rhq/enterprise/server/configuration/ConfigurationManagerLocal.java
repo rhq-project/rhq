@@ -325,6 +325,8 @@ public interface ConfigurationManagerLocal {
 
     void deleteConfigurations(List<Integer> configurationIds);
 
+    void deleteProperties(int[] propertyIds);
+
     PageList<Integer> findResourceConfigurationUpdatesByParentId(int aggregateConfigurationUpdateId,
         PageControl pageControl);
 

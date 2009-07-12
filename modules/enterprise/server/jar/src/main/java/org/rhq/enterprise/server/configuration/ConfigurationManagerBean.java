@@ -52,6 +52,7 @@ import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
+import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.composite.ConfigurationUpdateComposite;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -71,6 +72,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
@@ -1799,6 +1801,16 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
         propertiesQuery.executeUpdate();
         configurationsQuery.executeUpdate();
+    }
+
+    public void deleteProperties(int[] propertyIds) {
+        if (propertyIds == null || propertyIds.length == 0) {
+            return;
+        }
+
+        Query propertiesQuery = entityManager.createNamedQuery(Property.QUERY_DELETE_BY_PROPERTY_IDS);
+        propertiesQuery.setParameter("propertyIds", ArrayUtils.wrapInList(propertyIds));
+        propertiesQuery.executeUpdate();
     }
 
     //Added especially for remote interface

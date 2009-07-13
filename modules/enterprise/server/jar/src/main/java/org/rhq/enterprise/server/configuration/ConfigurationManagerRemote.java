@@ -193,6 +193,7 @@ public interface ConfigurationManagerRemote {
      *
      * @throws Exception if failed to get the configuration from the agent
      */
+    @WebMethod
     Configuration getLiveResourceConfiguration( //
         @WebParam(name = "user") Subject user, //
         @WebParam(name = "resourceId") int resourceId, boolean pingAgentFirst) throws Exception;

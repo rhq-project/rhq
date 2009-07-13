@@ -414,6 +414,7 @@
                             <useSystemClassLoader>false</useSystemClassLoader>
                             <additionalClasspathElements>
                                 <additionalClasspathElement>${project.build.testSourceDirectory}/../jars/ejb2-test.jar</additionalClasspathElement>
+                                <additionalClasspathElement>${project.build.testSourceDirectory}/../jars/ejb2-entity-bean-test.jar</additionalClasspathElement>
                             </additionalClasspathElements>
                             <systemProperties>
                                 <property>
@@ -425,8 +426,8 @@
                                     <value>${project.version}</value>
                                 </property>
                                 <property>
-                                    <name>ejb2.test.jar.path</name>
-                                    <value>${project.build.testSourceDirectory}/../jars/ejb2-test.jar</value>
+                                    <name>ejb2.test.jars.path</name>
+                                    <value>${project.build.testSourceDirectory}/../jars/ejb2-test.jar;${project.build.testSourceDirectory}/../jars/ejb2-entity-bean-test.jar</value>
                                 </property>
                                 <!-- Commented out until we solve the authenticated connections issues 
                                 <property>
@@ -529,6 +530,7 @@
                              <!--<argLine>-Dorg.hyperic.sigar.path=${basedir}/target/itest/lib -Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</argLine>-->
                              <additionalClasspathElements>
                                  <additionalClasspathElement>${project.build.testSourceDirectory}/../jars/ejb2-test.jar</additionalClasspathElement>
+                                 <additionalClasspathElement>${project.build.testSourceDirectory}/../jars/ejb2-entity-bean-test.jar</additionalClasspathElement>
                              </additionalClasspathElements>
                              <systemProperties>
                                  <property>
@@ -540,8 +542,8 @@
                                      <value>${project.version}</value>
                                  </property>
                                  <property>
-                                     <name>ejb2.test.jar.path</name>
-                                     <value>${project.build.testSourceDirectory}/../jars/ejb2-test.jar</value>
+                                     <name>ejb2.test.jars.path</name>
+                                     <value>${project.build.testSourceDirectory}/../jars/ejb2-test.jar;${project.build.testSourceDirectory}/../jars/ejb2-entity-bean-test.jar</value>
                                  </property>
                                 <!-- Commented out until we solve the authenticated connections issues 
                                 <property>

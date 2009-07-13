@@ -60,13 +60,15 @@ public abstract class AbstractEjb2ResourceTest extends AbstractResourceTest {
     }
 
     @BeforeGroups(groups = "as5-plugin")
-    @Parameters("ejb2.test.jar.path")
-    public void deployEjb2TestJars(String jarPath) {
+    @Parameters("ejb2.test.jars.path")
+    public void deployEjb2TestJars(String jarPaths) {
         try {
             System.out.println("Deploying EJB2 test jars to AS...");
-            File jarFile = new File(jarPath);
-            AppServerUtils.deployFileToAS(jarFile.getName(), jarFile, false);
 
+            for (String jarPath : jarPaths.split(";")) {
+                File jarFile = new File(jarPath);
+                AppServerUtils.deployFileToAS(jarFile.getName(), jarFile, false);
+            }
             //and discover the resources
             PluginContainer.getInstance().getInventoryManager().executeServiceScanImmediately();
         } catch (Exception e) {
@@ -75,12 +77,14 @@ public abstract class AbstractEjb2ResourceTest extends AbstractResourceTest {
     }
 
     @AfterGroups(groups = "as5-plugin")
-    @Parameters("ejb2.test.jar.path")
-    public void undeployEjb2TestJars(String jarPath) {
+    @Parameters("ejb2.test.jars.path")
+    public void undeployEjb2TestJars(String jarPaths) {
         try {
             System.out.println("Undeploying EJB2 test jars from AS...");
-            File jarFile = new File(jarPath);
-            AppServerUtils.undeployFromAS(jarFile.getName());
+            for (String jarPath : jarPaths.split(";")) {
+                File jarFile = new File(jarPath);
+                AppServerUtils.undeployFromAS(jarFile.getName());
+            }
         } catch (Exception e) {
             fail("Failed to undeploy EJB2 test jars.", e);
         }

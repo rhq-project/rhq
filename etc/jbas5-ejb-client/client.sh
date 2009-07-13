@@ -82,4 +82,5 @@ JBOSS_CLASSPATH="$JBOSS_CLASSPATH:$MAIN_JAR"
 # Setup JBoss sepecific properties
 JBOSS_ENDORSED_DIRS="$JBOSS_HOME/lib/endorsed"
 
+echo "$JAVA" $JAVA_OPTS -Xmx200M "-Djava.endorsed.dirs=$JBOSS_ENDORSED_DIRS" -classpath "$JBOSS_CLASSPATH" $MAIN_CLASS $@
 "$JAVA" $JAVA_OPTS -Xmx200M "-Djava.endorsed.dirs=$JBOSS_ENDORSED_DIRS" -classpath "$JBOSS_CLASSPATH" $MAIN_CLASS $@

@@ -206,6 +206,7 @@ public class ProcessComponent implements ResourceComponent, MeasurementFacet {
             for (PropertyDescriptor pd : pds) {
                 if (pd.getName().equals(searchProperty)) {
                     value = pd.getReadMethod().invoke(value);
+                    break;
                 }
             }
         } catch (Exception e) {

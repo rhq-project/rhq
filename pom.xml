@@ -545,10 +545,16 @@
       <!-- Ensure all code compiles and runs on Java 5 or later. -->
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <optimize>false</optimize>
+        <configuration>          
+          <!-- invocation options -->
+          <fork>true</fork>
+          <meminitial>128M</meminitial>
+          <maxmem>512M</maxmem>
+          
+          <!-- compiler options -->
           <source>1.5</source>
           <target>1.5</target>
+          <optimize>false</optimize>          
         </configuration>
       </plugin>
 

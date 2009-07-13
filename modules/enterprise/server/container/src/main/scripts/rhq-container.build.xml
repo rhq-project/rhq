@@ -343,7 +343,7 @@
    <copy file="${settings.localRepository}/org/rhq/rhq-client/${rhq.version}/rhq-client-${rhq.version}.zip"
          tofile="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-client/rhq-client-${rhq.version}.zip"
          verbose="true"
-         failonerror="true"/>
+         failonerror="false"/>
 
     <!-- optionally package the connectors -->
     <antcall target="package-connectors" />

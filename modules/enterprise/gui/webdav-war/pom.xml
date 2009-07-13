@@ -12,11 +12,8 @@
    <artifactId>rhq-webdav</artifactId>
    <packaging>war</packaging>
 
-   <name>RHQ WebDav</name>
+   <name>RHQ Enterprise WebDav</name>
    <description>The RHQ WebDav inventory access</description>
-
-
-
 
    <scm>
       <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/gui/webdav-war/</connection>

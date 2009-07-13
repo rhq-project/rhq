@@ -26,6 +26,7 @@ import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.resource.Resource;
 
 /**
  * @author Ian Springer
@@ -47,16 +48,16 @@ public class QueueResourceTest extends AbstractResourceTest {
     }
 
     @Override
-    protected void validateNumericMetricValue(String metricName, Double value) {
+    protected void validateNumericMetricValue(String metricName, Double value, Resource resource) {
         if (metricName.endsWith("Count")) {
             assert value >= 0;
         } else {
-            super.validateNumericMetricValue(metricName, value);
+            super.validateNumericMetricValue(metricName, value, resource);
         }
     }
 
     @Override
-    protected void validateTraitMetricValue(String metricName, String value) {
+    protected void validateTraitMetricValue(String metricName, String value, Resource resource) {
         if (metricName.equals("createdProgrammatically")) {
             assert value.equals("true");
         }

@@ -115,7 +115,7 @@ public abstract class AbstractResourceTest extends AbstractPluginTest {
                                     : report.getNumericData().iterator().next();
                                 Double value = (dataNumeric != null) ? dataNumeric.getValue() : null;
                                 System.out.println("Validating numeric metric '" + name + "' value (" + value + ")...");
-                                validateNumericMetricValue(metricDefinition.getName(), value);
+                                validateNumericMetricValue(metricDefinition.getName(), value, resource);
                             } else if (metricDefinition.getDataType() == DataType.TRAIT) {
                                 assert report.getTraitData().isEmpty() || report.getTraitData().size() == 1;
                                 assert report.getNumericData().isEmpty();
@@ -124,7 +124,7 @@ public abstract class AbstractResourceTest extends AbstractPluginTest {
                                     .getTraitData().iterator().next() : null;
                                 String value = (dataTrait != null) ? dataTrait.getValue() : null;
                                 System.out.println("Validating trait '" + name + "' value (" + value + ")...");
-                                validateTraitMetricValue(metricDefinition.getName(), value);
+                                validateTraitMetricValue(metricDefinition.getName(), value, resource);
                             }
                         }
                     } catch (Exception e) {
@@ -236,11 +236,11 @@ public abstract class AbstractResourceTest extends AbstractPluginTest {
         return;
     }
 
-    protected void validateNumericMetricValue(String metricName, Double value) {
+    protected void validateNumericMetricValue(String metricName, Double value, Resource resource) {
         assert value != null;
     }
 
-    protected void validateTraitMetricValue(String metricName, String value) {
+    protected void validateTraitMetricValue(String metricName, String value, Resource resource) {
         assert value != null;
     }
 

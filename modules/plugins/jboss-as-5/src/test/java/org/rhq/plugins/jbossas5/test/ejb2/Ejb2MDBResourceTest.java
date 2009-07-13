@@ -36,6 +36,7 @@ import javax.jms.TextMessage;
 import javax.naming.InitialContext;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.plugins.jbossas5.test.util.AppServerUtils;
 import org.testng.annotations.BeforeGroups;
 import org.testng.annotations.Test;
@@ -49,6 +50,9 @@ public class Ejb2MDBResourceTest extends AbstractEjb2ResourceTest {
 
     private static final int MESSAGES_SENT = 10;
 
+    private static final String QUEUE_NAME = "queue/A";
+    private static final String MDB_NAME = "StrictlyPooledMDB";
+    
     protected String getResourceTypeName() {
         return "EJB2 Message-Driven Bean";
     }
@@ -59,34 +63,37 @@ public class Ejb2MDBResourceTest extends AbstractEjb2ResourceTest {
             InitialContext ctx = AppServerUtils.getAppServerInitialContext();
 
             QueueConnectionFactory factory = (QueueConnectionFactory) ctx.lookup("ConnectionFactory");
-            Queue queue = (Queue) ctx.lookup("queue/A");
+            Queue queue = (Queue) ctx.lookup(QUEUE_NAME);
 
             QueueConnection connection = factory.createQueueConnection();
+            connection.start();
+
             QueueSession session = connection.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
 
             QueueSender sender = session.createSender(queue);
-
+            
             TextMessage message = session.createTextMessage();
 
             for (int i = 0; i < MESSAGES_SENT; ++i) {
                 message.setText("Message no. " + i);
                 sender.send(message);
             }
+            
+            sender.close();
+            session.close();
+            connection.close();
         } catch (Exception e) {
             fail("Failed to setup Message Driven Bean test", e);
         }
     }
 
-    protected void validateNumericMetricValue(String metricName, Double value) {
-        if ("MessageCount".equals(metricName)) {
+    @Override
+    protected void validateNumericMetricValue(String metricName, Double value, Resource resource) {
+        if ("MessageCount".equals(metricName) && resource.getResourceKey().contains(MDB_NAME)) {
             assertEquals(value, Double.valueOf(MESSAGES_SENT), "Unexpected message count.");
         } else {
-            super.validateNumericMetricValue(metricName, value);
+            super.validateNumericMetricValue(metricName, value, resource);
         }
-    }
-
-    protected void validateTraitMetricValue(String metricName, String value) {
-        super.validateTraitMetricValue(metricName, value);
     }
 
     protected Configuration getTestResourceConfiguration() {

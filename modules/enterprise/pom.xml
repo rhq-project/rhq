@@ -60,11 +60,22 @@
         <module>server/safe-invoker</module>
         <module>server/sars</module>
         <module>gui</module>
-        <module>client</module>        
         <module>server/plugins</module>
-        <module>server/ear</module>        
+        <module>server/ear</module>
         <module>server/container-lib</module>
         <module>server/container</module>
+      </modules>
+    </profile>
+    
+    <profile>
+      <id>client</id>
+      <activation>
+        <property>
+          <name>client</name>
+        </property>
+      </activation>
+      <modules>
+        <module>client</module>
       </modules>
     </profile>
 

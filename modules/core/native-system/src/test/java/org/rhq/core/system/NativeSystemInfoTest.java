@@ -186,7 +186,7 @@ public class NativeSystemInfoTest {
 
         assert allMemory != null;
         assert procMemory != null;
-        assert allMemory.getUsed() > procMemory.getSize() : allMemory.getUsed() + "->" + procMemory.getSize();
+        assert allMemory.getUsed() > procMemory.getResident() : allMemory.getUsed() + "->" + procMemory.getSize();
     }
 
     /**

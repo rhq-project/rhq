@@ -22,7 +22,7 @@
  */
 package org.rhq.core.pluginapi.event;
 
-import org.hyperic.sigar.Sigar;
+import org.hyperic.sigar.SigarProxy;
 import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.event.Event;
@@ -94,5 +94,5 @@ public interface EventContext {
      * @return an instance of Sigar
      */
     @NotNull
-    Sigar getSigar();
+    SigarProxy getSigar();
 }

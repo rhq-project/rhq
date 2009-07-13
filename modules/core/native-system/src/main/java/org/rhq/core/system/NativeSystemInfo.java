@@ -22,20 +22,29 @@
   */
 package org.rhq.core.system;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.List;
+ import org.apache.commons.logging.Log;
+ import org.apache.commons.logging.LogFactory;
+ import org.hyperic.sigar.FileSystem;
+ import org.hyperic.sigar.FileSystemMap;
+ import org.hyperic.sigar.Mem;
+ import org.hyperic.sigar.NetConnection;
+ import org.hyperic.sigar.NetFlags;
+ import org.hyperic.sigar.NetInterfaceStat;
+ import org.hyperic.sigar.OperatingSystem;
+ import org.hyperic.sigar.Sigar;
+ import org.hyperic.sigar.SigarException;
+ import org.hyperic.sigar.SigarProxy;
+ import org.hyperic.sigar.Swap;
+ import org.jetbrains.annotations.Nullable;
+ import org.rhq.core.system.pquery.ProcessInfoQuery;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.hyperic.sigar.*;
-import org.jetbrains.annotations.Nullable;
-
-import org.rhq.core.system.pquery.ProcessInfoQuery;
+ import java.io.BufferedReader;
+ import java.io.IOException;
+ import java.io.InputStreamReader;
+ import java.net.InetAddress;
+ import java.net.UnknownHostException;
+ import java.util.ArrayList;
+ import java.util.List;
 
 /**
  * The superclass for all the native {@link SystemInfo} implementations. You are free to subclass this implementation if
@@ -223,13 +232,8 @@ public class NativeSystemInfo implements SystemInfo {
 
     public ProcessInfo getThisProcess() {
         long self;
-        Sigar sigar = new Sigar();
 
-        try {
-            self = sigar.getPid();
-        } finally {
-            sigar.close();
-        }
+        self = sigar.getPid();
 
         ProcessInfo info = new ProcessInfo(self);
         return info;
@@ -338,6 +342,11 @@ public class NativeSystemInfo implements SystemInfo {
      * this object.
      */
     public NativeSystemInfo() {
-        this.sigar = SigarProxyCache.newInstance(new Sigar(), 100);
+
+        this.sigar = SigarAccess.getSigar();
     }
+
+
+    
+
 }

@@ -24,8 +24,10 @@ import java.util.List;
 
 import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
+import org.hyperic.sigar.SigarProxy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.rhq.core.system.SigarAccess;
 
 /**
  * Utility class to obtain the executable path of a process with the help of Sigar.
@@ -46,9 +48,8 @@ public abstract class OsProcessUtility {
      */
     @Nullable
     public static File getProcExe(long pid, String name) {
-        Sigar sigar = new Sigar();
+        SigarProxy sigar = SigarAccess.getSigar();
         File argv0;
-        try {
             try {
                 String exe = sigar.getProcExe(pid).getName();
                 // may be "" on Solaris
@@ -81,9 +82,6 @@ public abstract class OsProcessUtility {
                     }
                 }
             }
-        } finally {
-            sigar.close();
-        }
 
         return argv0;
     }
@@ -97,7 +95,7 @@ public abstract class OsProcessUtility {
      * @return Arguments that were passed to the process.
      */
     @NotNull
-    private static String[] getProcArgs(long pid, Sigar sigar) {
+    private static String[] getProcArgs(long pid, SigarProxy sigar) {
         try {
             return sigar.getProcArgs(pid);
         } catch (SigarException e) {
@@ -113,7 +111,7 @@ public abstract class OsProcessUtility {
      * @param sigar The Sigar instance to use
      */
     @NotNull
-    private static List<String> getProcModules(long pid, Sigar sigar) {
+    private static List<String> getProcModules(long pid, SigarProxy sigar) {
         try {
             return sigar.getProcModules(pid);
         } catch (SigarException e) {

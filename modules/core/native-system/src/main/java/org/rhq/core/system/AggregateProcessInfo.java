@@ -34,9 +34,9 @@ import org.hyperic.sigar.ProcFd;
 import org.hyperic.sigar.ProcMem;
 import org.hyperic.sigar.ProcState;
 import org.hyperic.sigar.ProcTime;
-import org.hyperic.sigar.Sigar;
+import org.hyperic.sigar.SigarProxy;
 
-/**
+ /**
  * Tracks the historical usage for child processes as they come and go to give an estimation of the total resources used
  * by a process and all its children, past and present.
  *
@@ -65,7 +65,6 @@ public class AggregateProcessInfo extends ProcessInfo {
         // first make sure this process itself is refreshed
         super.refresh();
 
-        Sigar sigar = new Sigar();
         try {
             // go through the entire process table and find the children of this parent process
             long[] pids = null;
@@ -149,8 +148,6 @@ public class AggregateProcessInfo extends ProcessInfo {
             this.aggregateProcFd = new AggregateProcFd(procFds);
         } catch (Exception e) {
             throw new SystemInfoException(e);
-        } finally {
-            sigar.close();
         }
     }
 
@@ -324,7 +321,7 @@ public class AggregateProcessInfo extends ProcessInfo {
             this.childPid = myPid;
         }
 
-        public void refresh(Sigar sigar) throws Exception {
+        public void refresh(SigarProxy sigar) throws Exception {
             // There are some instances where SIGAR can't get one or more of these (maybe permission issues?).
             // Do not bomb if we can't get one or more of these - we'll just handle nulls appropriately.
 

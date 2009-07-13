@@ -24,8 +24,6 @@ package org.rhq.core.system;
 
 import java.util.EnumSet;
 
-import org.hyperic.sigar.Sigar;
-import org.hyperic.sigar.ProcMem;
 
  /**
  * Checks for memory leaks.
@@ -146,8 +144,8 @@ public class MemoryLeakChecker {
                 System.out.println("[" + message + "] After System.gc(): (end-start=diff)->" + endUsedMemory + '-'
                     + startUsedMemory + '=' + usedMemoryDiff);
                 assert (usedMemoryDiff < ALLOWED_TO_LEAK) : "[" + message
-                    + "] We leaked too much memory: (end-start=diff)->" + endUsedMemory + '-' + startUsedMemory + '='
-                    + usedMemoryDiff;
+                    + "] We leaked too much java memory: (end-start=diff)->" + endUsedMemory + '-' + startUsedMemory + '='
+                    + (((float)usedMemoryDiff) / 1024f / 1024f) + "MB";
             } else {
                 System.out.println("[" + message
                     + "] Went the distance but did not seem to leak memory: (end-start=diff)->" + endUsedMemory + '-'
@@ -166,15 +164,6 @@ public class MemoryLeakChecker {
         long totalMemory = Runtime.getRuntime().totalMemory();
         long usedMemory = totalMemory - freeMemory;
 
-        try {
-            Sigar s = new Sigar();
-            ProcMem m = s.getProcMem(s.getPid());
-            System.out.println("Sigar says total: " + m.getSize());
-            usedMemory = m.getSize();
-            s.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
         return usedMemory;
     }
 }

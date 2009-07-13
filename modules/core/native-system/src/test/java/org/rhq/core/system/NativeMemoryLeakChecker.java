@@ -112,8 +112,8 @@ public class NativeMemoryLeakChecker {
                 System.out.println("[" + message + "] After System.gc(): (end-start=diff)->" + endUsedMemory + '-'
                     + startUsedMemory + '=' + usedMemoryDiff);
                 assert (usedMemoryDiff < ALLOWED_TO_LEAK) : "[" + message
-                    + "] We leaked too much memory: (end-start=diff)->" + endUsedMemory + '-' + startUsedMemory + '='
-                    + usedMemoryDiff;
+                    + "] We leaked too much native memory: (end-start=diff)->" + endUsedMemory + '-' + startUsedMemory + '='
+                    + (((float)usedMemoryDiff) / 1024f / 1024f) + "MB";
             } else {
                 System.out.println("[" + message
                     + "] Went the distance but did not seem to leak memory: (end-start=diff)->" + endUsedMemory + '-'

@@ -32,8 +32,8 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hyperic.sigar.FileInfo;
-import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
+import org.hyperic.sigar.SigarProxy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,7 +57,7 @@ public class LogFileEventPoller implements EventPoller {
     public LogFileEventPoller(EventContext eventContext, String eventType, File logFile, LogEntryProcessor entryProcessor) {
         this.eventType = eventType;
         this.logFile = logFile;
-        Sigar sigar = eventContext.getSigar();
+        SigarProxy sigar = eventContext.getSigar();
         try {
             this.logFileInfo = new LogFileInfo(sigar.getFileInfo(logFile.getPath()));
         } catch (SigarException e) {

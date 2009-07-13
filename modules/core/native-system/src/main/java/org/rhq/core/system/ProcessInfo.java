@@ -82,7 +82,7 @@ public class ProcessInfo {
     }
 
     public ProcessInfo(long pid) throws SystemInfoException {
-        this(pid, new Sigar());
+        this(pid, SigarAccess.getSigar());
     }
 
     public ProcessInfo(long pid, SigarProxy sigar) throws SystemInfoException {

@@ -31,7 +31,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.hyperic.sigar.Sigar;
+import org.hyperic.sigar.SigarProxy;
 import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.event.Event;
@@ -43,6 +43,7 @@ import org.rhq.core.pc.ContainerService;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.util.LoggingThreadFactory;
 import org.rhq.core.pluginapi.event.EventPoller;
+import org.rhq.core.system.SigarAccess;
 
 /**
  * Manager for the Plugin Container's Event subsystem.
@@ -65,7 +66,7 @@ public class EventManager implements ContainerService {
     private ReentrantReadWriteLock reportLock = new ReentrantReadWriteLock(true);
     private ScheduledThreadPoolExecutor pollerThreadPool;
     private Map<PollerKey, Runnable> pollerThreads;
-    private Sigar sigar;
+    private SigarProxy sigar;
 
     public void initialize() {
         this.activeReport = new EventReport(this.pcConfig.getEventReportMaxPerSource(), this.pcConfig
@@ -92,9 +93,6 @@ public class EventManager implements ContainerService {
         if (this.pollerThreadPool != null) {
             this.pollerThreadPool.shutdownNow();
         }
-        if (this.sigar != null) {
-            this.sigar.close();
-        }
     }
 
     public void setConfiguration(PluginContainerConfiguration config) {
@@ -115,9 +113,9 @@ public class EventManager implements ContainerService {
         }
     }
 
-    Sigar getSigar() {
+    SigarProxy getSigar() {
         if (this.sigar == null) {
-            this.sigar = new Sigar();
+            this.sigar = SigarAccess.getSigar();
         }
         return this.sigar;
     }

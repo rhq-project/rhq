@@ -136,7 +136,6 @@ public class MeasurementDefinitionManagerBean implements MeasurementDefinitionMa
     }
 
     @SuppressWarnings("unchecked")
-    @Override
     public PageList<MeasurementDefinition> findMeasurementDefinitions(Subject subject, MeasurementDefinition criteria,
         PageControl pc) throws FetchException {
 

@@ -19,7 +19,7 @@
 package org.rhq.core.util.collection;
 
 import java.lang.reflect.Array;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -86,7 +86,13 @@ public class ArrayUtils {
             return null;
         }
         Integer[] intermediate = wrapInArray(input);
-        return Arrays.asList(intermediate);
+
+        // do not use Arrays.asList because returned list needs to be modifiable
+        List<Integer> results = new ArrayList<Integer>();
+        for (Integer next : intermediate) {
+            results.add(next);
+        }
+        return results;
     }
 
 }

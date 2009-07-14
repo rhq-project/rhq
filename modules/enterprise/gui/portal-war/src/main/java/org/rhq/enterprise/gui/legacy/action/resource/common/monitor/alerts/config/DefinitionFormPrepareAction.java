@@ -158,8 +158,8 @@ public abstract class DefinitionFormPrepareAction extends TilesAction {
             }
 
             for (MeasurementDefinition definition : traitDefinitions) {
-                MeasurementSchedule schedule = scheduleManager.getSchedule(subject, definition.getId(),
-                    resource.getId(), false);
+                MeasurementSchedule schedule = scheduleManager.getSchedule(subject, resource.getId(), definition.getId(),
+                     false);
                 setDisabledName(schedule, definition);
             }
         } else {

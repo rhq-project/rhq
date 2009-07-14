@@ -18,25 +18,24 @@
  */
 package org.rhq.enterprise.server.report;
 
+import java.util.List;
+
+import javax.ejb.Remote;
+import javax.jws.WebMethod;
+import javax.jws.WebParam;
+import javax.jws.WebService;
+import javax.jws.soap.SOAPBinding;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.util.PageControl;
 
-import javax.jws.soap.SOAPBinding;
-import javax.jws.WebService;
-import javax.ejb.Remote;
-import java.util.List;
-
-
 /**
- * 
- *
  * @author Greg Hinkle
  */
 @SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
 @WebService
 @Remote
 public interface DataAccessRemote {
-
 
     /**
      * Execute a query. Requires a user with the MANAGE_INVENTORY permission.
@@ -45,17 +44,23 @@ public interface DataAccessRemote {
      * @param query the query to execute
      * @return a list of object results. Each entry in the rows array will represent an item from the select clause
      */
-    public List<Object[]> executeQuery(Subject subject, String query);
-
+    @WebMethod
+    public List<Object[]> executeQuery(//
+        @WebParam(name = "subject") Subject subject, // 
+        @WebParam(name = "query") String query);
 
     /**
      * Execute a query filtered by a page control
+     * 
      * @param subject an admin user's subject
      * @param query the query to execute
      * @param pageControl pages to load
      * @return list of object array results
      */
-    public List<Object[]> executeQuery(Subject subject, String query, PageControl pageControl);
+    @WebMethod
+    public List<Object[]> executeQuery(//
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "query") String query, //
+        @WebParam(name = "pageControl") PageControl pageControl);
 
-    
 }

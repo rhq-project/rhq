@@ -18,19 +18,19 @@
  */
 package org.rhq.enterprise.client.commands;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Arrays;
 
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
+import javax.script.*;
 
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.client.ClientMain;
 import org.rhq.enterprise.client.RemoteClient;
 import org.rhq.enterprise.client.TabularWriter;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * @author Greg Hinkle
@@ -39,6 +39,8 @@ public class ScriptCommand implements ClientCommand {
 
     private ScriptEngineManager sem;
     private ScriptEngine jsEngine;
+
+    private final Log log = LogFactory.getLog(ScriptCommand.class);
 
     public ScriptCommand() {
         sem = new ScriptEngineManager();
@@ -61,48 +63,29 @@ public class ScriptCommand implements ClientCommand {
             return true;
         }
 
-        // These are prepared on every call in case the user logs out and logs into another server
-        sem.getBindings().put("subject", client.getSubject());
-        sem.getBindings().putAll(client.getRemoteClient().getManagers());
-        TabularWriter tw = new TabularWriter(client.getPrintWriter());
-        tw.setWidth(client.getConsoleWidth());
-        sem.getBindings().put("pretty", tw);
+        initBindings(client);
 
-        // parse arg 1 for -f
-        if ((args != null) && (args.length == 3)) {
-            if ((args[1].trim().equalsIgnoreCase("-f")) && (args[2].trim().length() > 0)) {
-                try {
-                    BufferedReader ir = new BufferedReader(new FileReader(args[2]));
-                    Object result = null;
-                    String line = null;
-                    // iterate through the lines of script and execute
-                    boolean can_continue = true;
-                    while ((ir != null) && ((line = ir.readLine()) != null) && (line.trim().length() > 0)
-                        && can_continue) {
-                        // parse the command into separate arguments and execute
-                        String[] cmd_args = client.parseCommandLine(line);
-                        can_continue = client.executePromptCommand(cmd_args);
-                    }
-                    if (result != null) {
-                        client.getPrintWriter().print("result: ");
-                        client.getPrintWriter().print(result);
-                    }
-                    return true;
-                    // TODO: figure out what to do with exceptions.. too ugly, nicer info and log details?
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                } catch (ScriptException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (Exception e) {
-                    e.printStackTrace();
+        if (isScriptFileCommandLine(args)) {
+            try {
+                String scriptName = args[2].trim();
+                addScriptArgsToBindings(args);
+                return executeScriptFile(new FileReader(scriptName), client);
+            } catch (FileNotFoundException e) {
+                client.getPrintWriter().println(e.getMessage());
+                if (log.isDebugEnabled()) {
+                    log.debug("Unable to locate script file: " + e.getMessage());
                 }
-
-                // stop execution after custom script run/loaded
-                return true;
+            } catch (IOException e) {
+                client.getPrintWriter().println("An unpexected error occurred: " + e.getMessage());
+                log.warn("An unexpected IO error occurred.", e);
+            } catch (Exception e) {
+                client.getPrintWriter().println("An unpexected error occurred: " + e.getMessage());
+                log.warn("An unexpected IO error occurred.", e);
             }
+
+            return true;
         }
+
         StringBuilder script = new StringBuilder();
         for (int i = ("exec".equals(args[0]) ? 1 : 0); i < args.length; i++) {
             script.append(args[i]);
@@ -124,6 +107,44 @@ public class ScriptCommand implements ClientCommand {
             client.getPrintWriter().println("^");
         }
         client.getPrintWriter().println();
+        return true;
+    }
+
+    private void initBindings(ClientMain client) {
+        // These are prepared on every call in case the user logs out and logs into another server
+        sem.getBindings().put("subject", client.getSubject());
+        sem.getBindings().putAll(client.getRemoteClient().getManagers());
+        TabularWriter tw = new TabularWriter(client.getPrintWriter());
+        tw.setWidth(client.getConsoleWidth());
+        sem.getBindings().put("pretty", tw);
+    }
+
+    private boolean isScriptFileCommandLine(String[] args) {
+        return args != null && args.length > 2 && args[1].trim().equalsIgnoreCase("-f");
+    }
+
+    private void addScriptArgsToBindings(String[] args) {
+        if (args.length < 4) {
+            return;
+        }
+
+        Bindings bindings = jsEngine.getBindings(ScriptContext.ENGINE_SCOPE);
+        String[] scriptArgs = Arrays.copyOfRange(args, 3, args.length);
+        bindings.put("args", scriptArgs);
+    }
+
+    private boolean executeScriptFile(Reader reader, ClientMain client) {
+        try {
+            Object result = jsEngine.eval(reader);
+            if (result != null) {
+                client.getPrintWriter().print("result: ");
+                new TabularWriter(client.getPrintWriter()).print(result);
+            }
+        }
+        catch (ScriptException e) {
+            client.getPrintWriter().println(e.getMessage());
+            client.getPrintWriter().println("^");
+        }
         return true;
     }
 

@@ -148,7 +148,8 @@ public interface SubjectManagerRemote {
     @WebMethod
     PageList<Subject> findSubjects( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "username") Subject criteria, PageControl pc) //
+        @WebParam(name = "username") Subject criteria, //
+        @WebParam(name = "pageControl") PageControl pc) //
         throws FetchException;
 
     /**

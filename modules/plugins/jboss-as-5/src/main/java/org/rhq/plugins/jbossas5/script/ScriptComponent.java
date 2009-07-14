@@ -20,7 +20,6 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-
 package org.rhq.plugins.jbossas5.script;
 
 import java.io.File;
@@ -38,8 +37,6 @@ import org.jetbrains.annotations.NotNull;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
-import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.operation.OperationFacet;
@@ -52,241 +49,199 @@ import org.rhq.plugins.jbossas5.ApplicationServerComponent;
 
 /**
  * A JON service that provides the ability to execute a script.
- *
+ * 
  * @author Ian Springer
  */
 public class ScriptComponent implements
-        ResourceComponent<ApplicationServerComponent>, ConfigurationFacet,
-        OperationFacet
-{
-    public static final String PATH_CONFIG_PROP = "path";
-    public static final String ENVIRONMENT_VARIABLES_CONFIG_PROP = "environmentVariables";
+		ResourceComponent<ApplicationServerComponent>, OperationFacet {
+	public static final String PATH_CONFIG_PROP = "path";
+	public static final String ENVIRONMENT_VARIABLES_CONFIG_PROP = "environmentVariables";
 
-    public static final String EXECUTE_OPERATION = "execute";
+	public static final String EXECUTE_OPERATION = "execute";
 
-    public static final String COMMAND_LINE_ARGUMENTS_PARAM_PROP = "commandLineArguments";
+	public static final String COMMAND_LINE_ARGUMENTS_PARAM_PROP = "commandLineArguments";
 
-    private static final String EXIT_CODE_RESULT_PROP = "exitCode";
-    private static final String OUTPUT_RESULT_PROP = "output";
+	private static final String EXIT_CODE_RESULT_PROP = "exitCode";
+	private static final String OUTPUT_RESULT_PROP = "output";
 
-    private final Log log = LogFactory.getLog(this.getClass());
-    private String enviromentVariable;
-    private ResourceContext<ApplicationServerComponent> resourceContext;
+	private final Log log = LogFactory.getLog(this.getClass());
 
-    public void start(
-            ResourceContext<ApplicationServerComponent> resourceContext)
-    {
-        this.resourceContext = resourceContext;
-    }
+	private ResourceContext<ApplicationServerComponent> resourceContext;
 
-    public void stop()
-    {
-        this.resourceContext = null;
-    }
+	public void start(
+			ResourceContext<ApplicationServerComponent> resourceContext) {
+		this.resourceContext = resourceContext;
+	}
 
-    public AvailabilityType getAvailability()
-    {
-        File scriptFile = getScriptFile();
-        return (scriptFile.exists()) ? AvailabilityType.UP
-                : AvailabilityType.DOWN;
-    }
+	public void stop() {
+		this.resourceContext = null;
+	}
 
-    public OperationResult invokeOperation(String name, Configuration params)
-            throws Exception
-    {
-        if (name.equals(EXECUTE_OPERATION))
-        {
-            OperationResult operationResult = new OperationResult();
+	public AvailabilityType getAvailability() {
+		File scriptFile = getScriptFile();
+		return (scriptFile.exists()) ? AvailabilityType.UP
+				: AvailabilityType.DOWN;
+	}
 
-            File scriptFile = getScriptFile();
-            SystemInfo systemInfo = this.resourceContext.getSystemInformation();
-            ProcessExecution processExecution = ProcessExecutionUtility
-                    .createProcessExecution(scriptFile);
+	public OperationResult invokeOperation(String name, Configuration params)
+			throws Exception {
+		if (name.equals(EXECUTE_OPERATION)) {
+			OperationResult operationResult = new OperationResult();
 
-            processExecution.setWaitForCompletion(1000L * 60 * 60); // 1 hour
-            processExecution.setCaptureOutput(true);
+			File scriptFile = getScriptFile();
+			SystemInfo systemInfo = this.resourceContext.getSystemInformation();
+			ProcessExecution processExecution = ProcessExecutionUtility
+					.createProcessExecution(scriptFile);
 
-            // TODO: Make the script's cwd configurable, but default it to the
-            // directory containing the script.
-            processExecution.setWorkingDirectory(scriptFile.getParent());
+			processExecution.setWaitForCompletion(1000L * 60 * 60); // 1 hour
+			processExecution.setCaptureOutput(true);
 
-            setEnvironmentVariables(processExecution);
-            setCommandLineArguments(params, processExecution);
+			// TODO: Make the script's cwd configurable, but default it to the
+			// directory containing the script.
+			processExecution.setWorkingDirectory(scriptFile.getParent());
 
-            if (log.isDebugEnabled())
-            {
-                log.debug(processExecution);
-            }
+			setEnvironmentVariables(processExecution);
+			setCommandLineArguments(params, processExecution);
 
-            ProcessExecutionResults processExecutionResults = systemInfo
-                    .executeProcess(processExecution);
-            if (processExecutionResults.getError() != null)
-            {
-                throw new Exception(processExecutionResults.getError());
-            }
+			if (log.isDebugEnabled()) {
+				log.debug(processExecution);
+			}
 
-            Integer exitCode = processExecutionResults.getExitCode();
-            String output = processExecutionResults.getCapturedOutput(); // NOTE:
-            // this
-            // is
-            // stdout
-            // +
-            // stderr
+			ProcessExecutionResults processExecutionResults = systemInfo
+					.executeProcess(processExecution);
+			if (processExecutionResults.getError() != null) {
+				throw new Exception(processExecutionResults.getError());
+			}
 
-            Configuration complexResults = operationResult.getComplexResults();
-            complexResults.put(new PropertySimple(EXIT_CODE_RESULT_PROP,
-                    exitCode));
-            complexResults.put(new PropertySimple(OUTPUT_RESULT_PROP, output));
-            if (exitCode != null && exitCode != 0)
-            {
-                operationResult.setErrorMessage("Exit code was '" + exitCode
-                        + "', see operation results for details");
-            }
+			Integer exitCode = processExecutionResults.getExitCode();
+			String output = processExecutionResults.getCapturedOutput(); // NOTE:
+			// this
+			// is
+			// stdout
+			// +
+			// stderr
 
-            return operationResult;
-        }
-        else
-        {
-            throw new IllegalArgumentException("Unsupported operation: " + name);
-        }
-    }
+			Configuration complexResults = operationResult.getComplexResults();
+			complexResults.put(new PropertySimple(EXIT_CODE_RESULT_PROP,
+					exitCode));
+			complexResults.put(new PropertySimple(OUTPUT_RESULT_PROP, output));
+			if (exitCode != null && exitCode != 0) {
+				operationResult.setErrorMessage("Exit code was '" + exitCode
+						+ "', see operation results for details");
+			}
 
-    private void setCommandLineArguments(Configuration params,
-                                         ProcessExecution processExecution)
-    {
-        List<String> processExecutionArguments = processExecution
-                .getArguments();
-        if (null == processExecutionArguments)
-        {
-            processExecutionArguments = new ArrayList<String>();
-            processExecution.setArguments(processExecutionArguments);
-        }
+			return operationResult;
+		} else {
+			throw new IllegalArgumentException("Unsupported operation: " + name);
+		}
+	}
 
-        String cmdLineArgsString = params.getSimpleValue(
-                COMMAND_LINE_ARGUMENTS_PARAM_PROP, null);
-        List<String> cmdLineArgs = createCommandLineArgumentList(cmdLineArgsString);
-        if (null != cmdLineArgs)
-        {
-            processExecutionArguments.addAll(cmdLineArgs);
-        }
-    }
+	private void setCommandLineArguments(Configuration params,
+			ProcessExecution processExecution) {
+		List<String> processExecutionArguments = processExecution
+				.getArguments();
+		if (null == processExecutionArguments) {
+			processExecutionArguments = new ArrayList<String>();
+			processExecution.setArguments(processExecutionArguments);
+		}
 
-    private void setEnvironmentVariables(ProcessExecution processExecution)
-    {
-        Map<String, String> processExecutionEnvironmentVariables = processExecution
-                .getEnvironmentVariables();
-        if (null == processExecutionEnvironmentVariables)
-        {
-            processExecutionEnvironmentVariables = new LinkedHashMap<String, String>();
-            processExecution
-                    .setEnvironmentVariables(processExecutionEnvironmentVariables);
-        }
+		String cmdLineArgsString = params.getSimpleValue(
+				COMMAND_LINE_ARGUMENTS_PARAM_PROP, null);
+		List<String> cmdLineArgs = createCommandLineArgumentList(cmdLineArgsString);
+		if (null != cmdLineArgs) {
+			processExecutionArguments.addAll(cmdLineArgs);
+		}
+	}
 
-        Map<String, String> envVarsMap = createEnvironmentVariableMap(enviromentVariable);
-        if (null != envVarsMap)
-        {
-            processExecutionEnvironmentVariables.putAll(envVarsMap);
-        }
-    }
+	private void setEnvironmentVariables(ProcessExecution processExecution) {
+		Configuration pluginConfig = this.resourceContext
+				.getPluginConfiguration();
+		Map<String, String> processExecutionEnvironmentVariables = processExecution
+				.getEnvironmentVariables();
+		if (null == processExecutionEnvironmentVariables) {
+			processExecutionEnvironmentVariables = new LinkedHashMap<String, String>();
+			processExecution
+					.setEnvironmentVariables(processExecutionEnvironmentVariables);
+		}
 
-    @NotNull
-    private List<String> createCommandLineArgumentList(String cmdLineArgsString)
-    {
-        if (cmdLineArgsString == null)
-        {
-            return new ArrayList<String>();
-        }
+		String envVars = pluginConfig.getSimpleValue(
+				ENVIRONMENT_VARIABLES_CONFIG_PROP, null);
+		Map<String, String> envVarsMap = createEnvironmentVariableMap(envVars);
+		if (null != envVarsMap) {
+			processExecutionEnvironmentVariables.putAll(envVarsMap);
+		}
+	}
 
-        StringTokenizer tokenizer = new StringTokenizer(cmdLineArgsString, "\n");
-        List<String> cmdLineArgs = new ArrayList<String>(tokenizer
-                .countTokens());
-        while (tokenizer.hasMoreTokens())
-        {
-            String cmdLineArg = tokenizer.nextToken().trim();
-            cmdLineArg = replacePropertyPatterns(cmdLineArg);
-            cmdLineArgs.add(cmdLineArg);
-        }
+	@NotNull
+	private List<String> createCommandLineArgumentList(String cmdLineArgsString) {
+		if (cmdLineArgsString == null) {
+			return new ArrayList<String>();
+		}
 
-        return cmdLineArgs;
-    }
+		StringTokenizer tokenizer = new StringTokenizer(cmdLineArgsString, "\n");
+		List<String> cmdLineArgs = new ArrayList<String>(tokenizer
+				.countTokens());
+		while (tokenizer.hasMoreTokens()) {
+			String cmdLineArg = tokenizer.nextToken().trim();
+			cmdLineArg = replacePropertyPatterns(cmdLineArg);
+			cmdLineArgs.add(cmdLineArg);
+		}
 
-    private Map<String, String> createEnvironmentVariableMap(
-            String envVarsString)
-    {
-        if (envVarsString == null)
-        {
-            return null;
-        }
+		return cmdLineArgs;
+	}
 
-        StringTokenizer tokenizer = new StringTokenizer(envVarsString, "\n");
-        Map<String, String> envVars = new LinkedHashMap<String, String>(
-                tokenizer.countTokens());
-        while (tokenizer.hasMoreTokens())
-        {
-            String var = tokenizer.nextToken().trim();
-            int equalsIndex = var.indexOf('=');
-            if (equalsIndex == -1)
-            {
-                throw new IllegalStateException("Malformed environment entry: "
-                        + var);
-            }
+	private Map<String, String> createEnvironmentVariableMap(
+			String envVarsString) {
+		if (envVarsString == null) {
+			return null;
+		}
 
-            String varName = var.substring(0, equalsIndex);
-            String varValue = var.substring(equalsIndex + 1);
-            varValue = replacePropertyPatterns(varValue);
-            envVars.put(varName, varValue);
-        }
+		StringTokenizer tokenizer = new StringTokenizer(envVarsString, "\n");
+		Map<String, String> envVars = new LinkedHashMap<String, String>(
+				tokenizer.countTokens());
+		while (tokenizer.hasMoreTokens()) {
+			String var = tokenizer.nextToken().trim();
+			int equalsIndex = var.indexOf('=');
+			if (equalsIndex == -1) {
+				throw new IllegalStateException("Malformed environment entry: "
+						+ var);
+			}
 
-        return envVars;
-    }
+			String varName = var.substring(0, equalsIndex);
+			String varValue = var.substring(equalsIndex + 1);
+			varValue = replacePropertyPatterns(varValue);
+			envVars.put(varName, varValue);
+		}
 
-    private String replacePropertyPatterns(String envVars)
-    {
-        Pattern pattern = Pattern.compile("(%([^%]*)%)");
-        Matcher matcher = pattern.matcher(envVars);
-        /*
-           * Configuration parentPluginConfig = this.resourceContext
-           * .getParentResourceComponent().getPluginConfiguration();
-           */
-        Configuration parentPluginConfig = null;
+		return envVars;
+	}
 
-        StringBuffer buffer = new StringBuffer();
-        while (matcher.find())
-        {
-            String propName = matcher.group(2);
-            PropertySimple prop = parentPluginConfig.getSimple(propName);
-            String propPattern = matcher.group(1);
-            String replacement = (prop != null) ? prop.getStringValue()
-                    : propPattern;
-            matcher.appendReplacement(buffer, Matcher
-                    .quoteReplacement(replacement));
-        }
+	private String replacePropertyPatterns(String envVars) {
+		Pattern pattern = Pattern.compile("(%([^%]*)%)");
+		Matcher matcher = pattern.matcher(envVars);
+		Configuration parentPluginConfig = this.resourceContext
+				.getParentResourceComponent().getResourceContext()
+				.getPluginConfiguration();
+		StringBuffer buffer = new StringBuffer();
+		while (matcher.find()) {
+			String propName = matcher.group(2);
+			PropertySimple prop = parentPluginConfig.getSimple(propName);
+			String propPattern = matcher.group(1);
+			String replacement = (prop != null) ? prop.getStringValue()
+					: propPattern;
+			matcher.appendReplacement(buffer, Matcher
+					.quoteReplacement(replacement));
+		}
 
-        matcher.appendTail(buffer);
-        return buffer.toString();
-    }
+		matcher.appendTail(buffer);
+		return buffer.toString();
+	}
 
-    private File getScriptFile()
-    {
-        Configuration pluginConfig = this.resourceContext
-                .getPluginConfiguration();
-        String scriptFilePath = pluginConfig.getSimple(PATH_CONFIG_PROP)
-                .getStringValue();
-        return new File(scriptFilePath);
-    }
-
-    public Configuration loadResourceConfiguration() throws Exception
-    {
-        Configuration config = new Configuration();
-        config.put(new PropertySimple(ENVIRONMENT_VARIABLES_CONFIG_PROP, ""));
-        return config;
-    }
-
-    public void updateResourceConfiguration(ConfigurationUpdateReport report)
-    {
-        Configuration config = report.getConfiguration();
-        enviromentVariable = config
-                .getSimple(ENVIRONMENT_VARIABLES_CONFIG_PROP).getStringValue();
-
-    }
+	private File getScriptFile() {
+		Configuration pluginConfig = this.resourceContext
+				.getPluginConfiguration();
+		String scriptFilePath = pluginConfig.getSimple(PATH_CONFIG_PROP)
+				.getStringValue();
+		return new File(scriptFilePath);
+	}
 }

@@ -54,6 +54,7 @@ import org.rhq.core.system.ProcessInfo;
 import org.rhq.plugins.jbossas5.connection.LocalProfileServiceConnectionProvider;
 import org.rhq.plugins.jbossas5.connection.ProfileServiceConnection;
 import org.rhq.plugins.jbossas5.connection.ProfileServiceConnectionProvider;
+import org.rhq.plugins.jbossas5.connection.RemoteProfileServiceConnectionProvider;
 import org.rhq.plugins.jbossas5.helper.JBossInstallationInfo;
 import org.rhq.plugins.jbossas5.helper.JBossInstanceInfo;
 import org.rhq.plugins.jbossas5.helper.JBossProperties;
@@ -228,13 +229,13 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
 
     @Nullable
     private DiscoveredResourceDetails discoverInProcessJBossAS(ResourceDiscoveryContext discoveryContext) {
-        ProfileServiceConnectionProvider connectionProvider = new LocalProfileServiceConnectionProvider();
+        ProfileServiceConnectionProvider connectionProvider = new LocalProfileServiceConnectionProvider();        
         ProfileServiceConnection connection;
         try {
             connection = connectionProvider.connect();
         } catch (Exception e) {
             // This most likely just means we're not embedded inside a JBoss AS 5.x instance.
-            log.debug("Unable to connect to in-process ProfileService: " + e);
+            log.debug("Unable to connect to in-process ProfileService.", e);
             return null;
         }
 

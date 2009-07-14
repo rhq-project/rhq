@@ -296,7 +296,7 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
         // TODO: Check for a defunct connection and if found try to reconnect.
         ProfileServiceConnectionProvider connectionProvider;
         if (runningEmbedded()) {
-            connectionProvider = new LocalProfileServiceConnectionProvider();
+            connectionProvider = new LocalProfileServiceConnectionProvider();            
         } else {
             Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
             String namingURL = pluginConfig.getSimpleValue(PluginConfigPropNames.NAMING_URL, null);

@@ -36,28 +36,37 @@ import org.jboss.deployers.spi.management.deploy.DeploymentManager;
 import org.jboss.profileservice.spi.ProfileService;
 
 /**
+ * A connection provider for connecting to a remote Profile Service - AOP proxies are looked up from JNDI.
+ *
  * @author Ian Springer
  */
 public class RemoteProfileServiceConnectionProvider extends AbstractProfileServiceConnectionProvider {
     private static final String NAMING_CONTEXT_FACTORY = "org.jnp.interfaces.NamingContextFactory";
-    private static final String JNDI_LOGIN_INITIAL_CONTEXT_FACTORY = "org.jboss.security.jndi.JndiLoginInitialContextFactory";
 
     private static final String PROFILE_SERVICE_JNDI_NAME = "ProfileService";
-    private static final String SECURE_PROFILE_SERVICE_JNDI_NAME = "SecureProfileService/remote";
-    private static final String SECURE_MANAGEMENT_VIEW_JNDI_NAME = "SecureManagementView/remote";
-    private static final String SECURE_DEPLOYMENT_MANAGER_JNDI_NAME = "SecureDeploymentManager/remote";
+    private static final String MANAGEMENT_VIEW_JNDI_NAME = "ManagementView";
+    private static final String DEPLOYMENT_MANAGER_JNDI_NAME = "DeploymentManager";
 
+    private static final String JNP_TIMEOUT_JNP_INIT_PROP = "jnp.timeout";
+    private static final String JNP_SOTIMEOUT_JNP_INIT_PROP = "jnp.sotimeout";
     private static final String JNP_DISABLE_DISCOVERY_JNP_INIT_PROP = "jnp.disableDiscovery";
 
     /**
-     * This is the timeout for the initial attempt to establish the remote connection.
+     * This is the timeout (in milliseconds) for the initial attempt to establish the remote connection.
      */
     private static final int JNP_TIMEOUT = 60 * 1000; // 60 seconds
+
     /**
-     * This is the timeout for methods invoked on the remote ProfileService. NOTE: This timeout comes into play if the
-     * JBossAS instance has gone down since the original JNP connection was made.
+     * This is the timeout (in milliseconds) for methods invoked on the remote ProfileService. NOTE: This timeout comes
+     * into play if the JBossAS instance has gone down since the original JNP connection was made.
      */
     private static final int JNP_SO_TIMEOUT = 60 * 1000; // 60 seconds
+
+    /**
+     * A flag indicating that the discovery process should not attempt to automatically discover (via multicast) naming
+     * servers running the JBoss HA-JNDI service if it fails to connect to the specified jnp URL.
+     */
+    private static final boolean JNP_DISABLE_DISCOVERY = true;
 
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -73,46 +82,42 @@ public class RemoteProfileServiceConnectionProvider extends AbstractProfileServi
     }
 
     public String getPrincipal() {
-        return principal;
+        return this.principal;
     }
 
     public String getCredentials() {
-        return credentials;
+        return this.credentials;
     }
 
     protected AbstractProfileServiceConnection doConnect() {
         Properties env = new Properties();
         env.setProperty(Context.PROVIDER_URL, this.providerURL);
-        ProfileService profileService;
-        ManagementView managementView;
-        DeploymentManager deploymentManager;
 
         // Always use the non-login context factory, since we'll use JAAS for authentication if a username/password was
         // provided.
         env.setProperty(Context.INITIAL_CONTEXT_FACTORY, NAMING_CONTEXT_FACTORY);
 
-        // Make sure the timeout always happens, even if the JBoss server is hung.
-        env.setProperty("jnp.timeout", String.valueOf(JNP_TIMEOUT));
-        env.setProperty("jnp.sotimeout", String.valueOf(JNP_SO_TIMEOUT));
+        env.setProperty(JNP_TIMEOUT_JNP_INIT_PROP, String.valueOf(JNP_TIMEOUT));
+        env.setProperty(JNP_SOTIMEOUT_JNP_INIT_PROP, String.valueOf(JNP_SO_TIMEOUT));
 
-        env.setProperty(JNP_DISABLE_DISCOVERY_JNP_INIT_PROP, "true");
+        env.setProperty(JNP_DISABLE_DISCOVERY_JNP_INIT_PROP, String.valueOf(JNP_DISABLE_DISCOVERY));
         
         log.debug("Connecting to Profile Service via remote JNDI using env [" + env + "]...");
         this.initialContext = createInitialContext(env);
 
+        ProfileService profileService = (ProfileService) lookup(this.initialContext, PROFILE_SERVICE_JNDI_NAME);
+        ManagementView managementView = (ManagementView) lookup(this.initialContext, MANAGEMENT_VIEW_JNDI_NAME);
+        DeploymentManager deploymentManager = (DeploymentManager) lookup(this.initialContext,
+                DEPLOYMENT_MANAGER_JNDI_NAME);
+
         AbstractProfileServiceConnection profileServiceConnection;
         if (this.principal != null) {
-            profileService = (ProfileService) lookup(initialContext, SECURE_PROFILE_SERVICE_JNDI_NAME);
-            managementView = (ManagementView) lookup(initialContext, SECURE_MANAGEMENT_VIEW_JNDI_NAME);
-            deploymentManager = (DeploymentManager) lookup(initialContext, SECURE_DEPLOYMENT_MANAGER_JNDI_NAME);
+            // Use a connection that will perform a JAAS login prior to all invocations.
             profileServiceConnection = new JaasAuthenticationProxyProfileServiceConnection(this, profileService,
                     managementView, deploymentManager);
         } else {
-            profileService = (ProfileService) lookup(initialContext, PROFILE_SERVICE_JNDI_NAME);
-            managementView = profileService.getViewManager();
-            deploymentManager = profileService.getDeploymentManager();
-            profileServiceConnection = new BasicProfileServiceConnection(this, profileService,
-                    managementView, deploymentManager);
+            profileServiceConnection = new BasicProfileServiceConnection(this, profileService, managementView,
+                    deploymentManager);
         }
         return profileServiceConnection;
     }

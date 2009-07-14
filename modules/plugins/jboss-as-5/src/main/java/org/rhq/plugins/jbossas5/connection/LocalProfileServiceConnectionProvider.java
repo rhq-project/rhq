@@ -32,17 +32,19 @@ import org.jboss.deployers.spi.management.deploy.DeploymentManager;
 import org.jboss.profileservice.spi.ProfileService;
 
 /**
+ * A connection provider for connecting to a local Profile Service.
+ *
  * @author Ian Springer
  */
 public class LocalProfileServiceConnectionProvider extends AbstractProfileServiceConnectionProvider {
-    private static final String PROFILE_SERVICE_JNDI_NAME = "ProfileService";
+    private static final String PROFILE_SERVICE_LOCAL_JNDI_NAME = "java:ProfileService";
 
     private final Log log = LogFactory.getLog(this.getClass());
 
     protected BasicProfileServiceConnection doConnect() {
         log.debug("Connecting to Profile Service via local JNDI...");
         InitialContext initialContext = createInitialContext(null);
-        ProfileService profileService = (ProfileService) lookup(initialContext, PROFILE_SERVICE_JNDI_NAME);
+        ProfileService profileService = (ProfileService) lookup(initialContext, PROFILE_SERVICE_LOCAL_JNDI_NAME);
         ManagementView managementView = profileService.getViewManager();
         DeploymentManager deploymentManager = profileService.getDeploymentManager();
         return new BasicProfileServiceConnection(this, profileService, managementView, deploymentManager);

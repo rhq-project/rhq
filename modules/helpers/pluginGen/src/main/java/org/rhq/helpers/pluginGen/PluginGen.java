@@ -93,7 +93,10 @@ public class PluginGen {
         postprocess(props);
         generate(props);
 
-        System.out.println("Don't forget to add your plugin to the parent pom.xml");
+        System.out.println("Don't forget to ");
+        System.out.println("  - add your plugin to the parent pom.xml if needed");
+        System.out.println("  - edit pom.xml of your plugin");
+        System.out.println("  - edit rhq-plugin.xml of your plugin");
     }
 
     /**

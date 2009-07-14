@@ -2028,7 +2028,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     public PageList<Resource> findResources(Subject subject, Resource criteria, PageControl pc) throws FetchException {
         try {
             QueryGenerator generator = new QueryGenerator(criteria, pc);
-            generator.setAuthorizationResourceFragment(AuthorizationTokenType.RESOURCE, subject.getId());
+            generator.setAuthorizationResourceFragment(AuthorizationTokenType.RESOURCE, null, subject.getId());
 
             Query query = generator.getQuery(entityManager);
             Query countQuery = generator.getCountQuery(entityManager);

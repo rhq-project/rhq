@@ -77,6 +77,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.core.domain.util.QueryGenerator;
+import org.rhq.core.domain.util.QueryGenerator.AuthorizationTokenType;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
@@ -1298,6 +1299,9 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         PageControl pc) throws FetchException {
         try {
             QueryGenerator generator = new QueryGenerator(criteria, pc);
+            if (authorizationManager.isInventoryManager(subject) == false) {
+                generator.setAuthorizationResourceFragment(AuthorizationTokenType.GROUP, null, subject.getId());
+            }
 
             Query query = generator.getQuery(entityManager);
             Query countQuery = generator.getCountQuery(entityManager);

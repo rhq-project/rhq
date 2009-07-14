@@ -249,7 +249,7 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
             PackageVersion.QUERY_FIND_BY_CHANNEL_ID_WITH_PACKAGE_FILTERED, pc);
 
         query.setParameter("channelId", channelId);
-        query.setParameter("filter", (filter == null) ? null : ("%" + filter.toUpperCase() + "%"));
+        query.setParameter("filter", PersistenceUtility.formatSearchParameter(filter));
 
         List<PackageVersion> results = query.getResultList();
         long count = getPackageVersionCountFromChannel(subject, filter, channelId);
@@ -508,6 +508,7 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
     }
 
     @SuppressWarnings("unchecked")
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
     public PageList<Channel> findChannels(Subject subject, Channel criteria, PageControl pc) throws FetchException {
         try {
             QueryGenerator generator = new QueryGenerator(criteria, pc);
@@ -525,6 +526,7 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
     }
 
     @SuppressWarnings("unchecked")
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
     public PageList<PackageVersion> findPackageVersionsInChannel(Subject subject, int channelId,
         PackageVersion criteria, PageControl pc) throws FetchException {
 

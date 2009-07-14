@@ -101,6 +101,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.core.domain.util.QueryGenerator;
+import org.rhq.core.domain.util.QueryGenerator.AuthorizationTokenType;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
@@ -788,8 +789,10 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         Resource parentResource = null;
 
         if (null != typeName) {
-            type = (ResourceType) entityManager.createNamedQuery(ResourceType.QUERY_FIND_BY_NAME).setParameter("name",
-                typeName).getSingleResult();
+            Query query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_BY_NAME);
+            query.setParameter("name", typeName);
+            type = (ResourceType) query.getSingleResult();
+            // TODO: why is this being fetched after it was just loaded?!
             type = entityManager.find(ResourceType.class, type.getId());
         }
         if (parentResourceId > 0) {
@@ -2025,6 +2028,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     public PageList<Resource> findResources(Subject subject, Resource criteria, PageControl pc) throws FetchException {
         try {
             QueryGenerator generator = new QueryGenerator(criteria, pc);
+            generator.setAuthorizationResourceFragment(AuthorizationTokenType.RESOURCE, subject.getId());
 
             Query query = generator.getQuery(entityManager);
             Query countQuery = generator.getCountQuery(entityManager);

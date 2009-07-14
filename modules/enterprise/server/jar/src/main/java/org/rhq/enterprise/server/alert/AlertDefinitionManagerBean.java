@@ -127,6 +127,12 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
     public AlertDefinition getAlertDefinitionById(Subject subject, int alertDefinitionId) {
         //LOG.debug("AlertDefinitionManager.getAlertDefinitionById(" + user + ", " + alertDefinitionId + ")");
         AlertDefinition alertDefinition = entityManager.find(AlertDefinition.class, alertDefinitionId);
+        if (authorizationManager.canViewResource(subject, alertDefinition.getResource().getId()) == false) {
+            throw new PermissionException("User[" + subject.getName()
+                + "] does not have permission to view alertDefinition[id=" + alertDefinitionId + "] for resource[id="
+                + alertDefinition.getResource().getId() + "]");
+        }
+
         if (alertDefinition != null) {
             // avoid NPEs if the caller passed an invalid id
             alertDefinition.getConditions().size();

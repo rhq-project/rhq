@@ -18,19 +18,19 @@
  */
 package org.rhq.enterprise.server.report;
 
+import java.util.List;
+
+import javax.ejb.Stateless;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.RequiredPermission;
-
-import javax.ejb.Stateless;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
-import java.util.List;
-
 
 /**
  * This service provides jpql querying access to the core. You can pass in arbitrary
@@ -43,11 +43,10 @@ import java.util.List;
 @Stateless
 public class DataAccessBean implements DataAccessLocal, DataAccessRemote {
 
-
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
-
+    @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public List<Object[]> executeQuery(Subject subject, String query) {
         Query q = entityManager.createQuery(query);
@@ -55,6 +54,7 @@ public class DataAccessBean implements DataAccessLocal, DataAccessRemote {
         return q.getResultList();
     }
 
+    @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public List<Object[]> executeQuery(Subject subject, String query, PageControl pageControl) {
         Query q = buildQuery(query, pageControl);
@@ -88,4 +88,3 @@ public class DataAccessBean implements DataAccessLocal, DataAccessRemote {
     }
 
 }
-

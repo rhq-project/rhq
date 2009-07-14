@@ -71,6 +71,7 @@ import org.rhq.enterprise.server.system.SystemManagerLocal;
 @Stateless
 @WebService(endpointInterface = "org.rhq.enterprise.server.auth.SubjectManagerRemote")
 public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRemote {
+    @SuppressWarnings("unused")
     private final Log log = LogFactory.getLog(SubjectManagerBean.class);
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)

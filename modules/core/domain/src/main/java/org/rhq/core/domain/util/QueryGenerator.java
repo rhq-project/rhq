@@ -21,6 +21,9 @@ import javax.persistence.Query;
 
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.content.Channel;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.util.jdbc.JDBCUtil;
 
 /**
@@ -143,16 +146,29 @@ public final class QueryGenerator {
     public void setAuthorizationResourceFragment(AuthorizationTokenType type, String fragment, int subjectId) {
         this.authorizationSubjectId = subjectId;
         if (type == AuthorizationTokenType.RESOURCE) {
-            this.authorizationJoinFragment = "" //
-                + "JOIN " + alias + "." + fragment + " authRes " + NL // 
-                + "JOIN authRes.implicitGroup authGroup " + NL //
-                + "JOIN authGroup.roles authRole " + NL //
-                + "JOIN authRole.subject authSubject " + NL;
+            if (fragment == null) {
+                this.authorizationJoinFragment = "" // 
+                    + "JOIN " + alias + ".implicitGroup authGroup " + NL //
+                    + "JOIN authGroup.roles authRole " + NL //
+                    + "JOIN authRole.subject authSubject " + NL;
+            } else {
+                this.authorizationJoinFragment = "" //
+                    + "JOIN " + alias + "." + fragment + " authRes " + NL // 
+                    + "JOIN authRes.implicitGroup authGroup " + NL //
+                    + "JOIN authGroup.roles authRole " + NL //
+                    + "JOIN authRole.subject authSubject " + NL;
+            }
         } else if (type == AuthorizationTokenType.GROUP) {
-            this.authorizationJoinFragment = "" //
-                + "JOIN " + alias + "." + fragment + " authGroup " + NL //
-                + "JOIN authGroup.roles authRole " + NL //
-                + "JOIN authRole.subject authSubject " + NL;
+            if (fragment == null) {
+                this.authorizationJoinFragment = "" // 
+                    + "JOIN " + alias + ".roles authRole " + NL //
+                    + "JOIN authRole.subject authSubject " + NL;
+            } else {
+                this.authorizationJoinFragment = "" //
+                    + "JOIN " + alias + "." + fragment + " authGroup " + NL //
+                    + "JOIN authGroup.roles authRole " + NL //
+                    + "JOIN authRole.subject authSubject " + NL;
+            }
         } else {
             throw new IllegalArgumentException(this.getClass().getSimpleName()
                 + " does not yet support generating queries for '" + type + "' token types");
@@ -373,5 +389,17 @@ public final class QueryGenerator {
         alertGenerator.addFilter(expression, (Object[]) definitionIds);
 
         System.out.println(alertGenerator.getQueryString(false));
+
+        QueryGenerator channelGenerator = new QueryGenerator(new Channel("csp"), PageControl.getUnlimitedInstance());
+        System.out.println(channelGenerator.getQueryString(false));
+
+        QueryGenerator resourceGenerator = new QueryGenerator(new Resource(1), PageControl.getUnlimitedInstance());
+        resourceGenerator.setAuthorizationResourceFragment(AuthorizationTokenType.RESOURCE, null, 1);
+        System.out.println(resourceGenerator.getQueryString(false));
+
+        QueryGenerator groupGenerator = new QueryGenerator(new ResourceGroup("dyna"), PageControl
+            .getUnlimitedInstance());
+        groupGenerator.setAuthorizationResourceFragment(AuthorizationTokenType.GROUP, null, 1);
+        System.out.println(groupGenerator.getQueryString(false));
     }
 }

@@ -65,10 +65,14 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.domain.util.QueryGenerator;
+import org.rhq.core.domain.util.QueryGenerator.AuthorizationTokenType;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
+import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
+import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.exception.FetchException;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
@@ -107,6 +111,9 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
 
     @EJB
     private AlertConditionCacheManagerLocal alertConditionCacheManager;
+
+    @EJB
+    private AuthorizationManagerLocal authorizationManager;
 
     @EJB
     private ResourceGroupManagerLocal resGrpMgr;
@@ -268,6 +275,15 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
         long endDate, EventSeverity[] severities, String source, String searchString, PageControl pc) {
 
         List<Resource> resources = resGrpMgr.findResourcesForAutoGroup(subject, parent, type);
+        for (Resource res : resources) {
+            if (authorizationManager.canViewResource(subject, res.getId()) == false) {
+                throw new PermissionException("User [" + subject.getName()
+                    + "] does not have permission to view event history for autoGroup[parentResourceId=" + parent
+                    + ", resourceTypeId=" + type + "], root cause: missing permission to view resource[id="
+                    + res.getId() + "]");
+            }
+        }
+
         int[] resourceIds = new int[resources.size()];
         int i = 0;
         for (Resource res : resources) {
@@ -636,9 +652,13 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
         return results;
     }
 
-    //Especially added for remote interface
     public PageList<EventComposite> findEventsForResource(Subject subject, int resourceId, long startDate,
         long endDate, EventSeverity severity, String source, String detail, PageControl pc) throws FetchException {
+
+        if (authorizationManager.canViewResource(subject, resourceId) == false) {
+            throw new PermissionException("User [" + subject.getName()
+                + "] does not have permission to view event history for resource[id=" + resourceId + "]");
+        }
 
         EventSeverity[] severities = { severity };
         PageList<EventComposite> comp = findEvents(subject, new int[] { resourceId }, startDate, endDate, severities,
@@ -649,19 +669,39 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
     public PageList<EventComposite> findEventsForCompGroup(Subject subject, int groupId, long begin, long endDate,
         EventSeverity severity, String source, String searchString, PageControl pc) throws FetchException {
 
+        if (authorizationManager.canViewGroup(subject, groupId) == false) {
+            throw new PermissionException("User [" + subject.getName()
+                + "] does not have permission to view event history for resourceGroup[id=" + groupId + "]");
+        }
+
         EventSeverity[] severities = { severity };
 
         return findEventsForCompGroup(subject, groupId, begin, endDate, severities, source, searchString, pc);
     }
 
-    //TODO: This is impossible currently to implement, Query generator does not support 'in between'
-    /*
-    public PageList<EventComposite> findEvents(Subject subject, long begin, long end, Event criteria, PageControl pc)
+    @SuppressWarnings("unchecked")
+    public PageList<Event> findEvents(Subject subject, Event criteria, long begin, long end, PageControl pc)
         throws FetchException {
-        
-        return null;
+
+        try {
+            QueryGenerator generator = new QueryGenerator(criteria, pc);
+            if (authorizationManager.isInventoryManager(subject) == false) {
+                generator.setAuthorizationResourceFragment(AuthorizationTokenType.RESOURCE, "source.resource", subject
+                    .getId());
+            }
+            generator.addFilter("timestamp between ? and ?", begin, end);
+
+            Query query = generator.getQuery(entityManager);
+            Query countQuery = generator.getCountQuery(entityManager);
+
+            long count = (Long) countQuery.getSingleResult();
+            List<Event> events = query.getResultList();
+
+            return new PageList<Event>(events, (int) count, pc);
+        } catch (Exception e) {
+            throw new FetchException(e.getMessage());
+        }
     }
-    */
 
     public PageList<EventComposite> findEventsForAutoGroup(Subject subject, int parentResourceId, int resourceTypeId,
         long begin, long end, EventSeverity severity, String source, String detail, PageControl pc)

@@ -565,8 +565,8 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
 
         Map<MeasurementDefinition, List<MetricDisplaySummary>> compareMetrics = new HashMap<MeasurementDefinition, List<MetricDisplaySummary>>();
         for (Resource resource : resources) {
-            List<MeasurementSchedule> scheds = scheduleManager.findSchedulesByResourceIdAndDefinitionIds(resource
-                .getId(), collectingDefIdArr);
+            List<MeasurementSchedule> scheds = scheduleManager.findSchedulesByResourceIdAndDefinitionIds(subject,
+                resource.getId(), collectingDefIdArr);
             int[] schedIds = new int[scheds.size()];
             for (int i = 0; (i < schedIds.length); ++i) {
                 schedIds[i] = scheds.get(i).getId();

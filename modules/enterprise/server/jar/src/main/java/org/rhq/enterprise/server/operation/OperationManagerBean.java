@@ -1658,13 +1658,13 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
             ResourceGroup group = ((GroupOperationHistory) history).getGroup();
             if (!authorizationManager.canViewGroup(subject, group.getId())) {
                 throw new PermissionException("User [" + subject.getName()
-                    + "] does not have permission to view group [" + group + "]");
+                    + "] does not have permission to view operation history for group [" + group + "]");
             }
         } else {
             Resource resource = ((ResourceOperationHistory) history).getResource();
             if (!authorizationManager.canViewResource(subject, resource.getId())) {
                 throw new PermissionException("User [" + subject.getName()
-                    + "] does not have permission to view resource [" + resource + "]");
+                    + "] does not have permission to view operation history for resource [" + resource + "]");
             }
         }
     }

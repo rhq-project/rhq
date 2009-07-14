@@ -483,7 +483,6 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
         }
     }
 
-    //Specifically added for remove interface
     public PageList<Role> findSubjectAssignedRoles(Subject subject, int subjectId, PageControl pc)
         throws FetchException {
         PageList<Role> assignedRoles = findRolesBySubject(subjectId, pc);

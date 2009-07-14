@@ -75,7 +75,8 @@ public interface MeasurementScheduleManagerLocal {
      *
      * @return a list of Schedules
      */
-    List<MeasurementSchedule> findSchedulesByResourceIdAndDefinitionIds(int resourceId, int[] definitionIds);
+    List<MeasurementSchedule> findSchedulesByResourceIdAndDefinitionIds(Subject subject, int resourceId,
+        int[] definitionIds);
 
     /**
      * Obtain a MeasurementSchedule by its Id after a check for a valid session

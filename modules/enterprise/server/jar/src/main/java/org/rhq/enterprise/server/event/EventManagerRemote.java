@@ -25,6 +25,7 @@ import javax.jws.WebService;
 import javax.jws.soap.SOAPBinding;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.event.composite.EventComposite;
 import org.rhq.core.domain.util.PageControl;
@@ -100,14 +101,12 @@ public interface EventManagerRemote {
         @WebParam(name = "numBuckets") int numBuckets) //
         throws FetchException;
 
-    /*TODO: Currently impossible to implement, QueryGenerator does not support in-between
     @WebMethod
-    PageList<EventComposite> findEvents( //
+    PageList<Event> findEvents( //
         @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "criteria") Event criteria, //
         @WebParam(name = "begin") long begin, //
         @WebParam(name = "end") long end, //
-        @WebParam(name = "criteria") Event criteria, //
-        @WebParam(name = "pc") PageControl pc) //
+        @WebParam(name = "pageControl") PageControl pc) //
         throws FetchException;
-     */
 }

@@ -268,11 +268,19 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
      */
     public List<MeasurementSchedule> findSchedulesByResourceIdsAndDefinitionId(Subject subject, int[] resourceIds,
         int definitionId) {
-        return findSchedulesByResourcesAndDefinitions(resourceIds, new int[] { definitionId });
+        return findSchedulesByResourcesAndDefinitions(subject, resourceIds, new int[] { definitionId });
     }
 
     @SuppressWarnings("unchecked")
-    private List<MeasurementSchedule> findSchedulesByResourcesAndDefinitions(int[] resourceIds, int[] definitionIds) {
+    private List<MeasurementSchedule> findSchedulesByResourcesAndDefinitions(Subject subject, int[] resourceIds,
+        int[] definitionIds) {
+        for (int resourceId : resourceIds) {
+            if (!authorizationManager.canViewResource(subject, resourceId)) {
+                throw new PermissionException("User[" + subject.getName()
+                    + "] does not have permission to view metric schedules for resource[id=" + resourceId + "]");
+            }
+        }
+
         Query query = entityManager.createNamedQuery(MeasurementSchedule.FIND_BY_RESOURCE_IDS_AND_DEFINITION_IDS);
         query.setParameter("definitionIds", ArrayUtils.wrapInList(definitionIds));
         query.setParameter("resourceIds", ArrayUtils.wrapInList(resourceIds));
@@ -294,8 +302,8 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     public MeasurementSchedule getSchedule(Subject subject, int resourceId, int definitionId, boolean attachBaseline)
         throws MeasurementNotFoundException {
         try {
-            List<MeasurementSchedule> results = findSchedulesByResourcesAndDefinitions(new int[] { resourceId },
-                new int[] { definitionId });
+            List<MeasurementSchedule> results = findSchedulesByResourcesAndDefinitions(subject,
+                new int[] { resourceId }, new int[] { definitionId });
             if (results.size() != 1) {
                 throw new MeasurementException("Could not find measurementSchedule[resourceId=" + resourceId
                     + ", definitionId=" + definitionId + "]");
@@ -339,6 +347,15 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         // pageControl.initDefaultOrderingField(); // this is ignored, as this method eventually uses native queries
 
         List<Resource> resources = resourceGroupManager.findResourcesForAutoGroup(subject, parentId, childType);
+        for (Resource res : resources) {
+            if (!authorizationManager.canViewResource(subject, res.getId())) {
+                throw new PermissionException("User[" + subject.getName()
+                    + "] does not have permission to view metric schedules for autoGroup[parentResourceId=" + parentId
+                    + ", resourceTypeId=" + childType + "], root cause: does not have permission to view resource[id="
+                    + res.getId() + "]");
+            }
+        }
+
         ResourceType resType;
         try {
             resType = resourceTypeManager.getResourceTypeById(subject, childType);
@@ -360,6 +377,11 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     public PageList<MeasurementScheduleComposite> findSchedulesForCompatibleGroup(Subject subject, int groupId,
         PageControl pageControl) {
         // pageControl.initDefaultOrderingField(); // this is ignored, as this method eventually uses native queries
+
+        if (!authorizationManager.canViewResource(subject, groupId)) {
+            throw new PermissionException("User[" + subject.getName()
+                + "] does not have permission to view metric schedules for resourceGroup[id=" + groupId + "]");
+        }
 
         ResourceGroup group = resourceGroupManager.getResourceGroupById(subject, groupId, GroupCategory.COMPATIBLE);
         Set<Resource> resources = group.getExplicitResources();
@@ -495,6 +517,11 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     @SuppressWarnings("unchecked")
     public PageList<MeasurementScheduleComposite> findScheduleCompositesForResource(Subject subject, int resourceId,
         @Nullable DataType dataType, PageControl pageControl) {
+        if (!authorizationManager.canViewResource(subject, resourceId)) {
+            throw new PermissionException("User[" + subject.getName()
+                + "] does not have permission to view metric schedules for resource[id=" + resourceId + "]");
+        }
+
         pageControl.addDefaultOrderingField("ms.id");
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
@@ -507,6 +534,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
 
     public PageList<MeasurementScheduleComposite> findSchedulesForResource(Subject subject, int resourceId,
         PageControl pageControl) {
+
         return findScheduleCompositesForResource(subject, resourceId, null, pageControl);
     }
 
@@ -519,13 +547,22 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     }
 
     public void disableSchedules(Subject subject, int resourceId, int[] measurementDefinitionIds) {
-        Resource resource = resourceManager.getResourceById(subject, resourceId);
         if (!authorizationManager.hasResourcePermission(subject, Permission.MANAGE_MEASUREMENTS, resourceId)) {
-            throw new PermissionException("You do not have permission to change resource [" + resource
-                + "]'s metric collection schedules");
+            throw new PermissionException("User[" + subject.getName()
+                + "] does not have permission to disable metric collection schedules for resource[id=" + resourceId
+                + "]");
         }
 
-        List<MeasurementSchedule> measurementSchedules = findSchedulesByResourceIdAndDefinitionIds(resourceId,
+        disableSchedule(subject, resourceId, measurementDefinitionIds);
+
+        return;
+    }
+
+    // callers to this method need to perform authorization
+    private void disableSchedule(Subject subject, int resourceId, int[] measurementDefinitionIds) {
+        Resource resource = resourceManager.getResourceById(subject, resourceId);
+
+        List<MeasurementSchedule> measurementSchedules = findSchedulesByResourceIdAndDefinitionIds(subject, resourceId,
             measurementDefinitionIds);
         ResourceMeasurementScheduleRequest resourceMeasurementScheduleRequest = new ResourceMeasurementScheduleRequest(
             resourceId);
@@ -547,13 +584,19 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     }
 
     public void enableSchedules(Subject subject, int resourceId, int[] measurementDefinitionIds) {
-        Resource resource = resourceManager.getResourceById(subject, resourceId);
         if (!authorizationManager.hasResourcePermission(subject, Permission.MANAGE_MEASUREMENTS, resourceId)) {
-            throw new PermissionException("You do not have permission to change resource [" + resource
-                + "]'s metric collection schedules");
+            throw new PermissionException("User[" + subject.getName()
+                + "] does not have permission to enable metric collection schedules for resource[id=" + resourceId
+                + "]");
         }
 
-        List<MeasurementSchedule> measurementSchedules = findSchedulesByResourceIdAndDefinitionIds(resourceId,
+        enableSchedule(subject, resourceId, measurementDefinitionIds);
+    }
+
+    // callers to this method need to perform authorization
+    private void enableSchedule(Subject subject, int resourceId, int[] measurementDefinitionIds) {
+        Resource resource = resourceManager.getResourceById(subject, resourceId);
+        List<MeasurementSchedule> measurementSchedules = findSchedulesByResourceIdAndDefinitionIds(subject, resourceId,
             measurementDefinitionIds);
         ResourceMeasurementScheduleRequest resourceMeasurementScheduleRequest = new ResourceMeasurementScheduleRequest(
             resourceId);
@@ -718,11 +761,12 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         collectionInterval = verifyMinimumCollectionInterval(collectionInterval);
         Resource resource = resourceManager.getResourceById(subject, resourceId);
         if (!authorizationManager.hasResourcePermission(subject, Permission.MANAGE_MEASUREMENTS, resourceId)) {
-            throw new PermissionException("You do not have permission to change resource [" + resource
-                + "]'s metric collection schedules");
+            throw new PermissionException("User[" + subject.getName()
+                + "] does not have permission to change metric collection schedules for resource[id=" + resourceId
+                + "]");
         }
 
-        List<MeasurementSchedule> measurementSchedules = findSchedulesByResourceIdAndDefinitionIds(resourceId,
+        List<MeasurementSchedule> measurementSchedules = findSchedulesByResourceIdAndDefinitionIds(subject, resourceId,
             measurementDefinitionIds);
         ResourceMeasurementScheduleRequest resourceMeasurementScheduleRequest = new ResourceMeasurementScheduleRequest(
             resourceId);
@@ -796,11 +840,17 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
      * Disable the measurement schedules for the passed definitions for the resources of the passed compatible group.
      */
     public void disableSchedulesForCompatibleGroup(Subject subject, int groupId, int[] measurementDefinitionIds) {
+        if (!authorizationManager.hasGroupPermission(subject, Permission.MANAGE_MEASUREMENTS, groupId)) {
+            throw new PermissionException("User[" + subject.getName()
+                + "] does not have permission to disable metric collection schedules for resourceGroup[id=" + groupId
+                + "]");
+        }
+
         ResourceGroup group = resourceGroupManager.getResourceGroupById(subject, groupId, GroupCategory.COMPATIBLE);
         Set<Resource> resources = group.getExplicitResources();
 
         for (Resource resource : resources) {
-            disableSchedules(subject, resource.getId(), measurementDefinitionIds);
+            disableSchedule(subject, resource.getId(), measurementDefinitionIds);
         }
     }
 
@@ -808,11 +858,17 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
      * Enable the measurement schedules for the passed definitions for the resources of the passed compatible group.
      */
     public void enableSchedulesForCompatibleGroup(Subject subject, int groupId, int[] measurementDefinitionIds) {
+        if (!authorizationManager.hasGroupPermission(subject, Permission.MANAGE_MEASUREMENTS, groupId)) {
+            throw new PermissionException("User[" + subject.getName()
+                + "] does not have permission to enable metric collection schedules for resourceGroup[id=" + groupId
+                + "]");
+        }
+
         ResourceGroup group = resourceGroupManager.getResourceGroupById(subject, groupId, GroupCategory.COMPATIBLE);
         Set<Resource> resources = group.getExplicitResources();
 
         for (Resource resource : resources) {
-            enableSchedules(subject, resource.getId(), measurementDefinitionIds);
+            enableSchedule(subject, resource.getId(), measurementDefinitionIds);
         }
     }
 
@@ -899,8 +955,9 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
      *
      * @return a list of Schedules
      */
-    public List<MeasurementSchedule> findSchedulesByResourceIdAndDefinitionIds(int resourceId, int[] definitionIds) {
-        return findSchedulesByResourcesAndDefinitions(new int[] { resourceId }, definitionIds);
+    public List<MeasurementSchedule> findSchedulesByResourceIdAndDefinitionIds(Subject subject, int resourceId,
+        int[] definitionIds) {
+        return findSchedulesByResourcesAndDefinitions(subject, new int[] { resourceId }, definitionIds);
     }
 
     /**

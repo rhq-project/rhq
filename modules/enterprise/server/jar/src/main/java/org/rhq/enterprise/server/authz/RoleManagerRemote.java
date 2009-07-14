@@ -41,7 +41,6 @@ import org.rhq.enterprise.server.exception.UpdateException;
 @Remote
 public interface RoleManagerRemote {
 
-    //available as getRoleById
     /**
      * Returns the role with the given ID
      *
@@ -55,7 +54,6 @@ public interface RoleManagerRemote {
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "roleId") int roleId);
 
-    //not avialable
     /**
      * Get all roles assigned for a certain subject
      * 
@@ -71,7 +69,6 @@ public interface RoleManagerRemote {
         @WebParam(name = "pageControl") PageControl pc) //
         throws FetchException;
 
-    //Available as getAvailableRolesForSubject, but better proxy!
     @WebMethod
     PageList<Role> findSubjectUnassignedRoles( //
         @WebParam(name = "subject") Subject subject, //
@@ -79,7 +76,6 @@ public interface RoleManagerRemote {
         @WebParam(name = "pageControl") PageControl pc) //
         throws FetchException;
 
-    //does not exist
     @WebMethod
     PageList<Role> findRoles( //
         @WebParam(name = "subject") Subject subject, //
@@ -87,7 +83,6 @@ public interface RoleManagerRemote {
         @WebParam(name = "pageControl") PageControl pc) //
         throws FetchException;
 
-    //available as: assignRolesToSubject
     /**
      * Assigns a set of roles to a subject which authorizes the subject to do anything the roles permit.
      *
@@ -102,7 +97,6 @@ public interface RoleManagerRemote {
         @WebParam(name = "roleIds") int[] roleIds) //
         throws UpdateException;
 
-    //avaialble 
     /**
      * Disassociates particular roles from a subject. Once complete, the subject will no longer be authorized with the
      * given roles.
@@ -118,7 +112,6 @@ public interface RoleManagerRemote {
         @WebParam(name = "roleIds") int[] roleIds) //
         throws UpdateException;
 
-    //available as assignSubjectsToRole
     /**
      * Assigns a set of subjects to a role which authorizes the subjects to do anything the role permits.
      *
@@ -133,7 +126,6 @@ public interface RoleManagerRemote {
         @WebParam(name = "subjectIds") int[] subjectIds) //
         throws UpdateException;
 
-    //does not exist
     /**
      * Dissociate particular subjects from a role.
      * 
@@ -148,7 +140,6 @@ public interface RoleManagerRemote {
         @WebParam(name = "subjectIds") int[] subjectIds) //
         throws UpdateException;
 
-    //available!
     /**
      * Adds the given resource groups to the given role.
      *
@@ -163,7 +154,6 @@ public interface RoleManagerRemote {
         @WebParam(name = "pendingGroupIds") int[] pendingGroupIds) //
         throws UpdateException;
 
-    //does not exist
     @WebMethod
     void addRolesToResourceGroup( //
         @WebParam(name = "subject") Subject subject, //
@@ -186,7 +176,6 @@ public interface RoleManagerRemote {
         @WebParam(name = "groupIds") int[] groupIds) //
         throws UpdateException;
 
-    //not available
     @WebMethod
     void removeRolesFromResourceGroup( //
         @WebParam(name = "subject") Subject subject, //

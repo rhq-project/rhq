@@ -25,6 +25,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
+import javax.ejb.EJB;
 import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -47,6 +48,7 @@ import org.rhq.core.db.OracleDatabaseType;
 import org.rhq.core.db.PostgresqlDatabaseType;
 import org.rhq.core.db.SQLServerDatabaseType;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.calltime.CallTimeData;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataValue;
@@ -56,6 +58,8 @@ import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
+import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.exception.FetchException;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 
@@ -103,6 +107,9 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
     @javax.annotation.Resource
     private SessionContext sessionContext;
 
+    @EJB
+    private AuthorizationManagerLocal authorizationManager;
+
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void addCallTimeData(@NotNull Set<CallTimeData> callTimeDataSet) {
         if (callTimeDataSet.isEmpty()) {
@@ -138,7 +145,13 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
         pageControl.initDefaultOrderingField("SUM(value.total)/SUM(value.count)", PageOrdering.DESC); // only set if no ordering yet specified
         pageControl.addDefaultOrderingField("key.callDestination", PageOrdering.ASC); // add this to sort, if not already specified
 
-        // TODO: authz check
+        MeasurementSchedule schedule = entityManager.find(MeasurementSchedule.class, scheduleId);
+        int resourceId = schedule.getResource().getId();
+        if (authorizationManager.canViewResource(subject, resourceId) == false) {
+            throw new PermissionException("User [" + subject
+                + "] does not have permission to view call time data for measurementSchedule[id=" + scheduleId
+                + "] and resource[id=" + resourceId + "]");
+        }
 
         String query = CallTimeDataValue.QUERY_FIND_COMPOSITES_FOR_RESOURCE;
 

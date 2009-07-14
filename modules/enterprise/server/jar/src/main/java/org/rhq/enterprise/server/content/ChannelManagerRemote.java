@@ -43,7 +43,7 @@ public interface ChannelManagerRemote {
     /**
      * Associates the package versions (identified by their IDs) to the given channel (also identified by its ID).
      *
-     * @param  user           The logged in user's subject.
+     * @param subject           The logged in user's subject.
      * @param channelId         the ID of the channel
      * @param packageVersionIds the list of package version IDs to add to the channel
      * @throws UpdateException TODO
@@ -58,8 +58,8 @@ public interface ChannelManagerRemote {
      * Creates a new {@link Channel}. Note that the created channel will not have any content sources assigned and no
      * resources will be subscribed. It is a virgin channel.
      *
-     * @param  user           The logged in user's subject.
-     * @param  channel a new channel object.
+     * @param subject The logged in user's subject.
+     * @param channel a new channel object.
      *
      * @return the newly created channel
      * @throws CreateException TODO
@@ -73,7 +73,7 @@ public interface ChannelManagerRemote {
      * Deletes the identified channel. If this deletion orphans package versions (that is, its originating resource or
      * content source has been deleted), this will also purge those orphaned package versions.
      *
-     * @param  user           The logged in user's subject.
+     * @param subject The logged in user's subject.
      * @param channelId
      * @throws DeleteException TODO
      */
@@ -92,7 +92,7 @@ public interface ChannelManagerRemote {
     PageList<Channel> findChannels( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "criteria") Channel criteria, //
-        @WebParam(name = "pc") PageControl pc) //
+        @WebParam(name = "pageControl") PageControl pc) //
         throws FetchException;
 
     @WebMethod
@@ -100,89 +100,89 @@ public interface ChannelManagerRemote {
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "channelId") int channelId, //
         @WebParam(name = "criteria") PackageVersion criteria, //
-        @WebParam(name = "pc") PageControl pc) //
+        @WebParam(name = "pageControl") PageControl pc) //
         throws FetchException;
 
-    //rename user, change exception
+    // change exception
     /**
      * Update an existing {@link Channel} object's basic fields, like name, description, etc. Note that the given <code>
      * channel</code>'s relationships will be ignored and not merged with the existing channel (e.g. is subscribed
      * resources will not be changed, regardless of what the given channel's subscribed resources set it). See methods
      * like {@link #addContentSourcesToChannel(Subject, int, int[])} to alter its relationships.
      *
-     * @param  user           The logged in user's subject.
-     * @param  channel to be updated
+     * @param subject The logged in user's subject.
+     * @param channel to be updated
      *
      * @return Channel that was updated
      */
     @WebMethod
     Channel updateChannel( //
-        @WebParam(name = "user") Subject user, //
+        @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "channel") Channel channel) throws ChannelException;
 
     /**
      * Returns the set of package versions that can currently be accessed via the given channel.
      *
-     * @param  user           The logged in user's subject.
-     * @param  channelId identifies the channel
-     * @param filter A channel filter.
-     * @param  pc        pagination controls
+     * @param subject   The logged in user's subject.
+     * @param channelId identifies the channel
+     * @param filter    A channel filter.
+     * @param pc        pagination controls
      *
      * @return the package versions that are available in the channel
      */
     @WebMethod
     PageList<PackageVersion> findPackageVersionsInChannel( //
-        @WebParam(name = "user") Subject user, //
+        @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "channelId") int channelId, //
         @WebParam(name = "filter") String filter, //
-        @WebParam(name = "pc") PageControl pc);
+        @WebParam(name = "pageControl") PageControl pc);
 
     //Exposed methods that are not in remote specification
     @WebMethod
     PageList<Channel> findChannels( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "pc") PageControl pc) //
+        @WebParam(name = "pageControl") PageControl pc) //
         throws FetchException;
 
     /**
      * Gets all resources that are subscribed to the given channel.
      *
-     * @param  user           The logged in user's subject.
-     * @param  channelId
-     * @param  pc
+     * @param subject The logged in user's subject.
+     * @param channelId
+     * @param pc
      *
      * @return the list of subscribers
      */
     @WebMethod
     PageList<Resource> findSubscribedResources( //
-        @WebParam(name = "user") Subject user, //
+        @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "channelId") int channelId, //
-        @WebParam(name = "pc") PageControl pc);
+        @WebParam(name = "pageControl") PageControl pc);
 
     /**
      * Subscribes the identified resource to the set of identified channels. Once complete, the resource will be able to
      * access all package content from all content sources that are assigned to the given channels.
      *
-     * @param  user           The logged in user's subject.
+     * @param subject    The logged in user's subject.
      * @param resourceId The id of the resource to be subscribed.
      * @param channelIds A list of channels to which the resource is subscribed.
      */
     @WebMethod
     void subscribeResourceToChannels( //
-        @WebParam(name = "user") Subject user, //
+        @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceId") int resourceId, //
         @WebParam(name = "channelIds") int[] channelIds);
 
     /**
      * Unsubscribes the identified resource from the set of identified channels.
      *
-     * @param  user           The logged in user's subject.
+     * @param subject    The logged in user's subject.
      * @param resourceId The id of the resource to be subscribed.
      * @param channelIds A list of channels to which the resource is subscribed.
      */
     @WebMethod
     void unsubscribeResourceFromChannels( //
-        @WebParam(name = "user") Subject user, //
+        @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceId") int resourceId, //
         @WebParam(name = "channelIds") int[] channelIds);
 

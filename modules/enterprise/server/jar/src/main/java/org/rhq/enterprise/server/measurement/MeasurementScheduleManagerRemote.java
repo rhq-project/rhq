@@ -70,7 +70,7 @@ public interface MeasurementScheduleManagerRemote {
     PageList<MeasurementScheduleComposite> findScheduleDefaultsForResourceType(//
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceTypeId") int resourceTypeId,//
-        @WebParam(name = "pc") PageControl pageControl);
+        @WebParam(name = "pageControl") PageControl pageControl);
 
     @WebMethod
     List<MeasurementSchedule> findSchedulesByResourceIdsAndDefinitionId(//
@@ -83,19 +83,19 @@ public interface MeasurementScheduleManagerRemote {
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "parentResourceId") int parentResourceId,//
         @WebParam(name = "resourceTypeId") int resourceTypeId,//
-        @WebParam(name = "pc") PageControl pageControl);
+        @WebParam(name = "pageControl") PageControl pageControl);
 
     @WebMethod
     PageList<MeasurementScheduleComposite> findSchedulesForCompatibleGroup(//
         @WebParam(name = "subject") Subject subject,//
         @WebParam(name = "groupId") int groupId,//
-        @WebParam(name = "pc") PageControl pageControl);
+        @WebParam(name = "pageControl") PageControl pageControl);
 
     @WebMethod
     PageList<MeasurementScheduleComposite> findSchedulesForResource(//
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceId") int resourceId,//
-        @WebParam(name = "pc") PageControl pageControl);
+        @WebParam(name = "pageControl") PageControl pageControl);
 
     @WebMethod
     MeasurementSchedule getScheduleById(//

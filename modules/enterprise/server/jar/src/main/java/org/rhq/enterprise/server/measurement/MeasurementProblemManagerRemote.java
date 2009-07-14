@@ -38,6 +38,6 @@ public interface MeasurementProblemManagerRemote {
     PageList<ProblemResourceComposite> findProblemResources(//
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "oldestDate") long oldestDate, //
-        @WebParam(name = "pc") PageControl pc);
+        @WebParam(name = "pageControl") PageControl pc);
 
 }

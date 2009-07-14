@@ -99,19 +99,19 @@ public interface ResourceGroupManagerRemote {
     PageList<ResourceGroup> findResourceGroupsForRole( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "roleId") int roleId, //
-        @WebParam(name = "pc") PageControl pc) throws FetchException;
+        @WebParam(name = "pageControl") PageControl pc) throws FetchException;
 
     @WebMethod
     PageList<ResourceGroup> findResourceGroups( //
         @WebParam(name = "subject") Subject subject, //        
         @WebParam(name = "criteria") ResourceGroup criteria, //
-        @WebParam(name = "pc") PageControl pc) throws FetchException;
+        @WebParam(name = "pageControl") PageControl pc) throws FetchException;
 
     @WebMethod
     PageList<ResourceGroupComposite> findResourceGroupComposites( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "criteria") ResourceGroup criteria, //
-        @WebParam(name = "pc") PageControl pc) throws FetchException;
+        @WebParam(name = "pageControl") PageControl pc) throws FetchException;
 
     @WebMethod
     void removeResourcesFromGroup(//

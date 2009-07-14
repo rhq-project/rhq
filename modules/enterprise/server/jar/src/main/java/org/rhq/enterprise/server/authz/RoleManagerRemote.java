@@ -68,7 +68,7 @@ public interface RoleManagerRemote {
     PageList<Role> findSubjectAssignedRoles( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "subjectId") int subjectId, //
-        @WebParam(name = "pc") PageControl pc) //
+        @WebParam(name = "pageControl") PageControl pc) //
         throws FetchException;
 
     //Available as getAvailableRolesForSubject, but better proxy!
@@ -76,7 +76,7 @@ public interface RoleManagerRemote {
     PageList<Role> findSubjectUnassignedRoles( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "subjectId") int subjectId, //
-        @WebParam(name = "pc") PageControl pc) //
+        @WebParam(name = "pageControl") PageControl pc) //
         throws FetchException;
 
     //does not exist
@@ -84,7 +84,7 @@ public interface RoleManagerRemote {
     PageList<Role> findRoles( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "criteria") Role criteria, //
-        @WebParam(name = "pc") PageControl pc) //
+        @WebParam(name = "pageControl") PageControl pc) //
         throws FetchException;
 
     //available as: assignRolesToSubject

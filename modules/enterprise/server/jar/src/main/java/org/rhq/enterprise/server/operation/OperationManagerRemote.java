@@ -246,7 +246,7 @@ public interface OperationManagerRemote {
     PageList<ResourceOperationHistory> findOperationHistories(//
         @WebParam(name = "subject") Subject subject,//
         @WebParam(name = "criteria") ResourceOperationHistory criteria,//
-        @WebParam(name = "pc") PageControl pc)//
+        @WebParam(name = "pageControl") PageControl pc)//
         throws FetchException;
 
     //--Methods that are not written in the remote specification.--
@@ -261,18 +261,18 @@ public interface OperationManagerRemote {
      * @param endate
      *            filter used to show only results occurring before this epoch millis parameter, nullable
      * @param pc
-     * @param user
+     * @param subject
      *            The logged in user's subject.
      *
      * @return all operation histories for the given resource
      */
     @WebMethod
     PageList<ResourceOperationHistory> findCompletedResourceOperationHistories( //
-        @WebParam(name = "user") Subject user, //
+        @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceId") int resourceId, //
         @WebParam(name = "startDate") Long startDate, //
         @WebParam(name = "endDate") Long endDate, //
-        @WebParam(name = "pc") PageControl pc);
+        @WebParam(name = "pageControl") PageControl pc);
 
     /**
      * Returns the list of pending operation histories for the given resource. This will return all items that are still
@@ -288,9 +288,9 @@ public interface OperationManagerRemote {
      */
     @WebMethod
     PageList<ResourceOperationHistory> findPendingResourceOperationHistories( //
-        @WebParam(name = "user") Subject user, //
+        @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceId") int resourceId, //
-        @WebParam(name = "pc") PageControl pc);
+        @WebParam(name = "pageControl") PageControl pc);
 
     /**
      * Returns the list of scheduled operations for the given resource. This only includes scheduled jobs on the
@@ -307,7 +307,7 @@ public interface OperationManagerRemote {
      */
     @WebMethod
     List<ResourceOperationSchedule> getScheduledResourceOperations( //
-        @WebParam(name = "user") Subject user, //
+        @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceId") int resourceId) throws Exception;
 
     /**
@@ -323,7 +323,7 @@ public interface OperationManagerRemote {
      */
     @WebMethod
     List<OperationDefinition> getSupportedResourceOperations( //
-        @WebParam(name = "user") Subject user, //
+        @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceId") int resourceId, //
         @WebParam(name = "eagerLoaded") boolean eagerLoaded);
 }

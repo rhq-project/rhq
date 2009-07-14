@@ -44,6 +44,6 @@ public interface MeasurementDefinitionManagerRemote {
     PageList<MeasurementDefinition> findMeasurementDefinitions(//
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "criteria") MeasurementDefinition criteria, //
-        @WebParam(name = "pc") PageControl pc) //
+        @WebParam(name = "pageControl") PageControl pc) //
         throws FetchException;
 }

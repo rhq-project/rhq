@@ -112,14 +112,14 @@ public interface ConfigurationManagerRemote {
 
     /**
      * Get whether the the specified resource is in the process of updating its configuration.
-     * @param user             The logged in user's subject.
+     * @param subject          The logged in user's subject.
      * @param resourceId       A resource id.
      * @return True if in progress, else False.
      * @throws FetchException
      */
     @WebMethod
     boolean isResourceConfigurationUpdateInProgress( //
-        @WebParam(name = "user") Subject user, //
+        @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceId") int resourceId) throws FetchException;
 
     @WebMethod
@@ -143,7 +143,7 @@ public interface ConfigurationManagerRemote {
      * newConfiguration</code> is usually a modified version of a configuration returned by
      * {@link #getPluginConfiguration(Subject, int)}.
      *
-     * @param  user             The logged in user's subject.
+     * @param  subject          The logged in user's subject.
      * @param  resourceId       a {@link Resource} id
      * @param  newConfiguration the new plugin configuration
      *
@@ -152,7 +152,7 @@ public interface ConfigurationManagerRemote {
      */
     @WebMethod
     PluginConfigurationUpdate updatePluginConfiguration( //
-        @WebParam(name = "user") Subject user, //
+        @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceId") int resourceId, //
         @WebParam(name = "newConfiguration") Configuration newConfiguration) //
         throws UpdateException;
@@ -165,7 +165,7 @@ public interface ConfigurationManagerRemote {
      * sent. Once the agent finishes with the request, it will send the completed request information to
      * {@link #completedResourceConfigurationUpdate(AbstractResourceConfigurationUpdate)}.</p>
      *
-     * @param  user             The logged in user's subject.
+     * @param  subject          The logged in user's subject.
      * @param  resourceId       identifies the resource to be updated
      * @param  newConfiguration the resource's desired new configuration
      *
@@ -185,8 +185,8 @@ public interface ConfigurationManagerRemote {
      * the up-to-date configuration directly from the agent. An exception will be thrown if communications with the
      * agent cannot be made.
      *
-     * @param  user             The logged in user's subject.
-     * @param                   resourceId
+     * @param subject    The logged in user's subject.
+     * @param resourceId resourceId
      * @param pingAgentFirst
      * 
      * @return the live configuration
@@ -195,7 +195,7 @@ public interface ConfigurationManagerRemote {
      */
     @WebMethod
     Configuration getLiveResourceConfiguration( //
-        @WebParam(name = "user") Subject user, //
+        @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceId") int resourceId, boolean pingAgentFirst) throws Exception;
 
 }

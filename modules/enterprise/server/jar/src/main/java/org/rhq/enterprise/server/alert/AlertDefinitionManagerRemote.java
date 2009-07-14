@@ -73,7 +73,7 @@ public interface AlertDefinitionManagerRemote {
     PageList<AlertDefinition> findAlertDefinitions( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "criteria") AlertDefinition criteria, //
-        @WebParam(name = "pc") PageControl pc) //
+        @WebParam(name = "pageControl") PageControl pc) //
         throws FetchException;
 
 }

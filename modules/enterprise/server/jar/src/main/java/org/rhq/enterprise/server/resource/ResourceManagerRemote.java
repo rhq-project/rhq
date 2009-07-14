@@ -123,7 +123,7 @@ public interface ResourceManagerRemote {
      * 
      * Supported Sorting:
      *   ?? This needs to be defined ??
-     *   
+     *    
      * </pre>
      * @return
      * @throws FetchException
@@ -132,7 +132,7 @@ public interface ResourceManagerRemote {
     PageList<Resource> findResources( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "criteria") Resource criteria, //
-        @WebParam(name = "pc") PageControl pc) throws FetchException;
+        @WebParam(name = "pageControl") PageControl pc) throws FetchException;
 
     /**
      * This find service can be used to find child resources for the specified resource,
@@ -172,7 +172,7 @@ public interface ResourceManagerRemote {
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceId") int resourceId, //
         @WebParam(name = "criteria") Resource criteria, //
-        @WebParam(name = "pc") PageControl pc) throws FetchException;
+        @WebParam(name = "pageControl") PageControl pc) throws FetchException;
 
     /**
      * Removes these resources from inventory.  The resources may subsequently be rediscovered.  Note that for
@@ -191,13 +191,12 @@ public interface ResourceManagerRemote {
     // THIS WILL BE REMOVED
     @WebMethod
     PageList<ResourceComposite> findResourceComposites( //
-        @WebParam(name = "user") Subject user, //
+        @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "category") ResourceCategory category, //
         @WebParam(name = "typeName") String typeName, //
         @WebParam(name = "parentResourceId") int parentResourceId, //
         @WebParam(name = "searchString") String searchString, //
         @WebParam(name = "pageControl") PageControl pageControl);
-
 
     List<ResourceInstallCount> findResourceInstallCounts(Subject subject, boolean groupByVersions);
 }

@@ -44,7 +44,7 @@ public interface EventManagerRemote {
         @WebParam(name = "severity") EventSeverity severity, //
         @WebParam(name = "source") String source, //
         @WebParam(name = "detail") String detail, //
-        @WebParam(name = "pc") PageControl pc) //
+        @WebParam(name = "pageControl") PageControl pc) //
         throws FetchException;
 
     @WebMethod
@@ -57,7 +57,7 @@ public interface EventManagerRemote {
         @WebParam(name = "severity") EventSeverity severity, //
         @WebParam(name = "source") String source, //
         @WebParam(name = "detail") String detail, //
-        @WebParam(name = "pc") PageControl pc) //
+        @WebParam(name = "pageControl") PageControl pc) //
         throws FetchException;
 
     @WebMethod
@@ -69,7 +69,7 @@ public interface EventManagerRemote {
         @WebParam(name = "severity") EventSeverity severity, //
         @WebParam(name = "source") String source, //
         @WebParam(name = "detail") String detail, //
-        @WebParam(name = "pc") PageControl pc) //
+        @WebParam(name = "pageControl") PageControl pc) //
         throws FetchException;
 
     @WebMethod

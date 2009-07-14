@@ -40,7 +40,7 @@ public interface CallTimeDataManagerRemote {
         @WebParam(name = "scheduleId") int scheduleId, //
         @WebParam(name = "beginTime") long beginTime, //
         @WebParam(name = "endTime") long endTime, //
-        @WebParam(name = "pc") PageControl pc) //
+        @WebParam(name = "pageControl") PageControl pc) //
         throws FetchException;
 
     /* this method was never implemented, and so won't be in the remote api yet

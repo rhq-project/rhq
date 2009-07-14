@@ -70,6 +70,6 @@ public interface AlertManagerRemote {
         @WebParam(name = "resourceIds") int[] resourceIds, //
         @WebParam(name = "beginTime") long beginTime, //
         @WebParam(name = "endTime") long endTime, //
-        @WebParam(name = "pc") PageControl pc) //
+        @WebParam(name = "pageControl") PageControl pc) //
         throws FetchException;
 }

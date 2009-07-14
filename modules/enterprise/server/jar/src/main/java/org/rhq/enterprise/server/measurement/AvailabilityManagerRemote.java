@@ -51,7 +51,7 @@ public interface AvailabilityManagerRemote {
     public PageList<Availability> findAvailabilityForResource( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceId") int resourceId, //
-        @WebParam(name = "pc") PageControl pc) //
+        @WebParam(name = "pageControl") PageControl pc) //
         throws FetchException;
 
     /**

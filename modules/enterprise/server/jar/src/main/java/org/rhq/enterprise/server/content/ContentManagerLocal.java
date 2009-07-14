@@ -26,15 +26,18 @@ import javax.ejb.Local;
 
 import org.rhq.core.clientapi.server.content.ContentServiceResponse;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.ContentServiceRequest;
 import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageDetailsKey;
+import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.transfer.ContentDiscoveryReport;
 import org.rhq.core.domain.content.transfer.DeployPackageStep;
 import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
 import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
+import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 
 /**
  * EJB interface to the server content subsystem.
@@ -62,31 +65,10 @@ public interface ContentManagerLocal {
      * Deletes the specified package from the resource.
      *
      * @param user                the user who is requesting the delete
-     * @param resourceId          identifies the resource from which the packages should be deleted
-     * @param installedPackageIds identifies all of the packages to be deleted
-     * @param requestNotes        user-specified notes on what is contained in this request 
-     */
-    void deletePackages(Subject user, int resourceId, int[] installedPackageIds, String requestNotes);
-
-    /**
-     * Deletes the specified package from the resource.
-     *
-     * @param user                the user who is requesting the delete
      * @param resourceIds         identifies the resources from which the packages should be deleted
      * @param installedPackageIds identifies all of the packages to be deleted
      */
     void deletePackages(Subject user, int[] resourceIds, int[] installedPackageIds);
-
-    /**
-     * Deploys packages on the specified resources. Each installed package entry should be populated with the <code>
-     * PackageVersion</code> being installed, along with the deployment configuration values if any. This method will
-     * take care of populating the rest of the values in each installed package object.
-     *
-     * @param user              the user who is requesting the creation
-     * @param resourceIds       identifies the resources against which the package will be deployed
-     * @param packageVersionIds packageVersions we want to install
-     */
-    void deployPackages(Subject user, int[] resourceIds, int[] packageVersionIds);
 
     /**
      * Requests the plugin load and send the actual bits for the specified package.
@@ -281,4 +263,39 @@ public interface ContentManagerLocal {
      * @return the package that was found/persisted
      */
     Package persistOrMergePackageSafely(Package pkg);
+
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    //
+    // The following are shared with the Remote Interface
+    //
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    PackageVersion createPackageVersion(Subject subject, String packageName, int packageTypeId, String version,
+        int architectureId, byte[] packageBytes);
+
+    /**
+     * Deletes the specified package from the resource.
+     *
+     * @param user                the user who is requesting the delete
+     * @param resourceId          identifies the resource from which the packages should be deleted
+     * @param installedPackageIds identifies all of the packages to be deleted
+     * @param requestNotes        user-specified notes on what is contained in this request 
+     */
+    void deletePackages(Subject user, int resourceId, int[] installedPackageIds, String requestNotes);
+
+    /**
+     * Deploys packages on the specified resources. Each installed package entry should be populated with the <code>
+     * PackageVersion</code> being installed, along with the deployment configuration values if any. This method will
+     * take care of populating the rest of the values in each installed package object.
+     *
+     * @param user              the user who is requesting the creation
+     * @param resourceIds       identifies the resources against which the package will be deployed
+     * @param packageVersionIds packageVersions we want to install
+     */
+    void deployPackages(Subject user, int[] resourceIds, int[] packageVersionIds);
+
+    List<Architecture> findArchitectures(Subject subject);
+
+    List<PackageType> findPackageTypes(Subject subject, String resourceTypeName, String pluginName)
+        throws ResourceTypeNotFoundException;
 }

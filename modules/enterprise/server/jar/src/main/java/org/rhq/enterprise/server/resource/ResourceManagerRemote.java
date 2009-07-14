@@ -30,7 +30,6 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
-import org.rhq.core.domain.resource.composite.ResourceInstallCount;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.exception.DeleteException;
@@ -198,8 +197,4 @@ public interface ResourceManagerRemote {
         @WebParam(name = "searchString") String searchString, //
         @WebParam(name = "pageControl") PageControl pageControl);
 
-    @WebMethod
-    List<ResourceInstallCount> findResourceInstallCounts(//
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "groupByVersions") boolean groupByVersions);
 }

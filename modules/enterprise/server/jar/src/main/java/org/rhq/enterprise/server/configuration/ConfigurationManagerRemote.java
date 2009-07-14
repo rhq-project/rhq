@@ -94,7 +94,8 @@ public interface ConfigurationManagerRemote {
      * @throws FetchException In case where there was a problem fetching the resource configuration
      */
     @WebMethod
-    Configuration getResourceConfiguration(Subject subject, //
+    Configuration getResourceConfiguration(//
+        @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceId") int resourceId) //
         throws FetchException;
 

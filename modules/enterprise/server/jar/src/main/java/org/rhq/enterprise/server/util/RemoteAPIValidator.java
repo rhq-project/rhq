@@ -26,6 +26,7 @@ import java.util.List;
 import javax.ejb.Local;
 import javax.jws.WebMethod;
 import javax.jws.WebParam;
+import javax.jws.WebService;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.util.PageControl;
@@ -107,11 +108,16 @@ public class RemoteAPIValidator {
             localInterface = interfaces[1];
         }
 
+        WebService webService = remoteInterface.getAnnotation(WebService.class);
+        if (webService == null) {
+            errors.add(remoteInterface.getSimpleName() + ", missing @WebService class annotation");
+        }
+
         Method[] remoteMethods = remoteInterface.getMethods();
         for (Method remoteMethod : remoteMethods) {
             WebMethod webMethod = remoteMethod.getAnnotation(WebMethod.class);
             if (webMethod == null) {
-                errors.add(format(remoteMethod) + ", missing @WebMethod annotation");
+                errors.add(format(remoteMethod) + ", missing @WebMethod method annotation");
             }
 
             String methodName = remoteMethod.getName();
@@ -153,7 +159,8 @@ public class RemoteAPIValidator {
             }
         }
         if (webParam == null) {
-            errors.add(format(remoteMethod) + ", missing @WebParam annotation for " + parameterType.getSimpleName());
+            errors.add(format(remoteMethod) + ", missing @WebParam parameter annotation for "
+                + parameterType.getSimpleName());
             return;
         }
 

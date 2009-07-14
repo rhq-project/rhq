@@ -198,5 +198,8 @@ public interface ResourceManagerRemote {
         @WebParam(name = "searchString") String searchString, //
         @WebParam(name = "pageControl") PageControl pageControl);
 
-    List<ResourceInstallCount> findResourceInstallCounts(Subject subject, boolean groupByVersions);
+    @WebMethod
+    List<ResourceInstallCount> findResourceInstallCounts(//
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "groupByVersions") boolean groupByVersions);
 }

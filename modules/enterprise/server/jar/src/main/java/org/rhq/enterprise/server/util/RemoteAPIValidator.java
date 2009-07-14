@@ -18,16 +18,24 @@
  */
 package org.rhq.enterprise.server.util;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.ejb.Local;
+import javax.jws.WebMethod;
+import javax.jws.WebParam;
 
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerBean;
 import org.rhq.enterprise.server.alert.AlertManagerBean;
 import org.rhq.enterprise.server.auth.SubjectManagerBean;
 import org.rhq.enterprise.server.authz.RoleManagerBean;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerBean;
 import org.rhq.enterprise.server.content.ChannelManagerBean;
+import org.rhq.enterprise.server.content.ContentManagerBean;
 import org.rhq.enterprise.server.event.EventManagerBean;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerBean;
 import org.rhq.enterprise.server.measurement.CallTimeDataManagerBean;
@@ -52,6 +60,7 @@ public class RemoteAPIValidator {
         CallTimeDataManagerBean.class, //
         ChannelManagerBean.class,//
         ConfigurationManagerBean.class, //
+        ContentManagerBean.class, //
         EventManagerBean.class, //
         MeasurementBaselineManagerBean.class,//
         MeasurementDataManagerBean.class,//
@@ -64,42 +73,99 @@ public class RemoteAPIValidator {
         RoleManagerBean.class, //
         SubjectManagerBean.class };
 
-    public static void validate() {
+    public static void validateAll() {
+        int classesInError = 0;
         for (Class<?> managerBean : beans) {
-            Class<?>[] interfaces = managerBean.getInterfaces();
-            if (interfaces.length != 2) {
-                throw new ValidationException(managerBean.getSimpleName() + " had " + interfaces.length
-                    + " interfaces, was expecting 2");
-            }
-
-            Class<?> localInterface = null;
-            Class<?> remoteInterface = null;
-
-            if (interfaces[0].getAnnotation(Local.class) != null) {
-                localInterface = interfaces[0];
-                remoteInterface = interfaces[1];
-            } else {
-                remoteInterface = interfaces[0];
-                localInterface = interfaces[1];
-            }
-
-            Method[] remoteMethods = remoteInterface.getMethods();
-            for (Method remoteMethod : remoteMethods) {
-                String methodName = remoteMethod.getName();
-                Class<?>[] parameterTypes = remoteMethod.getParameterTypes();
-                try {
-                    localInterface.getMethod(methodName, parameterTypes);
-                } catch (NoSuchMethodException nsme) {
-                    throw new ValidationException(managerBean.getSimpleName() + " had remote method '"
-                        + format(remoteMethod) + "' which wasn't found in the local interface");
+            List<String> errors = validate(managerBean);
+            if (errors.isEmpty() == false) {
+                classesInError++;
+                for (String error : errors) {
+                    System.out.println(error);
                 }
+                System.out.println();
             }
-            System.out.println(managerBean.getSimpleName() + " is valid");
+        }
+        System.out.println(String.valueOf(beans.length) + " classes checked, " + classesInError + " in error");
+    }
+
+    public static List<String> validate(Class<?> managerBean) {
+        List<String> errors = new ArrayList<String>();
+
+        Class<?>[] interfaces = managerBean.getInterfaces();
+        if (interfaces.length != 2) {
+            errors.add(managerBean.getSimpleName() + " had " + interfaces.length + " interfaces, was expecting 2");
+        }
+
+        Class<?> localInterface = null;
+        Class<?> remoteInterface = null;
+
+        if (interfaces[0].getAnnotation(Local.class) != null) {
+            localInterface = interfaces[0];
+            remoteInterface = interfaces[1];
+        } else {
+            remoteInterface = interfaces[0];
+            localInterface = interfaces[1];
+        }
+
+        Method[] remoteMethods = remoteInterface.getMethods();
+        for (Method remoteMethod : remoteMethods) {
+            WebMethod webMethod = remoteMethod.getAnnotation(WebMethod.class);
+            if (webMethod == null) {
+                errors.add(format(remoteMethod) + ", missing @WebMethod annotation");
+            }
+
+            String methodName = remoteMethod.getName();
+            Class<?>[] parameterTypes = remoteMethod.getParameterTypes();
+            try {
+                localInterface.getMethod(methodName, parameterTypes);
+            } catch (NoSuchMethodException nsme) {
+                errors.add(format(remoteMethod) + ", method not found in the local interface");
+            }
+
+            validateTypeParameter(remoteMethod, 0, Subject.class, "subject", errors);
+            validateTypeParameter(remoteMethod, parameterTypes.length - 1, PageControl.class, "pageControl", errors);
+        }
+
+        return errors;
+    }
+
+    private static void validateTypeParameter(Method remoteMethod, int parameterIndex, Class<?> expectedParameterType,
+        String namingConvention, List<String> errors) {
+        int parameterCount = remoteMethod.getParameterTypes().length;
+        if (parameterCount == 0) {
+            return;
+        }
+        if (parameterIndex < 0 || parameterIndex > parameterCount - 1) {
+            errors.add(format(remoteMethod) + ", parameterIndex was " + parameterIndex + " but only had "
+                + parameterCount + " arguments");
+        }
+
+        Class<?> parameterType = remoteMethod.getParameterTypes()[parameterIndex];
+        if (parameterType.equals(expectedParameterType) == false) {
+            return;
+        }
+        Annotation[] parameterAnnotations = remoteMethod.getParameterAnnotations()[parameterIndex];
+        WebParam webParam = null;
+        for (int i = 0; i < parameterAnnotations.length; i++) {
+            if (parameterAnnotations[i] instanceof WebParam) {
+                webParam = (WebParam) parameterAnnotations[i];
+                break;
+            }
+        }
+        if (webParam == null) {
+            errors.add(format(remoteMethod) + ", missing @WebParam annotation for " + parameterType.getSimpleName());
+            return;
+        }
+
+        String name = webParam.name();
+        if (name.equals(namingConvention) == false) {
+            errors.add(format(remoteMethod) + ", convention should be @WebParam(name = \"" + namingConvention + "\")");
         }
     }
 
     private static String format(Method method) {
         StringBuilder builder = new StringBuilder();
+        builder.append(method.getDeclaringClass().getSimpleName()).append('.');
         builder.append(method.getName()).append("(");
         boolean first = true;
         for (Class<?> parameterType : method.getParameterTypes()) {
@@ -115,15 +181,6 @@ public class RemoteAPIValidator {
     }
 
     public static void main(String[] args) {
-        RemoteAPIValidator.validate();
-    }
-}
-
-class ValidationException extends RuntimeException {
-
-    private static final long serialVersionUID = 1L;
-
-    public ValidationException(String message) {
-        super(message);
+        RemoteAPIValidator.validateAll();
     }
 }

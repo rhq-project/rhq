@@ -145,6 +145,17 @@ public class JMXServerComponent implements JMXComponent {
             // any remote connections
             ConnectionSettings settings = new ConnectionSettings();
 
+            String principal = null;
+            String credentials = null;
+            PropertySimple o = configuration.getSimple(JMXComponent.PRINCIPAL_CONFIG_PROP);
+            if (o != null) {
+                principal = o.getStringValue();
+            }
+            o = configuration.getSimple(JMXComponent.CREDENTIALS_CONFIG_PROP);
+            if (o != null) {
+                credentials = o.getStringValue();
+            }
+
             settings.initializeConnectionType((ConnectionTypeDescriptor) Class.forName(connectionTypeDescriptorClass)
                 .newInstance());
 
@@ -158,6 +169,12 @@ public class JMXServerComponent implements JMXComponent {
                 settings.setLibraryURI(configuration.getSimple(JMXDiscoveryComponent.INSTALL_URI).getStringValue());
             }
 
+            if (principal != null) {
+                settings.setPrincipal(principal);
+            }
+            if (credentials != null) {
+                settings.setCredentials(credentials);
+            }
             prepareConnection(settings);
         }
 

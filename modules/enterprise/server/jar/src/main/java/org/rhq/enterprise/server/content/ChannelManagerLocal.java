@@ -77,7 +77,7 @@ public interface ChannelManagerLocal {
      *
      * @return the list of subscriptions
      */
-    List<ChannelComposite> getResourceSubscriptions(int resourceId);
+    List<ChannelComposite> findResourceSubscriptions(int resourceId);
 
     /**
      * Gets all channels that aren't subscribed to for the given resource.

@@ -204,7 +204,7 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
     }
 
     @SuppressWarnings("unchecked")
-    public List<ChannelComposite> getResourceSubscriptions(int resourceId) {
+    public List<ChannelComposite> findResourceSubscriptions(int resourceId) {
         Query query = entityManager.createNamedQuery(Channel.QUERY_FIND_CHANNEL_COMPOSITES_BY_RESOURCE_ID);
 
         query.setParameter("resourceId", resourceId);

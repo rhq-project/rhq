@@ -309,7 +309,7 @@ public class CreateNewPackageUIBean {
         Resource resource = EnterpriseFacesContextUtility.getResource();
 
         ChannelManagerLocal channelManager = LookupUtil.getChannelManagerLocal();
-        List<ChannelComposite> channels = channelManager.getResourceSubscriptions(resource.getId());
+        List<ChannelComposite> channels = channelManager.findResourceSubscriptions(resource.getId());
 
         SelectItem[] items = new SelectItem[channels.size()];
         int itemCounter = 0;

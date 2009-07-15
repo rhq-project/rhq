@@ -1,5 +1,7 @@
 package test;
 
+import java.lang.reflect.Proxy;
+
 import java.io.File;
 import java.util.Arrays;
 import java.util.Properties;
@@ -30,10 +32,13 @@ public class EjbClient
    private static final String NAMING_CONTEXT_FACTORY = "org.jnp.interfaces.NamingContextFactory";
    
    private static final String SECURE_PROFILE_SERVICE_JNDI_NAME = "SecureProfileService/remote";
-   private static final String UNSECURE_PROFILE_SERVICE_JNDI_NAME = "ProfileService";
    private static final String SECURE_MANAGEMENT_VIEW_JNDI_NAME = "SecureManagementView/remote";
   
    private static final String SECURE_DEPLOYMENT_MANAGER_JNDI_NAME = "SecureDeploymentManager/remote";
+   
+   private static final String PROFILE_SERVICE_JNDI_NAME = "ProfileService";
+   private static final String MANAGEMENT_VIEW_JNDI_NAME = "ManagementView";
+   private static final String DEPLOYMENT_MANAGER_JNDI_NAME = "DeploymentManager";
    
    private static final String PROFILE_SERVICE_PRINCIPAL = "admin";
    private static final String PROFILE_SERVICE_CREDENTIALS = "admin";
@@ -46,12 +51,13 @@ public class EjbClient
        boolean unsecure = options.contains("unsecure");
        boolean testDeployment = options.contains("test-deployment");
        boolean testAuth = options.contains("test-auth");
+       boolean useJaas = options.contains("jaas");
        
       //System.setProperty("org.jboss.security.SecurityAssociation.ThreadLocal", "false");
 
       Properties env = new Properties();
       env.setProperty(Context.PROVIDER_URL, "jnp://127.0.0.1:1099/");
-      if (unsecure) {
+      if (unsecure || useJaas) {
           env.setProperty(Context.INITIAL_CONTEXT_FACTORY, NAMING_CONTEXT_FACTORY);
       } else {
           env.setProperty(Context.INITIAL_CONTEXT_FACTORY, JNDI_LOGIN_INITIAL_CONTEXT_FACTORY);
@@ -65,9 +71,27 @@ public class EjbClient
       DeploymentManager deploymentManager;
       
       if (unsecure) {
-          profileService = (ProfileService)lookup(initialContext, UNSECURE_PROFILE_SERVICE_JNDI_NAME);
+          profileService = (ProfileService)lookup(initialContext, PROFILE_SERVICE_JNDI_NAME);
           managementView = profileService.getViewManager();
           deploymentManager = profileService.getDeploymentManager();
+      } else if (useJaas) {
+          profileService = (ProfileService)lookup(initialContext, PROFILE_SERVICE_JNDI_NAME);
+          managementView = (ManagementView)lookup(initialContext, MANAGEMENT_VIEW_JNDI_NAME);
+          deploymentManager = (DeploymentManager)lookup(initialContext, DEPLOYMENT_MANAGER_JNDI_NAME);
+          
+          //apply the jaas security
+          ClassLoader classLoader = EjbClient.class.getClassLoader();
+          profileService = (ProfileService) Proxy.newProxyInstance(classLoader, 
+              new Class<?>[] { ProfileService.class }, 
+              new JaasAuthenticationInvocationHandler(profileService, PROFILE_SERVICE_PRINCIPAL, PROFILE_SERVICE_CREDENTIALS));
+      
+          managementView = (ManagementView) Proxy.newProxyInstance(classLoader, 
+              new Class<?>[] { ManagementView.class }, 
+              new JaasAuthenticationInvocationHandler(managementView, PROFILE_SERVICE_PRINCIPAL, PROFILE_SERVICE_CREDENTIALS));
+
+          deploymentManager = (DeploymentManager) Proxy.newProxyInstance(classLoader, 
+              new Class<?>[] { DeploymentManager.class }, 
+              new JaasAuthenticationInvocationHandler(deploymentManager, PROFILE_SERVICE_PRINCIPAL, PROFILE_SERVICE_CREDENTIALS));
       } else {
           profileService = (ProfileService)lookup(initialContext, SECURE_PROFILE_SERVICE_JNDI_NAME);
           managementView = (ManagementView)lookup(initialContext, SECURE_MANAGEMENT_VIEW_JNDI_NAME);     

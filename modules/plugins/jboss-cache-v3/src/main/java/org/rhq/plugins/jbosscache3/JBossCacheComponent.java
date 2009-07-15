@@ -32,6 +32,7 @@ import org.mc4j.ems.connection.bean.EmsBean;
 import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 import org.mc4j.ems.connection.bean.operation.EmsOperation;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
@@ -112,13 +113,17 @@ public class JBossCacheComponent implements MeasurementFacet, OperationFacet,
 		OperationResult result = null;
 
 		try {
-			EmsBean cacheBean = getEmsConnection().getBean(beanName);
+			EmsBean detailComponent = getEmsConnection().getBean(beanName);
 
-			EmsOperation operation = cacheBean.getOperation(name);
+			EmsOperation operation = detailComponent.getOperation(name);
 
-			String res = String.valueOf(operation.invoke(new Object[] {}));
+			Object obj = operation.invoke(new Object[] {});
 
-			result = new OperationResult(res);
+			if (obj != null) {
+				result = new OperationResult();
+				result.getComplexResults().put(
+						new PropertySimple("output", String.valueOf(obj)));
+			}
 		} catch (Exception e) {
 			log.error(" Failure to invoke operation " + name + " on bean "
 					+ beanName, e);

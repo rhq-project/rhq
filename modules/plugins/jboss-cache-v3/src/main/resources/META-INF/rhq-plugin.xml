@@ -21,7 +21,7 @@
       </runs-inside>
                  
           <plugin-configuration>
-              <c:simple-property name="searchString" default="*:*,jmx-resource=*"/>
+              <c:simple-property name="searchString" default="*:*,jmx-resource=CacheMgmtInterceptor"/>
           </plugin-configuration>
            
            <operation name="destroy" displayName="destroy"/>         
@@ -29,26 +29,25 @@
            <operation name="create" displayName="create"/>         
            <operation name="start" displayName="start"/>         
            <operation name="printLockInfo" displayName="Print Lock Info">
-                  <results><c:simple-property name="details"></c:simple-property></results>
+                  <results><c:simple-property name="output"></c:simple-property></results>
             </operation>
             <operation name="printCacheDetails" displayName="Print Cache Details" >
-                  <results><c:simple-property name="details"></c:simple-property></results>
+                  <results><c:simple-property name="output"></c:simple-property></results>
              </operation>    
             <operation name="printCacheDetailsAsHtml" displayName="print Cache Details As Html">
-                  <results><c:simple-property name="details"></c:simple-property></results>
+                  <results><c:simple-property name="output"></c:simple-property></results>
              </operation>  
             <operation name="printConfigurationAsString" displayName="print Configuration As String.">
-                  <results><c:simple-property name="details"></c:simple-property></results>
+                  <results><c:simple-property name="output"></c:simple-property></results>
              </operation>  
             <operation name="printLockInfoAsHtml" displayName="print Configuration As String">
-                  <results><c:simple-property name="details"></c:simple-property></results>
+                  <results><c:simple-property name="output"></c:simple-property></results>
              </operation>  
              <operation name="printConfigurationAsHtmlString" displayName="Print Details as HTML.">
-                  <results><c:simple-property name="details"></c:simple-property></results>
+                  <results><c:simple-property name="output"></c:simple-property></results>
              </operation> 
                
-            <metric property="ClusterConfig" dataType="trait" />     
-            <metric property="TransactionManager" dataType="trait" />  
+            <metric property="ClusterConfig" dataType="trait" />       
             <metric property="NodeLockingScheme" dataType="trait" />            
             <metric property="ExposeManagementStatistics" dataType="trait" displayName="Expose Management Statistics?" />       
             <metric property="RegisterJmxResource" dataType="trait" displayName="Register JMX Resource?" />       
@@ -128,19 +127,19 @@
               
                 <operation name="getNumberOfNodes" displayName="Get Number of nodes." 
                            description="Returns the number of nodes in the data container">
-                  <results><c:simple-property name="nr"></c:simple-property></results>
+                  <results><c:simple-property name="output"></c:simple-property></results>
                 </operation>
                 <operation name="getNumberOfAttributes" displayName="Get Number of attributes." 
                            description="Returns the number of nodes in the data container">
-                  <results><c:simple-property name="nr"></c:simple-property></results>
+                  <results><c:simple-property name="output"></c:simple-property></results>
                 </operation>
                 <operation name="printDetails" displayName="Print Details." 
                            description="Prints details about the data container">
-                  <results><c:simple-property name="details"></c:simple-property></results>
+                  <results><c:simple-property name="output"></c:simple-property></results>
                 </operation>
                 <operation name="printDetailsAsHtml" displayName="Print Details as HTML." 
                            description="Prints details about the data container, formatted as HTML">
-                  <results><c:simple-property name="details"></c:simple-property></results>
+                  <results><c:simple-property name="output"></c:simple-property></results>
                 </operation>       
                            
            </service>
@@ -183,7 +182,7 @@
                
              <operation name="dumpRegions" displayName="Dump Regions" 
                         description="A String representation of all registered regions">
-                <results><c:simple-property name="dump"></c:simple-property></results>
+                <results><c:simple-property name="output"></c:simple-property></results>
              </operation>
              
              <metric property="numRegions"  displayName="Number of Regions" 

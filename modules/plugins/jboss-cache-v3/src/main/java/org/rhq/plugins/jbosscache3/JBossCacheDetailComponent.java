@@ -31,6 +31,7 @@ import org.mc4j.ems.connection.bean.EmsBean;
 import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 import org.mc4j.ems.connection.bean.operation.EmsOperation;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
@@ -57,7 +58,6 @@ public class JBossCacheDetailComponent implements MeasurementFacet,
 	public static String CACHE_DETAIL_BEAN_NAME = "bean-name";
 	public ProfileServiceComponent parentComponent;
 	private String beanName;
-
 	private final Log log = LogFactory.getLog(this.getClass());
 
 	public void start(ResourceContext<ProfileServiceComponent> context)
@@ -143,9 +143,11 @@ public class JBossCacheDetailComponent implements MeasurementFacet,
 
 			Object obj = operation.invoke(new Object[] {});
 
-			if (obj != null)
-				result = new OperationResult(String.valueOf(obj));
-
+			if (obj != null) {
+				result = new OperationResult();
+				result.getComplexResults().put(
+						new PropertySimple("output", String.valueOf(obj)));
+			}
 		} catch (Exception e) {
 			log.error(" Failure to invoke operation " + name + " on bean "
 					+ beanName, e);

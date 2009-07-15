@@ -21,39 +21,29 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-package org.rhq.plugins.jbossas5.test.ejb2;
+package org.rhq.plugins.jbossas5.test.util;
 
-import org.rhq.plugins.jbossas5.test.util.MethodArgDef;
-import org.testng.annotations.Test;
 
 /**
+ * A helper class for {@link AppServerUtils#invokeMethod(String, Object, MethodArgDef...)}
+ * method.
  * 
  * @author Lukas Krejci
  */
-@Test(groups = "as5-plugin")
-public class Ejb2SLSBResourceTest extends AbstractSessionBeanTest {
+public class MethodArgDef {
+    private Class<?> type;
+    private Object value;
 
-    protected String getResourceTypeName() {
-        return "EJB2 Stateless Session Bean";
+    public MethodArgDef(Class<?> type, Object value) {
+        this.type = type;
+        this.value = value;
     }
 
-    protected MethodArgDef[] getEjbCreateMethodArgs() {
-        return null;
+    public Class<?> getType() {
+        return type;
     }
 
-    protected String getExpectedResourceKey() {
-        return "jboss.j2ee:jndiName=ejbcts/StatelessSessionHome,service=EJB";
-    }
-
-    protected String getTestedBeanName() {
-        return "ejbcts/StatelessSessionHome";
-    }
-
-    protected MethodArgDef[] getTestedMethodArgs() {
-        return new MethodArgDef[] { new MethodArgDef(String.class, "") };
-    }
-
-    protected String getTestedMethodName() {
-        return "method1";
+    public Object getValue() {
+        return value;
     }
 }

@@ -24,6 +24,7 @@
 package org.rhq.plugins.jbossas5.test.util;
 
 import java.io.File;
+import java.lang.reflect.Method;
 import java.util.Properties;
 import java.util.Set;
 
@@ -180,11 +181,39 @@ public class AppServerUtils {
         return new InitialContext(env);
     }
 
+    /**
+     * A helper method to invoke a method on an object using reflection.
+     * 
+     * @param methodName the name of the method to invoke
+     * @param instance the instance to invoke the method upon
+     * @param methodArgTypesAndValues the method argument types and values
+     * @return the result of the method call
+     * @throws Exception on error
+     */
+    public static Object invokeMethod(String methodName, Object instance, MethodArgDef... methodArgTypesAndValues)
+    throws Exception {
+    Class<?>[] argTypes = null;
+    Object[] argValues = null;
+
+    if (methodArgTypesAndValues != null) {
+        argTypes = new Class<?>[methodArgTypesAndValues.length];
+        argValues = new Object[methodArgTypesAndValues.length];
+
+        for (int i = 0; i < methodArgTypesAndValues.length; ++i) {
+            argTypes[i] = methodArgTypesAndValues[i].getType();
+            argValues[i] = methodArgTypesAndValues[i].getValue();
+        }
+    }
+
+    Method method = instance.getClass().getMethod(methodName, argTypes);
+
+    return method.invoke(instance, argValues);
+}
+    
     private static DeploymentManager getDeploymentManager() throws Exception {
         ProfileServiceConnection profileServiceConnection = getASComponentProxy(ProfileServiceComponent.class)
             .getConnection();
 
         return profileServiceConnection.getDeploymentManager();
     }
-
 }

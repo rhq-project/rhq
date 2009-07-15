@@ -23,6 +23,7 @@
 
 package org.rhq.plugins.jbossas5.test.ejb2;
 
+import org.rhq.plugins.jbossas5.test.util.MethodArgDef;
 import org.testng.annotations.Test;
 
 /**

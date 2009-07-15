@@ -33,6 +33,8 @@ import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.plugins.jbossas5.test.util.AppServerUtils;
+import org.rhq.plugins.jbossas5.test.util.MethodArgDef;
 import org.testng.annotations.BeforeGroups;
 
 /**
@@ -50,7 +52,7 @@ public abstract class AbstractSessionBeanTest extends AbstractEjb2ResourceTest {
             MethodArgDef[] args = getTestedMethodArgs();
 
             for (int i = 0; i < getTestedMethodExpectedInvocationCount(); ++i)
-                invokeMethod(getTestedMethodName(), bean, args);
+                AppServerUtils.invokeMethod(getTestedMethodName(), bean, args);
         } catch (Exception e) {
             fail("Failed to setup the remote EJB2 test bean.", e);
         }

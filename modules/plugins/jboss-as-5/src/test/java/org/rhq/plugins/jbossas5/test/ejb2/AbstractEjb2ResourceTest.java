@@ -26,11 +26,11 @@ package org.rhq.plugins.jbossas5.test.ejb2;
 import static org.testng.Assert.fail;
 
 import java.io.File;
-import java.lang.reflect.Method;
 
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.plugins.jbossas5.test.AbstractResourceTest;
 import org.rhq.plugins.jbossas5.test.util.AppServerUtils;
+import org.rhq.plugins.jbossas5.test.util.MethodArgDef;
 import org.testng.annotations.AfterGroups;
 import org.testng.annotations.BeforeGroups;
 import org.testng.annotations.Parameters;
@@ -40,24 +40,6 @@ import org.testng.annotations.Parameters;
  * @author Lukas Krejci
  */
 public abstract class AbstractEjb2ResourceTest extends AbstractResourceTest {
-
-    protected static class MethodArgDef {
-        private Class<?> type;
-        private Object value;
-
-        public MethodArgDef(Class<?> type, Object value) {
-            this.type = type;
-            this.value = value;
-        }
-
-        public Class<?> getType() {
-            return type;
-        }
-
-        public Object getValue() {
-            return value;
-        }
-    }
 
     @BeforeGroups(groups = "as5-plugin")
     @Parameters("ejb2.test.jars.path")
@@ -92,26 +74,6 @@ public abstract class AbstractEjb2ResourceTest extends AbstractResourceTest {
 
     protected static Object createRemoteBean(String homeJndiName, MethodArgDef... createMethodArgs) throws Exception {
         Object home = AppServerUtils.getRemoteObject(homeJndiName, Object.class);
-        return invokeMethod("create", home, createMethodArgs);
-    }
-
-    protected static Object invokeMethod(String methodName, Object instance, MethodArgDef... methodArgTypesAndValues)
-        throws Exception {
-        Class<?>[] argTypes = null;
-        Object[] argValues = null;
-
-        if (methodArgTypesAndValues != null) {
-            argTypes = new Class<?>[methodArgTypesAndValues.length];
-            argValues = new Object[methodArgTypesAndValues.length];
-
-            for (int i = 0; i < methodArgTypesAndValues.length; ++i) {
-                argTypes[i] = methodArgTypesAndValues[i].getType();
-                argValues[i] = methodArgTypesAndValues[i].getValue();
-            }
-        }
-
-        Method method = instance.getClass().getMethod(methodName, argTypes);
-
-        return method.invoke(instance, argValues);
+        return AppServerUtils.invokeMethod("create", home, createMethodArgs);
     }
 }

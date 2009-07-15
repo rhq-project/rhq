@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.plugins.jbossas5.test.util.AppServerUtils;
+import org.rhq.plugins.jbossas5.test.util.MethodArgDef;
 import org.testng.Assert;
 import org.testng.annotations.AfterGroups;
 import org.testng.annotations.BeforeGroups;
@@ -66,25 +67,25 @@ public class Ejb2EntityBeanResourceTest extends AbstractEjb2ResourceTest {
             //create the entities
             ArrayList<Object> entities = new ArrayList<Object>();
             for (int i = 0; i < CREATE_COUNT; ++i) {
-                entities.add(invokeMethod("create", entityHome, new MethodArgDef[] { new MethodArgDef(String.class,
+                entities.add(AppServerUtils.invokeMethod("create", entityHome, new MethodArgDef[] { new MethodArgDef(String.class,
                     KEY_PREFIX + i) }));
             }
 
             //try to find the entities
             for (int i = 0; i < CREATE_COUNT; ++i) {
-                invokeMethod("findByPrimaryKey", entityHome, new MethodArgDef[] { new MethodArgDef(String.class,
+                AppServerUtils.invokeMethod("findByPrimaryKey", entityHome, new MethodArgDef[] { new MethodArgDef(String.class,
                     KEY_PREFIX + i) });
             }
 
             //update some
             for (int i = 0; i < UPDATE_COUNT; ++i) {
                 Object entity = entities.get(i);
-                invokeMethod("setInt", entity, new MethodArgDef[] { new MethodArgDef(int.class, i) });
+                AppServerUtils.invokeMethod("setInt", entity, new MethodArgDef[] { new MethodArgDef(int.class, i) });
             }
 
             //delete some
             for (int i = 0; i < DELETE_COUNT; ++i) {
-                invokeMethod("remove", entities.get(i), (MethodArgDef[]) null);
+                AppServerUtils.invokeMethod("remove", entities.get(i), (MethodArgDef[]) null);
             }
         } catch (Exception e) {
             fail("Failed to setup the EJB2 entity bean for testing.", e);

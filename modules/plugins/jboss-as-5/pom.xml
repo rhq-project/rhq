@@ -39,7 +39,7 @@
                    3) Uncomment the JBoss snapshot repo near the bottom of this POM.
         -->
         <jbossas.version>5.1.0-SNAPSHOT</jbossas.version>
-        <rhq.testng.excludedGroups>as5-plugin</rhq.testng.excludedGroups>
+        <!-- <rhq.testng.excludedGroups>as5-plugin</rhq.testng.excludedGroups>  -->
     </properties>
 
     <dependencyManagement>
@@ -304,21 +304,26 @@
             <groupId>org.jboss.deployers</groupId>
             <artifactId>jboss-deployers-client-spi</artifactId>
             <scope>runtime</scope>
-        </dependency>        
-<!-- The profile service client is not ready yet...
+        </dependency>   
+        
         <dependency>
             <groupId>org.jboss.jbossas</groupId>
             <artifactId>jboss-as-profileservice</artifactId>
             <classifier>client</classifier>            
-            <version>${jbossas.version}</version>
             <scope>runtime</scope>
         </dependency>
--->        
+        
+        <dependency>
+            <groupId>jboss.messaging</groupId>
+            <artifactId>jboss-messaging-client</artifactId>
+            <scope>test</scope>
+        </dependency>
+
         <!-- Uncomment the below deps if you want to pull down the jboss-profileservice
              and jboss-system sources jars for debugging purposes. You will also need
              to make sure you have the JBoss snapshot repo in this POM or your settings.xml.
         -->
-
+<!-- 
         <dependency>
             <groupId>org.jboss.jbossas</groupId>
             <artifactId>jboss-as-profileservice</artifactId>
@@ -329,19 +334,7 @@
             <artifactId>jboss-as-system</artifactId>
             <scope>provided</scope>
         </dependency>
-        
-        <dependency>
-            <groupId>jboss.messaging</groupId>
-            <artifactId>jboss-messaging-client</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <!-- Change this to profile service client once it is usable -->
-        <dependency>
-            <groupId>org.jboss.jbossas</groupId>
-            <artifactId>jboss-as-profileservice</artifactId>
-            <scope>test</scope>
-        </dependency>
+-->        
     </dependencies>
 
     <build>
@@ -429,7 +422,6 @@
                                     <name>ejb2.test.jars.path</name>
                                     <value>${project.build.testSourceDirectory}/../jars/ejb2-test.jar;${project.build.testSourceDirectory}/../jars/ejb2-entity-bean-test.jar</value>
                                 </property>
-                                <!-- Commented out until we solve the authenticated connections issues 
                                 <property>
                                     <name>principal</name>
                                     <value>admin</value>
@@ -438,7 +430,6 @@
                                     <name>credentials</name>
                                     <value>admin</value>
                                 </property>
-                                -->
                             </systemProperties>
                         </configuration>
                     </execution>
@@ -545,7 +536,6 @@
                                      <name>ejb2.test.jars.path</name>
                                      <value>${project.build.testSourceDirectory}/../jars/ejb2-test.jar;${project.build.testSourceDirectory}/../jars/ejb2-entity-bean-test.jar</value>
                                  </property>
-                                <!-- Commented out until we solve the authenticated connections issues 
                                 <property>
                                     <name>principal</name>
                                     <value>admin</value>
@@ -554,7 +544,6 @@
                                     <name>credentials</name>
                                     <value>admin</value>
                                 </property>
-                                -->
                              </systemProperties>
                           </configuration>
                        </execution>

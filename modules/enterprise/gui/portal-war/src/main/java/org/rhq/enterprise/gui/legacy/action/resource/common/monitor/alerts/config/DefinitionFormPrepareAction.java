@@ -137,10 +137,10 @@ public abstract class DefinitionFormPrepareAction extends TilesAction {
 
         defForm.setResourceType(type.getId());
 
-        List<MeasurementDefinition> dataDefinitions = definitionManager.getMeasurementDefinitionsByResourceType(
+        List<MeasurementDefinition> dataDefinitions = definitionManager.findMeasurementDefinitionsByResourceType(
             subject, type.getId(), DataType.MEASUREMENT, null);
 
-        List<MeasurementDefinition> traitDefinitions = definitionManager.getMeasurementDefinitionsByResourceType(
+        List<MeasurementDefinition> traitDefinitions = definitionManager.findMeasurementDefinitionsByResourceType(
             subject, type.getId(), DataType.TRAIT, null);
 
         List<RelatedOptionBean> baselines = new ArrayList<RelatedOptionBean>();

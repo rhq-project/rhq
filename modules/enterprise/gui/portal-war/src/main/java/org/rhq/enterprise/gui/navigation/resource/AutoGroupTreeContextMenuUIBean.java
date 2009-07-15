@@ -65,7 +65,7 @@ public class AutoGroupTreeContextMenuUIBean extends TreeContextMenuBase {
             currentAutoGroup = getAutoGroupForResourceType(subject, parentId, resourceTypeId);
 
             List<MeasurementDefinition> definitions = measurementDefinitionManager
-                .getMeasurementDefinitionsByResourceType(subject, resourceTypeId, DataType.MEASUREMENT, null);
+                .findMeasurementDefinitionsByResourceType(subject, resourceTypeId, DataType.MEASUREMENT, null);
 
             metricMenuItemDescriptorsForView = createViewMenuItemDescriptors(currentAutoGroup, definitions);
             metricMenuItemDescriptorsForGraph = createGraphMenuItemDescriptors(currentAutoGroup, definitions);

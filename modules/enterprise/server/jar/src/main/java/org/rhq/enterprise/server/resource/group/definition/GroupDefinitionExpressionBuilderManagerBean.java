@@ -53,7 +53,7 @@ public class GroupDefinitionExpressionBuilderManagerBean implements GroupDefinit
     private ResourceTypeManagerLocal resourceTypeManager;
 
     public List<String> getTraitPropertyNames(int resourceTypeId) {
-        List<MeasurementDefinition> definitions = measurementDefinitionManager.getMeasurementDefinitionsByResourceType(
+        List<MeasurementDefinition> definitions = measurementDefinitionManager.findMeasurementDefinitionsByResourceType(
             subjectManager.getOverlord(), resourceTypeId, DataType.TRAIT, null);
 
         List<String> results = new ArrayList<String>();

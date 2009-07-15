@@ -423,7 +423,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
 
         Map<Integer, Integer> alerts = alertManager.getAlertCountForSchedules(begin, end, scheduleIds);
 
-        List<MeasurementDefinition> definitions = measurementDefinitionManager.getMeasurementDefinitionsByResourceType(
+        List<MeasurementDefinition> definitions = measurementDefinitionManager.findMeasurementDefinitionsByResourceType(
             subject, resourceTypeId, DataType.MEASUREMENT, null);
         Map<Integer, MeasurementDefinition> defMap = new HashMap<Integer, MeasurementDefinition>(definitions.size());
         for (MeasurementDefinition def : definitions) {

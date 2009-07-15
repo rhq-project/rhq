@@ -102,7 +102,7 @@ public class MetricsTableUIBean {
 
         } else if (context.category == EntityContext.Category.ResourceGroup) {
             List<MeasurementDefinition> measurementDefinitions = definitionManager
-                .getMeasurementDefinitionsByResourceType(user.getSubject(), getResourceGroup(user).getResourceType()
+                .findMeasurementDefinitionsByResourceType(user.getSubject(), getResourceGroup(user).getResourceType()
                     .getId(), DataType.MEASUREMENT, null);
 
             int[] defIds = new int[measurementDefinitions.size()];
@@ -116,7 +116,7 @@ public class MetricsTableUIBean {
 
         } else if (context.category == EntityContext.Category.AutoGroup) {
             List<MeasurementDefinition> measurementDefinitions = definitionManager
-                .getMeasurementDefinitionsByResourceType(user.getSubject(), context.getResourceTypeId(),
+                .findMeasurementDefinitionsByResourceType(user.getSubject(), context.getResourceTypeId(),
                     DataType.MEASUREMENT, null);
 
             int[] defIds = new int[measurementDefinitions.size()];

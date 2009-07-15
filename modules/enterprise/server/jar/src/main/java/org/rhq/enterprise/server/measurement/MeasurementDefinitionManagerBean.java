@@ -112,7 +112,7 @@ public class MeasurementDefinitionManagerBean implements MeasurementDefinitionMa
     }
 
     @SuppressWarnings("unchecked")
-    public List<MeasurementDefinition> getMeasurementDefinitionsByResourceType(Subject user, int resourceTypeId,
+    public List<MeasurementDefinition> findMeasurementDefinitionsByResourceType(Subject user, int resourceTypeId,
         DataType dataType, DisplayType displayType) {
         Query query = entityManager
             .createNamedQuery(MeasurementDefinition.FIND_BY_RESOURCE_TYPE_DATA_TYPE_DISPLAY_TYPE);
@@ -125,7 +125,7 @@ public class MeasurementDefinitionManagerBean implements MeasurementDefinitionMa
     }
 
     @SuppressWarnings("unchecked")
-    public List<MeasurementDefinition> getMeasurementDefinitionsByIds(Subject subject,
+    public List<MeasurementDefinition> findMeasurementDefinitionsByIds(Subject subject,
         Integer[] measurementDefinitionIds) {
         Query query = entityManager.createNamedQuery(MeasurementDefinition.FIND_BY_IDS);
         List<Integer> ids = Arrays.asList(measurementDefinitionIds);

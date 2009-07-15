@@ -53,7 +53,7 @@ public interface MeasurementDefinitionManagerLocal {
      *
      * @return List<MeasurementDefinition> list of definitions found
      */
-    List<MeasurementDefinition> getMeasurementDefinitionsByResourceType(Subject user, int resourceTypeId,
+    List<MeasurementDefinition> findMeasurementDefinitionsByResourceType(Subject user, int resourceTypeId,
         DataType dataType, DisplayType displayType);
 
     /**
@@ -64,7 +64,7 @@ public interface MeasurementDefinitionManagerLocal {
      *
      * @return List<MeasurementDefinition> list of definitions found
      */
-    List<MeasurementDefinition> getMeasurementDefinitionsByIds(Subject subject, Integer[] measurementDefinitionIds);
+    List<MeasurementDefinition> findMeasurementDefinitionsByIds(Subject subject, Integer[] measurementDefinitionIds);
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //

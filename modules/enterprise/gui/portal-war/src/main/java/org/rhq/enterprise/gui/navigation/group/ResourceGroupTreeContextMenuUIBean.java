@@ -85,7 +85,7 @@ public class ResourceGroupTreeContextMenuUIBean extends TreeContextMenuBase {
 
         if (currentResourceGroup != null) {
             List<MeasurementDefinition> definitions = measurementDefinitionManager
-                .getMeasurementDefinitionsByResourceType(subject, currentResourceGroup.getResourceType().getId(),
+                .findMeasurementDefinitionsByResourceType(subject, currentResourceGroup.getResourceType().getId(),
                     DataType.MEASUREMENT, null);
 
             // operations menugroup, lazy-loaded entries because only name/id are needed for display

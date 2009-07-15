@@ -97,7 +97,7 @@ public class ConfigMetricsFormPrepareAction extends TilesAction {
         if (configuringDefaultSchedules) {
             int resourceTypeId = type;
             log.debug("Obtaining default metric schedules for resource type " + resourceTypeId + "...");
-            List<MeasurementDefinition> definitions = definitionManager.getMeasurementDefinitionsByResourceType(
+            List<MeasurementDefinition> definitions = definitionManager.findMeasurementDefinitionsByResourceType(
                 subject, resourceTypeId, null, null);
             List<MeasurementScheduleComposite> composites = new ArrayList<MeasurementScheduleComposite>();
             for (MeasurementDefinition definition : definitions) {

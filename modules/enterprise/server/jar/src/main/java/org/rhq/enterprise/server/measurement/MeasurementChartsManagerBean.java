@@ -557,7 +557,7 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
             collectingDefIdArr[i] = collectingDefIds[i];
         }
 
-        List<MeasurementDefinition> definitions = measurementDefinitionManager.getMeasurementDefinitionsByIds(subject,
+        List<MeasurementDefinition> definitions = measurementDefinitionManager.findMeasurementDefinitionsByIds(subject,
             collectingDefIds);
         for (MeasurementDefinition definition : definitions) {
             measurementDefinitionsMap.put(definition.getId(), definition);

@@ -29,6 +29,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.client.ClientMain;
 import org.rhq.enterprise.client.RemoteClient;
 import org.rhq.enterprise.client.TabularWriter;
+import org.rhq.enterprise.client.utility.ScriptUtil;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -49,6 +50,10 @@ public class ScriptCommand implements ClientCommand {
         pc.setPageNumber(-1);
         sem.getBindings().put("unlimitedPC", pc);
         jsEngine = sem.getEngineByName("JavaScript");
+    }
+
+    public ScriptEngine getScriptEngine() {
+        return jsEngine;
     }
 
     public String getPromptCommandString() {
@@ -117,6 +122,20 @@ public class ScriptCommand implements ClientCommand {
         TabularWriter tw = new TabularWriter(client.getPrintWriter());
         tw.setWidth(client.getConsoleWidth());
         sem.getBindings().put("pretty", tw);
+
+        bindScriptUtils();
+    }
+
+    private void bindScriptUtils() {
+        ScriptUtil scriptUtil = new ScriptUtil(jsEngine);
+        jsEngine.put("scriptUtil", scriptUtil);
+
+        String func = "function isDefined(identifier) { return scriptUtil.isDefined(identifier); }";
+        try {
+            jsEngine.eval(func);
+        } catch (ScriptException e) {
+            log.warn("Unable to bind script utility function isDefined()", e);
+        }
     }
 
     private boolean isScriptFileCommandLine(String[] args) {

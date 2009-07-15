@@ -136,7 +136,7 @@ public interface OperationManagerLocal {
      *
      * @throws SchedulerException
      */
-    List<GroupOperationSchedule> getScheduledGroupOperations(Subject subject, int groupId) throws SchedulerException;
+    List<GroupOperationSchedule> findScheduledGroupOperations(Subject subject, int groupId) throws SchedulerException;
 
     /**
      * Given a resource job's details, this returns the schedule for that resource job.
@@ -270,7 +270,7 @@ public interface OperationManagerLocal {
      *
      * @return the operation definitions for the resource type
      */
-    List<OperationDefinition> getSupportedResourceTypeOperations(Subject subject, int resourceTypeId,
+    List<OperationDefinition> findSupportedResourceTypeOperations(Subject subject, int resourceTypeId,
         boolean eagerLoaded);
 
     /**
@@ -283,7 +283,7 @@ public interface OperationManagerLocal {
      *
      * @return the operation definitions for the group
      */
-    List<OperationDefinition> getSupportedGroupOperations(Subject subject, int compatibleGroupId, boolean eagerLoaded);
+    List<OperationDefinition> findSupportedGroupOperations(Subject subject, int compatibleGroupId, boolean eagerLoaded);
 
     /**
      * Returns the definition of the named operation supported by the given resource. If the operation is not valid for
@@ -554,7 +554,7 @@ public interface OperationManagerLocal {
      *
      * @throws SchedulerException
      */
-    List<ResourceOperationSchedule> getScheduledResourceOperations(Subject subject, int resourceId)
+    List<ResourceOperationSchedule> findScheduledResourceOperations(Subject subject, int resourceId)
         throws SchedulerException;
 
     /**
@@ -567,7 +567,7 @@ public interface OperationManagerLocal {
      *
      * @return the operation definitions for the resource
      */
-    List<OperationDefinition> getSupportedResourceOperations(Subject subject, int resourceId, boolean eagerLoaded);
+    List<OperationDefinition> findSupportedResourceOperations(Subject subject, int resourceId, boolean eagerLoaded);
 
     /**
      * #see {@link OperationManagerRemote#scheduleGroupOperation

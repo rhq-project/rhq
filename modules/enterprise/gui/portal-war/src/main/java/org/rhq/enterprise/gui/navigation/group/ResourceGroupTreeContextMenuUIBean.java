@@ -89,7 +89,7 @@ public class ResourceGroupTreeContextMenuUIBean extends TreeContextMenuBase {
                     DataType.MEASUREMENT, null);
 
             // operations menugroup, lazy-loaded entries because only name/id are needed for display
-            List<OperationDefinition> operations = operationManager.getSupportedResourceTypeOperations(subject,
+            List<OperationDefinition> operations = operationManager.findSupportedResourceTypeOperations(subject,
                 currentResourceGroup.getResourceType().getId(), false);
 
             menuItemDescriptorsForView = createViewMenuItemDescriptors(currentResourceGroup, definitions);

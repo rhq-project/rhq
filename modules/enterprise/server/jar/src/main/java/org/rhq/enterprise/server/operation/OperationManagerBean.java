@@ -368,7 +368,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return;
     }
 
-    public List<ResourceOperationSchedule> getScheduledResourceOperations(Subject subject, int resourceId)
+    public List<ResourceOperationSchedule> findScheduledResourceOperations(Subject subject, int resourceId)
         throws SchedulerException {
         Resource resource = getResourceIfAuthorized(subject, resourceId);
 
@@ -392,7 +392,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return operationSchedules;
     }
 
-    public List<GroupOperationSchedule> getScheduledGroupOperations(Subject subject, int groupId)
+    public List<GroupOperationSchedule> findScheduledGroupOperations(Subject subject, int groupId)
         throws SchedulerException {
         ResourceGroup group = getCompatibleGroupIfAuthorized(subject, groupId);
 
@@ -1004,7 +1004,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     }
 
     @SuppressWarnings("unchecked")
-    public List<OperationDefinition> getSupportedResourceOperations(Subject subject, int resourceId, boolean eagerLoaded) {
+    public List<OperationDefinition> findSupportedResourceOperations(Subject subject, int resourceId, boolean eagerLoaded) {
         if (!authorizationManager.canViewResource(subject, resourceId)) {
             throw new PermissionException("User [" + subject + "] does not have permission to view resource ["
                 + resourceId + "]");
@@ -1026,7 +1026,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     }
 
     @SuppressWarnings("unchecked")
-    public List<OperationDefinition> getSupportedResourceTypeOperations(Subject subject, int resourceTypeId,
+    public List<OperationDefinition> findSupportedResourceTypeOperations(Subject subject, int resourceTypeId,
         boolean eagerLoaded) {
         try {
             String queryName = eagerLoaded ? OperationDefinition.QUERY_FIND_BY_TYPE_AND_NAME
@@ -1045,7 +1045,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     }
 
     @SuppressWarnings( { "unchecked" })
-    public List<OperationDefinition> getSupportedGroupOperations(Subject subject, int compatibleGroupId,
+    public List<OperationDefinition> findSupportedGroupOperations(Subject subject, int compatibleGroupId,
         boolean eagerLoaded) {
         if (!authorizationManager.canViewGroup(subject, compatibleGroupId)) {
             throw new PermissionException("User [" + subject + "] does not have permission to view group ["

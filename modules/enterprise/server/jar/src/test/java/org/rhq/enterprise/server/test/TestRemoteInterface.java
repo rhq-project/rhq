@@ -244,7 +244,7 @@ public class TestRemoteInterface extends AssertJUnit {
         assertEquals(1, history.size());
 
         // remove scheduled operations
-        List<ResourceOperationSchedule> schedules = operationManager.getScheduledResourceOperations(user, testPlatform
+        List<ResourceOperationSchedule> schedules = operationManager.findScheduledResourceOperations(user, testPlatform
             .getResource().getId());
         assertEquals(1, history.size());
 
@@ -254,7 +254,7 @@ public class TestRemoteInterface extends AssertJUnit {
                     .getResource().getId());
             }
 
-            schedules = operationManager.getScheduledResourceOperations(user, testPlatform.getResource().getId());
+            schedules = operationManager.findScheduledResourceOperations(user, testPlatform.getResource().getId());
             assertTrue(schedules.isEmpty());
         }
 
@@ -262,13 +262,13 @@ public class TestRemoteInterface extends AssertJUnit {
         schedule = operationManager.scheduleResourceOperation(user, testPlatform.getResource().getId(),
             "viewProcessList", 300000L, 0L, 0, 0, null, "unit test - shutdown operation");
 
-        schedules = operationManager.getScheduledResourceOperations(user, testPlatform.getResource().getId());
+        schedules = operationManager.findScheduledResourceOperations(user, testPlatform.getResource().getId());
         assertEquals(1, schedules.size());
         assertEquals(schedule.getJobId(), schedules.get(0).getJobId());
 
         operationManager.unscheduleResourceOperation(user, schedules.get(0).getJobId().toString(), testPlatform
             .getResource().getId());
-        schedules = operationManager.getScheduledResourceOperations(user, testPlatform.getResource().getId());
+        schedules = operationManager.findScheduledResourceOperations(user, testPlatform.getResource().getId());
         assertTrue(schedules.isEmpty());
     }
 
@@ -362,7 +362,7 @@ public class TestRemoteInterface extends AssertJUnit {
         assertEquals(1, history.size());
 
         // remove scheduled operations
-        List<ResourceOperationSchedule> schedules = operationManager.getScheduledResourceOperations(user, testAS
+        List<ResourceOperationSchedule> schedules = operationManager.findScheduledResourceOperations(user, testAS
             .getResource().getId());
         assertEquals(1, history.size());
 
@@ -372,7 +372,7 @@ public class TestRemoteInterface extends AssertJUnit {
                     .getId());
             }
 
-            schedules = operationManager.getScheduledResourceOperations(user, testAS.getResource().getId());
+            schedules = operationManager.findScheduledResourceOperations(user, testAS.getResource().getId());
             assertTrue(schedules.isEmpty());
         }
 
@@ -380,13 +380,13 @@ public class TestRemoteInterface extends AssertJUnit {
         schedule = operationManager.scheduleResourceOperation(user, testAS.getResource().getId(), "shutdown", 300000L,
             0L, 0, 0, null, "unit test - shutdown operation");
 
-        schedules = operationManager.getScheduledResourceOperations(user, testAS.getResource().getId());
+        schedules = operationManager.findScheduledResourceOperations(user, testAS.getResource().getId());
         assertEquals(1, schedules.size());
         assertEquals(schedule.getJobId(), schedules.get(0).getJobId());
 
         operationManager.unscheduleResourceOperation(user, schedules.get(0).getJobId().toString(), testAS.getResource()
             .getId());
-        schedules = operationManager.getScheduledResourceOperations(user, testAS.getResource().getId());
+        schedules = operationManager.findScheduledResourceOperations(user, testAS.getResource().getId());
         assertTrue(schedules.isEmpty());
     }
 

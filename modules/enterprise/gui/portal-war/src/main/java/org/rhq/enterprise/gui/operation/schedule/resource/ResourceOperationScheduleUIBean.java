@@ -61,7 +61,7 @@ public class ResourceOperationScheduleUIBean extends OperationScheduleUIBean {
 
         List<ResourceOperationSchedule> results = null;
         try {
-            results = manager.getScheduledResourceOperations(subject, requestResource.getId());
+            results = manager.findScheduledResourceOperations(subject, requestResource.getId());
         } catch (SchedulerException se) {
             // throw up all known information to the caller for now
             throw new IllegalStateException(se.getMessage(), se);

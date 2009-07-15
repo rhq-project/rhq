@@ -251,9 +251,9 @@ public final class AlertDefUtil {
 
         // need to eager load the definitions so the check against getParametersConfigurationDefinition succeeds below
         if (isAlertTemplate) {
-            operationDefinitions = operationManager.getSupportedResourceTypeOperations(subject, id, true);
+            operationDefinitions = operationManager.findSupportedResourceTypeOperations(subject, id, true);
         } else {
-            operationDefinitions = operationManager.getSupportedResourceOperations(subject, id, true);
+            operationDefinitions = operationManager.findSupportedResourceOperations(subject, id, true);
         }
 
         for (OperationDefinition definition : operationDefinitions) {

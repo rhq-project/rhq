@@ -64,7 +64,7 @@ public class ResourceGroupOperationScheduleUIBean extends OperationScheduleUIBea
 
         List<GroupOperationSchedule> results = null;
         try {
-            results = manager.getScheduledGroupOperations(subject, requestGroup.getId());
+            results = manager.findScheduledGroupOperations(subject, requestGroup.getId());
         } catch (SchedulerException se) {
             // throw up all known information to the caller for now
             throw new IllegalStateException(se.getMessage(), se);

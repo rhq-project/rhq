@@ -54,7 +54,7 @@ public class ResourceTreeContextMenuUIBean extends TreeContextMenuBase {
                 subject, resourceId, DataType.MEASUREMENT, null, true);
 
             // operations menu, lazy-loaded entries because only name/id are needed for display 
-            List<OperationDefinition> operations = operationManager.getSupportedResourceTypeOperations(subject,
+            List<OperationDefinition> operations = operationManager.findSupportedResourceTypeOperations(subject,
                 currentResource.getResourceType().getId(), false);
 
             menuItemDescriptorsForView = createViewMenuItemDescriptors(resourceId, schedules);

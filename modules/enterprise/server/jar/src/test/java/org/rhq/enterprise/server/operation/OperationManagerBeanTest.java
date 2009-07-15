@@ -155,7 +155,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         ResourceOperationSchedule schedule = operationManager.scheduleResourceOperation(superuser, resource.getId(),
             "testOp", null, trigger, "desc");
         List<ResourceOperationSchedule> schedules;
-        schedules = operationManager.getScheduledResourceOperations(superuser, resource.getId());
+        schedules = operationManager.findScheduledResourceOperations(superuser, resource.getId());
         assert schedules != null;
         assert schedules.size() == 1;
 
@@ -184,7 +184,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         // nothing to unschedule really
 
         // but lets prove to ourselves that it isn't scheduled anymore (because it executed)
-        schedules = operationManager.getScheduledResourceOperations(superuser, resource.getId());
+        schedules = operationManager.findScheduledResourceOperations(superuser, resource.getId());
         assert schedules != null;
         assert schedules.size() == 0;
     }
@@ -208,7 +208,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert schedule.getGroup().getId() == newGroup.getId();
 
         List<GroupOperationSchedule> schedules;
-        schedules = operationManager.getScheduledGroupOperations(superuser, newGroup.getId());
+        schedules = operationManager.findScheduledGroupOperations(superuser, newGroup.getId());
         assert schedules != null;
         assert schedules.size() == 1;
         GroupOperationSchedule returnedSchedule = schedules.get(0);
@@ -264,7 +264,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert returnedConfiguration.getSimple("param2").getStringValue().equals("blah");
 
         List<GroupOperationSchedule> schedules;
-        schedules = operationManager.getScheduledGroupOperations(superuser, newGroup.getId());
+        schedules = operationManager.findScheduledGroupOperations(superuser, newGroup.getId());
         assert schedules != null;
         assert schedules.size() == 1;
         GroupOperationSchedule returnedSchedule = schedules.get(0);
@@ -324,7 +324,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert schedule.getGroup().getId() == newGroup.getId();
 
         List<GroupOperationSchedule> schedules;
-        schedules = operationManager.getScheduledGroupOperations(superuser, newGroup.getId());
+        schedules = operationManager.findScheduledGroupOperations(superuser, newGroup.getId());
         assert schedules != null;
         assert schedules.size() == 1;
         GroupOperationSchedule returnedSchedule = schedules.get(0);
@@ -355,7 +355,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert results2.size() == 0;
 
         // see that it isn't scheduled anymore
-        schedules = operationManager.getScheduledGroupOperations(superuser, newGroup.getId());
+        schedules = operationManager.findScheduledGroupOperations(superuser, newGroup.getId());
         assert schedules != null;
         assert schedules.size() == 0;
     }
@@ -915,7 +915,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert schedule.getResource().getId() == newResource.getId();
 
         List<ResourceOperationSchedule> schedules;
-        schedules = operationManager.getScheduledResourceOperations(superuser, resource.getId());
+        schedules = operationManager.findScheduledResourceOperations(superuser, resource.getId());
         assert schedules != null;
         assert schedules.size() == 1;
         ResourceOperationSchedule returnedSchedule = schedules.get(0);
@@ -976,7 +976,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert returnedConfiguration.getSimple("param2").getStringValue().equals("blah");
 
         List<ResourceOperationSchedule> schedules;
-        schedules = operationManager.getScheduledResourceOperations(superuser, resource.getId());
+        schedules = operationManager.findScheduledResourceOperations(superuser, resource.getId());
         assert schedules != null;
         assert schedules.size() == 1;
         ResourceOperationSchedule returnedSchedule = schedules.get(0);
@@ -1021,7 +1021,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert schedule.getResource().getId() == newResource.getId();
 
         List<ResourceOperationSchedule> schedules;
-        schedules = operationManager.getScheduledResourceOperations(superuser, resource.getId());
+        schedules = operationManager.findScheduledResourceOperations(superuser, resource.getId());
         assert schedules != null;
         assert schedules.size() == 1;
         ResourceOperationSchedule returnedSchedule = schedules.get(0);
@@ -1057,7 +1057,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert results.size() == 0;
 
         // see that it isn't scheduled anymore
-        schedules = operationManager.getScheduledResourceOperations(superuser, resource.getId());
+        schedules = operationManager.findScheduledResourceOperations(superuser, resource.getId());
         assert schedules != null;
         assert schedules.size() == 0;
     }
@@ -1081,7 +1081,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert schedule.getResource().getId() == newResource.getId();
 
         List<ResourceOperationSchedule> schedules;
-        schedules = operationManager.getScheduledResourceOperations(superuser, resource.getId());
+        schedules = operationManager.findScheduledResourceOperations(superuser, resource.getId());
         assert schedules != null;
         assert schedules.size() == 1;
         ResourceOperationSchedule returnedSchedule = schedules.get(0);
@@ -1139,7 +1139,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert schedule.getResource().getId() == newResource.getId();
 
         List<ResourceOperationSchedule> schedules;
-        schedules = operationManager.getScheduledResourceOperations(superuser, resource.getId());
+        schedules = operationManager.findScheduledResourceOperations(superuser, resource.getId());
         assert schedules != null;
         assert schedules.size() == 1;
         ResourceOperationSchedule returnedSchedule = schedules.get(0);
@@ -1483,7 +1483,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert op.equals(newOperation);
 
         // need to eager load the definition because .equals compares the resource type objects
-        ops = operationManager.getSupportedGroupOperations(superuser, newGroup.getId(), true);
+        ops = operationManager.findSupportedGroupOperations(superuser, newGroup.getId(), true);
         assert ops != null;
         assert ops.size() == 1;
         op = ops.iterator().next();
@@ -1500,7 +1500,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert op.equals(newOperation);
 
         // need to eager load the definition because .equals compares the resource type objects
-        ops = operationManager.getSupportedResourceOperations(superuser, newResource.getId(), true);
+        ops = operationManager.findSupportedResourceOperations(superuser, newResource.getId(), true);
         assert ops != null;
         assert ops.size() == 1;
         op = ops.iterator().next();
@@ -1532,13 +1532,13 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
             }
 
             try {
-                operationManager.getScheduledGroupOperations(noPermSubject, newGroup.getId());
+                operationManager.findScheduledGroupOperations(noPermSubject, newGroup.getId());
                 assert false : "Should not have permission to do this";
             } catch (PermissionException expected) {
             }
 
             try {
-                operationManager.getScheduledResourceOperations(noPermSubject, newResource.getId());
+                operationManager.findScheduledResourceOperations(noPermSubject, newResource.getId());
                 assert false : "Should not have permission to do this";
             } catch (PermissionException expected) {
             }
@@ -1552,7 +1552,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
 
             try {
                 // do not need to eager load just to test authorization
-                operationManager.getSupportedGroupOperations(noPermSubject, newGroup.getId(), false);
+                operationManager.findSupportedGroupOperations(noPermSubject, newGroup.getId(), false);
                 assert false : "Should not have permission to do this";
             } catch (PermissionException expected) {
             }
@@ -1566,7 +1566,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
 
             try {
                 // do not need to eager load just to test authorization
-                operationManager.getSupportedResourceOperations(noPermSubject, newResource.getId(), false);
+                operationManager.findSupportedResourceOperations(noPermSubject, newResource.getId(), false);
                 assert false : "Should not have permission to do this";
             } catch (PermissionException expected) {
             }

@@ -442,7 +442,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         int result = 0;
 
         try {
-            List<ResourceOperationSchedule> schedules = operationManager.getScheduledResourceOperations(overlord,
+            List<ResourceOperationSchedule> schedules = operationManager.findScheduledResourceOperations(overlord,
                 resourceId);
 
             result = schedules.size();

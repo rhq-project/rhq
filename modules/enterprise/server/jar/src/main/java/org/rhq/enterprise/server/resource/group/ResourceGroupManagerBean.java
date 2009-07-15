@@ -279,7 +279,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             if (group.getGroupCategory() == GroupCategory.COMPATIBLE) {
                 Subject overlord = subjectManager.getOverlord();
                 try {
-                    List<GroupOperationSchedule> ops = operationManager.getScheduledGroupOperations(overlord, groupId);
+                    List<GroupOperationSchedule> ops = operationManager.findScheduledGroupOperations(overlord, groupId);
 
                     for (GroupOperationSchedule schedule : ops) {
                         try {

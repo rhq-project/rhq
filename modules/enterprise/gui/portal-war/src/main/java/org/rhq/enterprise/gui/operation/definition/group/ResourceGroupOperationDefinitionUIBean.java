@@ -54,7 +54,7 @@ public class ResourceGroupOperationDefinitionUIBean extends OperationDefinitionU
         ResourceGroup resourceGroup = EnterpriseFacesContextUtility.getResourceGroup();
 
         // only name and definition are displayed in the "Supported Operations" section of the Operation>New sub-tab
-        List<OperationDefinition> definitions = operationManager.getSupportedGroupOperations(subject, resourceGroup
+        List<OperationDefinition> definitions = operationManager.findSupportedGroupOperations(subject, resourceGroup
             .getId(), false);
 
         return new PageList<OperationDefinition>(definitions, new PageControl(0, definitions.size()));

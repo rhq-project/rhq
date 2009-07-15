@@ -311,7 +311,7 @@ public interface OperationManagerRemote {
      * @throws Exception
      */
     @WebMethod
-    List<ResourceOperationSchedule> getScheduledResourceOperations( //
+    List<ResourceOperationSchedule> findScheduledResourceOperations( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceId") int resourceId) //
         throws Exception;
@@ -328,7 +328,7 @@ public interface OperationManagerRemote {
      * @throws Exception
      */
     @WebMethod
-    List<OperationDefinition> getSupportedResourceOperations( //
+    List<OperationDefinition> findSupportedResourceOperations( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceId") int resourceId, //
         @WebParam(name = "eagerLoaded") boolean eagerLoaded);

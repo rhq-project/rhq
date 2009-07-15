@@ -229,7 +229,15 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
 
     @Nullable
     private DiscoveredResourceDetails discoverInProcessJBossAS(ResourceDiscoveryContext discoveryContext) {
-        ProfileServiceConnectionProvider connectionProvider = new LocalProfileServiceConnectionProvider();        
+        //ProfileServiceConnectionProvider connectionProvider = new LocalProfileServiceConnectionProvider();
+        // TODO: Remove this temporary hack and uncomment the above line once
+        // https://jira.jboss.org/jira/browse/JBAS-7085 is put to bed.
+        String namingURL = "jnp://127.0.0.1:1099/";
+        String principal = "admin";
+        String credentials = "admin";
+        ProfileServiceConnectionProvider connectionProvider = new RemoteProfileServiceConnectionProvider(namingURL,
+                principal, credentials);
+
         ProfileServiceConnection connection;
         try {
             connection = connectionProvider.connect();

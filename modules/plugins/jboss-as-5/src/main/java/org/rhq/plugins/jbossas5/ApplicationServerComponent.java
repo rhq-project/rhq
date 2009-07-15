@@ -296,7 +296,13 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
         // TODO: Check for a defunct connection and if found try to reconnect.
         ProfileServiceConnectionProvider connectionProvider;
         if (runningEmbedded()) {
-            connectionProvider = new LocalProfileServiceConnectionProvider();            
+            //connectionProvider = new LocalProfileServiceConnectionProvider();
+            // TODO: Remove this temporary hack and uncomment the above line once
+            // https://jira.jboss.org/jira/browse/JBAS-7085 is put to bed.
+            String namingURL = "jnp://127.0.0.1:1099/";
+            String principal = "admin";
+            String credentials = "admin";
+            connectionProvider = new RemoteProfileServiceConnectionProvider(namingURL, principal, credentials);
         } else {
             Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
             String namingURL = pluginConfig.getSimpleValue(PluginConfigPropNames.NAMING_URL, null);

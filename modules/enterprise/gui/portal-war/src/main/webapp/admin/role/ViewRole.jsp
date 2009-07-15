@@ -167,6 +167,10 @@ groupWidgetProperties = getWidgetProperties('<c:out value="${groupWidgetInstance
   <tiles:put name="pageAction" beanName="selfPgAction"/>
   <tiles:put name="postfix" value="g"/>
 </tiles:insert>
+
+<html:hidden property="r"/>
+</html:form>
+</c:if>
 </c:if>
 
 <tiles:insert definition=".page.return">
@@ -175,7 +179,3 @@ groupWidgetProperties = getWidgetProperties('<c:out value="${groupWidgetInstance
 </tiles:insert>
 
 <tiles:insert definition=".page.footer"/>
-
-<html:hidden property="r"/>
-</html:form>
-</c:if>

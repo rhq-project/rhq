@@ -117,7 +117,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
     private boolean topLevel;
     private String valueExpressionFormat;
     private String overrideExpressionFormat;
-    private boolean isAggregate;
+    private boolean isGroup;
     private HtmlModalPanel memberValuesModalPanel;
 
     public AbstractPropertyBagUIComponentTreeFactory(AbstractConfigurationComponent config,
@@ -130,8 +130,8 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
         this.valueExpressionFormat = valueExpressionFormat;
         this.overrideExpressionFormat = getOverrideExpressionFormat(valueExpressionFormat);
         // The below variable is for the new group config impl being implemented by Ian.
-        this.isAggregate = (this.config instanceof ConfigurationSetComponent);
-        if (this.isAggregate) {
+        this.isGroup = (this.config instanceof ConfigurationSetComponent);
+        if (this.isGroup) {
             ConfigurationSetComponent configurationSetComponent = (ConfigurationSetComponent) this.config;
             this.memberValuesModalPanel = configurationSetComponent.getPropSetModalPanel();
         }
@@ -217,7 +217,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
         FacesComponentUtility.addVerbatimText(parent, "</th>");
 
         // TODO: Get rid of the Override column, once the new group config stuff is operational.
-        if (this.config.isAggregate()) {
+        if (this.config.isGroup()) {
             FacesComponentUtility.addVerbatimText(parent, "<th class='" + headerCellStyleClass + "'>");
             FacesComponentUtility.addOutputText(parent, this.config, "Override", FacesComponentUtility.NO_STYLE_CLASS);
             FacesComponentUtility.addVerbatimText(parent, "</th>");
@@ -300,11 +300,11 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
             this.valueExpressionFormat);
 
         UIInput input = null;
-        if (!this.isAggregate || (propertySimple.getOverride() != null && propertySimple.getOverride()))
+        if (!this.isGroup || (propertySimple.getOverride() != null && propertySimple.getOverride()))
             // We need to create the input component ahead of when we need to add it to the component tree, since we
             // need to know the input component's id in order to render the unset control.
             input = PropertyRenderingUtility.createInputForSimpleProperty(propertyDefinitionSimple, propertySimple,
-                propertyValueExpression, getListIndex(), this.isAggregate, this.config.isReadOnly(), this.config
+                propertyValueExpression, getListIndex(), this.isGroup, this.config.isReadOnly(), this.config
                     .isFullyEditable(), this.config.isPrevalidate());
 
         FacesComponentUtility
@@ -315,7 +315,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
 
         // TODO: Get rid of the override checkbox once the group plugin config has been converted over to the new
         //       group config GUI.
-        if (this.config.isAggregate()) {
+        if (this.config.isGroup()) {
             FacesComponentUtility.addVerbatimText(parent, "<td class='" + CssStyleClasses.PROPERTY_ENABLED_CELL + "'>");
             addPropertyOverrideControl(parent, propertyDefinitionSimple, input);
             FacesComponentUtility.addVerbatimText(parent, "</td>");
@@ -324,7 +324,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
         FacesComponentUtility.addVerbatimText(parent, "<td class='" + CssStyleClasses.PROPERTY_ENABLED_CELL + "'>");
         if (!propertyDefinitionSimple.isRequired())
             PropertyRenderingUtility.addUnsetControl(parent, propertyDefinitionSimple, propertySimple, this.config
-                .getListIndex(), input, this.isAggregate, this.config.isReadOnly(), this.config.isFullyEditable());
+                .getListIndex(), input, this.isGroup, this.config.isReadOnly(), this.config.isFullyEditable());
         FacesComponentUtility.addVerbatimText(parent, "</td>");
 
         FacesComponentUtility.addVerbatimText(parent, "<td class='" + CssStyleClasses.PROPERTY_VALUE_CELL + "'>");
@@ -345,13 +345,13 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
 
     private void addPropertySimpleValue(UIComponent parent, @Nullable UIInput input,
         ValueExpression propertyValueExpression) {
-        if (!this.isAggregate) {
+        if (!this.isGroup) {
             parent.getChildren().add(input);
             return;
         }
 
         HtmlPanelGrid panelGrid = FacesComponentUtility.addPanelGrid(parent, null, 2, CssStyleClasses.BUTTONS_TABLE);
-        panelGrid.setColumnClasses("aggregate-property-value-cell, aggregate-property-members-icon-cell");
+        panelGrid.setColumnClasses("group-property-value-cell, group-property-members-icon-cell");
         if (input != null)
             panelGrid.getChildren().add(input);
         else
@@ -396,7 +396,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
         String expressionString = String.format(valueExpressionFormat, propertySimple.getName());
         ValueExpression valueExpression = FacesExpressionUtility.createValueExpression(expressionString, String.class);
         UIInput input = null;
-        if (!this.isAggregate || propertySimple.getOverride() != null && propertySimple.getOverride())
+        if (!this.isGroup || propertySimple.getOverride() != null && propertySimple.getOverride())
             input = PropertyRenderingUtility.createInputForSimpleProperty(propertySimple, valueExpression, this.config
                 .isReadOnly());
         addPropertySimpleValue(wrapper, input, valueExpression);
@@ -462,7 +462,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
 
         PropertyDefinition listMemberPropertyDefinition = listPropertyDefinition.getMemberDefinition();
         if (listMemberPropertyDefinition instanceof PropertyDefinitionMap) {
-            if (!this.isAggregate) {
+            if (!this.isGroup) {
                 addListMemberMapProperties(parent, listProperty, (PropertyDefinitionMap) listMemberPropertyDefinition,
                     rowStyleClass);
             } else {

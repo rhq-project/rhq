@@ -133,7 +133,7 @@ public class ConfigRenderer extends Renderer {
             if (configurationComponent instanceof ConfigUIComponent) {
                 component.getChildren().clear();
             } else { // configurationComponent instanceof ConfigurationSetComponent
-                // If it's an AJAX request for a configSet component, recalculate the aggregate config from the member
+                // If it's an AJAX request for a configSet component, recalculate the group config from the member
                 // configs and clear our child components. NOTE: This can *not* be done in decode(), because the model
                 // will not have been updated yet with any changes made to child UIInput values.
                 ConfigurationSetComponent configurationSetComponent = ((ConfigurationSetComponent) configurationComponent);
@@ -144,7 +144,7 @@ public class ConfigRenderer extends Renderer {
                 } else {
                     // Otherwise, make sure it's not rendered.
                     propSetModalPanel.setShowWhenRendered(false);
-                    configurationSetComponent.getConfigurationSet().calculateAggregateConfiguration();
+                    configurationSetComponent.getConfigurationSet().calculateGroupConfiguration();
                     component.getChildren().clear();
                 }
             }
@@ -264,7 +264,7 @@ public class ConfigRenderer extends Renderer {
         // Update member Configurations if this is a group config.
         if (configurationComponent instanceof ConfigurationSetComponent) {
             ConfigurationSetComponent configurationSetComponent = ((ConfigurationSetComponent) configurationComponent);
-            configurationSetComponent.getConfigurationSet().applyAggregateConfiguration();
+            configurationSetComponent.getConfigurationSet().applyGroupConfiguration();
         }
 
         // Now add a new component to the JSF component tree.
@@ -311,7 +311,7 @@ public class ConfigRenderer extends Renderer {
         // ...and from member Configurations if this is a group config.
         if (configurationComponent instanceof ConfigurationSetComponent) {
             ConfigurationSetComponent configurationSetComponent = ((ConfigurationSetComponent) configurationComponent);
-            configurationSetComponent.getConfigurationSet().applyAggregateConfiguration();
+            configurationSetComponent.getConfigurationSet().applyGroupConfiguration();
         }
 
         FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Property at index " + listIndex
@@ -371,7 +371,7 @@ public class ConfigRenderer extends Renderer {
         // ...and from member Configurations if this is a group config.
         if (configurationComponent instanceof ConfigurationSetComponent) {
             ConfigurationSetComponent configurationSetComponent = ((ConfigurationSetComponent) configurationComponent);
-            configurationSetComponent.getConfigurationSet().applyAggregateConfiguration();
+            configurationSetComponent.getConfigurationSet().applyGroupConfiguration();
         }
 
         FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Property '" + memberName + "' deleted from map '"
@@ -384,7 +384,7 @@ public class ConfigRenderer extends Renderer {
         FacesComponentUtility.addOutputText(footnotesPanel, config, "*", REQUIRED_MARKER_TEXT_STYLE_CLASS);
         FacesComponentUtility.addOutputText(footnotesPanel, config, " denotes a required field.",
             FacesComponentUtility.NO_STYLE_CLASS);
-        if (config.isAggregate()) {
+        if (config.isGroup()) {
             HtmlPanelGroup overridePanel = FacesComponentUtility.addBlockPanel(config, config, NOTE_PANEL_STYLE_CLASS);
             FacesComponentUtility.addOutputText(overridePanel, config,
                 "note: if override is not checked, that property will not be altered on any group members",
@@ -563,7 +563,7 @@ public class ConfigRenderer extends Renderer {
         // The below can be uncommented in order for the "propertyExpressionValue" attribute to have a valid value
         // on the initial page load (i.e. for testing purposes).
         //propertySet.getAttributes().put(PropertySetComponent.PROPERTY_EXPRESSION_STRING_ATTRIBUTE,
-        //            "#{EditTestConfigurationUIBean.configurationSet.aggregateConfiguration.map['String1'].stringValue}");
+        //            "#{EditTestConfigurationUIBean.configurationSet.groupConfiguration.map['String1'].stringValue}");
 
         propertySet.setValueExpression(PropertySetComponent.CONFIGURATION_SET_ATTRIBUTE, configurationSetComponent
             .getValueExpression(ConfigurationSetComponent.CONFIGURATION_SET_ATTRIBUTE));

@@ -31,8 +31,8 @@ import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
-import org.rhq.core.domain.configuration.group.AggregatePluginConfigurationUpdate;
-import org.rhq.core.domain.configuration.group.AggregateResourceConfigurationUpdate;
+import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
+import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.server.exception.FetchException;
 import org.rhq.enterprise.server.exception.UpdateException;
@@ -50,13 +50,13 @@ import org.rhq.enterprise.server.exception.UpdateException;
 public interface ConfigurationManagerRemote {
 
     @WebMethod
-    AggregatePluginConfigurationUpdate getAggregatePluginConfigurationUpdate( //
+    GroupPluginConfigurationUpdate getGroupPluginConfigurationUpdate( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "configurationUpdateId") int configurationUpdateId) //
         throws FetchException;
 
     @WebMethod
-    AggregateResourceConfigurationUpdate getAggregateResourceConfigurationUpdate( //
+    GroupResourceConfigurationUpdate getGroupResourceConfigurationUpdate( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "configurationUpdateId") int configurationUpdateId) //
         throws FetchException;
@@ -121,10 +121,11 @@ public interface ConfigurationManagerRemote {
     @WebMethod
     boolean isResourceConfigurationUpdateInProgress( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int resourceId) throws FetchException;
+        @WebParam(name = "resourceId") int resourceId) //
+        throws FetchException;
 
     @WebMethod
-    boolean isAggregateResourceConfigurationUpdateInProgress( //
+    boolean isGroupResourceConfigurationUpdateInProgress( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceGroupId") int resourceGroupId) //
         throws FetchException;
@@ -132,7 +133,7 @@ public interface ConfigurationManagerRemote {
     /* this currently doesn't build because jaxws requires a default, no-arg constructor from all objects in the graph
      * in order to perform serialization correctly, and java.util.Map does not have one (because it's an interface)
     @WebMethod
-    int scheduleAggregateResourceConfigurationUpdate(//
+    int scheduleGroupResourceConfigurationUpdate(//
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "compatibleGroupId") int compatibleGroupId, //
         @WebParam(name = "newResourceConfigurationMap") Map<Integer, Configuration> newResourceConfigurationMap) //
@@ -177,9 +178,8 @@ public interface ConfigurationManagerRemote {
     ResourceConfigurationUpdate updateResourceConfiguration( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceId") int resourceId, //
-        @WebParam(name = "newConfiguration") Configuration newConfiguration) throws UpdateException;
-
-    //--Methods that are not available in spec--
+        @WebParam(name = "newConfiguration") Configuration newConfiguration) //
+        throws UpdateException;
 
     /**
      * Get the currently live resource configuration for the {@link Resource} with the given id. This actually asks for
@@ -197,6 +197,8 @@ public interface ConfigurationManagerRemote {
     @WebMethod
     Configuration getLiveResourceConfiguration( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int resourceId, boolean pingAgentFirst) throws Exception;
+        @WebParam(name = "resourceId") int resourceId, //
+        @WebParam(name = "pingAgentFirst") boolean pingAgentFirst) //
+        throws Exception;
 
 }

@@ -111,16 +111,16 @@ import org.rhq.core.domain.util.serial.HibernateUtil;
         + "  FROM ResourceGroup rg " //
         + "  JOIN rg.explicitResources r " //
         + " WHERE rg.id = :resourceGroupId"),
-    @NamedQuery(name = Configuration.QUERY_GET_RESOURCE_CONFIG_MAP_BY_AGGREGATE_ID, query = "" //
+    @NamedQuery(name = Configuration.QUERY_GET_RESOURCE_CONFIG_MAP_BY_GROUP_UPDATE_ID, query = "" //
         + "SELECT res.id, cu.configuration " //
         + "  FROM ResourceConfigurationUpdate cu " //
         + "  JOIN cu.resource res " //
-        + " WHERE cu.aggregateConfigurationUpdate.id = :aggregateConfigurationUpdateId"),
-    @NamedQuery(name = Configuration.QUERY_GET_PLUGIN_CONFIG_MAP_BY_AGGREGATE_ID, query = "" //
+        + " WHERE cu.groupConfigurationUpdate.id = :groupConfigurationUpdateId"),
+    @NamedQuery(name = Configuration.QUERY_GET_PLUGIN_CONFIG_MAP_BY_GROUP_UPDATE_ID, query = "" //
         + "SELECT res.id, cu.configuration " //
         + "  FROM PluginConfigurationUpdate cu " //
         + "  JOIN cu.resource res " //
-        + " WHERE cu.aggregateConfigurationUpdate.id = :aggregateConfigurationUpdateId"),
+        + " WHERE cu.groupConfigurationUpdate.id = :groupConfigurationUpdateId"),
     @NamedQuery(name = Configuration.QUERY_DELETE_PROPERTIES_BY_CONFIGURATION_IDS, query = "" //
         + "DELETE FROM Property p WHERE p.configuration.id IN ( :configurationIds )"),
     @NamedQuery(name = Configuration.QUERY_DELETE_CONFIGURATIONS_BY_CONFIGURATION_IDs, query = "" //
@@ -136,8 +136,8 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
     public static final String QUERY_GET_RESOURCE_CONFIG_BY_RESOURCE_ID = "Configuration.getResourceConfigByResourceId";
     public static final String QUERY_GET_RESOURCE_CONFIG_MAP_BY_GROUP_ID = "Configuration.getResourceConfigMapByGroupId";
     public static final String QUERY_GET_PLUGIN_CONFIG_MAP_BY_GROUP_ID = "Configuration.getPluginConfigMapByGroupId";
-    public static final String QUERY_GET_RESOURCE_CONFIG_MAP_BY_AGGREGATE_ID = "Configuration.getResourceConfigMapByAggregateId";
-    public static final String QUERY_GET_PLUGIN_CONFIG_MAP_BY_AGGREGATE_ID = "Configuration.getPluginConfigMapByAggregateId";
+    public static final String QUERY_GET_RESOURCE_CONFIG_MAP_BY_GROUP_UPDATE_ID = "Configuration.getResourceConfigMapByGroupUpdateId";
+    public static final String QUERY_GET_PLUGIN_CONFIG_MAP_BY_GROUP_UPDATE_ID = "Configuration.getPluginConfigMapByGroupUpdateId";
 
     public static final String QUERY_DELETE_PROPERTIES_BY_CONFIGURATION_IDS = "Property.deleteByConfigurationIds";
     public static final String QUERY_DELETE_CONFIGURATIONS_BY_CONFIGURATION_IDs = "Configuration.deleteByConfigurationIdS";

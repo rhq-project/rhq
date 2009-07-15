@@ -57,6 +57,7 @@ import org.rhq.enterprise.server.exception.UpdateException;
 @Stateless
 @WebService(endpointInterface = "org.rhq.enterprise.server.authz.RoleManagerRemote")
 public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
+    @SuppressWarnings("unused")
     private final Log log = LogFactory.getLog(RoleManagerBean.class);
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
@@ -526,6 +527,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
         }
     }
 
+    @RequiredPermission(Permission.MANAGE_SECURITY)
     public void removeRolesFromResourceGroup(Subject subject, int groupId, int[] roleIds) throws UpdateException {
         if ((roleIds != null) && (roleIds.length > 0)) {
             ResourceGroup group = entityManager.find(ResourceGroup.class, groupId);

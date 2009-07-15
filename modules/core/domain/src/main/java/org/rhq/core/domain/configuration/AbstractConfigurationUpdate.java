@@ -61,12 +61,10 @@ public abstract class AbstractConfigurationUpdate {
     @Column(name = "MTIME", nullable = false)
     protected long modifiedTime = System.currentTimeMillis();
 
-    protected AbstractConfigurationUpdate()
-    {
+    protected AbstractConfigurationUpdate() {
     }
 
-    protected AbstractConfigurationUpdate(String subjectName)
-    {
+    protected AbstractConfigurationUpdate(String subjectName) {
         this.subjectName = subjectName;
         this.status = ConfigurationUpdateStatus.INPROGRESS;
     }

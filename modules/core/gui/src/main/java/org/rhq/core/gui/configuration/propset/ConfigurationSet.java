@@ -40,7 +40,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 public class ConfigurationSet {
     private ConfigurationDefinition configurationDefinition;
     private List<ConfigurationSetMember> members;
-    private Configuration aggregateConfiguration;
+    private Configuration groupConfiguration;
 
     public ConfigurationSet(ConfigurationDefinition configurationDefinition, List<ConfigurationSetMember> members) {
         if (configurationDefinition == null)
@@ -49,12 +49,12 @@ public class ConfigurationSet {
         if (members == null)
             throw new IllegalArgumentException("members parameter is null.");
         this.members = members;
-        this.aggregateConfiguration = new Configuration();
-        calculateAggregateConfiguration();
+        this.groupConfiguration = new Configuration();
+        calculateGroupConfiguration();
     }
 
-    public void calculateAggregateConfiguration() {
-        this.aggregateConfiguration.getMap().clear();
+    public void calculateGroupConfiguration() {
+        this.groupConfiguration.getMap().clear();
         if (this.members.isEmpty())
             return;
         Map<String, PropertyDefinition> childPropertyDefinitions = this.configurationDefinition
@@ -63,10 +63,10 @@ public class ConfigurationSet {
         for (ConfigurationSetMember member : this.members)
             sourceParentPropertyMaps.add(member.getConfiguration());
         for (PropertyDefinition childPropertyDefinition : childPropertyDefinitions.values())
-            aggregateProperty(childPropertyDefinition, sourceParentPropertyMaps, this.aggregateConfiguration);
+            calculateGroupProperty(childPropertyDefinition, sourceParentPropertyMaps, this.groupConfiguration);
     }
 
-    public void applyAggregateConfiguration() {
+    public void applyGroupConfiguration() {
         if (this.members.isEmpty())
             return;
         Map<String, PropertyDefinition> childPropertyDefinitions = this.configurationDefinition
@@ -75,7 +75,7 @@ public class ConfigurationSet {
         for (ConfigurationSetMember member : this.members)
             sourceParentPropertyMaps.add(member.getConfiguration());
         for (PropertyDefinition childPropertyDefinition : childPropertyDefinitions.values())
-            mergeProperty(childPropertyDefinition, sourceParentPropertyMaps, this.aggregateConfiguration);
+            mergeProperty(childPropertyDefinition, sourceParentPropertyMaps, this.groupConfiguration);
     }
 
     public ConfigurationDefinition getConfigurationDefinition() {
@@ -86,11 +86,11 @@ public class ConfigurationSet {
         return members;
     }
 
-    public Configuration getAggregateConfiguration() {
-        return aggregateConfiguration;
+    public Configuration getGroupConfiguration() {
+        return groupConfiguration;
     }
 
-    private static void aggregateProperty(PropertyDefinition propertyDefinition,
+    private static void calculateGroupProperty(PropertyDefinition propertyDefinition,
         List<AbstractPropertyMap> sourceParentPropertyMaps, AbstractPropertyMap targetParentPropertyMap) {
         if (propertyDefinition instanceof PropertyDefinitionSimple) {
             String sampleValue = getSimpleValue(sourceParentPropertyMaps.get(0), propertyDefinition.getName());
@@ -109,7 +109,7 @@ public class ConfigurationSet {
                 // Set override to true so the config renderer will know the prop is homogenous.
                 propertySimple.setOverride(true);
         }
-        // If the property is a Map, recurse into it and aggregate its child properties.
+        // If the property is a Map, recurse into it and group together its child properties.
         else if (propertyDefinition instanceof PropertyDefinitionMap) {
             List<AbstractPropertyMap> nestedSourceParentPropertyMaps = new ArrayList();
             for (AbstractPropertyMap sourceParentPropertyMap : sourceParentPropertyMaps) {
@@ -121,7 +121,7 @@ public class ConfigurationSet {
             }
             PropertyMap targetPropertyMap = new PropertyMap(propertyDefinition.getName());
             targetParentPropertyMap.put(targetPropertyMap);
-            aggregatePropertyMap((PropertyDefinitionMap) propertyDefinition, nestedSourceParentPropertyMaps,
+            calculateGroupPropertyMap((PropertyDefinitionMap) propertyDefinition, nestedSourceParentPropertyMaps,
                 targetPropertyMap);
         } else if (propertyDefinition instanceof PropertyDefinitionList) {
             PropertyDefinitionList propertyDefinitionList = (PropertyDefinitionList) propertyDefinition;
@@ -130,23 +130,23 @@ public class ConfigurationSet {
             targetParentPropertyMap.put(targetPropertyList);
             if (listMemberPropertyDefinition instanceof PropertyDefinitionMap) {
                 PropertyDefinitionMap propertyDefinitionMap = (PropertyDefinitionMap) listMemberPropertyDefinition;
-                // TODO: How do we aggregate Lists of Maps? Not trivial...
+                // TODO: How do we group together Lists of Maps? Not trivial...
             }
         }
     }
 
-    private static void aggregatePropertyMap(PropertyDefinitionMap propertyDefinitionMap,
+    private static void calculateGroupPropertyMap(PropertyDefinitionMap propertyDefinitionMap,
         List<AbstractPropertyMap> sourceParentPropertyMaps, AbstractPropertyMap targetParentPropertyMap) {
         Map<String, PropertyDefinition> childPropertyDefinitions = propertyDefinitionMap.getPropertyDefinitions();
         if (!childPropertyDefinitions.isEmpty()) {
             for (PropertyDefinition childPropertyDefinition : childPropertyDefinitions.values())
-                aggregateProperty(childPropertyDefinition, sourceParentPropertyMaps, targetParentPropertyMap);
+                calculateGroupProperty(childPropertyDefinition, sourceParentPropertyMaps, targetParentPropertyMap);
         } else {
-            aggregateOpenPropertyMap(sourceParentPropertyMaps, targetParentPropertyMap);
+            calculateGroupOpenPropertyMap(sourceParentPropertyMaps, targetParentPropertyMap);
         }
     }
 
-    private static void aggregateOpenPropertyMap(List<AbstractPropertyMap> sourceParentPropertyMaps,
+    private static void calculateGroupOpenPropertyMap(List<AbstractPropertyMap> sourceParentPropertyMaps,
         AbstractPropertyMap targetParentPropertyMap) {
         Map<String, Map<String, Integer>> memberNameValueFrequenciesMap = createMemberNameValueFrequenciesMap(sourceParentPropertyMaps);
         for (String memberName : memberNameValueFrequenciesMap.keySet()) {
@@ -172,9 +172,9 @@ public class ConfigurationSet {
     }
 
     private static void mergeProperty(PropertyDefinition propertyDefinition,
-        List<AbstractPropertyMap> memberParentPropertyMaps, AbstractPropertyMap aggregateParentPropertyMap) {
+        List<AbstractPropertyMap> memberParentPropertyMaps, AbstractPropertyMap groupParentPropertyMap) {
         if (propertyDefinition instanceof PropertyDefinitionSimple) {
-            PropertySimple propertySimple = aggregateParentPropertyMap.getSimple(propertyDefinition.getName());
+            PropertySimple propertySimple = groupParentPropertyMap.getSimple(propertyDefinition.getName());
             if (propertySimple != null && propertySimple.getOverride() != null && propertySimple.getOverride()) {
                 for (AbstractPropertyMap sourceParentPropertyMap : memberParentPropertyMaps) {
                     PropertySimple sourcePropertySimple = sourceParentPropertyMap.getSimple(propertyDefinition
@@ -194,14 +194,14 @@ public class ConfigurationSet {
             List<AbstractPropertyMap> nestedSourceParentPropertyMaps = new ArrayList();
             for (AbstractPropertyMap sourceParentPropertyMap : memberParentPropertyMaps)
                 nestedSourceParentPropertyMaps.add(sourceParentPropertyMap.getMap(propertyDefinition.getName()));
-            PropertyMap aggregatePropertyMap = aggregateParentPropertyMap.getMap(propertyDefinition.getName());
-            aggregateParentPropertyMap.put(aggregatePropertyMap);
+            PropertyMap groupPropertyMap = groupParentPropertyMap.getMap(propertyDefinition.getName());
+            groupParentPropertyMap.put(groupPropertyMap);
             mergePropertyMap((PropertyDefinitionMap) propertyDefinition, nestedSourceParentPropertyMaps,
-                aggregatePropertyMap);
+                groupPropertyMap);
         } else if (propertyDefinition instanceof PropertyDefinitionList) {
             PropertyDefinitionList propertyDefinitionList = (PropertyDefinitionList) propertyDefinition;
             PropertyDefinition listMemberPropertyDefinition = propertyDefinitionList.getMemberDefinition();
-            PropertyList aggregatePropertyList = aggregateParentPropertyMap.getList(propertyDefinition.getName());
+            PropertyList groupPropertyList = groupParentPropertyMap.getList(propertyDefinition.getName());
             if (listMemberPropertyDefinition instanceof PropertyDefinitionMap) {
                 PropertyDefinitionMap propertyDefinitionMap = (PropertyDefinitionMap) listMemberPropertyDefinition;
                 // TODO: How do we merge Lists of Maps? Not trivial...
@@ -210,31 +210,30 @@ public class ConfigurationSet {
     }
 
     private static void mergePropertyMap(PropertyDefinitionMap propertyDefinitionMap,
-        List<AbstractPropertyMap> memberParentPropertyMaps, AbstractPropertyMap aggregateParentPropertyMap) {
+        List<AbstractPropertyMap> memberParentPropertyMaps, AbstractPropertyMap groupParentPropertyMap) {
         Map<String, PropertyDefinition> childPropertyDefinitions = propertyDefinitionMap.getPropertyDefinitions();
         if (!childPropertyDefinitions.isEmpty()) {
             for (PropertyDefinition childPropertyDefinition : childPropertyDefinitions.values())
-                mergeProperty(childPropertyDefinition, memberParentPropertyMaps, aggregateParentPropertyMap);
+                mergeProperty(childPropertyDefinition, memberParentPropertyMaps, groupParentPropertyMap);
         } else {
-            mergeOpenPropertyMap(memberParentPropertyMaps, aggregateParentPropertyMap);
+            mergeOpenPropertyMap(memberParentPropertyMaps, groupParentPropertyMap);
         }
     }
 
     private static void mergeOpenPropertyMap(List<AbstractPropertyMap> memberParentPropertyMaps,
-        AbstractPropertyMap aggregateParentPropertyMap) {
-        for (String aggregateMemberPropertyName : aggregateParentPropertyMap.getMap().keySet()) {
-            PropertySimple aggregateMemberProperty = aggregateParentPropertyMap.getSimple(aggregateMemberPropertyName);
-            if (aggregateMemberProperty != null && aggregateMemberProperty.getOverride() != null
-                && aggregateMemberProperty.getOverride()) {
+        AbstractPropertyMap groupParentPropertyMap) {
+        for (String groupMemberPropertyName : groupParentPropertyMap.getMap().keySet()) {
+            PropertySimple groupMemberProperty = groupParentPropertyMap.getSimple(groupMemberPropertyName);
+            if (groupMemberProperty != null && groupMemberProperty.getOverride() != null
+                && groupMemberProperty.getOverride()) {
                 for (AbstractPropertyMap sourceParentPropertyMap : memberParentPropertyMaps) {
-                    PropertySimple sourcePropertySimple = sourceParentPropertyMap
-                        .getSimple(aggregateMemberPropertyName);
+                    PropertySimple sourcePropertySimple = sourceParentPropertyMap.getSimple(groupMemberPropertyName);
                     if (sourcePropertySimple == null) {
-                        sourcePropertySimple = new PropertySimple(aggregateMemberPropertyName, aggregateMemberProperty
+                        sourcePropertySimple = new PropertySimple(groupMemberPropertyName, groupMemberProperty
                             .getStringValue());
                         sourceParentPropertyMap.put(sourcePropertySimple);
                     } else {
-                        sourcePropertySimple.setStringValue(aggregateMemberProperty.getStringValue());
+                        sourcePropertySimple.setStringValue(groupMemberProperty.getStringValue());
                     }
                 }
             }

@@ -21,7 +21,7 @@ package org.rhq.enterprise.gui.configuration.group;
 import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
 
-import org.rhq.core.domain.configuration.group.AggregateResourceConfigurationUpdate;
+import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
@@ -54,12 +54,12 @@ public class GroupResourceConfigurationHistoryUIBean extends PagedDataTableUIBea
 
     public String deleteSelectedUpdates() {
         String[] selectedUpdates = getSelectedUpdates();
-        Integer[] aggregateConfigUpdateIds = StringUtility.getIntegerArray(selectedUpdates);
+        Integer[] groupConfigUpdateIds = StringUtility.getIntegerArray(selectedUpdates);
 
         try {
-            configurationManager.deleteAggregateResourceConfigurationUpdates(getSubject(), getResourceGroup().getId(),
-                aggregateConfigUpdateIds);
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Deleted " + aggregateConfigUpdateIds.length
+            configurationManager.deleteGroupResourceConfigurationUpdates(getSubject(), getResourceGroup().getId(),
+                groupConfigUpdateIds);
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Deleted " + groupConfigUpdateIds.length
                 + " group updates.");
         } catch (Exception e) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to delete selected group updates.", e);
@@ -69,15 +69,15 @@ public class GroupResourceConfigurationHistoryUIBean extends PagedDataTableUIBea
     }
 
     private class ListGroupResourceConfigurationUpdatesDataModel extends
-        PagedListDataModel<AggregateResourceConfigurationUpdate> {
+        PagedListDataModel<GroupResourceConfigurationUpdate> {
 
         public ListGroupResourceConfigurationUpdatesDataModel(PageControlView view, String beanName) {
             super(view, beanName);
         }
 
         @Override
-        public PageList<AggregateResourceConfigurationUpdate> fetchPage(PageControl pc) {
-            return configurationManager.findAggregateResourceConfigurationUpdatesByGroupId(getResourceGroup().getId(),
+        public PageList<GroupResourceConfigurationUpdate> fetchPage(PageControl pc) {
+            return configurationManager.findGroupResourceConfigurationUpdates(getResourceGroup().getId(),
                 pc);
         }
     }

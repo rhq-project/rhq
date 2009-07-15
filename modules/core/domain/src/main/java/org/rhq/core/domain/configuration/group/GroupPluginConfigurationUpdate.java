@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.domain.configuration.group;
 
 import java.util.ArrayList;
@@ -34,46 +34,45 @@ import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 
+import org.rhq.core.domain.configuration.AbstractPropertyMap;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.configuration.AbstractPropertyMap;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 
 @DiscriminatorValue("plugin")
 @Entity
 @NamedQueries( {
-    @NamedQuery(name = AggregatePluginConfigurationUpdate.QUERY_FIND_BY_GROUP_ID, query = "SELECT apcu "
-        + "FROM AggregatePluginConfigurationUpdate AS apcu " + "WHERE apcu.group.id = :groupId"),
-    @NamedQuery(name = AggregatePluginConfigurationUpdate.QUERY_FIND_LATEST_BY_GROUP_ID, query = "" //
+    @NamedQuery(name = GroupPluginConfigurationUpdate.QUERY_FIND_BY_GROUP_ID, query = "SELECT apcu "
+        + "FROM GroupPluginConfigurationUpdate AS apcu " + "WHERE apcu.group.id = :groupId"),
+    @NamedQuery(name = GroupPluginConfigurationUpdate.QUERY_FIND_LATEST_BY_GROUP_ID, query = "" //
         + "SELECT cgu " //
-        + "  FROM AggregatePluginConfigurationUpdate cgu " //
+        + "  FROM GroupPluginConfigurationUpdate cgu " //
         + " WHERE cgu.group.id = :groupId " //
         + "   AND cgu.modifiedTime = ( SELECT MAX(cgu2.modifiedTime) " //
-        + "                             FROM AggregatePluginConfigurationUpdate cgu2 " //
+        + "                             FROM GroupPluginConfigurationUpdate cgu2 " //
         + "                            WHERE cgu2.group.id = :groupId ) "),
-    @NamedQuery(name = AggregatePluginConfigurationUpdate.QUERY_DELETE_BY_ID, query = "DELETE "
-        + "FROM AggregatePluginConfigurationUpdate AS apcu " + "WHERE apcu.id IN ( :ids ) ") })
-public class AggregatePluginConfigurationUpdate extends AbstractAggregateConfigurationUpdate {
-    public static final String QUERY_FIND_BY_GROUP_ID = "AggregatePluginConfigurationUpdate.findByGroupId";
-    public static final String QUERY_FIND_LATEST_BY_GROUP_ID = "AggregatePluginConfigurationUpdate.findLatestByGroupId";
-    public static final String QUERY_DELETE_BY_ID = "AggregatePluginConfigurationUpdate.deleteById";
+    @NamedQuery(name = GroupPluginConfigurationUpdate.QUERY_DELETE_BY_ID, query = "DELETE "
+        + "FROM GroupPluginConfigurationUpdate AS apcu " + "WHERE apcu.id IN ( :ids ) ") })
+public class GroupPluginConfigurationUpdate extends AbstractGroupConfigurationUpdate {
+    public static final String QUERY_FIND_BY_GROUP_ID = "GroupPluginConfigurationUpdate.findByGroupId";
+    public static final String QUERY_FIND_LATEST_BY_GROUP_ID = "GroupPluginConfigurationUpdatee.findLatestByGroupId";
+    public static final String QUERY_DELETE_BY_ID = "GroupPluginConfigurationUpdate.deleteById";
 
     private static final long serialVersionUID = 1L;
 
-    @OneToMany(mappedBy = "aggregateConfigurationUpdate", fetch = FetchType.LAZY, cascade = { CascadeType.ALL })
+    @OneToMany(mappedBy = "groupConfigurationUpdate", fetch = FetchType.LAZY, cascade = { CascadeType.ALL })
     private List<PluginConfigurationUpdate> configurationUpdates = new ArrayList<PluginConfigurationUpdate>();
 
-    protected AggregatePluginConfigurationUpdate() {
+    protected GroupPluginConfigurationUpdate() {
     } // JPA
 
-    public AggregatePluginConfigurationUpdate(ResourceGroup group,
-                                              String subjectName) {
+    public GroupPluginConfigurationUpdate(ResourceGroup group, String subjectName) {
         super(group, subjectName);
-        //this.configuration = aggregateConfiguration.deepCopy(false);
+        //this.configuration = groupConfiguration.deepCopy(false);
         // TODO (ips, 02/13/09): This is a temporary workaround - we don't really need to store a Configuration at all,
         //      since it can be recalculated from the member configs when needed, but the AbstractConfigurationUpdate
         //      base class requires the configuration field to be non-null.
@@ -137,11 +136,11 @@ public class AggregatePluginConfigurationUpdate extends AbstractAggregateConfigu
             /*
             else if (changesProperty instanceof PropertyList) {
                throw new UnsupportedOperationException(
-                   "PropertyList type not supported for aggregate plugin configuration updates");
+                   "PropertyList type not supported for group plugin configuration updates");
             } else {
                throw new UnsupportedOperationException("Property of type '"
                    + changesProperty.getClass().getSimpleName() + "' "
-                   + "not supported for aggregate plugin configuration updates");
+                   + "not supported for group plugin configuration updates");
             }
             */
         }

@@ -35,7 +35,7 @@ import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
-public abstract class AbstractAggregateConfigurationUpdateJob implements Job {
+public abstract class AbstractGroupConfigurationUpdateJob implements Job {
     public static final String DATAMAP_INT_CONFIG_GROUP_UPDATE_ID = "configGroupUpdateId";
     public static final String DATAMAP_INT_SUBJECT_ID = "subjectId";
 
@@ -61,21 +61,21 @@ public abstract class AbstractAggregateConfigurationUpdateJob implements Job {
         Integer subjectId = jobDataMap.getIntFromString(DATAMAP_INT_SUBJECT_ID);
         Subject subject = LookupUtil.getSubjectManager().getSubjectById(subjectId);
 
-        processAggregateConfigurationUpdate(configurationGroupUpdateId, subject);
+        processGroupConfigurationUpdate(configurationGroupUpdateId, subject);
     }
 
-    private void processAggregateConfigurationUpdate(Integer aggregateConfigurationUpdateId, Subject subject) {
+    private void processGroupConfigurationUpdate(Integer groupConfigurationUpdateId, Subject subject) {
         ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
 
         String errorMessages = null;
         try {
-            long childPluginConfigurationUpdateCount = getConfigurationUpdateCount(aggregateConfigurationUpdateId,
+            long childPluginConfigurationUpdateCount = getConfigurationUpdateCount(groupConfigurationUpdateId,
                 configurationManager);
 
             int rowsProcessed = 0;
             PageControl pc = new PageControl(0, 1000, new OrderingField("cu.id", PageOrdering.ASC));
             while (true) {
-                List<Integer> pagedChildUpdateIds = getConfigurationUpdateIds(aggregateConfigurationUpdateId,
+                List<Integer> pagedChildUpdateIds = getConfigurationUpdateIds(groupConfigurationUpdateId,
                     configurationManager, pc);
                 if (pagedChildUpdateIds.size() <= 0) {
                     break;
@@ -95,7 +95,7 @@ public abstract class AbstractAggregateConfigurationUpdateJob implements Job {
         } catch (Exception e) {
             errorMessages = ThrowableUtil.getAllMessages(e);
         } finally {
-            completeAggregateConfigurationUpdate(configurationManager, aggregateConfigurationUpdateId, errorMessages);
+            completeGroupConfigurationUpdate(configurationManager, groupConfigurationUpdateId, errorMessages);
         }
     }
 
@@ -108,15 +108,15 @@ public abstract class AbstractAggregateConfigurationUpdateJob implements Job {
         return jobNamePrefix + group.getId();
     }
 
-    protected abstract List<Integer> getConfigurationUpdateIds(Integer aggregatePluginConfigurationUpdateId,
+    protected abstract List<Integer> getConfigurationUpdateIds(Integer groupPluginConfigurationUpdateId,
         ConfigurationManagerLocal configurationManager, PageControl pc);
 
-    protected abstract long getConfigurationUpdateCount(Integer aggregatePluginConfigurationUpdateId,
+    protected abstract long getConfigurationUpdateCount(Integer groupPluginConfigurationUpdateId,
         ConfigurationManagerLocal configurationManager);
 
     protected abstract void executeConfigurationUpdate(ConfigurationManagerLocal configurationManager,
         Integer childUpdateId, Subject subject);
 
-    protected abstract void completeAggregateConfigurationUpdate(ConfigurationManagerLocal configurationManager,
-        Integer aggregateConfigurationUpdateId, String errorMessages);
+    protected abstract void completeGroupConfigurationUpdate(ConfigurationManagerLocal configurationManager,
+        Integer groupConfigurationUpdateId, String errorMessages);
 }

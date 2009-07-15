@@ -137,6 +137,8 @@ groupWidgetProperties = getWidgetProperties('<c:out value="${groupWidgetInstance
 <br>
 
 <c:if test="${not Role.fsystem}">
+<c:if test="${useroperations['MANAGE_SECURITY']}">
+
 <html:form method="POST" action="/admin/role/RemoveResourceGroups">
 
 <tiles:insert definition=".header.tab">
@@ -146,17 +148,16 @@ groupWidgetProperties = getWidgetProperties('<c:out value="${groupWidgetInstance
 <display:table items="${RoleResGrps}" var="group" action="${selfPgAction}"
                postfix="g"
                width="100%" cellpadding="0" cellspacing="0">
-  <c:if test="${useroperations['MANAGE_SECURITY']}">
-    <display:column width="1%" property="id" title="<input type=\"checkbox\" onclick=\"ToggleAll(this, groupWidgetProperties, true)\" name=\"listToggleAll\">" isLocalizedTitle="false" styleClass="ListCellCheckbox" headerStyleClass="ListHeaderCheckbox" >
-      <display:checkboxdecorator name="g" onclick="ToggleSelection(this, groupWidgetProperties, true)" styleClass="listMember"/>
-    </display:column>
-  </c:if>
+  
+  <display:column width="1%" property="id" title="<input type=\"checkbox\" onclick=\"ToggleAll(this, groupWidgetProperties, true)\" name=\"listToggleAll\">" isLocalizedTitle="false" styleClass="ListCellCheckbox" headerStyleClass="ListHeaderCheckbox" >
+    <display:checkboxdecorator name="g" onclick="ToggleSelection(this, groupWidgetProperties, true)" styleClass="listMember"/>
+  </display:column>
+  
   <display:column width="25%" property="name" href="/rhq/group/inventory/view.xhtml?category=${group.groupCategory.name}&groupId=${group.id}" title="common.header.Group"
                   sortAttr="r.name"/>
   <display:column width="75%" property="description" title="common.header.Description"/>
 </display:table>
 
-<c:if test="${useroperations['MANAGE_SECURITY']}">
 <tiles:insert definition=".toolbar.addToList">
   <tiles:put name="addToListUrl" value="/admin/role/RoleAdmin.do?mode=addGroups"/>
   <tiles:put name="widgetInstanceName" beanName="groupWidgetInstanceName"/>

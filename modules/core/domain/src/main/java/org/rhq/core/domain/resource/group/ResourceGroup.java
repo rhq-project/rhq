@@ -49,7 +49,7 @@ import javax.persistence.Table;
 import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.authz.Role;
-import org.rhq.core.domain.configuration.group.AbstractAggregateConfigurationUpdate;
+import org.rhq.core.domain.configuration.group.AbstractGroupConfigurationUpdate;
 import org.rhq.core.domain.operation.GroupOperationHistory;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -116,7 +116,20 @@ import org.rhq.core.domain.resource.ResourceType;
         + "    WHERE ir.id = :roleId ) "
         + "  AND rg.id NOT IN ( :excludeIds )" + "  AND rg.clusterResourceGroup is NULL"),
 
-    @NamedQuery(name = ResourceGroup.QUERY_GET_RESOURCE_GROUPS_ASSIGNED_TO_ROLE, query = "SELECT rg FROM ResourceGroup AS rg JOIN rg.roles AS r WHERE r.id = :id"),
+    @NamedQuery(name = ResourceGroup.QUERY_GET_RESOURCE_GROUPS_ASSIGNED_TO_ROLE_admin, query = "" //
+        + "SELECT rg " //
+        + "  FROM ResourceGroup AS rg " //
+        + "  JOIN rg.roles AS r " //
+        + " WHERE r.id = :id"), //
+    @NamedQuery(name = ResourceGroup.QUERY_GET_RESOURCE_GROUPS_ASSIGNED_TO_ROLE, query = "" //
+        + "SELECT rg " //
+        + "  FROM ResourceGroup AS rg " //
+        + "  JOIN rg.roles AS r " //
+        + " WHERE r.id = :id " //
+        + "   AND r.id IN ( SELECT role.id " //
+        + "                   FROM Role role " //
+        + "                   JOIN role.subjects s " // 
+        + "                  WHERE s.id = :subjectId ) "),
 
     @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_IDS_admin, query = "" //
         + "          SELECT rg " //
@@ -177,6 +190,7 @@ public class ResourceGroup extends Group {
     public static final String QUERY_FIND_BY_CLUSTER_KEY = "ResourceGroup.findByClusterKey";
     public static final String QUERY_GET_AVAILABLE_RESOURCE_GROUPS_FOR_ROLE_WITH_EXCLUDES = "ResourceGroup.getAvailableResourceGroupsForRoleWithExcludes";
     public static final String QUERY_GET_AVAILABLE_RESOURCE_GROUPS_FOR_ROLE = "ResourceGroup.getAvailableResourceGroupsForRole";
+    public static final String QUERY_GET_RESOURCE_GROUPS_ASSIGNED_TO_ROLE_admin = "ResourceGroup.getResourceGroupsAssignedToRole_admin";
     public static final String QUERY_GET_RESOURCE_GROUPS_ASSIGNED_TO_ROLE = "ResourceGroup.getResourceGroupsAssignedToRole";
     public static final String QUERY_FIND_BY_IDS_admin = "ResourceGroup.findByIds_admin";
     public static final String QUERY_FIND_BY_IDS = "ResourceGroup.findByIds";
@@ -383,7 +397,7 @@ public class ResourceGroup extends Group {
     @OneToMany(mappedBy = "group", cascade = { CascadeType.ALL })
     @OrderBy
     // by primary key which will also put the configuration updates in chronological order
-    private List<AbstractAggregateConfigurationUpdate> configurationUpdates = new ArrayList<AbstractAggregateConfigurationUpdate>();
+    private List<AbstractGroupConfigurationUpdate> configurationUpdates = new ArrayList<AbstractGroupConfigurationUpdate>();
 
     @JoinColumn(name = "GROUP_DEFINITION_ID", referencedColumnName = "ID", nullable = true)
     @ManyToOne
@@ -518,11 +532,11 @@ public class ResourceGroup extends Group {
     }
 
     @NotNull
-    public List<AbstractAggregateConfigurationUpdate> getConfigurationUpdates() {
+    public List<AbstractGroupConfigurationUpdate> getConfigurationUpdates() {
         return configurationUpdates;
     }
 
-    public void setConfigurationUpdates(@NotNull List<AbstractAggregateConfigurationUpdate> configurationUpdates) {
+    public void setConfigurationUpdates(@NotNull List<AbstractGroupConfigurationUpdate> configurationUpdates) {
         this.configurationUpdates = configurationUpdates;
     }
 

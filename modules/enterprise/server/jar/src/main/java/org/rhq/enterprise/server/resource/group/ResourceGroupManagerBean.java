@@ -307,11 +307,11 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             // break resource and plugin configuration update links in order to preserve individual change history
             Query q = null;
 
-            q = entityManager.createNamedQuery(ResourceConfigurationUpdate.QUERY_DELETE_UPDATE_AGGREGATE_BY_GROUP);
+            q = entityManager.createNamedQuery(ResourceConfigurationUpdate.QUERY_DELETE_GROUP_UPDATES_FOR_GROUP);
             q.setParameter("groupId", groupId);
             q.executeUpdate();
 
-            q = entityManager.createNamedQuery(PluginConfigurationUpdate.QUERY_DELETE_UPDATE_AGGREGATE_BY_GROUP);
+            q = entityManager.createNamedQuery(PluginConfigurationUpdate.QUERY_DELETE_GROUP_UPDATES_FOR_GROUP);
             q.setParameter("groupId", groupId);
             q.executeUpdate();
 
@@ -1270,15 +1270,25 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
     }
 
     @SuppressWarnings("unchecked")
+    // if a user doesn't have MANAGE_SETTINGS, they can only see groups under their own roles
     public PageList<ResourceGroup> findResourceGroupsForRole(Subject subject, int roleId, PageControl pc)
         throws FetchException {
         try {
             pc.initDefaultOrderingField("rg.name");
 
-            String queryName = ResourceGroup.QUERY_GET_RESOURCE_GROUPS_ASSIGNED_TO_ROLE;
+            String queryName = null;
+            if (authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_SETTINGS)) {
+                queryName = ResourceGroup.QUERY_GET_RESOURCE_GROUPS_ASSIGNED_TO_ROLE_admin;
+            } else {
+                queryName = ResourceGroup.QUERY_GET_RESOURCE_GROUPS_ASSIGNED_TO_ROLE;
+            }
             Query queryCount = PersistenceUtility.createCountQuery(entityManager, queryName);
             Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, queryName, pc);
 
+            if (authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_SETTINGS) == false) {
+                queryCount.setParameter("subjectId", subject.getId());
+                query.setParameter("subjectId", subject.getId());
+            }
             queryCount.setParameter("id", roleId);
             query.setParameter("id", roleId);
 

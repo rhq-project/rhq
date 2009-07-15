@@ -75,7 +75,8 @@ public interface OperationManagerRemote {
     void cancelOperationHistory( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "historyId") int historyId, //
-        @WebParam(name = "ignoreAgentErrors") boolean ignoreAgentErrors) throws UpdateException;
+        @WebParam(name = "ignoreAgentErrors") boolean ignoreAgentErrors) //
+        throws UpdateException;
 
     /**
      * Purges the history from the database. Doing this loses all audit trails of the invoked operation. This can handle
@@ -102,7 +103,8 @@ public interface OperationManagerRemote {
     void deleteOperationHistory( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "historyId") int historyId, //
-        @WebParam(name = "purgeInProgress") boolean purgeInProgress) throws DeleteException;
+        @WebParam(name = "purgeInProgress") boolean purgeInProgress) //
+        throws DeleteException;
 
     /**
      * Schedules an operation for execution on the given resource.
@@ -139,7 +141,8 @@ public interface OperationManagerRemote {
         @WebParam(name = "repeatCount") int repeatCount, //
         @WebParam(name = "timeout") int timeout, //
         @WebParam(name = "parameters") Configuration parameters, //
-        @WebParam(name = "description") String description) throws ScheduleException;
+        @WebParam(name = "description") String description) //
+        throws ScheduleException;
 
     /**
      * Unschedules the resource operation identified with the given job ID.
@@ -157,7 +160,8 @@ public interface OperationManagerRemote {
     void unscheduleResourceOperation( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "jobId") String jobId, //
-        @WebParam(name = "resourceId") int resourceId) throws UnscheduleException;
+        @WebParam(name = "resourceId") int resourceId) //
+        throws UnscheduleException;
 
     /**
      * Unschedules the group operation identified with the given job ID.
@@ -218,7 +222,8 @@ public interface OperationManagerRemote {
     @WebMethod
     OperationHistory getOperationHistoryByHistoryId(//
         @WebParam(name = "subject") Subject subject,//
-        @WebParam(name = "historyId") int historyId) throws FetchException;
+        @WebParam(name = "historyId") int historyId) //
+        throws FetchException;
 
     /**
      * Get the operation history for a job ID. Note that the job ID is <b>not</b> the same thing as the history ID. See
@@ -233,7 +238,8 @@ public interface OperationManagerRemote {
     @WebMethod
     OperationHistory getOperationHistoryByJobId(//
         @WebParam(name = "subject") Subject subject,//
-        @WebParam(name = "historyJobId") String historyJobId) throws FetchException;
+        @WebParam(name = "historyJobId") String historyJobId) //
+        throws FetchException;
 
     /**
      * @param subject
@@ -249,7 +255,6 @@ public interface OperationManagerRemote {
         @WebParam(name = "pageControl") PageControl pc)//
         throws FetchException;
 
-    //--Methods that are not written in the remote specification.--
     /**
      * Returns the list of completed operation histories for the given resource. This will return all items that are no
      * longer INPROGRESS that were invoked as part of a group operation to which this resource belongs or on the
@@ -308,7 +313,8 @@ public interface OperationManagerRemote {
     @WebMethod
     List<ResourceOperationSchedule> getScheduledResourceOperations( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int resourceId) throws Exception;
+        @WebParam(name = "resourceId") int resourceId) //
+        throws Exception;
 
     /**
      * Unschedules the resource operation identified with the given job ID.

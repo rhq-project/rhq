@@ -20,8 +20,6 @@ package org.rhq.enterprise.server.configuration.job;
 
 import java.util.List;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
 
@@ -30,43 +28,38 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 
-public class AggregateResourceConfigurationUpdateJob extends AbstractAggregateConfigurationUpdateJob {
+public class GroupPluginConfigurationUpdateJob extends AbstractGroupConfigurationUpdateJob {
     /**
-     * Prefix for all job names and job group names of aggregate resource configuration updates.
+     * Prefix for all job names and job group names of group plugin configuration updates.
      */
-    private static final String JOB_NAME_PREFIX = "rhq-arcu-";
-
-    private final Log log = LogFactory.getLog(AggregateResourceConfigurationUpdateJob.class);
+    private static final String JOB_NAME_PREFIX = "rhq-apcu-";
 
     public static JobDetail getJobDetail(ResourceGroup group, Subject subject, JobDataMap jobDataMap) {
-        return AbstractAggregateConfigurationUpdateJob.getJobDetail(group, subject, jobDataMap,
-            AggregateResourceConfigurationUpdateJob.class, JOB_NAME_PREFIX);
+        return AbstractGroupConfigurationUpdateJob.getJobDetail(group, subject, jobDataMap,
+            GroupPluginConfigurationUpdateJob.class, JOB_NAME_PREFIX);
     }
 
-    protected List<Integer> getConfigurationUpdateIds(Integer aggregatePluginConfigurationUpdateId,
+    protected List<Integer> getConfigurationUpdateIds(Integer groupPluginConfigurationUpdateId,
         ConfigurationManagerLocal configurationManager, PageControl pc) {
-        List<Integer> pagedChildUpdateIds = configurationManager.findResourceConfigurationUpdatesByParentId(
-            aggregatePluginConfigurationUpdateId, pc);
+        List<Integer> pagedChildUpdateIds = configurationManager.findPluginConfigurationUpdatesByParentId(
+            groupPluginConfigurationUpdateId, pc);
         return pagedChildUpdateIds;
     }
 
-    protected long getConfigurationUpdateCount(Integer aggregatePluginConfigurationUpdateId,
+    protected long getConfigurationUpdateCount(Integer groupPluginConfigurationUpdateId,
         ConfigurationManagerLocal configurationManager) {
         long childPluginConfigurationUpdateCount = configurationManager
-            .getResourceConfigurationUpdateCountByParentId(aggregatePluginConfigurationUpdateId);
+            .getPluginConfigurationUpdateCountByParentId(groupPluginConfigurationUpdateId);
         return childPluginConfigurationUpdateCount;
     }
 
     protected void executeConfigurationUpdate(ConfigurationManagerLocal configurationManager, Integer childUpdateId,
         Subject subject) {
-        configurationManager.executeResourceConfigurationUpdate(childUpdateId);
+        configurationManager.completePluginConfigurationUpdate(childUpdateId);
     }
 
-    protected void completeAggregateConfigurationUpdate(ConfigurationManagerLocal configurationManager,
-        Integer aggregateConfigurationUpdateId, String errorMessages) {
-        if (errorMessages != null)
-            log.error("Failed to execute one or more Resource Configuration updates that were part of a group update - details: "
-                + errorMessages);
-        // TODO: Stick the errors in the individual updates?
+    protected void completeGroupConfigurationUpdate(ConfigurationManagerLocal configurationManager,
+        Integer groupConfigurationUpdateId, String errorMessages) {
+        configurationManager.updateGroupPluginConfigurationUpdateStatus(groupConfigurationUpdateId, errorMessages);
     }
 }

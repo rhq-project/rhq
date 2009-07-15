@@ -348,6 +348,11 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
 
     public EventSeverity[] getSeverityBuckets(Subject subject, int resourceId, long begin, long end, int numBuckets)
         throws FetchException {
+        if (authorizationManager.canViewResource(subject, resourceId) == false) {
+            throw new PermissionException("User [" + subject.getName()
+                + "] does not have permission to view event buckets for resource[id=" + resourceId + "]");
+        }
+
         try {
             Resource res = entityManager.find(Resource.class, resourceId);
             List<Resource> resources = new ArrayList<Resource>(1);
@@ -362,12 +367,26 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
         long end, int numBuckets) {
 
         List<Resource> resources = resGrpMgr.findResourcesForAutoGroup(subject, parentId, type);
+        for (Resource res : resources) {
+            if (authorizationManager.canViewResource(subject, res.getId()) == false) {
+                throw new PermissionException("User [" + subject.getName()
+                    + "] does not have permission to view event buckets for autoGroup[parentResourceId=" + parentId
+                    + ", resourceTypeId=" + type + "], root cause: missing permission to view resource[id="
+                    + res.getId() + "]");
+            }
+        }
+
         return getSeverityBucketsForResources(subject, resources, begin, end, numBuckets);
 
     }
 
     public EventSeverity[] getSeverityBucketsForCompGroup(Subject subject, int groupId, long begin, long end,
         int numBuckets) throws FetchException {
+
+        if (authorizationManager.canViewGroup(subject, groupId) == false) {
+            throw new PermissionException("User [" + subject.getName()
+                + "] does not have permission to view event buckets for resourceGroup[id=" + groupId + "]");
+        }
 
         List<Resource> resources = resGrpMgr.findResourcesForResourceGroup(subject, groupId, GroupCategory.COMPATIBLE);
         return getSeverityBucketsForResources(subject, resources, begin, end, numBuckets);

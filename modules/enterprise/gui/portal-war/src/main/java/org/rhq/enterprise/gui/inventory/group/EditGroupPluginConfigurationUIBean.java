@@ -20,21 +20,20 @@ package org.rhq.enterprise.gui.inventory.group;
 
 import javax.faces.application.FacesMessage;
 
-import org.rhq.core.gui.util.FacesContextUtility;
-import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.gui.legacy.ParamConstants;
-import org.rhq.enterprise.gui.configuration.group.ViewGroupResourceConfigurationUIBean;
-import org.rhq.enterprise.server.authz.PermissionException;
-
 import org.jboss.seam.ScopeType;
 import org.jboss.seam.annotations.Begin;
 import org.jboss.seam.annotations.Create;
+import org.jboss.seam.annotations.End;
 import org.jboss.seam.annotations.In;
 import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Scope;
-import org.jboss.seam.annotations.End;
 import org.jboss.seam.core.Conversation;
 import org.jboss.seam.faces.Redirect;
+
+import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.enterprise.gui.legacy.ParamConstants;
+import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.server.authz.PermissionException;
 
 /**
  * A POJO Seam component that handles loading and updating of plugin configurations across a compatible Group.
@@ -64,11 +63,11 @@ public class EditGroupPluginConfigurationUIBean extends AbstractGroupPluginConfi
      */
     public void updateConfigurations() {
         try {
-            // TODO: See if there's some way for the config renderer to handle calling applyAggregateConfiguration(),
+            // TODO: See if there's some way for the config renderer to handle calling applyGroupConfiguration(),
             //       so the managed bean doesn't have to worry about doing it.
-            getConfigurationSet().applyAggregateConfiguration();
-            getConfigurationManager().scheduleAggregatePluginConfigurationUpdate(EnterpriseFacesContextUtility
-                .getSubject(), getGroup().getId(), getPluginConfigurations());
+            getConfigurationSet().applyGroupConfiguration();
+            getConfigurationManager().scheduleGroupPluginConfigurationUpdate(
+                EnterpriseFacesContextUtility.getSubject(), getGroup().getId(), getPluginConfigurations());
         } catch (Exception e) {
             if (e instanceof PermissionException) {
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, e.getLocalizedMessage());

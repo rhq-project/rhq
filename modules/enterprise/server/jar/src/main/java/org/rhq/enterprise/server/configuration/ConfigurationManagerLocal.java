@@ -35,14 +35,14 @@ import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.composite.ConfigurationUpdateComposite;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
-import org.rhq.core.domain.configuration.group.AbstractAggregateConfigurationUpdate;
-import org.rhq.core.domain.configuration.group.AggregatePluginConfigurationUpdate;
-import org.rhq.core.domain.configuration.group.AggregateResourceConfigurationUpdate;
+import org.rhq.core.domain.configuration.group.AbstractGroupConfigurationUpdate;
+import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
+import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.configuration.job.AggregatePluginConfigurationUpdateJob;
+import org.rhq.enterprise.server.configuration.job.GroupPluginConfigurationUpdateJob;
 import org.rhq.enterprise.server.exception.FetchException;
 import org.rhq.enterprise.server.exception.UpdateException;
 
@@ -60,7 +60,7 @@ public interface ConfigurationManagerLocal {
      * Updates the plugin configuration used to connect and communicate with the resource using the information in the
      * passed {@link PluginConfigurationUpdate} object. This update object will be changed to reflect the result of the
      * plugin configuration update attempt. This is an internal method called by
-     * {@link #updatePluginConfiguration(Subject, int, Configuration)} and {@link AggregatePluginConfigurationUpdateJob}
+     * {@link #updatePluginConfiguration(Subject, int, Configuration)} and {@link GroupPluginConfigurationUpdateJob}
      * . It is not intended to be used for general, public consumption.
      *
      * @param update a previously server-side persisted update, which has not yet made it to the agent
@@ -153,7 +153,7 @@ public interface ConfigurationManagerLocal {
      * {@link #updateResourceConfiguration(Subject, int, Configuration)} to call with REQUIRES_NEW transaction scope so
      * it can force the new request to be committed to the DB. Also used by
      * {@link #getLatestResourceConfigurationUpdate(Subject, int)} and
-     * {@link #scheduleAggregateResourceConfigurationUpdate}.
+     * {@link #scheduleGroupResourceConfigurationUpdate}.
      *
      * @param  subject
      * @param  resourceId
@@ -161,14 +161,14 @@ public interface ConfigurationManagerLocal {
      * @param  newStatus
      * @param  newSubject       user to associate with this update change (may be <code>null</code>)
      *
-     * @param isPartofAggregateUpdate
+     * @param isPartofGroupUpdate
      * @return the persisted Resource Configuration update, or null if the specified Configuration is identical to the
      *         currently persisted Configuration
      */
     @Nullable
     ResourceConfigurationUpdate persistNewResourceConfigurationUpdateHistory(Subject subject, int resourceId,
         Configuration newConfiguration, ConfigurationUpdateStatus newStatus, String newSubject,
-        boolean isPartofAggregateUpdate);
+        boolean isPartofGroupUpdate);
 
     /**
      * A callback method that is called when an agent has completed updating a resource's configuration.
@@ -289,7 +289,7 @@ public interface ConfigurationManagerLocal {
      */
     Configuration getConfigurationFromDefaultTemplate(ConfigurationDefinition definition);
 
-    AggregatePluginConfigurationUpdate getAggregatePluginConfigurationById(int configurationUpdateId);
+    GroupPluginConfigurationUpdate getGroupPluginConfigurationById(int configurationUpdateId);
 
     PageList<ConfigurationUpdateComposite> findPluginConfigurationUpdateCompositesByParentId(int configurationUpdateId,
         PageControl pageControl);
@@ -301,43 +301,39 @@ public interface ConfigurationManagerLocal {
 
     long getPluginConfigurationUpdateCountByParentId(int configurationUpdateId);
 
-    int createAggregateConfigurationUpdate(AbstractAggregateConfigurationUpdate update);
+    int createGroupConfigurationUpdate(AbstractGroupConfigurationUpdate update);
 
-    int scheduleAggregatePluginConfigurationUpdate(Subject subject, int compatibleGroupId,
+    int scheduleGroupPluginConfigurationUpdate(Subject subject, int compatibleGroupId,
         Map<Integer, Configuration> pluginConfigurationUpdate) throws UpdateException;
 
-    PageList<AggregatePluginConfigurationUpdate> findAggregatePluginConfigurationUpdatesByGroupId(int groupId,
-        PageControl pc);
+    PageList<GroupPluginConfigurationUpdate> findGroupPluginConfigurationUpdates(int groupId, PageControl pc);
 
-    PageList<AggregateResourceConfigurationUpdate> findAggregateResourceConfigurationUpdatesByGroupId(int groupId,
-        PageControl pc);
+    PageList<GroupResourceConfigurationUpdate> findGroupResourceConfigurationUpdates(int groupId, PageControl pc);
 
-    ConfigurationUpdateStatus updateAggregatePluginConfigurationUpdateStatus(int aggregatePluginConfigurationUpdateId,
+    ConfigurationUpdateStatus updateGroupPluginConfigurationUpdateStatus(int groupPluginConfigurationUpdateId,
         String errorMessages);
 
-    int deleteAggregatePluginConfigurationUpdates(Subject subject, Integer resourceGroupId,
-        Integer[] aggregatePluginConfigurationUpdateIds);
+    int deleteGroupPluginConfigurationUpdates(Subject subject, Integer resourceGroupId,
+        Integer[] groupPluginConfigurationUpdateIds);
 
-    int deleteAggregateResourceConfigurationUpdates(Subject subject, Integer resourceGroupId,
-        Integer[] aggregateResourceConfigurationUpdateIds);
+    int deleteGroupResourceConfigurationUpdates(Subject subject, Integer resourceGroupId,
+        Integer[] groupResourceConfigurationUpdateIds);
 
-    void updateAggregateConfigurationUpdate(AbstractAggregateConfigurationUpdate groupUpdate);
+    void updateGroupConfigurationUpdate(AbstractGroupConfigurationUpdate groupUpdate);
 
     void deleteConfigurations(List<Integer> configurationIds);
 
     void deleteProperties(int[] propertyIds);
 
-    PageList<Integer> findResourceConfigurationUpdatesByParentId(int aggregateConfigurationUpdateId,
-        PageControl pageControl);
+    PageList<Integer> findResourceConfigurationUpdatesByParentId(int groupConfigurationUpdateId, PageControl pageControl);
 
-    long getResourceConfigurationUpdateCountByParentId(int aggregateConfigurationUpdateId);
+    long getResourceConfigurationUpdateCountByParentId(int groupConfigurationUpdateId);
 
     void executeResourceConfigurationUpdate(int updateId);
 
-    AggregateResourceConfigurationUpdate getAggregateResourceConfigurationById(int configurationUpdateId);
+    GroupResourceConfigurationUpdate getGroupResourceConfigurationById(int configurationUpdateId);
 
-    Map<Integer, Configuration> getResourceConfigurationMapForAggregateUpdate(
-        Integer aggregateResourceConfigurationUpdateId);
+    Map<Integer, Configuration> getResourceConfigurationMapForGroupUpdate(Integer groupResourceConfigurationUpdateId);
 
     Map<Integer, Configuration> getResourceConfigurationMapForCompatibleGroup(ResourceGroup compatibleGroup);
 
@@ -357,7 +353,7 @@ public interface ConfigurationManagerLocal {
     Map<Integer, Configuration> getPluginConfigurationsForCompatibleGroup(Subject subject, int groupId)
         throws ConfigurationUpdateStillInProgressException, Exception;
 
-    Map<Integer, Configuration> getPluginConfigurationMapForAggregateUpdate(Integer aggregatePluginConfigurationUpdateId);
+    Map<Integer, Configuration> getPluginConfigurationMapForGroupUpdate(Integer groupPluginConfigurationUpdateId);
 
     /**
      * The purpose of this method is really to clean up requests when we detect
@@ -377,10 +373,10 @@ public interface ConfigurationManagerLocal {
     //
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    public AggregatePluginConfigurationUpdate getAggregatePluginConfigurationUpdate(Subject subject,
-        int configurationUpdateId) throws FetchException;
+    public GroupPluginConfigurationUpdate getGroupPluginConfigurationUpdate(Subject subject, int configurationUpdateId)
+        throws FetchException;
 
-    public AggregateResourceConfigurationUpdate getAggregateResourceConfigurationUpdate(Subject subject,
+    public GroupResourceConfigurationUpdate getGroupResourceConfigurationUpdate(Subject subject,
         int configurationUpdateId) throws FetchException;
 
     public Configuration getConfiguration(Subject subject, int configurationId) throws FetchException;
@@ -433,9 +429,9 @@ public interface ConfigurationManagerLocal {
 
     boolean isResourceConfigurationUpdateInProgress(Subject subject, int resourceId) throws FetchException;
 
-    boolean isAggregateResourceConfigurationUpdateInProgress(Subject subject, int groupId) throws FetchException;
+    boolean isGroupResourceConfigurationUpdateInProgress(Subject subject, int groupId) throws FetchException;
 
-    int scheduleAggregateResourceConfigurationUpdate(Subject subject, int compatibleGroupId,
+    int scheduleGroupResourceConfigurationUpdate(Subject subject, int compatibleGroupId,
         Map<Integer, Configuration> newResourceConfigurationMap) throws UpdateException;
 
     /**

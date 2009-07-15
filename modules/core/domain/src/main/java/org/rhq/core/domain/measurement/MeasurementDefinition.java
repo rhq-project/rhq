@@ -53,55 +53,33 @@ import org.rhq.core.domain.resource.ResourceType;
 //@Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
 @Entity
 @NamedQueries( {
-    @NamedQuery(name = MeasurementDefinition.FIND_BY_RESOURCE_ID, query = "SELECT md FROM MeasurementDefinition md JOIN md.schedules AS sch WHERE sch.resource.id= :resId"),
-    @NamedQuery(name = MeasurementDefinition.FIND_FOR_RESOURCES, query = "SELECT md FROM MeasurementDefinition md JOIN md.schedules AS sch WHERE sch.resource IN (:resources)"),
-    @NamedQuery(name = MeasurementDefinition.FIND_FOR_RESOURCE_TYPE, query = "SELECT md FROM MeasurementDefinition md WHERE md.resourceType = :type"),
-    @NamedQuery(name = MeasurementDefinition.FIND_BY_RESOURCE_TYPE_DATA_TYPE_DISPLAY_TYPE, query = "  SELECT md "
-        + "    FROM MeasurementDefinition md " + "   WHERE md.resourceType.id = :resourceTypeId "
-        + "         AND ( md.dataType = :dataType OR :dataType is null ) "
-        + "         AND ( md.displayType = :displayType OR :displayType is null ) " + "ORDER BY md.displayName"),
-    @NamedQuery(name = MeasurementDefinition.FIND_BY_IDS, query = "SELECT md FROM MeasurementDefinition md WHERE md.id IN ( :ids )"),
-    @NamedQuery(name = MeasurementDefinition.FIND_SCHEDULE_COMPOSITE_FOR_RESOURCE_TYPE, query = "SELECT new org.rhq.core.domain.measurement.composite.MeasurementScheduleComposite(md, md.defaultOn, md.defaultInterval) "
-        + "FROM MeasurementDefinition md WHERE md.resourceType.id = :resourceTypeId"),
-    @NamedQuery(name = MeasurementDefinition.DISABLE_ALL, query = "UPDATE MeasurementDefinition md SET md.defaultOn = false") })
+    @NamedQuery(name = MeasurementDefinition.FIND_BY_RESOURCE_TYPE_DATA_TYPE_DISPLAY_TYPE, query = "" //
+        + "  SELECT md " //
+        + "    FROM MeasurementDefinition md " //
+        + "   WHERE md.resourceType.id = :resourceTypeId " //
+        + "     AND ( md.dataType = :dataType OR :dataType is null ) " //
+        + "     AND ( md.displayType = :displayType OR :displayType is null ) " //
+        + "ORDER BY md.displayName"), //
+    @NamedQuery(name = MeasurementDefinition.FIND_SCHEDULE_COMPOSITE_FOR_RESOURCE_TYPE, query = "" //
+        + "SELECT new org.rhq.core.domain.measurement.composite.MeasurementScheduleComposite(md, md.defaultOn, md.defaultInterval) "
+        + "  FROM MeasurementDefinition md " //
+        + " WHERE md.resourceType.id = :resourceTypeId"), //
+    @NamedQuery(name = MeasurementDefinition.FIND_BY_IDS, query = "" //
+        + "SELECT md " //
+        + "  FROM MeasurementDefinition md " //
+        + " WHERE md.id IN ( :ids )"), //
+    @NamedQuery(name = MeasurementDefinition.DISABLE_ALL, query = "" //
+        + "UPDATE MeasurementDefinition md " //
+        + "   SET md.defaultOn = false") })
 @SequenceGenerator(name = "id", sequenceName = "RHQ_MEASUREMENT_DEF_ID_SEQ")
 @Table(name = "RHQ_MEASUREMENT_DEF")
 public class MeasurementDefinition implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    /**
-     * Select the MeasurementDefinition that has the name matching :name
-     */
-    public static final String FIND_BY_NAME = "MeasurementDefinition.findByName";
-
-    /**
-     * Select MeasurementDefinitions that have the category passed in :cat
-     */
-    public static final String FIND_BY_CATEGORY = "MeasurementDefinition.findByCategory";
-
-    /**
-     * Return all Definitions for the resources passed in :resources
-     */
-    public static final String FIND_FOR_RESOURCES = "MeasurementDefinition.findForResources";
-
-    /**
-     * Select definitions that are applicable for the ResourceType passed in :type
-     */
-    public static final String FIND_FOR_RESOURCE_TYPE = "MeasurementDefinition.findForResourceType";
-
-    /**
-     * Select definitions that are applicable for the ResourceType ID passed in :typeId
-     */
     public static final String FIND_BY_RESOURCE_TYPE_DATA_TYPE_DISPLAY_TYPE = "MeasurementDefinition.findByResourceTypeDataTypeDisplayType";
-
-    /**
-     * Find all definitions for the resource with id :resId
-     */
-    public static final String FIND_BY_RESOURCE_ID = "MeasurementDefinition.findByResourceid";
-
-    public static final String FIND_BY_IDS = "MeasurementDefinition.findByIds";
     public static final String FIND_SCHEDULE_COMPOSITE_FOR_RESOURCE_TYPE = "MeasurementDefinition.findScheduleCompositeForResourceType";
+    public static final String FIND_BY_IDS = "MeasurementDefinition.findByIds";
     public static final String DISABLE_ALL = "MeasurementDefinition.disableAll";
 
     @Column(name = "ID", nullable = false)

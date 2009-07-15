@@ -189,26 +189,6 @@ public class MeasurementTest extends AbstractEJB3Test {
 
     @SuppressWarnings("unchecked")
     @Test(groups = "integration.ejb3")
-    public void testFindByResourceId() throws Exception {
-        getTransactionManager().begin();
-        EntityManager em = getEntityManager();
-        try {
-            MeasurementDefinition def = setupTables(em);
-            List<MeasurementSchedule> schedules = def.getSchedules();
-            MeasurementSchedule sched = schedules.get(0);
-            Resource res = sched.getResource();
-
-            Query q = em.createNamedQuery(MeasurementDefinition.FIND_BY_RESOURCE_ID);
-            q.setParameter("resId", res.getId());
-            List<MeasurementDefinition> def2 = q.getResultList();
-            assert def.equals(def2.get(0)) : "Got a different Definition back";
-        } finally {
-            getTransactionManager().rollback();
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    @Test(groups = "integration.ejb3")
     public void testFindScheduleByResourceAndDefinition() throws Exception {
         getTransactionManager().begin();
         EntityManager em = getEntityManager();

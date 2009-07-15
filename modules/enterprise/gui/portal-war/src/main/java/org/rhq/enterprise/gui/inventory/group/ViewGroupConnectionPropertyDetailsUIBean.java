@@ -64,7 +64,7 @@ public class ViewGroupConnectionPropertyDetailsUIBean extends PagedDataTableUIBe
             int groupPluginConfigurationUpdateId = getPluginResourceConfigurationUpdateId();
 
             this.pluginConfigurations = this.configurationManager
-                .getPluginConfigurationMapForAggregateUpdate(groupPluginConfigurationUpdateId);
+                .getPluginConfigurationMapForGroupUpdate(groupPluginConfigurationUpdateId);
             this.configurationSet = GroupPluginConfigurationUtility.buildConfigurationSet(subject, group,
                 this.pluginConfigurations);
         }
@@ -93,10 +93,10 @@ public class ViewGroupConnectionPropertyDetailsUIBean extends PagedDataTableUIBe
                 resourceGroup = requestResourceGroup;
             }
 
-            int aggregatePluginConfigurationUpdateId = FacesContextUtility.getRequiredRequestParameter("apcuId",
+            int groupPluginConfigurationUpdateId = FacesContextUtility.getRequiredRequestParameter("apcuId",
                 Integer.class);
             PageList<ConfigurationUpdateComposite> childUpdates = configurationManager
-                .findPluginConfigurationUpdateCompositesByParentId(aggregatePluginConfigurationUpdateId, pc);
+                .findPluginConfigurationUpdateCompositesByParentId(groupPluginConfigurationUpdateId, pc);
 
             return childUpdates;
         }

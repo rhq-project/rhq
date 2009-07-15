@@ -98,7 +98,7 @@
                                 value="#{item.id}"
                                 rendered="#{latestConfig.id != item.id
                                           and item.status ne 'INPROGRESS'
-                                          and empty item.aggregateConfigurationUpdate}"/>
+                                          and empty item.groupConfigurationUpdate}"/>
                 </rich:column>
 
                 <rich:column>
@@ -172,12 +172,12 @@
                     </f:facet>
 
                     <h:outputText value="Individual Resource Update"
-                                  rendered="#{empty item.aggregateConfigurationUpdate}"/>
+                                  rendered="#{empty item.groupConfigurationUpdate}"/>
                     <h:outputLink value="/rhq/group/configuration/history.xhtml"
-                                  rendered="#{not empty item.aggregateConfigurationUpdate}">
-                        <f:param name="groupId" value="#{item.aggregateConfigurationUpdate.group.id}"/>
-                        <f:param name="arcuId" value="#{item.aggregateConfigurationUpdate.id}"/>
-                        <f:param name="mode" value="aggregate"/>
+                                  rendered="#{not empty item.groupConfigurationUpdate}">
+                        <f:param name="groupId" value="#{item.groupConfigurationUpdate.group.id}"/>
+                        <f:param name="arcuId" value="#{item.groupConfigurationUpdate.id}"/>
+                        <f:param name="mode" value="group"/>
                         <h:outputText value="Group Update Member"/>
                     </h:outputLink>
                 </rich:column>

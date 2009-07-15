@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.configuration;
 
 import javax.faces.application.FacesMessage;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -70,7 +71,7 @@ public abstract class AbstractAddNewOpenMapMemberPropertyUIBean {
         }
 
         PropertySimple propertySimple = new PropertySimple(propertyName, this.propertyValue);
-        // It is essential to set override to true in case this is an aggregate config.
+        // It is essential to set override to true in case this is an group config.
         propertySimple.setOverride(true);
         propertyMap.put(propertySimple);
         FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Property '" + propertySimple.getName()

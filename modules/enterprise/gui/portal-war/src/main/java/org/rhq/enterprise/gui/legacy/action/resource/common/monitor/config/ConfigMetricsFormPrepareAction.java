@@ -18,8 +18,12 @@
  */
 package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.config;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
@@ -27,7 +31,9 @@ import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.tiles.ComponentContext;
 import org.apache.struts.tiles.actions.TilesAction;
+
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementScheduleComposite;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -36,6 +42,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.util.WebUtility;
+import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
@@ -62,6 +69,7 @@ public class ConfigMetricsFormPrepareAction extends TilesAction {
 
         Subject subject = WebUtility.getSubject(request);
         MeasurementScheduleManagerLocal scheduleManager = LookupUtil.getMeasurementScheduleManager();
+        MeasurementDefinitionManagerLocal definitionManager = LookupUtil.getMeasurementDefinitionManager();
         ResourceTypeManagerLocal rtManager = LookupUtil.getResourceTypeManager();
 
         // NOTE: This action will be passed either a resourceTypeId OR a resourceId or a groupID or type+parent
@@ -89,8 +97,15 @@ public class ConfigMetricsFormPrepareAction extends TilesAction {
         if (configuringDefaultSchedules) {
             int resourceTypeId = type;
             log.debug("Obtaining default metric schedules for resource type " + resourceTypeId + "...");
-            measurementSchedules = scheduleManager.findScheduleDefaultsForResourceType(subject,
-                resourceTypeId, pageControl);
+            List<MeasurementDefinition> definitions = definitionManager.getMeasurementDefinitionsByResourceType(
+                subject, resourceTypeId, null, null);
+            List<MeasurementScheduleComposite> composites = new ArrayList<MeasurementScheduleComposite>();
+            for (MeasurementDefinition definition : definitions) {
+                composites.add(new MeasurementScheduleComposite(definition, definition.isDefaultOn(), definition
+                    .getDefaultInterval()));
+            }
+            measurementSchedules = new PageList<MeasurementScheduleComposite>(composites, definitions.size(),
+                pageControl);
             request.setAttribute(AttrConstants.MONITOR_ENABLED_ATTR, Boolean.FALSE);
             ResourceType rType = rtManager.getResourceTypeById(subject, resourceTypeId);
 
@@ -100,8 +115,7 @@ public class ConfigMetricsFormPrepareAction extends TilesAction {
             int resourceId = WebUtility.getOptionalIntRequestParameter(request, "id", -1);
             if ((parent > 0) && (type > 0)) {
                 request.setAttribute(AttrConstants.MONITOR_ENABLED_ATTR, true);
-                measurementSchedules = scheduleManager.findSchedulesForAutoGroup(subject, parent, type,
-                    pageControl);
+                measurementSchedules = scheduleManager.findSchedulesForAutoGroup(subject, parent, type, pageControl);
 
                 request.setAttribute("type", type);
                 request.setAttribute("parent", parent);
@@ -113,8 +127,8 @@ public class ConfigMetricsFormPrepareAction extends TilesAction {
                 request.setAttribute(AttrConstants.MONITOR_ENABLED_ATTR, monitoringConfigured);
                 if (monitoringConfigured) {
                     log.debug("Obtaining metric schedules for resource " + resourceId + "...");
-                    measurementSchedules = scheduleManager.findScheduleCompositesForResource(subject, resourceId,
-                        null, pageControl);
+                    measurementSchedules = scheduleManager.findScheduleCompositesForResource(subject, resourceId, null,
+                        pageControl);
                 }
             } else if (groupId > 0) {
                 boolean monitoringConfigured = true; // isMonitoringConfiguredForGroup(groupId); // TODO implement the method, see below

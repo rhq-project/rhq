@@ -90,7 +90,7 @@
               controllerUrl="/admin/user/NewFormPrepare.do"
               path="/admin/user/NewUser.jsp"/>
 
-  <!-- used to aggregate ViewProperties and ViewRoles for a user -->
+  <!-- used to group together ViewProperties and ViewRoles for a user -->
   <definition name=".admin.user.View"
               controllerUrl="/admin/user/View.do"
               path="/admin/user/ViewUser.jsp"/>  

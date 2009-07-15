@@ -196,7 +196,7 @@ public interface OperationManagerLocal {
 
     /**
      * Returns the list of completed operation histories for the group resource. This will return all items that are no
-     * longer INPROGRESS that were invoked on this group. This only returns the "aggregate" history item - not the
+     * longer INPROGRESS that were invoked on this group. This only returns the group history item - not the
      * individual resource operation histories for the group member invocation results. See
      * {@link #findCompletedResourceOperationHistories(Subject, int, Long, Long, PageControl)} for that.
      *
@@ -210,7 +210,7 @@ public interface OperationManagerLocal {
 
     /**
      * Returns the list of pending operation histories for the group resource. This will return all items that are still
-     * INPROGRESS that were invoked on this group. This only returns the "aggregate" history item - not the individual
+     * INPROGRESS that were invoked on this group. This only returns the group history item - not the individual
      * resource operation histories for the group member invocation results. See
      * {@link #findPendingResourceOperationHistories(Subject, int, PageControl)} for that.
      *

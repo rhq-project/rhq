@@ -92,12 +92,12 @@ public class PropertySetRenderer extends Renderer {
         PropertySetComponent propertySetComponent = (PropertySetComponent) component;
         validateAttributes(propertySetComponent);
 
-        // If it's an AJAX request for this component, apply the aggregate config to the member configs
+        // If it's an AJAX request for this component, apply the group config to the member configs
         // and clear our child components. NOTE: This can *not* be done in decode(), because the model
         // will not have been updated yet with any changes made to child UIInput values. 
         String refresh = FacesContextUtility.getOptionalRequestParameter("refresh");
         if (refresh != null && refresh.equals(ConfigRenderer.PROPERTY_SET_COMPONENT_ID)) {
-            propertySetComponent.getConfigurationSet().applyAggregateConfiguration();
+            propertySetComponent.getConfigurationSet().applyGroupConfiguration();
             component.getChildren().clear();
         }
 
@@ -261,7 +261,7 @@ public class PropertySetRenderer extends Renderer {
     }
 
     private List<PropertyInfo> createPropertyInfos(PropertySetComponent propertySetComponent,
-        PropertySimple aggregatePropertySimple) {
+        PropertySimple groupPropertySimple) {
         ValueExpression configurationInfosExpression = propertySetComponent
             .getValueExpression(PropertySetComponent.CONFIGURATION_SET_ATTRIBUTE);
         String configurationInfosExpressionString = configurationInfosExpression.getExpressionString();
@@ -270,7 +270,7 @@ public class PropertySetRenderer extends Renderer {
             + ".members[%d].configuration}";
 
         String propertyExpressionStringFormat = createPropertyExpressionFormat(configurationExpressionStringFormat,
-            aggregatePropertySimple, propertySetComponent.getListIndex());
+            groupPropertySimple, propertySetComponent.getListIndex());
         String propertyValueExpressionStringFormat = "#{"
             + FacesExpressionUtility.unwrapExpressionString(propertyExpressionStringFormat) + ".stringValue}";
         //noinspection ConstantConditions

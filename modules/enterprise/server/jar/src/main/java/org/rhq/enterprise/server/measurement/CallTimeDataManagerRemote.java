@@ -51,7 +51,7 @@ public interface CallTimeDataManagerRemote {
         @WebParam(name = "measurementDefinitionId") int measurementDefinitionId, //
         @WebParam(name = "beginTime") long beginTime, //
         @WebParam(name = "endTime") long endTime, //
-        @WebParam(name = "pc") PageControl pc) //
+        @WebParam(name = "pageControl") PageControl pageControl) //
         throws FetchException;
         */
 }

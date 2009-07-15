@@ -306,18 +306,6 @@ public interface MeasurementScheduleManagerLocal {
     void enableSchedulesForCompatibleGroup(Subject subject, int groupId, int[] measurementDefinitionIds);
 
     /**
-     * Retrieves the default metric collection schedules for the given resource type.
-     *
-     * @param  subject        the current user
-     * @param  resourceTypeId a {@link org.rhq.core.domain.resource.ResourceType} id
-     * @param  pageControl    the page control for the results
-     *
-     * @return the default metric collection schedules for the given resource type
-     */
-    PageList<MeasurementScheduleComposite> findScheduleDefaultsForResourceType(Subject subject, int resourceTypeId,
-        PageControl pageControl);
-
-    /**
      * Return a list of MeasurementSchedules for the given ids
      *
      * @param  ids PrimaryKeys of the schedules searched

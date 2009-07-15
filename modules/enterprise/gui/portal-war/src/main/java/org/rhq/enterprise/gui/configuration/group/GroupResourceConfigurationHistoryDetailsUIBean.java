@@ -67,7 +67,7 @@ public class GroupResourceConfigurationHistoryDetailsUIBean extends PagedDataTab
             int groupResourceConfigurationUpdateId = getGroupResourceConfigurationUpdateId();
 
             this.resourceConfigurations = this.configurationManager
-                .getResourceConfigurationMapForAggregateUpdate(groupResourceConfigurationUpdateId);
+                .getResourceConfigurationMapForGroupUpdate(groupResourceConfigurationUpdateId);
             this.configurationSet = GroupResourceConfigurationUtility.buildConfigurationSet(subject, group,
                 resourceConfigurations);
         }

@@ -45,7 +45,7 @@ import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
-import org.rhq.core.domain.configuration.group.AggregatePluginConfigurationUpdate;
+import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.discovery.InventoryReport;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
@@ -341,19 +341,19 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
     }
 
     @Test(enabled = false)
-    public void testAggregatePluginConfigurationUpdateWorkflowSuccess() throws Exception {
+    public void testGroupPluginConfigurationUpdateWorkflowSuccess() throws Exception {
         // TODO (joseph): Fix and then re-enable this test.
-        //testAggregatePluginConfigurationUpdateWorkflowHelper(false);
+        //testGroupPluginConfigurationUpdateWorkflowHelper(false);
     }
 
     @Test(enabled = false)
-    public void testAggregatePluginConfigurationUpdateWorkflowFailure() throws Exception {
+    public void testGroupPluginConfigurationUpdateWorkflowFailure() throws Exception {
         // TODO (joseph): Fix and then re-enable this test.
-        //testAggregatePluginConfigurationUpdateWorkflowHelper(true);
+        //testGroupPluginConfigurationUpdateWorkflowHelper(true);
     }
 
     @Test(enabled = false)
-    public void testAggregatePluginConfigurationUpdateMergeAlgorithmPerformance() throws Exception {
+    public void testGroupPluginConfigurationUpdateMergeAlgorithmPerformance() throws Exception {
         Configuration configuration = new Configuration();
         configuration.put(new PropertySimple("foo1", "1"));
         configuration.put(new PropertySimple("foo2", "2"));
@@ -365,7 +365,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
          * for a configuration object that has 5 simple properties, baseline for groupSize of 100K was 165ms (Dec 6,
          * 2007);
          *
-         * that means it took 0.000165ms per merge into the aggregate;
+         * that means it took 0.000165ms per merge into the group configuration;
          */
         final int TEST_SIZE = 100000;
         final double BASELINE = 0.00165;
@@ -378,30 +378,29 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         }
 
         /*
-         * getAggregateConfiguration is the most expensive part of the algorithm that helps to render a ResourceGroup's
+         * getGroupConfiguration is the most expensive part of the algorithm that helps to render a ResourceGroup's
          * inventory tab
          *
          * so let's run timings on uber groups to make sure it's speedy
          */
         long before = System.currentTimeMillis();
-        //AggregatePluginConfigurationUpdate.getAggregateConfiguration(timingSet);
+        //GroupPluginConfigurationUpdate.getGroupConfiguration(timingSet);
         long after = System.currentTimeMillis();
 
         long millisTaken = after - before;
 
         if (millisTaken < EXPECTED) {
             if ((millisTaken + 5000) < EXPECTED) {
-                assert false : "Merging AggregatePluginConfigurationUpdates is too slow: " + "It took " + millisTaken
+                assert false : "Merging GroupPluginConfigurationUpdates is too slow: " + "It took " + millisTaken
                     + " millis for " + TEST_SIZE + " resources; " + "We wanted less than " + EXPECTED + "ms";
             } else {
-                System.out.println("Merging AggregatePluginConfigurationUpdates is a bit slow: " + "It took "
-                    + millisTaken + " millis for " + TEST_SIZE + " resources; " + "We wanted less than " + EXPECTED
-                    + "ms");
+                System.out.println("Merging GroupPluginConfigurationUpdates is a bit slow: " + "It took " + millisTaken
+                    + " millis for " + TEST_SIZE + " resources; " + "We wanted less than " + EXPECTED + "ms");
             }
         }
     }
 
-    private void testAggregatePluginConfigurationUpdateWorkflowHelper(boolean failOnChildUpdates) throws Exception {
+    private void testGroupPluginConfigurationUpdateWorkflowHelper(boolean failOnChildUpdates) throws Exception {
         getTransactionManager().begin();
         EntityManager em = getEntityManager();
 
@@ -440,69 +439,70 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
                 + "expected was: " + configuration2;
             /*  end simple checks */
 
-            /* begin aggregate configuration creation checks */
-            Configuration expectedAggregate = new Configuration();
-            expectedAggregate.put(new PropertySimple("foo", AggregatePluginConfigurationUpdate.MIXED_VALUES_MARKER));
-            expectedAggregate.put(new PropertySimple("fail", "false"));
+            /* begin group configuration creation checks */
+            Configuration expectedGroupConfiguration = new Configuration();
+            expectedGroupConfiguration
+                .put(new PropertySimple("foo", GroupPluginConfigurationUpdate.MIXED_VALUES_MARKER));
+            expectedGroupConfiguration.put(new PropertySimple("fail", "false"));
 
             List<Configuration> updatedConfigurations = Arrays.asList(new Configuration[] { updatedConfiguration1,
                 updatedConfiguration2 });
 
-            Configuration aggregateConfiguration = null;
+            Configuration groupConfiguration = null;
             /*
-            Configuration aggregateConfiguration = AggregatePluginConfigurationUpdate
-                .getAggregateConfiguration(updatedConfigurations);
+            Configuration groupConfiguration = GroupPluginConfigurationUpdate
+                .getGroupConfiguration(updatedConfigurations);
              */
 
-            assert aggregateConfiguration.equals(expectedAggregate) : "aggregate was: " + aggregateConfiguration + ", "
-                + "expected was: " + expectedAggregate;
-            /*  end aggregate configuration creation checks */
+            assert groupConfiguration.equals(expectedGroupConfiguration) : "group configuration was: "
+                + groupConfiguration + ", " + "expected was: " + expectedGroupConfiguration;
+            /*  end group configuration creation checks */
 
-            /* begin aggregate modification */
-            Configuration overrideAggregate = new Configuration();
+            /* begin group modification */
+            Configuration groupConfigurationOverride = new Configuration();
             PropertySimple propertySimple1 = new PropertySimple("foo", "3");
             PropertySimple propertySimple2 = new PropertySimple("fail", "true");
-            overrideAggregate.put(propertySimple1);
-            overrideAggregate.put(propertySimple2);
+            groupConfigurationOverride.put(propertySimple1);
+            groupConfigurationOverride.put(propertySimple2);
 
             // regardless of failures, semantics dictate that the new configuration should be persisted to the resource
-            Configuration expectedAggregateResults = new Configuration();
-            expectedAggregateResults.put(new PropertySimple("foo", "3")); // from overrideAggregate
+            Configuration expectedGroupConfigurationResults = new Configuration();
+            expectedGroupConfigurationResults.put(new PropertySimple("foo", "3")); // from groupConfigurationOverride
             propertySimple1.setOverride(Boolean.TRUE);
 
             if (failOnChildUpdates) {
-                expectedAggregateResults.put(new PropertySimple("fail", "true")); // from overrideAggregate
+                expectedGroupConfigurationResults.put(new PropertySimple("fail", "true")); // from groupConfigurationOverride
                 propertySimple2.setOverride(Boolean.TRUE); // will make TestServices fail
             } else {
-                expectedAggregateResults.put(new PropertySimple("fail", "false")); // from both resource's current configuration
+                expectedGroupConfigurationResults.put(new PropertySimple("fail", "false")); // from both resource's current configuration
                 propertySimple2.setOverride(Boolean.FALSE); // false is default, but setting explicitly for test clarity
             }
 
-            Map<Integer, Configuration> memberConfigs = new HashMap();
+            Map<Integer, Configuration> memberConfigs = new HashMap<Integer, Configuration>();
             memberConfigs.put(resource1.getId(), configuration1);
             memberConfigs.put(resource2.getId(), configuration2);
-            int aggregateUpdateId = configurationManager.scheduleAggregatePluginConfigurationUpdate(overlord,
-                compatibleGroup.getId(), memberConfigs);
+            int groupUpdateId = configurationManager.scheduleGroupPluginConfigurationUpdate(overlord, compatibleGroup
+                .getId(), memberConfigs);
 
             // instead of sleeping, let's directly execute what would normally be scheduled
-            //configurationManager.completeAggregatePluginConfigurationUpdate(aggregateUpdateId);
+            //configurationManager.completeGroupPluginConfigurationUpdate(groupUpdateId);
 
-            AggregatePluginConfigurationUpdate update = configurationManager
-                .getAggregatePluginConfigurationById(aggregateUpdateId);
+            GroupPluginConfigurationUpdate update = configurationManager.getGroupPluginConfigurationById(groupUpdateId);
 
-            assert update != null : "Aggregate plugin configuration update should not have been null";
+            assert update != null : "Group plugin configuration update should not have been null";
 
             int i = 0;
             for (PluginConfigurationUpdate childUpdate : update.getConfigurationUpdates()) {
                 Configuration childUpdateConfiguration = childUpdate.getConfiguration();
-                assert childUpdateConfiguration.equals(expectedAggregateResults) : "new updateChildConfig[" + i
-                    + "] was: " + childUpdateConfiguration + ", " + "expected was: " + expectedAggregateResults;
+                assert childUpdateConfiguration.equals(expectedGroupConfigurationResults) : "new updateChildConfig["
+                    + i + "] was: " + childUpdateConfiguration + ", " + "expected was: "
+                    + expectedGroupConfigurationResults;
                 i++;
             }
 
-            Configuration configurationAfterAggregate1 = configurationManager.getPluginConfiguration(overlord,
+            Configuration configurationAfterGroupUpdate1 = configurationManager.getPluginConfiguration(overlord,
                 resource1.getId());
-            Configuration configurationAfterAggregate2 = configurationManager.getPluginConfiguration(overlord,
+            Configuration configurationAfterGroupUpdate2 = configurationManager.getPluginConfiguration(overlord,
                 resource2.getId());
 
             ConfigurationUpdateStatus expectedResultStatus = null;
@@ -513,16 +513,16 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
                 expectedResultStatus = ConfigurationUpdateStatus.SUCCESS;
             }
 
-            assert configurationAfterAggregate1.equals(expectedAggregateResults) : "new config1 was: "
-                + configurationAfterAggregate1 + ", " + "expected was: " + expectedAggregateResults;
+            assert configurationAfterGroupUpdate1.equals(expectedGroupConfigurationResults) : "new config1 was: "
+                + configurationAfterGroupUpdate1 + ", " + "expected was: " + expectedGroupConfigurationResults;
 
-            assert configurationAfterAggregate2.equals(expectedAggregateResults) : "new config2 was: "
-                + configurationAfterAggregate2 + ", " + "expected was: " + expectedAggregateResults;
+            assert configurationAfterGroupUpdate2.equals(expectedGroupConfigurationResults) : "new config2 was: "
+                + configurationAfterGroupUpdate2 + ", " + "expected was: " + expectedGroupConfigurationResults;
 
-            assert update.getStatus() == expectedResultStatus : "Aggregate plugin configuration update "
+            assert update.getStatus() == expectedResultStatus : "Group plugin configuration update "
                 + "should have been marked as " + expectedResultStatus + ": " + update;
 
-            /*  end aggregate modification */
+            /*  end group modification */
         } catch (Exception e) {
             e.printStackTrace();
             assert false : "Failed test with this exception: " + e;

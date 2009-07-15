@@ -21,7 +21,7 @@ package org.rhq.enterprise.gui.inventory.group;
 import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.configuration.group.AggregatePluginConfigurationUpdate;
+import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -54,7 +54,7 @@ public class ViewGroupConnectionPropertyHistoryUIBean extends PagedDataTableUIBe
         Integer[] selectedUpdateIds = StringUtility.getIntegerArray(selectedUpdateStringIds);
 
         try {
-            int deleteCount = configurationManager.deleteAggregatePluginConfigurationUpdates(subject, resourceGroup
+            int deleteCount = configurationManager.deleteGroupPluginConfigurationUpdates(subject, resourceGroup
                 .getId(), selectedUpdateIds);
             if (deleteCount == selectedUpdateIds.length) {
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Deleted " + selectedUpdateIds.length
@@ -83,13 +83,13 @@ public class ViewGroupConnectionPropertyHistoryUIBean extends PagedDataTableUIBe
     }
 
     private class ListGroupConnectionPropertyUpdateHistoryDataModel extends
-        PagedListDataModel<AggregatePluginConfigurationUpdate> {
+        PagedListDataModel<GroupPluginConfigurationUpdate> {
         public ListGroupConnectionPropertyUpdateHistoryDataModel(PageControlView view, String beanName) {
             super(view, beanName);
         }
 
         @Override
-        public PageList<AggregatePluginConfigurationUpdate> fetchPage(PageControl pc) {
+        public PageList<GroupPluginConfigurationUpdate> fetchPage(PageControl pc) {
             ResourceGroup requestResourceGroup = EnterpriseFacesContextUtility.getResourceGroup();
             ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
 
@@ -99,8 +99,8 @@ public class ViewGroupConnectionPropertyHistoryUIBean extends PagedDataTableUIBe
                 resourceGroup = requestResourceGroup;
             }
 
-            PageList<AggregatePluginConfigurationUpdate> results = null;
-            results = configurationManager.findAggregatePluginConfigurationUpdatesByGroupId(
+            PageList<GroupPluginConfigurationUpdate> results = null;
+            results = configurationManager.findGroupPluginConfigurationUpdates(
                 requestResourceGroup.getId(), pc);
             return results;
         }

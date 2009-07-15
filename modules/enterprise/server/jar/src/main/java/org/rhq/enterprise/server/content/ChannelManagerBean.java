@@ -449,7 +449,6 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
     }
 
     @SuppressWarnings("unchecked")
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
     public void unsubscribeResourceFromChannels(Subject subject, int resourceId, int[] channelIds) {
         if ((channelIds == null) || (channelIds.length == 0)) {
             return; // nothing to do

@@ -29,7 +29,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 
-import org.rhq.core.domain.configuration.group.AggregateResourceConfigurationUpdate;
+import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
 import org.rhq.core.domain.resource.Resource;
 
 @DiscriminatorValue("resource")
@@ -78,7 +78,7 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = ResourceConfigurationUpdate.QUERY_FIND_BY_PARENT_UPDATE_ID_AND_STATUS, query = "" //
         + "SELECT cu.resource " //
         + "  FROM ResourceConfigurationUpdate cu " //
-        + " WHERE cu.aggregateConfigurationUpdate.id = :parentUpdateId " //
+        + " WHERE cu.groupConfigurationUpdate.id = :parentUpdateId " //
         + "   AND cu.status = :status"),
     @NamedQuery(name = ResourceConfigurationUpdate.QUERY_FIND_COMPOSITE_BY_PARENT_UPDATE_ID, query = "" //
         + "SELECT new org.rhq.core.domain.configuration.composite.ConfigurationUpdateComposite" //
@@ -86,11 +86,11 @@ import org.rhq.core.domain.resource.Resource;
         + "         res.id, res.name ) " //
         + "  FROM ResourceConfigurationUpdate cu " //
         + "  JOIN cu.resource res " //
-        + " WHERE cu.aggregateConfigurationUpdate.id = :aggregateConfigurationUpdateId"),
+        + " WHERE cu.groupConfigurationUpdate.id = :groupConfigurationUpdateId"),
     @NamedQuery(name = ResourceConfigurationUpdate.QUERY_FIND_BY_PARENT_UPDATE_ID, query = "" //
         + "SELECT cu.id " //
         + "  FROM ResourceConfigurationUpdate cu " //
-        + " WHERE cu.aggregateConfigurationUpdate.id = :aggregateConfigurationUpdateId"),
+        + " WHERE cu.groupConfigurationUpdate.id = :groupConfigurationUpdateId"),
     @NamedQuery(name = ResourceConfigurationUpdate.QUERY_FIND_ALL_COMPOSITES_ADMIN, query = "" //
         + "   SELECT new org.rhq.core.domain.configuration.composite.ConfigurationUpdateComposite" //
         + "        ( cu.id, cu.status, cu.errorMessage, cu.subjectName, cu.createdTime, cu.modifiedTime, " // update w/o config
@@ -141,18 +141,18 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_2, query = ""
         + "DELETE FROM ResourceConfigurationUpdate rcu " //
         + " WHERE rcu.resource.id IN ( :resourceIds )"),
-    @NamedQuery(name = ResourceConfigurationUpdate.QUERY_DELETE_UPDATE_AGGREGATE, query = "" //
+    @NamedQuery(name = ResourceConfigurationUpdate.QUERY_DELETE_GROUP_UPDATE, query = "" //
         + "UPDATE ResourceConfigurationUpdate rcu " //
-        + "   SET rcu.aggregateConfigurationUpdate = NULL " //
-        + " WHERE rcu.aggregateConfigurationUpdate IN ( SELECT arcu " //
-        + "                                               FROM AggregateResourceConfigurationUpdate arcu " //
-        + "                                              WHERE arcu.id = :arcuId )"),
-    @NamedQuery(name = ResourceConfigurationUpdate.QUERY_DELETE_UPDATE_AGGREGATE_BY_GROUP, query = "" //
+        + "   SET rcu.groupConfigurationUpdate = NULL " //
+        + " WHERE rcu.groupConfigurationUpdate IN ( SELECT arcu " //
+        + "                                           FROM GroupResourceConfigurationUpdate arcu " //
+        + "                                          WHERE arcu.id = :arcuId )"),
+    @NamedQuery(name = ResourceConfigurationUpdate.QUERY_DELETE_GROUP_UPDATES_FOR_GROUP, query = "" //
         + "UPDATE ResourceConfigurationUpdate rcu " //
-        + "   SET rcu.aggregateConfigurationUpdate = NULL " //
-        + " WHERE rcu.aggregateConfigurationUpdate IN ( SELECT arcu " //
-        + "                                               FROM AggregateResourceConfigurationUpdate arcu " //
-        + "                                              WHERE arcu.group.id = :groupId )") })
+        + "   SET rcu.groupConfigurationUpdate = NULL " //
+        + " WHERE rcu.groupConfigurationUpdate IN ( SELECT arcu " //
+        + "                                           FROM GroupResourceConfigurationUpdate arcu " //
+        + "                                          WHERE arcu.group.id = :groupId )") })
 public class ResourceConfigurationUpdate extends AbstractResourceConfigurationUpdate {
     private static final long serialVersionUID = 1L;
 
@@ -173,8 +173,8 @@ public class ResourceConfigurationUpdate extends AbstractResourceConfigurationUp
     public static final String QUERY_DELETE_BY_RESOURCES_0 = "ResourceConfigurationUpdate.deleteByResources0";
     public static final String QUERY_DELETE_BY_RESOURCES_1 = "ResourceConfigurationUpdate.deleteByResources1";
     public static final String QUERY_DELETE_BY_RESOURCES_2 = "ResourceConfigurationUpdate.deleteByResources2";
-    public static final String QUERY_DELETE_UPDATE_AGGREGATE = "ResourceConfigurationUpdate.deleteUpdateAggregate";
-    public static final String QUERY_DELETE_UPDATE_AGGREGATE_BY_GROUP = "ResourceConfigurationUpdate.deleteUpdateAggregateByGroup";
+    public static final String QUERY_DELETE_GROUP_UPDATE = "ResourceConfigurationUpdate.deleteGroupUpdate";
+    public static final String QUERY_DELETE_GROUP_UPDATES_FOR_GROUP = "ResourceConfigurationUpdate.deleteGroupUpdatesForGroup";
 
     @JoinColumn(name = "CONFIG_RES_ID", referencedColumnName = "ID", nullable = true)
     @ManyToOne
@@ -182,7 +182,7 @@ public class ResourceConfigurationUpdate extends AbstractResourceConfigurationUp
 
     @JoinColumn(name = "AGG_RES_UPDATE_ID", referencedColumnName = "ID", nullable = true)
     @ManyToOne
-    private AggregateResourceConfigurationUpdate aggregateConfigurationUpdate;
+    private GroupResourceConfigurationUpdate groupConfigurationUpdate;
 
     protected ResourceConfigurationUpdate() {
     } // JPA
@@ -200,12 +200,12 @@ public class ResourceConfigurationUpdate extends AbstractResourceConfigurationUp
         this.resource = resource;
     }
 
-    public AggregateResourceConfigurationUpdate getAggregateConfigurationUpdate() {
-        return aggregateConfigurationUpdate;
+    public GroupResourceConfigurationUpdate getGroupConfigurationUpdate() {
+        return groupConfigurationUpdate;
     }
 
-    public void setAggregateConfigurationUpdate(AggregateResourceConfigurationUpdate aggregateConfigurationUpdate) {
-        this.aggregateConfigurationUpdate = aggregateConfigurationUpdate;
+    public void setGroupConfigurationUpdate(GroupResourceConfigurationUpdate groupConfigurationUpdate) {
+        this.groupConfigurationUpdate = groupConfigurationUpdate;
     }
 
     @Override
@@ -213,9 +213,9 @@ public class ResourceConfigurationUpdate extends AbstractResourceConfigurationUp
         super.appendToStringInternals(str);
         str.append(", resource=").append(this.resource);
 
-        if (aggregateConfigurationUpdate != null) {
-            // circular toString if you try to print the entire aggregateConfigurationUpdate object
-            str.append(", aggregateResourceConfigurationUpdate=").append(aggregateConfigurationUpdate.getId());
+        if (groupConfigurationUpdate != null) {
+            // circular toString if you try to print the entire groupConfigurationUpdate object
+            str.append(", groupResourceConfigurationUpdate=").append(groupConfigurationUpdate.getId());
         }
     }
 }

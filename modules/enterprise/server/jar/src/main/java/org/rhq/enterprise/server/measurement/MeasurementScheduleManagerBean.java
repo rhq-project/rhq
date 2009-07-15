@@ -320,18 +320,6 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         }
     }
 
-    @SuppressWarnings("unchecked")
-    public PageList<MeasurementScheduleComposite> findScheduleDefaultsForResourceType(Subject subject,
-        int resourceTypeId, PageControl pageControl) {
-        pageControl.initDefaultOrderingField("md.id");
-
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-            MeasurementDefinition.FIND_SCHEDULE_COMPOSITE_FOR_RESOURCE_TYPE, pageControl);
-        query.setParameter("resourceTypeId", resourceTypeId);
-        List<MeasurementScheduleComposite> results = query.getResultList();
-        return new PageList<MeasurementScheduleComposite>(results, pageControl);
-    }
-
     /**
      * Get the MeasurementSchedule composits for an autogroup
      *

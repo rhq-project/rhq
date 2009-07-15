@@ -161,7 +161,6 @@ public interface RoleManagerRemote {
         @WebParam(name = "roleIds") int[] roleIds) //
         throws UpdateException;
 
-    //available!
     /**
      * Removes the given resource groups from the given role.
      *

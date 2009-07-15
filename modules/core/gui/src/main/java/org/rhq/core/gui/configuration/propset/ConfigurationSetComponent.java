@@ -49,7 +49,7 @@ public class ConfigurationSetComponent extends AbstractConfigurationComponent im
     public Configuration getConfiguration() {
         ConfigurationSet configurationSet = FacesComponentUtility.getExpressionAttribute(this,
             CONFIGURATION_SET_ATTRIBUTE, ConfigurationSet.class);
-        return (configurationSet != null) ? configurationSet.getAggregateConfiguration() : null;
+        return (configurationSet != null) ? configurationSet.getGroupConfiguration() : null;
     }
 
     @Nullable
@@ -68,7 +68,7 @@ public class ConfigurationSetComponent extends AbstractConfigurationComponent im
     public String getConfigurationExpressionString() {
         String configurationSetExpressionString = getValueExpression(CONFIGURATION_SET_ATTRIBUTE).getExpressionString();
         return "#{" + FacesExpressionUtility.unwrapExpressionString(configurationSetExpressionString)
-            + ".aggregateConfiguration}";
+            + ".groupConfiguration}";
     }
 
     @Nullable

@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.configuration.test;
 
 import javax.faces.application.FacesMessage;
+
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.Outcomes;
 
@@ -31,9 +32,9 @@ public class EditTestConfigurationUIBean extends AbstractTestConfigurationUIBean
     protected static final String FAILURE_OUTCOME = "failure";
 
     public String updateConfiguration() {
-        // Any values changed in the aggregate config (i.e. via the inputs on the main page) need to be
+        // Any values changed in the group config (i.e. via the inputs on the main page) need to be
         // applied to all member configs before persisting them.
-        getConfigurationSet().applyAggregateConfiguration();
+        getConfigurationSet().applyGroupConfiguration();
         // TODO (low priority): Persist the test config somewhere.
         FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Configuration updated.");
         return Outcomes.SUCCESS;

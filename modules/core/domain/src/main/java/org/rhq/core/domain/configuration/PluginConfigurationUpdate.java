@@ -31,7 +31,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 
-import org.rhq.core.domain.configuration.group.AggregatePluginConfigurationUpdate;
+import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.resource.Resource;
 
 @DiscriminatorValue("plugin")
@@ -67,15 +67,16 @@ import org.rhq.core.domain.resource.Resource;
         + "       ( cu.id, cu.status, cu.errorMessage, cu.subjectName, cu.createdTime, cu.modifiedTime, " // update w/o config
         + "         res.id, res.name ) " //
         + "  FROM PluginConfigurationUpdate cu " //
-        + "  JOIN cu.resource res " + " WHERE cu.aggregateConfigurationUpdate.id = :aggregateConfigurationUpdateId"),
+        + "  JOIN cu.resource res " //
+        + " WHERE cu.groupConfigurationUpdate.id = :groupConfigurationUpdateId"),
     @NamedQuery(name = PluginConfigurationUpdate.QUERY_FIND_BY_PARENT_UPDATE_ID, query = "" //
         + "SELECT cu.id " //
         + "  FROM PluginConfigurationUpdate cu " //
-        + " WHERE cu.aggregateConfigurationUpdate.id = :aggregateConfigurationUpdateId"),
+        + " WHERE cu.groupConfigurationUpdate.id = :groupConfigurationUpdateId"),
     @NamedQuery(name = PluginConfigurationUpdate.QUERY_FIND_STATUS_BY_PARENT_UPDATE_ID, query = "" //
         + "SELECT cu.status " //
         + "  FROM PluginConfigurationUpdate cu " //
-        + " WHERE cu.aggregateConfigurationUpdate.id = :aggregateConfigurationUpdateId " //
+        + " WHERE cu.groupConfigurationUpdate.id = :groupConfigurationUpdateId " //
         + " GROUP BY cu.status"), //
     @NamedQuery(name = PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_0, query = "" //
         + "UPDATE Property p " //
@@ -94,18 +95,18 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_2, query = "" //
         + "DELETE FROM PluginConfigurationUpdate pcu " //
         + " WHERE pcu.resource.id IN ( :resourceIds )"),
-    @NamedQuery(name = PluginConfigurationUpdate.QUERY_DELETE_UPDATE_AGGREGATE_BY_GROUP, query = "" //
+    @NamedQuery(name = PluginConfigurationUpdate.QUERY_DELETE_GROUP_UPDATES_FOR_GROUP, query = "" //
         + "UPDATE PluginConfigurationUpdate pcu " //
-        + "   SET pcu.aggregateConfigurationUpdate = null " //
-        + " WHERE pcu.aggregateConfigurationUpdate IN ( SELECT apcu " //
-        + "                                               FROM AggregatePluginConfigurationUpdate apcu " //
-        + "                                              WHERE apcu.group.id = :groupId )"),
-    @NamedQuery(name = PluginConfigurationUpdate.QUERY_DELETE_UPDATE_AGGREGATE, query = "" //
+        + "   SET pcu.groupConfigurationUpdate = null " //
+        + " WHERE pcu.groupConfigurationUpdate IN ( SELECT apcu " //
+        + "                                           FROM GroupPluginConfigurationUpdate apcu " //
+        + "                                          WHERE apcu.group.id = :groupId )"),
+    @NamedQuery(name = PluginConfigurationUpdate.QUERY_DELETE_GROUP_UPDATE, query = "" //
         + "UPDATE PluginConfigurationUpdate pcu " //
-        + "   SET pcu.aggregateConfigurationUpdate = null " //
-        + " WHERE pcu.aggregateConfigurationUpdate IN ( SELECT apcu " //
-        + "                                               FROM AggregatePluginConfigurationUpdate apcu " //
-        + "                                              WHERE apcu.id = :apcuId )") })
+        + "   SET pcu.groupConfigurationUpdate = null " //
+        + " WHERE pcu.groupConfigurationUpdate IN ( SELECT apcu " //
+        + "                                           FROM GroupPluginConfigurationUpdate apcu " //
+        + "                                          WHERE apcu.id = :apcuId )") })
 /**
  * @author Joseph Marques
  */
@@ -122,8 +123,8 @@ public class PluginConfigurationUpdate extends AbstractResourceConfigurationUpda
     public static final String QUERY_DELETE_BY_RESOURCES_0 = "PluginConfigurationUpdate.deleteByResources0";
     public static final String QUERY_DELETE_BY_RESOURCES_1 = "PluginConfigurationUpdate.deleteByResources1";
     public static final String QUERY_DELETE_BY_RESOURCES_2 = "PluginConfigurationUpdate.deleteByResources2";
-    public static final String QUERY_DELETE_UPDATE_AGGREGATE_BY_GROUP = "pluginConfigurationUpdate.deleteUpdateAggregateByGroup";
-    public static final String QUERY_DELETE_UPDATE_AGGREGATE = "pluginConfigurationUpdate.deleteUpdateAggregate";
+    public static final String QUERY_DELETE_GROUP_UPDATES_FOR_GROUP = "pluginConfigurationUpdate.deleteGroupUpdatesForGroup";
+    public static final String QUERY_DELETE_GROUP_UPDATE = "pluginConfigurationUpdate.deleteGroupUpdate";
 
     @JoinColumn(name = "PLUGIN_CONFIG_RES_ID", referencedColumnName = "ID", nullable = true)
     @ManyToOne(cascade = CascadeType.MERGE, fetch = FetchType.LAZY)
@@ -131,7 +132,7 @@ public class PluginConfigurationUpdate extends AbstractResourceConfigurationUpda
 
     @JoinColumn(name = "AGG_PLUGIN_UPDATE_ID", referencedColumnName = "ID", nullable = true)
     @ManyToOne
-    private AggregatePluginConfigurationUpdate aggregateConfigurationUpdate;
+    private GroupPluginConfigurationUpdate groupConfigurationUpdate;
 
     protected PluginConfigurationUpdate() {
     } // JPA
@@ -149,12 +150,12 @@ public class PluginConfigurationUpdate extends AbstractResourceConfigurationUpda
         this.resource = resource;
     }
 
-    public AggregatePluginConfigurationUpdate getAggregateConfigurationUpdate() {
-        return aggregateConfigurationUpdate;
+    public GroupPluginConfigurationUpdate getGroupConfigurationUpdate() {
+        return groupConfigurationUpdate;
     }
 
-    public void setAggregateConfigurationUpdate(AggregatePluginConfigurationUpdate aggregateConfigurationUpdate) {
-        this.aggregateConfigurationUpdate = aggregateConfigurationUpdate;
+    public void setGroupConfigurationUpdate(GroupPluginConfigurationUpdate groupConfigurationUpdate) {
+        this.groupConfigurationUpdate = groupConfigurationUpdate;
     }
 
     @Override
@@ -162,9 +163,9 @@ public class PluginConfigurationUpdate extends AbstractResourceConfigurationUpda
         super.appendToStringInternals(str);
         str.append(", resource=").append(this.resource);
 
-        if (aggregateConfigurationUpdate != null) {
-            // circular toString if you try to print the entire aggregateConfigurationUpdate object
-            str.append(", aggregatePluginConfigurationUpdate=").append(aggregateConfigurationUpdate.getId());
+        if (groupConfigurationUpdate != null) {
+            // circular toString if you try to print the entire groupConfigurationUpdate object
+            str.append(", groupPluginConfigurationUpdate=").append(groupConfigurationUpdate.getId());
         }
     }
 }

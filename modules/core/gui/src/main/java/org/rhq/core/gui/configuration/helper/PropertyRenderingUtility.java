@@ -73,13 +73,13 @@ public class PropertyRenderingUtility {
     @NotNull
     public static UIInput createInputForSimpleProperty(PropertyDefinitionSimple propertyDefinitionSimple,
         PropertySimple propertySimple, ValueExpression propertyValueExpression, Integer listIndex,
-        boolean configIsAggregate, boolean configReadOnly, boolean configFullyEditable, boolean prevalidate) {
+        boolean isGroupConfig, boolean configReadOnly, boolean configFullyEditable, boolean prevalidate) {
         UIInput input = createInput(propertyDefinitionSimple);
 
         if (propertySimple != null)
             addTitleAttribute(input, propertySimple.getStringValue());
 
-        boolean isUnset = isUnset(propertyDefinitionSimple, propertySimple, configIsAggregate);
+        boolean isUnset = isUnset(propertyDefinitionSimple, propertySimple, isGroupConfig);
         boolean isReadOnly = isReadOnly(propertyDefinitionSimple, propertySimple, configReadOnly, configFullyEditable);
 
         String propertyId = PropertyIdGeneratorUtility.getIdentifier(propertySimple, listIndex);
@@ -155,7 +155,7 @@ public class PropertyRenderingUtility {
 
     public static HtmlSelectBooleanCheckbox addUnsetControl(UIComponent parent,
         PropertyDefinitionSimple propertyDefinitionSimple, PropertySimple propertySimple, Integer listIndex,
-        UIInput valueInput, boolean configIsAggregate, boolean configReadOnly, boolean configFullyEditable) {
+        UIInput valueInput, boolean isGroupConfig, boolean configReadOnly, boolean configFullyEditable) {
 
         HtmlSelectBooleanCheckbox unsetCheckbox = FacesComponentUtility.createComponent(
             HtmlSelectBooleanCheckbox.class, null);
@@ -164,9 +164,9 @@ public class PropertyRenderingUtility {
             unsetCheckbox.setId(unsetCheckboxId);
         }
         parent.getChildren().add(unsetCheckbox);
-        unsetCheckbox.setValue(isUnset(propertyDefinitionSimple, propertySimple, configIsAggregate));
+        unsetCheckbox.setValue(isUnset(propertyDefinitionSimple, propertySimple, isGroupConfig));
         if (isReadOnly(propertyDefinitionSimple, propertySimple, configReadOnly, configFullyEditable)
-            || isAggregateWithDifferingValues(propertySimple, configIsAggregate)) {
+            || isGroupConfigWithDifferingValues(propertySimple, isGroupConfig)) {
             FacesComponentUtility.setDisabled(unsetCheckbox, true);
         } else {
             // Add JavaScript that will disable/enable the corresponding input element when the unset checkbox is
@@ -460,9 +460,9 @@ public class PropertyRenderingUtility {
     }
 
     private static boolean isUnset(PropertyDefinitionSimple propertyDefinitionSimple, PropertySimple propertySimple,
-        boolean configIsAggregate) {
-        if (isAggregateWithDifferingValues(propertySimple, configIsAggregate))
-            // Properties from aggregate configs that have differing values should not be marked unset.
+        boolean isGroupConfig) {
+        if (isGroupConfigWithDifferingValues(propertySimple, isGroupConfig))
+            // Properties from group configs that have differing values should not be marked unset.
             return false;
         if (propertySimple == null)
             return false;
@@ -478,8 +478,8 @@ public class PropertyRenderingUtility {
             propertySimple)))));
     }
 
-    public static boolean isAggregateWithDifferingValues(PropertySimple propertySimple, boolean configIsAggregate) {
-        return configIsAggregate && (propertySimple.getOverride() == null || !propertySimple.getOverride());
+    public static boolean isGroupConfigWithDifferingValues(PropertySimple propertySimple, boolean isGroupConfig) {
+        return isGroupConfig && (propertySimple.getOverride() == null || !propertySimple.getOverride());
     }
 
     private static boolean isInvalidRequiredProperty(PropertyDefinitionSimple propertyDefinitionSimple,

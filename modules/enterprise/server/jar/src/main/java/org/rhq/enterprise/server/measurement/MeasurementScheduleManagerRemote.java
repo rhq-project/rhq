@@ -67,12 +67,6 @@ public interface MeasurementScheduleManagerRemote {
         throws UpdateException;
 
     @WebMethod
-    PageList<MeasurementScheduleComposite> findScheduleDefaultsForResourceType(//
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceTypeId") int resourceTypeId,//
-        @WebParam(name = "pageControl") PageControl pageControl);
-
-    @WebMethod
     List<MeasurementSchedule> findSchedulesByResourceIdsAndDefinitionId(//
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceIds") int[] resourceIds,//

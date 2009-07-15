@@ -39,34 +39,34 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 @DiscriminatorValue("resource")
 @Entity
 @NamedQueries( {
-    @NamedQuery(name = AggregateResourceConfigurationUpdate.QUERY_FIND_ALL_IN_STATUS, query = "" //
+    @NamedQuery(name = GroupResourceConfigurationUpdate.QUERY_FIND_ALL_IN_STATUS, query = "" //
         + "SELECT arcu " //
-        + "  FROM AggregateResourceConfigurationUpdate arcu " //
+        + "  FROM GroupResourceConfigurationUpdate arcu " //
         + " WHERE arcu.status = :status"),
-    @NamedQuery(name = AggregateResourceConfigurationUpdate.QUERY_FIND_BY_GROUP_ID, query = "SELECT arcu "
-        + "  FROM AggregateResourceConfigurationUpdate AS arcu " // 
+    @NamedQuery(name = GroupResourceConfigurationUpdate.QUERY_FIND_BY_GROUP_ID, query = "SELECT arcu "
+        + "  FROM GroupResourceConfigurationUpdate AS arcu " // 
         + " WHERE arcu.group.id = :groupId"),
-    @NamedQuery(name = AggregateResourceConfigurationUpdate.QUERY_FIND_LATEST_BY_GROUP_ID, query = "" //
+    @NamedQuery(name = GroupResourceConfigurationUpdate.QUERY_FIND_LATEST_BY_GROUP_ID, query = "" //
         + "SELECT cgu " //
-        + "  FROM AggregateResourceConfigurationUpdate cgu " //
+        + "  FROM GroupResourceConfigurationUpdate cgu " //
         + " WHERE cgu.group.id = :groupId " //
         + "   AND cgu.modifiedTime = ( SELECT MAX(cgu2.modifiedTime) " //
-        + "                             FROM AggregateResourceConfigurationUpdate cgu2 " //
+        + "                             FROM GroupResourceConfigurationUpdate cgu2 " //
         + "                            WHERE cgu2.group.id = :groupId ) ") })
-public class AggregateResourceConfigurationUpdate extends AbstractAggregateConfigurationUpdate {
+public class GroupResourceConfigurationUpdate extends AbstractGroupConfigurationUpdate {
     private static final long serialVersionUID = 1L;
 
-    public static final String QUERY_FIND_ALL_IN_STATUS = "AggregateResourceConfigurationUpdate.findAllInStatus";
-    public static final String QUERY_FIND_BY_GROUP_ID = "AggregateResourceConfigurationUpdate.findByGroupId";
-    public static final String QUERY_FIND_LATEST_BY_GROUP_ID = "AggregateResourceConfigurationUpdate.findLatestByGroupId";
+    public static final String QUERY_FIND_ALL_IN_STATUS = "GroupResourceConfigurationUpdate.findAllInStatus";
+    public static final String QUERY_FIND_BY_GROUP_ID = "GroupResourceConfigurationUpdate.findByGroupId";
+    public static final String QUERY_FIND_LATEST_BY_GROUP_ID = "GroupResourceConfigurationUpdate.findLatestByGroupId";
 
-    @OneToMany(mappedBy = "aggregateConfigurationUpdate", cascade = { CascadeType.PERSIST, CascadeType.REMOVE })
+    @OneToMany(mappedBy = "groupConfigurationUpdate", cascade = { CascadeType.PERSIST, CascadeType.REMOVE })
     private List<ResourceConfigurationUpdate> configurationUpdates = new ArrayList<ResourceConfigurationUpdate>();
 
-    protected AggregateResourceConfigurationUpdate() {
+    protected GroupResourceConfigurationUpdate() {
     } // JPA
 
-    public AggregateResourceConfigurationUpdate(ResourceGroup group, String subjectName) {
+    public GroupResourceConfigurationUpdate(ResourceGroup group, String subjectName) {
         super(group, subjectName);
         // TODO (ips, 02/13/09): This is a temporary workaround - we don't really need to store a Configuration at all,
         //      since it can be recalculated from the member configs when needed, but the AbstractConfigurationUpdate

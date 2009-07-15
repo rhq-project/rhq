@@ -43,11 +43,6 @@ public class PrepareAction extends TilesAction {
 
         pForm.setDisplayOnDash(true);
 
-        //        Map<String, String> charts = new HashMap<String, String>();
-        //        for (Tuple<String, String> chart : savedCharts.chartList) {
-        //            charts.put(chart.lefty, chart.righty);
-        //        }
-
         request.setAttribute("charts", savedCharts.chartList);
         request.setAttribute("chartsize", String.valueOf(savedCharts.chartList.size()));
 

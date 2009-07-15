@@ -52,7 +52,8 @@ public interface ChannelManagerRemote {
     void addPackageVersionsToChannel( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "channelId") int channelId, //
-        @WebParam(name = "packageVersionIds") int[] packageVersionIds) throws UpdateException;
+        @WebParam(name = "packageVersionIds") int[] packageVersionIds) //
+        throws UpdateException;
 
     /**
      * Creates a new {@link Channel}. Note that the created channel will not have any content sources assigned and no
@@ -67,7 +68,8 @@ public interface ChannelManagerRemote {
     @WebMethod
     Channel createChannel( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "channel") Channel channel) throws CreateException;
+        @WebParam(name = "channel") Channel channel) //
+        throws CreateException;
 
     /**
      * Deletes the identified channel. If this deletion orphans package versions (that is, its originating resource or
@@ -80,7 +82,8 @@ public interface ChannelManagerRemote {
     @WebMethod
     void deleteChannel( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "channelId") int channelId) throws DeleteException;
+        @WebParam(name = "channelId") int channelId) //
+        throws DeleteException;
 
     @WebMethod
     Channel getChannel( //
@@ -118,7 +121,8 @@ public interface ChannelManagerRemote {
     @WebMethod
     Channel updateChannel( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "channel") Channel channel) throws ChannelException;
+        @WebParam(name = "channel") Channel channel) //
+        throws ChannelException;
 
     /**
      * Returns the set of package versions that can currently be accessed via the given channel.
@@ -137,7 +141,6 @@ public interface ChannelManagerRemote {
         @WebParam(name = "filter") String filter, //
         @WebParam(name = "pageControl") PageControl pc);
 
-    //Exposed methods that are not in remote specification
     @WebMethod
     PageList<Channel> findChannels( //
         @WebParam(name = "subject") Subject subject, //

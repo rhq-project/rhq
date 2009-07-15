@@ -96,9 +96,9 @@
         <mapping class="org.rhq.core.domain.configuration.definition.PropertyDefinitionMap" />
         <mapping class="org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple" />
         <mapping class="org.rhq.core.domain.configuration.definition.PropertyGroupDefinition" />
-        <mapping class="org.rhq.core.domain.configuration.group.AbstractAggregateConfigurationUpdate" />
-        <mapping class="org.rhq.core.domain.configuration.group.AggregatePluginConfigurationUpdate" />
-        <mapping class="org.rhq.core.domain.configuration.group.AggregateResourceConfigurationUpdate" />
+        <mapping class="org.rhq.core.domain.configuration.group.AbstractGroupConfigurationUpdate" />
+        <mapping class="org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate" />
+        <mapping class="org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate" />
         <mapping class="org.rhq.core.domain.alert.Alert" />
         <mapping class="org.rhq.core.domain.alert.AlertCondition" />
         <mapping class="org.rhq.core.domain.alert.AlertConditionLog" />

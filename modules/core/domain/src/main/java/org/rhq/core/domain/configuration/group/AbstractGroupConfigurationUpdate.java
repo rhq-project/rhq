@@ -44,7 +44,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CONFIG_GROUP_UPDATE_ID_SEQ")
 @Table(name = "RHQ_CONFIG_GROUP_UPDATE")
-public abstract class AbstractAggregateConfigurationUpdate extends AbstractConfigurationUpdate implements Serializable {
+public abstract class AbstractGroupConfigurationUpdate extends AbstractConfigurationUpdate implements Serializable {
     @GeneratedValue(generator = "SEQ", strategy = GenerationType.AUTO)
     @Id
     private int id;
@@ -55,10 +55,10 @@ public abstract class AbstractAggregateConfigurationUpdate extends AbstractConfi
 
     public static final String MIXED_VALUES_MARKER = "~ Mixed Values ~";
 
-    protected AbstractAggregateConfigurationUpdate() {
+    protected AbstractGroupConfigurationUpdate() {
     }
 
-    protected AbstractAggregateConfigurationUpdate(ResourceGroup group, String subjectName) {
+    protected AbstractGroupConfigurationUpdate(ResourceGroup group, String subjectName) {
         super(subjectName);
         this.group = group;
     }

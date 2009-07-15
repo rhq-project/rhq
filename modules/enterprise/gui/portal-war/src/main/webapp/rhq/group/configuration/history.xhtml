@@ -116,7 +116,7 @@
                   <h:outputLink value="/rhq/group/configuration/history.xhtml">
                      <f:param name="groupId" value="#{param.groupId}" />
                      <f:param name="arcuId" value="#{item.id}" />
-                     <f:param name="mode" value="aggregate" />
+                     <f:param name="mode" value="group" />
                      <h:outputText value="View Group Update" />
                   </h:outputLink>
                   <br />
@@ -149,7 +149,7 @@
          </rich:panel>
       </h:form>
       
-      <rich:panel rendered="#{param.mode eq 'aggregate' and not empty param.arcuId}">
+      <rich:panel rendered="#{param.mode eq 'group' and not empty param.arcuId}">
          <f:facet name="header">
             <h:outputText value="Group Configuration Update Request"/>
          </f:facet>

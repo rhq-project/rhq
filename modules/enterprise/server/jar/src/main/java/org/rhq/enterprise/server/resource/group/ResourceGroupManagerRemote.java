@@ -103,7 +103,7 @@ public interface ResourceGroupManagerRemote {
 
     @WebMethod
     PageList<ResourceGroup> findResourceGroups( //
-        @WebParam(name = "subject") Subject subject, //        
+        @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "criteria") ResourceGroup criteria, //
         @WebParam(name = "pageControl") PageControl pc) throws FetchException;
 

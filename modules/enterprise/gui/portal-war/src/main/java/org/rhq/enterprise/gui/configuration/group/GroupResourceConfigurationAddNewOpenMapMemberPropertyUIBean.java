@@ -37,6 +37,6 @@ public class GroupResourceConfigurationAddNewOpenMapMemberPropertyUIBean extends
     EditGroupResourceConfigurationUIBean editGroupResourceConfigurationUIBean;
 
     protected Configuration getConfiguration() {
-        return this.editGroupResourceConfigurationUIBean.getConfigurationSet().getAggregateConfiguration();
+        return this.editGroupResourceConfigurationUIBean.getConfigurationSet().getGroupConfiguration();
     }
 }

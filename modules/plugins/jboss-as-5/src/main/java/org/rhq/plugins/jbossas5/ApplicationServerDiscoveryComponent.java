@@ -54,7 +54,6 @@ import org.rhq.core.system.ProcessInfo;
 import org.rhq.plugins.jbossas5.connection.LocalProfileServiceConnectionProvider;
 import org.rhq.plugins.jbossas5.connection.ProfileServiceConnection;
 import org.rhq.plugins.jbossas5.connection.ProfileServiceConnectionProvider;
-import org.rhq.plugins.jbossas5.connection.RemoteProfileServiceConnectionProvider;
 import org.rhq.plugins.jbossas5.helper.JBossInstallationInfo;
 import org.rhq.plugins.jbossas5.helper.JBossInstanceInfo;
 import org.rhq.plugins.jbossas5.helper.JBossProperties;
@@ -229,14 +228,7 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
 
     @Nullable
     private DiscoveredResourceDetails discoverInProcessJBossAS(ResourceDiscoveryContext discoveryContext) {
-        //ProfileServiceConnectionProvider connectionProvider = new LocalProfileServiceConnectionProvider();
-        // TODO: Remove this temporary hack and uncomment the above line once
-        // https://jira.jboss.org/jira/browse/JBAS-7085 is put to bed.
-        String namingURL = "jnp://127.0.0.1:1099/";
-        String principal = "admin";
-        String credentials = "admin";
-        ProfileServiceConnectionProvider connectionProvider = new RemoteProfileServiceConnectionProvider(namingURL,
-                principal, credentials);
+        ProfileServiceConnectionProvider connectionProvider = new LocalProfileServiceConnectionProvider();
 
         ProfileServiceConnection connection;
         try {

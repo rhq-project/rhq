@@ -296,13 +296,7 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
         // TODO: Check for a defunct connection and if found try to reconnect.
         ProfileServiceConnectionProvider connectionProvider;
         if (runningEmbedded()) {
-            //connectionProvider = new LocalProfileServiceConnectionProvider();
-            // TODO: Remove this temporary hack and uncomment the above line once
-            // https://jira.jboss.org/jira/browse/JBAS-7085 is put to bed.
-            String namingURL = "jnp://127.0.0.1:1099/";
-            String principal = "admin";
-            String credentials = "admin";
-            connectionProvider = new RemoteProfileServiceConnectionProvider(namingURL, principal, credentials);
+            connectionProvider = new LocalProfileServiceConnectionProvider();
         } else {
             Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
             String namingURL = pluginConfig.getSimpleValue(PluginConfigPropNames.NAMING_URL, null);
@@ -448,7 +442,7 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
 
     @NotNull
     private JBossASPaths getJBossASPaths() {
-        Configuration pluginConfiguration = resourceContext.getPluginConfiguration();
+        Configuration pluginConfiguration = this.resourceContext.getPluginConfiguration();
 
         String homeDir = pluginConfiguration.getSimpleValue(PluginConfigPropNames.HOME_DIR, null);
         String serverHomeDir = pluginConfiguration.getSimpleValue(PluginConfigPropNames.SERVER_HOME_DIR, null);
@@ -457,7 +451,7 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
     }
 
     private boolean runningEmbedded() {
-        Configuration pluginConfiguration = resourceContext.getPluginConfiguration();
+        Configuration pluginConfiguration = this.resourceContext.getPluginConfiguration();
         String namingUrl = pluginConfiguration.getSimpleValue(PluginConfigPropNames.NAMING_URL, null);
         return namingUrl == null;
     }
@@ -515,7 +509,8 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
     public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException,
         Exception {
         if (this.operationDelegate == null) {
-            this.operationDelegate = new ApplicationServerOperationsDelegate(this, resourceContext.getSystemInformation());
+            this.operationDelegate = new ApplicationServerOperationsDelegate(this,
+                    this.resourceContext.getSystemInformation());
         }
         ApplicationServerSupportedOperations operation = Enum.valueOf(ApplicationServerSupportedOperations.class, name
             .toUpperCase());

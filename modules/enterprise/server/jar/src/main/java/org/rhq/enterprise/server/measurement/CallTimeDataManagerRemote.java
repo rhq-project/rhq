@@ -35,7 +35,7 @@ import org.rhq.enterprise.server.exception.FetchException;
 @Remote
 public interface CallTimeDataManagerRemote {
     @WebMethod
-    PageList<CallTimeDataComposite> getCallTimeDataForResource( //
+    PageList<CallTimeDataComposite> findCallTimeDataForResource( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "scheduleId") int scheduleId, //
         @WebParam(name = "beginTime") long beginTime, //

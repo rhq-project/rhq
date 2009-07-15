@@ -84,7 +84,7 @@ public class CallTimeUIBean extends PagedDataTableUIBean {
                         "This resource defines multiple resource time metrics - only one is allowed.");
                 } else {
                     int scheduleId = callTimeSchedules.get(0).getId();
-                    results = callTimeDataManager.getCallTimeDataForResource(subject, scheduleId,
+                    results = callTimeDataManager.findCallTimeDataForResource(subject, scheduleId,
                         rangePreferences.begin, rangePreferences.end, pc);
                 }
             } else if (context.category == EntityContext.Category.ResourceGroup) {

@@ -269,7 +269,7 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
             }
             assert calltimeScheduleId > 0 : "why don't we have a calltime schedule?";
             PageList<CallTimeDataComposite> calltimeData = LookupUtil.getCallTimeDataManager()
-                .getCallTimeDataForResource(overlord, calltimeScheduleId, 0, Long.MAX_VALUE, new PageControl());
+                .findCallTimeDataForResource(overlord, calltimeScheduleId, 0, Long.MAX_VALUE, new PageControl());
             assert calltimeData.getTotalSize() == 0 : "didn't purge all calltime data";
 
             // check trait data
@@ -381,7 +381,7 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
         CallTimeDataManagerLocal mgr = LookupUtil.getCallTimeDataManager();
         mgr.addCallTimeData(dataset);
 
-        PageList<CallTimeDataComposite> persistedData = mgr.getCallTimeDataForResource(LookupUtil.getSubjectManager()
+        PageList<CallTimeDataComposite> persistedData = mgr.findCallTimeDataForResource(LookupUtil.getSubjectManager()
             .getOverlord(), calltimeSchedule.getId(), timestamp - 1L, timestamp + count + 1L, new PageControl());
         // just a few sanity checks
         assert persistedData.getTotalSize() == count : "did not persist all calltime data, only persisted: "

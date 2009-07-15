@@ -38,13 +38,13 @@ import org.rhq.enterprise.server.exception.FetchException;
 public interface CallTimeDataManagerLocal {
     void addCallTimeData(Set<CallTimeData> callTimeDataSet);
 
-    PageList<CallTimeDataComposite> getCallTimeDataForResource(Subject subject, int scheduleId, long beginTime,
+    PageList<CallTimeDataComposite> findCallTimeDataForResource(Subject subject, int scheduleId, long beginTime,
         long endTime, PageControl pageControl) throws FetchException;;
 
-    PageList<CallTimeDataComposite> getCallTimeDataForCompatibleGroup(Subject subject, int groupId,
+    PageList<CallTimeDataComposite> findCallTimeDataForCompatibleGroup(Subject subject, int groupId,
         int measurementDefinitionId, long beginTime, long endTime, PageControl pageControl) throws FetchException;
 
-    PageList<CallTimeDataComposite> getCallTimeDataForAutoGroup(Subject subject, int parentResourceId,
+    PageList<CallTimeDataComposite> findCallTimeDataForAutoGroup(Subject subject, int parentResourceId,
         int childResourceTypeId, int measurementDefinitionId, long beginTime, long endTime, PageControl pageControl);
 
     int purgeCallTimeData(Date deleteUpToTime) throws SQLException;

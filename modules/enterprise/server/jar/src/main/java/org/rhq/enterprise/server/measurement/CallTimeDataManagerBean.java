@@ -140,7 +140,7 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<CallTimeDataComposite> getCallTimeDataForResource(Subject subject, int scheduleId, long beginTime,
+    public PageList<CallTimeDataComposite> findCallTimeDataForResource(Subject subject, int scheduleId, long beginTime,
         long endTime, PageControl pageControl) throws FetchException {
         pageControl.initDefaultOrderingField("SUM(value.total)/SUM(value.count)", PageOrdering.DESC); // only set if no ordering yet specified
         pageControl.addDefaultOrderingField("key.callDestination", PageOrdering.ASC); // add this to sort, if not already specified
@@ -175,13 +175,13 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
         return new PageList<CallTimeDataComposite>(results, (int) count, pageControl);
     }
 
-    public PageList<CallTimeDataComposite> getCallTimeDataForCompatibleGroup(Subject subject, int groupId,
+    public PageList<CallTimeDataComposite> findCallTimeDataForCompatibleGroup(Subject subject, int groupId,
         int measurementDefinitionId, long beginTime, long endTime, PageControl pageControl) {
         // TODO
         return null;
     }
 
-    public PageList<CallTimeDataComposite> getCallTimeDataForAutoGroup(Subject subject, int parentResourceId,
+    public PageList<CallTimeDataComposite> findCallTimeDataForAutoGroup(Subject subject, int parentResourceId,
         int childResourceTypeId, int measurementDefinitionId, long beginTime, long endTime, PageControl pageControl) {
         // TODO
         return null;

@@ -105,7 +105,7 @@ public class PerformanceFormPrepareAction extends MetricsControlFormPrepareActio
             request.setAttribute("MeasurementDef", measurementDef);
             CallTimeDataManagerLocal callTimeDataManager = LookupUtil.getCallTimeDataManager();
             PageControl pageControl = WebUtility.getPageControl(request);
-            callTimeDataComposites = callTimeDataManager.getCallTimeDataForResource(subject, selectedSchedule.getId(),
+            callTimeDataComposites = callTimeDataManager.findCallTimeDataForResource(subject, selectedSchedule.getId(),
                 range.getBegin(), range.getEnd(), pageControl);
         } else {
             callTimeDataComposites = new PageList<CallTimeDataComposite>();

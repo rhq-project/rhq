@@ -88,8 +88,10 @@ public abstract class AbstractPluginTest {
             System.out.println("Configuring AS connection properties.");
             if (principal != null) {
                 //we need to have the AS5 resource to be able to configure it
+                System.out.println("Issuing the first server scan. This might fail because we haven't had the chance to configure the resource yet.");
                 PluginContainer.getInstance().getInventoryManager().executeServerScanImmediately();
 
+                System.out.println("Applying AS5 server resource configuration.");
                 Configuration newConfig = AppServerUtils.getASResource().getPluginConfiguration();
                 newConfig.put(new PropertySimple("principal", principal));
                 newConfig.put(new PropertySimple("credentials", credentials));

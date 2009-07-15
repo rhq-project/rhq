@@ -56,7 +56,7 @@ public class Ejb2EntityBeanResourceTest extends AbstractEjb2ResourceTest {
     }
 
     /**
-     * Perform some CRUD operations so that we some values to collect as metrics.
+     * Perform some CRUD operations so that we have some values to collect as metrics.
      */
     @BeforeGroups(groups = "as5-plugin")
     public void setupBean() {

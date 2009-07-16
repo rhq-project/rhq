@@ -268,5 +268,5 @@ public interface SubjectManagerLocal {
      */
     Subject updateSubject(Subject subject, Subject subjectToModify) throws UpdateException;
 
-    PageList<Subject> findSubjects(Subject subject, SubjectCriteria criteria);
+    PageList<Subject> findSubjectsByCriteria(Subject subject, SubjectCriteria criteria);
 }

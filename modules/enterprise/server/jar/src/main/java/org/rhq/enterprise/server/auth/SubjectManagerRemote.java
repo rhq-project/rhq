@@ -195,7 +195,7 @@ public interface SubjectManagerRemote {
         throws UpdateException;
 
     @WebMethod
-    PageList<Subject> findSubjects(//
+    PageList<Subject> findSubjectsByCriteria(//
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "criteria") SubjectCriteria criteria);
 

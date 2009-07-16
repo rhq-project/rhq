@@ -41,6 +41,7 @@ import org.jboss.metatype.api.values.MetaValue;
 import org.jboss.metatype.api.values.SimpleValue;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
+import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -50,13 +51,15 @@ import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.plugins.jbossas5.serviceBinding.Util.PropertyDefinition;
 
 public class SetComponent implements ResourceComponent<ManagerComponent>, ConfigurationFacet, DeleteResourceFacet {
 
     private final Log log = LogFactory.getLog(this.getClass());
 
     private static final String BINDING_PROPERTY = "binding";
-
+    private static final String RESULTING_BINDINGS_PROPERTY = "resultingBindings";
+    
     private ResourceContext<ManagerComponent> context;
 
     public Configuration loadResourceConfiguration() throws Exception {
@@ -101,6 +104,42 @@ public class SetComponent implements ResourceComponent<ManagerComponent>, Config
                     bindingMap.put(new PropertySimple(Util.BIND_ADDRESS_PROPERTY, addr.getHostAddress()));
                 }
             }
+        }
+        
+        //now populate the resulting binding map so that the users have overview what the 
+        //the bindings would look like if this binding set was active.
+        PropertyList resultingBindings = new PropertyList(RESULTING_BINDINGS_PROPERTY);
+        configuration.put(resultingBindings);
+        
+        int portOffset = configuration.getSimple(Util.PORT_OFFSET_PROPERTY).getIntegerValue();
+        String defaultHostName = configuration.getSimple(Util.DEFAULT_HOST_NAME_PROPERTY).getStringValue();
+        
+        Configuration bindingManagerConfiguration = context.getParentResourceComponent().loadResourceConfiguration();
+        
+        for(Property p : bindingManagerConfiguration.getList(Util.STANDARD_BINDINGS_PROPERTY).getList()) {
+            PropertyMap standardBinding = (PropertyMap) p;
+            
+            PropertyMap bindingMap = new PropertyMap(BINDING_PROPERTY);
+            resultingBindings.add(bindingMap);
+            
+            for (PropertyDefinition def : Util.BINDING_SET_OVERRIDE_PROPERTIES) {
+                Property equivalent = standardBinding.get(def.propertyName);
+                if (equivalent != null) {
+                    bindingMap.put(equivalent);
+                }
+            }
+            
+            //now update the port and host name in the result
+            boolean fixedPort = standardBinding.getSimple(Util.FIXED_PORT_PROPERTY).getBooleanValue();
+            boolean fixedHostName = standardBinding.getSimple(Util.FIXED_HOST_NAME_PROPERTY).getBooleanValue();
+            int standardPort = standardBinding.getSimple(Util.PORT_PROPERTY).getIntegerValue();
+            String standardHostName = standardBinding.getSimple(Util.HOST_NAME_PROPERTY).getStringValue();
+            
+            PropertySimple resultingPort = bindingMap.getSimple(Util.PORT_PROPERTY);
+            PropertySimple resultingHostName = bindingMap.getSimple(Util.HOST_NAME_PROPERTY);
+            
+            resultingPort.setIntegerValue(fixedPort ? standardPort : (standardPort + portOffset));   
+            resultingHostName.setStringValue(fixedHostName ? standardHostName : defaultHostName);
         }
         return configuration;
     }

@@ -54,13 +54,24 @@ import org.rhq.core.domain.configuration.PropertySimple;
  */
 class Util {
 
+    public static final String STANDARD_BINDINGS_PROPERTY = "standardBindings";
     public static final String OVERRIDE_BINDINGS_PROPERTY = "overrideBindings";
     public static final String BIND_ADDRESS_PROPERTY = "bindAddress";
     public static final String ACTIVE_BINDING_SET_NAME_PROPERTY = "activeBindingSetName";
     public static final String BINDING_SETS_PROPERTY = "bindingSets";
-
-    private static final String HOST_NAME_PROPERTY = "hostName";
-
+    
+    public static final String NAME_PROPERTY = "name";
+    public static final String DEFAULT_HOST_NAME_PROPERTY = "defaultHostName";
+    public static final String DESCRIPTION_PROPERTY = "description";
+    public static final String FULLY_QUALIFIED_NAME_PROPERTY = "fullyQualifiedName";
+    public static final String BINDING_NAME_PROPERTY = "bindingName";
+    public static final String SERVICE_NAME_PROPERTY = "serviceName";
+    public static final String PORT_OFFSET_PROPERTY = "portOffset";
+    public static final String HOST_NAME_PROPERTY = "hostName";
+    public static final String PORT_PROPERTY = "port";
+    public static final String FIXED_HOST_NAME_PROPERTY = "fixedHostName";
+    public static final String FIXED_PORT_PROPERTY = "fixedPort";
+    
     public static class PropertyDefinition {
         public String propertyName;
         public Class<?> propertyType;
@@ -72,18 +83,28 @@ class Util {
     }
 
     public static final PropertyDefinition[] BINDING_SET_SIMPLE_PROPERTIES = {
-        new PropertyDefinition("name", String.class), new PropertyDefinition("defaultHostName", String.class),
-        new PropertyDefinition("portOffset", Integer.class) };
+        new PropertyDefinition(NAME_PROPERTY, String.class), new PropertyDefinition(DEFAULT_HOST_NAME_PROPERTY, String.class),
+        new PropertyDefinition(PORT_OFFSET_PROPERTY, Integer.class) };
 
     /**
      * All the properties of the override binding except "bindAddress" which is a byte[] representing an IP address
      * and thus has to be treated specially.
      */
     public static final PropertyDefinition[] BINDING_SET_OVERRIDE_PROPERTIES = {
-        new PropertyDefinition("serviceName", String.class), new PropertyDefinition("bindingName", String.class),
-        new PropertyDefinition("fullyQualifiedName", String.class),
-        new PropertyDefinition("description", String.class), new PropertyDefinition("hostName", String.class),
-        new PropertyDefinition("port", Integer.class) };
+        new PropertyDefinition(SERVICE_NAME_PROPERTY, String.class), new PropertyDefinition(BINDING_NAME_PROPERTY, String.class),
+        new PropertyDefinition(FULLY_QUALIFIED_NAME_PROPERTY, String.class),
+        new PropertyDefinition(DESCRIPTION_PROPERTY, String.class), new PropertyDefinition(HOST_NAME_PROPERTY, String.class),
+        new PropertyDefinition(PORT_PROPERTY, Integer.class) };
+
+    /**
+     * Properties of a standard binding.
+     */
+    public static final PropertyDefinition[] STANDARD_BINDING_PROPERTIES = {
+    new PropertyDefinition(SERVICE_NAME_PROPERTY, String.class), new PropertyDefinition(BINDING_NAME_PROPERTY, String.class),
+    new PropertyDefinition(PORT_PROPERTY, Integer.class), new PropertyDefinition(HOST_NAME_PROPERTY, String.class),
+    new PropertyDefinition(DESCRIPTION_PROPERTY, String.class),
+    new PropertyDefinition(FULLY_QUALIFIED_NAME_PROPERTY, String.class),
+    new PropertyDefinition(FIXED_HOST_NAME_PROPERTY, Boolean.class), new PropertyDefinition(FIXED_PORT_PROPERTY, Boolean.class) };
 
     private Util() {
 

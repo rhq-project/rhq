@@ -64,16 +64,8 @@ public class ManagerComponent extends ManagedComponentComponent implements Creat
     private final Log log = LogFactory.getLog(this.getClass());
 
     private static final String BINDING_PROPERTY = "binding";
-    private static final String STANDARD_BINDINGS_PROPERTY = "standardBindings";
     private static final String BINDING_SET_SERVICE_NAME = "Service Binding Set";
     private static final String RESOURCE_KEY_SEPARATOR = "!)@(#*";
-
-    private static final PropertyDefinition[] STANDARD_BINDING_PROPERTIES = {
-        new PropertyDefinition("serviceName", String.class), new PropertyDefinition("bindingName", String.class),
-        new PropertyDefinition("port", Integer.class), new PropertyDefinition("hostname", String.class),
-        new PropertyDefinition("description", String.class),
-        new PropertyDefinition("fullyQualifiedName", String.class),
-        new PropertyDefinition("fixedHostName", Boolean.class), new PropertyDefinition("fixedPort", Boolean.class) };
 
     private ManagedComponent bindingManagerComponent;
 
@@ -98,9 +90,9 @@ public class ManagerComponent extends ManagedComponentComponent implements Creat
         configuration.put(new PropertySimple(Util.ACTIVE_BINDING_SET_NAME_PROPERTY, activeBindingSetName));
 
         CollectionValue standardBindings = (CollectionValue) bindingManagerComponent.getProperty(
-            STANDARD_BINDINGS_PROPERTY).getValue();
+            Util.STANDARD_BINDINGS_PROPERTY).getValue();
 
-        PropertyList bindings = new PropertyList(STANDARD_BINDINGS_PROPERTY);
+        PropertyList bindings = new PropertyList(Util.STANDARD_BINDINGS_PROPERTY);
         configuration.put(bindings);
 
         for (MetaValue b : standardBindings.getElements()) {
@@ -109,7 +101,7 @@ public class ManagerComponent extends ManagedComponentComponent implements Creat
             PropertyMap bindingMap = new PropertyMap(BINDING_PROPERTY);
             bindings.add(bindingMap);
 
-            for (PropertySimple prop : Util.getProperties(Arrays.asList(STANDARD_BINDING_PROPERTIES), binding)) {
+            for (PropertySimple prop : Util.getProperties(Arrays.asList(Util.STANDARD_BINDING_PROPERTIES), binding)) {
                 bindingMap.put(prop);
             }
         }
@@ -156,11 +148,11 @@ public class ManagerComponent extends ManagedComponentComponent implements Creat
             bindingManagerComponent.getProperty(Util.ACTIVE_BINDING_SET_NAME_PROPERTY).setValue(
                 Util.wrap(updatedConfiguration.getSimple(Util.ACTIVE_BINDING_SET_NAME_PROPERTY), String.class));
 
-            PropertyList standardBindingsList = updatedConfiguration.getList(STANDARD_BINDINGS_PROPERTY);
+            PropertyList standardBindingsList = updatedConfiguration.getList(Util.STANDARD_BINDINGS_PROPERTY);
 
             MetaValue[] standarBindingsArray = new MetaValue[standardBindingsList.getList().size()];
             CollectionValueSupport standardBindingsValue = new CollectionValueSupport(
-                (CollectionMetaType) bindingManagerComponent.getProperty(STANDARD_BINDINGS_PROPERTY).getMetaType());
+                (CollectionMetaType) bindingManagerComponent.getProperty(Util.STANDARD_BINDINGS_PROPERTY).getMetaType());
             standardBindingsValue.setElements(standarBindingsArray);
 
             ImmutableCompositeMetaType bindingMetaType = (ImmutableCompositeMetaType) standardBindingsValue
@@ -172,7 +164,7 @@ public class ManagerComponent extends ManagedComponentComponent implements Creat
 
                 MapCompositeValueSupport binding = new MapCompositeValueSupport(bindingMetaType);
 
-                for (PropertyDefinition def : STANDARD_BINDING_PROPERTIES) {
+                for (PropertyDefinition def : Util.STANDARD_BINDING_PROPERTIES) {
                     binding.put(def.propertyName, Util.wrap(standardBindingMap.getSimple(def.propertyName),
                         def.propertyType));
                 }
@@ -180,7 +172,7 @@ public class ManagerComponent extends ManagedComponentComponent implements Creat
                 standarBindingsArray[i++] = binding;
             }
 
-            bindingManagerComponent.getProperty(STANDARD_BINDINGS_PROPERTY).setValue(standardBindingsValue);
+            bindingManagerComponent.getProperty(Util.STANDARD_BINDINGS_PROPERTY).setValue(standardBindingsValue);
 
             updateBindingManager();
 

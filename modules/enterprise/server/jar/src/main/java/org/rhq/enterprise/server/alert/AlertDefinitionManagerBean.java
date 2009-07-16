@@ -74,6 +74,17 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
     @EJB
     private StatusManagerLocal agentStatusManager;
 
+    private boolean checkViewPermission(Subject subject, AlertDefinition alertDefinition) {
+        if (alertDefinition.getResourceType() != null) // an alert template
+        {
+            return authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_INVENTORY);
+        } else // an alert definition
+        {
+            return authorizationManager.hasResourcePermission(subject, Permission.MANAGE_ALERTS, alertDefinition
+                .getResource().getId());
+        }
+    }
+
     private boolean checkPermission(Subject subject, AlertDefinition alertDefinition) {
         /*
          * system side-effects are primarily call-outs from the template manager to the definition manager, when the
@@ -125,9 +136,8 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
     }
 
     public AlertDefinition getAlertDefinitionById(Subject subject, int alertDefinitionId) {
-        //LOG.debug("AlertDefinitionManager.getAlertDefinitionById(" + user + ", " + alertDefinitionId + ")");
         AlertDefinition alertDefinition = entityManager.find(AlertDefinition.class, alertDefinitionId);
-        if (authorizationManager.canViewResource(subject, alertDefinition.getResource().getId()) == false) {
+        if (checkViewPermission(subject, alertDefinition) == false) {
             throw new PermissionException("User[" + subject.getName()
                 + "] does not have permission to view alertDefinition[id=" + alertDefinitionId + "] for resource[id="
                 + alertDefinition.getResource().getId() + "]");

@@ -32,20 +32,19 @@ import org.rhq.enterprise.server.auth.SubjectManagerRemote;
 import org.rhq.enterprise.server.authz.RoleManagerRemote;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerRemote;
 import org.rhq.enterprise.server.content.ChannelManagerRemote;
-import org.rhq.enterprise.server.content.ContentManagerRemote;
 import org.rhq.enterprise.server.content.ContentHelperRemote;
-import org.rhq.enterprise.server.operation.OperationManagerRemote;
-import org.rhq.enterprise.server.resource.ResourceManagerRemote;
-import org.rhq.enterprise.server.resource.group.ResourceGroupManagerRemote;
-import org.rhq.enterprise.server.install.remote.RemoteInstallManagerRemote;
+import org.rhq.enterprise.server.content.ContentManagerRemote;
+import org.rhq.enterprise.server.event.EventManagerRemote;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerRemote;
 import org.rhq.enterprise.server.measurement.CallTimeDataManagerRemote;
 import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerRemote;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerRemote;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerRemote;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerRemote;
+import org.rhq.enterprise.server.operation.OperationManagerRemote;
 import org.rhq.enterprise.server.report.DataAccessRemote;
-import org.rhq.enterprise.server.event.EventManagerRemote;
+import org.rhq.enterprise.server.resource.ResourceManagerRemote;
+import org.rhq.enterprise.server.resource.group.ResourceGroupManagerRemote;
 
 /**
  * A remote access client with transparent proxies to RHQ servers.
@@ -59,26 +58,23 @@ public class RemoteClient {
     public enum Manager {
         AlertManager(AlertManagerRemote.class), //
         AlertDefinitionManager(AlertDefinitionManagerRemote.class), //
-        AvailabilityManager(AvailabilityManagerRemote.class),
-        CallTimeDataManager(CallTimeDataManagerRemote.class),
-        ChannelManager(ChannelManagerRemote.class), //
+        AvailabilityManager(AvailabilityManagerRemote.class), CallTimeDataManager(CallTimeDataManagerRemote.class), ChannelManager(
+            ChannelManagerRemote.class), //
         ConfigurationManager(ConfigurationManagerRemote.class), //
         ContentHelperManager(ContentHelperRemote.class), //
         ContentManager(ContentManagerRemote.class), //
-        DataAccess(DataAccessRemote.class),
-        EventManager(EventManagerRemote.class),
+        DataAccess(DataAccessRemote.class), EventManager(EventManagerRemote.class),
 
-        MeasurementBaselineManager(MeasurementBaselineManagerRemote.class),
-        MeasurementDataManager(MeasurementDataManagerRemote.class),
-        MeasurementDefinitionManager(MeasurementDefinitionManagerRemote.class),
-        MeasurementScheduleManager(MeasurementScheduleManagerRemote.class),
+        MeasurementBaselineManager(MeasurementBaselineManagerRemote.class), MeasurementDataManager(
+            MeasurementDataManagerRemote.class), MeasurementDefinitionManager(MeasurementDefinitionManagerRemote.class), MeasurementScheduleManager(
+            MeasurementScheduleManagerRemote.class),
 
         OperationManager(OperationManagerRemote.class), //
         ResourceManager(ResourceManagerRemote.class), //
         ResourceGroupManager(ResourceGroupManagerRemote.class), //
         RoleManager(RoleManagerRemote.class), //
         SubjectManager(SubjectManagerRemote.class),
-//        RemoteInstallManager(RemoteInstallManagerRemote.class),
+        //        RemoteInstallManager(RemoteInstallManagerRemote.class),
         ;
 
         private Class<?> remote;
@@ -213,9 +209,9 @@ public class RemoteClient {
         return RemoteClientProxy.getProcessor(this, Manager.SubjectManager);
     }
 
-//    public RemoteInstallManagerRemote getRemoteInstallManagerRemote() {
-//        return RemoteClientProxy.getProcessor(this, Manager.RemoteInstallManager);
-//    }
+    //    public RemoteInstallManagerRemote getRemoteInstallManagerRemote() {
+    //        return RemoteClientProxy.getProcessor(this, Manager.RemoteInstallManager);
+    //    }
 
     public Subject getSubject() {
         return subject;

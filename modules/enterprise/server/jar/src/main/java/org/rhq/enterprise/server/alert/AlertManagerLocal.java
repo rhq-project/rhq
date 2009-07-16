@@ -87,5 +87,5 @@ public interface AlertManagerLocal {
     PageList<Alert> findAlerts(Subject subject, Alert criteria, AlertPriority priority, int[] resourceIds,
         long beginTime, long endTime, PageControl pc) throws FetchException;
 
-    PageList<Alert> findAlertsByCriteria(Subject subject, AlertCriteria criteria, PageControl pc) throws FetchException;
+    PageList<Alert> findAlertsByCriteria(Subject subject, AlertCriteria criteria) throws FetchException;
 }

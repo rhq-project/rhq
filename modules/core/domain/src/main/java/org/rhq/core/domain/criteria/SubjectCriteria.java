@@ -51,161 +51,85 @@ public class SubjectCriteria extends Criteria {
     private PageOrdering sortPhoneNumber;
     private PageOrdering sortDepartment;
 
-    public Integer getFilterId() {
-        return filterId;
-    }
-
-    public void setFilterId(Integer filterId) {
+    public void addFilterId(Integer filterId) {
         this.filterId = filterId;
     }
 
-    public String getFilterName() {
-        return filterName;
-    }
-
-    public void setFilterName(String filterName) {
+    public void addFilterName(String filterName) {
         this.filterName = filterName;
     }
 
-    public String getFilterFirstName() {
-        return filterFirstName;
-    }
-
-    public void setFilterFirstName(String filterFirstName) {
+    public void addFilterFirstName(String filterFirstName) {
         this.filterFirstName = filterFirstName;
     }
 
-    public String getFilterLastName() {
-        return filterLastName;
-    }
-
-    public void setFilterLastName(String filterLastName) {
+    public void addFilterLastName(String filterLastName) {
         this.filterLastName = filterLastName;
     }
 
-    public String getFilterEmailAddress() {
-        return filterEmailAddress;
-    }
-
-    public void setFilterEmailAddress(String filterEmailAddress) {
+    public void addFilterEmailAddress(String filterEmailAddress) {
         this.filterEmailAddress = filterEmailAddress;
     }
 
-    public String getFilterSmsAddress() {
-        return filterSmsAddress;
-    }
-
-    public void setFilterSmsAddress(String filterSmsAddress) {
+    public void addFilterSmsAddress(String filterSmsAddress) {
         this.filterSmsAddress = filterSmsAddress;
     }
 
-    public String getFilterPhoneNumber() {
-        return filterPhoneNumber;
-    }
-
-    public void setFilterPhoneNumber(String filterPhoneNumber) {
+    public void addFilterPhoneNumber(String filterPhoneNumber) {
         this.filterPhoneNumber = filterPhoneNumber;
     }
 
-    public String getFilterDepartment() {
-        return filterDepartment;
-    }
-
-    public void setFilterDepartment(String filterDepartment) {
+    public void addFilterDepartment(String filterDepartment) {
         this.filterDepartment = filterDepartment;
     }
 
-    public Boolean getFilterFactive() {
-        return filterFactive;
-    }
-
-    public void setFilterFactive(Boolean filterFactive) {
+    public void addFilterFactive(Boolean filterFactive) {
         this.filterFactive = filterFactive;
     }
 
-    public boolean isFetchConfiguration() {
-        return fetchConfiguration;
-    }
-
-    public void setFetchConfiguration(boolean fetchConfiguration) {
+    public void fetchConfiguration(boolean fetchConfiguration) {
         this.fetchConfiguration = fetchConfiguration;
     }
 
-    public boolean isFetchRoles() {
-        return fetchRoles;
-    }
-
-    public void setFetchRoles(boolean fetchRoles) {
+    public void fetchRoles(boolean fetchRoles) {
         this.fetchRoles = fetchRoles;
     }
 
-    public boolean isFetchSubjectNotifications() {
-        return fetchSubjectNotifications;
-    }
-
-    public void setFetchSubjectNotifications(boolean fetchSubjectNotifications) {
+    public void fetchSubjectNotifications(boolean fetchSubjectNotifications) {
         this.fetchSubjectNotifications = fetchSubjectNotifications;
     }
 
-    public PageOrdering getSortName() {
-        return sortName;
-    }
-
-    public void setSortName(PageOrdering sortName) {
+    public void addSortName(PageOrdering sortName) {
         addSortField("name");
         this.sortName = sortName;
     }
 
-    public PageOrdering getSortFirstName() {
-        return sortFirstName;
-    }
-
-    public void setSortFirstName(PageOrdering sortFirstName) {
+    public void addSortFirstName(PageOrdering sortFirstName) {
         addSortField("firstName");
         this.sortFirstName = sortFirstName;
     }
 
-    public PageOrdering getSortLastName() {
-        return sortLastName;
-    }
-
-    public void setSortLastName(PageOrdering sortLastName) {
+    public void addSortLastName(PageOrdering sortLastName) {
         addSortField("lastName");
         this.sortLastName = sortLastName;
     }
 
-    public PageOrdering getSortEmailAddress() {
-        return sortEmailAddress;
-    }
-
-    public void setSortEmailAddress(PageOrdering sortEmailAddress) {
+    public void addSortEmailAddress(PageOrdering sortEmailAddress) {
         addSortField("emailAddress");
         this.sortEmailAddress = sortEmailAddress;
     }
 
-    public PageOrdering getSortSmsAddress() {
-        return sortSmsAddress;
-    }
-
-    public void setSortSmsAddress(PageOrdering sortSmsAddress) {
+    public void addSortSmsAddress(PageOrdering sortSmsAddress) {
         addSortField("smsAddress");
         this.sortSmsAddress = sortSmsAddress;
     }
 
-    public PageOrdering getSortPhoneNumber() {
-        return sortPhoneNumber;
-    }
-
-    public void setSortPhoneNumber(PageOrdering sortPhoneNumber) {
+    public void addSortPhoneNumber(PageOrdering sortPhoneNumber) {
         addSortField("phoneNumber");
         this.sortPhoneNumber = sortPhoneNumber;
     }
 
-    public PageOrdering getSortDepartment() {
-        return sortDepartment;
-    }
-
-    public void setSortDepartment(PageOrdering sortDepartment) {
+    public void addSortDepartment(PageOrdering sortDepartment) {
         addSortField("department");
         this.sortDepartment = sortDepartment;
     }

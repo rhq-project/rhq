@@ -55,7 +55,6 @@ public final class CriteriaQueryGenerator {
     private List<String> joinExpressions = new ArrayList<String>();
 
     private Criteria criteria;
-    private PageControl pageControl;
 
     private String authorizationJoinFragment;
     private int authorizationSubjectId;
@@ -64,14 +63,8 @@ public final class CriteriaQueryGenerator {
     private String className;
     private static String NL = System.getProperty("line.separator");
 
-    public CriteriaQueryGenerator(Criteria criteria, PageControl pageControl) {
+    public CriteriaQueryGenerator(Criteria criteria) {
         this.criteria = criteria;
-
-        if (pageControl == null) {
-            this.pageControl = PageControl.getUnlimitedInstance();
-        } else {
-            this.pageControl = pageControl;
-        }
 
         String criteriaClassName = criteria.getClass().getSimpleName();
         className = criteriaClassName.substring(0, criteriaClassName.length() - 8);
@@ -274,7 +267,7 @@ public final class CriteriaQueryGenerator {
         String queryString = getQueryString(false);
         Query query = em.createQuery(queryString);
         setBindValues(query, false);
-        PersistenceUtility.setDataPage(query, pageControl);
+        PersistenceUtility.setDataPage(query, criteria.getPageControl());
         return query;
     }
 
@@ -305,28 +298,27 @@ public final class CriteriaQueryGenerator {
     }
 
     public static void testSubjectCriteria() {
-        PageControl pc = PageControl.getUnlimitedInstance();
         SubjectCriteria subjectCriteria = new SubjectCriteria();
-        subjectCriteria.setFilterFirstName("joe");
-        subjectCriteria.setFilterFactive(true);
-        subjectCriteria.setFetchRoles(true);
-        subjectCriteria.setSortName(PageOrdering.ASC);
+        subjectCriteria.addFilterFirstName("joe");
+        subjectCriteria.addFilterFactive(true);
+        subjectCriteria.fetchRoles(true);
+        subjectCriteria.addSortName(PageOrdering.ASC);
 
-        CriteriaQueryGenerator subjectGenerator = new CriteriaQueryGenerator(subjectCriteria, pc);
+        CriteriaQueryGenerator subjectGenerator = new CriteriaQueryGenerator(subjectCriteria);
         System.out.println(subjectGenerator.getQueryString(false));
         System.out.println(subjectGenerator.getQueryString(true));
     }
 
     public static void testAlertCriteria() {
-        PageControl pc = PageControl.getUnlimitedInstance();
         AlertCriteria alertCriteria = new AlertCriteria();
-        alertCriteria.setFilterName("joe");
-        alertCriteria.setFilterResourceIds(Arrays.asList(1, 2, 3));
-        alertCriteria.setFetchAlertDefinition(true);
-        alertCriteria.setSortPriority(PageOrdering.DESC);
-        alertCriteria.setSortName(PageOrdering.ASC);
+        alertCriteria.addFilterName("joe");
+        alertCriteria.addFilterResourceIds(Arrays.asList(1, 2, 3));
+        alertCriteria.fetchAlertDefinition(true);
+        alertCriteria.addSortPriority(PageOrdering.DESC);
+        alertCriteria.addSortName(PageOrdering.ASC);
+        alertCriteria.setPaging(0, 100);
 
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(alertCriteria, pc);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(alertCriteria);
         System.out.println(generator.getQueryString(false));
         System.out.println(generator.getQueryString(true));
 

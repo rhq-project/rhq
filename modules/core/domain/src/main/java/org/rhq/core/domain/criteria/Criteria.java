@@ -43,6 +43,9 @@ public abstract class Criteria implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    private Integer pageNumber;
+    private Integer pageSize;
+
     protected Map<String, String> filterOverrides;
     protected Map<String, String> sortOverrides;
 
@@ -118,8 +121,18 @@ public abstract class Criteria implements Serializable {
         orderingFieldNames.add("sort" + Character.toUpperCase(fieldName.charAt(0)) + fieldName.substring(1));
     }
 
+    public void setPaging(int pageNumber, int pageSize) {
+        this.pageNumber = pageNumber;
+        this.pageSize = pageSize;
+    }
+
     public PageControl getPageControl() {
-        PageControl pc = PageControl.getUnlimitedInstance();
+        PageControl pc = null;
+        if (pageNumber == null || pageSize == null) {
+            pc = PageControl.getUnlimitedInstance();
+        } else {
+            pc = new PageControl(pageNumber, pageSize);
+        }
         for (String fieldName : orderingFieldNames) {
             for (Field sortField : getFields(Type.SORT)) {
                 if (sortField.getName().equals(fieldName) == false) {

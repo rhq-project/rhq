@@ -65,125 +65,65 @@ public class AlertCriteria extends Criteria {
         sortOverrides.put("priority", "alertDefinition.priority");
     }
 
-    public Integer getFilterId() {
-        return filterId;
-    }
-
-    public void setFilterId(Integer filterId) {
+    public void addFilterId(Integer filterId) {
         this.filterId = filterId;
     }
 
-    public String getFilterTriggeredOperation() {
-        return filterTriggeredOperation;
-    }
-
-    public void setFilterTriggeredOperation(String filterTriggeredOperation) {
+    public void addFilterTriggeredOperation(String filterTriggeredOperation) {
         this.filterTriggeredOperation = filterTriggeredOperation;
     }
 
-    public Long getFilterStartTime() {
-        return filterStartTime;
-    }
-
-    public void setFilterStartTime(Long filterStartTime) {
+    public void addFilterStartTime(Long filterStartTime) {
         this.filterStartTime = filterStartTime;
     }
 
-    public Long getFilterEndTime() {
-        return filterEndTime;
-    }
-
-    public void setFilterEndTime(Long filterEndTime) {
+    public void addFilterEndTime(Long filterEndTime) {
         this.filterEndTime = filterEndTime;
     }
 
-    public String getFilterName() {
-        return filterName;
-    }
-
-    public void setFilterName(String filterName) {
+    public void addFilterName(String filterName) {
         this.filterName = filterName;
     }
 
-    public String getFilterDescription() {
-        return filterDescription;
-    }
-
-    public void setFilterDescription(String filterDescription) {
+    public void addFilterDescription(String filterDescription) {
         this.filterDescription = filterDescription;
     }
 
-    public AlertPriority getFilterPriority() {
-        return filterPriority;
-    }
-
-    public void setFilterPriority(AlertPriority filterPriority) {
+    public void addFilterPriority(AlertPriority filterPriority) {
         this.filterPriority = filterPriority;
     }
 
-    public String getFilterResourceTypeName() {
-        return filterResourceTypeName;
-    }
-
-    public void setFilterResourceTypeName(String filterResourceTypeName) {
+    public void addFilterResourceTypeName(String filterResourceTypeName) {
         this.filterResourceTypeName = filterResourceTypeName;
     }
 
-    public List<Integer> getFilterResourceIds() {
-        return filterResourceIds;
-    }
-
-    public void setFilterResourceIds(List<Integer> filterResourceIds) {
+    public void addFilterResourceIds(List<Integer> filterResourceIds) {
         this.filterResourceIds = filterResourceIds;
     }
 
-    public boolean isFetchAlertDefinition() {
-        return fetchAlertDefinition;
-    }
-
-    public void setFetchAlertDefinition(boolean fetchAlertDefinition) {
+    public void fetchAlertDefinition(boolean fetchAlertDefinition) {
         this.fetchAlertDefinition = fetchAlertDefinition;
     }
 
-    public boolean isFetchConditionLogs() {
-        return fetchConditionLogs;
-    }
-
-    public void setFetchConditionLogs(boolean fetchConditionLogs) {
+    public void fetchConditionLogs(boolean fetchConditionLogs) {
         this.fetchConditionLogs = fetchConditionLogs;
     }
 
-    public boolean isFetchNotificationLogs() {
-        return fetchNotificationLogs;
-    }
-
-    public void setFetchNotificationLogs(boolean fetchNotificationLogs) {
+    public void fetchNotificationLogs(boolean fetchNotificationLogs) {
         this.fetchNotificationLogs = fetchNotificationLogs;
     }
 
-    public PageOrdering getSortName() {
-        return sortName;
-    }
-
-    public void setSortName(PageOrdering sortName) {
+    public void addSortName(PageOrdering sortName) {
         addSortField("name");
         this.sortName = sortName;
     }
 
-    public PageOrdering getSortCtime() {
-        return sortCtime;
-    }
-
-    public void setSortCtime(PageOrdering sortCtime) {
+    public void addSortCtime(PageOrdering sortCtime) {
         addSortField("ctime");
         this.sortCtime = sortCtime;
     }
 
-    public PageOrdering getSortPriority() {
-        return sortPriority;
-    }
-
-    public void setSortPriority(PageOrdering sortPriority) {
+    public void addSortPriority(PageOrdering sortPriority) {
         addSortField("priority");
         this.sortPriority = sortPriority;
     }

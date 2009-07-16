@@ -23,6 +23,7 @@ import java.util.List;
 import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
@@ -84,4 +85,7 @@ public interface MeasurementDefinitionManagerLocal {
 
     PageList<MeasurementDefinition> findMeasurementDefinitions(Subject sessionSubject, MeasurementDefinition criteria,
         PageControl pc) throws FetchException;
+
+    PageList<MeasurementDefinition> findMeasurementDefinitionsByCriteria(Subject subject,
+        MeasurementDefinitionCriteria criteria);
 }

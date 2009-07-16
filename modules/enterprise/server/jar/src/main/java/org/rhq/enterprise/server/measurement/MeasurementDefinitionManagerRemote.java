@@ -25,6 +25,7 @@ import javax.jws.WebService;
 import javax.jws.soap.SOAPBinding;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -46,4 +47,9 @@ public interface MeasurementDefinitionManagerRemote {
         @WebParam(name = "criteria") MeasurementDefinition criteria, //
         @WebParam(name = "pageControl") PageControl pc) //
         throws FetchException;
+
+    @WebMethod
+    PageList<MeasurementDefinition> findMeasurementDefinitionsByCriteria(//
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "criteria") MeasurementDefinitionCriteria criteria);
 }

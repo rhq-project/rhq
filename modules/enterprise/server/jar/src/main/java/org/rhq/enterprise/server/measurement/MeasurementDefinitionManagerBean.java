@@ -34,10 +34,12 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
+import org.rhq.core.domain.util.CriteriaQueryGenerator;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.QueryGenerator;
@@ -152,6 +154,19 @@ public class MeasurementDefinitionManagerBean implements MeasurementDefinitionMa
         } catch (Exception e) {
             throw new FetchException(e.getMessage());
         }
+    }
 
+    @SuppressWarnings("unchecked")
+    public PageList<MeasurementDefinition> findMeasurementDefinitionsByCriteria(Subject subject,
+        MeasurementDefinitionCriteria criteria) {
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+
+        Query query = generator.getQuery(entityManager);
+        Query countQuery = generator.getCountQuery(entityManager);
+
+        long count = (Long) countQuery.getSingleResult();
+        List<MeasurementDefinition> alertDefinitions = query.getResultList();
+
+        return new PageList<MeasurementDefinition>(alertDefinitions, (int) count, criteria.getPageControl());
     }
 }

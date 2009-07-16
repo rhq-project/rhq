@@ -11,6 +11,8 @@ rem are described in comments in rhq-client-env.bat. The variables can also be
 rem set via rhq-client-env.bat, which is sourced by this script.
 rem ===========================================================================
 
+setlocal
+
 rem if debug variable is set, it is assumed to be on, unless its value is false
 if "%RHQ_CLI_DEBUG%" == "false" (
    set RHQ_CLI_DEBUG=

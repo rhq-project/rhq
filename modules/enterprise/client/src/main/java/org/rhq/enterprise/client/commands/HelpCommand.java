@@ -21,6 +21,9 @@ package org.rhq.enterprise.client.commands;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
+import java.lang.reflect.GenericArrayType;
+import java.lang.reflect.WildcardType;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -87,22 +90,9 @@ public class HelpCommand implements ClientCommand {
                     String[][] data = new String[methods.length][2];
                     for (int i = 0; i < methods.length; i++) {
 
-                        String returnTypeName = null;
-
                         Type returnType = methods[i].getGenericReturnType();
-                        if (returnType instanceof ParameterizedType) {
-                            ParameterizedType type = (ParameterizedType) returnType;
-                            Type[] typeArguments = type.getActualTypeArguments();
-                            for (Type typeArgument : typeArguments) {
-                                Class typeArgClass = (Class) typeArgument;
-                                returnTypeName = methods[i].getReturnType().getSimpleName() + "<" + typeArgClass.getSimpleName() + ">";
-                            }
-                        } else {
-                            returnTypeName = methods[i].getReturnType().getSimpleName();
-                        }
 
-
-                        data[i][0] = returnTypeName;
+                        data[i][0] = getSimpleTypeString(returnType);
 
                         Class<?>[] paramTypes = methods[i].getParameterTypes();
                         StringBuilder buf = new StringBuilder();
@@ -118,7 +108,6 @@ public class HelpCommand implements ClientCommand {
                         boolean secondary = false;
                         for (int j = 0; (j < paramTypes.length); ++j) {
                             String typeName = paramTypes[j].getSimpleName();
-
 
 
                             if (annotations != null && annotations.length >= i) {
@@ -145,7 +134,7 @@ public class HelpCommand implements ClientCommand {
                     tw.print(data);
                 } else {
                     client.getPrintWriter().println(
-                        "Unknown service [" + args[2] + "] try 'help api' for a listing of services");
+                            "Unknown service [" + args[2] + "] try 'help api' for a listing of services");
                 }
 
             }
@@ -163,6 +152,42 @@ public class HelpCommand implements ClientCommand {
         return true;
     }
 
+
+    private String getSimpleTypeString(Type type) {
+        if (type instanceof ParameterizedType) {
+            ParameterizedType pType = (ParameterizedType) type;
+            Type[] typeArguments = pType.getActualTypeArguments();
+
+            String typeArgString = "";
+            for (Type typeArgument : typeArguments) {
+
+                if (typeArgString.length() > 0) {
+                    typeArgString += ",";
+                }
+
+                typeArgString += getSimpleTypeString(typeArgument);
+            }
+            return getSimpleTypeString(pType.getRawType()) + "<" + typeArgString + ">";
+
+
+        } else if (type instanceof TypeVariable) {
+            TypeVariable vType = (TypeVariable) type;
+            return vType.getClass().getSimpleName();
+        } else if (type instanceof GenericArrayType) {
+            GenericArrayType aType = (GenericArrayType) type;
+            return aType.getClass().getSimpleName() + "[" + getSimpleTypeString(aType.getGenericComponentType()) + "]";
+        } else if (type instanceof WildcardType) {
+            return ((WildcardType)type).toString();
+        } else {
+            if (type == null) {
+                return "";
+            } else {
+                return ((Class)type).getSimpleName();
+            }
+        }
+    }
+
+
     public String getSyntax() {
         return "help [command] | [api [service]]";
     }
@@ -173,7 +198,7 @@ public class HelpCommand implements ClientCommand {
 
     public String getDetailedHelp() {
         return "Use help [command] to get detailed help\n"
-            + "help api will return the list of service apis available for script execs\n"
-            + "help api [service] will display the methods and signatures of a specific api";
+                + "help api will return the list of service apis available for script execs\n"
+                + "help api [service] will display the methods and signatures of a specific api";
     }
 }

@@ -431,11 +431,7 @@ public class ClientMain {
 
             this.serviceCompletor = (new ServiceCompletor(this.getRemoteClient().getManagers()));
 
-            ScriptCommand sc = (ScriptCommand) commands.get("exec");
-            sc.initBindings(this);  
 
-            this.serviceCompletor.setContext(((ScriptCommand)commands.get("exec")).getContext());
-            
 
             consoleReader.addCompletor(this.serviceCompletor);
 
@@ -449,6 +445,12 @@ public class ClientMain {
     public void setSubject(Subject subject) {
         this.subject = subject;
         this.remoteClient.setSubject(subject);
+
+        ScriptCommand sc = (ScriptCommand) commands.get("exec");
+        sc.initBindings(this);
+
+        this.serviceCompletor.setContext(((ScriptCommand)commands.get("exec")).getContext());
+        
     }
 
     public String getHost() {

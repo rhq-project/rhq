@@ -154,5 +154,6 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/hibernate/hibernate3/3.2.r14201-2/hibernate3-3.2.r14201-2.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/jline/jline/0.9.94/jline-0.9.94.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/ettrema/milton-api/1.4.1/milton-api-1.4.1.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/jboss/javassist/3.8.0.GA/javassist-3.8.0.GA.jar"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

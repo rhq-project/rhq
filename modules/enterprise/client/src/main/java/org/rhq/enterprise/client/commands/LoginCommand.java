@@ -47,11 +47,12 @@ public class LoginCommand implements ClientCommand {
             client.setHost(host);
             client.setPort(port);
             RemoteClient remoteClient = new RemoteClient(host, port);
-            client.setRemoteClient(remoteClient);
 
             client.setUser(user);
             client.setPass(pass);
+            client.setRemoteClient(remoteClient);
             client.setSubject(client.getRemoteClient().getSubjectManagerRemote().login(user, pass));
+
             client.getRemoteClient().setLoggedIn(true);
             client.getPrintWriter().println("Login successful");
 

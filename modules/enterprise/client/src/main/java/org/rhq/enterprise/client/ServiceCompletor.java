@@ -21,12 +21,23 @@ package org.rhq.enterprise.client;
 import jline.Completor;
 
 import javax.jws.WebParam;
-import javax.script.ScriptContext;
 import javax.script.Bindings;
-import java.util.*;
-import java.lang.reflect.Method;
-import java.lang.reflect.Field;
+import javax.script.ScriptContext;
+import java.beans.BeanInfo;
+import java.beans.IntrospectionException;
+import java.beans.Introspector;
+import java.beans.MethodDescriptor;
+import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * A Contextual JavaScript interactive completor. Not perfect, but
@@ -52,7 +63,7 @@ public class ServiceCompletor implements Completor {
     }
 
     public int complete(String s, int i, List list) {
-
+        try {
         if (lastComplete != null && lastComplete.equals(s)) {
             recomplete++;
         } else {
@@ -95,11 +106,15 @@ public class ServiceCompletor implements Completor {
         }
 
         return (list.size() == 0) ? (-1) : rootLength;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return -1;
+        }
     }
 
 
     public int contextComplete(Object baseObject, String s, int i, List list) {
-        if (s.contains(".")) {
+        if (!s.contains("(") && s.contains(".")) {
             String[] call = s.split("\\.",2);
 
             Map<String, Object> matches = getContextMatches(baseObject, call[0]);
@@ -112,17 +127,32 @@ public class ServiceCompletor implements Completor {
             Map<String, Object> matches = getContextMatches(baseObject, call[0]);
 
 
-            if (call.length == 2 && matches.containsKey(call[0]) && matches.get(call[0]) instanceof Method) {
-                return call[0].length() + 1 + completeParameters(call[1], i, list, (Method)matches.get(call[0]));
-            } else {
-                if (matches.size() == 1 && matches.containsKey(call[0])) {
-                    list.add("(");
-                    return call[0].length() + 1;
-                }
+            if (call.length == 2 && matches.containsKey(call[0])) {
 
-                list.addAll(matches.keySet());
-                return 0;
+                List<Object> exactMatches = getExactContextMatches(baseObject, call[0]);
+                int x = 0;
+                    for (Object match : exactMatches) {
+                        if (match instanceof Method) {
+                            int result = completeParameters(call[1], i, list, (Method) match);  // x should be the same for all calls
+                            if (result > 0) {
+                                x = result;
+                            }
+                        }
+                    }
+                return call[0].length() + 1 + x;
+
             }
+
+            if (matches.size() == 1 && matches.containsKey(call[0])) {
+                if (matches.get(call[0]) instanceof Method) {
+                    list.add("(");
+                }
+                return call[0].length() + 1;
+            }
+
+            list.addAll(matches.keySet());
+            return 0;
+
         }
     }
 
@@ -149,7 +179,9 @@ public class ServiceCompletor implements Completor {
         int baseLength = 0;
 
         for (int x = 0; x < paramIndex; x++ ) {
-            if (!c[x].isAssignableFrom(context.getAttribute(paramList[x]).getClass())) { 
+            Object paramFound = context.getAttribute(paramList[x]);
+
+            if (paramFound != null && !c[x].isAssignableFrom(paramFound.getClass())) {
                 return -1;
             }
             baseLength += paramList[x].length() + 1;
@@ -169,7 +201,7 @@ public class ServiceCompletor implements Completor {
                 list.addAll(matches.keySet());
             }
 
-            if (list.size() == 0 && recomplete == 2) {
+            if (list.size() == 0 && recomplete == 3) {
                 Annotation[][] annotations = method.getParameterAnnotations();
 
                 if (annotations != null && annotations.length >= i) {
@@ -180,9 +212,8 @@ public class ServiceCompletor implements Completor {
                         }
                     }
                 }
+                list.add("type: " + c[paramIndex].getSimpleName());
             }
-            list.add("type: " + c[paramIndex].getSimpleName());
-
             return baseLength;
         }
     }
@@ -212,11 +243,13 @@ public class ServiceCompletor implements Completor {
      private Map<String, Object> getContextMatches(String start, Class typeFilter) {
         Map<String, Object> found = new HashMap<String, Object>();
         if (context != null) {
-            for (Integer scope : context.getScopes()) {
+            for (int scope : context.getScopes()) {
                 Bindings bindings = context.getBindings(scope);
                 for (String var : bindings.keySet()) {
                     if (var.startsWith(start)) {
-                        if (typeFilter.isAssignableFrom(bindings.get(var).getClass())) {
+
+                        if ((bindings.get(var) != null && typeFilter.isAssignableFrom(bindings.get(var).getClass()))
+                            || recomplete == 2) {
                             found.put(var, bindings.get(var));
                         }
                     }
@@ -229,20 +262,63 @@ public class ServiceCompletor implements Completor {
     private Map<String, Object> getContextMatches(Object baseObject, String start) {
         Map<String, Object> found = new HashMap<String, Object>();
 
-        Class intf = baseObject.getClass().getInterfaces()[0];
-        Method[] methods = baseObject.getClass().getDeclaredMethods();
-        for (Method m : methods) {
-            if (m.getName().startsWith(start)) {
-                found.put(m.getName(), m);
+        try {
+
+            BeanInfo info = Introspector.getBeanInfo(baseObject.getClass(), Object.class);
+
+            Set<Method> methodsCovered = new HashSet<Method>();
+
+            PropertyDescriptor[] descriptors = info.getPropertyDescriptors();
+            for (PropertyDescriptor desc : descriptors) {
+                if (desc.getName().startsWith(start)) {
+                    found.put(desc.getName(), desc);
+                    methodsCovered.add(desc.getReadMethod());
+                    methodsCovered.add(desc.getWriteMethod());
+                }
             }
+
+            MethodDescriptor[] methods = info.getMethodDescriptors();
+            for (MethodDescriptor desc : methods) {
+                if (desc.getName().startsWith(start) && !methodsCovered.contains(desc.getMethod())) {
+                    found.put(desc.getName(), desc.getMethod());
+                }
+            }
+
+
+        } catch (IntrospectionException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
 
+        return found;
+    }
+    private List<Object> getExactContextMatches(Object baseObject, String attribute) {
+        List<Object> found = new ArrayList<Object>();
 
-        Field[] fields = baseObject.getClass().getDeclaredFields();
-        for (Field f : fields) {
-            if (f.getName().startsWith(start)) {
-                found.put(f.getName(), f);
+        try {
+
+            BeanInfo info = Introspector.getBeanInfo(baseObject.getClass(), Object.class);
+
+            Set<Method> methodsCovered = new HashSet<Method>();
+
+            PropertyDescriptor[] descriptors = info.getPropertyDescriptors();
+            for (PropertyDescriptor desc : descriptors) {
+                if (desc.getName().equals(attribute)) {
+                    found.add(desc);
+                    methodsCovered.add(desc.getReadMethod());
+                    methodsCovered.add(desc.getWriteMethod());
+                }
             }
+
+            MethodDescriptor[] methods = info.getMethodDescriptors();
+            for (MethodDescriptor desc : methods) {
+                if (desc.getName().equals(attribute) && !methodsCovered.contains(desc.getMethod())) {
+                    found.add(desc.getMethod());
+                }
+            }
+
+
+        } catch (IntrospectionException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
 
         return found;

@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -452,4 +453,6 @@ public interface ResourceManagerLocal {
     void uninventoryResources(Subject subject, int[] resourceIds) throws DeleteException;
 
     List<ResourceInstallCount> findResourceInstallCounts(Subject subject, boolean groupByVersions);
+
+    PageList<Resource> findResourcesByCriteria(Subject subject, ResourceCriteria criteria);
 }

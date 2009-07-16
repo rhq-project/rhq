@@ -27,6 +27,7 @@ import javax.jws.WebService;
 import javax.jws.soap.SOAPBinding;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
@@ -196,5 +197,10 @@ public interface ResourceManagerRemote {
         @WebParam(name = "parentResourceId") int parentResourceId, //
         @WebParam(name = "searchString") String searchString, //
         @WebParam(name = "pageControl") PageControl pageControl);
+
+    @WebMethod
+    PageList<Resource> findResourcesByCriteria( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "criteria") ResourceCriteria criteria);
 
 }

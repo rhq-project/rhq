@@ -64,6 +64,7 @@ import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.InstalledPackageHistory;
 import org.rhq.core.domain.content.PackageInstallationStep;
 import org.rhq.core.domain.content.ResourceChannel;
+import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSource;
 import org.rhq.core.domain.measurement.Availability;
@@ -97,6 +98,7 @@ import org.rhq.core.domain.resource.composite.ResourceInstallCount;
 import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
+import org.rhq.core.domain.util.CriteriaQueryGenerator;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
@@ -2064,11 +2066,10 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         }
     }
 
+    @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public List<ResourceInstallCount> findResourceInstallCounts(Subject subject, boolean groupByVersions) {
-
         Query query = null;
-
         if (!groupByVersions) {
             query = entityManager.createNamedQuery(Resource.QUERY_RESOURCE_REPORT);
         } else {
@@ -2076,9 +2077,24 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         }
 
         List<ResourceInstallCount> results = query.getResultList();
-
         return results;
+    }
 
+    @SuppressWarnings("unchecked")
+    public PageList<Resource> findResourcesByCriteria(Subject subject, ResourceCriteria criteria) {
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        if (authorizationManager.isInventoryManager(subject) == false) {
+            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE, null,
+                subject.getId());
+        }
+
+        Query query = generator.getQuery(entityManager);
+        Query countQuery = generator.getCountQuery(entityManager);
+
+        long count = (Long) countQuery.getSingleResult();
+        List<Resource> results = query.getResultList();
+
+        return new PageList<Resource>(results, (int) count, criteria.getPageControl());
     }
 
 }

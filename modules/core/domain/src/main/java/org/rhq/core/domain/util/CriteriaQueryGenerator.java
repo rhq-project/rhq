@@ -140,26 +140,26 @@ public final class CriteriaQueryGenerator {
         if (type == AuthorizationTokenType.RESOURCE) {
             if (fragment == null) {
                 this.authorizationJoinFragment = "" // 
-                    + "JOIN " + alias + ".implicitGroup authGroup " + NL //
+                    + "JOIN " + alias + ".implicitGroups authGroup " + NL //
                     + "JOIN authGroup.roles authRole " + NL //
-                    + "JOIN authRole.subject authSubject " + NL;
+                    + "JOIN authRole.subjects authSubject " + NL;
             } else {
                 this.authorizationJoinFragment = "" //
                     + "JOIN " + alias + "." + fragment + " authRes " + NL // 
                     + "JOIN authRes.implicitGroup authGroup " + NL //
                     + "JOIN authGroup.roles authRole " + NL //
-                    + "JOIN authRole.subject authSubject " + NL;
+                    + "JOIN authRole.subjects authSubject " + NL;
             }
         } else if (type == AuthorizationTokenType.GROUP) {
             if (fragment == null) {
                 this.authorizationJoinFragment = "" // 
                     + "JOIN " + alias + ".roles authRole " + NL //
-                    + "JOIN authRole.subject authSubject " + NL;
+                    + "JOIN authRole.subjects authSubject " + NL;
             } else {
                 this.authorizationJoinFragment = "" //
                     + "JOIN " + alias + "." + fragment + " authGroup " + NL //
                     + "JOIN authGroup.roles authRole " + NL //
-                    + "JOIN authRole.subject authSubject " + NL;
+                    + "JOIN authRole.subjects authSubject " + NL;
             }
         } else {
             throw new IllegalArgumentException(this.getClass().getSimpleName()

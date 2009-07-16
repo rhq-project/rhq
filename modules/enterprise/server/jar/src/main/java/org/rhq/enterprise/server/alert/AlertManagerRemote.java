@@ -77,7 +77,6 @@ public interface AlertManagerRemote {
     @WebMethod
     PageList<Alert> findAlertsByCriteria( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "criteria") AlertCriteria criteria, //
-        @WebParam(name = "pageControl") PageControl pageControl) //
+        @WebParam(name = "criteria") AlertCriteria criteria) //
         throws FetchException;
 }

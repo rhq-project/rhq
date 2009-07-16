@@ -93,15 +93,11 @@ public class TestRemoteInterface extends AssertJUnit {
 
         assertNotNull(user);
 
-        assertTrue(subjectManager.isLoggedIn("ws-test"));
-
         assertEquals("ws-test", user.getName());
 
         assertNotNull(user.getSessionId());
 
         assertTrue(user.getSessionId() != 0);
-
-        assertTrue(subjectManager.isLoggedIn("ws-test"));
 
         Subject newUser = subjectManager.getSubjectByName("ws-test-user");
 
@@ -124,15 +120,11 @@ public class TestRemoteInterface extends AssertJUnit {
 
         subjectManager.createPrincipal(user, "ws-test-user", "ws-test-password");
         newUser = subjectManager.login("ws-test-user", "ws-test-password");
-        assertTrue(subjectManager.isLoggedIn("ws-test-user"));
         subjectManager.logout(newUser);
-        assertFalse(subjectManager.isLoggedIn("ws-test-user"));
 
         subjectManager.changePassword(user, "ws-test-user", "updated-ws-test-password");
         newUser = subjectManager.login("ws-test-user", "updated-ws-test-password");
-        assertTrue(subjectManager.isLoggedIn("ws-test-user"));
         subjectManager.logout(newUser);
-        assertFalse(subjectManager.isLoggedIn("ws-test-user"));
 
         newUser = subjectManager.getSubjectByName("ws-test-user");
         newUser.setFirstName("updated-first-name");

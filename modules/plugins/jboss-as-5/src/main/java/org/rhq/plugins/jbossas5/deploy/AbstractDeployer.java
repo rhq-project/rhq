@@ -33,7 +33,6 @@ import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.deployers.spi.management.deploy.DeploymentManager;
 import org.jboss.deployers.spi.management.deploy.DeploymentStatus;
 import org.jboss.managed.api.ManagedDeployment;
-import org.jboss.profileservice.spi.ProfileService;
 import org.jboss.profileservice.spi.ProfileKey;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -42,6 +41,7 @@ import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
+import org.rhq.plugins.jbossas5.connection.ProfileServiceConnection;
 import org.rhq.plugins.jbossas5.util.ConversionUtils;
 import org.rhq.plugins.jbossas5.util.DeploymentUtils;
 
@@ -57,10 +57,10 @@ public abstract class AbstractDeployer implements Deployer {
 
     private final Log log = LogFactory.getLog(this.getClass());
 
-    private ProfileService profileService;
+    private ProfileServiceConnection profileServiceConnection;
 
-    protected AbstractDeployer(ProfileService profileService) {
-        this.profileService = profileService;
+    protected AbstractDeployer(ProfileServiceConnection profileService) {
+        this.profileServiceConnection = profileService;
     }
 
     public void deploy(CreateResourceReport createResourceReport, ResourceType resourceType) {
@@ -85,7 +85,7 @@ public abstract class AbstractDeployer implements Deployer {
             @SuppressWarnings( { "ConstantConditions" })
             boolean deployExploded = deployTimeConfig.getSimple("deployExploded").getBooleanValue();
 
-            DeploymentManager deploymentManager = this.profileService.getDeploymentManager();
+            DeploymentManager deploymentManager = this.profileServiceConnection.getDeploymentManager();
             boolean deployFarmed = deployTimeConfig.getSimple("deployFarmed").getBooleanValue();
             if (deployFarmed) {
                 Collection<ProfileKey> profileKeys = deploymentManager.getProfiles();
@@ -143,8 +143,8 @@ public abstract class AbstractDeployer implements Deployer {
         return log;
     }
 
-    protected ProfileService getProfileService() {
-        return profileService;
+    protected ProfileServiceConnection getProfileServiceConnection() {
+        return profileServiceConnection;
     }
 
     protected abstract File prepareArchive(PackageDetailsKey key, ResourceType resourceType);
@@ -155,7 +155,7 @@ public abstract class AbstractDeployer implements Deployer {
         String archiveFileName = archiveFile.getName();
         KnownDeploymentTypes deploymentType = ConversionUtils.getDeploymentType(resourceType);
         String deploymentTypeString = deploymentType.getType();
-        ManagementView managementView = profileService.getViewManager();
+        ManagementView managementView = profileServiceConnection.getManagementView();
         managementView.load();
         Set<ManagedDeployment> managedDeployments = managementView.getDeploymentsForType(deploymentTypeString);
         for (ManagedDeployment managedDeployment : managedDeployments) {

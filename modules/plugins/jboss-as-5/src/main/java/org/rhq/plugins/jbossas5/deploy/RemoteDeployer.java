@@ -37,6 +37,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.content.ContentContext;
 import org.rhq.core.pluginapi.content.ContentServices;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.plugins.jbossas5.connection.ProfileServiceConnection;
 import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
 
 /**
@@ -49,10 +50,10 @@ public class RemoteDeployer extends AbstractDeployer {
     private ResourceContext<?> resourceContext;
 
     /**
-     * @param profileService
+     * @param profileServiceConnection
      */
-    public RemoteDeployer(ProfileService profileService, ResourceContext<?> resourceContext) {
-        super(profileService);
+    public RemoteDeployer(ProfileServiceConnection profileServiceConnection, ResourceContext<?> resourceContext) {
+        super(profileServiceConnection);
         this.resourceContext = resourceContext;
     }
 
@@ -100,7 +101,7 @@ public class RemoteDeployer extends AbstractDeployer {
     }
 
     private File getServerTempDirectory() {
-        ManagementView managementView = getProfileService().getViewManager();
+        ManagementView managementView = getProfileServiceConnection().getManagementView();
         ManagedComponent serverConfigComponent = ManagedComponentUtils.getSingletonManagedComponent(managementView,
             new ComponentType("MCBean", "ServerConfig"));
         String serverTempDir = (String) ManagedComponentUtils.getSimplePropertyValue(serverConfigComponent,

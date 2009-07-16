@@ -24,9 +24,9 @@ package org.rhq.plugins.jbossas5.deploy;
 
 import java.io.File;
 
-import org.jboss.profileservice.spi.ProfileService;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.plugins.jbossas5.connection.ProfileServiceConnection;
 
 /**
  * A deployer used when running inside the JBoss AS 5 process.
@@ -38,8 +38,8 @@ public class LocalDeployer extends AbstractDeployer {
     /**
      * @param profileService
      */
-    public LocalDeployer(ProfileService profileService) {
-        super(profileService);
+    public LocalDeployer(ProfileServiceConnection profileServiceConnection) {
+        super(profileServiceConnection);
     }
 
     @Override

@@ -46,7 +46,6 @@ import org.jboss.managed.api.ManagedProperty;
 import org.jboss.on.common.jbossas.JBPMWorkflowManager;
 import org.jboss.on.common.jbossas.JBossASPaths;
 import org.jboss.profileservice.spi.NoSuchDeploymentException;
-import org.jboss.profileservice.spi.ProfileService;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -425,11 +424,11 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
     }
 
     private Deployer getDeployer() {
-        ProfileService profileService = getConnection().getProfileService();
+        ProfileServiceConnection profileServiceConnection = getConnection();
         if (runningEmbedded()) {
-            return new LocalDeployer(profileService);
+            return new LocalDeployer(profileServiceConnection);
         } else {
-            return new RemoteDeployer(profileService, this.resourceContext);
+            return new RemoteDeployer(profileServiceConnection, this.resourceContext);
         }
     }
 

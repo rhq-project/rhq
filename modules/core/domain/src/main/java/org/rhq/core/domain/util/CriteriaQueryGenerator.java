@@ -73,7 +73,7 @@ public final class CriteriaQueryGenerator {
             this.pageControl = pageControl;
         }
 
-        String criteriaClassName = criteria.getClass().getName();
+        String criteriaClassName = criteria.getClass().getSimpleName();
         className = criteriaClassName.substring(0, criteriaClassName.length() - 8);
 
         StringBuilder aliasBuilder = new StringBuilder();
@@ -184,8 +184,14 @@ public final class CriteriaQueryGenerator {
             results.append(alias).append(NL);
         }
         results.append("FROM ").append(className).append(' ').append(alias).append(NL);
-        for (String fetchJoin : criteria.getFetchFields()) {
-            results.append("LEFT JOIN FETCH ").append(alias).append('.').append(fetchJoin).append(NL);
+        if (countQuery == false) {
+            /* 
+             * don't fetch in the count query to avoid: "query specified join fetching, 
+             * but the owner of the fetched association was not present in the select list"
+             */
+            for (String fetchJoin : criteria.getFetchFields()) {
+                results.append("LEFT JOIN FETCH ").append(alias).append('.').append(fetchJoin).append(NL);
+            }
         }
         if (authorizationJoinFragment != null) {
             results.append(authorizationJoinFragment);

@@ -37,12 +37,11 @@ import org.rhq.core.domain.util.PageOrdering;
  */
 public abstract class Criteria implements Serializable {
 
-    private static final long serialVersionUID = 1L;
+    private enum Type {
+        FILTER, FETCH, SORT;
+    }
 
-    private List<Field> filterFields;
-    private List<Field> fetchFields;
-    private List<Field> sortFields;
-    private List<Field> overrideFields;
+    private static final long serialVersionUID = 1L;
 
     protected Map<String, String> filterOverrides;
     protected Map<String, String> sortOverrides;
@@ -50,24 +49,6 @@ public abstract class Criteria implements Serializable {
     private List<String> orderingFieldNames;
 
     public Criteria() {
-        Field[] fields = this.getClass().getDeclaredFields();
-        filterFields = new ArrayList<Field>();
-        fetchFields = new ArrayList<Field>();
-        sortFields = new ArrayList<Field>();
-        overrideFields = new ArrayList<Field>();
-
-        for (Field field : fields) {
-            field.setAccessible(true);
-            if (field.getName().startsWith("filter")) {
-                filterFields.add(field);
-            } else if (field.getName().startsWith("fetch")) {
-                fetchFields.add(field);
-            } else if (field.getName().startsWith("sort")) {
-                sortFields.add(field);
-            } else {
-                overrideFields.add(field);
-            }
-        }
 
         filterOverrides = new HashMap<String, String>();
         sortOverrides = new HashMap<String, String>();
@@ -75,9 +56,23 @@ public abstract class Criteria implements Serializable {
         orderingFieldNames = new ArrayList<String>();
     }
 
+    private List<Field> getFields(Type fieldType) {
+        String prefix = fieldType.name().toLowerCase();
+        List<Field> results = new ArrayList<Field>();
+
+        for (Field field : this.getClass().getDeclaredFields()) {
+            field.setAccessible(true);
+            if (field.getName().startsWith(prefix)) {
+                results.add(field);
+            }
+        }
+
+        return results;
+    }
+
     public Map<String, Object> getFilterFields() {
         Map<String, Object> results = new HashMap<String, Object>();
-        for (Field filterField : filterFields) {
+        for (Field filterField : getFields(Type.FILTER)) {
             Object filterFieldValue = null;
             try {
                 filterFieldValue = filterField.get(this);
@@ -101,7 +96,7 @@ public abstract class Criteria implements Serializable {
 
     public List<String> getFetchFields() {
         List<String> results = new ArrayList<String>();
-        for (Field fetchField : fetchFields) {
+        for (Field fetchField : getFields(Type.FETCH)) {
             Object fetchFieldValue = null;
             try {
                 fetchField.setAccessible(true);
@@ -126,7 +121,7 @@ public abstract class Criteria implements Serializable {
     public PageControl getPageControl() {
         PageControl pc = PageControl.getUnlimitedInstance();
         for (String fieldName : orderingFieldNames) {
-            for (Field sortField : sortFields) {
+            for (Field sortField : getFields(Type.SORT)) {
                 if (sortField.getName().equals(fieldName) == false) {
                     continue;
                 }

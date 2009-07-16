@@ -24,19 +24,18 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.client.ClientMain;
 import org.rhq.enterprise.client.RemoteClient;
 import org.rhq.enterprise.client.TabularWriter;
+import org.rhq.enterprise.client.script.CmdLineParser;
+import org.rhq.enterprise.client.script.NamedScriptArg;
+import org.rhq.enterprise.client.script.ScriptArg;
+import org.rhq.enterprise.client.script.ParseException;
+import org.rhq.enterprise.client.script.ScriptCmdLine;
 import org.rhq.enterprise.client.utility.PackageFinder;
 import org.rhq.enterprise.client.utility.ScriptUtil;
 
-import javax.script.Bindings;
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
+import javax.script.*;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.IOException;
 import java.io.Reader;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -51,15 +50,14 @@ public class ScriptCommand implements ClientCommand {
 
     public ScriptCommand() {
         sem = new ScriptEngineManager();
+        PageControl pc = new PageControl();
+        pc.setPageNumber(-1);
+        sem.getBindings().put("unlimitedPC", pc);
         sem.getBindings().put("pageControl", PageControl.getUnlimitedInstance());
         jsEngine = sem.getEngineByName("JavaScript");
 
         importRecursive(jsEngine);
-
-        // jsEngine = sem.getEngineByName("groovy");
     }
-
-    
 
     private void importRecursive(ScriptEngine jsEngine) {
 
@@ -101,20 +99,22 @@ public class ScriptCommand implements ClientCommand {
 
         if (isScriptFileCommandLine(args)) {
             try {
-                String scriptName = args[2].trim();
-                addScriptArgsToBindings(args);
-                return executeScriptFile(new FileReader(scriptName), client);
+                CmdLineParser cmdLineParser = new CmdLineParser();
+                ScriptCmdLine scriptCmdLine = cmdLineParser.parse(args);
+
+                bindScriptArgs(scriptCmdLine);
+
+                return executeScriptFile(new FileReader(scriptCmdLine.getScriptFileName()), client);
             } catch (FileNotFoundException e) {
                 client.getPrintWriter().println(e.getMessage());
                 if (log.isDebugEnabled()) {
                     log.debug("Unable to locate script file: " + e.getMessage());
                 }
-            } catch (IOException e) {
-                client.getPrintWriter().println("An unpexected error occurred: " + e.getMessage());
-                log.warn("An unexpected IO error occurred.", e);
-            } catch (Exception e) {
-                client.getPrintWriter().println("An unpexected error occurred: " + e.getMessage());
-                log.warn("An unexpected IO error occurred.", e);
+            } catch (ParseException e) {
+                client.getPrintWriter().println("parse error: " + e.getMessage());
+                if (log.isDebugEnabled()) {
+                    log.debug("A parse error occurred.", e);
+                }
             }
 
             return true;
@@ -168,17 +168,44 @@ public class ScriptCommand implements ClientCommand {
     }
 
     private boolean isScriptFileCommandLine(String[] args) {
-        return args != null && args.length > 2 && args[1].trim().equalsIgnoreCase("-f");
-    }
-
-    private void addScriptArgsToBindings(String[] args) {
-        if (args.length < 4) {
-            return;
+        if (args == null || args.length < 3) {
+            return false;
         }
 
-        Bindings bindings = jsEngine.getBindings(ScriptContext.ENGINE_SCOPE);
-        String[] scriptArgs = Arrays.copyOfRange(args, 3, args.length);
-        bindings.put("args", scriptArgs);
+        for (int i = 0; i < args.length; ++i) {
+            if (args[i].equals("-f")) {
+                return true;
+            }
+        }
+
+        return false;
+
+    }
+
+    private void bindScriptArgs(ScriptCmdLine cmdLine) {
+        bindArgsArray(cmdLine);
+
+        if (cmdLine.getArgType() == ScriptCmdLine.ArgType.NAMED) {
+            bindNamedArgs(cmdLine);    
+        }
+    }
+
+    private void bindArgsArray(ScriptCmdLine cmdLine) {
+        String[] args = new String[cmdLine.getArgs().size()];
+        int i = 0;
+
+        for (ScriptArg arg : cmdLine.getArgs()) {
+            args[i++] = arg.getValue();
+        }
+
+        jsEngine.put("args", args);
+    }
+
+    private void bindNamedArgs(ScriptCmdLine cmdLine) {
+        for (ScriptArg arg : cmdLine.getArgs()) {
+            NamedScriptArg namedArg = (NamedScriptArg) arg;
+            jsEngine.put(namedArg.getName(), namedArg.getValue());
+        }
     }
 
     private boolean executeScriptFile(Reader reader, ClientMain client) {

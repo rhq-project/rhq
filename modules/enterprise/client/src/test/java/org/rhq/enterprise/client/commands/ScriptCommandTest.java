@@ -33,6 +33,7 @@ import javax.script.Bindings;
 public class ScriptCommandTest {
 
     ScriptCommand cmd;
+    
     @Test
     public void executeShouldSetDefaultBindings() throws Exception {
         ClientMain client = createClient();

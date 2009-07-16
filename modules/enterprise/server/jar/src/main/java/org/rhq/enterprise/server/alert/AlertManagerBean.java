@@ -63,6 +63,7 @@ import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.util.MeasurementConverter;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.util.CriteriaQueryGenerator;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
@@ -857,12 +858,13 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<Alert> findAlerts(Subject subject, AlertCriteria criteria, PageControl pc) throws FetchException {
+    public PageList<Alert> findAlertsByCriteria(Subject subject, AlertCriteria criteria, PageControl pc)
+        throws FetchException {
         try {
-            QueryGenerator generator = new QueryGenerator(criteria, pc);
+            CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria, pc);
             if (authorizationManager.isInventoryManager(subject) == false) {
-                generator.setAuthorizationResourceFragment(AuthorizationTokenType.RESOURCE, "definition.resource",
-                    subject.getId());
+                generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE,
+                    "definition.resource", subject.getId());
             }
 
             Query query = generator.getQuery(entityManager);

@@ -80,8 +80,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
             return authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_INVENTORY);
         } else // an alert definition
         {
-            return authorizationManager.hasResourcePermission(subject, Permission.MANAGE_ALERTS, alertDefinition
-                .getResource().getId());
+            return authorizationManager.canViewResource(subject, alertDefinition.getResource().getId());
         }
     }
 

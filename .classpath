@@ -18,7 +18,6 @@
 	<classpathentry kind="var" path="M2_REPO/org/jboss/man/jboss-metatype/2.1.0.SP1/jboss-metatype-2.1.0.SP1.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/apache/commons/commons-io/1.3.2/commons-io-1.3.2.jar"/>
 	<classpathentry kind="var" path="M2_REPO/com/sun/xml/bind/jaxb-impl/2.1.6/jaxb-impl-2.1.6.jar"/>
-	<classpathentry kind="var" path="M2_REPO/mc4j/org-mc4j-ems/1.2.5/org-mc4j-ems-1.2.5.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/rhq"/>
 	<classpathentry kind="output" path="eclipse-classes"/>

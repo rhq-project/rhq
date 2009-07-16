@@ -64,7 +64,7 @@ public class MeasurementDefinitionCriteria extends Criteria {
     public MeasurementDefinitionCriteria() {
         super();
 
-        filterOverrides.put("resourceTypeName", "alertDefinition.resourceType.name like ?");
+        filterOverrides.put("resourceTypeName", "resourceType.name like ?");
 
         sortOverrides.put("resourceTypeName", "resourceType.name");
     }

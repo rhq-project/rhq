@@ -24,6 +24,7 @@ import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Principal;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.exception.CreateException;
@@ -266,4 +267,6 @@ public interface SubjectManagerLocal {
      * @see 
      */
     Subject updateSubject(Subject subject, Subject subjectToModify) throws UpdateException;
+
+    PageList<Subject> findSubjects(Subject subject, SubjectCriteria criteria);
 }

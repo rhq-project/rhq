@@ -26,6 +26,7 @@ import javax.jws.soap.SOAPBinding;
 
 import org.rhq.core.domain.auth.Principal;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
@@ -192,5 +193,10 @@ public interface SubjectManagerRemote {
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "subjectToModify") Subject subjectToModify) //
         throws UpdateException;
+
+    @WebMethod
+    PageList<Subject> findSubjects(//
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "criteria") SubjectCriteria criteria);
 
 }

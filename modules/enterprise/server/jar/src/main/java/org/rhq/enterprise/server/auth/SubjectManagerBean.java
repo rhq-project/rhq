@@ -47,6 +47,8 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.criteria.SubjectCriteria;
+import org.rhq.core.domain.util.CriteriaQueryGenerator;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
@@ -669,5 +671,18 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         }
 
         return new PageList<Subject>(subjects, (int) count, pc);
+    }
+
+    @SuppressWarnings("unchecked")
+    public PageList<Subject> findSubjects(Subject subject, SubjectCriteria criteria) {
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+
+        Query query = generator.getQuery(entityManager);
+        Query countQuery = generator.getCountQuery(entityManager);
+
+        long count = (Long) countQuery.getSingleResult();
+        List<Subject> subjects = query.getResultList();
+
+        return new PageList<Subject>(subjects, (int) count, criteria.getPageControl());
     }
 }

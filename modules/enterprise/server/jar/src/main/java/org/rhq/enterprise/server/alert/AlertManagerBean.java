@@ -57,6 +57,7 @@ import org.rhq.core.domain.alert.notification.SnmpNotification;
 import org.rhq.core.domain.alert.notification.SubjectNotification;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.util.MeasurementConverter;
@@ -853,6 +854,26 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         } catch (Exception e) {
             throw new FetchException(e.getMessage());
         }
+    }
 
+    @SuppressWarnings("unchecked")
+    public PageList<Alert> findAlerts(Subject subject, AlertCriteria criteria, PageControl pc) throws FetchException {
+        try {
+            QueryGenerator generator = new QueryGenerator(criteria, pc);
+            if (authorizationManager.isInventoryManager(subject) == false) {
+                generator.setAuthorizationResourceFragment(AuthorizationTokenType.RESOURCE, "definition.resource",
+                    subject.getId());
+            }
+
+            Query query = generator.getQuery(entityManager);
+            Query countQuery = generator.getCountQuery(entityManager);
+
+            long count = (Long) countQuery.getSingleResult();
+            List<Alert> alerts = query.getResultList();
+
+            return new PageList<Alert>(alerts, (int) count, pc);
+        } catch (Exception e) {
+            throw new FetchException(e.getMessage());
+        }
     }
 }

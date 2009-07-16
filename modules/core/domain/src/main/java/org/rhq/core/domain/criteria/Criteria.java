@@ -22,6 +22,7 @@
  */
 package org.rhq.core.domain.criteria;
 
+import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,7 +35,10 @@ import org.rhq.core.domain.util.PageOrdering;
 /**
  * @author Joseph Marques
  */
-public abstract class Criteria {
+public abstract class Criteria implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     private List<Field> filterFields;
     private List<Field> fetchFields;
     private List<Field> sortFields;

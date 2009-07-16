@@ -27,6 +27,7 @@ import javax.jws.soap.SOAPBinding;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.exception.FetchException;
@@ -70,6 +71,13 @@ public interface AlertManagerRemote {
         @WebParam(name = "resourceIds") int[] resourceIds, //
         @WebParam(name = "beginTime") long beginTime, //
         @WebParam(name = "endTime") long endTime, //
-        @WebParam(name = "pageControl") PageControl pc) //
+        @WebParam(name = "pageControl") PageControl pageControl) //
+        throws FetchException;
+
+    @WebMethod
+    PageList<Alert> findAlerts( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "criteria") AlertCriteria criteria, //
+        @WebParam(name = "pageControl") PageControl pageControl) //
         throws FetchException;
 }

@@ -27,6 +27,7 @@ import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.exception.FetchException;
@@ -85,4 +86,6 @@ public interface AlertManagerLocal {
 
     PageList<Alert> findAlerts(Subject subject, Alert criteria, AlertPriority priority, int[] resourceIds,
         long beginTime, long endTime, PageControl pc) throws FetchException;
+
+    PageList<Alert> findAlerts(Subject subject, AlertCriteria criteria, PageControl pc) throws FetchException;
 }

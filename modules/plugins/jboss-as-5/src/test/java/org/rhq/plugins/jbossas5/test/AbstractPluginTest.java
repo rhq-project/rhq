@@ -47,7 +47,7 @@ public abstract class AbstractPluginTest {
     private static final File ITEST_DIR = new File("target/itest");
     private static final long ONE_WEEK_IN_SECONDS = 60L * 60 * 24;
 
-    @BeforeSuite
+    @BeforeSuite(groups = "as5-plugin")
     public void start() {
         try {
             PluginContainerConfiguration pcConfig = new PluginContainerConfiguration();
@@ -81,7 +81,7 @@ public abstract class AbstractPluginTest {
         }
     }
 
-    @BeforeSuite(dependsOnMethods = "start")
+    @BeforeSuite(dependsOnMethods = "start", groups = "as5-plugin")
     @Parameters( { "principal", "credentials" })
     public void configureASResource(@Optional String principal, @Optional String credentials) {
         try {
@@ -105,7 +105,7 @@ public abstract class AbstractPluginTest {
         }
     }
 
-    @BeforeSuite(dependsOnMethods = "configureASResource")
+    @BeforeSuite(dependsOnMethods = "configureASResource", groups = "as5-plugin")
     public void scanInventory() {
         try {
             System.out.println("Issuing inventory scan.");
@@ -116,7 +116,7 @@ public abstract class AbstractPluginTest {
         }
     }
 
-    @AfterSuite
+    @AfterSuite(groups = "as5-plugin")
     public void stop() {
         System.out.println("Stopping PC...");
         PluginContainer.getInstance().shutdown();

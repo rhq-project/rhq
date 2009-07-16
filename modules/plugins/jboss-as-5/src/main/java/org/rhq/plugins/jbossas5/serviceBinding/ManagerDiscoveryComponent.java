@@ -22,6 +22,7 @@
  */
 package org.rhq.plugins.jbossas5.serviceBinding;
 
+import org.jboss.managed.api.ManagedComponent;
 import org.rhq.plugins.jbossas5.ManagedComponentDiscoveryComponent;
 
 /**
@@ -30,54 +31,15 @@ import org.rhq.plugins.jbossas5.ManagedComponentDiscoveryComponent;
  * @author Filip Drabek
  * @author Lukas Krejci
  */
-@Deprecated
 public class ManagerDiscoveryComponent extends ManagedComponentDiscoveryComponent<ManagerComponent> {
 
-    //    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<ProfileServiceComponent> context)
-    //        throws InvalidPluginConfigurationException, Exception {
-    //
-    //        ResourceType resourceType = context.getResourceType();
-    //        Configuration config = context.getDefaultPluginConfiguration();
-    //
-    //        String managerType = config.getSimple(ManagerDiscoveryComponent.MANAGER_COMPONENT_TYPE).getStringValue();
-    //
-    //        String managerSubType = config.getSimple(ManagerDiscoveryComponent.MANAGER_COMPONENT_SUBTYPE).getStringValue();
-    //        ManagementView managementView = context.getParentResourceComponent().getConnection().getManagementView();
-    //
-    //        Set<ManagedComponent> components;
-    //        ComponentType componentType = new ComponentType(managerType, managerSubType);
-    //
-    //        try {
-    //            components = managementView.getComponentsForType(componentType);
-    //        } catch (Exception e) {
-    //            throw new IllegalStateException("Failed to get component types for Manager Component.", e);
-    //        }
-    //
-    //        Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>(components.size());
-    //
-    //        for (ManagedComponent component : components) {
-    //
-    //            Set<ManagedOperation> ope = component.getOperations();
-    //            for (ManagedOperation op : ope) {
-    //                log.error(op.getName());
-    //                ManagedParameter[] mPar = op.getParameters();
-    //                for (int i = 0; i < mPar.length; i++) {
-    //                    log.error("            " + mPar[i].getMetaType().getClassName());
-    //                }
-    //            }
-    //            String resourceName = component.getName();
-    //            String resourceKey = managerType + ":" + managerSubType + ":" + resourceName;
-    //
-    //            String version = " "; // TODO
-    //            DiscoveredResourceDetails resource = new DiscoveredResourceDetails(resourceType, resourceKey, resourceName,
-    //                version, resourceType.getDescription(), context.getDefaultPluginConfiguration(), null);
-    //
-    //            resource.getPluginConfiguration().put(
-    //                new PropertySimple(ManagedComponentComponent.Config.COMPONENT_NAME, component.getName()));
-    //
-    //            discoveredResources.add(resource);
-    //        }
-    //        return discoveredResources;
-    //    }
+    /**
+     * Return a pretty human readable resource name. 
+     */
+    @Override
+    protected String getResourceName(ManagedComponent component) {
+        return "Service Binding Manager";
+    }
 
+    
 }

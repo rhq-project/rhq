@@ -2872,8 +2872,9 @@
 
         <service name="Service Binding Manager"
                  class="org.rhq.plugins.jbossas5.serviceBinding.ManagerComponent"
-                 discovery="ManagedComponentDiscoveryComponent"
-                 description="The Service Binding Manager manages the ports of the deployed services">
+                 discovery="org.rhq.plugins.jbossas5.serviceBinding.ManagerDiscoveryComponent"
+                 description="The Service Binding Manager manages the ports of the deployed services"
+                 singleton="true">
 
             <plugin-configuration>
                 <c:simple-property name="componentType" default="MCBean" readOnly="true"/>
@@ -2888,14 +2889,14 @@
                                                 A change to this property takes effect only after the server restart."/>
                 <c:list-property name="standardBindings" description="The standard port bindings inherited by the binding sets.">
 	                <c:map-property name="binding">
-                        <c:simple-property name="serviceName" description="The name of the service to which this binding applies"/>
-	                    <c:simple-property name="bindingName" required="false" description="A qualifier identifying which particular binding within the service this is"/>
-	                    <c:simple-property name="port" type="integer" description="The port to use for the binding"/>
-	                    <c:simple-property name="hostname" required="false" description="The host name or string notation IP address to use for the binding"/>
-	                    <c:simple-property name="description" required="false" description="Description of the binding"/>
-	                    <c:simple-property name="fullyQualifiedName" required="false" readOnly="true" description="The fully qualified binding name"/>
-	                    <c:simple-property name="fixedHostName" type="boolean" description="Whether the host name should remain fixed in all binding sets"/>
-	                    <c:simple-property name="fixedPort" type="boolean" description="Whether the port should remain fixed in all binding sets"/>
+                        <c:simple-property name="serviceName" description="The name of the service to which this binding applies."/>
+	                    <c:simple-property name="bindingName" required="false" description="A qualifier identifying which particular binding within the service this is."/>
+	                    <c:simple-property name="port" type="integer" description="The port to use for the binding."/>
+	                    <c:simple-property name="hostname" required="false" description="The host name or string notation IP address to use for the binding."/>
+	                    <c:simple-property name="description" required="false" description="Description of the binding."/>
+	                    <c:simple-property name="fullyQualifiedName" required="false" readOnly="true" description="The fully qualified binding name. This is an informational field only consisting of the service name and the binding name."/>
+	                    <c:simple-property name="fixedHostName" type="boolean" description="Whether the host name should remain fixed in all binding sets."/>
+	                    <c:simple-property name="fixedPort" type="boolean" description="Whether the port should remain fixed in all binding sets."/>
 	                </c:map-property>
                 </c:list-property>
             </resource-configuration>
@@ -2903,23 +2904,30 @@
             <service name="Service Binding Set"
                      class="org.rhq.plugins.jbossas5.serviceBinding.SetComponent"
                      discovery="org.rhq.plugins.jbossas5.serviceBinding.SetDiscoveryComponent"
-                     description="The Service Binding Set defines all bindings of a profile" createDeletePolicy="both">
+                     description="The Service Binding Set defines all bindings of a profile. It inherits the standard bindings from the Service Binding Manager and defines a port offset and overriden and additional bindings." createDeletePolicy="both">
 
                 <resource-configuration>
-                    <c:simple-property name="name" readOnly="true" description="The name of this binding set"/>
-                    <c:simple-property name="defaultHostName" description='the host name that should be used for all bindings whose configuration does not specify fixedHostName="true"'/>
-                    <c:simple-property name="portOffset" type="integer" description="value to add to the port configuration for a standard binding to derive the port to use in this binding set"/>
-                    <c:list-property name="overrideBindings" description="binding configurations that apply only to this binding set, either non-standard bindings or ones that override standard binding configurations">
+                    <c:simple-property name="name" readOnly="true" description="The name of this binding set."/>
+                    <c:simple-property name="defaultHostName" description='The host name that should be used for all bindings whose configuration does not specify "fixed host name".'/>
+                    <c:simple-property name="portOffset" type="integer" description="A value to add to the port configuration for a standard binding to derive the port to use in this binding set. This doesn't apply to standard bindings defined as 'fixed port'."/>
+                    <c:list-property name="overrideBindings" description='The binding configurations that apply only to this binding set, either non-standard bindings or ones that override standard binding configurations.
+                        The binding set inherits the standard bindings from the Service Binding Manager, applies the port offset to them (unless the standard binding is defined as "fixed port") and append the override
+                        bindings. These can either redefine a standard binding or define a brand new binding. The standard bindings and the override bindings then define the 
+                        full set of the bindings that are defined by the binding set.'>
                         <c:map-property name="binding">
-		                    <c:simple-property name="serviceName" displayName="Service Name" description="The name of the service to which this binding applies"/>
-		                    <c:simple-property name="bindingName" required="false" displayName="Binding Name" description="A qualifier identifying which particular binding within the service this is"/>
-		                    <c:simple-property name="port" type="integer" displayName="Port" description="the port to use for the binding"/>
+		                    <c:simple-property name="serviceName" displayName="Service Name" description="The name of the service to which this binding applies."/>
+		                    <c:simple-property name="bindingName" required="false" displayName="Binding Name" description="A qualifier identifying which particular binding within the service this is."/>
+		                    <c:simple-property name="port" type="integer" displayName="Port" description="The port to use for the binding."/>
 		                    <c:simple-property name="hostName" required="false" displayName="Host Name" description="The host name or string notation IP address to use for the binding."/>
 		                    <c:simple-property name="description" required="false" displayName="Description" description="Description of the binding"/>
-		                    <c:simple-property name="fullyQualifiedName" required="false" readOnly="true" displayName="Fully Qualified Name" description="The fully qualified binding name. This is an informational field only."/>
+		                    <c:simple-property name="fullyQualifiedName" required="false" readOnly="true" displayName="Fully Qualified Name" description="The fully qualified binding name. This is an informational field only consisting of the service name and the binding name."/>
                         </c:map-property>
                     </c:list-property>
                 </resource-configuration>
+
+                <help><![CDATA[
+                
+                ]]></help>                
             </service>
 		</service>
 

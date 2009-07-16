@@ -215,7 +215,8 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
             // if this is a recovery alert
             if (alertDefinition.getRecoveryId() != 0) {
                 // only add to the cache if the to-be-recovered definition is disabled, and thus needs recovering
-                AlertDefinition toBeRecoveredDefinition = getAlertDefinitionById(subject, alertDefinition
+                // use entityManager direct to bypass security checks, we already know this user is authorized
+                AlertDefinition toBeRecoveredDefinition = entityManager.find(AlertDefinition.class, alertDefinition
                     .getRecoveryId());
                 if (toBeRecoveredDefinition.getEnabled() == false) {
                     addToCache = true;

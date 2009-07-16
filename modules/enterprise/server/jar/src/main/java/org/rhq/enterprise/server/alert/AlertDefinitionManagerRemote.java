@@ -35,7 +35,8 @@ import org.rhq.enterprise.server.exception.FetchException;
 @Remote
 public interface AlertDefinitionManagerRemote {
     @WebMethod
-    AlertDefinition getAlertDefinition( //
+    AlertDefinition getAlertDefinition(
+    //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "alertDefinitionId") int alertDefinitionId) //
         throws FetchException;
@@ -72,7 +73,8 @@ public interface AlertDefinitionManagerRemote {
     @WebMethod
     PageList<AlertDefinition> findAlertDefinitions( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "criteria") AlertDefinition criteria) //
+        @WebParam(name = "criteria") AlertDefinition criteria, //
+        @WebParam(name = "pageControl") PageControl pageControl) //
         throws FetchException;
 
 }

@@ -29,6 +29,7 @@ import mazz.i18n.Msg;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.client.commands.ClientCommand;
+import org.rhq.enterprise.client.commands.ScriptCommand;
 
 /**
  * @author Greg Hinkle
@@ -70,6 +71,9 @@ public class ClientMain {
 
     // The subject that will be used to carry out all requested actions
     private Subject subject;
+
+    
+    private ServiceCompletor serviceCompletor;
 
     // Entrance to main.
     public static void main(String[] args) throws Exception {
@@ -258,8 +262,11 @@ public class ClientMain {
                 outputWriter.println("   [" + args[0] + " syntax: " + command.getPromptCommandString());
             }
         } else {
-            return commands.get("exec").execute(this, args);
-            // outputWriter.println("Unknown command [" + cmd + "]");
+            boolean result = commands.get("exec").execute(this, args);
+
+            this.serviceCompletor.setContext(((ScriptCommand)commands.get("exec")).getContext());
+
+            return result;
         }
         return true;
     }
@@ -288,6 +295,11 @@ public class ClientMain {
      */
     public String[] parseCommandLine(String cmdLine) {
         // private String[] parseCommandLine(String cmdLine) {
+
+        if (cmdLine == null) {
+            return new String[] {""};
+        }
+
         ByteArrayInputStream in = new ByteArrayInputStream(cmdLine.getBytes());
         StreamTokenizer strtok = new StreamTokenizer(new InputStreamReader(in));
         List<String> args = new ArrayList<String>();
@@ -417,7 +429,16 @@ public class ClientMain {
                 new SimpleCompletor(this.getRemoteClient().getManagers().keySet().toArray(
                     new String[this.getRemoteClient().getManagers().size()])) }));
 
-            consoleReader.addCompletor(new ServiceCompletor(this.getRemoteClient().getManagers()));
+            this.serviceCompletor = (new ServiceCompletor(this.getRemoteClient().getManagers()));
+
+            ScriptCommand sc = (ScriptCommand) commands.get("exec");
+            sc.initBindings(this);  
+
+            this.serviceCompletor.setContext(((ScriptCommand)commands.get("exec")).getContext());
+            
+
+            consoleReader.addCompletor(this.serviceCompletor);
+
         }
     }
 
@@ -427,6 +448,7 @@ public class ClientMain {
 
     public void setSubject(Subject subject) {
         this.subject = subject;
+        this.remoteClient.setSubject(subject);
     }
 
     public String getHost() {

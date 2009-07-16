@@ -111,7 +111,8 @@
       <copy file="${settings.localRepository}/org/rhq/rhq-enterprise-server/${project.version}/rhq-enterprise-server-${project.version}.jar" tofile="${lib.home}/rhq-enterprise-server-${project.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/jboss/jboss-common/${jboss-common.version}/jboss-common-${jboss-common.version}.jar" tofile="${lib.home}/jboss-common-${jboss-common.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/jboss/jboss-remoting/${jboss-remoting.version}/jboss-remoting-${jboss-remoting.version}.jar" tofile="${lib.home}/jboss-remoting-${jboss-remoting.version}.jar" verbose="true" />     
-      <copy file="${settings.localRepository}/oswego-concurrent/concurrent/${concurrent.version}/concurrent-${concurrent.version}.jar" tofile="${lib.home}/concurrent-${concurrent.version}.jar" verbose="true" />      
+      <copy file="${settings.localRepository}/jboss/javassist/${jboss-javassist.version}/javassist-${jboss-javassist.version}.jar" tofile="${lib.home}/javassist-${jboss-javassist.version}.jar" verbose="true" />     
+      <copy file="${settings.localRepository}/oswego-concurrent/concurrent/${concurrent.version}/concurrent-${concurrent.version}.jar" tofile="${lib.home}/concurrent-${concurrent.version}.jar" verbose="true" />
       <!-- TODO: This can probaby go away after we stop using EJB classes as Exceptions in the RemoteAPI -->
       <copy file="${settings.localRepository}/jboss/jboss-j2ee/${jboss.version}/jboss-j2ee-${jboss.version}.jar" tofile="${lib.home}/jboss-j2ee-${jboss.version}.jar" verbose="true" />
    </target>
@@ -128,7 +129,7 @@
       <delete file="${lib.home}/rhq-cli-${project.version}.jar" />
       <echo>*** Creating new cli jar...</echo>
       <mkdir dir="${cli.home}/classes" />
-      <javac srcdir="${basedir}/src/main/java" destdir="${cli.home}/classes" classpathref="cli.classpath" fork="true" executable="${java.jre.home}/../bin/javac" debug="true" debuglevel="lines,vars,source"/>
+      <javac srcdir="${basedir}/src/main/java" destdir="${cli.home}/classes" classpathref="cli.classpath" fork="true" executable="${java.home}/bin/javac" debug="true" debuglevel="lines,vars,source"/>
       <jar destfile="${lib.home}/rhq-cli-${project.version}.jar" basedir="${cli.home}/classes" includes="org/rhq/**">
          <manifest>
             <attribute name="Specification-Title" value="JBossWS" />
@@ -294,7 +295,7 @@
          <pathelement path="${maven.test.classpath}" />
       </path>
       <mkdir dir="${basedir}/target/test-classes" />
-      <javac srcdir="${basedir}/src/test/java" destdir="${basedir}/target/test-classes" classpathref="test.classpath" fork="true" executable="${java.jre.home}/../bin/javac" excludes="**/ClientMainTest.java" debug="true" debuglevel="lines,vars,source" />
+      <javac srcdir="${basedir}/src/test/java" destdir="${basedir}/target/test-classes" classpathref="test.classpath" fork="true" executable="${java.home}/bin/javac" excludes="**/ClientMainTest.java" debug="true" debuglevel="lines,vars,source" />
    </target>
 
 </project>

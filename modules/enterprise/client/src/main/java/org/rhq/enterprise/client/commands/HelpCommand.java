@@ -19,6 +19,9 @@
 package org.rhq.enterprise.client.commands;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -28,6 +31,8 @@ import java.util.Map;
 
 import org.rhq.enterprise.client.ClientMain;
 import org.rhq.enterprise.client.TabularWriter;
+
+import javax.jws.WebParam;
 
 /**
  * @author Greg Hinkle
@@ -81,22 +86,50 @@ public class HelpCommand implements ClientCommand {
                     });
                     String[][] data = new String[methods.length][2];
                     for (int i = 0; i < methods.length; i++) {
-                        data[i][0] = methods[i].getName();
+
+                        String returnTypeName = null;
+
+                        Type returnType = methods[i].getGenericReturnType();
+                        if (returnType instanceof ParameterizedType) {
+                            ParameterizedType type = (ParameterizedType) returnType;
+                            Type[] typeArguments = type.getActualTypeArguments();
+                            for (Type typeArgument : typeArguments) {
+                                Class typeArgClass = (Class) typeArgument;
+                                returnTypeName = methods[i].getReturnType().getSimpleName() + "<" + typeArgClass.getSimpleName() + ">";
+                            }
+                        } else {
+                            returnTypeName = methods[i].getReturnType().getSimpleName();
+                        }
+
+
+                        data[i][0] = returnTypeName;
 
                         Class<?>[] paramTypes = methods[i].getParameterTypes();
                         StringBuilder buf = new StringBuilder();
 
-                        buf.append(methods[i].getReturnType().getSimpleName());
-                        buf.append(" ");
+//                        buf.append(methods[i].getReturnType().getSimpleName());
+//                        buf.append(" ");
                         buf.append(methods[i].getName());
                         buf.append("(");
+
+                        Annotation[][] annotations = methods[i].getParameterAnnotations();
+
 
                         boolean secondary = false;
                         for (int j = 0; (j < paramTypes.length); ++j) {
                             String typeName = paramTypes[j].getSimpleName();
-                            if ((0 == j) && typeName.equals("Subject")) {
-                                continue;
+
+
+
+                            if (annotations != null && annotations.length >= i) {
+                                Annotation[] as = annotations[j];
+                                for (Annotation a : as) {
+                                    if (a instanceof WebParam) {
+                                        typeName += " " + ((WebParam) a).name();
+                                    }
+                                }
                             }
+
                             if (secondary)
                                 buf.append(", ");
                             secondary = true;
@@ -106,7 +139,7 @@ public class HelpCommand implements ClientCommand {
                         data[i][1] = buf.toString();
                     }
 
-                    TabularWriter tw = new TabularWriter(client.getPrintWriter(), "Method", "Signature");
+                    TabularWriter tw = new TabularWriter(client.getPrintWriter(), "Returns", "Signature");
                     tw.setWidth(client.getConsoleWidth());
 
                     tw.print(data);

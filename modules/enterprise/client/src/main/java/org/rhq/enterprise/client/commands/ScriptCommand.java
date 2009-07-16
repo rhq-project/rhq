@@ -18,20 +18,26 @@
  */
 package org.rhq.enterprise.client.commands;
 
-import java.io.*;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Arrays;
-
-import javax.script.*;
-
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.client.ClientMain;
 import org.rhq.enterprise.client.RemoteClient;
 import org.rhq.enterprise.client.TabularWriter;
+import org.rhq.enterprise.client.utility.PackageFinder;
 import org.rhq.enterprise.client.utility.ScriptUtil;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+
+import javax.script.Bindings;
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.Reader;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Greg Hinkle
@@ -45,11 +51,31 @@ public class ScriptCommand implements ClientCommand {
 
     public ScriptCommand() {
         sem = new ScriptEngineManager();
-        // sem.getBindings().put("unlimitedPC", PageControl.getUnlimitedInstance());
-        PageControl pc = new PageControl();
-        pc.setPageNumber(-1);
-        sem.getBindings().put("unlimitedPC", pc);
+        sem.getBindings().put("pageControl", PageControl.getUnlimitedInstance());
         jsEngine = sem.getEngineByName("JavaScript");
+
+        importRecursive(jsEngine);
+
+        // jsEngine = sem.getEngineByName("groovy");
+    }
+
+    
+
+    private void importRecursive(ScriptEngine jsEngine) {
+
+        try {
+
+            List<String> packages = new PackageFinder().findPackages("org.rhq.core.domain");
+
+            for (String pkg : packages) {
+                jsEngine.eval("importPackage(" + pkg + ")");
+            }
+            
+
+        } catch (ScriptException e) {
+            e.printStackTrace();
+        }
+
     }
 
     public ScriptEngine getScriptEngine() {
@@ -67,6 +93,9 @@ public class ScriptCommand implements ClientCommand {
             client.getPrintWriter().println("Unable to execute scripts until successfully logged in.");
             return true;
         }
+
+        // These are prepared on every call in case the user logs out and logs into another server
+        Bindings bindings = sem.getBindings();
 
         initBindings(client);
 
@@ -115,7 +144,7 @@ public class ScriptCommand implements ClientCommand {
         return true;
     }
 
-    private void initBindings(ClientMain client) {
+    public void initBindings(ClientMain client) {
         // These are prepared on every call in case the user logs out and logs into another server
         sem.getBindings().put("subject", client.getSubject());
         sem.getBindings().putAll(client.getRemoteClient().getManagers());
@@ -183,7 +212,12 @@ public class ScriptCommand implements ClientCommand {
     public String getDetailedHelp() {
         StringBuilder help = new StringBuilder();
         help.append("Executes JavaScript commands. You can utilize the following service managers: "
-            + RemoteClient.Manager.values());
+                + RemoteClient.Manager.values());
         return help.toString();
+    }
+
+
+    public ScriptContext getContext() {
+        return jsEngine.getContext();
     }
 }

@@ -57,6 +57,7 @@ public class LoginCommand implements ClientCommand {
 
         } catch (Exception e) {
             client.getPrintWriter().println("Login failed: " + e.getMessage());
+            e.printStackTrace();
         }
 
         return true;

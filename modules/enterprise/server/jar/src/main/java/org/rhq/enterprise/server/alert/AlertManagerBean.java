@@ -69,7 +69,6 @@ import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.core.domain.util.QueryGenerator;
 import org.rhq.core.domain.util.QueryGenerator.AuthorizationTokenType;
 import org.rhq.core.util.collection.ArrayUtils;
-import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.i18n.AlertI18NFactory;
 import org.rhq.enterprise.server.alert.i18n.AlertI18NResourceKeys;
@@ -840,9 +839,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                 generator.addRelationshipFilter("definition", "priority = ?", priority.name());
             }
             if (resourceIds != null && resourceIds.length != 0) {
-                String expression = "definition.resource.id IN (" + JDBCUtil.generateInBinds(resourceIds.length) + ")";
-                Object[] varargs = (Object[]) ArrayUtils.wrapInArray(resourceIds);
-                generator.addFilter(expression, varargs);
+                generator.addFilter("definition.resource.id IN ( ? )", ArrayUtils.wrapInList(resourceIds));
             }
             generator.addFilter("ctime between ? and ?", beginTime, endTime);
 

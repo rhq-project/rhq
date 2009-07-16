@@ -404,7 +404,8 @@ public class JnpConfig {
         }
 
         protected String getNamingBindAddress() {
-            if (namingBindAddress.substring(0, PROPERTY_EXPRESSION_PREFIX.length()).equals(PROPERTY_EXPRESSION_PREFIX)) {
+            if ((namingBindAddress.length() >= PROPERTY_EXPRESSION_PREFIX.length()) &&
+                    (namingBindAddress.substring(0, PROPERTY_EXPRESSION_PREFIX.length()).equals(PROPERTY_EXPRESSION_PREFIX))) {
                 log.warn("Naming 'BindingAddress' attribute has invalid value (" + namingBindAddress
                     + ") in JBossAS config file " + file
                     + " - the value should be a host name, an IP address, or a resolvable property reference.");

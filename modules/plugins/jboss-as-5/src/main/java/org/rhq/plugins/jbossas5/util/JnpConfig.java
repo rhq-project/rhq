@@ -40,7 +40,6 @@ import javax.xml.parsers.SAXParserFactory;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.Nullable;
-import org.rhq.plugins.jbossas5.helper.JBossProperties;
 import org.xml.sax.Attributes;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
@@ -49,6 +48,8 @@ import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
 
 import org.jboss.util.StringPropertyReplacer;
+
+import org.rhq.plugins.jbossas5.helper.JBossProperties;
 
 /**
  * This class will parse the passed File in the getConfig method. This file is normally the jboss-service.xml file in
@@ -484,7 +485,8 @@ public class JnpConfig
 
         protected String getNamingBindAddress()
         {
-            if (namingBindAddress.substring(0, PROPERTY_EXPRESSION_PREFIX.length()).equals(PROPERTY_EXPRESSION_PREFIX))
+            if ((namingBindAddress.length() >= PROPERTY_EXPRESSION_PREFIX.length()) &&
+                    (namingBindAddress.substring(0, PROPERTY_EXPRESSION_PREFIX.length()).equals(PROPERTY_EXPRESSION_PREFIX)))
             {
                 log.warn("Naming 'BindingAddress' attribute has invalid value (" + namingBindAddress
                         + ") in JBossAS config file " + file

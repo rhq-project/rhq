@@ -22,7 +22,11 @@
   */
 package org.rhq.plugins.jbossas;
 
+import java.io.File;
+import java.util.Set;
+
 import org.mc4j.ems.connection.bean.EmsBean;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -37,9 +41,6 @@ import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.plugins.jbossas.util.DatasourceConfigurationEditor;
 import org.rhq.plugins.jbossas.util.JBossMBeanUtility;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
-
-import java.io.File;
-import java.util.Set;
 
 /**
  * @author Greg Hinkle
@@ -75,8 +76,11 @@ public class DatasourceComponent extends MBeanResourceComponent<JBossASServerCom
         File deploymentFile = getResourceContext().getParentResourceComponent().getDeploymentFilePath(
             getResourceContext().getResourceKey());
 
-        assert deploymentFile.exists() : "Deployment file " + deploymentFile + " doesn't exist for Datasource ["
-            + getResourceContext().getResourceKey() + "].";
+        if (!deploymentFile.exists()) {
+            log.warn( "Deployment file " + deploymentFile + " doesn't exist for Datasource ["
+            + getResourceContext().getResourceKey() + "].");
+            return null;
+        }
 
         return DatasourceConfigurationEditor.loadDatasource(deploymentFile, this.name);
     }
@@ -111,7 +115,7 @@ public class DatasourceComponent extends MBeanResourceComponent<JBossASServerCom
     }
 
     @Override
-    public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) 
+    public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests)
     {
         super.getValues(report, requests, getConnectionPoolBean());
     }

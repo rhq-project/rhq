@@ -153,17 +153,6 @@ public interface SubjectManagerRemote {
         throws FetchException;
 
     /**
-     * Check if a user is logged in.
-     *
-     * @param  username The name of the user.
-     *
-     * @return <code>true</code> if the given user is logged in; <code>false</code> if not.
-     */
-    @WebMethod
-    boolean isLoggedIn( //
-        @WebParam(name = "username") String username);
-
-    /**
      * Logs a user into the system. This will authenticate the given user with the given password. If the user was
      * already logged in, the current session will be used but the password will still need to be authenticated.
      *

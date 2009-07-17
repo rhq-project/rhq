@@ -34,21 +34,22 @@ public class AlertCriteria extends Criteria {
 
     private Integer filterId;
     private String filterTriggeredOperation;
-    private Long filterStartTime;
-    private Long filterEndTime;
-    private String filterName;
-    private String filterDescription;
-    private AlertPriority filterPriority;
-    private String filterResourceTypeName;
-    private List<Integer> filterResourceIds;
+    private Long filterStartTime; // requires overrides
+    private Long filterEndTime; // requires overrides
+    private String filterName; // requires overrides
+    private String filterDescription; // requires overrides
+    private AlertPriority filterPriority; // requires overrides
+    private String filterResourceTypeId; // requires overrides
+    private String filterResourceTypeName; // requires overrides
+    private List<Integer> filterResourceIds; // requires overrides
 
     private boolean fetchAlertDefinition;
     private boolean fetchConditionLogs;
     private boolean fetchNotificationLogs;
 
-    private PageOrdering sortName;
+    private PageOrdering sortName; // requires overrides
     private PageOrdering sortCtime;
-    private PageOrdering sortPriority;
+    private PageOrdering sortPriority; // requires overrides
 
     public AlertCriteria() {
         super();
@@ -58,6 +59,7 @@ public class AlertCriteria extends Criteria {
         filterOverrides.put("name", "alertDefinition.name like ?");
         filterOverrides.put("description", "alertDefinition.description like ?");
         filterOverrides.put("priority", "alertDefinition.priority = ?");
+        filterOverrides.put("resourceTypeId", "alertDefinition.resourceType.id = ?");
         filterOverrides.put("resourceTypeName", "alertDefinition.resourceType.name like ?");
         filterOverrides.put("resourceIds", "alertDefinition.resource.id IN ( ? )");
 

@@ -37,9 +37,11 @@ public class ResourceCriteria extends Criteria {
     private InventoryStatus filterInventoryStatus;
     private String filterVersion;
     private String filterDescription;
+    private String filterResourceTypeId; // needs overrides
     private String filterResourceTypeName; // needs overrides
     private ResourceCategory filterResourceCategory; // needs overrides
     private String filterPluginName; // needs overrides
+    private String filterParentResourceId; // needs overrides
     private String filterParentResourceName; // needs overrides
     private String filterAgentName; // needs overrides
 
@@ -80,9 +82,11 @@ public class ResourceCriteria extends Criteria {
     public ResourceCriteria() {
         super();
 
+        filterOverrides.put("resourceTypeId", "resourceType.id = ?");
         filterOverrides.put("resourceTypeName", "resourceType.name like ?");
         filterOverrides.put("resourceCategory", "resourceType.category like ?");
         filterOverrides.put("plugin", "resourceType.plugin = ?");
+        filterOverrides.put("parentResourceId", "parentResource.id = ?");
         filterOverrides.put("parentResourceName", "parentResource.name like ?");
         filterOverrides.put("agentName", "agent.name like ?");
 
@@ -118,6 +122,10 @@ public class ResourceCriteria extends Criteria {
         this.filterDescription = filterDescription;
     }
 
+    public void addFilterResourceTypeId(String filterResourceTypeId) {
+        this.filterResourceTypeId = filterResourceTypeId;
+    }
+
     public void addFilterResourceTypeName(String filterResourceTypeName) {
         this.filterResourceTypeName = filterResourceTypeName;
     }
@@ -128,6 +136,10 @@ public class ResourceCriteria extends Criteria {
 
     public void addFilterPluginName(String filterPluginName) {
         this.filterPluginName = filterPluginName;
+    }
+
+    public void addFilterParentResourceId(String filterParentResourceId) {
+        this.filterParentResourceId = filterParentResourceId;
     }
 
     public void addFilterParentResourceName(String filterParentResourceName) {

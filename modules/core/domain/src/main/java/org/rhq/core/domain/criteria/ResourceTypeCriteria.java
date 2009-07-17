@@ -25,7 +25,6 @@ package org.rhq.core.domain.criteria;
 import org.rhq.core.domain.resource.CreateDeletePolicy;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceCreationDataType;
-import org.rhq.core.domain.resource.ResourceSubCategory;
 import org.rhq.core.domain.util.PageOrdering;
 
 /**
@@ -41,8 +40,8 @@ public class ResourceTypeCriteria extends Criteria {
     private CreateDeletePolicy filterCreateDeletePolicy;
     private Boolean filterSupportsManualAdd;
     private String filterPluginName; // needs overrides
-    private ResourceSubCategory filterSubCategory;
 
+    private boolean fetchSubCategory;
     private boolean fetchChildResourceTypes;
     private boolean fetchParentResourceTypes;
     private boolean fetchPluginConfigurationDefinition;
@@ -63,7 +62,7 @@ public class ResourceTypeCriteria extends Criteria {
     public ResourceTypeCriteria() {
         super();
 
-        filterOverrides.put("pluginName", "plugin = ?");
+        filterOverrides.put("pluginName", "plugin like ?");
 
         sortOverrides.put("pluginName", "plugin");
     }
@@ -100,8 +99,8 @@ public class ResourceTypeCriteria extends Criteria {
         this.filterPluginName = filterPluginName;
     }
 
-    public void addFilterSubCategory(ResourceSubCategory filterSubCategory) {
-        this.filterSubCategory = filterSubCategory;
+    public void fetchSubCategory(boolean fetchSubCategory) {
+        this.fetchSubCategory = fetchSubCategory;
     }
 
     public void fetchChildResourceTypes(boolean fetchChildResourceTypes) {

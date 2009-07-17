@@ -755,7 +755,6 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
         }
     }
 
-    @SuppressWarnings("unchecked")
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         if (ExternalizableStrategy.Subsystem.REMOTEAPI.id() == in.readChar()) {
             readExternalRemote(in);
@@ -786,19 +785,21 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
         out.writeUTF(this.plugin);
         out.writeLong(this.ctime);
         out.writeLong(this.mtime);
-        // not supplied by remote: childResourceTypes
-        // not supplied by remote: parentResourceTypes        
-        // not supplied by remote: pluginConfigurationDefinition        
-        // not supplied by remote: resourceConfigurationDefinition        
-        // not supplied by remote: subCategory        
-        // not supplied by remote: metricDefinitions        
-        // not supplied by remote: eventDefinitions        
-        // not supplied by remote: operationDefinitions
-        // not supplied by remote: processScans
-        // not supplied by remote: packageTypes
-        // not supplied by remote: subCategories
-        // not supplied by remote: resources
-        // not supplied by remote: productVersions
+        out.writeObject(this.subCategory);
+        out.writeObject((null == childResourceTypes) ? null : new LinkedHashSet<ResourceType>(childResourceTypes));
+        out.writeObject((null == parentResourceTypes) ? null : new LinkedHashSet<ResourceType>(parentResourceTypes));
+        out.writeObject(pluginConfigurationDefinition);
+        out.writeObject(resourceConfigurationDefinition);
+        out.writeObject((null == metricDefinitions) ? null
+            : new LinkedHashSet<MeasurementDefinition>(metricDefinitions));
+        out.writeObject((null == eventDefinitions) ? null : new LinkedHashSet<EventDefinition>(eventDefinitions));
+        out.writeObject((null == operationDefinitions) ? null : new LinkedHashSet<OperationDefinition>(
+            operationDefinitions));
+        out.writeObject((null == processScans) ? null : new LinkedHashSet<ProcessScan>(processScans));
+        out.writeObject((null == packageTypes) ? null : new LinkedHashSet<PackageType>(packageTypes));
+        out.writeObject((null == subCategories) ? null : new LinkedHashSet<ResourceSubCategory>(subCategories));
+        out.writeObject((null == resources) ? null : new LinkedHashSet<Resource>(resources));
+        out.writeObject((null == productVersions) ? null : new LinkedHashSet<ProductVersion>(productVersions));
         // not supplied by remote: helpText
     }
 

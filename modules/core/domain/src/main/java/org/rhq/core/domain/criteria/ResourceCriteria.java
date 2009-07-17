@@ -22,6 +22,7 @@
  */
 package org.rhq.core.domain.criteria;
 
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.util.PageOrdering;
@@ -44,6 +45,7 @@ public class ResourceCriteria extends Criteria {
     private String filterParentResourceId; // needs overrides
     private String filterParentResourceName; // needs overrides
     private String filterAgentName; // needs overrides
+    private AvailabilityType filterCurrentAvailability; // needs overrides
 
     private boolean fetchResourceType;
     private boolean fetchChildResources;
@@ -89,6 +91,7 @@ public class ResourceCriteria extends Criteria {
         filterOverrides.put("parentResourceId", "parentResource.id = ?");
         filterOverrides.put("parentResourceName", "parentResource.name like ?");
         filterOverrides.put("agentName", "agent.name like ?");
+        filterOverrides.put("currentAvailability", "currentAvailability.availabilityType = ?");
 
         sortOverrides.put("resourceTypeName", "resourceType.name");
         sortOverrides.put("resourceCategory", "resourceType.category");

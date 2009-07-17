@@ -28,6 +28,7 @@ import java.util.Set;
 import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.EventCriteria;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventDefinition;
 import org.rhq.core.domain.event.EventSeverity;
@@ -201,4 +202,6 @@ public interface EventManagerLocal {
 
     PageList<Event> findEvents(Subject subject, Event criteria, long begin, long end, PageControl pc)
         throws FetchException;
+
+    PageList<Event> findEventsByCriteria(Subject subject, EventCriteria criteria);
 }

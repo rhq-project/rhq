@@ -54,6 +54,7 @@ import org.rhq.core.db.OracleDatabaseType;
 import org.rhq.core.db.PostgresqlDatabaseType;
 import org.rhq.core.db.SQLServerDatabaseType;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.EventCriteria;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventDefinition;
 import org.rhq.core.domain.event.EventSeverity;
@@ -61,6 +62,7 @@ import org.rhq.core.domain.event.EventSource;
 import org.rhq.core.domain.event.composite.EventComposite;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.GroupCategory;
+import org.rhq.core.domain.util.CriteriaQueryGenerator;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
@@ -731,6 +733,23 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
         PageList<EventComposite> comp = findEventsForAutoGroup(subject, parentResourceId, resourceTypeId, begin, end,
             severities, source, detail, pc);
         return comp;
+    }
+
+    @SuppressWarnings("unchecked")
+    public PageList<Event> findEventsByCriteria(Subject subject, EventCriteria criteria) {
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        if (authorizationManager.isInventoryManager(subject) == false) {
+            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE,
+                "source.resource", subject.getId());
+        }
+
+        Query query = generator.getQuery(entityManager);
+        Query countQuery = generator.getCountQuery(entityManager);
+
+        long count = (Long) countQuery.getSingleResult();
+        List<Event> results = query.getResultList();
+
+        return new PageList<Event>(results, (int) count, criteria.getPageControl());
     }
 
 }

@@ -25,6 +25,7 @@ import javax.jws.WebService;
 import javax.jws.soap.SOAPBinding;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.EventCriteria;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.event.composite.EventComposite;
@@ -109,4 +110,9 @@ public interface EventManagerRemote {
         @WebParam(name = "end") long end, //
         @WebParam(name = "pageControl") PageControl pc) //
         throws FetchException;
+
+    @WebMethod
+    PageList<Event> findEventsByCriteria( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "criteria") EventCriteria criteria);
 }

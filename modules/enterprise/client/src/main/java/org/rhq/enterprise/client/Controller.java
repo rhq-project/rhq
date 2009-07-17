@@ -53,6 +53,7 @@ public class Controller {
         Subject subject = remoteClient.getSubjectManagerRemote().login(username, password);
         remoteClient.setSubject(subject);
         remoteClient.setLoggedIn(true);
+        loggedIn = true;
 
         return subject;
     }

@@ -207,7 +207,7 @@ public class ClientMain {
      */
     public boolean loggedIn() {
         boolean loggedIn = false;
-        if ((this.subject != null) && (this.getRemoteClient() != null) && (this.getRemoteClient().isConnected())) {
+        if ((controller.getSubject() != null) && (this.getRemoteClient() != null) && (this.getRemoteClient().isConnected())) {
             loggedIn = true;
         }
         return loggedIn;

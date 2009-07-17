@@ -18,8 +18,6 @@
  */
 package org.rhq.enterprise.server.measurement;
 
-import java.util.List;
-
 import javax.ejb.Remote;
 import javax.jws.WebMethod;
 import javax.jws.WebParam;
@@ -27,9 +25,8 @@ import javax.jws.WebService;
 import javax.jws.soap.SOAPBinding;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
-import org.rhq.core.domain.measurement.composite.MeasurementScheduleComposite;
-import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.exception.UpdateException;
 
@@ -67,33 +64,8 @@ public interface MeasurementScheduleManagerRemote {
         throws UpdateException;
 
     @WebMethod
-    List<MeasurementSchedule> findSchedulesByResourceIdsAndDefinitionId(//
+    PageList<MeasurementSchedule> getSchedulesByCriteria(//
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceIds") int[] resourceIds,//
-        @WebParam(name = "measurementDefinitionId") int measurementDefinitionId);
-
-    @WebMethod
-    PageList<MeasurementScheduleComposite> findSchedulesForAutoGroup(//
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "parentResourceId") int parentResourceId,//
-        @WebParam(name = "resourceTypeId") int resourceTypeId,//
-        @WebParam(name = "pageControl") PageControl pageControl);
-
-    @WebMethod
-    PageList<MeasurementScheduleComposite> findSchedulesForCompatibleGroup(//
-        @WebParam(name = "subject") Subject subject,//
-        @WebParam(name = "groupId") int groupId,//
-        @WebParam(name = "pageControl") PageControl pageControl);
-
-    @WebMethod
-    PageList<MeasurementScheduleComposite> findSchedulesForResource(//
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int resourceId,//
-        @WebParam(name = "pageControl") PageControl pageControl);
-
-    @WebMethod
-    MeasurementSchedule getScheduleById(//
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "scheduleId") int scheduleId);
+        @WebParam(name = "criteria") MeasurementScheduleCriteria criteria);
 
 }

@@ -26,6 +26,7 @@ import javax.ejb.Local;
 import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
@@ -353,5 +354,7 @@ public interface MeasurementScheduleManagerLocal {
      */
     PageList<MeasurementScheduleComposite> findSchedulesForResource(Subject subject, int resourceId,
         PageControl pageControl);
+
+    PageList<MeasurementSchedule> getSchedulesByCriteria(Subject subject, MeasurementScheduleCriteria criteria);
 
 }

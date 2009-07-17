@@ -179,6 +179,10 @@ public class JmxConnectionHelper {
                 connectionSettings.getAdvancedProperties().setProperty("jnp.timeout", String.valueOf(JNP_TIMEOUT));
                 connectionSettings.getAdvancedProperties().setProperty("jnp.sotimeout", String.valueOf(JNP_SO_TIMEOUT));
 
+                // TODO (ips): Remove this?
+                connectionSettings.getAdvancedProperties().setProperty(ConnectionFactory.USE_CONTEXT_CLASSLOADER,
+                        Boolean.TRUE.toString());
+
                 if (copyConnectionLibraries) {
                     // Tell EMS to make copies of jar files so that the ems classloader doesn't lock
                     // application files (making us unable to update them)  Bug: JBNADM-670

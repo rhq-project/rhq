@@ -65,8 +65,9 @@ public class JBossAS5ConnectionTypeDescriptor extends JBossConnectionTypeDescrip
         //                    <classpathentry kind="var" path="JBOSS/client/concurrent.jar"/>
         //                    <classpathentry kind="output" path="bin"/>
         //            </classpath>
+        return new String[0];
 
-        return new String[] { "client/jboss-common-core.jar", "client/jnp-client.jar",
+        /*return new String[] { "client/jboss-common-core.jar", "client/jnp-client.jar",
             "lib/jboss-profileservice-spi.jar", "client/jboss-logging-jdk.jar", "client/jboss-logging-jdk.jar",
             "client/log4j.jar", "client/jboss-logging-spi.jar", "client/jboss-aop-client.jar",
             "client/jboss-remoting.jar", "common/lib/jboss-security-aspects.jar",
@@ -75,7 +76,7 @@ public class JBossAS5ConnectionTypeDescriptor extends JBossConnectionTypeDescrip
             "client/concurrent.jar", "client/jmx-invoker-adaptor-client.jar", "client/jboss-client.jar",
             "client/jboss-integration.jar", "client/jboss-serialization.jar",
             //this is to support hibernate plugin out of the box in jboss as 5
-            "common/lib/hibernate-core.jar" };
+            "common/lib/hibernate-core.jar" };*/
     }
 
 }

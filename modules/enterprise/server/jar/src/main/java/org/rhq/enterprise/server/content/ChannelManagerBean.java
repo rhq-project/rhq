@@ -43,7 +43,9 @@ import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.PackageVersionContentSource;
 import org.rhq.core.domain.content.ResourceChannel;
 import org.rhq.core.domain.content.composite.ChannelComposite;
+import org.rhq.core.domain.criteria.ChannelCriteria;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.util.CriteriaQueryGenerator;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
@@ -508,20 +510,16 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
 
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public PageList<Channel> findChannels(Subject subject, Channel criteria, PageControl pc) throws FetchException {
-        try {
-            QueryGenerator generator = new QueryGenerator(criteria, pc);
+    public PageList<Channel> findChannels(Subject subject, ChannelCriteria criteria) {
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
 
-            Query query = generator.getQuery(entityManager);
-            Query countQuery = generator.getCountQuery(entityManager);
+        Query query = generator.getQuery(entityManager);
+        Query countQuery = generator.getCountQuery(entityManager);
 
-            long count = (Long) countQuery.getSingleResult();
-            List<Channel> channels = query.getResultList();
+        long count = (Long) countQuery.getSingleResult();
+        List<Channel> channels = query.getResultList();
 
-            return new PageList<Channel>(channels, (int) count, pc);
-        } catch (Exception e) {
-            throw new FetchException(e.getMessage());
-        }
+        return new PageList<Channel>(channels, (int) count, criteria.getPageControl());
     }
 
     @SuppressWarnings("unchecked")

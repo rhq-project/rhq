@@ -27,6 +27,7 @@ import javax.jws.soap.SOAPBinding;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.Channel;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.criteria.ChannelCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -94,9 +95,7 @@ public interface ChannelManagerRemote {
     @WebMethod
     PageList<Channel> findChannels( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "criteria") Channel criteria, //
-        @WebParam(name = "pageControl") PageControl pc) //
-        throws FetchException;
+        @WebParam(name = "criteria") ChannelCriteria criteria);
 
     @WebMethod
     PageList<PackageVersion> findPackageVersionsInChannel( //

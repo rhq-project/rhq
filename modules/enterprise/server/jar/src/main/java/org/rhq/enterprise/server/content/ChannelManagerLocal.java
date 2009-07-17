@@ -27,6 +27,7 @@ import org.rhq.core.domain.content.Channel;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.composite.ChannelComposite;
+import org.rhq.core.domain.criteria.ChannelCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -152,13 +153,13 @@ public interface ChannelManagerLocal {
     /**
      * @see ChannelManagerRemote#findChannels(Subject, Channel, PageControl)
      */
-    public PageList<Channel> findChannels(Subject subject, Channel criteria, PageControl pc) throws FetchException;
+    PageList<Channel> findChannels(Subject subject, ChannelCriteria criteria);
 
     /**
      * @see ChannelManagerRemote#findPackageVersionsInChannel(Subject, int, PackageVersion, PageControl)
      */
-    public PageList<PackageVersion> findPackageVersionsInChannel(Subject subject, int channelId,
-        PackageVersion criteria, PageControl pc) throws FetchException;
+    PageList<PackageVersion> findPackageVersionsInChannel(Subject subject, int channelId, PackageVersion criteria,
+        PageControl pc) throws FetchException;
 
     /**
      * @see ChannelManagerRemote#subscribeResourceToChannels(Subject, int, int[])

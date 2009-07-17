@@ -5,6 +5,7 @@
 	<classpathentry kind="src" path="modules/common/jboss-as/src/test/java"/>
 	<classpathentry kind="src" path="modules/common/jboss-as/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/tomcat/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/tomcat/src/test/java"/>
 	<classpathentry kind="src" path="modules/serverplugins/jboss-software/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/rhq-server/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/jboss-cache/src/main/java"/>

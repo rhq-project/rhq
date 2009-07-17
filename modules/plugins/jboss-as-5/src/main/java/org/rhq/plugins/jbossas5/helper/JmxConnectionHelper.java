@@ -173,6 +173,7 @@ public class JmxConnectionHelper {
                     connectionSettings.setAdvancedProperties(new Properties());
                 }
 
+                connectionSettings.getAdvancedProperties().setProperty(ConnectionFactory.USE_CONTEXT_CLASSLOADER, "true");
                 connectionSettings.getAdvancedProperties().setProperty(JNP_DISABLE_DISCOVERY_JNP_INIT_PROP, "true");
 
                 // Make sure the timeout always happens, even if the JBoss server is hung.

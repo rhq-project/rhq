@@ -942,6 +942,7 @@
     <depends plugin="JMX" useClasses="true"/>
 
     <server name="JBossAS Server"
+            classLoader="instance"
             class="ApplicationServerComponent"
             discovery="ApplicationServerDiscoveryComponent"
             description="JBoss Application Server 5">

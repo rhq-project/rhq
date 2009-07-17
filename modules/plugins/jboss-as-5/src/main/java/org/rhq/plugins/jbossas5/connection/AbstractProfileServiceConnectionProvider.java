@@ -78,7 +78,8 @@ public abstract class AbstractProfileServiceConnectionProvider implements Profil
 
     protected Object lookup(InitialContext initialContext, String name) {
         try {
-            return initialContext.lookup(name);
+            Object found = initialContext.lookup(name);
+            return found;
         } catch (NamingException e) {
             throw new RuntimeException("Failed to lookup JNDI name '" + name + "' from InitialContext.", e);
         }

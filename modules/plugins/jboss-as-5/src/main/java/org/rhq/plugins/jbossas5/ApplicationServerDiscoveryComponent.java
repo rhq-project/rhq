@@ -24,8 +24,11 @@ package org.rhq.plugins.jbossas5;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -35,15 +38,13 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.maven.artifact.versioning.ComparableVersion;
-import org.jboss.deployers.spi.management.ManagementView;
-import org.jboss.managed.api.ComponentType;
-import org.jboss.managed.api.ManagedComponent;
 import org.jetbrains.annotations.Nullable;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
+import org.rhq.core.pluginapi.inventory.ClassLoaderFacet;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
@@ -67,10 +68,7 @@ import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
  * @author Ian Springer
  * @author Mark Spritzler
  */
-public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryComponent {
-    private static final String DEFAULT_RESOURCE_DESCRIPTION_AS = "JBoss Application Server (AS)";
-    private static final String DEFAULT_RESOURCE_DESCRIPTION_EAP = "JBoss Enterprise Application Platform (EAP)";
-    private static final String JBMANCON_DEBUG_SYSPROP = "jbmancon.debug";
+public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryComponent, ClassLoaderFacet {
     private static final String CHANGE_ME = "***CHANGE_ME***";
     private static final String JBOSS_SERVICE_XML = "conf" + File.separator + "jboss-service.xml";
     private static final String JBOSS_NAMING_SERVICE_XML = "deploy" + File.separator + "naming-service.xml";
@@ -108,6 +106,33 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
                 + " resources.");
 
         return resources;
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<URL> getAdditionalClasspathUrls(ResourceDiscoveryContext context, DiscoveredResourceDetails details) throws Exception {
+        Configuration pluginConfig = details.getPluginConfiguration();
+        String homeDir = pluginConfig.getSimple(PluginConfigUtil.HOME_DIR).getStringValue();
+
+        List<URL> clientJars = new ArrayList<URL>();
+
+        String[] jarFileNames = { "client/jbossall-client.jar",
+                                  "common/lib/jboss-security-aspects.jar",
+                                  "lib/jboss-managed.jar",
+                                  "lib/jboss-metatype.jar",
+                                  "lib/jboss-dependency.jar"
+                                };
+        for (String jarFileName : jarFileNames) {
+            File clientJar = new File(homeDir, jarFileName);
+            if (!clientJar.exists()) {
+                throw new FileNotFoundException("Cannot find [" + clientJar + "]; unable to manage server");
+            }
+            if (!clientJar.canRead()) {
+                throw new IOException("Cannot read [" + clientJar + "]; unable to manage server");
+            }
+            clientJars.add(clientJar.toURI().toURL());
+        }
+
+        return clientJars;
     }
 
     private Set<DiscoveredResourceDetails> discoverExternalJBossAsProcesses(ResourceDiscoveryContext discoveryContext) {
@@ -172,28 +197,28 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
             // TODO? Set the connection type - local or remote
 
             // Set the required props...
-            pluginConfiguration.put(new PropertySimple(ApplicationServerComponent.PluginConfigPropNames.NAMING_URL,
+            pluginConfiguration.put(new PropertySimple(PluginConfigUtil.NAMING_URL,
                 jnpURL));
-            pluginConfiguration.put(new PropertySimple(ApplicationServerComponent.PluginConfigPropNames.HOME_DIR,
+            pluginConfiguration.put(new PropertySimple(PluginConfigUtil.HOME_DIR,
                 installHome.getAbsolutePath()));
             pluginConfiguration.put(new PropertySimple(
-                ApplicationServerComponent.PluginConfigPropNames.SERVER_HOME_DIR, configDir));
+                PluginConfigUtil.SERVER_HOME_DIR, configDir));
 
             // Set the optional props...
-            pluginConfiguration.put(new PropertySimple(ApplicationServerComponent.PluginConfigPropNames.SERVER_NAME,
+            pluginConfiguration.put(new PropertySimple(PluginConfigUtil.SERVER_NAME,
                 cmdLine.getSystemProperties().getProperty(JBossProperties.SERVER_NAME)));
-            pluginConfiguration.put(new PropertySimple(ApplicationServerComponent.PluginConfigPropNames.BIND_ADDRESS,
+            pluginConfiguration.put(new PropertySimple(PluginConfigUtil.BIND_ADDRESS,
                 cmdLine.getSystemProperties().getProperty(JBossProperties.BIND_ADDRESS)));
 
             String javaHome = processInfo.getEnvironmentVariable(JAVA_HOME_ENV_VAR);
             if (javaHome == null && log.isDebugEnabled()) {
                 log.debug("JAVA_HOME environment variable not set in JBossAS process - defaulting "
-                    + ApplicationServerComponent.PluginConfigPropNames.JAVA_HOME
+                    + PluginConfigUtil.JAVA_HOME
                     + "connection property to the plugin container JRE dir.");
                 javaHome = System.getenv(JAVA_HOME_ENV_VAR);
             }
 
-            pluginConfiguration.put(new PropertySimple(ApplicationServerComponent.PluginConfigPropNames.JAVA_HOME,
+            pluginConfiguration.put(new PropertySimple(PluginConfigUtil.JAVA_HOME,
                 javaHome));
 
             initLogEventSourcesConfigProp(configDir, pluginConfiguration);
@@ -214,7 +239,7 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
         //setPluginConfigurationDefaults(pluginConfiguration);
 
         ProcessInfo processInfo = null;
-        String jbossHomeDir = pluginConfig.getSimple(ApplicationServerComponent.PluginConfigPropNames.HOME_DIR)
+        String jbossHomeDir = pluginConfig.getSimple(PluginConfigUtil.HOME_DIR)
             .getStringValue();
         JBossInstallationInfo installInfo;
         try {
@@ -229,67 +254,19 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
 
     @Nullable
     private DiscoveredResourceDetails discoverInProcessJBossAS(ResourceDiscoveryContext discoveryContext) {
-        ProfileServiceConnectionProvider connectionProvider = new LocalProfileServiceConnectionProvider();
-
-        ProfileServiceConnection connection;
         try {
-            connection = connectionProvider.connect();
-        } catch (Exception e) {
-            // This most likely just means we're not embedded inside a JBoss AS 5.x instance.
-            log.debug("Unable to connect to in-process ProfileService.", e);
+            return new InProcessJBossASDiscovery().discoverInProcessJBossAS(discoveryContext);
+        } catch (Throwable t) {
+            log.debug("In-process JBossAS discovery failed - we are probably not running embedded within JBossAS", t);
             return null;
         }
-
-        ManagementView managementView = connection.getManagementView();
-        ManagedComponent serverConfigComponent = ManagedComponentUtils.getSingletonManagedComponent(managementView,
-            new ComponentType("MCBean", "ServerConfig"));
-        String serverName = (String) ManagedComponentUtils.getSimplePropertyValue(serverConfigComponent, "serverName");
-
-        // serverHomeDir is the full path to the instance's configuration dir, e.g. "/opt/jboss-5.1.0.GA/server/default";
-        // That's guaranteed to be unique among JBAS instances on the same machine, so we'll use it as the Resource key.
-        String serverHomeDir = (String) ManagedComponentUtils.getSimplePropertyValue(serverConfigComponent,
-            "serverHomeDir");
-        String resourceKey = serverHomeDir;
-
-        // homeDir is the full path to the JBoss installation dir used by this instance, e.g. "/opt/jboss-5.1.0.GA".
-        String homeDir = (String) ManagedComponentUtils.getSimplePropertyValue(serverConfigComponent, "homeDir");
-        // Figure out if the instance is AS or EAP, and reflect that in the Resource name.
-        JBossInstallationInfo installInfo;
-        try {
-            installInfo = new JBossInstallationInfo(new File(homeDir));
-        } catch (IOException e) {
-            throw new InvalidPluginConfigurationException(e);
-        }
-        String resourceName = "JBoss ";
-        resourceName += installInfo.isEap() ? "EAP " : "AS ";
-        resourceName += installInfo.getMajorVersion();
-        resourceName += " (" + serverName + ")";
-
-        String description = installInfo.isEap() ? DEFAULT_RESOURCE_DESCRIPTION_EAP : DEFAULT_RESOURCE_DESCRIPTION_AS;
-
-        String version = (String) ManagedComponentUtils.getSimplePropertyValue(serverConfigComponent,
-            "specificationVersion");
-
-        Configuration pluginConfig = discoveryContext.getDefaultPluginConfiguration();
-        pluginConfig.put(new PropertySimple(ApplicationServerComponent.PluginConfigPropNames.HOME_DIR, homeDir));
-        pluginConfig.put(new PropertySimple(ApplicationServerComponent.PluginConfigPropNames.SERVER_HOME_DIR,
-            serverHomeDir));
-        pluginConfig.put(new PropertySimple(ApplicationServerComponent.PluginConfigPropNames.SERVER_NAME, serverName));
-
-        boolean debug = Boolean.getBoolean(JBMANCON_DEBUG_SYSPROP);
-        if (debug) {
-            //new UnitTestRunner().runUnitTests(connection);
-        }
-
-        return new DiscoveredResourceDetails(discoveryContext.getResourceType(), resourceKey, resourceName, version,
-            description, pluginConfig, null);
     }
 
     private DiscoveredResourceDetails createResourceDetails(ResourceDiscoveryContext discoveryContext,
         Configuration pluginConfiguration, @Nullable ProcessInfo processInfo, JBossInstallationInfo installInfo) {
         String serverHomeDir = pluginConfiguration.getSimple(
-            ApplicationServerComponent.PluginConfigPropNames.SERVER_HOME_DIR).getStringValue();
-        File absoluteConfigPath = ApplicationServerComponent.resolvePathRelativeToHomeDir(pluginConfiguration,
+            PluginConfigUtil.SERVER_HOME_DIR).getStringValue();
+        File absoluteConfigPath = PluginConfigUtil.resolvePathRelativeToHomeDir(pluginConfiguration,
             serverHomeDir);
 
         // Canonicalize the config path, so it's consistent no matter how it's entered.
@@ -299,8 +276,8 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
         String key = FileUtils.getCanonicalPath(absoluteConfigPath.getPath());
 
         String bindAddress = pluginConfiguration.getSimple(
-            ApplicationServerComponent.PluginConfigPropNames.BIND_ADDRESS).getStringValue();
-        String namingUrl = pluginConfiguration.getSimple(ApplicationServerComponent.PluginConfigPropNames.NAMING_URL)
+            PluginConfigUtil.BIND_ADDRESS).getStringValue();
+        String namingUrl = pluginConfiguration.getSimple(PluginConfigUtil.NAMING_URL)
             .getStringValue();
 
         // Only include the JNP port in the Resource name if its value is not "***CHANGE_ME***".
@@ -350,7 +327,7 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
     }
 
     private void configureEventSourceForServerLogFile(Configuration pluginConfiguration) {
-        File rhqLogFile = ApplicationServerComponent.resolvePathRelativeToHomeDir(pluginConfiguration,
+        File rhqLogFile = PluginConfigUtil.resolvePathRelativeToHomeDir(pluginConfiguration,
             "../logs/rhq-server-log4j.log");
         if (rhqLogFile.exists() && !rhqLogFile.isDirectory()) {
             try {

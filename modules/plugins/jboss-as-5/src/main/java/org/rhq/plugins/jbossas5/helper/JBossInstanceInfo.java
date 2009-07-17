@@ -37,7 +37,7 @@ import java.util.Properties;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jboss.util.StringPropertyReplacer;
+import org.rhq.core.util.StringPropertyReplacer;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.plugins.jbossas5.util.JBossConfigurationUtility;
 

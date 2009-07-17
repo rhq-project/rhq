@@ -94,24 +94,31 @@
           <groupId>org.jboss.integration</groupId>
           <artifactId>jboss-profileservice-spi</artifactId>
           <version>5.1.0.SP1</version>
-          <!--<scope>provided</scope>-->
+          <scope>provided</scope>
         </dependency>
 
         <dependency>
           <groupId>org.jboss.man</groupId>
           <artifactId>jboss-managed</artifactId>
           <version>2.1.1.CR1</version>
-          <!--<scope>provided</scope>-->
+          <scope>provided</scope>
         </dependency>
 
         <dependency>
           <groupId>org.jboss.man</groupId>
           <artifactId>jboss-metatype</artifactId>
           <version>2.1.1.CR1</version>
-          <!--<scope>provided</scope>-->
+          <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss</groupId>
+          <artifactId>jboss-common-core</artifactId>
+          <scope>provided</scope>
         </dependency>
 
         <!--======= client API jars (temporary) =======-->
+<!-- CLASSLOADER FACET WILL FIND THESE
         <dependency>
             <groupId>org.jboss.microcontainer</groupId>
             <artifactId>jboss-kernel</artifactId>
@@ -167,8 +174,10 @@
           <version>1.3.4-jboss</version>
           <scope>runtime</scope>
         </dependency>
+-->
 
         <!-- aka jboss-client.jar -->
+<!-- CLASSLOADER FACET WILL FIND THESE
         <dependency>
             <groupId>org.jboss.jbossas</groupId>
             <artifactId>jboss-as-server</artifactId>
@@ -249,15 +258,19 @@
           <classifier>client</classifier>
           <scope>runtime</scope>
         </dependency>
+-->
 
         <!-- needed by ManagementView.getDeployment() -->
+<!-- CLASSLOADER FACET WILL FIND THESE
         <dependency>
           <groupId>org.jboss.microcontainer</groupId>
           <artifactId>jboss-dependency</artifactId>
           <scope>runtime</scope>
         </dependency>
+-->
 
         <!-- The four below deps are needed by the non-EJB proxy but not by the EJB proxy. -->
+<!-- CLASSLOADER FACET WILL FIND THESE
         <dependency>
           <groupId>org.jboss.security</groupId>
           <artifactId>jbosssx-client</artifactId>
@@ -326,6 +339,29 @@
             <artifactId>jboss-messaging-client</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.jboss.jbossas</groupId>
+            <artifactId>jboss-as-profileservice</artifactId>
+            <classifier>client</classifier>            
+            <scope>runtime</scope>
+        </dependency>
+-->
+        
+        <!-- needed for remote JMX -->
+        <dependency>
+            <groupId>org.jboss.jbossas</groupId>
+            <artifactId>jboss-as-server</artifactId>            
+            <classifier>jmx-invoker-adaptor-client</classifier>
+            <scope>runtime</scope>
+        </dependency>
+      
+        <dependency>
+            <groupId>jboss.messaging</groupId>
+            <artifactId>jboss-messaging-client</artifactId>
+            <scope>test</scope>
+        </dependency>
+
 
         <!-- Uncomment the below deps if you want to pull down the jboss-profileservice
              and jboss-system sources jars for debugging purposes. You will also need

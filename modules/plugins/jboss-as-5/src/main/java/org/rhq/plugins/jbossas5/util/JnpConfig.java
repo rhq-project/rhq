@@ -47,7 +47,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
 
-import org.jboss.util.StringPropertyReplacer;
+import org.rhq.core.util.StringPropertyReplacer;
 
 import org.rhq.plugins.jbossas5.helper.JBossProperties;
 

@@ -674,11 +674,9 @@
             dataType="trait" displayType="summary"
             description="the virtual host with which this context is associated"/>
 
-    <!--
     <metric property="responseTime"
-            dataType="calltime" defaultOn="false" units="milliseconds" destinationType="URL"
+            dataType="calltime" defaultOn="false" defaultInterval="600000" units="milliseconds" destinationType="URL"
             description="the minimum, maximum, and average response times for requests serviced by this webapp"/>
-    -->
 
     <metric property="activeSessions"
            displayName="Currently Active Sessions"
@@ -937,6 +935,7 @@
 
 <plugin name="JBossAS5" displayName="JBoss Application Server 5.x" package="org.rhq.plugins.jbossas5"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        description="Supports management and monitoring of JBoss AS from version EAP 5"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
 
@@ -945,7 +944,7 @@
     <server name="JBossAS Server"
             class="ApplicationServerComponent"
             discovery="ApplicationServerDiscoveryComponent"
-            description="JBoss Application Server">
+            description="JBoss Application Server 5">
 
         <subcategories>
    <!-- Remove until we have support for JVM management.
@@ -2320,14 +2319,6 @@
                     <c:simple-property name="filename" readOnly="true"/>
                     <c:simple-property name="contextPath" description="this WAR's context path (e.g. /admin-console" readOnly="true"/>
                 </c:group>
-                <c:group name="ResponseTime">
-                   <c:simple-property name="responseTimeLogFile" required="false"
-                                      description="the full path to the log file containing response-time stats for this webapp"/>
-                   <c:simple-property name="responseTimeUrlExcludes" required="false"
-                                      description="a space-delimited list of regular expressions specifying URLs that should be excluded from response-time stats collection"/>
-                   <c:simple-property name="responseTimeUrlTransforms" required="false"
-                                      description="a space-delimited list of Perl-style substitution expressions that should be applied to all URLs for which response-time stats are collected (e.g. |^/dept/finance/.*|/dept/finance/*|)"/>
-                </c:group>
                 <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
                     <c:simple-property name="extension" default="war" readOnly="true"/>
                     <c:simple-property name="descriptionTemplate" default="a standalone web application (WAR)" readOnly="true"/>
@@ -2374,6 +2365,14 @@
                         <c:simple-property name="componentType" default="MBean" readOnly="true"/>
                         <c:simple-property name="componentSubtype" default="WebApplicationManager" readOnly="true"/>
                         <c:simple-property name="componentName" readOnly="true"/>
+                    </c:group>
+                    <c:group name="ResponseTime">
+                       <c:simple-property name="responseTimeLogFile" required="false"
+                                          description="the full path to the log file containing response-time stats for this webapp"/>
+                       <c:simple-property name="responseTimeUrlExcludes" required="false"
+                                          description="a space-delimited list of regular expressions specifying URLs that should be excluded from response-time stats collection"/>
+                       <c:simple-property name="responseTimeUrlTransforms" required="false"
+                                          description="a space-delimited list of Perl-style substitution expressions that should be applied to all URLs for which response-time stats are collected (e.g. |^/dept/finance/.*|/dept/finance/*|)"/>
                     </c:group>
                 </plugin-configuration>
 
@@ -2431,6 +2430,14 @@
                         <c:simple-property name="componentType" default="MBean" readOnly="true"/>
                         <c:simple-property name="componentSubtype" default="WebApplicationManager" readOnly="true"/>
                         <c:simple-property name="componentName" readOnly="true"/>
+                    </c:group>
+                    <c:group name="ResponseTime">
+                       <c:simple-property name="responseTimeLogFile" required="false"
+                                          description="the full path to the log file containing response-time stats for this webapp"/>
+                       <c:simple-property name="responseTimeUrlExcludes" required="false"
+                                          description="a space-delimited list of regular expressions specifying URLs that should be excluded from response-time stats collection"/>
+                       <c:simple-property name="responseTimeUrlTransforms" required="false"
+                                          description="a space-delimited list of Perl-style substitution expressions that should be applied to all URLs for which response-time stats are collected (e.g. |^/dept/finance/.*|/dept/finance/*|)"/>
                     </c:group>
                 </plugin-configuration>
 
@@ -2884,7 +2891,7 @@
 
             <resource-configuration>
                 <c:simple-property name="activeBindingSetName"
-                                   activationPolicy="restart" 
+                                   activationPolicy="restart"
                                    description="The name of the binding set the Service Binding Manager should use when resolving bindings.
                                                 A change to this property takes effect only after the server restart."/>
                 <c:list-property name="standardBindings" description="The standard port bindings inherited by the binding sets.">
@@ -2912,7 +2919,7 @@
                     <c:simple-property name="portOffset" type="integer" description="A value to add to the port configuration for a standard binding to derive the port to use in this binding set. This doesn't apply to standard bindings defined as 'fixed port'."/>
                     <c:list-property name="overrideBindings" description='The binding configurations that apply only to this binding set, either non-standard bindings or ones that override standard binding configurations.
                         The binding set inherits the standard bindings from the Service Binding Manager, applies the port offset to them (unless the standard binding is defined as "fixed port") and append the override
-                        bindings. These can either redefine a standard binding or define a brand new binding. The standard bindings and the override bindings then define the 
+                        bindings. These can either redefine a standard binding or define a brand new binding. The standard bindings and the override bindings then define the
                         full set of the bindings that are defined by the binding set.'>
                             <c:map-property name="binding">
 						        <c:simple-property name="serviceName" displayName="Service Name" description="The name of the service to which this binding applies."/>
@@ -2923,7 +2930,7 @@
 						        <c:simple-property name="fullyQualifiedName" required="false" readOnly="true" displayName="Fully Qualified Name" description="The fully qualified binding name. This is an informational field only consisting of the service name and the binding name."/>
 						    </c:map-property>
                     </c:list-property>
-                    
+
                     <c:list-property name="resultingBindings" readOnly="true" required="false" displayName="Resulting Bindings"
                                      description="In this list you can review the resulting bindings of this binding set. This list doesn't include the override bindings defined above, only the standard bindings as they would look if this binding set was active (i.e. the port offset and default host name applied where appropriate).">
                             <c:map-property name="binding" readOnly="true">

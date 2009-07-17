@@ -22,27 +22,23 @@
  */
 package org.rhq.plugins.jbossas5;
 
-import java.io.File;
 import java.util.Iterator;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.Nullable;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.measurement.MeasurementDataTrait;
-import org.rhq.core.domain.measurement.MeasurementReport;
-import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
-import org.rhq.core.domain.measurement.calltime.CallTimeData;
-import org.rhq.core.pluginapi.measurement.MeasurementFacet;
-import org.rhq.core.pluginapi.util.ResponseTimeConfiguration;
-import org.rhq.core.pluginapi.util.ResponseTimeLogParser;
-import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
 
 import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.managed.api.ManagedComponent;
 import org.jboss.managed.api.ManagedDeployment;
 import org.jboss.profileservice.spi.NoSuchDeploymentException;
+
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
+import org.rhq.core.domain.measurement.MeasurementReport;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.pluginapi.measurement.MeasurementFacet;
+import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
 
 /**
  * @author Ian Springer
@@ -51,27 +47,16 @@ public class WarMeasurementFacetDelegate implements MeasurementFacet
 {
     private static final String CONTEXT_ROOT_TRAIT = "contextRoot";
     private static final String VIRTUAL_HOSTS_TRAIT = "virtualHosts";
-    private static final String RESPONSE_TIME_METRIC = "ResponseTime";
-    public static final String RESPONSE_TIME_LOG_FILE_CONFIG_PROP = "responseTimeLogFile";
 
     private static final String CONTEXT_COMPONENT_NAME = "ContextMO";
 
     private final Log log = LogFactory.getLog(this.getClass());
 
     private AbstractManagedDeploymentComponent managedDeploymentComponent;
-    private ResponseTimeLogParser logParser;
 
     public WarMeasurementFacetDelegate(AbstractManagedDeploymentComponent managedDeploymentComponent)
     {
         this.managedDeploymentComponent = managedDeploymentComponent;
-        Configuration pluginConfig = managedDeploymentComponent.getResourceContext().getPluginConfiguration();
-        ResponseTimeConfiguration responseTimeConfig = new ResponseTimeConfiguration(pluginConfig);
-        File logFile = responseTimeConfig.getLogFile();
-        if (logFile != null) {
-            this.logParser = new ResponseTimeLogParser(logFile);
-            this.logParser.setExcludes(responseTimeConfig.getExcludes());
-            this.logParser.setTransforms(responseTimeConfig.getTransforms());
-        }
     }
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests)
@@ -115,22 +100,6 @@ public class WarMeasurementFacetDelegate implements MeasurementFacet
                     MeasurementDataTrait trait = new MeasurementDataTrait(request, value);
                     report.addData(trait);
                 }
-                else if (metricName.equals(RESPONSE_TIME_METRIC)) {
-                   if (this.logParser != null) {
-                      try {
-                          CallTimeData callTimeData = new CallTimeData(request);
-                          this.logParser.parseLog(callTimeData);
-                          report.addData(callTimeData);
-                      } catch (Exception e) {
-                          log.error("Failed to retrieve HTTP call-time data.", e);
-                      }
-                  } else {
-                      log.error("The '" + RESPONSE_TIME_METRIC + "' metric is enabled for WAR resource '"
-                          + getApplicationName() + "', but no value is defined for the '"
-                          + RESPONSE_TIME_LOG_FILE_CONFIG_PROP + "' connection property.");
-                      // TODO: Communicate this error back to the server for display in the GUI.
-                   }
-                }
             }
             catch (Exception e)
             {
@@ -163,11 +132,5 @@ public class WarMeasurementFacetDelegate implements MeasurementFacet
         {
             return null;
         }
-    }
-
-    private String getApplicationName()
-    {
-        String name = managedDeploymentComponent.getDeploymentName();
-        return name;
     }
 }

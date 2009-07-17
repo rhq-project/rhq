@@ -22,25 +22,30 @@
  */
 package org.rhq.plugins.jbossas5;
 
+import java.io.File;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import org.jboss.deployers.spi.management.ManagementView;
+import org.jboss.managed.api.ComponentType;
+import org.jboss.managed.api.ManagedComponent;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.domain.measurement.calltime.CallTimeData;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.core.pluginapi.util.ResponseTimeConfiguration;
+import org.rhq.core.pluginapi.util.ResponseTimeLogParser;
 import org.rhq.plugins.jbossas5.helper.MoreKnownComponentTypes;
 import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
 import org.rhq.plugins.jbossas5.util.RegularExpressionNameMatcher;
 import org.rhq.plugins.jbossas5.util.ResourceComponentUtils;
-
-import org.jboss.deployers.spi.management.ManagementView;
-import org.jboss.managed.api.ComponentType;
-import org.jboss.managed.api.ManagedComponent;
 
 /**
  * A Resource component for web application contexts (e.g. "//localhost/jmx-console").
@@ -51,6 +56,9 @@ public class WebApplicationContextComponent extends ManagedComponentComponent
 {
     public static final String VIRTUAL_HOST_PROPERTY = "virtualHost";
     public static final String CONTEXT_PATH_PROPERTY = "contextPath";
+
+    private static final String RESPONSE_TIME_METRIC = "responseTime";
+    public static final String RESPONSE_TIME_LOG_FILE_CONFIG_PROP = "responseTimeLogFile";
 
     private static final String VIRTUAL_HOST_TRAIT = "virtualHost";
 
@@ -72,6 +80,7 @@ public class WebApplicationContextComponent extends ManagedComponentComponent
     private final Log log = LogFactory.getLog(this.getClass());
 
     private String servletComponentNamesRegex;
+    private ResponseTimeLogParser logParser;
 
     @Override
     public void start(ResourceContext<ProfileServiceComponent> resourceContext) throws Exception
@@ -81,6 +90,14 @@ public class WebApplicationContextComponent extends ManagedComponentComponent
         this.servletComponentNamesRegex =
                 ResourceComponentUtils.replacePropertyExpressionsInTemplate(SERVLET_COMPONENT_NAMES_REGEX_TEMPLATE,
                         pluginConfig);
+        ResponseTimeConfiguration responseTimeConfig = new ResponseTimeConfiguration(pluginConfig);
+        File logFile = responseTimeConfig.getLogFile();
+        if (logFile != null) {
+            this.logParser = new ResponseTimeLogParser(logFile);
+            this.logParser.setExcludes(responseTimeConfig.getExcludes());
+            this.logParser.setTransforms(responseTimeConfig.getTransforms());
+        }
+
     }
 
     @Override
@@ -89,7 +106,7 @@ public class WebApplicationContextComponent extends ManagedComponentComponent
     {
         ProfileServiceComponent warComponent = getResourceContext().getParentResourceComponent();
         ManagementView managementView = warComponent.getConnection().getManagementView();
-        Set<MeasurementScheduleRequest> remainingRequests = new LinkedHashSet();
+        Set<MeasurementScheduleRequest> remainingRequests = new LinkedHashSet<MeasurementScheduleRequest>();
         for (MeasurementScheduleRequest request : requests)
         {
             String metricName = request.getName();
@@ -107,6 +124,22 @@ public class WebApplicationContextComponent extends ManagedComponentComponent
                     String virtualHost = pluginConfig.getSimple(VIRTUAL_HOST_PROPERTY).getStringValue();
                     MeasurementDataTrait trait = new MeasurementDataTrait(request, virtualHost);
                     report.addData(trait);
+                }
+                else if (metricName.equals(RESPONSE_TIME_METRIC)) {
+                   if (this.logParser != null) {
+                      try {
+                          CallTimeData callTimeData = new CallTimeData(request);
+                          this.logParser.parseLog(callTimeData);
+                          report.addData(callTimeData);
+                      } catch (Exception e) {
+                          log.error("Failed to retrieve HTTP call-time data.", e);
+                      }
+                  } else {
+                      log.error("The '" + RESPONSE_TIME_METRIC + "' metric is enabled for WAR resource '"
+                          + getResourceDescription() + "', but no value is defined for the '"
+                          + RESPONSE_TIME_LOG_FILE_CONFIG_PROP + "' connection property.");
+                      // TODO: Communicate this error back to the server for display in the GUI.
+                   }
                 }
                 else
                 {

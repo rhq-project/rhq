@@ -33,6 +33,13 @@ import javax.management.ObjectName;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.Nullable;
+
+import org.jboss.deployers.spi.management.ManagementView;
+import org.jboss.managed.api.ComponentType;
+import org.jboss.managed.api.ManagedComponent;
+import org.jboss.managed.api.ManagedDeployment;
+import org.jboss.profileservice.spi.NoSuchDeploymentException;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.ResourceType;
@@ -43,12 +50,6 @@ import org.rhq.plugins.jbossas5.helper.MoreKnownComponentTypes;
 import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
 import org.rhq.plugins.jbossas5.util.RegularExpressionNameMatcher;
 import org.rhq.plugins.jbossas5.util.ResourceComponentUtils;
-
-import org.jboss.deployers.spi.management.ManagementView;
-import org.jboss.managed.api.ComponentType;
-import org.jboss.managed.api.ManagedComponent;
-import org.jboss.managed.api.ManagedDeployment;
-import org.jboss.profileservice.spi.NoSuchDeploymentException;
 
 /**
  * A component for discovering the contexts of a WAR - one context per vhost the WAR is deployed to.
@@ -69,7 +70,7 @@ public class WebApplicationContextDiscoveryComponent
     // The name of the MBean:WebApplicationManager component for a WAR.
     private static final String WEB_APPLICATION_MANAGER_COMPONENT_NAME_TEMPLATE =
             "jboss.web:host=%" + WebApplicationContextComponent.VIRTUAL_HOST_PROPERTY + "%,"
-                    + "path=%" + WebApplicationContextComponent.CONTEXT_PATH_PROPERTY + "%,type=Manager";
+                    + "path=%" + WebApplicationContextComponent.CONTEXT_PATH_PROPERTY + "%,type=Manager"; // TODO check cluster case
 
     private final Log log = LogFactory.getLog(this.getClass());
 

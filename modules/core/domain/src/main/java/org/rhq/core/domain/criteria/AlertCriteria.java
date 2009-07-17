@@ -72,7 +72,7 @@ public class AlertCriteria extends Criteria {
         this.filterId = filterId;
     }
 
-    public void addFilterTriggeredOperation(String filterTriggeredOperationName) {
+    public void addFilterTriggeredOperationName(String filterTriggeredOperationName) {
         this.filterTriggeredOperationName = filterTriggeredOperationName;
     }
 

@@ -28,8 +28,6 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.EventCriteria;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSeverity;
-import org.rhq.core.domain.event.composite.EventComposite;
-import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.exception.FetchException;
 
@@ -37,42 +35,6 @@ import org.rhq.enterprise.server.exception.FetchException;
 @WebService
 @Remote
 public interface EventManagerRemote {
-    @WebMethod
-    PageList<EventComposite> findEventsForResource( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int resourceId, //
-        @WebParam(name = "begin") long begin, //
-        @WebParam(name = "end") long end, //
-        @WebParam(name = "severity") EventSeverity severity, //
-        @WebParam(name = "source") String source, //
-        @WebParam(name = "detail") String detail, //
-        @WebParam(name = "pageControl") PageControl pc) //
-        throws FetchException;
-
-    @WebMethod
-    PageList<EventComposite> findEventsForAutoGroup( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "parentResourceId") int parentResourceId, //
-        @WebParam(name = "resourceTypeId") int resourceTypeId, //
-        @WebParam(name = "begin") long begin, //
-        @WebParam(name = "end") long end, //
-        @WebParam(name = "severity") EventSeverity severity, //
-        @WebParam(name = "source") String source, //
-        @WebParam(name = "detail") String detail, //
-        @WebParam(name = "pageControl") PageControl pc) //
-        throws FetchException;
-
-    @WebMethod
-    PageList<EventComposite> findEventsForCompGroup( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceGroupId") int resourceGroupId, //
-        @WebParam(name = "begin") long begin, //
-        @WebParam(name = "end") long end, //
-        @WebParam(name = "severity") EventSeverity severity, //
-        @WebParam(name = "source") String source, //
-        @WebParam(name = "detail") String detail, //
-        @WebParam(name = "pageControl") PageControl pc) //
-        throws FetchException;
 
     @WebMethod
     EventSeverity[] getSeverityBuckets( //
@@ -100,15 +62,6 @@ public interface EventManagerRemote {
         @WebParam(name = "begin") long begin, //
         @WebParam(name = "end") long end, //
         @WebParam(name = "numBuckets") int numBuckets) //
-        throws FetchException;
-
-    @WebMethod
-    PageList<Event> findEvents( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "criteria") Event criteria, //
-        @WebParam(name = "begin") long begin, //
-        @WebParam(name = "end") long end, //
-        @WebParam(name = "pageControl") PageControl pc) //
         throws FetchException;
 
     @WebMethod

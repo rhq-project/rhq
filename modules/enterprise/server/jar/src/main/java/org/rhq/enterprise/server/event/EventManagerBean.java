@@ -67,8 +67,6 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
-import org.rhq.core.domain.util.QueryGenerator;
-import org.rhq.core.domain.util.QueryGenerator.AuthorizationTokenType;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
@@ -698,30 +696,6 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
         EventSeverity[] severities = { severity };
 
         return findEventsForCompGroup(subject, groupId, begin, endDate, severities, source, searchString, pc);
-    }
-
-    @SuppressWarnings("unchecked")
-    public PageList<Event> findEvents(Subject subject, Event criteria, long begin, long end, PageControl pc)
-        throws FetchException {
-
-        try {
-            QueryGenerator generator = new QueryGenerator(criteria, pc);
-            if (authorizationManager.isInventoryManager(subject) == false) {
-                generator.setAuthorizationResourceFragment(AuthorizationTokenType.RESOURCE, "source.resource", subject
-                    .getId());
-            }
-            generator.addFilter("timestamp between ? and ?", begin, end);
-
-            Query query = generator.getQuery(entityManager);
-            Query countQuery = generator.getCountQuery(entityManager);
-
-            long count = (Long) countQuery.getSingleResult();
-            List<Event> events = query.getResultList();
-
-            return new PageList<Event>(events, (int) count, pc);
-        } catch (Exception e) {
-            throw new FetchException(e.getMessage());
-        }
     }
 
     public PageList<EventComposite> findEventsForAutoGroup(Subject subject, int parentResourceId, int resourceTypeId,

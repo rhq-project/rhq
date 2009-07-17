@@ -200,8 +200,5 @@ public interface EventManagerLocal {
     public EventSeverity[] getSeverityBucketsForCompGroup(Subject subject, int groupId, long begin, long end,
         int numBuckets) throws FetchException;
 
-    PageList<Event> findEvents(Subject subject, Event criteria, long begin, long end, PageControl pc)
-        throws FetchException;
-
     PageList<Event> findEventsByCriteria(Subject subject, EventCriteria criteria);
 }

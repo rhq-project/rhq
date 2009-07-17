@@ -137,7 +137,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
         boolean checkChildren) {
         ResourceContainer resourceContainer = this.inventoryManager.getResourceContainer(resource);
         AvailabilityFacet resourceComponent = null;
-        if (resourceContainer != null) {
+        if (resourceContainer != null && resource.getInventoryStatus() == InventoryStatus.COMMITTED) {
             try {
                 resourceComponent = resourceContainer.createResourceComponentProxy(AvailabilityFacet.class,
                     FacetLockType.NONE, GET_AVAILABILITY_TIMEOUT, true, false);
@@ -203,7 +203,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
 
             if (checkChildren) {
                 // Wrap in a fresh HashSet to avoid ConcurrentModificationExceptions.
-                Set<Resource> children = new HashSet(resource.getChildResources());
+                Set<Resource> children = new HashSet<Resource>(resource.getChildResources());
                 if (current == AvailabilityType.UP) {
                     for (Resource child : children)
                         checkInventory(child, availabilityReport, reportChangesOnly, true);

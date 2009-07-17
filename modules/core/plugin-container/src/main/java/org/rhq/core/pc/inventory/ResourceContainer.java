@@ -522,7 +522,6 @@ public class ResourceContainer implements Serializable {
                 }
                 Thread.currentThread().setContextClassLoader(pluginClassLoader);
                 // This is the actual call into the resource component's facet interface.
-                @SuppressWarnings( { "UnnecessaryLocalVariable" })
                 Object results = this.method.invoke(resourceComponent, this.args);
                 return results;
             } catch (InvocationTargetException e) {

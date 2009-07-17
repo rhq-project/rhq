@@ -301,9 +301,10 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
 
             PluginComponentFactory componentFactory = PluginContainer.getInstance().getPluginComponentFactory();
             InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
-            ResourceDiscoveryComponent discoveryComponent = componentFactory.getDiscoveryComponent(resourceType);
             ResourceContainer platformContainer = inventoryManager.getResourceContainer(inventoryManager.getPlatform());
             ResourceComponent platformComponent = inventoryManager.getResourceComponent(inventoryManager.getPlatform());
+            ResourceDiscoveryComponent discoveryComponent = componentFactory.getDiscoveryComponent(resourceType,
+                platformContainer);
 
             ResourceDiscoveryContext context = new ResourceDiscoveryContext(resourceType, platformComponent,
                 platformContainer.getResourceContext(), systemInfo, scanResults, Collections.EMPTY_LIST, pcName);

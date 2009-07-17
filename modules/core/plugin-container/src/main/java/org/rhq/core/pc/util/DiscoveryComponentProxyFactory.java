@@ -43,8 +43,7 @@ import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.inventory.TimeoutException;
 import org.rhq.core.pc.plugin.BlacklistedException;
-import org.rhq.core.pc.plugin.PluginEnvironment;
-import org.rhq.core.pc.PluginContainer;
+import org.rhq.core.pluginapi.inventory.ClassLoaderFacet;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 
 /**
@@ -63,6 +62,35 @@ public class DiscoveryComponentProxyFactory {
     private static final String DAEMON_THREAD_POOL_NAME = "ResourceDiscoveryComponent.invoker.daemon";
     private ExecutorService daemonThreadPool = null;
     private final Set<ResourceType> blacklist = new HashSet<ResourceType>();
+
+    /**
+     * Same as {@link #getDiscoveryComponentProxy(ResourceType, ResourceDiscoveryComponent, long)} except
+     * this lets you provide the interface of the discovery component you want to talk to. For example,
+     * use this to talk to the {@link ClassLoaderFacet} of a discovery component.
+     */
+    @SuppressWarnings("unchecked")
+    public <T> T getDiscoveryComponentProxy(ResourceType type, ResourceDiscoveryComponent component, long timeout,
+        Class<T> componentInterface) throws PluginContainerException, BlacklistedException {
+
+        if (isResourceTypeBlacklisted(type)) {
+            throw new BlacklistedException("Discovery component for resource type [" + type + "] has been blacklisted");
+        }
+
+        try {
+            ClassLoader pluginClassLoader = component.getClass().getClassLoader();
+
+            // This is the handler that will actually invoke the method calls.
+            ResourceDiscoveryComponentInvocationHandler handler = new ResourceDiscoveryComponentInvocationHandler(type,
+                component, timeout, pluginClassLoader);
+
+            // This is the proxy that will look like the discovery component object that the caller will use.
+            T proxy = (T) Proxy.newProxyInstance(pluginClassLoader, new Class<?>[] { componentInterface }, handler);
+            return proxy;
+
+        } catch (Throwable t) {
+            throw new PluginContainerException("Cannot get discovery component proxy for [" + component + "]", t);
+        }
+    }
 
     /**
      * Given a discovery component instance, this returns that component wrapped in a proxy that provides the ability
@@ -84,29 +112,7 @@ public class DiscoveryComponentProxyFactory {
     public ResourceDiscoveryComponent getDiscoveryComponentProxy(ResourceType type,
         ResourceDiscoveryComponent component, long timeout) throws PluginContainerException, BlacklistedException {
 
-        if (isResourceTypeBlacklisted(type)) {
-            throw new BlacklistedException("Discovery component for resource type [" + type + "] has been blacklisted");
-        }
-
-        try {
-            String pluginName = type.getPlugin();
-            PluginEnvironment pluginEnv = PluginContainer.getInstance().getPluginManager().getPlugin(pluginName);
-            ClassLoader pluginClassLoader = pluginEnv.getPluginClassLoader();
-
-            // This is the handler that will actually invoke the method calls.
-            ResourceDiscoveryComponentInvocationHandler handler = new ResourceDiscoveryComponentInvocationHandler(type,
-                component, timeout, pluginClassLoader);
-
-            ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-
-            // This is the proxy that will look like the discovery component object that the caller will use.
-            ResourceDiscoveryComponent proxy = (ResourceDiscoveryComponent) Proxy.newProxyInstance(classLoader,
-                new Class<?>[] { ResourceDiscoveryComponent.class }, handler);
-
-            return proxy;
-        } catch (Throwable t) {
-            throw new PluginContainerException("Cannot get discovery component proxy for [" + component + "]", t);
-        }
+        return getDiscoveryComponentProxy(type, component, timeout, ResourceDiscoveryComponent.class);
     }
 
     public void initialize() {
@@ -163,7 +169,7 @@ public class DiscoveryComponentProxyFactory {
         private final ClassLoader pluginClassLoader;
 
         public ResourceDiscoveryComponentInvocationHandler(ResourceType type, ResourceDiscoveryComponent component,
-                                                           long timeout, ClassLoader pluginClassLoader) {
+            long timeout, ClassLoader pluginClassLoader) {
             if (timeout <= 0) {
                 throw new IllegalArgumentException("timeout value is not positive.");
             }
@@ -194,7 +200,7 @@ public class DiscoveryComponentProxyFactory {
         private Object invokeInNewThread(Method method, Object[] args) throws Throwable {
             ExecutorService threadPool = getThreadPool();
             Callable invocationThread = new ComponentInvocationThread(this.component, method, args,
-                    this.pluginClassLoader);
+                this.pluginClassLoader);
             Future<?> future = threadPool.submit(invocationThread);
             try {
                 return future.get(this.timeout, TimeUnit.MILLISECONDS);
@@ -245,7 +251,7 @@ public class DiscoveryComponentProxyFactory {
         private ClassLoader pluginClassLoader;
 
         ComponentInvocationThread(ResourceDiscoveryComponent component, Method method, Object[] args,
-                                  ClassLoader pluginClassLoader) {
+            ClassLoader pluginClassLoader) {
             this.component = component;
             this.method = method;
             this.args = args;

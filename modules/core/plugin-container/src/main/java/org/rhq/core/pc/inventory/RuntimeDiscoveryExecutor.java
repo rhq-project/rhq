@@ -1,30 +1,34 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.pc.inventory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 
 import org.apache.commons.logging.Log;
@@ -44,10 +48,10 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.util.exception.ExceptionPackage;
 import org.rhq.core.util.exception.Severity;
 
- /**
- * @author Greg Hinkle
- * @author Ian Springer
- */
+/**
+* @author Greg Hinkle
+* @author Ian Springer
+*/
 public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryReport> {
     private Log log = LogFactory.getLog(RuntimeDiscoveryExecutor.class);
 
@@ -86,19 +90,22 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
     public InventoryReport call() {
         try {
             String target = (resource != null) ? this.resource.toString() : "platform";
-            log.info("Running runtime discovery scan rooted at " + target + "...");
+            log.info("Running runtime discovery scan rooted at [" + target + "]");
 
             InventoryReport report = new InventoryReport(inventoryManager.getAgent());
             report.setRuntimeReport(true);
             report.setStartTime(System.currentTimeMillis());
             runtimeDiscover(report);
             report.setEndTime(System.currentTimeMillis());
-            log.debug(String
-                .format("Runtime discovery scan took %d ms.", (report.getEndTime() - report.getStartTime())));
+
+            if (log.isDebugEnabled()) {
+                log.debug(String.format("Runtime discovery scan took %d ms.", (report.getEndTime() - report
+                    .getStartTime())));
+            }
 
             // TODO this is always zero for embedded because we don't populate the report
-            log.info("Scanned " + report.getAddedRoots().size() + " servers and found "
-                + (report.getResourceCount() - report.getAddedRoots().size()) + " total descendant Resources.");
+            log.info("Scanned [" + report.getAddedRoots().size() + "] servers and found ["
+                + (report.getResourceCount() - report.getAddedRoots().size()) + "] total descendant Resources.");
 
             // TODO GH: This is principally valuable only until we work out the last of the data transfer situations
             if (log.isTraceEnabled()) {
@@ -154,26 +161,31 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
 
         ResourceContainer parentContainer = this.inventoryManager.getResourceContainer(parent);
         if (parentContainer == null) {
-            log.debug("ResourceContainer for parent " + parent + " is null, so we can't execute runtime discovery on it.");
+            if (log.isDebugEnabled()) {
+                log.debug("Cannot perform service scan on parent [" + parent + "] without a container");
+            }
             return;
         }
 
         if (parentContainer.getResourceComponentState() != ResourceContainer.ResourceComponentState.STARTED) {
-            log.trace("ResourceComponent for parent " + parent + " is not in the STARTED state, so we can't execute "
-                + "runtime discovery on it.");
+            if (log.isTraceEnabled()) {
+                log.trace("Parent [" + parent + "] is not STARTED - not performing service scan");
+            }
             return;
         }
 
         if (parent.getInventoryStatus() != InventoryStatus.COMMITTED) {
-            log.debug("Parent " + parent + " must first be imported (i.e. in the COMMITTED state) "
-                + "to allow for runtime discovery.");
+            if (log.isDebugEnabled()) {
+                log.debug("Parent [" + parent + "] must be imported/commited before service scan can run.");
+            }
             return;
         }
 
         ResourceComponent parentComponent = parentContainer.getResourceComponent();
         if (parentComponent == null) {
-            log.debug("ResourceComponent for parent " + parent
-                + " was null, so we can't execute runtime discovery on it.");
+            if (log.isDebugEnabled()) {
+                log.debug("Parent component for [" + parent + "] was null; cannot perform service scan.");
+            }
             return;
         }
 
@@ -182,14 +194,20 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
         // to discoverForResource(). Without this live check, the availability of these newly discovered
         // resources would be null, so we would just return without checking for their children.
         AvailabilityType availability;
+        ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
         try {
+            Thread.currentThread().setContextClassLoader(parentContainer.getResourceClassLoader());
             availability = parentComponent.getAvailability();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             availability = AvailabilityType.DOWN;
+        } finally {
+            Thread.currentThread().setContextClassLoader(originalCL);
         }
+
         if (availability != AvailabilityType.UP) {
-            log.debug("Availability of " + parent + " is not UP, so we can't execute runtime discovery on it.");
+            if (log.isDebugEnabled()) {
+                log.debug("Availability of [" + parent + "] is not UP, cannot perform service scan on it.");
+            }
             return;
         }
 
@@ -197,26 +215,29 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
 
         // For each child resource type of the server, do a discovery for resources of that type
         for (ResourceType childResourceType : parent.getResourceType().getChildResourceTypes()) {
-            try
-            {
+            try {
                 // Make sure we have a discovery component for that type, otherwise there is nothing to do
                 ResourceDiscoveryComponent discoveryComponent = null;
                 try {
-                    discoveryComponent = factory.getDiscoveryComponent(childResourceType);
+                    discoveryComponent = factory.getDiscoveryComponent(childResourceType, parentContainer);
                 } catch (PluginContainerException pce) {
                     log.error("Unable to obtain discovery component for [" + childResourceType + "]", pce);
                 }
 
                 if (discoveryComponent == null) {
-                    log.debug("Resource not discoverable, no component found " + childResourceType);
+                    if (log.isDebugEnabled()) {
+                        log.debug("Resource not discoverable, no component found: " + childResourceType);
+                    }
                     continue; // Assume its not discoverable
                 }
 
                 // For this resource type, discover all resources of that type on this parent resource
-                log.debug("Running Runtime discovery on parent resource: " + parent + " looking for children of type: "
-                    + childResourceType);
+                if (log.isDebugEnabled()) {
+                    log.debug("Running service scan on parent resource [" + parent + "] looking for children of type ["
+                        + childResourceType + "]");
+                }
                 Set<Resource> childResources = this.inventoryManager.executeComponentDiscovery(childResourceType,
-                        discoveryComponent, parentComponent, parentContainer.getResourceContext(), Collections.EMPTY_LIST);
+                    discoveryComponent, parentComponent, parentContainer.getResourceContext(), Collections.EMPTY_LIST);
 
                 // For each discovered resource, update it in the inventory manager and recursively discover its child resources
                 Map<String, Resource> mergedResources = new HashMap<String, Resource>();
@@ -234,9 +255,7 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
                     discoverForResource(mergedResource, report, thisInReport);
                 }
                 removeStaleResources(parent, childResourceType, mergedResources);
-            }
-            catch (Throwable t)
-            {
+            } catch (Throwable t) {
                 report.getErrors().add(new ExceptionPackage(Severity.Severe, t));
                 log.error("Error in runtime discovery", t);
             }
@@ -253,7 +272,7 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
             if (existingChildResource.getResourceType().equals(childResourceType)
                 && !mergedResources.containsKey(existingChildResource.getUuid())
                 && (existingChildResource.getId() == 0 || !this.pluginContainerConfiguration.isInsideAgent())) {
-                log.info("Removing stale " + existingChildResource + "...");
+                log.info("Removing stale resource [" + existingChildResource + "]");
                 this.inventoryManager.removeResourceAndIndicateIfScanIsNeeded(existingChildResource);
             }
         }

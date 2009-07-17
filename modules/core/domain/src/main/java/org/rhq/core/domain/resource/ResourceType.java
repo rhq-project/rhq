@@ -61,9 +61,6 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlTransient;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.event.EventDefinition;
@@ -353,17 +350,21 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
     @Transient
     private transient String helpText;
 
+    @Transient
+    private transient ClassLoaderType classLoaderType;
+
     /* no-arg constructor required by EJB spec and Externalizable (Externalizable also requires it to be public) */
     public ResourceType() {
         // Intentionally left blank
     }
 
-    public ResourceType(@NotNull String name, @NotNull String plugin, ResourceCategory category,
-        ResourceType parentResourceType) {
-        // Do not mark category NotNull. we create just key versions of ResourceTypes to do equals comparisons without a category
-
-        assert name != null;
-        assert plugin != null;
+    public ResourceType(String name, String plugin, ResourceCategory category, ResourceType parentResourceType) {
+        if (name == null) {
+            throw new IllegalArgumentException("name==null");
+        }
+        if (plugin == null) {
+            throw new IllegalArgumentException("plugin==null");
+        }
 
         // Initialize empty ordered lists...
         this.childResourceTypes = new LinkedHashSet<ResourceType>();
@@ -392,42 +393,38 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
         this.id = id;
     }
 
-    @NotNull
     public String getName() {
         return this.name;
     }
 
-    public void setName(@NotNull String name) {
+    public void setName(String name) {
         this.name = name;
     }
 
-    @NotNull
     public ResourceCategory getCategory() {
         return this.category;
     }
 
-    public void setCategory(@NotNull ResourceCategory category) {
+    public void setCategory(ResourceCategory category) {
         this.category = category;
     }
 
-    @NotNull
     public ResourceCreationDataType getCreationDataType() {
         return creationDataType;
     }
 
-    public void setCreationDataType(@NotNull ResourceCreationDataType creationDataType) {
+    public void setCreationDataType(ResourceCreationDataType creationDataType) {
         if (creationDataType == null)
             throw new IllegalArgumentException("creationDataType cannot be null");
 
         this.creationDataType = creationDataType;
     }
 
-    @NotNull
     public CreateDeletePolicy getCreateDeletePolicy() {
         return createDeletePolicy;
     }
 
-    public void setCreateDeletePolicy(@NotNull CreateDeletePolicy createDeletePolicy) {
+    public void setCreateDeletePolicy(CreateDeletePolicy createDeletePolicy) {
         if (createDeletePolicy == null)
             throw new IllegalArgumentException("createDeletePolicy cannot be null");
 
@@ -445,9 +442,8 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
     /**
      * Returns the ResourceSubCategory, if any, which this ResourceType
      * has been tagged with. If the ResourceType has not been tagged with
-     * a subcategory, null is returned.
+     * a subcategory, <code>null</code> is returned.
      */
-    @Nullable
     public ResourceSubCategory getSubCategory() {
         return this.subCategory;
     }
@@ -490,12 +486,11 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
         this.description = description;
     }
 
-    @NotNull
     public String getPlugin() {
         return this.plugin;
     }
 
-    public void setPlugin(@NotNull String plugin) {
+    public void setPlugin(String plugin) {
         this.plugin = plugin;
     }
 
@@ -699,13 +694,20 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
         // TODO: Order by category too?
     }
 
-    @Nullable
     public String getHelpText() {
         return helpText;
     }
 
-    public void setHelpText(@Nullable String helpText) {
+    public void setHelpText(String helpText) {
         this.helpText = helpText;
+    }
+
+    public ClassLoaderType getClassLoaderType() {
+        return classLoaderType;
+    }
+
+    public void setClassLoaderType(ClassLoaderType classLoaderType) {
+        this.classLoaderType = classLoaderType;
     }
 
     @Override

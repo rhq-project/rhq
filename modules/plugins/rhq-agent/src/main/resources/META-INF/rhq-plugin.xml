@@ -13,7 +13,7 @@
    <server name="RHQ Agent"
            discovery="AgentDiscoveryComponent"
            class="AgentServerComponent"
-           description="RHQ Agent">
+           description="Management Agent">
 
       <plugin-configuration>
          <c:group name="event" displayName="Log Tracking">
@@ -613,7 +613,7 @@
       </resource-configuration>
 
       <server name="RHQ Agent JVM"
-              description="JVM of the RHQ Agent"
+              description="JVM of the Management Agent"
               sourcePlugin="JMX"
               sourceType="JMX Server"
               discovery="org.rhq.plugins.jmx.InternalJMXServerDiscoveryComponent"
@@ -643,6 +643,104 @@
                  description="The number of individual measurement collections that have failed since this RHQ Agent was started"/>
          <metric property="LateCollections" displayType="summary" measurementType="trendsup"
                  description="The number of individual measurement collections that have fallen behind from their desired schedule"/>
+
+      </service>
+
+      <service name="Plugin Container"
+               discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+               class="org.rhq.plugins.jmx.MBeanResourceComponent"
+               description="The plugin container itself, which hosts the plugins and manages their lifecycle"
+               singleton="true">
+
+         <plugin-configuration>
+            <c:simple-property name="objectName" default="rhq.pc:type=PluginContainer"/>
+            <c:simple-property name="nameTemplate" default="Agent Plugin Container"/>
+            <c:simple-property name="descriptionTemplate" default="information about this agent's plugin container"/>
+         </plugin-configuration>
+
+         <operation name="retrievePluginDependencyGraph"
+                    description="Get the list of plugins and show what plugins they depend on. The order of this list is the order in which the plugins are deployed.">
+            <results>
+               <c:list-property name="plugins" description="The plugins currently deployed and their dependencies. This list is in the order the plugins are deployed.">
+                  <c:map-property name="plugin">
+                     <c:simple-property name="name" description="Name of the plugin" />
+                     <c:simple-property name="dependencies" description="The list of dependent plugins that this plugin depends on" />
+                  </c:map-property>
+               </c:list-property>
+            </results>
+         </operation>
+
+         <operation name="retrievePluginClassLoaderInformation"
+                    displayName="Retrieve Plugin ClassLoader Information"
+                    description="Get information on all plugin classloaders. There is one plugin classloader for each deployed plugin.">
+            <results>
+               <c:simple-property name="numberOfClassLoaders" displayName="Number of ClassLoaders" description="The number of plugin classloaders in the list" type="integer"/>
+               <c:list-property name="classloaders" displayName="ClassLoaders" description="Classloaders that have been created and are assigned to plugins">
+                  <c:map-property name="classloader">
+                     <c:simple-property name="pluginName" description="Name of the plugin that is assigned the classloader" />
+                     <c:simple-property name="classloaderInfo" displayName="ClassLoader Information" description="The information on the plugin classloader" />
+                  </c:map-property>
+               </c:list-property>
+            </results>
+         </operation>
+
+         <operation name="retrieveDiscoveryClassLoaderInformation"
+                    displayName="Retrieve Discovery ClassLoader Information"
+                    description="Get information on all discovery classloaders. These are created for discovery components that need to discover resources under a parent resource where that parent resource is from a different plugin than the discovery component.">
+            <results>
+               <c:simple-property name="numberOfClassLoaders" displayName="Number of ClassLoaders" description="The number of discovery classloaders in the list" type="integer"/>
+               <c:list-property name="classloaders" displayName="ClassLoaders" description="Classloaders that have been created for discovery components">
+                  <c:map-property name="classloader">
+                     <c:simple-property name="id" description="A identifier consisting of the name of the plugin combined with the hashcode of the parent resource classloader" />
+                     <c:simple-property name="classloaderInfo" displayName="ClassLoader Information" description="The information on the discovery classloader" />
+                  </c:map-property>
+               </c:list-property>
+            </results>
+         </operation>
+
+         <operation name="retrieveAllResourceClassLoaderInformation"
+                    displayName="Retrieve ClassLoader Information For All Resources"
+                    description="Get information on classloaders for all resources. Depending on the number of resources being managed, this is potentially an expensive operation.">
+            <results>
+               <c:simple-property name="numberOfResources" description="The number of resource classloaders in the list. This is the number of resources currently being managed, not the total number of classloader instances that exist" type="integer"/>
+               <c:list-property name="classloaders" description="Classloaders that have been created and are assigned to resources">
+                  <c:map-property name="classloader">
+                     <c:simple-property name="resourceName" description="Name of the resource that is assigned the classloader" />
+                     <c:simple-property name="resourceId" description="The ID of the resource that is assigned the classloader" />
+                     <c:simple-property name="classloaderInfo" description="The information on the resource classloader" />
+                  </c:map-property>
+               </c:list-property>
+            </results>
+         </operation>
+
+         <operation name="retrieveUniqueResourceClassLoaderInformation"
+                    displayName="Retrieve Unique Resource ClassLoader Information"
+                    description="Get information on all unique resource classloader instances that are created. Depending on the number of resources being managed, this is potentially an expensive operation.">
+            <results>
+               <c:simple-property name="numberOfClassLoaders" displayName="Number of ClassLoaders" description="The number of resource classloader instances that have been created and are assigned to at least one resource" type="integer"/>
+               <c:list-property name="classloaders" description="Classloaders that have been created and are assigned to resources">
+                  <c:map-property name="classloader">
+                     <c:simple-property name="classloaderInfo" description="The information on the resource classloader instance" />
+                     <c:simple-property name="resourceCount" description="The number of resources that are currently assigned this resource classloader"/>
+                  </c:map-property>
+               </c:list-property>
+            </results>
+         </operation>
+
+         <metric property="NumberOfPluginClassLoaders"
+                 defaultOn="false"
+                 displayType="detail"
+                 defaultInterval="3600000"
+                 description="The total number of plugin classloaders currently created and actively managed."/>
+         <metric property="NumberOfDiscoveryClassLoaders"
+                 defaultOn="false"
+                 displayType="detail"
+                 defaultInterval="3600000"
+                 description="The total number of discovery classloaders currently created and actively managed."/>
+         <metric property="NumberOfResourceClassLoaders"
+                 displayType="summary"
+                 defaultInterval="600000"
+                 description="The total number of individual resource classloaders currently created and assigned to resources."/>
 
       </service>
 

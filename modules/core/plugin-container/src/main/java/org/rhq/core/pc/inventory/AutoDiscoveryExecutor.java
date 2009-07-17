@@ -27,9 +27,9 @@ import java.io.ObjectOutputStream;
 import java.lang.reflect.Method;
 import java.lang.reflect.TypeVariable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.Collections;
 import java.util.concurrent.Callable;
 
 import org.apache.commons.logging.Log;
@@ -104,15 +104,18 @@ public class AutoDiscoveryExecutor implements Runnable, Callable<InventoryReport
                 pluginDiscovery(report, processInfos);
             }
             report.setEndTime(System.currentTimeMillis());
-            log.debug(String.format("Server discovery scan took %d ms.", (report.getEndTime() - report.getStartTime())));
+
+            if (log.isDebugEnabled()) {
+                log.debug("Server discovery scan took [" + (report.getEndTime() - report.getStartTime()) + "] ms.");
+            }
 
             // TODO GH: This is principally valuable only until we work out the last of the data transfer situations
             if (log.isTraceEnabled()) {
                 ByteArrayOutputStream baos = new ByteArrayOutputStream(10000);
                 ObjectOutputStream oos = new ObjectOutputStream(baos);
                 oos.writeObject(report);
-                log.trace("Server Discovery report for " + report.getResourceCount() + " resources with a size of "
-                    + baos.size() + " bytes");
+                log.trace("Server Discovery report for [" + report.getResourceCount() + "] resources with a size of ["
+                    + baos.size() + "] bytes");
             }
 
             inventoryManager.handleReport(report);
@@ -125,8 +128,7 @@ public class AutoDiscoveryExecutor implements Runnable, Callable<InventoryReport
         return report;
     }
 
-    private List<ProcessInfo> getProcessInfos()
-    {
+    private List<ProcessInfo> getProcessInfos() {
         SystemInfo systemInfo = SystemInfoFactory.createSystemInfo();
         log.debug("Retrieving process table...");
         long startTime = System.currentTimeMillis();
@@ -135,9 +137,9 @@ public class AutoDiscoveryExecutor implements Runnable, Callable<InventoryReport
             processInfos = systemInfo.getAllProcesses();
         } catch (UnsupportedOperationException uoe) {
             log.debug("Cannot perform process scan - not supported on this platform. (" + systemInfo.getClass() + ")");
-        }        
+        }
         long elapsedTime = System.currentTimeMillis() - startTime;
-        log.debug("Retrieval of process table took " + elapsedTime + " ms." );
+        log.debug("Retrieval of process table took " + elapsedTime + " ms.");
         return processInfos;
     }
 
@@ -155,7 +157,9 @@ public class AutoDiscoveryExecutor implements Runnable, Callable<InventoryReport
         PluginComponentFactory factory = PluginContainer.getInstance().getPluginComponentFactory();
 
         Set<ResourceType> serverTypes = pluginManager.getMetadataManager().getTypesForCategory(ResourceCategory.SERVER);
-        ResourceComponent platformComponent = inventoryManager.getResourceComponent(inventoryManager.getPlatform());
+        ResourceContainer platformContainer = inventoryManager.getResourceContainer(inventoryManager.getPlatform());
+        ResourceComponent platformComponent = platformContainer.getResourceComponent();
+        Resource platformResource = platformContainer.getResource();
 
         for (ResourceType serverType : serverTypes) {
             if (!serverType.getParentResourceTypes().isEmpty()) {
@@ -163,7 +167,7 @@ public class AutoDiscoveryExecutor implements Runnable, Callable<InventoryReport
             }
 
             try {
-                ResourceDiscoveryComponent component = factory.getDiscoveryComponent(serverType);
+                ResourceDiscoveryComponent component = factory.getDiscoveryComponent(serverType, platformContainer);
                 // TODO GH: Manage plugin component call
 
                 /* TODO GH: Fixme
@@ -171,21 +175,16 @@ public class AutoDiscoveryExecutor implements Runnable, Callable<InventoryReport
                  * resource with incompatible component " + serverType); continue; }
                  */
 
-                ResourceContainer platformContainer = inventoryManager.getResourceContainer(inventoryManager
-                    .getPlatform());
-
                 if (platformContainer.getSynchronizationState() == ResourceContainer.SynchronizationState.NEW) {
-                    report.addAddedRoot(platformContainer.getResource());
+                    report.addAddedRoot(platformResource);
                 }
 
-                // Perform auto-discovery PIQL queries now to see if we can auto-detect servers that are currently
-                // running.
+                // Perform auto-discovery PIQL queries now to see if we can auto-detect servers that are currently running.
                 List<ProcessScanResult> scanResults = performProcessScans(processInfos, serverType);
 
-                Set<Resource> discoveredServers = this.inventoryManager.executeComponentDiscovery(serverType, component, 
-                        platformComponent, platformContainer.getResourceContext(), scanResults);
+                Set<Resource> discoveredServers = this.inventoryManager.executeComponentDiscovery(serverType,
+                    component, platformComponent, platformContainer.getResourceContext(), scanResults);
 
-                Resource platformResource = platformContainer.getResource();
                 for (Resource discoveredServer : discoveredServers) {
                     log.debug("Detected server " + discoveredServer);
                     Resource inventoriedResource = this.inventoryManager.mergeResourceFromDiscovery(discoveredServer,
@@ -207,8 +206,7 @@ public class AutoDiscoveryExecutor implements Runnable, Callable<InventoryReport
         }
     }
 
-    private List<ProcessScanResult> performProcessScans(List<ProcessInfo> processInfos, ResourceType serverType)
-    {
+    private List<ProcessScanResult> performProcessScans(List<ProcessInfo> processInfos, ResourceType serverType) {
         if (processInfos == null || processInfos.isEmpty())
             return Collections.emptyList();
         List<ProcessScanResult> scanResults = new ArrayList<ProcessScanResult>();

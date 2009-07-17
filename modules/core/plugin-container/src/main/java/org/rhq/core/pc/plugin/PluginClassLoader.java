@@ -32,7 +32,6 @@ import java.io.InputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -85,26 +84,61 @@ public class PluginClassLoader extends URLClassLoader {
         LogFactory.release(this);
     }
 
+    /**
+     * Creates a classloader for the given named plugin whose plugin jar is found at the given URL.
+     * 
+     * @param pluginJarName the logical name of the plugin
+     * @param pluginUrl the location where the plugin jar can be found
+     * @param unpackNestedJars if <code>true</code>, any lib/*.jar files found in the plugin jar
+     *                         are unpacked and put in the classloader
+     * @param parent the parent classloader for the new classloader being created
+     * @param tmpDirectory the directory where the unpacked nested jars are placed
+     *
+     * @return the new plugin classloader
+     *
+     * @throws PluginContainerException
+     */
     public static PluginClassLoader create(String pluginJarName, URL pluginUrl, boolean unpackNestedJars,
         ClassLoader parent, File tmpDirectory) throws PluginContainerException {
         return create(pluginJarName, new URL[] { pluginUrl }, unpackNestedJars, parent, tmpDirectory);
     }
 
+    /**
+     * Creates a classloader for the given named plugin whose plugin jar is found at the URL found
+     * in the first index of the given URL array. The rest of the URLs in the array are to be added
+     * to the classloader as additional jars.
+     * 
+     * @param pluginJarName the logical name of the plugin
+     * @param pluginUrls the first element is the location where the plugin jar can be found, the remaining
+     *                   are additional URLs to jars that will be added to the new classloader 
+     * @param unpackNestedJars if <code>true</code>, any lib/*.jar files found in the plugin jar
+     *                         are unpacked and put in the classloader. The additional jars are NEVER unpacked.
+     * @param parent the parent classloader for the new classloader being created
+     * @param tmpDirectory the directory where the unpacked nested jars are placed
+     *
+     * @return the new plugin classloader
+     *
+     * @throws PluginContainerException
+     */
     public static PluginClassLoader create(String pluginJarName, URL[] pluginUrls, boolean unpackNestedJars,
         ClassLoader parent, File tmpDirectory) throws PluginContainerException {
         List<URL> classpathUrlList = new ArrayList<URL>();
         File unpackedDirectory = null;
+        boolean processedPluginJar = false; // after the first URL is processed (which is the plugin jar) this will be true
 
         for (URL pluginUrl : pluginUrls) {
             classpathUrlList.add(pluginUrl);
 
-            if (unpackNestedJars) {
+            // note that we only ever unpacked the plugin jar itself
+            if (!processedPluginJar && unpackNestedJars) {
                 try {
                     unpackedDirectory = unpackEmbeddedJars(pluginJarName, pluginUrl, classpathUrlList, tmpDirectory);
                 } catch (Exception e) {
                     throw new PluginContainerException("Failed to unpack embedded JARs within: " + pluginUrl, e);
                 }
             }
+
+            processedPluginJar = true;
         }
 
         URL[] classpath = classpathUrlList.toArray(new URL[classpathUrlList.size()]);
@@ -238,10 +272,30 @@ public class PluginClassLoader extends URLClassLoader {
     @Override
     public String toString() {
         if (this.stringValue == null) {
+            URL[] urls = getURLs();
+            String dir = "<>";
+            if (this.embeddedJarsDirectory != null) {
+                dir = this.embeddedJarsDirectory.toURI().toString();
+            }
+
             StringBuilder stringBuilder = new StringBuilder(this.getClass().getSimpleName());
             stringBuilder.append('@').append(Integer.toHexString(this.hashCode())).append("[");
-            stringBuilder.append("parent=").append(getParent()).append(", ");
-            stringBuilder.append("urls=").append(Arrays.asList(getURLs())).append("]");
+            stringBuilder.append("parent=").append(getParent()).append(",");
+            stringBuilder.append("embedded-dir=[").append(dir).append("],");
+            stringBuilder.append("urls=[");
+            if (urls != null) {
+                for (int i = 0; i < urls.length; i++) {
+                    if (i != 0) {
+                        stringBuilder.append(',');
+                    }
+                    if (urls[i].toString().startsWith(dir)) {
+                        stringBuilder.append(new File(urls[i].getPath()).getName()); // convert to file just so we parse out only the filename
+                    } else {
+                        stringBuilder.append(urls[i]); // must be the plugin jar itself or an additional jar that is somewhere else
+                    }
+                }
+            }
+            stringBuilder.append("]]");
             this.stringValue = stringBuilder.toString();
         }
         return this.stringValue;

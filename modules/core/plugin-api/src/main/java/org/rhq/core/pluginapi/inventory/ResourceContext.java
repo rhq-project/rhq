@@ -118,6 +118,7 @@ public class ResourceContext<T extends ResourceComponent> {
         this.pluginContainerName = pluginContainerName;
         if (temporaryDirectory == null) {
             this.temporaryDirectory = new File(System.getProperty("java.io.tmpdir"), "AGENT_TMP");
+            this.temporaryDirectory.mkdirs();
         } else {
             this.temporaryDirectory = temporaryDirectory;
         }

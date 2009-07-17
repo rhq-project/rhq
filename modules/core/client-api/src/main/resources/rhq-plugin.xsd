@@ -48,9 +48,9 @@
                   <xs:attribute name="useClasses" type="xs:boolean" default="false">
                      <xs:annotation>
                         <xs:documentation>
-                           If true, the classloader from this dependency plugin will be the
-                           parent of this plugin's classloader making its classes accessible. Can only be
-                           true for one depends reference (often the last).
+                           If true, the classes from this dependency plugin will be accessible. Can only be
+                           true for one depends reference. If never specified, the last depends reference
+                           will default this value to true.
                         </xs:documentation>
                      </xs:annotation>
                   </xs:attribute>
@@ -557,6 +557,23 @@
            <xs:documentation>Defines whether resources of this type can be manually added to inventory
            by the user (i.e. rather than being autodiscovered and then imported).</xs:documentation>
         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="classLoader" use="optional" default="shared">
+         <xs:annotation>
+            <xs:documentation>Dictates what classes the resource component has available. If 'shared', the resource
+            will only need to share classes from its parent resource. If 'instance', the resource will need its own
+            classloader instance and that classloader instance will get additional jars added to it if the resource's
+            discovery component implements the ClassLoaderFacet. Note that this attribute is ignored if the resource
+            and its parent are from the same plugin - in that case, the resource's classloader will always be that
+            of its parent resource.
+            </xs:documentation>
+         </xs:annotation>
+         <xs:simpleType>
+            <xs:restriction base="xs:string">
+               <xs:enumeration value="shared" />
+               <xs:enumeration value="instance" />
+            </xs:restriction>
+         </xs:simpleType>
       </xs:attribute>
       <xs:attribute name="subCategory" use="optional">
          <xs:annotation>

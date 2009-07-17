@@ -22,8 +22,6 @@
  */
 package org.rhq.core.pc.plugin;
 
-import org.jetbrains.annotations.NotNull;
-
 /**
  * Stores the context of a loaded plugin. This currently includes the plugin's name and the loader that was used to
  * load its plugin descriptor.
@@ -41,14 +39,12 @@ public class PluginEnvironment {
      * @param  pluginName the plugin's name
      * @param  pluginDescriptorLoader the loader that was used to load the plugin's descriptor
      */
-    public PluginEnvironment(@NotNull String pluginName, @NotNull PluginDescriptorLoader pluginDescriptorLoader) {
+    public PluginEnvironment(String pluginName, PluginDescriptorLoader pluginDescriptorLoader) {
         this.pluginName = pluginName;
         this.pluginDescriptorLoader = pluginDescriptorLoader;
     }
 
     public void destroy() {
-        // Clean up the temp dir that was used by the plugin classloader.
-        this.pluginDescriptorLoader.destroy();
         this.pluginDescriptorLoader = null;
     }
 

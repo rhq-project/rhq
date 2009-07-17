@@ -50,6 +50,7 @@ import org.rhq.core.clientapi.descriptor.plugin.ServiceDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.SubCategoryDescriptor;
 import org.rhq.core.domain.event.EventDefinition;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.resource.ClassLoaderType;
 import org.rhq.core.domain.resource.CreateDeletePolicy;
 import org.rhq.core.domain.resource.ProcessScan;
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -432,6 +433,13 @@ public class PluginMetadataParser {
         // 7) Process matches (for process scan auto-discovery)
         // 8) Artifacts
         // 9) Child subcategories
+
+        String classLoaderTypeString = resourceDescriptor.getClassLoader();
+        if (classLoaderTypeString == null) {
+            resourceType.setClassLoaderType(ClassLoaderType.SHARED);
+        } else {
+            resourceType.setClassLoaderType(ClassLoaderType.valueOf(classLoaderTypeString.toUpperCase()));
+        }
 
         // Only set the description, subCategory, etc. if they have not already been set. This is in
         if (resourceType.getDescription() == null) {

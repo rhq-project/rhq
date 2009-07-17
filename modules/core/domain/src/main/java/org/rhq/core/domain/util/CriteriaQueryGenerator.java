@@ -172,9 +172,9 @@ public final class CriteriaQueryGenerator {
         StringBuilder results = new StringBuilder();
         results.append("SELECT ");
         if (countQuery) {
-            results.append("COUNT(").append(alias).append(")").append(NL);
+            results.append("COUNT(distinct ").append(alias).append(")").append(NL);
         } else {
-            results.append(alias).append(NL);
+            results.append("distinct ").append(alias).append(NL);
         }
         results.append("FROM ").append(className).append(' ').append(alias).append(NL);
         if (countQuery == false) {
@@ -259,8 +259,9 @@ public final class CriteriaQueryGenerator {
                 results.append(' ').append(orderingField.getOrdering());
             }
         }
-
-        return results.append(NL).toString();
+        results.append(NL);
+        System.out.println(results);
+        return results.toString();
     }
 
     public Query getQuery(EntityManager em) {

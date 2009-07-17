@@ -41,6 +41,7 @@ import org.apache.commons.logging.LogFactory;
 import org.jboss.annotation.IgnoreDependency;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -48,6 +49,8 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceFacets;
 import org.rhq.core.domain.resource.composite.ResourceTypeTemplateCountComposite;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.util.CriteriaQueryGenerator;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.server.RHQConstants;
@@ -61,7 +64,7 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
  * @author Joseph Marques
  */
 @Stateless
-public class ResourceTypeManagerBean implements ResourceTypeManagerLocal {
+public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, ResourceTypeManagerRemote {
     private final Log log = LogFactory.getLog(ResourceTypeManagerBean.class);
 
     // TODO: Add a getResourceTypeByResourceId method.
@@ -390,5 +393,18 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal {
 
         List<ResourceType> results = query.getResultList();
         return results;
+    }
+
+    @SuppressWarnings("unchecked")
+    public PageList<ResourceType> findResourceTypesByCriteria(Subject subject, ResourceTypeCriteria criteria) {
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+
+        Query query = generator.getQuery(entityManager);
+        Query countQuery = generator.getCountQuery(entityManager);
+
+        long count = (Long) countQuery.getSingleResult();
+        List<ResourceType> results = query.getResultList();
+
+        return new PageList<ResourceType>(results, (int) count, criteria.getPageControl());
     }
 }

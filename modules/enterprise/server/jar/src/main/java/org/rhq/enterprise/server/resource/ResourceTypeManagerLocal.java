@@ -25,12 +25,14 @@ import java.util.SortedSet;
 import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceFacets;
 import org.rhq.core.domain.resource.composite.ResourceTypeTemplateCountComposite;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.util.PageList;
 
 /**
  * A manager that provides methods for creating, updating, deleting, and querying
@@ -121,4 +123,6 @@ public interface ResourceTypeManagerLocal {
     Map<Integer, ResourceTypeTemplateCountComposite> getTemplateCountCompositeMap();
 
     List<ResourceType> getResourceTypesByPlugin(String pluginName);
+
+    PageList<ResourceType> findResourceTypesByCriteria(Subject subject, ResourceTypeCriteria criteria);
 }

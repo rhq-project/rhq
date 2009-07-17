@@ -25,6 +25,7 @@ import javax.ejb.Local;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.composite.IntegerOptionItem;
+import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.exception.FetchException;
@@ -74,6 +75,5 @@ public interface AlertDefinitionManagerLocal {
 
     AlertDefinition getAlertDefinition(Subject subject, int alertDefinitionId) throws FetchException;
 
-    PageList<AlertDefinition> findAlertDefinitions(Subject subject, AlertDefinition criteria, PageControl pc)
-        throws FetchException;
+    PageList<AlertDefinition> findAlertDefinitions(Subject subject, AlertDefinitionCriteria criteria);
 }

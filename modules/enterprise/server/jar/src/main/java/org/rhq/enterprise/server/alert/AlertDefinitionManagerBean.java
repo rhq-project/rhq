@@ -40,15 +40,15 @@ import org.rhq.core.domain.alert.BooleanExpression;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.composite.IntegerOptionItem;
+import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.NumericType;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.util.CriteriaQueryGenerator;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
-import org.rhq.core.domain.util.QueryGenerator;
-import org.rhq.core.domain.util.QueryGenerator.AuthorizationTokenType;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.engine.AlertDefinitionEvent;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
@@ -586,25 +586,19 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<AlertDefinition> findAlertDefinitions(Subject subject, AlertDefinition criteria, PageControl pc)
-        throws FetchException {
-
-        try {
-            QueryGenerator generator = new QueryGenerator(criteria, pc);
-            if (authorizationManager.isInventoryManager(subject) == false) {
-                generator.setAuthorizationResourceFragment(AuthorizationTokenType.RESOURCE, subject.getId());
-            }
-
-            Query query = generator.getQuery(entityManager);
-            Query countQuery = generator.getCountQuery(entityManager);
-
-            long count = (Long) countQuery.getSingleResult();
-            List<AlertDefinition> alertDefinitions = query.getResultList();
-
-            return new PageList<AlertDefinition>(alertDefinitions, (int) count, pc);
-        } catch (Exception e) {
-            throw new FetchException(e.getMessage());
+    public PageList<AlertDefinition> findAlertDefinitions(Subject subject, AlertDefinitionCriteria criteria) {
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        if (authorizationManager.isInventoryManager(subject) == false) {
+            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE, subject
+                .getId());
         }
 
+        Query query = generator.getQuery(entityManager);
+        Query countQuery = generator.getCountQuery(entityManager);
+
+        long count = (Long) countQuery.getSingleResult();
+        List<AlertDefinition> alertDefinitions = query.getResultList();
+
+        return new PageList<AlertDefinition>(alertDefinitions, (int) count, criteria.getPageControl());
     }
 }

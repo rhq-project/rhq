@@ -30,58 +30,38 @@ import org.rhq.core.domain.util.PageOrdering;
 /**
  * @author Joseph Marques
  */
-public class AlertCriteria extends Criteria {
+public class AlertDefinitionCriteria extends Criteria {
 
     private Integer filterId;
-    private String filterTriggeredOperationName; // requires overrides
-    private Long filterStartTime; // requires overrides
-    private Long filterEndTime; // requires overrides
-    private String filterName; // requires overrides
-    private String filterDescription; // requires overrides
-    private AlertPriority filterPriority; // requires overrides
-    private String filterResourceTypeId; // requires overrides
-    private String filterResourceTypeName; // requires overrides
+    private String filterName;
+    private String filterDescription;
+    private AlertPriority filterPriority;
+    private String filterAlertTemplateParentId; // requires overrides
+    private String filterAlertTemplateResourceTypeId; // requires overrides
+    private String filterAlertTemplateResourceTypeName; // requires overrides
     private List<Integer> filterResourceIds; // requires overrides
+    private Boolean filterEnabled;
+    private String filterOperationName; // requires overrides
 
     private boolean fetchAlertDefinition;
     private boolean fetchConditionLogs;
     private boolean fetchNotificationLogs;
 
-    private PageOrdering sortName; // requires overrides
-    private PageOrdering sortCtime;
-    private PageOrdering sortPriority; // requires overrides
+    private PageOrdering sortName;
+    private PageOrdering sortPriority;
 
-    public AlertCriteria() {
+    public AlertDefinitionCriteria() {
         super();
 
-        filterOverrides.put("triggeredOperationName", "triggeredOperation like ?");
-        filterOverrides.put("startTime", "ctime >= ?");
-        filterOverrides.put("endTime", "ctime <= ?");
-        filterOverrides.put("name", "alertDefinition.name like ?");
-        filterOverrides.put("description", "alertDefinition.description like ?");
-        filterOverrides.put("priority", "alertDefinition.priority = ?");
-        filterOverrides.put("resourceTypeId", "alertDefinition.resourceType.id = ?");
-        filterOverrides.put("resourceTypeName", "alertDefinition.resourceType.name like ?");
+        filterOverrides.put("alertTemplateParentId", "parentId = ?");
+        filterOverrides.put("alertTemplateResourceTypeId", "alertDefinition.resourceType.id = ?");
+        filterOverrides.put("alertTemplateResourceTypeName", "alertDefinition.resourceType.name like ?");
         filterOverrides.put("resourceIds", "alertDefinition.resource.id IN ( ? )");
-
-        sortOverrides.put("name", "alertDefinition.name");
-        sortOverrides.put("priority", "alertDefinition.priority");
+        filterOverrides.put("operationName", "operationDefinition.name like ?");
     }
 
     public void addFilterId(Integer filterId) {
         this.filterId = filterId;
-    }
-
-    public void addFilterTriggeredOperation(String filterTriggeredOperationName) {
-        this.filterTriggeredOperationName = filterTriggeredOperationName;
-    }
-
-    public void addFilterStartTime(Long filterStartTime) {
-        this.filterStartTime = filterStartTime;
-    }
-
-    public void addFilterEndTime(Long filterEndTime) {
-        this.filterEndTime = filterEndTime;
     }
 
     public void addFilterName(String filterName) {
@@ -96,16 +76,28 @@ public class AlertCriteria extends Criteria {
         this.filterPriority = filterPriority;
     }
 
-    public void addFilterResourceTypeId(String filterResourceTypeId) {
-        this.filterResourceTypeId = filterResourceTypeId;
+    public void addFilterAlertTemplateParentId(String filterAlertTemplateParentId) {
+        this.filterAlertTemplateParentId = filterAlertTemplateParentId;
     }
 
-    public void addFilterResourceTypeName(String filterResourceTypeName) {
-        this.filterResourceTypeName = filterResourceTypeName;
+    public void addFilterAlertTemplateResourceTypeId(String filterAlertTemplateResourceTypeId) {
+        this.filterAlertTemplateResourceTypeId = filterAlertTemplateResourceTypeId;
+    }
+
+    public void addFilterAlertTemplateResourceTypeName(String filterAlertTemplateResourceTypeName) {
+        this.filterAlertTemplateResourceTypeName = filterAlertTemplateResourceTypeName;
     }
 
     public void addFilterResourceIds(List<Integer> filterResourceIds) {
         this.filterResourceIds = filterResourceIds;
+    }
+
+    public void addFilterEnabled(Boolean filterEnabled) {
+        this.filterEnabled = filterEnabled;
+    }
+
+    public void addFilterOperationName(String filterOperationName) {
+        this.filterOperationName = filterOperationName;
     }
 
     public void fetchAlertDefinition(boolean fetchAlertDefinition) {
@@ -123,11 +115,6 @@ public class AlertCriteria extends Criteria {
     public void addSortName(PageOrdering sortName) {
         addSortField("name");
         this.sortName = sortName;
-    }
-
-    public void addSortCtime(PageOrdering sortCtime) {
-        addSortField("ctime");
-        this.sortCtime = sortCtime;
     }
 
     public void addSortPriority(PageOrdering sortPriority) {

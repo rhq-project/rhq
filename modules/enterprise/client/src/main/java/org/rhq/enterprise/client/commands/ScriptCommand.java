@@ -24,6 +24,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.client.ClientMain;
 import org.rhq.enterprise.client.RemoteClient;
 import org.rhq.enterprise.client.TabularWriter;
+import org.rhq.enterprise.client.Controller;
 import org.rhq.enterprise.client.script.CmdLineParser;
 import org.rhq.enterprise.client.script.NamedScriptArg;
 import org.rhq.enterprise.client.script.ScriptArg;
@@ -46,6 +47,8 @@ public class ScriptCommand implements ClientCommand {
     private ScriptEngineManager sem;
     private ScriptEngine jsEngine;
 
+    private Controller controller;
+
     private final Log log = LogFactory.getLog(ScriptCommand.class);
 
     public ScriptCommand() {
@@ -57,6 +60,10 @@ public class ScriptCommand implements ClientCommand {
         jsEngine = sem.getEngineByName("JavaScript");
 
         importRecursive(jsEngine);
+    }
+
+    public void setController(Controller controller) {
+        this.controller = controller;
     }
 
     private void importRecursive(ScriptEngine jsEngine) {
@@ -85,16 +92,6 @@ public class ScriptCommand implements ClientCommand {
     }
 
     public boolean execute(ClientMain client, String[] args) {
-
-        // check to see if user logged in
-        if (client.getSubject() == null) {
-            client.getPrintWriter().println("Unable to execute scripts until successfully logged in.");
-            return true;
-        }
-
-        // These are prepared on every call in case the user logs out and logs into another server
-        Bindings bindings = sem.getBindings();
-
         initBindings(client);
 
         if (isScriptFileCommandLine(args)) {
@@ -146,13 +143,17 @@ public class ScriptCommand implements ClientCommand {
 
     public void initBindings(ClientMain client) {
         // These are prepared on every call in case the user logs out and logs into another server
-        sem.getBindings().put("subject", client.getSubject());
-        sem.getBindings().putAll(client.getRemoteClient().getManagers());
+        if (controller.getSubject() != null) {
+            sem.getBindings().put("subject", controller.getSubject());
+            sem.getBindings().putAll(controller.getManagers());
+        }
         TabularWriter tw = new TabularWriter(client.getPrintWriter());
         tw.setWidth(client.getConsoleWidth());
         sem.getBindings().put("pretty", tw);
 
         bindScriptUtils();
+
+        jsEngine.put("rhq", controller);
     }
 
     private void bindScriptUtils() {

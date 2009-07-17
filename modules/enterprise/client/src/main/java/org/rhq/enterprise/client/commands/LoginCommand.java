@@ -19,13 +19,20 @@
 package org.rhq.enterprise.client.commands;
 
 import org.rhq.enterprise.client.ClientMain;
-import org.rhq.enterprise.client.RemoteClient;
+import org.rhq.enterprise.client.RHQServer;
+import org.rhq.enterprise.client.Controller;
 
 /**
  * @author Greg Hinkle
  * @author Simeon Pinder
  */
 public class LoginCommand implements ClientCommand {
+
+    private Controller controller;
+
+    public void setController(Controller client) {
+        controller = client;
+    }
 
     public String getPromptCommandString() {
         return "login";
@@ -44,18 +51,11 @@ public class LoginCommand implements ClientCommand {
                 host = "localhost";
                 port = 7080;
             }
-            client.setHost(host);
-            client.setPort(port);
-            RemoteClient remoteClient = new RemoteClient(host, port);
 
-            client.setUser(user);
-            client.setPass(pass);
-            client.setRemoteClient(remoteClient);
-            client.setSubject(client.getRemoteClient().getSubjectManagerRemote().login(user, pass));
+            controller.setServer(new RHQServer(host, port));
+            controller.login(user, pass);
 
-            client.getRemoteClient().setLoggedIn(true);
             client.getPrintWriter().println("Login successful");
-
         } catch (Exception e) {
             client.getPrintWriter().println("Login failed: " + e.getMessage());
             e.printStackTrace();
@@ -73,6 +73,6 @@ public class LoginCommand implements ClientCommand {
     }
 
     public String getDetailedHelp() {
-        return ""; // To change body of implemented methods use File | Settings | File Templates.
+        return "";
     }
 }

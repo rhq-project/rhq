@@ -34,6 +34,7 @@ import java.util.Map;
 
 import org.rhq.enterprise.client.ClientMain;
 import org.rhq.enterprise.client.TabularWriter;
+import org.rhq.enterprise.client.Controller;
 
 import javax.jws.WebParam;
 
@@ -41,6 +42,12 @@ import javax.jws.WebParam;
  * @author Greg Hinkle
  */
 public class HelpCommand implements ClientCommand {
+
+    private Controller controller;
+
+    public void setController(Controller cliClient) {
+        this.controller = cliClient;
+    }
 
     public String getPromptCommandString() {
         return "help";

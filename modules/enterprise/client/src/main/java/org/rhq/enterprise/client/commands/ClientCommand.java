@@ -19,6 +19,7 @@
 package org.rhq.enterprise.client.commands;
 
 import org.rhq.enterprise.client.ClientMain;
+import org.rhq.enterprise.client.Controller;
 
 /**
  * @author Greg Hinkle
@@ -29,6 +30,8 @@ public interface ClientCommand {
     @SuppressWarnings("unchecked")
     public static Class<ClientCommand>[] COMMANDS = new Class[] { HelpCommand.class, LoginCommand.class,
         LogoutCommand.class, QuitCommand.class, ScriptCommand.class };
+
+    void setController(Controller controller);
 
     /**
      * All implementations must indicate what the prompt command is that will trigger its execution. This method returns

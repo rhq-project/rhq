@@ -30,6 +30,7 @@ import mazz.i18n.Msg;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.client.commands.ClientCommand;
 import org.rhq.enterprise.client.commands.ScriptCommand;
+import org.rhq.enterprise.client.Controller;
 
 /**
  * @author Greg Hinkle
@@ -75,17 +76,37 @@ public class ClientMain {
     
     private ServiceCompletor serviceCompletor;
 
+    private static Controller controller;
+
     // Entrance to main.
     public static void main(String[] args) throws Exception {
 
         // instantiate
         ClientMain main = new ClientMain();
 
+        controller = new Controller(main);
+        initCommands();
+
         // process startup arguments
         main.processArguments(args);
 
         // begin client access loop
         main.inputLoop();
+    }
+
+    private static void initCommands() {
+        for (Class<ClientCommand> commandClass : ClientCommand.COMMANDS) {
+            ClientCommand command = null;
+            try {
+                command = commandClass.newInstance();
+                command.setController(controller);
+                commands.put(command.getPromptCommandString(), command);
+            } catch (InstantiationException e) {
+                e.printStackTrace();
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     //
@@ -131,8 +152,8 @@ public class ClientMain {
                     // prompt = host + ":" + port + "> ";
                     // Modify the prompt to display host:port(logged-in-user)
                     String loggedInUser = "";
-                    if ((getSubject() != null) && (getSubject().getName() != null)) {
-                        loggedInUser = getSubject().getName();
+                    if ((controller.getSubject() != null) && (controller.getSubject().getName() != null)) {
+                        loggedInUser = controller.getSubject().getName();
                     }
                     if (loggedInUser.trim().length() > 0) {
                         prompt = host + ":" + port + "(" + loggedInUser + ")> ";
@@ -263,8 +284,9 @@ public class ClientMain {
             }
         } else {
             boolean result = commands.get("exec").execute(this, args);
-
-            this.serviceCompletor.setContext(((ScriptCommand)commands.get("exec")).getContext());
+            if (loggedIn()) {
+                this.serviceCompletor.setContext(((ScriptCommand)commands.get("exec")).getContext());
+            }
 
             return result;
         }
@@ -447,8 +469,6 @@ public class ClientMain {
         this.remoteClient.setSubject(subject);
 
         ScriptCommand sc = (ScriptCommand) commands.get("exec");
-        sc.initBindings(this);
-
         this.serviceCompletor.setContext(((ScriptCommand)commands.get("exec")).getContext());
         
     }
@@ -495,23 +515,6 @@ public class ClientMain {
 
     public int getConsoleWidth() {
         return this.consoleReader.getTermwidth();
-    }
-
-    static {
-        for (Class<ClientCommand> commandClass : ClientCommand.COMMANDS) {
-            ClientCommand command = null;
-            try {
-                command = commandClass.newInstance();
-                commands.put(command.getPromptCommandString(), command);
-
-            } catch (InstantiationException e) {
-                e.printStackTrace(); // To change body of catch statement use
-                // File | Settings | File Templates.
-            } catch (IllegalAccessException e) {
-                e.printStackTrace(); // To change body of catch statement use
-                // File | Settings | File Templates.
-            }
-        }
     }
 
     public Map<String, ClientCommand> getCommands() {

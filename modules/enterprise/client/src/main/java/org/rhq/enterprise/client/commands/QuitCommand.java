@@ -19,6 +19,7 @@
 package org.rhq.enterprise.client.commands;
 
 import org.rhq.enterprise.client.ClientMain;
+import org.rhq.enterprise.client.Controller;
 
 /**
  * @author Greg Hinkle
@@ -27,6 +28,9 @@ public class QuitCommand implements ClientCommand {
 
     public String getPromptCommandString() {
         return "quit";
+    }
+
+    public void setController(Controller controller) {
     }
 
     public boolean execute(ClientMain client, String[] args) {
@@ -42,6 +46,6 @@ public class QuitCommand implements ClientCommand {
     }
 
     public String getDetailedHelp() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return null;
     }
 }

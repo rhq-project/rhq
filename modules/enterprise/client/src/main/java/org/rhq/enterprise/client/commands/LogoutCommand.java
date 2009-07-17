@@ -19,28 +19,27 @@
 package org.rhq.enterprise.client.commands;
 
 import org.rhq.enterprise.client.ClientMain;
+import org.rhq.enterprise.client.Controller;
 
 /**
  * @author Greg Hinkle
  */
 public class LogoutCommand implements ClientCommand {
 
+    private Controller controller;
+
+    public void setController(Controller controller) {
+        this.controller = controller;
+    }
+
     public String getPromptCommandString() {
         return "logout";
     }
 
     public boolean execute(ClientMain client, String[] args) {
-
-        client.setHost(null);
-        client.setPort(0);
-        client.getRemoteClient().setLoggedIn(false);
-        client.setRemoteClient(null);
-
-        client.setUser(null);
-        client.setPass(null);
-
+        controller.logout();
         client.getPrintWriter().println("Logout successful");
-
+        
         return true;
     }
 
@@ -53,6 +52,6 @@ public class LogoutCommand implements ClientCommand {
     }
 
     public String getDetailedHelp() {
-        return ""; // To change body of implemented methods use File | Settings | File Templates.
+        return "";
     }
 }

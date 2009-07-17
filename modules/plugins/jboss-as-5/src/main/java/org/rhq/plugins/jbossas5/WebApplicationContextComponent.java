@@ -136,7 +136,7 @@ public class WebApplicationContextComponent extends ManagedComponentComponent
                       }
                   } else {
                       log.error("The '" + RESPONSE_TIME_METRIC + "' metric is enabled for WAR resource '"
-                          + getResourceDescription() + "', but no value is defined for the '"
+                          + getComponentName() + "', but no value is defined for the '"
                           + RESPONSE_TIME_LOG_FILE_CONFIG_PROP + "' connection property.");
                       // TODO: Communicate this error back to the server for display in the GUI.
                    }

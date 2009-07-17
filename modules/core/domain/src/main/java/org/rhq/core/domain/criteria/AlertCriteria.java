@@ -33,7 +33,7 @@ import org.rhq.core.domain.util.PageOrdering;
 public class AlertCriteria extends Criteria {
 
     private Integer filterId;
-    private String filterTriggeredOperation;
+    private String filterTriggeredOperationName; // requires overrides
     private Long filterStartTime; // requires overrides
     private Long filterEndTime; // requires overrides
     private String filterName; // requires overrides
@@ -54,6 +54,7 @@ public class AlertCriteria extends Criteria {
     public AlertCriteria() {
         super();
 
+        filterOverrides.put("triggeredOperationName", "triggeredOperation like ?");
         filterOverrides.put("startTime", "ctime >= ?");
         filterOverrides.put("endTime", "ctime <= ?");
         filterOverrides.put("name", "alertDefinition.name like ?");
@@ -71,8 +72,8 @@ public class AlertCriteria extends Criteria {
         this.filterId = filterId;
     }
 
-    public void addFilterTriggeredOperation(String filterTriggeredOperation) {
-        this.filterTriggeredOperation = filterTriggeredOperation;
+    public void addFilterTriggeredOperation(String filterTriggeredOperationName) {
+        this.filterTriggeredOperationName = filterTriggeredOperationName;
     }
 
     public void addFilterStartTime(Long filterStartTime) {

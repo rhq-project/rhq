@@ -46,7 +46,6 @@ import org.jboss.managed.api.ManagedProperty;
 import org.jboss.on.common.jbossas.JBPMWorkflowManager;
 import org.jboss.on.common.jbossas.JBossASPaths;
 import org.jboss.profileservice.spi.NoSuchDeploymentException;
-
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mc4j.ems.connection.EmsConnection;
@@ -105,7 +104,7 @@ import com.jboss.jbossnetwork.product.jbpm.handlers.ControlActionFacade;
 
 /**
  * ResourceComponent for a JBoss AS, 5.1.0.CR1 or later, Server.
- * 
+ *
  * @author Jason Dobies
  * @author Mark Spritzler
  * @author Ian Springer
@@ -151,8 +150,7 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
                 // Ping the connection to make sure it's not defunct.
                 this.connection.getManagementView().getComponentTypes();
                 availability = AvailabilityType.UP;
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 availability = AvailabilityType.DOWN;
             }
         } else {
@@ -174,7 +172,9 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
 
         JBPMWorkflowManager workflowManager = createJbpmWorkflowManager(resourceContext);
         File configPath = getConfigurationPath();
-        this.contentFacetDelegate = new ApplicationServerContentFacetDelegate(workflowManager, configPath);
+
+        this.contentFacetDelegate = new ApplicationServerContentFacetDelegate(workflowManager, configPath,
+            resourceContext.getContentContext());
     }
 
     public void stop() {
@@ -508,8 +508,8 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
     public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException,
         Exception {
         if (this.operationDelegate == null) {
-            this.operationDelegate = new ApplicationServerOperationsDelegate(this,
-                    this.resourceContext.getSystemInformation());
+            this.operationDelegate = new ApplicationServerOperationsDelegate(this, this.resourceContext
+                .getSystemInformation());
         }
         ApplicationServerSupportedOperations operation = Enum.valueOf(ApplicationServerSupportedOperations.class, name
             .toUpperCase());
@@ -552,8 +552,8 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
     private JBPMWorkflowManager createJbpmWorkflowManager(ResourceContext resourceContext) {
         ContentContext contentContext = resourceContext.getContentContext();
         ControlActionFacade controlActionFacade = initControlActionFacade();
-        JBossASPaths paths = getJBossASPaths();
-        JBPMWorkflowManager workflowManager = new JBPMWorkflowManager(contentContext, controlActionFacade, paths);
+        JBPMWorkflowManager workflowManager = new JBPMWorkflowManager(contentContext, controlActionFacade, this
+            .getJBossASPaths());
         return workflowManager;
     }
 

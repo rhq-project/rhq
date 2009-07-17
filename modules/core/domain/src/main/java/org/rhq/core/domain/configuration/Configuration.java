@@ -61,6 +61,7 @@ import org.hibernate.annotations.Cascade;
 import org.hibernate.annotations.CascadeType;
 import org.jetbrains.annotations.NotNull;
 
+import org.rhq.core.domain.util.EntitySerializer;
 import org.rhq.core.domain.util.serial.ExternalizableStrategy;
 import org.rhq.core.domain.util.serial.HibernateUtil;
 
@@ -571,15 +572,19 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
 
         if (ExternalizableStrategy.Subsystem.REMOTEAPI == strategy) {
             writeExternalRemote(out);
+        } else if (ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION == strategy) {
+            EntitySerializer.writeExternalRemote(this, out);
         } else {
             writeExternalAgent(out);
         }
     }
 
-    @SuppressWarnings("unchecked")
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        if (ExternalizableStrategy.Subsystem.REMOTEAPI.id() == in.readChar()) {
+        char c = in.readChar();
+        if (ExternalizableStrategy.Subsystem.REMOTEAPI.id() == c) {
             readExternalRemote(in);
+        } else if (ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION.id() == c) {
+            EntitySerializer.readExternalRemote(this, in);
         } else {
             readExternalAgent(in);
         }

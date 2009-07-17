@@ -69,6 +69,7 @@ import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.event.EventDefinition;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.operation.OperationDefinition;
+import org.rhq.core.domain.util.EntitySerializer;
 import org.rhq.core.domain.util.serial.ExternalizableStrategy;
 
 /**
@@ -750,14 +751,19 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
 
         if (ExternalizableStrategy.Subsystem.REMOTEAPI == strategy) {
             writeExternalRemote(out);
+        } else if (ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION == strategy) {
+            EntitySerializer.writeExternalRemote(this, out);
         } else {
             writeExternalAgent(out);
         }
     }
 
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        if (ExternalizableStrategy.Subsystem.REMOTEAPI.id() == in.readChar()) {
+        char c = in.readChar();
+        if (ExternalizableStrategy.Subsystem.REMOTEAPI.id() == c) {
             readExternalRemote(in);
+        } else if (ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION.id() == c) {
+            EntitySerializer.readExternalRemote(this, in);
         } else {
             readExternalAgent(in);
         }

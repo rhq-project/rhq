@@ -52,6 +52,7 @@ import javax.xml.bind.annotation.XmlTransient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import org.rhq.core.domain.util.EntitySerializer;
 import org.rhq.core.domain.util.serial.ExternalizableStrategy;
 
 /**
@@ -288,15 +289,19 @@ public abstract class Property implements Externalizable {
 
         if (ExternalizableStrategy.Subsystem.REMOTEAPI == strategy) {
             writeExternalRemote(out);
+        } else if (ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION == strategy) {
+            EntitySerializer.writeExternalRemote(this, out);
         } else {
             writeExternalAgent(out);
         }
     }
 
-    @SuppressWarnings("unchecked")
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        if (ExternalizableStrategy.Subsystem.REMOTEAPI.id() == in.readChar()) {
+        char c = in.readChar();
+        if (ExternalizableStrategy.Subsystem.REMOTEAPI.id() == c) {
             readExternalRemote(in);
+        } else if (ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION.id() == c) {
+            EntitySerializer.readExternalRemote(this, in);
         } else {
             readExternalAgent(in);
         }

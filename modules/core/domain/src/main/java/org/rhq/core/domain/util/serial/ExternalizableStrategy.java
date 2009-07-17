@@ -33,7 +33,9 @@ package org.rhq.core.domain.util.serial;
 public class ExternalizableStrategy {
 
     public enum Subsystem {
-        AGENT((char) 1), REMOTEAPI((char) 2);
+        AGENT((char) 1), //
+        REMOTEAPI((char) 2), //
+        REFLECTIVE_SERIALIZATION((char) 3);
 
         private char id;
 

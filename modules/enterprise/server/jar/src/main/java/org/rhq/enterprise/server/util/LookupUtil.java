@@ -132,6 +132,7 @@ import org.rhq.enterprise.server.resource.ResourceManagerBean;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerBean;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceTypeManagerRemote;
 import org.rhq.enterprise.server.resource.cluster.ClusterManagerBean;
 import org.rhq.enterprise.server.resource.cluster.ClusterManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerBean;
@@ -449,6 +450,10 @@ public final class LookupUtil {
 
     public static ResourceTypeManagerLocal getResourceTypeManager() {
         return lookupLocal(ResourceTypeManagerBean.class);
+    }
+
+    public static ResourceTypeManagerRemote getResourceTypeManagerRemote() {
+        return lookupRemote(ResourceTypeManagerBean.class);
     }
 
     public static RoleManagerLocal getRoleManager() {

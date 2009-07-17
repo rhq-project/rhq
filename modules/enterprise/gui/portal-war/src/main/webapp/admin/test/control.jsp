@@ -27,6 +27,10 @@
 <%@ page import="org.rhq.enterprise.server.util.LookupUtil" %>
 <%@ page import="org.rhq.enterprise.server.scheduler.jobs.DataPurgeJob"%>
 
+<%@ page import="org.rhq.enterprise.server.resource.ResourceTypeManagerRemote"%>
+<%@ page import="org.rhq.core.domain.criteria.ResourceTypeCriteria"%>
+<%@ page import="org.rhq.core.domain.resource.ResourceType"%>
+
 <%@ page import="javax.naming.NamingException" %>
 
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
@@ -53,6 +57,7 @@
    SystemManagerLocal systemManager;
    SubjectManagerLocal subjectManager;
    SupportManagerLocal supportManager;
+   ResourceTypeManagerRemote typeManager;
 
    coreTestBean = LookupUtil.getCoreTest();
    discoveryTestBean = LookupUtil.getDiscoveryTest();
@@ -67,6 +72,7 @@
    systemManager = LookupUtil.getSystemManager();
    subjectManager = LookupUtil.getSubjectManager();
    supportManager = LookupUtil.getSupportManager();
+   typeManager = LookupUtil.getResourceTypeManagerRemote();
 
    String result = null;
    String mode = pageContext.getRequest().getParameter("mode");
@@ -190,6 +196,18 @@
          String description = request.getParameter("description");
          java.net.URL url = supportManager.getSnapshotReport(subjectManager.getOverlord(), resourceId, name, description);
          result = "Snapshot Report is located here: " + url.toString();
+      }
+      else if ("typeManagerRemote".equals(mode))
+      {
+         int typeId = Integer.parseInt(request.getParameter("typeId"));
+         ResourceTypeCriteria criteria = new ResourceTypeCriteria();
+         criteria.addFilterId(typeId);
+         criteria.fetchMetricDefinitions(true);
+         java.util.List<ResourceType> types = typeManager.findResourceTypesByCriteria(subjectManager.getOverlord(), criteria);
+         result = "";
+         for (ResourceType type : types) {
+            result += type.getName() + " has " + (type.getMetricDefinitions() != null ? type.getMetricDefinitions().size() : "empty") + " metric definitions";
+         }
       }
    }
    catch (Exception e)
@@ -343,6 +361,18 @@ Generate Snapshot Report
    Description: <input type="text" name="description" size="100"/><br/>
    <input type="submit" value="Generate Snapshot" name="Generate Snapshot"/>
 </form>
+
+<h2>Resource Type Criteria</h2>
+
+<c:url var="url" value="/admin/test/control.jsp?mode=typeManagerRemote"/>
+Query ResourceTypes by Criteria
+<form action="<c:out value="${url}"/>" method="get">
+   <input type="hidden" name="mode" value="typeManagerRemote"/>
+   ResourceType ID: <input type="text" name="typeId" size="10"/><br/>
+   <input type="submit" value="Query by Criteria" name="Query by Criteria"/>
+</form>
+
+
 
 </body>
 </html>

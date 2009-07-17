@@ -68,8 +68,6 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
-import org.rhq.core.domain.util.QueryGenerator;
-import org.rhq.core.domain.util.QueryGenerator.AuthorizationTokenType;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.i18n.AlertI18NFactory;
@@ -78,7 +76,6 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.core.EmailManagerLocal;
-import org.rhq.enterprise.server.exception.FetchException;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.measurement.util.MeasurementFormatter;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
@@ -828,53 +825,19 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<Alert> findAlerts(Subject subject, Alert criteria, AlertPriority priority, int[] resourceIds,
-        long beginTime, long endTime, PageControl pc) throws FetchException {
-
-        try {
-            QueryGenerator generator = new QueryGenerator(criteria, pc);
-            if (authorizationManager.isInventoryManager(subject) == false) {
-                generator.setAuthorizationResourceFragment(AuthorizationTokenType.RESOURCE, "definition.resource",
-                    subject.getId());
-            }
-            if (priority != null) {
-                generator.addRelationshipFilter("definition", "priority = ?", priority.name());
-            }
-            if (resourceIds != null && resourceIds.length != 0) {
-                generator.addFilter("definition.resource.id IN ( ? )", ArrayUtils.wrapInList(resourceIds));
-            }
-            generator.addFilter("ctime between ? and ?", beginTime, endTime);
-
-            Query query = generator.getQuery(entityManager);
-            Query countQuery = generator.getCountQuery(entityManager);
-
-            long count = (Long) countQuery.getSingleResult();
-            List<Alert> alerts = query.getResultList();
-
-            return new PageList<Alert>(alerts, (int) count, pc);
-        } catch (Exception e) {
-            throw new FetchException(e.getMessage());
+    public PageList<Alert> findAlertsByCriteria(Subject subject, AlertCriteria criteria) {
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        if (authorizationManager.isInventoryManager(subject) == false) {
+            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE,
+                "definition.resource", subject.getId());
         }
-    }
 
-    @SuppressWarnings("unchecked")
-    public PageList<Alert> findAlertsByCriteria(Subject subject, AlertCriteria criteria) throws FetchException {
-        try {
-            CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
-            if (authorizationManager.isInventoryManager(subject) == false) {
-                generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE,
-                    "definition.resource", subject.getId());
-            }
+        Query query = generator.getQuery(entityManager);
+        Query countQuery = generator.getCountQuery(entityManager);
 
-            Query query = generator.getQuery(entityManager);
-            Query countQuery = generator.getCountQuery(entityManager);
+        long count = (Long) countQuery.getSingleResult();
+        List<Alert> alerts = query.getResultList();
 
-            long count = (Long) countQuery.getSingleResult();
-            List<Alert> alerts = query.getResultList();
-
-            return new PageList<Alert>(alerts, (int) count, criteria.getPageControl());
-        } catch (Exception e) {
-            throw new FetchException(e.getMessage());
-        }
+        return new PageList<Alert>(alerts, (int) count, criteria.getPageControl());
     }
 }

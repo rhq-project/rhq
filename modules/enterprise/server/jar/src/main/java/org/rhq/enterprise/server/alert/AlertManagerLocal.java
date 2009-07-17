@@ -30,7 +30,6 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.exception.FetchException;
 
 /**
  * @author Joseph Marques
@@ -84,8 +83,5 @@ public interface AlertManagerLocal {
     //
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    PageList<Alert> findAlerts(Subject subject, Alert criteria, AlertPriority priority, int[] resourceIds,
-        long beginTime, long endTime, PageControl pc) throws FetchException;
-
-    PageList<Alert> findAlertsByCriteria(Subject subject, AlertCriteria criteria) throws FetchException;
+    PageList<Alert> findAlertsByCriteria(Subject subject, AlertCriteria criteria);
 }

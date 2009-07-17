@@ -57,6 +57,7 @@ import org.rhq.plugins.jbossas5.connection.ProfileServiceConnectionProvider;
 import org.rhq.plugins.jbossas5.helper.JBossInstallationInfo;
 import org.rhq.plugins.jbossas5.helper.JBossInstanceInfo;
 import org.rhq.plugins.jbossas5.helper.JBossProperties;
+import org.rhq.plugins.jbossas5.helper.JBossProductType;
 import org.rhq.plugins.jbossas5.util.JnpConfig;
 import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
 
@@ -130,19 +131,19 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
             JBossInstallationInfo installInfo = cmdLine.getInstallInfo();
             ComparableVersion version = new ComparableVersion(installInfo.getVersion());
 
-            String productType = installInfo.getProductType().name();
+            JBossProductType productType = installInfo.getProductType();
 
-            // Check if this is a compatible JBoass AS instance
-            if (productType.equals("AS") && version.compareTo(AS_MINIMUM_VERSION) < 0) {
+            // Check if this is a compatible JBoss AS instance.
+            if (productType == JBossProductType.AS && version.compareTo(AS_MINIMUM_VERSION) < 0) {
                 if (log.isDebugEnabled())
-                    log.debug("JBAS version " + version + " is not supported by this plugin (minimum version is "
+                    log.debug("JBoss AS version " + version + " is not supported by this plugin (minimum version is "
                         + AS_MINIMUM_VERSION + ") - skipping...");
                 continue;
             }
-            // Check if this is a compatible JBoass EAP instance
-            if (productType.equals("EAP") && version.compareTo(EAP_MINIMUM_VERSION) < 0) {
+            // Check if this is a compatible JBoss EAP instance.
+            if (productType == JBossProductType.EAP && version.compareTo(EAP_MINIMUM_VERSION) < 0) {
                 if (log.isDebugEnabled())
-                    log.debug("JBEAP version " + version + " is not supported by this plugin (minimum version is "
+                    log.debug("JBoss EAP version " + version + " is not supported by this plugin (minimum version is "
                         + EAP_MINIMUM_VERSION + ") - skipping...");
                 continue;
             }

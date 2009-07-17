@@ -317,28 +317,7 @@
             <groupId>org.jboss.deployers</groupId>
             <artifactId>jboss-deployers-client-spi</artifactId>
             <scope>runtime</scope>
-        </dependency>   
-        
-        <dependency>
-            <groupId>org.jboss.jbossas</groupId>
-            <artifactId>jboss-as-profileservice</artifactId>
-            <classifier>client</classifier>            
-            <scope>runtime</scope>
-        </dependency>
-        
-        <!-- needed for remote JMX -->
-        <dependency>
-            <groupId>org.jboss.jbossas</groupId>
-            <artifactId>jboss-as-server</artifactId>            
-            <classifier>jmx-invoker-adaptor-client</classifier>
-            <scope>runtime</scope>
-        </dependency>
-      
-        <dependency>
-            <groupId>jboss.messaging</groupId>
-            <artifactId>jboss-messaging-client</artifactId>
-            <scope>test</scope>
-        </dependency>
+        </dependency>        
 
         <dependency>
             <groupId>org.jboss.jbossas</groupId>

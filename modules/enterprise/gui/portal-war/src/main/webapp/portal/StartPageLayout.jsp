@@ -35,7 +35,10 @@
 			<li class="category" id="admin"><fmt:message key="start.category.AdminTools.title"/></li>
 			<li class="items">
 					<ul class="pipe">
-						<li class="first"><html:link action="admin/config/Config.do?mode=edit"><fmt:message key="start.category.AdminTools.item.EditConfig"/></html:link></li>
+
+                        
+						<li class="first"><html:link href="/rhq/admin/downloads.xhtml">Agent Installs</html:link></li>
+						<li><html:link action="admin/config/Config.do?mode=edit"><fmt:message key="start.category.AdminTools.item.EditConfig"/></html:link></li>
 						<li><html:link action="admin/config/EditDefaults.do?mode=monitor&viewMode=all"><fmt:message key="start.category.AdminTools.item.ViewMonitoring"/></html:link></li>
 						<li><html:link action="admin/license/LicenseAdmin.do?mode=view"><fmt:message key="start.category.AdminTools.item.ManageLicense"/></html:link></li>
 					</ul>

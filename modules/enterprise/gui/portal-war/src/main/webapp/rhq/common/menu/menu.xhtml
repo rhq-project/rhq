@@ -320,28 +320,6 @@
             </rich:menuItem>
         </rich:menuGroup>
 
-        <ui:remove>***** Administration > AGENT DISTRIBUTION *****</ui:remove>
-        <rich:menuGroup value="Agent Distribution">
-            <rich:menuItem submitMode="none" onclick="window.location = '/agentupdate/version'">
-                <h:outputText value="Agent Update Binary Version Info"/>
-            </rich:menuItem>
-            <rich:menuItem submitMode="none" onclick="window.location = '/agentupdate/download'">
-                <h:outputText value="Download Agent Update Binary"/>
-            </rich:menuItem>
-            <rich:menuItem submitMode="none" onclick="window.location = '/downloads'">
-                <h:outputText value="Agent Connectors"/>
-            </rich:menuItem>
-        </rich:menuGroup>
-
-        <ui:remove>***** Administration > CLIENT DISTRIBUTION *****</ui:remove>
-        <rich:menuGroup value="Client Distribution">
-            <rich:menuItem submitMode="none" onclick="window.location = '/client/version'">
-                <h:outputText value="Remote Client (CLI) Version Info"/>
-            </rich:menuItem>
-            <rich:menuItem submitMode="none" onclick="window.location = '/client/download'">
-                <h:outputText value="Download Remote Client (CLI) Binary"/>
-            </rich:menuItem>
-        </rich:menuGroup>
 
 
         <rich:menuGroup value="Reports">
@@ -350,6 +328,12 @@
             </rich:menuItem>
 
         </rich:menuGroup>
+
+        <rich:menuItem submitMode="none"
+                       icon="/images/icons/Save_16.png"
+                       onclick="window.location = '/rhq/admin/downloads.xhtml'">
+            <h:outputText value="Downloads"/>
+       </rich:menuItem>
 
 
         <rich:menuItem submitMode="none"

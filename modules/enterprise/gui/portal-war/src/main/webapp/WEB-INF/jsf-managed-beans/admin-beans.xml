@@ -28,4 +28,11 @@
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
 
+    <managed-bean>
+        <description>Access to downloads information</description>
+        <managed-bean-name>DownloadsUIBean</managed-bean-name>
+        <managed-bean-class>org.rhq.enterprise.gui.admin.DownloadsUIBean</managed-bean-class>
+        <managed-bean-scope>request</managed-bean-scope>
+    </managed-bean>
+
 </faces-config>

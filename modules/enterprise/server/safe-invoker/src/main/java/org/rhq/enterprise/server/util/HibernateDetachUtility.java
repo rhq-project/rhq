@@ -154,6 +154,8 @@ public class HibernateDetachUtility {
                         String className = fieldValue.getClass().getName();
                         className = className.substring(0, className.indexOf("_$$_"));
                         if (!replacement.getClass().getName().contains("hibernate")) {
+                            nullOutUninitializedFields(replacement, nulledObjects, depth+1, serializationType);
+
                             field.set(object, replacement);
                         } else {
                             replacement = null;

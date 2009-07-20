@@ -55,6 +55,7 @@ public abstract class AbstractPluginTest {
             pcConfig.setPluginFinder(new FileSystemPluginFinder(pluginDir));
             pcConfig.setPluginDirectory(pluginDir);
             pcConfig.setInsideAgent(false);
+            pcConfig.setCreateResourceClassloaders(true);
 
             // Set initial delays for all scheduled scans to one week to effectively disable them.
             pcConfig.setServerDiscoveryInitialDelay(ONE_WEEK_IN_SECONDS);

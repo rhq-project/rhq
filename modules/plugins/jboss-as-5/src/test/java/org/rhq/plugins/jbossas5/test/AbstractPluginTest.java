@@ -136,6 +136,7 @@ public abstract class AbstractPluginTest {
         defaultRegex.append("(org\\.jboss\\.proxy\\..*)|");
         defaultRegex.append("(org\\.jboss\\.aop\\..*)|");
         defaultRegex.append("(org\\.jboss\\.jmx\\..*)|");
+        defaultRegex.append("(org\\.jboss\\.invocation\\..*)|");
         defaultRegex.append("(org\\.jnp\\..*)|");
         defaultRegex.append("(org\\.rhq\\.plugins\\..*)|");
         defaultRegex.append("(org\\.mc4j\\..*)|");

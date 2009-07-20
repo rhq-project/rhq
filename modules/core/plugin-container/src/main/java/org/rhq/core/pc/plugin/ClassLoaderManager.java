@@ -265,7 +265,7 @@ public class ClassLoaderManager {
                 log.debug("Creating discovery classloader [" + hash + "] from URL [" + pluginJarUrl + ']');
             }
             cl = createClassLoader(pluginJarUrl, null, parentClassLoader);
-            this.pluginClassLoaders.put(hash, cl);
+            this.discoveryClassLoaders.put(hash, cl);
         }
         return cl;
     }

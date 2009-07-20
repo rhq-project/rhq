@@ -119,11 +119,13 @@ public class TabularWriter {
                 }
             }
 
+            String idProperty = "id";
+            if (properties.containsKey(idProperty)) {
+                printProperty(idProperty, properties.get(idProperty), maxLength);
+            }
+
             for (String key : properties.keySet()) {
-                this.out.print("\t");
-                printPreSpaced(out, key, maxLength);
-                this.out.print(": ");
-                this.out.println(properties.get(key));
+                printProperty(key, properties.get(key), maxLength);
             }
 
         } catch (InvocationTargetException e) {
@@ -135,6 +137,13 @@ public class TabularWriter {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
 
+    }
+
+    private void printProperty(String name, String value, int maxLength) {
+        out.print("\t");
+        printPreSpaced(out, name, maxLength);
+        out.print(": ");
+        out.println(value);
     }
 
     public void print(Collection list) {

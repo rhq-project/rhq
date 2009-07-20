@@ -1283,7 +1283,13 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
     boolean sendResourceErrorToServer(ResourceError resourceError) {
         boolean errorSent = false;
-        DiscoveryServerService serverService = this.configuration.getServerServices().getDiscoveryServerService();
+
+        DiscoveryServerService serverService = null;
+        ServerServices serverServices = this.configuration.getServerServices();
+        if (serverServices != null) {
+            serverService = serverServices.getDiscoveryServerService();
+        }
+
         if (serverService != null) {
             try {
                 // use light-weight proxy to Resource, so that the entire hierarchy doesn't get serialized

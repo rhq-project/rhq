@@ -76,7 +76,7 @@
     <h2.version>1.1.113</h2.version>
     <jtds.version>1.2.2</jtds.version>
     <richfaces.version>3.3.0.GA</richfaces.version>
-    <sigar.version>1.6.3.68-beta1</sigar.version>
+    <sigar.version>1.6.3.82</sigar.version>
     <quartz.version>1.6.5</quartz.version>
 
     <!-- defaults for datasource used by dbsetup, unit+integration tests, and dev container build -

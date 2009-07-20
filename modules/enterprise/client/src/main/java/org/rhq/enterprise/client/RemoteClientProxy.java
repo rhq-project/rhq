@@ -18,23 +18,26 @@
  */
 package org.rhq.enterprise.client;
 
+import javassist.CannotCompileException;
+import javassist.ClassPool;
+import javassist.CtClass;
+import javassist.CtMethod;
+import javassist.CtNewMethod;
+import javassist.NotFoundException;
+import javassist.bytecode.ParameterAnnotationsAttribute;
+import org.jboss.remoting.invocation.NameBasedInvocation;
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.util.serial.ExternalizableStrategy;
+
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
-import org.jboss.remoting.invocation.NameBasedInvocation;
-
-import org.rhq.core.domain.util.serial.ExternalizableStrategy;
-import org.rhq.core.domain.auth.Subject;
-import javassist.ClassPool;
-import javassist.CtClass;
-import javassist.NotFoundException;
-import javassist.CtMethod;
-import javassist.CannotCompileException;
-import javassist.CtNewMethod;
-import javassist.bytecode.ParameterAnnotationsAttribute;
-
 /**
+ * This class acts as a local SLSB proxy to make remote invocations
+ * to SLSB Remotes over a remoting invoker.
+ *
+ *
  * @author Greg Hinkle
  */
 @SuppressWarnings("unchecked")
@@ -158,7 +161,15 @@ public class RemoteClientProxy implements InvocationHandler {
 
             Class[] params = method.getParameterTypes();
 
-            if (!method.getName().equals("login") && method.getDeclaringClass().getSimpleName().endsWith("Simple")) {
+            Class originalClass = method.getDeclaringClass().getInterfaces()[0];
+
+            try {
+                // See if this method really exists or if its a simplified set of parameters
+                originalClass.getMethod(method.getName(), method.getParameterTypes());
+
+            } catch (NoSuchMethodException nsme) {
+                // If this was not in the original interface it must've been added in the Simplifier... add back the subject argument
+                    // if (!method.getName().equals("login") &&  == null) {
                 Object[] newArgs = new Object[args.length + 1];
                 System.arraycopy(args, 0, newArgs, 1, args.length);
                 newArgs[0] = client.getSubject();

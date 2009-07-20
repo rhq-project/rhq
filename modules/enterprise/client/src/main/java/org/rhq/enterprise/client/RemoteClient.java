@@ -45,6 +45,7 @@ import org.rhq.enterprise.server.report.DataAccessRemote;
 import org.rhq.enterprise.server.resource.ResourceManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerRemote;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerRemote;
+import org.rhq.enterprise.server.exception.LoginException;
 
 /**
  * A remote access client with transparent proxies to RHQ servers.
@@ -121,6 +122,12 @@ public class RemoteClient {
         this.host = host;
         this.port = port;
         init();
+    }
+
+
+    public Subject login(String user, String password) throws LoginException {
+        this.subject = getSubjectManagerRemote().login(user, password);
+        return subject;
     }
 
     public boolean isConnected() {

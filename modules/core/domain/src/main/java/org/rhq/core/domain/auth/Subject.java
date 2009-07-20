@@ -509,7 +509,7 @@ public class Subject implements Externalizable {
         out.writeObject(configuration);
         out.writeObject(roles);
         // not supplied by remote: subjectNotifications
-        out.writeInt(this.sessionId);
+        out.writeInt(this.sessionId == null ? 0 : this.sessionId);
     }
 
     @SuppressWarnings("unchecked")

@@ -24,9 +24,18 @@ import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Array;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Constructor;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Arrays;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -35,6 +44,7 @@ import javax.xml.bind.annotation.XmlTransient;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.Hibernate;
+import org.hibernate.proxy.HibernateProxy;
 
 /**
  * @author Greg Hinkle
@@ -56,7 +66,6 @@ public class HibernateDetachUtility {
 
     private static void nullOutUninitializedFields(Object value, Set<Integer> nulledObjects, int depth,
         SerializationType serializationType) throws Exception {
-        //        System.out.println("*");
         if (depth > 50) {
             //         LOG.warn("Getting different object hierarchies back from calls: " + value.getClass().getName());
             return;
@@ -68,10 +77,22 @@ public class HibernateDetachUtility {
 
         nulledObjects.add(System.identityHashCode(value));
 
-        if (value instanceof Collection) {
+        if (value instanceof Object[]) {
+            Object[] objArray = (Object[]) value;
+            for(int i = 0; i < objArray.length; i++)
+            {
+                nullOutUninitializedFields(objArray[i], nulledObjects, depth +1, serializationType);
+            }
+
+        } else if (value instanceof Collection) {
             // Null out any entries in initialized collections
             for (Object val : (Collection) value) {
                 nullOutUninitializedFields(val, nulledObjects, depth + 1, serializationType);
+            }
+        } else if (value instanceof Map) {
+            for (Object key : ((Map)value).keySet()) {
+                nullOutUninitializedFields(((Map)value).get(key), nulledObjects, depth+1, serializationType);
+                nullOutUninitializedFields(key, nulledObjects, depth+1, serializationType);
             }
         } else {
 
@@ -91,74 +112,118 @@ public class HibernateDetachUtility {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private static void nullOutFieldsByFieldAccess(Object object, Set<Integer> nulledObjects, int depth,
         SerializationType serializationType) throws Exception {
 
-        // BeanInfo bi = Introspector.getBeanInfo(value.getClass(), Object.class);
 
-        boolean isDomainObject = object.getClass().getName().startsWith("org.rhq.core.domain");
-        Field[] fields = object.getClass().getDeclaredFields();
-
-        for (Field field : fields) {
-            int mods = field.getModifiers();
-            if (Modifier.isStatic(mods) || Modifier.isTransient(mods) || Modifier.isFinal(mods))
-                continue;
-
-            Object fieldValue = null;
-
-            try {
-                field.setAccessible(true);
-                fieldValue = field.get(object);
-            } catch (Throwable lie) {
-                if (LOG.isDebugEnabled()) {
-                    LOG
-                        .debug("Couldn't load: " + field.getName() + " off of " + object.getClass().getSimpleName(),
-                            lie);
-                }
-                nullOutField(object, field.getName());
-            }
-
-            if (isDomainObject) {
-                if (!Hibernate.isInitialized(fieldValue)) {
-                    try {
-                        if (LOG.isDebugEnabled()) {
-                            LOG.debug("Nulling out: " + field.getName() + " off of "
-                                + object.getClass().getSimpleName());
-                        }
-
-                        nullOutField(object, field.getName());
-                    } catch (Exception lie) {
-                        LOG.debug("Couldn't null out: " + field.getName() + " off of "
-                            + object.getClass().getSimpleName() + " trying field access", lie);
-                    }
-                } else {
-                    if (null != fieldValue) {
-                        if (fieldValue.getClass().getName().contains("javassist")) {
-
-                            Class assistClass = fieldValue.getClass();
-                            Method m = assistClass.getMethod("writeReplace");
-                            Object replacement = m.invoke(fieldValue);
-
-                            setField(object, field.getName(), replacement);
-
-                            String className = fieldValue.getClass().getName();
-                            className = className.substring(0, className.indexOf("_$$_"));
-                        }
-                    }
-                }
-            }
-
-            // Get the value in case it was updated above. Recurse on any field value that may
-            // itself lead to proxies. That includes any collection and any org.rhq type (like a composite).
-            fieldValue = field.get(object);
-            if ((null != fieldValue)
-                && ((fieldValue instanceof Collection) || fieldValue.getClass().getName().startsWith("org.rhq"))) {
-                nullOutUninitializedFields(fieldValue, nulledObjects, depth + 1, serializationType);
-            }
+        Class tmpClass = object.getClass();
+        List<Field> fieldsToClean = new ArrayList<Field>();
+        while (tmpClass != null && tmpClass != Object.class) {
+            Collections.addAll(fieldsToClean, tmpClass.getDeclaredFields());
+            tmpClass = tmpClass.getSuperclass();
         }
+
+        nullOutFieldsByFieldAccess(object, fieldsToClean, nulledObjects, depth, serializationType);
     }
 
+
+    @SuppressWarnings("unchecked")
+    private static void nullOutFieldsByFieldAccess(Object object, List<Field> classFields, Set<Integer> nulledObjects, int depth,
+                                                   SerializationType serializationType) throws Exception {
+
+        boolean accessModifierFlag = false;
+        for (Field field : classFields) {
+            accessModifierFlag = false;
+            if (!field.isAccessible()) {
+                field.setAccessible(true);
+                accessModifierFlag = true;
+            }
+
+            Object fieldValue = field.get(object);
+
+            if (fieldValue instanceof HibernateProxy) {
+
+                Object replacement = null;
+                if (fieldValue.getClass().getName().contains("javassist")) {
+
+                    Class assistClass = fieldValue.getClass();
+                    try {
+                        Method m = assistClass.getMethod("writeReplace");
+                        replacement = m.invoke(fieldValue);
+
+                        String className = fieldValue.getClass().getName();
+                        className = className.substring(0, className.indexOf("_$$_"));
+                        if (!replacement.getClass().getName().contains("hibernate")) {
+                            field.set(object, replacement);
+                        } else {
+                            replacement = null;
+                        }
+                    } catch (Exception e) {
+                        System.out.println("Unable to write replace object " + fieldValue.getClass());
+                    }
+                }
+
+                if (replacement == null) {
+
+                    String className = ((HibernateProxy) fieldValue).getHibernateLazyInitializer().getEntityName();
+                    Class clazz = Class.forName(className);
+                    Class[] constArgs = {Integer.class};
+                    Constructor construct = null;
+
+                    try {
+                        construct = clazz.getConstructor(constArgs);
+                        replacement = construct.newInstance((Integer) ((HibernateProxy) fieldValue).getHibernateLazyInitializer().getIdentifier());
+                        field.set(object, replacement);
+                    } catch (NoSuchMethodException e) {
+                        System.out.println("No id constructor for base bean " + className);
+                        field.set(object, replacement);
+                    }
+                }
+
+
+            } else {
+                if (fieldValue instanceof org.hibernate.collection.PersistentCollection) {
+                    // checking if it is a set, list, or bag (simply if it is a
+                    // collection)
+
+                    if (!((org.hibernate.collection.PersistentCollection) fieldValue).wasInitialized()) {
+                        field.set(object, null);
+                    } else {
+
+                        Object replacement = null;
+                        if (fieldValue instanceof Map) {
+                            replacement = new HashMap((Map) fieldValue);
+                        } else if (fieldValue instanceof List) {
+                            replacement = new ArrayList((List) fieldValue);
+                        } else if (fieldValue instanceof Set) {
+                            replacement = new HashSet((Set) fieldValue);
+                        } else if (fieldValue instanceof Collection) {
+                            replacement = new ArrayList((Collection)fieldValue);
+                        }
+                        setField(object, field.getName(), replacement);
+
+                        nullOutUninitializedFields(replacement, nulledObjects, depth+1, serializationType);
+                    }
+
+                } else {
+                    if (fieldValue != null &&
+                            (fieldValue.getClass().getName().contains("org.rhq") ||
+                                fieldValue instanceof Collection ||
+                                fieldValue instanceof Object[] || 
+                                fieldValue instanceof Map))
+                        nullOutUninitializedFields((fieldValue), nulledObjects, depth+1, serializationType);
+                }
+            }
+            if (accessModifierFlag) {
+                field.setAccessible(false);
+            }
+        }
+
+    }
+
+
+
+    
     private static void nullOutFieldsByAccessors(Object value, Set<Integer> nulledObjects, int depth,
         SerializationType serializationType) throws Exception {
         // Null out any collections that aren't loaded

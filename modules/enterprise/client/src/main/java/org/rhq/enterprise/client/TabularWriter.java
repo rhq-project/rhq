@@ -81,7 +81,7 @@ public class TabularWriter {
     public void print(Object object) {
 
         if (object instanceof Collection) {
-            print((Collection)object);
+            print((Collection) object);
             return;
         }
 
@@ -148,82 +148,110 @@ public class TabularWriter {
         } else {
 
             String[][] data = null;
-            Object firstObject = list.iterator().next();
-            try {
 
 
-                if (firstObject instanceof String) {
-                    headers = new String[]{"Value"};
-                    data = new String[list.size()][1];
-                    int i = 0;
-                    for (Object object : list) {
-                        data[i++][0] = (String) object;
-                    }
+            if (!allOneType(list)) {
+                printStrings(list);
+            } else {
 
 
-                } else {
-
-                    BeanInfo info = Introspector.getBeanInfo(firstObject.getClass(), firstObject.getClass().getSuperclass());
-                    int i = 0;
+                Object firstObject = list.iterator().next();
+                try {
 
 
-                    List<PropertyDescriptor> pdList = new ArrayList<PropertyDescriptor>(); //Arrays.asList(info.getPropertyDescriptors()));
-                    for (PropertyDescriptor pd : info.getPropertyDescriptors()) {
-
-                        try {
-                            boolean allNull = true;
-                            for (Object row : list) {
-                                Method m = pd.getReadMethod();
-                                Object val = null;
-                                if (m != null) {
-                                    val = pd.getReadMethod().invoke(row);
-                                }
-                                if ((val != null && !(val instanceof Collection)) ||
-                                        ((val != null && (val instanceof Collection) && !((Collection) val).isEmpty())))
-                                    allNull = false;
-                            }
-                            if (!allNull && !IGNORED_PROPS.contains(pd.getName())) {
-                                pdList.add(pd);
-                            }
-                        } catch (Exception e) {
+                    if (firstObject instanceof String) {
+                        headers = new String[]{"Value"};
+                        data = new String[list.size()][1];
+                        int i = 0;
+                        for (Object object : list) {
+                            data[i++][0] = (String) object;
                         }
 
-                    }
+
+                    } else {
 
 
-                    headers = new String[pdList.size()];
-                    data = new String[list.size()][pdList.size()];
+                        BeanInfo info = Introspector.getBeanInfo(firstObject.getClass(), firstObject.getClass().getSuperclass());
+                        int i = 0;
 
-                    for (PropertyDescriptor pd : pdList) {
-                        headers[i++] = pd.getName();
-                    }
-                    i = 0;
-                    for (Object row : list) {
-                        int j = 0;
-                        for (PropertyDescriptor pd : pdList) {
 
-                            Object val = "?";
+                        List<PropertyDescriptor> pdList = new ArrayList<PropertyDescriptor>(); //Arrays.asList(info.getPropertyDescriptors()));
+                        for (PropertyDescriptor pd : info.getPropertyDescriptors()) {
+
                             try {
-                                val = pd.getReadMethod().invoke(row);
-                            } catch (Throwable e) {
-                                System.out.println("crap");
+                                boolean allNull = true;
+                                for (Object row : list) {
+                                    Method m = pd.getReadMethod();
+                                    Object val = null;
+                                    if (m != null) {
+                                        val = pd.getReadMethod().invoke(row);
+                                    }
+                                    if ((val != null && !(val instanceof Collection)) ||
+                                            ((val != null && (val instanceof Collection) && !((Collection) val).isEmpty())))
+                                        allNull = false;
+                                }
+                                if (!allNull && !IGNORED_PROPS.contains(pd.getName())) {
+                                    pdList.add(pd);
+                                }
+                            } catch (Exception e) {
+                                e.printStackTrace();
                             }
-                            data[i][j++] = String.valueOf(val);
+
                         }
-                        i++;
+
+
+                        headers = new String[pdList.size()];
+                        data = new String[list.size()][pdList.size()];
+
+                        for (PropertyDescriptor pd : pdList) {
+                            headers[i++] = pd.getName();
+                        }
+                        i = 0;
+                        for (Object row : list) {
+                            int j = 0;
+                            for (PropertyDescriptor pd : pdList) {
+
+                                Object val = "?";
+                                try {
+                                    val = pd.getReadMethod().invoke(row);
+                                } catch (Throwable e) {
+                                    System.out.println("crap");
+                                }
+                                data[i][j++] = String.valueOf(val);
+                            }
+                            i++;
+                        }
                     }
+
+                    this.print(data);
+
+                } catch (Exception e) {
+                    e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                } finally {
+                    headers = null;
                 }
-
-                this.print(data);
-
-            } catch (Exception e) {
-                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-            } finally {
-                headers = null;
             }
 
         }
 
+    }
+
+    private void printStrings(Collection list) {
+        for (Object object : list) {
+            out.println(String.valueOf(object));
+        }
+    }
+
+    private boolean allOneType(Collection list) {
+        Class lastClass = null;
+        for (Object object : list) {
+            if (lastClass == null) {
+                lastClass = object.getClass();
+            } else if (!object.getClass().equals(lastClass)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public void print(Object[] data) {

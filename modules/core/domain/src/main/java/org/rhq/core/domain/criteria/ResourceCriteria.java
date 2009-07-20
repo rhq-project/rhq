@@ -42,7 +42,7 @@ public class ResourceCriteria extends Criteria {
     private String filterResourceTypeName; // needs overrides
     private ResourceCategory filterResourceCategory; // needs overrides
     private String filterPluginName; // needs overrides
-    private String filterParentResourceId; // needs overrides
+    private Integer filterParentResourceId; // needs overrides
     private String filterParentResourceName; // needs overrides
     private String filterAgentName; // needs overrides
     private AvailabilityType filterCurrentAvailability; // needs overrides
@@ -141,7 +141,7 @@ public class ResourceCriteria extends Criteria {
         this.filterPluginName = filterPluginName;
     }
 
-    public void addFilterParentResourceId(String filterParentResourceId) {
+    public void addFilterParentResourceId(Integer filterParentResourceId) {
         this.filterParentResourceId = filterParentResourceId;
     }
 

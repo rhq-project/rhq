@@ -32,6 +32,7 @@ import org.rhq.enterprise.client.script.ParseException;
 import org.rhq.enterprise.client.script.ScriptCmdLine;
 import org.rhq.enterprise.client.utility.PackageFinder;
 import org.rhq.enterprise.client.utility.ScriptUtil;
+import org.rhq.enterprise.client.utility.ResourceClientProxy;
 
 import javax.script.*;
 import java.io.FileNotFoundException;
@@ -126,7 +127,7 @@ public class ScriptCommand implements ClientCommand {
 
             Object result = jsEngine.eval(script.toString());
             if (result != null) {
-                client.getPrintWriter().print("result: ");
+//                client.getPrintWriter().print("result: ");
                 new TabularWriter(client.getPrintWriter()).print(result);
             }
         } catch (ScriptException e) {
@@ -151,6 +152,7 @@ public class ScriptCommand implements ClientCommand {
         tw.setWidth(client.getConsoleWidth());
         sem.getBindings().put("pretty", tw);
 
+        sem.getBindings().put("ResourceProxyFactory", new ResourceClientProxy.Factory(client.getRemoteClient()));
         bindScriptUtils();
 
         jsEngine.put("rhq", controller);
@@ -213,7 +215,7 @@ public class ScriptCommand implements ClientCommand {
         try {
             Object result = jsEngine.eval(reader);
             if (result != null) {
-                client.getPrintWriter().print("result: ");
+//                client.getPrintWriter().print("result: ");
                 new TabularWriter(client.getPrintWriter()).print(result);
             }
         }

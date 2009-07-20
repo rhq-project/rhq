@@ -38,17 +38,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Collections;
 
 /**
  * A Contextual JavaScript interactive completor. Not perfect, but
  * handles a fair number of cases.
  *
- *
  * @author Greg Hinkle
  */
 public class ServiceCompletor implements Completor {
 
-    private Map<String,Object> services;
+    private Map<String, Object> services;
 
     private ScriptContext context;
 
@@ -64,48 +64,53 @@ public class ServiceCompletor implements Completor {
 
     public int complete(String s, int i, List list) {
         try {
-        if (lastComplete != null && lastComplete.equals(s)) {
-            recomplete++;
-        } else {
-            recomplete = 1;
-        }
+            if (lastComplete != null && lastComplete.equals(s)) {
+                recomplete++;
+            } else {
+                recomplete = 1;
+            }
 
-        lastComplete = s;
-
-
-        String base = s;
-
-        int rootLength = 0;
-
-        if (s.indexOf('=') > 0) {
-            base = s.substring(s.indexOf("=")+1).trim();
-            rootLength = s.length() - base.length();
-        }
+            lastComplete = s;
 
 
-        String[] call = base.split("\\.", 2);
-        if (base.endsWith(".")) {
-            call = new String[] { call[0], ""};
-        }
+            String base = s;
+
+            int rootLength = 0;
+
+            if (s.indexOf('=') > 0) {
+                base = s.substring(s.indexOf("=") + 1).trim();
+                rootLength = s.length() - base.length();
+            }
 
 
-        if (call.length == 1) {
-            Map<String, Object> matches = getContextMatches(call[0]);
+            String[] call = base.split("\\.", 2);
+            if (base.endsWith(".")) {
+                call = new String[]{call[0], ""};
+            }
+
+
+            if (call.length == 1) {
+                Map<String, Object> matches = getContextMatches(call[0]);
                 if (matches.size() == 1 && matches.containsKey(call[0])) {
                     list.add(".");
                     return rootLength + call[0].length() + 1;
-                
-            }  else {
+
+                } else {
                     list.addAll(matches.keySet());
                 }
-        } else {
-            Object rootObject = context.getAttribute(call[0]);
-            if (rootObject != null) {
-                return rootLength + call[0].length() + 1 + contextComplete(rootObject, call[1], i, list);
+            } else {
+                Object rootObject = context.getAttribute(call[0]);
+                if (rootObject != null) {
+                    int matchIndex = contextComplete(rootObject, call[1], i, list);
+                    Collections.sort(list);
+                    return rootLength + call[0].length() + 1 + matchIndex;
+                }
             }
-        }
 
-        return (list.size() == 0) ? (-1) : rootLength;
+            Collections.sort(list);
+
+
+            return (list.size() == 0) ? (-1) : rootLength;
         } catch (Exception e) {
             e.printStackTrace();
             return -1;
@@ -115,12 +120,12 @@ public class ServiceCompletor implements Completor {
 
     public int contextComplete(Object baseObject, String s, int i, List list) {
         if (!s.contains("(") && s.contains(".")) {
-            String[] call = s.split("\\.",2);
+            String[] call = s.split("\\.", 2);
 
             Map<String, Object> matches = getContextMatches(baseObject, call[0]);
             Object rootObject = matches.get(call[0]);
 
-            return call[0].length() + 1 + contextComplete(rootObject, call[1],i,list);
+            return call[0].length() + 1 + contextComplete(rootObject, call[1], i, list);
         } else {
             String[] call = s.split("\\(", 2);
 
@@ -131,14 +136,14 @@ public class ServiceCompletor implements Completor {
 
                 List<Object> exactMatches = getExactContextMatches(baseObject, call[0]);
                 int x = 0;
-                    for (Object match : exactMatches) {
-                        if (match instanceof Method) {
-                            int result = completeParameters(call[1], i, list, (Method) match);  // x should be the same for all calls
-                            if (result > 0) {
-                                x = result;
-                            }
+                for (Object match : exactMatches) {
+                    if (match instanceof Method) {
+                        int result = completeParameters(call[1], i, list, (Method) match);  // x should be the same for all calls
+                        if (result > 0) {
+                            x = result;
                         }
                     }
+                }
                 return call[0].length() + 1 + x;
 
             }
@@ -157,19 +162,15 @@ public class ServiceCompletor implements Completor {
     }
 
 
-
-
-
     public int completeParameters(String params, int i, List list, Method method) {
 
 
         String[] paramList = params.split(",");
 
 
-
         Class[] c = method.getParameterTypes();
 
-        String lastParam = paramList[paramList.length -1];
+        String lastParam = paramList[paramList.length - 1];
         int paramIndex = paramList.length - 1;
         if (params.trim().endsWith(",")) {
             lastParam = "";
@@ -178,7 +179,7 @@ public class ServiceCompletor implements Completor {
 
         int baseLength = 0;
 
-        for (int x = 0; x < paramIndex; x++ ) {
+        for (int x = 0; x < paramIndex; x++) {
             Object paramFound = context.getAttribute(paramList[x]);
 
             if (paramFound != null && !c[x].isAssignableFrom(paramFound.getClass())) {
@@ -189,13 +190,13 @@ public class ServiceCompletor implements Completor {
 
 
         if (paramIndex >= c.length) {
-            list.add(params+")");
-            return (params+")").length();
+            list.add(params + ")");
+            return (params + ")").length();
         } else {
             Map<String, Object> matches = getContextMatches(lastParam, c[paramIndex]);
 
             if (matches.size() == 1 && matches.containsKey(lastParam)) {
-                list.add(paramIndex == c.length-1 ?")": ",");
+                list.add(paramIndex == c.length - 1 ? ")" : ",");
                 return baseLength + lastParam.length();
             } else {
                 list.addAll(matches.keySet());
@@ -240,7 +241,7 @@ public class ServiceCompletor implements Completor {
     }
 
 
-     private Map<String, Object> getContextMatches(String start, Class typeFilter) {
+    private Map<String, Object> getContextMatches(String start, Class typeFilter) {
         Map<String, Object> found = new HashMap<String, Object>();
         if (context != null) {
             for (int scope : context.getScopes()) {
@@ -249,7 +250,7 @@ public class ServiceCompletor implements Completor {
                     if (var.startsWith(start)) {
 
                         if ((bindings.get(var) != null && typeFilter.isAssignableFrom(bindings.get(var).getClass()))
-                            || recomplete == 2) {
+                                || recomplete == 2) {
                             found.put(var, bindings.get(var));
                         }
                     }
@@ -279,7 +280,7 @@ public class ServiceCompletor implements Completor {
 
             MethodDescriptor[] methods = info.getMethodDescriptors();
             for (MethodDescriptor desc : methods) {
-                if (desc.getName().startsWith(start) && !methodsCovered.contains(desc.getMethod())) {
+                if (desc.getName().startsWith(start) && !methodsCovered.contains(desc.getMethod()) && !desc.getName().startsWith("_d")) {
                     found.put(desc.getName(), desc.getMethod());
                 }
             }
@@ -291,6 +292,7 @@ public class ServiceCompletor implements Completor {
 
         return found;
     }
+
     private List<Object> getExactContextMatches(Object baseObject, String attribute) {
         List<Object> found = new ArrayList<Object>();
 
@@ -325,8 +327,6 @@ public class ServiceCompletor implements Completor {
     }
 
 
-
-
     private List<Method> getMethods(Object service) {
         Class intf = service.getClass().getInterfaces()[0];
         Method[] methods = intf.getMethods();
@@ -341,11 +341,11 @@ public class ServiceCompletor implements Completor {
     }
 
 
-    private void addSignatures( String serviceName, Method method, List candidates) {
+    private void addSignatures(String serviceName, Method method, List candidates) {
         Object service = services.get(serviceName);
         Class intf = service.getClass().getInterfaces()[0];
         candidates.add(getSignature(method));
-        
+
 //        Method[] methods = intf.getMethods();
 //        for (Method m : methods) {
 //            if (m.getName().equals(methodName)) {
@@ -372,7 +372,7 @@ public class ServiceCompletor implements Completor {
                 Annotation[] as = annotations[i];
                 for (Annotation a : as) {
                     if (a instanceof WebParam) {
-                        name = ((WebParam)a).name();
+                        name = ((WebParam) a).name();
                     }
                 }
 

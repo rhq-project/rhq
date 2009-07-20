@@ -58,7 +58,7 @@ import org.rhq.core.domain.resource.ResourceType;
         + "      AND ( od.name = :operationName or :operationName IS NULL )" //
         + " ORDER BY od.displayName"),
     @NamedQuery(name = OperationDefinition.QUERY_FIND_LIGHT_WEIGHT_BY_TYPE_AND_NAME, query = "" //
-        + "   SELECT new org.rhq.core.domain.operation.composite.OperationDefinitionLightWeight " //
+        + "   SELECT new org.rhq.core.domain.operation.OperationDefinition " //
         + "          ( od.id, od.name, od.resourceVersionRange, od.description, od.timeout, od.displayName ) " //
         + "     FROM OperationDefinition AS od " //
         + "    WHERE od.resourceType.id = :resourceTypeId " //
@@ -74,7 +74,7 @@ import org.rhq.core.domain.resource.ResourceType;
         + "      AND ( od.name = :operationName or :operationName IS NULL )" //
         + " ORDER BY od.displayName"),
     @NamedQuery(name = OperationDefinition.QUERY_FIND_LIGHT_WEIGHT_BY_RESOURCE_AND_NAME, query = "" //
-        + "   SELECT new org.rhq.core.domain.operation.composite.OperationDefinitionLightWeight " //
+        + "   SELECT new org.rhq.core.domain.operation.OperationDefinition " //
         + "          ( od.id, od.name, od.resourceVersionRange, od.description, od.timeout, od.displayName ) " //
         + "     FROM OperationDefinition AS od, Resource res " //
         + "    WHERE od.resourceType.id = res.resourceType.id " //
@@ -91,7 +91,7 @@ import org.rhq.core.domain.resource.ResourceType;
         + "      AND ( od.name = :operationName or :operationName IS NULL )" //
         + " ORDER BY od.displayName"),
     @NamedQuery(name = OperationDefinition.QUERY_FIND_LIGHT_WEIGHT_BY_GROUP_AND_NAME, query = "" //
-        + "   SELECT new org.rhq.core.domain.operation.composite.OperationDefinitionLightWeight " //
+        + "   SELECT new org.rhq.core.domain.operation.OperationDefinition " //
         + "          ( od.id, od.name, od.resourceVersionRange, od.description, od.timeout, od.displayName ) " //
         + "     FROM OperationDefinition AS od, ResourceGroup rg " //
         + "    WHERE od.resourceType.id = rg.resourceType.id " //
@@ -155,6 +155,15 @@ public class OperationDefinition implements Serializable {
 
     /* no-arg constructor required by EJB spec - not for use by subclasses */
     protected OperationDefinition() {
+    }
+
+    /* used by lightweight named queries */
+    public OperationDefinition(int id, String name, String resourceVersionRange, String description, Integer timeout,
+        String displayName) {
+        this(name, resourceVersionRange, description);
+        setId(id);
+        setTimeout(timeout);
+        setDisplayName(displayName);
     }
 
     public OperationDefinition(@NotNull String name, String resourceVersionRange, String description) {

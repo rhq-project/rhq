@@ -421,24 +421,6 @@ public class WarComponent extends ApplicationComponent implements OperationFacet
         return deploymentInformation;
     }
 
-    // DeleteResourceFacet Implementation  --------------------------------------------
-
-    public void deleteResource() throws Exception {
-        Configuration pluginConfiguration = getResourceContext().getPluginConfiguration();
-        String fullFileName = pluginConfiguration.getSimple(FILENAME_PLUGIN_CONFIG_PROP).getStringValue();
-
-        File file = new File(fullFileName);
-
-        // If the file does not exist, we don't bother
-        // See https://jira.jboss.org/jira/browse/JOPR-79
-        if (file.exists()) {
-            super.deleteResource();
-        }
-        else {
-            log.info("War file [" + fullFileName + "] was not found - ignoring.");
-        }
-
-    }
 
 
     private enum WarOperation {

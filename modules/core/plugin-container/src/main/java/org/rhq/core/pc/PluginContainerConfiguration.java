@@ -44,6 +44,7 @@ public class PluginContainerConfiguration {
     private static final String DATA_DIRECTORY_PROP = PROP_PREFIX + "data-directory";
     private static final String TEMP_DIRECTORY_PROP = PROP_PREFIX + "temp-directory";
     private static final String ROOT_PLUGIN_CLASSLOADER_REGEX_PROP = PROP_PREFIX + "root-plugin-classloader-regex";
+    private static final String CREATE_RESOURCE_CLASSLOADERS = PROP_PREFIX + "create-resource-classloaders";
 
     // The following configuration settings have hardcoded default values. These defaults are publicly
     // accessible so the entity that embeds the plugin container can know what its default values are.
@@ -213,6 +214,36 @@ public class PluginContainerConfiguration {
         } else {
             configuration.remove(ROOT_PLUGIN_CLASSLOADER_REGEX_PROP);
         }
+    }
+
+    /**
+     * Returns whether or not the plugin container should create individual classloaders for resources
+     * that need that kind of isolation. Typically, this value is the same as the {@link #isInsideAgent()} flag
+     * because usually it is only when running inside an agent do you need to create these classloaders.
+     * However, this flag can be set independently of that is-inside-agent flag to support tests.
+     *
+     * @return <code>true</code> if the container should create individual classloaders for resources that need them;
+     *         <code>false</code> if only plugin classloaders are needed, thus assuming the root classloader has all
+     *         connection classes for any and all managed resources that need to be monitored.
+     */
+    public boolean isCreateResourceClassloaders() {
+        Object val = configuration.get(CREATE_RESOURCE_CLASSLOADERS);
+
+        if (val == null) {
+            return isInsideAgent(); // the default is determined if inside an agent or not
+        }
+
+        return ((Boolean) val).booleanValue();
+    }
+
+    /**
+     * Sets the flag to indicate if the plugin container should create individual resource classloaders.
+     * See {@link #isCreateResourceClassloaders()} for more details of what this flag means.
+     *
+     * @param flag
+     */
+    public void setCreateResourceClassloaders(boolean flag) {
+        configuration.put(CREATE_RESOURCE_CLASSLOADERS, Boolean.valueOf(flag));
     }
 
     /**

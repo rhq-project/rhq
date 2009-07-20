@@ -108,7 +108,7 @@ public class PluginManager implements ContainerService {
         // build our empty class loader manager - we use it to create and manage our plugin's classloaders
         Map<String, URL> pluginNamesUrls = new HashMap<String, URL>();
         PluginDependencyGraph graph = new PluginDependencyGraph();
-        boolean createResourceCL = configuration.isInsideAgent();
+        boolean createResourceCL = configuration.isCreateResourceClassloaders();
         this.classLoaderManager = new ClassLoaderManager(pluginNamesUrls, graph, rootCL, tmpDir, createResourceCL);
 
         try {

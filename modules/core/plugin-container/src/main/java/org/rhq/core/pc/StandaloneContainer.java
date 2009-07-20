@@ -127,6 +127,7 @@ public class StandaloneContainer {
         pcConfig.setPluginDirectory(pluginDir);
         pcConfig.setDataDirectory(dataDir);
         pcConfig.setInsideAgent(false);
+        pcConfig.setCreateResourceClassloaders(true); // we need to create these because even though we aren't in the agent, we aren't embedded in a managed resource either
         pcConfig.setServerServices(new ServerServices());
         pc.setConfiguration(pcConfig);
 

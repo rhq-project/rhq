@@ -52,14 +52,9 @@ public class ResponseTimeConfiguration {
 
     @Nullable
     public File getLogFile() {
-        PropertySimple logFileProp = this.pluginConfig.getSimple(RESPONSE_TIME_LOG_FILE_CONFIG_PROP);
-        File logFile;
-        if ((logFileProp != null) && (logFileProp.getStringValue() != null)) {
-            logFile = new File(logFileProp.getStringValue());
-        } else {
-            logFile = null;
-        }
-
+        String logFilePath = this.pluginConfig.getSimpleValue(RESPONSE_TIME_LOG_FILE_CONFIG_PROP, null);
+        //noinspection UnnecessaryLocalVariable
+        File logFile = (logFilePath != null) ? new File(logFilePath) : null;
         return logFile;
     }
 
@@ -93,21 +88,31 @@ public class ResponseTimeConfiguration {
             while (tokenizer.hasMoreTokens()) {
                 String value = tokenizer.nextToken();
                 String delimiter = value.substring(0, 1); // first character is the delimiter (sed-style)
-                StringTokenizer valueTokenizer = new StringTokenizer(value, delimiter);
-                if (valueTokenizer.countTokens() != 2) {
+                String lastChar = value.substring(value.length() - 1);
+                if (value.length() < 3 || !lastChar.equals(delimiter)) {
                     throw new InvalidPluginConfigurationException("'" + RESPONSE_TIME_URL_TRANSFORMS_CONFIG_PROP
-                        + "' connection property contains an invalid transform expression: " + value);
+                        + "' connection property contains an invalid transform expression [" + value + "]. "
+                        + "A transform expressions should contain exactly three delimiters (the first character "
+                        + "of the expression is the delimiter) and should also end with a delimiter. For example, "
+                        + "|foo|bar|\" replaces \"foo\" with \"bar\".");
                 }
-
-                String regEx = valueTokenizer.nextToken();
-                String replacement = valueTokenizer.nextToken();
+                String[] tokens = value.substring(1, value.length() - 1).split(Pattern.quote(delimiter), -1);
+                if (tokens.length != 2) {
+                    throw new InvalidPluginConfigurationException("'" + RESPONSE_TIME_URL_TRANSFORMS_CONFIG_PROP
+                        + "' connection property contains an invalid transform expression [" + value + "]. "
+                        + "A transform expressions should contain exactly three delimiters (the first character "
+                        + "of the expression is the delimiter). For example, \"|foo|bar|\" replaces \"foo\" with \"bar\".");
+                }
+                String regEx = tokens[0];
+                String replacement = tokens[1];
                 try {
                     Pattern pattern = Pattern.compile(regEx);
                     RegexSubstitution transform = new RegexSubstitution(pattern, replacement);
                     transforms.add(transform);
                 } catch (PatternSyntaxException e) {
                     throw new InvalidPluginConfigurationException("'" + RESPONSE_TIME_URL_TRANSFORMS_CONFIG_PROP
-                        + "' connection property contains an invalid transform expression: " + value, e);
+                        + "' connection property contains an invalid transform expression [" + value + "]. "
+                        + "Specifically, the regular expression portion [" + regEx + "] is not a valid regular expression.", e);
                 }
             }
         }

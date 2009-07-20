@@ -11,18 +11,18 @@
    <depends plugin="JMX" />
    <depends plugin="JBossAS5" useClasses="true"/>
 
-   <service name="Jboss Cache"
-           class="JBossCacheComponent"
-           discovery="JBossCacheDiscoveryComponent"
-           description="The JBoss Cache instances on this server">  
+   <service name="JBoss Cache"
+            class="JBossCacheComponent"
+            discovery="JBossCacheDiscoveryComponent"
+            description="The JBoss Cache instances on this server">  
            
-      <runs-inside>
-          <parent-resource-type name="JBossAS Server" plugin="JBossAS5"/>
-      </runs-inside>
+           <runs-inside>
+               <parent-resource-type name="JBossAS Server" plugin="JBossAS5"/>
+           </runs-inside>
                  
-          <plugin-configuration>
-              <c:simple-property name="searchString" default="*:*,jmx-resource=CacheMgmtInterceptor"/>
-          </plugin-configuration>
+           <plugin-configuration>
+               <c:simple-property name="searchString" default="*:*,jmx-resource=CacheMgmtInterceptor"/>
+           </plugin-configuration>
            
            <operation name="destroy" displayName="destroy"/>         
            <operation name="stop" displayName="stop"/>         

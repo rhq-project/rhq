@@ -87,7 +87,7 @@
     <!--  other, possibly experimental plugins -->
     <module>augeas</module>
     <module>apt</module>
-    <module>cli</module>    
+    <module>script</module>    
     <module>grub</module>    
 <!-- not behaving       <module>hardware</module> -->
     <module>hosts</module>

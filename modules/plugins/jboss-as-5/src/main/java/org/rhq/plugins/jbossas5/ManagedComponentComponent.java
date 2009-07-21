@@ -90,10 +90,8 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
         String COMPONENT_SUBTYPE = "componentSubtype";
         String COMPONENT_NAME = "componentName";
         String TEMPLATE_NAME = "templateName";
-        String RESOURCE_NAME = "resourceName";
-    }
-
-    public static final String COMPONENT_NAME_PROPERTY = "componentName";
+        String COMPONENT_NAME_PROPERTY = "componentNameProperty";
+    }    
 
     protected static final char PREFIX_DELIMITER = '|';
 

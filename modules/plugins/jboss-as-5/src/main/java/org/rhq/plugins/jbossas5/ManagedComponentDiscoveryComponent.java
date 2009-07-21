@@ -76,7 +76,13 @@ public class ManagedComponentDiscoveryComponent<P extends ProfileServiceComponen
         for (ManagedComponent component : components) {
             if (accept(discoveryContext, component)) {
                 String resourceName = getResourceName(component);
+                if (resourceName == null) {
+                    resourceName = component.getName();
+                }
                 String resourceKey = getResourceKey(component);
+                if (resourceKey == null) {
+                    resourceKey = component.getName();
+                }
                 String version = null; // (ips) I don't think there's anything generic we can do here.
 
                 DiscoveredResourceDetails resource = new DiscoveredResourceDetails(resourceType, resourceKey,
@@ -99,6 +105,13 @@ public class ManagedComponentDiscoveryComponent<P extends ProfileServiceComponen
         return ConversionUtils.getComponentType(resourceType);
     }
 
+    /**
+     * Subclasses can override this method if they don't want to use the ManagedComponent name as the initial
+     * Resource name.
+     *
+     * @param component the ManagedComponent being discovered
+     * @return the name to be assigned to the corresponding Resource
+     */
     protected String getResourceName(ManagedComponent component) {
         return component.getName();
     }
@@ -111,7 +124,7 @@ public class ManagedComponentDiscoveryComponent<P extends ProfileServiceComponen
      * ({@link ManagedComponentComponent#getComponentName()}). 
      *
      * @param component the component to uniquely identify
-     * @return the unique identificator for the component
+     * @return the unique identifier for the component
      */
     protected String getResourceKey(ManagedComponent component) {
         return component.getName();

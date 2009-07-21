@@ -1255,10 +1255,10 @@
                 <c:simple-property name="componentSubtype" default="NoTx" readOnly="true"/>
                 <c:simple-property name="componentName" readOnly="true"/>
                 <c:simple-property name="templateName" default="NoTxDataSourceTemplate" readOnly="true"/>
-                <c:simple-property name="resourceName" default="jndi-name" readOnly="true">
+                <c:simple-property name="componentNameProperty" default="jndi-name" readOnly="true">
                     <c:description>
                         The name of the Resource configuration property whose value should be used as the
-                        Resource name when creating a new Resource of this type.
+                        ManagedComponent name when creating a new Resource of this type.
                     </c:description>
                 </c:simple-property>
             </plugin-configuration>
@@ -1309,7 +1309,7 @@
                 <c:simple-property name="componentSubtype" default="LocalTx" readOnly="true"/>
                 <c:simple-property name="componentName" readOnly="true"/>
                 <c:simple-property name="templateName" default="LocalTxDataSourceTemplate" readOnly="true"/>
-                <c:simple-property name="resourceName" default="jndi-name" readOnly="true">
+                <c:simple-property name="componentNameProperty" default="jndi-name" readOnly="true">
                     <c:description>
                         The name of the Resource configuration property whose value should be used as the
                         Resource name when creating a new Resource of this type.
@@ -1373,7 +1373,7 @@
                 <c:simple-property name="componentSubtype" default="XA" readOnly="true"/>
                 <c:simple-property name="componentName" readOnly="true"/>
                 <c:simple-property name="templateName" default="XADataSourceTemplate" readOnly="true"/>
-                <c:simple-property name="resourceName" default="jndi-name" readOnly="true">
+                <c:simple-property name="componentNameProperty" default="jndi-name" readOnly="true">
                     <c:description>
                         The name of the Resource configuration property whose value should be used as the
                         Resource name when creating a new Resource of this type.
@@ -1482,7 +1482,7 @@
                 <c:simple-property name="componentSubtype" default="NoTx" readOnly="true"/>
                 <c:simple-property name="componentName" readOnly="true"/>
                 <c:simple-property name="templateName" default="NoTxConnectionFactoryTemplate" readOnly="true"/>
-                <c:simple-property name="resourceName" default="jndi-name" readOnly="true">
+                <c:simple-property name="componentNameProperty" default="jndi-name" readOnly="true">
                     <c:description>
                         The name of the Resource configuration property whose value should be used as the
                         Resource name when creating a new Resource of this type.
@@ -1545,7 +1545,7 @@
                 <c:simple-property name="componentSubtype" default="Tx" readOnly="true"/>
                 <c:simple-property name="componentName" readOnly="true"/>
                 <c:simple-property name="templateName" default="TxConnectionFactoryTemplate" readOnly="true"/>
-                <c:simple-property name="resourceName" default="jndi-name" readOnly="true">
+                <c:simple-property name="componentNameProperty" default="jndi-name" readOnly="true">
                     <c:description>
                         The name of the Resource configuration property whose value should be used as the
                         Resource name when creating a new Resource of this type.
@@ -1635,14 +1635,14 @@
                  class="JmsDestinationComponent"
                  createDeletePolicy="both"
                  subCategory="JMS Destinations"
-                 discovery="ManagedComponentDiscoveryComponent">
+                 discovery="JmsDestinationDiscoveryComponent">
 
             <plugin-configuration>
                 <c:simple-property name="componentType" default="JMSDestination" readOnly="true"/>
                 <c:simple-property name="componentSubtype" default="Queue" readOnly="true"/>
                 <c:simple-property name="componentName" readOnly="true"/>
                 <c:simple-property name="templateName" default="QueueTemplate" readOnly="true"/>
-                <c:simple-property name="resourceName" default="JNDIName" readOnly="true">
+                <c:simple-property name="componentNameProperty" default="JNDIName" readOnly="true">
                     <c:description>
                         The name of the Resource configuration property whose value should be used as the
                         Resource name when creating a new Resource of this type.
@@ -1937,14 +1937,14 @@
                  class="JmsDestinationComponent"
                  createDeletePolicy="both"
                  subCategory="JMS Destinations"
-                 discovery="ManagedComponentDiscoveryComponent">
+                 discovery="JmsDestinationDiscoveryComponent">
 
             <plugin-configuration>
                 <c:simple-property name="componentType" default="JMSDestination" readOnly="true"/>
                 <c:simple-property name="componentSubtype" default="Topic" readOnly="true"/>
                 <c:simple-property name="componentName" readOnly="true"/>
                 <c:simple-property name="templateName" default="TopicTemplate" readOnly="true"/>
-                <c:simple-property name="resourceName" default="JNDIName" readOnly="true">
+                <c:simple-property name="componentNameProperty" default="JNDIName" readOnly="true">
                     <c:description>
                         The name of the Resource configuration property whose value should be used as the
                         Resource name when creating a new Resource of this type.

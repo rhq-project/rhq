@@ -321,43 +321,38 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
         }
     }
 
-    private static String getResourceName(Configuration pluginConfig, Configuration resourceConfig) {
-        PropertySimple resourceNameProp = pluginConfig.getSimple(ManagedComponentComponent.Config.RESOURCE_NAME);
-        if (resourceNameProp == null || resourceNameProp.getStringValue() == null)
-            throw new IllegalStateException("Property [" + ManagedComponentComponent.Config.RESOURCE_NAME
+    private static String getComponentName(Configuration pluginConfig, Configuration resourceConfig) {
+        PropertySimple componentNameProp =
+                pluginConfig.getSimple(ManagedComponentComponent.Config.COMPONENT_NAME_PROPERTY);
+        if (componentNameProp == null || componentNameProp.getStringValue() == null) {
+            throw new IllegalStateException("Property [" + ManagedComponentComponent.Config.COMPONENT_NAME_PROPERTY
                 + "] is not defined in the default plugin configuration.");
-        String resourceNamePropName = resourceNameProp.getStringValue();
-        PropertySimple propToUseAsResourceName = resourceConfig.getSimple(resourceNamePropName);
-        if (propToUseAsResourceName == null)
-            throw new IllegalStateException("Property [" + resourceNamePropName
-                + "] is not defined in initial Resource configuration.");
-        return propToUseAsResourceName.getStringValue();
-    }
-
-    private String getResourceKey(ResourceType resourceType, String resourceName) {
-        ComponentType componentType = ConversionUtils.getComponentType(resourceType);
-        if (componentType == null)
-            throw new IllegalStateException("Unable to map " + resourceType + " to a ComponentType.");
-        // TODO (ips): I think the key can just be the resource name.
-        return componentType.getType() + ":" + componentType.getSubtype() + ":" + resourceName;
+        }
+        String componentNamePropName = componentNameProp.getStringValue();
+        PropertySimple propToUseAsComponentName = resourceConfig.getSimple(componentNamePropName);
+        if (propToUseAsComponentName == null) {
+            throw new IllegalStateException("Property [" + componentNamePropName
+                + "] is not defined in user-specified initial Resource configuration.");
+        }
+        return propToUseAsComponentName.getStringValue();
     }
 
     private void createConfigurationBasedResource(CreateResourceReport createResourceReport, ResourceType resourceType) {
         Configuration defaultPluginConfig = getDefaultPluginConfiguration(resourceType);
         Configuration resourceConfig = createResourceReport.getResourceConfiguration();
-        String resourceName = getResourceName(defaultPluginConfig, resourceConfig);
+        String componentName = getComponentName(defaultPluginConfig, resourceConfig);
         ComponentType componentType = ConversionUtils.getComponentType(resourceType);
         ManagementView managementView = getConnection().getManagementView();
-        if (ManagedComponentUtils.isManagedComponent(managementView, resourceName, componentType)) {
+        if (ManagedComponentUtils.isManagedComponent(managementView, componentName, componentType)) {
             createResourceReport.setStatus(CreateResourceStatus.FAILURE);
-            createResourceReport.setErrorMessage("A " + resourceType.getName() + " named '" + resourceName
+            createResourceReport.setErrorMessage("A " + resourceType.getName() + " named '" + componentName
                 + "' already exists.");
             return;
         }
 
-        createResourceReport.setResourceName(resourceName);
-        String resourceKey = getResourceKey(resourceType, resourceName);
-        createResourceReport.setResourceKey(resourceKey);
+        // The PC doesn't use the Resource name or key for anything, but set them anyway to make it happy.
+        createResourceReport.setResourceName(componentName);
+        createResourceReport.setResourceKey(componentName);
 
         PropertySimple templateNameProperty = defaultPluginConfig
             .getSimple(ManagedComponentComponent.Config.TEMPLATE_NAME);
@@ -383,7 +378,7 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
             log.debug("Applying template [" + templateName + "] to create ManagedComponent of type [" + componentType
                 + "]...");
             try {
-                managementView.applyTemplate(resourceName, template);
+                managementView.applyTemplate(componentName, template);
                 managementView.process();
                 createResourceReport.setStatus(CreateResourceStatus.SUCCESS);
             } catch (Exception e) {

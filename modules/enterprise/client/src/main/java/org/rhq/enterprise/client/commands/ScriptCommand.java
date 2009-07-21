@@ -18,27 +18,32 @@
  */
 package org.rhq.enterprise.client.commands;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.rhq.core.domain.util.PageControl;
-import org.rhq.enterprise.client.ClientMain;
-import org.rhq.enterprise.client.RemoteClient;
-import org.rhq.enterprise.client.TabularWriter;
-import org.rhq.enterprise.client.Controller;
-import org.rhq.enterprise.client.script.CmdLineParser;
-import org.rhq.enterprise.client.script.NamedScriptArg;
-import org.rhq.enterprise.client.script.ScriptArg;
-import org.rhq.enterprise.client.script.ParseException;
-import org.rhq.enterprise.client.script.ScriptCmdLine;
-import org.rhq.enterprise.client.utility.PackageFinder;
-import org.rhq.enterprise.client.utility.ScriptUtil;
-import org.rhq.enterprise.client.utility.ResourceClientProxy;
-
-import javax.script.*;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.Reader;
 import java.util.List;
+
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.enterprise.client.ClientMain;
+import org.rhq.enterprise.client.Controller;
+import org.rhq.enterprise.client.RemoteClient;
+import org.rhq.enterprise.client.TabularWriter;
+import org.rhq.enterprise.client.script.CmdLineParser;
+import org.rhq.enterprise.client.script.NamedScriptArg;
+import org.rhq.enterprise.client.script.ParseException;
+import org.rhq.enterprise.client.script.ScriptArg;
+import org.rhq.enterprise.client.script.ScriptCmdLine;
+import org.rhq.enterprise.client.utility.PackageFinder;
+import org.rhq.enterprise.client.utility.ResourceClientProxy;
+import org.rhq.enterprise.client.utility.ScriptUtil;
 
 /**
  * @author Greg Hinkle
@@ -76,7 +81,6 @@ public class ScriptCommand implements ClientCommand {
             for (String pkg : packages) {
                 jsEngine.eval("importPackage(" + pkg + ")");
             }
-            
 
         } catch (ScriptException e) {
             e.printStackTrace();
@@ -127,7 +131,7 @@ public class ScriptCommand implements ClientCommand {
 
             Object result = jsEngine.eval(script.toString());
             if (result != null) {
-//                client.getPrintWriter().print("result: ");
+                //                client.getPrintWriter().print("result: ");
                 new TabularWriter(client.getPrintWriter()).print(result);
             }
         } catch (ScriptException e) {
@@ -159,14 +163,37 @@ public class ScriptCommand implements ClientCommand {
     }
 
     private void bindScriptUtils() {
-        ScriptUtil scriptUtil = new ScriptUtil(jsEngine);
-        jsEngine.put("scriptUtil", scriptUtil);
+        final String BIND_NAME = "scriptUtil";
 
-        String func = "function isDefined(identifier) { return scriptUtil.isDefined(identifier); }";
-        try {
-            jsEngine.eval(func);
-        } catch (ScriptException e) {
-            log.warn("Unable to bind script utility function isDefined()", e);
+        ScriptUtil scriptUtil = new ScriptUtil(jsEngine);
+        jsEngine.put(BIND_NAME, scriptUtil);
+
+        java.lang.reflect.Method[] methods = ScriptUtil.class.getMethods();
+        for (java.lang.reflect.Method method : methods) {
+            String methodName = method.getName();
+            int argCount = method.getParameterTypes().length;
+
+            StringBuilder functionBuilder = new StringBuilder();
+            functionBuilder.append(methodName).append("(");
+            for (int i = 0; i < argCount; i++) {
+                if (i != 0) {
+                    functionBuilder.append(", ");
+                }
+                functionBuilder.append(methodName + "arg_" + i);
+            }
+            functionBuilder.append(")");
+            String functionFragment = functionBuilder.toString();
+
+            boolean returnsVoid = method.getReturnType().equals(Void.TYPE);
+            String funcctionDefinition = "function " + functionFragment + " { " + (returnsVoid ? "" : " return ")
+                + BIND_NAME + "." + functionFragment + "; }";
+
+            //= "function isDefined(identifier) { return scriptUtil.isDefined(identifier); }";
+            try {
+                jsEngine.eval(funcctionDefinition);
+            } catch (ScriptException e) {
+                log.warn("Unable to bind script utility function " + functionFragment, e);
+            }
         }
     }
 
@@ -189,7 +216,7 @@ public class ScriptCommand implements ClientCommand {
         bindArgsArray(cmdLine);
 
         if (cmdLine.getArgType() == ScriptCmdLine.ArgType.NAMED) {
-            bindNamedArgs(cmdLine);    
+            bindNamedArgs(cmdLine);
         }
     }
 
@@ -215,11 +242,10 @@ public class ScriptCommand implements ClientCommand {
         try {
             Object result = jsEngine.eval(reader);
             if (result != null) {
-//                client.getPrintWriter().print("result: ");
+                //                client.getPrintWriter().print("result: ");
                 new TabularWriter(client.getPrintWriter()).print(result);
             }
-        }
-        catch (ScriptException e) {
+        } catch (ScriptException e) {
             client.getPrintWriter().println(e.getMessage());
             client.getPrintWriter().println("^");
         }
@@ -242,10 +268,9 @@ public class ScriptCommand implements ClientCommand {
     public String getDetailedHelp() {
         StringBuilder help = new StringBuilder();
         help.append("Executes JavaScript commands. You can utilize the following service managers: "
-                + RemoteClient.Manager.values());
+            + RemoteClient.Manager.values());
         return help.toString();
     }
-
 
     public ScriptContext getContext() {
         return jsEngine.getContext();

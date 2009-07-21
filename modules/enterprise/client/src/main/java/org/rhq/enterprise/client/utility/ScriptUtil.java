@@ -11,7 +11,15 @@ public class ScriptUtil {
     }
 
     public boolean isDefined(String identifier) {
-        return scriptEngine.get(identifier) != null;    
+        return scriptEngine.get(identifier) != null;
+    }
+
+    public void sleep(long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException ie) {
+            throw new RuntimeException(ie);
+        }
     }
 
 }

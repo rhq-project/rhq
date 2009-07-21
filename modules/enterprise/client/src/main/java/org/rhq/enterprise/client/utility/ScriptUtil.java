@@ -22,4 +22,33 @@ public class ScriptUtil {
         }
     }
 
+    public void assertEqual(Object lefty, Object righty) {
+        assertEqual(lefty, righty, null);
+    }
+
+    public void assertEqual(Object lefty, Object righty, String errorMessage) {
+        boolean result;
+        if (lefty == null) {
+            if (righty == null) {
+                result = true; // both null
+            } else {
+                result = false; // only lefty is null
+            }
+        } else {
+            if (righty == null) {
+                result = false; // only righty is null
+            } else {
+                result = lefty.equals(righty) && righty.equals(lefty);
+            }
+        }
+        System.out.println("assertEqual(" + lefty + ", " + righty + ") was " + result);
+        if (result == false) {
+            if (errorMessage == null) {
+                throw new AssertionError();
+            } else {
+                throw new AssertionError(errorMessage);
+            }
+        }
+    }
+
 }

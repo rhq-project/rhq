@@ -52,6 +52,7 @@ import org.rhq.enterprise.server.resource.ResourceManagerRemote;
  */
 @Test(groups = "ws")
 public class ClientMainTest extends AssertJUnit {
+/*
 
     static private final boolean TESTS_ENABLED = true;
 
@@ -815,5 +816,5 @@ public class ClientMainTest extends AssertJUnit {
             System.out.println(xml + "\n\n");
         }
     }
-
+*/
 }

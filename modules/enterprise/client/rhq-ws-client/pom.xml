@@ -112,7 +112,7 @@
                               value="${buildNumber}" />
                            <property
                               name="java.jre.home"
-                              value="${java.home}" />
+                              value="${java.home}/jre" />
                            <property
                               name="maven.compile.classpath"
                               refid="maven.compile.classpath" />

@@ -3,7 +3,7 @@
 <plugin name="JBossCache3"
         displayName="JBossCache 3.x Services"
         package="org.rhq.plugins.jbosscache3"
-        description="Provides monitoring of JBossCache statistics"
+        description="Provides monitoring of JBossCache 3.x statistics"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
@@ -24,26 +24,26 @@
                <c:simple-property name="searchString" default="*:*,jmx-resource=CacheMgmtInterceptor"/>
            </plugin-configuration>
            
-           <operation name="destroy" displayName="destroy"/>         
-           <operation name="stop" displayName="stop"/>         
-           <operation name="create" displayName="create"/>         
-           <operation name="start" displayName="start"/>         
-           <operation name="printLockInfo" displayName="Print Lock Info">
+           <operation name="destroy" displayName="Destroy this cache."/>
+           <operation name="stop" displayName="Stop this cache."/>
+           <operation name="create" displayName="Create this cache."/>
+           <operation name="start" displayName="Start this cache."/>
+           <operation name="printLockInfo" displayName="Print lock information.">
                   <results><c:simple-property name="output"></c:simple-property></results>
             </operation>
-            <operation name="printCacheDetails" displayName="Print Cache Details" >
+            <operation name="printCacheDetails" displayName="Print cache details." >
                   <results><c:simple-property name="output"></c:simple-property></results>
              </operation>    
-            <operation name="printCacheDetailsAsHtml" displayName="print Cache Details As Html">
+            <operation name="printCacheDetailsAsHtml" displayName="Print cache details as HTML.">
                   <results><c:simple-property name="output"></c:simple-property></results>
              </operation>  
-            <operation name="printConfigurationAsString" displayName="print Configuration As String.">
+            <operation name="printConfigurationAsString" displayName="Print configuration as plain text.">
                   <results><c:simple-property name="output"></c:simple-property></results>
              </operation>  
-            <operation name="printLockInfoAsHtml" displayName="print Configuration As String">
+            <operation name="printLockInfoAsHtml" displayName="Print lock info as HTML.">
                   <results><c:simple-property name="output"></c:simple-property></results>
              </operation>  
-             <operation name="printConfigurationAsHtmlString" displayName="Print Details as HTML.">
+             <operation name="printConfigurationAsHtmlString" displayName="Print configuration as HTML.">
                   <results><c:simple-property name="output"></c:simple-property></results>
              </operation> 
                
@@ -87,7 +87,7 @@
                 <c:simple-property name="jmx-resource" default="jmx-resource=CacheMgmtInterceptor"/>
               </plugin-configuration>
                
-               <operation name="resetStatistics" displayName="Reset Statistics" description="Resets all statistics" />
+               <operation name="resetStatistics" displayName="Reset Statistics" description="Reset all statistics." />
                 
                <metric property="Evictions"  displayName="Evictions" measurementType="trendsup"
                   description="the number of cache eviction operations"  category="performance"/>
@@ -127,19 +127,19 @@
                 <c:simple-property name="jmx-resource" default="jmx-resource=DataContainer"/>
               </plugin-configuration>     
               
-                <operation name="getNumberOfNodes" displayName="Get Number of nodes." 
+                <operation name="getNumberOfNodes" displayName="Get the number of nodes."
                            description="Returns the number of nodes in the data container">
                   <results><c:simple-property name="output"></c:simple-property></results>
                 </operation>
-                <operation name="getNumberOfAttributes" displayName="Get Number of attributes." 
+                <operation name="getNumberOfAttributes" displayName="Get the number of attributes."
                            description="Returns the number of nodes in the data container">
                   <results><c:simple-property name="output"></c:simple-property></results>
                 </operation>
-                <operation name="printDetails" displayName="Print Details." 
+                <operation name="printDetails" displayName="Print details as plain text."
                            description="Prints details about the data container">
                   <results><c:simple-property name="output"></c:simple-property></results>
                 </operation>
-                <operation name="printDetailsAsHtml" displayName="Print Details as HTML." 
+                <operation name="printDetailsAsHtml" displayName="Print details as HTML."
                            description="Prints details about the data container, formatted as HTML">
                   <results><c:simple-property name="output"></c:simple-property></results>
                 </operation>       
@@ -156,7 +156,7 @@
                 <c:simple-property name="jmx-resource" default="jmx-resource=RPCManager"/>
               </plugin-configuration>   
                     
-              <operation name="resetStatistics" displayName="Reset Statistics" description="Resets all statistics" />
+              <operation name="resetStatistics" displayName="Reset Statistics" description="Reset all statistics." />
                     
                <metric property="Enabled" dataType="trait"  displayName="RPC Enabled?" 
                  description="whether or not the RPC Manager is used in this cache instance"/>
@@ -184,8 +184,8 @@
                 <c:simple-property name="jmx-resource" default="jmx-resource=RegionManager"/>
               </plugin-configuration>              
                
-             <operation name="dumpRegions" displayName="Dump Regions" 
-                        description="A String representation of all registered regions">
+             <operation name="dumpRegions" displayName="Dump Regions"
+                        description="Dump a list of all registered regions.">
                 <results><c:simple-property name="output"></c:simple-property></results>
              </operation>
              
@@ -202,7 +202,7 @@
               <plugin-configuration>
                 <c:simple-property name="jmx-resource" default="jmx-resource=TransactionTable"/>
               </plugin-configuration>         
-              <operation name="resetStatistics" displayName="Reset Statistics" description="Resets all statistics" />         
+              <operation name="resetStatistics" displayName="Reset Statistics" description="Reset all statistics." />
                    
               <metric property="numberOfRegisteredTransactions" displayType="summary"
                 description="the number of registered transactions"  category="performance"/>

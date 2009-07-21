@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
 <plugin name="JBossCache"
-        displayName="JBossCache4 Services"
+        displayName="JBossCache 2.x Services"
         package="org.rhq.plugins.jbosscache"
-        description="Provides monitoring of JBossCache 4.x statistics"
+        description="Provides monitoring of JBossCache 2.x statistics"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">

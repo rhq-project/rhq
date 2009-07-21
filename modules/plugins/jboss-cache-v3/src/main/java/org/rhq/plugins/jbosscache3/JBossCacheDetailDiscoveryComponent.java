@@ -91,27 +91,25 @@ public class JBossCacheDetailDiscoveryComponent implements
 			List<EmsBean> cacheBeans = connection.queryBeans(queryUtility
 					.getTranslatedQuery());
 
-			for (int i = 0; i < cacheBeans.size(); i++) {
-				EmsBean bean = cacheBeans.get(i);
+            for (EmsBean bean : cacheBeans) {
+                Map<String, String> nameMap = bean.getBeanName()
+                        .getKeyProperties();
 
-				Map<String, String> nameMap = bean.getBeanName()
-						.getKeyProperties();
+                String name = null;
 
-				String name = null;
+                if (nameMap.containsKey(CACHE_JMX_NAME))
+                    name = nameMap.get(CACHE_JMX_NAME);
 
-				if (nameMap.containsKey(CACHE_JMX_NAME))
-					name = nameMap.get(CACHE_JMX_NAME);
-
-				if (name != null) {
-					Configuration conf = new Configuration();
-					conf.put(new PropertySimple(
-							JBossCacheDetailComponent.CACHE_DETAIL_BEAN_NAME,
-							bean.getBeanName()));
-					resources.add(new DiscoveredResourceDetails(resourceType,
-							bean.getBeanName().toString(), name, "",
-							"JBoss Cache", conf, null));
-				}
-			}
+                if (name != null) {
+                    Configuration conf = new Configuration();
+                    conf.put(new PropertySimple(
+                            JBossCacheDetailComponent.CACHE_DETAIL_BEAN_NAME,
+                            bean.getBeanName()));
+                    resources.add(new DiscoveredResourceDetails(resourceType,
+                            bean.getBeanName().toString(), name, "",
+                            "JBoss Cache", conf, null));
+                }
+            }
 		}
 		return resources;
 

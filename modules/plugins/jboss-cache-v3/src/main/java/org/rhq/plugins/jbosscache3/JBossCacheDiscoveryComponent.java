@@ -81,22 +81,19 @@ public class JBossCacheDiscoveryComponent implements
 
 			HashSet<String> names = new HashSet<String>();
 
-			for (int i = 0; i < cacheBeans.size(); i++) {
-				EmsBean bean = cacheBeans.get(i);
+            for (EmsBean bean : cacheBeans) {
+                String beanName = bean.getBeanName().toString();
 
-				String beanName = bean.getBeanName().toString();
+                Matcher m = p.matcher(beanName);
+                if (m.find()) {
+                    beanName = m.replaceFirst(m.group(2).equals(",") ? m
+                            .group(1) : "");
 
-				Matcher m = p.matcher(beanName);
-				if (m.find()) {
-					beanName = m.replaceFirst(m.group(2).equals(",") ? m
-							.group(1) : "");
-
-					if (!names.contains(beanName)) {
-						names.add(beanName);
-					}
-				}
-
-			}
+                    if (!names.contains(beanName)) {
+                        names.add(beanName);
+                    }
+                }
+            }
 
 			for (String key : names) {
 				Configuration conf = new Configuration();

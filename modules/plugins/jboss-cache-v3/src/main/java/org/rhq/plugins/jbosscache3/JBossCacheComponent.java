@@ -90,12 +90,11 @@ public class JBossCacheComponent implements MeasurementFacet, OperationFacet,
 			}
 		}
 
-		log.info("Jboss Cache " + beanName + "was loaded.");
+		log.debug("JBoss Cache " + beanName + " was loaded.");
 	}
 
 	public void stop() {
-		// TODO Auto-generated method stub
-
+		return;
 	}
 
 	public AvailabilityType getAvailability() {
@@ -122,7 +121,7 @@ public class JBossCacheComponent implements MeasurementFacet, OperationFacet,
 		} catch (Exception e) {
 			if (log.isDebugEnabled())
 				log.debug("Can not determine availability for " + beanName
-						+ ": " + e.getMessage());
+						+ ": " + e);
 			return AvailabilityType.DOWN;
 		}
 	}
@@ -153,7 +152,7 @@ public class JBossCacheComponent implements MeasurementFacet, OperationFacet,
 						new PropertySimple("output", String.valueOf(obj)));
 			}
 		} catch (Exception e) {
-			log.error(" Failure to invoke operation " + name + " on bean "
+			log.error("Failure to invoke operation " + name + " on bean "
 					+ beanName, e);
 		}
 		return result;
@@ -183,11 +182,10 @@ public class JBossCacheComponent implements MeasurementFacet, OperationFacet,
 
 				}
 			} catch (Exception e) {
-				log.error(" Failure to collect measurements data from metric "
+				log.error(" Failure to collect measurement data for metric "
 						+ metricName + " from bean "
 						+ cacheBean.getBeanName().toString(), e);
 			}
-
 		}
 	}
 }

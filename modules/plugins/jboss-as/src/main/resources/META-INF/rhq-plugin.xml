@@ -271,7 +271,7 @@
 
         The issue here is that JBossAS changed the way it creates the MBean names of the deployed EJBs from the
         JNDI names / EJB names (this happened around version 4.0.3.sp1). Basically the <jndi-name>, or
-        <local-jndi-name> if <jnid-name> is not present, from jboss.xml is used.
+        <local-jndi-name> if <jndi-name> is not present, from jboss.xml is used.
 
         So the workaround is to set the <jndi-name> to the ejb-name in your application.
         As this probably breaks client code, you will want to setup a naming reference that restores the original
@@ -2556,7 +2556,7 @@
          <operation name="execute" displayName="Execute Script"
                     description="execute the script; NOTE: environment variables to be
                                  passed to the script can be configured via this Script
-                                 service's connection properties (under its Inventory tab)">
+                                 service's connection properties (under its Inventory&gt;Connection tab)">
             <parameters>
                <c:simple-property name="commandLineArguments" type="longString" required="false"
                                   description="the command-line arguments (if any) to pass to the script; each

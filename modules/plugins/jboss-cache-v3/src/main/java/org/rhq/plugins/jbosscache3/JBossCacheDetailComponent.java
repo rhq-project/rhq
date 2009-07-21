@@ -72,8 +72,7 @@ public class JBossCacheDetailComponent implements MeasurementFacet,
 	}
 
 	public void stop() {
-		// TODO Auto-generated method stub
-
+		return;
 	}
 
 	public AvailabilityType getAvailability() {
@@ -87,7 +86,7 @@ public class JBossCacheDetailComponent implements MeasurementFacet,
 		} catch (Exception e) {
 			if (log.isDebugEnabled())
 				log.debug("Can not determine availability for " + beanName
-						+ ": " + e.getMessage());
+						+ ": " + e);
 			return AvailabilityType.DOWN;
 		}
 	}
@@ -122,9 +121,9 @@ public class JBossCacheDetailComponent implements MeasurementFacet,
 							.toString()));
 				}
 			} catch (Exception e) {
-				log.error(" Failure to collect measurement data from metric "
+				log.error(" Failure to collect measurement data for metric "
 						+ metricName + " from bean "
-						+ detailComponent.getBeanName().toString(), e);
+						+ detailComponent.getBeanName(), e);
 			}
 
 		}
@@ -153,5 +152,4 @@ public class JBossCacheDetailComponent implements MeasurementFacet,
 		}
 		return result;
 	}
-
 }

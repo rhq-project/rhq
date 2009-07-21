@@ -10,18 +10,6 @@ public class ScriptUtil {
         this.scriptEngine = scriptEngine;
     }
 
-    public boolean isDefined(String identifier) {
-        return scriptEngine.get(identifier) != null;
-    }
-
-    public void sleep(long millis) {
-        try {
-            Thread.sleep(millis);
-        } catch (InterruptedException ie) {
-            throw new RuntimeException(ie);
-        }
-    }
-
     public void assertEqual(Object lefty, Object righty) {
         assertEqual(lefty, righty, null);
     }
@@ -50,4 +38,17 @@ public class ScriptUtil {
         }
     }
 
+    public void assertExists(String identifier) {
+        if (scriptEngine.get(identifier) == null) {
+            throw new AssertionError(identifier + " was not defined");
+        }
+    }
+
+    public void sleep(long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException ie) {
+            throw new RuntimeException(ie);
+        }
+    }
 }

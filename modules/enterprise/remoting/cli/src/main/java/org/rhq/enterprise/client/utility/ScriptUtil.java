@@ -31,7 +31,7 @@ public class ScriptUtil {
         }
         if (result == false) {
             if (errorMessage == null) {
-                throw new AssertionError();
+                throw new AssertionError("values were not equal");
             } else {
                 throw new AssertionError(errorMessage);
             }

@@ -143,15 +143,33 @@ public class AppServerUtils {
 
     /**
      * Returns the application server component proxy with given interface.
+     * <p>
+     * The proxy is created using the AS component classloader and therefore cannot be directly
+     * cast to the facetInterface, which is most probably loaded in a different classloader.
+     * <p>
+     * The return type is therefore an object and you have to use reflection to work with it.
      * 
      * @param <T> 
-     * @param facetInterface the proxy interface to hide the application server component behind
+     * @param facetInterface the proxy interface class to hide the application server component behind
      * @return the proxy
      * @throws Exception
      */
-    public static <T> T getASComponentProxy(Class<T> facetInterface) throws Exception {
-        return ComponentUtil.getComponent(getASResource().getId(), facetInterface, FacetLockType.WRITE,
-            DEPLOY_CONTENT_TIMEOUT, true, true);
+    public static <T> Object getASComponentProxy(Class<T> facetInterface) throws Exception {
+        ClassLoader currenContextClassLoader = Thread.currentThread().getContextClassLoader();
+        try {
+            Resource asResource = getASResource();
+            ClassLoader cl = PluginContainer.getInstance().getPluginComponentFactory().getResourceClassloader(
+                asResource);
+            Class<?> resourceSpecificFacetInterface = Class.forName(facetInterface.getName(), true, cl);
+
+            //use the resource specific classloader for the proxy creation
+            Thread.currentThread().setContextClassLoader(cl);
+            
+            return ComponentUtil.getComponent(asResource.getId(), resourceSpecificFacetInterface, FacetLockType.WRITE,
+                DEPLOY_CONTENT_TIMEOUT, true, true);
+        } finally {
+            Thread.currentThread().setContextClassLoader(currenContextClassLoader);
+        }
     }
 
     public static <T> T getRemoteObject(String jndiName, Class<T> clazz) throws Exception {
@@ -168,15 +186,10 @@ public class AppServerUtils {
         Properties env = new Properties();
         env.setProperty(Context.PROVIDER_URL, asConfiguration.getSimpleValue("namingURL", null));
 
-        String principal = asConfiguration.getSimpleValue("principal", null);
-
-        if (principal == null) {
-            env.setProperty(Context.INITIAL_CONTEXT_FACTORY, "org.jnp.interfaces.NamingContextFactory");
-        } else {
-            env.setProperty(Context.INITIAL_CONTEXT_FACTORY, "org.jboss.security.jndi.JndiLoginInitialContextFactory");
-            env.setProperty(Context.SECURITY_PRINCIPAL, principal);
-            env.setProperty(Context.SECURITY_CREDENTIALS, asConfiguration.getSimpleValue("credentials", null));
-        }
+        env.setProperty(Context.INITIAL_CONTEXT_FACTORY, "org.jnp.interfaces.NamingContextFactory");
+        env.setProperty("jnp.timeout", "60000");
+        env.setProperty("jnp.sotimeout", "60000");
+        env.setProperty("jnp.disableDiscovery", "true");
 
         return new InitialContext(env);
     }
@@ -191,29 +204,31 @@ public class AppServerUtils {
      * @throws Exception on error
      */
     public static Object invokeMethod(String methodName, Object instance, MethodArgDef... methodArgTypesAndValues)
-    throws Exception {
-    Class<?>[] argTypes = null;
-    Object[] argValues = null;
+        throws Exception {
+        Class<?>[] argTypes = null;
+        Object[] argValues = null;
 
-    if (methodArgTypesAndValues != null) {
-        argTypes = new Class<?>[methodArgTypesAndValues.length];
-        argValues = new Object[methodArgTypesAndValues.length];
+        if (methodArgTypesAndValues != null) {
+            argTypes = new Class<?>[methodArgTypesAndValues.length];
+            argValues = new Object[methodArgTypesAndValues.length];
 
-        for (int i = 0; i < methodArgTypesAndValues.length; ++i) {
-            argTypes[i] = methodArgTypesAndValues[i].getType();
-            argValues[i] = methodArgTypesAndValues[i].getValue();
+            for (int i = 0; i < methodArgTypesAndValues.length; ++i) {
+                argTypes[i] = methodArgTypesAndValues[i].getType();
+                argValues[i] = methodArgTypesAndValues[i].getValue();
+            }
         }
+
+        Method method = instance.getClass().getMethod(methodName, argTypes);
+
+        return method.invoke(instance, argValues);
     }
 
-    Method method = instance.getClass().getMethod(methodName, argTypes);
-
-    return method.invoke(instance, argValues);
-}
-    
     private static DeploymentManager getDeploymentManager() throws Exception {
-        ProfileServiceConnection profileServiceConnection = getASComponentProxy(ProfileServiceComponent.class)
-            .getConnection();
 
-        return profileServiceConnection.getDeploymentManager();
+        Object asComponent = getASComponentProxy(ProfileServiceComponent.class);
+
+        Object connection = invokeMethod("getConnection", asComponent, (MethodArgDef[])null);
+        //I wonder why this cast works... where does the DeploymentManager get loaded from in plugin and in here? 
+        return (DeploymentManager) invokeMethod("getDeploymentManager", connection, (MethodArgDef[])null);
     }
 }

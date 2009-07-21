@@ -110,6 +110,11 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+          <groupId>org.jboss.javaee</groupId>
+          <artifactId>jboss-javaee</artifactId>
+          <scope>test</scope>
+        </dependency>
 
         <!-- Uncomment the below deps if you want to pull down the jboss-profileservice
              and jboss-system sources jars for debugging purposes. You will also need

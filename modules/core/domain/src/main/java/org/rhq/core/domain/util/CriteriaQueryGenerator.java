@@ -148,7 +148,7 @@ public final class CriteriaQueryGenerator {
             } else {
                 this.authorizationJoinFragment = "" //
                     + "JOIN " + alias + "." + fragment + " authRes " + NL // 
-                    + "JOIN authRes.implicitGroup authGroup " + NL //
+                    + "JOIN authRes.implicitGroups authGroup " + NL //
                     + "JOIN authGroup.roles authRole " + NL //
                     + "JOIN authRole.subjects authSubject " + NL;
             }
@@ -262,6 +262,7 @@ public final class CriteriaQueryGenerator {
             }
         }
         results.append(NL);
+        //System.out.println(results);
         return results.toString();
     }
 

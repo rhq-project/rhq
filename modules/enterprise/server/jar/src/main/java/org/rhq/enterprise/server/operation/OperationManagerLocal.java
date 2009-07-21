@@ -30,6 +30,9 @@ import org.quartz.Trigger;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.composite.IntegerOptionItem;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.criteria.GroupOperationHistoryCriteria;
+import org.rhq.core.domain.criteria.OperationDefinitionCriteria;
+import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.operation.GroupOperationHistory;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.OperationHistory;
@@ -611,4 +614,11 @@ public interface OperationManagerLocal {
      */
     void unscheduleGroupOperation(Subject subject, String jobId, int resourceGroupId) throws UnscheduleException;
 
+    List<OperationDefinition> findOperationDefinitionsByCriteria(Subject subject, OperationDefinitionCriteria criteria);
+
+    PageList<ResourceOperationHistory> findResourceOperationHistoriesByCriteria(Subject subject,
+        ResourceOperationHistoryCriteria criteria);
+
+    PageList<GroupOperationHistory> findGroupOperationHistoriesByCriteria(Subject subject,
+        GroupOperationHistoryCriteria criteria);
 }

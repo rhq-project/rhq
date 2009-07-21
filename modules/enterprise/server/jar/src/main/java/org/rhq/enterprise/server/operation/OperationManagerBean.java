@@ -47,6 +47,9 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.composite.IntegerOptionItem;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.criteria.GroupOperationHistoryCriteria;
+import org.rhq.core.domain.criteria.OperationDefinitionCriteria;
+import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.operation.GroupOperationHistory;
 import org.rhq.core.domain.operation.GroupOperationScheduleEntity;
 import org.rhq.core.domain.operation.HistoryJobId;
@@ -65,6 +68,7 @@ import org.rhq.core.domain.operation.composite.ResourceOperationScheduleComposit
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.util.CriteriaQueryGenerator;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
@@ -1004,7 +1008,8 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     }
 
     @SuppressWarnings("unchecked")
-    public List<OperationDefinition> findSupportedResourceOperations(Subject subject, int resourceId, boolean eagerLoaded) {
+    public List<OperationDefinition> findSupportedResourceOperations(Subject subject, int resourceId,
+        boolean eagerLoaded) {
         if (!authorizationManager.canViewResource(subject, resourceId)) {
             throw new PermissionException("User [" + subject + "] does not have permission to view resource ["
                 + resourceId + "]");
@@ -1759,7 +1764,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
 
     /**
      * Returns a managed entity of the scheduled job.
-     *
+     *+
      * @param  jobId
      *
      * @return a managed entity, attached to this bean's entity manager
@@ -1817,5 +1822,58 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
             throw new FetchException(e);
         }
 
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public List<OperationDefinition> findOperationDefinitionsByCriteria(Subject subject,
+        OperationDefinitionCriteria criteria) {
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+
+        Query query = generator.getQuery(entityManager);
+        Query countQuery = generator.getCountQuery(entityManager);
+
+        long count = (Long) countQuery.getSingleResult();
+        List<OperationDefinition> results = query.getResultList();
+
+        return new PageList<OperationDefinition>(results, (int) count, criteria.getPageControl());
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public PageList<ResourceOperationHistory> findResourceOperationHistoriesByCriteria(Subject subject,
+        ResourceOperationHistoryCriteria criteria) {
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        if (authorizationManager.isInventoryManager(subject) == false) {
+            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE, subject
+                .getId());
+        }
+
+        Query query = generator.getQuery(entityManager);
+        Query countQuery = generator.getCountQuery(entityManager);
+
+        long count = (Long) countQuery.getSingleResult();
+        List<ResourceOperationHistory> results = query.getResultList();
+
+        return new PageList<ResourceOperationHistory>(results, (int) count, criteria.getPageControl());
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public PageList<GroupOperationHistory> findGroupOperationHistoriesByCriteria(Subject subject,
+        GroupOperationHistoryCriteria criteria) {
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        if (authorizationManager.isInventoryManager(subject) == false) {
+            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.GROUP, subject
+                .getId());
+        }
+
+        Query query = generator.getQuery(entityManager);
+        Query countQuery = generator.getCountQuery(entityManager);
+
+        long count = (Long) countQuery.getSingleResult();
+        List<GroupOperationHistory> results = query.getResultList();
+
+        return new PageList<GroupOperationHistory>(results, (int) count, criteria.getPageControl());
     }
 }

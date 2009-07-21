@@ -1,29 +1,30 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.domain.operation;
 
 import java.io.Serializable;
 import java.util.Date;
+
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorColumn;
 import javax.persistence.Entity;
@@ -50,47 +51,63 @@ import javax.persistence.Table;
 @IdClass(ScheduleJobId.class)
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @NamedQueries( {
-    @NamedQuery(name = OperationScheduleEntity.QUERY_FIND_BY_JOB_ID, query = "SELECT s "
-        + "  FROM OperationScheduleEntity s" + " WHERE s.jobName = :jobName " + "   AND s.jobGroup = :jobGroup "),
-    @NamedQuery(name = OperationScheduleEntity.QUERY_GET_SCHEDULE_RESOURCE_ADMIN, query = "SELECT DISTINCT new org.rhq.core.domain.operation.composite.ResourceOperationScheduleComposite( "
-        + "    ro.jobName, "
-        + "    ro.jobGroup, "
-        + "    '', "
-        + "    ro.nextFireTime, "
-        + "    ro.resource.id, "
-        + "    ro.resource.name, "
-        + "    ro.resource.resourceType.name) "
-        + " FROM ResourceOperationScheduleEntity ro " + " WHERE ro.nextFireTime IS NOT NULL "),
-    @NamedQuery(name = OperationScheduleEntity.QUERY_GET_SCHEDULE_RESOURCE, query = "SELECT DISTINCT new org.rhq.core.domain.operation.composite.ResourceOperationScheduleComposite( "
-        + "    ro.jobName, "
-        + "    ro.jobGroup, "
-        + "    '', "
-        + "    ro.nextFireTime, "
-        + "    ro.resource.id, "
-        + "    ro.resource.name, "
-        + "    ro.resource.resourceType.name) "
-        + " FROM ResourceOperationScheduleEntity ro JOIN ro.resource.implicitGroups g JOIN g.roles r JOIN r.subjects s "
-        + " WHERE ro.nextFireTime IS NOT NULL AND s = :subject "),
-    @NamedQuery(name = OperationScheduleEntity.QUERY_GET_SCHEDULE_GROUP_ADMIN, query = "SELECT DISTINCT new org.rhq.core.domain.operation.composite.GroupOperationScheduleComposite( "
-        + "    go.jobName, "
-        + "    go.jobGroup, "
-        + "    '', "
-        + "    go.nextFireTime, "
-        + "    go.group.id, "
-        + "    go.group.name, "
-        + "    go.group.resourceType.name) "
-        + " FROM GroupOperationScheduleEntity go "
-        + " WHERE go.nextFireTime IS NOT NULL "),
-    @NamedQuery(name = OperationScheduleEntity.QUERY_GET_SCHEDULE_GROUP, query = "SELECT DISTINCT new org.rhq.core.domain.operation.composite.GroupOperationScheduleComposite( "
-        + "    go.jobName, "
-        + "    go.jobGroup, "
-        + "    '', "
-        + "    go.nextFireTime, "
-        + "    go.group.id, "
-        + "    go.group.name, "
-        + "    go.group.resourceType.name) "
-        + " FROM GroupOperationScheduleEntity go JOIN go.group g JOIN g.roles r JOIN r.subjects s "
-        + " WHERE go.nextFireTime IS NOT NULL AND s = :subject ") })
+    @NamedQuery(name = OperationScheduleEntity.QUERY_FIND_BY_JOB_ID, query = "" //
+        + "SELECT s " //
+        + "  FROM OperationScheduleEntity s " //
+        + " WHERE s.jobName = :jobName " //
+        + "   AND s.jobGroup = :jobGroup "),
+    @NamedQuery(name = OperationScheduleEntity.QUERY_GET_SCHEDULE_RESOURCE_ADMIN, query = "" //
+        + "SELECT DISTINCT new org.rhq.core.domain.operation.composite.ResourceOperationScheduleComposite( "
+        + "    ro.jobName, " //
+        + "    ro.jobGroup, " //
+        + "    '', " //
+        + "    ro.nextFireTime, " //
+        + "    ro.resource.id, " //
+        + "    ro.resource.name, " //
+        + "    ro.resource.resourceType.name) " //
+        + "  FROM ResourceOperationScheduleEntity ro " //
+        + " WHERE ro.nextFireTime IS NOT NULL "), //
+    @NamedQuery(name = OperationScheduleEntity.QUERY_GET_SCHEDULE_RESOURCE, query = "" //
+        + "SELECT DISTINCT new org.rhq.core.domain.operation.composite.ResourceOperationScheduleComposite( "
+        + "    ro.jobName, " //
+        + "    ro.jobGroup, " //
+        + "    '', " //
+        + "    ro.nextFireTime, " //
+        + "    ro.resource.id, " //
+        + "    ro.resource.name, " //
+        + "    ro.resource.resourceType.name) " //
+        + "  FROM ResourceOperationScheduleEntity ro " //
+        + "  JOIN ro.resource.implicitGroups g " //
+        + "  JOIN g.roles r " //
+        + "  JOIN r.subjects s " //
+        + " WHERE ro.nextFireTime IS NOT NULL " //
+        + "   AND s = :subject "), //
+    @NamedQuery(name = OperationScheduleEntity.QUERY_GET_SCHEDULE_GROUP_ADMIN, query = "" //
+        + "SELECT DISTINCT new org.rhq.core.domain.operation.composite.GroupOperationScheduleComposite( "
+        + "    go.jobName, " //
+        + "    go.jobGroup, " //
+        + "    '', " //
+        + "    go.nextFireTime, " //
+        + "    go.group.id, " //
+        + "    go.group.name, " //
+        + "    go.group.resourceType.name) " //
+        + "  FROM GroupOperationScheduleEntity go " //
+        + " WHERE go.nextFireTime IS NOT NULL "), //
+    @NamedQuery(name = OperationScheduleEntity.QUERY_GET_SCHEDULE_GROUP, query = "" //
+        + "SELECT DISTINCT new org.rhq.core.domain.operation.composite.GroupOperationScheduleComposite( "
+        + "    go.jobName, " //
+        + "    go.jobGroup, " //
+        + "    '', " //
+        + "    go.nextFireTime, " //
+        + "    go.group.id, " //
+        + "    go.group.name, " //
+        + "    go.group.resourceType.name) " //
+        + "  FROM GroupOperationScheduleEntity go " //
+        + "  JOIN go.group g " //
+        + "  JOIN g.roles r " //
+        + "  JOIN r.subjects s " //
+        + " WHERE go.nextFireTime IS NOT NULL " //
+        + "   AND s = :subject ") })
 @Table(name = "RHQ_OPERATION_SCHEDULE")
 public abstract class OperationScheduleEntity implements Serializable {
     public static final String QUERY_FIND_BY_JOB_ID = "OperationScheduleEntity.findByJobId";

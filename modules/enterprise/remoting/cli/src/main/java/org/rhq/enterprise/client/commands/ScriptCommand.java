@@ -26,6 +26,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.Reader;
 import java.util.List;
+import java.util.Arrays;
 
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
@@ -60,6 +61,11 @@ public class ScriptCommand implements ClientCommand {
     private Controller controller;
 
     private final Log log = LogFactory.getLog(ScriptCommand.class);
+
+    private StringBuilder script = new StringBuilder();
+
+    private boolean isMultilineScript = false;
+    private boolean inMultilineScript = false;
 
     public ScriptCommand() {
         sem = new ScriptEngineManager();
@@ -126,14 +132,32 @@ public class ScriptCommand implements ClientCommand {
             return true;
         }
 
-        StringBuilder script = new StringBuilder();
+
+        isMultilineScript = "\\".equals(args[args.length - 1]);
+        inMultilineScript = inMultilineScript || isMultilineScript;
+
+        if (!isMultilineScript && !inMultilineScript) {
+            script = new StringBuilder();
+        }
+
+        if (isMultilineScript) {
+            args = Arrays.copyOfRange(args, 0, args.length - 1);
+        }
+
         for (int i = ("exec".equals(args[0]) ? 1 : 0); i < args.length; i++) {
             script.append(args[i]);
             script.append(" ");
         }
+
+        if (isMultilineScript) {
+            return true;
+        }
+
         try {
 
             Object result = jsEngine.eval(script.toString());
+            inMultilineScript = false;
+            script = new StringBuilder();
             if (result != null) {
                 //                client.getPrintWriter().print("result: ");
                 new TabularWriter(client.getPrintWriter()).print(result);
@@ -285,4 +309,5 @@ public class ScriptCommand implements ClientCommand {
     public ScriptContext getContext() {
         return jsEngine.getContext();
     }
+
 }

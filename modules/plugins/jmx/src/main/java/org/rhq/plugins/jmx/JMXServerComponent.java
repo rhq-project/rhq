@@ -23,9 +23,7 @@
 package org.rhq.plugins.jmx;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -240,52 +238,24 @@ public class JMXServerComponent implements JMXComponent {
     }
 
     private void addAdditionalJarsToConnectionSettings(ConnectionSettings settings) {
-        // get the plugin config setting that contains comma-separated list of files/dirs to additional jars
-        // if no additional classpath entries are specified, we'll return immediately and not do anything to settings
-        Configuration pc = context.getPluginConfiguration();
-        PropertySimple prop = pc.getSimple(JMXDiscoveryComponent.ADDITIONAL_CLASSPATH_ENTRIES);
-        if (prop == null || prop.getStringValue() == null || prop.getStringValue().trim().length() == 0) {
-            return;
-        }
-        String[] paths = prop.getStringValue().trim().split(",");
-        if (paths == null || paths.length == 0) {
-            return;
+        // get the additional jars from the config
+        Configuration pluginConfiguration = getResourceContext().getPluginConfiguration();
+        List<File> additionalEntries = JMXDiscoveryComponent.getAdditionalJarsFromConfig(pluginConfiguration);
+        if (additionalEntries == null || additionalEntries.size() == 0) {
+            return; // nothing to do, there are no additional entries to add
         }
 
-        // get the current set of class path entries - we are going to add to these
-        List<File> entries = settings.getClassPathEntries();
-        if (entries == null) {
-            entries = new ArrayList<File>();
+        // get the setting's current list of classpath entries - we are going to add to these
+        List<File> settingsEntries = settings.getClassPathEntries();
+        if (settingsEntries == null) {
+            settingsEntries = new ArrayList<File>();
         }
 
-        // Get all additional classpath entries which can be listed as jar filenames or directories.
-        // If a directory has "/*.jar" at the end, all jar files found in that directory will be added
-        // as class path entries.
-        final class JarFilenameFilter implements FilenameFilter {
-            public boolean accept(File dir, String name) {
-                return name.endsWith(".jar");
-            }
-        }
-
-        for (String path : paths) {
-            path = path.trim();
-            if (path.length() > 0) {
-                if (path.endsWith("*.jar")) {
-                    path = path.substring(0, path.length() - 5);
-                    File dir = new File(path);
-                    File[] jars = dir.listFiles(new JarFilenameFilter());
-                    if (jars != null && jars.length > 0) {
-                        entries.addAll(Arrays.asList(jars));
-                    }
-                } else {
-                    File pathFile = new File(path);
-                    entries.add(pathFile);
-                }
-            }
-        }
+        // append the additional entries to the end of the setting's current entries
+        settingsEntries.addAll(additionalEntries);
 
         // now that we've appended our additional jars, tell the connection settings about the new list
-        settings.setClassPathEntries(entries);
+        settings.setClassPathEntries(settingsEntries);
 
         return;
     }

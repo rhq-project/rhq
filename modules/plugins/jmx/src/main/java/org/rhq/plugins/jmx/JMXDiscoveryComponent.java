@@ -22,6 +22,11 @@
  */
 package org.rhq.plugins.jmx;
 
+import java.io.File;
+import java.io.FilenameFilter;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -42,7 +47,7 @@ import org.rhq.core.system.ProcessInfo;
  *
  * @author Greg Hinkle
  */
-public class JMXDiscoveryComponent implements ResourceDiscoveryComponent {
+public class JMXDiscoveryComponent implements ResourceDiscoveryComponent { //, ClassLoaderFacet {
     private static final Log log = LogFactory.getLog(JMXDiscoveryComponent.class);
 
     public static final String VMID_CONFIG_PROPERTY = "vmid";
@@ -156,7 +161,8 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent {
             String resourceKey = c.getSimpleValue(CONNECTOR_ADDRESS_CONFIG_PROPERTY, null);
             String connectionType = c.getSimpleValue(CONNECTION_TYPE, null);
 
-            DiscoveredResourceDetails s = new DiscoveredResourceDetails(context.getResourceType(), resourceKey, "Java VM", "?", connectionType + " [" + resourceKey + "]", null, null);
+            DiscoveredResourceDetails s = new DiscoveredResourceDetails(context.getResourceType(), resourceKey,
+                "Java VM", "?", connectionType + " [" + resourceKey + "]", null, null);
 
             s.setPluginConfiguration(c);
 
@@ -164,6 +170,32 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent {
         }
 
         return found;
+    }
+
+    // For now, this method is not used. This method is the ClassLoaderFacet method, but I commented
+    // out the fact that this class implements that interface. As of today, 7/20/2009, I'm not sure we really
+    // need to implement the classloader facet since EMS's ability to use additionalClasspathEntries in its
+    // classloaders is all we need today to support JMX Server resource types. But I have a feeling it may be
+    // necessary in the future to allow plugins to extend the JMX Server resource type and have it specify
+    // "classLoaderType='instance'" in its plugin descriptor - if that use-case is ever needed, we'll want to
+    // have this class implement ClassLoaderFacet which then brings this method in use (nothing would need to
+    // be changed other than to add "implements ClassLoaderFacet" to the class definition).
+    // For now, since we don't want the additional overhead of calling into this method when we currently have
+    // no need for it, we do not implement the ClassLoaderFacet.
+    public List<URL> getAdditionalClasspathUrls(ResourceDiscoveryContext context, DiscoveredResourceDetails details)
+        throws Exception {
+
+        List<File> jars = getAdditionalJarsFromConfig(details.getPluginConfiguration());
+        if (jars == null || jars.size() == 0) {
+            return null;
+        }
+
+        List<URL> urls = new ArrayList<URL>(jars.size());
+        for (File jar : jars) {
+            urls.add(jar.toURI().toURL());
+        }
+
+        return urls;
     }
 
     protected DiscoveredResourceDetails discoverProcess(ResourceDiscoveryContext context, ProcessInfo process) {
@@ -202,13 +234,70 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent {
             name += " (" + port + ")";
 
             Configuration config = context.getDefaultPluginConfiguration();
-            config.put(new PropertySimple(CONNECTION_TYPE, "org.mc4j.ems.connection.support.metadata.J2SE5ConnectionTypeDescriptor"));
-            config.put(new PropertySimple(CONNECTOR_ADDRESS_CONFIG_PROPERTY, "service:jmx:rmi:///jndi/rmi://localhost:" + port + "/jmxrmi"));
+            config.put(new PropertySimple(CONNECTION_TYPE,
+                "org.mc4j.ems.connection.support.metadata.J2SE5ConnectionTypeDescriptor"));
+            config.put(new PropertySimple(CONNECTOR_ADDRESS_CONFIG_PROPERTY, "service:jmx:rmi:///jndi/rmi://localhost:"
+                + port + "/jmxrmi"));
             // config.put(new PropertySimple(INSTALL_URI, process.getCurrentWorkingDirectory()));
 
-            details = new DiscoveredResourceDetails(context.getResourceType(), port, name, null, "Standalone JVM Process", config, null);
+            details = new DiscoveredResourceDetails(context.getResourceType(), port, name, null,
+                "Standalone JVM Process", config, null);
         }
 
         return details;
+    }
+
+    /**
+     * Examines the plugin configuration and if it defines additional classpath entries, this
+     * will return a list of files that point to all the jars that need to be added to a classloader
+     * to support the managed JMX resource.
+     * 
+     * Note: this is package static scoped so the resource component can use this method.
+     * 
+     * @param pluginConfiguration
+     * 
+     * @return list of files pointing to additional jars; will be empty if no additional jars are to be added
+     */
+    static List<File> getAdditionalJarsFromConfig(Configuration pluginConfiguration) {
+        List<File> jarFiles = new ArrayList<File>();
+
+        // get the plugin config setting that contains comma-separated list of files/dirs to additional jars
+        // if no additional classpath entries are specified, we'll return an empty list
+        PropertySimple prop = pluginConfiguration.getSimple(JMXDiscoveryComponent.ADDITIONAL_CLASSPATH_ENTRIES);
+        if (prop == null || prop.getStringValue() == null || prop.getStringValue().trim().length() == 0) {
+            return jarFiles;
+        }
+        String[] paths = prop.getStringValue().trim().split(",");
+        if (paths == null || paths.length == 0) {
+            return jarFiles;
+        }
+
+        // Get all additional classpath entries which can be listed as jar filenames or directories.
+        // If a directory has "/*.jar" at the end, all jar files found in that directory will be added
+        // as class path entries.
+        final class JarFilenameFilter implements FilenameFilter {
+            public boolean accept(File dir, String name) {
+                return name.endsWith(".jar");
+            }
+        }
+
+        for (String path : paths) {
+            path = path.trim();
+            if (path.length() > 0) {
+                if (path.endsWith("*.jar")) {
+                    path = path.substring(0, path.length() - 5);
+                    File dir = new File(path);
+                    File[] jars = dir.listFiles(new JarFilenameFilter());
+                    if (jars != null && jars.length > 0) {
+                        jarFiles.addAll(Arrays.asList(jars));
+                    }
+                } else {
+                    File pathFile = new File(path);
+                    jarFiles.add(pathFile);
+                }
+            }
+        }
+
+        return jarFiles;
     }
 }

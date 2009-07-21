@@ -34,11 +34,11 @@
         <version><#if props.rhqVersion??>${props.rhqVersion}<#else >1.3.0-SNAPSHOT</#if></version><!-- TODO adjust RHQ version -->
     </parent>
 
-    <groupId>${props.packagePrefix}</groupId>
+    <groupId>org.rhq</groupId>
     <artifactId>${props.name}-plugin</artifactId>
     <packaging>jar</packaging>
 
-    <name>${props.name} Plugin</name>
+    <name>RHQ ${props.name} Plugin</name>
     <#if props.description??>
     <description>${props.description}</description>
     </#if>

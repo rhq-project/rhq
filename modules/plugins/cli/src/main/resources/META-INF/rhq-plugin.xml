@@ -1,24 +1,25 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
-<plugin name="CLI"
-        displayName="Command Line Interface"
-        package="org.rhq.plugins.cli"
+<plugin name="Script"
+        displayName="Script"
+        description="Manages resources that have command line executables or scripts as their management interfaces"
+        package="org.rhq.plugins.script"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
 
 
-   <server name="CLI Server"
-           discovery="CliDiscoveryComponent"
-           class="CliServerComponent"
-           description="A resource with a command line as its management interface"
+   <server name="Script Server"
+           discovery="ScriptDiscoveryComponent"
+           class="ScriptServerComponent"
+           description="A resource with a command line executable or script as its management interface"
            supportsManualAdd="true">
 
       <plugin-configuration>
-         <c:group name="cliEnvironment" displayName="Command Line Executable Runtime Environment">
-            <c:simple-property name="executable" required="true" description="The full path to the command line executable" />
+         <c:group name="executableEnvironment" displayName="Executable Runtime Environment">
+            <c:simple-property name="executable" required="true" description="The full path to the command line executable or script" />
             <c:simple-property name="workingDirectory" required="false" description="When the executable is invoked, this will be its working directory." />
-            <c:list-property name="environmentVariables" required="false" description="Environment variables that are set when executing the CLI process">
+            <c:list-property name="environmentVariables" required="false" description="Environment variables that are set when executing the executable">
                <c:map-property name="environmentVariable">
                   <c:simple-property name="name" type="string" required="true" summary="true" description="Name of the environment variable"/>
                   <c:simple-property name="value" type="string" required="true" summary="true" description="Value of the environment variable" />
@@ -26,20 +27,20 @@
             </c:list-property>
          </c:group>
          <c:group name="avail" displayName="Availability Definition">
-            <c:simple-property name="availabilityExecuteCheck" required="false" type="boolean" description="If specified and true, the ability to successfully execute the CLI executable can determine whether or not the managed resource is considered up and available. If you set this to true, you normally do not set the availability regex settings in order to allow availability to be determined based solely on the successful execution, regardless of the exit code or output. If this is false, setting one of the avail regex settings will override it as if it were true."/>
+            <c:simple-property name="availabilityExecuteCheck" required="false" type="boolean" description="If specified and true, the ability to successfully execute the executable can determine whether or not the managed resource is considered up and available. If you set this to true, you normally do not set the availability regex settings in order to allow availability to be determined based solely on the successful execution, regardless of the exit code or output. If this is false, setting one of the avail regex settings will override it as if it were true."/>
             <c:simple-property name="availabilityExitCodeRegex" required="false" description="If specified, the executable must return an exit code that matches this regular expression if the managed resource is to be considered up and available"/>
             <c:simple-property name="availabilityOutputRegex" required="false" description="If specified, the executable must output text that matches this regular expression if the managed resource is to be considered up and available"/>
-            <c:simple-property name="availabilityArguments" required="false" description="If the CLI needs to be executed in order to determine availability, these are the arguments that will be passed to the executable. If you do not specify the regex settings and you set the execute check setting to false, the CLI will not be executed and these arguments will not be used - in this case, availability will be determined by the mere existence of the executable binary."/>
+            <c:simple-property name="availabilityArguments" required="false" description="If the executable needs to be executed in order to determine availability, these are the arguments that will be passed to the executable. If you do not specify the regex settings and you set the execute check setting to false, the executable will not be executed and these arguments will not be used - in this case, availability will be determined by the mere existence of the executable file."/>
          </c:group>
          <c:group name="version" displayName="Version Definition">
-            <c:simple-property name="versionArguments" required="false" description="The arguments to pass to the CLI that will help determine the version of the managed resource"/>
-            <c:simple-property name="versionRegex" required="false" description="The regex that can pick out the version from the CLI output. If the regex has a captured group, its matched content will be used as the version. If there is no captured group, the entire output will be used as the version."/>
-            <c:simple-property name="fixedVersion" required="false" description="If specified, this will be the version of the managed resource - the CLI will not be invoked to determine it." />
+            <c:simple-property name="versionArguments" required="false" description="The arguments to pass to the executable that will help determine the version of the managed resource"/>
+            <c:simple-property name="versionRegex" required="false" description="The regex that can pick out the version from the executable output. If the regex has a captured group, its matched content will be used as the version. If there is no captured group, the entire output will be used as the version."/>
+            <c:simple-property name="fixedVersion" required="false" description="If specified, this will be the version of the managed resource - the executable will not be invoked to determine it." />
          </c:group>
          <c:group name="description" displayName="Description Definition">
-            <c:simple-property name="descriptionArguments" required="false" description="The arguments to pass to the CLI that will help determine the managed resource description. This can be arguments to enable verbose version output."/>
-            <c:simple-property name="descriptionRegex" required="false" description="The regex that can pick out the description from the CLI output. If the regex has a captured group, its matched content will be used as the description. If there is no captured group, the entire output will be used as the description."/>
-            <c:simple-property name="fixedDescription" required="false" description="If specified, this will be the description of the managed resource - the CLI will not be invoked to determine it." />
+            <c:simple-property name="descriptionArguments" required="false" description="The arguments to pass to the executable that will help determine the managed resource description. This can be arguments to enable verbose version output."/>
+            <c:simple-property name="descriptionRegex" required="false" description="The regex that can pick out the description from the executable output. If the regex has a captured group, its matched content will be used as the description. If there is no captured group, the entire output will be used as the description."/>
+            <c:simple-property name="fixedDescription" required="false" description="If specified, this will be the description of the managed resource - the executable will not be invoked to determine it." />
          </c:group>
       </plugin-configuration>
 
@@ -53,7 +54,7 @@
       -->
 
       <operation name="execute"
-                 description="Executes the CLI executable with a set of arguments and returns the output and exit code.">
+                 description="Executes the executable with a set of arguments and returns the output and exit code.">
          <parameters>
                <c:simple-property name="arguments" required="false" description="The arguments to pass to the executable." />
          </parameters>

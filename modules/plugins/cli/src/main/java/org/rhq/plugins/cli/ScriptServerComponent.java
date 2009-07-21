@@ -52,13 +52,14 @@ import org.rhq.core.system.SystemInfo;
 import org.rhq.core.util.exception.ThrowableUtil;
 
 /**
- * Represents a managed resource whose management interface is a command line executable.
+ * Represents a managed resource whose management interface is a command line executable or script,
+ * sometimes referred to as the "CLI" (command line interface).
  *
  * @author John Mazzitelli
  */
-public class CliServerComponent implements ResourceComponent, MeasurementFacet, OperationFacet {
+public class ScriptServerComponent implements ResourceComponent, MeasurementFacet, OperationFacet {
 
-    private final Log log = LogFactory.getLog(CliServerComponent.class);
+    private final Log log = LogFactory.getLog(ScriptServerComponent.class);
 
     private static final long MAX_WAIT_TIME = 3600000L;
 
@@ -91,7 +92,7 @@ public class CliServerComponent implements ResourceComponent, MeasurementFacet, 
 
     public void start(ResourceContext context) {
         if (log.isDebugEnabled()) {
-            log.debug("Cli Server started: " + context.getPluginConfiguration());
+            log.debug("Script Server started: " + context.getPluginConfiguration());
         }
 
         this.resourceContext = context;
@@ -99,12 +100,12 @@ public class CliServerComponent implements ResourceComponent, MeasurementFacet, 
 
     public void stop() {
         if (log.isDebugEnabled()) {
-            log.debug("Cli Server stopped: " + this.resourceContext.getPluginConfiguration());
+            log.debug("Script Server stopped: " + this.resourceContext.getPluginConfiguration());
         }
     }
 
     public AvailabilityType getAvailability() {
-        boolean result = checkCliAvailability();
+        boolean result = checkAvailability();
         return result ? AvailabilityType.UP : AvailabilityType.DOWN;
     }
 
@@ -160,7 +161,7 @@ public class CliServerComponent implements ResourceComponent, MeasurementFacet, 
                 ProcessExecutionResults exeResults = exeResultsCache.get((arguments == null) ? "" : arguments);
                 if (exeResults == null) {
                     boolean captureOutput = !valueIsExitCode; // don't need output if we need to just check exit code
-                    exeResults = executeCliExecutable(arguments, MAX_WAIT_TIME, captureOutput);
+                    exeResults = executeExecutable(arguments, MAX_WAIT_TIME, captureOutput);
                     exeResultsCache.put((arguments == null) ? "" : arguments, exeResults);
                 }
 
@@ -288,7 +289,7 @@ public class CliServerComponent implements ResourceComponent, MeasurementFacet, 
 
         String arguments = configuration.getSimpleValue(OPERATION_PARAM_ARGUMENTS, null);
 
-        ProcessExecutionResults exeResults = executeCliExecutable(arguments, MAX_WAIT_TIME, true);
+        ProcessExecutionResults exeResults = executeExecutable(arguments, MAX_WAIT_TIME, true);
         Integer exitcode = exeResults.getExitCode();
         String output = exeResults.getCapturedOutput();
         Throwable error = exeResults.getError();
@@ -327,12 +328,12 @@ public class CliServerComponent implements ResourceComponent, MeasurementFacet, 
      *
      * @throws InvalidPluginConfigurationException
      */
-    protected ProcessExecutionResults executeCliExecutable(String args, long wait, boolean captureOutput)
+    protected ProcessExecutionResults executeExecutable(String args, long wait, boolean captureOutput)
         throws InvalidPluginConfigurationException {
 
         SystemInfo sysInfo = this.resourceContext.getSystemInformation();
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
-        ProcessExecutionResults results = executeCliExecutable(sysInfo, pluginConfig, args, wait, captureOutput);
+        ProcessExecutionResults results = executeExecutable(sysInfo, pluginConfig, args, wait, captureOutput);
 
         if (log.isDebugEnabled()) {
             if (results != null) {
@@ -347,7 +348,7 @@ public class CliServerComponent implements ResourceComponent, MeasurementFacet, 
     }
 
     // This is protected static so the discovery component can use it.
-    protected static ProcessExecutionResults executeCliExecutable(SystemInfo sysInfo, Configuration pluginConfig,
+    protected static ProcessExecutionResults executeExecutable(SystemInfo sysInfo, Configuration pluginConfig,
         String args, long wait, boolean captureOutput) throws InvalidPluginConfigurationException {
 
         ProcessExecution processExecution = getProcessExecutionInfo(pluginConfig);
@@ -363,7 +364,7 @@ public class CliServerComponent implements ResourceComponent, MeasurementFacet, 
         return results;
     }
 
-    private boolean checkCliAvailability() throws InvalidPluginConfigurationException {
+    private boolean checkAvailability() throws InvalidPluginConfigurationException {
 
         String executable;
         boolean availExecuteCheck = false;
@@ -415,7 +416,7 @@ public class CliServerComponent implements ResourceComponent, MeasurementFacet, 
 
         // if we need to check the exit code or output, execute the CLI now
         if (availExecuteCheck || availExitCodeRegex != null || availOutputRegex != null) {
-            ProcessExecutionResults results = executeCliExecutable(availArgs, 3000L, (availOutputRegex != null));
+            ProcessExecutionResults results = executeExecutable(availArgs, 3000L, (availOutputRegex != null));
 
             // if we get some error while trying to run the executable, immediately consider the resource down
             if (results.getError() != null) {

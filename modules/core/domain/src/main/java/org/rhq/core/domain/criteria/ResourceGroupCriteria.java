@@ -22,6 +22,7 @@ public class ResourceGroupCriteria extends Criteria {
     private boolean fetchConfigurationUpdates;
     private boolean fetchGroupDefinition;
     private boolean fetchResourceType;
+    private boolean fetchRoles;
 
     private PageOrdering sortName;
     private PageOrdering sortResourceTypeName; // requires overrides
@@ -104,6 +105,10 @@ public class ResourceGroupCriteria extends Criteria {
 
     public void fetchResourceType(boolean fetchResourceType) {
         this.fetchResourceType = fetchResourceType;
+    }
+
+    public void fetchRoles(boolean fetchRoles) {
+        this.fetchRoles = fetchRoles;
     }
 
     public void addSortName(PageOrdering sortName) {

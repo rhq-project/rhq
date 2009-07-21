@@ -239,7 +239,7 @@
 
                 <artifactItem>
                   <groupId>org.rhq</groupId>
-                  <artifactId>rhq-cli-plugin</artifactId>
+                  <artifactId>rhq-augeas-plugin</artifactId>
                   <version>${project.version}</version>
                 </artifactItem>
 
@@ -254,14 +254,6 @@
                   <artifactId>rhq-grub-plugin</artifactId>
                   <version>${project.version}</version>
                 </artifactItem>
-
-<!--  In Development
-                <artifactItem>
-                  <groupId>org.rhq</groupId>
-                  <artifactId>rhq-hardware-plugin</artifactId>
-                  <version>${project.version}</version>
-                </artifactItem>
--->
 
                 <artifactItem>
                   <groupId>org.rhq</groupId>
@@ -281,7 +273,7 @@
                   <version>${project.version}</version>
                 </artifactItem>
 
-<!-- comment out until errors from RHQ-1226 are fixed
+<!-- TODO: Uncomment once errors from RHQ-1226 are fixed.
                 <artifactItem>
                   <groupId>org.rhq</groupId>
                   <artifactId>rhq-jira-plugin</artifactId>
@@ -305,14 +297,6 @@
                   <artifactId>rhq-netservices-plugin</artifactId>
                   <version>${project.version}</version>
                 </artifactItem>
-
-<!--  In Development
-                <artifactItem>
-                  <groupId>org.rhq</groupId>
-                  <artifactId>rhq-onewire-plugin</artifactId>
-                  <version>${project.version}</version>
-                </artifactItem>
--->
 
                 <artifactItem>
                   <groupId>org.rhq</groupId>
@@ -340,10 +324,10 @@
 
                 <artifactItem>
                   <groupId>org.rhq</groupId>
-                  <artifactId>rhq-augeas-plugin</artifactId>
+                  <artifactId>rhq-script-plugin</artifactId>
                   <version>${project.version}</version>
                 </artifactItem>
-
+                
                 <artifactItem>
                   <groupId>org.rhq</groupId>
                   <artifactId>rhq-snmptrapd-plugin</artifactId>

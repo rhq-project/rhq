@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.plugins.cli;
+package org.rhq.plugins.script;
 
 import java.io.File;
 import java.util.HashSet;
@@ -38,15 +38,19 @@ import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.util.exception.ThrowableUtil;
 
 /**
- * Discovery component that allows you to manually add your own CLI-managed resource.
+ * Discovery component that allows you to manually add your own CLI-managed resource, where
+ * the CLI is some executable binary or script.
+ * 
+ * The CLI executable/script itself is not the managed resource, it is merely the management front end
+ * to the actual managed resource.
  *
  * @author John Mazzitelli
  */
-public class CliDiscoveryComponent implements ResourceDiscoveryComponent {
-    private final Log log = LogFactory.getLog(CliDiscoveryComponent.class);
+public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent {
+    private final Log log = LogFactory.getLog(ScriptDiscoveryComponent.class);
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) {
-        log.info("Processing discovered CLI resources");
+        log.info("Processing discovered management script resources");
 
         HashSet<DiscoveredResourceDetails> details = new HashSet<DiscoveredResourceDetails>();
 
@@ -90,7 +94,7 @@ public class CliDiscoveryComponent implements ResourceDiscoveryComponent {
     protected DiscoveredResourceDetails processManuallyAddedResource(ResourceDiscoveryContext context,
         Configuration pluginConfig) {
 
-        String executable = pluginConfig.getSimple(CliServerComponent.PLUGINCONFIG_EXECUTABLE).getStringValue();
+        String executable = pluginConfig.getSimple(ScriptServerComponent.PLUGINCONFIG_EXECUTABLE).getStringValue();
         String version = determineVersion(context, pluginConfig);
         String description = determineDescription(context, pluginConfig);
         DiscoveredResourceDetails details = new DiscoveredResourceDetails(context.getResourceType(), executable,
@@ -126,19 +130,19 @@ public class CliDiscoveryComponent implements ResourceDiscoveryComponent {
     protected String determineDescription(ResourceDiscoveryContext context, Configuration pluginConfig) {
         String description = null;
         try {
-            PropertySimple descriptionProp = pluginConfig.getSimple(CliServerComponent.PLUGINCONFIG_FIXED_DESC);
+            PropertySimple descriptionProp = pluginConfig.getSimple(ScriptServerComponent.PLUGINCONFIG_FIXED_DESC);
             if (descriptionProp != null && descriptionProp.getStringValue() != null) {
                 description = descriptionProp.getStringValue();
             } else {
-                String args = pluginConfig.getSimpleValue(CliServerComponent.PLUGINCONFIG_DESC_ARGS, null);
-                ProcessExecutionResults results = CliServerComponent.executeCliExecutable(context
+                String args = pluginConfig.getSimpleValue(ScriptServerComponent.PLUGINCONFIG_DESC_ARGS, null);
+                ProcessExecutionResults results = ScriptServerComponent.executeExecutable(context
                     .getSystemInformation(), pluginConfig, args, 5000L, true);
                 if (results != null) {
                     if (results.getError() != null) {
                         log.warn("Failed to execute cli executable to get description. Cause: "
                             + ThrowableUtil.getAllMessages(results.getError()));
                     } else if (results.getCapturedOutput() != null) {
-                        String regex = pluginConfig.getSimpleValue(CliServerComponent.PLUGINCONFIG_DESC_REGEX, null);
+                        String regex = pluginConfig.getSimpleValue(ScriptServerComponent.PLUGINCONFIG_DESC_REGEX, null);
                         String output = results.getCapturedOutput();
                         if (regex == null) {
                             description = output;
@@ -176,19 +180,20 @@ public class CliDiscoveryComponent implements ResourceDiscoveryComponent {
     protected String determineVersion(ResourceDiscoveryContext context, Configuration pluginConfig) {
         String version = null;
         try {
-            PropertySimple versionProp = pluginConfig.getSimple(CliServerComponent.PLUGINCONFIG_FIXED_VERSION);
+            PropertySimple versionProp = pluginConfig.getSimple(ScriptServerComponent.PLUGINCONFIG_FIXED_VERSION);
             if (versionProp != null && versionProp.getStringValue() != null) {
                 version = versionProp.getStringValue();
             } else {
-                String args = pluginConfig.getSimpleValue(CliServerComponent.PLUGINCONFIG_VERSION_ARGS, null);
-                ProcessExecutionResults results = CliServerComponent.executeCliExecutable(context
+                String args = pluginConfig.getSimpleValue(ScriptServerComponent.PLUGINCONFIG_VERSION_ARGS, null);
+                ProcessExecutionResults results = ScriptServerComponent.executeExecutable(context
                     .getSystemInformation(), pluginConfig, args, 5000L, true);
                 if (results != null) {
                     if (results.getError() != null) {
                         log.warn("Failed to execute cli executable to get version. Cause: "
                             + ThrowableUtil.getAllMessages(results.getError()));
                     } else if (results.getCapturedOutput() != null) {
-                        String regex = pluginConfig.getSimpleValue(CliServerComponent.PLUGINCONFIG_VERSION_REGEX, null);
+                        String regex = pluginConfig.getSimpleValue(ScriptServerComponent.PLUGINCONFIG_VERSION_REGEX,
+                            null);
                         String output = results.getCapturedOutput();
                         if (regex == null) {
                             version = output;

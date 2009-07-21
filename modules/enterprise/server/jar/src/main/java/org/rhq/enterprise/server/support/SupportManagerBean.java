@@ -58,7 +58,7 @@ import org.rhq.enterprise.server.core.AgentManagerLocal;
  * @author John Mazzitelli
  */
 @Stateless
-public class SupportManagerBean implements SupportManagerLocal {
+public class SupportManagerBean implements SupportManagerLocal, SupportManagerRemote {
 
     @EJB
     private AgentManagerLocal agentManager;
@@ -90,8 +90,8 @@ public class SupportManagerBean implements SupportManagerLocal {
 
         Server thisServer = this.serverManager.getServer();
         String addr = thisServer.getAddress();
-        int port = thisServer.getSecurePort();
-        return new URL(String.format("https://%s:%d/downloads/support/%s", addr, port, downloadFile.getName()));
+        int port = thisServer.getPort();
+        return new URL(String.format("http://%s:%d/downloads/support/%s", addr, port, downloadFile.getName()));
     }
 
     private File getDownloadsDir() throws Exception {

@@ -34,6 +34,7 @@ import org.rhq.enterprise.server.configuration.ConfigurationManagerRemote;
 import org.rhq.enterprise.server.content.ChannelManagerRemote;
 import org.rhq.enterprise.server.content.ContentManagerRemote;
 import org.rhq.enterprise.server.event.EventManagerRemote;
+import org.rhq.enterprise.server.exception.LoginException;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerRemote;
 import org.rhq.enterprise.server.measurement.CallTimeDataManagerRemote;
 import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerRemote;
@@ -45,7 +46,7 @@ import org.rhq.enterprise.server.report.DataAccessRemote;
 import org.rhq.enterprise.server.resource.ResourceManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerRemote;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerRemote;
-import org.rhq.enterprise.server.exception.LoginException;
+import org.rhq.enterprise.server.support.SupportManagerRemote;
 
 /**
  * A remote access client with transparent proxies to RHQ servers.
@@ -76,7 +77,8 @@ public class RemoteClient {
         ResourceGroupManager(ResourceGroupManagerRemote.class), //
         ResourceTypeManager(ResourceTypeManagerRemote.class), //
         RoleManager(RoleManagerRemote.class), //
-        SubjectManager(SubjectManagerRemote.class),
+        SubjectManager(SubjectManagerRemote.class), //
+        SupportManager(SupportManagerRemote.class),
         //        RemoteInstallManager(RemoteInstallManagerRemote.class),
         ;
 
@@ -123,7 +125,6 @@ public class RemoteClient {
         this.port = port;
         init();
     }
-
 
     public Subject login(String user, String password) throws LoginException {
         this.subject = getSubjectManagerRemote().login(user, password);
@@ -222,6 +223,10 @@ public class RemoteClient {
 
     public SubjectManagerRemote getSubjectManagerRemote() {
         return RemoteClientProxy.getProcessor(this, Manager.SubjectManager);
+    }
+
+    public SupportManagerRemote getSupportManagerRemote() {
+        return RemoteClientProxy.getProcessor(this, Manager.SupportManager);
     }
 
     //    public RemoteInstallManagerRemote getRemoteInstallManagerRemote() {

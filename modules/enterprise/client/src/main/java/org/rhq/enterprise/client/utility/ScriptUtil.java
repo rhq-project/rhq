@@ -41,7 +41,6 @@ public class ScriptUtil {
                 result = lefty.equals(righty) && righty.equals(lefty);
             }
         }
-        System.out.println("assertEqual(" + lefty + ", " + righty + ") was " + result);
         if (result == false) {
             if (errorMessage == null) {
                 throw new AssertionError();

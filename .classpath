@@ -67,7 +67,7 @@
 	<classpathentry kind="src" path="modules/plugins/hosts/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/virt/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/snmptrapd/src/main/java"/>
-	<classpathentry kind="src" path="modules/plugins/cli/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/script/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/augeas/src/main/java"/>
 	<classpathentry kind="src" path="etc/samples/skeleton-plugin/src/main/java"/>
 	<classpathentry kind="src" path="etc/custom-serverplugin/src/main/java"/>

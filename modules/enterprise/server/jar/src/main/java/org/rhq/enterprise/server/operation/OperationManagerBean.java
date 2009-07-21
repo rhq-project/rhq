@@ -1824,7 +1824,6 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
 
     }
 
-    @Override
     @SuppressWarnings("unchecked")
     public List<OperationDefinition> findOperationDefinitionsByCriteria(Subject subject,
         OperationDefinitionCriteria criteria) {
@@ -1839,7 +1838,6 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return new PageList<OperationDefinition>(results, (int) count, criteria.getPageControl());
     }
 
-    @Override
     @SuppressWarnings("unchecked")
     public PageList<ResourceOperationHistory> findResourceOperationHistoriesByCriteria(Subject subject,
         ResourceOperationHistoryCriteria criteria) {
@@ -1858,7 +1856,6 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return new PageList<ResourceOperationHistory>(results, (int) count, criteria.getPageControl());
     }
 
-    @Override
     @SuppressWarnings("unchecked")
     public PageList<GroupOperationHistory> findGroupOperationHistoriesByCriteria(Subject subject,
         GroupOperationHistoryCriteria criteria) {

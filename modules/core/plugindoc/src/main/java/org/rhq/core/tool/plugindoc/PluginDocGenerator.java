@@ -54,7 +54,6 @@ public class PluginDocGenerator {
     private String confluencePassword;
 
     private static final Comparator<ResourceType> CHILD_RESOURCE_TYPES_SORTER = new Comparator<ResourceType>() {
-        @Override
         public int compare(ResourceType first, ResourceType second) {
             return first.getName().toLowerCase().compareTo(second.getName().toLowerCase());
         }

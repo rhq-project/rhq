@@ -372,8 +372,10 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
         this.metricDefinitions = new LinkedHashSet<MeasurementDefinition>();
         this.eventDefinitions = new LinkedHashSet<EventDefinition>();
         this.operationDefinitions = new LinkedHashSet<OperationDefinition>();
+        this.processScans = new HashSet<ProcessScan>();
         this.packageTypes = new HashSet<PackageType>();
         this.subCategories = new ArrayList<ResourceSubCategory>();
+        this.productVersions = new HashSet<ProductVersion>();
 
         this.name = name;
         this.category = category;
@@ -568,6 +570,10 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
         this.childResourceTypes.remove(oldChildResourceType);
     }
 
+    public void setChildResourceTypes(Set<ResourceType> childResourceTypes) {
+        this.childResourceTypes = childResourceTypes;
+    }
+
     public ConfigurationDefinition getPluginConfigurationDefinition() {
         return pluginConfigurationDefinition;
     }
@@ -622,6 +628,10 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
 
     public Set<ProcessScan> getProcessScans() {
         return this.processScans;
+    }
+
+    public void setProcessScans(Set<ProcessScan> processScans) {
+        this.processScans = processScans;
     }
 
     public boolean addProcessScan(ProcessScan processMatch) {

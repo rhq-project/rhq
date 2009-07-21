@@ -8,6 +8,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
@@ -22,7 +27,6 @@ import javax.xml.validation.SchemaFactory;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.velocity.app.event.implement.EscapeXmlReference;
 import org.codehaus.swizzle.confluence.Confluence;
 import org.codehaus.swizzle.confluence.Page;
 import org.codehaus.swizzle.confluence.SwizzleException;
@@ -48,6 +52,13 @@ public class PluginDocGenerator {
     private String confluenceParentPageTitle; // The Confluence parent page name (e.g. "Managed Resources").
     private String confluenceUserName;
     private String confluencePassword;
+
+    private static final Comparator<ResourceType> CHILD_RESOURCE_TYPES_SORTER = new Comparator<ResourceType>() {
+        @Override
+        public int compare(ResourceType first, ResourceType second) {
+            return first.getName().toLowerCase().compareTo(second.getName().toLowerCase());
+        }
+    };
 
     public void loadProperties(String propertiesFileName) {
         if (propertiesFileName == null) {
@@ -112,7 +123,19 @@ public class PluginDocGenerator {
         VelocityTemplateProcessor confluenceTemplateProcessor = new VelocityTemplateProcessor(
             CONFLUENCE_TEMPLATE_RESOURCE_PATH, CONFLUENCE_MACRO_LIBRARY_RESOURCE_PATH, EscapeConfluenceReference.class);
         VelocityTemplateProcessor docbookTemplateProcessor = new VelocityTemplateProcessor(
-            DOCBOOK_TEMPLATE_RESOURCE_PATH, DOCBOOK_MACRO_LIBRARY_RESOURCE_PATH, EscapeXmlReference.class);
+            DOCBOOK_TEMPLATE_RESOURCE_PATH, DOCBOOK_MACRO_LIBRARY_RESOURCE_PATH, EscapeDocBookReference.class);
+
+        // fixes for documentation generation
+        for (ResourceType resourceType : resourceTypes) {
+            // alphasort the childResourceTypes
+            Set<ResourceType> orderedChildTypes = new LinkedHashSet<ResourceType>();
+            List<ResourceType> childTypes = new ArrayList<ResourceType>(resourceType.getChildResourceTypes());
+            Collections.sort(childTypes, CHILD_RESOURCE_TYPES_SORTER);
+            for (ResourceType sortedType : childTypes) {
+                orderedChildTypes.add(sortedType);
+            }
+            resourceType.setChildResourceTypes(orderedChildTypes);
+        }
 
         // generate content for Confluence
         if (this.confluenceUrl != null) {

@@ -24,6 +24,7 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.clientapi.agent.metadata.ConfigurationMetadataParser;
 import org.rhq.core.clientapi.agent.metadata.ContentMetadataParser;
 import org.rhq.core.clientapi.agent.metadata.InvalidPluginDescriptorException;
@@ -305,6 +306,8 @@ public class PluginDescriptorProcessor {
             }
 
             for (ProcessScanDescriptor processMatch : resourceDescriptor.getProcessScan()) {
+                System.out.println(resourceType.getName() + ": "
+                    + new ProcessScan(processMatch.getQuery(), processMatch.getName()));
                 resourceType.addProcessScan(new ProcessScan(processMatch.getQuery(), processMatch.getName()));
             }
 
@@ -321,8 +324,7 @@ public class PluginDescriptorProcessor {
                 }
             }
 
-            if (resourceDescriptor.getHelp() != null && !resourceDescriptor.getHelp().getContent().isEmpty())
-            {
+            if (resourceDescriptor.getHelp() != null && !resourceDescriptor.getHelp().getContent().isEmpty()) {
                 resourceType.setHelpText(String.valueOf(resourceDescriptor.getHelp().getContent().get(0)));
             }
         } catch (InvalidPluginDescriptorException e) {

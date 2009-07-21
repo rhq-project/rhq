@@ -63,11 +63,15 @@ public abstract class Criteria implements Serializable {
         String prefix = fieldType.name().toLowerCase();
         List<Field> results = new ArrayList<Field>();
 
-        for (Field field : this.getClass().getDeclaredFields()) {
-            field.setAccessible(true);
-            if (field.getName().startsWith(prefix)) {
-                results.add(field);
+        Class<?> currentLevelClass = this.getClass();
+        while (currentLevelClass.equals(Criteria.class) == false) {
+            for (Field field : currentLevelClass.getDeclaredFields()) {
+                field.setAccessible(true);
+                if (field.getName().startsWith(prefix)) {
+                    results.add(field);
+                }
             }
+            currentLevelClass = currentLevelClass.getSuperclass();
         }
 
         return results;

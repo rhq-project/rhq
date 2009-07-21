@@ -32,7 +32,9 @@ import javax.persistence.Query;
 
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.Criteria;
+import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.criteria.SubjectCriteria;
+import org.rhq.core.domain.operation.OperationRequestStatus;
 
 /**
  * A query generator used to generate queries with specific filtering, prefetching, or sorting requirements.
@@ -260,7 +262,6 @@ public final class CriteriaQueryGenerator {
             }
         }
         results.append(NL);
-        System.out.println(results);
         return results.toString();
     }
 
@@ -296,6 +297,7 @@ public final class CriteriaQueryGenerator {
     public static void main(String[] args) {
         testSubjectCriteria();
         testAlertCriteria();
+        testInheritanceCriteria();
     }
 
     public static void testSubjectCriteria() {
@@ -324,6 +326,16 @@ public final class CriteriaQueryGenerator {
         System.out.println(generator.getQueryString(true));
 
         generator.setAuthorizationResourceFragment(AuthorizationTokenType.RESOURCE, "definition.resource", 1);
+        System.out.println(generator.getQueryString(false));
+        System.out.println(generator.getQueryString(true));
+    }
+
+    public static void testInheritanceCriteria() {
+        ResourceOperationHistoryCriteria historyCriteria = new ResourceOperationHistoryCriteria();
+        historyCriteria.addFilterResourceIds(Arrays.asList(1));
+        historyCriteria.addFilterStatus(OperationRequestStatus.FAILURE);
+
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(historyCriteria);
         System.out.println(generator.getQueryString(false));
         System.out.println(generator.getQueryString(true));
     }

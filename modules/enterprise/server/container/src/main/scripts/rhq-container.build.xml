@@ -330,6 +330,7 @@
     <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-agent"/>
     <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-client"/>
     <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-plugins"/>
+    <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/connectors"/>
 
     <!-- deploy the agent update binary to the downloads location -->
     <echo>Deploying the latest agent update binary and renaming it rhq-enterprise-agent-${rhq.version}.jar</echo>
@@ -381,8 +382,8 @@
 
   <target name="package-connectors" if="package-connectors">
     <echo>Deploying the rt-filter conectors ...</echo>
-    <delete file="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/connector-rtfilter.zip" />
-    <zip destfile="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/connector-rtfilter.zip" >
+    <delete file="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/connectors/connector-rtfilter.zip" />
+    <zip destfile="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/connectors/connector-rtfilter.zip" >
       <zipfileset dir="${basedir}/../../agent/src/etc/product_connectors">
          <include name="README.txt"/>
       </zipfileset>

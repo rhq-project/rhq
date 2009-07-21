@@ -18,28 +18,32 @@
  */
 package org.rhq.enterprise.gui.admin;
 
-import org.jboss.mx.util.MBeanServerLocator;
-import org.jboss.system.server.ServerConfig;
-import org.rhq.core.util.ObjectNameFactory;
-import org.rhq.core.util.stream.StreamUtil;
-import org.rhq.enterprise.server.util.LookupUtil;
-
-import javax.management.MBeanServer;
-import javax.management.MBeanServerInvocationHandler;
-import javax.management.ObjectName;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.Serializable;
-import java.util.Properties;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
+
+import javax.management.MBeanServer;
+import javax.management.MBeanServerInvocationHandler;
+import javax.management.ObjectName;
+
+import org.jboss.mx.util.MBeanServerLocator;
+import org.jboss.system.server.ServerConfig;
+
+import org.rhq.core.util.ObjectNameFactory;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
+ * Provides data to the page that allows a user to download the agent update binary, client distribution
+ * or connector binaries.
+ * 
  * @author Greg Hinkle
  */
 public class DownloadsUIBean implements Serializable {
-
+    private static final long serialVersionUID = 1L;
 
     public Properties getAgentVersionProperties() {
 
@@ -61,12 +65,9 @@ public class DownloadsUIBean implements Serializable {
         return MBeanServerLocator.locateJBoss();
     }
 
-
-    public List<File> getDownloadFiles() throws Exception {
-        File downloadDir = getDownloadsDir();
+    public List<File> getConnectorDownloadFiles() throws Exception {
+        File downloadDir = getConnectorDownloadsDir();
         File[] filesArray = downloadDir.listFiles();
-
-        // we only serve up files located in the flat rhq-downloads directory - no content from subdirectories
         List<File> files = new ArrayList<File>();
         if (filesArray != null) {
             for (File file : filesArray) {
@@ -78,20 +79,17 @@ public class DownloadsUIBean implements Serializable {
         return files;
     }
 
-
-    private File getDownloadsDir() throws Exception {
+    private File getConnectorDownloadsDir() throws Exception {
         MBeanServer mbs = getMBeanServer();
         ObjectName name = ObjectNameFactory.create("jboss.system:type=ServerConfig");
         Object mbean = MBeanServerInvocationHandler.newProxyInstance(mbs, name, ServerConfig.class, false);
         File serverHomeDir = ((ServerConfig) mbean).getServerHomeDir();
-        File downloadDir = new File(serverHomeDir, "deploy/rhq.ear/rhq-downloads");
+        File downloadDir = new File(serverHomeDir, "deploy/rhq.ear/rhq-downloads/connectors");
         if (!downloadDir.exists()) {
-            throw new FileNotFoundException("Missing downloads directory at [" + downloadDir + "]");
+            throw new FileNotFoundException("Missing connectors downloads directory at [" + downloadDir + "]");
         }
         return downloadDir;
     }
-
-
 
     private File getClientDownloadDir() throws Exception {
         MBeanServer mbs = getMBeanServer();
@@ -115,6 +113,5 @@ public class DownloadsUIBean implements Serializable {
             throw new RuntimeException("Unable to retrieve client version info", e);
         }
     }
-
 
 }

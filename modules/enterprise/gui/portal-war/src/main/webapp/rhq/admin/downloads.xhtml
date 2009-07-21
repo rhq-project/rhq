@@ -80,8 +80,8 @@
 
 
                 <h3>Connector Downloads</h3>
-                <ui:repeat var="download" value="#{DownloadsUIBean.downloadFiles}">
-                    <h:outputLink value="/downloads/#{download.name}">
+                <ui:repeat var="download" value="#{DownloadsUIBean.connectorDownloadFiles}">
+                    <h:outputLink value="/downloads/connectors/#{download.name}">
                         <h:outputText value="#{download.name}"/>
                     </h:outputLink>
                     <br/>

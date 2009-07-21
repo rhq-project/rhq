@@ -78,7 +78,7 @@ public class SupportManagerBean implements SupportManagerLocal {
         InputStream snapshotStream = getSnapshotReportStream(subject, resourceId, name, description);
 
         // TODO: not sure what we should really do with it, for now, put it in the downloads location.
-        // you can retrieve this by going to http://localhost:7080/downloads
+        // you can retrieve this by going to http://localhost:7080/downloads/support
         File dir = getDownloadsDir();
         File downloadFile = File.createTempFile(name + "-" + resourceId + "-", ".zip", dir);
         StreamUtil.copy(snapshotStream, new FileOutputStream(downloadFile));
@@ -91,11 +91,10 @@ public class SupportManagerBean implements SupportManagerLocal {
         ObjectName name = ObjectNameFactory.create("jboss.system:type=ServerConfig");
         Object mbean = MBeanServerInvocationHandler.newProxyInstance(mbs, name, ServerConfig.class, false);
         File serverHomeDir = ((ServerConfig) mbean).getServerHomeDir();
-        File downloadDir = new File(serverHomeDir, "deploy/rhq.ear/rhq-downloads");
+        File downloadDir = new File(serverHomeDir, "deploy/rhq.ear/rhq-downloads/support");
         if (!downloadDir.exists()) {
             throw new FileNotFoundException("Missing downloads directory at [" + downloadDir + "]");
         }
         return downloadDir;
     }
 }
-

@@ -65,14 +65,14 @@ public class DownloadServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         if (isServerAcceptingRequests()) {
-            String pathInfo = req.getPathInfo();
-            if (pathInfo != null && !pathInfo.equals("") && !pathInfo.equals("/")) {
+            File requestedDirectory = getRequestedDirectory(req);
+            if (requestedDirectory == null) {
                 numActiveDownloads++;
                 download(req, resp);
                 numActiveDownloads--;
             } else {
                 if (showDownloadsListing) {
-                    outputFileList(req, resp);
+                    outputFileList(requestedDirectory, req, resp);
                 } else {
                     disableBrowserCache(resp);
                     resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Listing disabled");
@@ -84,25 +84,51 @@ public class DownloadServlet extends HttpServlet {
         return;
     }
 
+    private File getRequestedDirectory(HttpServletRequest req) throws ServletException {
+
+        String pathInfo = req.getPathInfo();
+
+        File rootDownloadsDir;
+        try {
+            rootDownloadsDir = getRootDownloadsDir();
+        } catch (Throwable t) {
+            throw new ServletException(t);
+        }
+
+        if (pathInfo == null || pathInfo.equals("") || pathInfo.equals("/")) {
+            return rootDownloadsDir;
+        }
+
+        File downloadDir = new File(rootDownloadsDir, pathInfo);
+        if (downloadDir.isDirectory()) {
+            return downloadDir;
+        }
+
+        // either the path does not exist or its a file, not a directory
+        return null;
+    }
+
     private void download(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         try {
-            File downloadDir = getDownloadsDir();
+            File downloadDir = getRootDownloadsDir();
             File downloadFile = new File(downloadDir, req.getPathInfo());
-            if (!downloadFile.exists()) {
-                disableBrowserCache(resp);
-                resp.sendError(HttpServletResponse.SC_NOT_FOUND, "File does not exist: " + downloadFile.getName());
-                return;
-            }
-            resp.setContentType(getMimeType(downloadFile));
-            resp.setHeader("Content-Disposition", "attachment; filename=" + downloadFile.getName());
-            resp.setContentLength((int) downloadFile.length());
-            resp.setDateHeader("Last-Modified", downloadFile.lastModified());
+            if (!isForbiddenPath(downloadFile, resp)) {
+                if (!downloadFile.exists()) {
+                    disableBrowserCache(resp);
+                    resp.sendError(HttpServletResponse.SC_NOT_FOUND, "File does not exist: " + downloadFile.getName());
+                    return;
+                }
+                resp.setContentType(getMimeType(downloadFile));
+                resp.setHeader("Content-Disposition", "attachment; filename=" + downloadFile.getName());
+                resp.setContentLength((int) downloadFile.length());
+                resp.setDateHeader("Last-Modified", downloadFile.lastModified());
 
-            FileInputStream stream = new FileInputStream(downloadFile);
-            try {
-                StreamUtil.copy(stream, resp.getOutputStream(), false);
-            } finally {
-                stream.close();
+                FileInputStream stream = new FileInputStream(downloadFile);
+                try {
+                    StreamUtil.copy(stream, resp.getOutputStream(), false);
+                } finally {
+                    stream.close();
+                }
             }
         } catch (Throwable t) {
             log("Failed to stream download content", t);
@@ -129,28 +155,46 @@ public class DownloadServlet extends HttpServlet {
         return mimeType;
     }
 
-    private void outputFileList(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
+    private void outputFileList(File requestedDirectory, HttpServletRequest req, HttpServletResponse resp)
+        throws ServletException {
+
         try {
-            disableBrowserCache(resp);
-            resp.setContentType("text/html");
-            PrintWriter writer = resp.getWriter();
-            writer.println("<html><head><title>Available Downloads</title></head>");
-            writer.println("<body><h1>Available Downloads</h1>");
-            List<File> files = getDownloadFiles();
-            if (files.size() > 0) {
-                writer.println("<ul>");
-                for (File file : files) {
-                    writer.println("<li><a href=\"" + req.getServletPath() + "/" + file.getName() + "\">"
-                        + file.getName() + "</a></li>");
+            if (!isForbiddenPath(requestedDirectory, resp)) {
+                String dirName = requestedDirectory.getName();
+                disableBrowserCache(resp);
+                resp.setContentType("text/html");
+                PrintWriter writer = resp.getWriter();
+                writer.println(String.format("<html><head><title>Available Downloads: %s</title></head>", dirName));
+                writer.println("<body><h1>Available Downloads</h1>");
+                writer.println(String.format("<font size=\"+2\"><b><pre>%s</pre></b></font>", dirName));
+                List<File> files = getDownloadFiles(requestedDirectory);
+                if (files.size() > 0) {
+                    writer.println("<ul>");
+                    for (File file : files) {
+                        writer.println("<li><a href=\"" + req.getServletPath() + "/" + file.getName() + "\">"
+                            + file.getName() + "</a></li>");
+                    }
+                    writer.println("</ul>");
+                } else {
+                    writer.println("<h4>NONE</h4>");
                 }
-                writer.println("</ul>");
-            } else {
-                writer.println("<h4>NONE</h4>");
+                writer.println("</body></html>");
             }
-            writer.println("</body></html>");
         } catch (Exception e) {
             throw new ServletException("Cannot get downloads listing", e);
         }
+    }
+
+    private boolean isForbiddenPath(File requestedFile, HttpServletResponse resp) throws IOException {
+        boolean forbidden = true; // assume it is forbidden
+        if (requestedFile.toString().contains("rhq-agent")) {
+            resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Use /agentupdate/download to obtain the agent");
+        } else if (requestedFile.toString().contains("rhq-client")) {
+            resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Use /client/download to obtain the client");
+        } else {
+            forbidden = false;
+        }
+        return forbidden;
     }
 
     private void sendErrorServerNotAcceptingRequests(HttpServletResponse resp) throws IOException {
@@ -164,11 +208,10 @@ public class DownloadServlet extends HttpServlet {
         resp.setHeader("Pragma", "no-cache");
     }
 
-    private List<File> getDownloadFiles() throws Exception {
-        File downloadDir = getDownloadsDir();
-        File[] filesArray = downloadDir.listFiles();
+    private List<File> getDownloadFiles(File requestedDirectory) throws Exception {
+        File[] filesArray = requestedDirectory.listFiles();
 
-        // we only serve up files located in the flat rhq-downloads directory - no content from subdirectories
+        // this is simple - we only serve up files located in the requested directory - no content from subdirectories
         List<File> files = new ArrayList<File>();
         if (filesArray != null) {
             for (File file : filesArray) {
@@ -180,7 +223,7 @@ public class DownloadServlet extends HttpServlet {
         return files;
     }
 
-    private File getDownloadsDir() throws Exception {
+    private File getRootDownloadsDir() throws Exception {
         MBeanServer mbs = getMBeanServer();
         ObjectName name = ObjectNameFactory.create("jboss.system:type=ServerConfig");
         Object mbean = MBeanServerInvocationHandler.newProxyInstance(mbs, name, ServerConfig.class, false);

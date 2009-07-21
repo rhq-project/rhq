@@ -1,12 +1,9 @@
 package org.rhq.enterprise.client.utility;
 
-import static org.testng.Assert.*;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
 
 import org.testng.annotations.Test;
-import org.testng.annotations.BeforeClass;
-
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptEngine;
 
 public class ScriptUtilTest {
 
@@ -17,7 +14,12 @@ public class ScriptUtilTest {
 
         ScriptUtil scriptUtil = new ScriptUtil(scriptEngine);
 
-        assertTrue(scriptUtil.isDefined("foo"), "Expected isDefined() to return true when the variable is bound.");
+        try {
+            scriptUtil.assertExists("foo");
+            assert true;
+        } catch (AssertionError ae) {
+            assert false : "Expected isDefined() to return true when the variable is bound.";
+        }
     }
 
     @Test
@@ -26,7 +28,12 @@ public class ScriptUtilTest {
 
         ScriptUtil scriptUtil = new ScriptUtil(scriptEngine);
 
-        assertFalse(scriptUtil.isDefined("foo"), "Expected isDefined() to return false when the variable is not bound.");
+        try {
+            scriptUtil.assertExists("foo");
+            assert false : "Expected isDefined() to return false when the variable is not bound.";
+        } catch (AssertionError ae) {
+            assert true;
+        }
     }
 
     @Test
@@ -36,12 +43,17 @@ public class ScriptUtilTest {
 
         ScriptUtil scriptUtil = new ScriptUtil(scriptEngine);
 
-        assertTrue(scriptUtil.isDefined("func"), "Expected isDefined() to return true when function is bound.");
+        try {
+            scriptUtil.assertExists("func");
+            assert true;
+        } catch (AssertionError ae) {
+            assert false : "Expected isDefined() to return true when function is bound.";
+        }
     }
 
     ScriptEngine createScriptEngine() {
         ScriptEngineManager scriptEngineMgr = new ScriptEngineManager();
-        return scriptEngineMgr.getEngineByName("JavaScript");        
+        return scriptEngineMgr.getEngineByName("JavaScript");
     }
 
 }

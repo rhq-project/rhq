@@ -12,8 +12,8 @@
     <version>1.3.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>rhq-ws-client</artifactId>
-  <name>RHQ WS Client</name>
+  <artifactId>rhq-remoting-webservices</artifactId>
+  <name>RHQ Remoting Web Services Client</name>
 
   <scm>
      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/client/</connection>
@@ -21,7 +21,7 @@
   </scm>
 
    <properties>
-      <scm.module.path>modules/enterprise/client/</scm.module.path>
+      <scm.module.path>modules/enterprise/remoting/</scm.module.path>
       <persistence-api.version>1.0</persistence-api.version>
    </properties>
 
@@ -164,7 +164,7 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-jar-plugin</artifactId>
             <configuration>
-               <classesDirectory>${project.build.directory}/rhq-client-${version}/wsconsume-output</classesDirectory>
+               <classesDirectory>${project.build.directory}/rhq-remoting-webservices-${version}/wsconsume-output</classesDirectory>
                <includes>
                   <include>org/rhq/**</include>
                </includes>

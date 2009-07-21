@@ -68,14 +68,14 @@
     </profile>
     
     <profile>
-      <id>client</id>
+      <id>remoting</id>
       <activation>
         <property>
-          <name>client</name>
+          <name>remoting</name>
         </property>
       </activation>
       <modules>
-        <module>client</module>
+        <module>remoting</module>
       </modules>
     </profile>
 

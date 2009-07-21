@@ -11,10 +11,10 @@
       <version>1.3.0-SNAPSHOT</version>
    </parent>
 
-   <artifactId>rhq-cli-client</artifactId>
+   <artifactId>rhq-remoting-cli</artifactId>
 
-   <name>RHQ Enterprise Remote Client</name>
-   <description>RHQ Remote Client</description>
+   <name>RHQ Enterprise Remote CLI</name>
+   <description>RHQ Enterprise Remote Command Line Interface</description>
 
    <scm>
       <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/client/</connection>
@@ -22,7 +22,7 @@
    </scm>
 
    <properties>
-      <scm.module.path>modules/enterprise/client/</scm.module.path>
+      <scm.module.path>modules/enterprise/remoting/</scm.module.path>
 
       <jline.version>0.9.94</jline.version>
       <i18nlog.version>1.0.9</i18nlog.version>
@@ -65,7 +65,7 @@
 
       <dependency>
         <groupId>${groupId}</groupId>
-        <artifactId>rhq-ws-client</artifactId>
+        <artifactId>rhq-remoting-webservices</artifactId>
         <version>${version}</version>
       </dependency>
 
@@ -199,7 +199,7 @@
                               name="settings.localRepository"
                               value="${settings.localRepository}" />
                            <property
-                              name="rhq-ws-client.version"
+                              name="rhq-remoting-ws.version"
                               value="${version}" />
                            <property
                               name="commons-logging.version"
@@ -413,22 +413,6 @@
                <scope>provided</scope>
             </dependency>
 
-            <!--
-               <dependency>
-               <groupId>hibernate-annotations</groupId>
-               <artifactId>hibernate-annotations</artifactId>
-               <scope>provided</scope>
-               </dependency>
-               
-               
-               <dependency>
-               <groupId>jboss.jbossws</groupId>
-               <artifactId>jboss-jaxws</artifactId>
-               <scope>provided</scope>
-               </dependency>
-               
-            -->
-
          </dependencies>
 
          <build>
@@ -498,7 +482,7 @@
                            <additionalClasspathElements>
                               <!-- The below is required for WS Java Client support -->
                               <additionalClasspathElement>
-                                 ${project.build.outputDirectory}/lib/rhq-cli-${project.version}.jar
+                                 ${project.build.outputDirectory}/lib/rhq-remoting-cli-${project.version}.jar
                               </additionalClasspathElement>
                               <additionalClasspathElement>
                                  ${project.build.outputDirectory}/lib/${project.build.finalName}.jar

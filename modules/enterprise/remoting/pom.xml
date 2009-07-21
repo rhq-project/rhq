@@ -11,16 +11,15 @@
       <version>1.3.0-SNAPSHOT</version>
    </parent>
 
-   <groupId>org.rhq</groupId>
-   <artifactId>rhq-client-parent</artifactId>
+   <artifactId>rhq-remoting-parent</artifactId>
    <packaging>pom</packaging>
 
-   <name>RHQ Remote Client Parent POM</name>
-   <description>RHQ Remote Client Parent POM</description>
+   <name>RHQ Remoting Parent POM</name>
+   <description>RHQ Enterprise Remoting Parent POM</description>
 
    <modules>
-      <module>rhq-ws-client</module>
-      <module>rhq-cli-client</module>
+      <module>webservices</module>
+      <module>cli</module>
    </modules>
 
 </project>

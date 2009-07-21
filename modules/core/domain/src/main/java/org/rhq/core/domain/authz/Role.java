@@ -58,24 +58,39 @@ import org.rhq.core.domain.auth.Subject;
  * @author Greg Hinkle
  */
 @Entity
-@NamedQueries( {
-    @NamedQuery(name = Role.QUERY_FIND_BY_IDS, query = "SELECT r FROM Role AS r WHERE r.id IN ( :ids )"),
-    @NamedQuery(name = Role.QUERY_FIND_ALL, query = "SELECT r FROM Role AS r"),
-    @NamedQuery(name = Role.QUERY_FIND_AVAILABLE_ROLES_WITH_EXCLUDES, query = "   SELECT DISTINCT r "
-        + "     FROM Role AS r " + "LEFT JOIN r.subjects AS s " + "    WHERE r.id NOT IN " + "          ( "
-        + "            SELECT rr.id " + "              FROM Subject ss " + "              JOIN ss.roles AS rr "
-        + "             WHERE ss.id = :subjectId " + "          ) " + "      AND r.id NOT IN ( :excludes )"),
-    @NamedQuery(name = Role.QUERY_FIND_AVAILABLE_ROLES, query = "    SELECT DISTINCT r " + "     FROM Role AS r "
-        + "LEFT JOIN r.subjects AS s " + "    WHERE r.id NOT IN " + "          ( " + "            SELECT rr.id "
-        + "              FROM Subject ss " + "              JOIN ss.roles AS rr "
-        + "             WHERE ss.id = :subjectId" + "          )"),
-    @NamedQuery(name = Role.QUERY_FIND_AVAILABLE_ROLES_FOR_ALERT_DEFINITION_WITH_EXCLUDES, query = "SELECT r"
-        + "  FROM Role r" + " WHERE r.id NOT IN" + "       ( " + "         SELECT rn.role.id"
-        + "           FROM RoleNotification rn" + "          WHERE rn.alertDefinition.id = :alertDefinitionId "
-        + "       ) " + "   AND r.id NOT IN ( :excludes )"),
-    @NamedQuery(name = Role.QUERY_FIND_AVAILABLE_ROLES_FOR_ALERT_DEFINITION, query = "SELECT r" + "  FROM Role r"
-        + " WHERE r.id NOT IN" + "       ( " + "         SELECT rn.role.id" + "           FROM RoleNotification rn"
-        + "          WHERE rn.alertDefinition.id = :alertDefinitionId " + "       ) ") })
+@NamedQueries( { //
+@NamedQuery(name = Role.QUERY_FIND_BY_IDS, query = "SELECT r FROM Role AS r WHERE r.id IN ( :ids )"), //
+    @NamedQuery(name = Role.QUERY_FIND_ALL, query = "SELECT r FROM Role AS r"), //
+    @NamedQuery(name = Role.QUERY_FIND_AVAILABLE_ROLES_WITH_EXCLUDES, query = "" //
+        + "   SELECT DISTINCT r " //
+        + "     FROM Role AS r " //
+        + "LEFT JOIN r.subjects AS s " //
+        + "    WHERE r.id NOT IN ( SELECT rr.id " //
+        + "                          FROM Subject ss " //
+        + "                          JOIN ss.roles AS rr " //
+        + "                         WHERE ss.id = :subjectId ) " //
+        + "      AND r.id NOT IN ( :excludes )"), //
+    @NamedQuery(name = Role.QUERY_FIND_AVAILABLE_ROLES, query = "" //
+        + "   SELECT DISTINCT r " //
+        + "     FROM Role AS r " //
+        + "LEFT JOIN r.subjects AS s " //
+        + "    WHERE r.id NOT IN ( SELECT rr.id " //
+        + "                          FROM Subject ss " //
+        + "                          JOIN ss.roles AS rr " //
+        + "                         WHERE ss.id = :subjectId )"), //
+    @NamedQuery(name = Role.QUERY_FIND_AVAILABLE_ROLES_FOR_ALERT_DEFINITION_WITH_EXCLUDES, query = "" //
+        + "SELECT r" //
+        + "  FROM Role r" //
+        + " WHERE r.id NOT IN ( SELECT rn.role.id " //
+        + "                       FROM RoleNotification rn" //
+        + "                      WHERE rn.alertDefinition.id = :alertDefinitionId ) " //
+        + "   AND r.id NOT IN ( :excludes )"), //
+    @NamedQuery(name = Role.QUERY_FIND_AVAILABLE_ROLES_FOR_ALERT_DEFINITION, query = "" //
+        + "SELECT r" //
+        + "  FROM Role r" //
+        + " WHERE r.id NOT IN ( SELECT rn.role.id " //
+        + "                       FROM RoleNotification rn" //
+        + "                      WHERE rn.alertDefinition.id = :alertDefinitionId ) ") })
 @SequenceGenerator(name = "RHQ_ROLE_ID_SEQ", sequenceName = "RHQ_ROLE_ID_SEQ")
 @Table(name = "RHQ_ROLE")
 public class Role implements Serializable {

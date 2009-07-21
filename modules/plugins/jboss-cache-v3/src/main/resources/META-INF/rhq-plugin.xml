@@ -80,7 +80,8 @@
           <service name="Interceptor"
                  class="JBossCacheDetailComponent"
                  discovery="JBossCacheDetailDiscoveryComponent"
-                 description="JBoss Cache Interceptor">
+                 description="JBoss Cache Interceptor"
+                 singleton="true">
              
               <plugin-configuration>
                 <c:simple-property name="jmx-resource" default="jmx-resource=CacheMgmtInterceptor"/>
@@ -119,7 +120,8 @@
          <service name="Data Container"
                  class="JBossCacheDetailComponent"
                  discovery="JBossCacheDetailDiscoveryComponent"
-                 description="JBoss Cache Data Container">
+                 description="JBoss Cache Data Container"
+                 singleton="true">
              
               <plugin-configuration>
                 <c:simple-property name="jmx-resource" default="jmx-resource=DataContainer"/>
@@ -147,7 +149,8 @@
          <service name="RPC Manager"
                  class="JBossCacheDetailComponent"
                  discovery="JBossCacheDetailDiscoveryComponent"
-                 description="JBoss Cache RPC Manager">
+                 description="JBoss Cache RPC Manager"
+                 singleton="true">
 
               <plugin-configuration>
                 <c:simple-property name="jmx-resource" default="jmx-resource=RPCManager"/>
@@ -174,7 +177,8 @@
          <service name="RegionManager"
                  class="JBossCacheDetailComponent"
                  discovery="JBossCacheDetailDiscoveryComponent"
-                 description="JBoss Cache RegionManager">
+                 description="JBoss Cache RegionManager"
+                 singleton="true">
 
               <plugin-configuration>
                 <c:simple-property name="jmx-resource" default="jmx-resource=RegionManager"/>
@@ -192,7 +196,8 @@
          <service name="Transaction Table"
                  class="JBossCacheDetailComponent"
                  discovery="JBossCacheDetailDiscoveryComponent"
-                 description="JBoss Cache TransactionTable">
+                 description="JBoss Cache TransactionTable"
+                 singleton="true">
                  
               <plugin-configuration>
                 <c:simple-property name="jmx-resource" default="jmx-resource=TransactionTable"/>
@@ -208,7 +213,8 @@
          <service name="Tx Interceptor"
                  class="JBossCacheDetailComponent"
                  discovery="JBossCacheDetailDiscoveryComponent"
-                 description="JBoss Cache TxInterceptor">
+                 description="JBoss Cache TxInterceptor"
+                 singleton="true">
                  
                <plugin-configuration>
                  <c:simple-property name="jmx-resource" default="jmx-resource=TxInterceptor"/>
@@ -229,7 +235,8 @@
            <service name="Lock Manager"
                      class="JBossCacheDetailComponent"
                  discovery="JBossCacheDetailDiscoveryComponent"
-                 description="MVCC Lock Manager">
+                 description="MVCC Lock Manager"
+                 singleton="true">
                  
                  <plugin-configuration>
                    <c:simple-property name="jmx-resource" default="jmx-resource=MVCCLockManager"/>

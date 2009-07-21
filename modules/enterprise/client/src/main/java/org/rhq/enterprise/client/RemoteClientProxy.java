@@ -52,6 +52,10 @@ public class RemoteClientProxy implements InvocationHandler {
         this.manager = manager;
     }
 
+    public Class getRemoteInterface() {
+        return this.manager.remote();
+    }
+
     public static <T> T getProcessor(RemoteClient remoteClient, RemoteClient.Manager manager) {
         try {
             RemoteClientProxy gpc = new RemoteClientProxy(remoteClient, manager);
@@ -161,13 +165,15 @@ public class RemoteClientProxy implements InvocationHandler {
 
             Class[] params = method.getParameterTypes();
 
-            Class originalClass = method.getDeclaringClass().getInterfaces()[0];
+
 
             try {
+                Class originalClass = method.getDeclaringClass().getInterfaces()[0];
                 // See if this method really exists or if its a simplified set of parameters
                 originalClass.getMethod(method.getName(), method.getParameterTypes());
 
-            } catch (NoSuchMethodException nsme) {
+            } catch (Exception e) {
+                
                 // If this was not in the original interface it must've been added in the Simplifier... add back the subject argument
                     // if (!method.getName().equals("login") &&  == null) {
                 Object[] newArgs = new Object[args.length + 1];

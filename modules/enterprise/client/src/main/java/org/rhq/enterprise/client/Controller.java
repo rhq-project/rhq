@@ -54,6 +54,7 @@ public class Controller {
         remoteClient.setSubject(subject);
         remoteClient.setLoggedIn(true);
         loggedIn = true;
+        client.setSubject(subject);
 
         return subject;
     }

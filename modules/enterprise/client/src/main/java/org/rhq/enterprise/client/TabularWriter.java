@@ -18,6 +18,12 @@
  */
 package org.rhq.enterprise.client;
 
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.PropertyList;
+import org.rhq.core.domain.configuration.PropertyMap;
+
 import java.io.PrintWriter;
 import java.util.*;
 import java.beans.Introspector;
@@ -82,6 +88,11 @@ public class TabularWriter {
 
         if (object instanceof Collection) {
             print((Collection) object);
+            return;
+        }
+
+        if (object instanceof Configuration) {
+            print((Configuration) object);
             return;
         }
 
@@ -244,6 +255,62 @@ public class TabularWriter {
         }
 
     }
+
+
+
+    public void print(Configuration config) {
+        out.println("Configuration [" + config.getId() + "] - " + config.getNotes());
+        for (PropertySimple p : config.getSimpleProperties().values()) {
+            print(p, 1);
+        }
+        for (PropertyList p : config.getListProperties().values()) {
+            print(p, 1);
+        }
+        for (PropertyMap p : config.getMapProperties().values()) {
+            print(p, 1);
+        }
+
+    }
+
+    public void print(PropertySimple p, int depth) {
+        out.println(indent(depth) + p.getName() + " = " + p.getStringValue());
+    }
+
+    public void print(PropertyList p, int depth) {
+        out.println(indent(depth) + p.getName() + " [" + p.getList().size() + "] {");
+            for (Property entry : p.getList()) {
+                if (entry instanceof PropertySimple) {
+                    print((PropertySimple) entry, depth+1);
+                } else if (entry instanceof PropertyMap) {
+                    print((PropertyMap)entry, depth+1);
+                }
+            }
+
+        out.println(indent(depth) + "}");
+    }
+
+    public void print(PropertyMap p, int depth) {
+        out.println(indent(depth) + p.getName() + " [" + p.getMap().size() + "] {");
+        for (String key : p.getMap().keySet()) {
+            Property entry = p.getMap().get(key);
+            if (entry instanceof PropertySimple) {
+                print((PropertySimple) entry, depth+1);
+            } else if (entry instanceof PropertyMap) {
+                print((PropertyMap)entry, depth+1);
+            }
+        }
+        out.println(indent(depth) + "}");
+    }
+
+
+    private String indent(int x) {
+        StringBuilder buf = new StringBuilder();
+        for (int i = 0; i < x; i++) {
+            buf.append("  ");
+        }
+        return buf.toString();
+    }
+
 
     private void printStrings(Collection list) {
         for (Object object : list) {

@@ -160,7 +160,7 @@ public class ScriptCommand implements ClientCommand {
         tw.setWidth(client.getConsoleWidth());
         sem.getBindings().put("pretty", tw);
 
-        sem.getBindings().put("ResourceProxyFactory", new ResourceClientProxy.Factory(client.getRemoteClient()));
+        sem.getBindings().put("ProxyFactory", new ResourceClientProxy.Factory(client.getRemoteClient()));
         bindScriptUtils();
 
         jsEngine.put("rhq", controller);

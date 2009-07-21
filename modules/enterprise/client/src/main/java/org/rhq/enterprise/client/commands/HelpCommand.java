@@ -35,6 +35,7 @@ import java.util.Map;
 import org.rhq.enterprise.client.ClientMain;
 import org.rhq.enterprise.client.TabularWriter;
 import org.rhq.enterprise.client.Controller;
+import org.rhq.enterprise.client.utility.ReflectionUtility;
 
 import javax.jws.WebParam;
 
@@ -99,7 +100,7 @@ public class HelpCommand implements ClientCommand {
 
                         Type returnType = methods[i].getGenericReturnType();
 
-                        data[i][0] = getSimpleTypeString(returnType);
+                        data[i][0] = ReflectionUtility.getSimpleTypeString(returnType);
 
                         Class<?>[] paramTypes = methods[i].getParameterTypes();
                         StringBuilder buf = new StringBuilder();
@@ -159,40 +160,6 @@ public class HelpCommand implements ClientCommand {
         return true;
     }
 
-
-    private String getSimpleTypeString(Type type) {
-        if (type instanceof ParameterizedType) {
-            ParameterizedType pType = (ParameterizedType) type;
-            Type[] typeArguments = pType.getActualTypeArguments();
-
-            String typeArgString = "";
-            for (Type typeArgument : typeArguments) {
-
-                if (typeArgString.length() > 0) {
-                    typeArgString += ",";
-                }
-
-                typeArgString += getSimpleTypeString(typeArgument);
-            }
-            return getSimpleTypeString(pType.getRawType()) + "<" + typeArgString + ">";
-
-
-        } else if (type instanceof TypeVariable) {
-            TypeVariable vType = (TypeVariable) type;
-            return vType.getClass().getSimpleName();
-        } else if (type instanceof GenericArrayType) {
-            GenericArrayType aType = (GenericArrayType) type;
-            return aType.getClass().getSimpleName() + "[" + getSimpleTypeString(aType.getGenericComponentType()) + "]";
-        } else if (type instanceof WildcardType) {
-            return ((WildcardType)type).toString();
-        } else {
-            if (type == null) {
-                return "";
-            } else {
-                return ((Class)type).getSimpleName();
-            }
-        }
-    }
 
 
     public String getSyntax() {

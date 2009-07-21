@@ -128,6 +128,9 @@ public class ClientMain {
         consoleReader.addCompletor(new ArgumentCompletor(new Completor[] { new SimpleCompletor("help"),
             new SimpleCompletor(commands.keySet().toArray(new String[commands.size()])) }));
 
+        this.serviceCompletor = new ServiceCompletor(consoleReader);
+        consoleReader.addCompletor(this.serviceCompletor);
+
         // enable pagination
         consoleReader.setUsePagination(true);
     }
@@ -443,20 +446,12 @@ public class ClientMain {
 
         if (remoteClient != null) {
             remoteClient.reinitialize();
-            // change the set of completers for a logged in session, now make available direct
-            // invocation of the remote API.
-            consoleReader.addCompletor(new ArgumentCompletor(new Completor[] {
-                new SimpleCompletor("help"),
-                new SimpleCompletor("api"),
-                new SimpleCompletor(this.getRemoteClient().getManagers().keySet().toArray(
-                    new String[this.getRemoteClient().getManagers().size()])) }));
-
-            this.serviceCompletor = (new ServiceCompletor(this.getRemoteClient().getManagers()));
 
 
-
-            consoleReader.addCompletor(this.serviceCompletor);
-
+            ScriptCommand sc = (ScriptCommand) commands.get("exec");
+            sc.initBindings(this);
+            this.serviceCompletor.setContext(sc.getContext());
+            this.serviceCompletor.setServices(remoteClient.getManagers());
         }
     }
 
@@ -467,10 +462,6 @@ public class ClientMain {
     public void setSubject(Subject subject) {
         this.subject = subject;
         this.remoteClient.setSubject(subject);
-
-        ScriptCommand sc = (ScriptCommand) commands.get("exec");
-        this.serviceCompletor.setContext(((ScriptCommand)commands.get("exec")).getContext());
-        
     }
 
     public String getHost() {

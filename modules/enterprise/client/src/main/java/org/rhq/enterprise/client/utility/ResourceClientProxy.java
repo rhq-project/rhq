@@ -37,6 +37,9 @@ import javassist.CtClass;
 import javassist.CtMethod;
 import javassist.CtNewMethod;
 import javassist.NotFoundException;
+import javassist.bytecode.ParameterAnnotationsAttribute;
+import javassist.bytecode.annotation.Annotation;
+import javassist.bytecode.annotation.StringMemberValue;
 import javassist.util.proxy.MethodHandler;
 import javassist.util.proxy.ProxyFactory;
 
@@ -59,6 +62,19 @@ import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.client.RemoteClient;
 import org.rhq.enterprise.server.exception.LoginException;
 import org.rhq.enterprise.server.operation.ResourceOperationSchedule;
+
+import javax.jws.WebParam;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Implements a local object that exposes resource related data as
@@ -156,8 +172,7 @@ public class ResourceClientProxy {
     }
 
     public String toString() {
-        return resource.getName() + "(" + resource.getResourceType().getName() + "::"
-            + resource.getResourceType().getPlugin() + ")";
+        return "[" + resourceId + "] " + resource.getName() + " (" + resource.getResourceType().getName() + "::" + resource.getResourceType().getPlugin() + ")";
     }
 
     public void init() {
@@ -165,7 +180,7 @@ public class ResourceClientProxy {
         this.resource = remoteClient.getResourceManagerRemote().getResource(remoteClient.getSubject(), resourceId);
 
         // Lazy init children, not here
-        initMeasurments();
+        initMeasurements();
         initOperations();
     }
 
@@ -176,11 +191,11 @@ public class ResourceClientProxy {
             remoteClient.getSubject(), criteria);
 
         for (Resource child : childResources) {
-            this.children.add(new Factory(remoteClient).getResourceProxy(child.getId()));
+            this.children.add(new Factory(remoteClient).getResource(child.getId()));
         }
     }
 
-    public void initMeasurments() {
+    public void initMeasurements() {
         MeasurementDefinitionCriteria criteria = new MeasurementDefinitionCriteria();
         criteria.addFilterResourceTypeName(resource.getResourceType().getName());
 
@@ -347,7 +362,7 @@ public class ResourceClientProxy {
                     if (key instanceof Measurement) {
                         return String.valueOf(key);
                     } else if (key instanceof Operation) {
-                        System.out.println("Need to invoke op" + key);
+                        System.out.println("Invoking operation " + ((Operation)key).getName());
 
                         return ((Operation) key).invoke(args);
 
@@ -368,7 +383,7 @@ public class ResourceClientProxy {
 
         private static AtomicInteger classIndex = new AtomicInteger();
 
-        public ResourceClientProxy getResourceProxy(int resourceId) {
+        public ResourceClientProxy getResource(int resourceId) {
 
             ResourceClientProxy proxy = new ResourceClientProxy(remoteClient, resourceId);
             Class customInterface = null;
@@ -378,14 +393,10 @@ public class ResourceClientProxy {
                 CtClass customClass = pool.makeInterface(ResourceClientProxy.class.getName() + "__Custom__"
                     + classIndex.getAndIncrement());
 
-                //                CtConstructor constructor = new CtConstructor(new CtClass[] { pool.get(ResourceClientProxy.class.getName()) }, customClass);
-                //                customClass.addConstructor(constructor);
-
                 for (String key : proxy.allProperties.keySet()) {
                     Object prop = proxy.allProperties.get(key);
 
                     if (prop instanceof Measurement) {
-
                         Measurement m = (Measurement) prop;
                         String name = getterName(key);
 
@@ -405,12 +416,33 @@ public class ResourceClientProxy {
                         CtClass[] params = new CtClass[types.size()];
                         int x = 0;
                         for (String param : types.keySet()) {
-                            params[x] = types.get(param);
+                            params[x++] = types.get(param);
                         }
 
-                        CtMethod method = CtNewMethod.abstractMethod(ConfigurationClassBuilder.translateConfiguration(o
-                            .getDefinition().getResultsConfigurationDefinition()), simpleName(key), params,
-                            new CtClass[0], customClass);
+                        CtMethod method =
+                                CtNewMethod.abstractMethod(
+                                    ConfigurationClassBuilder.translateConfiguration(o.getDefinition().getResultsConfigurationDefinition()),
+                                        simpleName(key),
+                                        params,
+                                        new CtClass[0],
+                                        customClass);
+
+                        // Setup @WebParam annotations so the signatures have the config prop names
+                        javassist.bytecode.annotation.Annotation[][] newAnnotations = new javassist.bytecode.annotation.Annotation[params.length][1];
+                        int i = 0;
+                        for (String paramName : types.keySet()) {
+                            newAnnotations[i] = new Annotation[1];
+
+                            newAnnotations[i][0] = new Annotation(WebParam.class.getName(), method.getMethodInfo().getConstPool());
+                            newAnnotations[i][0].addMemberValue("name",new StringMemberValue(paramName, method.getMethodInfo().getConstPool()));
+                            i++;
+                        }
+
+                        ParameterAnnotationsAttribute newAnnotationsAttribute =
+                                new ParameterAnnotationsAttribute(method.getMethodInfo().getConstPool(), ParameterAnnotationsAttribute.visibleTag);
+                        newAnnotationsAttribute.setAnnotations(newAnnotations);
+                        method.getMethodInfo().addAttribute(newAnnotationsAttribute);
+
                         customClass.addMethod(method);
                     }
                 }
@@ -467,7 +499,7 @@ public class ResourceClientProxy {
 
         Factory factory = new Factory(rc);
 
-        ResourceClientProxy resource = factory.getResourceProxy(10571);
+        ResourceClientProxy resource = factory.getResource(10571);
 
         for (Measurement m : resource.getMeasurements()) {
             System.out.println(m.toString());

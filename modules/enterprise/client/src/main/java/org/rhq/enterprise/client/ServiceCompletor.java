@@ -19,6 +19,7 @@
 package org.rhq.enterprise.client;
 
 import jline.Completor;
+import jline.ConsoleReader;
 
 import javax.jws.WebParam;
 import javax.script.Bindings;
@@ -30,6 +31,8 @@ import java.beans.MethodDescriptor;
 import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -39,6 +42,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Collections;
+
+import org.rhq.enterprise.client.utility.ReflectionUtility;
+import org.rhq.enterprise.client.utility.ResourceClientProxy;
+import org.rhq.core.domain.auth.Subject;
 
 /**
  * A Contextual JavaScript interactive completor. Not perfect, but
@@ -56,9 +63,31 @@ public class ServiceCompletor implements Completor {
 
     // Consecutive times this exact complete has been requested
     private int recomplete;
+    private ConsoleReader consoleReader;
 
+    private static final Set<String> IGNORED_METHODS;
+    static {
+        IGNORED_METHODS = new HashSet<String>();
+        IGNORED_METHODS.add("newProxyInstance");
+        IGNORED_METHODS.add("hashCode");
+        IGNORED_METHODS.add("equals");
+        IGNORED_METHODS.add("getInvocationHandler");
+        IGNORED_METHODS.add("isProxyClass");
+        IGNORED_METHODS.add("newProxyInstance");
+        IGNORED_METHODS.add("getProxyClass");
+        IGNORED_METHODS.add("main");
+        IGNORED_METHODS.add("handler");
+        IGNORED_METHODS.add("init");
+        IGNORED_METHODS.add("initChildren");
+        IGNORED_METHODS.add("initMeasurements");
+        IGNORED_METHODS.add("initOperations");
+    }
 
-    public ServiceCompletor(Map<String, Object> services) {
+    public ServiceCompletor(ConsoleReader reader) {
+        this.consoleReader = reader;
+    }
+
+    public void setServices(Map<String, Object> services) {
         this.services = services;
     }
 
@@ -138,6 +167,13 @@ public class ServiceCompletor implements Completor {
                 int x = 0;
                 for (Object match : exactMatches) {
                     if (match instanceof Method) {
+
+                        if (recomplete == 3) {
+                            displaySignatures(baseObject, (Method)match);
+
+                            return -1;
+                        }
+
                         int result = completeParameters(call[1], i, list, (Method) match);  // x should be the same for all calls
                         if (result > 0) {
                             x = result;
@@ -155,15 +191,44 @@ public class ServiceCompletor implements Completor {
                 return call[0].length() + 1;
             }
 
-            list.addAll(matches.keySet());
+            if (recomplete == 2) {
+                List<Method> methods = new ArrayList<Method>();
+                for (Object val : matches.values()) {
+                    if (val instanceof Method) {
+                        methods.add((Method) val);
+                    }
+                }
+                displaySignatures(baseObject,methods.toArray(new Method[methods.size()]));
+            } else {
+                list.addAll(matches.keySet());
+            }
             return 0;
 
         }
     }
 
+    private void displaySignatures(Object object, Method... methods) {
+        try {
+            String start = this.consoleReader.getCursorBuffer().getBuffer().toString();
+            while ((this.consoleReader.getCursorBuffer().cursor > 0)
+                       && this.consoleReader.backspace()) {
+                ;
+            }
+            this.consoleReader.printNewline();
+            this.consoleReader.printNewline();
+            for (Method m : methods) {
+                this.consoleReader.printString(getSignature(object, m));
+                this.consoleReader.printNewline();
+            }
+            this.consoleReader.drawLine();
+            this.consoleReader.putString(start);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 
     public int completeParameters(String params, int i, List list, Method method) {
-
 
         String[] paramList = params.split(",");
 
@@ -202,19 +267,19 @@ public class ServiceCompletor implements Completor {
                 list.addAll(matches.keySet());
             }
 
-            if (list.size() == 0 && recomplete == 3) {
-                Annotation[][] annotations = method.getParameterAnnotations();
-
-                if (annotations != null && annotations.length >= i) {
-                    Annotation[] as = annotations[paramIndex];
-                    for (Annotation a : as) {
-                        if (a instanceof WebParam) {
-                            list.add("name: " + ((WebParam) a).name());
-                        }
-                    }
-                }
-                list.add("type: " + c[paramIndex].getSimpleName());
-            }
+//            if (list.size() == 0 && recomplete == 3) {
+//                Annotation[][] annotations = method.getParameterAnnotations();
+//
+//                if (annotations != null && annotations.length >= i) {
+//                    Annotation[] as = annotations[paramIndex];
+//                    for (Annotation a : as) {
+//                        if (a instanceof WebParam) {
+//                            list.add("name: " + ((WebParam) a).name());
+//                        }
+//                    }
+//                }
+//                list.add("type: " + c[paramIndex].getSimpleName());
+//            }
             return baseLength;
         }
     }
@@ -232,9 +297,11 @@ public class ServiceCompletor implements Completor {
                 }
             }
         }
-        for (String var : services.keySet()) {
-            if (var.startsWith(start)) {
-                found.put(var, services.get(var));
+        if (services != null) {
+            for (String var : services.keySet()) {
+                if (var.startsWith(start)) {
+                    found.put(var, services.get(var));
+                }
             }
         }
         return found;
@@ -260,6 +327,8 @@ public class ServiceCompletor implements Completor {
         return found;
     }
 
+
+
     private Map<String, Object> getContextMatches(Object baseObject, String start) {
         Map<String, Object> found = new HashMap<String, Object>();
 
@@ -280,7 +349,11 @@ public class ServiceCompletor implements Completor {
 
             MethodDescriptor[] methods = info.getMethodDescriptors();
             for (MethodDescriptor desc : methods) {
-                if (desc.getName().startsWith(start) && !methodsCovered.contains(desc.getMethod()) && !desc.getName().startsWith("_d")) {
+                if (desc.getName().startsWith(start)
+                        && !methodsCovered.contains(desc.getMethod())
+                        && !desc.getName().startsWith("_d")
+                        && !IGNORED_METHODS.contains(desc.getName())) {
+
                     found.put(desc.getName(), desc.getMethod());
                 }
             }
@@ -289,7 +362,6 @@ public class ServiceCompletor implements Completor {
         } catch (IntrospectionException e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
-
         return found;
     }
 
@@ -341,28 +413,45 @@ public class ServiceCompletor implements Completor {
     }
 
 
-    private void addSignatures(String serviceName, Method method, List candidates) {
-        Object service = services.get(serviceName);
-        Class intf = service.getClass().getInterfaces()[0];
-        candidates.add(getSignature(method));
+    private static String getSignature(Object object, Method m) {
 
-//        Method[] methods = intf.getMethods();
-//        for (Method m : methods) {
-//            if (m.getName().equals(methodName)) {
-//                candidates.add(serviceName + "." + methodName + getSignature(m));
-//            }
-//        }
-    }
+        // If its our service proxy lookup the original interface that has the annotations
+        if (object instanceof Proxy) {
+            if (Proxy.getInvocationHandler(object) instanceof RemoteClientProxy) {
+                try {
+                    m = ((RemoteClientProxy)Proxy.getInvocationHandler(object)).
+                            getRemoteInterface().
+                                getDeclaredMethod(m.getName(),m.getParameterTypes());
+                } catch (NoSuchMethodException e) {
+                    Class[] params = m.getParameterTypes();
+                    Class[] newParams = new Class[params.length + 1];
+                    System.arraycopy(params, 0, newParams, 1, params.length);
+                    newParams[0] = Subject.class;
 
-    private static String getSignature(Method m) {
+                    try {
+                           m = ((RemoteClientProxy)Proxy.getInvocationHandler(object)).
+                            getRemoteInterface().
+                                getDeclaredMethod(m.getName(),newParams);
+                    } catch (NoSuchMethodException nsme) {
+                        
+                    }
+                }
+            }
+        }
+
+
         StringBuilder buf = new StringBuilder();
-        Class[] params = m.getParameterTypes();
+        Type[] params = m.getGenericParameterTypes();
         Annotation[][] annotations = m.getParameterAnnotations();
         int i = 0;
-        for (Class type : params) {
-            if (buf.length() == 0) {
-                buf.append("(");
-            } else {
+
+        buf.append(ReflectionUtility.getSimpleTypeString(m.getGenericReturnType()));
+        buf.append(" ");
+
+        buf.append(m.getName());
+        buf.append("(");
+        for (Type type : params) {
+            if (i > 0) {
                 buf.append(", ");
             }
 
@@ -372,14 +461,13 @@ public class ServiceCompletor implements Completor {
                 Annotation[] as = annotations[i];
                 for (Annotation a : as) {
                     if (a instanceof WebParam) {
-                        name = ((WebParam) a).name();
+                        name = ReflectionUtility.getSimpleTypeString(type) + " " + ((WebParam) a).name();
                     }
                 }
-
             }
 
             if (name == null) {
-                name = type.getSimpleName();
+                name = ReflectionUtility.getSimpleTypeString(type);
             }
 
             buf.append(name);

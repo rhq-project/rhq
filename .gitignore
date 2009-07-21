@@ -1,0 +1,188 @@
+
+# /
+/dev-container
+/eclipse-classes
+/dev-agent
+
+# /etc/classloaders-test/dummy1/
+/etc/classloaders-test/dummy1/target
+
+# /etc/classloaders-test/dummy2/
+/etc/classloaders-test/dummy2/target
+
+# /etc/classloaders-test/dummy3/
+/etc/classloaders-test/dummy3/target
+
+# /etc/classloaders-test/plugin1/
+/etc/classloaders-test/plugin1/target
+
+# /etc/classloaders-test/plugin2/
+/etc/classloaders-test/plugin2/target
+
+# /modules/
+/modules/target
+
+# /modules/core/client-api/
+/modules/core/client-api/target
+
+# /modules/core/comm-api/
+/modules/core/comm-api/target
+
+# /modules/core/dbutils/
+/modules/core/dbutils/target
+
+# /modules/core/domain/
+/modules/core/domain/target
+
+# /modules/core/gui/
+/modules/core/gui/target
+
+# /modules/core/native-system/
+/modules/core/native-system/target
+
+# /modules/core/plugin-api/
+/modules/core/plugin-api/target
+
+# /modules/core/plugin-container/
+/modules/core/plugin-container/target
+
+# /modules/core/plugin-validator/
+/modules/core/plugin-validator/target
+
+# /modules/core/plugindoc/
+/modules/core/plugindoc/target
+
+# /modules/core/util/
+/modules/core/util/target
+
+# /modules/enterprise/
+/modules/enterprise/target
+
+# /modules/enterprise/agent/
+/modules/enterprise/agent/target
+
+# /modules/enterprise/agentupdate/
+/modules/enterprise/agentupdate/target
+
+# /modules/enterprise/client/
+/modules/enterprise/client/target
+
+# /modules/enterprise/comm/
+/modules/enterprise/comm/target
+
+# /modules/enterprise/gui/
+/modules/enterprise/gui/target
+
+# /modules/enterprise/gui/installer-war/
+/modules/enterprise/gui/installer-war/target
+
+# /modules/enterprise/gui/portal-war/
+/modules/enterprise/gui/portal-war/target
+
+# /modules/enterprise/gui/webdav-war/
+/modules/enterprise/gui/webdav-war/target
+
+# /modules/enterprise/server/container/
+/modules/enterprise/server/container/target
+
+# /modules/enterprise/server/container-lib/
+/modules/enterprise/server/container-lib/target
+
+# /modules/enterprise/server/ear/
+/modules/enterprise/server/ear/target
+
+# /modules/enterprise/server/jar/
+/modules/enterprise/server/jar/target
+
+# /modules/enterprise/server/plugins/
+/modules/enterprise/server/plugins/target
+
+# /modules/enterprise/server/plugins/disk/
+/modules/enterprise/server/plugins/disk/target
+
+# /modules/enterprise/server/plugins/url/
+/modules/enterprise/server/plugins/url/target
+
+# /modules/enterprise/server/plugins/yum/
+/modules/enterprise/server/plugins/yum/target
+
+# /modules/enterprise/server/safe-invoker/
+/modules/enterprise/server/safe-invoker/target
+
+# /modules/enterprise/server/sars/agent-sar/
+/modules/enterprise/server/sars/agent-sar/target
+
+# /modules/helpers/pluginGen/
+/modules/helpers/pluginGen/target
+
+# /modules/helpers/rtfilter/
+/modules/helpers/rtfilter/target
+
+# /modules/plugins/apache/
+/modules/plugins/apache/target
+
+# /modules/plugins/apt/
+/modules/plugins/apt/target
+
+# /modules/plugins/augeas/
+/modules/plugins/augeas/target
+
+# /modules/plugins/cli/
+/modules/plugins/cli/target
+
+# /modules/plugins/database/
+/modules/plugins/database/target
+
+# /modules/plugins/grub/
+/modules/plugins/grub/target
+
+# /modules/plugins/hardware/
+/modules/plugins/hardware/target
+
+# /modules/plugins/hosts/
+/modules/plugins/hosts/target
+
+# /modules/plugins/hudson/
+/modules/plugins/hudson/target
+
+# /modules/plugins/iis/
+/modules/plugins/iis/target
+
+# /modules/plugins/jira/
+/modules/plugins/jira/target
+
+# /modules/plugins/jmx/
+/modules/plugins/jmx/target
+
+# /modules/plugins/mock-jboss/
+/modules/plugins/mock-jboss/target
+
+# /modules/plugins/mysql/
+/modules/plugins/mysql/target
+
+# /modules/plugins/netservices/
+/modules/plugins/netservices/target
+
+# /modules/plugins/oracle/
+/modules/plugins/oracle/target
+
+# /modules/plugins/perftest/
+/modules/plugins/perftest/target
+
+# /modules/plugins/platform/
+/modules/plugins/platform/target
+
+# /modules/plugins/postgres/
+/modules/plugins/postgres/target
+
+# /modules/plugins/rhq-agent/
+/modules/plugins/rhq-agent/target
+
+# /modules/plugins/snmptrapd/
+/modules/plugins/snmptrapd/target
+
+# /modules/plugins/sshd/
+/modules/plugins/sshd/target
+
+# /modules/plugins/virt/
+/modules/plugins/virt/target

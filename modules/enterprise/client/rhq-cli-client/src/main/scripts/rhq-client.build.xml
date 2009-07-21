@@ -36,17 +36,6 @@
       <delete dir="${cli.home}" />
    </target>
 
-   <!--
-      <target name="prepare-native-dir"> 
-      <echo>*** Removing old native distribution</echo>
-      <delete
-      dir="${jbossws.home}" />
-      <echo>*** Unzipping native distribution</echo>
-      <unzip
-      src="${settings.localRepository}/jboss/jbossws/${jbossws.version}/jbossws-${jbossws.version}.zip"
-      dest="${project.build.outputDirectory}" />         
-      </target>
-   -->
 
    <!-- To generate the client service classes we need portions of an AS distribution that provide
 	   jbossws.  Use a previous unzip if it is uptodate, in order to speed things up. -->

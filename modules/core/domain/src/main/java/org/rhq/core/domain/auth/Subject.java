@@ -466,6 +466,8 @@ public class Subject implements Externalizable {
             writeExternalRemote(out);
         } else if (ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION == strategy) {
             EntitySerializer.writeExternalRemote(this, out);
+            // reflective serialization misses sessionId because it's not a persistence annotated
+            out.writeInt(this.sessionId == null ? 0 : this.sessionId);
         } else {
             writeExternalAgent(out);
         }
@@ -477,6 +479,8 @@ public class Subject implements Externalizable {
             readExternalRemote(in);
         } else if (ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION.id() == c) {
             EntitySerializer.readExternalRemote(this, in);
+            // reflective serialization misses sessionId because it's not a persistence annotated
+            this.sessionId = in.readInt();
         } else {
             readExternalAgent(in);
         }

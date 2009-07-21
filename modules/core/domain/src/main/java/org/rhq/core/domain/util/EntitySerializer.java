@@ -22,6 +22,7 @@
  */
 package org.rhq.core.domain.util;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -214,12 +215,15 @@ public class EntitySerializer {
         System.out.println(writeResource.toString());
         System.out.println("BEFORE");
 
-        ObjectOutput output = new ObjectOutputStream(new FileOutputStream("S:\\test.txt"));
+        String tempDir = System.getProperty("java.io.tmpdir");
+        File tempFile = new File(tempDir, "entitySerializerTest.txt");
+
+        ObjectOutput output = new ObjectOutputStream(new FileOutputStream(tempFile));
         writeExternalRemote(writeResource, output);
         output.close();
 
         Resource readResource = new Resource();
-        ObjectInput input = new ObjectInputStream(new FileInputStream("S:\\test.txt"));
+        ObjectInput input = new ObjectInputStream(new FileInputStream(tempFile));
         readExternalRemote(readResource, input);
         input.close();
 

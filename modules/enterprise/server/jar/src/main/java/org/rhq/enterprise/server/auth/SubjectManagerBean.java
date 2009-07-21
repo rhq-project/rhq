@@ -52,7 +52,6 @@ import org.rhq.core.domain.util.CriteriaQueryGenerator;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
-import org.rhq.core.domain.util.QueryGenerator;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
@@ -60,7 +59,6 @@ import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.CustomJaasDeploymentServiceMBean;
 import org.rhq.enterprise.server.exception.CreateException;
 import org.rhq.enterprise.server.exception.DeleteException;
-import org.rhq.enterprise.server.exception.FetchException;
 import org.rhq.enterprise.server.exception.LoginException;
 import org.rhq.enterprise.server.exception.UpdateException;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
@@ -185,26 +183,6 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         }
 
         return subject;
-    }
-
-    /** 
-     * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#findSubjects(org.rhq.core.domain.auth.Subject, org.rhq.core.domain.auth.Subject, org.rhq.core.domain.util.PageControl)
-     */
-    @SuppressWarnings("unchecked")
-    public PageList<Subject> findSubjects(Subject subject, Subject criteria, PageControl pc) throws FetchException {
-        try {
-            QueryGenerator generator = new QueryGenerator(criteria, pc);
-
-            Query query = generator.getQuery(entityManager);
-            Query countQuery = generator.getCountQuery(entityManager);
-
-            long count = (Long) countQuery.getSingleResult();
-            List<Subject> subjects = query.getResultList();
-
-            return new PageList<Subject>(subjects, (int) count, pc);
-        } catch (Exception e) {
-            throw new FetchException(e.getMessage());
-        }
     }
 
     /**

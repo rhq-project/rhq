@@ -27,12 +27,10 @@ import javax.jws.soap.SOAPBinding;
 import org.rhq.core.domain.auth.Principal;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.SubjectCriteria;
-import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
 import org.rhq.enterprise.server.exception.CreateException;
 import org.rhq.enterprise.server.exception.DeleteException;
-import org.rhq.enterprise.server.exception.FetchException;
 import org.rhq.enterprise.server.exception.LoginException;
 import org.rhq.enterprise.server.exception.UpdateException;
 
@@ -114,44 +112,6 @@ public interface SubjectManagerRemote {
     @WebMethod
     Subject getSubjectByName( //
         @WebParam(name = "username") String username);
-
-    /**
-     * This find service can be used to find subjects based on various criteria and return various data.
-     *
-     * @param subject  The logged in user's subject.
-     * @param criteria {@link Resource}, can be null
-     * <pre>
-     * If provided the Subject object can specify various search criteria as specified below.
-     *   Subject.id : exact match
-     *   Subject.description : case insensitive substring match
-     *   Subject.firstName
-     *   Subject.lastName
-     *   Subject.emailAddress   
-     * </pre>
-     * @param pc {@link PageControl}
-     * <pre>
-     * If provided PageControl specifies page size, requested page, sorting, and optional data.
-     * 
-     * Supported OptionalData
-     *   To specify optional data call pc.setOptionalData() and supply one of more of the DATA_* constants
-     *   defined in this interface.
-     * 
-     * Supported Sorting:
-     *   Possible values to provide PageControl for sorting (PageControl.orderingFields)
-     *     name
-     *     firstName
-     *     lastName
-     *   
-     * </pre>
-     * @return
-     * @throws FetchException
-     */
-    @WebMethod
-    PageList<Subject> findSubjects( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "username") Subject criteria, //
-        @WebParam(name = "pageControl") PageControl pc) //
-        throws FetchException;
 
     /**
      * Logs a user into the system. This will authenticate the given user with the given password. If the user was

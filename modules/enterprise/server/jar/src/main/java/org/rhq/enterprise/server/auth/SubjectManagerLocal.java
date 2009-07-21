@@ -29,7 +29,6 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.exception.CreateException;
 import org.rhq.enterprise.server.exception.DeleteException;
-import org.rhq.enterprise.server.exception.FetchException;
 import org.rhq.enterprise.server.exception.LoginException;
 import org.rhq.enterprise.server.exception.UpdateException;
 
@@ -245,11 +244,6 @@ public interface SubjectManagerLocal {
      * @see {@link SubjectManagerRemote#getSubjectByName(String)}
      */
     Subject getSubjectByName(String username);
-
-    /**
-     * @see {@link SubjectManagerRemote#findSubjects(Subject, Subject, PageControl)}
-     */
-    PageList<Subject> findSubjects(Subject subject, Subject criteria, PageControl pc) throws FetchException;
 
     /**
      * @see SubjectManagerRemote#isLoggedIn(String)

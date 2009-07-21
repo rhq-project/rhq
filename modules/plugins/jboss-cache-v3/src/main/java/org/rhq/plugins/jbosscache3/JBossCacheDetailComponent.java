@@ -112,12 +112,11 @@ public class JBossCacheDetailComponent implements MeasurementFacet,
 				EmsAttribute atribute = detailComponent
 						.getAttribute(metricName);
 
-				Object value = atribute.refresh();
+				Object value = atribute.getValue();
 
 				if (request.getDataType() == DataType.MEASUREMENT) {
-					Number number = (Number) value;
-					report.addData(new MeasurementDataNumeric(request, number
-							.doubleValue()));
+					Double number = ((Number) value).doubleValue();
+					report.addData(new MeasurementDataNumeric(request, number));
 				} else if (request.getDataType() == DataType.TRAIT) {
 					report.addData(new MeasurementDataTrait(request, value
 							.toString()));

@@ -76,6 +76,21 @@ public class JBossCacheComponent implements MeasurementFacet, OperationFacet,
 		else
 			throw new InvalidPluginConfigurationException(
 					"Invalid plugin configuration in JBossCache component.");
+
+		EmsConnection connection = getEmsConnection();
+
+		EmsBean emsBean = connection.getBean(beanName);
+		if (emsBean == null) {
+			connection.refresh();
+			emsBean = connection.getBean(beanName);
+			if (emsBean == null) {
+				log.error("EmsBean " + beanName + " was not found.");
+				throw new InvalidPluginConfigurationException(
+						"Invalid plugin configuration in JBossCache component.");
+			}
+		}
+
+		log.info("Jboss Cache " + beanName + "was loaded.");
 	}
 
 	public void stop() {
@@ -86,10 +101,23 @@ public class JBossCacheComponent implements MeasurementFacet, OperationFacet,
 	public AvailabilityType getAvailability() {
 		try {
 			EmsConnection connection = parentComp.getEmsConnection();
+
 			if (connection == null)
 				return AvailabilityType.DOWN;
 
-			boolean up = connection.getBean(beanName).isRegistered();
+			EmsBean emsBean = connection.getBean(beanName);
+			boolean up = emsBean.isRegistered();
+
+			if (up == false) {
+				// in some buggy situations, a remote server might tell us an
+				// MBean isn't registered but it really is.
+				// see JBPAPP-2031 for more
+				String emsBeanName = emsBean.getBeanName().getCanonicalName();
+				int size = emsBean.getConnectionProvider()
+						.getExistingConnection().queryBeans(emsBeanName).size();
+				up = (size == 1);
+			}
+
 			return up ? AvailabilityType.UP : AvailabilityType.DOWN;
 		} catch (Exception e) {
 			if (log.isDebugEnabled())
@@ -146,9 +174,9 @@ public class JBossCacheComponent implements MeasurementFacet, OperationFacet,
 
 				if (value != null) {
 					if (request.getDataType() == DataType.MEASUREMENT) {
-						Number number = (Number) value;
+						Double number = ((Number) value).doubleValue();
 						report.addData(new MeasurementDataNumeric(request,
-								number.doubleValue()));
+								number));
 					} else if (request.getDataType() == DataType.TRAIT)
 						report.addData(new MeasurementDataTrait(request, value
 								.toString()));

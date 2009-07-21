@@ -25,6 +25,8 @@ package org.rhq.plugins.jbosscache3;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
@@ -46,8 +48,8 @@ import org.rhq.plugins.jmx.ObjectNameQueryUtility;
 public class JBossCacheDiscoveryComponent implements
 		ResourceDiscoveryComponent<ProfileServiceComponent> {
 
-	private ResourceDiscoveryContext<ProfileServiceComponent> context;
 	private Configuration defaultConfig;
+	private String REGEX = "(,|:)jmx-resource=[^,]*(,|\\z)";
 
 	public Set<DiscoveredResourceDetails> discoverResources(
 			ResourceDiscoveryContext<ProfileServiceComponent> context)
@@ -56,7 +58,6 @@ public class JBossCacheDiscoveryComponent implements
 		ProfileServiceComponent parentComponent = context
 				.getParentResourceComponent();
 
-		this.context = context;
 		this.defaultConfig = context.getDefaultPluginConfiguration();
 
 		List<Configuration> configurations = context.getPluginConfigurations();
@@ -64,6 +65,8 @@ public class JBossCacheDiscoveryComponent implements
 		EmsConnection connection = parentComponent.getEmsConnection();
 
 		Set<DiscoveredResourceDetails> resources = new HashSet<DiscoveredResourceDetails>();
+
+		Pattern p = Pattern.compile(REGEX);
 
 		if (configurations.isEmpty())
 			configurations.add(defaultConfig);
@@ -82,12 +85,17 @@ public class JBossCacheDiscoveryComponent implements
 				EmsBean bean = cacheBeans.get(i);
 
 				String beanName = bean.getBeanName().toString();
-				beanName = beanName.substring(0, beanName
-						.indexOf(",jmx-resource"));
 
-				if (!names.contains(beanName)) {
-					names.add(beanName);
+				Matcher m = p.matcher(beanName);
+				if (m.find()) {
+					beanName = m.replaceFirst(m.group(2).equals(",") ? m
+							.group(1) : "");
+
+					if (!names.contains(beanName)) {
+						names.add(beanName);
+					}
 				}
+
 			}
 
 			for (String key : names) {

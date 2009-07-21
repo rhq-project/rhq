@@ -66,7 +66,6 @@
    </dependencies>
 
    <build>
-      <finalName>rhq-client-${project.version}</finalName>
       <outputDirectory>target/${project.build.finalName}</outputDirectory>
 
       <plugins>

@@ -6,10 +6,11 @@
     <format>zip</format>
   </formats> 
   <includeBaseDirectory>true</includeBaseDirectory>
-  <baseDirectory>${project.build.finalName}</baseDirectory>
+  <!--<baseDirectory>${basedir}/target/${artifactId}-${version}</baseDirectory>-->
+  <baseDirectory>${artifactId}-${version}</baseDirectory>
   <fileSets>
     <fileSet>      
-      <directory>${project.build.outputDirectory}</directory>    
+      <directory>${basedir}/target/${artifactId}-${version}</directory>
       <outputDirectory>/</outputDirectory>
       <includes>	
         <include>**/*</include>
@@ -19,7 +20,7 @@
       </excludes>
     </fileSet>
     <fileSet>      
-      <directory>${project.build.outputDirectory}</directory>    
+      <directory>${basedir}/target/${artifactId}-${version}</directory>
       <outputDirectory>/</outputDirectory>
       <includes>
         <include>**/*.sh</include>

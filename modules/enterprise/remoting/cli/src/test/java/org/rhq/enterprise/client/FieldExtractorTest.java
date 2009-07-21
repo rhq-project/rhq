@@ -27,6 +27,8 @@ import static org.testng.Assert.*;
 
 import org.testng.annotations.Test;
 
+import javax.persistence.Entity;
+import javax.persistence.Id;
 import java.lang.reflect.Field;
 
 public class FieldExtractorTest {
@@ -71,6 +73,17 @@ public class FieldExtractorTest {
         assertEquals(actual, expected, "The string 'null' should be returned when a field is null");
     }
 
+    @Test
+    public void theSimpleClassNameAndIdShouldBeReturnedForEntityField() throws Exception {
+        TestBean src = new TestBean();
+        FieldExtractor extractor = new FieldExtractor();
+
+        Field field = getField(src, "myEntity");
+
+        String expected = "TestEntity[id:1]";
+        String actual = extractor.getValue(field, src);
+    }
+
     Field getField(Object src, String fieldName) throws Exception {
         return src.getClass().getDeclaredField(fieldName);
     }
@@ -81,6 +94,8 @@ public class FieldExtractorTest {
         private String myString = "string";
 
         private AnotherTestBean myTestBean = new AnotherTestBean();
+
+        private TestEntity myEntity = new TestEntity();
 
         public int getMyInt() {
             return myInt;
@@ -104,6 +119,12 @@ public class FieldExtractorTest {
         public String toString() {
             return "ANOTHER TEST BEAN";
         }
+    }
+
+    @Entity
+    static class TestEntity {
+        @Id
+        private int id = 1;
     }
 
 }

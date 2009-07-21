@@ -98,83 +98,6 @@ public interface ResourceManagerRemote {
         @WebParam(name = "resourceId") int resourceId) throws FetchException;
 
     /**
-     * This find service can be used to find resources based on various criteria and return various data.
-     *
-     * @param subject The logged in user's subject.
-     * @param criteria {@link Resource}, can be null
-     * <pre>
-     * If provided the Resource object can specify various search criteria as specified below.
-     *   Resource.id : exact match
-     *   Resource.description : case insensitive substring match   
-     *   Resource.inventoryStatus : exact match
-     *   Resource.name : case insensitive substring match   
-     *   Resource.parentResource.id : exact match
-     *   Resource.resourceKey : case insensitive substring match   
-     *   Resource.resourceType.id : exact match
-     * All other fields are ignored:
-     * </pre>
-     * @param pc {@link PageControl}
-     * <pre>
-     * If provided PageControl specifies page size, requested page, sorting, and optional data.
-     * 
-     * Supported OptionalData
-     *   To specify optional data call pc.setOptionalData() and supply one of more of the DATA_* constants
-     *   defined in this interface.
-     * 
-     * Supported Sorting:
-     *   ?? This needs to be defined ??
-     *    
-     * </pre>
-     * @return
-     * @throws FetchException
-     */
-    @WebMethod
-    PageList<Resource> findResources( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "criteria") Resource criteria, //
-        @WebParam(name = "pageControl") PageControl pc) throws FetchException;
-
-    /**
-     * This find service can be used to find child resources for the specified resource,
-     * based on various criteria and return various data.
-     *
-     * @param subject The logged in user's subject.
-     * @param resourceId the id of a {@link Resource} in inventory. 
-     * @param criteria {@link Resource}, can be null
-     * <pre>
-     * If provided the Resource object can specify various search criteria as specified below.
-     * These criteria are applied to the children resources!
-     *   Resource.id : exact match
-     *   Resource.description : case insensitive substring match   
-     *   Resource.inventoryStatus : exact match
-     *   Resource.name : case insensitive substring match   
-     *   Resource.resourceKey : case insensitive substring match   
-     *   Resource.resourceType.id : exact match
-     * All other fields are ignored:
-     * </pre>
-     * @param pc {@link PageControl}
-     * <pre>
-     * If provided PageControl specifies page size, requested page, sorting, and optional data.
-     * 
-     * Supported OptionalData
-     *   To specify optional data call pc.setOptionalData() and supply one of more of the DATA_* constants
-     *   defined in this interface.
-     * 
-     * Supported Sorting:
-     *   ?? This needs to be defined ??
-     *   
-     * </pre>
-     * @return
-     * @throws FetchException
-     */
-    @WebMethod
-    PageList<Resource> findResourceChildren( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int resourceId, //
-        @WebParam(name = "criteria") Resource criteria, //
-        @WebParam(name = "pageControl") PageControl pc) throws FetchException;
-
-    /**
      * Removes these resources from inventory.  The resources may subsequently be rediscovered.  Note that for
      * each specified resource all children will also be removed, it it not necessary or recommended to
      * specify more than one resource in the same ancestry line.
@@ -188,7 +111,6 @@ public interface ResourceManagerRemote {
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceIds") int[] resourceIds) throws DeleteException;
 
-    // THIS WILL BE REMOVED
     @WebMethod
     PageList<ResourceComposite> findResourceComposites( //
         @WebParam(name = "subject") Subject subject, //

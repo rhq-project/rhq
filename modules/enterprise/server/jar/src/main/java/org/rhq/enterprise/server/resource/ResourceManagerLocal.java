@@ -437,17 +437,6 @@ public interface ResourceManagerLocal {
     List<Resource> findResourceLineage(Subject subject, int resourceId) throws FetchException;
 
     /**
-     * #see {@link ResourceManagerRemote#findResources(Subject, Resource, PageControl)
-     */
-    PageList<Resource> findResources(Subject subject, Resource criteria, PageControl pc) throws FetchException;
-
-    /**
-     * #see {@link ResourceManagerRemote#findResourceChildren(Subject, int, Resource, PageControl)
-     */
-    PageList<Resource> findResourceChildren(Subject subject, int resourceId, Resource criteria, PageControl pc)
-        throws FetchException;
-
-    /**
      * #see {@link ResourceManagerRemote#uninventoryResources(Subject, int)
      */
     void uninventoryResources(Subject subject, int[] resourceIds) throws DeleteException;

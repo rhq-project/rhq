@@ -102,8 +102,6 @@ import org.rhq.core.domain.util.CriteriaQueryGenerator;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
-import org.rhq.core.domain.util.QueryGenerator;
-import org.rhq.core.domain.util.QueryGenerator.AuthorizationTokenType;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
@@ -2024,38 +2022,6 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         }
 
         return result;
-    }
-
-    @SuppressWarnings("unchecked")
-    public PageList<Resource> findResources(Subject subject, Resource criteria, PageControl pc) throws FetchException {
-        try {
-            QueryGenerator generator = new QueryGenerator(criteria, pc);
-            generator.setAuthorizationResourceFragment(AuthorizationTokenType.RESOURCE, null, subject.getId());
-
-            Query query = generator.getQuery(entityManager);
-            Query countQuery = generator.getCountQuery(entityManager);
-
-            long count = (Long) countQuery.getSingleResult();
-            List<Resource> results = query.getResultList();
-
-            return new PageList<Resource>(results, (int) count, pc);
-        } catch (Exception e) {
-            throw new FetchException(e);
-        }
-    }
-
-    public PageList<Resource> findResourceChildren(Subject subject, int resourceId, Resource criteria, PageControl pc)
-        throws FetchException {
-
-        try {
-            // finding the children is equivalent to filtering on the parent
-            Resource parentResourceFlyWeight = new Resource(resourceId);
-            criteria.setParentResource(parentResourceFlyWeight);
-        } catch (Exception e) {
-            throw new FetchException(e);
-        }
-
-        return findResources(subject, criteria, pc);
     }
 
     public void uninventoryResources(Subject subject, int[] resourceIds) throws DeleteException {

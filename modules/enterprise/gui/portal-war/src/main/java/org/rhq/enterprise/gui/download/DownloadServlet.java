@@ -169,9 +169,13 @@ public class DownloadServlet extends HttpServlet {
                 writer.println(String.format("<font size=\"+2\"><b><pre>%s</pre></b></font>", dirName));
                 List<File> files = getDownloadFiles(requestedDirectory);
                 if (files.size() > 0) {
+                    String pathInfo = req.getPathInfo();
+                    if (!pathInfo.endsWith("/")) {
+                        pathInfo += "/";
+                    }
                     writer.println("<ul>");
                     for (File file : files) {
-                        writer.println("<li><a href=\"" + req.getServletPath() + "/" + file.getName() + "\">"
+                        writer.println("<li><a href=\"" + req.getServletPath() + pathInfo + file.getName() + "\">"
                             + file.getName() + "</a></li>");
                     }
                     writer.println("</ul>");

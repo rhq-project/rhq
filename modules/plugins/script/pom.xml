@@ -9,21 +9,21 @@
    </parent>
 
    <groupId>org.rhq</groupId>
-   <artifactId>rhq-cli-plugin</artifactId>
+   <artifactId>rhq-script-plugin</artifactId>
    <packaging>jar</packaging>
 
-   <name>RHQ Command Line Interface Plugin</name>
+   <name>RHQ Script Plugin</name>
    <description>
-      A plugin for managing resources that have a command line as their management interface.
+      A plugin for managing resources that have command line executables or scripts as their management interface.
    </description>
 
    <scm>
-      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/plugins/cli</connection>
-      <developerConnection>scm:svn:http://ispringer@svn.rhq-project.org/repos/rhq/trunk/modules/plugins/cli</developerConnection>
+      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/plugins/script</connection>
+      <developerConnection>scm:svn:http://ispringer@svn.rhq-project.org/repos/rhq/trunk/modules/plugins/script</developerConnection>
    </scm>
 
    <properties>
-      <scm.module.path>modules/plugins/cli/</scm.module.path>
+      <scm.module.path>modules/plugins/script/</scm.module.path>
    </properties>
 
    <profiles>

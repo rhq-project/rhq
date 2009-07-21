@@ -54,8 +54,10 @@ public class Props {
     private boolean singleton;
     /** Does the service support configuration ? */
     private boolean resourceConfiguration;
-    /** Does the service suport events */
+    /** Does the service support events */
     private boolean events;
+    /** Does the service support the support facet? */
+    private boolean supportFacet;
     /** Can the service create children ? */
     private boolean createChildren;
     /** Can the service delete children ? */
@@ -152,6 +154,14 @@ public class Props {
 
     public void setEvents(boolean events) {
         this.events = events;
+    }
+
+    public boolean isSupportFacet() {
+        return supportFacet;
+    }
+
+    public void setSupportFacet(boolean supportFacet) {
+        this.supportFacet = supportFacet;
     }
 
     public boolean isCreateChildren() {
@@ -268,11 +278,14 @@ public class Props {
         sb.append(", singleton=").append(singleton);
         sb.append(", resourceConfiguration=").append(resourceConfiguration);
         sb.append(", events=").append(events);
+        sb.append(", supportFacet=").append(supportFacet);
         sb.append(", createChildren=").append(createChildren);
         sb.append(", deleteChildren=").append(deleteChildren);
         sb.append(", usesExternalJarsInPlugin=").append(usesExternalJarsInPlugin);
         sb.append(", manualAddOfChildren=").append(manualAddOfChildren);
         sb.append(", usePluginLifecycleListenerApi=").append(usePluginLifecycleListenerApi);
+        sb.append(", dependsOnJmxPlugin=").append(dependsOnJmxPlugin);
+        sb.append(", rhqVersion='").append(rhqVersion).append('\'');
         sb.append(", children=").append(children);
         sb.append('}');
         return sb.toString();

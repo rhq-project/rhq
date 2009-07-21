@@ -64,6 +64,11 @@ import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.pluginapi.plugin.PluginContext;
 import org.rhq.core.pluginapi.plugin.PluginLifecycleListener;
 </#if>
+<#if props.supportFacet>
+import org.rhq.core.pluginapi.support.SnapshotReportRequest;
+import org.rhq.core.pluginapi.support.SnapshotReportResults;
+import org.rhq.core.pluginapi.support.SupportFacet;
+</#if>
 
 
 public class ${props.componentClass} implements ResourceComponent<#if props.parentType??><${props.parentType}></#if>
@@ -84,6 +89,9 @@ public class ${props.componentClass} implements ResourceComponent<#if props.pare
 </#if>
 <#if props.usePluginLifecycleListenerApi>
 , PluginLifecycleListener
+</#if>
+<#if props.supportFacet>
+, SupportFacet
 </#if>
 {
     private final Log log = LogFactory.getLog(this.getClass());
@@ -245,6 +253,22 @@ public class ${props.componentClass} implements ResourceComponent<#if props.pare
     public void deleteResource() throws Exception
     {
         // TODO supply code to delete a child resource
+    }
+</#if>
+
+<#if props.supportFacet>
+    /**
+     * Takes a snapshot and returns the snapshot report content in the given stream. A facet implementation
+     * can support different kinds of snapshots, the given name determines which kind of snapshot to take.
+     *
+     * @param request identifies the type of snapshot to take
+     * @return snapshot results, including a stream containing the contents of the snapshot report
+     * @throws Exception if failed to generate the snapshot report
+     */
+    public SnapshotReportResults getSnapshotReport(SnapshotReportRequest request) throws Exception
+    {
+        // TODO
+        return null;
     }
 </#if>
 }

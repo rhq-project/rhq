@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project
+   xmlns="http://maven.apahe.org/POM/4.0.0"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.rhq</groupId>
+    <artifactId>rhq-parent</artifactId>
+    <version>1.3.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>rhq-ws-client</artifactId>
+  <name>RHQ WS Client</name>
+
+  <scm>
+     <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/client/</connection>
+     <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/client/</developerConnection>
+  </scm>
+
+   <properties>
+      <scm.module.path>modules/enterprise/client/</scm.module.path>
+      <persistence-api.version>1.0</persistence-api.version>
+   </properties>
+
+   <dependencies>
+      <dependency>
+         <groupId>org.jboss.jbossas</groupId>
+         <artifactId>jboss-as-dist</artifactId>
+         <type>zip</type>
+      </dependency>
+
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-enterprise-server</artifactId>
+         <version>${project.version}</version>
+         <type>ejb</type>
+         <scope>compile</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-core-domain</artifactId>
+         <version>${project.version}</version>
+         <type>ejb</type>
+         <scope>compile</scope>
+      </dependency>
+
+      <!--  This is needed for wsprovide's classpath. I'm not sure why, but it's not provided with jbossws -->
+      <dependency>
+         <groupId>javax.persistence</groupId>
+         <artifactId>persistence-api</artifactId>
+         <version>1.0</version>
+         <scope>compile</scope>
+      </dependency>
+
+      <!-- TODO This can probably go away after we stop using EJB Exception classes in the remote API -->
+      <dependency>
+         <groupId>jboss</groupId>
+         <artifactId>jboss-j2ee</artifactId>
+         <scope>provided</scope>
+      </dependency>
+
+   </dependencies>
+
+   <build>
+      <finalName>rhq-client-${project.version}</finalName>
+      <outputDirectory>target/${project.build.finalName}</outputDirectory>
+
+      <plugins>
+      
+         <plugin>
+           <artifactId>maven-enforcer-plugin</artifactId>
+           <executions>
+             <execution>
+               <id>enforce-versions</id>
+               <goals>
+                 <!-- IMPORTANT: Use enforce goal, rather than enforce-once goal, otherwise reactor
+                                 builds will fail due to http://jira.codehaus.org/browse/MENFORCER-11 -->
+                 <goal>enforce</goal>
+               </goals>
+               <configuration>
+                 <rules>
+                   <requireJavaVersion>
+                     <version>[1.6,1.8)</version> <!-- 1.6.x, 1.7.x -->
+                   </requireJavaVersion>
+                 </rules>
+               </configuration>
+             </execution>
+           </executions>
+         </plugin>
+
+         <plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
+
+               <execution>
+                  <id>client-distribution</id>
+                  <phase>compile</phase>
+                  <configuration>
+                     <tasks>
+                        <ant
+                           antfile="${basedir}/src/main/scripts/rhq-client.build.xml"
+                           dir="${basedir}"
+                           target="prepare-dist"
+                           inheritAll="false"
+                           inheritRefs="false">
+
+                           <property
+                              name="buildNumber"
+                              value="${buildNumber}" />
+                           <property
+                              name="java.jre.home"
+                              value="${java.home}" />
+                           <property
+                              name="maven.compile.classpath"
+                              refid="maven.compile.classpath" />
+                           <property
+                              name="maven.runtime.classpath"
+                              refid="maven.runtime.classpath" />
+                           <property
+                              name="project.build.outputDirectory"
+                              value="${project.build.outputDirectory}" />
+                           <property
+                              name="project.name"
+                              value="${project.name}" />
+                           <property
+                              name="project.groupId"
+                              value="${project.groupId}" />
+                           <property
+                              name="project.version"
+                              value="${project.version}" />
+                           <property
+                              name="settings.localRepository"
+                              value="${settings.localRepository}" />
+                           <property
+                              name="persistence-api.version"
+                              value="${persistence-api.version}" />
+                           <property
+                              name="jboss.version"
+                              value="${jboss.version}" />
+                           <property
+                              name="jbossws.version"
+                              value="${jbossws.version}" />
+                           <property
+                              name="rhq.client.build.exclude.cli.jar"
+                              value="${rhq.client.build.exclude.cli.jar}" />
+                           <property
+                              name="rhq.client.build.include.client.jar"
+                              value="${rhq.client.build.include.client.jar}" />
+                        </ant>
+                     </tasks>
+                  </configuration>
+                  <goals>
+                     <goal>run</goal>
+                  </goals>
+               </execution>
+
+            </executions>
+         </plugin>
+
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-jar-plugin</artifactId>
+            <configuration>
+               <classesDirectory>${project.build.directory}/rhq-client-${version}/wsconsume-output</classesDirectory>
+               <includes>
+                  <include>org/rhq/**</include>
+               </includes>
+               <archive>
+                  <index>true</index>
+                  <manifestEntries>
+                     <Specification-Title>JBossWS</Specification-Title>
+                     <Implementation-Title>${project.name}</Implementation-Title>
+                     <Implementation-Version>${version}</Implementation-Version>
+                     <Implementation-Vendor-Id>${groupId}</Implementation-Vendor-Id>
+                     <Build-Number>${buildNumber}</Build-Number>
+                  </manifestEntries>
+               </archive>
+            </configuration>
+         </plugin>
+
+      </plugins>
+
+   </build>
+
+</project>

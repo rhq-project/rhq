@@ -26,6 +26,7 @@ import javax.jws.soap.SOAPBinding;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
+import org.rhq.core.domain.criteria.RoleCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.exception.FetchException;
@@ -73,13 +74,6 @@ public interface RoleManagerRemote {
     PageList<Role> findSubjectUnassignedRoles( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "subjectId") int subjectId, //
-        @WebParam(name = "pageControl") PageControl pc) //
-        throws FetchException;
-
-    @WebMethod
-    PageList<Role> findRoles( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "criteria") Role criteria, //
         @WebParam(name = "pageControl") PageControl pc) //
         throws FetchException;
 
@@ -181,5 +175,10 @@ public interface RoleManagerRemote {
         @WebParam(name = "groupId") int groupId, //
         @WebParam(name = "roleIds") int[] roleIds) //
         throws UpdateException;
+
+    @WebMethod
+    PageList<Role> findRolesByCriteria( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "criteria") RoleCriteria criteria);
 
 }

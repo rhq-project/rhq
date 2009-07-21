@@ -25,6 +25,7 @@ import javax.ejb.Local;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
+import org.rhq.core.domain.criteria.RoleCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.exception.FetchException;
@@ -181,8 +182,6 @@ public interface RoleManagerLocal {
     //This is a proxy of getAvailableRolesForSubject but without pendingRoleIds as required by remote spec 
     PageList<Role> findSubjectUnassignedRoles(Subject subject, int subjectId, PageControl pc) throws FetchException;
 
-    PageList<Role> findRoles(Subject subject, Role criteria, PageControl pc) throws FetchException;
-
     /**
      * Assigns a set of roles to a subject which authorizes the subject to do anything the roles permit.
      *
@@ -231,4 +230,7 @@ public interface RoleManagerLocal {
     void removeResourceGroupsFromRole(Subject subject, int roleId, int[] groupIds) throws UpdateException;
 
     void removeRolesFromResourceGroup(Subject subject, int groupId, int[] roleIds) throws UpdateException;
+
+    PageList<Role> findRolesByCriteria(Subject subject, RoleCriteria criteria);
+
 }

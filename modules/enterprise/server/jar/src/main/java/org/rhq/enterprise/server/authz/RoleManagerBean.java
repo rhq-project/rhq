@@ -38,11 +38,12 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
+import org.rhq.core.domain.criteria.RoleCriteria;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.util.CriteriaQueryGenerator;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
-import org.rhq.core.domain.util.QueryGenerator;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.exception.FetchException;
@@ -510,23 +511,6 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    public PageList<Role> findRoles(Subject subject, Role criteria, PageControl pc) throws FetchException {
-        try {
-            QueryGenerator generator = new QueryGenerator(criteria, pc);
-
-            Query query = generator.getQuery(entityManager);
-            Query countQuery = generator.getCountQuery(entityManager);
-
-            long count = (Long) countQuery.getSingleResult();
-            List<Role> roles = query.getResultList();
-
-            return new PageList<Role>(roles, (int) count, pc);
-        } catch (Exception e) {
-            throw new FetchException(e.getMessage());
-        }
-    }
-
     @RequiredPermission(Permission.MANAGE_SECURITY)
     public void removeRolesFromResourceGroup(Subject subject, int groupId, int[] roleIds) throws UpdateException {
         if ((roleIds != null) && (roleIds.length > 0)) {
@@ -573,6 +557,19 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
         }
 
         return;
+    }
+
+    @SuppressWarnings("unchecked")
+    public PageList<Role> findRolesByCriteria(Subject subject, RoleCriteria criteria) {
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+
+        Query query = generator.getQuery(entityManager);
+        Query countQuery = generator.getCountQuery(entityManager);
+
+        long count = (Long) countQuery.getSingleResult();
+        List<Role> roles = query.getResultList();
+
+        return new PageList<Role>(roles, (int) count, criteria.getPageControl());
     }
 
 }

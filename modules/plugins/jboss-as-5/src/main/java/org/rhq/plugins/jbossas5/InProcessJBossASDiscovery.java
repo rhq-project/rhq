@@ -1,6 +1,6 @@
 /*
  * Jopr Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2009 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -44,14 +44,23 @@ import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.managed.api.ComponentType;
 import org.jboss.managed.api.ManagedComponent;
 
+/**
+ * 
+ */
 public class InProcessJBossASDiscovery {
-
     private final Log log = LogFactory.getLog(this.getClass());
 
     private static final String DEFAULT_RESOURCE_DESCRIPTION_AS = "JBoss Application Server (AS)";
-    private static final String DEFAULT_RESOURCE_DESCRIPTION_EAP = "JBoss Enterprise Application Platform (EAP)";
-    private static final String JBMANCON_DEBUG_SYSPROP = "jbmancon.debug";
+    private static final String DEFAULT_RESOURCE_DESCRIPTION_EAP = "JBoss Enterprise Application Platform (EAP)";   
 
+    /**
+     * Attempts to discover an in-process JBoss AS or EAP instance. If successful, returns the Resource details,
+     * otherwise, returns null.
+     *
+     * @param discoveryContext the Resource discovery context
+     *
+     * @return if successful, the Resource details, otherwise, null
+     */
     @Nullable
     public DiscoveredResourceDetails discoverInProcessJBossAS(ResourceDiscoveryContext discoveryContext) {
         ProfileServiceConnectionProvider connectionProvider = new LocalProfileServiceConnectionProvider();
@@ -60,7 +69,7 @@ public class InProcessJBossASDiscovery {
             connection = connectionProvider.connect();
         } catch (Exception e) {
             // This most likely just means we're not embedded inside a JBoss AS 5.x instance.
-            log.debug("Unable to connect to in-process ProfileService: " + e);
+            log.debug("Unable to connect to in-process ProfileService.", e);
             return null;
         }
 
@@ -98,11 +107,6 @@ public class InProcessJBossASDiscovery {
         pluginConfig.put(new PropertySimple(PluginConfigUtil.HOME_DIR, homeDir));
         pluginConfig.put(new PropertySimple(PluginConfigUtil.SERVER_HOME_DIR, serverHomeDir));
         pluginConfig.put(new PropertySimple(PluginConfigUtil.SERVER_NAME, serverName));
-
-        boolean debug = Boolean.getBoolean(JBMANCON_DEBUG_SYSPROP);
-        if (debug) {
-            //new UnitTestRunner().runUnitTests(connection);
-        }
 
         return new DiscoveredResourceDetails(discoveryContext.getResourceType(), resourceKey, resourceName, version,
                 description, pluginConfig, null);

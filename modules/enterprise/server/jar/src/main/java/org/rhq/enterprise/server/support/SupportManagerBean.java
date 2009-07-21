@@ -36,10 +36,12 @@ import org.jboss.system.server.ServerConfig;
 import org.rhq.core.clientapi.agent.support.SupportAgentService;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.authz.RequiredPermission;
+import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 
 /**
@@ -60,6 +62,9 @@ public class SupportManagerBean implements SupportManagerLocal {
 
     @EJB
     private AgentManagerLocal agentManager;
+
+    @EJB
+    private ServerManagerLocal serverManager;
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public InputStream getSnapshotReportStream(Subject subject, int resourceId, String name, String description)
@@ -83,7 +88,10 @@ public class SupportManagerBean implements SupportManagerLocal {
         File downloadFile = File.createTempFile(name + "-" + resourceId + "-", ".zip", dir);
         StreamUtil.copy(snapshotStream, new FileOutputStream(downloadFile));
 
-        return downloadFile.toURI().toURL();
+        Server thisServer = this.serverManager.getServer();
+        String addr = thisServer.getAddress();
+        int port = thisServer.getSecurePort();
+        return new URL(String.format("https://%s:%d/downloads/support/%s", addr, port, downloadFile.getName()));
     }
 
     private File getDownloadsDir() throws Exception {
@@ -92,8 +100,11 @@ public class SupportManagerBean implements SupportManagerLocal {
         Object mbean = MBeanServerInvocationHandler.newProxyInstance(mbs, name, ServerConfig.class, false);
         File serverHomeDir = ((ServerConfig) mbean).getServerHomeDir();
         File downloadDir = new File(serverHomeDir, "deploy/rhq.ear/rhq-downloads/support");
-        if (!downloadDir.exists()) {
-            throw new FileNotFoundException("Missing downloads directory at [" + downloadDir + "]");
+        if (!downloadDir.isDirectory()) {
+            downloadDir.mkdirs();
+            if (!downloadDir.isDirectory()) {
+                throw new FileNotFoundException("Missing downloads directory at [" + downloadDir + "]");
+            }
         }
         return downloadDir;
     }

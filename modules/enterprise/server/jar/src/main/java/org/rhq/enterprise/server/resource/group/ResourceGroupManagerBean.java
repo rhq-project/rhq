@@ -62,6 +62,7 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
+import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.resource.InventoryStatus;
@@ -72,12 +73,11 @@ import org.rhq.core.domain.resource.composite.ResourceFacets;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
+import org.rhq.core.domain.util.CriteriaQueryGenerator;
 import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
-import org.rhq.core.domain.util.QueryGenerator;
-import org.rhq.core.domain.util.QueryGenerator.AuthorizationTokenType;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
@@ -1302,47 +1302,6 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
 
     }
 
-    @SuppressWarnings("unchecked")
-    public PageList<ResourceGroup> findResourceGroups( //
-        Subject subject, //
-        ResourceGroup criteria, //
-        PageControl pc) throws FetchException {
-        try {
-            QueryGenerator generator = new QueryGenerator(criteria, pc);
-            if (authorizationManager.isInventoryManager(subject) == false) {
-                generator.setAuthorizationResourceFragment(AuthorizationTokenType.GROUP, null, subject.getId());
-            }
-
-            Query query = generator.getQuery(entityManager);
-            Query countQuery = generator.getCountQuery(entityManager);
-
-            long count = (Long) countQuery.getSingleResult();
-            List<ResourceGroup> results = query.getResultList();
-
-            return new PageList<ResourceGroup>(results, (int) count, pc);
-        } catch (Exception e) {
-            throw new FetchException(e.getMessage());
-        }
-    }
-
-    // note: QueryGenerator does not yet support generated queries for composites, only actual entities
-    public PageList<ResourceGroupComposite> findResourceGroupComposites( //
-        Subject subject, //
-        ResourceGroup criteria, //
-        PageControl pc) throws FetchException {
-        try {
-            GroupCategory groupCategory = criteria.getGroupCategory();
-            ResourceType resourceType = criteria.getResourceType();
-            ResourceCategory resourceCategory = resourceType == null ? null : criteria.getResourceType().getCategory();
-            String nameFilter = criteria.getName();
-
-            return findResourceGroupComposites(subject, groupCategory, resourceCategory, resourceType, nameFilter,
-                null, null, pc);
-        } catch (Exception e) {
-            throw new FetchException(e);
-        }
-    }
-
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public void setRecursive( //
         Subject subject, //
@@ -1364,4 +1323,22 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             throw new UpdateException(e);
         }
     }
+
+    @SuppressWarnings("unchecked")
+    public PageList<ResourceGroup> findResourceGroupsByCriteria(Subject subject, ResourceGroupCriteria criteria) {
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        if (authorizationManager.isInventoryManager(subject) == false) {
+            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.GROUP, null,
+                subject.getId());
+        }
+
+        Query query = generator.getQuery(entityManager);
+        Query countQuery = generator.getCountQuery(entityManager);
+
+        long count = (Long) countQuery.getSingleResult();
+        List<ResourceGroup> results = query.getResultList();
+
+        return new PageList<ResourceGroup>(results, (int) count, criteria.getPageControl());
+    }
+
 }

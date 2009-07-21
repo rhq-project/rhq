@@ -25,6 +25,7 @@ import javax.jws.WebService;
 import javax.jws.soap.SOAPBinding;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageControl;
@@ -102,18 +103,6 @@ public interface ResourceGroupManagerRemote {
         @WebParam(name = "pageControl") PageControl pc) throws FetchException;
 
     @WebMethod
-    PageList<ResourceGroup> findResourceGroups( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "criteria") ResourceGroup criteria, //
-        @WebParam(name = "pageControl") PageControl pc) throws FetchException;
-
-    @WebMethod
-    PageList<ResourceGroupComposite> findResourceGroupComposites( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "criteria") ResourceGroup criteria, //
-        @WebParam(name = "pageControl") PageControl pc) throws FetchException;
-
-    @WebMethod
     void removeResourcesFromGroup(//
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "groupId") int groupId, //
@@ -136,4 +125,9 @@ public interface ResourceGroupManagerRemote {
     ResourceGroup updateResourceGroup( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "newResourceGroup") ResourceGroup newResourceGroup) throws UpdateException;
+
+    @WebMethod
+    PageList<ResourceGroup> findResourceGroupsByCriteria( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "criteria") ResourceGroupCriteria criteria);
 }

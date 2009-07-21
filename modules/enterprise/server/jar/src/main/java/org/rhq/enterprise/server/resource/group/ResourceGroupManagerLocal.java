@@ -23,6 +23,7 @@ import java.util.List;
 import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -132,15 +133,11 @@ public interface ResourceGroupManagerLocal {
     PageList<ResourceGroup> findResourceGroupsForRole(Subject subject, int roleId, PageControl pc)
         throws FetchException;
 
-    PageList<ResourceGroup> findResourceGroups(Subject subject, ResourceGroup criteria, PageControl pc)
-        throws FetchException;
-
-    PageList<ResourceGroupComposite> findResourceGroupComposites(Subject subject, ResourceGroup criteria, PageControl pc)
-        throws FetchException;
-
     void removeResourcesFromGroup(Subject subject, int groupId, int[] resourceIds) throws UpdateException;
 
     void setRecursive(Subject subject, int groupId, boolean isRecursive) throws UpdateException;
 
     ResourceGroup updateResourceGroup(Subject subject, ResourceGroup group) throws UpdateException;
+
+    PageList<ResourceGroup> findResourceGroupsByCriteria(Subject subject, ResourceGroupCriteria criteria);
 }

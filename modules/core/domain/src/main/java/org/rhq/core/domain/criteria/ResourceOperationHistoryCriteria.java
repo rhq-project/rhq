@@ -30,6 +30,8 @@ import java.util.List;
 public class ResourceOperationHistoryCriteria extends OperationHistoryCriteria {
     private List<Integer> filterResourceIds; // requires override
 
+    private boolean fetchResults;
+
     public ResourceOperationHistoryCriteria() {
         super();
 
@@ -38,5 +40,9 @@ public class ResourceOperationHistoryCriteria extends OperationHistoryCriteria {
 
     public void addFilterResourceIds(List<Integer> filterResourceIds) {
         this.filterResourceIds = filterResourceIds;
+    }
+
+    public void fetchResults(boolean fetchResults) {
+        this.fetchResults = fetchResults;
     }
 }

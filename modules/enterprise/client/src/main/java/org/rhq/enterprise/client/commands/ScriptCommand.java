@@ -18,6 +18,10 @@
  */
 package org.rhq.enterprise.client.commands;
 
+import java.beans.BeanInfo;
+import java.beans.IntrospectionException;
+import java.beans.Introspector;
+import java.beans.MethodDescriptor;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.Reader;
@@ -168,32 +172,38 @@ public class ScriptCommand implements ClientCommand {
         ScriptUtil scriptUtil = new ScriptUtil(jsEngine);
         jsEngine.put(BIND_NAME, scriptUtil);
 
-        java.lang.reflect.Method[] methods = ScriptUtil.class.getMethods();
-        for (java.lang.reflect.Method method : methods) {
-            String methodName = method.getName();
-            int argCount = method.getParameterTypes().length;
+        try {
+            BeanInfo beanInfo = Introspector.getBeanInfo(ScriptUtil.class, Object.class);
+            MethodDescriptor[] methodDescriptors = beanInfo.getMethodDescriptors();
+            for (MethodDescriptor methodDescriptor : methodDescriptors) {
+                java.lang.reflect.Method method = methodDescriptor.getMethod();
+                String methodName = method.getName();
+                int argCount = method.getParameterTypes().length;
 
-            StringBuilder functionBuilder = new StringBuilder();
-            functionBuilder.append(methodName).append("(");
-            for (int i = 0; i < argCount; i++) {
-                if (i != 0) {
-                    functionBuilder.append(", ");
+                StringBuilder functionBuilder = new StringBuilder();
+                functionBuilder.append(methodName).append("(");
+                for (int i = 0; i < argCount; i++) {
+                    if (i != 0) {
+                        functionBuilder.append(", ");
+                    }
+                    functionBuilder.append("arg_" + i);
                 }
-                functionBuilder.append(methodName + "arg_" + i);
-            }
-            functionBuilder.append(")");
-            String functionFragment = functionBuilder.toString();
+                functionBuilder.append(")");
+                String functionFragment = functionBuilder.toString();
 
-            boolean returnsVoid = method.getReturnType().equals(Void.TYPE);
-            String funcctionDefinition = "function " + functionFragment + " { " + (returnsVoid ? "" : " return ")
-                + BIND_NAME + "." + functionFragment + "; }";
+                boolean returnsVoid = method.getReturnType().equals(Void.TYPE);
+                String functionDefinition = "function " + functionFragment + " { " + (returnsVoid ? "" : "return ")
+                    + BIND_NAME + "." + functionFragment + "; }";
 
-            //= "function isDefined(identifier) { return scriptUtil.isDefined(identifier); }";
-            try {
-                jsEngine.eval(funcctionDefinition);
-            } catch (ScriptException e) {
-                log.warn("Unable to bind script utility function " + functionFragment, e);
+                log.info("Binding... \"" + functionDefinition + "\"");
+                try {
+                    jsEngine.eval(functionDefinition);
+                } catch (ScriptException e) {
+                    log.warn("Unable to bind script utility function " + functionFragment, e);
+                }
             }
+        } catch (IntrospectionException ie) {
+            log.warn("Could not bind any script utility functions", ie);
         }
     }
 

@@ -99,7 +99,12 @@ public class PluginComponentFactory implements ContainerService {
             classLoader = classLoaderMgr.obtainPluginClassLoader(pluginName);
         } else {
             ClassLoader parentClassLoader = parentResourceContainer.getResourceClassLoader();
-            classLoader = classLoaderMgr.obtainDiscoveryClassLoader(pluginName, parentClassLoader);
+            // only create if plugins are different, otherwise, use parent classloader as is
+            if (pluginName.equals(parentResourceContainer.getResource().getResourceType().getPlugin())) {
+                classLoader = parentClassLoader;
+            } else {
+                classLoader = classLoaderMgr.obtainDiscoveryClassLoader(pluginName, parentClassLoader);
+            }
         }
 
         ResourceDiscoveryComponent discoveryComponent = (ResourceDiscoveryComponent) instantiateClass(classLoader,

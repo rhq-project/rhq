@@ -284,8 +284,8 @@ public class ApplicationServerOperationsDelegate {
 		if (javaHomeDir == null) {
 			throw new IllegalStateException(
 					"The '"
-							+ "JAVA_HOME"
-							+ "' connection property must be set in order to start or stop JBossAS via script.");
+							+ ApplicationServerComponent.Config.JAVA_HOME
+							+ "' connection property must be set in order to start or stop the application server via script.");
 		}
 
 		validateJavaHomePathProperty();
@@ -602,9 +602,8 @@ public class ApplicationServerOperationsDelegate {
 	public File getJavaHomePath() {
 		Configuration pluginConfig = serverComponent.getResourceContext()
 				.getPluginConfiguration();
-		String javaHomePath = pluginConfig.getSimple(
-				ApplicationServerComponent.Config.JAVA_HOME)
-				.getStringValue();
+		String javaHomePath = pluginConfig.getSimpleValue(
+				ApplicationServerComponent.Config.JAVA_HOME, null);
 
 		if (javaHomePath == null) {
 			log

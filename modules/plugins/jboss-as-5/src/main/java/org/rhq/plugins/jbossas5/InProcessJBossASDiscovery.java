@@ -51,7 +51,9 @@ public class InProcessJBossASDiscovery {
     private final Log log = LogFactory.getLog(this.getClass());
 
     private static final String DEFAULT_RESOURCE_DESCRIPTION_AS = "JBoss Application Server (AS)";
-    private static final String DEFAULT_RESOURCE_DESCRIPTION_EAP = "JBoss Enterprise Application Platform (EAP)";   
+    private static final String DEFAULT_RESOURCE_DESCRIPTION_EAP = "JBoss Enterprise Application Platform (EAP)";
+
+    private static final String JAVA_HOME_ENV_VAR = "JAVA_HOME";
 
     /**
      * Attempts to discover an in-process JBoss AS or EAP instance. If successful, returns the Resource details,
@@ -103,10 +105,13 @@ public class InProcessJBossASDiscovery {
         String version = (String) ManagedComponentUtils.getSimplePropertyValue(serverConfigComponent,
             "specificationVersion");
 
+        String javaHome = System.getenv(JAVA_HOME_ENV_VAR);
+
         Configuration pluginConfig = discoveryContext.getDefaultPluginConfiguration();
         pluginConfig.put(new PropertySimple(ApplicationServerComponent.Config.HOME_DIR, homeDir));
         pluginConfig.put(new PropertySimple(ApplicationServerComponent.Config.SERVER_HOME_DIR, serverHomeDir));
         pluginConfig.put(new PropertySimple(ApplicationServerComponent.Config.SERVER_NAME, serverName));
+        pluginConfig.put(new PropertySimple(ApplicationServerComponent.Config.JAVA_HOME, javaHome));
 
         return new DiscoveredResourceDetails(discoveryContext.getResourceType(), resourceKey, resourceName, version,
                 description, pluginConfig, null);

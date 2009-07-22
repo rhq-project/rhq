@@ -22,6 +22,6 @@
 	<classpathentry kind="var" path="M2_REPO/com/sun/xml/bind/jaxb-impl/2.1.6/jaxb-impl-2.1.6.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/rhq"/>
-	<classpathentry kind="var" path="M2_REPO/org/hyperic/sigar/1.6.3.68-beta1/sigar-1.6.3.68-beta1.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/hyperic/sigar/1.6.3.82/sigar-1.6.3.82.jar"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

@@ -73,7 +73,7 @@ public interface InstallerI18NResourceKeys {
 
     @I18NMessages( {
         @I18NMessage(locale = "en", value = "Support for this database is experimental and is to be used for demo and testing purposes only."),
-        @I18NMessage(locale = "de", value = "Unterstützung für diese Datenbank ist experimentell und ist nur für Demo-und Testzwecken geeignet.") })
+        @I18NMessage(locale = "de", value = "Unterstützung für diese Datenbank ist experimentell und ist nur für Demo-und Testzwecke geeignet.") })
     String EXPERIMENTAL_DB = "experimentalDb";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Create a database/user if needed"),

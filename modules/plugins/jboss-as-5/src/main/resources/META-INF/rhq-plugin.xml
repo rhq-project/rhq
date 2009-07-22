@@ -1003,22 +1003,23 @@
                <c:simple-property name="shutdownMethod" displayName="Shutdown Method" type="string" required="false" default="JMX"
                                description="The method used to execute the Shutdown operation;
                                             defaults to 'JMX MBean'.">
-                <c:property-options>
-                   <c:option value="JMX"    name="JMX MBean" default="true"/>
-                   <c:option value="SCRIPT" name="shutdown script"/>
-                </c:property-options>
+                 <c:property-options>
+                    <c:option value="JMX"    name="JMX MBean" default="true"/>
+                    <c:option value="SCRIPT" name="shutdown script"/>
+                 </c:property-options>
                </c:simple-property>
-             <c:simple-property name="bindingAddress" displayName="Binding Address" required="false" default="127.0.0.1"
-                               description="The host or IP address used by all JBoss services as the binding
-                                            address (e.g. 10.11.14.233); specify 0.0.0.0 to tell JBossAS to
-                                            bind to all available network interfaces; defaults to '127.0.0.1'."/>
+               <c:simple-property name="bindAddress" displayName="Bind Address" required="false" default="127.0.0.1"
+                                 description="The host or IP address that all application server services should listen on
+                                              (e.g. 10.11.14.233 or foo.example.com); specify 0.0.0.0 to tell the
+                                              application server to bind to all available network interfaces; defaults to
+                                              '127.0.0.1'."/>
              </c:group>
 
            <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
-                     <c:simple-property name="shutdownMbeanName" displayName="Shutdown MBean Name"
+                     <c:simple-property name="shutdownMBeanName" displayName="Shutdown MBean Name"
                                default="jboss.system:type=Server"
                                description="Name of the MBean to use when shutting down this server through JMX."/>
-                     <c:simple-property name="shutdownMbeanOperation" displayName="Shutdown MBean Operation" default="shutdown"
+                     <c:simple-property name="shutdownMBeanOperation" displayName="Shutdown MBean Operation" default="shutdown"
                                description="Name of the operation to invoke when shutting down this server through JMX.
                                  Note that only operations with no parameter or with one int parameter are supported. If the
                                  operation requires an int parameter, '0' will be supplied."/>

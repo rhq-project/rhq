@@ -52,15 +52,11 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.system.ProcessInfo;
-import org.rhq.plugins.jbossas5.connection.LocalProfileServiceConnectionProvider;
-import org.rhq.plugins.jbossas5.connection.ProfileServiceConnection;
-import org.rhq.plugins.jbossas5.connection.ProfileServiceConnectionProvider;
 import org.rhq.plugins.jbossas5.helper.JBossInstallationInfo;
 import org.rhq.plugins.jbossas5.helper.JBossInstanceInfo;
 import org.rhq.plugins.jbossas5.helper.JBossProperties;
 import org.rhq.plugins.jbossas5.helper.JBossProductType;
 import org.rhq.plugins.jbossas5.util.JnpConfig;
-import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
 
 /**
  * A Resource discovery component for JBoss AS, 5.1.0.CR1 or later, and JBoss EAP, 5.0.0.Beta or later, Servers.
@@ -111,7 +107,7 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
     @SuppressWarnings("unchecked")
     public List<URL> getAdditionalClasspathUrls(ResourceDiscoveryContext context, DiscoveredResourceDetails details) throws Exception {
         Configuration pluginConfig = details.getPluginConfiguration();
-        String homeDir = pluginConfig.getSimple(PluginConfigUtil.HOME_DIR).getStringValue();
+        String homeDir = pluginConfig.getSimple(ApplicationServerComponent.Config.HOME_DIR).getStringValue();
 
         List<URL> clientJars = new ArrayList<URL>();
 
@@ -197,28 +193,28 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
             // TODO? Set the connection type - local or remote
 
             // Set the required props...
-            pluginConfiguration.put(new PropertySimple(PluginConfigUtil.NAMING_URL,
+            pluginConfiguration.put(new PropertySimple(ApplicationServerComponent.Config.NAMING_URL,
                 jnpURL));
-            pluginConfiguration.put(new PropertySimple(PluginConfigUtil.HOME_DIR,
+            pluginConfiguration.put(new PropertySimple(ApplicationServerComponent.Config.HOME_DIR,
                 installHome.getAbsolutePath()));
             pluginConfiguration.put(new PropertySimple(
-                PluginConfigUtil.SERVER_HOME_DIR, configDir));
+                ApplicationServerComponent.Config.SERVER_HOME_DIR, configDir));
 
             // Set the optional props...
-            pluginConfiguration.put(new PropertySimple(PluginConfigUtil.SERVER_NAME,
+            pluginConfiguration.put(new PropertySimple(ApplicationServerComponent.Config.SERVER_NAME,
                 cmdLine.getSystemProperties().getProperty(JBossProperties.SERVER_NAME)));
-            pluginConfiguration.put(new PropertySimple(PluginConfigUtil.BIND_ADDRESS,
+            pluginConfiguration.put(new PropertySimple(ApplicationServerComponent.Config.BIND_ADDRESS,
                 cmdLine.getSystemProperties().getProperty(JBossProperties.BIND_ADDRESS)));
 
             String javaHome = processInfo.getEnvironmentVariable(JAVA_HOME_ENV_VAR);
             if (javaHome == null && log.isDebugEnabled()) {
                 log.debug("JAVA_HOME environment variable not set in JBossAS process - defaulting "
-                    + PluginConfigUtil.JAVA_HOME
+                    + ApplicationServerComponent.Config.JAVA_HOME
                     + "connection property to the plugin container JRE dir.");
                 javaHome = System.getenv(JAVA_HOME_ENV_VAR);
             }
 
-            pluginConfiguration.put(new PropertySimple(PluginConfigUtil.JAVA_HOME,
+            pluginConfiguration.put(new PropertySimple(ApplicationServerComponent.Config.JAVA_HOME,
                 javaHome));
 
             initLogEventSourcesConfigProp(configDir, pluginConfiguration);
@@ -239,7 +235,7 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
         //setPluginConfigurationDefaults(pluginConfiguration);
 
         ProcessInfo processInfo = null;
-        String jbossHomeDir = pluginConfig.getSimple(PluginConfigUtil.HOME_DIR)
+        String jbossHomeDir = pluginConfig.getSimple(ApplicationServerComponent.Config.HOME_DIR)
             .getStringValue();
         JBossInstallationInfo installInfo;
         try {
@@ -263,10 +259,10 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
     }
 
     private DiscoveredResourceDetails createResourceDetails(ResourceDiscoveryContext discoveryContext,
-        Configuration pluginConfiguration, @Nullable ProcessInfo processInfo, JBossInstallationInfo installInfo) {
-        String serverHomeDir = pluginConfiguration.getSimple(
-            PluginConfigUtil.SERVER_HOME_DIR).getStringValue();
-        File absoluteConfigPath = PluginConfigUtil.resolvePathRelativeToHomeDir(pluginConfiguration,
+        Configuration pluginConfig, @Nullable ProcessInfo processInfo, JBossInstallationInfo installInfo) {
+        String serverHomeDir = pluginConfig.getSimple(
+            ApplicationServerComponent.Config.SERVER_HOME_DIR).getStringValue();
+        File absoluteConfigPath = ApplicationServerComponent.resolvePathRelativeToHomeDir(pluginConfig,
             serverHomeDir);
 
         // Canonicalize the config path, so it's consistent no matter how it's entered.
@@ -275,9 +271,9 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
         // JON: fix for JBNADM-2634 - do not resolve symlinks (ips, 12/18/07)
         String key = FileUtils.getCanonicalPath(absoluteConfigPath.getPath());
 
-        String bindAddress = pluginConfiguration.getSimple(
-            PluginConfigUtil.BIND_ADDRESS).getStringValue();
-        String namingUrl = pluginConfiguration.getSimple(PluginConfigUtil.NAMING_URL)
+        String bindAddress = pluginConfig.getSimple(
+            ApplicationServerComponent.Config.BIND_ADDRESS).getStringValue();
+        String namingUrl = pluginConfig.getSimple(ApplicationServerComponent.Config.NAMING_URL)
             .getStringValue();
 
         // Only include the JNP port in the Resource name if its value is not "***CHANGE_ME***".
@@ -302,12 +298,12 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
             baseName += " Jopr Server, ";
             description += " hosting the Jopr Server";
             // We know this is an RHQ Server. Let's add an event source for its server log file, but disable it by default.
-            configureEventSourceForServerLogFile(pluginConfiguration);
+            configureEventSourceForServerLogFile(pluginConfig);
         }
         String name = formatServerName(baseName, bindAddress, namingPort, configName, installInfo);
 
         return new DiscoveredResourceDetails(discoveryContext.getResourceType(), key, name, installInfo.getVersion(),
-            description, pluginConfiguration, processInfo);
+            description, pluginConfig, processInfo);
     }
 
     private String formatServerName(String baseName, String bindingAddress, String jnpPort, String configName,
@@ -326,8 +322,8 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
         return baseName + ((details != null) ? (" (" + details + ")") : "");
     }
 
-    private void configureEventSourceForServerLogFile(Configuration pluginConfiguration) {
-        File rhqLogFile = PluginConfigUtil.resolvePathRelativeToHomeDir(pluginConfiguration,
+    private void configureEventSourceForServerLogFile(Configuration pluginConfig) {
+        File rhqLogFile = ApplicationServerComponent.resolvePathRelativeToHomeDir(pluginConfig,
             "../logs/rhq-server-log4j.log");
         if (rhqLogFile.exists() && !rhqLogFile.isDirectory()) {
             try {
@@ -339,7 +335,7 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
                     LogFileEventResourceComponentHelper.LogEventSourcePropertyNames.ENABLED, Boolean.FALSE));
                 serverLogEventSource.put(new PropertySimple(
                     LogFileEventResourceComponentHelper.LogEventSourcePropertyNames.MINIMUM_SEVERITY, "info"));
-                PropertyList logEventSources = pluginConfiguration
+                PropertyList logEventSources = pluginConfig
                     .getList(LogFileEventResourceComponentHelper.LOG_EVENT_SOURCES_CONFIG_PROP);
                 logEventSources.add(serverLogEventSource);
             } catch (IOException e) {

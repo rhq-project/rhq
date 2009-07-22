@@ -45,7 +45,7 @@ import org.jboss.managed.api.ComponentType;
 import org.jboss.managed.api.ManagedComponent;
 
 /**
- * 
+ * A helper class for discovering an in-process JBossAS server.
  */
 public class InProcessJBossASDiscovery {
     private final Log log = LogFactory.getLog(this.getClass());
@@ -104,9 +104,9 @@ public class InProcessJBossASDiscovery {
             "specificationVersion");
 
         Configuration pluginConfig = discoveryContext.getDefaultPluginConfiguration();
-        pluginConfig.put(new PropertySimple(PluginConfigUtil.HOME_DIR, homeDir));
-        pluginConfig.put(new PropertySimple(PluginConfigUtil.SERVER_HOME_DIR, serverHomeDir));
-        pluginConfig.put(new PropertySimple(PluginConfigUtil.SERVER_NAME, serverName));
+        pluginConfig.put(new PropertySimple(ApplicationServerComponent.Config.HOME_DIR, homeDir));
+        pluginConfig.put(new PropertySimple(ApplicationServerComponent.Config.SERVER_HOME_DIR, serverHomeDir));
+        pluginConfig.put(new PropertySimple(ApplicationServerComponent.Config.SERVER_NAME, serverName));
 
         return new DiscoveredResourceDetails(discoveryContext.getResourceType(), resourceKey, resourceName, version,
                 description, pluginConfig, null);

@@ -58,6 +58,7 @@ import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.util.MeasurementConverter;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
+import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
@@ -316,7 +317,7 @@ public class ResourceClientProxy {
                 Thread.sleep(1000);
                 PageList<ResourceOperationHistory> histories = remoteClient.getOperationManagerRemote()
                     .findResourceOperationHistoriesByCriteria(remoteClient.getSubject(), criteria);
-                if (histories.size() > 0) {
+                if (histories.size() > 0 && histories.get(0).getStatus() != OperationRequestStatus.INPROGRESS) {
                     history = histories.get(0);
                 }
             }

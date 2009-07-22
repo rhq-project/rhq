@@ -73,7 +73,7 @@ public interface InstallerI18NResourceKeys {
 
     @I18NMessages( {
         @I18NMessage(locale = "en", value = "Support for this database is experimental and is to be used for demo and testing purposes only."),
-        @I18NMessage(locale = "de", value = "Unterstützung für diese Datenbank ist experimentell und wird für Demo-und Testzwecken nur.") })
+        @I18NMessage(locale = "de", value = "Unterstützung für diese Datenbank ist experimentell und ist nur für Demo-und Testzwecken geeignet.") })
     String EXPERIMENTAL_DB = "experimentalDb";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Create a database/user if needed"),
@@ -157,9 +157,11 @@ public interface InstallerI18NResourceKeys {
 
     @I18NMessages( {
         @I18NMessage(locale = "en", value = "Press the 'Production Installation' button for a normal installation.\\n\\\n"
-            + "Press the 'Embedded Installation' button to quickly create a complete environment with the help of the embedded database and embedded agent. The embedded installation is for demonstration and evaluation purposes ONLY!"),
+            + "Press the 'Embedded Installation' button to quickly create a complete environment with the help of the embedded database and embedded agent. "
+                +"The embedded installation is for demonstration and evaluation purposes ONLY!"),
         @I18NMessage(locale = "de", value = "Drücken Sie die 'Produktion Installation'-Taste für eine normale Installation durchzuführen.\\n\\\n"
-            + "Drücken Sie die 'Embedded Installation'-Taste, um schnell eine vollständige Umwelt mit Hilfe der eingebetteten Datenbank und Embedded Agenten. Die Embedded-Installation ist für die Demonstration und Evaluierung Zwecke ONLY!") })
+            + "Drücken Sie die 'Embedded Installation'-Taste, um schnell eine vollständige Umgebung mit Hilfe der eingebetteten Datenbank und Embedded Agenten zu erstellen. "+
+                "Die Embedded-Installation ist nur für Demonstrations- und Evaluierungszwecke geeignet!") })
     String INSTALL_BUTTONS_TEXT = "installButtonsText";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "-- or --"), @I18NMessage(locale = "de", value = "-- oder --") })
@@ -171,7 +173,7 @@ public interface InstallerI18NResourceKeys {
 
     @I18NMessages( {
         @I18NMessage(locale = "en", value = "Database Settings define the database configured for this installation. All are required. Use the \"Test Connection\" button to validate the settings."),
-        @I18NMessage(locale = "de", value = "Die Datenbankeinstellungen definieren die Datenbank für diese Installation. Alle einstellungen werden benötigt.\\n\\\n"
+        @I18NMessage(locale = "de", value = "Die Datenbankeinstellungen definieren die Datenbank für diese Installation. Alle Einstellungen werden benötigt.\\n\\\n"
             + "Klicken Sie auf den \"Verbindung testen\" Button, um die Einstellungen zu validieren.") })
     String DATABASE_SETTINGS_INSTRUCTIONS = "databaseSettingsInstructions";
 

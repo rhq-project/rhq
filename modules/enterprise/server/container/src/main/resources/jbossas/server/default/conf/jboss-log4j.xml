@@ -151,6 +151,12 @@
      <priority value="INFO"/>
    </category>
 
+   <!-- Setting the status manager bean to DEBUG would allow you to see specific status bits -->
+   <!-- DEBUG also has a negative impact on database performance -->
+   <category name="org.rhq.enterprise.server.cloud.StatusManagerBean">
+      <priority value="INFO" />
+   </category>
+
    <!-- Top category for the server-side code, including SLSBs -->
    <!--
    <category name="org.rhq.enterprise.server">

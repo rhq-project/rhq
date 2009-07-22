@@ -133,6 +133,7 @@ public class TabularWriter {
             String idProperty = "id";
             if (properties.containsKey(idProperty)) {
                 printProperty(idProperty, properties.get(idProperty), maxLength);
+                properties.remove(idProperty);
             }
 
             for (String key : properties.keySet()) {

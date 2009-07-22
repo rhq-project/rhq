@@ -18,30 +18,41 @@
  */
 package org.rhq.enterprise.client;
 
+import au.com.bytecode.opencsv.CSVWriter;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
+import org.rhq.core.domain.configuration.PropertySimple;
 
-import java.io.PrintWriter;
-import java.util.*;
-import java.beans.Introspector;
-import java.beans.IntrospectionException;
 import java.beans.BeanInfo;
+import java.beans.IntrospectionException;
+import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
+import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 /**
  * @author Greg Hinkle
  */
 public class TabularWriter {
 
+    private static final String CSV = "csv";
+
     String[] headers;
     int[] maxColumnLength;
     int width = 160;
     PrintWriter out;
+    private String format = "raw";
+    private CSVWriter csvWriter;
 
     static Set<String> IGNORED_PROPS = new HashSet<String>();
 
@@ -82,6 +93,15 @@ public class TabularWriter {
 
     public TabularWriter(PrintWriter out) {
         this.out = out;
+    }
+
+    public TabularWriter(PrintWriter out, String format) {
+        this.out = out;
+        this.format = format;
+
+        if (CSV.equals(format)) {
+            csvWriter = new CSVWriter(out);
+        }
     }
 
     public void print(Object object) {
@@ -162,7 +182,7 @@ public class TabularWriter {
         // List of arbitrary objects
         if (list == null || list.size() == 0)
             out.println("no data");
-        else if (list.size() == 1) {
+        else if (list.size() == 1 && !CSV.equals(format)) {
             out.println("one row");
 
             print(list.iterator().next());
@@ -383,32 +403,41 @@ public class TabularWriter {
         }
 
         if (headers != null) {
-
-            for (int i = 0; i < maxColumnLength.length; i++) {
-                int colSize = maxColumnLength[i];
-                printSpaced(out, headers[i], colSize);
-                out.print(" ");
+            if (CSV.equals(format)) {
+                csvWriter.writeNext(headers);
             }
+            else {
+                for (int i = 0; i < maxColumnLength.length; i++) {
+                    int colSize = maxColumnLength[i];
+                    printSpaced(out, headers[i], colSize);
+                    out.print(" ");
+                }
 
-            out.print("\n");
+                out.print("\n");
 
-            for (int i = 0; i < width; i++) {
-                out.print("-");
+                for (int i = 0; i < width; i++) {
+                    out.print("-");
+                }
             }
             out.print("\n");
 
         }
 
-
-        for (String[] row : data) {
-
-            for (int i = 0; i < maxColumnLength.length; i++) {
-                int colSize = maxColumnLength[i];
-
-                printSpaced(out, row[i], colSize);
-                out.print(" ");
+        if (CSV.equals(format)) {
+            for (String[] row : data) {
+                csvWriter.writeNext(row);
             }
-            out.print("\n");
+        }
+        else {
+            for (String[] row : data) {
+                for (int i = 0; i < maxColumnLength.length; i++) {
+                    int colSize = maxColumnLength[i];
+
+                    printSpaced(out, row[i], colSize);
+                    out.print(" ");
+                }
+                out.print("\n");
+            }
         }
 
         out.print(data.length + " rows\n");
@@ -449,4 +478,5 @@ public class TabularWriter {
     public void setWidth(int width) {
         this.width = width;
     }
+
 }

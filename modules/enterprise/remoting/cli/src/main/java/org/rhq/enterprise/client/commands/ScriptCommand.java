@@ -41,6 +41,7 @@ import org.rhq.enterprise.client.ClientMain;
 import org.rhq.enterprise.client.Controller;
 import org.rhq.enterprise.client.RemoteClient;
 import org.rhq.enterprise.client.TabularWriter;
+import org.rhq.enterprise.client.Exporter;
 import org.rhq.enterprise.client.script.CmdLineParser;
 import org.rhq.enterprise.client.script.NamedScriptArg;
 import org.rhq.enterprise.client.script.ParseException;
@@ -73,6 +74,7 @@ public class ScriptCommand implements ClientCommand {
         pc.setPageNumber(-1);
         sem.getBindings().put("unlimitedPC", pc);
         sem.getBindings().put("pageControl", PageControl.getUnlimitedInstance());
+        sem.put("exporter", new Exporter());
         jsEngine = sem.getEngineByName("JavaScript");
 
         importRecursive(jsEngine);

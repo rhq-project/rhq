@@ -29,6 +29,7 @@
       <log4j.version>1.2.14</log4j.version>
       <persistence-api.version>1.0</persistence-api.version>
       <hibernate-all.version>1.0.0.Alpha9</hibernate-all.version>
+      <opencsv.version>1.8</opencsv.version>
    </properties>
 
    <dependencies>
@@ -86,6 +87,12 @@
          <artifactId>commons-lang</artifactId>
          <version>2.4</version>
          <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>net.sf.opencsv</groupId>
+         <artifactId>opencsv</artifactId>
+         <version>${opencsv.version}</version>
       </dependency>
 
       <dependency>
@@ -211,6 +218,9 @@
                            <property
                               name="commons-logging.version"
                               value="${commons-logging.version}" />
+                           <property
+                              name="opencsv.version"
+                              value="${opencsv.version}" />
                            <property
                               name="concurrent.version"
                               value="${concurrent.version}" />

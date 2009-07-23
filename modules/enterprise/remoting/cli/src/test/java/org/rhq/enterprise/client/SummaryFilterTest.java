@@ -45,7 +45,29 @@ public class SummaryFilterTest {
     }
 
     @Test
-    public void filterShouldReturnTrueForSummaryProperty() throws Exception {                
+    public void filterShouldReturnTrueForSummaryProperty() throws Exception {
+        SummaryFilter filter = new SummaryFilter();
+        PropertyDescriptor summaryProperty = getPropertyDescriptor("summaryField");
+
+        assertTrue(filter.filter(summaryProperty), "Filter should return true for property of a @Summary field.");
+    }
+
+    @Test
+    public void filterShouldReturnFalseForNonSummaryProperty() throws Exception {
+        SummaryFilter filter = new SummaryFilter();
+        PropertyDescriptor nonSummaryProperty = getPropertyDescriptor("nonSummaryField");
+
+        assertFalse(filter.filter(nonSummaryProperty), "Filter should return false for property of a field that does " +
+            "not have the @Summary annotation");
+    }
+
+    @Test
+    public void filterShouldReturnFalseForPropertyThatDoesNotReferToAField() throws Exception {
+        SummaryFilter filter = new SummaryFilter();
+        PropertyDescriptor notAField = getPropertyDescriptor("nonField");
+
+        assertFalse(filter.filter(notAField), "Filter should return false for a property that does not directly " +
+                "correspond to a field");
     }
 
     PropertyDescriptor getPropertyDescriptor(String name) throws Exception {
@@ -90,6 +112,10 @@ public class SummaryFilterTest {
 
         public void setNonSummaryField(String nonSummaryField) {
             this.nonSummaryField = nonSummaryField;
+        }
+
+        public String getNonField() {
+            return null;
         }
     }
 

@@ -50,7 +50,19 @@ public class CommunicationsResourceComponent extends MBeanResourceComponent {
 
             for (Map.Entry<String, Calltime> data : allData.entrySet()) {
                 String commandName = data.getKey();
-                Calltime calltime = data.getValue();
+                Calltime calltime = data.getValue(); // do not alter the values in here, its a shallow copy
+                
+                // If successes is 0, the Callback values will have Long.MIN/MAX_VALUE for maximum and minimum times.
+                // But if successes is 0, we know we can't have valid values anyway, so just zero them out.
+                long minimum = 0;
+                long maximum = 0;
+                long average = 0;
+                if (calltime.getSuccesses() > 0) {
+                    minimum = calltime.getMinimum();
+                    maximum = calltime.getMaximum();
+                    average = calltime.getAverage();                    
+                }
+
                 PropertyMap command = new PropertyMap("command", //
                     new PropertySimple("command", commandName), //
                     new PropertySimple("totalCount", calltime.getCount()), //
@@ -58,9 +70,9 @@ public class CommunicationsResourceComponent extends MBeanResourceComponent {
                     new PropertySimple("failureCount", calltime.getFailures()), //
                     new PropertySimple("droppedCount", calltime.getDropped()), //
                     new PropertySimple("notProcessedCount", calltime.getNotProcessed()), //
-                    new PropertySimple("executionMinTime", calltime.getMinimum()), //
-                    new PropertySimple("executionMaxTime", calltime.getMaximum()), //
-                    new PropertySimple("executionAvgTime", calltime.getAverage()));
+                    new PropertySimple("executionMinTime", minimum), //
+                    new PropertySimple("executionMaxTime", maximum), //
+                    new PropertySimple("executionAvgTime", average));
                 commands.add(command);
             }
 

@@ -63,7 +63,22 @@ import org.rhq.core.domain.resource.Resource;
         + "         FROM Resource res " //
         + "    LEFT JOIN res.currentAvailability avail " //
         + "        WHERE res.id IN ( :resourceIds ) " //
-        + "          AND avail IS NULL ") })
+        + "          AND avail IS NULL "),
+    /*
+     * Platform plugins always return up for availability.  Platforms are
+     * only down if the check-suspect-agent's backfiller sets them down.
+     * Thus this agent has been backfilled if it's platform is not up.
+     * 
+     * Returns 0 if the agent has NOT been backfilled, non-zero if it is.
+     */
+    @NamedQuery(name = ResourceAvailability.QUERY_IS_AGENT_BACKFILLED, query = "" //
+        + "SELECT COUNT(avail.id) " // return count of 
+        + "  FROM Resource res " //
+        + "  JOIN res.currentAvailability avail " // we only want the current availability
+        + " WHERE res.agent.id = :agentId " // use id not name to prevent an unnecessary join to agent table
+        + "   AND res.parentResource IS NULL " // we only want platforms
+        + "   AND avail.availabilityType <> 1") // get all DOWN or UNKNOWN
+})
 @SequenceGenerator(name = "RHQ_RESOURCE_AVAIL_SEQ", sequenceName = "RHQ_RESOURCE_AVAIL_ID_SEQ", allocationSize = 100)
 public class ResourceAvailability implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -73,6 +88,7 @@ public class ResourceAvailability implements Serializable {
     public static final String QUERY_FIND_BY_RESOURCE_ID = "ResourceAvailability.findByResourceId";
     public static final String UPDATE_BY_AGENT_ID = "ResourceAvailability.updateByAgentId";
     public static final String INSERT_BY_RESOURCE_IDS = "ResourceAvailability.insertByResourceIds";
+    public static final String QUERY_IS_AGENT_BACKFILLED = "ResourceAvailability.isAgentBackfilled";
 
     @SuppressWarnings("unused")
     @Column(name = "ID", nullable = false)

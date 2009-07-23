@@ -588,9 +588,10 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
 
     public boolean isAgentBackfilled(int agentId) {
         // query returns 0 if the agent's platform is DOWN (or does not exist), 1 if not
-        Query q = entityManager.createNamedQuery(Availability.QUERY_IS_AGENT_BACKFILLED);
-        q.setParameter("agentId", agentId);
-        return ((Number) q.getSingleResult()).intValue() == 0;
+        Query query = entityManager.createNamedQuery(ResourceAvailability.QUERY_IS_AGENT_BACKFILLED);
+        query.setParameter("agentId", agentId);
+        Long downOrSuspectCount = (Long) query.getSingleResult();
+        return downOrSuspectCount != 0L;
     }
 
     /**

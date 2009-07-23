@@ -56,50 +56,62 @@ import org.rhq.core.domain.resource.Resource;
  * @author John Mazzitelli
  */
 @Entity
-@NamedQueries( {
-    @NamedQuery(name = Availability.FIND_CURRENT_BY_RESOURCE, query = "SELECT av FROM Availability av "
-        + " WHERE av.resource.id = :resourceId " + "   AND av.endTime IS NULL " + "ORDER BY av.startTime ASC "), // this order by is on purpose - for handling NonUniqueResultException problems
-    @NamedQuery(name = Availability.FIND_BY_RESOURCE, query = "  SELECT av FROM Availability av "
-        + "   WHERE av.resource.id = :resourceId " + "ORDER BY av.startTime ASC"),
-    @NamedQuery(name = Availability.FIND_BY_RESOURCE_NO_SORT, query = "  SELECT av FROM Availability av "
-        + "   WHERE av.resource.id = :resourceId "),
+@NamedQueries( { @NamedQuery(name = Availability.FIND_CURRENT_BY_RESOURCE, query = "" //
+    + "  SELECT av " //
+    + "    FROM Availability av " //
+    + "   WHERE av.resource.id = :resourceId " //
+    + "     AND av.endTime IS NULL " //
+    + "ORDER BY av.startTime ASC "), // this order by is on purpose - for handling NonUniqueResultException problems
+    @NamedQuery(name = Availability.FIND_BY_RESOURCE, query = "" //
+        + "  SELECT av " //
+        + "    FROM Availability av " //
+        + "   WHERE av.resource.id = :resourceId " //
+        + "ORDER BY av.startTime ASC"), //
+    @NamedQuery(name = Availability.FIND_BY_RESOURCE_NO_SORT, query = "" //
+        + "SELECT av " //
+        + "  FROM Availability av " //
+        + " WHERE av.resource.id = :resourceId "), //
 
     // get all current resource availabilities for those that do not match a given availability type
-    @NamedQuery(name = Availability.FIND_NONMATCHING_WITH_RESOURCE_ID_BY_AGENT_AND_TYPE, query = "SELECT new org.rhq.core.domain.resource.composite.ResourceIdWithAvailabilityComposite(av.resource.id, av) "
-        + "  FROM Availability av "
-        + " WHERE av.resource.agent.id = :agentId "
-        + "   AND ((av.availabilityType <> :availabilityType AND :availabilityType IS NOT NULL) "
-        + "        OR (av.availabilityType IS NOT NULL AND :availabilityType IS NULL) "
-        + "        OR (av.availabilityType IS NULL AND :availabilityType IS NOT NULL))" + "   AND av.endTime IS NULL"),
-    @NamedQuery(name = Availability.FIND_FOR_RESOURCE_WITHIN_INTERVAL, query = "SELECT av FROM Availability av "
-        + " WHERE av.resource.id = :resourceId "
+    @NamedQuery(name = Availability.FIND_NONMATCHING_WITH_RESOURCE_ID_BY_AGENT_AND_TYPE, query = "" //
+        + "SELECT new org.rhq.core.domain.resource.composite.ResourceIdWithAvailabilityComposite(av.resource.id, av) " //
+        + "  FROM Availability av " //
+        + " WHERE av.resource.agent.id = :agentId " //
+        + "   AND ((av.availabilityType <> :availabilityType AND :availabilityType IS NOT NULL) " //
+        + "        OR (av.availabilityType IS NOT NULL AND :availabilityType IS NULL) " //
+        + "        OR (av.availabilityType IS NULL AND :availabilityType IS NOT NULL))" //
+        + "   AND av.endTime IS NULL"), //
+    @NamedQuery(name = Availability.FIND_FOR_RESOURCE_WITHIN_INTERVAL, query = "" //
+        + "SELECT av FROM Availability av " //
+        + " WHERE av.resource.id = :resourceId " //
         + "   AND ((av.startTime <= :start AND (av.endTime >= :start OR av.endTime IS NULL) ) " /* availability straddles :start */
         + "       OR (av.startTime BETWEEN :start AND :end)) " /* interval straddles availability.startTime */
-        + "ORDER BY av.startTime ASC"),
-    @NamedQuery(name = Availability.FIND_FOR_RESOURCE_GROUP_WITHIN_INTERVAL, query = "SELECT av FROM Availability av "
-        + " WHERE av.resource.id IN (SELECT ires.id FROM ResourceGroup rg JOIN rg.implicitResources ires WHERE rg.id = :groupId) "
+        + "ORDER BY av.startTime ASC"), //
+    @NamedQuery(name = Availability.FIND_FOR_RESOURCE_GROUP_WITHIN_INTERVAL, query = "" //
+        + "SELECT av FROM Availability av " //
+        + " WHERE av.resource.id IN ( SELECT ires.id " //
+        + "                             FROM ResourceGroup rg " //
+        + "                             JOIN rg.implicitResources ires " //
+        + "                            WHERE rg.id = :groupId ) " //
         + "   AND ((av.startTime <= :start AND (av.endTime >= :start OR av.endTime IS NULL) ) " /* availability straddles :start */
-        + "       OR (av.startTime BETWEEN :start AND :end)) " /* interval straddles availability.startTime */
-        + "ORDER BY av.startTime ASC"),
-    @NamedQuery(name = Availability.FIND_FOR_AUTO_GROUP_WITHIN_INTERVAL, query = "SELECT av FROM Availability av "
-        + " JOIN av.resource res JOIN res.parentResource parent JOIN res.resourceType type " //
-        + " WHERE parent.id = :parentId AND type.id = :typeId "
-        + "   AND ((av.startTime <= :start AND (av.endTime >= :start OR av.endTime IS NULL) ) " /* availability straddles :start */
-        + "       OR (av.startTime BETWEEN :start AND :end)) " /* interval straddles availability.startTime */
-        + "ORDER BY av.startTime ASC"),
-    @NamedQuery(name = Availability.FIND_BY_RESOURCE_AND_DATE, query = "SELECT av FROM Availability av "
-        + " WHERE av.resource.id = :resourceId " + "   AND av.startTime <= :aTime "
-        + "   AND (av.endTime >= :aTime OR av.endTime IS NULL) "),
-
-    // Returns 0 if the agent is backfilled as DOWN, returns 1 if not.
-    // It does this very simply - if the platform is down, the only way it could have
-    // gone down is by the check-suspect-agent's backfiller - avail reports never show
-    // a downed platform because the platform plugins all return UP for platform availability.
-    @NamedQuery(name = Availability.QUERY_IS_AGENT_BACKFILLED, query = "SELECT COUNT(DISTINCT av.availabilityType) FROM Availability av WHERE "
-        + "   av.resource.agent.id = :agentId AND "
-        + "   av.resource.parentResource IS NULL AND "
-        + "   av.endTime IS NULL AND " + "   NOT av.availabilityType = 0"),
-    @NamedQuery(name = Availability.QUERY_DELETE_BY_RESOURCES, query = "DELETE Availability a WHERE a.resource.id IN ( :resourceIds )") })
+        + "        OR (av.startTime BETWEEN :start AND :end)) " /* interval straddles availability.startTime */
+        + "ORDER BY av.startTime ASC"), //
+    @NamedQuery(name = Availability.FIND_FOR_AUTO_GROUP_WITHIN_INTERVAL, query = "" //
+        + "  SELECT av FROM Availability av " //
+        + "    JOIN av.resource res JOIN res.parentResource parent JOIN res.resourceType type " //
+        + "   WHERE parent.id = :parentId " //
+        + "     AND type.id = :typeId " //
+        + "     AND ((av.startTime <= :start AND (av.endTime >= :start OR av.endTime IS NULL)) " /* availability straddles :start */
+        + "          OR (av.startTime BETWEEN :start AND :end)) " /* interval straddles availability.startTime */
+        + "ORDER BY av.startTime ASC"), //
+    @NamedQuery(name = Availability.FIND_BY_RESOURCE_AND_DATE, query = "" //
+        + "SELECT av FROM Availability av " //
+        + " WHERE av.resource.id = :resourceId " //
+        + "   AND av.startTime <= :aTime " //
+        + "   AND ( av.endTime >= :aTime OR av.endTime IS NULL ) "), //
+    @NamedQuery(name = Availability.QUERY_DELETE_BY_RESOURCES, query = "" //
+        + " DELETE Availability a " //
+        + "  WHERE a.resource.id IN ( :resourceIds )") })
 @SequenceGenerator(name = "Generator", sequenceName = "RHQ_AVAILABILITY_ID_SEQ")
 @Table(name = "RHQ_AVAILABILITY")
 public class Availability implements Serializable {
@@ -113,7 +125,6 @@ public class Availability implements Serializable {
     public static final String FIND_FOR_RESOURCE_GROUP_WITHIN_INTERVAL = "Availability.findForResourceGroupWithinInterval";
     public static final String FIND_FOR_AUTO_GROUP_WITHIN_INTERVAL = "Availability.findForAutoGroupWithinInterval";
     public static final String FIND_BY_RESOURCE_AND_DATE = "Availability.findByResourceAndDate";
-    public static final String QUERY_IS_AGENT_BACKFILLED = "Availability.isAgentBackfilled";
     public static final String QUERY_DELETE_BY_RESOURCES = "Availability.deleteByResources";
 
     public static final String NATIVE_QUERY_PURGE = "DELETE FROM RHQ_AVAILABILITY WHERE END_TIME < ?";

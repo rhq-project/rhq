@@ -2893,9 +2893,20 @@
 
             <resource-configuration>
                 <c:simple-property name="activeBindingSetName"
-                                   activationPolicy="restart"
-                                   description="The name of the binding set the Service Binding Manager should use when resolving bindings.
-                                                A change to this property takes effect only after the server restart."/>
+                                   activationPolicy="restart">
+                    <c:description><![CDATA[
+The name of the binding set the Service Binding Manager should use when resolving bindings.
+Note to JBoss ON or Jopr users (does not apply to JBoss AS admin console):
+CHANGING THIS PROPERTY IS POTENTIALLY DANGEGROUS because if there are any port conflicts 
+on the machine the Application Server is running on, the server will not start up again and 
+it will not be possible to monitor it.
+To be able to monitor the server again after the restart you have to update the "Naming Provider Url"
+in the "Connection" subtab in the "Inventory" of the Application Server to the value
+of "jboss:service=Naming:Port" binding of the active binding set.
+I.e. if the "jboss:service=Naming:Port" binding of the active binding set has the port set to 4099 and hostname to 127.0.0.1,
+you have to set the "Naming Provider Url" to jnp://127.0.0.1:4099.                    
+                    ]]></c:description>
+                </c:simple-property>
                 <c:list-property name="standardBindings" description="The standard port bindings inherited by the binding sets.">
 	                <c:map-property name="binding">
                         <c:simple-property name="serviceName" description="The name of the service to which this binding applies."/>
@@ -2915,6 +2926,22 @@
                      discovery="org.rhq.plugins.jbossas5.serviceBinding.SetDiscoveryComponent"
                      description="The Service Binding Set defines all bindings of a profile. It inherits the standard bindings from the Service Binding Manager and defines a port offset and overriden and additional bindings." createDeletePolicy="both">
 
+                <operation name="displayBindings" displayName="Display Bindings" description="Displays the full set of bindings as they would look if this bindings set was active.">
+                    <results>
+                        <c:list-property name="resultingBindings" readOnly="true" required="false" displayName="Resulting Bindings"
+                                         description="In this list you can review the resulting bindings of this binding set. This list includes the override bindings defined for this binding set and the standard bindings as they would look if this binding set was active (i.e. the port offset and default host name applied where appropriate).">
+                                <c:map-property name="binding" readOnly="true">
+                                    <c:simple-property readOnly="true" name="serviceName" displayName="Service Name" description="The name of the service to which this binding applies."/>
+                                    <c:simple-property readOnly="true" name="bindingName" required="false" displayName="Binding Name" description="A qualifier identifying which particular binding within the service this is."/>
+                                    <c:simple-property readOnly="true" name="port" type="integer" displayName="Port" description="The port to use for the binding."/>
+                                    <c:simple-property readOnly="true" name="hostName" required="false" displayName="Host Name" description="The host name or string notation IP address to use for the binding."/>
+                                    <c:simple-property readOnly="true" name="description" required="false" displayName="Description" description="Description of the binding"/>
+                                    <c:simple-property readOnly="true" name="fullyQualifiedName" required="false" displayName="Fully Qualified Name" description="The fully qualified binding name. This is an informational field only consisting of the service name and the binding name."/>
+                                </c:map-property>
+                        </c:list-property>
+                    </results>
+                </operation>
+
                 <resource-configuration>
                     <c:simple-property name="name" readOnly="true" description="The name of this binding set."/>
                     <c:simple-property name="defaultHostName" description='The host name that should be used for all bindings whose configuration does not specify "fixed host name".'/>
@@ -2932,19 +2959,7 @@
 						        <c:simple-property name="fullyQualifiedName" required="false" readOnly="true" displayName="Fully Qualified Name" description="The fully qualified binding name. This is an informational field only consisting of the service name and the binding name."/>
 						    </c:map-property>
                     </c:list-property>
-
-                    <c:list-property name="resultingBindings" readOnly="true" required="false" displayName="Resulting Bindings"
-                                     description="In this list you can review the resulting bindings of this binding set. This list doesn't include the override bindings defined above, only the standard bindings as they would look if this binding set was active (i.e. the port offset and default host name applied where appropriate).">
-                            <c:map-property name="binding" readOnly="true">
-                                <c:simple-property readOnly="true" name="serviceName" displayName="Service Name" description="The name of the service to which this binding applies."/>
-                                <c:simple-property readOnly="true" name="bindingName" required="false" displayName="Binding Name" description="A qualifier identifying which particular binding within the service this is."/>
-                                <c:simple-property readOnly="true" name="port" type="integer" displayName="Port" description="The port to use for the binding."/>
-                                <c:simple-property readOnly="true" name="hostName" required="false" displayName="Host Name" description="The host name or string notation IP address to use for the binding."/>
-                                <c:simple-property readOnly="true" name="description" required="false" displayName="Description" description="Description of the binding"/>
-                                <c:simple-property readOnly="true" name="fullyQualifiedName" required="false" displayName="Fully Qualified Name" description="The fully qualified binding name. This is an informational field only consisting of the service name and the binding name."/>
-                            </c:map-property>
-                    </c:list-property>
-                </resource-configuration>
+                </resource-configuration>                
             </service>
 		</service>
 

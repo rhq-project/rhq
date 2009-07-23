@@ -38,14 +38,14 @@ public class QuitCommand implements ClientCommand {
     }
 
     public String getSyntax() {
-        return "logout";
+        return "quit";
     }
 
     public String getHelp() {
-        return "Close the console client";
+        return "Exit the CLI interpreter";
     }
 
     public String getDetailedHelp() {
-        return null;
+        return getHelp();
     }
 }

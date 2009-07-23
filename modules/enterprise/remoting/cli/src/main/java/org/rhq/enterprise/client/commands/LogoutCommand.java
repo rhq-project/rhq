@@ -48,10 +48,10 @@ public class LogoutCommand implements ClientCommand {
     }
 
     public String getHelp() {
-        return "Logout from the server connection but leave the client running";
+        return "Logout and disconnect from the server but does not exit the CLI interpreter";
     }
 
     public String getDetailedHelp() {
-        return "";
+        return getHelp();
     }
 }

@@ -289,23 +289,16 @@ public class ScriptCommand implements ClientCommand {
     }
 
     public String getSyntax() {
-        String example = "Ex.  exec 2 + 2";
-        example += "\n" + "Ex2. exec -f (path to file)";
-        String syntax = "exec <scripting code>";
-
-        return example + "\n" + syntax;
-
+        return "exec <statement> | [-s<indexed|named>] -f <file> [args]";
     }
 
     public String getHelp() {
-        return "Excecutes JavaScript commands using the various service interfaces";
+        return "Execute a statement or a script";
     }
 
     public String getDetailedHelp() {
-        StringBuilder help = new StringBuilder();
-        help.append("Executes JavaScript commands. You can utilize the following service managers: "
-            + RemoteClient.Manager.values());
-        return help.toString();
+        return "Execute a statement or a script. The following services managers are available: " +
+                RemoteClient.Manager.values();
     }
 
     public ScriptContext getContext() {

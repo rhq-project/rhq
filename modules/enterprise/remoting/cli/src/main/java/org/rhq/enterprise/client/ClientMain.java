@@ -268,15 +268,24 @@ public class ClientMain {
         return;
     }
 
-    // private boolean executePromptCommand(String[] args) throws Exception {
-    // public boolean executePromptCommand(String[] args, PrintWriter pw) throws Exception {
     public boolean executePromptCommand(String[] args) throws Exception {
         String cmd = args[0];
         if (commands.containsKey(cmd)) {
             ClientCommand command = commands.get(cmd);
+
+            if (shouldDisplayHelp(args)) {
+                outputWriter.println("syntax: " + command.getSyntax());
+                outputWriter.println("description: " + command.getHelp() + "\n");
+                return true;
+            }
+
+            if (shouldDisplayDetailedHelp(args)) {
+                outputWriter.println("syntax: " + command.getSyntax());
+                outputWriter.println("description: " + command.getDetailedHelp() + "\n");
+                return true;
+            }
+
             try {
-                // return command.execute(this, args);
-                // add extra printline for readability
                 boolean response = command.execute(this, args);
                 processNotes(outputWriter);
                 outputWriter.println("");
@@ -294,6 +303,22 @@ public class ClientMain {
             return result;
         }
         return true;
+    }
+
+    private boolean shouldDisplayHelp(String[] args) {
+        if (args.length < 2) {
+            return false;
+        }
+
+        return args[1].equals("-h");
+    }
+
+    private boolean shouldDisplayDetailedHelp(String[] args) {
+        if (args.length < 2) {
+            return false;
+        }
+
+        return args[1].equals("--help");
     }
 
     /**

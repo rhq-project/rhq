@@ -65,14 +65,15 @@ public class LoginCommand implements ClientCommand {
     }
 
     public String getSyntax() {
-        return "login user pass (host) (port)";
+        return "login username password [host] [port]";
     }
 
     public String getHelp() {
-        return "Login to a server with specified user and password";
+        return "Log into a server with specified username and password";
     }
 
     public String getDetailedHelp() {
-        return "";
+        return "Log into a server with the specified username and password. The server host name and port may " +
+                "optionally be specified. The host name defaults to localhost and the port to 7080.";
     }
 }

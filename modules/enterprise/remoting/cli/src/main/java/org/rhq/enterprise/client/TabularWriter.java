@@ -54,6 +54,7 @@ public class TabularWriter {
     private String format = "raw";
     private CSVWriter csvWriter;
     private SummaryFilter summaryFilter = new SummaryFilter();
+    boolean exportMode;
 
     static Set<String> IGNORED_PROPS = new HashSet<String>();
 
@@ -134,7 +135,7 @@ public class TabularWriter {
             Map<String, String> properties = new TreeMap<String, String>();
             int maxLength = 0;
             for (PropertyDescriptor pd : info.getPropertyDescriptors()) {
-                if (summaryFilter.filter(pd)) {
+                if (exportMode || summaryFilter.filter(pd)) {
                     Method m = pd.getReadMethod();
                     Object val = null;
                     if (m != null) {
@@ -220,7 +221,7 @@ public class TabularWriter {
 
                         List<PropertyDescriptor> pdList = new ArrayList<PropertyDescriptor>();
                         for (PropertyDescriptor pd : info.getPropertyDescriptors()) {
-                            if (summaryFilter.filter(pd)) {
+                            if (exportMode || summaryFilter.filter(pd)) {
                                 try {
                                     boolean allNull = true;
                                     for (Object row : list) {
@@ -481,4 +482,11 @@ public class TabularWriter {
         this.width = width;
     }
 
+    public boolean isExportMode() {
+        return exportMode;
+    }
+
+    public void setExportMode(boolean exportMode) {
+        this.exportMode = exportMode;
+    }
 }

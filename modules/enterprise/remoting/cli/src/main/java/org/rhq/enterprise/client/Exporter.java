@@ -43,6 +43,7 @@ public class Exporter {
             this.file = file;
             fileWriter = new FileWriter(this.file);
             tabularWriter = new TabularWriter(new PrintWriter(fileWriter), format);
+            tabularWriter.setExportMode(true);
         } catch (IOException e) {
             throw new ExportException(e);
         }

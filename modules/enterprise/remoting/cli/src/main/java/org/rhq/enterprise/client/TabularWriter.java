@@ -53,6 +53,7 @@ public class TabularWriter {
     PrintWriter out;
     private String format = "raw";
     private CSVWriter csvWriter;
+    private SummaryFilter summaryFilter = new SummaryFilter();
 
     static Set<String> IGNORED_PROPS = new HashSet<String>();
 
@@ -133,19 +134,20 @@ public class TabularWriter {
             Map<String, String> properties = new TreeMap<String, String>();
             int maxLength = 0;
             for (PropertyDescriptor pd : info.getPropertyDescriptors()) {
+                if (summaryFilter.filter(pd)) {
+                    Method m = pd.getReadMethod();
+                    Object val = null;
+                    if (m != null) {
+                        val = m.invoke(object);
+                    }
 
-                Method m = pd.getReadMethod();
-                Object val = null;
-                if (m != null) {
-                    val = m.invoke(object);
-                }
-
-                if (val != null) {
-                    try {
-                        String str = String.valueOf(val);
-                        maxLength = Math.max(maxLength, pd.getName().length());
-                        properties.put(pd.getName(), String.valueOf(val));
-                    } catch (Exception e) {
+                    if (val != null) {
+                        try {
+                            String str = String.valueOf(val);
+                            maxLength = Math.max(maxLength, pd.getName().length());
+                            properties.put(pd.getName(), String.valueOf(val));
+                        } catch (Exception e) {
+                        }
                     }
                 }
             }
@@ -216,28 +218,28 @@ public class TabularWriter {
                         int i = 0;
 
 
-                        List<PropertyDescriptor> pdList = new ArrayList<PropertyDescriptor>(); //Arrays.asList(info.getPropertyDescriptors()));
+                        List<PropertyDescriptor> pdList = new ArrayList<PropertyDescriptor>();
                         for (PropertyDescriptor pd : info.getPropertyDescriptors()) {
-
-                            try {
-                                boolean allNull = true;
-                                for (Object row : list) {
-                                    Method m = pd.getReadMethod();
-                                    Object val = null;
-                                    if (m != null) {
-                                        val = pd.getReadMethod().invoke(row);
+                            if (summaryFilter.filter(pd)) {
+                                try {
+                                    boolean allNull = true;
+                                    for (Object row : list) {
+                                        Method m = pd.getReadMethod();
+                                        Object val = null;
+                                        if (m != null) {
+                                            val = pd.getReadMethod().invoke(row);
+                                        }
+                                        if ((val != null && !(val instanceof Collection)) ||
+                                                ((val != null && (val instanceof Collection) && !((Collection) val).isEmpty())))
+                                            allNull = false;
                                     }
-                                    if ((val != null && !(val instanceof Collection)) ||
-                                            ((val != null && (val instanceof Collection) && !((Collection) val).isEmpty())))
-                                        allNull = false;
+                                    if (!allNull && !IGNORED_PROPS.contains(pd.getName())) {
+                                        pdList.add(pd);
+                                    }
+                                } catch (Exception e) {
+                                    e.printStackTrace();
                                 }
-                                if (!allNull && !IGNORED_PROPS.contains(pd.getName())) {
-                                    pdList.add(pd);
-                                }
-                            } catch (Exception e) {
-                                e.printStackTrace();
                             }
-
                         }
 
 

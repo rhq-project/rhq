@@ -25,7 +25,6 @@ package org.rhq.plugins.jbossas5;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URI;
-import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -39,8 +38,9 @@ import org.jboss.deployers.spi.management.deploy.ProgressEvent;
 import org.jboss.deployers.spi.management.deploy.ProgressListener;
 import org.jboss.managed.api.DeploymentState;
 import org.jboss.managed.api.ManagedDeployment;
-import org.jboss.managed.api.ManagedProperty;
 import org.jboss.profileservice.spi.NoSuchDeploymentException;
+import org.jboss.remoting.CannotConnectException;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
@@ -112,6 +112,10 @@ public abstract class AbstractManagedDeploymentComponent
         {
             log.warn(this.deploymentType + " deployment '" + this.deploymentName + "' not found. Cause: "
                     + e.getLocalizedMessage());
+            return AvailabilityType.DOWN;
+        }
+        catch (CannotConnectException e)
+        {
             return AvailabilityType.DOWN;
         }
     }

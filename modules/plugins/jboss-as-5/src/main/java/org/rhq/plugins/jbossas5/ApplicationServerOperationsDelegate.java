@@ -84,7 +84,6 @@ public class ApplicationServerOperationsDelegate {
 			.getLog(ApplicationServerOperationsDelegate.class);
 
 	private static final String SEPARATOR = "\n-----------------------\n";
-	// Attributes --------------------------------------------
 
 	static final String DEFAULT_START_SCRIPT = "bin" + File.separator + "run."
 			+ ((File.separatorChar == '/') ? "sh" : "bat");
@@ -175,16 +174,16 @@ public class ApplicationServerOperationsDelegate {
 		File startScriptFile = getStartScriptPath();
 		validateScriptFile(
 				startScriptFile,
-				ApplicationServerComponent.Config.START_SCRIPT_CONFIG_PROP);
+				ApplicationServerPluginConfigurationProperties.START_SCRIPT_CONFIG_PROP);
 
         // The optional command prefix (e.g. sudo or nohup).
 		String prefix = pluginConfig
 				.getSimple(
-						ApplicationServerComponent.Config.SCRIPT_PREFIX_CONFIG_PROP)
+						ApplicationServerPluginConfigurationProperties.SCRIPT_PREFIX_CONFIG_PROP)
 				.getStringValue();
 		String configName = getConfigurationSet();
         String bindAddress = pluginConfig.getSimpleValue(
-				ApplicationServerComponent.Config.BIND_ADDRESS, null);
+				ApplicationServerPluginConfigurationProperties.BIND_ADDRESS, null);
 
 		ProcessExecution processExecution;
 		if (prefix == null || prefix.replaceAll("\\s", "").equals("")) {
@@ -261,14 +260,14 @@ public class ApplicationServerOperationsDelegate {
 
 		configPath = resolvePathRelativeToHomeDir(getRequiredPropertyValue(
 				pluginConfig,
-				ApplicationServerComponent.Config.SERVER_HOME_DIR));
+				ApplicationServerPluginConfigurationProperties.SERVER_HOME_DIR));
 
 		if (!configPath.exists()) {
 			throw new InvalidPluginConfigurationException(
 					"Configuration path '" + configPath + "' does not exist.");
 		}
 		return pluginConfig.getSimpleValue(
-				ApplicationServerComponent.Config.SERVER_NAME,
+				ApplicationServerPluginConfigurationProperties.SERVER_NAME,
 				configPath.getName());
 	}
 
@@ -284,7 +283,7 @@ public class ApplicationServerOperationsDelegate {
 		if (javaHomeDir == null) {
 			throw new IllegalStateException(
 					"The '"
-							+ ApplicationServerComponent.Config.JAVA_HOME
+							+ ApplicationServerPluginConfigurationProperties.JAVA_HOME
 							+ "' connection property must be set in order to start or stop the application server via script.");
 		}
 
@@ -311,7 +310,7 @@ public class ApplicationServerOperationsDelegate {
 						ApplicationServerShutdownMethod.class,
 						pluginConfig
 								.getSimple(
-										ApplicationServerComponent.Config.SHUTDOWN_METHOD_CONFIG_PROP)
+										ApplicationServerPluginConfigurationProperties.SHUTDOWN_METHOD_CONFIG_PROP)
 								.getStringValue());
 		String result = ApplicationServerShutdownMethod.JMX
 				.equals(shutdownMethod) ? shutdownViaJmx()
@@ -333,10 +332,10 @@ public class ApplicationServerOperationsDelegate {
 		File shutdownScriptFile = getShutdownScriptPath();
 		validateScriptFile(
 				shutdownScriptFile,
-				ApplicationServerComponent.Config.SHUTDOWN_SCRIPT_CONFIG_PROP);
+				ApplicationServerPluginConfigurationProperties.SHUTDOWN_SCRIPT_CONFIG_PROP);
 		String prefix = pluginConfig
 				.getSimple(
-						ApplicationServerComponent.Config.SCRIPT_PREFIX_CONFIG_PROP)
+						ApplicationServerPluginConfigurationProperties.SCRIPT_PREFIX_CONFIG_PROP)
 				.getStringValue();
 		ProcessExecution processExecution = ProcessExecutionUtility
 				.createProcessExecution(prefix, shutdownScriptFile);
@@ -344,7 +343,7 @@ public class ApplicationServerOperationsDelegate {
 		initProcessExecution(processExecution, shutdownScriptFile);
 
 		String server = pluginConfig.getSimple(
-				ApplicationServerComponent.Config.NAMING_URL)
+				ApplicationServerPluginConfigurationProperties.NAMING_URL)
 				.getStringValue();
 		if (server != null) {
 			processExecution.getArguments().add("--server=" + server);
@@ -406,11 +405,11 @@ public class ApplicationServerOperationsDelegate {
 	private String shutdownViaJmx() {
 		String mbeanName = pluginConfig
 				.getSimple(
-						ApplicationServerComponent.Config.SHUTDOWN_MBEAN_CONFIG_PROP)
+						ApplicationServerPluginConfigurationProperties.SHUTDOWN_MBEAN_CONFIG_PROP)
 				.getStringValue();
 		String operationName = pluginConfig
 				.getSimple(
-						ApplicationServerComponent.Config.SHUTDOWN_MBEAN_OPERATION_CONFIG_PROP)
+						ApplicationServerPluginConfigurationProperties.SHUTDOWN_MBEAN_OPERATION_CONFIG_PROP)
 				.getStringValue();
 
 		EmsConnection connection = this.serverComponent.getEmsConnection();
@@ -530,7 +529,7 @@ public class ApplicationServerOperationsDelegate {
 				.getPluginConfiguration();
 		String startScript = pluginConfig
 				.getSimpleValue(
-						ApplicationServerComponent.Config.START_SCRIPT_CONFIG_PROP,
+						ApplicationServerPluginConfigurationProperties.START_SCRIPT_CONFIG_PROP,
 						DEFAULT_START_SCRIPT);
 		File startScriptFile = resolvePathRelativeToHomeDir(startScript);
 		return startScriptFile;
@@ -548,7 +547,7 @@ public class ApplicationServerOperationsDelegate {
 		File configDir = new File(path);
 		if (!configDir.isAbsolute()) {
 			String jbossHomeDir = getRequiredPropertyValue(pluginConfig,
-					ApplicationServerComponent.Config.HOME_DIR);
+					ApplicationServerPluginConfigurationProperties.HOME_DIR);
 			configDir = new File(jbossHomeDir, path);
 		}
 
@@ -582,7 +581,7 @@ public class ApplicationServerOperationsDelegate {
 				.getPluginConfiguration();
 		String shutdownScript = pluginConfig
 				.getSimpleValue(
-						ApplicationServerComponent.Config.SHUTDOWN_SCRIPT_CONFIG_PROP,
+						ApplicationServerPluginConfigurationProperties.SHUTDOWN_SCRIPT_CONFIG_PROP,
 						DEFAULT_SHUTDOWN_SCRIPT);
 		File shutdownScriptFile = resolvePathRelativeToHomeDir(shutdownScript);
 		return shutdownScriptFile;
@@ -603,7 +602,7 @@ public class ApplicationServerOperationsDelegate {
 		Configuration pluginConfig = serverComponent.getResourceContext()
 				.getPluginConfiguration();
 		String javaHomePath = pluginConfig.getSimpleValue(
-				ApplicationServerComponent.Config.JAVA_HOME, null);
+				ApplicationServerPluginConfigurationProperties.JAVA_HOME, null);
 
 		if (javaHomePath == null) {
 			log
@@ -619,13 +618,13 @@ public class ApplicationServerOperationsDelegate {
 
 	void validateJavaHomePathProperty() {
 		String javaHome = pluginConfig.getSimple(
-				ApplicationServerComponent.Config.JAVA_HOME)
+				ApplicationServerPluginConfigurationProperties.JAVA_HOME)
 				.getStringValue();
 		if (javaHome != null) {
 			File javaHomeDir = new File(javaHome);
 			if (!javaHomeDir.isAbsolute()) {
 				throw new InvalidPluginConfigurationException(
-						ApplicationServerComponent.Config.JAVA_HOME
+						ApplicationServerPluginConfigurationProperties.JAVA_HOME
 								+ " connection property ('"
 								+ javaHomeDir
 								+ "') is not an absolute path. Note, on Windows, absolute paths must start with the drive letter (e.g. C:).");
@@ -633,7 +632,7 @@ public class ApplicationServerOperationsDelegate {
 
 			if (!javaHomeDir.exists()) {
 				throw new InvalidPluginConfigurationException(
-						ApplicationServerComponent.Config.JAVA_HOME
+						ApplicationServerPluginConfigurationProperties.JAVA_HOME
 								+ " connection property ('"
 								+ javaHomeDir
 								+ "') does not exist.");
@@ -641,7 +640,7 @@ public class ApplicationServerOperationsDelegate {
 
 			if (!javaHomeDir.isDirectory()) {
 				throw new InvalidPluginConfigurationException(
-						ApplicationServerComponent.Config.JAVA_HOME
+						ApplicationServerPluginConfigurationProperties.JAVA_HOME
 								+ " connection property ('"
 								+ javaHomeDir
 								+ "') is not a directory.");

@@ -36,6 +36,8 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.commons.lang.exception.ExceptionUtils;
+
 import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.deployers.spi.management.deploy.ProgressEvent;
 import org.jboss.deployers.spi.management.deploy.ProgressListener;
@@ -46,10 +48,13 @@ import org.jboss.managed.api.ManagedProperty;
 import org.jboss.on.common.jbossas.JBPMWorkflowManager;
 import org.jboss.on.common.jbossas.JBossASPaths;
 import org.jboss.profileservice.spi.NoSuchDeploymentException;
+import org.jboss.remoting.CannotConnectException;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.support.metadata.InternalVMTypeDescriptor;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -112,23 +117,6 @@ import com.jboss.jbossnetwork.product.jbpm.handlers.ControlActionFacade;
 public class ApplicationServerComponent implements ResourceComponent, ProfileServiceComponent,
     CreateChildResourceFacet, MeasurementFacet, ConfigurationFacet, ProgressListener, ContentFacet, OperationFacet {
 
-    public interface Config {
-        String SERVER_NAME = "serverName";
-        String NAMING_URL = "namingURL";
-        String PRINCIPAL = "principal";
-        String CREDENTIALS = "credentials";
-        String HOME_DIR = "homeDir";
-        String SERVER_HOME_DIR = "serverHomeDir";
-        String JAVA_HOME = "javaHome";
-        String BIND_ADDRESS = "bindAddress";
-        String START_SCRIPT_CONFIG_PROP = "startScript";
-        String SHUTDOWN_SCRIPT_CONFIG_PROP = "shutdownScript";
-        String SHUTDOWN_MBEAN_CONFIG_PROP = "shutdownMBeanName";
-        String SHUTDOWN_MBEAN_OPERATION_CONFIG_PROP = "shutdownMBeanOperation";
-        String SHUTDOWN_METHOD_CONFIG_PROP = "shutdownMethod";
-        String SCRIPT_PREFIX_CONFIG_PROP = "scriptPrefix";
-    }
-    
     private static final String MANAGED_PROPERTY_GROUP = "managedPropertyGroup";
 
     private static final Pattern METRIC_NAME_PATTERN = Pattern.compile("(.*)\\|(.*)\\|(.*)\\|(.*)");
@@ -151,7 +139,7 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
                 // Ping the connection to make sure it's not defunct.
                 this.connection.getManagementView().getComponentTypes();
                 availability = AvailabilityType.UP;
-            } catch (Exception e) {
+            } catch (CannotConnectException e) {
                 availability = AvailabilityType.DOWN;
             }
         } else {
@@ -299,15 +287,25 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
             connectionProvider = new LocalProfileServiceConnectionProvider();
         } else {
             Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
-            String namingURL = pluginConfig.getSimpleValue(Config.NAMING_URL, null);
+            String namingURL = pluginConfig.getSimpleValue(ApplicationServerPluginConfigurationProperties.NAMING_URL, null);
             validateNamingURL(namingURL);
-            String principal = pluginConfig.getSimpleValue(Config.PRINCIPAL, null);
-            String credentials = pluginConfig.getSimpleValue(Config.CREDENTIALS, null);
+            String principal = pluginConfig.getSimpleValue(ApplicationServerPluginConfigurationProperties.PRINCIPAL, null);
+            String credentials = pluginConfig.getSimpleValue(ApplicationServerPluginConfigurationProperties.CREDENTIALS, null);
             connectionProvider = new RemoteProfileServiceConnectionProvider(namingURL, principal, credentials);
         }
         try {
             this.connection = connectionProvider.connect();
         } catch (RuntimeException e) {
+            Throwable rootCause = ExceptionUtils.getRootCause(e);
+            if (rootCause instanceof SecurityException) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Failed to connect to Profile Service.", e);
+                } else {
+                    log.warn("Failed to connect to Profile Service - cause: " + rootCause);
+                }
+                throw new InvalidPluginConfigurationException(
+                        "Values of 'principal' and/or 'credentials' connection properties are invalid.", rootCause);
+            }
             log.debug("Failed to connect to Profile Service.", e);
         }
     }
@@ -439,23 +437,24 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
     private JBossASPaths getJBossASPaths() {
         Configuration pluginConfiguration = this.resourceContext.getPluginConfiguration();
 
-        String homeDir = pluginConfiguration.getSimpleValue(Config.HOME_DIR, null);
-        String serverHomeDir = pluginConfiguration.getSimpleValue(Config.SERVER_HOME_DIR, null);
+        String homeDir = pluginConfiguration.getSimpleValue(ApplicationServerPluginConfigurationProperties.HOME_DIR, null);
+        String serverHomeDir = pluginConfiguration.getSimpleValue(ApplicationServerPluginConfigurationProperties.SERVER_HOME_DIR, null);
 
         return new JBossASPaths(homeDir, serverHomeDir);
     }
 
     private boolean runningEmbedded() {
         Configuration pluginConfiguration = this.resourceContext.getPluginConfiguration();
-        String namingUrl = pluginConfiguration.getSimpleValue(Config.NAMING_URL, null);
+        String namingUrl = pluginConfiguration.getSimpleValue(ApplicationServerPluginConfigurationProperties.NAMING_URL, null);
         return namingUrl == null;
     }
 
     @NotNull
-    static File resolvePathRelativeToHomeDir(Configuration pluginConfig, @NotNull String path) {
+    private File resolvePathRelativeToHomeDir(@NotNull String path) {
         File configDir = new File(path);
         if (!configDir.isAbsolute()) {
-            String homeDir = pluginConfig.getSimple(Config.HOME_DIR).getStringValue();
+            Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
+            String homeDir = pluginConfig.getSimple(ApplicationServerPluginConfigurationProperties.HOME_DIR).getStringValue();
             configDir = new File(homeDir, path);
         }
         return configDir;
@@ -511,16 +510,16 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
 
         Configuration jmxConfig = new Configuration();
 
-        String jbossHomeDir = pluginConfiguration.getSimpleValue(Config.HOME_DIR, null);
+        String jbossHomeDir = pluginConfiguration.getSimpleValue(ApplicationServerPluginConfigurationProperties.HOME_DIR, null);
 
         String connectorDescriptorType;
         boolean runningEmbedded = runningEmbedded();
         if (runningEmbedded) {
             connectorDescriptorType = InternalVMTypeDescriptor.class.getName();
         } else {
-            String connectorAddress = pluginConfiguration.getSimpleValue(Config.NAMING_URL, null);
-            String connectorPrincipal = pluginConfiguration.getSimpleValue(Config.PRINCIPAL, null);
-            String connectorCredentials = pluginConfiguration.getSimpleValue(Config.CREDENTIALS, null);
+            String connectorAddress = pluginConfiguration.getSimpleValue(ApplicationServerPluginConfigurationProperties.NAMING_URL, null);
+            String connectorPrincipal = pluginConfiguration.getSimpleValue(ApplicationServerPluginConfigurationProperties.PRINCIPAL, null);
+            String connectorCredentials = pluginConfiguration.getSimpleValue(ApplicationServerPluginConfigurationProperties.CREDENTIALS, null);
 
             connectorDescriptorType = JBossAS5ConnectionTypeDescriptor.class.getName();
 
@@ -558,8 +557,9 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
 
     private File getConfigurationPath() {
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
-        File configPath = resolvePathRelativeToHomeDir(pluginConfig, getRequiredPropertyValue(pluginConfig,
-            Config.SERVER_HOME_DIR));
+        String serverHomeDir = getRequiredPropertyValue(pluginConfig,
+                ApplicationServerPluginConfigurationProperties.SERVER_HOME_DIR);
+        File configPath = resolvePathRelativeToHomeDir(serverHomeDir);
         if (!configPath.isDirectory()) {
             throw new InvalidPluginConfigurationException("Configuration path '" + configPath + "' does not exist.");
         }

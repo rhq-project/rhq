@@ -46,6 +46,8 @@ import org.jboss.metatype.api.values.CompositeValue;
 import org.jboss.metatype.api.values.EnumValue;
 import org.jboss.metatype.api.values.MetaValue;
 import org.jboss.metatype.api.values.SimpleValue;
+import org.jboss.remoting.CannotConnectException;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -103,7 +105,12 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
     // ResourceComponent Implementation  --------------------------------------------
 
     public AvailabilityType getAvailability() {
-        RunState runState = getManagedComponent().getRunState();
+        RunState runState;
+        try {
+            runState = getManagedComponent().getRunState();
+        } catch (CannotConnectException e) {
+            return AvailabilityType.DOWN;
+        }
         return (runState == RunState.RUNNING) ? AvailabilityType.UP : AvailabilityType.DOWN;
     }
 

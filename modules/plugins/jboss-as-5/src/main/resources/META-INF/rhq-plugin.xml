@@ -1283,11 +1283,6 @@
                 <c:group name="advanced" displayName="Advanced">
                     &datasourceAndConnectionFactoryAdvancedResourceConfigProps;
                     &datasourceAdvancedResourceConfigProps;
-
-                    <c:simple-property name="track-connection-by-tx" type="boolean" activationPolicy="immediate"
-                                       displayName="Track Connection By Transaction" required="false">
-                        <c:description>Whether the connection should be locked into the transaction.</c:description>
-                    </c:simple-property>
                 </c:group>
 
                 <c:template name="Oracle No TX" description="No Transaction Datasource for Oracle">
@@ -1323,13 +1318,6 @@
             &managedObjectMetrics;
             &datasourceMetrics;
 
-            <metric displayName="Connection Count" property="connectionCount" displayType="summary"/>
-            <metric displayName="Available Connection Count" property="availableConnectionCount" displayType="summary"/>
-            <metric displayName="Maximum Connections in Use Count" property="maxConnectionsInUseCount"/>
-            <metric displayName="In Use Connection Count" property="inUseConnectionCount"/>
-            <metric displayName="Connection Created Count" property="connectionCreatedCount"/>
-            <metric displayName="Connection Destroyed Count" property="connectionDestroyedCount"/>
-
             <resource-configuration>
 
                 <!-- For ManagedProperty annotations, see:
@@ -1344,13 +1332,6 @@
                 <c:group name="advanced" displayName="Advanced">
                     &datasourceAndConnectionFactoryAdvancedResourceConfigProps;
                     &datasourceAdvancedResourceConfigProps;
-
-                    <c:simple-property name="track-connection-by-tx" type="boolean" activationPolicy="immediate"
-                                       displayName="Track Connection By Transaction" required="true"
-                                       default="true" readOnly="true">
-                        <c:description>Whether the connection should be locked into the transaction.</c:description>
-                    </c:simple-property>
-
                 </c:group>
 
                 <c:template name="Oracle Local TX" description="Local Transaction Datasource for Oracle">
@@ -1386,13 +1367,6 @@
 
             &managedObjectMetrics;
             &datasourceMetrics;
-
-            <metric displayName="Connection Count" property="connectionCount" displayType="summary"/>
-            <metric displayName="Available Connection Count" property="availableConnectionCount" displayType="summary"/>
-            <metric displayName="Maximum Connections in Use Count" property="maxConnectionsInUseCount"/>
-            <metric displayName="In Use Connection Count" property="inUseConnectionCount"/>
-            <metric displayName="Connection Created Count" property="connectionCreatedCount"/>
-            <metric displayName="Connection Destroyed Count" property="connectionDestroyedCount"/>
 
             <resource-configuration>
 
@@ -1508,27 +1482,13 @@
             <resource-configuration>
 
                 <c:group name="connection" displayName="Connection Information">
-
                     &connectionFactoryConnectionResourceConfigProps;
                     &datasourceAndConnectionFactoryConnectionResourceConfigProps;
-
                 </c:group>
 
                 <c:group name="advanced" displayName="Advanced">
-
                     &datasourceAndConnectionFactoryAdvancedResourceConfigProps;
                     &connectionFactoryAdvancedResourceConfigProps;
-
-                    <c:simple-property name="track-connection-by-tx"
-                                       type="boolean"
-                                       activationPolicy="immediate"
-                                       displayName="Track Connection By Transaction"
-                                       required="false"
-                                       default="false"
-                                       readOnly="true">
-                        <c:description>Whether the connection should be locked into the transaction.</c:description>
-                    </c:simple-property>
-
                 </c:group>
             </resource-configuration>
 
@@ -1599,7 +1559,7 @@
                         <c:description>
                             If true, enable transaction interleaving if the DB vendor supports it (most do not).
                             Can only be set to true if XA transactions are enabled.
-                            This property supercedes the "track-connection-by-tx" property from earlier versions of
+                            This property supersedes the "track-connection-by-tx" property from earlier versions of
                             JBoss AS. The default is false.
                         </c:description>
                     </c:simple-property>

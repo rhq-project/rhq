@@ -105,13 +105,16 @@ public class InProcessJBossASDiscovery {
         String version = (String) ManagedComponentUtils.getSimplePropertyValue(serverConfigComponent,
             "specificationVersion");
 
+        // TODO (ips): Perhaps we should use the java.home sysprop instead of the JAVA_HOME env var, since it may be 
+        //             slightly more reliable.
         String javaHome = System.getenv(JAVA_HOME_ENV_VAR);
 
         Configuration pluginConfig = discoveryContext.getDefaultPluginConfiguration();
-        pluginConfig.put(new PropertySimple(ApplicationServerComponent.Config.HOME_DIR, homeDir));
-        pluginConfig.put(new PropertySimple(ApplicationServerComponent.Config.SERVER_HOME_DIR, serverHomeDir));
-        pluginConfig.put(new PropertySimple(ApplicationServerComponent.Config.SERVER_NAME, serverName));
-        pluginConfig.put(new PropertySimple(ApplicationServerComponent.Config.JAVA_HOME, javaHome));
+        pluginConfig.put(new PropertySimple(ApplicationServerPluginConfigurationProperties.HOME_DIR, homeDir));
+        pluginConfig.put(new PropertySimple(ApplicationServerPluginConfigurationProperties.SERVER_HOME_DIR,
+                serverHomeDir));
+        pluginConfig.put(new PropertySimple(ApplicationServerPluginConfigurationProperties.SERVER_NAME, serverName));
+        pluginConfig.put(new PropertySimple(ApplicationServerPluginConfigurationProperties.JAVA_HOME, javaHome));
 
         return new DiscoveredResourceDetails(discoveryContext.getResourceType(), resourceKey, resourceName, version,
                 description, pluginConfig, null);

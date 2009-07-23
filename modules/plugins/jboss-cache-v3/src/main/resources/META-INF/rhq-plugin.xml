@@ -24,6 +24,16 @@
                <c:simple-property name="searchString" default="*:*,jmx-resource=CacheMgmtInterceptor"/>
            </plugin-configuration>
            
+        <service name="Cache"
+                 class="JBossCacheDetailComponent"
+                 discovery="JBossCacheDetailDiscoveryComponent"
+                 description="JBoss Cache"
+                 singleton="true">
+ 
+           <plugin-configuration>
+                <c:simple-property name="jmx-resource" default=""/>
+           </plugin-configuration>
+           
            <operation name="destroy" displayName="Destroy this cache."/>
            <operation name="stop" displayName="Stop this cache."/>
            <operation name="create" displayName="Create this cache."/>
@@ -76,6 +86,7 @@
             <metric property="StateRetrievalTimeout" category="performance"/>             
             <metric property="TransactionManagerLookupClass" dataType="trait" />       
             <metric property="ClusterProperties" dataType="trait" />       
+          </service>
                                                  
           <service name="Interceptor"
                  class="JBossCacheDetailComponent"

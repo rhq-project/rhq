@@ -69,6 +69,7 @@ public class JBossCacheDetailComponent implements MeasurementFacet,
 		beanName = context.getPluginConfiguration().getSimple(
 				CACHE_DETAIL_BEAN_NAME).getStringValue();
 
+		log.debug("JBoss Cache " + beanName + " was loaded.");
 	}
 
 	public void stop() {
@@ -113,13 +114,15 @@ public class JBossCacheDetailComponent implements MeasurementFacet,
 
 				Object value = atribute.getValue();
 
-				if (request.getDataType() == DataType.MEASUREMENT) {
-					Double number = ((Number) value).doubleValue();
-					report.addData(new MeasurementDataNumeric(request, number));
-				} else if (request.getDataType() == DataType.TRAIT) {
-					report.addData(new MeasurementDataTrait(request, value
-							.toString()));
-				}
+				if (value != null)
+					if (request.getDataType() == DataType.MEASUREMENT) {
+						Double number = ((Number) value).doubleValue();
+						report.addData(new MeasurementDataNumeric(request,
+								number));
+					} else if (request.getDataType() == DataType.TRAIT) {
+						report.addData(new MeasurementDataTrait(request, value
+								.toString()));
+					}
 			} catch (Exception e) {
 				log.error(" Failure to collect measurement data for metric "
 						+ metricName + " from bean "

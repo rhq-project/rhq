@@ -24,9 +24,10 @@ package org.rhq.plugins.jbosscache3;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
 import org.rhq.core.domain.configuration.Configuration;
@@ -37,7 +38,6 @@ import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.plugins.jbossas5.ProfileServiceComponent;
-import org.rhq.plugins.jmx.ObjectNameQueryUtility;
 
 /**
  * 
@@ -49,10 +49,15 @@ public class JBossCacheDetailDiscoveryComponent implements
 
 	private ProfileServiceComponent parentComponent;
 	public static String CACHE_JMX_NAME = "jmx-resource";
+	private final Log log = LogFactory.getLog(this.getClass());
 
 	public Set<DiscoveredResourceDetails> discoverResources(
 			ResourceDiscoveryContext<ProfileServiceComponent> context)
 			throws InvalidPluginConfigurationException, Exception {
+
+		ResourceType resourceType = context.getResourceType();
+
+		log.trace("Discovering " + resourceType.getName() + " Resources...");
 
 		parentComponent = context.getParentResourceComponent();
 
@@ -78,39 +83,34 @@ public class JBossCacheDetailDiscoveryComponent implements
 		EmsConnection connection = parentComponent.getEmsConnection();
 		Set<DiscoveredResourceDetails> resources = new HashSet<DiscoveredResourceDetails>();
 
-		ResourceType resourceType = context.getResourceType();
-
 		String jmxName;
 
 		for (Configuration config : configurations) {
 			jmxName = config.getSimple(CACHE_JMX_NAME).getStringValue();
 
-			ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(
-					beanName + "," + jmxName);
+			beanName = (beanName + (jmxName.equals("") ? "" : "," + jmxName));
 
-			List<EmsBean> cacheBeans = connection.queryBeans(queryUtility
-					.getTranslatedQuery());
+			EmsBean emsBean = connection.getBean(beanName);
+			if (emsBean == null) {
+				connection.refresh();
+				emsBean = connection.getBean(beanName);
 
-            for (EmsBean bean : cacheBeans) {
-                Map<String, String> nameMap = bean.getBeanName()
-                        .getKeyProperties();
+			}
 
-                String name = null;
+			if (emsBean != null) {
+				Configuration conf = new Configuration();
+				conf.put(new PropertySimple(
+						JBossCacheDetailComponent.CACHE_DETAIL_BEAN_NAME,
+						beanName));
+				resources.add(new DiscoveredResourceDetails(resourceType,
+						beanName, resourceType.getName(), "", "JBoss Cache",
+						conf, null));
 
-                if (nameMap.containsKey(CACHE_JMX_NAME))
-                    name = nameMap.get(CACHE_JMX_NAME);
-
-                if (name != null) {
-                    Configuration conf = new Configuration();
-                    conf.put(new PropertySimple(
-                            JBossCacheDetailComponent.CACHE_DETAIL_BEAN_NAME,
-                            bean.getBeanName()));
-                    resources.add(new DiscoveredResourceDetails(resourceType,
-                            bean.getBeanName().toString(), name, "",
-                            "JBoss Cache", conf, null));
-                }
-            }
+			}
 		}
+
+		log.trace("Discovered " + resources.size() + " "
+				+ resourceType.getName() + " Resources.");
 		return resources;
 
 	}

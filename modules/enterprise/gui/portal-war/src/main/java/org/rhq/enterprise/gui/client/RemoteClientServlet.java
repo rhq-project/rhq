@@ -140,7 +140,7 @@ public class RemoteClientServlet extends HttpServlet {
         try {
             File zip = getRemoteClientZip();
             // zip is null when client module has not been built
-            if (zip == null || !zip.exists()) {
+            if (!zip.exists()) {
                 disableBrowserCache(resp);
                 resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Remote Client binary does not exist: "
                     + zip.getName());
@@ -260,9 +260,6 @@ public class RemoteClientServlet extends HttpServlet {
 
             // calculate the MD5 of the client zip
             File zip = getRemoteClientZip();
-            if (zip == null) {
-                return null;
-            }
             String md5Property = RHQ_CLIENT_MD5 + '=' + MD5Generator.getDigestString(zip) + '\n';
 
             // now write the server version info in our internal version file our servlet will use

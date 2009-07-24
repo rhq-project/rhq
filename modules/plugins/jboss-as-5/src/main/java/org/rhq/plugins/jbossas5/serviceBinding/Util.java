@@ -23,18 +23,15 @@
 package org.rhq.plugins.jbossas5.serviceBinding;
 
 import java.io.Serializable;
-import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-import org.jboss.metatype.api.types.ArrayMetaType;
 import org.jboss.metatype.api.types.CollectionMetaType;
 import org.jboss.metatype.api.types.CompositeMetaType;
 import org.jboss.metatype.api.types.ImmutableCompositeMetaType;
 import org.jboss.metatype.api.types.MetaType;
-import org.jboss.metatype.api.values.ArrayValueSupport;
 import org.jboss.metatype.api.values.CollectionValue;
 import org.jboss.metatype.api.values.CollectionValueSupport;
 import org.jboss.metatype.api.values.CompositeValue;
@@ -56,7 +53,6 @@ class Util {
 
     public static final String STANDARD_BINDINGS_PROPERTY = "standardBindings";
     public static final String OVERRIDE_BINDINGS_PROPERTY = "overrideBindings";
-    public static final String BIND_ADDRESS_PROPERTY = "bindAddress";
     public static final String ACTIVE_BINDING_SET_NAME_PROPERTY = "activeBindingSetName";
     public static final String BINDING_SETS_PROPERTY = "bindingSets";
     
@@ -87,8 +83,7 @@ class Util {
         new PropertyDefinition(PORT_OFFSET_PROPERTY, Integer.class) };
 
     /**
-     * All the properties of the override binding except "bindAddress" which is a byte[] representing an IP address
-     * and thus has to be treated specially.
+     * All the properties of the override binding.
      */
     public static final PropertyDefinition[] BINDING_SET_OVERRIDE_PROPERTIES = {
         new PropertyDefinition(SERVICE_NAME_PROPERTY, String.class), new PropertyDefinition(BINDING_NAME_PROPERTY, String.class),
@@ -156,15 +151,6 @@ class Util {
                 newBinding.put(def.propertyName, Util
                     .wrap(updatedBinding.getSimple(def.propertyName), def.propertyType));
             }
-
-            //and now we need to set the "bindAddress" of the binding.. this is a byte[] representing the raw InetAddress.
-            byte[] bindAddress = InetAddress.getByName(updatedBinding.getSimpleValue(HOST_NAME_PROPERTY, null))
-                .getAddress();
-
-            ArrayValueSupport avs = new ArrayValueSupport(ArrayMetaType.getPrimitiveArrayType(byte[].class));
-            avs.setValue(bindAddress);
-
-            newBinding.put(BIND_ADDRESS_PROPERTY, avs);
             updatedOverrideBindings.add(newBinding);
         }
 

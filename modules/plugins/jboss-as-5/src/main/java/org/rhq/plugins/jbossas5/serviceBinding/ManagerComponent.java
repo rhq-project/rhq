@@ -23,6 +23,7 @@
 package org.rhq.plugins.jbossas5.serviceBinding;
 
 import java.util.Arrays;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -46,6 +47,9 @@ import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
+import org.rhq.core.domain.measurement.MeasurementReport;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
@@ -184,6 +188,20 @@ public class ManagerComponent extends ManagedComponentComponent implements Creat
         }
     }
 
+    @Override
+    public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
+        for (MeasurementScheduleRequest request : metrics) {
+            if (request.getName().equals(Util.ACTIVE_BINDING_SET_NAME_PROPERTY)) {
+                ManagedComponent bindingManagerComponent = getBindingManager();
+                String activeBindingSetName = Util.getValue((SimpleValue) bindingManagerComponent.getProperty(
+                    Util.ACTIVE_BINDING_SET_NAME_PROPERTY).getValue(), String.class);
+                
+                report.addData(new MeasurementDataTrait(request, activeBindingSetName));
+            }
+        }
+        super.getValues(report, metrics);
+    }
+    
     // CreateChildResourceFacet ----------------------------------------------
 
     public CreateResourceReport createResource(CreateResourceReport report) {

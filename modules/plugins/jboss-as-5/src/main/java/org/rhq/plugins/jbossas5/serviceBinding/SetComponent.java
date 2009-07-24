@@ -22,14 +22,11 @@
  */
 package org.rhq.plugins.jbossas5.serviceBinding;
 
-import java.net.Inet4Address;
-import java.net.Inet6Address;
-import java.net.InetAddress;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 import org.apache.commons.logging.Log;
@@ -37,7 +34,6 @@ import org.apache.commons.logging.LogFactory;
 import org.jboss.managed.api.ManagedComponent;
 import org.jboss.managed.api.ManagedProperty;
 import org.jboss.metatype.api.types.MetaType;
-import org.jboss.metatype.api.values.ArrayValue;
 import org.jboss.metatype.api.values.CollectionValue;
 import org.jboss.metatype.api.values.CollectionValueSupport;
 import org.jboss.metatype.api.values.CompositeValue;
@@ -50,16 +46,21 @@ import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
+import org.rhq.core.domain.measurement.MeasurementReport;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.plugins.jbossas5.serviceBinding.Util.PropertyDefinition;
 
-public class SetComponent implements ResourceComponent<ManagerComponent>, ConfigurationFacet, DeleteResourceFacet, OperationFacet {
+public class SetComponent implements ResourceComponent<ManagerComponent>, ConfigurationFacet, DeleteResourceFacet, OperationFacet,
+    MeasurementFacet {
 
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -97,24 +98,6 @@ public class SetComponent implements ResourceComponent<ManagerComponent>, Config
 
             for (PropertySimple prop : Util.getProperties(Arrays.asList(Util.BINDING_SET_OVERRIDE_PROPERTIES), binding)) {
                 bindingMap.put(prop);
-            }
-
-            ArrayValue bindingAddressValue = (ArrayValue) binding.get(Util.BIND_ADDRESS_PROPERTY);
-            byte[] bindAddress = null;
-            if (bindingAddressValue != null) {
-                bindAddress = (byte[]) bindingAddressValue.getValue();
-            }
-
-            if (bindAddress == null) {
-                bindingMap.put(new PropertySimple(Util.BIND_ADDRESS_PROPERTY, null));
-            } else {
-                if (bindAddress.length == 4) {
-                    Inet4Address addr = (Inet4Address) InetAddress.getByAddress(bindAddress);
-                    bindingMap.put(new PropertySimple(Util.BIND_ADDRESS_PROPERTY, addr.getHostAddress()));
-                } else if (bindAddress.length == 16) {
-                    Inet6Address addr = (Inet6Address) InetAddress.getByAddress(bindAddress);
-                    bindingMap.put(new PropertySimple(Util.BIND_ADDRESS_PROPERTY, addr.getHostAddress()));
-                }
             }
         }
         return configuration;
@@ -270,6 +253,20 @@ public class SetComponent implements ResourceComponent<ManagerComponent>, Config
         return result;
     }
 
+    public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
+        Configuration config = loadResourceConfiguration();
+
+        for (MeasurementScheduleRequest request : metrics) {
+            String requestName = request.getName();
+            if (requestName.equals(Util.NAME_PROPERTY) || requestName.equals(Util.DEFAULT_HOST_NAME_PROPERTY) ||
+                requestName.equals(Util.PORT_OFFSET_PROPERTY)) {
+                
+                String value = config.getSimpleValue(requestName, null);
+                report.addData(new MeasurementDataTrait(request, value));
+            }
+        }
+    }
+    
     private CompositeValue getBindingSet() {
         String bindingSetName = context.getParentResourceComponent().getBindingSetNameFromResourceKey(
             context.getResourceKey());

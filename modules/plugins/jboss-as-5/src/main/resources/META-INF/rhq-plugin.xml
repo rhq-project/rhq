@@ -2851,6 +2851,9 @@
                 <c:simple-property name="componentName" readOnly="true"/>
             </plugin-configuration>
 
+            <metric property="activeBindingSetName" dataType="trait" displayName="Active Binding Set"
+                    displayType="summary" description="The active binding set used to obtain port bindings from." />
+            
             <resource-configuration>
                 <c:simple-property name="activeBindingSetName"
                                    activationPolicy="restart">
@@ -2902,6 +2905,10 @@ you have to set the "Naming Provider Url" to jnp://127.0.0.1:4099.
                     </results>
                 </operation>
 
+                <metric property="name" displayName="Name" dataType="trait" displayType="summary" description="The name of this binding set."/>
+                <metric property="defaultHostName" dataType="trait" displayName="Default Host Name" displayType="summary" description="The default host name of this binding set." />
+                <metric property="portOffset" dataType="trait" displayName="Port Offset" displayType="summary" description="The port offset of this binding set."/>
+                
                 <resource-configuration>
                     <c:simple-property name="name" readOnly="true" description="The name of this binding set."/>
                     <c:simple-property name="defaultHostName" description='The host name that should be used for all bindings whose configuration does not specify "fixed host name".'/>

@@ -22,7 +22,6 @@ import javax.ejb.Local;
 
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
-import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.composite.AbstractAlertConditionCategoryComposite;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.InventoryStatus;
@@ -39,8 +38,6 @@ public interface AlertConditionManagerLocal {
     Integer getAlertDefinitionByConditionIdInNewTransaction(int alertConditionId);
 
     AlertCondition getAlertConditionById(int alertConditionId);
-
-    PageList<AlertDefinition> getAllAlertDefinitionsWithConditions(Subject user, PageControl pageControl);
 
     PageList<? extends AbstractAlertConditionCategoryComposite> getAlertConditionComposites(Subject user,
         Integer agentId, AlertConditionCategory category, PageControl pageControl);

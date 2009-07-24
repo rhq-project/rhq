@@ -104,20 +104,6 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
     }
 
     @SuppressWarnings("unchecked")
-    public List<AlertDefinition> findAllAlertDefinitionsWithConditions(int agentId, Subject user) {
-        if (authorizationManager.isOverlord(user) == false) {
-            throw new PermissionException("User [" + user.getName() + "] does not have permission to call "
-                + "getAllAlertDefinitionsWithConditions; only the overlord has that right");
-        }
-
-        Query query = entityManager.createNamedQuery(AlertDefinition.QUERY_FIND_ALL_WITH_CONDITIONS);
-        query.setParameter("agentId", agentId);
-        List<AlertDefinition> list = query.getResultList();
-
-        return list;
-    }
-
-    @SuppressWarnings("unchecked")
     public PageList<AlertDefinition> findAlertDefinitions(Subject subject, int resourceId, PageControl pageControl) {
         pageControl.initDefaultOrderingField("ctime", PageOrdering.DESC);
 

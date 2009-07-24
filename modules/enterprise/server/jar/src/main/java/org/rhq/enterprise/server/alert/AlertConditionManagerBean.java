@@ -77,24 +77,6 @@ public class AlertConditionManagerBean implements AlertConditionManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<AlertDefinition> getAllAlertDefinitionsWithConditions(Subject user, PageControl pageControl) {
-        if (authorizationManager.isOverlord(user) == false) {
-            throw new PermissionException("User [" + user.getName() + "] does not have permission to call "
-                + "getAllAlertDefinitionsWithConditions; only the overlord has that right");
-        }
-
-        Query queryCount = PersistenceUtility.createCountQuery(entityManager,
-            AlertDefinition.QUERY_FIND_ALL_WITH_CONDITIONS);
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-            AlertDefinition.QUERY_FIND_ALL_WITH_CONDITIONS, pageControl);
-
-        long totalCount = (Long) queryCount.getSingleResult();
-        List<AlertDefinition> list = query.getResultList();
-
-        return new PageList<AlertDefinition>(list, (int) totalCount, pageControl);
-    }
-
-    @SuppressWarnings("unchecked")
     public PageList<? extends AbstractAlertConditionCategoryComposite> getAlertConditionComposites(Subject user,
         Integer agentId, AlertConditionCategory category, PageControl pageControl) {
         if (authorizationManager.isOverlord(user) == false) {

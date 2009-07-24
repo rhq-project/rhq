@@ -37,8 +37,6 @@ import org.rhq.enterprise.server.exception.FetchException;
  */
 @Local
 public interface AlertDefinitionManagerLocal {
-    List<AlertDefinition> findAllAlertDefinitionsWithConditions(int agentId, Subject user);
-
     PageList<AlertDefinition> findAlertDefinitions(Subject subject, int resourceId, PageControl pageControl);
 
     AlertDefinition getAlertDefinitionById(Subject subject, int alertDefinitionId);

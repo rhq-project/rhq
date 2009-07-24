@@ -2,7 +2,10 @@ package org.rhq.enterprise.client;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.server.exception.LoginException;
+import org.rhq.enterprise.client.commands.ScriptCommand;
+import org.rhq.enterprise.client.commands.LoginCommand;
 
+import javax.script.ScriptEngine;
 import java.util.Map;
 
 public class Controller {
@@ -56,7 +59,15 @@ public class Controller {
         loggedIn = true;
         client.setSubject(subject);
 
+        bindSubject(subject);
+
         return subject;
+    }
+
+    private void bindSubject(Subject subject) {
+        ScriptCommand cmd = (ScriptCommand) client.getCommands().get("exec");
+        ScriptEngine scriptEngine = cmd.getScriptEngine();
+        scriptEngine.put("subject", subject);
     }
 
     public void logout() {

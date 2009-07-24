@@ -179,7 +179,8 @@ public class ScriptCommand implements ClientCommand {
     public void initBindings(ClientMain client) {
         // These are prepared on every call in case the user logs out and logs into another server
         if (controller.getSubject() != null) {
-            sem.getBindings().put("subject", controller.getSubject());
+            jsEngine.put("subject", controller.getSubject());
+            //sem.getBindings().put("subject", controller.getSubject());
             sem.getBindings().putAll(controller.getManagers());
         }
         TabularWriter tw = new TabularWriter(client.getPrintWriter());

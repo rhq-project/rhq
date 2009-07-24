@@ -20,6 +20,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Arrays;
+import java.util.LinkedList;
 
 import jline.ArgumentCompletor;
 import jline.Completor;
@@ -78,6 +80,8 @@ public class ClientMain {
 
     private static Controller controller;
 
+    private boolean scriptMode;
+
     // Entrance to main.
     public static void main(String[] args) throws Exception {
 
@@ -90,8 +94,10 @@ public class ClientMain {
         // process startup arguments
         main.processArguments(args);
 
-        // begin client access loop
-        main.inputLoop();
+        if (!main.scriptMode) {
+            // begin client access loop
+            main.inputLoop();
+        }
     }
 
     private static void initCommands() {
@@ -387,12 +393,10 @@ public class ClientMain {
     }
 
     private void displayUsage() {
-        // outputWriter.println("rhq-client.sh [-h] [-u user] [-p pass] [-s host] [-t port] [-f file]");
         outputWriter.println("rhq-cli.sh [-h] [-u user] [-p pass] [-s host] [-t port] [-f file]");
     }
 
     void processArguments(String[] args) throws IllegalArgumentException {
-
         String sopts = "-:hu:p:s:t:f:";
         LongOpt[] lopts = { new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'h'),
             new LongOpt("user", LongOpt.REQUIRED_ARGUMENT, null, 'u'),
@@ -401,11 +405,6 @@ public class ClientMain {
             new LongOpt("port", LongOpt.REQUIRED_ARGUMENT, null, 't'),
             new LongOpt("file", LongOpt.NO_ARGUMENT, null, 'f') };
 
-        // String config_file_name = null;
-        // boolean clean_config = false;
-        // boolean purge_data = false;
-
-        // Getopt getopt = new Getopt("agent", args, sopts, lopts);
         Getopt getopt = new Getopt("Cli", args, sopts, lopts);
         int code;
 
@@ -437,6 +436,14 @@ public class ClientMain {
             case 'p': {
                 this.pass = getopt.getOptarg();
                 break;
+            }
+            case 'f':{
+                scriptMode = true;
+                List<String> argsList = new LinkedList<String>();
+                argsList.add("exec");
+                argsList.addAll(Arrays.asList(args));
+                commands.get("exec").execute(this, argsList.toArray(new String[] {}));
+                return;
             }
 
             case 'i': {

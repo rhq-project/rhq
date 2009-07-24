@@ -14,7 +14,7 @@
        Recent Measurements</h2>
    <ui:repeat var="metric"
               value="#{MetricsTableUIBean.metricSummaries}">
-     <c:if test="#{metric.valuesPresent}">
+     <h:panelGroup rendered="#{metric.valuesPresent}">
           <div style="text-indent: 20px;">
               <rich:paint2D id="painter" width="60" height="18" style="margin: 2px"
                  data="#{param.id}:#{metric.definitionId}" format="png" paint="#{ResourceMetricSparklineUIBean.paint}" />
@@ -32,13 +32,13 @@
 
              <br />
           </div>
-       </c:if>
+       </h:panelGroup>
    </ui:repeat>
 
 
    <div style="text-indent: 20px;">
       <h:outputText value="This resource has no recent metrics"
-                    rendered="#{MetricsTableUIBean.metricSummaries.size ne 0 and (MetricsTableUIBean.valuesPresent)}"/>
+                    rendered="#{MetricsTableUIBean.metricSummaries.size > 0 and (MetricsTableUIBean.valuesPresent eq false)}"/>
    </div>
    <div style="text-indent: 20px;">
       <h:outputText value="This resource has no metrics"

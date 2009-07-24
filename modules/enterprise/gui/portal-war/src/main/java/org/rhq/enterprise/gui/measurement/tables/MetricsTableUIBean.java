@@ -50,7 +50,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * This class supports the UI needs of Resource metrics.  Depending on the context various metric summary processing takes place
  * returning the appropriate metric summaries.  This class can be extended to provide context-specific UI Bean classes, or
  * encapsulated in UI beans that must extend other classes, such as PagedDataTableUIBean.
- *  
+ *
  * @author jay shaughnessy
  */
 public class MetricsTableUIBean {
@@ -68,6 +68,7 @@ public class MetricsTableUIBean {
     protected ResourceGroup resourceGroup;
 
     private List<MetricDisplaySummary> metricSummaries = null;
+    private boolean valuesPresent = false;
 
     public MetricsTableUIBean() {
         context = WebUtility.getEntityContext();
@@ -137,9 +138,20 @@ public class MetricsTableUIBean {
         for (MetricDisplaySummary summary : metricSummaries) {
             MonitorUtils.formatSimpleMetrics(summary, FacesContext.getCurrentInstance().getExternalContext()
                 .getRequestLocale());
+            if (summary.getValuesPresent())
+                valuesPresent=true;
         }
 
         return metricSummaries;
+    }
+
+    /**
+     * Return it the summaries have values present.
+     * Value is only valid *after* a call to #getMetricSummaries()
+     * @return
+     */
+    public boolean isValuesPresent() {
+        return valuesPresent;
     }
 
     public ResourceGroup getResourceGroup(WebUser user) {

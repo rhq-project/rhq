@@ -14,27 +14,34 @@
        Recent Measurements</h2>
    <ui:repeat var="metric"
               value="#{MetricsTableUIBean.metricSummaries}">
-      <div style="text-indent: 20px;">
-          <rich:paint2D id="painter" width="60" height="18" style="margin: 2px"
-             data="#{param.id}:#{metric.definitionId}" format="png" paint="#{ResourceMetricSparklineUIBean.paint}" />
+     <c:if test="#{metric.valuesPresent}">
+          <div style="text-indent: 20px;">
+              <rich:paint2D id="painter" width="60" height="18" style="margin: 2px"
+                 data="#{param.id}:#{metric.definitionId}" format="png" paint="#{ResourceMetricSparklineUIBean.paint}" />
 
-         <h:outputText value=" " />
-         <h:outputLink value="/resource/common/monitor/Visibility.do">
-             <f:param name="mode" value="chartSingleMetricSingleResource"/>
-             <f:param name="id" value="#{param.id}"/>
-             <f:param name="m" value="#{metric.definitionId}"/>
-             <h:outputText value="#{metric.label}" />
-         </h:outputLink>
-         <h:outputText value=": " />
-         <h:outputText value="#{metric.lastMetric.valueFmt}"/>
+             <h:outputText value=" " />
+             <h:outputLink value="/resource/common/monitor/Visibility.do">
+                 <f:param name="mode" value="chartSingleMetricSingleResource"/>
+                 <f:param name="id" value="#{param.id}"/>
+                 <f:param name="m" value="#{metric.definitionId}"/>
+                 <h:outputText value="#{metric.label}" />
+             </h:outputLink>
+             <h:outputText value=": " />
+             <h:outputText value="#{metric.lastMetric.valueFmt}"/>
 
 
-         <br />
-      </div>
+             <br />
+          </div>
+       </c:if>
    </ui:repeat>
 
+
    <div style="text-indent: 20px;">
-      <h:outputText value="This resource has no metrics" 
+      <h:outputText value="This resource has no recent metrics"
+                    rendered="#{MetricsTableUIBean.metricSummaries.size ne 0 && MetricsTableUIBean.metricSummaries.valuesPresent}"/>
+   </div>
+   <div style="text-indent: 20px;">
+      <h:outputText value="This resource has no metrics"
                     rendered="#{MetricsTableUIBean.metricSummaries.size eq 0}"/>
    </div>
 

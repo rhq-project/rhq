@@ -10,8 +10,6 @@ import gnu.getopt.LongOpt;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -80,7 +78,7 @@ public class ClientMain {
 
     private static Controller controller;
 
-    private boolean scriptMode;
+    private boolean interactiveMode = true;
 
     // Entrance to main.
     public static void main(String[] args) throws Exception {
@@ -94,7 +92,7 @@ public class ClientMain {
         // process startup arguments
         main.processArguments(args);
 
-        if (!main.scriptMode) {
+        if (main.interactiveMode) {
             // begin client access loop
             main.inputLoop();
         }
@@ -437,34 +435,62 @@ public class ClientMain {
                 this.pass = getopt.getOptarg();
                 break;
             }
-            case 'f':{
-                scriptMode = true;
+            case 'f': {
+                interactiveMode = false;
                 List<String> argsList = new LinkedList<String>();
                 argsList.add("exec");
                 argsList.addAll(Arrays.asList(args));
-                commands.get("exec").execute(this, argsList.toArray(new String[] {}));
+                commands.get("exec").execute(this, argsList.toArray(new String[]{}));
                 return;
-            }
-
-            case 'i': {
-                File script = new File(getopt.getOptarg());
-
-                try {
-                    inputReader = new BufferedReader(new FileReader(script));
-                    stdinInput = false;
-                } catch (Exception e) {
-                    // throw new
-                    // IllegalArgumentException(MSG.getMsg(ClientI18NResourceKeys.BAD_INPUT_FILE,
-                    // script, e));
-                }
-
-                break;
             }
             }
         }
         if (user != null && pass != null) {
             commands.get("login").execute(this, new String[] { "login", user, pass });
+        }  switch (code) {
+            case ':':
+            case '?': {
+                // for now both of these should exit
+                displayUsage();
+                throw new IllegalArgumentException("mm");// MSG.getMsg(ClientI18NResourceKeys.BAD_ARGS,null));
+            }
+
+            case 1: {
+                // this will catch non-option arguments (which we don't
+                // currently care about)
+                System.err.println(MSG.getMsg(ClientI18NResourceKeys.USAGE, getopt.getOptarg()));
+                break;
+            }
+
+            case 'h': {
+                displayUsage();
+                break;
+            }
+
+            case 'u': {
+                this.user = getopt.getOptarg();
+                break;
+            }
+            case 'p': {
+                this.pass = getopt.getOptarg();
+                break;
+            }
+            case 'f': {
+                interactiveMode = true;
+                commands.get("exec").execute(this, createExecArgs(args));
+                return;
+            }
+            }
+    }
+
+    private String[] createExecArgs(String[] args) {
+        String[] execArgs = new String[args.length + 1];
+        execArgs[0] = "exec";
+        for (int i = 0; i < args.length; ++i) {
+            execArgs[i + 1] = args[i];
         }
+
+        return execArgs;
     }
 
     public RemoteClient getRemoteClient() {

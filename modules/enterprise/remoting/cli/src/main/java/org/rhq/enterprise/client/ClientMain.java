@@ -437,10 +437,7 @@ public class ClientMain {
             }
             case 'f': {
                 interactiveMode = false;
-                List<String> argsList = new LinkedList<String>();
-                argsList.add("exec");
-                argsList.addAll(Arrays.asList(args));
-                commands.get("exec").execute(this, argsList.toArray(new String[]{}));
+                commands.get("exec").execute(this, createExecArgs(args));
                 return;
             }
             }

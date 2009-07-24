@@ -20,10 +20,15 @@ package org.rhq.enterprise.server.core.concurrency;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.logging.Log;
@@ -45,7 +50,7 @@ public class LatchedServiceController {
         this.serviceCompletionLatch = new CountDownLatch(services.size());
 
         this.latchedServices = services;
-        for (LatchedService nextService : latchedServices) {
+        for (LatchedService nextService : this.latchedServices) {
             nextService.controller = this;
         }
     }
@@ -53,25 +58,36 @@ public class LatchedServiceController {
     public void executeServices() throws LatchedServiceCircularityException {
         checkForCircularDependencies();
 
-        // start all latched services, but they'll block
-        List<Thread> threads = new ArrayList<Thread>();
-        for (LatchedService service : latchedServices) {
-            Thread thread = new Thread(service, "Plugin Deployment - " + service.getServiceName());
-            threads.add(thread);
-            thread.start();
+        int threadPoolSize;
+        try {
+            threadPoolSize = Integer.parseInt(System.getProperty("rhq.server.plugin-deployer-threads", "5"));
+        } catch (NumberFormatException e) {
+            threadPoolSize = 5;
+            log.warn("Invalid number of threads specified, defaulting to [" + threadPoolSize + "]: " + e);
         }
 
-        // let them all go at the same time here
+        ExecutorService threadPool = Executors.newFixedThreadPool(threadPoolSize);
+        log.debug("Will execute latched services with a concurrency of [" + threadPoolSize + "]");
+
+        // submit all latched services, but they'll block either in the thread pool queue or our startup latch
+        Map<String, Future<?>> threads = new HashMap<String, Future<?>>();
+        for (LatchedService service : this.latchedServices) {
+            log.debug("Submitting [" + service.getServiceName() + "] to thread pool");
+            Future<?> thread = threadPool.submit(service);
+            threads.put(service.getServiceName(), thread);
+        }
+
+        // allow them to go
         serviceStartupLatch.countDown();
 
         try {
             // and then wait for all of them to complete
-            while (!serviceCompletionLatch.await(90, TimeUnit.SECONDS)) {
+            while (!this.serviceCompletionLatch.await(90, TimeUnit.SECONDS)) {
                 boolean stillRunning = false;
-                for (Thread thread : threads) {
-                    if (thread.isAlive()) {
+                for (Map.Entry<String, Future<?>> thread : threads.entrySet()) {
+                    if (!thread.getValue().isDone()) {
                         stillRunning = true;
-                        log.warn("Thread [" + thread.getName() + "] is still running - is it hung?");
+                        log.warn("Still processing [" + thread.getKey() + "] - is it hung?");
                     }
                 }
                 if (!stillRunning) {
@@ -80,7 +96,9 @@ public class LatchedServiceController {
                 }
             }
         } catch (InterruptedException ie) {
-            log.info("Controller was interrupted; can not be sure if all services have begun");
+            log.warn("Controller was interrupted; can not be sure if all services have begun");
+        } finally {
+            threadPool.shutdownNow();
         }
 
         log.debug("All services have begun");
@@ -89,7 +107,7 @@ public class LatchedServiceController {
     private void checkForCircularDependencies() throws LatchedServiceException {
         Set<LatchedService> visited = new HashSet<LatchedService>();
         List<LatchedService> currentPath = new ArrayList<LatchedService>();
-        for (LatchedService nextService : latchedServices) {
+        for (LatchedService nextService : this.latchedServices) {
             if (visited.contains(nextService)) {
                 // have already visited this service from a different path
                 continue;

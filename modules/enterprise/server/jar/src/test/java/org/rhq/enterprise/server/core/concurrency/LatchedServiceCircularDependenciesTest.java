@@ -41,7 +41,7 @@ public class LatchedServiceCircularDependenciesTest extends AbstractEJB3Test {
 
         @Override
         public void executeService() throws LatchedServiceException {
-            return; // no-op, we only care about testing the circular dependency checker 
+            return; // no-op
         }
 
     }
@@ -54,9 +54,10 @@ public class LatchedServiceCircularDependenciesTest extends AbstractEJB3Test {
             String[] parts = dep.split("-");
 
             DummyLatchedService service = getDummyServiceByName(parts[0], knownServices);
-            DummyLatchedService dependency = getDummyServiceByName(parts[1], knownServices);
-
-            service.addDependency(dependency);
+            if (parts.length > 1) {
+                DummyLatchedService dependency = getDummyServiceByName(parts[1], knownServices);
+                service.addDependency(dependency);
+            }
         }
 
         Collection<DummyLatchedService> dummies = knownServices.values();
@@ -90,6 +91,17 @@ public class LatchedServiceCircularDependenciesTest extends AbstractEJB3Test {
     @Test
     public void testSelfCircularDependencyGraph() {
         testCircularDependency("1-1");
+    }
+
+    @Test
+    public void testNoCircularDependencyGraph() {
+        Collection<DummyLatchedService> dummies = getDummiesFromDependencyGraph("1,2,3,4,5,6,7,8,9,10");
+        LatchedServiceController controller = new LatchedServiceController(dummies);
+        try {
+            controller.executeServices();
+        } catch (LatchedServiceCircularityException lsce) {
+            assert false : "Should not have recieved a LatchedServiceCircularityException, but did: " + lsce;
+        }
     }
 
     private void testCircularDependency(String dependencyGraph) {

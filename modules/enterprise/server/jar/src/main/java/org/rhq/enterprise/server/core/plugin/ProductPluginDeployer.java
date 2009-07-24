@@ -524,8 +524,18 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
             }
         }
 
+        // submit them to the controller in the order they should be deployed
+        ArrayList<LatchedPluginDeploymentService> orderedLatchedServices = new ArrayList<LatchedPluginDeploymentService>();
+        List<String> pluginOrder = dependencyGraph.getDeploymentOrder();
+        for (String nextPlugin : pluginOrder) {
+            LatchedPluginDeploymentService nextService = latchedDependencyMap.get(nextPlugin);
+            if (nextService != null) {
+                orderedLatchedServices.add(nextService);
+            }
+        }
+
         long startDeployTime = System.currentTimeMillis();
-        LatchedServiceController controller = new LatchedServiceController(latchedDependencyMap.values());
+        LatchedServiceController controller = new LatchedServiceController(orderedLatchedServices);
         try {
             controller.executeServices();
         } catch (LatchedServiceCircularityException lsce) {

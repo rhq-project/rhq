@@ -210,6 +210,8 @@ public class LatchedServiceController {
         public void run() {
             running = true;
 
+            controller.log.debug("Processing [" + this.serviceName + "]...");
+
             try {
                 dependencyLatch = new CountDownLatch(dependencies.size());
 
@@ -266,6 +268,8 @@ public class LatchedServiceController {
                 } finally {
                     // and notify the controller as well 
                     controller.serviceCompletionLatch.countDown();
+
+                    controller.log.debug("Processed [" + this.serviceName + "]");
                 }
             }
         }

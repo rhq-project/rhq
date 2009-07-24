@@ -139,7 +139,6 @@ public class RemoteClientServlet extends HttpServlet {
 
         try {
             File zip = getRemoteClientZip();
-            // zip is null when client module has not been built
             if (!zip.exists()) {
                 disableBrowserCache(resp);
                 resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Remote Client binary does not exist: "

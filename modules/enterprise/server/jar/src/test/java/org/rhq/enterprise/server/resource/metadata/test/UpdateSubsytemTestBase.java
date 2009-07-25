@@ -136,7 +136,8 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
         } else {
             testPlugin.setVersion(descriptor.getVersion());
         }
-        metadataManager.registerPlugin(LookupUtil.getSubjectManager().getOverlord(), testPlugin, descriptor, null);
+        metadataManager.registerPlugin(LookupUtil.getSubjectManager().getOverlord(), testPlugin, descriptor, null,
+            false);
         getEntityManager().flush();
     }
 

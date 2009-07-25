@@ -44,8 +44,11 @@ public interface ResourceMetadataManagerLocal {
      * @param plugin   The plugin object being deployed
      * @param metadata The plugin descriptor file
      * @param pluginFile the actual plugin file whose content will be stored in the database (will be ignored if null)
+     * @param forceUpdate if <code>true</code>, the plugin's types will be updated, even if the plugin hasn't changed since
+     *                    the last time it was registered
      */
-    void registerPlugin(Subject whoami, Plugin plugin, PluginDescriptor metadata, File pluginFile) throws Exception;
+    void registerPlugin(Subject whoami, Plugin plugin, PluginDescriptor metadata, File pluginFile, boolean forceUpdate)
+        throws Exception;
 
     /**
      * Returns the list of all plugins deployed in the server.

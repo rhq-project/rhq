@@ -72,6 +72,15 @@ public class PluginDependencyGraphTest {
         assert order.get(6).equals("B") : order;
         assert order.get(7).equals("A") : order;
 
+        List<String> dependents = graph.getOptionalDependents("E");
+        assert dependents.contains("C") : dependents;
+        assert dependents.contains("D") : dependents;
+        assert dependents.size() == 2 : dependents;
+        dependents = graph.getOptionalDependents("F");
+        assert dependents.contains("C") : dependents;
+        assert dependents.contains("D") : dependents;
+        assert dependents.size() == 2 : dependents;
+
         // Use the same dependency graph, but do not deploy plugin F.
         // With F missing, G will fail because it required F
         graph = new PluginDependencyGraph();
@@ -106,6 +115,16 @@ public class PluginDependencyGraphTest {
         assert order.get(4).equals("C") : order;
         assert order.get(5).equals("B") : order;
         assert order.get(6).equals("A") : order;
+
+        dependents = graph.getOptionalDependents("E");
+        assert dependents.contains("C") : dependents;
+        assert dependents.contains("D") : dependents;
+        assert dependents.size() == 2 : dependents;
+        dependents = graph.getOptionalDependents("F");
+        assert dependents.contains("C") : dependents;
+        assert dependents.contains("D") : dependents;
+        assert dependents.contains("G") : dependents;
+        assert dependents.size() == 3 : dependents;
     }
 
     public void testTypicalDeployment() {

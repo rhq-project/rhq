@@ -126,6 +126,34 @@ public class PluginDependencyGraph {
     }
 
     /**
+     * Given a plugin that is in this dependency graph, this will return all those plugins
+     * that <i>optionally</i> depend on it. If a plugin has a required dependency on
+     * the given plugin, or a plugin does not depend on the given plugin at all, that plugin
+     * will not be in the returned list.
+     * 
+     * @param pluginName the plugin whose dependents are to be returned
+     * 
+     * @return list of all plugins that optionally depend on the given plugin
+     */
+    public List<String> getOptionalDependents(String pluginName) {
+        List<String> dependents = new ArrayList<String>();
+        for (Map.Entry<String, List<PluginDependency>> entry : this.dependencyMap.entrySet()) {
+            if (entry.getKey().equals(pluginName)) {
+                continue; // don't bother examining the plugin itself
+            }
+
+            // see if current plugin optionally depends on the given pluginName, if so, add it to the list
+            for (PluginDependency dependency : entry.getValue()) {
+                if (!dependency.required && dependency.name.equals(pluginName)) {
+                    dependents.add(entry.getKey());
+                    break;
+                }
+            }
+        }
+        return dependents;
+    }
+
+    /**
      * Returns <code>true</code> if the dependency graph has no missing required plugins.
      * That is to say, all required dependencies of all plugins can be found in this graph. If this returns <code>true</code>,
      * you can safely call {@link #getDeploymentOrder()} and expect it to return an ordered list of plugins.

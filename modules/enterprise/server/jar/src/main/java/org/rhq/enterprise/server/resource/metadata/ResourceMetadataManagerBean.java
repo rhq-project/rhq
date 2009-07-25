@@ -128,9 +128,11 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
-    public void registerPlugin(Subject whoami, Plugin plugin, PluginDescriptor pluginDescriptor, File pluginFile)
-        throws Exception {
+    public void registerPlugin(Subject whoami, Plugin plugin, PluginDescriptor pluginDescriptor, File pluginFile,
+        boolean forceUpdate) throws Exception {
+
         // TODO GH: Consider how to remove features from plugins in updates without breaking everything
+
         Plugin existingPlugin = null;
         boolean newOrUpdated = false;
         try {
@@ -161,19 +163,18 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
             log.debug("Updated plugin entity [" + plugin + "]");
         }
 
-        if (newOrUpdated || !PLUGIN_METADATA_MANAGER.getPluginNames().contains(plugin.getName())) {
+        if (newOrUpdated || forceUpdate || !PLUGIN_METADATA_MANAGER.getPluginNames().contains(plugin.getName())) {
             Set<ResourceType> rootResourceTypes = PLUGIN_METADATA_MANAGER.loadPlugin(pluginDescriptor);
             if (rootResourceTypes == null) {
                 throw new Exception("Failed to load plugin [" + plugin.getName() + "].");
             }
-            if (newOrUpdated) {
-                // Only merge the plugin's ResourceTypes into the DB if the plugin is new or updated.
+            if (newOrUpdated || forceUpdate) {
+                // Only merge the plugin's ResourceTypes into the DB if the plugin is new or updated or we were forced to
                 updateTypes(plugin.getName(), rootResourceTypes);
             }
         }
 
-        // TODO GH: JBNADM-1310 - Push updated plugins to running agents and have them reboot their PCs
-        // See also JBNADM-1630
+        // TODO GH: JBNADM-1310/JBNADM-1630 - Push updated plugins to running agents and have them reboot their PCs
         return;
     }
 

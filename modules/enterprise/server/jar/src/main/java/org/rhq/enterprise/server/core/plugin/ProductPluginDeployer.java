@@ -518,8 +518,23 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
                 if (null != dependencyService) {
                     service.addDependency(dependencyService);
                 } else {
-                    log.warn("Ignoring " + pluginName + " dependency on missing dependency plugin: "
+                    log.warn("Ignoring [" + pluginName + "] dependency on missing dependency plugin: "
                         + dependencyPluginName);
+                }
+            }
+
+            // In addition, we need to register plugins that are optionally dependent on the plugins we must register
+            // in order to allow the dependents to refresh themselves and add any new child types that need to be registered.
+            List<String> optionalDependents = dependencyGraph.getOptionalDependents(pluginName);
+            for (String dependentPluginName : optionalDependents) {
+                LatchedPluginDeploymentService dependentService = getServiceIfExists(dependentPluginName,
+                    latchedDependencyMap);
+                if (null != dependentService) {
+                    dependentService.setForceUpdate(true); // make sure it updates its types, even if plugin hasn't changed
+                    dependentService.addDependency(service);
+                } else {
+                    log.warn("Ignoring [" + pluginName + "] dependent on missing dependent plugin: "
+                        + dependentPluginName);
                 }
             }
         }
@@ -566,7 +581,7 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
      * This is the mechanism to kick off the registration of a new plugin. You must ensure you call this at the
      * appropriate time such that the plugin getting registered already has its dependencies registered.
      */
-    private void registerPluginJar(PluginDescriptor pluginDescriptor, DeploymentInfo deploymentInfo) {
+    private void registerPluginJar(PluginDescriptor pluginDescriptor, DeploymentInfo deploymentInfo, boolean forceUpdate) {
         if (pluginDescriptor == null) {
             log.error("Missing plugin descriptor; is [" + deploymentInfo.localUrl + "] a valid plugin?");
             return;
@@ -606,7 +621,8 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
             // if we are called when hot-deploying a plugin whose dependencies aren't deployed, this will fail
             ResourceMetadataManagerLocal metadataManager = LookupUtil.getResourceMetadataManager();
             SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
-            metadataManager.registerPlugin(subjectManager.getOverlord(), plugin, pluginDescriptor, localPluginFile);
+            metadataManager.registerPlugin(subjectManager.getOverlord(), plugin, pluginDescriptor, localPluginFile,
+                forceUpdate);
         } catch (Exception e) {
             log.error("Failed to register RHQ plugin file [" + deploymentInfo.shortName + "] at ["
                 + deploymentInfo.localUrl + "]", e);
@@ -695,17 +711,24 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
     class LatchedPluginDeploymentService extends LatchedServiceController.LatchedService {
         private final DeploymentInfo pluginDeploymentInfo;
         private final PluginDescriptor pluginDescriptor;
+        private boolean forceUpdate;
 
         public LatchedPluginDeploymentService(String pluginName, DeploymentInfo di, PluginDescriptor descriptor) {
+
             super(pluginName);
             this.pluginDeploymentInfo = di;
             this.pluginDescriptor = descriptor;
+            this.forceUpdate = false;
+        }
+
+        public void setForceUpdate(boolean forceUpdate) {
+            this.forceUpdate = forceUpdate;
         }
 
         @Override
         public void executeService() throws LatchedServiceException {
             try {
-                registerPluginJar(this.pluginDescriptor, this.pluginDeploymentInfo);
+                registerPluginJar(this.pluginDescriptor, this.pluginDeploymentInfo, this.forceUpdate);
             } catch (Throwable t) {
                 throw new LatchedServiceException(t);
             }

@@ -33,8 +33,6 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.exception.DeleteException;
-import org.rhq.enterprise.server.exception.FetchException;
 
 /**
  * @author Asaf Shakarchi
@@ -78,7 +76,7 @@ public interface ResourceManagerRemote {
     @WebMethod
     Resource getResource( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int resourceId) throws FetchException;
+        @WebParam(name = "resourceId") int resourceId);
 
     /**
      * Returns the lineage of the Resource with the specified id. The lineage is represented as a List of Resources,
@@ -95,7 +93,7 @@ public interface ResourceManagerRemote {
     @WebMethod
     List<Resource> findResourceLineage( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int resourceId) throws FetchException;
+        @WebParam(name = "resourceId") int resourceId);
 
     /**
      * Removes these resources from inventory.  The resources may subsequently be rediscovered.  Note that for
@@ -104,12 +102,11 @@ public interface ResourceManagerRemote {
      * 
      * @param subject The logged in user's subject.
      * @param resourceIds The resources to uninventory.
-     * @throws DeleteException
      */
     @WebMethod
     void uninventoryResources( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceIds") int[] resourceIds) throws DeleteException;
+        @WebParam(name = "resourceIds") int[] resourceIds);
 
     @WebMethod
     PageList<ResourceComposite> findResourceComposites( //

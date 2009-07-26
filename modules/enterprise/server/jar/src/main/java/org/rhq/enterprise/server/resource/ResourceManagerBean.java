@@ -110,8 +110,6 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
-import org.rhq.enterprise.server.exception.DeleteException;
-import org.rhq.enterprise.server.exception.FetchException;
 import org.rhq.enterprise.server.exception.UnscheduleException;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
@@ -1992,44 +1990,28 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     //
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    public Resource getResource(Subject subject, int resourceId) throws FetchException {
-        Resource result = null;
-
-        try {
-            result = getResourceById(subject, resourceId);
-        } catch (Exception e) {
-            throw new FetchException(e);
-        }
-
-        return result;
+    public Resource getResource(Subject subject, int resourceId) {
+        return getResourceById(subject, resourceId);
     }
 
     // lineage is a getXXX (not findXXX) because it logically returns a single object, but modeled as a list here
-    public List<Resource> findResourceLineage(Subject subject, int resourceId) throws FetchException {
+    public List<Resource> findResourceLineage(Subject subject, int resourceId) {
         List<Resource> result = null;
 
-        try {
-            result = getResourceLineage(resourceId);
+        result = getResourceLineage(resourceId);
 
-            for (Resource resource : result) {
-                if (!authorizationManager.canViewResource(subject, resource.getId())) {
-                    throw new PermissionException("User [" + subject + "] does not have permission to view resource ["
-                        + resource.getId() + "]");
-                }
+        for (Resource resource : result) {
+            if (!authorizationManager.canViewResource(subject, resource.getId())) {
+                throw new PermissionException("User [" + subject + "] does not have permission to view resource ["
+                    + resource.getId() + "]");
             }
-        } catch (Exception e) {
-            throw new FetchException(e);
         }
 
         return result;
     }
 
-    public void uninventoryResources(Subject subject, int[] resourceIds) throws DeleteException {
-        try {
-            deleteResources(subject, resourceIds);
-        } catch (Exception e) {
-            throw new DeleteException(e);
-        }
+    public void uninventoryResources(Subject subject, int[] resourceIds) {
+        deleteResources(subject, resourceIds);
     }
 
     @SuppressWarnings("unchecked")

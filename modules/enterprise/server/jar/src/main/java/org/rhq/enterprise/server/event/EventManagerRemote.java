@@ -29,7 +29,6 @@ import org.rhq.core.domain.criteria.EventCriteria;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.exception.FetchException;
 
 @SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
 @WebService
@@ -42,8 +41,7 @@ public interface EventManagerRemote {
         @WebParam(name = "resourceId") int resourceId, //
         @WebParam(name = "begin") long begin, //
         @WebParam(name = "end") long end, //
-        @WebParam(name = "numBuckets") int numBuckets) //
-        throws FetchException;
+        @WebParam(name = "numBuckets") int numBuckets);
 
     @WebMethod
     EventSeverity[] getSeverityBucketsForAutoGroup( //
@@ -52,8 +50,7 @@ public interface EventManagerRemote {
         @WebParam(name = "resourceTypeId") int resourceTypeId, //
         @WebParam(name = "begin") long begin, //
         @WebParam(name = "end") long end, //
-        @WebParam(name = "numBuckets") int numBuckets) //
-        throws FetchException;
+        @WebParam(name = "numBuckets") int numBuckets);
 
     @WebMethod
     EventSeverity[] getSeverityBucketsForCompGroup( //
@@ -61,8 +58,7 @@ public interface EventManagerRemote {
         @WebParam(name = "resourceGroupId") int resourceGroupId, //
         @WebParam(name = "begin") long begin, //
         @WebParam(name = "end") long end, //
-        @WebParam(name = "numBuckets") int numBuckets) //
-        throws FetchException;
+        @WebParam(name = "numBuckets") int numBuckets);
 
     @WebMethod
     PageList<Event> findEventsByCriteria( //

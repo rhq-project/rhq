@@ -66,8 +66,6 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
-import org.rhq.enterprise.server.exception.CreateException;
-import org.rhq.enterprise.server.exception.UpdateException;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.group.RecursivityChangeType;
@@ -292,9 +290,8 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     // required for the recalculation thread
-    public void calculateGroupMembership(Subject subject, int groupDefinitionId) throws CreateException,
-        GroupDefinitionDeleteException, GroupDefinitionNotFoundException, InvalidExpressionException,
-        ResourceGroupUpdateException {
+    public void calculateGroupMembership(Subject subject, int groupDefinitionId) throws GroupDefinitionDeleteException,
+        GroupDefinitionNotFoundException, InvalidExpressionException, ResourceGroupUpdateException {
         /*
          * even though this method declares to throw it, it should never generate an InvalidExpressionException because
          * the definition's expression set was validated before it was persisted.  conceivably, if the group definition
@@ -368,18 +365,18 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
         log.debug("calculateGroupMembership took " + (endTime - startTime) + " millis");
     }
 
+    @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public Integer calculateGroupMembership_helper(Subject overlord, int groupDefinitionId,
-        ExpressionEvaluator.Result result) throws CreateException, UpdateException, GroupDefinitionNotFoundException,
-        GroupDefinitionNotFoundException {
+        ExpressionEvaluator.Result result) throws GroupDefinitionNotFoundException, GroupDefinitionNotFoundException {
         long startTime = System.currentTimeMillis();
 
         GroupDefinition groupDefinition = getById(groupDefinitionId);
 
         String groupByClause = result.getGroupByClause();
-        ResourceGroup resourceGroup = resourceGroupManager.getByGroupDefinitionAndGroupByClause(groupDefinition
-            .getId(), groupByClause);
+        ResourceGroup resourceGroup = resourceGroupManager.getByGroupDefinitionAndGroupByClause(
+            groupDefinition.getId(), groupByClause);
         int resourceGroupId = 0;
         if (resourceGroup == null) {
             String newDynamicGroupName = getDynamicGroupName(groupDefinition.getName(), groupByClause);

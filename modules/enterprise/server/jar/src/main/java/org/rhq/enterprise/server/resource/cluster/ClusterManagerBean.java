@@ -38,9 +38,9 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
-import org.rhq.enterprise.server.exception.CreateException;
-import org.rhq.enterprise.server.exception.UpdateException;
+import org.rhq.enterprise.server.resource.group.ResourceGroupAlreadyExistsException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
+import org.rhq.enterprise.server.resource.group.ResourceGroupUpdateException;
 
 /**
  * 
@@ -110,9 +110,9 @@ public class ClusterManagerBean implements ClusterManagerLocal {
                     .createResourceGroup(subjectManager.getOverlord(), autoClusterBackingGroup).getId();
                 autoClusterBackingGroup = entityManager.find(ResourceGroup.class, id);
 
-            } catch (CreateException e) {
+            } catch (ResourceGroupAlreadyExistsException e) {
                 // This should not happen since the group name is actually generated
-                log.error("Unexpected Error: " + e);
+                log.error("Unexpected Error, group exists " + e);
                 return null;
             }
         }
@@ -133,8 +133,8 @@ public class ClusterManagerBean implements ClusterManagerLocal {
                 // view the parent group. (That check was done above)
                 resourceGroupManager.ensureMembershipMatches(subjectManager.getOverlord(), autoClusterBackingGroup
                     .getId(), resourceIds);
-            } catch (UpdateException ue) {
-                log.error("Could not add resources to group:" + ue.getCause().getMessage());
+            } catch (ResourceGroupUpdateException e) {
+                log.error("Could not add resources to group:" + e);
             }
         }
 

@@ -28,7 +28,6 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.exception.FetchException;
 
 @SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
 @WebService
@@ -40,8 +39,7 @@ public interface CallTimeDataManagerRemote {
         @WebParam(name = "scheduleId") int scheduleId, //
         @WebParam(name = "beginTime") long beginTime, //
         @WebParam(name = "endTime") long endTime, //
-        @WebParam(name = "pageControl") PageControl pc) //
-        throws FetchException;
+        @WebParam(name = "pageControl") PageControl pc);
 
     /* this method was never implemented, and so won't be in the remote api yet
     @WebMethod

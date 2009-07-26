@@ -34,8 +34,7 @@ import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.enterprise.server.exception.FetchException;
-import org.rhq.enterprise.server.exception.UpdateException;
+import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 
 /**
  * The configuration manager which allows you to request resource configuration changes, view current resource
@@ -52,20 +51,17 @@ public interface ConfigurationManagerRemote {
     @WebMethod
     GroupPluginConfigurationUpdate getGroupPluginConfigurationUpdate( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "configurationUpdateId") int configurationUpdateId) //
-        throws FetchException;
+        @WebParam(name = "configurationUpdateId") int configurationUpdateId);
 
     @WebMethod
     GroupResourceConfigurationUpdate getGroupResourceConfigurationUpdate( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "configurationUpdateId") int configurationUpdateId) //
-        throws FetchException;
+        @WebParam(name = "configurationUpdateId") int configurationUpdateId);
 
     @WebMethod
     Configuration getConfiguration( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "configurationId") int configurationId) //
-        throws FetchException;
+        @WebParam(name = "configurationId") int configurationId);
 
     /**
      * Get the current plugin configuration for the {@link Resource} with the given id, or <code>null</code> if the
@@ -82,8 +78,7 @@ public interface ConfigurationManagerRemote {
     @WebMethod
     Configuration getPluginConfiguration( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int resourceId) //
-        throws FetchException;
+        @WebParam(name = "resourceId") int resourceId);
 
     /**
      * Get the current Resource configuration.
@@ -96,20 +91,17 @@ public interface ConfigurationManagerRemote {
     @WebMethod
     Configuration getResourceConfiguration(//
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int resourceId) //
-        throws FetchException;
+        @WebParam(name = "resourceId") int resourceId);
 
     @WebMethod
     PluginConfigurationUpdate getLatestPluginConfigurationUpdate( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int resourceId) //
-        throws FetchException;
+        @WebParam(name = "resourceId") int resourceId);
 
     @WebMethod
     ResourceConfigurationUpdate getLatestResourceConfigurationUpdate( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int resourceId) //
-        throws FetchException;
+        @WebParam(name = "resourceId") int resourceId);
 
     /**
      * Get whether the the specified resource is in the process of updating its configuration.
@@ -121,14 +113,12 @@ public interface ConfigurationManagerRemote {
     @WebMethod
     boolean isResourceConfigurationUpdateInProgress( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int resourceId) //
-        throws FetchException;
+        @WebParam(name = "resourceId") int resourceId);
 
     @WebMethod
     boolean isGroupResourceConfigurationUpdateInProgress( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceGroupId") int resourceGroupId) //
-        throws FetchException;
+        @WebParam(name = "resourceGroupId") int resourceGroupId);
 
     /* this currently doesn't build because jaxws requires a default, no-arg constructor from all objects in the graph
      * in order to perform serialization correctly, and java.util.Map does not have one (because it's an interface)
@@ -137,7 +127,7 @@ public interface ConfigurationManagerRemote {
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "compatibleGroupId") int compatibleGroupId, //
         @WebParam(name = "newResourceConfigurationMap") Map<Integer, Configuration> newResourceConfigurationMap) //
-        throws UpdateException;
+        throws SchedulerException;
         */
 
     /**
@@ -150,14 +140,12 @@ public interface ConfigurationManagerRemote {
      * @param  newConfiguration the new plugin configuration
      *
      * @return the plugin configuration update item corresponding to this request
-     * @throws UpdateException In case where there was a problem fetching the plugin configuration
      */
     @WebMethod
     PluginConfigurationUpdate updatePluginConfiguration( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceId") int resourceId, //
-        @WebParam(name = "newConfiguration") Configuration newConfiguration) //
-        throws UpdateException;
+        @WebParam(name = "newConfiguration") Configuration newConfiguration) throws ResourceNotFoundException;
 
     /**
      * This method is called when a user has requested to change the resource configuration for an existing resource. If
@@ -172,14 +160,13 @@ public interface ConfigurationManagerRemote {
      * @param  newConfiguration the resource's desired new configuration
      *
      * @return the resource configuration update item corresponding to this request
-     * @throws UpdateException 
      */
     @WebMethod
     ResourceConfigurationUpdate updateResourceConfiguration( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceId") int resourceId, //
-        @WebParam(name = "newConfiguration") Configuration newConfiguration) //
-        throws UpdateException;
+        @WebParam(name = "newConfiguration") Configuration newConfiguration) throws ResourceNotFoundException,
+        ConfigurationUpdateStillInProgressException;
 
     /**
      * Get the currently live resource configuration for the {@link Resource} with the given id. This actually asks for

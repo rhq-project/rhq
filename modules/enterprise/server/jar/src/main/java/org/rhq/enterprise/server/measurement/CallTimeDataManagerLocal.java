@@ -29,7 +29,6 @@ import org.rhq.core.domain.measurement.calltime.CallTimeData;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.exception.FetchException;
 
 /**
  * The manager for call-time metric data.
@@ -39,10 +38,10 @@ public interface CallTimeDataManagerLocal {
     void addCallTimeData(Set<CallTimeData> callTimeDataSet);
 
     PageList<CallTimeDataComposite> findCallTimeDataForResource(Subject subject, int scheduleId, long beginTime,
-        long endTime, PageControl pageControl) throws FetchException;;
+        long endTime, PageControl pageControl);;
 
     PageList<CallTimeDataComposite> findCallTimeDataForCompatibleGroup(Subject subject, int groupId,
-        int measurementDefinitionId, long beginTime, long endTime, PageControl pageControl) throws FetchException;
+        int measurementDefinitionId, long beginTime, long endTime, PageControl pageControl);
 
     PageList<CallTimeDataComposite> findCallTimeDataForAutoGroup(Subject subject, int parentResourceId,
         int childResourceTypeId, int measurementDefinitionId, long beginTime, long endTime, PageControl pageControl);

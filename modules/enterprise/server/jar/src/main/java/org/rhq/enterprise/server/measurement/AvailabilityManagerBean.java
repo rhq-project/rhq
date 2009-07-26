@@ -60,7 +60,6 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.common.EntityContext;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
-import org.rhq.enterprise.server.exception.FetchException;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.resource.ResourceAvailabilityManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
@@ -115,35 +114,31 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         return resourceAvailabilityManager.getLatestAvailabilityType(subject, resourceId);
     }
 
-    public Availability getCurrentAvailabilityForResource(Subject subject, int resourceId) throws FetchException {
+    public Availability getCurrentAvailabilityForResource(Subject subject, int resourceId) {
         Availability retAvailability;
-        try {
-            if (authorizationManager.canViewResource(subject, resourceId) == false) {
-                throw new PermissionException("User [" + subject
-                    + "] does not have permission to view current availability for resource[id=" + resourceId + "]");
-            }
-
-            try {
-                Query q = entityManager.createNamedQuery(Availability.FIND_CURRENT_BY_RESOURCE);
-                q.setParameter("resourceId", resourceId);
-                retAvailability = (Availability) q.getSingleResult();
-            } catch (NoResultException nre) {
-                // Fall back to searching for the one with the latest start date, but most likely it doesn't exist
-                Resource resource = resourceManager.getResourceById(subject, resourceId);
-                List<Availability> availList = resource.getAvailability();
-                if ((availList != null) && (availList.size() > 0)) {
-                    log
-                        .warn("Could not query for latest avail but found one - missing null end time (this should never happen)");
-                    retAvailability = availList.get(availList.size() - 1);
-                } else {
-                    retAvailability = new Availability(resource, new Date(), null);
-                }
-            }
-
-            return retAvailability;
-        } catch (Exception e) {
-            throw new FetchException(e);
+        if (authorizationManager.canViewResource(subject, resourceId) == false) {
+            throw new PermissionException("User [" + subject
+                + "] does not have permission to view current availability for resource[id=" + resourceId + "]");
         }
+
+        try {
+            Query q = entityManager.createNamedQuery(Availability.FIND_CURRENT_BY_RESOURCE);
+            q.setParameter("resourceId", resourceId);
+            retAvailability = (Availability) q.getSingleResult();
+        } catch (NoResultException nre) {
+            // Fall back to searching for the one with the latest start date, but most likely it doesn't exist
+            Resource resource = resourceManager.getResourceById(subject, resourceId);
+            List<Availability> availList = resource.getAvailability();
+            if ((availList != null) && (availList.size() > 0)) {
+                log
+                    .warn("Could not query for latest avail but found one - missing null end time (this should never happen)");
+                retAvailability = availList.get(availList.size() - 1);
+            } else {
+                retAvailability = new Availability(resource, new Date(), null);
+            }
+        }
+
+        return retAvailability;
     }
 
     public List<AvailabilityPoint> findAvailabilitiesForResource(Subject subject, int resourceId,
@@ -744,31 +739,25 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<Availability> findAvailabilityForResource(Subject subject, int resourceId, PageControl pageControl)
-        throws FetchException {
-        try {
-            if (authorizationManager.canViewResource(subject, resourceId) == false) {
-                throw new PermissionException("User [" + subject
-                    + "] does not have permission to view Availability history for resource[id=" + resourceId + "]");
-            }
-
-            pageControl.initDefaultOrderingField("av.startTime", PageOrdering.DESC);
-
-            Query countQuery = PersistenceUtility
-                .createCountQuery(entityManager, Availability.FIND_BY_RESOURCE_NO_SORT);
-            Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-                Availability.FIND_BY_RESOURCE_NO_SORT, pageControl);
-
-            countQuery.setParameter("resourceId", resourceId);
-            query.setParameter("resourceId", resourceId);
-
-            long count = (Long) countQuery.getSingleResult();
-            List<Availability> availabilities = query.getResultList();
-
-            return new PageList<Availability>(availabilities, (int) count, pageControl);
-        } catch (Exception e) {
-            throw new FetchException(e);
+    public PageList<Availability> findAvailabilityForResource(Subject subject, int resourceId, PageControl pageControl) {
+        if (authorizationManager.canViewResource(subject, resourceId) == false) {
+            throw new PermissionException("User [" + subject
+                + "] does not have permission to view Availability history for resource[id=" + resourceId + "]");
         }
+
+        pageControl.initDefaultOrderingField("av.startTime", PageOrdering.DESC);
+
+        Query countQuery = PersistenceUtility.createCountQuery(entityManager, Availability.FIND_BY_RESOURCE_NO_SORT);
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, Availability.FIND_BY_RESOURCE_NO_SORT,
+            pageControl);
+
+        countQuery.setParameter("resourceId", resourceId);
+        query.setParameter("resourceId", resourceId);
+
+        long count = (Long) countQuery.getSingleResult();
+        List<Availability> availabilities = query.getResultList();
+
+        return new PageList<Availability>(availabilities, (int) count, pageControl);
     }
 
     private void notifyAlertConditionCacheManager(String callingMethod, Availability... availabilities) {

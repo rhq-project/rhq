@@ -28,7 +28,6 @@ import org.rhq.core.domain.common.composite.IntegerOptionItem;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.exception.FetchException;
 
 /**
  * all methods that aren't getters appropriately update the contents of the AlertConditionCache
@@ -71,7 +70,7 @@ public interface AlertDefinitionManagerLocal {
     //
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    AlertDefinition getAlertDefinition(Subject subject, int alertDefinitionId) throws FetchException;
+    AlertDefinition getAlertDefinition(Subject subject, int alertDefinitionId);
 
     PageList<AlertDefinition> findAlertDefinitions(Subject subject, AlertDefinitionCriteria criteria);
 }

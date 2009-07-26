@@ -28,7 +28,6 @@ import javax.jws.soap.SOAPBinding;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
-import org.rhq.enterprise.server.exception.FetchException;
 
 @SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
 @WebService
@@ -38,6 +37,5 @@ public interface MeasurementBaselineManagerRemote {
     @WebMethod
     List<MeasurementBaseline> findBaselinesForResource( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int resourceId) //
-        throws FetchException;
+        @WebParam(name = "resourceId") int resourceId);
 }

@@ -54,7 +54,6 @@ import org.rhq.enterprise.server.alert.engine.AlertDefinitionEvent;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.cloud.StatusManagerLocal;
-import org.rhq.enterprise.server.exception.FetchException;
 
 /**
  * @author Joseph Marques
@@ -563,12 +562,8 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         return removed;
     }
 
-    public AlertDefinition getAlertDefinition(Subject subject, int alertDefinitionId) throws FetchException {
-        try {
-            return getAlertDefinitionById(subject, alertDefinitionId);
-        } catch (Exception e) {
-            throw new FetchException(e);
-        }
+    public AlertDefinition getAlertDefinition(Subject subject, int alertDefinitionId) {
+        return getAlertDefinitionById(subject, alertDefinitionId);
     }
 
     @SuppressWarnings("unchecked")

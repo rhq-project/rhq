@@ -24,6 +24,7 @@ import java.util.Map;
 import javax.ejb.Local;
 
 import org.jetbrains.annotations.Nullable;
+import org.quartz.SchedulerException;
 
 import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
 import org.rhq.core.domain.auth.Subject;
@@ -43,8 +44,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.configuration.job.GroupPluginConfigurationUpdateJob;
-import org.rhq.enterprise.server.exception.FetchException;
-import org.rhq.enterprise.server.exception.UpdateException;
+import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 
 /**
  * The configuration manager which allows you to request resource configuration changes, view current resource
@@ -78,7 +78,7 @@ public interface ConfigurationManagerLocal {
      * {@link #getCurrentResourceConfiguration}.
      * @throws FetchException TODO
      */
-    Configuration getResourceConfiguration(int resourceId) throws FetchException;
+    Configuration getResourceConfiguration(int resourceId);
 
     /**
      * Get the currently live resource configuration for the {@link Resource} with the given id. This actually asks for
@@ -168,7 +168,7 @@ public interface ConfigurationManagerLocal {
     @Nullable
     ResourceConfigurationUpdate persistNewResourceConfigurationUpdateHistory(Subject subject, int resourceId,
         Configuration newConfiguration, ConfigurationUpdateStatus newStatus, String newSubject,
-        boolean isPartofGroupUpdate);
+        boolean isPartofGroupUpdate) throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException;
 
     /**
      * A callback method that is called when an agent has completed updating a resource's configuration.
@@ -301,10 +301,10 @@ public interface ConfigurationManagerLocal {
 
     long getPluginConfigurationUpdateCountByParentId(int configurationUpdateId);
 
-    int createGroupConfigurationUpdate(AbstractGroupConfigurationUpdate update);
+    int createGroupConfigurationUpdate(AbstractGroupConfigurationUpdate update) throws SchedulerException;
 
     int scheduleGroupPluginConfigurationUpdate(Subject subject, int compatibleGroupId,
-        Map<Integer, Configuration> pluginConfigurationUpdate) throws UpdateException;
+        Map<Integer, Configuration> pluginConfigurationUpdate) throws SchedulerException;
 
     PageList<GroupPluginConfigurationUpdate> findGroupPluginConfigurationUpdates(int groupId, PageControl pc);
 
@@ -373,13 +373,12 @@ public interface ConfigurationManagerLocal {
     //
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    public GroupPluginConfigurationUpdate getGroupPluginConfigurationUpdate(Subject subject, int configurationUpdateId)
-        throws FetchException;
+    public GroupPluginConfigurationUpdate getGroupPluginConfigurationUpdate(Subject subject, int configurationUpdateId);
 
     public GroupResourceConfigurationUpdate getGroupResourceConfigurationUpdate(Subject subject,
-        int configurationUpdateId) throws FetchException;
+        int configurationUpdateId);
 
-    public Configuration getConfiguration(Subject subject, int configurationId) throws FetchException;
+    public Configuration getConfiguration(Subject subject, int configurationId);
 
     /**
      * Get the current plugin configuration for the {@link Resource} with the given id, or <code>null</code> if the
@@ -393,7 +392,7 @@ public interface ConfigurationManagerLocal {
      * @throws FetchException TODO
      */
     @Nullable
-    Configuration getPluginConfiguration(Subject subject, int resourceId) throws FetchException;
+    Configuration getPluginConfiguration(Subject subject, int resourceId);
 
     /**
      * Get the latest plugin configuration for the {@link Resource} with the given id. Returns the configuration as it
@@ -406,7 +405,7 @@ public interface ConfigurationManagerLocal {
      *         {@link Resource} with the given id
      * @throws FetchException TODO
      */
-    PluginConfigurationUpdate getLatestPluginConfigurationUpdate(Subject subject, int resourceId) throws FetchException;
+    PluginConfigurationUpdate getLatestPluginConfigurationUpdate(Subject subject, int resourceId);
 
     /**
      * Get the latest resource configuration for the {@link Resource} with the given id, or <code>null</code> if the
@@ -424,15 +423,14 @@ public interface ConfigurationManagerLocal {
      * @throws FetchException TODO
      */
     @Nullable
-    ResourceConfigurationUpdate getLatestResourceConfigurationUpdate(Subject subject, int resourceId)
-        throws FetchException;
+    ResourceConfigurationUpdate getLatestResourceConfigurationUpdate(Subject subject, int resourceId);
 
-    boolean isResourceConfigurationUpdateInProgress(Subject subject, int resourceId) throws FetchException;
+    boolean isResourceConfigurationUpdateInProgress(Subject subject, int resourceId);
 
-    boolean isGroupResourceConfigurationUpdateInProgress(Subject subject, int groupId) throws FetchException;
+    boolean isGroupResourceConfigurationUpdateInProgress(Subject subject, int groupId);
 
     int scheduleGroupResourceConfigurationUpdate(Subject subject, int compatibleGroupId,
-        Map<Integer, Configuration> newResourceConfigurationMap) throws UpdateException;
+        Map<Integer, Configuration> newResourceConfigurationMap) throws SchedulerException;
 
     /**
      * Updates the plugin configuration used to connect and communicate with the resource. The given <code>
@@ -444,10 +442,9 @@ public interface ConfigurationManagerLocal {
      * @param  newConfiguration the new plugin configuration
      *
      * @return the plugin configuration update item corresponding to this request
-     * @throws UpdateException TODO
      */
     PluginConfigurationUpdate updatePluginConfiguration(Subject subject, int resourceId, Configuration newConfiguration)
-        throws UpdateException;
+        throws ResourceNotFoundException;
 
     /**
      * This method is called when a user has requested to change the resource configuration for an existing resource. If
@@ -463,11 +460,10 @@ public interface ConfigurationManagerLocal {
      *
      * @return the resource configuration update item corresponding to this request. null 
      * if newConfiguration is equal to the existing configuration.
-     * @throws UpdateException TODO
      */
     @Nullable
     ResourceConfigurationUpdate updateResourceConfiguration(Subject subject, int resourceId,
-        Configuration newConfiguration) throws UpdateException;
+        Configuration newConfiguration) throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException;
 
-    Configuration getResourceConfiguration(Subject subject, int resourceId) throws FetchException;
+    Configuration getResourceConfiguration(Subject subject, int resourceId);
 }

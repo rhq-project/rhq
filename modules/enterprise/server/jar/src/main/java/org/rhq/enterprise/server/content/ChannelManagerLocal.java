@@ -31,10 +31,6 @@ import org.rhq.core.domain.criteria.ChannelCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.exception.CreateException;
-import org.rhq.enterprise.server.exception.DeleteException;
-import org.rhq.enterprise.server.exception.FetchException;
-import org.rhq.enterprise.server.exception.UpdateException;
 
 @Local
 public interface ChannelManagerLocal {
@@ -113,7 +109,8 @@ public interface ChannelManagerLocal {
     /**
      * @see ChannelManagerRemote#removeContentSourcesFromChannel(Subject, int, int[])
      */
-    void removeContentSourcesFromChannel(Subject subject, int channelId, int[] contentSourceIds) throws Exception;
+    void removeContentSourcesFromChannel(Subject subject, int channelId, int[] contentSourceIds)
+        throws ChannelException;
 
     /**
      * @see ChannelManagerRemote#getPackageVersionCountFromChannel(Subject, String, int)
@@ -127,28 +124,24 @@ public interface ChannelManagerLocal {
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     /**
-     * @throws UpdateException TODO
      * @see ChannelManagerRemote#addPackageVersionsToChannel(Subject, int, int[])
      */
-    void addPackageVersionsToChannel(Subject subject, int channelId, int[] packageVersionIds) throws UpdateException;
+    void addPackageVersionsToChannel(Subject subject, int channelId, int[] packageVersionIds);
 
     /**
-     * @throws CreateException TODO
      * @see ChannelManagerRemote#createChannel(Subject, Channel)
      */
-    Channel createChannel(Subject subject, Channel channel) throws CreateException;
+    Channel createChannel(Subject subject, Channel channel) throws ChannelException;
 
     /**
-     * @throws DeleteException TODO
      * @see ChannelManagerRemote#deleteChannel(Subject, int)
      */
-    void deleteChannel(Subject subject, int channelId) throws DeleteException;
+    void deleteChannel(Subject subject, int channelId);
 
     /**
-     * @throws FetchException TODO
      * @see ChannelManagerRemote#getChannel(Subject, int)
      */
-    Channel getChannel(Subject subject, int channelId) throws FetchException;
+    Channel getChannel(Subject subject, int channelId);
 
     /**
      * @see ChannelManagerRemote#findChannels(Subject, Channel, PageControl)
@@ -159,7 +152,7 @@ public interface ChannelManagerLocal {
      * @see ChannelManagerRemote#findPackageVersionsInChannel(Subject, int, PackageVersion, PageControl)
      */
     PageList<PackageVersion> findPackageVersionsInChannel(Subject subject, int channelId, PackageVersion criteria,
-        PageControl pc) throws FetchException;
+        PageControl pc);
 
     /**
      * @see ChannelManagerRemote#subscribeResourceToChannels(Subject, int, int[])

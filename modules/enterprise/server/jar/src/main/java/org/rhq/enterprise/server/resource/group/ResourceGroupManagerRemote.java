@@ -30,10 +30,6 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.exception.CreateException;
-import org.rhq.enterprise.server.exception.DeleteException;
-import org.rhq.enterprise.server.exception.FetchException;
-import org.rhq.enterprise.server.exception.UpdateException;
 
 /**
  * @author Jay Shaughnessy 
@@ -52,79 +48,50 @@ public interface ResourceGroupManagerRemote {
     void addResourcesToGroup( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "groupId") int groupId, //
-        @WebParam(name = "resourceIds") int[] resourceIds) throws UpdateException;
+        @WebParam(name = "resourceIds") int[] resourceIds);
 
-    /**
-     * 
-     * @param subject
-     * @param resourceGroup
-     * @throws CreateException May wrap (ResourceGroupNotFoundException, ResourceGroupAlreadyExistsException)
-     */
     @WebMethod
     ResourceGroup createResourceGroup( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceGroup") ResourceGroup resourceGroup) throws CreateException;
+        @WebParam(name = "resourceGroup") ResourceGroup resourceGroup);
 
-    /**
-     * 
-     * @param subject
-     * @param groupId
-     * @throws DeleteException Possible Causes (ResourceGroupNotFoundException, ResourceGroupDeleteException)
-     */
     @WebMethod
     void deleteResourceGroup( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "groupId") int groupId) throws DeleteException;
+        @WebParam(name = "groupId") int groupId) throws ResourceGroupNotFoundException, ResourceGroupDeleteException;
 
     @WebMethod
     ResourceGroup getResourceGroup( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "groupId") int groupId) throws FetchException;
+        @WebParam(name = "groupId") int groupId);
 
-    /**
-     * Get the ResourceGroup and Availability by id.
-     *
-     * @param  subject {@link Subject} of the calling user
-     * @param  groupId id to search by
-     *
-     * @return ResourceGroupComposite composite object with the ResourceGroup and availability, as well as the count of
-     *         resources in the group
-     * @throws FetchException TODO
-     */
     @WebMethod
     ResourceGroupComposite getResourceGroupComposite( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "groupId") int groupId) throws FetchException;
+        @WebParam(name = "groupId") int groupId);
 
     @WebMethod
     PageList<ResourceGroup> findResourceGroupsForRole( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "roleId") int roleId, //
-        @WebParam(name = "pageControl") PageControl pc) throws FetchException;
+        @WebParam(name = "pageControl") PageControl pc);
 
     @WebMethod
     void removeResourcesFromGroup(//
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "groupId") int groupId, //
-        @WebParam(name = "resourceIds") int[] resourceIds) throws UpdateException;
+        @WebParam(name = "resourceIds") int[] resourceIds);
 
     @WebMethod
     void setRecursive( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "groupId") int groupId, //
-        @WebParam(name = "isRecursive") boolean isRecursive) throws UpdateException;
+        @WebParam(name = "isRecursive") boolean isRecursive);
 
-    /**
-     * 
-     * @param subject
-     * @param newResourceGroup
-     * @return updatedResourceGroup
-     * @throws UpdateException Possible Causes (ResourceGroupAlreadyExistsException, ResourceGroupUpdateException)
-     */
     @WebMethod
     ResourceGroup updateResourceGroup( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "newResourceGroup") ResourceGroup newResourceGroup) throws UpdateException;
+        @WebParam(name = "newResourceGroup") ResourceGroup newResourceGroup);
 
     @WebMethod
     PageList<ResourceGroup> findResourceGroupsByCriteria( //

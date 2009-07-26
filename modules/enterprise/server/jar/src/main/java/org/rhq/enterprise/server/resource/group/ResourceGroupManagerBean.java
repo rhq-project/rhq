@@ -39,7 +39,6 @@ import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
-import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.PersistenceException;
 import javax.persistence.Query;
@@ -85,11 +84,7 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
-import org.rhq.enterprise.server.exception.CreateException;
-import org.rhq.enterprise.server.exception.DeleteException;
-import org.rhq.enterprise.server.exception.FetchException;
 import org.rhq.enterprise.server.exception.UnscheduleException;
-import org.rhq.enterprise.server.exception.UpdateException;
 import org.rhq.enterprise.server.operation.GroupOperationSchedule;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
@@ -145,52 +140,33 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public ResourceGroup createResourceGroup(Subject user, ResourceGroup group) throws CreateException {
-        try {
-            /*
-            GH: We are now allowing Groups where names collide... TODO, should this only be allowed for cluster auto backing groups?
-            Query query = entityManager.createNamedQuery(ResourceGroup.QUERY_FIND_BY_NAME);
-            query.setParameter("name", group.getName());
+    public ResourceGroup createResourceGroup(Subject user, ResourceGroup group) {
+        /*
+        GH: We are now allowing Groups where names collide... TODO, should this only be allowed for cluster auto backing groups?
+        Query query = entityManager.createNamedQuery(ResourceGroup.QUERY_FIND_BY_NAME);
+        query.setParameter("name", group.getName());
 
-            List<ResourceGroup> groups = query.getResultList();
-            if (groups.size() != 0) {
-                throw new ResourceGroupAlreadyExistsException("ResourceGroup with name " + group.getName()
-                    + " already exists");
-            }*/
+        List<ResourceGroup> groups = query.getResultList();
+        if (groups.size() != 0) {
+            throw new ResourceGroupAlreadyExistsException("ResourceGroup with name " + group.getName()
+                + " already exists");
+        }*/
 
-            long time = System.currentTimeMillis();
-            group.setCtime(time);
-            group.setMtime(time);
-            group.setModifiedBy(user);
+        long time = System.currentTimeMillis();
+        group.setCtime(time);
+        group.setMtime(time);
+        group.setModifiedBy(user);
 
-            entityManager.persist(group);
-        } catch (Exception e) {
-            throw new CreateException(e);
-        }
+        entityManager.persist(group);
 
         return group;
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public ResourceGroup updateResourceGroup(Subject user, ResourceGroup group, RecursivityChangeType changeType)
-        throws ResourceGroupAlreadyExistsException, ResourceGroupUpdateException {
-
-        Query query = entityManager.createNamedQuery(ResourceGroup.QUERY_FIND_BY_NAME);
-        query.setParameter("name", group.getName());
+        throws ResourceGroupUpdateException {
 
         int groupId = group.getId();
-        try {
-            ResourceGroup foundGroup = (ResourceGroup) query.getSingleResult();
-            if (foundGroup.getId() == groupId) {
-                // user is updating the same group and hasn't changed the name, this is OK
-            } else {
-                //  user is updating the group name to the name of an existing group - this is bad
-                throw new ResourceGroupAlreadyExistsException("ResourceGroup with name " + group.getName()
-                    + " already exists");
-            }
-        } catch (NoResultException e) {
-            // user is changing the name of the group, this is OK
-        }
 
         if (changeType == null) {
             ResourceGroup attachedGroup = entityManager.find(ResourceGroup.class, groupId);
@@ -264,61 +240,57 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public void deleteResourceGroup(Subject user, int groupId) throws DeleteException {
-        try {
-            ResourceGroup group = getResourceGroupById(user, groupId, null);
+    public void deleteResourceGroup(Subject user, int groupId) throws ResourceGroupNotFoundException,
+        ResourceGroupDeleteException {
+        ResourceGroup group = getResourceGroupById(user, groupId, null);
 
-            // for compatible groups, first recursively remove any referring backing groups for auto-clusters
-            if (group.getGroupCategory() == GroupCategory.COMPATIBLE) {
-                for (ResourceGroup referringGroup : group.getClusterBackingGroups()) {
-                    deleteResourceGroup(user, referringGroup.getId());
-                }
+        // for compatible groups, first recursively remove any referring backing groups for auto-clusters
+        if (group.getGroupCategory() == GroupCategory.COMPATIBLE) {
+            for (ResourceGroup referringGroup : group.getClusterBackingGroups()) {
+                deleteResourceGroup(user, referringGroup.getId());
             }
-
-            // unschedule all jobs for this group (only compatible groups have operations, mixed do not)
-            if (group.getGroupCategory() == GroupCategory.COMPATIBLE) {
-                Subject overlord = subjectManager.getOverlord();
-                try {
-                    List<GroupOperationSchedule> ops = operationManager.findScheduledGroupOperations(overlord, groupId);
-
-                    for (GroupOperationSchedule schedule : ops) {
-                        try {
-                            operationManager
-                                .unscheduleGroupOperation(overlord, schedule.getJobId().toString(), groupId);
-                        } catch (UnscheduleException e) {
-                            log.warn("Failed to unschedule job [" + schedule + "] for a group being deleted [" + group
-                                + "]", e);
-                        }
-                    }
-                } catch (SchedulerException e1) {
-                    log.warn("Failed to get jobs for a group being deleted [" + group
-                        + "]; will not attempt to unschedule anything", e1);
-                }
-            }
-
-            for (Role doomedRoleRelationship : group.getRoles()) {
-                group.removeRole(doomedRoleRelationship);
-                entityManager.merge(doomedRoleRelationship);
-            }
-
-            // remove all resources in the group
-            resourceGroupManager.removeAllResourcesFromGroup(user, groupId);
-
-            // break resource and plugin configuration update links in order to preserve individual change history
-            Query q = null;
-
-            q = entityManager.createNamedQuery(ResourceConfigurationUpdate.QUERY_DELETE_GROUP_UPDATES_FOR_GROUP);
-            q.setParameter("groupId", groupId);
-            q.executeUpdate();
-
-            q = entityManager.createNamedQuery(PluginConfigurationUpdate.QUERY_DELETE_GROUP_UPDATES_FOR_GROUP);
-            q.setParameter("groupId", groupId);
-            q.executeUpdate();
-
-            entityManager.remove(group);
-        } catch (Exception e) {
-            throw new DeleteException(e);
         }
+
+        // unschedule all jobs for this group (only compatible groups have operations, mixed do not)
+        if (group.getGroupCategory() == GroupCategory.COMPATIBLE) {
+            Subject overlord = subjectManager.getOverlord();
+            try {
+                List<GroupOperationSchedule> ops = operationManager.findScheduledGroupOperations(overlord, groupId);
+
+                for (GroupOperationSchedule schedule : ops) {
+                    try {
+                        operationManager.unscheduleGroupOperation(overlord, schedule.getJobId().toString(), groupId);
+                    } catch (UnscheduleException e) {
+                        log.warn("Failed to unschedule job [" + schedule + "] for a group being deleted [" + group
+                            + "]", e);
+                    }
+                }
+            } catch (SchedulerException e1) {
+                log.warn("Failed to get jobs for a group being deleted [" + group
+                    + "]; will not attempt to unschedule anything", e1);
+            }
+        }
+
+        for (Role doomedRoleRelationship : group.getRoles()) {
+            group.removeRole(doomedRoleRelationship);
+            entityManager.merge(doomedRoleRelationship);
+        }
+
+        // remove all resources in the group
+        resourceGroupManager.removeAllResourcesFromGroup(user, groupId);
+
+        // break resource and plugin configuration update links in order to preserve individual change history
+        Query q = null;
+
+        q = entityManager.createNamedQuery(ResourceConfigurationUpdate.QUERY_DELETE_GROUP_UPDATES_FOR_GROUP);
+        q.setParameter("groupId", groupId);
+        q.executeUpdate();
+
+        q = entityManager.createNamedQuery(PluginConfigurationUpdate.QUERY_DELETE_GROUP_UPDATES_FOR_GROUP);
+        q.setParameter("groupId", groupId);
+        q.executeUpdate();
+
+        entityManager.remove(group);
     }
 
     public ResourceGroup getResourceGroupById(Subject user, int id, GroupCategory category)
@@ -386,25 +358,21 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public void addResourcesToGroup(Subject subject, int groupId, int[] resourceIds) throws UpdateException {
+    public void addResourcesToGroup(Subject subject, int groupId, int[] resourceIds) {
         Integer[] ids = ArrayUtils.wrapInArray(resourceIds);
         if (ids == null || ids.length == 0) {
             return;
         }
 
-        try {
-            boolean isRecursive = isRecursive(groupId); // will perform check for group existence
+        boolean isRecursive = isRecursive(groupId); // will perform check for group existence
 
-            // batch the removes to prevent the ORA error about IN clauses containing more than 1000 items
-            for (int batchIndex = 0; batchIndex < ids.length; batchIndex += 1000) {
-                Integer[] batchIdArray = ArrayUtils.copyOfRange(ids, batchIndex, batchIndex + 1000);
-                List<Integer> batchIds = Arrays.asList(batchIdArray);
+        // batch the removes to prevent the ORA error about IN clauses containing more than 1000 items
+        for (int batchIndex = 0; batchIndex < ids.length; batchIndex += 1000) {
+            Integer[] batchIdArray = ArrayUtils.copyOfRange(ids, batchIndex, batchIndex + 1000);
+            List<Integer> batchIds = Arrays.asList(batchIdArray);
 
-                addResourcesToGroupImplicit(subject, groupId, batchIds, true, isRecursive);
-                addResourcesToGroupExplicit(subject, groupId, batchIds, isRecursive);
-            }
-        } catch (Exception e) {
-            throw new UpdateException(e);
+            addResourcesToGroupImplicit(subject, groupId, batchIds, true, isRecursive);
+            addResourcesToGroupExplicit(subject, groupId, batchIds, isRecursive);
         }
     }
 
@@ -527,23 +495,19 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public void removeResourcesFromGroup(Subject subject, int groupId, int[] resourceIds) throws UpdateException {
+    public void removeResourcesFromGroup(Subject subject, int groupId, int[] resourceIds) {
         Integer[] ids = ArrayUtils.wrapInArray(resourceIds);
         if (ids == null || ids.length == 0) {
             return;
         }
 
-        try {
-            boolean isRecursive = isRecursive(groupId); // will perform check for group existence
+        boolean isRecursive = isRecursive(groupId); // will perform check for group existence
 
-            // batch the removes to prevent the ORA error about IN clauses containing more than 1000 items
-            for (int batchIndex = 0; batchIndex < ids.length; batchIndex += 1000) {
-                Integer[] batchIdArray = ArrayUtils.copyOfRange(ids, batchIndex, batchIndex + 1000);
+        // batch the removes to prevent the ORA error about IN clauses containing more than 1000 items
+        for (int batchIndex = 0; batchIndex < ids.length; batchIndex += 1000) {
+            Integer[] batchIdArray = ArrayUtils.copyOfRange(ids, batchIndex, batchIndex + 1000);
 
-                removeResourcesFromGroup_helper(subject, groupId, batchIdArray, isRecursive);
-            }
-        } catch (Exception e) {
-            throw new UpdateException(e);
+            removeResourcesFromGroup_helper(subject, groupId, batchIdArray, isRecursive);
         }
     }
 
@@ -1174,7 +1138,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         return groupIds;
     }
 
-    public void ensureMembershipMatches(Subject subject, int groupId, int[] resourceIds) throws UpdateException {
+    public void ensureMembershipMatches(Subject subject, int groupId, int[] resourceIds) {
         //throws ResourceGroupUpdateException {
         List<Integer> currentMembers = resourceManager.findExplicitResourceIdsByResourceGroup(groupId);
 
@@ -1197,129 +1161,111 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
 
     public ResourceGroup getResourceGroup( //
         Subject subject, //
-        int groupId) throws FetchException {
-        try {
-            return getResourceGroupById(subject, groupId, null);
-        } catch (Exception e) {
-            throw new FetchException(e);
-        }
+        int groupId) {
+        return getResourceGroupById(subject, groupId, null);
     }
 
     @SuppressWarnings("unchecked")
-    public ResourceGroupComposite getResourceGroupComposite(Subject subject, int groupId) throws FetchException {
-        try {
-            // Auto cluster backing groups have a special security allowance that let's a non-inventory-manager
-            // view them even if they aren't directly in one of their roles, by nature of the fact that the user has
-            // the parent cluster group in one of its roles.
+    public ResourceGroupComposite getResourceGroupComposite(Subject subject, int groupId) {
+        // Auto cluster backing groups have a special security allowance that let's a non-inventory-manager
+        // view them even if they aren't directly in one of their roles, by nature of the fact that the user has
+        // the parent cluster group in one of its roles.
 
-            if (!authorizationManager.canViewGroup(subject, groupId)) {
-                throw new PermissionException("You do not have permission to view this resource group");
-            }
-
-            String queryString = "SELECT \n" //
-                + "  (SELECT count(er) "
-                + "       FROM ResourceGroup g JOIN g.explicitResources er where g.id = :groupId),\n"
-                + "  (SELECT avg(er.currentAvailability.availabilityType) "
-                + "       FROM ResourceGroup g JOIN g.explicitResources er where g.id = :groupId) AS eavail,\n"
-                + "  (SELECT count(ir) "
-                + "       FROM ResourceGroup g JOIN g.implicitResources ir where g.id = :groupId),\n"
-                + "  (SELECT avg(ir.currentAvailability.availabilityType) "
-                + "       FROM ResourceGroup g JOIN g.implicitResources ir where g.id = :groupId), g \n"
-                + "FROM ResourceGroup g where g.id = :groupId";
-
-            Query query = entityManager.createQuery(queryString);
-            query.setParameter("groupId", groupId);
-            List<Object[]> results = (List<Object[]>) query.getResultList();
-
-            if (results.size() == 0) {
-                throw new ResourceGroupNotFoundException(groupId);
-            }
-
-            Object[] data = results.get(0);
-
-            ResourceGroup group = (ResourceGroup) data[4];
-            ResourceType type = group.getResourceType();
-            ResourceFacets facets;
-            if (type == null) {
-                // mixed group
-                facets = ResourceFacets.NONE;
-            } else {
-                // compatible group
-                facets = resourceTypeManager.getResourceFacets(group.getResourceType().getId());
-            }
-
-            ResourceGroupComposite composite = null;
-            if (((Number) data[2]).longValue() > 0) {
-                composite = new ResourceGroupComposite( //
-                    ((Number) data[0]).longValue(), //
-                    ((Number) data[1]).doubleValue(), //
-                    ((Number) data[2]).longValue(), //
-                    ((Number) data[3]).doubleValue(), //
-                    group, facets);
-            } else {
-                composite = new ResourceGroupComposite(0, 0, 0, 0, group, facets);
-            }
-            group.getModifiedBy().getFirstName();
-
-            return composite;
-        } catch (Exception e) {
-            throw new FetchException(e);
+        if (!authorizationManager.canViewGroup(subject, groupId)) {
+            throw new PermissionException("You do not have permission to view this resource group");
         }
+
+        String queryString = "SELECT \n" //
+            + "  (SELECT count(er) "
+            + "       FROM ResourceGroup g JOIN g.explicitResources er where g.id = :groupId),\n"
+            + "  (SELECT avg(er.currentAvailability.availabilityType) "
+            + "       FROM ResourceGroup g JOIN g.explicitResources er where g.id = :groupId) AS eavail,\n"
+            + "  (SELECT count(ir) "
+            + "       FROM ResourceGroup g JOIN g.implicitResources ir where g.id = :groupId),\n"
+            + "  (SELECT avg(ir.currentAvailability.availabilityType) "
+            + "       FROM ResourceGroup g JOIN g.implicitResources ir where g.id = :groupId), g \n"
+            + "FROM ResourceGroup g where g.id = :groupId";
+
+        Query query = entityManager.createQuery(queryString);
+        query.setParameter("groupId", groupId);
+        List<Object[]> results = (List<Object[]>) query.getResultList();
+
+        if (results.size() == 0) {
+            throw new ResourceGroupNotFoundException(groupId);
+        }
+
+        Object[] data = results.get(0);
+
+        ResourceGroup group = (ResourceGroup) data[4];
+        ResourceType type = group.getResourceType();
+        ResourceFacets facets;
+        if (type == null) {
+            // mixed group
+            facets = ResourceFacets.NONE;
+        } else {
+            // compatible group
+            facets = resourceTypeManager.getResourceFacets(group.getResourceType().getId());
+        }
+
+        ResourceGroupComposite composite = null;
+        if (((Number) data[2]).longValue() > 0) {
+            composite = new ResourceGroupComposite( //
+                ((Number) data[0]).longValue(), //
+                ((Number) data[1]).doubleValue(), //
+                ((Number) data[2]).longValue(), //
+                ((Number) data[3]).doubleValue(), //
+                group, facets);
+        } else {
+            composite = new ResourceGroupComposite(0, 0, 0, 0, group, facets);
+        }
+        group.getModifiedBy().getFirstName();
+
+        return composite;
     }
 
     @SuppressWarnings("unchecked")
     // if a user doesn't have MANAGE_SETTINGS, they can only see groups under their own roles
-    public PageList<ResourceGroup> findResourceGroupsForRole(Subject subject, int roleId, PageControl pc)
-        throws FetchException {
-        try {
-            pc.initDefaultOrderingField("rg.name");
+    public PageList<ResourceGroup> findResourceGroupsForRole(Subject subject, int roleId, PageControl pc) {
+        pc.initDefaultOrderingField("rg.name");
 
-            String queryName = null;
-            if (authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_SETTINGS)) {
-                queryName = ResourceGroup.QUERY_GET_RESOURCE_GROUPS_ASSIGNED_TO_ROLE_admin;
-            } else {
-                queryName = ResourceGroup.QUERY_GET_RESOURCE_GROUPS_ASSIGNED_TO_ROLE;
-            }
-            Query queryCount = PersistenceUtility.createCountQuery(entityManager, queryName);
-            Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, queryName, pc);
-
-            if (authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_SETTINGS) == false) {
-                queryCount.setParameter("subjectId", subject.getId());
-                query.setParameter("subjectId", subject.getId());
-            }
-            queryCount.setParameter("id", roleId);
-            query.setParameter("id", roleId);
-
-            long count = (Long) queryCount.getSingleResult();
-            List<ResourceGroup> groups = query.getResultList();
-
-            return new PageList<ResourceGroup>(groups, (int) count, pc);
-        } catch (Exception e) {
-            throw new FetchException(e);
+        String queryName = null;
+        if (authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_SETTINGS)) {
+            queryName = ResourceGroup.QUERY_GET_RESOURCE_GROUPS_ASSIGNED_TO_ROLE_admin;
+        } else {
+            queryName = ResourceGroup.QUERY_GET_RESOURCE_GROUPS_ASSIGNED_TO_ROLE;
         }
+        Query queryCount = PersistenceUtility.createCountQuery(entityManager, queryName);
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, queryName, pc);
 
+        if (authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_SETTINGS) == false) {
+            queryCount.setParameter("subjectId", subject.getId());
+            query.setParameter("subjectId", subject.getId());
+        }
+        queryCount.setParameter("id", roleId);
+        query.setParameter("id", roleId);
+
+        long count = (Long) queryCount.getSingleResult();
+        List<ResourceGroup> groups = query.getResultList();
+
+        return new PageList<ResourceGroup>(groups, (int) count, pc);
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public void setRecursive( //
         Subject subject, //
         int groupId, //
-        boolean isRecursive) throws UpdateException {
+        boolean isRecursive) {
         ResourceGroup group = entityManager.find(ResourceGroup.class, groupId);
         if (group == null) {
-            throw new UpdateException("Can not change recursivity of unknown group[" + groupId + "]");
+            throw new ResourceGroupNotFoundException(groupId);
         }
         updateResourceGroup(subject, group, isRecursive ? RecursivityChangeType.AddedRecursion
             : RecursivityChangeType.RemovedRecursion);
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public ResourceGroup updateResourceGroup(Subject subject, ResourceGroup group) throws UpdateException {
-        try {
-            return updateResourceGroup(subject, group, null);
-        } catch (Exception e) {
-            throw new UpdateException(e);
-        }
+    public ResourceGroup updateResourceGroup(Subject subject, ResourceGroup group) throws ResourceGroupUpdateException {
+        return updateResourceGroup(subject, group, null);
     }
 
     @SuppressWarnings("unchecked")

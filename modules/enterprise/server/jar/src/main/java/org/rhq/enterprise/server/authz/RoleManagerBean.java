@@ -46,8 +46,6 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.exception.FetchException;
-import org.rhq.enterprise.server.exception.UpdateException;
 
 /**
  * This bean provides functionality to manipulate the security rules. That is, adding/modifying/deleting roles and their
@@ -170,11 +168,11 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
      * @see org.rhq.enterprise.server.authz.RoleManagerLocal#addRolesToSubject(Subject, int, int[])
      */
     @RequiredPermission(Permission.MANAGE_SECURITY)
-    public void addRolesToSubject(Subject subject, int subjectId, int[] roleIds) throws UpdateException {
+    public void addRolesToSubject(Subject subject, int subjectId, int[] roleIds) {
         if (roleIds != null) {
             Subject subjectToModify = subjectManager.getSubjectById(subjectId); // attach it
             if (subjectToModify == null) {
-                throw new UpdateException("Could not find subject[" + subjectId + "] to add roles to");
+                throw new IllegalArgumentException("Could not find subject[" + subjectId + "] to add roles to");
             }
 
             if (subjectToModify.getFsystem() || (authorizationManager.isSystemSuperuser(subjectToModify))) {
@@ -187,7 +185,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
             for (Integer roleId : roleIds) {
                 Role role = entityManager.find(Role.class, roleId);
                 if (role == null) {
-                    throw new UpdateException("Tried to add role[" + roleId + "] to subject[" + subjectId
+                    throw new IllegalArgumentException("Tried to add role[" + roleId + "] to subject[" + subjectId
                         + "], but role was not found");
                 }
                 role.addSubject(subjectToModify);
@@ -201,17 +199,17 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
      * @see org.rhq.enterprise.server.authz.RoleManagerLocal#addSubjectsToRole(Subject, int, int[])
      */
     @RequiredPermission(Permission.MANAGE_SECURITY)
-    public void addSubjectsToRole(Subject subject, int roleId, int[] subjectIds) throws UpdateException {
+    public void addSubjectsToRole(Subject subject, int roleId, int[] subjectIds) {
         if (subjectIds != null) {
             Role role = getRoleById(roleId); // attach it
             if (role == null) {
-                throw new UpdateException("Could not find role[" + roleId + "] to add subjects to");
+                throw new IllegalArgumentException("Could not find role[" + roleId + "] to add subjects to");
             }
 
             for (Integer subjectId : subjectIds) {
                 Subject newSubject = entityManager.find(Subject.class, subjectId);
                 if (newSubject == null) {
-                    throw new UpdateException("Tried to add subject[" + subjectId + "] to role[" + roleId
+                    throw new IllegalArgumentException("Tried to add subject[" + subjectId + "] to role[" + roleId
                         + "], but subject was not found");
                 }
 
@@ -232,7 +230,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
      * @see org.rhq.enterprise.server.authz.RoleManagerLocal#removeRolesFromSubject(Subject, int, int[])
      */
     @RequiredPermission(Permission.MANAGE_SECURITY)
-    public void removeRolesFromSubject(Subject subject, int subjectId, int[] roleIds) throws UpdateException {
+    public void removeRolesFromSubject(Subject subject, int subjectId, int[] roleIds) {
         if (roleIds != null) {
             Subject subjectToModify = subjectManager.getSubjectById(subjectId); // attach it
 
@@ -431,18 +429,18 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
      * @see org.rhq.enterprise.server.authz.RoleManagerLocal#addResourceGroupsToRole(Subject, int, int[])
      */
     @RequiredPermission(Permission.MANAGE_SECURITY)
-    public void addResourceGroupsToRole(Subject subject, int roleId, int[] groupIds) throws UpdateException {
+    public void addResourceGroupsToRole(Subject subject, int roleId, int[] groupIds) {
         if ((groupIds != null) && (groupIds.length > 0)) {
             Role role = entityManager.find(Role.class, roleId);
             if (role == null) {
-                throw new UpdateException("Could not find role[" + roleId + "] to add resourceGroups to");
+                throw new IllegalArgumentException("Could not find role[" + roleId + "] to add resourceGroups to");
             }
             role.getResourceGroups().size(); // load them in
 
             for (Integer groupId : groupIds) {
                 ResourceGroup group = entityManager.find(ResourceGroup.class, groupId);
                 if (role == null) {
-                    throw new UpdateException("Tried to add resourceGroup[" + groupId + "] to role[" + roleId
+                    throw new IllegalArgumentException("Tried to add resourceGroup[" + groupId + "] to role[" + roleId
                         + "], but resourceGroup was not found");
                 }
                 role.addResourceGroup(group);
@@ -456,19 +454,19 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
      * @see org.rhq.enterprise.server.authz.RoleManagerLocal#removeResourceGroupsFromRole(Subject, int, int[])
      */
     @RequiredPermission(Permission.MANAGE_SECURITY)
-    public void removeResourceGroupsFromRole(Subject subject, int roleId, int[] groupIds) throws UpdateException {
+    public void removeResourceGroupsFromRole(Subject subject, int roleId, int[] groupIds) {
         if ((groupIds != null) && (groupIds.length > 0)) {
             Role role = entityManager.find(Role.class, roleId);
             if (role == null) {
-                throw new UpdateException("Could not find role[" + roleId + "] to remove resourceGroups from");
+                throw new IllegalArgumentException("Could not find role[" + roleId + "] to remove resourceGroups from");
             }
             role.getResourceGroups().size(); // load them in
 
             for (Integer groupId : groupIds) {
                 ResourceGroup doomedGroup = entityManager.find(ResourceGroup.class, groupId);
                 if (doomedGroup == null) {
-                    throw new UpdateException("Tried to remove doomedGroup[" + groupId + "] from role[" + roleId
-                        + "], but subject was not found");
+                    throw new IllegalArgumentException("Tried to remove doomedGroup[" + groupId + "] from role["
+                        + roleId + "], but subject was not found");
                 }
                 role.removeResourceGroup(doomedGroup);
             }
@@ -485,25 +483,24 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
         }
     }
 
-    public PageList<Role> findSubjectAssignedRoles(Subject subject, int subjectId, PageControl pc)
-        throws FetchException {
+    public PageList<Role> findSubjectAssignedRoles(Subject subject, int subjectId, PageControl pc) {
         PageList<Role> assignedRoles = findRolesBySubject(subjectId, pc);
         return assignedRoles;
     }
 
     @RequiredPermission(Permission.MANAGE_SECURITY)
-    public void removeSubjectsFromRole(Subject subject, int roleId, int[] subjectIds) throws UpdateException {
+    public void removeSubjectsFromRole(Subject subject, int roleId, int[] subjectIds) {
         if ((subjectIds != null) && (subjectIds.length > 0)) {
             Role role = entityManager.find(Role.class, roleId);
             if (role == null) {
-                throw new UpdateException("Could not find role[" + roleId + "] to remove subjects from");
+                throw new IllegalArgumentException("Could not find role[" + roleId + "] to remove subjects from");
             }
             role.getSubjects().size(); // load them in
 
             for (Integer subjectId : subjectIds) {
                 Subject doomedSubject = entityManager.find(Subject.class, subjectId);
                 if (doomedSubject == null) {
-                    throw new UpdateException("Tried to remove subject[" + subjectId + "] from role[" + roleId
+                    throw new IllegalArgumentException("Tried to remove subject[" + subjectId + "] from role[" + roleId
                         + "], but subject was not found");
                 }
                 role.removeSubject(doomedSubject);
@@ -512,19 +509,19 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     }
 
     @RequiredPermission(Permission.MANAGE_SECURITY)
-    public void removeRolesFromResourceGroup(Subject subject, int groupId, int[] roleIds) throws UpdateException {
+    public void removeRolesFromResourceGroup(Subject subject, int groupId, int[] roleIds) {
         if ((roleIds != null) && (roleIds.length > 0)) {
             ResourceGroup group = entityManager.find(ResourceGroup.class, groupId);
             if (group == null) {
-                throw new UpdateException("Could not find resourceGroup[" + groupId + "] to remove roles from");
+                throw new IllegalArgumentException("Could not find resourceGroup[" + groupId + "] to remove roles from");
             }
             group.getRoles().size(); // load them in
 
             for (Integer roleId : roleIds) {
                 Role doomedRole = entityManager.find(Role.class, roleId);
                 if (doomedRole == null) {
-                    throw new UpdateException("Tried to remove role[" + roleId + "] from resourceGroup[" + groupId
-                        + "], but role was not found");
+                    throw new IllegalArgumentException("Tried to remove role[" + roleId + "] from resourceGroup["
+                        + groupId + "], but role was not found");
                 }
                 group.removeRole(doomedRole);
             }
@@ -538,18 +535,18 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     }
 
     @RequiredPermission(Permission.MANAGE_SECURITY)
-    public void addRolesToResourceGroup(Subject subject, int groupId, int[] roleIds) throws UpdateException {
+    public void addRolesToResourceGroup(Subject subject, int groupId, int[] roleIds) {
         if ((roleIds != null) && (roleIds.length > 0)) {
             ResourceGroup group = entityManager.find(ResourceGroup.class, groupId);
             if (group == null) {
-                throw new UpdateException("Could not find resourceGroup[" + groupId + "] to add roles to");
+                throw new IllegalArgumentException("Could not find resourceGroup[" + groupId + "] to add roles to");
             }
             group.getRoles().size(); // load them in
 
             for (Integer roleId : roleIds) {
                 Role role = entityManager.find(Role.class, roleId);
                 if (role == null) {
-                    throw new UpdateException("Tried to add role[" + roleId + "] to resourceGroup[" + groupId
+                    throw new IllegalArgumentException("Tried to add role[" + roleId + "] to resourceGroup[" + groupId
                         + "], but role was not found");
                 }
                 group.addRole(role);

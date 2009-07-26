@@ -46,8 +46,6 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.exception.DeleteException;
-import org.rhq.enterprise.server.exception.FetchException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
 
 /**
@@ -429,17 +427,17 @@ public interface ResourceManagerLocal {
     /**
      * #see {@link ResourceManagerRemote#getResource(Subject, int)
      */
-    Resource getResource(Subject subject, int resourceId) throws FetchException;
+    Resource getResource(Subject subject, int resourceId);
 
     /**
      * #see {@link ResourceManagerRemote#findResourceLineage(Subject, int)
      */
-    List<Resource> findResourceLineage(Subject subject, int resourceId) throws FetchException;
+    List<Resource> findResourceLineage(Subject subject, int resourceId);
 
     /**
      * #see {@link ResourceManagerRemote#uninventoryResources(Subject, int)
      */
-    void uninventoryResources(Subject subject, int[] resourceIds) throws DeleteException;
+    void uninventoryResources(Subject subject, int[] resourceIds);
 
     List<ResourceInstallCount> findResourceInstallCounts(Subject subject, boolean groupByVersions);
 

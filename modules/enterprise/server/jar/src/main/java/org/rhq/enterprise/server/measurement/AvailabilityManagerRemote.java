@@ -29,7 +29,6 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.exception.FetchException;
 
 /**
  * @author Noam Malki
@@ -51,8 +50,7 @@ public interface AvailabilityManagerRemote {
     public PageList<Availability> findAvailabilityForResource( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceId") int resourceId, //
-        @WebParam(name = "pageControl") PageControl pc) //
-        throws FetchException;
+        @WebParam(name = "pageControl") PageControl pc);
 
     /**
      * Gets the last known Availability for the given resource - which includes whether it is currently up (i.e.
@@ -71,6 +69,6 @@ public interface AvailabilityManagerRemote {
     @WebMethod
     public Availability getCurrentAvailabilityForResource( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int resourceId) throws FetchException;
+        @WebParam(name = "resourceId") int resourceId);
 
 }

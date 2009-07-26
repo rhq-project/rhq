@@ -87,8 +87,6 @@ import org.rhq.enterprise.server.configuration.job.AbstractGroupConfigurationUpd
 import org.rhq.enterprise.server.configuration.job.GroupPluginConfigurationUpdateJob;
 import org.rhq.enterprise.server.configuration.job.GroupResourceConfigurationUpdateJob;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
-import org.rhq.enterprise.server.exception.FetchException;
-import org.rhq.enterprise.server.exception.UpdateException;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
@@ -128,7 +126,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     private SubjectManagerLocal subjectManager;
 
     @Nullable
-    public Configuration getPluginConfiguration(Subject subject, int resourceId) throws FetchException {
+    public Configuration getPluginConfiguration(Subject subject, int resourceId) {
         log.debug("Getting current plugin configuration for resource [" + resourceId + "]");
 
         Resource resource = entityManager.find(Resource.class, resourceId);
@@ -225,14 +223,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     public PluginConfigurationUpdate updatePluginConfiguration(Subject subject, int resourceId,
-        Configuration configuration) throws UpdateException {
+        Configuration configuration) throws ResourceNotFoundException {
         Subject overlord = subjectManager.getOverlord();
-        Resource resource;
-        try {
-            resource = resourceManager.getResourceById(overlord, resourceId);
-        } catch (ResourceNotFoundException rfne) {
-            throw new UpdateException("Cannot update plugin config for unknown resource [" + resourceId + "]");
-        }
+        Resource resource = resourceManager.getResourceById(overlord, resourceId);
 
         // make sure the user has the proper permissions to do this
         ensureModifyPermission(subject, resource);
@@ -256,32 +249,28 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return update;
     }
 
-    public Configuration getResourceConfiguration(Subject subject, int resourceId) throws FetchException {
-        try {
-            Resource resource = entityManager.find(Resource.class, resourceId);
+    public Configuration getResourceConfiguration(Subject subject, int resourceId) {
+        Resource resource = entityManager.find(Resource.class, resourceId);
 
-            if (resource == null) {
-                throw new NoResultException("Cannot get live configuration for unknown resource [" + resourceId + "]");
-            }
-
-            if (!authorizationManager.canViewResource(subject, resource.getId())) {
-                throw new PermissionException("User [" + subject.getName()
-                    + "] does not have permission to view resource configuration for [" + resource + "]");
-            }
-
-            Configuration result = configurationManager.getResourceConfiguration(resourceId);
-
-            return result;
-        } catch (Exception e) {
-            throw new FetchException(e);
+        if (resource == null) {
+            throw new NoResultException("Cannot get live configuration for unknown resource [" + resourceId + "]");
         }
+
+        if (!authorizationManager.canViewResource(subject, resource.getId())) {
+            throw new PermissionException("User [" + subject.getName()
+                + "] does not have permission to view resource configuration for [" + resource + "]");
+        }
+
+        Configuration result = configurationManager.getResourceConfiguration(resourceId);
+
+        return result;
     }
 
     // Use new transaction because this only works if the resource in question has not
     // yet been loaded by Hibernate.  We want the query to return a non-proxied configuration,
     // this is critical for remote API use.
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public Configuration getResourceConfiguration(int resourceId) throws FetchException {
+    public Configuration getResourceConfiguration(int resourceId) {
         // Ensure that we return a non-proxied Configuration object that can survive after the
         // Hibernate session goes away.
         Query query = entityManager.createNamedQuery(Configuration.QUERY_GET_RESOURCE_CONFIG_BY_RESOURCE_ID);
@@ -292,8 +281,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     @Nullable
-    public ResourceConfigurationUpdate getLatestResourceConfigurationUpdate(Subject subject, int resourceId)
-        throws FetchException {
+    public ResourceConfigurationUpdate getLatestResourceConfigurationUpdate(Subject subject, int resourceId) {
         log.debug("Getting current resource configuration for resource [" + resourceId + "]");
 
         Resource resource;
@@ -372,7 +360,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     private ResourceConfigurationUpdate persistNewAgentReportedResourceConfiguration(Resource resource,
-        Configuration liveConfig) {
+        Configuration liveConfig) throws ConfigurationUpdateStillInProgressException {
         /*
         * NOTE: We pass the overlord, since this is a system side-effect.  here, the system
         * and *not* the user, is choosing to persist the most recent configuration because it was different
@@ -387,8 +375,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return update;
     }
 
-    public PluginConfigurationUpdate getLatestPluginConfigurationUpdate(Subject subject, int resourceId)
-        throws FetchException {
+    public PluginConfigurationUpdate getLatestPluginConfigurationUpdate(Subject subject, int resourceId) {
         log.debug("Getting current plugin configuration for resource [" + resourceId + "]");
 
         Resource resource;
@@ -419,7 +406,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return current;
     }
 
-    public boolean isResourceConfigurationUpdateInProgress(Subject subject, int resourceId) throws FetchException {
+    public boolean isResourceConfigurationUpdateInProgress(Subject subject, int resourceId) {
         boolean updateInProgress;
         try {
             Query query = entityManager.createNamedQuery(ResourceConfigurationUpdate.QUERY_FIND_LATEST_BY_RESOURCE_ID);
@@ -457,7 +444,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return updateInProgress;
     }
 
-    public boolean isGroupResourceConfigurationUpdateInProgress(Subject subject, int groupId) throws FetchException {
+    public boolean isGroupResourceConfigurationUpdateInProgress(Subject subject, int groupId) {
         boolean updateInProgress;
         try {
             Query query = entityManager
@@ -969,7 +956,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
     @Nullable
     public ResourceConfigurationUpdate updateResourceConfiguration(Subject subject, int resourceId,
-        Configuration newConfiguration) throws UpdateException {
+        Configuration newConfiguration) throws ResourceNotFoundException {
         // must do this in a separate transaction so it is committed prior to sending the agent request
         // (consider synchronizing to avoid the condition where someone calls this method twice quickly
         // in two different txs which would put two updates in INPROGRESS and cause havoc)
@@ -1029,9 +1016,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public ResourceConfigurationUpdate persistNewResourceConfigurationUpdateHistory(Subject subject, int resourceId,
         Configuration newConfiguration, ConfigurationUpdateStatus newStatus, String newSubject,
-        boolean isPartofGroupUpdate) throws ConfigurationUpdateStillInProgressException {
+        boolean isPartofGroupUpdate) throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException {
         // get the resource that we will be updating
-        Resource resource = entityManager.find(Resource.class, resourceId);
+        Resource resource = resourceManager.getResourceById(subject, resourceId);
 
         // make sure the user has the proper permissions to do this
         if (!authorizationManager.hasResourcePermission(subject, Permission.CONFIGURE, resource.getId())) {
@@ -1333,12 +1320,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return entityManager.find(Configuration.class, id);
     }
 
-    public Configuration getConfiguration(Subject subject, int configurationId) throws FetchException {
-        try {
-            return getConfigurationById(configurationId);
-        } catch (Exception e) {
-            throw new FetchException(e);
-        }
+    public Configuration getConfiguration(Subject subject, int configurationId) {
+        return getConfigurationById(configurationId);
     }
 
     public Configuration getConfigurationFromDefaultTemplate(ConfigurationDefinition definition) {
@@ -1361,68 +1344,65 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public int createGroupConfigurationUpdate(AbstractGroupConfigurationUpdate update) {
+    public int createGroupConfigurationUpdate(AbstractGroupConfigurationUpdate update) throws SchedulerException {
         entityManager.persist(update);
         return update.getId();
     }
 
     public int scheduleGroupPluginConfigurationUpdate(Subject subject, int compatibleGroupId,
-        Map<Integer, Configuration> memberPluginConfigurations) throws UpdateException {
-        //Wrapping all possible exceptions as UpdateException for remote interface compatibility
-        try {
-            if (memberPluginConfigurations == null) {
-                throw new IllegalArgumentException(
-                    "GroupPluginConfigurationUpdate must have non-null member configurations.");
-            }
+        Map<Integer, Configuration> memberPluginConfigurations) throws SchedulerException {
 
-            ResourceGroup group = getCompatibleGroupIfAuthorized(subject, compatibleGroupId);
-
-            ensureModifyResourcePermission(subject, group);
-
-            /*
-             * we need to create and persist the group in a new/separate transaction before the rest of the
-             * processing of this method; if we try to create and attach the PluginConfigurationUpdate children
-             * to the parent group before the group update is actually persisted, we'll get StaleStateExceptions
-             * from Hibernate because of our use of flush/clear (we're trying to update it before it actually
-             * actually exists)
-             */
-            GroupPluginConfigurationUpdate groupUpdate = new GroupPluginConfigurationUpdate(group, subject.getName());
-            int updateId = configurationManager.createGroupConfigurationUpdate(groupUpdate);
-
-            // Create and persist updates for each of the members.
-            for (Integer resourceId : memberPluginConfigurations.keySet()) {
-                Configuration memberResourceConfiguration = memberPluginConfigurations.get(resourceId);
-                Resource flyWeight = new Resource(resourceId);
-                PluginConfigurationUpdate memberUpdate = new PluginConfigurationUpdate(flyWeight,
-                    memberResourceConfiguration, subject.getName());
-                memberUpdate.setGroupConfigurationUpdate(groupUpdate);
-                entityManager.persist(memberUpdate);
-            }
-
-            JobDataMap jobDataMap = new JobDataMap();
-            jobDataMap.putAsString(AbstractGroupConfigurationUpdateJob.DATAMAP_INT_CONFIG_GROUP_UPDATE_ID, updateId);
-            jobDataMap.putAsString(AbstractGroupConfigurationUpdateJob.DATAMAP_INT_SUBJECT_ID, subject.getId());
-
-            /*
-             * acquire quartz objects and schedule the group update, but deferred the execution for 10 seconds
-             * because we need this transaction to complete so that the data is available when the quartz job triggers
-             */
-            JobDetail jobDetail = GroupPluginConfigurationUpdateJob.getJobDetail(group, subject, jobDataMap);
-            Trigger trigger = QuartzUtil.getFireOnceOffsetTrigger(jobDetail, 10000);
-            scheduler.scheduleJob(jobDetail, trigger);
-
-            log.debug("Scheduled plugin configuration update against compatibleGroup[id=" + compatibleGroupId + "]");
-
-            return updateId;
-        } catch (Exception e) {
-            throw new UpdateException(e);
+        if (memberPluginConfigurations == null) {
+            throw new IllegalArgumentException(
+                "GroupPluginConfigurationUpdate must have non-null member configurations.");
         }
+
+        ResourceGroup group = getCompatibleGroupIfAuthorized(subject, compatibleGroupId);
+
+        ensureModifyResourcePermission(subject, group);
+
+        /*
+         * we need to create and persist the group in a new/separate transaction before the rest of the
+         * processing of this method; if we try to create and attach the PluginConfigurationUpdate children
+         * to the parent group before the group update is actually persisted, we'll get StaleStateExceptions
+         * from Hibernate because of our use of flush/clear (we're trying to update it before it actually
+         * actually exists)
+         */
+        GroupPluginConfigurationUpdate groupUpdate = new GroupPluginConfigurationUpdate(group, subject.getName());
+        int updateId = configurationManager.createGroupConfigurationUpdate(groupUpdate);
+
+        // Create and persist updates for each of the members.
+        for (Integer resourceId : memberPluginConfigurations.keySet()) {
+            Configuration memberResourceConfiguration = memberPluginConfigurations.get(resourceId);
+            Resource flyWeight = new Resource(resourceId);
+            PluginConfigurationUpdate memberUpdate = new PluginConfigurationUpdate(flyWeight,
+                memberResourceConfiguration, subject.getName());
+            memberUpdate.setGroupConfigurationUpdate(groupUpdate);
+            entityManager.persist(memberUpdate);
+        }
+
+        JobDataMap jobDataMap = new JobDataMap();
+        jobDataMap.putAsString(AbstractGroupConfigurationUpdateJob.DATAMAP_INT_CONFIG_GROUP_UPDATE_ID, updateId);
+        jobDataMap.putAsString(AbstractGroupConfigurationUpdateJob.DATAMAP_INT_SUBJECT_ID, subject.getId());
+
+        /*
+         * acquire quartz objects and schedule the group update, but deferred the execution for 10 seconds
+         * because we need this transaction to complete so that the data is available when the quartz job triggers
+         */
+        JobDetail jobDetail = GroupPluginConfigurationUpdateJob.getJobDetail(group, subject, jobDataMap);
+        Trigger trigger = QuartzUtil.getFireOnceOffsetTrigger(jobDetail, 10000);
+        scheduler.scheduleJob(jobDetail, trigger);
+
+        log.debug("Scheduled plugin configuration update against compatibleGroup[id=" + compatibleGroupId + "]");
+
+        return updateId;
     }
 
     public int scheduleGroupResourceConfigurationUpdate(Subject subject, int compatibleGroupId,
-        Map<Integer, Configuration> newResourceConfigurationMap) throws UpdateException {
+        Map<Integer, Configuration> newResourceConfigurationMap) throws SchedulerException {
         if (newResourceConfigurationMap == null) {
-            throw new UpdateException("GroupResourceConfigurationUpdate must have non-null member configurations.");
+            throw new IllegalArgumentException(
+                "GroupResourceConfigurationUpdate must have non-null member configurations.");
         }
 
         ResourceGroup group = getCompatibleGroupIfAuthorized(subject, compatibleGroupId);
@@ -1463,11 +1443,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
          */
         JobDetail jobDetail = GroupResourceConfigurationUpdateJob.getJobDetail(group, subject, jobDataMap);
         Trigger trigger = QuartzUtil.getFireOnceOffsetTrigger(jobDetail, 10000);
-        try {
-            scheduler.scheduleJob(jobDetail, trigger);
-        } catch (SchedulerException e) {
-            throw new UpdateException("Could not schedule job: " + e.getMessage());
-        }
+        scheduler.scheduleJob(jobDetail, trigger);
 
         log.debug("Scheduled Resource configuration update against compatible ResourceGroup[id=" + compatibleGroupId
             + "].");
@@ -1803,14 +1779,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         propertiesQuery.executeUpdate();
     }
 
-    public GroupPluginConfigurationUpdate getGroupPluginConfigurationUpdate(Subject subject, int configurationUpdateId)
-        throws FetchException {
-        GroupPluginConfigurationUpdate update = null;
-        try {
-            update = getGroupPluginConfigurationById(configurationUpdateId);
-        } catch (Exception e) {
-            throw new FetchException(e);
-        }
+    public GroupPluginConfigurationUpdate getGroupPluginConfigurationUpdate(Subject subject, int configurationUpdateId) {
+        GroupPluginConfigurationUpdate update = getGroupPluginConfigurationById(configurationUpdateId);
 
         int groupId = update.getGroup().getId();
         if (authorizationManager.canViewGroup(subject, groupId) == false) {
@@ -1822,13 +1792,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     public GroupResourceConfigurationUpdate getGroupResourceConfigurationUpdate(Subject subject,
-        int configurationUpdateId) throws FetchException {
-        GroupResourceConfigurationUpdate update = null;
-        try {
-            update = getGroupResourceConfigurationById(configurationUpdateId);
-        } catch (Exception e) {
-            throw new FetchException(e);
-        }
+        int configurationUpdateId) {
+        GroupResourceConfigurationUpdate update = getGroupResourceConfigurationById(configurationUpdateId);
 
         int groupId = update.getGroup().getId();
         if (authorizationManager.canViewGroup(subject, groupId) == false) {

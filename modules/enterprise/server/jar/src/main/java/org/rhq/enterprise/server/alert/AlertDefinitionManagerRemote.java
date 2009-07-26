@@ -28,7 +28,6 @@ import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.exception.FetchException;
 
 @SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
 @WebService
@@ -37,8 +36,7 @@ public interface AlertDefinitionManagerRemote {
     @WebMethod
     AlertDefinition getAlertDefinition(//
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "alertDefinitionId") int alertDefinitionId) //
-        throws FetchException;
+        @WebParam(name = "alertDefinitionId") int alertDefinitionId);
 
     @WebMethod
     PageList<AlertDefinition> findAlertDefinitions( //

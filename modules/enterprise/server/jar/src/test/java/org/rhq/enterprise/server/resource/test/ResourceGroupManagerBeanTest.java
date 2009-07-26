@@ -30,7 +30,6 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.server.authz.PermissionException;
-import org.rhq.enterprise.server.exception.UpdateException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupAlreadyExistsException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
@@ -112,10 +111,8 @@ public class ResourceGroupManagerBeanTest extends AbstractEJB3Test {
                 ResourceGroup oldGroup = resourceGroupManager.getResourceGroupById(testSubject, id, null);
                 oldGroup.setDescription("new description goes here ");
                 resourceGroupManager.updateResourceGroup(testSubject, oldGroup);
-            } catch (UpdateException e) {
-                if (e.getCause() instanceof ResourceGroupAlreadyExistsException) {
-                    fail("ResourceGroupAlreadyExistsException should NOT have been thrown.");
-                }
+            } catch (ResourceGroupAlreadyExistsException rgaee) {
+                fail("ResourceGroupAlreadyExistsException should NOT have been thrown.");
             }
         } finally {
             getTransactionManager().rollback();
@@ -148,54 +145,8 @@ public class ResourceGroupManagerBeanTest extends AbstractEJB3Test {
                 ResourceGroup oldGroup = resourceGroupManager.getResourceGroupById(testSubject, id, null);
                 oldGroup.setName("newGroup1");
                 resourceGroupManager.updateResourceGroup(testSubject, oldGroup);
-            } catch (UpdateException e) {
-                if (e.getCause() instanceof ResourceGroupAlreadyExistsException) {
-                    fail("ResourceGroupAlreadyExistsException should NOT have been thrown.");
-                }
-            }
-        } finally {
-            getTransactionManager().rollback();
-        }
-    }
-
-    //   @Test(groups = "integration.session")
-    //   When I step through a test like this in the UI it works fine (i.e. update a resource to have the same name as an existing resource)
-    //   I'm not sure why the test throws a NoSuchMethodException
-    public void testUpdateGroupNameFail() throws Exception {
-        getTransactionManager().begin();
-        try {
-            EntityManager em = getEntityManager();
-
-            /* bootstrap */
-            ResourceType type = new ResourceType("type", "plugin", ResourceCategory.PLATFORM, null);
-            Subject testSubject = SessionTestHelper.createNewSubject(em, "testSubject");
-            createSession(testSubject);
-            Role testRole = SessionTestHelper.createNewRoleForSubject(em, testSubject, "testRole");
-            testRole.addPermission(Permission.MANAGE_INVENTORY);
-            ResourceGroup group1 = new ResourceGroup("group1", type);
-            ResourceGroup group2 = new ResourceGroup("group2", type);
-            group1.addRole(testRole);
-            group2.addRole(testRole);
-            em.persist(type);
-            em.persist(group1);
-            em.persist(group2);
-            em.flush();
-            testRole.addResourceGroup(group1);
-            testRole.addResourceGroup(group2);
-            em.merge(testRole);
-            em.flush();
-
-            int group1Id = group1.getId();
-            try {
-                ResourceGroup group1Retrieved = resourceGroupManager.getResourceGroupById(testSubject, group1Id, null);
-                group1Retrieved.setName("group2");
-                group1Retrieved.setDescription("new description");
-                resourceGroupManager.updateResourceGroup(testSubject, group1Retrieved);
-                fail("ResourceGroupAlreadyExistsException should have been throw");
-            } catch (UpdateException e) {
-                if (e.getCause() instanceof ResourceGroupAlreadyExistsException) {
-                    // expected
-                }
+            } catch (ResourceGroupAlreadyExistsException rgaee) {
+                fail("ResourceGroupAlreadyExistsException should NOT have been thrown.");
             }
         } finally {
             getTransactionManager().rollback();

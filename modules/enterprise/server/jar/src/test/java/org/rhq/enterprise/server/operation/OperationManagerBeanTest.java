@@ -58,7 +58,6 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.exception.ExceptionPackage;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
-import org.rhq.enterprise.server.exception.UpdateException;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
@@ -424,7 +423,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
             operationManager.cancelOperationHistory(superuser, history.getId(), false);
             assert false : "Should not have been able to cancel an operation that is not INPROGRESS";
         } catch (EJBException expected) {
-            assert expected.getCause() instanceof UpdateException;
+            // expected
         }
 
         // purge the group history
@@ -1221,7 +1220,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
             operationManager.cancelOperationHistory(superuser, history.getId(), false);
             assert false : "Should not have been able to cancel an operation that is not INPROGRESS";
         } catch (EJBException expected) {
-            assert expected.getCause() instanceof UpdateException;
+            // expected
         }
 
         operationManager.deleteOperationHistory(superuser, history.getId(), false);

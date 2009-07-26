@@ -33,10 +33,6 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.exception.CreateException;
-import org.rhq.enterprise.server.exception.DeleteException;
-import org.rhq.enterprise.server.exception.FetchException;
-import org.rhq.enterprise.server.exception.UpdateException;
 
 /**
  * A manager that provides methods for creating, updating, deleting, and querying {@link ResourceGroup}s.
@@ -120,24 +116,24 @@ public interface ResourceGroupManagerLocal {
     static public final String DATA_EXPLICIT_RESOURCES = "explicitResources";
     static public final String DATA_ROLES = "roles";
 
-    void addResourcesToGroup(Subject subject, int groupId, int[] resourceIds) throws UpdateException;
+    void addResourcesToGroup(Subject subject, int groupId, int[] resourceIds);
 
-    ResourceGroup createResourceGroup(Subject user, ResourceGroup group) throws CreateException;
+    ResourceGroup createResourceGroup(Subject user, ResourceGroup group);
 
-    void deleteResourceGroup(Subject user, int groupId) throws DeleteException;
+    void deleteResourceGroup(Subject user, int groupId) throws ResourceGroupNotFoundException,
+        ResourceGroupDeleteException;
 
-    ResourceGroup getResourceGroup(Subject subject, int groupId) throws FetchException;
+    ResourceGroup getResourceGroup(Subject subject, int groupId);
 
-    ResourceGroupComposite getResourceGroupComposite(Subject subject, int groupId) throws FetchException;
+    ResourceGroupComposite getResourceGroupComposite(Subject subject, int groupId);
 
-    PageList<ResourceGroup> findResourceGroupsForRole(Subject subject, int roleId, PageControl pc)
-        throws FetchException;
+    PageList<ResourceGroup> findResourceGroupsForRole(Subject subject, int roleId, PageControl pc);
 
-    void removeResourcesFromGroup(Subject subject, int groupId, int[] resourceIds) throws UpdateException;
+    void removeResourcesFromGroup(Subject subject, int groupId, int[] resourceIds);
 
-    void setRecursive(Subject subject, int groupId, boolean isRecursive) throws UpdateException;
+    void setRecursive(Subject subject, int groupId, boolean isRecursive);
 
-    ResourceGroup updateResourceGroup(Subject subject, ResourceGroup group) throws UpdateException;
+    ResourceGroup updateResourceGroup(Subject subject, ResourceGroup group);
 
     PageList<ResourceGroup> findResourceGroupsByCriteria(Subject subject, ResourceGroupCriteria criteria);
 }

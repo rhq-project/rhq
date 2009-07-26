@@ -73,7 +73,6 @@ import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
-import org.rhq.enterprise.server.exception.FetchException;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 
@@ -346,8 +345,7 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
         return buckets;
     }
 
-    public EventSeverity[] getSeverityBuckets(Subject subject, int resourceId, long begin, long end, int numBuckets)
-        throws FetchException {
+    public EventSeverity[] getSeverityBuckets(Subject subject, int resourceId, long begin, long end, int numBuckets) {
         if (authorizationManager.canViewResource(subject, resourceId) == false) {
             throw new PermissionException("User [" + subject.getName()
                 + "] does not have permission to view event buckets for resource[id=" + resourceId + "]");
@@ -381,7 +379,7 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
     }
 
     public EventSeverity[] getSeverityBucketsForCompGroup(Subject subject, int groupId, long begin, long end,
-        int numBuckets) throws FetchException {
+        int numBuckets) {
 
         if (authorizationManager.canViewGroup(subject, groupId) == false) {
             throw new PermissionException("User [" + subject.getName()
@@ -672,7 +670,7 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
     }
 
     public PageList<EventComposite> findEventsForResource(Subject subject, int resourceId, long startDate,
-        long endDate, EventSeverity severity, String source, String detail, PageControl pc) throws FetchException {
+        long endDate, EventSeverity severity, String source, String detail, PageControl pc) {
 
         if (authorizationManager.canViewResource(subject, resourceId) == false) {
             throw new PermissionException("User [" + subject.getName()
@@ -686,7 +684,7 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
     }
 
     public PageList<EventComposite> findEventsForCompGroup(Subject subject, int groupId, long begin, long endDate,
-        EventSeverity severity, String source, String searchString, PageControl pc) throws FetchException {
+        EventSeverity severity, String source, String searchString, PageControl pc) {
 
         if (authorizationManager.canViewGroup(subject, groupId) == false) {
             throw new PermissionException("User [" + subject.getName()
@@ -699,8 +697,7 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
     }
 
     public PageList<EventComposite> findEventsForAutoGroup(Subject subject, int parentResourceId, int resourceTypeId,
-        long begin, long end, EventSeverity severity, String source, String detail, PageControl pc)
-        throws FetchException {
+        long begin, long end, EventSeverity severity, String source, String detail, PageControl pc) {
 
         EventSeverity[] severities = { severity };
 

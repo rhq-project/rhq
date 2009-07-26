@@ -45,11 +45,8 @@ import org.rhq.core.domain.operation.composite.ResourceOperationScheduleComposit
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.exception.DeleteException;
-import org.rhq.enterprise.server.exception.FetchException;
 import org.rhq.enterprise.server.exception.ScheduleException;
 import org.rhq.enterprise.server.exception.UnscheduleException;
-import org.rhq.enterprise.server.exception.UpdateException;
 
 @Local
 public interface OperationManagerLocal {
@@ -479,9 +476,8 @@ public interface OperationManagerLocal {
      *                          even if the method failed to notify the agent(s) that the operation should be canceled.
      *                          If <code>false</code>, this method will not update the history status unless it could
      *                          successfully tell the agent(s) to cancel the operation.
-     * @throws UpdateException
      */
-    void cancelOperationHistory(Subject subject, int historyId, boolean ignoreAgentErrors) throws UpdateException;
+    void cancelOperationHistory(Subject subject, int historyId, boolean ignoreAgentErrors);
 
     /**
      * Purges the history from the database. Doing this loses all audit trails of the invoked operation. This can handle
@@ -496,9 +492,8 @@ public interface OperationManagerLocal {
      *                        deleted. You normally do not want to purge operation histories until they are completed,
      *                        so you normally pass in <code>false</code>, but a user might want to force it to be
      *                        purged, in which case the UI will want to pass in <code>true</code>
-     * @throws DeleteException
      */
-    void deleteOperationHistory(Subject subject, int historyId, boolean purgeInProgress) throws DeleteException;
+    void deleteOperationHistory(Subject subject, int historyId, boolean purgeInProgress);
 
     /**
      * Returns the list of completed operation histories for the given resource. This will return all items that are no
@@ -519,7 +514,7 @@ public interface OperationManagerLocal {
      * #see {@link OperationManagerRemote#findOperationHistories
      */
     PageList<ResourceOperationHistory> findOperationHistories(Subject subject, ResourceOperationHistory criteria,
-        PageControl pc) throws FetchException;
+        PageControl pc);
 
     /**
      * Returns the list of pending operation histories for the given resource. This will return all items that are still
@@ -538,12 +533,12 @@ public interface OperationManagerLocal {
     /**
      * #see {@link OperationManagerRemote#getOperationHistoryByHistoryId
      */
-    OperationHistory getOperationHistoryByHistoryId(Subject subject, int historyId) throws FetchException;
+    OperationHistory getOperationHistoryByHistoryId(Subject subject, int historyId);
 
     /**
      * #see {@link OperationManagerRemote#getOperationHistoryByJobId
      */
-    OperationHistory getOperationHistoryByJobId(Subject subject, String historyJobId) throws FetchException;
+    OperationHistory getOperationHistoryByJobId(Subject subject, String historyJobId);
 
     /**
      * Returns the list of scheduled operations for the given resource. This only includes scheduled jobs on the

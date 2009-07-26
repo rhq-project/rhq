@@ -29,7 +29,6 @@ import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.exception.FetchException;
 
 /**
  * A manager for {@link MeasurementDefinition}s.
@@ -84,7 +83,7 @@ public interface MeasurementDefinitionManagerLocal {
     MeasurementDefinition getMeasurementDefinition(Subject subject, int definitionId);
 
     PageList<MeasurementDefinition> findMeasurementDefinitions(Subject sessionSubject, MeasurementDefinition criteria,
-        PageControl pc) throws FetchException;
+        PageControl pc);
 
     PageList<MeasurementDefinition> findMeasurementDefinitionsByCriteria(Subject subject,
         MeasurementDefinitionCriteria criteria);

@@ -54,10 +54,6 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
-import org.rhq.enterprise.server.exception.CreateException;
-import org.rhq.enterprise.server.exception.DeleteException;
-import org.rhq.enterprise.server.exception.FetchException;
-import org.rhq.enterprise.server.exception.UpdateException;
 import org.rhq.enterprise.server.plugin.content.ContentSourcePluginContainer;
 
 @Stateless
@@ -74,7 +70,7 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
     private ContentSourceManagerLocal contentSourceManager;
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public void deleteChannel(Subject subject, int channelId) throws DeleteException {
+    public void deleteChannel(Subject subject, int channelId) {
         log.debug("User [" + subject + "] is deleting channel [" + channelId + "]");
 
         // bulk delete m-2-m mappings to the doomed channel
@@ -120,7 +116,7 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public Channel getChannel(Subject subject, int channelId) throws FetchException {
+    public Channel getChannel(Subject subject, int channelId) {
         Channel channel = entityManager.find(Channel.class, channelId);
 
         if ((channel != null) && (channel.getChannelContentSources() != null)) {
@@ -285,18 +281,14 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public Channel createChannel(Subject subject, Channel channel) throws CreateException {
-        try {
-            validateChannel(channel);
+    public Channel createChannel(Subject subject, Channel channel) throws ChannelException {
+        validateChannel(channel);
 
-            log.debug("User [" + subject + "] is creating channel [" + channel + "]");
-            entityManager.persist(channel);
-            log.debug("User [" + subject + "] created channel [" + channel + "]");
+        log.debug("User [" + subject + "] is creating channel [" + channel + "]");
+        entityManager.persist(channel);
+        log.debug("User [" + subject + "] created channel [" + channel + "]");
 
-            return channel; // now has the ID set
-        } catch (Exception e) {
-            throw new CreateException(e);
-        }
+        return channel; // now has the ID set
     }
 
     @SuppressWarnings("unchecked")
@@ -359,25 +351,20 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public void addPackageVersionsToChannel(Subject subject, int channelId, int[] packageVersionIds)
-        throws UpdateException {
-        try {
-            Channel channel = entityManager.find(Channel.class, channelId);
+    public void addPackageVersionsToChannel(Subject subject, int channelId, int[] packageVersionIds) {
+        Channel channel = entityManager.find(Channel.class, channelId);
 
-            for (int packageVersionId : packageVersionIds) {
-                PackageVersion packageVersion = entityManager.find(PackageVersion.class, packageVersionId);
+        for (int packageVersionId : packageVersionIds) {
+            PackageVersion packageVersion = entityManager.find(PackageVersion.class, packageVersionId);
 
-                ChannelPackageVersion mapping = new ChannelPackageVersion(channel, packageVersion);
-                entityManager.persist(mapping);
-            }
-        } catch (Exception e) {
-            throw new UpdateException(e);
+            ChannelPackageVersion mapping = new ChannelPackageVersion(channel, packageVersion);
+            entityManager.persist(mapping);
         }
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public void removeContentSourcesFromChannel(Subject subject, int channelId, int[] contentSourceIds)
-        throws Exception {
+        throws ChannelException {
         Channel channel = getChannel(subject, channelId);
 
         log.debug("User [" + subject + "] is removing content sources from channel [" + channel + "]");
@@ -525,22 +512,17 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public PageList<PackageVersion> findPackageVersionsInChannel(Subject subject, int channelId,
-        PackageVersion criteria, PageControl pc) throws FetchException {
+        PackageVersion criteria, PageControl pc) {
+        QueryGenerator generator = new QueryGenerator(criteria, pc);
+        generator.addRelationshipFilter("channelPackageVersions", "channel.id = ?", channelId);
 
-        try {
-            QueryGenerator generator = new QueryGenerator(criteria, pc);
-            generator.addRelationshipFilter("channelPackageVersions", "channel.id = ?", channelId);
+        Query query = generator.getQuery(entityManager);
+        Query countQuery = generator.getCountQuery(entityManager);
 
-            Query query = generator.getQuery(entityManager);
-            Query countQuery = generator.getCountQuery(entityManager);
+        long count = (Long) countQuery.getSingleResult();
+        List<PackageVersion> packageVersions = query.getResultList();
 
-            long count = (Long) countQuery.getSingleResult();
-            List<PackageVersion> packageVersions = query.getResultList();
-
-            return new PageList<PackageVersion>(packageVersions, (int) count, pc);
-        } catch (Exception e) {
-            throw new FetchException(e.getMessage());
-        }
+        return new PageList<PackageVersion>(packageVersions, (int) count, pc);
     }
 
 }

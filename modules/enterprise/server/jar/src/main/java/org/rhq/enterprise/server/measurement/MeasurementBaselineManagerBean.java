@@ -55,7 +55,6 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.cloud.StatusManagerLocal;
-import org.rhq.enterprise.server.exception.FetchException;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
@@ -468,13 +467,8 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
             throw new BaselineCreationException("Baseline calculation is only valid for a dynamic measurement");
         }
 
-        MeasurementAggregate agg;
-
-        try {
-            agg = dataManager.getAggregate(subjectManager.getOverlord(), schedule.getId(), startDate, endDate);
-        } catch (FetchException e) {
-            throw new DataNotAvailableException(e);
-        }
+        MeasurementAggregate agg = dataManager.getAggregate(subjectManager.getOverlord(), schedule.getId(), startDate,
+            endDate);
 
         // attach the entity, so we can find the baseline
         schedule = entityManager.merge(schedule);
@@ -519,13 +513,8 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
     public MeasurementBaseline calculateBaseline(int groupId, int definitionId, boolean userEntered, long startDate,
         long endDate, boolean save) throws DataNotAvailableException, BaselineCreationException {
 
-        MeasurementAggregate agg = null;
-
-        try {
-            agg = dataManager.getAggregate(subjectManager.getOverlord(), groupId, definitionId, startDate, endDate);
-        } catch (FetchException e) {
-            throw new DataNotAvailableException(e);
-        }
+        MeasurementAggregate agg = dataManager.getAggregate(subjectManager.getOverlord(), groupId, definitionId,
+            startDate, endDate);
 
         Subject overlord = subjectManager.getOverlord();
         List<Integer> resourceIds = resourceManager.findImplicitResourceIdsByResourceGroup(groupId);
@@ -582,19 +571,15 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
     }
 
     @SuppressWarnings("unchecked")
-    public List<MeasurementBaseline> findBaselinesForResource(Subject subject, int resourceId) throws FetchException {
-        try {
-            if (authorizationManager.canViewResource(subject, resourceId) == false) {
-                throw new PermissionException("User[" + subject.getName()
-                    + " ] does not have permission to view baselines for resource[id=" + resourceId + "]");
-            }
-
-            Query query = entityManager.createNamedQuery(MeasurementBaseline.QUERY_FIND_BY_RESOURCE);
-            query.setParameter("resourceId", resourceId);
-            List<MeasurementBaseline> results = query.getResultList();
-            return results;
-        } catch (Exception e) {
-            throw new FetchException(e);
+    public List<MeasurementBaseline> findBaselinesForResource(Subject subject, int resourceId) {
+        if (authorizationManager.canViewResource(subject, resourceId) == false) {
+            throw new PermissionException("User[" + subject.getName()
+                + " ] does not have permission to view baselines for resource[id=" + resourceId + "]");
         }
+
+        Query query = entityManager.createNamedQuery(MeasurementBaseline.QUERY_FIND_BY_RESOURCE);
+        query.setParameter("resourceId", resourceId);
+        List<MeasurementBaseline> results = query.getResultList();
+        return results;
     }
 }

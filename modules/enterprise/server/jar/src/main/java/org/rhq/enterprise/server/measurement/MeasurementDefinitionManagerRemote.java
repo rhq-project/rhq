@@ -29,7 +29,6 @@ import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.exception.FetchException;
 
 @SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
 @WebService
@@ -45,8 +44,7 @@ public interface MeasurementDefinitionManagerRemote {
     PageList<MeasurementDefinition> findMeasurementDefinitions(//
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "criteria") MeasurementDefinition criteria, //
-        @WebParam(name = "pageControl") PageControl pc) //
-        throws FetchException;
+        @WebParam(name = "pageControl") PageControl pc);
 
     @WebMethod
     PageList<MeasurementDefinition> findMeasurementDefinitionsByCriteria(//

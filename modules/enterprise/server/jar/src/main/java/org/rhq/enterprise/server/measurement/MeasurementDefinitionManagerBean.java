@@ -45,7 +45,6 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.QueryGenerator;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.exception.FetchException;
 
 /**
  * A manager for {@link MeasurementDefinition}s.
@@ -139,21 +138,16 @@ public class MeasurementDefinitionManagerBean implements MeasurementDefinitionMa
 
     @SuppressWarnings("unchecked")
     public PageList<MeasurementDefinition> findMeasurementDefinitions(Subject subject, MeasurementDefinition criteria,
-        PageControl pc) throws FetchException {
+        PageControl pc) {
+        QueryGenerator generator = new QueryGenerator(criteria, pc);
 
-        try {
-            QueryGenerator generator = new QueryGenerator(criteria, pc);
+        Query query = generator.getQuery(entityManager);
+        Query countQuery = generator.getCountQuery(entityManager);
 
-            Query query = generator.getQuery(entityManager);
-            Query countQuery = generator.getCountQuery(entityManager);
+        long count = (Long) countQuery.getSingleResult();
+        List<MeasurementDefinition> alertDefinitions = query.getResultList();
 
-            long count = (Long) countQuery.getSingleResult();
-            List<MeasurementDefinition> alertDefinitions = query.getResultList();
-
-            return new PageList<MeasurementDefinition>(alertDefinitions, (int) count, pc);
-        } catch (Exception e) {
-            throw new FetchException(e.getMessage());
-        }
+        return new PageList<MeasurementDefinition>(alertDefinitions, (int) count, pc);
     }
 
     @SuppressWarnings("unchecked")

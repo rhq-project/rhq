@@ -39,7 +39,6 @@ import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.action.BaseValidatorForm;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
-import org.rhq.enterprise.server.exception.UpdateException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupUpdateException;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -122,17 +121,10 @@ public class AddGroupResourcesAction extends BaseAction {
             RequestUtils.setConfirmation(request, "resource.group.inventory.confirm.AddResources");
 
             return returnSuccess(request, mapping, forwardParams);
-        } catch (UpdateException ue) {
-            Throwable cause = ue.getCause();
-            if (cause instanceof ResourceGroupUpdateException) {
-                log.debug("group update failed:", cause);
-                RequestUtils.setError(request, "resource.group.inventory.error.GroupNotFound");
-                return returnFailure(request, mapping, forwardParams);
-            } else { // if (cause instanceof ResourceGroupUpdateException) AND CATCH ALL HANDLER 
-                log.debug("group update failed:", cause);
-                RequestUtils.setError(request, "resource.group.inventory.error.GroupUpdateError", cause.getMessage());
-                return returnFailure(request, mapping, forwardParams);
-            }
+        } catch (ResourceGroupUpdateException rgue) {
+            log.debug("group update failed:", rgue);
+            RequestUtils.setError(request, "resource.group.inventory.error.GroupUpdateError", rgue.getMessage());
+            return returnFailure(request, mapping, forwardParams);
         }
     }
 }

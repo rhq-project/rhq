@@ -29,8 +29,6 @@ import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.criteria.RoleCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.exception.FetchException;
-import org.rhq.enterprise.server.exception.UpdateException;
 
 /**
  * The remote interface to the role manager, providing a restricted set of Role Management services. that provides the API to manipulate the security rules within the JON Server.
@@ -67,15 +65,13 @@ public interface RoleManagerRemote {
     PageList<Role> findSubjectAssignedRoles( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "subjectId") int subjectId, //
-        @WebParam(name = "pageControl") PageControl pc) //
-        throws FetchException;
+        @WebParam(name = "pageControl") PageControl pc);
 
     @WebMethod
     PageList<Role> findSubjectUnassignedRoles( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "subjectId") int subjectId, //
-        @WebParam(name = "pageControl") PageControl pc) //
-        throws FetchException;
+        @WebParam(name = "pageControl") PageControl pc);
 
     /**
      * Assigns a set of roles to a subject which authorizes the subject to do anything the roles permit.
@@ -88,8 +84,7 @@ public interface RoleManagerRemote {
     void addRolesToSubject( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "subjectId") int subjectId, //
-        @WebParam(name = "roleIds") int[] roleIds) //
-        throws UpdateException;
+        @WebParam(name = "roleIds") int[] roleIds);
 
     /**
      * Disassociates particular roles from a subject. Once complete, the subject will no longer be authorized with the
@@ -103,8 +98,7 @@ public interface RoleManagerRemote {
     void removeRolesFromSubject( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "subjectId") int subjectId, //
-        @WebParam(name = "roleIds") int[] roleIds) //
-        throws UpdateException;
+        @WebParam(name = "roleIds") int[] roleIds);
 
     /**
      * Assigns a set of subjects to a role which authorizes the subjects to do anything the role permits.
@@ -117,8 +111,7 @@ public interface RoleManagerRemote {
     void addSubjectsToRole( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "roleId") int roleId, //
-        @WebParam(name = "subjectIds") int[] subjectIds) //
-        throws UpdateException;
+        @WebParam(name = "subjectIds") int[] subjectIds);
 
     /**
      * Dissociate particular subjects from a role.
@@ -131,8 +124,7 @@ public interface RoleManagerRemote {
     void removeSubjectsFromRole( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "roleId") int roleId, //
-        @WebParam(name = "subjectIds") int[] subjectIds) //
-        throws UpdateException;
+        @WebParam(name = "subjectIds") int[] subjectIds);
 
     /**
      * Adds the given resource groups to the given role.
@@ -145,15 +137,13 @@ public interface RoleManagerRemote {
     void addResourceGroupsToRole( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "roleId") int roleId, //
-        @WebParam(name = "pendingGroupIds") int[] pendingGroupIds) //
-        throws UpdateException;
+        @WebParam(name = "pendingGroupIds") int[] pendingGroupIds);
 
     @WebMethod
     void addRolesToResourceGroup( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "groupId") int groupId, //
-        @WebParam(name = "roleIds") int[] roleIds) //
-        throws UpdateException;
+        @WebParam(name = "roleIds") int[] roleIds);
 
     /**
      * Removes the given resource groups from the given role.
@@ -166,15 +156,13 @@ public interface RoleManagerRemote {
     void removeResourceGroupsFromRole( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "roleId") int roleId, //
-        @WebParam(name = "groupIds") int[] groupIds) //
-        throws UpdateException;
+        @WebParam(name = "groupIds") int[] groupIds);
 
     @WebMethod
     void removeRolesFromResourceGroup( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "groupId") int groupId, //
-        @WebParam(name = "roleIds") int[] roleIds) //
-        throws UpdateException;
+        @WebParam(name = "roleIds") int[] roleIds);
 
     @WebMethod
     PageList<Role> findRolesByCriteria( //

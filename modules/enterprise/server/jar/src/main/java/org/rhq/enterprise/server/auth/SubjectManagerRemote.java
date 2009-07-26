@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.auth;
 
+import javax.ejb.CreateException;
 import javax.ejb.Remote;
 import javax.jws.WebMethod;
 import javax.jws.WebParam;
@@ -29,10 +30,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
-import org.rhq.enterprise.server.exception.CreateException;
-import org.rhq.enterprise.server.exception.DeleteException;
 import org.rhq.enterprise.server.exception.LoginException;
-import org.rhq.enterprise.server.exception.UpdateException;
 
 @SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
 @WebService
@@ -45,15 +43,12 @@ public interface SubjectManagerRemote {
      * @param  subject  The logged in user's subject.
      * @param  username The user whose password will be changed
      * @param  password The new password for the user
-     *
-     * @throws UpdateException if the password could not be changed
      */
     @WebMethod
     void changePassword( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "username") String username, //
-        @WebParam(name = "password") String password) //
-        throws UpdateException;
+        @WebParam(name = "password") String password);
 
     /**
      * Creates a new principal (username and password) in the internal database. The password will be encoded before
@@ -99,8 +94,7 @@ public interface SubjectManagerRemote {
     @WebMethod
     void deleteSubjects( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "subjectIds") int[] subjectIds) //
-        throws DeleteException;
+        @WebParam(name = "subjectIds") int[] subjectIds);
 
     /**
      * Looks up the existing of a subject by the given username.
@@ -151,8 +145,7 @@ public interface SubjectManagerRemote {
     @WebMethod
     Subject updateSubject( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "subjectToModify") Subject subjectToModify) //
-        throws UpdateException;
+        @WebParam(name = "subjectToModify") Subject subjectToModify);
 
     @WebMethod
     PageList<Subject> findSubjectsByCriteria(//

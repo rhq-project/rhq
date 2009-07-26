@@ -37,7 +37,6 @@ import org.rhq.core.domain.event.composite.EventComposite;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.exception.FetchException;
 
 /**
  * Interface for the Event Manager
@@ -165,14 +164,13 @@ public interface EventManagerLocal {
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     public PageList<EventComposite> findEventsForResource(Subject subject, int resourceId, long startDate,
-        long endDate, EventSeverity severity, String source, String detail, PageControl pc) throws FetchException;
+        long endDate, EventSeverity severity, String source, String detail, PageControl pc);
 
     PageList<EventComposite> findEventsForAutoGroup(Subject subject, int parentResourceId, int resourceTypeId,
-        long begin, long end, EventSeverity severity, String source, String detail, PageControl pc)
-        throws FetchException;
+        long begin, long end, EventSeverity severity, String source, String detail, PageControl pc);
 
     public PageList<EventComposite> findEventsForCompGroup(Subject subject, int groupId, long begin, long endDate,
-        EventSeverity severity, String source, String searchString, PageControl pc) throws FetchException;
+        EventSeverity severity, String source, String searchString, PageControl pc);
 
     /**
      * Provide the buckets for a timeline with the (most severe) severity for each bucket.
@@ -184,8 +182,7 @@ public interface EventManagerLocal {
      * @return
      * @throws FetchException TODO
      */
-    public EventSeverity[] getSeverityBuckets(Subject subject, int resourceId, long begin, long end, int numBuckets)
-        throws FetchException;
+    public EventSeverity[] getSeverityBuckets(Subject subject, int resourceId, long begin, long end, int numBuckets);
 
     /**
      * Provide the buckets for a timeline with the (most severe) severity for each bucket.
@@ -198,7 +195,7 @@ public interface EventManagerLocal {
      * @throws FetchException TODO
      */
     public EventSeverity[] getSeverityBucketsForCompGroup(Subject subject, int groupId, long begin, long end,
-        int numBuckets) throws FetchException;
+        int numBuckets);
 
     PageList<Event> findEventsByCriteria(Subject subject, EventCriteria criteria);
 }

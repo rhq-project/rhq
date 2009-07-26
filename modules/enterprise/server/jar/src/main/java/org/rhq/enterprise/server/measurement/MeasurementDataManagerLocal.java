@@ -37,7 +37,6 @@ import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowCo
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.enterprise.server.exception.FetchException;
 import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
 
 /**
@@ -166,11 +165,9 @@ public interface MeasurementDataManagerLocal {
      * @throws FetchException if the schedule does not reference numerical data or if the user is not allowed to view
      *                        the {@link Resource} corresponding to this scheduleId
      */
-    MeasurementAggregate getAggregate(Subject subject, int scheduleId, long startTime, long endTime)
-        throws FetchException;
+    MeasurementAggregate getAggregate(Subject subject, int scheduleId, long startTime, long endTime);
 
-    MeasurementAggregate getAggregate(Subject subject, int groupId, int definitionId, long startTime, long endTime)
-        throws FetchException;
+    MeasurementAggregate getAggregate(Subject subject, int groupId, int definitionId, long startTime, long endTime);
 
     /**
      * Return all known trait data for the passed schedule, defined by resourceId and definitionId
@@ -180,10 +177,9 @@ public interface MeasurementDataManagerLocal {
      *
      * @return a List of {@link MeasurementDataTrait} objects.
      */
-    List<MeasurementDataTrait> findTraits(Subject subject, int resourceId, int definitionId) throws FetchException;
+    List<MeasurementDataTrait> findTraits(Subject subject, int resourceId, int definitionId);
 
-    List<MeasurementDataTrait> findCurrentTraitsForResource(Subject subject, int resourceId, DisplayType displayType)
-        throws FetchException;
+    List<MeasurementDataTrait> findCurrentTraitsForResource(Subject subject, int resourceId, DisplayType displayType);
 
     /**
      * Get live metrics for a given MeasurementSchedule
@@ -192,7 +188,7 @@ public interface MeasurementDataManagerLocal {
      *
      * @return MeasurementData for this Schedule
      */
-    Set<MeasurementData> findLiveData(Subject subject, int resourceId, int[] definitionIds) throws FetchException;
+    Set<MeasurementData> findLiveData(Subject subject, int resourceId, int[] definitionIds);
 
     /**
      * Returns a list of numeric data point lists for the given compatible group - one per specified measurement
@@ -210,9 +206,8 @@ public interface MeasurementDataManagerLocal {
      * @return
      */
     List<List<MeasurementDataNumericHighLowComposite>> findDataForCompatibleGroup(Subject subject, int groupId,
-        int definitionId, long beginTime, long endTime, int numPoints, boolean groupAggregateOnly)
-        throws FetchException;
+        int definitionId, long beginTime, long endTime, int numPoints, boolean groupAggregateOnly);
 
     List<List<MeasurementDataNumericHighLowComposite>> findDataForResource(Subject subject, int resourceId,
-        int[] definitionIds, long beginTime, long endTime, int numPoints) throws FetchException;
+        int[] definitionIds, long beginTime, long endTime, int numPoints);
 }

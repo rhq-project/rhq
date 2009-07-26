@@ -82,7 +82,6 @@ import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
-import org.rhq.enterprise.server.exception.FetchException;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
 import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
@@ -423,8 +422,8 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
 
         Map<Integer, Integer> alerts = alertManager.getAlertCountForSchedules(begin, end, scheduleIds);
 
-        List<MeasurementDefinition> definitions = measurementDefinitionManager.findMeasurementDefinitionsByResourceType(
-            subject, resourceTypeId, DataType.MEASUREMENT, null);
+        List<MeasurementDefinition> definitions = measurementDefinitionManager
+            .findMeasurementDefinitionsByResourceType(subject, resourceTypeId, DataType.MEASUREMENT, null);
         Map<Integer, MeasurementDefinition> defMap = new HashMap<Integer, MeasurementDefinition>(definitions.size());
         for (MeasurementDefinition def : definitions) {
             defMap.put(def.getId(), def);
@@ -658,11 +657,10 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         log.debug(callingMethod + ": " + stats.toString());
     }
 
-    public MeasurementAggregate getAggregate(Subject subject, int scheduleId, long startTime, long endTime)
-        throws FetchException {
+    public MeasurementAggregate getAggregate(Subject subject, int scheduleId, long startTime, long endTime) {
         MeasurementSchedule schedule = entityManager.find(MeasurementSchedule.class, scheduleId);
         if (schedule == null) {
-            throw new FetchException("Could not fine MeasurementSchedule with the id[" + scheduleId + "]");
+            throw new MeasurementException("Could not fine MeasurementSchedule with the id[" + scheduleId + "]");
         }
 
         if (authorizationManager.canViewResource(subject, schedule.getResource().getId()) == false) {
@@ -671,24 +669,20 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         }
 
         if (schedule.getDefinition().getDataType() != DataType.MEASUREMENT) {
-            throw new FetchException(schedule + " is not about numerical values. Can't compute aggregates");
+            throw new IllegalArgumentException(schedule + " is not about numerical values. Can't compute aggregates");
         }
 
         if (startTime > endTime) {
-            throw new FetchException("Start date " + startTime + " is not before " + endTime);
+            throw new IllegalArgumentException("Start date " + startTime + " is not before " + endTime);
         }
 
-        try {
-            MeasurementDataManagerUtility utility = MeasurementDataManagerUtility.getInstance(rhqDs);
-            MeasurementAggregate aggregate = utility.getAggregateByScheduleId(startTime, endTime, schedule.getId());
-            return aggregate;
-        } catch (Exception e) {
-            throw new FetchException(e);
-        }
+        MeasurementDataManagerUtility utility = MeasurementDataManagerUtility.getInstance(rhqDs);
+        MeasurementAggregate aggregate = utility.getAggregateByScheduleId(startTime, endTime, schedule.getId());
+        return aggregate;
     }
 
     public MeasurementAggregate getAggregate(Subject subject, int groupId, int definitionId, long startTime,
-        long endTime) throws FetchException {
+        long endTime) {
 
         if (authorizationManager.canViewGroup(subject, groupId) == false) {
             throw new PermissionException("User[" + subject.getName()
@@ -698,21 +692,17 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
 
         MeasurementDefinition def = measurementDefinitionManager.getMeasurementDefinition(subject, definitionId);
         if (def.getDataType() != DataType.MEASUREMENT) {
-            throw new FetchException(def + " is not about numerical values. Can't compute aggregates");
+            throw new IllegalArgumentException(def + " is not about numerical values. Can't compute aggregates");
         }
 
         if (startTime > endTime) {
-            throw new FetchException("Start date " + startTime + " is not before " + endTime);
+            throw new IllegalArgumentException("Start date " + startTime + " is not before " + endTime);
         }
 
-        try {
-            MeasurementDataManagerUtility utility = MeasurementDataManagerUtility.getInstance(rhqDs);
-            MeasurementAggregate aggregate = utility.getAggregateByGroupAndDefinition(startTime, endTime, groupId,
-                definitionId);
-            return aggregate;
-        } catch (Exception e) {
-            throw new FetchException(e);
-        }
+        MeasurementDataManagerUtility utility = MeasurementDataManagerUtility.getInstance(rhqDs);
+        MeasurementAggregate aggregate = utility.getAggregateByGroupAndDefinition(startTime, endTime, groupId,
+            definitionId);
+        return aggregate;
     }
 
     /**
@@ -727,126 +717,111 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
      */
     @SuppressWarnings("unchecked")
     public List<MeasurementDataTrait> findCurrentTraitsForResource(Subject subject, int resourceId,
-        DisplayType displayType) throws FetchException {
+        DisplayType displayType) {
         if (authorizationManager.canViewResource(subject, resourceId) == false) {
             throw new PermissionException("User[" + subject.getName()
                 + "] does not have permission to view traits for resource[id=" + resourceId + "]");
         }
-        try {
-            Query query;
-            List<Object[]> qres;
 
-            if (displayType == null) {
-                //         query = entityManager.createNamedQuery(MeasurementDataTrait.FIND_CURRENT_FOR_RESOURCE);
-                query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-                    MeasurementDataTrait.FIND_CURRENT_FOR_RESOURCE, new OrderingField("d.displayOrder",
-                        PageOrdering.ASC));
-            } else {
-                query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-                    MeasurementDataTrait.FIND_CURRENT_FOR_RESOURCE_AND_DISPLAY_TYPE, new OrderingField(
-                        "d.displayOrder", PageOrdering.ASC));
-                query.setParameter("displayType", displayType);
-            }
+        Query query;
+        List<Object[]> qres;
 
-            query.setParameter("resourceId", resourceId);
-            qres = query.getResultList();
-
-            /*
-             * Now that we have everything from the query (it returns a tuple <MeasurementDataTrait,DislayName> of the
-             * definition), lets create the method output.
-             */
-            List<MeasurementDataTrait> result = new ArrayList<MeasurementDataTrait>(qres.size());
-            for (Object[] objs : qres) {
-                MeasurementDataTrait mdt = fillMeasurementDataTraitFromObjectArray(objs);
-                result.add(mdt);
-            }
-
-            if (log.isDebugEnabled()) {
-                log.debug("getCurrentTraitsForResource(" + resourceId + ") -> result is " + result);
-            }
-
-            return result;
-        } catch (Exception e) {
-            throw new FetchException(e);
+        if (displayType == null) {
+            //         query = entityManager.createNamedQuery(MeasurementDataTrait.FIND_CURRENT_FOR_RESOURCE);
+            query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+                MeasurementDataTrait.FIND_CURRENT_FOR_RESOURCE, new OrderingField("d.displayOrder", PageOrdering.ASC));
+        } else {
+            query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+                MeasurementDataTrait.FIND_CURRENT_FOR_RESOURCE_AND_DISPLAY_TYPE, new OrderingField("d.displayOrder",
+                    PageOrdering.ASC));
+            query.setParameter("displayType", displayType);
         }
+
+        query.setParameter("resourceId", resourceId);
+        qres = query.getResultList();
+
+        /*
+         * Now that we have everything from the query (it returns a tuple <MeasurementDataTrait,DislayName> of the
+         * definition), lets create the method output.
+         */
+        List<MeasurementDataTrait> result = new ArrayList<MeasurementDataTrait>(qres.size());
+        for (Object[] objs : qres) {
+            MeasurementDataTrait mdt = fillMeasurementDataTraitFromObjectArray(objs);
+            result.add(mdt);
+        }
+
+        if (log.isDebugEnabled()) {
+            log.debug("getCurrentTraitsForResource(" + resourceId + ") -> result is " + result);
+        }
+
+        return result;
     }
 
     public List<List<MeasurementDataNumericHighLowComposite>> findDataForCompatibleGroup(Subject subject, int groupId,
-        int definitionId, long beginTime, long endTime, int numPoints, boolean groupAggregateOnly)
-        throws FetchException {
+        int definitionId, long beginTime, long endTime, int numPoints, boolean groupAggregateOnly) {
         if (authorizationManager.canViewGroup(subject, groupId) == false) {
             throw new PermissionException("User[" + subject.getName()
                 + "] does not have permission to view measurement data for resourceGroup[id=" + groupId + "]");
         }
-        try {
-            ResourceGroup group = resourceGroupManager.getResourceGroupById(subject, groupId, GroupCategory.COMPATIBLE);
-            Set<Resource> resources = group.getExplicitResources();
 
-            int[] resourceIds = new int[resources.size()];
-            int i = 0;
-            for (Resource res : resources) {
-                resourceIds[i] = res.getId();
-                i++;
-            }
+        ResourceGroup group = resourceGroupManager.getResourceGroupById(subject, groupId, GroupCategory.COMPATIBLE);
+        Set<Resource> resources = group.getExplicitResources();
 
-            List<List<MeasurementDataNumericHighLowComposite>> ret;
-
-            if (groupAggregateOnly) {
-                ret = findDataAggregatesForSiblingResources(subject, resourceIds, definitionId, beginTime, endTime,
-                    numPoints);
-            } else {
-                ret = findDataForSiblingResources(subject, resourceIds, definitionId, beginTime, endTime, numPoints);
-            }
-
-            return ret;
-        } catch (Exception e) {
-            throw new FetchException(e);
+        int[] resourceIds = new int[resources.size()];
+        int i = 0;
+        for (Resource res : resources) {
+            resourceIds[i] = res.getId();
+            i++;
         }
+
+        List<List<MeasurementDataNumericHighLowComposite>> ret;
+
+        if (groupAggregateOnly) {
+            ret = findDataAggregatesForSiblingResources(subject, resourceIds, definitionId, beginTime, endTime,
+                numPoints);
+        } else {
+            ret = findDataForSiblingResources(subject, resourceIds, definitionId, beginTime, endTime, numPoints);
+        }
+
+        return ret;
     }
 
     public List<List<MeasurementDataNumericHighLowComposite>> findDataForResource(Subject subject, int resourceId,
-        int[] definitionIds, long beginTime, long endTime, int numPoints) throws FetchException {
+        int[] definitionIds, long beginTime, long endTime, int numPoints) {
         if (authorizationManager.canViewResource(subject, resourceId) == false) {
             throw new PermissionException("User[" + subject.getName()
                 + "] does not have permission to view measurement data for resource[id=" + resourceId + "]");
         }
-        try {
-            return MeasurementDataManagerUtility.getInstance(rhqDs).getMeasurementDataForResource(beginTime, endTime,
-                resourceId, definitionIds);
-        } catch (Exception e) {
-            throw new FetchException(e);
-        }
+
+        return MeasurementDataManagerUtility.getInstance(rhqDs).getMeasurementDataForResource(beginTime, endTime,
+            resourceId, definitionIds);
     }
 
     @SuppressWarnings("unchecked")
-    public Set<MeasurementData> findLiveData(Subject subject, int resourceId, int[] definitionIds)
-        throws FetchException {
+    public Set<MeasurementData> findLiveData(Subject subject, int resourceId, int[] definitionIds) {
         if (authorizationManager.canViewResource(subject, resourceId) == false) {
             throw new PermissionException("User[" + subject.getName()
                 + "] does not have permission to view live measurement data for resource[id=" + resourceId + "]");
         }
-        try {
-            Resource resource = entityManager.find(Resource.class, resourceId);
-            Agent agent = resource.getAgent();
 
-            Query q = entityManager.createNamedQuery(MeasurementDefinition.FIND_BY_IDS);
-            q.setParameter("ids", ArrayUtils.wrapInList(definitionIds));
-            List<MeasurementDefinition> definitions = q.getResultList();
+        Resource resource = entityManager.find(Resource.class, resourceId);
+        Agent agent = resource.getAgent();
 
-            String[] names = new String[definitions.size()];
-            int i = 0;
-            for (MeasurementDefinition def : definitions) {
-                names[i++] = def.getName();
-            }
+        Query q = entityManager.createNamedQuery(MeasurementDefinition.FIND_BY_IDS);
+        q.setParameter("ids", ArrayUtils.wrapInList(definitionIds));
+        List<MeasurementDefinition> definitions = q.getResultList();
 
-            AgentClient ac = agentClientManager.getAgentClient(agent);
-            Set<MeasurementData> values = ac.getMeasurementAgentService().getRealTimeMeasurementValue(resourceId,
-                DataType.MEASUREMENT, names);
-
-            return values;
-        } catch (Exception e) {
-            throw new FetchException(e);
+        String[] names = new String[definitions.size()];
+        int i = 0;
+        for (MeasurementDefinition def : definitions) {
+            names[i++] = def.getName();
         }
+
+        AgentClient ac = agentClientManager.getAgentClient(agent);
+        Set<MeasurementData> values = ac.getMeasurementAgentService().getRealTimeMeasurementValue(resourceId,
+            DataType.MEASUREMENT, names);
+
+        return values;
     }
 
     /**
@@ -858,30 +833,25 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
      * @return a List of {@link MeasurementDataTrait} objects.
      */
     @SuppressWarnings("unchecked")
-    public List<MeasurementDataTrait> findTraits(Subject subject, int resourceId, int definitionId)
-        throws FetchException {
+    public List<MeasurementDataTrait> findTraits(Subject subject, int resourceId, int definitionId) {
         if (authorizationManager.canViewResource(subject, resourceId) == false) {
             throw new PermissionException("User[" + subject.getName()
                 + "] does not have permission to view trait data for resource[id=" + resourceId
                 + "] and definition[id=" + definitionId + "]");
         }
 
-        try {
-            Query q = entityManager.createNamedQuery(MeasurementDataTrait.FIND_ALL_FOR_RESOURCE_AND_DEFINITION);
-            q.setParameter("resourceId", resourceId);
-            q.setParameter("definitionId", definitionId);
-            List<Object[]> queryResult = q.getResultList();
+        Query q = entityManager.createNamedQuery(MeasurementDataTrait.FIND_ALL_FOR_RESOURCE_AND_DEFINITION);
+        q.setParameter("resourceId", resourceId);
+        q.setParameter("definitionId", definitionId);
+        List<Object[]> queryResult = q.getResultList();
 
-            List<MeasurementDataTrait> result = new ArrayList<MeasurementDataTrait>(queryResult.size());
+        List<MeasurementDataTrait> result = new ArrayList<MeasurementDataTrait>(queryResult.size());
 
-            for (Object[] objs : queryResult) {
-                MeasurementDataTrait mdt = fillMeasurementDataTraitFromObjectArray(objs);
-                result.add(mdt);
-            }
-
-            return result;
-        } catch (Exception e) {
-            throw new FetchException(e);
+        for (Object[] objs : queryResult) {
+            MeasurementDataTrait mdt = fillMeasurementDataTraitFromObjectArray(objs);
+            result.add(mdt);
         }
+
+        return result;
     }
 }

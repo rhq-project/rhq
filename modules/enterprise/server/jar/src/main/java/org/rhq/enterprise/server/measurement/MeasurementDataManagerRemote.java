@@ -32,7 +32,6 @@ import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
-import org.rhq.enterprise.server.exception.FetchException;
 
 @SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
 @WebService
@@ -43,29 +42,25 @@ public interface MeasurementDataManagerRemote {
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "scheduleId") int scheduleId, //
         @WebParam(name = "startTime") long startTime, //
-        @WebParam(name = "endTime") long endTime) //
-        throws FetchException;
+        @WebParam(name = "endTime") long endTime);
 
     @WebMethod
     List<MeasurementDataTrait> findTraits(//
         @WebParam(name = "subject") Subject subject,//
         @WebParam(name = "resourceId") int resourceId, //
-        @WebParam(name = "definitionId") int definitionId) //
-        throws FetchException;
+        @WebParam(name = "definitionId") int definitionId);
 
     @WebMethod
     List<MeasurementDataTrait> findCurrentTraitsForResource(//
         @WebParam(name = "subject") Subject subject,//
         @WebParam(name = "resourceId") int resourceId, //
-        @WebParam(name = "displayType") DisplayType displayType) //
-        throws FetchException;
+        @WebParam(name = "displayType") DisplayType displayType);
 
     @WebMethod
     Set<MeasurementData> findLiveData(//
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceId") int resourceId, //
-        @WebParam(name = "definitionIds") int[] definitionIds) //
-        throws FetchException;
+        @WebParam(name = "definitionIds") int[] definitionIds);
 
     @WebMethod
     List<List<MeasurementDataNumericHighLowComposite>> findDataForCompatibleGroup(//
@@ -75,8 +70,7 @@ public interface MeasurementDataManagerRemote {
         @WebParam(name = "beginTime") long beginTime, //
         @WebParam(name = "endTime") long endTime, //
         @WebParam(name = "numPoints") int numPoints,//
-        @WebParam(name = "groupAggregateOnly") boolean groupAggregateOnly)//
-        throws FetchException;
+        @WebParam(name = "groupAggregateOnly") boolean groupAggregateOnly);
 
     @WebMethod
     List<List<MeasurementDataNumericHighLowComposite>> findDataForResource(//
@@ -85,6 +79,5 @@ public interface MeasurementDataManagerRemote {
         @WebParam(name = "definitionIds") int[] definitionIds,// 
         @WebParam(name = "beginTime") long beginTime, //
         @WebParam(name = "endTime") long endTime, //
-        @WebParam(name = "numPoints") int numPoints) //
-        throws FetchException;
+        @WebParam(name = "numPoints") int numPoints);
 }

@@ -29,7 +29,6 @@ import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.exception.FetchException;
 import org.rhq.enterprise.server.resource.ResourceAvailabilityManagerLocal;
 
 /**
@@ -167,8 +166,7 @@ public interface AvailabilityManagerLocal {
     /**
      * #see {@link AvailabilityManagerRemote#getAvailabilityForResource(Subject, int, PageControl)
      */
-    PageList<Availability> findAvailabilityForResource(Subject subject, int resourceId, PageControl pc)
-        throws FetchException;
+    PageList<Availability> findAvailabilityForResource(Subject subject, int resourceId, PageControl pc);
 
     /**
      * #see {@link AvailabilityManagerRemote#getCurrentAvailabilityForResource(Subject, int)
@@ -176,5 +174,5 @@ public interface AvailabilityManagerLocal {
      * @see #getCurrentAvailabilityTypeForResource(Subject, int)
      * @see ResourceAvailabilityManagerLocal
      */
-    Availability getCurrentAvailabilityForResource(Subject subject, int resourceId) throws FetchException;
+    Availability getCurrentAvailabilityForResource(Subject subject, int resourceId);
 }

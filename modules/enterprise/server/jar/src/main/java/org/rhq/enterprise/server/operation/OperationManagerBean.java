@@ -84,11 +84,8 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
-import org.rhq.enterprise.server.exception.DeleteException;
-import org.rhq.enterprise.server.exception.FetchException;
 import org.rhq.enterprise.server.exception.ScheduleException;
 import org.rhq.enterprise.server.exception.UnscheduleException;
-import org.rhq.enterprise.server.exception.UpdateException;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
@@ -527,33 +524,27 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return getGroupOperationSchedule(subject, jobDetail);
     }
 
-    public OperationHistory getOperationHistoryByHistoryId(Subject subject, int historyId) throws FetchException {
-        try {
-            OperationHistory history = entityManager.find(OperationHistory.class, historyId);
+    public OperationHistory getOperationHistoryByHistoryId(Subject subject, int historyId) {
+        OperationHistory history = entityManager.find(OperationHistory.class, historyId);
 
-            if (history == null) {
-                throw new RuntimeException("Cannot get history - it does not exist: " + historyId);
-            }
-
-            if (history.getParameters() != null) {
-                history.getParameters().getId(); // eagerly load it
-            }
-
-            if (history instanceof ResourceOperationHistory) {
-                ResourceOperationHistory resourceHistory = (ResourceOperationHistory) history;
-                if (resourceHistory.getResults() != null) {
-                    resourceHistory.getResults().getId(); // eagerly load it
-                }
-            }
-
-            ensureViewPermission(subject, history);
-
-            return history;
-
-        } catch (Exception e) {
-            throw new FetchException(e);
+        if (history == null) {
+            throw new RuntimeException("Cannot get history - it does not exist: " + historyId);
         }
 
+        if (history.getParameters() != null) {
+            history.getParameters().getId(); // eagerly load it
+        }
+
+        if (history instanceof ResourceOperationHistory) {
+            ResourceOperationHistory resourceHistory = (ResourceOperationHistory) history;
+            if (resourceHistory.getResults() != null) {
+                resourceHistory.getResults().getId(); // eagerly load it
+            }
+        }
+
+        ensureViewPermission(subject, history);
+
+        return history;
     }
 
     @SuppressWarnings("unchecked")
@@ -576,33 +567,29 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return pagedResourceHistories;
     }
 
-    public OperationHistory getOperationHistoryByJobId(Subject subject, String historyJobId) throws FetchException {
+    public OperationHistory getOperationHistoryByJobId(Subject subject, String historyJobId) {
+        HistoryJobId jobIdObject = new HistoryJobId(historyJobId);
+
+        Query query = entityManager.createNamedQuery(OperationHistory.QUERY_FIND_BY_JOB_ID);
+        query.setParameter("jobName", jobIdObject.getJobName());
+        query.setParameter("jobGroup", jobIdObject.getJobGroup());
+        query.setParameter("createdTime", jobIdObject.getCreatedTime());
+
+        OperationHistory history;
+
         try {
-            HistoryJobId jobIdObject = new HistoryJobId(historyJobId);
-
-            Query query = entityManager.createNamedQuery(OperationHistory.QUERY_FIND_BY_JOB_ID);
-            query.setParameter("jobName", jobIdObject.getJobName());
-            query.setParameter("jobGroup", jobIdObject.getJobGroup());
-            query.setParameter("createdTime", jobIdObject.getCreatedTime());
-
-            OperationHistory history;
-
-            try {
-                history = (OperationHistory) query.getSingleResult();
-            } catch (Exception e) {
-                history = null;
-            }
-
-            if (history == null) {
-                throw new RuntimeException("Cannot get history - it does not exist: " + historyJobId);
-            }
-
-            ensureViewPermission(subject, history);
-
-            return history;
+            history = (OperationHistory) query.getSingleResult();
         } catch (Exception e) {
-            throw new FetchException(e);
+            history = null;
         }
+
+        if (history == null) {
+            throw new RuntimeException("Cannot get history - it does not exist: " + historyJobId);
+        }
+
+        ensureViewPermission(subject, history);
+
+        return history;
     }
 
     @SuppressWarnings("unchecked")
@@ -761,23 +748,18 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return history;
     }
 
-    public void cancelOperationHistory(Subject subject, int historyId, boolean ignoreAgentErrors)
-        throws UpdateException {
-        try {
-            OperationHistory doomedHistory = getOperationHistoryByHistoryId(subject, historyId); // this also checks authorization so we don't have to do it again
+    public void cancelOperationHistory(Subject subject, int historyId, boolean ignoreAgentErrors) {
+        OperationHistory doomedHistory = getOperationHistoryByHistoryId(subject, historyId); // this also checks authorization so we don't have to do it again
 
-            ensureControlPermission(subject, doomedHistory);
+        ensureControlPermission(subject, doomedHistory);
 
-            // Do different things depending whether this is a group or resource history being canceled.
-            // If group history - cancel all individual resource invocations that are part of that group.
-            // If resource history - tell the agent to cancel it
-            if (doomedHistory instanceof GroupOperationHistory) {
-                cancelGroupOperation(subject, (GroupOperationHistory) doomedHistory, ignoreAgentErrors);
-            } else {
-                cancelResourceOperation(subject, (ResourceOperationHistory) doomedHistory, ignoreAgentErrors);
-            }
-        } catch (Exception e) {
-            throw new UpdateException(e);
+        // Do different things depending whether this is a group or resource history being canceled.
+        // If group history - cancel all individual resource invocations that are part of that group.
+        // If resource history - tell the agent to cancel it
+        if (doomedHistory instanceof GroupOperationHistory) {
+            cancelGroupOperation(subject, (GroupOperationHistory) doomedHistory, ignoreAgentErrors);
+        } else {
+            cancelResourceOperation(subject, (ResourceOperationHistory) doomedHistory, ignoreAgentErrors);
         }
 
         return;
@@ -957,29 +939,25 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return results;
     }
 
-    public void deleteOperationHistory(Subject subject, int historyId, boolean purgeInProgress) throws DeleteException {
-        try {
-            OperationHistory doomedHistory = getOperationHistoryByHistoryId(subject, historyId); // this also checks authorization so we don't have to do it again
+    public void deleteOperationHistory(Subject subject, int historyId, boolean purgeInProgress) {
+        OperationHistory doomedHistory = getOperationHistoryByHistoryId(subject, historyId); // this also checks authorization so we don't have to do it again
 
-            ensureControlPermission(subject, doomedHistory);
+        ensureControlPermission(subject, doomedHistory);
 
-            if ((doomedHistory.getStatus() == OperationRequestStatus.INPROGRESS) && !purgeInProgress) {
-                throw new IllegalStateException(
-                    "The job is still in the in-progress state. Please wait for it to complete: " + doomedHistory);
-            }
-
-            if (doomedHistory instanceof GroupOperationHistory) {
-                List<ResourceOperationHistory> resourceHistories = ((GroupOperationHistory) doomedHistory)
-                    .getResourceOperationHistories();
-                for (ResourceOperationHistory child : resourceHistories) {
-                    deleteOperationHistory_helper(child.getId());
-                }
-            }
-
-            deleteOperationHistory_helper(doomedHistory.getId());
-        } catch (Exception e) {
-            throw new DeleteException(e);
+        if ((doomedHistory.getStatus() == OperationRequestStatus.INPROGRESS) && !purgeInProgress) {
+            throw new IllegalStateException(
+                "The job is still in the in-progress state. Please wait for it to complete: " + doomedHistory);
         }
+
+        if (doomedHistory instanceof GroupOperationHistory) {
+            List<ResourceOperationHistory> resourceHistories = ((GroupOperationHistory) doomedHistory)
+                .getResourceOperationHistories();
+            for (ResourceOperationHistory child : resourceHistories) {
+                deleteOperationHistory_helper(child.getId());
+            }
+        }
+
+        deleteOperationHistory_helper(doomedHistory.getId());
 
         return;
     }
@@ -1806,22 +1784,17 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
 
     @SuppressWarnings("unchecked")
     public PageList<ResourceOperationHistory> findOperationHistories(Subject subject,
-        ResourceOperationHistory criteria, PageControl pc) throws FetchException {
-        try {
-            QueryGenerator generator = new QueryGenerator(criteria, pc);
-            generator.setAuthorizationResourceFragment(AuthorizationTokenType.RESOURCE, subject.getId());
+        ResourceOperationHistory criteria, PageControl pc) {
+        QueryGenerator generator = new QueryGenerator(criteria, pc);
+        generator.setAuthorizationResourceFragment(AuthorizationTokenType.RESOURCE, subject.getId());
 
-            Query query = generator.getQuery(entityManager);
-            Query countQuery = generator.getCountQuery(entityManager);
+        Query query = generator.getQuery(entityManager);
+        Query countQuery = generator.getCountQuery(entityManager);
 
-            long count = (Long) countQuery.getSingleResult();
-            List<ResourceOperationHistory> results = query.getResultList();
+        long count = (Long) countQuery.getSingleResult();
+        List<ResourceOperationHistory> results = query.getResultList();
 
-            return new PageList<ResourceOperationHistory>(results, (int) count, pc);
-        } catch (Exception e) {
-            throw new FetchException(e);
-        }
-
+        return new PageList<ResourceOperationHistory>(results, (int) count, pc);
     }
 
     @SuppressWarnings("unchecked")

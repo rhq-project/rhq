@@ -28,7 +28,6 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.exception.UpdateException;
 
 @SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
 @WebService
@@ -39,29 +38,25 @@ public interface MeasurementScheduleManagerRemote {
     void disableSchedules(//
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceId") int resourceId, //
-        @WebParam(name = "measurementDefinitionIds") int[] measurementDefinitionIds) //
-        throws UpdateException;
+        @WebParam(name = "measurementDefinitionIds") int[] measurementDefinitionIds);
 
     @WebMethod
     void disableSchedulesForCompatibleGroup(//
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "groupId") int groupId, //
-        @WebParam(name = "measurementDefinitionIds") int[] measurementDefinitionIds)//
-        throws UpdateException;
+        @WebParam(name = "measurementDefinitionIds") int[] measurementDefinitionIds);
 
     @WebMethod
     void enableSchedules(//
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceId") int resourceId, //
-        @WebParam(name = "measurementDefinitionIds") int[] measurementDefinitionIds) //
-        throws UpdateException;
+        @WebParam(name = "measurementDefinitionIds") int[] measurementDefinitionIds);
 
     @WebMethod
     void enableSchedulesForCompatibleGroup(//
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "groupId") int groupId, //
-        @WebParam(name = "measurementDefinitionIds") int[] measurementDefinitionIds) //
-        throws UpdateException;
+        @WebParam(name = "measurementDefinitionIds") int[] measurementDefinitionIds);
 
     @WebMethod
     PageList<MeasurementSchedule> getSchedulesByCriteria(//

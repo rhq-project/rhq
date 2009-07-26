@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.auth;
 
 import java.util.Collection;
 
+import javax.ejb.CreateException;
 import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Principal;
@@ -27,10 +28,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.exception.CreateException;
-import org.rhq.enterprise.server.exception.DeleteException;
 import org.rhq.enterprise.server.exception.LoginException;
-import org.rhq.enterprise.server.exception.UpdateException;
 
 /**
  * The local EJB interface to the Authentication Boss.
@@ -120,7 +118,7 @@ public interface SubjectManagerLocal {
      *
      * @throws Exception if the principal could not be added
      */
-    void createPrincipal(Subject subject, Principal principal) throws Exception;
+    void createPrincipal(Subject subject, Principal principal) throws CreateException;
 
     /**
      * Checks that the user exists <b>and</b> has a {@link Principal} associated with it. This means that the user both
@@ -150,7 +148,7 @@ public interface SubjectManagerLocal {
      *
      * @throws Exception if failed to delete one or more users
      */
-    void deleteUsers(Subject subject, int[] subjectIds) throws Exception;
+    void deleteUsers(Subject subject, int[] subjectIds);
 
     /**
      * Returns the actual {@link Subject} for the given session.
@@ -218,7 +216,7 @@ public interface SubjectManagerLocal {
     /**
      * #see {@link SubjectManagerRemote#changePassword(Subject, String, String)
      */
-    void changePassword(Subject subject, String username, String password) throws UpdateException;
+    void changePassword(Subject subject, String username, String password);
 
     /**
      * #see {@link SubjectManagerRemote#createPrincipal(Subject, String, String)
@@ -233,7 +231,7 @@ public interface SubjectManagerLocal {
     /**
      * #see {@link SubjectManagerRemote#deleteSubjects(Subject, int[])
      */
-    void deleteSubjects(Subject subject, int[] subjectIds) throws DeleteException;
+    void deleteSubjects(Subject subject, int[] subjectIds);
 
     /**
      * #see {@link SubjectManagerRemote#getSubjectById(Subject, int)}
@@ -260,7 +258,7 @@ public interface SubjectManagerLocal {
     /**
      * @see 
      */
-    Subject updateSubject(Subject subject, Subject subjectToModify) throws UpdateException;
+    Subject updateSubject(Subject subject, Subject subjectToModify);
 
     PageList<Subject> findSubjectsByCriteria(Subject subject, SubjectCriteria criteria);
 }

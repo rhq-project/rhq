@@ -35,7 +35,6 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
-import org.rhq.enterprise.server.exception.UpdateException;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
@@ -397,7 +396,7 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
     }
 
     private void implicitGroupMembershipAddHelper(Subject subject, ResourceGroup recursiveGroup, Resource node,
-        List<Resource> expectedResults) throws Exception {
+        List<Resource> expectedResults) {
         printGroup("complex implicit before add: node = " + node.getName() + " [" + node.getId() + "]", subject,
             recursiveGroup);
         resourceGroupManager.addResourcesToGroup(subject, recursiveGroup.getId(), new int[] { node.getId() });
@@ -410,7 +409,7 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
     }
 
     private void implicitGroupMembershipRemoveHelper(Subject subject, ResourceGroup recursiveGroup, Resource node,
-        List<Resource> expectedResults) throws UpdateException {
+        List<Resource> expectedResults) {
         printGroup("complex implicit before remove: node = " + node.getName() + " [" + node.getId() + "]", subject,
             recursiveGroup);
         resourceGroupManager.removeResourcesFromGroup(subject, recursiveGroup.getId(), new int[] { node.getId() });

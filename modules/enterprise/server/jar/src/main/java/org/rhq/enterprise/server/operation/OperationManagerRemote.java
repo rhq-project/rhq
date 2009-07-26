@@ -35,10 +35,8 @@ import org.rhq.core.domain.operation.GroupOperationHistory;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.exception.DeleteException;
 import org.rhq.enterprise.server.exception.ScheduleException;
 import org.rhq.enterprise.server.exception.UnscheduleException;
-import org.rhq.enterprise.server.exception.UpdateException;
 
 @SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
 @WebService
@@ -69,14 +67,12 @@ public interface OperationManagerRemote {
      *            method failed to notify the agent(s) that the operation should be canceled. If <code>false</code>,
      *            this method will not update the history status unless it could successfully tell the agent(s) to
      *            cancel the operation.
-     * @throws UpdateException
      */
     @WebMethod
     void cancelOperationHistory( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "operationHistoryId") int operationHistoryId, //
-        @WebParam(name = "ignoreAgentErrors") boolean ignoreAgentErrors) //
-        throws UpdateException;
+        @WebParam(name = "ignoreAgentErrors") boolean ignoreAgentErrors);
 
     /**
      * Purges the history from the database. Doing this loses all audit trails of the invoked operation. This can handle
@@ -97,14 +93,12 @@ public interface OperationManagerRemote {
      *            normally do not want to purge operation histories until they are completed, so you normally pass in
      *            <code>false</code>, but a user might want to force it to be purged, in which case the UI will want
      *            to pass in <code>true</code>
-     * @throws DeleteException
      */
     @WebMethod
     void deleteOperationHistory( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "operationHistoryId") int operationHistoryId, //
-        @WebParam(name = "purgeInProgress") boolean purgeInProgress) //
-        throws DeleteException;
+        @WebParam(name = "purgeInProgress") boolean purgeInProgress);
 
     /**
      * Schedules an operation for execution on the given resource.

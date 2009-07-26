@@ -24,8 +24,8 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.Channel;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.server.content.ChannelException;
 import org.rhq.enterprise.server.content.ChannelManagerLocal;
-import org.rhq.enterprise.server.exception.CreateException;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class CreateChannelUIBean {
@@ -47,7 +47,7 @@ public class CreateChannelUIBean {
             Channel created = manager.createChannel(subject, newChannel);
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Saved [" + created.getName()
                 + "] with the ID of [" + created.getId() + "]");
-        } catch (CreateException ce) {
+        } catch (ChannelException ce) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Error: " + ce.getMessage());
             return "failed";
         }

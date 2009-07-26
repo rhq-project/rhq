@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
+import javax.ejb.CreateException;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.ExcludeDefaultInterceptors;
@@ -57,10 +58,7 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.CustomJaasDeploymentServiceMBean;
-import org.rhq.enterprise.server.exception.CreateException;
-import org.rhq.enterprise.server.exception.DeleteException;
 import org.rhq.enterprise.server.exception.LoginException;
-import org.rhq.enterprise.server.exception.UpdateException;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 
 /**
@@ -382,14 +380,14 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
      * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#createPrincipal(Subject, Principal)
      */
     @RequiredPermission(Permission.MANAGE_SECURITY)
-    public void createPrincipal(Subject whoami, Principal principal) throws Exception {
+    public void createPrincipal(Subject whoami, Principal principal) throws CreateException {
         entityManager.persist(principal);
     }
 
     /**
      * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#changePassword(Subject, String, String)
      */
-    public void changePassword(Subject whoami, String username, String password) throws UpdateException {
+    public void changePassword(Subject whoami, String username, String password) {
         // a user can change his own password, as can a user with the appropriate permission
         if (!whoami.getName().equals(username)) {
             if (!authorizationManager.hasGlobalPermission(whoami, Permission.MANAGE_SECURITY)) {
@@ -470,7 +468,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
      * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#deleteUsers(Subject, int[])
      */
     @RequiredPermission(Permission.MANAGE_SECURITY)
-    public void deleteUsers(Subject subject, int[] subjectIds) throws DeleteException {
+    public void deleteUsers(Subject subject, int[] subjectIds) {
         for (Integer doomedSubjectId : subjectIds) {
             Subject doomedSubject = getSubjectById(doomedSubjectId);
 
@@ -492,19 +490,12 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
 
             // TODO: we need to reassign ownership of things this user used to own
 
-            //TODO: deletePrincipal/deleteSubject should throw 'DeleteException' instead of generic 'Exception'.
-            try {
-                // if this user was authenticated via JDBC and thus has a principal, remove it
-                if (isUserWithPrincipal(doomedSubject.getName())) {
-                    deletePrincipal(subject, doomedSubject);
-                }
-
-                deleteSubject(subject, doomedSubject);
-            } catch (PermissionException pe) {
-                throw pe; // let PermissionExceptions bubble up as themselves
-            } catch (Exception e) {
-                throw new DeleteException(e);
+            // if this user was authenticated via JDBC and thus has a principal, remove it
+            if (isUserWithPrincipal(doomedSubject.getName())) {
+                deletePrincipal(subject, doomedSubject);
             }
+
+            deleteSubject(subject, doomedSubject);
         }
 
         return;
@@ -514,7 +505,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
      * @see org.rhq.enterprise.server.auth.SubjectManagerRemote#deleteSubjects(org.rhq.core.domain.auth.Subject, int[])
      * TODO: A wrapper method for deleteUsers, exposed in remote, both should be merged at some point.
      */
-    public void deleteSubjects(Subject sessionSubject, int[] subjectIds) throws DeleteException {
+    public void deleteSubjects(Subject sessionSubject, int[] subjectIds) {
         deleteUsers(sessionSubject, subjectIds);
     }
 

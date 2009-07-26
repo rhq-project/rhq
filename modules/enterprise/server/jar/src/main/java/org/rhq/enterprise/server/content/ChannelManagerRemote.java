@@ -31,10 +31,6 @@ import org.rhq.core.domain.criteria.ChannelCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.exception.CreateException;
-import org.rhq.enterprise.server.exception.DeleteException;
-import org.rhq.enterprise.server.exception.FetchException;
-import org.rhq.enterprise.server.exception.UpdateException;
 
 @SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
 @WebService
@@ -47,14 +43,12 @@ public interface ChannelManagerRemote {
      * @param subject           The logged in user's subject.
      * @param channelId         the ID of the channel
      * @param packageVersionIds the list of package version IDs to add to the channel
-     * @throws UpdateException TODO
      */
     @WebMethod
     void addPackageVersionsToChannel( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "channelId") int channelId, //
-        @WebParam(name = "packageVersionIds") int[] packageVersionIds) //
-        throws UpdateException;
+        @WebParam(name = "packageVersionIds") int[] packageVersionIds);
 
     /**
      * Creates a new {@link Channel}. Note that the created channel will not have any content sources assigned and no
@@ -64,13 +58,12 @@ public interface ChannelManagerRemote {
      * @param channel a new channel object.
      *
      * @return the newly created channel
-     * @throws CreateException TODO
      */
     @WebMethod
     Channel createChannel( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "channel") Channel channel) //
-        throws CreateException;
+        throws ChannelException;
 
     /**
      * Deletes the identified channel. If this deletion orphans package versions (that is, its originating resource or
@@ -78,19 +71,16 @@ public interface ChannelManagerRemote {
      *
      * @param subject The logged in user's subject.
      * @param channelId
-     * @throws DeleteException TODO
      */
     @WebMethod
     void deleteChannel( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "channelId") int channelId) //
-        throws DeleteException;
+        @WebParam(name = "channelId") int channelId);
 
     @WebMethod
     Channel getChannel( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "channelId") int channelId) //
-        throws FetchException;
+        @WebParam(name = "channelId") int channelId);
 
     @WebMethod
     PageList<Channel> findChannels( //
@@ -102,8 +92,7 @@ public interface ChannelManagerRemote {
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "channelId") int channelId, //
         @WebParam(name = "criteria") PackageVersion criteria, //
-        @WebParam(name = "pageControl") PageControl pc) //
-        throws FetchException;
+        @WebParam(name = "pageControl") PageControl pc);
 
     // change exception
     /**
@@ -143,8 +132,7 @@ public interface ChannelManagerRemote {
     @WebMethod
     PageList<Channel> findChannels( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "pageControl") PageControl pc) //
-        throws FetchException;
+        @WebParam(name = "pageControl") PageControl pc);
 
     /**
      * Gets all resources that are subscribed to the given channel.

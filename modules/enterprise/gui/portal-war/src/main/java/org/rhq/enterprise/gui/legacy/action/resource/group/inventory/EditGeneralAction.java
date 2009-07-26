@@ -34,9 +34,8 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.gui.legacy.HubConstants;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
-import org.rhq.enterprise.server.exception.UpdateException;
-import org.rhq.enterprise.server.resource.group.ResourceGroupAlreadyExistsException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
+import org.rhq.enterprise.server.resource.group.ResourceGroupUpdateException;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -77,13 +76,9 @@ public class EditGeneralAction extends BaseAction {
 
             RequestUtils.setConfirmation(request, "resource.group.inventory.confirm.EditGeneralProperties");
             return returnSuccess(request, mapping, forwardParams, BaseAction.YES_RETURN_PATH);
-        } catch (UpdateException ue) {
-            log.debug("group update failed:", ue);
-            if (ue.getCause() instanceof ResourceGroupAlreadyExistsException) {
-                RequestUtils.setError(request, "resource.group.inventory.error.DuplicateGroupName", ue.getMessage());
-            } else {
-                RequestUtils.setError(request, "resource.group.inventory.error.GroupUpdateError", ue.getMessage());
-            }
+        } catch (ResourceGroupUpdateException rgue) {
+            log.debug("group update failed:", rgue);
+            RequestUtils.setError(request, "resource.group.inventory.error.GroupUpdateError", rgue.getMessage());
             return returnFailure(request, mapping, forwardParams);
         }
     }

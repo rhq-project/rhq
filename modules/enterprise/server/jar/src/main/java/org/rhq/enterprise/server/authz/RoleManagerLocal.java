@@ -28,8 +28,6 @@ import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.criteria.RoleCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.exception.FetchException;
-import org.rhq.enterprise.server.exception.UpdateException;
 
 /**
  * The local interface to the role manager that provides the API to manipulate the security rules within the JON Server.
@@ -175,12 +173,12 @@ public interface RoleManagerLocal {
     // Use getRole instead
     Role getRoleById(Integer roleId);
 
-    Role getRole(Subject subject, int roleId) throws FetchException;
+    Role getRole(Subject subject, int roleId);
 
-    PageList<Role> findSubjectAssignedRoles(Subject subject, int subjectId, PageControl pc) throws FetchException;
+    PageList<Role> findSubjectAssignedRoles(Subject subject, int subjectId, PageControl pc);
 
     //This is a proxy of getAvailableRolesForSubject but without pendingRoleIds as required by remote spec 
-    PageList<Role> findSubjectUnassignedRoles(Subject subject, int subjectId, PageControl pc) throws FetchException;
+    PageList<Role> findSubjectUnassignedRoles(Subject subject, int subjectId, PageControl pc);
 
     /**
      * Assigns a set of roles to a subject which authorizes the subject to do anything the roles permit.
@@ -188,9 +186,8 @@ public interface RoleManagerLocal {
      * @param subject   the user attempting to assign the roles to the subject
      * @param subjectId the subject who is to be authorized with the given roles
      * @param roleIds   the roles to assign
-     * @throws UpdateException TODO
      */
-    void addRolesToSubject(Subject subject, int subjectId, int[] roleIds) throws UpdateException;
+    void addRolesToSubject(Subject subject, int subjectId, int[] roleIds);
 
     /**
      * Disassociates particular roles from a subject. Once complete, the subject will no longer be authorized with the
@@ -199,13 +196,12 @@ public interface RoleManagerLocal {
      * @param subject   the user that is attempting to perform the remove
      * @param subjectId the user that is to have the roles unassigned from it
      * @param roleIds   list of role IDs that are to be removed from user
-     * @throws UpdateException TODO
      */
-    void removeRolesFromSubject(Subject subject, int subjectId, int[] roleIds) throws UpdateException;
+    void removeRolesFromSubject(Subject subject, int subjectId, int[] roleIds);
 
-    void addSubjectsToRole(Subject subject, int roleId, int[] subjectIds) throws UpdateException;
+    void addSubjectsToRole(Subject subject, int roleId, int[] subjectIds);
 
-    void removeSubjectsFromRole(Subject subject, int roleId, int[] subjectIds) throws UpdateException;
+    void removeSubjectsFromRole(Subject subject, int roleId, int[] subjectIds);
 
     /**
      * Adds the given resource groups to the given role.
@@ -213,11 +209,10 @@ public interface RoleManagerLocal {
      * @param subject          user attempting to add the groups to the role
      * @param roleId
      * @param pendingGroupIds
-     * @throws UpdateException TODO
      */
-    void addResourceGroupsToRole(Subject subject, int roleId, int[] pendingGroupIds) throws UpdateException;
+    void addResourceGroupsToRole(Subject subject, int roleId, int[] pendingGroupIds);
 
-    void addRolesToResourceGroup(Subject subject, int groupId, int[] roleIds) throws UpdateException;
+    void addRolesToResourceGroup(Subject subject, int groupId, int[] roleIds);
 
     /**
      * Removes the given resource groups from the given role.
@@ -225,11 +220,10 @@ public interface RoleManagerLocal {
      * @param subject   user attempting to remove the groups from the role
      * @param roleId
      * @param groupIds
-     * @throws UpdateException TODO
      */
-    void removeResourceGroupsFromRole(Subject subject, int roleId, int[] groupIds) throws UpdateException;
+    void removeResourceGroupsFromRole(Subject subject, int roleId, int[] groupIds);
 
-    void removeRolesFromResourceGroup(Subject subject, int groupId, int[] roleIds) throws UpdateException;
+    void removeRolesFromResourceGroup(Subject subject, int groupId, int[] roleIds);
 
     PageList<Role> findRolesByCriteria(Subject subject, RoleCriteria criteria);
 

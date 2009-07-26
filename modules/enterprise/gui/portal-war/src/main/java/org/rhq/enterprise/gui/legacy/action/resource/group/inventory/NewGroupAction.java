@@ -39,7 +39,6 @@ import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.HubConstants;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
-import org.rhq.enterprise.server.exception.CreateException;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
@@ -102,9 +101,9 @@ public class NewGroupAction extends BaseAction {
 
             // ctime, mtime, and modifiedBy should all be persistence hooks
             resourceGroupManager.createResourceGroup(subject, newGroup);
-        } catch (CreateException ex) {
-            log.debug("group creation failed: ", ex);
-            RequestUtils.setError(request, "resource.group.inventory.error.DuplicateGroupName");
+        } catch (Throwable t) {
+            log.debug("group creation failed: ", t);
+            RequestUtils.setError(request, "resource.group.inventory.error.GroupCreateError", t.getMessage());
             return returnFailure(request, mapping);
         }
 

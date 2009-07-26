@@ -497,7 +497,7 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
 
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public PageList<Channel> findChannels(Subject subject, ChannelCriteria criteria) {
+    public PageList<Channel> findChannelsByCriteria(Subject subject, ChannelCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
 
         Query query = generator.getQuery(entityManager);

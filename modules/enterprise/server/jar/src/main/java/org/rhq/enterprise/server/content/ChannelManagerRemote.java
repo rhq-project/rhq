@@ -84,7 +84,7 @@ public interface ChannelManagerRemote {
         @WebParam(name = "channelId") int channelId);
 
     @WebMethod
-    PageList<Channel> findChannels( //
+    PageList<Channel> findChannelsByCriteria( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "criteria") ChannelCriteria criteria);
 

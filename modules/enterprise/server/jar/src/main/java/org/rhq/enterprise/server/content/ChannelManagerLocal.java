@@ -147,7 +147,7 @@ public interface ChannelManagerLocal {
     /**
      * @see ChannelManagerRemote#findChannels(Subject, Channel, PageControl)
      */
-    PageList<Channel> findChannels(Subject subject, ChannelCriteria criteria);
+    PageList<Channel> findChannelsByCriteria(Subject subject, ChannelCriteria criteria);
 
     /**
      * @see ChannelManagerRemote#findPackageVersionsInChannel(Subject, int, PackageVersion, PageControl)

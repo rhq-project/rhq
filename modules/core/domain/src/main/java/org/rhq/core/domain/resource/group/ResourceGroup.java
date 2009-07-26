@@ -147,15 +147,12 @@ import org.rhq.core.domain.resource.ResourceType;
         + "           WHERE rg.id IN ( :ids ) " //
         + "             AND s = :subject"), //
 
-    /*
-    * For recursive group stuff, we want dups in the results
-    *
-    * Can *not* do <code>rg.implicitResources impR where impR.id IN ( :ids )</code> because that won't
-    * cover the case when impR is in the implicit list more than once.
-    *
-    * We need all dups here
-    */
-    @NamedQuery(name = ResourceGroup.QUERY_FIND_IMPLICIT_BY_RESOURCE_ID, query = "SELECT rg FROM Resource AS res JOIN res.implicitGroups rg WHERE res.id = :id "),
+    @NamedQuery(name = ResourceGroup.QUERY_FIND_IMPLICIT_RECURSIVE_GROUP_IDS_BY_RESOURCE_ID, query = "" //
+        + "SELECT rg.id " //
+        + "  FROM Resource AS res " //
+        + "  JOIN res.implicitGroups rg " //
+        + " WHERE res.id = :id " //
+        + "   AND rg.recursive = true "),
 
     /* the following two are for auto-groups summary */
     @NamedQuery(name = ResourceGroup.QUERY_FIND_AUTOGROUP_BY_ID, query = "SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(AVG(a.availabilityType), res.parentResource, res.resourceType, COUNT(res)) "
@@ -194,7 +191,7 @@ public class ResourceGroup extends Group {
     public static final String QUERY_GET_RESOURCE_GROUPS_ASSIGNED_TO_ROLE = "ResourceGroup.getResourceGroupsAssignedToRole";
     public static final String QUERY_FIND_BY_IDS_admin = "ResourceGroup.findByIds_admin";
     public static final String QUERY_FIND_BY_IDS = "ResourceGroup.findByIds";
-    public static final String QUERY_FIND_IMPLICIT_BY_RESOURCE_ID = "ResourceGroup.findImplicitByResourceId";
+    public static final String QUERY_FIND_IMPLICIT_RECURSIVE_GROUP_IDS_BY_RESOURCE_ID = "ResourceGroup.findImplicitRecursiveGroupIdsByResourceId";
 
     public static final String QUERY_FIND_AUTOGROUP_BY_ID = "ResourceGroup.findAutoGroupById";
     public static final String QUERY_FIND_AUTOGROUP_BY_ID_ADMIN = "ResourceGroup.findAutoGroupById_admin";

@@ -96,13 +96,74 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
             // test update implicit resources
             Resource newChildOfNodeA = new Resource("new nodeOne child", "new nodeOne child", nodeA.getResourceType());
 
-            resourceManager.createResource(subject, newChildOfNodeA, nodeA.getId());
+            resourceManager.createResource(subject, newChildOfNodeA, nodeA.getId()); // sets up implicit relationships
 
             List<Resource> updatedImplicitResources = resourceManager.findImplicitResourcesByResourceGroup(subject,
                 recursiveGroup, PageControl.getUnlimitedInstance());
 
             resourcesFromTreeA.add(newChildOfNodeA);
             verifyEqualByIds("Failed: simple implicit resources", resourcesFromTreeA, updatedImplicitResources);
+        } catch (Throwable t) {
+            t.printStackTrace();
+            throw t;
+        } finally {
+            getTransactionManager().rollback();
+        }
+    }
+
+    @Test(groups = "integration.session")
+    public void testUpdateImplicitGroupMembership() throws Throwable {
+        getTransactionManager().begin();
+        try {
+            EntityManager em = getEntityManager();
+
+            // setup simple test structures
+            Subject subject = SessionTestHelper.createNewSubject(em, "fake subject");
+            Role role = SessionTestHelper
+                .createNewRoleForSubject(em, subject, "fake role", Permission.MANAGE_INVENTORY);
+
+            ResourceGroup lineageG1 = SessionTestHelper.createNewMixedGroupForRole(em, role, "gen1", true);
+            ResourceGroup lineageG2 = SessionTestHelper.createNewMixedGroupForRole(em, role, "gen2", true);
+            ResourceGroup lineageG3 = SessionTestHelper.createNewMixedGroupForRole(em, role, "gen3", true);
+            ResourceGroup lineageG4 = SessionTestHelper.createNewMixedGroupForRole(em, role, "gen4", true);
+
+            // setup the test tree
+            List<Resource> fullTree = ResourceTreeHelper.createTree(em, "A=1; 1=a; a=i;"); // resource chain
+            Resource gen1 = ResourceTreeHelper.findNode(fullTree, "A");
+            Resource gen2 = ResourceTreeHelper.findNode(fullTree, "1");
+            Resource gen3 = ResourceTreeHelper.findNode(fullTree, "a");
+            Resource gen4 = ResourceTreeHelper.findNode(fullTree, "i");
+
+            resourceGroupManager.addResourcesToGroup(subject, lineageG1.getId(), new int[] { gen1.getId() });
+            resourceGroupManager.addResourcesToGroup(subject, lineageG2.getId(), new int[] { gen2.getId() });
+            resourceGroupManager.addResourcesToGroup(subject, lineageG3.getId(), new int[] { gen3.getId() });
+            resourceGroupManager.addResourcesToGroup(subject, lineageG4.getId(), new int[] { gen4.getId() });
+
+            // test update implicit resources
+            Resource gen5 = new Resource("g5", "g5", gen4.getResourceType());
+            resourceManager.createResource(subject, gen5, gen4.getId()); // sets up implicit relationships
+
+            // confirm results
+            List<Integer> newLineageG1 = resourceManager.findImplicitResourceIdsByResourceGroup(lineageG1.getId());
+            List<Integer> newLineageG2 = resourceManager.findImplicitResourceIdsByResourceGroup(lineageG2.getId());
+            List<Integer> newLineageG3 = resourceManager.findImplicitResourceIdsByResourceGroup(lineageG3.getId());
+            List<Integer> newLineageG4 = resourceManager.findImplicitResourceIdsByResourceGroup(lineageG4.getId());
+
+            List<Resource> treeGen1 = ResourceTreeHelper.getSubtree(gen1);
+            List<Resource> treeGen2 = ResourceTreeHelper.getSubtree(gen2);
+            List<Resource> treeGen3 = ResourceTreeHelper.getSubtree(gen3);
+            List<Resource> treeGen4 = ResourceTreeHelper.getSubtree(gen4);
+
+            // gen5 resource should have been added to all of them
+            treeGen1.add(gen5);
+            treeGen2.add(gen5);
+            treeGen3.add(gen5);
+            treeGen4.add(gen5);
+
+            verifyEqual("Failed: updateImplicitGroupMembership gen1", getIds(treeGen1), newLineageG1);
+            verifyEqual("Failed: updateImplicitGroupMembership gen2", getIds(treeGen2), newLineageG2);
+            verifyEqual("Failed: updateImplicitGroupMembership gen3", getIds(treeGen3), newLineageG3);
+            verifyEqual("Failed: updateImplicitGroupMembership gen4", getIds(treeGen4), newLineageG4);
         } catch (Throwable t) {
             t.printStackTrace();
             throw t;
@@ -342,8 +403,8 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
         resourceGroupManager.addResourcesToGroup(subject, recursiveGroup.getId(), new int[] { node.getId() });
         printGroup("complex implicit after add: node = " + node.getName() + " [" + node.getId() + "]", subject,
             recursiveGroup);
-        List<Resource> implicitResources = resourceManager.findImplicitResourcesByResourceGroup(subject, recursiveGroup,
-            PageControl.getUnlimitedInstance());
+        List<Resource> implicitResources = resourceManager.findImplicitResourcesByResourceGroup(subject,
+            recursiveGroup, PageControl.getUnlimitedInstance());
         verifyEqualByIds("Failed: complex implicit add: node = " + node.getName() + " [" + node.getId() + "]",
             expectedResults, implicitResources);
     }
@@ -355,8 +416,8 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
         resourceGroupManager.removeResourcesFromGroup(subject, recursiveGroup.getId(), new int[] { node.getId() });
         printGroup("complex implicit after remove: node = " + node.getName() + " [" + node.getId() + "]", subject,
             recursiveGroup);
-        List<Resource> implicitResources = resourceManager.findImplicitResourcesByResourceGroup(subject, recursiveGroup,
-            PageControl.getUnlimitedInstance());
+        List<Resource> implicitResources = resourceManager.findImplicitResourcesByResourceGroup(subject,
+            recursiveGroup, PageControl.getUnlimitedInstance());
         verifyEqualByIds("Failed: complex implicit remove: node = " + node.getName() + " [" + node.getId() + "]",
             expectedResults, implicitResources);
     }
@@ -364,6 +425,10 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
     private void verifyEqualByIds(String errorMessage, List<Resource> expected, List<Resource> results) {
         List<Integer> expectedIds = getIds(expected);
         List<Integer> resultsIds = getIds(results);
+        verifyEqual(errorMessage, expectedIds, resultsIds);
+    }
+
+    private void verifyEqual(String errorMessage, List<Integer> expectedIds, List<Integer> resultsIds) {
         assert (expectedIds.containsAll(resultsIds) && resultsIds.containsAll(expectedIds)) : errorMessage
             + "\nexpected = " + expectedIds + "\nresults = " + resultsIds;
     }

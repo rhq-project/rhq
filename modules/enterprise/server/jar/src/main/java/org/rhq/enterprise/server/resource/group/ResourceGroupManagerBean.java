@@ -721,65 +721,63 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
          * Get all the groups the parent of this resource is implicitly in. This will tell us which we need to update
          * (because we added new descendants).
          */
-        Query query = entityManager.createNamedQuery(ResourceGroup.QUERY_FIND_IMPLICIT_BY_RESOURCE_ID);
+        Query query = entityManager
+            .createNamedQuery(ResourceGroup.QUERY_FIND_IMPLICIT_RECURSIVE_GROUP_IDS_BY_RESOURCE_ID);
         query.setParameter("id", resource.getParentResource().getId());
-        List<ResourceGroup> groups = query.getResultList();
+        List<Integer> implicitRecursiveGroupIds = query.getResultList();
 
         // the resource isn't currently in a group -> no work to do
-        if (groups.size() == 0) {
+        if (implicitRecursiveGroupIds.size() == 0) {
             return;
-        }
-
-        List<ResourceGroup> recursiveGroups = new ArrayList<ResourceGroup>(groups.size());
-        for (ResourceGroup group : groups) {
-            if (group.isRecursive()) {
-                recursiveGroups.add(group);
-            }
         }
 
         /*
          * BFS-construct the resource tree
          */
-        List<Resource> resourceTree = new ArrayList<Resource>();
+        List<Integer> resourceIdsToAdd = new ArrayList<Integer>();
         List<Resource> toBeSearched = new LinkedList<Resource>();
         toBeSearched.add(resource);
         while (toBeSearched.size() > 0) {
             Resource next = toBeSearched.remove(0);
-            resourceTree.add(next);
+            resourceIdsToAdd.add(next.getId());
             toBeSearched.addAll(next.getChildResources());
         }
 
         /*
-         * We should add this resource and all of its descendants to whatever recursive groups this resource's parent is
-         * in
+         * now add this resource and all of its descendants to whatever recursive groups it's parent is already in
          */
-        for (ResourceGroup implicitRecursiveGroup : recursiveGroups) {
-            for (Resource implicitResource : resourceTree) {
-                // cardinal rule, add the relationship in both directions
-                implicitRecursiveGroup.addImplicitResource(implicitResource);
-                implicitResource.getImplicitGroups().add(implicitRecursiveGroup);
+        try {
+            Connection conn = rhqDs.getConnection();
+            PreparedStatement insertImplicitStatement = null;
+            for (Integer implicitRecursiveGroupId : implicitRecursiveGroupIds) {
+                /*
+                 * do have to worry about whether these resources are already in the explicit resource list because
+                 * they are being newly committed to inventory and thus shouldn't be in any group except the work
+                 * being done right now. 
+                 * 
+                 * also, since we've already computed the toAddResourceIds by recursing down the chain resource passed 
+                 * to this method, we can just do simple RHQ_RESOURCE_GROUP_RES_IMP_MAP table insertions 
+                 */
+                String insertImplicitQueryString = JDBCUtil.transformQueryForMultipleInParameters(
+                    ResourceGroup.QUERY_NATIVE_ADD_RESOURCES_TO_GROUP_IMPLICIT, "@@RESOURCE_IDS@@", resourceIdsToAdd
+                        .size());
+                insertImplicitStatement = conn.prepareStatement(insertImplicitQueryString);
+                insertImplicitStatement.setInt(1, implicitRecursiveGroupId);
+                JDBCUtil.bindNTimes(insertImplicitStatement, ArrayUtils.unwrapCollection(resourceIdsToAdd), 2);
+                insertImplicitStatement.executeUpdate();
+
+                /*
+                 * when automatically updating recursive groups during inventory sync we need to make sure that we also
+                 * update the resourceGroup; this will realistically only happen when a recursive group definition is
+                 * created, but which initially creates one or more resource groups of size 1; if this happens, the
+                 * group will be created as a compatible group, if resources are later added via an inventory sync, and
+                 * if this compatible group's membership changes, we need to recalculate the group category
+                 */
+                setResourceType(implicitRecursiveGroupId);
             }
-
-            /*
-             * when automatically updating recursive groups during inventory sync we need to make sure that we also
-             * update the resourceGroup; this will realistically only happen when a recursive group definition is
-             * created, but which initially creates one or more resource groups of size 1; if this happens, the
-             * group will be created as a compatible group, if resources are later added via an inventory sync, and
-             * if this compatible group's membership changes, we need to recalculate the group category
-             */
-            setResourceType(implicitRecursiveGroup.getId());
-        }
-
-        /*
-         * Merge all the participants after the relationships are constructed, and save the return values so callers can
-         * work with attached objects.
-         */
-        for (ResourceGroup implicitRecursiveGroup : recursiveGroups) {
-            entityManager.merge(implicitRecursiveGroup);
-        }
-
-        for (Resource implicitResource : resourceTree) {
-            entityManager.merge(implicitResource);
+        } catch (Exception e) {
+            throw new ResourceGroupUpdateException("Could not add resource[id=" + resource.getId()
+                + "] to necessary implicit groups", e);
         }
     }
 

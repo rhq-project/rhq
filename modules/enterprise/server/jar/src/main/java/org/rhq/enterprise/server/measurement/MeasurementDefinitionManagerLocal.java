@@ -27,7 +27,6 @@ import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
-import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
 /**
@@ -81,9 +80,6 @@ public interface MeasurementDefinitionManagerLocal {
      * @return the MeasurementDefinition or null if not found
      */
     MeasurementDefinition getMeasurementDefinition(Subject subject, int definitionId);
-
-    PageList<MeasurementDefinition> findMeasurementDefinitions(Subject sessionSubject, MeasurementDefinition criteria,
-        PageControl pc);
 
     PageList<MeasurementDefinition> findMeasurementDefinitionsByCriteria(Subject subject,
         MeasurementDefinitionCriteria criteria);

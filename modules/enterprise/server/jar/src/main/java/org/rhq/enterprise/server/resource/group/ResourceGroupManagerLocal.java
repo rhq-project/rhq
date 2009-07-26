@@ -111,11 +111,6 @@ public interface ResourceGroupManagerLocal {
     //
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    //optional data for findResourceGroups and findResourceGroupComposites
-    static public final String DATA_IMPLICIT_RESOURCES = "implicitResource";
-    static public final String DATA_EXPLICIT_RESOURCES = "explicitResources";
-    static public final String DATA_ROLES = "roles";
-
     void addResourcesToGroup(Subject subject, int groupId, int[] resourceIds);
 
     ResourceGroup createResourceGroup(Subject user, ResourceGroup group);

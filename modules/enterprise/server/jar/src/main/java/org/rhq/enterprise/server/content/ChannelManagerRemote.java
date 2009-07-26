@@ -28,6 +28,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.Channel;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.criteria.ChannelCriteria;
+import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -88,11 +89,9 @@ public interface ChannelManagerRemote {
         @WebParam(name = "criteria") ChannelCriteria criteria);
 
     @WebMethod
-    PageList<PackageVersion> findPackageVersionsInChannel( //
+    PageList<PackageVersion> findPackageVersionsInChannelByCriteria( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "channelId") int channelId, //
-        @WebParam(name = "criteria") PackageVersion criteria, //
-        @WebParam(name = "pageControl") PageControl pc);
+        @WebParam(name = "criteria") PackageVersionCriteria criteria);
 
     // change exception
     /**

@@ -39,11 +39,6 @@ import org.rhq.core.domain.util.PageList;
 @Remote
 public interface ResourceGroupManagerRemote {
 
-    //optional data for findResourceGroups and findResourceGroupComposites
-    static public final String DATA_IMPLICIT_RESOURCES = "implicitResource";
-    static public final String DATA_EXPLICIT_RESOURCES = "explicitResources";
-    static public final String DATA_ROLES = "roles";
-
     @WebMethod
     void addResourcesToGroup( //
         @WebParam(name = "subject") Subject subject, //

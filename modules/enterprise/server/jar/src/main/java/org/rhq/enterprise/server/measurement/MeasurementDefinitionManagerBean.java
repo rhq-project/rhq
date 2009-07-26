@@ -40,9 +40,7 @@ import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.util.CriteriaQueryGenerator;
-import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.util.QueryGenerator;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 
@@ -134,20 +132,6 @@ public class MeasurementDefinitionManagerBean implements MeasurementDefinitionMa
 
         List<MeasurementDefinition> results = query.getResultList();
         return results;
-    }
-
-    @SuppressWarnings("unchecked")
-    public PageList<MeasurementDefinition> findMeasurementDefinitions(Subject subject, MeasurementDefinition criteria,
-        PageControl pc) {
-        QueryGenerator generator = new QueryGenerator(criteria, pc);
-
-        Query query = generator.getQuery(entityManager);
-        Query countQuery = generator.getCountQuery(entityManager);
-
-        long count = (Long) countQuery.getSingleResult();
-        List<MeasurementDefinition> alertDefinitions = query.getResultList();
-
-        return new PageList<MeasurementDefinition>(alertDefinitions, (int) count, pc);
     }
 
     @SuppressWarnings("unchecked")

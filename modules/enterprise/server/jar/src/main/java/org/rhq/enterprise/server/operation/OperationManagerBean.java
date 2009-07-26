@@ -73,8 +73,6 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
-import org.rhq.core.domain.util.QueryGenerator;
-import org.rhq.core.domain.util.QueryGenerator.AuthorizationTokenType;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
@@ -1780,21 +1778,6 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         } catch (Exception e) {
             throw new ScheduleException(e);
         }
-    }
-
-    @SuppressWarnings("unchecked")
-    public PageList<ResourceOperationHistory> findOperationHistories(Subject subject,
-        ResourceOperationHistory criteria, PageControl pc) {
-        QueryGenerator generator = new QueryGenerator(criteria, pc);
-        generator.setAuthorizationResourceFragment(AuthorizationTokenType.RESOURCE, subject.getId());
-
-        Query query = generator.getQuery(entityManager);
-        Query countQuery = generator.getCountQuery(entityManager);
-
-        long count = (Long) countQuery.getSingleResult();
-        List<ResourceOperationHistory> results = query.getResultList();
-
-        return new PageList<ResourceOperationHistory>(results, (int) count, pc);
     }
 
     @SuppressWarnings("unchecked")

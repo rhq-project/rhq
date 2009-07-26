@@ -28,6 +28,7 @@ import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.composite.ChannelComposite;
 import org.rhq.core.domain.criteria.ChannelCriteria;
+import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -151,8 +152,7 @@ public interface ChannelManagerLocal {
     /**
      * @see ChannelManagerRemote#findPackageVersionsInChannel(Subject, int, PackageVersion, PageControl)
      */
-    PageList<PackageVersion> findPackageVersionsInChannel(Subject subject, int channelId, PackageVersion criteria,
-        PageControl pc);
+    PageList<PackageVersion> findPackageVersionsInChannelByCriteria(Subject subject, PackageVersionCriteria criteria);
 
     /**
      * @see ChannelManagerRemote#subscribeResourceToChannels(Subject, int, int[])

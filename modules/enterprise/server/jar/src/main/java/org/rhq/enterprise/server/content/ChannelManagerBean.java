@@ -44,12 +44,12 @@ import org.rhq.core.domain.content.PackageVersionContentSource;
 import org.rhq.core.domain.content.ResourceChannel;
 import org.rhq.core.domain.content.composite.ChannelComposite;
 import org.rhq.core.domain.criteria.ChannelCriteria;
+import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.CriteriaQueryGenerator;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
-import org.rhq.core.domain.util.QueryGenerator;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
@@ -511,10 +511,9 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
 
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public PageList<PackageVersion> findPackageVersionsInChannel(Subject subject, int channelId,
-        PackageVersion criteria, PageControl pc) {
-        QueryGenerator generator = new QueryGenerator(criteria, pc);
-        generator.addRelationshipFilter("channelPackageVersions", "channel.id = ?", channelId);
+    public PageList<PackageVersion> findPackageVersionsInChannelByCriteria(Subject subject,
+        PackageVersionCriteria criteria) {
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
 
         Query query = generator.getQuery(entityManager);
         Query countQuery = generator.getCountQuery(entityManager);
@@ -522,7 +521,7 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
         long count = (Long) countQuery.getSingleResult();
         List<PackageVersion> packageVersions = query.getResultList();
 
-        return new PageList<PackageVersion>(packageVersions, (int) count, pc);
+        return new PageList<PackageVersion>(packageVersions, (int) count, criteria.getPageControl());
     }
 
 }

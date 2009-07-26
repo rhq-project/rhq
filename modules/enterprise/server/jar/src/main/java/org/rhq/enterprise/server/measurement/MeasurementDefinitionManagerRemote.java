@@ -27,7 +27,6 @@ import javax.jws.soap.SOAPBinding;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
-import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
 @SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
@@ -39,12 +38,6 @@ public interface MeasurementDefinitionManagerRemote {
     MeasurementDefinition getMeasurementDefinition(//
         @WebParam(name = "subject") Subject subject,//
         @WebParam(name = "definitionId") int definitionId);
-
-    @WebMethod
-    PageList<MeasurementDefinition> findMeasurementDefinitions(//
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "criteria") MeasurementDefinition criteria, //
-        @WebParam(name = "pageControl") PageControl pc);
 
     @WebMethod
     PageList<MeasurementDefinition> findMeasurementDefinitionsByCriteria(//

@@ -406,24 +406,6 @@ public interface ResourceManagerLocal {
     //
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    static public final String DATA_AGENT = "agent";
-    static public final String DATA_AVAILABILITY = "availability";
-    static public final String DATA_CURRENT_AVAILABILITY = "currentAvailability";
-    static public final String DATA_EXPLICIT_GROUPS = "explicitGroups";
-    static public final String DATA_IMPLICIT_GROUPS = "implicitGroups";
-    static public final String DATA_PARENT_RESOURCE = "parentResource";
-    static public final String DATA_PLUGIN_CONFIGURATION = "pluginConfiguration";
-    static public final String DATA_PRODUCT_VERSION = "productVersion";
-    static public final String DATA_RESOURCE_CONFIGURATION = "resourceConfiguration";
-    static public final String DATA_RESOURCE_ERRORS = "resourceErrors";
-    static public final String DATA_RESOURCE_TYPE = "resourceType";
-
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    //
-    // The following are shared with the Remote Interface
-    //
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
     /**
      * #see {@link ResourceManagerRemote#getResource(Subject, int)
      */

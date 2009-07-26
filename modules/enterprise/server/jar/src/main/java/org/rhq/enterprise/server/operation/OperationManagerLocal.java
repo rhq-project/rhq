@@ -55,7 +55,7 @@ public interface OperationManagerLocal {
     /**
      * Schedules an operation for execution on the given resource.
      *
-     * @param  subject        the user who is asking to schedule the job
+     * @param  subject       the user who is asking to schedule the job
      * @param  resourceId    the resource that is the target of the operation
      * @param  operationName the actual operation to invoke
      * @param  parameters    optional parameters to pass into the operation
@@ -73,7 +73,7 @@ public interface OperationManagerLocal {
     /**
      * Schedules an operation for execution on members of the given group.
      *
-     * @param  subject                    the user who is asking to schedule the job
+     * @param  subject                   the user who is asking to schedule the job
      * @param  groupId                   the group whose member resources are the target of the operation
      * @param  executionOrderResourceIds optional order of exection - if not<code>null</code>, these are group members
      *                                   resource IDs in the order in which the operations are invoked
@@ -185,7 +185,7 @@ public interface OperationManagerLocal {
     /**
      * Get the paged resource operation histories for a given group history.
      *
-     * @param  subject    the user that wants to see the history
+     * @param  subject   the user that wants to see the history
      * @param  historyId ID of the history to retrieve
      * @param  pc        the page control used for sorting and paging of results
      *
@@ -355,7 +355,7 @@ public interface OperationManagerLocal {
      * resource has had no operations performed against it yet (or if all previously performed operations have been
      * deleted from the history). Returns the result of the operation as it is known on the server-side in the database.
      *
-     * @param  subject     the user who wants to see the information
+     * @param  subject    the user who wants to see the information
      * @param  resourceId a {@link Resource} id
      *
      * @return the most recent operation performed against the {@link Resource} with the given id, or <code>null</code>
@@ -368,7 +368,7 @@ public interface OperationManagerLocal {
      * Get the oldest operation still in progress for the {@link Resource} with the given id, or <code>null</code> if
      * the resource has no operations being performed against it. Returns the INPROCESS element with empty results.
      *
-     * @param  subject     the user who wants to see the information
+     * @param  subject    the user who wants to see the information
      * @param  resourceId a {@link Resource} id
      *
      * @return the oldest operation still in progress for the {@link Resource} with the given id, or <code>null</code>
@@ -380,7 +380,7 @@ public interface OperationManagerLocal {
     /**
      * Get the OperationDefinition object that corresponds to this operationId
      *
-     * @param  whoami      the user who wants to see the information
+     * @param  subject     the user who wants to see the information
      * @param  operationId
      *
      * @return the OperationDefinition object that corresponds to this operationId
@@ -470,7 +470,7 @@ public interface OperationManagerLocal {
      * <p>If the cancel request succeeds, the history element will be checked against the
      * AlertConditionCacheManager.</p>
      *
-     * @param subject            the user that wants to cancel the operation
+     * @param subject           the user that wants to cancel the operation
      * @param historyId         the ID of the history item identifying the in-progress operation
      * @param ignoreAgentErrors if <code>true</code> this will still flag the history items in the database as canceled,
      *                          even if the method failed to notify the agent(s) that the operation should be canceled.
@@ -486,7 +486,7 @@ public interface OperationManagerLocal {
      * <p>Note that this method will handle deleting a resource or group history - depending on what the given <code>
      * historyId</code> refers to.</p>
      *
-     * @param subject          the user that wants to delete the history
+     * @param subject         the user that wants to delete the history
      * @param historyId       the ID of the history to be deleted
      * @param purgeInProgress if <code>true</code>, even if the operation is in progress, the history entity will be
      *                        deleted. You normally do not want to purge operation histories until they are completed,
@@ -509,12 +509,6 @@ public interface OperationManagerLocal {
      */
     PageList<ResourceOperationHistory> findCompletedResourceOperationHistories(Subject subject, int resourceId,
         Long startDate, Long endDate, PageControl pc);
-
-    /**
-     * #see {@link OperationManagerRemote#findOperationHistories
-     */
-    PageList<ResourceOperationHistory> findOperationHistories(Subject subject, ResourceOperationHistory criteria,
-        PageControl pc);
 
     /**
      * Returns the list of pending operation histories for the given resource. This will return all items that are still
@@ -577,7 +571,7 @@ public interface OperationManagerLocal {
     /**
      * Schedules an operation for execution on the given resource.
      *
-     * @param  subject           The logged in user's subject.
+     * @param  subject        The logged in user's subject.
      * @param  resourceId     the resource that is the target of the operation
      * @param  operationName  the actual operation to invoke
      * @param  delay          the number of milliseconds to delay this operation, 0 for immediate start.
@@ -597,7 +591,7 @@ public interface OperationManagerLocal {
     /**
      * Unschedules the resource operation identified with the given job ID.
      *
-     * @param  subject     the user who is asking to unschedule the operation
+     * @param  subject    the user who is asking to unschedule the operation
      * @param  jobId      identifies the operation to unschedule
      * @param  resourceId the ID of the resource whose operation is getting unscheduled
      * @throws UnscheduleException TODO

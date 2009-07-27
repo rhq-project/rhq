@@ -34,6 +34,7 @@ import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 import org.mc4j.ems.connection.settings.ConnectionSettings;
 import org.mc4j.ems.connection.support.ConnectionProvider;
 import org.mc4j.ems.connection.support.metadata.ConnectionTypeDescriptor;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -225,11 +226,15 @@ public class TomcatServerComponent implements JMXComponent, MeasurementFacet, Op
                 // but the connection will not work. That failure seems to come from the call to loadSynchronous after
                 // the connection is established. If we get to this point that an exception was thrown, close any
                 // connection that was made and null it out so we can try to establish it again.
-                if (connection != null) {
+                if (this.connection != null) {
                     if (log.isDebugEnabled())
                         log.debug("Connection created but an exception was thrown. Closing the connection.", e);
-                    connection.close();
-                    connection = null;
+                    try {
+                        this.connection.close();
+                    } catch (Exception e2) {
+                        log.error("Error closing Tomcat EMS connection: " + e2);
+                    }
+                    this.connection = null;
                 }
 
                 // Since the connection is attempted each time it's used, failure to connect could result in log

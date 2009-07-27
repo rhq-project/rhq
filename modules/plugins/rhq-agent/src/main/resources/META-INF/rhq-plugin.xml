@@ -332,7 +332,7 @@
          </c:group>
          <c:group name="plugincontainer" displayName="Plugin Container" hiddenByDefault="false">
             <c:description>Plugin Container configuration properties</c:description>
-            <c:simple-property name="rhq.agent.plugins.directory" type="string" activationPolicy="restart" required="true" default="plugins" displayName="Plugins Directory"  />
+            <c:simple-property name="rhq.agent.plugins.directory" type="string" activationPolicy="restart" required="true" default="plugins" displayName="Plugins Directory" description="Location on the file system where the plugin jar files are stored"/>
             <c:simple-property name="rhq.agent.plugins.server-discovery.initial-delay-secs" type="integer" units="seconds" activationPolicy="restart" required="false" default="10" displayName="Server Discovery Initial Delay" description="Startup delay before the first server discovery is run" />
             <c:simple-property name="rhq.agent.plugins.server-discovery.period-secs" type="integer" units="seconds" activationPolicy="restart" required="false" default="900" displayName="Server Discovery Period" description="Time between server discoveries" />
             <c:simple-property name="rhq.agent.plugins.service-discovery.initial-delay-secs" type="integer" units="seconds" activationPolicy="restart" required="false" default="20" displayName="Service Discovery Initial Delay" description="Startup delay before the first service discovery is run" />

@@ -29,10 +29,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.List;
-import java.lang.reflect.Method;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -48,6 +47,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.CreateResourceStatus;
@@ -241,28 +241,55 @@ public class PostgresServerComponent implements DatabaseComponent, Configuration
         report.setStatus(ConfigurationUpdateStatus.SUCCESS);
     }
 
+   /**
+    * Get data about the database server. Currently we have two categories:
+    * <ul>
+    * <li>Database.* are metrics that are obtained from the database server itself</li>
+    * <li>Process.* are metrics obtained from the native system.</li>
+    * </ul>
+    *
+    * @param  report  the report where all collected measurement data will be added
+    * @param  metrics the schedule of what needs to be collected when
+    *
+    */
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) {
-        if (aggregateProcessInfo != null) {
-            aggregateProcessInfo.refresh();
-            for (MeasurementScheduleRequest request : metrics) {
-                if (request.getName().startsWith("Process.")) {
-                    //report.addData(new MeasurementDataNumeric(request, getProcessProperty(request.getName())));
 
-                    Object val = lookupAttributeProperty(aggregateProcessInfo, request.getName().substring("Process.".length()));
-                    if (val != null && val instanceof Number) {
+       for (MeasurementScheduleRequest request : metrics) {
+          String property = request.getName();
+          if (property.startsWith("Process.")) {
+             if (aggregateProcessInfo != null) {
+                aggregateProcessInfo.refresh();
+
+                //report.addData(new MeasurementDataNumeric(request, getProcessProperty(request.getName())));
+
+                Object val = lookupAttributeProperty(aggregateProcessInfo, property.substring("Process.".length()));
+                if (val != null && val instanceof Number) {
 //                        aggregateProcessInfo.getAggregateMemory().Cpu().getTotal()
-                        report.addData(new MeasurementDataNumeric(request, ((Number) val).doubleValue()));
-                    }
-                } else if (request.getName().equals("startTime")) {
-                    /* db start time
-                     * try { ResultSet rs = getConnection().createStatement().executeQuery("SELECT
-                     * pg_postmaster_start_time()"); report.addData(new MeasurementDataTrait(request,
-                     * rs.getTimestamp(1).getTime())); return } catch (SQLException e) {
-                     *
-                     *}*/
+                   report.addData(new MeasurementDataNumeric(request, ((Number) val).doubleValue()));
                 }
-            }
-        }
+             }
+          } else if (property.startsWith("Database")) {
+             try {
+                if (property.endsWith("startTime")) {
+                   // db start time
+                   ResultSet rs = getConnection().createStatement().executeQuery("SELECT pg_postmaster_start_time()");
+                   if (rs.next())
+                     report.addData(new MeasurementDataTrait(request, rs.getTimestamp(1).toString()));
+
+                }
+                else if (property.endsWith("backends")) {
+                   // number of connected backends
+                   ResultSet rs = getConnection().createStatement().executeQuery("select count(*) from pg_stat_activity");
+                   if (rs.next())
+                     report.addData(new MeasurementDataNumeric(request, (double)rs.getLong(1)));
+                }
+
+             }
+             catch (SQLException e) {
+                log.warn("Can not collect property: " + property + ": " + e.getLocalizedMessage());
+             }
+          }
+       }
     }
 
     private Double getProcessProperty(String property) {

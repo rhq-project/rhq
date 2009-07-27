@@ -31,6 +31,7 @@ import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
 import org.rhq.core.domain.resource.Resource;
@@ -187,5 +188,53 @@ public interface ConfigurationManagerRemote {
         @WebParam(name = "resourceId") int resourceId, //
         @WebParam(name = "pingAgentFirst") boolean pingAgentFirst) //
         throws Exception;
+
+
+
+    /**
+     * Return the resource configuration definition for the {@link org.rhq.core.domain.resource.ResourceType} with the
+     * specified id.
+     *
+     * @param  subject         the user who is requesting the resource configuration definition
+     * @param  resourceTypeId identifies the resource type whose resource configuration definition is being requested
+     *
+     * @return the resource configuration definition for the {@link org.rhq.core.domain.resource.ResourceType} with the
+     *         specified id, or <code>null</code> if the ResourceType does not define a resource configuration
+     */
+    @WebMethod
+    ConfigurationDefinition getResourceConfigurationDefinitionForResourceType(
+            @WebParam(name = "subject") Subject subject,
+            @WebParam(name = "resourceTypeId") int resourceTypeId);
+
+    /**
+     * Return the resource configuration definition for the {@link org.rhq.core.domain.resource.ResourceType} with the
+     * specified id. The templates will be loaded in the definition returned from this call.
+     *
+     * @param  subject         the user who is requesting the resource configuration definition
+     * @param  resourceTypeId identifies the resource type whose resource configuration definition is being requested
+     *
+     * @return the resource configuration definition for the {@link org.rhq.core.domain.resource.ResourceType} with the
+     *         specified id, or <code>null</code> if the ResourceType does not define a resource configuration
+     */
+    @WebMethod
+    ConfigurationDefinition getResourceConfigurationDefinitionWithTemplatesForResourceType(
+            @WebParam(name = "subject") Subject subject,
+            @WebParam(name = "resourceTypeId") int resourceTypeId);
+
+    /**
+     * Return the plugin configuration definition for the {@link org.rhq.core.domain.resource.ResourceType} with the
+     * specified id.
+     *
+     * @param  subject         the user who is requesting the plugin configuration definition
+     * @param  resourceTypeId identifies the resource type whose plugin configuration definition is being requested
+     *
+     * @return the plugin configuration definition for the {@link org.rhq.core.domain.resource.ResourceType} with the
+     *         specified id, or <code>null</code> if the ResourceType does not define a plugin configuration
+     */
+    @WebMethod
+    ConfigurationDefinition getPluginConfigurationDefinitionForResourceType(
+            @WebParam(name = "subject") Subject subject,
+            @WebParam(name = "resourceTypeId") int resourceTypeId);
+
 
 }

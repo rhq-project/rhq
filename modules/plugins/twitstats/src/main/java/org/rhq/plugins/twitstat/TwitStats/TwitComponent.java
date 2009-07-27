@@ -43,7 +43,7 @@ import org.rhq.core.pluginapi.operation.OperationResult;
 /**
  * Implementation of the Twit subsystem functionality.
  * Actual work is done in the children
- * 
+ *
  * @author Heiko W. Rupp
  */
 public class TwitComponent implements ResourceComponent, OperationFacet, MeasurementFacet
@@ -117,7 +117,6 @@ public class TwitComponent implements ResourceComponent, OperationFacet, Measure
              if (lastId>0) {
                 MeasurementDataNumeric res;
                 res = new MeasurementDataNumeric(req, (double) statuses.size());
-                log.info("=!= got " + statuses.size() + " results : " + statuses);
 
                 eventPoller.addStatuses(statuses);
                 report.addData(res);

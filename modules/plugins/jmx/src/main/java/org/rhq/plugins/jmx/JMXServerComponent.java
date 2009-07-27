@@ -182,7 +182,11 @@ public class JMXServerComponent implements JMXComponent {
 
     public void stop() {
         if (connection != null) {
-            connection.close();
+            try {
+                connection.close();
+            } catch (Exception e) {
+                log.error("Error closing EMS connection: " + e);
+            }
             connection = null;
         }
     }

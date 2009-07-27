@@ -112,9 +112,11 @@ public class ServiceCompletor implements Completor {
             }
 
 
-            String[] call = base.split("\\.", 2);
+            String[] call = base.split("\\.");
             if (base.endsWith(".")) {
-                call = new String[]{call[0], ""};
+                String[] argPadded = new String[call.length+1];
+                System.arraycopy(call, 0, argPadded, 0, call.length);
+                argPadded[call.length] = "";
             }
 
 
@@ -130,7 +132,8 @@ public class ServiceCompletor implements Completor {
             } else {
                 Object rootObject = context.getAttribute(call[0]);
                 if (rootObject != null) {
-                    int matchIndex = contextComplete(rootObject, call[1], i, list);
+                    String theRest = base.substring(call[0].length() + 1, base.length());
+                    int matchIndex = contextComplete(rootObject, theRest, i, list);
                     Collections.sort(list);
                     return rootLength + call[0].length() + 1 + matchIndex;
                 }
@@ -174,14 +177,13 @@ public class ServiceCompletor implements Completor {
                             return -1;
                         }
 
-                        int result = completeParameters(call[1], i, list, (Method) match);  // x should be the same for all calls
+                        int result = completeParameters(baseObject, call[1], i, list, (Method) match);  // x should be the same for all calls
                         if (result > 0) {
                             x = result;
                         }
                     }
                 }
                 return call[0].length() + 1 + x;
-
             }
 
             if (matches.size() == 1 && matches.containsKey(call[0])) {
@@ -228,7 +230,7 @@ public class ServiceCompletor implements Completor {
     }
 
 
-    public int completeParameters(String params, int i, List list, Method method) {
+    public int completeParameters(Object baseObject, String params, int i, List list, Method method) {
 
         String[] paramList = params.split(",");
 
@@ -258,13 +260,26 @@ public class ServiceCompletor implements Completor {
             list.add(params + ")");
             return (params + ")").length();
         } else {
-            Map<String, Object> matches = getContextMatches(lastParam, c[paramIndex]);
 
-            if (matches.size() == 1 && matches.containsKey(lastParam)) {
-                list.add(paramIndex == c.length - 1 ? ")" : ",");
-                return baseLength + lastParam.length();
+            if (baseObject instanceof Map && method.getName().equals("get") && method.getParameterTypes().length == 1) {
+                Class keyType = method.getParameterTypes()[0];
+                for (Object key : ((Map)baseObject).keySet()) {
+                    String lookupChoice = "\'" + String.valueOf(key) + "\'";
+                    if (lookupChoice.startsWith(lastParam)) {
+                        list.add(lookupChoice);
+                    }
+                }
+
             } else {
-                list.addAll(matches.keySet());
+                Map<String, Object> matches = getContextMatches(lastParam, c[paramIndex]);
+
+                if (matches.size() == 1 && matches.containsKey(lastParam)) {
+
+                    list.add(paramIndex == c.length - 1 ? ")" : ",");
+                    return baseLength + lastParam.length();
+                } else {
+                    list.addAll(matches.keySet());
+                }
             }
 
 //            if (list.size() == 0 && recomplete == 3) {

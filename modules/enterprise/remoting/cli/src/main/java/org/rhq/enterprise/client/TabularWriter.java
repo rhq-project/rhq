@@ -134,8 +134,16 @@ public class TabularWriter {
             out.println(object.getClass().getSimpleName() + ":");
             Map<String, String> properties = new TreeMap<String, String>();
             int maxLength = 0;
+
+            boolean anyFilters = false;
             for (PropertyDescriptor pd : info.getPropertyDescriptors()) {
-                if (exportMode || summaryFilter.filter(pd)) {
+                if (summaryFilter.filter(pd)) {
+                    anyFilters = true;
+                }
+            }
+
+            for (PropertyDescriptor pd : info.getPropertyDescriptors()) {
+                if (exportMode || !anyFilters || summaryFilter.filter(pd)) {
                     Method m = pd.getReadMethod();
                     Object val = null;
                     if (m != null) {
@@ -214,14 +222,24 @@ public class TabularWriter {
 
                     } else {
 
+                        if (consistentMaps(list)) {
 
+
+                        } else {
                         BeanInfo info = Introspector.getBeanInfo(firstObject.getClass(), firstObject.getClass().getSuperclass());
-                        int i = 0;
 
+                        boolean anyFilters = false;
+                        for (PropertyDescriptor pd : info.getPropertyDescriptors()) {
+                            if (summaryFilter.filter(pd)) {
+                                anyFilters = true;
+                            }
+                        }
+
+                        int i = 0;
 
                         List<PropertyDescriptor> pdList = new ArrayList<PropertyDescriptor>();
                         for (PropertyDescriptor pd : info.getPropertyDescriptors()) {
-                            if (exportMode || summaryFilter.filter(pd)) {
+                            if (exportMode || !anyFilters || summaryFilter.filter(pd)) {
                                 try {
                                     boolean allNull = true;
                                     for (Object row : list) {
@@ -268,6 +286,7 @@ public class TabularWriter {
                     }
 
                     this.print(data);
+                    }
 
                 } catch (Exception e) {
                     e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
@@ -280,6 +299,55 @@ public class TabularWriter {
 
     }
 
+
+    private String shortVersion(Object object) {
+
+        if (object instanceof PropertySimple) {
+            return ((PropertySimple)object).getStringValue();
+        } else {
+            return String.valueOf(object);
+        }
+
+    }
+
+
+
+    private boolean consistentMaps(Collection list) {
+        List<String> keys = null;
+        String[][] data = new String[list.size()][];
+        int i = 0;
+        for (Object row : list) {
+            if (!(row instanceof Map)) {
+                return false;
+            }
+            if (keys == null) {
+                keys = new ArrayList<String>();
+
+                for (Object key : ((Map)row).keySet()) {
+                    String headerKey = String.valueOf(key);
+                    keys.add(headerKey);
+                }
+            }
+
+            data[i] = new String[keys.size()];
+            for (Object key : ((Map)row).keySet()) {
+                if (!keys.contains(String.valueOf(key))) {
+                    return false;
+                }
+                data[i][keys.lastIndexOf(String.valueOf(key))] = shortVersion(((Map)row).get(key));
+            }
+            i++;
+        }
+
+        if (keys != null) {
+            headers = keys.toArray(new String[keys.size()]);
+            print(data);
+            return true;
+        } else {
+            return false;
+        }
+
+    }
 
 
     public void print(Configuration config) {

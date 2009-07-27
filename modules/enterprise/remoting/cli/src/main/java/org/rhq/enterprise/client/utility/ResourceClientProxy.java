@@ -46,10 +46,12 @@ import javassist.util.proxy.ProxyFactory;
 import javax.jws.WebParam;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
 import org.rhq.core.domain.criteria.OperationDefinitionCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
+import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementCategory;
 import org.rhq.core.domain.measurement.MeasurementData;
@@ -60,6 +62,7 @@ import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.client.RemoteClient;
@@ -88,6 +91,8 @@ public class ResourceClientProxy {
     private Map<String, Operation> operationMap = new HashMap<String, Operation>();
 
     private List<ResourceClientProxy> children;
+    private ConfigurationDefinition resourceConfigurationDefinition;
+    private ConfigurationDefinition pluginConfigurationDefinition;
 
     public ResourceClientProxy() {
     }
@@ -100,7 +105,6 @@ public class ResourceClientProxy {
         this.measurementDefinitions = parentProxy.measurementDefinitions;
         this.measurementMap = parentProxy.measurementMap;
         this.children = parentProxy.children;
-        ;
 
     }
 
@@ -109,6 +113,10 @@ public class ResourceClientProxy {
         this.resourceId = resourceId;
 
         init();
+    }
+
+    public int getId() {
+        return resourceId;
     }
 
     public String getName() {
@@ -173,9 +181,22 @@ public class ResourceClientProxy {
         // Lazy init children, not here
         initMeasurements();
         initOperations();
+        initConfigDefs();
     }
 
-    public void initChildren() {
+    private void initConfigDefs() {
+        this.resourceConfigurationDefinition =
+            remoteClient.getConfigurationManagerRemote().getResourceConfigurationDefinitionForResourceType(
+                remoteClient.getSubject(),
+                resource.getResourceType().getId());
+        this.pluginConfigurationDefinition =
+            remoteClient.getConfigurationManagerRemote().getPluginConfigurationDefinitionForResourceType(
+                remoteClient.getSubject(),
+                resource.getResourceType().getId());
+    }
+
+
+    private void initChildren() {
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.addFilterParentResourceId(resourceId);
         PageList<Resource> childResources = remoteClient.getResourceManagerRemote().findResourcesByCriteria(
@@ -186,7 +207,7 @@ public class ResourceClientProxy {
         }
     }
 
-    public void initMeasurements() {
+    private void initMeasurements() {
         MeasurementDefinitionCriteria criteria = new MeasurementDefinitionCriteria();
         criteria.addFilterResourceTypeName(resource.getResourceType().getName());
 
@@ -334,10 +355,34 @@ public class ResourceClientProxy {
     public static class ClientProxyMethodHandler implements MethodHandler {
 
         ResourceClientProxy resourceClientProxy;
+        RemoteClient remoteClient;
 
-        public ClientProxyMethodHandler(ResourceClientProxy resourceClientProxy) {
+        public ClientProxyMethodHandler(ResourceClientProxy resourceClientProxy, RemoteClient remoteClient) {
             this.resourceClientProxy = resourceClientProxy;
+            this.remoteClient = remoteClient;
         }
+
+        // Methods here are optional and only accessible if their declared on the custom resource interface class
+
+        public Configuration getPluginConfiguration() {
+            return remoteClient.getConfigurationManagerRemote().getPluginConfiguration(
+                    remoteClient.getSubject(), resourceClientProxy.resourceId);
+        }
+
+        public ConfigurationDefinition getPluginConfigurationDefinition() {
+            return resourceClientProxy.pluginConfigurationDefinition;
+        }
+
+        public Configuration getResourceConfiguration() {
+            return remoteClient.getConfigurationManagerRemote().getResourceConfiguration(
+                    remoteClient.getSubject(), resourceClientProxy.resourceId);
+        }
+
+        public ConfigurationDefinition getResourceConfigurationDefinition() {
+            return resourceClientProxy.resourceConfigurationDefinition;
+        }
+
+
 
         public Object invoke(Object proxy, Method method, Method proceedMethod, Object[] args) throws Throwable {
 
@@ -345,21 +390,28 @@ public class ResourceClientProxy {
                 Method realMethod = ResourceClientProxy.class.getMethod(method.getName(), method.getParameterTypes());
                 return realMethod.invoke(resourceClientProxy, args);
             } else {
-                String name = method.getName();
-                Object key = resourceClientProxy.allProperties.get(name);
-                if (key == null) {
-                    name = decapitalize(method.getName().substring(3, method.getName().length()));
-                    key = resourceClientProxy.allProperties.get(name);
-                }
 
-                if (key != null) {
-                    if (key instanceof Measurement) {
-                        return String.valueOf(key);
-                    } else if (key instanceof Operation) {
-                        System.out.println("Invoking operation " + ((Operation) key).getName());
+                try {
+                    Method localMethod = ClientProxyMethodHandler.class.getDeclaredMethod(method.getName(), method.getParameterTypes());
+                    return localMethod.invoke(this, args);
+                } catch (NoSuchMethodException nsme) {
+                
+                    String name = method.getName();
+                    Object key = resourceClientProxy.allProperties.get(name);
+                    if (key == null) {
+                        name = decapitalize(method.getName().substring(3, method.getName().length()));
+                        key = resourceClientProxy.allProperties.get(name);
+                    }
 
-                        return ((Operation) key).invoke(args);
+                    if (key != null) {
+                        if (key instanceof Measurement) {
+                            return key;
+                        } else if (key instanceof Operation) {
+                            System.out.println("Invoking operation " + ((Operation) key).getName());
 
+                            return ((Operation) key).invoke(args);
+
+                        }
                     }
                 }
 
@@ -371,7 +423,7 @@ public class ResourceClientProxy {
     public static class Factory {
         private RemoteClient remoteClient;
 
-        public Factory(RemoteClient remoteClient) {
+            public Factory(RemoteClient remoteClient) {
             this.remoteClient = remoteClient;
         }
 
@@ -397,7 +449,7 @@ public class ResourceClientProxy {
                         try {
                             ResourceClientProxy.class.getMethod(name);
                         } catch (NoSuchMethodException nsme) {
-                            CtMethod method = CtNewMethod.abstractMethod(pool.get(String.class.getName()),
+                            CtMethod method = CtNewMethod.abstractMethod(pool.get(Measurement.class.getName()),
                                 getterName(key), new CtClass[0], new CtClass[0], customClass);
                             customClass.addMethod(method);
                         }
@@ -449,13 +501,24 @@ public class ResourceClientProxy {
             }
 
             if (customInterface != null) {
+
+                List<Class> interfaces = new ArrayList<Class>();
+                interfaces.add(customInterface);
+                if (proxy.resourceConfigurationDefinition != null) {
+                    interfaces.add(ResourceConfigurable.class);
+                }
+                if (proxy.pluginConfigurationDefinition != null) {
+                    interfaces.add(PluginConfigurable.class);
+                }
+
+
                 ProxyFactory proxyFactory = new ProxyFactory();
-                proxyFactory.setInterfaces(new Class[] { customInterface });
+                proxyFactory.setInterfaces(interfaces.toArray(new Class[interfaces.size()]));
                 proxyFactory.setSuperclass(ResourceClientProxy.class);
                 ResourceClientProxy proxied = null;
                 try {
                     proxied = (ResourceClientProxy) proxyFactory.create(new Class[] {}, new Object[] {},
-                        new ClientProxyMethodHandler(proxy));
+                        new ClientProxyMethodHandler(proxy, remoteClient));
                 } catch (InstantiationException e) {
                     e.printStackTrace(); //To change body of catch statement use File | Settings | File Templates.
                 } catch (IllegalAccessException e) {
@@ -483,6 +546,21 @@ public class ResourceClientProxy {
     private static String getterName(String name) {
         return "get" + Character.toUpperCase(name.charAt(0)) + name.substring(1, name.length());
     }
+
+
+    public static interface PluginConfigurable {
+        public Configuration getPluginConfiguration();
+
+        public ConfigurationDefinition getPluginConfigurationDefinition();
+    }
+
+    public static interface ResourceConfigurable {
+        public Configuration getResourceConfiguration();
+
+        public ConfigurationDefinition getResourceConfigurationDefinition();
+    }
+
+
 
     public static void main(String[] args) throws LoginException {
         RemoteClient rc = new RemoteClient("localhost", 7080);

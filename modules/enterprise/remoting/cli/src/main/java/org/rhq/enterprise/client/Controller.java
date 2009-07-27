@@ -51,9 +51,10 @@ public class Controller {
         client.setPort(rhqServer.getPort());
         client.setUser(username);
         client.setPass(password);
-        client.setRemoteClient(remoteClient);
 
         Subject subject = remoteClient.getSubjectManagerRemote().login(username, password);
+        client.setRemoteClient(remoteClient);
+
         remoteClient.setSubject(subject);
         remoteClient.setLoggedIn(true);
         loggedIn = true;

@@ -25,6 +25,7 @@ import jline.ArgumentCompletor;
 import jline.Completor;
 import jline.ConsoleReader;
 import jline.SimpleCompletor;
+import jline.MultiCompletor;
 import mazz.i18n.Msg;
 
 import org.rhq.core.domain.auth.Subject;
@@ -127,13 +128,15 @@ public class ClientMain {
 
         // Setup the command line completers for listed actions for the user before login
         // completes initial commands available
-        consoleReader.addCompletor(new SimpleCompletor(commands.keySet().toArray(new String[commands.size()])));
+        Completor commandCompletor = new SimpleCompletor(commands.keySet().toArray(new String[commands.size()]));
         // completes help arguments (basically, help <command>)
-        consoleReader.addCompletor(new ArgumentCompletor(new Completor[] { new SimpleCompletor("help"),
-            new SimpleCompletor(commands.keySet().toArray(new String[commands.size()])) }));
+        Completor helpCompletor = new ArgumentCompletor(new Completor[] { new SimpleCompletor("help"),
+            new SimpleCompletor(commands.keySet().toArray(new String[commands.size()])) });
 
         this.serviceCompletor = new ServiceCompletor(consoleReader);
-        consoleReader.addCompletor(this.serviceCompletor);
+        consoleReader.addCompletor(
+                new MultiCompletor(new Completor[] {serviceCompletor, helpCompletor, commandCompletor}));
+        
 
         // enable pagination
         consoleReader.setUsePagination(true);

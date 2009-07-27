@@ -1,25 +1,25 @@
- /*
-  * Jopr Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * Jopr Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.plugins.jbossas.util;
 
 import java.io.File;
@@ -48,7 +48,6 @@ import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
 
 import org.rhq.core.util.StringPropertyReplacer;
-
 import org.rhq.plugins.jbossas.helper.JBossProperties;
 
 /**
@@ -289,8 +288,8 @@ public class JnpConfig {
         private boolean inNaming = false;
         private boolean inNamingPort = false;
         private boolean inNamingBindAddress = false;
-        private StringBuilder namingPort = new StringBuilder();
-        private StringBuilder namingBindAddress = new StringBuilder();
+        private StringBuilder namingPort = null;
+        private StringBuilder namingBindAddress = null;
 
         //Binding Manager
         private boolean inBinding = false;
@@ -360,9 +359,11 @@ public class JnpConfig {
                 if (name != null) {
                     if (name.equals("Port")) {
                         inNamingPort = true;
+                        namingPort = new StringBuilder();
                         return;
                     } else if (name.equals("BindAddress")) {
                         inNamingBindAddress = true;
+                        namingBindAddress = new StringBuilder();
                         return;
                     }
                 }
@@ -394,8 +395,18 @@ public class JnpConfig {
         }
 
         protected Integer getNamingPort() {
+            if (isBindingManagerInUse) {
+                return null;
+            }
+
+            if (null == namingPort) {
+                log.warn("Naming 'RmiPort' attribute not found in JBossAS config file " + file
+                    + ". This may be ok as it can be specified in more than one place.");
+                return null;
+            }
+
             try {
-                return (!isBindingManagerInUse) ? Integer.parseInt(namingPort.toString()) : null;
+                return Integer.parseInt(namingPort.toString());
             } catch (NumberFormatException e) {
                 log.warn("Naming 'Port' attribute has invalid value (" + namingPort + ") in JBossAS config file "
                     + file + " - the value should be a positive integer or a resolvable property reference.");
@@ -404,14 +415,25 @@ public class JnpConfig {
         }
 
         protected String getNamingBindAddress() {
-            if ((namingBindAddress.length() >= PROPERTY_EXPRESSION_PREFIX.length()) &&
-                    (namingBindAddress.substring(0, PROPERTY_EXPRESSION_PREFIX.length()).equals(PROPERTY_EXPRESSION_PREFIX))) {
-                log.warn("Naming 'BindingAddress' attribute has invalid value (" + namingBindAddress
-                    + ") in JBossAS config file " + file
-                    + " - the value should be a host name, an IP address, or a resolvable property reference.");
+            if (isBindingManagerInUse) {
                 return null;
             }
-            return (!isBindingManagerInUse) ? namingBindAddress.toString() : null;
+
+            if (null == namingBindAddress) {
+                log.warn("Naming 'BindingAddress' attribute not found in JBossAS config file " + file
+                    + ". This may be ok as it can be specified in more than one place.");
+                return null;
+            }
+
+            String bindAddressString = namingBindAddress.toString();
+            if ((null == bindAddressString) || bindAddressString.startsWith(PROPERTY_EXPRESSION_PREFIX)) {
+                log.warn("Naming 'BindingAddress' attribute has invalid value (" + namingBindAddress
+                    + ") in JBossAS config file " + file
+                    + ". The value should be a host name, an IP address, or a resolvable property reference.");
+                return null;
+            }
+
+            return bindAddressString;
         }
 
         protected String getServerName() {

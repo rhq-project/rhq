@@ -142,12 +142,9 @@
           <artifactId>jnp-client</artifactId>
           <scope>test</scope>
         </dependency>
-
-        <dependency>
-          <groupId>org.jboss.remoting</groupId>
-          <artifactId>jboss-remoting</artifactId>
-          <scope>test</scope>
-        </dependency>
+        
+        <!-- NOTE: An org.jboss.remoting:jboss-remoting dep is declared above in 'provided' scope, 
+                   so we do not need it here ('provided' applies to both compilation and tests). -->
 
         <dependency>
           <groupId>org.jboss.jbossas</groupId>

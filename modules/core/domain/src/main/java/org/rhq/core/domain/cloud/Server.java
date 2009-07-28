@@ -83,7 +83,8 @@ import org.rhq.core.domain.resource.Agent;
         + "UPDATE Server s " //
         + "   SET s.operationMode = :downMode " //
         + " WHERE s.operationMode = :normalMode " //
-        + "   AND s.mtime < :staleTime "), //
+        + "   AND s.mtime < :staleTime " //
+        + "   AND s.id <> :thisServerId "), //
     @NamedQuery(name = Server.QUERY_UPDATE_STATUS_BY_NAME, query = "" //
         + " UPDATE Server s " //
         + "    SET s.status = -1 " // negative numbers so that bitmask strat does not conflict with this one

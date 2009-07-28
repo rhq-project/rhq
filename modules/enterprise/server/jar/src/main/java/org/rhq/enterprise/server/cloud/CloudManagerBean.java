@@ -30,6 +30,8 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.jboss.annotation.IgnoreDependency;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.cloud.FailoverListDetails;
@@ -43,6 +45,7 @@ import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
+import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -74,6 +77,10 @@ public class CloudManagerBean implements CloudManagerLocal {
 
     @EJB
     private AuthorizationManagerLocal authorizationManager;
+
+    @EJB
+    @IgnoreDependency
+    private ServerManagerLocal serverManager;
 
     public List<Agent> getAgentsByServerName(String serverName) {
         Server server = cloudManager.getServerByName(serverName);
@@ -250,11 +257,26 @@ public class CloudManagerBean implements CloudManagerLocal {
 
         long staleTime = System.currentTimeMillis() - SERVER_DOWN_INTERVAL;
 
+        int serverId = 0;
+        try {
+            Server server = serverManager.getServer();
+            if (log.isDebugEnabled()) {
+                log.debug(server.toString() + " is marking stale servers DOWN");
+            }
+            serverId = server.getId();
+        } catch (Exception e) {
+            log.error("Could not determine which instance is marking stale servers DOWN");
+        }
         Query query = entityManager.createNamedQuery(Server.QUERY_UPDATE_SET_STALE_DOWN);
         query.setParameter("downMode", Server.OperationMode.DOWN);
         query.setParameter("normalMode", Server.OperationMode.NORMAL);
         query.setParameter("staleTime", staleTime);
-        query.executeUpdate();
+        query.setParameter("thisServerId", serverId);
+        int resultCount = query.executeUpdate();
+
+        if (log.isDebugEnabled()) {
+            log.debug(String.valueOf(resultCount) + " stale servers were marked DOWN");
+        }
 
         // Perform requested partition events. Note that we only need to execute one cloud partition
         // regardless of the number of pending requests, as the work would be duplicated.

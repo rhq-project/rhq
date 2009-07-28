@@ -29,6 +29,7 @@ import org.testng.xml.XmlClass;
 import org.testng.TestNG;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
 import org.apache.commons.io.filefilter.NameFileFilter;
@@ -36,6 +37,8 @@ import org.apache.commons.io.filefilter.NameFileFilter;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FilenameFilter;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.ArrayList;
 import java.util.List;
@@ -72,23 +75,47 @@ public class ScriptTestRunner {
         }
     }
 
-    public void execute() {
-        Collection<File> scripts = findScripts();
+    public void execute() throws IOException {
+        Collection<Script> scripts = findScripts();
         XmlSuite suite = createSuite();
 
-        for (File script : scripts) {
+        for (Script script : scripts) {
             addTestToSuite(suite, script);
         }
 
         runSuite(suite);
     }
 
-    private Collection<File> findScripts() {
+    private Collection<Script> findScripts() throws IOException {
         return findScripts(scriptDir);
     }
 
-    private List<File> findScripts(File dir) {
-        List<File> scripts = new ArrayList<File>();
+//    private List<File> findScripts(File dir) {
+//        List<File> scripts = new ArrayList<File>();
+//        File[] paths = dir.listFiles();
+//        List<File> dirs = new ArrayList<File>();
+//
+//        for (File path : paths) {
+//            if (path.isDirectory() && !path.isHidden()) {
+//                dirs.add(path);
+//            }
+//            else if (scriptFilter.accept(dir, path.getAbsolutePath())) {
+//                scripts.add(path);
+//                if (singleTestMode) {
+//                    return scripts;
+//                }
+//            }
+//        }
+//
+//        for (File subdir : dirs) {
+//            scripts.addAll(findScripts(subdir));
+//        }
+//
+//        return scripts;
+//    }
+
+    private List<Script> findScripts(File dir) throws IOException {
+        List<Script> scripts = new ArrayList<Script>();
         File[] paths = dir.listFiles();
         List<File> dirs = new ArrayList<File>();
 
@@ -97,7 +124,12 @@ public class ScriptTestRunner {
                 dirs.add(path);
             }
             else if (scriptFilter.accept(dir, path.getAbsolutePath())) {
-                scripts.add(path);
+                Script script = new Script();
+                script.srcFile = path;
+                script.args = findScriptArgs(path);
+
+                scripts.add(script);
+
                 if (singleTestMode) {
                     return scripts;
                 }
@@ -111,17 +143,40 @@ public class ScriptTestRunner {
         return scripts;
     }
 
+    private String findScriptArgs(final File script) throws IOException {
+        File parentDir = script.getParentFile();
+
+        File[] argsFiles = parentDir.listFiles(new FilenameFilter() {
+            public boolean accept(File dir, String name) {
+                return name.endsWith(".args") && baseNamesAreSame(script.getName(), name);
+            }
+        });
+
+        if (argsFiles.length > 0) {
+            return IOUtils.toString(new FileReader(argsFiles[0]));
+        }
+
+        return null;
+    }
+
+    private boolean baseNamesAreSame(String scriptFileName, String scriptArgsFileName) {
+        return FilenameUtils.getBaseName(scriptFileName).equals(FilenameUtils.getBaseName(scriptArgsFileName));
+    }
+
     private XmlSuite createSuite() {
         XmlSuite suite = new XmlSuite();
         suite.setName("Command line suite");
         return suite;
     }
 
-    private void addTestToSuite(XmlSuite suite, File script) {
+    private void addTestToSuite(XmlSuite suite, Script script) {
         XmlTest test = new XmlTest(suite);
-        test.setName(FilenameUtils.getBaseName(script.getAbsolutePath()));
-        test.addParameter("script", script.getAbsolutePath());
-
+        test.setName(FilenameUtils.getBaseName(script.srcFile.getAbsolutePath()));
+        test.addParameter("script", script.srcFile.getAbsolutePath());
+        if (script.args != null) {
+            test.addParameter("args", script.args);
+        }
+        
         List<XmlClass> classes = new ArrayList<XmlClass>();
         classes.add(new XmlClass(ScriptTest.class));
         test.setXmlClasses(classes);
@@ -138,7 +193,13 @@ public class ScriptTestRunner {
         testNG.run();
     }
 
-    public static void main(String[] args) {
+    private static class Script {
+        public File srcFile;
+
+        public String args;
+    }
+
+    public static void main(String[] args) throws Exception {
         ScriptTestRunner runner = new ScriptTestRunner();
         runner.execute();
     }

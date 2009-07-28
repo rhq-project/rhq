@@ -26,18 +26,39 @@ package org.rhq.enterprise.remoting.cli;
 import org.rhq.enterprise.client.ClientMain;
 import org.testng.annotations.Test;
 import org.testng.annotations.Parameters;
+import org.testng.annotations.Optional;
 
 import java.net.URL;
 import java.net.URI;
+import java.util.Arrays;
+import java.util.List;
+import java.util.ArrayList;
 
 public class ScriptTest {
 
-    @Parameters({"script"})
+    @Parameters({"script", "args"})
     @Test
-    public void testScript(String script) throws Exception {
-        String[] args = new String[] {"exec", "-f", script};
+    public void testScript(String script, @Optional("") String scriptArgs) throws Exception {
+        List<String> args = createRequiredArgs(script);
 
-        ClientMain.main(args);
+        if (!scriptArgs.isEmpty()) {
+            args.addAll(getOptioalArgs(scriptArgs));
+        }
+
+        ClientMain.main(args.toArray(new String[] {}));
+    }
+
+    private List<String> createRequiredArgs(String script) {
+        List<String> args = new ArrayList<String>();
+        args.add("exec");
+        args.add("-f");
+        args.add(script);
+
+        return args;
+    }
+
+    private List<String> getOptioalArgs(String scriptArgs) {
+        return Arrays.asList(scriptArgs.split("\\s"));
     }
 
 }

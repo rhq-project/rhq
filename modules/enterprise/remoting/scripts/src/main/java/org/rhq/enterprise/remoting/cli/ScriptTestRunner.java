@@ -29,8 +29,13 @@ import org.testng.xml.XmlClass;
 import org.testng.TestNG;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.filefilter.IOFileFilter;
+import org.apache.commons.io.filefilter.SuffixFileFilter;
+import org.apache.commons.io.filefilter.NameFileFilter;
 
 import java.io.File;
+import java.io.FileFilter;
+import java.io.FilenameFilter;
 import java.util.Collection;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +46,31 @@ public class ScriptTestRunner {
     private File scriptDir = new File(System.getProperty("script.dir"));
 
     private String outputDir = System.getProperty("test.output.dir");
+
+    private String testName = System.getProperty("test");
+
+    private boolean singleTestMode;
+
+    private FilenameFilter scriptFilter;
+
+    public ScriptTestRunner() {
+        singleTestMode = testName != null && !testName.isEmpty() && !testName.equals("${test}");
+
+        if (singleTestMode) {
+            scriptFilter = new FilenameFilter() {
+                public boolean accept(File dir, String name) {
+                    return name.endsWith(testName);
+                }
+            };
+        }
+        else {
+            scriptFilter = new FilenameFilter() {
+                public boolean accept(File dir, String name) {
+                    return name.endsWith(".js");
+                }
+            };
+        }
+    }
 
     public void execute() {
         Collection<File> scripts = findScripts();
@@ -54,12 +84,36 @@ public class ScriptTestRunner {
     }
 
     private Collection<File> findScripts() {
-        return FileUtils.listFiles(scriptDir, new String[] {"js"}, true);
+        return findScripts(scriptDir);
+    }
+
+    private List<File> findScripts(File dir) {
+        List<File> scripts = new ArrayList<File>();
+        File[] paths = dir.listFiles();
+        List<File> dirs = new ArrayList<File>();
+
+        for (File path : paths) {
+            if (path.isDirectory() && !path.isHidden()) {
+                dirs.add(path);
+            }
+            else if (scriptFilter.accept(dir, path.getAbsolutePath())) {
+                scripts.add(path);
+                if (singleTestMode) {
+                    return scripts;
+                }
+            }
+        }
+
+        for (File subdir : dirs) {
+            scripts.addAll(findScripts(subdir));
+        }
+
+        return scripts;
     }
 
     private XmlSuite createSuite() {
         XmlSuite suite = new XmlSuite();
-        suite.setName("CLI Script Test Suite");
+        suite.setName("Command line suite");
         return suite;
     }
 
@@ -85,7 +139,6 @@ public class ScriptTestRunner {
     }
 
     public static void main(String[] args) {
-        System.out.println("BOOTSTRAP SCRIPT TESTS");
         ScriptTestRunner runner = new ScriptTestRunner();
         runner.execute();
     }

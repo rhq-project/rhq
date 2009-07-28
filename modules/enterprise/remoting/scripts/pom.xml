@@ -81,6 +81,7 @@
                             fork="true">
                          <sysproperty key="script.dir" value="${basedir}/src/test/script"/>
                          <sysproperty key="test.output.dir" value="${basedir}/target/surefire-reports"/>
+                         <sysproperty key="test" value="${test}"/>
                       </java>
                    </tasks>
                 </configuration>

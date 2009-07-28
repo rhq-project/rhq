@@ -115,8 +115,6 @@ public class VirtualHostDiscoveryComponent
             throws Exception
     {
         ComponentType webHostComponentType = MoreKnownComponentTypes.MBean.WebHost.getType();
-        //return managementView.getMatchingComponents(WEB_HOST_COMPONENT_NAMES_REGEX,
-        //        webHostComponentType, new RegularExpressionNameMatcher());
         return ManagedComponentUtils.getManagedComponents(managementView, webHostComponentType,
                 WEB_HOST_COMPONENT_NAMES_REGEX, new RegularExpressionNameMatcher());
     }

@@ -257,13 +257,12 @@ public class CloudManagerBean implements CloudManagerLocal {
 
         long staleTime = System.currentTimeMillis() - SERVER_DOWN_INTERVAL;
 
-        int serverId = 0;
+        String serverName = null;
         try {
-            Server server = serverManager.getServer();
+            serverName = serverManager.getIdentity();
             if (log.isDebugEnabled()) {
-                log.debug(server.toString() + " is marking stale servers DOWN");
+                log.debug(serverName + " is marking stale servers DOWN");
             }
-            serverId = server.getId();
         } catch (Exception e) {
             log.error("Could not determine which instance is marking stale servers DOWN");
         }
@@ -271,7 +270,7 @@ public class CloudManagerBean implements CloudManagerLocal {
         query.setParameter("downMode", Server.OperationMode.DOWN);
         query.setParameter("normalMode", Server.OperationMode.NORMAL);
         query.setParameter("staleTime", staleTime);
-        query.setParameter("thisServerId", serverId);
+        query.setParameter("thisServerName", serverName); // might be null
         int resultCount = query.executeUpdate();
 
         if (log.isDebugEnabled()) {

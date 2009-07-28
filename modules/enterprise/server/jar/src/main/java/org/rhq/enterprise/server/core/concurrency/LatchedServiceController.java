@@ -44,6 +44,7 @@ public class LatchedServiceController {
     private final Collection<? extends LatchedService> latchedServices;
     private final CountDownLatch serviceStartupLatch;
     private final CountDownLatch serviceCompletionLatch;
+    private int threadPoolSize;
 
     public LatchedServiceController(Collection<? extends LatchedService> services) {
         this.serviceStartupLatch = new CountDownLatch(1);
@@ -53,21 +54,28 @@ public class LatchedServiceController {
         for (LatchedService nextService : this.latchedServices) {
             nextService.controller = this;
         }
+
+        try {
+            this.threadPoolSize = Integer.parseInt(System.getProperty("rhq.server.plugin-deployer-threads", "5"));
+        } catch (NumberFormatException e) {
+            this.threadPoolSize = 5;
+            log.warn("Invalid number of threads specified, defaulting to [" + this.threadPoolSize + "]: " + e);
+        }
+    }
+
+    public int getThreadPoolSize() {
+        return threadPoolSize;
+    }
+
+    public void setThreadPoolSize(int threadPoolSize) {
+        this.threadPoolSize = threadPoolSize;
     }
 
     public void executeServices() throws LatchedServiceCircularityException {
         checkForCircularDependencies();
 
-        int threadPoolSize;
-        try {
-            threadPoolSize = Integer.parseInt(System.getProperty("rhq.server.plugin-deployer-threads", "5"));
-        } catch (NumberFormatException e) {
-            threadPoolSize = 5;
-            log.warn("Invalid number of threads specified, defaulting to [" + threadPoolSize + "]: " + e);
-        }
-
-        ExecutorService threadPool = Executors.newFixedThreadPool(threadPoolSize);
-        log.debug("Will execute latched services with a concurrency of [" + threadPoolSize + "]");
+        ExecutorService threadPool = Executors.newFixedThreadPool(this.threadPoolSize);
+        log.debug("Will execute latched services with a concurrency of [" + this.threadPoolSize + "]");
 
         // submit all latched services, but they'll block either in the thread pool queue or our startup latch
         Map<String, Future<?>> threads = new HashMap<String, Future<?>>();
@@ -146,15 +154,15 @@ public class LatchedServiceController {
         private CountDownLatch dependencyLatch;
         private LatchedServiceController controller;
         private final String serviceName;
-        private final List<LatchedService> dependencies;
-        private final List<LatchedService> dependees;
+        private final Set<LatchedService> dependencies;
+        private final Set<LatchedService> dependees;
         private volatile boolean running = false;
         private volatile boolean hasFailed = false;
 
         public LatchedService(String serviceName) {
             this.serviceName = serviceName;
-            this.dependencies = new ArrayList<LatchedService>();
-            this.dependees = new ArrayList<LatchedService>();
+            this.dependencies = new HashSet<LatchedService>();
+            this.dependees = new HashSet<LatchedService>();
         }
 
         public String getServiceName() {
@@ -176,7 +184,8 @@ public class LatchedServiceController {
 
         public void notifyComplete(LatchedService service, boolean didFail) {
             if (!dependencies.contains(service)) {
-                throw new IllegalArgumentException(service + " is not a dependency of " + this);
+                controller.log.error(service + " is not a dependency of " + this);
+                return;
             }
 
             /*
@@ -200,7 +209,8 @@ public class LatchedServiceController {
 
                 // avoid a deadlock (this is just more paranoia)
                 if (maxWaits-- <= 0) {
-                    throw new IllegalStateException("thread hasn't started and created our latch, abort!");
+                    controller.log.error("thread hasn't started and created our latch, abort!");
+                    return;
                 }
             }
 
@@ -210,9 +220,15 @@ public class LatchedServiceController {
         public void run() {
             running = true;
 
-            controller.log.debug("Processing [" + this.serviceName + "]...");
+            String originalThreadName = Thread.currentThread().getName();
+            Thread.currentThread().setName("Latched Service Processor: " + this.serviceName);
 
             try {
+                if (controller.log.isDebugEnabled()) {
+                    controller.log.debug("Latched Service Processing [" + this.serviceName + "]; dependencies=["
+                        + this.dependencies + "]; dependees=[" + this.dependees + "]...");
+                }
+
                 dependencyLatch = new CountDownLatch(dependencies.size());
 
                 if (controller == null) {
@@ -270,6 +286,7 @@ public class LatchedServiceController {
                     controller.serviceCompletionLatch.countDown();
 
                     controller.log.debug("Processed [" + this.serviceName + "]");
+                    Thread.currentThread().setName(originalThreadName);
                 }
             }
         }
@@ -282,7 +299,7 @@ public class LatchedServiceController {
             boolean first = true;
             for (LatchedService dep : dependencies) {
                 if (!first) {
-                    builder.append(", ");
+                    builder.append("|");
                 } else {
                     first = false;
                 }

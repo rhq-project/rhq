@@ -56,7 +56,17 @@ public abstract class AbstractPluginTest {
             pcConfig.setPluginDirectory(pluginDir);
             pcConfig.setInsideAgent(false);
             pcConfig.setCreateResourceClassloaders(true);
-            pcConfig.setRootPluginClassLoaderRegex(getRootClassLoaderClassesToHideRegex());
+            
+            // Because we communicate with the AS directly in the tests setups
+            // we need a number of deps in the test classloader.
+            // If we configured the plugin container to hide the classes below
+            // we would run into issues of classes not being able to transfer the
+            // classloader boundaries outside of our control (like for example during EJB3 
+            // remote interface proxuing). It it therefore best just to include the complete
+            // set of dependencies in the test scope in pom.xml and let the plugin container
+            // take those over.
+            // [mazz] i think this can be fixed, uncomment this if we can isolate the PC better
+            //pcConfig.setRootPluginClassLoaderRegex(getRootClassLoaderClassesToHideRegex());
 
             // Set initial delays for all scheduled scans to one week to effectively disable them.
             pcConfig.setServerDiscoveryInitialDelay(ONE_WEEK_IN_SECONDS);
@@ -130,48 +140,39 @@ public abstract class AbstractPluginTest {
     }
     
     private String getRootClassLoaderClassesToHideRegex() {
-// Because we communicate with the AS directly in the tests setups
-// we need a number of deps in the test classloader.
-// If we configured the plugin container to hide the classes below
-// we would run into issues of classes not being able to transfer the
-// classloader boundaries outside of our control (like for example during EJB3 
-// remote interface proxuing). It it therefore best just to include the complete
-// set of dependencies in the test scope in pom.xml and let the plugin container
-// take those over.
-//        StringBuilder defaultRegex = new StringBuilder();
-//
-//        // some things that we know are in the maven isolated classloader that we need to hide
-//        defaultRegex.append("(org\\.jboss\\.proxy\\..*)|");
-//        defaultRegex.append("(org\\.jboss\\.aop\\..*)|");
-//        defaultRegex.append("(org\\.jboss\\.jmx\\..*)|");
-//        defaultRegex.append("(org\\.jboss\\.invocation\\..*)|");
-//        defaultRegex.append("(org\\.jnp\\..*)|");
-//        defaultRegex.append("(org\\.rhq\\.plugins\\..*)|");
-//        defaultRegex.append("(org\\.mc4j\\..*)|");
-//
-//        // the rest of these are the same regex statements used by the agent
-//        defaultRegex.append("(javax\\.xml\\.bind\\..*)|");
-//        defaultRegex.append("(com\\.sun\\.activation\\..*)|");
-//        defaultRegex.append("(com\\.sun\\.istack\\..*)|");
-//        defaultRegex.append("(com\\.sun\\.xml\\..*)|");
-//        defaultRegex.append("(org\\.apache\\.commons\\.httpclient\\..*)|");
-//        defaultRegex.append("(org\\.apache\\.xerces\\..*)|");
-//        defaultRegex.append("(org\\.jboss\\.logging\\..*)|");
-//        defaultRegex.append("(org\\.jboss\\.net\\..*)|");
-//        defaultRegex.append("(org\\.jboss\\.util\\..*)|");
-//        defaultRegex.append("(org\\.jboss\\.dom4j\\..*)|");
-//        defaultRegex.append("(org\\.jboss\\.mx\\..*)|");
-//        defaultRegex.append("(org\\.jboss\\.remoting\\..*)|");
-//        defaultRegex.append("(org\\.jboss\\.serial\\..*)|");
-//        defaultRegex.append("(org\\.dom4j\\..*)|");
-//        defaultRegex.append("(EDU\\.oswego\\..*)|");
-//        defaultRegex.append("(gnu\\.getopt\\..*)|");
-//        defaultRegex.append("(org\\.rhq\\.core\\.clientapi\\..*)|");
-//        defaultRegex.append("(org\\.rhq\\.core\\.communications\\..*)|");
-//        defaultRegex.append("(org\\.rhq\\.core\\.pc\\..*)|");
-//        defaultRegex.append("(org\\.rhq\\.enterprise\\.communications\\.(?!command\\.server\\.CommandProcessorMetrics.*).*)");
-//
-//        return defaultRegex.toString();
-        return "";
+        StringBuilder defaultRegex = new StringBuilder();
+
+        // some things that we know are in the maven isolated classloader that we need to hide
+        defaultRegex.append("(org\\.jboss\\.proxy\\..*)|");
+        defaultRegex.append("(org\\.jboss\\.aop\\..*)|");
+        defaultRegex.append("(org\\.jboss\\.jmx\\..*)|");
+        defaultRegex.append("(org\\.jboss\\.invocation\\..*)|");
+        defaultRegex.append("(org\\.jnp\\..*)|");
+        defaultRegex.append("(org\\.rhq\\.plugins\\..*)|");
+        defaultRegex.append("(org\\.mc4j\\..*)|");
+
+        // the rest of these are the same regex statements used by the agent
+        defaultRegex.append("(javax\\.xml\\.bind\\..*)|");
+        defaultRegex.append("(com\\.sun\\.activation\\..*)|");
+        defaultRegex.append("(com\\.sun\\.istack\\..*)|");
+        defaultRegex.append("(com\\.sun\\.xml\\..*)|");
+        defaultRegex.append("(org\\.apache\\.commons\\.httpclient\\..*)|");
+        defaultRegex.append("(org\\.apache\\.xerces\\..*)|");
+        defaultRegex.append("(org\\.jboss\\.logging\\..*)|");
+        defaultRegex.append("(org\\.jboss\\.net\\..*)|");
+        defaultRegex.append("(org\\.jboss\\.util\\..*)|");
+        defaultRegex.append("(org\\.jboss\\.dom4j\\..*)|");
+        defaultRegex.append("(org\\.jboss\\.mx\\..*)|");
+        defaultRegex.append("(org\\.jboss\\.remoting\\..*)|");
+        defaultRegex.append("(org\\.jboss\\.serial\\..*)|");
+        defaultRegex.append("(org\\.dom4j\\..*)|");
+        defaultRegex.append("(EDU\\.oswego\\..*)|");
+        defaultRegex.append("(gnu\\.getopt\\..*)|");
+        defaultRegex.append("(org\\.rhq\\.core\\.clientapi\\..*)|");
+        defaultRegex.append("(org\\.rhq\\.core\\.communications\\..*)|");
+        defaultRegex.append("(org\\.rhq\\.core\\.pc\\..*)|");
+        defaultRegex.append("(org\\.rhq\\.enterprise\\.communications\\.(?!command\\.server\\.CommandProcessorMetrics.*).*)");
+
+        return defaultRegex.toString();       
     }
 }

@@ -96,9 +96,9 @@ public class LinuxPlatformComponent extends PlatformComponent implements Content
         PropertySimple yumProp = pluginConfiguration.getSimple("enableInternalYumServer");
         if (yumProp != null) {
             Boolean bool = yumProp.getBooleanValue();
-            this.enableContentDiscovery = (bool != null) ? bool.booleanValue() : false;
+            this.enableInternalYumServer = (bool != null) ? bool.booleanValue() : false;
         } else {
-            this.enableContentDiscovery = false;
+            this.enableInternalYumServer = false;
         }
 
         if (this.enableContentDiscovery) {

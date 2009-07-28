@@ -33,7 +33,7 @@ import org.rhq.core.pc.PluginContainer;
  */
 @Test(groups = "as5-plugin")
 public class GeneralPluginTest extends AbstractPluginTest {
-    @Test(groups = "as5-plugin")
+
     public void testPluginLoad() {
         PluginManager pluginManager = PluginContainer.getInstance().getPluginManager();
         PluginEnvironment pluginEnvironment = pluginManager.getPlugin(getPluginName());

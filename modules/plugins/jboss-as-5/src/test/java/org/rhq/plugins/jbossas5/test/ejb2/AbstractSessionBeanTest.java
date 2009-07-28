@@ -24,18 +24,16 @@
 package org.rhq.plugins.jbossas5.test.ejb2;
 
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.fail;
 
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertyList;
-import org.rhq.core.domain.configuration.PropertyMap;
-import org.rhq.core.domain.configuration.PropertySimple;
+import javax.rmi.PortableRemoteObject;
+
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.plugins.jbossas5.test.util.AppServerUtils;
+import org.rhq.plugins.jbossas5.test.util.EjbSessionBeanTestTemplate;
 import org.rhq.plugins.jbossas5.test.util.MethodArgDef;
 import org.testng.annotations.BeforeGroups;
+import org.testng.annotations.BeforeTest;
 
 /**
  * 
@@ -43,73 +41,52 @@ import org.testng.annotations.BeforeGroups;
  */
 public abstract class AbstractSessionBeanTest extends AbstractEjb2ResourceTest {
 
-    @BeforeGroups(groups = "as5-plugin")
-    public void setupBean() {
-        try {
-            Object bean = createRemoteBean(getTestedBeanName(), getEjbCreateMethodArgs());
+    private EjbSessionBeanTestTemplate testTemplate;
 
-            //call some methods so that we get the stats back
-            MethodArgDef[] args = getTestedMethodArgs();
+    protected static abstract class Ejb2SessionBeanTestTemplate extends EjbSessionBeanTestTemplate {
 
-            for (int i = 0; i < getTestedMethodExpectedInvocationCount(); ++i)
-                AppServerUtils.invokeMethod(getTestedMethodName(), bean, args);
-        } catch (Exception e) {
-            fail("Failed to setup the remote EJB2 test bean.", e);
+        protected abstract MethodArgDef[] getEjbCreateMethodArgs();
+
+        protected abstract Class<?> getHomeInterface();
+        
+        protected abstract String getHomeInterfaceJndiName();
+        
+        protected Object getRemoteBean() throws Exception {
+            return createRemoteBean(getHomeInterfaceJndiName(), getHomeInterface(), getEjbCreateMethodArgs());
         }
+        
+        protected static Object createRemoteBean(String homeJndiName, Class<?> homeInterface, MethodArgDef... createMethodArgs) throws Exception {
+            Object home = AppServerUtils.getRemoteObject(homeJndiName, Object.class);
+            
+            Object narrowed = PortableRemoteObject.narrow(home, homeInterface);
+            
+            return AppServerUtils.invokeMethod("create", narrowed, createMethodArgs);
+        }            
+    }
+    
+    protected AbstractSessionBeanTest(EjbSessionBeanTestTemplate testTemplate) {
+        this.testTemplate = testTemplate;
     }
 
+    protected void setupBean() {
+        testTemplate.setupBean();
+    }
+    
     @Override
     protected void validateOperationResult(String name, OperationResult result, Resource resource) {
-        if ("viewInvocationStats".equals(name) && resource.getResourceKey().contains(getExpectedResourceKey())) {
-            //the method was invoked ten times in the setup. we should see it in the results here...
-            Configuration resultValueConfig = result.getComplexResults();
-
-            assertNotNull(resultValueConfig, "viewInvocationStats results shouldn't be null.");
-
-            PropertyList propertyList = resultValueConfig.getList("methods");
-
-            assertNotNull(propertyList, "viewInvocationStats must include a \"methods\" property list.");
-            assertEquals(propertyList.getList().size(), 1,
-                "the viewInvocationStats should contain exactly one method statistics");
-
-            PropertyMap methodStat = (PropertyMap) propertyList.getList().iterator().next();
-
-            assertEquals(methodStat.getSimpleValue("methodName", null), getTestedMethodName(),
-                "Couldn't find method stats for the tested method.");
-
-            PropertySimple count = methodStat.getSimple("count");
-            assertNotNull(count, "Could get to the 'count' method stat property. This should not happen.");
-
-            assertEquals(count.getIntegerValue(), Integer.valueOf(getTestedMethodExpectedInvocationCount()),
-                "The tested method call count doesn't match.");
-
-            assertNotNull(methodStat.getSimple("totalTime"),
-                "Couldn't find 'totalTime' method stat. This should not happen.");
-            assertNotNull(methodStat.getSimple("minTime"),
-                "Couldn't find 'minTime' method stat. This should not happen.");
-            assertNotNull(methodStat.getSimple("maxTime"),
-                "Couldn't find 'maxTime' method stat. This should not happen.");
-        } else {
+        if (!testTemplate.validateOperationResult(name, result, resource)) {
             super.validateOperationResult(name, result, resource);
         }
     }
 
-    protected Configuration getTestResourceConfiguration() {
-        //there is no resource level configuration for session beans.
-        return new Configuration();
+    @Override
+    protected void validateNumericMetricValue(String metricName, Double value, Resource resource) {
+        if ("CreateCount".equals(metricName)) {
+            assertEquals(value, Double.valueOf(1), "Unexpected Session Bean CreateCount.");
+        } else {
+            super.validateNumericMetricValue(metricName, value, resource);
+        }
     }
-
-    protected abstract String getExpectedResourceKey();
-
-    protected abstract String getTestedBeanName();
-
-    protected abstract String getTestedMethodName();
-
-    protected int getTestedMethodExpectedInvocationCount() {
-        return 10;
-    }
-
-    protected abstract MethodArgDef[] getEjbCreateMethodArgs();
-
-    protected abstract MethodArgDef[] getTestedMethodArgs();
+    
+    
 }

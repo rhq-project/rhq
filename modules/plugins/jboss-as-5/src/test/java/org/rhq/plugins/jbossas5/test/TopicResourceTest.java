@@ -31,14 +31,40 @@ import org.rhq.core.domain.resource.Resource;
 /**
  * @author Ian Springer
  */
-@Test(groups = "as5-plugin")
+@Test(groups = { "as5-plugin", "as5-plugin-topic" })
 public class TopicResourceTest extends AbstractResourceTest {
-    @BeforeTest(groups = "as5-plugin")
+
+    @BeforeTest(groups = "as5-plugin-topic" )
     public void setup() {
         System.out.println("Running Topic test...");
         // TODO: Create a topic, subscribe to it, and send a message to it (i.e. to generate some metrics).
     }
 
+    @Override
+    public void testMetrics() throws Exception {
+        super.testMetrics();
+    }
+
+    @Override
+    public void testOperations() throws Exception {
+        super.testOperations();
+    }
+
+    @Override
+    public void testResourceConfigLoad() throws Exception {
+        super.testResourceConfigLoad();
+    }
+
+    @Override
+    public void testResourceConfigUpdate() throws Exception {
+        super.testResourceConfigUpdate();
+    }
+
+    @Override
+    public void testResourceCreation() throws Exception {
+        super.testResourceCreation();
+    }
+    
     protected String getResourceTypeName() {
         return "Topic";
     }

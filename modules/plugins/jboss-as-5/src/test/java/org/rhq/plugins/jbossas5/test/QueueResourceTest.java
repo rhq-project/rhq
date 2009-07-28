@@ -31,16 +31,42 @@ import org.rhq.core.domain.resource.Resource;
 /**
  * @author Ian Springer
  */
-@Test(groups = "as5-plugin")
+@Test(groups = {"as5-plugin", "as5-plugin-queue"})
 public class QueueResourceTest extends AbstractResourceTest {
-    @BeforeTest(groups = "as5-plugin")
+
+    @BeforeTest(groups = "as5-plugin-queue")
     public void setup() {
         System.out.println("Running Queue test...");
         // TODO: Create a queue and send a message to it (i.e. to generate some metrics).
     }
-
+    
     protected String getResourceTypeName() {
         return "Queue";
+    }
+
+    @Override
+    public void testMetrics() throws Exception {
+        super.testMetrics();
+    }
+
+    @Override
+    public void testOperations() throws Exception {
+        super.testOperations();
+    }
+
+    @Override
+    public void testResourceConfigLoad() throws Exception {
+        super.testResourceConfigLoad();
+    }
+
+    @Override
+    public void testResourceConfigUpdate() throws Exception {
+        super.testResourceConfigUpdate();
+    }
+
+    @Override
+    public void testResourceCreation() throws Exception {
+        super.testResourceCreation();
     }
 
     protected Configuration getTestResourceConfiguration() {

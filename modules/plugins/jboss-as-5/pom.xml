@@ -120,6 +120,10 @@
           <scope>provided</scope>          
         </dependency>       
       
+        <!--  To prevent the classloading issues with the maven's isolated classloader 
+              and the plugin classloader in our integration tests, we just include all 
+              the deps for the AS5 plugin in the test scope. -->
+              
         <dependency>
             <groupId>jboss.messaging</groupId>
             <artifactId>jboss-messaging-client</artifactId>
@@ -128,27 +132,218 @@
         </dependency>
 
         <dependency>
-          <groupId>org.jboss.javaee</groupId>
-          <artifactId>jboss-javaee</artifactId>
-          <!--<version>5.0.1.GA</version>-->
+            <groupId>org.jboss.microcontainer</groupId>
+            <artifactId>jboss-kernel</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.naming</groupId>
+          <artifactId>jnp-client</artifactId>
           <scope>test</scope>
         </dependency>
 
         <dependency>
-			<groupId>org.jboss.naming</groupId>
-			<artifactId>jnp-client</artifactId>
-            <!--<version>5.0.3.GA</version>-->
-			<scope>test</scope>
+          <groupId>org.jboss.remoting</groupId>
+          <artifactId>jboss-remoting</artifactId>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.jbossas</groupId>
+          <artifactId>jboss-as-aspects</artifactId>
+          <version>5.1.0.CR1</version>
+          <classifier>jboss-aspect-jdk50-client</classifier>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>trove</groupId>
+          <artifactId>trove</artifactId>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>javassist</groupId>
+          <artifactId>javassist</artifactId>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.security</groupId>
+          <artifactId>jboss-security-spi</artifactId>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.javaee</groupId>
+          <artifactId>jboss-javaee</artifactId>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>oswego-concurrent</groupId>
+          <artifactId>concurrent</artifactId>
+          <version>1.3.4-jboss</version>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jboss.jbossas</groupId>
+            <artifactId>jboss-as-server</artifactId>
+            <classifier>client</classifier>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss</groupId>
+          <artifactId>jboss-mdr</artifactId>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.logging</groupId>
+          <artifactId>jboss-logging-spi</artifactId>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.logging</groupId>
+          <artifactId>jboss-logging-log4j</artifactId>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.jbossas</groupId>
+          <artifactId>jboss-as-security</artifactId>
+          <version>5.1.0.CR1</version>
+          <classifier>client</classifier>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.integration</groupId>
+          <artifactId>jboss-transaction-spi</artifactId>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.ejb3</groupId>
+          <artifactId>jboss-ejb3-common</artifactId>
+          <classifier>client</classifier>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.ejb3</groupId>
+          <artifactId>jboss-ejb3-core</artifactId>
+          <classifier>client</classifier>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.ejb3</groupId>
+          <artifactId>jboss-ejb3-ext-api</artifactId>
+          <version>1.0.0</version>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.ejb3</groupId>
+          <artifactId>jboss-ejb3-proxy-spi</artifactId>          
+          <classifier>client</classifier>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.ejb3</groupId>
+          <artifactId>jboss-ejb3-proxy-impl</artifactId>          
+          <classifier>client</classifier>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.ejb3</groupId>
+          <artifactId>jboss-ejb3-security</artifactId>
+          <classifier>client</classifier>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.microcontainer</groupId>
+          <artifactId>jboss-dependency</artifactId>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.security</groupId>
+          <artifactId>jbosssx-client</artifactId>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.aspects</groupId>
+          <artifactId>jboss-security-aspects</artifactId>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.aop</groupId>
+          <artifactId>jboss-aop</artifactId>
+          <classifier>client</classifier>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss</groupId>
+          <artifactId>jboss-common-core</artifactId>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jboss</groupId>
+            <artifactId>jboss-reflect</artifactId>
+            <scope>test</scope>
+        </dependency>
+        
+        <dependency>
+            <groupId>jboss</groupId>
+            <artifactId>jboss-serialization</artifactId>
+            <scope>test</scope>
+        </dependency>        
+
+        <dependency>
+            <groupId>org.jboss.deployers</groupId>
+            <artifactId>jboss-deployers-core-spi</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jboss.deployers</groupId>
+            <artifactId>jboss-deployers-client-spi</artifactId>
+            <scope>test</scope>
+        </dependency>        
+
+        <dependency>
+            <groupId>org.jboss.jbossas</groupId>
+            <artifactId>jboss-as-profileservice</artifactId>
+            <classifier>client</classifier>            
+            <scope>test</scope>
         </dependency>
         
         <dependency>
             <groupId>org.jboss.jbossas</groupId>
-            <artifactId>jboss-as-server</artifactId>
-            <!--<version>5.1.0.GA</version>-->
-            <classifier>client</classifier>
+            <artifactId>jboss-as-server</artifactId>            
+            <classifier>jmx-invoker-adaptor-client</classifier>
             <scope>test</scope>
         </dependency>
-        
+      
+        <dependency>
+            <groupId>jboss.messaging</groupId>
+            <artifactId>jboss-messaging-client</artifactId>
+            <scope>test</scope>
+        </dependency>
+
         <!-- Uncomment the below deps if you want to pull down the jboss-profileservice
              and jboss-system sources jars for debugging purposes. You will also need
              to make sure you have the JBoss snapshot repo in this POM or your settings.xml.
@@ -238,6 +433,7 @@
                             <additionalClasspathElements>
                                 <additionalClasspathElement>${project.build.testSourceDirectory}/../jars/ejb2-test.jar</additionalClasspathElement>
                                 <additionalClasspathElement>${project.build.testSourceDirectory}/../jars/ejb2-entity-bean-test.jar</additionalClasspathElement>
+                                <additionalClasspathElement>${project.build.testSourceDirectory}/../jars/ejb2-sfsb-test.jar</additionalClasspathElement>
                             </additionalClasspathElements>
                             <systemProperties>
                                 <property>
@@ -250,7 +446,7 @@
                                 </property>
                                 <property>
                                     <name>ejb2.test.jars.path</name>
-                                    <value>${project.build.testSourceDirectory}/../jars/ejb2-test.jar;${project.build.testSourceDirectory}/../jars/ejb2-entity-bean-test.jar</value>
+                                    <value>${project.build.testSourceDirectory}/../jars/ejb2-test.jar;${project.build.testSourceDirectory}/../jars/ejb2-entity-bean-test.jar;${project.build.testSourceDirectory}/../jars/ejb2-sfsb-test.jar</value>
                                 </property>
                                 <property>
                                     <name>principal</name>
@@ -352,6 +548,7 @@
                              <additionalClasspathElements>
                                  <additionalClasspathElement>${project.build.testSourceDirectory}/../jars/ejb2-test.jar</additionalClasspathElement>
                                  <additionalClasspathElement>${project.build.testSourceDirectory}/../jars/ejb2-entity-bean-test.jar</additionalClasspathElement>
+                                 <additionalClasspathElement>${project.build.testSourceDirectory}/../jars/ejb2-sfsb-test.jar</additionalClasspathElement>
                              </additionalClasspathElements>
                              <systemProperties>
                                  <property>
@@ -364,7 +561,7 @@
                                  </property>
                                  <property>
                                      <name>ejb2.test.jars.path</name>
-                                     <value>${project.build.testSourceDirectory}/../jars/ejb2-test.jar;${project.build.testSourceDirectory}/../jars/ejb2-entity-bean-test.jar</value>
+                                     <value>${project.build.testSourceDirectory}/../jars/ejb2-test.jar;${project.build.testSourceDirectory}/../jars/ejb2-entity-bean-test.jar;${project.build.testSourceDirectory}/../jars/ejb2-sfsb-test.jar</value>
                                  </property>
                                 <property>
                                     <name>principal</name>

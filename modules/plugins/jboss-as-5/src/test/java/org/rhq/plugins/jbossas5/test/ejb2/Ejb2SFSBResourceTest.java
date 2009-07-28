@@ -24,36 +24,72 @@
 package org.rhq.plugins.jbossas5.test.ejb2;
 
 import org.rhq.plugins.jbossas5.test.util.MethodArgDef;
+import org.testng.annotations.BeforeGroups;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 /**
  * 
  * @author Lukas Krejci
  */
-@Test(groups = "as5-plugin")
+@Test(groups = { "as5-plugin", "as5-plugin-ejb2", "as5-plugin-ejb2-sfsb" })
 public class Ejb2SFSBResourceTest extends AbstractSessionBeanTest {
+
+    private static class TestTemplate extends Ejb2SessionBeanTestTemplate {
+
+        protected MethodArgDef[] getEjbCreateMethodArgs() {
+            return null;
+        }
+
+        protected Class<?> getHomeInterface() {
+            try {
+                return Class.forName("org.jboss.test.ejb.proxy.beans.StatefulCounterHome");
+            } catch (ClassNotFoundException e) {
+                throw new IllegalStateException("Could not find Ejb2SFSB home interface test class.", e);
+            }
+        }
+
+        protected String getExpectedResourceKey() {
+            return "jboss.j2ee:jndiName=ejb/StatefulCounterEjb,service=EJB";
+        }
+
+        protected String getTestedBeanName() {
+            return "ejb/StatefulCounterEjb";
+        }
+
+        protected String getHomeInterfaceJndiName() {
+            return "ejb/StatefulCounterEjb";
+        }
+
+        protected MethodArgDef[] getTestedMethodArgs() {
+            return null;
+        }
+
+        protected String getTestedMethodName() {
+            return "count";
+        }
+    }
+
+    public Ejb2SFSBResourceTest() {
+        super(new TestTemplate());
+    }
+    
+    @BeforeGroups(groups = "as5-plugin-ejb2", dependsOnMethods = "deployEjb2TestJars")
+    public void setupBean() {
+        super.setupBean();
+    }
+    
+    @Override
+    public void testMetrics() throws Exception {
+        super.testMetrics();
+    }
+
+    @Override
+    public void testOperations() throws Exception {
+        super.testOperations();
+    }
 
     protected String getResourceTypeName() {
         return "EJB2 Stateful Session Bean";
-    }
-
-    protected MethodArgDef[] getEjbCreateMethodArgs() {
-        return new MethodArgDef[] { new MethodArgDef(String.class, "test") };
-    }
-
-    protected String getExpectedResourceKey() {
-        return "jboss.j2ee:jndiName=ejbcts/StatefulSessionBean,service=EJB";
-    }
-
-    protected String getTestedBeanName() {
-        return "ejbcts/StatefulSessionBean";
-    }
-
-    protected MethodArgDef[] getTestedMethodArgs() {
-        return new MethodArgDef[] { new MethodArgDef(String.class, "") };
-    }
-
-    protected String getTestedMethodName() {
-        return "method1";
     }
 }

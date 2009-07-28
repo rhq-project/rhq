@@ -24,36 +24,87 @@
 package org.rhq.plugins.jbossas5.test.ejb2;
 
 import org.rhq.plugins.jbossas5.test.util.MethodArgDef;
+import org.testng.annotations.BeforeGroups;
 import org.testng.annotations.Test;
 
 /**
  * 
  * @author Lukas Krejci
  */
-@Test(groups = "as5-plugin")
+@Test(groups = { "as5-plugin", "as5-plugin-ejb2", "as5-plugin-ejb2-slsb" })
 public class Ejb2SLSBResourceTest extends AbstractSessionBeanTest {
+
+    private static class TestTemplate extends Ejb2SessionBeanTestTemplate {
+        protected MethodArgDef[] getEjbCreateMethodArgs() {
+            return null;
+        }
+
+        protected Class<?> getHomeInterface() {
+            try {
+                return Class.forName("org.jboss.test.cts.interfaces.StatelessSessionHome");
+            } catch (ClassNotFoundException e) {
+                throw new IllegalStateException("Could not find Ejb2SLSB home interface test class.", e);
+            }
+        }
+    
+        protected String getExpectedResourceKey() {
+            return "jboss.j2ee:jndiName=ejbcts/StatelessSessionHome,service=EJB";
+        }
+    
+        protected String getTestedBeanName() {
+            return getHomeInterfaceJndiName();
+        }
+        
+        protected String getHomeInterfaceJndiName() {
+            return "ejbcts/StatelessSessionHome";
+        }
+    
+        protected MethodArgDef[] getTestedMethodArgs() {
+            return new MethodArgDef[] { new MethodArgDef(String.class, "") };
+        }
+    
+        /**
+         * We call the method on the session bean.
+         */
+        protected String getTestedMethodName() {
+            return "method1";
+        }
+
+        /**
+         * The stats are on the home interface, so we expect the create
+         * method stats.
+         */
+        @Override
+        protected String getExpectedMethodName() {
+            return "create";
+        }
+        
+        @Override
+        protected int getTestedMethodExpectedInvocationCount() {
+            return 1;
+        }
+    }
+    
+    public Ejb2SLSBResourceTest() {
+        super(new TestTemplate());
+    }
+    
+    @BeforeGroups(groups = "as5-plugin-ejb2", dependsOnMethods = "deployEjb2TestJars")
+    public void setupBean() {
+        super.setupBean();
+    }
+    
+    @Override
+    public void testMetrics() throws Exception {
+        super.testMetrics();
+    }
+
+    @Override
+    public void testOperations() throws Exception {
+        super.testOperations();
+    }
 
     protected String getResourceTypeName() {
         return "EJB2 Stateless Session Bean";
-    }
-
-    protected MethodArgDef[] getEjbCreateMethodArgs() {
-        return null;
-    }
-
-    protected String getExpectedResourceKey() {
-        return "jboss.j2ee:jndiName=ejbcts/StatelessSessionHome,service=EJB";
-    }
-
-    protected String getTestedBeanName() {
-        return "ejbcts/StatelessSessionHome";
-    }
-
-    protected MethodArgDef[] getTestedMethodArgs() {
-        return new MethodArgDef[] { new MethodArgDef(String.class, "") };
-    }
-
-    protected String getTestedMethodName() {
-        return "method1";
     }
 }

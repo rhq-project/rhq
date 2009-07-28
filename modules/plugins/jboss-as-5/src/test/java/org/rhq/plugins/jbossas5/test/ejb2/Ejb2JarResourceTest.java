@@ -28,8 +28,21 @@ import org.testng.annotations.Test;
 /**
  * @author Lukas Krejci
  */
-@Test(groups = "as5-plugin")
+//Push the Jar test after all the other tests operating with the stuff from the jars,
+//so that we don't end up with a stopped JAR.
+@Test(groups = { "as5-plugin", "as5-plugin-ejb2", "as5-plugin-ejb2-jar" }, 
+      dependsOnGroups = { "as5-plugin-ejb2-mdb", "as5-plugin-ejb2-eb", "as5-plugin-ejb2-sfsb", "as5-plugin-ejb2-slsb" })
 public class Ejb2JarResourceTest extends AbstractEjb2ResourceTest {
+
+    @Override
+    public void testMetrics() throws Exception {
+        super.testMetrics();
+    }
+
+    @Override
+    public void testOperations() throws Exception {
+        super.testOperations();
+    }
 
     protected String getResourceTypeName() {
         return "EJB2 JAR";

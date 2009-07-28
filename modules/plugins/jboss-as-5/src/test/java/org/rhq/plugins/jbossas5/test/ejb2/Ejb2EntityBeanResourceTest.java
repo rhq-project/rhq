@@ -33,15 +33,15 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.plugins.jbossas5.test.util.AppServerUtils;
 import org.rhq.plugins.jbossas5.test.util.MethodArgDef;
 import org.testng.Assert;
-import org.testng.annotations.AfterGroups;
 import org.testng.annotations.BeforeGroups;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 /**
  * 
  * @author Lukas Krejci
  */
-@Test(groups = "as5-plugin")
+@Test(groups = { "as5-plugin", "as5-plugin-ejb2", "as5-plugin-ejb2-eb" })
 public class Ejb2EntityBeanResourceTest extends AbstractEjb2ResourceTest {
 
     private static final int CREATE_COUNT = 5;
@@ -59,9 +59,11 @@ public class Ejb2EntityBeanResourceTest extends AbstractEjb2ResourceTest {
     /**
      * Perform some CRUD operations so that we have some values to collect as metrics.
      */
-    @BeforeGroups(groups = "as5-plugin")
+    @BeforeGroups(groups = "as5-plugin-ejb2", dependsOnMethods = "deployEjb2TestJars")
     public void setupBean() {
         try {
+            System.out.println("Performing CRUD ops on entities of type " + JNDI_NAME);
+            
             Object entityHome = AppServerUtils.getRemoteObject(JNDI_NAME, Object.class);
 
             //create the entities
@@ -107,8 +109,15 @@ public class Ejb2EntityBeanResourceTest extends AbstractEjb2ResourceTest {
     //        }
     //    }
 
-    protected Configuration getTestResourceConfiguration() {
-        return new Configuration();
+    
+    @Override
+    public void testMetrics() throws Exception {
+        super.testMetrics();
+    }
+
+    @Override
+    public void testOperations() throws Exception {
+        super.testOperations();
     }
 
     @Override

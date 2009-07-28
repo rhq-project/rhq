@@ -27,6 +27,7 @@ import static org.testng.Assert.fail;
 
 import java.io.File;
 
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.plugins.jbossas5.test.AbstractResourceTest;
 import org.rhq.plugins.jbossas5.test.util.AppServerUtils;
@@ -41,7 +42,7 @@ import org.testng.annotations.Parameters;
  */
 public abstract class AbstractEjb2ResourceTest extends AbstractResourceTest {
 
-    @BeforeGroups(groups = "as5-plugin")
+    @BeforeGroups(groups = "as5-plugin-ejb2")
     @Parameters("ejb2.test.jars.path")
     public void deployEjb2TestJars(String jarPaths) {
         try {
@@ -58,7 +59,7 @@ public abstract class AbstractEjb2ResourceTest extends AbstractResourceTest {
         }
     }
 
-    @AfterGroups(groups = "as5-plugin")
+    @AfterGroups(groups = "as5-plugin-ejb2")
     @Parameters("ejb2.test.jars.path")
     public void undeployEjb2TestJars(String jarPaths) {
         try {
@@ -72,6 +73,14 @@ public abstract class AbstractEjb2ResourceTest extends AbstractResourceTest {
         }
     }
 
+    /**
+     * None of the EJB2 resources define any resource level configuration.
+     */
+    protected Configuration getTestResourceConfiguration() {
+        return new Configuration();
+    }
+
+    
     protected static Object createRemoteBean(String homeJndiName, MethodArgDef... createMethodArgs) throws Exception {
         Object home = AppServerUtils.getRemoteObject(homeJndiName, Object.class);
         return AppServerUtils.invokeMethod("create", home, createMethodArgs);

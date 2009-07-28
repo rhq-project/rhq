@@ -63,14 +63,13 @@ public abstract class AbstractResourceTest extends AbstractPluginTest {
     private static final long MEASUREMENT_FACET_METHOD_TIMEOUT = 3000; // 3 seconds
     private static final long OPERATION_FACET_METHOD_TIMEOUT = 3000; // 3 seconds
 
-    public void testDiscovery() throws Exception {
+    protected void testDiscovery() throws Exception {
         Set<Resource> resources = getResources();
         System.out.println("Found " + resources.size() + " " + getResourceType().getName() + " Resources.");
         assert !resources.isEmpty();
     }
 
-    @Test(groups = "as5-plugin")
-    public void testResourceCreation() throws Exception {
+    protected void testResourceCreation() throws Exception {
         ResourceType resourceType = getResourceType();
         if (!resourceType.isCreatable()) {
             return;
@@ -87,8 +86,7 @@ public abstract class AbstractResourceTest extends AbstractPluginTest {
         return;
     }
 
-    @Test(groups = "as5-plugin")
-    public void testMetrics() throws Exception {
+    protected void testMetrics() throws Exception {
         if (supportsFacet(MeasurementFacet.class)) {
             Set<MeasurementDefinition> metricDefinitions = getResourceType().getMetricDefinitions();
             Set<Resource> resources = getResources();
@@ -136,8 +134,7 @@ public abstract class AbstractResourceTest extends AbstractPluginTest {
         return;
     }
 
-    @Test(groups = "as5-plugin")
-    public void testOperations() throws Exception {
+    protected void testOperations() throws Exception {
         if (supportsFacet(OperationFacet.class)) {
             Set<OperationDefinition> operationDefinitions = getResourceType().getOperationDefinitions();
             Set<Resource> resources = getResources();
@@ -161,8 +158,7 @@ public abstract class AbstractResourceTest extends AbstractPluginTest {
         return;
     }
 
-    @Test(groups = "as5-plugin")
-    public void testResourceConfigLoad() throws Exception {
+    protected void testResourceConfigLoad() throws Exception {
         if (supportsFacet(ConfigurationFacet.class) && getResourceType().getResourceConfigurationDefinition() != null) {
             ConfigurationManager configurationManager = PluginContainer.getInstance().getConfigurationManager();
             Set<Resource> resources = getResources();
@@ -178,8 +174,7 @@ public abstract class AbstractResourceTest extends AbstractPluginTest {
         return;
     }
 
-    @Test(groups = "as5-plugin")
-    public void testResourceConfigUpdate() throws Exception {
+    protected void testResourceConfigUpdate() throws Exception {
         if (supportsFacet(ConfigurationFacet.class) && getResourceType().getResourceConfigurationDefinition() != null) {
             ConfigurationManager configurationManager = PluginContainer.getInstance().getConfigurationManager();
             Set<Resource> resources = getResources();

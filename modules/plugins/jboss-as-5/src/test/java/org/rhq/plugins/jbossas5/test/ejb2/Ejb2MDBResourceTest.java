@@ -39,13 +39,14 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.plugins.jbossas5.test.util.AppServerUtils;
 import org.testng.annotations.BeforeGroups;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 /**
  * 
  * @author Lukas Krejci
  */
-@Test(groups = "as5-plugin")
+@Test(groups = { "as5-plugin", "as5-plugin-ejb2", "as5-plugin-ejb2-mdb" })
 public class Ejb2MDBResourceTest extends AbstractEjb2ResourceTest {
 
     private static final int MESSAGES_SENT = 10;
@@ -57,9 +58,11 @@ public class Ejb2MDBResourceTest extends AbstractEjb2ResourceTest {
         return "EJB2 Message-Driven Bean";
     }
 
-    @BeforeGroups(groups = "as5-plugin")
+    @BeforeGroups(groups = "as5-plugin-ejb2", dependsOnMethods = "deployEjb2TestJars")
     public void setupBean() {
         try {
+            System.out.println("Sending " + MESSAGES_SENT + " messages to " + QUEUE_NAME);
+            
             InitialContext ctx = AppServerUtils.getAppServerInitialContext();
 
             QueueConnectionFactory factory = (QueueConnectionFactory) ctx.lookup("ConnectionFactory");
@@ -88,6 +91,16 @@ public class Ejb2MDBResourceTest extends AbstractEjb2ResourceTest {
     }
 
     @Override
+    public void testMetrics() throws Exception {
+        super.testMetrics();
+    }
+
+    @Override
+    public void testOperations() throws Exception {
+        super.testOperations();
+    }
+
+    @Override
     protected void validateNumericMetricValue(String metricName, Double value, Resource resource) {
         if ("MessageCount".equals(metricName) && resource.getResourceKey().contains(MDB_NAME)) {
             assertEquals(value, Double.valueOf(MESSAGES_SENT), "Unexpected message count.");
@@ -95,10 +108,4 @@ public class Ejb2MDBResourceTest extends AbstractEjb2ResourceTest {
             super.validateNumericMetricValue(metricName, value, resource);
         }
     }
-
-    protected Configuration getTestResourceConfiguration() {
-        //nothing configurable for an MDB
-        return new Configuration();
-    }
-
 }

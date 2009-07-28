@@ -20,6 +20,7 @@
    <modules>
       <module>webservices</module>
       <module>cli</module>
+      <module>scripts</module>
    </modules>
 
 </project>

@@ -110,6 +110,13 @@
       <scope>test</scope>
     </dependency>
 
+    <dependency>
+	  <groupId>org.jboss.jbossws</groupId>
+	  <artifactId>jbossws-native-dist</artifactId>
+	  <type>zip</type>
+      <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+    </dependency>
+
   </dependencies>
 
   <build>
@@ -200,6 +207,7 @@
                   <property name="rhq.server.https.port" value="${rhq.server.https.port}" />
 
                   <property name="rhq.server.enable.ws" value="${rhq.server.enable.ws}" />
+                  <property name="jbossws-native-dist.version" value="${jbossws-native-dist.version}" />
                 </ant>
               </tasks>
             </configuration>

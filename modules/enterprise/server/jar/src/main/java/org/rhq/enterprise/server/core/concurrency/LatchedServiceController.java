@@ -36,6 +36,7 @@ import org.apache.commons.logging.LogFactory;
 
 /**
  * @author Joseph Marques
+ * @author John Mazzitelli
  */
 public class LatchedServiceController {
 
@@ -44,14 +45,28 @@ public class LatchedServiceController {
     private final Collection<? extends LatchedService> latchedServices;
     private final CountDownLatch serviceStartupLatch;
     private final CountDownLatch serviceCompletionLatch;
+    private final Map<String, CountDownLatch> dependencyLatches;
+
     private int threadPoolSize;
 
+    /**
+     * Creates the controller that will be responsible for launching the services in a thread pool.
+     * Note that you must ensure the order of the given services is in the order you want them submitted
+     * to the thread pool. N services will be executed concurrently (where N is the
+     * {@link #setThreadPoolSize(int) size of the thread pool}) but if there are dependencies among
+     * services, you must ensure services appear after their dependencies in the list.
+     * 
+     * @param services list of services that will be invoked
+     */
     public LatchedServiceController(Collection<? extends LatchedService> services) {
         this.serviceStartupLatch = new CountDownLatch(1);
         this.serviceCompletionLatch = new CountDownLatch(services.size());
+        this.dependencyLatches = new HashMap<String, CountDownLatch>(services.size());
 
         this.latchedServices = services;
         for (LatchedService nextService : this.latchedServices) {
+            this.dependencyLatches.put(nextService.getServiceName(),
+                new CountDownLatch(nextService.dependencies.size()));
             nextService.controller = this;
         }
 
@@ -151,7 +166,6 @@ public class LatchedServiceController {
 
     public static abstract class LatchedService implements Runnable {
 
-        private CountDownLatch dependencyLatch;
         private LatchedServiceController controller;
         private final String serviceName;
         private final Set<LatchedService> dependencies;
@@ -182,9 +196,9 @@ public class LatchedServiceController {
             dependency.dependees.add(this);
         }
 
-        public void notifyComplete(LatchedService service, boolean didFail) {
-            if (!dependencies.contains(service)) {
-                controller.log.error(service + " is not a dependency of " + this);
+        public void notifyComplete(LatchedService finishedService, boolean didFail) {
+            if (!dependencies.contains(finishedService)) {
+                controller.log.error(finishedService + " is not a dependency of " + this);
                 return;
             }
 
@@ -196,25 +210,8 @@ public class LatchedServiceController {
                 hasFailed = true;
             }
 
-            // this method might get called so quickly, that the
-            // run method never gets the chance to create the latch
-            // wait here for the latch to get created
-            int maxWaits = 60;
-            while (dependencyLatch == null) {
-                try {
-                    Thread.sleep(1000L);
-                } catch (InterruptedException e) {
-                    // ignore
-                }
-
-                // avoid a deadlock (this is just more paranoia)
-                if (maxWaits-- <= 0) {
-                    controller.log.error("thread hasn't started and created our latch, abort!");
-                    return;
-                }
-            }
-
-            dependencyLatch.countDown();
+            // one of our dependencies is done, decrement our countdown latch to indicate this
+            this.controller.dependencyLatches.get(this.serviceName).countDown();
         }
 
         public void run() {
@@ -228,8 +225,6 @@ public class LatchedServiceController {
                     controller.log.debug("Latched Service Processing [" + this.serviceName + "]; dependencies=["
                         + this.dependencies + "]; dependees=[" + this.dependees + "]...");
                 }
-
-                dependencyLatch = new CountDownLatch(dependencies.size());
 
                 if (controller == null) {
                     throw new IllegalStateException("LatchedServices must be started via some controller");
@@ -254,7 +249,7 @@ public class LatchedServiceController {
                      * do not perform startup actions until all dependencies
                      * have performed their startup actions first
                      */
-                    dependencyLatch.await();
+                    controller.dependencyLatches.get(this.serviceName).await();
                 } catch (InterruptedException ie) {
                     controller.log.info(serviceName + " will not be started; "
                         + "did not verify all dependent services successfully started");

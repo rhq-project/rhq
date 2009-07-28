@@ -18,8 +18,10 @@
  */
 package org.rhq.enterprise.server.core.concurrency;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.testng.annotations.Test;
@@ -47,6 +49,7 @@ public class LatchedServiceCircularDependenciesTest {
 
     private Collection<DummyLatchedService> getDummiesFromDependencyGraph(String dependencyGraph) {
         Map<String, DummyLatchedService> knownServices = new HashMap<String, DummyLatchedService>();
+        List<DummyLatchedService> orderedServices = new ArrayList<DummyLatchedService>();
 
         String[] deps = dependencyGraph.replaceAll(" ", "").split(",");
         for (String dep : deps) {
@@ -57,10 +60,10 @@ public class LatchedServiceCircularDependenciesTest {
                 DummyLatchedService dependency = getDummyServiceByName(parts[1], knownServices);
                 service.addDependency(dependency);
             }
+            orderedServices.add(service);
         }
 
-        Collection<DummyLatchedService> dummies = knownServices.values();
-        return dummies;
+        return orderedServices;
     }
 
     private DummyLatchedService getDummyServiceByName(String name, Map<String, DummyLatchedService> dummies) {

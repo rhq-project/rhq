@@ -18,25 +18,41 @@
  */
 package org.rhq.enterprise.server.core.concurrency;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.testng.annotations.Test;
 
 import org.rhq.enterprise.server.core.concurrency.LatchedServiceController.LatchedService;
 
-@Test(enabled = false)
+@Test
 public class LatchedServiceDependenciesTest {
 
     public void testDependencies() throws Exception {
-        // 1 is a plugin that is a dependency 2
+        // 1 is a plugin that is a dependency of 2
         // 2 can't start because 1 takes up the entire thread pool
         // Make sure this doesn't deadlock - 1 needs to be able to inform 2 that it is done,
         // even though 2 isn't yet started in a thread
         Collection<DummyLatchedService> dummies = getDummiesFromDependencyGraph("1,2-1");
         LatchedServiceController controller = new LatchedServiceController(dummies);
         controller.setThreadPoolSize(1);
+        controller.executeServices();
+    }
+
+    public void testDependencies2() throws Exception {
+        Collection<DummyLatchedService> dummies = getDummiesFromDependencyGraph("1,6-1,2,7-2,3,8-3,4,9-4,5,10-5");
+        LatchedServiceController controller = new LatchedServiceController(dummies);
+        controller.setThreadPoolSize(1);
+        controller.executeServices();
+    }
+
+    public void testDependencies3() throws Exception {
+        Collection<DummyLatchedService> dummies = getDummiesFromDependencyGraph("1,6-1,2,7-2,3,8-3,4,9-4,5,10-5");
+        LatchedServiceController controller = new LatchedServiceController(dummies);
+        controller.setThreadPoolSize(5);
         controller.executeServices();
     }
 
@@ -53,6 +69,7 @@ public class LatchedServiceDependenciesTest {
 
     private Collection<DummyLatchedService> getDummiesFromDependencyGraph(String dependencyGraph) {
         Map<String, DummyLatchedService> knownServices = new HashMap<String, DummyLatchedService>();
+        List<DummyLatchedService> orderedServices = new ArrayList<DummyLatchedService>();
 
         String[] deps = dependencyGraph.replaceAll(" ", "").split(",");
         for (String dep : deps) {
@@ -63,10 +80,10 @@ public class LatchedServiceDependenciesTest {
                 DummyLatchedService dependency = getDummyServiceByName(parts[1], knownServices);
                 service.addDependency(dependency);
             }
+            orderedServices.add(service);
         }
 
-        Collection<DummyLatchedService> dummies = knownServices.values();
-        return dummies;
+        return orderedServices;
     }
 
     private DummyLatchedService getDummyServiceByName(String name, Map<String, DummyLatchedService> dummies) {

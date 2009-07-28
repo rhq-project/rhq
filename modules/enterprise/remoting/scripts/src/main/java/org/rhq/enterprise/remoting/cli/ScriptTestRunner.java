@@ -23,26 +23,21 @@
 
 package org.rhq.enterprise.remoting.cli;
 
-import org.testng.xml.XmlSuite;
-import org.testng.xml.XmlTest;
-import org.testng.xml.XmlClass;
-import org.testng.TestNG;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.filefilter.IOFileFilter;
-import org.apache.commons.io.filefilter.SuffixFileFilter;
-import org.apache.commons.io.filefilter.NameFileFilter;
+import org.testng.TestNG;
+import org.testng.xml.XmlClass;
+import org.testng.xml.XmlSuite;
+import org.testng.xml.XmlTest;
 
 import java.io.File;
-import java.io.FileFilter;
-import java.io.FilenameFilter;
 import java.io.FileReader;
+import java.io.FilenameFilter;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
 import java.util.LinkedList;
+import java.util.List;
 
 public class ScriptTestRunner {
 
@@ -89,30 +84,6 @@ public class ScriptTestRunner {
     private Collection<Script> findScripts() throws IOException {
         return findScripts(scriptDir);
     }
-
-//    private List<File> findScripts(File dir) {
-//        List<File> scripts = new ArrayList<File>();
-//        File[] paths = dir.listFiles();
-//        List<File> dirs = new ArrayList<File>();
-//
-//        for (File path : paths) {
-//            if (path.isDirectory() && !path.isHidden()) {
-//                dirs.add(path);
-//            }
-//            else if (scriptFilter.accept(dir, path.getAbsolutePath())) {
-//                scripts.add(path);
-//                if (singleTestMode) {
-//                    return scripts;
-//                }
-//            }
-//        }
-//
-//        for (File subdir : dirs) {
-//            scripts.addAll(findScripts(subdir));
-//        }
-//
-//        return scripts;
-//    }
 
     private List<Script> findScripts(File dir) throws IOException {
         List<Script> scripts = new ArrayList<Script>();

@@ -25,13 +25,12 @@ import java.util.Map;
 import org.testng.annotations.Test;
 
 import org.rhq.enterprise.server.core.concurrency.LatchedServiceController.LatchedService;
-import org.rhq.enterprise.server.test.AbstractEJB3Test;
 
 /**
  * @author Joseph Marques
  */
 @Test
-public class LatchedServiceCircularDependenciesTest extends AbstractEJB3Test {
+public class LatchedServiceCircularDependenciesTest {
 
     private class DummyLatchedService extends LatchedService {
 

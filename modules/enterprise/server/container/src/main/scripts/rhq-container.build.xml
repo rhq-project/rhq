@@ -190,6 +190,27 @@
       <available file="${jboss.home}/lib/jboss-system.jar" type="file" property="jboss.home.is.valid" />
       <fail unless="jboss.home.is.valid" message="${jboss.home} does not contain a valid JBoss 4.x installation - aborting..." />
 
+    <!-- Run JBossWS 3.1.1 upgrade script on the JBossAS: 
+	    i) pull upgrade bundle ii) unzip iii) run it on JBossAS instance 
+	    (4.2.3) to 3.1.1. These upgrade steps should be revisited when moving JBossAS version beyond 4.2.3 -->
+    <echo>...Upgrading JBossWS version from bundled version...</echo>
+
+  	<!-- Unzip JBossWS dist zipfile... if necessary -->
+    <property name="jbossws-native.zip" location="${settings.localRepository}/org/jboss/jbossws/jbossws-native-dist/${jbossws-native-dist.version}/jbossws-native-dist-${jbossws-native-dist.version}.zip" />
+    <condition property="jbossws-native.uptodate">
+       <and>
+          <uptodate srcfile="${jbossws-native.zip}" targetfile="${jboss-native.home}" />
+          <available file="${jboss-native.home}/deploy/lib/jbossws-native-core.jar" type="file" />
+       </and>
+    </condition>
+
+    <!-- Prepare the upgrade location -->
+    <antcall target="unzip-jbossws-native" inheritall="true" />
+
+    <!-- Call the upgrade script -->
+    <echo>Running upgrade script for JBossWS ${jbossws-native-dist.version} </echo>
+    <ant antfile="${basedir}/target/${jboss-native-dir}/build.xml" target="deploy-jboss423" dir="${basedir}/target/${jboss-native-dir}" />
+
       <echo>Installing safe ejb3 web invoker ...</echo>
       <delete verbose="true">
          <fileset dir="${jboss.deploy.dir}/jbossws.sar">
@@ -381,25 +402,6 @@
          </fileset>
       </move>
 
-      <!-- Run JBossWS 3.1.1 upgrade script on the JBossAS: 
-  	    i) pull upgrade bundle ii) unzip iii) run it on JBossAS instance 
-  	    (4.2.3) to 3.1.1. These upgrade steps should be revisited when moving JBossAS version beyond 4.2.3 -->
-      <echo>...Upgrading JBossWS version from bundled version...</echo>
-      <!-- Unzip JBossWS dist zipfile... if necessary -->
-      <property name="jbossws-native.zip" location="${settings.localRepository}/org/jboss/jbossws/jbossws-native-dist/${jbossws-native-dist.version}/jbossws-native-dist-${jbossws-native-dist.version}.zip" />
-      <condition property="jbossws-native.uptodate">
-         <and>
-            <uptodate srcfile="${jbossws-native.zip}" targetfile="${jboss-native.home}" />
-            <available file="${jboss-native.home}/deploy/lib/jbossws-native-core.jar" type="file" />
-         </and>
-      </condition>
-
-      <!-- Prepare the upgrade location -->
-      <antcall target="unzip-jbossws-native" inheritall="true" />
-
-      <!-- Call the upgrade script -->
-      <echo>Running upgrade script for JBossWS ${jbossws-native-dist.version} </echo>
-      <ant antfile="${basedir}/target/${jboss-native-dir}/build.xml" target="deploy-jboss423" dir="${basedir}/target/${jboss-native-dir}" />
    </target>
 
    <target name="package-connectors" if="package-connectors">

@@ -57,6 +57,7 @@
     <jboss-serialization.version>1.0.3.GA</jboss-serialization.version>
     <jboss-javassist.version>3.8.0.GA</jboss-javassist.version>
     <jbossws.version>3.0.1-native-2.0.4.GA</jbossws.version>
+    <jbossws-native-dist.version>3.1.1.GA</jbossws-native-dist.version>
     <!-- End: JBoss AS Dependency Versions -->
     
     <commons-logging.version>1.1.0.jboss</commons-logging.version>
@@ -209,6 +210,13 @@
          <groupId>jboss.jbossws</groupId>
          <artifactId>jbossws-client</artifactId>
          <version>${jbossws.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.jboss.jbossws</groupId>
+         <artifactId>jbossws-native-dist</artifactId>
+         <version>3.1.1.GA</version>
+         <type>zip</type>
       </dependency>
       
       <dependency>

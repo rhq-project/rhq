@@ -16,26 +16,30 @@ import org.rhq.core.domain.configuration.Configuration;
  * @author Simeon Pinder
  *
  */
-public class WebServiceTypeAdapter extends XmlAdapter<Configuration[], Map<Integer, Configuration>> {
+public class WebServiceTypeAdapter extends XmlAdapter<Object[], Map<Integer, Configuration>> {
 
     @Override
-    public Configuration[] marshal(Map<Integer, Configuration> opaque) throws Exception {
-        Configuration[] bag = null;
+    public Object[] marshal(Map<Integer, Configuration> opaque) throws Exception {
+        Object[] bag = null;
         if (opaque != null) {
-            bag = opaque.values().toArray(new Configuration[opaque.size()]);
+            int i = 0;
+            bag = new Object[2 * opaque.size()];
+            for (Map.Entry<Integer, Configuration> mapEntry : opaque.entrySet()) {
+                bag[i++] = mapEntry.getKey();
+                bag[i++] = mapEntry.getValue();
+            }
         } else {
-            bag = new Configuration[0];
+            bag = new Object[0];
         }
         return bag;
     }
 
     @Override
-    public Map<Integer, Configuration> unmarshal(Configuration[] serializable) throws Exception {
+    public Map<Integer, Configuration> unmarshal(Object[] marshallable) throws Exception {
         Map<Integer, Configuration> map = new HashMap<Integer, Configuration>();
-        int i = 0;
-        if (serializable != null) {
-            for (Configuration c : serializable) {
-                map.put(Integer.valueOf(i++), c);
+        if (marshallable != null) {
+            for (int i = 0; i < marshallable.length; i += 2) {
+                map.put((Integer) marshallable[i], (Configuration) marshallable[i + 1]);
             }
         }
         return map;

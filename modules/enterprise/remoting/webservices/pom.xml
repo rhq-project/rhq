@@ -112,7 +112,7 @@
                               value="${buildNumber}" />
                            <property
                               name="java.jre.home"
-                              value="${java.home}/jre" />
+                              value="${java.home}" />
                            <property
                               name="maven.compile.classpath"
                               refid="maven.compile.classpath" />
@@ -149,6 +149,9 @@
                            <property
                               name="rhq.client.build.include.client.jar"
                               value="${rhq.client.build.include.client.jar}" />
+                           <property
+                              name="quartz.version"
+                              value="${quartz.version}" />
                         </ant>
                      </tasks>
                   </configuration>

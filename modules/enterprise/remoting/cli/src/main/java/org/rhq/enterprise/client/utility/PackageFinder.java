@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.net.URL;
 
 /**
  * @author Greg Hinkle
@@ -41,12 +42,18 @@ public class PackageFinder {
 
         String cwd = System.getProperty("user.dir");
         File libDir = new File(cwd, "lib");
+        File[] jars;
 
-        File[] jars = libDir.listFiles(new FileFilter() {
-            public boolean accept(File pathname) {
-                return pathname.isFile() && pathname.getName().endsWith(".jar");
-            }
-        });
+        if (libDir.exists()) {
+            jars = libDir.listFiles(new FileFilter() {
+                public boolean accept(File pathname) {
+                    return pathname.isFile() && pathname.getName().endsWith(".jar");
+                }
+            });
+        }
+        else {
+            jars = loadJARsFromClassPath(packageRoot);
+        }
 
 
         for (File jar : jars) {
@@ -54,6 +61,38 @@ public class PackageFinder {
         }
 
         return found;
+    }
+
+    private File[] loadJARsFromClassPath(String pkgRoot) {
+        try {
+            List<File> jarFiles = new ArrayList<File>();
+            String pkgPath = pkgRoot.replaceAll("\\.", "/");
+            Enumeration<URL> resources = getClass().getClassLoader().getResources(pkgPath);
+            URL resource = null;
+
+            while (resources.hasMoreElements()) {
+                resource = resources.nextElement();
+                if (resource.toString().startsWith("jar:file")) {
+                    String jarFilePath = getJARFilePath(resource);
+                    jarFiles.add(new File(jarFilePath));
+                }
+            }
+
+            return jarFiles.toArray(new File[] {});
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+            return new File[] {};
+        }
+
+    }
+
+    private String getJARFilePath(URL resource) {
+        int startIndex = "jar:file:".length();
+        String string = resource.toString().substring(startIndex);
+        int endIndex = string.indexOf("!");
+
+        return string.substring(0, endIndex);
     }
 
     private void findPackages(String packageRoot, List<String> list, File jar) {

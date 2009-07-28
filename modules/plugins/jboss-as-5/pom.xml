@@ -434,6 +434,7 @@
                                 <additionalClasspathElement>${project.build.testSourceDirectory}/../jars/ejb2-test.jar</additionalClasspathElement>
                                 <additionalClasspathElement>${project.build.testSourceDirectory}/../jars/ejb2-entity-bean-test.jar</additionalClasspathElement>
                                 <additionalClasspathElement>${project.build.testSourceDirectory}/../jars/ejb2-sfsb-test.jar</additionalClasspathElement>
+                                <additionalClasspathElement>${project.build.testSourceDirectory}/../jars/ejb3-slsb-test.jar</additionalClasspathElement>
                             </additionalClasspathElements>
                             <systemProperties>
                                 <property>
@@ -447,6 +448,10 @@
                                 <property>
                                     <name>ejb2.test.jars.path</name>
                                     <value>${project.build.testSourceDirectory}/../jars/ejb2-test.jar;${project.build.testSourceDirectory}/../jars/ejb2-entity-bean-test.jar;${project.build.testSourceDirectory}/../jars/ejb2-sfsb-test.jar</value>
+                                </property>
+                                <property>
+                                    <name>ejb3.test.jars.path</name>
+                                    <value>${project.build.testSourceDirectory}/../jars/ejb3-slsb-test.jar</value>
                                 </property>
                                 <property>
                                     <name>principal</name>
@@ -549,6 +554,7 @@
                                  <additionalClasspathElement>${project.build.testSourceDirectory}/../jars/ejb2-test.jar</additionalClasspathElement>
                                  <additionalClasspathElement>${project.build.testSourceDirectory}/../jars/ejb2-entity-bean-test.jar</additionalClasspathElement>
                                  <additionalClasspathElement>${project.build.testSourceDirectory}/../jars/ejb2-sfsb-test.jar</additionalClasspathElement>
+                                 <additionalClasspathElement>${project.build.testSourceDirectory}/../jars/ejb3-slsb-test.jar</additionalClasspathElement>
                              </additionalClasspathElements>
                              <systemProperties>
                                  <property>
@@ -563,6 +569,10 @@
                                      <name>ejb2.test.jars.path</name>
                                      <value>${project.build.testSourceDirectory}/../jars/ejb2-test.jar;${project.build.testSourceDirectory}/../jars/ejb2-entity-bean-test.jar;${project.build.testSourceDirectory}/../jars/ejb2-sfsb-test.jar</value>
                                  </property>
+                                <property>
+                                    <name>ejb3.test.jars.path</name>
+                                    <value>${project.build.testSourceDirectory}/../jars/ejb3-slsb-test.jar</value>
+                                </property>
                                 <property>
                                     <name>principal</name>
                                     <value>admin</value>

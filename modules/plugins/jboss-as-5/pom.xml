@@ -29,8 +29,8 @@
 
     <properties>
         <scm.module.path>modules/plugins/jboss-as-5/</scm.module.path>
-        
-        <jbossas.version>5.1.0-SNAPSHOT</jbossas.version>        
+
+        <jbossas.version>5.1.0-SNAPSHOT</jbossas.version>
         <rhq.testng.excludedGroups>as5-plugin</rhq.testng.excludedGroups>
     </properties>
 
@@ -38,15 +38,15 @@
         <dependencies>
           <dependency>
             <groupId>org.jboss.jbossas</groupId>
-		    <artifactId>jboss-as-parent</artifactId>
-		    <version>${jbossas.version}</version>
+          <artifactId>jboss-as-parent</artifactId>
+          <version>${jbossas.version}</version>
             <type>pom</type>
             <scope>import</scope>
           </dependency>
           <dependency>
             <groupId>org.jboss.jbossas</groupId>
-		    <artifactId>jboss-as-component-matrix</artifactId>
-		    <version>${jbossas.version}</version>
+          <artifactId>jboss-as-component-matrix</artifactId>
+          <version>${jbossas.version}</version>
             <type>pom</type>
             <scope>import</scope>
           </dependency>
@@ -72,7 +72,7 @@
           <artifactId>commons-lang</artifactId>
           <version>2.4</version>
         </dependency>
-        
+
         <dependency>
           <groupId>gnu-getopt</groupId>
           <artifactId>getopt</artifactId>
@@ -88,21 +88,21 @@
 
         <dependency>
           <groupId>org.jboss.integration</groupId>
-          <artifactId>jboss-profileservice-spi</artifactId>       
+          <artifactId>jboss-profileservice-spi</artifactId>
           <!--<version>5.1.0.SP1</version>-->
           <scope>provided</scope>
         </dependency>
 
         <dependency>
           <groupId>org.jboss.man</groupId>
-          <artifactId>jboss-managed</artifactId>          
+          <artifactId>jboss-managed</artifactId>
           <!--<version>2.1.1.CR1</version>-->
           <scope>provided</scope>
         </dependency>
 
         <dependency>
           <groupId>org.jboss.man</groupId>
-          <artifactId>jboss-metatype</artifactId>          
+          <artifactId>jboss-metatype</artifactId>
           <!--<version>2.1.1.CR1</version>-->
           <scope>provided</scope>
         </dependency>
@@ -113,17 +113,17 @@
           <!--<version>2.2.14.GA</version>-->
           <scope>provided</scope>
         </dependency>
-      
+
         <dependency>
           <groupId>org.jboss.remoting</groupId>
           <artifactId>jboss-remoting</artifactId>
-          <scope>provided</scope>          
-        </dependency>       
-      
-        <!--  To prevent the classloading issues with the maven's isolated classloader 
-              and the plugin classloader in our integration tests, we just include all 
+          <scope>provided</scope>
+        </dependency>
+
+        <!--  To prevent the classloading issues with the maven's isolated classloader
+              and the plugin classloader in our integration tests, we just include all
               the deps for the AS5 plugin in the test scope. -->
-              
+
         <dependency>
             <groupId>jboss.messaging</groupId>
             <artifactId>jboss-messaging-client</artifactId>
@@ -250,14 +250,14 @@
 
         <dependency>
           <groupId>org.jboss.ejb3</groupId>
-          <artifactId>jboss-ejb3-proxy-spi</artifactId>          
+          <artifactId>jboss-ejb3-proxy-spi</artifactId>
           <classifier>client</classifier>
           <scope>test</scope>
         </dependency>
 
         <dependency>
           <groupId>org.jboss.ejb3</groupId>
-          <artifactId>jboss-ejb3-proxy-impl</artifactId>          
+          <artifactId>jboss-ejb3-proxy-impl</artifactId>
           <classifier>client</classifier>
           <scope>test</scope>
         </dependency>
@@ -305,12 +305,12 @@
             <artifactId>jboss-reflect</artifactId>
             <scope>test</scope>
         </dependency>
-        
+
         <dependency>
             <groupId>jboss</groupId>
             <artifactId>jboss-serialization</artifactId>
             <scope>test</scope>
-        </dependency>        
+        </dependency>
 
         <dependency>
             <groupId>org.jboss.deployers</groupId>
@@ -322,22 +322,22 @@
             <groupId>org.jboss.deployers</groupId>
             <artifactId>jboss-deployers-client-spi</artifactId>
             <scope>test</scope>
-        </dependency>        
+        </dependency>
 
         <dependency>
             <groupId>org.jboss.jbossas</groupId>
             <artifactId>jboss-as-profileservice</artifactId>
-            <classifier>client</classifier>            
+            <classifier>client</classifier>
             <scope>test</scope>
         </dependency>
-        
+
         <dependency>
             <groupId>org.jboss.jbossas</groupId>
-            <artifactId>jboss-as-server</artifactId>            
+            <artifactId>jboss-as-server</artifactId>
             <classifier>jmx-invoker-adaptor-client</classifier>
             <scope>test</scope>
         </dependency>
-      
+
         <dependency>
             <groupId>jboss.messaging</groupId>
             <artifactId>jboss-messaging-client</artifactId>
@@ -348,7 +348,7 @@
              and jboss-system sources jars for debugging purposes. You will also need
              to make sure you have the JBoss snapshot repo in this POM or your settings.xml.
         -->
-<!-- 
+<!--
         <dependency>
             <groupId>org.jboss.jbossas</groupId>
             <artifactId>jboss-as-profileservice</artifactId>
@@ -359,7 +359,7 @@
             <artifactId>jboss-as-system</artifactId>
             <scope>provided</scope>
         </dependency>
--->        
+-->
     </dependencies>
 
     <build>
@@ -545,7 +545,7 @@
                           </goals>
                           <configuration>
                              <skip>${maven.test.skip}</skip>
-                             <parallel>false</parallel>                             
+                             <parallel>false</parallel>
                              <useSystemClassLoader>false</useSystemClassLoader>
                              <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
                              <argLine>-Dorg.hyperic.sigar.path=${basedir}/target/itest/lib</argLine>

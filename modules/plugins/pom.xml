@@ -77,7 +77,7 @@
   <modules>
     <!--  core plugins  -->
     <module>platform</module>
-    <module>jmx</module>    
+    <module>jmx</module>
     <module>rhq-agent</module>
     <module>apache</module>
     <module>iis</module>
@@ -87,8 +87,8 @@
     <!--  other, possibly experimental plugins -->
     <module>augeas</module>
     <module>apt</module>
-    <module>script</module>    
-    <module>grub</module>    
+    <module>script</module>
+    <module>grub</module>
 <!-- not behaving       <module>hardware</module> -->
     <module>hosts</module>
     <module>hudson</module>
@@ -97,10 +97,10 @@
     <module>netservices</module>
 <!-- non-public dependency        <module>onewire</module> -->
     <module>oracle</module>
-    <module>perftest</module>        
+    <module>perftest</module>
     <module>snmptrapd</module>
     <module>sshd</module>
-    <module>twitstats</module>
+    <module>twitter</module>
     <module>virt</module>
 
     <!-- make this the last - it will validate all the plugins -->

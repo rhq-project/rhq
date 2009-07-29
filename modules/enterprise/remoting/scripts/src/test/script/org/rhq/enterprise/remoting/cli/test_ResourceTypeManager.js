@@ -1,10 +1,5 @@
 rhq.login('rhqadmin', 'rhqadmin');
 
-bindings = context.getBindings(100);
-println(bindings.keySet());
-
-//println(ResourceManager);
-
 criteria = new ResourceTypeCriteria();
 resourceTypes = ResourceTypeManager.findResourceTypesByCriteria(criteria);
 

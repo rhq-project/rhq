@@ -27,7 +27,6 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.plugins.jbossas5.test.util.AppServerUtils;
 import org.rhq.plugins.jbossas5.test.util.EjbSessionBeanTestTemplate;
-import org.testng.annotations.BeforeGroups;
 
 /**
  * 
@@ -58,6 +57,15 @@ public abstract class AbstractEjb3SessionBeanResourceTest extends AbstractEjb3Re
     protected void validateOperationResult(String name, OperationResult result, Resource resource) {
         if (!testTemplate.validateOperationResult(name, result, resource)) {
             super.validateOperationResult(name, result, resource);
+        }
+    }
+
+    @Override
+    protected void validateNumericMetricValue(String metricName, Double value, Resource resource) {
+        if ("createCount".equals(metricName)) {
+            assert value > 0 : "Expected Session Bean CreateCount greater than 0.";
+        } else {
+            super.validateNumericMetricValue(metricName, value, resource);
         }
     }
     

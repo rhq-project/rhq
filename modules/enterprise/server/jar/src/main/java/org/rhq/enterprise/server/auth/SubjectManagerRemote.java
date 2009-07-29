@@ -64,7 +64,8 @@ public interface SubjectManagerRemote {
     void createPrincipal( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "username") String username, //
-        @WebParam(name = "password") String password) throws CreateException;
+        @WebParam(name = "password") String password) //
+        throws SubjectException;
 
     /**
      * Create a a new subject. This <b>ignores</b> the roles in <code>subject</code>. The created subject will not be
@@ -80,7 +81,8 @@ public interface SubjectManagerRemote {
     @WebMethod
     Subject createSubject( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "subjectToCreate") Subject subjectToCreate) throws CreateException;
+        @WebParam(name = "subjectToCreate") Subject subjectToCreate) //
+        throws SubjectException;
 
     /**
      * Deletes the given set of users, including both the {@link Subject} and {@link Principal} objects associated with

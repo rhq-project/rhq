@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
-import javax.ejb.CreateException;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.ExcludeDefaultInterceptors;
@@ -187,14 +186,14 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
      * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#createSubject(Subject, Subject)
      */
     @RequiredPermission(Permission.MANAGE_SECURITY)
-    public Subject createSubject(Subject whoami, Subject subject) throws CreateException {
+    public Subject createSubject(Subject whoami, Subject subject) throws SubjectException {
         // Make sure there's not already a system subject with that name
         if (getSubjectByName(subject.getName()) != null) {
-            throw new CreateException("A user already exists with " + subject.getName());
+            throw new SubjectException("A user already exists with " + subject.getName());
         }
 
         if (subject.getFsystem()) {
-            throw new CreateException("Cannot create new system subjects: " + subject.getName());
+            throw new SubjectException("Cannot create new system subjects: " + subject.getName());
         }
 
         // we are ignoring roles - anything the caller gave us is thrown out
@@ -371,17 +370,21 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
      * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#createPrincipal(Subject, String, String)
      */
     @RequiredPermission(Permission.MANAGE_SECURITY)
-    public void createPrincipal(Subject whoami, String username, String password) throws CreateException {
+    public void createPrincipal(Subject whoami, String username, String password) throws SubjectException {
         Principal principal = new Principal(username, Util.createPasswordHash("MD5", "base64", null, null, password));
-        entityManager.persist(principal);
+        createPrincipal(whoami, principal);
     }
 
     /**
      * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#createPrincipal(Subject, Principal)
      */
     @RequiredPermission(Permission.MANAGE_SECURITY)
-    public void createPrincipal(Subject whoami, Principal principal) throws CreateException {
-        entityManager.persist(principal);
+    public void createPrincipal(Subject whoami, Principal principal) throws SubjectException {
+        try {
+            entityManager.persist(principal);
+        } catch (Exception e) {
+            throw new SubjectException("Failed creating principal: " + e.getMessage());
+        }
     }
 
     /**

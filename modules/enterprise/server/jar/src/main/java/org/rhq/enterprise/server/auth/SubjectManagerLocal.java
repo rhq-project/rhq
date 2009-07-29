@@ -20,7 +20,6 @@ package org.rhq.enterprise.server.auth;
 
 import java.util.Collection;
 
-import javax.ejb.CreateException;
 import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Principal;
@@ -118,7 +117,7 @@ public interface SubjectManagerLocal {
      *
      * @throws Exception if the principal could not be added
      */
-    void createPrincipal(Subject subject, Principal principal) throws CreateException;
+    void createPrincipal(Subject subject, Principal principal) throws SubjectException;
 
     /**
      * Checks that the user exists <b>and</b> has a {@link Principal} associated with it. This means that the user both
@@ -221,12 +220,12 @@ public interface SubjectManagerLocal {
     /**
      * #see {@link SubjectManagerRemote#createPrincipal(Subject, String, String)
      */
-    void createPrincipal(Subject subject, String username, String password) throws CreateException;
+    void createPrincipal(Subject subject, String username, String password) throws SubjectException;
 
     /**
      * #see {@link SubjectManagerRemote#createSubject(Subject, Subject)
      */
-    Subject createSubject(Subject subject, Subject subjectToCreate) throws CreateException;
+    Subject createSubject(Subject subject, Subject subjectToCreate) throws SubjectException;
 
     /**
      * #see {@link SubjectManagerRemote#deleteSubjects(Subject, int[])

@@ -123,7 +123,7 @@
         <!--  To prevent the classloading issues with the maven's isolated classloader
               and the plugin classloader in our integration tests, we just include all
               the deps for the AS5 plugin in the test scope. -->
-
+<!--              
         <dependency>
             <groupId>jboss.messaging</groupId>
             <artifactId>jboss-messaging-client</artifactId>
@@ -143,8 +143,8 @@
           <scope>test</scope>
         </dependency>
         
-        <!-- NOTE: An org.jboss.remoting:jboss-remoting dep is declared above in 'provided' scope, 
-                   so we do not need it here ('provided' applies to both compilation and tests). -->
+        <!- - NOTE: An org.jboss.remoting:jboss-remoting dep is declared above in 'provided' scope, 
+                   so we do not need it here ('provided' applies to both compilation and tests). - ->
 
         <dependency>
           <groupId>org.jboss.jbossas</groupId>
@@ -340,7 +340,7 @@
             <artifactId>jboss-messaging-client</artifactId>
             <scope>test</scope>
         </dependency>
-
+-->
         <!-- Uncomment the below deps if you want to pull down the jboss-profileservice
              and jboss-system sources jars for debugging purposes. You will also need
              to make sure you have the JBoss snapshot repo in this POM or your settings.xml.

@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.server.auth;
 
-import javax.ejb.CreateException;
 import javax.ejb.Remote;
 import javax.jws.WebMethod;
 import javax.jws.WebParam;
@@ -75,8 +74,6 @@ public interface SubjectManagerRemote {
      * @param  subjectToCreate The subject to be created.
      *
      * @return the newly persisted {@link Subject}
-     *
-     * @throws CreateException if there is already a subject with the same name
      */
     @WebMethod
     Subject createSubject( //

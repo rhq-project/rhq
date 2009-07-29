@@ -120,12 +120,8 @@
               and the plugin classloader in our integration tests, we just include all
               the deps for the AS5 plugin in the test scope. -->
 
-        <dependency>
-            <groupId>jboss.messaging</groupId>
-            <artifactId>jboss-messaging-client</artifactId>
-            <version>1.4.3.GA</version>
-            <scope>test</scope>
-        </dependency>
+        <!-- NOTE: An org.jboss.remoting:jboss-remoting dep is declared above in 'provided' scope, 
+                   so we do not need it here ('provided' applies to both compilation and tests). -->
 
         <dependency>
             <groupId>org.jboss.microcontainer</groupId>
@@ -139,9 +135,6 @@
           <scope>test</scope>
         </dependency>
         
-        <!-- NOTE: An org.jboss.remoting:jboss-remoting dep is declared above in 'provided' scope, 
-                   so we do not need it here ('provided' applies to both compilation and tests). -->
-
         <dependency>
           <groupId>org.jboss.jbossas</groupId>
           <artifactId>jboss-as-aspects</artifactId>

@@ -6,6 +6,7 @@ import org.rhq.enterprise.client.commands.ScriptCommand;
 import org.rhq.enterprise.client.commands.LoginCommand;
 
 import javax.script.ScriptEngine;
+import javax.script.ScriptContext;
 import java.util.Map;
 
 public class Controller {
@@ -69,6 +70,7 @@ public class Controller {
         ScriptCommand cmd = (ScriptCommand) client.getCommands().get("exec");
         ScriptEngine scriptEngine = cmd.getScriptEngine();
         scriptEngine.put("subject", subject);
+        scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE).putAll(client.getRemoteClient().getManagers());
     }
 
     public void logout() {

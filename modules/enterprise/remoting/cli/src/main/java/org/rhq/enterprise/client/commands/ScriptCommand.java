@@ -34,6 +34,7 @@ import org.rhq.enterprise.client.script.ScriptCmdLine;
 import org.rhq.enterprise.client.utility.PackageFinder;
 import org.rhq.enterprise.client.utility.ResourceClientProxy;
 import org.rhq.enterprise.client.utility.ScriptUtil;
+import org.rhq.enterprise.client.utility.ScriptAssert;
 
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
@@ -48,6 +49,7 @@ import java.io.FileReader;
 import java.io.Reader;
 import java.util.Arrays;
 import java.util.List;
+import java.lang.reflect.Method;
 
 /**
  * @author Greg Hinkle
@@ -178,7 +180,6 @@ public class ScriptCommand implements ClientCommand {
         // These are prepared on every call in case the user logs out and logs into another server
         if (controller.getSubject() != null) {
             jsEngine.put("subject", controller.getSubject());
-            //sem.getBindings().put("subject", controller.getSubject());
             sem.getBindings().putAll(controller.getManagers());
         }
         TabularWriter tw = new TabularWriter(client.getPrintWriter());
@@ -186,28 +187,26 @@ public class ScriptCommand implements ClientCommand {
         sem.getBindings().put("pretty", tw);
 
         sem.getBindings().put("ProxyFactory", new ResourceClientProxy.Factory(client.getRemoteClient()));
-        bindScriptUtils();
 
-        jsEngine.put("rhq", controller);
+        bindObjectAndGlobalFuctions(controller, "rhq");
+        bindObjectAndGlobalFuctions(new ScriptUtil(), "scriptUtil");
+        bindObjectAndGlobalFuctions(new ScriptAssert(jsEngine), "Assert");
     }
 
-    private void bindScriptUtils() {
-        final String BIND_NAME = "scriptUtil";
-
-        ScriptUtil scriptUtil = new ScriptUtil(jsEngine);
-        jsEngine.put(BIND_NAME, scriptUtil);
-
+    private void bindObjectAndGlobalFuctions(Object object, String bindingName) {
+        jsEngine.put(bindingName, object);
         try {
-            BeanInfo beanInfo = Introspector.getBeanInfo(ScriptUtil.class, Object.class);
+            BeanInfo beanInfo = Introspector.getBeanInfo(object.getClass());
             MethodDescriptor[] methodDescriptors = beanInfo.getMethodDescriptors();
+
             for (MethodDescriptor methodDescriptor : methodDescriptors) {
-                java.lang.reflect.Method method = methodDescriptor.getMethod();
+                Method method = methodDescriptor.getMethod();
                 String methodName = method.getName();
                 int argCount = method.getParameterTypes().length;
 
                 StringBuilder functionBuilder = new StringBuilder();
                 functionBuilder.append(methodName).append("(");
-                for (int i = 0; i < argCount; i++) {
+                for (int i = 0; i < argCount; ++i) {
                     if (i != 0) {
                         functionBuilder.append(", ");
                     }
@@ -215,20 +214,21 @@ public class ScriptCommand implements ClientCommand {
                 }
                 functionBuilder.append(")");
                 String functionFragment = functionBuilder.toString();
-
                 boolean returnsVoid = method.getReturnType().equals(Void.TYPE);
-                String functionDefinition = "function " + functionFragment + " { " + (returnsVoid ? "" : "return ")
-                    + BIND_NAME + "." + functionFragment + "; }";
 
-                log.info("Binding... \"" + functionDefinition + "\"");
+                String functionDefinition = "function " + functionFragment + " { " + (returnsVoid ? "" : "return ")
+                    + bindingName + "." + functionFragment + "; }";
+
+                log.info("Binding global function --> " + functionDefinition);
                 try {
                     jsEngine.eval(functionDefinition);
                 } catch (ScriptException e) {
-                    log.warn("Unable to bind script utility function " + functionFragment, e);
+                    log.warn("Unable to bind global function " + functionFragment, e);
                 }
             }
-        } catch (IntrospectionException ie) {
-            log.warn("Could not bind any script utility functions", ie);
+        } catch (IntrospectionException e) {
+            // TODO Should we altogether remove the object from the script engine bindings?
+            log.warn("Could not bind " + object.getClass().getName() + " into script engine.");
         }
     }
 

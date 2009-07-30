@@ -33,6 +33,7 @@ import java.lang.annotation.ElementType;
  * only those fields of an entity that have this annotation will be included in the output.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
+@Target({ElementType.FIELD, ElementType.METHOD })
 public @interface Summary {
+    int index() default 50;
 }

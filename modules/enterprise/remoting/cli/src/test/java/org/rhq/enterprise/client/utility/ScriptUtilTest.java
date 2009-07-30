@@ -13,7 +13,7 @@ public class ScriptUtilTest {
 
     @Test
     public void getFileBytes() {
-        ScriptUtil scriptUtil = new ScriptUtil();
+        ScriptUtil scriptUtil = new ScriptUtil(null);
 
         try {
             String fileContents = "the rain in spain falls mainly on the plain";

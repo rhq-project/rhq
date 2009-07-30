@@ -37,6 +37,7 @@ import org.apache.commons.logging.LogFactory;
 import org.hyperic.sigar.CpuPerc;
 import org.hyperic.sigar.Mem;
 import org.hyperic.sigar.Swap;
+import org.hyperic.sigar.SigarException;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
@@ -59,6 +60,7 @@ import org.rhq.core.pluginapi.util.ObjectUtil;
 import org.rhq.core.system.CpuInformation;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.core.system.SystemInfo;
+import org.rhq.core.system.SigarAccess;
 
 /**
  * Represents the platform resource which is the root resource for all other resources managed.
@@ -89,6 +91,7 @@ public class PlatformComponent implements ResourceComponent, ConfigurationFacet,
 
     protected ResourceContext resourceContext;
     private SystemInfo sysinfo;
+
 
     public void start(ResourceContext context) {
         this.resourceContext = context;
@@ -122,6 +125,12 @@ public class PlatformComponent implements ResourceComponent, ConfigurationFacet,
         boolean isNative = info.isNative();
         Mem platformMemoryInfo = null;
         Swap platformSwapInfo = null;
+        CpuPerc cpuPerc = null;
+        try {
+            cpuPerc = SigarAccess.getSigar().getCpuPerc();
+        } catch (SigarException e) {
+            // No natives
+        }
 
         for (MeasurementScheduleRequest request : metrics) {
             String property = request.getName();
@@ -131,7 +140,6 @@ public class PlatformComponent implements ResourceComponent, ConfigurationFacet,
                 if (!isNative) {
                     continue;
                 }
-
                 property = property.substring(NATIVE_INDICATOR.length());
             }
 
@@ -156,27 +164,10 @@ public class PlatformComponent implements ResourceComponent, ConfigurationFacet,
                 }
             } else if (property.startsWith("CpuPerc.")) {
 
-                double result = 0.0;
-                property = property.substring(property.indexOf(".") + 1);
-
-                int numberOfCpus = 0;
-                try {
-                    numberOfCpus = sysinfo.getNumberOfCpus();
-                } catch (UnsupportedOperationException uoe) {
-                    if (log.isDebugEnabled())
-                        log.debug("Can't get number of CPUs ignoring metric " + property + " : " + uoe.getMessage());
-                }
-                if (numberOfCpus > 0) {
-                    for (int i = 0; i < numberOfCpus; i++) {
-                        CpuInformation cpuInfo = sysinfo.getCpu(i);
-                        CpuPerc cpuPerc = cpuInfo.getCpuPercentage();
-                        double value = ((Number) ObjectUtil.lookupAttributeProperty(cpuPerc, property)).doubleValue();
-                        result += value;
-                    }
-
-                    result /= numberOfCpus;
-
-                    report.addData(new MeasurementDataNumeric(request, result));
+                if (cpuPerc != null) {
+                    property = property.substring(property.indexOf(".") + 1);
+                    double value = ((Number) ObjectUtil.lookupAttributeProperty(cpuPerc, property)).doubleValue();
+                    report.addData(new MeasurementDataNumeric(request, value));
                 }
             }
         }

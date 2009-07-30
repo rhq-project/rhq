@@ -20,6 +20,7 @@ package org.rhq.enterprise.client;
 
 import jline.Completor;
 import jline.ConsoleReader;
+import jline.ANSIBuffer;
 
 import javax.jws.WebParam;
 import javax.script.Bindings;
@@ -44,7 +45,6 @@ import java.util.Set;
 import java.util.Collections;
 
 import org.rhq.enterprise.client.utility.ReflectionUtility;
-import org.rhq.enterprise.client.utility.ResourceClientProxy;
 import org.rhq.core.domain.auth.Subject;
 
 /**
@@ -492,7 +492,7 @@ public class ServiceCompletor implements Completor {
         buf.append(ReflectionUtility.getSimpleTypeString(m.getGenericReturnType()));
         buf.append(" ");
 
-        buf.append(m.getName());
+        buf.append(ANSIBuffer.ANSICodes.attrib(4) + m.getName() + ANSIBuffer.ANSICodes.attrib(0));
         buf.append("(");
         boolean first = true;
         for (Type type : params) {

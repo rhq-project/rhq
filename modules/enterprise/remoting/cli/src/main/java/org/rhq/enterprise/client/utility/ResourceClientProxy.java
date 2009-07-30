@@ -584,5 +584,5 @@ public class ResourceClientProxy {
         for (Measurement m : resource.getMeasurements()) {
             System.out.println(m.toString());
         }
-    }
+    }   
 }

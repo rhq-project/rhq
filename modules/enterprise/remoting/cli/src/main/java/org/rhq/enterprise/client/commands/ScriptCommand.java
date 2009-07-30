@@ -181,6 +181,8 @@ public class ScriptCommand implements ClientCommand {
                 client.getPrintWriter().print(" ");
             }
             client.getPrintWriter().println("^");
+            script = new StringBuilder();
+            inMultilineScript = false;
         }
         client.getPrintWriter().println();
         return true;
@@ -199,7 +201,7 @@ public class ScriptCommand implements ClientCommand {
         sem.getBindings().put("ProxyFactory", new ResourceClientProxy.Factory(client.getRemoteClient()));
 
         bindObjectAndGlobalFuctions(controller, "rhq");
-        bindObjectAndGlobalFuctions(new ScriptUtil(), "scriptUtil");
+        bindObjectAndGlobalFuctions(new ScriptUtil(controller), "scriptUtil");
         bindObjectAndGlobalFuctions(new ScriptAssert(jsEngine), "Assert");
     }
 

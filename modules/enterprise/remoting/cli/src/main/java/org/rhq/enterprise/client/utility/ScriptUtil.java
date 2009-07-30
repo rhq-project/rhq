@@ -1,13 +1,32 @@
 package org.rhq.enterprise.client.utility;
 
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.enterprise.client.Controller;
+import org.rhq.enterprise.server.resource.ResourceManagerRemote;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import javax.script.ScriptEngine;
-
 public class ScriptUtil {
+
+    private Controller controller;
+
+    public ScriptUtil(Controller controller) {
+        this.controller = controller;
+    }
+
+    public PageList<Resource> findResources(String string) {
+        ResourceManagerRemote resourceManager = controller.getRemoteClient().getResourceManagerRemote();
+
+        ResourceCriteria criteria = new ResourceCriteria();
+        criteria.addFilterName('%' + string + '%');
+        return resourceManager.findResourcesByCriteria(controller.getSubject(), criteria);
+    }
+
 
     public byte[] getFileBytes(String fileName) {
         File file = new File(fileName);

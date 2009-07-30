@@ -38,6 +38,10 @@ public class Controller {
         return null;
     }
 
+    public RemoteClient getRemoteClient() {
+        return remoteClient;
+    }
+
     public Subject getSubject() {
         if (loggedIn) {
             return client.getRemoteClient().getSubject();

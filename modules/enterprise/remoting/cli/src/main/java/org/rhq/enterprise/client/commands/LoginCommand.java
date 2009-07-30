@@ -21,6 +21,7 @@ package org.rhq.enterprise.client.commands;
 import org.rhq.enterprise.client.ClientMain;
 import org.rhq.enterprise.client.RHQServer;
 import org.rhq.enterprise.client.Controller;
+import jline.ANSIBuffer;
 
 /**
  * @author Greg Hinkle
@@ -55,7 +56,7 @@ public class LoginCommand implements ClientCommand {
             controller.setServer(new RHQServer(host, port));
             controller.login(user, pass);
 
-            client.getPrintWriter().println("Login successful");
+            client.getPrintWriter().println(ANSIBuffer.ANSICodes.attrib(5) + "Login successful" + ANSIBuffer.ANSICodes.attrib(0));
         } catch (Exception e) {
             client.getPrintWriter().println("Login failed: " + e.getMessage());
             e.printStackTrace();

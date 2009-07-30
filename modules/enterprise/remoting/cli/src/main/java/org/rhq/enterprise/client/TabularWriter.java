@@ -24,25 +24,20 @@ import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.util.Summary;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.measurement.ResourceAvailability;
 
-import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
-import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.HashMap;
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.LinkedHashMap;
 
 /**
@@ -253,7 +248,7 @@ public class TabularWriter {
                                     } catch (Throwable e) {
                                         e.printStackTrace();
                                     }
-                                    data[i][j++] = String.valueOf(val);
+                                    data[i][j++] = shortVersion(val);
                                 }
                                 i++;
                             }
@@ -279,6 +274,10 @@ public class TabularWriter {
 
         if (object instanceof PropertySimple) {
             return ((PropertySimple) object).getStringValue();
+        } else if (object instanceof ResourceType) {
+            return ((ResourceType) object).getName();
+        } else if (object instanceof ResourceAvailability) {
+            return ((ResourceAvailability) object).getAvailabilityType().getName();
         } else {
             return String.valueOf(object);
         }

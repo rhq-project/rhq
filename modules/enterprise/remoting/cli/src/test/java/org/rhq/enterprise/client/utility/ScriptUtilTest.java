@@ -12,55 +12,8 @@ import org.testng.annotations.Test;
 public class ScriptUtilTest {
 
     @Test
-    public void isDefinedShouldReturnTrueWhenVariableIsBound() {
-        ScriptEngine scriptEngine = createScriptEngine();
-        scriptEngine.put("foo", "bar");
-
-        ScriptUtil scriptUtil = new ScriptUtil(scriptEngine);
-
-        try {
-            scriptUtil.assertExists("foo");
-            assert true;
-        } catch (AssertionError ae) {
-            assert false : "Expected isDefined() to return true when the variable is bound.";
-        }
-    }
-
-    @Test
-    public void isDefinedShouldReturnFalseWhenVariableIsNotBound() {
-        ScriptEngine scriptEngine = createScriptEngine();
-
-        ScriptUtil scriptUtil = new ScriptUtil(scriptEngine);
-
-        try {
-            scriptUtil.assertExists("foo");
-            assert false : "Expected isDefined() to return false when the variable is not bound.";
-        } catch (AssertionError ae) {
-            assert true;
-        }
-    }
-
-    @Test
-    public void isDefinedShouldReturnTrueWhenFunctionIsBound() {
-        ScriptEngine scriptEngine = createScriptEngine();
-        scriptEngine.put("func", "function func() { return 123; }");
-
-        ScriptUtil scriptUtil = new ScriptUtil(scriptEngine);
-
-        try {
-            scriptUtil.assertExists("func");
-            assert true;
-        } catch (AssertionError ae) {
-            assert false : "Expected isDefined() to return true when function is bound.";
-        }
-    }
-
-    @Test
     public void getFileBytes() {
-        ScriptEngine scriptEngine = createScriptEngine();
-        scriptEngine.put("func", "function func() { return 123; }");
-
-        ScriptUtil scriptUtil = new ScriptUtil(scriptEngine);
+        ScriptUtil scriptUtil = new ScriptUtil();
 
         try {
             String fileContents = "the rain in spain falls mainly on the plain";
@@ -80,11 +33,6 @@ public class ScriptUtilTest {
         } catch (IOException ioe) {
             assert false : "Failure testing getFileBytes: " + ioe.getMessage();
         }
-    }
-
-    ScriptEngine createScriptEngine() {
-        ScriptEngineManager scriptEngineMgr = new ScriptEngineManager();
-        return scriptEngineMgr.getEngineByName("JavaScript");
     }
 
 }

@@ -19,8 +19,21 @@
 
    <modules>
       <module>webservices</module>
-      <module>cli</module>
-      <module>scripts</module>
    </modules>
+
+   <profiles>
+      <profile>
+         <id>cli</id>
+         <activation>
+            <jdk>1.6</jdk>
+         </activation>
+
+         <modules>
+            <module>webservices</module>
+            <module>cli</module>
+            <module>scripts</module>
+         </modules>
+      </profile>
+   </profiles>
 
 </project>

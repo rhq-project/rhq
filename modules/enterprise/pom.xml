@@ -64,9 +64,11 @@
         <module>server/ear</module>
         <module>server/container-lib</module>
         <module>server/container</module>
+        <module>remoting</module>
       </modules>
     </profile>
     
+<!--
     <profile>
       <id>remoting</id>
       <activation>
@@ -78,6 +80,7 @@
         <module>remoting</module>
       </modules>
     </profile>
+-->
 
   </profiles>
 

@@ -102,13 +102,6 @@
          <scope>provided</scope>
       </dependency>
 
-      <dependency>
-         <groupId>i18nlog</groupId>
-         <artifactId>i18nlog</artifactId>
-         <version>${i18nlog.version}</version>
-         <scope>provided</scope>
-      </dependency>
-
       <!-- TODO This can probably go away after we stop using EJB Exception classes in the remote API -->
       <dependency>
          <groupId>jboss</groupId>
@@ -310,6 +303,26 @@
                   </goals>
                </execution>
 
+               <execution>
+                  <phase>process-classes</phase>
+                  <configuration>
+                  <tasks>
+                     <!-- generate the I18N resource bundles -->
+                     <taskdef name="i18n" classpathref="maven.runtime.classpath" classname="mazz.i18n.ant.I18NAntTask" />
+
+                     <i18n outputdir="${project.build.outputDirectory}" defaultlocale="en" verbose="false" append="false" verify="true">
+                        <classpath refid="maven.runtime.classpath" />
+                        <classfileset dir="${project.build.outputDirectory}">
+                           <include name="**/ClientI18NResourceKeys.class" />
+                        </classfileset>
+                     </i18n>
+                  </tasks>
+               </configuration>
+               <goals>
+                  <goal>run</goal>
+               </goals>
+               </execution>
+
             </executions>
          </plugin>
 
@@ -319,6 +332,7 @@
             <configuration>
                <includes>
                   <include>org/rhq/**</include>
+                  <include>client-messages*</include>
                </includes>
                <archive>
                   <index>true</index>

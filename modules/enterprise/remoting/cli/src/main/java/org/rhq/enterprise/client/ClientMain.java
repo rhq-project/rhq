@@ -18,20 +18,17 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Arrays;
-import java.util.LinkedList;
 
 import jline.ArgumentCompletor;
 import jline.Completor;
 import jline.ConsoleReader;
-import jline.SimpleCompletor;
 import jline.MultiCompletor;
+import jline.SimpleCompletor;
 import mazz.i18n.Msg;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.client.commands.ClientCommand;
 import org.rhq.enterprise.client.commands.ScriptCommand;
-import org.rhq.enterprise.client.Controller;
 
 /**
  * @author Greg Hinkle
@@ -74,7 +71,6 @@ public class ClientMain {
     // The subject that will be used to carry out all requested actions
     private Subject subject;
 
-    
     private ServiceCompletor serviceCompletor;
 
     private static Controller controller;
@@ -134,9 +130,8 @@ public class ClientMain {
             new SimpleCompletor(commands.keySet().toArray(new String[commands.size()])) });
 
         this.serviceCompletor = new ServiceCompletor(consoleReader);
-        consoleReader.addCompletor(
-                new MultiCompletor(new Completor[] {serviceCompletor, helpCompletor, commandCompletor}));
-        
+        consoleReader.addCompletor(new MultiCompletor(new Completor[] { serviceCompletor, helpCompletor,
+            commandCompletor }));
 
         // enable pagination
         consoleReader.setUsePagination(true);
@@ -217,7 +212,8 @@ public class ClientMain {
      */
     public boolean loggedIn() {
         boolean loggedIn = false;
-        if ((controller.getSubject() != null) && (this.getRemoteClient() != null) && (this.getRemoteClient().isConnected())) {
+        if ((controller.getSubject() != null) && (this.getRemoteClient() != null)
+            && (this.getRemoteClient().isConnected())) {
             loggedIn = true;
         }
         return loggedIn;
@@ -304,7 +300,7 @@ public class ClientMain {
         } else {
             boolean result = commands.get("exec").execute(this, args);
             if (loggedIn()) {
-                this.serviceCompletor.setContext(((ScriptCommand)commands.get("exec")).getContext());
+                this.serviceCompletor.setContext(((ScriptCommand) commands.get("exec")).getContext());
             }
 
             return result;
@@ -354,7 +350,7 @@ public class ClientMain {
         // private String[] parseCommandLine(String cmdLine) {
 
         if (cmdLine == null) {
-            return new String[] {""};
+            return new String[] { "" };
         }
 
         ByteArrayInputStream in = new ByteArrayInputStream(cmdLine.getBytes());
@@ -414,53 +410,53 @@ public class ClientMain {
 
         while ((code = getopt.getopt()) != -1) {
             switch (code) {
-                case ':':
-                case '?': {
-                    // for now both of these should exit
-                    displayUsage();
-                    throw new IllegalArgumentException("mm");// MSG.getMsg(ClientI18NResourceKeys.BAD_ARGS,null));
-                }
+            case ':':
+            case '?': {
+                // for now both of these should exit
+                displayUsage();
+                throw new IllegalArgumentException(MSG.getMsg(ClientI18NResourceKeys.BAD_ARGS));
+            }
 
-                case 1: {
-                    // this will catch non-option arguments (which we don't
-                    // currently care about)
-                    System.err.println(MSG.getMsg(ClientI18NResourceKeys.USAGE, getopt.getOptarg()));
-                    break;
-                }
+            case 1: {
+                // this will catch non-option arguments (which we don't
+                // currently care about)
+                System.err.println(MSG.getMsg(ClientI18NResourceKeys.USAGE, getopt.getOptarg()));
+                break;
+            }
 
-                case 'h': {
-                    displayUsage();
-                    break;
-                }
+            case 'h': {
+                displayUsage();
+                break;
+            }
 
-                case 'u': {
-                    this.user = getopt.getOptarg();
-                    break;
+            case 'u': {
+                this.user = getopt.getOptarg();
+                break;
+            }
+            case 'p': {
+                this.pass = getopt.getOptarg();
+                if (this.pass == null) {
+                    this.pass = this.consoleReader.readLine("password: ", (char) 0);
                 }
-                case 'p': {
-                    this.pass = getopt.getOptarg();
-                    if (this.pass == null) {
-                        this.pass = this.consoleReader.readLine("password: ", (char)0);
-                    }
-                    break;
-                }
-                case 'c': {
-                    interactiveMode = false;
-                    command = new String[] { getopt.getOptarg()};
-                    break;
-                }
-                case 'f': {
-                    interactiveMode = false;
+                break;
+            }
+            case 'c': {
+                interactiveMode = false;
+                command = new String[] { getopt.getOptarg() };
+                break;
+            }
+            case 'f': {
+                interactiveMode = false;
 
-                    String[] inputArgs = getopt.getOptarg().split("\\W");
-                    String[] commandArgs = new String[inputArgs.length+2];
-                    commandArgs[0] = "exec";
-                    commandArgs[1] = "-f";
-                    System.arraycopy(inputArgs,0,commandArgs,2, inputArgs.length);
+                String[] inputArgs = getopt.getOptarg().split("\\W");
+                String[] commandArgs = new String[inputArgs.length + 2];
+                commandArgs[0] = "exec";
+                commandArgs[1] = "-f";
+                System.arraycopy(inputArgs, 0, commandArgs, 2, inputArgs.length);
 
-                    command = commandArgs;
-                    break;
-                }
+                command = commandArgs;
+                break;
+            }
             }
         }
 
@@ -484,7 +480,6 @@ public class ClientMain {
 
         if (remoteClient != null) {
             remoteClient.reinitialize();
-
 
             ScriptCommand sc = (ScriptCommand) commands.get("exec");
             sc.initBindings(this);

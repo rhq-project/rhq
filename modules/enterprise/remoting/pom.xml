@@ -1,46 +1,43 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
-	<modelVersion>4.0.0</modelVersion>
+   <modelVersion>4.0.0</modelVersion>
 
-	<parent>
-		<groupId>org.rhq</groupId>
-		<artifactId>rhq-parent</artifactId>
-		<version>1.3.0-SNAPSHOT</version>
-	</parent>
+   <parent>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-parent</artifactId>
+      <version>1.3.0-SNAPSHOT</version>
+   </parent>
 
-	<artifactId>rhq-remoting-parent</artifactId>
-	<packaging>pom</packaging>
+   <artifactId>rhq-remoting-parent</artifactId>
+   <packaging>pom</packaging>
 
-	<name>RHQ Remoting Parent POM</name>
-	<description>RHQ Enterprise Remoting Parent POM</description>
+   <name>RHQ Remoting Parent POM</name>
+   <description>RHQ Enterprise Remoting Parent POM</description>
 
-	<modules>
-		<module>webservices</module>
-	</modules>
+   <modules>
+      <module>webservices</module>
+   </modules>
 
-	<profiles>
-		<profile>
-			<id>cli</id>
-			<activation>
-				<jdk>1.6</jdk>
-				<property>
-					<name>!java5.home</name>
-				</property>
-			</activation>
+   <profiles>
+      <profile>
+         <id>cli</id>
+         <activation>
+            <jdk>1.6</jdk>
+            <property>
+               <name>!java5.home</name>
+            </property>
+         </activation>
 
-			<modules>
-				<module>webservices</module>
-				<module>cli</module>
-				<!--
-					Temporarily commenting out scripts module from build. The scripts
-					tests require a running server and running agent which is not set
-					up yet in the continuous integration build.
-
-					<module>scripts</module>
-				-->
-			</modules>
-		</profile>
-	</profiles>
+         <modules>
+            <module>webservices</module>
+            <module>cli</module>
+            <!--
+               Temporarily commenting out scripts module from build. The scripts tests require a running server and
+               running agent which is not set up yet in the continuous integration build. <module>scripts</module>
+            -->
+         </modules>
+      </profile>
+   </profiles>
 
 </project>

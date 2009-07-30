@@ -81,6 +81,7 @@ import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.EntitySerializer;
+import org.rhq.core.domain.util.Summary;
 import org.rhq.core.domain.util.serial.ExternalizableStrategy;
 
 /**
@@ -859,6 +860,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_RESOURCE_SEQ")
     @Id
+    @Summary(index = 0)
     private int id;
 
     @Column(name = "UUID")
@@ -868,6 +870,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
     private String resourceKey;
 
     @Column(name = "NAME", nullable = false)
+    @Summary(index = 1)
     private String name;
 
     @Column(name = "INVENTORY_STATUS")
@@ -878,6 +881,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
     private boolean connected;
 
     @Column(name = "VERSION")
+    @Summary(index = 2)
     private String version;
 
     @Column(name = "DESCRIPTION")
@@ -901,6 +905,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
 
     @JoinColumn(name = "RESOURCE_TYPE_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne
+    @Summary(index = 4)
     private ResourceType resourceType;
 
     // LAZY fetch otherwise this will recursively call all parents until null is found
@@ -995,6 +1000,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
     private List<Availability> availability;
 
     @OneToOne(mappedBy = "resource", cascade = { CascadeType.PERSIST, CascadeType.REMOVE }, fetch = FetchType.LAZY)
+    @Summary(index = 3)
     private ResourceAvailability currentAvailability;
 
     // bulk delete @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY, cascade = { CascadeType.REMOVE })

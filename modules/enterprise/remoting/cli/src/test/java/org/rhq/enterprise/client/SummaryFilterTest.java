@@ -37,37 +37,15 @@ import java.beans.Introspector;
 public class SummaryFilterTest {
 
     @Test
-    public void filterShouldReturnTrueForIdProperty() throws Exception {
+    public void testFilterAndReturnOrder() throws Exception {
         SummaryFilter filter = new SummaryFilter();
-        PropertyDescriptor idProperty = getPropertyDescriptor("id");
+        PropertyDescriptor[] properties = filter.getPropertyDescriptors(new TestEntity(),false);
 
-        assertTrue(filter.filter(idProperty), "Filter should return true for id property.");
-    }
+        assert (properties.length == 2);
+        assert (properties[0].getName().equals("id"));
+        assert (properties[1].getName().equals("summaryField"));
 
-    @Test
-    public void filterShouldReturnTrueForSummaryProperty() throws Exception {
-        SummaryFilter filter = new SummaryFilter();
-        PropertyDescriptor summaryProperty = getPropertyDescriptor("summaryField");
 
-        assertTrue(filter.filter(summaryProperty), "Filter should return true for property of a @Summary field.");
-    }
-
-    @Test
-    public void filterShouldReturnFalseForNonSummaryProperty() throws Exception {
-        SummaryFilter filter = new SummaryFilter();
-        PropertyDescriptor nonSummaryProperty = getPropertyDescriptor("nonSummaryField");
-
-        assertFalse(filter.filter(nonSummaryProperty), "Filter should return false for property of a field that does " +
-            "not have the @Summary annotation");
-    }
-
-    @Test
-    public void filterShouldReturnFalseForPropertyThatDoesNotReferToAField() throws Exception {
-        SummaryFilter filter = new SummaryFilter();
-        PropertyDescriptor notAField = getPropertyDescriptor("nonField");
-
-        assertFalse(filter.filter(notAField), "Filter should return false for a property that does not directly " +
-                "correspond to a field");
     }
 
     PropertyDescriptor getPropertyDescriptor(String name) throws Exception {
@@ -83,9 +61,10 @@ public class SummaryFilterTest {
     @Entity
     static class TestEntity {
         @Id
+        @Summary(index=1)
         private int id;
 
-        @Summary
+        @Summary(index=2)
         private String summaryField;
 
         private String nonSummaryField;

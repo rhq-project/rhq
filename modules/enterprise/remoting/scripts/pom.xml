@@ -29,13 +29,6 @@
       </dependency>
 
       <dependency>
-         <groupId>${groupId}</groupId>
-         <artifactId>rhq-enterprise-server</artifactId>
-         <version>${version}</version>
-         <type>ejb</type>
-      </dependency>
-
-      <dependency>
          <groupId>org.testng</groupId>
          <artifactId>testng</artifactId>
          <version>5.8</version>

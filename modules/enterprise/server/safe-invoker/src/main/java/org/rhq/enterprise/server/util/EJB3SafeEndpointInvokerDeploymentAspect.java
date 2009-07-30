@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.util;
 
 import java.util.Iterator;
+
 import org.jboss.ws.core.server.ServiceEndpointInvoker;
 import org.jboss.ws.core.server.ServiceEndpointInvokerEJB21;
 import org.jboss.wsf.spi.deployment.Deployment;
@@ -32,7 +33,7 @@ import org.jboss.wsf.spi.deployment.Endpoint;
  */
 public class EJB3SafeEndpointInvokerDeploymentAspect extends DeploymentAspect {
     @Override
-    public void create(Deployment dep) {
+    public void start(Deployment dep) {
         Iterator i$ = dep.getService().getEndpoints().iterator();
         do {
             if (!i$.hasNext()) {

@@ -88,6 +88,12 @@ public class SigarAccess {
         private AtomicLong accessCount = new AtomicLong();
 
         public Object invoke(Object proxy, Method meth, Object[] args) throws Throwable {
+            // its possible in the time between this handler's creation and now, someone disabled the native layer.
+            // throw a runtime exception if the native system was disabled
+            if (SystemInfoFactory.isNativeSystemInfoDisabled()) {
+                throw new SystemInfoException("Native system has been disabled");
+            }
+
             try {
                 accessCount.incrementAndGet();
                 synchronized (this) {

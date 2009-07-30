@@ -45,7 +45,6 @@ import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pc.util.ComponentUtil;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.plugins.jbossas5.ProfileServiceComponent;
-import org.rhq.plugins.jbossas5.connection.ProfileServiceConnection;
 
 /**
  * Various application server related utility methods used by the tests.

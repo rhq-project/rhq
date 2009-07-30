@@ -77,7 +77,11 @@ public class ScriptCommand implements ClientCommand {
         sem.getBindings().put("pageControl", PageControl.getUnlimitedInstance());
         sem.put("exporter", new Exporter());
         jsEngine = sem.getEngineByName("JavaScript");
-
+        try {
+            jsEngine.eval("1+1");
+        } catch (ScriptException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
         importRecursive(jsEngine);
     }
 
@@ -171,7 +175,7 @@ public class ScriptCommand implements ClientCommand {
                 new TabularWriter(client.getPrintWriter()).print(result);
             }
         } catch (ScriptException e) {
-            client.getPrintWriter().println(e.getMessage());
+            client.getPrintWriter().println(e.getCause() != null ? e.getCause().getMessage() : e.getMessage());
             client.getPrintWriter().println(script);
             for (int i = 0; i < e.getColumnNumber(); i++) {
                 client.getPrintWriter().print(" ");

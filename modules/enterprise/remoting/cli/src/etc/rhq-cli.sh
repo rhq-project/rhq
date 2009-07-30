@@ -124,7 +124,7 @@ else
       RHQ_CLI_JAVA_ENDORSED_DIRS=`cygpath --windows --path "$RHQ_CLI_JAVA_ENDORSED_DIRS"`
    fi
    debug_msg "RHQ_CLI_JAVA_ENDORSED_DIRS: $RHQ_CLI_JAVA_ENDORSED_DIRS"
-   _JAVA_ENDORSED_DIRS_OPT="\"-Djava.endorsed.dirs=${RHQ_CLI_JAVA_ENDORSED_DIRS}\""
+   _JAVA_ENDORSED_DIRS_OPT="-Djava.endorsed.dirs=\"${RHQ_CLI_JAVA_ENDORSED_DIRS}\""
 fi
 
 RHQ_CLI_JAVA_OPTS="${_JAVA_ENDORSED_DIRS_OPT} ${RHQ_CLI_JAVA_OPTS} -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=9787"
@@ -161,11 +161,11 @@ if [ -n "$_CYGWIN" ]; then
 fi
 
 # Build the command line that starts the VM
-CMD="${RHQ_CLI_JAVA_EXE_FILE_PATH} ${RHQ_CLI_JAVA_OPTS} ${RHQ_CLI_ADDITIONAL_JAVA_OPTS} ${_LOG_CONFIG} -cp ${CLASSPATH} org.rhq.enterprise.client.ClientMain ${RHQ_CLI_CMDLINE_OPTS}"
+debug_msg "${RHQ_CLI_JAVA_EXE_FILE_PATH} ${RHQ_CLI_JAVA_OPTS} ${RHQ_CLI_ADDITIONAL_JAVA_OPTS} ${_LOG_CONFIG} -cp ${CLASSPATH} org.rhq.enterprise.client.ClientMain ${RHQ_CLI_CMDLINE_OPTS}"
 
 debug_msg "Executing the CLI with this command line:"
 debug_msg "$CMD"
 
-eval "$CMD"
+${RHQ_CLI_JAVA_EXE_FILE_PATH} ${RHQ_CLI_JAVA_OPTS} ${RHQ_CLI_ADDITIONAL_JAVA_OPTS} ${_LOG_CONFIG} -cp ${CLASSPATH} org.rhq.enterprise.client.ClientMain ${RHQ_CLI_CMDLINE_OPTS}
 
 debug_msg echo $0 done.

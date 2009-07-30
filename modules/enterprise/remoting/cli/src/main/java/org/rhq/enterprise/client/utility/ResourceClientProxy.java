@@ -65,6 +65,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.domain.util.Summary;
 import org.rhq.enterprise.client.RemoteClient;
 import org.rhq.enterprise.server.exception.LoginException;
 import org.rhq.enterprise.server.operation.ResourceOperationSchedule;
@@ -115,10 +116,12 @@ public class ResourceClientProxy {
         init();
     }
 
+    @Summary(index = 0)
     public int getId() {
         return resourceId;
     }
 
+    @Summary(index = 1)
     public String getName() {
         return resource.getName();
     }
@@ -127,6 +130,7 @@ public class ResourceClientProxy {
         return resource.getDescription();
     }
 
+    @Summary(index = 2)
     public String getVersion() {
         return resource.getVersion();
     }
@@ -250,10 +254,22 @@ public class ResourceClientProxy {
             this.definition = definition;
         }
 
+        @Summary(index = 0)
         public String getName() {
             return definition.getDisplayName();
         }
 
+        @Summary(index = 1)
+        public String getDisplayValue() {
+            Object val = getValue();
+            if (val instanceof Number) {
+                return MeasurementConverter.format(((Number) val).doubleValue(), getUnits(), true);
+            } else {
+                return String.valueOf(val);
+            }
+        }
+
+        @Summary(index = 2)
         public String getDescription() {
             return definition.getDescription();
         }
@@ -281,15 +297,6 @@ public class ResourceClientProxy {
             }
         }
 
-        public String getDisplayValue() {
-            Object val = getValue();
-            if (val instanceof Number) {
-                return MeasurementConverter.format(((Number) val).doubleValue(), getUnits(), true);
-            } else {
-                return String.valueOf(val);
-            }
-
-        }
 
         public String toString() {
             return getDisplayValue();
@@ -303,18 +310,21 @@ public class ResourceClientProxy {
             this.definition = definition;
         }
 
-        public OperationDefinition getDefinition() {
-            return definition;
-        }
 
+        @Summary(index = 0)
         public String getName() {
             return simpleName(this.definition.getDisplayName());
         }
 
+        @Summary(index = 1)
         public String getDescription() {
             return this.definition.getDescription();
         }
 
+        public OperationDefinition getDefinition() {
+            return definition;
+        }
+        
         public Object invoke(Object[] args) throws Exception {
             Configuration parameters = ConfigurationClassBuilder.translateParametersToConfig(definition
                 .getParametersConfigurationDefinition(), args);

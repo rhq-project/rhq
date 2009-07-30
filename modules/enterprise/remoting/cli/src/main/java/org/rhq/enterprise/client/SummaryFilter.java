@@ -24,21 +24,76 @@ package org.rhq.enterprise.client;
 
 import org.rhq.core.domain.util.Summary;
 
-import javax.persistence.Id;
+import java.beans.BeanInfo;
+import java.beans.IntrospectionException;
+import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 
 public class SummaryFilter {
 
-    public boolean filter(PropertyDescriptor property) {
-        try {
-            Field field = getField(property);
-            return field.isAnnotationPresent(Summary.class) || field.isAnnotationPresent(Id.class);
-        } catch (NoSuchFieldException e) {
-            return false;
+
+
+    public PropertyDescriptor[] getPropertyDescriptors(Object object, boolean exportMode) throws IntrospectionException {
+
+        BeanInfo info = Introspector.getBeanInfo(object.getClass(), object.getClass().getSuperclass());
+
+        final Map<PropertyDescriptor, Integer> indexes = new HashMap<PropertyDescriptor, Integer>();
+
+
+
+        for (PropertyDescriptor property : info.getPropertyDescriptors()) {
+            boolean add = false;
+            int index = 100;
+            try {
+                Field field = getField(property);
+
+                if (field.isAnnotationPresent(Summary.class)) {
+                    add = true;
+                    index = field.getAnnotation(Summary.class).index();
+                } else if (property.getReadMethod() != null && property.getReadMethod().isAnnotationPresent(Summary.class)) {
+                    add = true;
+                    index = property.getReadMethod().getAnnotation(Summary.class).index();
+                }
+
+            } catch (NoSuchFieldException e) {
+                if (property.getReadMethod() != null && property.getReadMethod().isAnnotationPresent(Summary.class)) {
+                    add = true;
+                    index = property.getReadMethod().getAnnotation(Summary.class).index();
+                }
+            }
+            if (add || exportMode) {
+                indexes.put(property, index);
+            }
         }
+
+        if (indexes.isEmpty()) {
+            for (PropertyDescriptor property : info.getPropertyDescriptors()) {
+                indexes.put(property, 0);
+            }
+        }
+
+
+        PropertyDescriptor[] descriptors;
+        descriptors = indexes.keySet().toArray(new PropertyDescriptor[indexes.size()]);
+        Arrays.sort(descriptors, new Comparator<PropertyDescriptor>() {
+            public int compare(PropertyDescriptor o1, PropertyDescriptor o2) {
+                int i = indexes.get(o1).compareTo(indexes.get(o2));
+                if (i == 0) {
+                    i = o1.getName().compareTo(o2.getName());
+                }
+                return i;
+            }
+        });
+
+        return descriptors;
     }
+
 
     private Field getField(PropertyDescriptor property) throws NoSuchFieldException {
         String propertyName = property.getName();
@@ -55,5 +110,6 @@ public class SummaryFilter {
 
         return method.getDeclaringClass();
     }
+
 
 }

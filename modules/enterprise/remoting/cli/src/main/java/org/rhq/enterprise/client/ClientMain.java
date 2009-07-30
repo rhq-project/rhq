@@ -157,7 +157,7 @@ public class ClientMain {
         while ((input_string != null) && (input_string.trim().length() == 0)) {
             if (prompt == null) {
                 if (!loggedIn()) {
-                    prompt = "unconnected> ";
+                    prompt = "unconnected$ ";
                 } else {
                     // prompt = host + ":" + port + "> ";
                     // Modify the prompt to display host:port(logged-in-user)
@@ -166,9 +166,9 @@ public class ClientMain {
                         loggedInUser = controller.getSubject().getName();
                     }
                     if (loggedInUser.trim().length() > 0) {
-                        prompt = host + ":" + port + "(" + loggedInUser + ")> ";
+                        prompt = loggedInUser + "@" + host + ":" + port + "$ ";
                     } else {
-                        prompt = host + ":" + port + "> ";
+                        prompt = host + ":" + port + "$ ";
                     }
                 }
             }
@@ -394,103 +394,83 @@ public class ClientMain {
     }
 
     private void displayUsage() {
-        outputWriter.println("rhq-cli.sh [-h] [-u user] [-p pass] [-s host] [-t port] [-f file]");
+        outputWriter.println("rhq-cli.sh [-h] [-u user] [-p [pass]] [-s host] [-t port] [-f file]|[-c command]");
     }
 
-    void processArguments(String[] args) throws IllegalArgumentException {
-        String sopts = "-:hu:p:s:t:f:";
+    void processArguments(String[] args) throws IllegalArgumentException, IOException {
+        String sopts = "-:hu:p::s:t:c:f:";
         LongOpt[] lopts = { new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'h'),
             new LongOpt("user", LongOpt.REQUIRED_ARGUMENT, null, 'u'),
-            new LongOpt("password", LongOpt.REQUIRED_ARGUMENT, null, 'p'),
+            new LongOpt("password", LongOpt.OPTIONAL_ARGUMENT, null, 'p'),
             new LongOpt("host", LongOpt.REQUIRED_ARGUMENT, null, 's'),
             new LongOpt("port", LongOpt.REQUIRED_ARGUMENT, null, 't'),
+            new LongOpt("command", LongOpt.REQUIRED_ARGUMENT, null, 'c'),
             new LongOpt("file", LongOpt.NO_ARGUMENT, null, 'f') };
 
         Getopt getopt = new Getopt("Cli", args, sopts, lopts);
         int code;
 
+        String[] command = null;
+
         while ((code = getopt.getopt()) != -1) {
             switch (code) {
-            case ':':
-            case '?': {
-                // for now both of these should exit
-                displayUsage();
-                throw new IllegalArgumentException("mm");// MSG.getMsg(ClientI18NResourceKeys.BAD_ARGS,null));
-            }
+                case ':':
+                case '?': {
+                    // for now both of these should exit
+                    displayUsage();
+                    throw new IllegalArgumentException("mm");// MSG.getMsg(ClientI18NResourceKeys.BAD_ARGS,null));
+                }
 
-            case 1: {
-                // this will catch non-option arguments (which we don't
-                // currently care about)
-                System.err.println(MSG.getMsg(ClientI18NResourceKeys.USAGE, getopt.getOptarg()));
-                break;
-            }
+                case 1: {
+                    // this will catch non-option arguments (which we don't
+                    // currently care about)
+                    System.err.println(MSG.getMsg(ClientI18NResourceKeys.USAGE, getopt.getOptarg()));
+                    break;
+                }
 
-            case 'h': {
-                displayUsage();
-                break;
-            }
+                case 'h': {
+                    displayUsage();
+                    break;
+                }
 
-            case 'u': {
-                this.user = getopt.getOptarg();
-                break;
-            }
-            case 'p': {
-                this.pass = getopt.getOptarg();
-                break;
-            }
-            case 'f': {
-                interactiveMode = false;
-                commands.get("exec").execute(this, createExecArgs(args));
-                return;
-            }
+                case 'u': {
+                    this.user = getopt.getOptarg();
+                    break;
+                }
+                case 'p': {
+                    this.pass = getopt.getOptarg();
+                    if (this.pass == null) {
+                        this.pass = this.consoleReader.readLine("password: ", (char)0);
+                    }
+                    break;
+                }
+                case 'c': {
+                    interactiveMode = false;
+                    command = new String[] { getopt.getOptarg()};
+                    break;
+                }
+                case 'f': {
+                    interactiveMode = false;
+
+                    String[] inputArgs = getopt.getOptarg().split("\\W");
+                    String[] commandArgs = new String[inputArgs.length+2];
+                    commandArgs[0] = "exec";
+                    commandArgs[1] = "-f";
+                    System.arraycopy(inputArgs,0,commandArgs,2, inputArgs.length);
+
+                    command = commandArgs;
+                    break;
+                }
             }
         }
+
         if (user != null && pass != null) {
             commands.get("login").execute(this, new String[] { "login", user, pass });
-        }  switch (code) {
-            case ':':
-            case '?': {
-                // for now both of these should exit
-                displayUsage();
-                throw new IllegalArgumentException("mm");// MSG.getMsg(ClientI18NResourceKeys.BAD_ARGS,null));
-            }
-
-            case 1: {
-                // this will catch non-option arguments (which we don't
-                // currently care about)
-                System.err.println(MSG.getMsg(ClientI18NResourceKeys.USAGE, getopt.getOptarg()));
-                break;
-            }
-
-            case 'h': {
-                displayUsage();
-                break;
-            }
-
-            case 'u': {
-                this.user = getopt.getOptarg();
-                break;
-            }
-            case 'p': {
-                this.pass = getopt.getOptarg();
-                break;
-            }
-            case 'f': {
-                interactiveMode = true;
-                commands.get("exec").execute(this, createExecArgs(args));
-                return;
-            }
-            }
-    }
-
-    private String[] createExecArgs(String[] args) {
-        String[] execArgs = new String[args.length + 1];
-        execArgs[0] = "exec";
-        for (int i = 0; i < args.length; ++i) {
-            execArgs[i + 1] = args[i];
         }
 
-        return execArgs;
+        if (command != null) {
+            commands.get("exec").execute(this, command);
+        }
     }
 
     public RemoteClient getRemoteClient() {

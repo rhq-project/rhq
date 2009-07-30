@@ -117,12 +117,13 @@ public class ServiceCompletor implements Completor {
                 String[] argPadded = new String[call.length+1];
                 System.arraycopy(call, 0, argPadded, 0, call.length);
                 argPadded[call.length] = "";
+                call = argPadded;
             }
 
 
             if (call.length == 1) {
                 Map<String, Object> matches = getContextMatches(call[0]);
-                if (matches.size() == 1 && matches.containsKey(call[0])) {
+                if (matches.size() == 1 && matches.containsKey(call[0]) && !s.endsWith(".")) {
                     list.add(".");
                     return rootLength + call[0].length() + 1;
 
@@ -188,7 +189,7 @@ public class ServiceCompletor implements Completor {
 
             if (matches.size() == 1 && matches.containsKey(call[0])) {
                 if (matches.get(call[0]) instanceof Method) {
-                    list.add("(");
+                    list.add("(" + (((Method)matches.get(call[0])).getParameterTypes().length == 0 ? ")" : ""));
                 }
                 return call[0].length() + 1;
             }
@@ -202,7 +203,11 @@ public class ServiceCompletor implements Completor {
                 }
                 displaySignatures(baseObject,methods.toArray(new Method[methods.size()]));
             } else {
-                list.addAll(matches.keySet());
+                if (matches.size() == 1 && matches.values().iterator().next() instanceof Method) {
+                    list.add(matches.keySet().iterator().next() + "(" + ((((Method)matches.values().iterator().next()).getParameterTypes().length == 0 ? ")" : "")));
+                } else {
+                    list.addAll(matches.keySet());
+                }
             }
             return 0;
 
@@ -218,10 +223,30 @@ public class ServiceCompletor implements Completor {
             }
             this.consoleReader.printNewline();
             this.consoleReader.printNewline();
+            String[][] signatures = new String[methods.length][];
+            int i = 0;
             for (Method m : methods) {
-                this.consoleReader.printString(getSignature(object, m));
+                signatures[i++] = getSignature(object,m).split(" ", 2);
+            }
+
+            int maxReturnLength = 0;
+            for (String[] sig : signatures) {
+                if (sig[0].length() > maxReturnLength)
+                    maxReturnLength = sig[0].length();
+            }
+
+            for (String[] sig : signatures) {
+                for (i = 0; i < (maxReturnLength - sig[0].length()); i++ ) {
+                    this.consoleReader.printString(" ");
+                }
+
+                this.consoleReader.printString(sig[0]);
+                this.consoleReader.printString(" ");
+                this.consoleReader.printString(sig[1]);
                 this.consoleReader.printNewline();
             }
+
+            
             this.consoleReader.drawLine();
             this.consoleReader.putString(start);
         } catch (Exception e) {
@@ -257,8 +282,12 @@ public class ServiceCompletor implements Completor {
 
 
         if (paramIndex >= c.length) {
-            list.add(params + ")");
-            return (params + ")").length();
+            if (params.endsWith(")")) {
+                return -1;
+            } else {
+                list.add(params + ")");
+                return (params + ")").length();
+            }
         } else {
 
             if (baseObject instanceof Map && method.getName().equals("get") && method.getParameterTypes().length == 1) {
@@ -465,9 +494,16 @@ public class ServiceCompletor implements Completor {
 
         buf.append(m.getName());
         buf.append("(");
+        boolean first = true;
         for (Type type : params) {
-            if (i > 0) {
+            if (i == 0 && type.equals(Subject.class))
+            {   i++;
+                continue;
+            }
+            if (!first) {
                 buf.append(", ");
+            } else {
+                first = false;
             }
 
             String name = null;

@@ -24,6 +24,7 @@ import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.util.Summary;
 
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
@@ -32,13 +33,17 @@ import java.beans.PropertyDescriptor;
 import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
+import java.util.HashMap;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 
 /**
  * @author Greg Hinkle
@@ -63,7 +68,6 @@ public class TabularWriter {
         IGNORED_PROPS.add("ctime");
         IGNORED_PROPS.add("itime");
         IGNORED_PROPS.add("uuid");
-        IGNORED_PROPS.add("description");
         IGNORED_PROPS.add("parentResource");
     }
 
@@ -125,46 +129,26 @@ public class TabularWriter {
                 return;
             }
 
-
-            BeanInfo info = Introspector.getBeanInfo(object.getClass(), object.getClass().getSuperclass());
-            headers = new String[info.getPropertyDescriptors().length];
-            int i = 0;
-
-
             out.println(object.getClass().getSimpleName() + ":");
-            Map<String, String> properties = new TreeMap<String, String>();
+            Map<String, String> properties = new LinkedHashMap<String, String>();
             int maxLength = 0;
 
-            boolean anyFilters = false;
-            for (PropertyDescriptor pd : info.getPropertyDescriptors()) {
-                if (summaryFilter.filter(pd)) {
-                    anyFilters = true;
+
+            for (PropertyDescriptor pd : summaryFilter.getPropertyDescriptors(object, exportMode)) {
+                Method m = pd.getReadMethod();
+                Object val = null;
+                if (m != null) {
+                    val = m.invoke(object);
                 }
-            }
 
-            for (PropertyDescriptor pd : info.getPropertyDescriptors()) {
-                if (exportMode || !anyFilters || summaryFilter.filter(pd)) {
-                    Method m = pd.getReadMethod();
-                    Object val = null;
-                    if (m != null) {
-                        val = m.invoke(object);
-                    }
-
-                    if (val != null) {
-                        try {
-                            String str = String.valueOf(val);
-                            maxLength = Math.max(maxLength, pd.getName().length());
-                            properties.put(pd.getName(), String.valueOf(val));
-                        } catch (Exception e) {
-                        }
+                if (val != null) {
+                    try {
+                        String str = String.valueOf(val);
+                        maxLength = Math.max(maxLength, pd.getName().length());
+                        properties.put(pd.getName(), String.valueOf(val));
+                    } catch (Exception e) {
                     }
                 }
-            }
-
-            String idProperty = "id";
-            if (properties.containsKey(idProperty)) {
-                printProperty(idProperty, properties.get(idProperty), maxLength);
-                properties.remove(idProperty);
             }
 
             for (String key : properties.keySet()) {
@@ -223,23 +207,14 @@ public class TabularWriter {
                     } else {
 
                         if (consistentMaps(list)) {
-
+                            // results printed
 
                         } else {
-                        BeanInfo info = Introspector.getBeanInfo(firstObject.getClass(), firstObject.getClass().getSuperclass());
 
-                        boolean anyFilters = false;
-                        for (PropertyDescriptor pd : info.getPropertyDescriptors()) {
-                            if (summaryFilter.filter(pd)) {
-                                anyFilters = true;
-                            }
-                        }
+                            int i = 0;
 
-                        int i = 0;
-
-                        List<PropertyDescriptor> pdList = new ArrayList<PropertyDescriptor>();
-                        for (PropertyDescriptor pd : info.getPropertyDescriptors()) {
-                            if (exportMode || !anyFilters || summaryFilter.filter(pd)) {
+                            List<PropertyDescriptor> pdList = new ArrayList<PropertyDescriptor>();
+                            for (PropertyDescriptor pd : summaryFilter.getPropertyDescriptors(firstObject, exportMode)) {
                                 try {
                                     boolean allNull = true;
                                     for (Object row : list) {
@@ -259,35 +234,35 @@ public class TabularWriter {
                                     e.printStackTrace();
                                 }
                             }
-                        }
 
 
-                        headers = new String[pdList.size()];
-                        data = new String[list.size()][pdList.size()];
+                            headers = new String[pdList.size()];
+                            data = new String[list.size()][pdList.size()];
 
-                        for (PropertyDescriptor pd : pdList) {
-                            headers[i++] = pd.getName();
-                        }
-                        i = 0;
-                        for (Object row : list) {
-                            int j = 0;
                             for (PropertyDescriptor pd : pdList) {
-
-                                Object val = "?";
-                                try {
-                                    val = pd.getReadMethod().invoke(row);
-                                } catch (Throwable e) {
-                                    System.out.println("crap");
-                                }
-                                data[i][j++] = String.valueOf(val);
+                                headers[i++] = pd.getName();
                             }
-                            i++;
+                            i = 0;
+                            for (Object row : list) {
+                                int j = 0;
+                                for (PropertyDescriptor pd : pdList) {
+
+                                    Object val = "?";
+                                    try {
+                                        val = pd.getReadMethod().invoke(row);
+                                    } catch (Throwable e) {
+                                        e.printStackTrace();
+                                    }
+                                    data[i][j++] = String.valueOf(val);
+                                }
+                                i++;
+                            }
+
+
+                            this.print(data);
+
                         }
                     }
-
-                    this.print(data);
-                    }
-
                 } catch (Exception e) {
                     e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
                 } finally {
@@ -303,13 +278,12 @@ public class TabularWriter {
     private String shortVersion(Object object) {
 
         if (object instanceof PropertySimple) {
-            return ((PropertySimple)object).getStringValue();
+            return ((PropertySimple) object).getStringValue();
         } else {
             return String.valueOf(object);
         }
 
     }
-
 
 
     private boolean consistentMaps(Collection list) {
@@ -323,18 +297,18 @@ public class TabularWriter {
             if (keys == null) {
                 keys = new ArrayList<String>();
 
-                for (Object key : ((Map)row).keySet()) {
+                for (Object key : ((Map) row).keySet()) {
                     String headerKey = String.valueOf(key);
                     keys.add(headerKey);
                 }
             }
 
             data[i] = new String[keys.size()];
-            for (Object key : ((Map)row).keySet()) {
+            for (Object key : ((Map) row).keySet()) {
                 if (!keys.contains(String.valueOf(key))) {
                     return false;
                 }
-                data[i][keys.lastIndexOf(String.valueOf(key))] = shortVersion(((Map)row).get(key));
+                data[i][keys.lastIndexOf(String.valueOf(key))] = shortVersion(((Map) row).get(key));
             }
             i++;
         }
@@ -370,13 +344,13 @@ public class TabularWriter {
 
     public void print(PropertyList p, int depth) {
         out.println(indent(depth) + p.getName() + " [" + p.getList().size() + "] {");
-            for (Property entry : p.getList()) {
-                if (entry instanceof PropertySimple) {
-                    print((PropertySimple) entry, depth+1);
-                } else if (entry instanceof PropertyMap) {
-                    print((PropertyMap)entry, depth+1);
-                }
+        for (Property entry : p.getList()) {
+            if (entry instanceof PropertySimple) {
+                print((PropertySimple) entry, depth + 1);
+            } else if (entry instanceof PropertyMap) {
+                print((PropertyMap) entry, depth + 1);
             }
+        }
 
         out.println(indent(depth) + "}");
     }
@@ -386,9 +360,9 @@ public class TabularWriter {
         for (String key : p.getMap().keySet()) {
             Property entry = p.getMap().get(key);
             if (entry instanceof PropertySimple) {
-                print((PropertySimple) entry, depth+1);
+                print((PropertySimple) entry, depth + 1);
             } else if (entry instanceof PropertyMap) {
-                print((PropertyMap)entry, depth+1);
+                print((PropertyMap) entry, depth + 1);
             }
         }
         out.println(indent(depth) + "}");
@@ -476,8 +450,7 @@ public class TabularWriter {
         if (headers != null) {
             if (CSV.equals(format)) {
                 csvWriter.writeNext(headers);
-            }
-            else {
+            } else {
                 for (int i = 0; i < maxColumnLength.length; i++) {
                     int colSize = maxColumnLength[i];
                     printSpaced(out, headers[i], colSize);
@@ -498,8 +471,7 @@ public class TabularWriter {
             for (String[] row : data) {
                 csvWriter.writeNext(row);
             }
-        }
-        else {
+        } else {
             for (String[] row : data) {
                 for (int i = 0; i < maxColumnLength.length; i++) {
                     int colSize = maxColumnLength[i];

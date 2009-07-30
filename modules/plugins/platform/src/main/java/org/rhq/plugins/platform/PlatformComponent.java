@@ -37,7 +37,6 @@ import org.apache.commons.logging.LogFactory;
 import org.hyperic.sigar.CpuPerc;
 import org.hyperic.sigar.Mem;
 import org.hyperic.sigar.Swap;
-import org.hyperic.sigar.SigarException;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
@@ -57,10 +56,9 @@ import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.pluginapi.util.ObjectUtil;
-import org.rhq.core.system.CpuInformation;
 import org.rhq.core.system.ProcessInfo;
-import org.rhq.core.system.SystemInfo;
 import org.rhq.core.system.SigarAccess;
+import org.rhq.core.system.SystemInfo;
 
 /**
  * Represents the platform resource which is the root resource for all other resources managed.
@@ -91,7 +89,6 @@ public class PlatformComponent implements ResourceComponent, ConfigurationFacet,
 
     protected ResourceContext resourceContext;
     private SystemInfo sysinfo;
-
 
     public void start(ResourceContext context) {
         this.resourceContext = context;
@@ -128,8 +125,8 @@ public class PlatformComponent implements ResourceComponent, ConfigurationFacet,
         CpuPerc cpuPerc = null;
         try {
             cpuPerc = SigarAccess.getSigar().getCpuPerc();
-        } catch (SigarException e) {
-            // No natives
+        } catch (Exception e) {
+            // probably native api is unavailable, but getCpuPerc might also have a problem; in either case, nothing we can do
         }
 
         for (MeasurementScheduleRequest request : metrics) {

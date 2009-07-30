@@ -42,6 +42,7 @@
         <module>gui</module>
         <module>server/plugins</module>
         <module>server/ear</module>
+        <module>remoting</module>
       </modules>
     </profile>
 
@@ -68,20 +69,6 @@
       </modules>
     </profile>
     
-<!--
-    <profile>
-      <id>remoting</id>
-      <activation>
-        <property>
-          <name>remoting</name>
-        </property>
-      </activation>
-      <modules>
-        <module>remoting</module>
-      </modules>
-    </profile>
--->
-
   </profiles>
 
 </project>

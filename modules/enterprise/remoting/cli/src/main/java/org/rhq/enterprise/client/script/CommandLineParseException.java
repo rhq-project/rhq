@@ -2,7 +2,7 @@ package org.rhq.enterprise.client.script;
 
 import java.util.Arrays;
 
-public class CommandLineParseException extends Exception {
+public class CommandLineParseException extends RuntimeException {
 
     public CommandLineParseException() {
         super();

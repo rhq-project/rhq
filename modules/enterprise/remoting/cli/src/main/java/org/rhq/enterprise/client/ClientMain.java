@@ -77,6 +77,8 @@ public class ClientMain {
 
     private boolean interactiveMode = true;
 
+    private Recorder recorder = new NoOpRecorder();
+
     // Entrance to main.
     public static void main(String[] args) throws Exception {
 
@@ -230,15 +232,13 @@ public class ClientMain {
         Runnable loop_runnable = new Runnable() {
             public void run() {
                 while (true) {
-                    // get a command from the user
-                    // if in daemon mode, only get input if reading from an
-                    // input file; ignore stdin
                     String cmd;
-                    // if ((m_daemonMode == false) || (stdinInput == false)) {
                     cmd = getUserInput(null);
-                    // } else {
-                    // cmd = null;
-                    // }
+                    try {
+                        recorder.record(cmd);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
 
                     try {
                         // parse the command into separate arguments and execute
@@ -570,5 +570,13 @@ public class ClientMain {
 
     public boolean isInteractiveMode() {
         return interactiveMode;
+    }
+
+    public Recorder getRecorder() {
+        return recorder;
+    }
+
+    public void setRecorder(Recorder recorder) {
+        this.recorder = recorder;
     }
 }

@@ -28,8 +28,14 @@ import org.rhq.enterprise.client.Controller;
 public interface ClientCommand {
 
     @SuppressWarnings("unchecked")
-    public static Class<ClientCommand>[] COMMANDS = new Class[] { HelpCommand.class, LoginCommand.class,
-        LogoutCommand.class, QuitCommand.class, ScriptCommand.class };
+    public static Class<ClientCommand>[] COMMANDS = new Class[] {
+        HelpCommand.class,
+        LoginCommand.class,
+        LogoutCommand.class,
+        QuitCommand.class,
+        ScriptCommand.class,
+        RecordCommand.class
+    };
 
     void setController(Controller controller);
 

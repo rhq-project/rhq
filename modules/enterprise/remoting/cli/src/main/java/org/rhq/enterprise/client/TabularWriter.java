@@ -165,7 +165,17 @@ public class TabularWriter {
         out.print("\t");
         printPreSpaced(out, name, maxLength);
         out.print(": ");
-        out.println(value);
+
+        if (value.length() > width) {
+            out.println(truncate(value));        
+        }
+        else {
+            out.println(value);
+        }
+    }
+
+    private String truncate(String string) {
+        return string.substring(0, string.length() - width - 3) + "...";
     }
 
     public void print(Collection list) {
@@ -489,7 +499,7 @@ public class TabularWriter {
     private void printSpaced(PrintWriter out, String data, int length) {
         int dataLength = data.length();
         if (dataLength > length) {
-            out.print(data.substring(0, length));
+            out.print(data.substring(0, length - 3) + "...");
         } else {
             out.print(data);
 
@@ -503,7 +513,7 @@ public class TabularWriter {
     private void printPreSpaced(PrintWriter out, String data, int length) {
         int dataLength = data.length();
         if (dataLength > length) {
-            out.print(data.substring(0, length));
+            out.print(data.substring(0, length - 3) + "...");
         } else {
             for (int i = dataLength; i < length; i++) {
                 out.print(" ");

@@ -64,6 +64,8 @@ import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.plugins.jbossas5.util.DeploymentUtils;
 
 /**
+ * A resource component for managing a standalone/top-level Profile Service managed deployment.
+ *  
  * @author Ian Springer
  */
 public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploymentComponent implements
@@ -167,13 +169,15 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
     }
 
     public DeployPackagesResponse deployPackages(Set<ResourcePackageDetails> packages, ContentServices contentServices) {
+        String resourceTypeName = getResourceContext().getResourceType().getName();
+
         // You can only update the one application file referenced by this resource, so punch out if multiple are
         // specified.
         if (packages.size() != 1) {
-            log.warn("Request to update an EAR/WAR file contained multiple packages: " + packages);
+            log.warn("Request to update " + resourceTypeName + " file contained multiple packages: " + packages);
             DeployPackagesResponse response = new DeployPackagesResponse(ContentResponseResult.FAILURE);
             response
-                .setOverallRequestErrorMessage("When updating an EAR/WAR, only one EAR/WAR can be updated at a time.");
+                .setOverallRequestErrorMessage("Only one " + resourceTypeName + " can be updated at a time.");
             return response;
         }
 
@@ -198,18 +202,22 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
 
         boolean deployExploded = this.deploymentFile.isDirectory();
 
-        // Backup the original app file/dir to <filename>.rej.
-        File backupOfOriginalFile = new File(this.deploymentFile.getPath() + BACKUP_FILE_EXTENSION);
+        // Backup the original app file/dir.
+        File tempDir = getResourceContext().getTemporaryDirectory();
+        File backupDir = new File(tempDir, "deployBackup");
+        File backupOfOriginalFile = new File(backupDir, this.deploymentFile.getName());
         log.debug("Backing up existing EAR/WAR '" + this.deploymentFile + "' to '" + backupOfOriginalFile + "'...");
         try {
-            if (backupOfOriginalFile.exists())
+            if (backupOfOriginalFile.exists()) {
                 FileUtils.forceDelete(backupOfOriginalFile);
-            if (this.deploymentFile.isDirectory())
+            }
+            if (this.deploymentFile.isDirectory()) {
                 FileUtils.copyDirectory(this.deploymentFile, backupOfOriginalFile, true);
-            else
+            } else {
                 FileUtils.copyFile(this.deploymentFile, backupOfOriginalFile, true);
+            }
         } catch (Exception e) {
-            throw new RuntimeException("Failed to backup existing EAR/WAR '" + this.deploymentFile + "' to '"
+            throw new RuntimeException("Failed to backup existing "  + resourceTypeName + "'" + this.deploymentFile + "' to '"
                 + backupOfOriginalFile + "'.");
         }
 
@@ -233,7 +241,6 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
 
         // Deploy away!
         log.debug("Deploying '" + tempFile + "'...");
-        File deployDir = this.deploymentFile.getParentFile();
         DeploymentManager deploymentManager = getConnection().getDeploymentManager();
         try {
             DeploymentUtils.deployArchive(deploymentManager, tempFile, deployExploded);
@@ -242,9 +249,17 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
             log.debug("Redeploy failed - rolling back to original archive...", e);
             String errorMessage = ThrowableUtil.getAllMessages(e);
             try {
-                // Delete the new app, which failed to deploy.
-                FileUtils.forceDelete(this.deploymentFile);
-                // Need to redeploy the original file - this generally should succeed.
+                // Try to delete the new app file, which failed to deploy, if it still exists.
+                if (this.deploymentFile.exists()) {
+                    try {
+                        FileUtils.forceDelete(this.deploymentFile);
+                    }
+                    catch (IOException e1) {
+                        log.debug("Failed to delete application file '" + this.deploymentFile
+                                + "' that failed to deploy.", e1);
+                    }
+                }
+                // Now redeploy the original file - this generally should succeed.
                 DeploymentUtils.deployArchive(deploymentManager, backupOfOriginalFile, deployExploded);
                 errorMessage += " ***** ROLLED BACK TO ORIGINAL APPLICATION FILE. *****";
             } catch (Exception e1) {
@@ -252,12 +267,12 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
                 errorMessage += " ***** FAILED TO ROLLBACK TO ORIGINAL APPLICATION FILE. *****: "
                     + ThrowableUtil.getAllMessages(e1);
             }
-            log.info("Failed to update EAR/WAR file '" + this.deploymentFile + "' using [" + packageDetails + "].");
+            log.info("Failed to update " + resourceTypeName + " file '"
+                    + this.deploymentFile + "' using [" + packageDetails + "].");
             return failApplicationDeployment(errorMessage, packageDetails);
         }
 
         // Deploy was successful!
-
         deleteBackupOfOriginalFile(backupOfOriginalFile);
         persistApplicationVersion(packageDetails, this.deploymentFile);
 
@@ -266,8 +281,8 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
             ContentResponseResult.SUCCESS);
         response.addPackageResponse(packageResponse);
 
-        log.debug("Updated EAR/WAR file '" + this.deploymentFile + "' successfully - returning response [" + response
-            + "]...");
+        log.debug("Updated " + resourceTypeName + " file '" + this.deploymentFile
+                + "' successfully - returning response [" + response + "]...");
 
         return response;
     }

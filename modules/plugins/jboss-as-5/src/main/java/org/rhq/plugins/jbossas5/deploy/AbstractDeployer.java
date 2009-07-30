@@ -31,7 +31,6 @@ import org.apache.commons.logging.LogFactory;
 import org.jboss.deployers.spi.management.KnownDeploymentTypes;
 import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.deployers.spi.management.deploy.DeploymentManager;
-import org.jboss.deployers.spi.management.deploy.DeploymentStatus;
 import org.jboss.managed.api.ManagedDeployment;
 import org.jboss.profileservice.spi.ProfileKey;
 
@@ -107,9 +106,8 @@ public abstract class AbstractDeployer implements Deployer {
                 deploymentManager.loadProfile(FARM_PROFILE_KEY);
             }
 
-            DeploymentStatus status;
             try {
-                status = DeploymentUtils.deployArchive(deploymentManager, archiveFile, deployExploded);
+                DeploymentUtils.deployArchive(deploymentManager, archiveFile, deployExploded);
             }
             finally {
                 // Make sure to switch back to the 'applications' profile if we switched to the 'farm' profile above.
@@ -118,18 +116,13 @@ public abstract class AbstractDeployer implements Deployer {
                 }
             }
 
-            if (status.getState() == DeploymentStatus.StateType.COMPLETED) {
-                createResourceReport.setResourceName(archiveName);
-                createResourceReport.setResourceKey(archiveName);
-                createResourceReport.setStatus(CreateResourceStatus.SUCCESS);
-            } else {
-                createResourceReport.setStatus(CreateResourceStatus.FAILURE);
-                createResourceReport.setErrorMessage(status.getMessage());
-                // noinspection ThrowableResultOfMethodCallIgnored
-                createResourceReport.setException(status.getFailure());
-            }
+            // Deployment was successful!
+            createResourceReport.setResourceName(archiveName);
+            createResourceReport.setResourceKey(archiveName);
+            createResourceReport.setStatus(CreateResourceStatus.SUCCESS);
+
         } catch (Throwable t) {
-            log.error("Error deploying application for report: " + createResourceReport, t);
+            log.error("Error deploying application for request [" + createResourceReport + "].", t);
             createResourceReport.setStatus(CreateResourceStatus.FAILURE);
             createResourceReport.setException(t);
         } finally {
@@ -164,5 +157,4 @@ public abstract class AbstractDeployer implements Deployer {
                     + "' is already deployed.");
         }
     }
-
 }

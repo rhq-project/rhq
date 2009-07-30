@@ -1,50 +1,50 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.system;
 
- import org.apache.commons.logging.Log;
- import org.apache.commons.logging.LogFactory;
- import org.hyperic.sigar.FileSystem;
- import org.hyperic.sigar.FileSystemMap;
- import org.hyperic.sigar.Mem;
- import org.hyperic.sigar.NetConnection;
- import org.hyperic.sigar.NetFlags;
- import org.hyperic.sigar.NetInterfaceStat;
- import org.hyperic.sigar.OperatingSystem;
- import org.hyperic.sigar.Sigar;
- import org.hyperic.sigar.SigarException;
- import org.hyperic.sigar.SigarProxy;
- import org.hyperic.sigar.Swap;
- import org.jetbrains.annotations.Nullable;
- import org.rhq.core.system.pquery.ProcessInfoQuery;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
 
- import java.io.BufferedReader;
- import java.io.IOException;
- import java.io.InputStreamReader;
- import java.net.InetAddress;
- import java.net.UnknownHostException;
- import java.util.ArrayList;
- import java.util.List;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.hyperic.sigar.FileSystem;
+import org.hyperic.sigar.FileSystemMap;
+import org.hyperic.sigar.Mem;
+import org.hyperic.sigar.NetConnection;
+import org.hyperic.sigar.NetFlags;
+import org.hyperic.sigar.NetInterfaceStat;
+import org.hyperic.sigar.OperatingSystem;
+import org.hyperic.sigar.Sigar;
+import org.hyperic.sigar.SigarException;
+import org.hyperic.sigar.SigarProxy;
+import org.hyperic.sigar.Swap;
+
+import org.rhq.core.system.pquery.ProcessInfoQuery;
 
 /**
  * The superclass for all the native {@link SystemInfo} implementations. You are free to subclass this implementation if
@@ -130,7 +130,6 @@ public class NativeSystemInfo implements SystemInfo {
     public List<NetworkAdapterInfo> getAllNetworkAdapters() throws SystemInfoException {
         ArrayList<NetworkAdapterInfo> adapters = new ArrayList<NetworkAdapterInfo>();
 
-
         try {
             String[] interfaceNames = sigar.getNetInterfaceList();
 
@@ -204,12 +203,12 @@ public class NativeSystemInfo implements SystemInfo {
         long[] pids = null;
         final int timeout = 2 * 60 * 1000; // 2 minutes
 
-        log.debug("Retrieving PIDs of all running processes..." );
+        log.debug("Retrieving PIDs of all running processes...");
         long startTime = System.currentTimeMillis();
         try {
             pids = sigar.getProcList();
             long elapsedTime = System.currentTimeMillis() - startTime;
-            log.debug("Retrieval of " + pids.length + " PIDs took " + elapsedTime + " ms." );
+            log.debug("Retrieval of " + pids.length + " PIDs took " + elapsedTime + " ms.");
             // NOTE: Do not close sigarImpl on success, as the ProcessInfos created below will reuse it.
         } catch (Exception e) {
             log.warn("Failed to retrieve PIDs of all running processes.", e);
@@ -261,11 +260,11 @@ public class NativeSystemInfo implements SystemInfo {
         }
     }
 
-    @Nullable
     public Swap getSwapInfo() {
 
         try {
-            // TODO: Remove this check once http://jira.jboss.com/jira/browse/JBNADM-3400 is fixed.
+            // Removed this check since http://jira.hyperic.com/browse/SIGAR-112 is fixed.
+            /*
             int enabledCpuCount = sigar.getCpuPercList().length;
             int totalCpuCount = sigar.getCpuInfoList().length;
             if (enabledCpuCount < totalCpuCount) {
@@ -273,6 +272,7 @@ public class NativeSystemInfo implements SystemInfo {
                     + " out of " + totalCpuCount + " CPUs are enabled.");
                 return null;
             }
+            */
             return sigar.getSwap();
         } catch (Exception e) {
             throw new UnsupportedOperationException("Cannot get swap info from native layer", e);
@@ -342,11 +342,6 @@ public class NativeSystemInfo implements SystemInfo {
      * this object.
      */
     public NativeSystemInfo() {
-
         this.sigar = SigarAccess.getSigar();
     }
-
-
-    
-
 }

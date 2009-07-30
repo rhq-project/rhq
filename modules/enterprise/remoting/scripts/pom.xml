@@ -29,6 +29,13 @@
       </dependency>
 
       <dependency>
+         <groupId>${groupId}</groupId>
+         <artifactId>rhq-enterprise-server</artifactId>
+         <version>${version}</version>
+         <type>ejb</type>
+      </dependency>
+
+      <dependency>
          <groupId>org.testng</groupId>
          <artifactId>testng</artifactId>
          <version>5.8</version>
@@ -78,11 +85,18 @@
                    <tasks>
                       <java classname="org.rhq.enterprise.remoting.cli.ScriptTestRunner"
                             classpathref="maven.test.classpath"
+                            resultproperty="script.tests.failed"
                             fork="true">
                          <sysproperty key="script.dir" value="${basedir}/src/test/script"/>
                          <sysproperty key="test.output.dir" value="${basedir}/target/surefire-reports"/>
                          <sysproperty key="test" value="${test}"/>
                       </java>
+
+                      <fail message="There were test failures">
+                         <condition>
+                            <isfailure code="${script.tests.failed}"/>
+                         </condition>
+                      </fail>
                    </tasks>
                 </configuration>
                 <goals>

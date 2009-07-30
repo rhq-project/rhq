@@ -41,6 +41,8 @@ import java.util.List;
 
 public class ScriptTestRunner {
 
+    static final int TESTS_FAILED_EXIT_CODE = 1;
+
     private File scriptDir = new File(System.getProperty("script.dir"));
 
     private String outputDir = System.getProperty("test.output.dir");
@@ -50,6 +52,8 @@ public class ScriptTestRunner {
     private boolean singleTestMode;
 
     private FilenameFilter scriptFilter;
+
+    private boolean hasFailures;
 
     public ScriptTestRunner() {
         singleTestMode = testName != null && !testName.isEmpty() && !testName.equals("${test}");
@@ -162,6 +166,8 @@ public class ScriptTestRunner {
         testNG.setXmlSuites(suites);
 
         testNG.run();
+
+        hasFailures = testNG.hasFailure();
     }
 
     private static class Script {
@@ -173,6 +179,10 @@ public class ScriptTestRunner {
     public static void main(String[] args) throws Exception {
         ScriptTestRunner runner = new ScriptTestRunner();
         runner.execute();
+
+        if (runner.hasFailures) {
+            System.exit(TESTS_FAILED_EXIT_CODE);
+        }        
     }
 
 }

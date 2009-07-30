@@ -28,9 +28,10 @@ import org.rhq.enterprise.client.RemoteClient;
 import org.rhq.enterprise.client.TabularWriter;
 import org.rhq.enterprise.client.script.CmdLineParser;
 import org.rhq.enterprise.client.script.NamedScriptArg;
-import org.rhq.enterprise.client.script.ParseException;
+import org.rhq.enterprise.client.script.CommandLineParseException;
 import org.rhq.enterprise.client.script.ScriptArg;
 import org.rhq.enterprise.client.script.ScriptCmdLine;
+import org.rhq.enterprise.client.script.CLIScriptException;
 import org.rhq.enterprise.client.utility.PackageFinder;
 import org.rhq.enterprise.client.utility.ResourceClientProxy;
 import org.rhq.enterprise.client.utility.ScriptUtil;
@@ -49,7 +50,6 @@ import java.io.FileReader;
 import java.io.Reader;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.lang.reflect.Method;
 
 /**
@@ -125,10 +125,15 @@ public class ScriptCommand implements ClientCommand {
                 if (log.isDebugEnabled()) {
                     log.debug("Unable to locate script file: " + e.getMessage());
                 }
-            } catch (ParseException e) {
-                client.getPrintWriter().println("parse error: " + e.getMessage());
-                if (log.isDebugEnabled()) {
-                    log.debug("A parse error occurred.", e);
+            } catch (CommandLineParseException e) {
+                if (client.isInteractiveMode()) {
+                    client.getPrintWriter().println("parse error: " + e.getMessage());
+                    if (log.isDebugEnabled()) {
+                        log.debug("A parse error occurred.", e);
+                    }
+                }
+                else {
+                    throw new CLIScriptException(e);
                 }
             }
 
@@ -278,12 +283,18 @@ public class ScriptCommand implements ClientCommand {
         try {
             Object result = jsEngine.eval(reader);
             if (result != null) {
-                //                client.getPrintWriter().print("result: ");
-                new TabularWriter(client.getPrintWriter()).print(result);
+                if (client.isInteractiveMode()) {
+                    new TabularWriter(client.getPrintWriter()).print(result);
+                }
             }
         } catch (ScriptException e) {
-            client.getPrintWriter().println(e.getMessage());
-            client.getPrintWriter().println("^");
+            if (client.isInteractiveMode()) {
+                client.getPrintWriter().println(e.getMessage());
+                client.getPrintWriter().println("^");
+            }
+            else {
+                throw new CLIScriptException(e);
+            }
         }
         return true;
     }

@@ -592,4 +592,8 @@ public class ClientMain {
             notes.add(note);
         }
     }
+
+    public boolean isInteractiveMode() {
+        return interactiveMode;
+    }
 }

@@ -11,7 +11,7 @@ import java.util.List;
 
 public class CmdLineParser {
 
-    public ScriptCmdLine parse(String[] cmdLine) throws ParseException {
+    public ScriptCmdLine parse(String[] cmdLine) throws CommandLineParseException {
         String[] args = Arrays.copyOfRange(cmdLine, 1, cmdLine.length);
         
         String shortOpts = "-:f:s:";
@@ -40,7 +40,7 @@ public class CmdLineParser {
                 case 's':
                     argStyle = getopt.getOptarg();
                     if (isInvalidArgStyle(argStyle)) {
-                        throw new ParseException(argStyle + " - invalid value for style option");
+                        throw new CommandLineParseException(argStyle + " - invalid value for style option");
                     }
                     break;
             }

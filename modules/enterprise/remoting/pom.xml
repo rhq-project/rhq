@@ -26,6 +26,7 @@
          <id>cli</id>
          <activation>
             <jdk>1.6</jdk>
+            <property>!java5.home</property>            
          </activation>
 
          <modules>

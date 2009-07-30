@@ -495,7 +495,7 @@ rhq.communications.connector.bind-port=
 rhq.communications.connector.transport-params=/jboss-remoting-servlet-invoker/ServerInvokerServlet
 
 # Multicast detector configuration for auto-discovery
-rhq.communications.multicast-detector.enabled=true
+rhq.communications.multicast-detector.enabled=false
 rhq.communications.multicast-detector.bind-address=${jboss.bind.address}
 rhq.communications.multicast-detector.multicast-address=224.16.16.16
 rhq.communications.multicast-detector.port=16162

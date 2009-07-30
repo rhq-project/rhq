@@ -19,6 +19,7 @@
 package org.rhq.enterprise.communications;
 
 import org.jboss.remoting.security.SSLSocketBuilder;
+
 import org.rhq.enterprise.communications.command.server.CommandAuthenticator;
 
 /**
@@ -69,9 +70,9 @@ public interface ServiceContainerConfigurationConstants {
     String MULTICASTDETECTOR_ENABLED = PROPERTY_NAME_PREFIX + "multicast-detector.enabled";
 
     /**
-     * By default, the multicast detector is enabled.
+     * By default, the multicast detector is disabled.
      */
-    boolean DEFAULT_MULTICASTDETECTOR_ENABLED = true;
+    boolean DEFAULT_MULTICASTDETECTOR_ENABLED = false;
 
     /**
      * The multicast detector's multicast address used for network registry messages (servers coming and going). This is

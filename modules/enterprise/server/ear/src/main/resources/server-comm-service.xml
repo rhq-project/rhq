@@ -33,7 +33,7 @@
 
             <java:property>
                <java:key>rhq.communications.global-concurrency-limit</java:key>
-               <java:value>${rhq.communications.global-concurrency-limit:295}</java:value>
+               <java:value>${rhq.communications.global-concurrency-limit:200}</java:value>
             </java:property>
 
             <!-- JON Server's remote endpoint for agents to talk to -->
@@ -59,7 +59,7 @@
 
             <java:property>
                <java:key>rhq.communications.multicast-detector.enabled</java:key>
-               <java:value>${rhq.communications.multicast-detector.enabled:true}</java:value>
+               <java:value>${rhq.communications.multicast-detector.enabled:false}</java:value>
             </java:property>
             <java:property>
                <java:key>rhq.communications.multicast-detector.multicast-address</java:key>

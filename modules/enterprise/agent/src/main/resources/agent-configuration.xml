@@ -128,7 +128,7 @@ commands named "config", "setconfig" and "setup" and the command line options
                enabled on your network and also requires the multicast
                detector be enabled.
                -->
-               <entry key="rhq.agent.server-auto-detection" value="true" />
+               <entry key="rhq.agent.server-auto-detection" value="false" />
 
                <!--
                _______________________________________________________________
@@ -822,7 +822,7 @@ commands named "config", "setconfig" and "setup" and the command line options
                server has gone down.  These settings affect the timeliness
                of our auto-detection mechanism.
                -->
-               <entry key="rhq.communications.multicast-detector.enabled"              value="true" />
+               <entry key="rhq.communications.multicast-detector.enabled"              value="false" />
                <entry key="rhq.communications.multicast-detector.multicast-address"    value="224.16.16.16" />
                <entry key="rhq.communications.multicast-detector.bind-address"         value="0.0.0.0" />
                <entry key="rhq.communications.multicast-detector.port"                 value="16162" />

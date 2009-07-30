@@ -274,7 +274,7 @@ RHQ Server Communications Configuration
                amount will be dropped and the client will be asked to
                resend it later.
                -->
-               <entry key="rhq.communications.global-concurrency-limit" value="295" />
+               <entry key="rhq.communications.global-concurrency-limit" value="200" />
 
                <!--
                _______________________________________________________________
@@ -304,7 +304,7 @@ RHQ Server Communications Configuration
                server has gone down.  These settings affect the timeliness
                of our auto-detection mechanism.
                -->
-               <entry key="rhq.communications.multicast-detector.enabled"              value="true" />
+               <entry key="rhq.communications.multicast-detector.enabled"              value="false" />
                <entry key="rhq.communications.multicast-detector.multicast-address"    value="224.16.16.16" />
                <entry key="rhq.communications.multicast-detector.bind-address"         value="0.0.0.0" />
                <entry key="rhq.communications.multicast-detector.port"                 value="16162" />

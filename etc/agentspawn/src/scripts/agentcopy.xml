@@ -110,12 +110,12 @@
          <replacefilter token="@@@rhq.communications.connector.bind-port@@@" value="${_index}"/>
          <replacefilter token="@@@rhq.communications.connector.bind-address@@@" value="${agentcopy.bindaddress}"/>
          <replacefilter token="@@@rhq.communications.connector.transport-params@@@" value="numAcceptThreads=3&amp;amp;maxPoolSize=303&amp;amp;clientMaxPoolSize=304&amp;amp;socketTimeout=60000&amp;amp;enableTcpNoDelay=true&amp;amp;backlog=200"/>
-         <replacefilter token="@@@rhq.communications.multicast-detector.enabled@@@" value="true"/>
+         <replacefilter token="@@@rhq.communications.multicast-detector.enabled@@@" value="false"/>
          <replacefilter token="@@@rhq.agent.server.transport@@@" value="servlet"/>
          <replacefilter token="@@@rhq.agent.server.bind-port@@@" value="${agentcopy.server.bind-port}"/>
          <replacefilter token="@@@rhq.agent.server.bind-address@@@" value="${agentcopy.server.bind-address}"/>
          <replacefilter token="@@@rhq.agent.server.transport-params@@@" value="/jboss-remoting-servlet-invoker/ServerInvokerServlet"/>
-         <replacefilter token="@@@rhq.agent.server-auto-detection@@@" value="true"/>
+         <replacefilter token="@@@rhq.agent.server-auto-detection@@@" value="false"/>
          <replacefilter token="@@@rhq.agent.client.server-polling-interval-msecs@@@" value="60000"/>
          <replacefilter token="@@@rhq.agent.client.max-concurrent@@@" value="5"/>
          <replacefilter token="@@@rhq.agent.client.command-timeout-msecs@@@" value="0"/>

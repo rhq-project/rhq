@@ -3,8 +3,14 @@ rhq.login('rhqadmin', 'rhqadmin');
 criteria = new ResourceTypeCriteria();
 resourceTypes = null;
 
-testFindUnfiltered();
-testFilterByPluginName();
+for (func in this) {
+    if (func.indexOf('test') == 0) {
+        this[func]();
+    }
+}
+
+//testFindUnfiltered();
+//testFilterByPluginName();
 
 logout();
 
@@ -36,6 +42,24 @@ function testFilterByPluginName() {
     
         assertEquals(resourceType.plugin, 'PerfTest', 'Expected only ResourceTypes from the PerfTest plugin');
     }
+}
+
+function testFilterByNameAndPluginName() {
+    criteria = new ResourceTypeCriteria();
+    criteria.addFilterPluginName('PerfTest');
+    criteria.addFilterName('service-alpha');
+
+    resourceTypes = ResourceTypeManager.findResourceTypesByCriteria(criteria);
+
+    assertResourceTypesFound('Failed to find ResourceTypes when filtering by name and by plugin name');
+    
+    importClass(java.lang.Integer);
+    assertEquals(new Integer(resourceTypes.size()), new Integer(1), 'Expected to get back one ResourceType when filtering by name and by plugin name');
+
+    resourceType = resourceTypes.get(0);
+
+    assertEquals(resourceType.name, 'service-alpha');
+    assertEquals(resourceType.plugin, 'PerfTest');
 }
 
 function assertResourceTypesFound(msg) {

@@ -751,6 +751,7 @@
         <c:simple-property name="componentType" default="EJB3" readOnly="true"/>
         <c:simple-property name="componentSubtype" default="MessageDriven" readOnly="true"/>
         <c:simple-property name="componentName" readOnly="true"/>
+        <c:simple-property name="invocationStatsPropertyName" default="invocationStats" readOnly="true"/>
     </plugin-configuration>
 '>
 
@@ -824,7 +825,7 @@
             description="The minimum, maximum, and average invocation times for each of the methods exposed by this EJB"/>
 '>
 
-<!ENTITY ejbSessionBeanOperations '
+<!ENTITY ejbInvocationStatsOperation '
    <operation name="viewInvocationStats" displayName="View Method Statistics" description="Display detailed method invocation statistics.">
        <results>
            <c:list-property name="methods">
@@ -2451,7 +2452,7 @@
                      discovery="Ejb2BeanDiscoveryComponent"
                      description="An EJB2 Stateless Session Bean">
                  &ejb2StatelessSessionBeanDefinition;
-                 &ejbSessionBeanOperations;
+                 &ejbInvocationStatsOperation;
                  &ejb2CommonMetrics;
                  &ejb2SessionBeanMetrics;
                  &ejb2StatelessSessionBeanMetrics;
@@ -2466,7 +2467,7 @@
                      discovery="Ejb2BeanDiscoveryComponent"
                      description="An EJB2 Stateful Session Bean">
                  &ejb2StatefulSessionBeanDefinition;
-                 &ejbSessionBeanOperations;
+                 &ejbInvocationStatsOperation;
                  &ejb2CommonMetrics;
                  &ejb2SessionBeanMetrics;
                  &ejb2StatefulSessionBeanMetrics;
@@ -2527,7 +2528,7 @@
                      discovery="Ejb2BeanDiscoveryComponent"
                      description="An EJB2 Stateless Session Bean">
                  &ejb2StatelessSessionBeanDefinition;
-                 &ejbSessionBeanOperations;
+                 &ejbInvocationStatsOperation;
                  &ejb2CommonMetrics;
                  &ejb2SessionBeanMetrics;
                  &ejb2StatelessSessionBeanMetrics;
@@ -2538,7 +2539,7 @@
                      discovery="Ejb2BeanDiscoveryComponent"
                      description="An EJB2 Stateful Session Bean">
                  &ejb2StatefulSessionBeanDefinition;
-                 &ejbSessionBeanOperations;
+                 &ejbInvocationStatsOperation;
                  &ejb2CommonMetrics;
                  &ejb2SessionBeanMetrics;
                  &ejb2StatefulSessionBeanMetrics;
@@ -2614,7 +2615,7 @@
                      discovery="Ejb3BeanDiscoveryComponent"
                      description="An EJB3 Stateless Session Bean (SLSB)">
                 &ejb3StatelessSessionBeanDefinition;
-                &ejbSessionBeanOperations;
+                &ejbInvocationStatsOperation;
                 &ejb3CommonMetrics;
                 &ejb3SessionBeanMetrics;
             </service>
@@ -2624,7 +2625,7 @@
                      discovery="Ejb3BeanDiscoveryComponent"
                      description="An EJB3 Stateful Session Bean (SFSB)">
                 &ejb3StatefulSessionBeanDefinition;
-                &ejbSessionBeanOperations;
+                &ejbInvocationStatsOperation;
                 &ejb3CommonMetrics;
                 &ejb3SessionBeanMetrics;
                 &ejb3StatefulSessionBeanMetrics;
@@ -2635,6 +2636,7 @@
                      discovery="Ejb3BeanDiscoveryComponent"
                      description="An EJB3 Message-Driven Bean (MDB)">
                 &ejb3MessageDrivenBeanDefinition;
+                &ejbInvocationStatsOperation;
                 &ejb3CommonMetrics;
                 &ejb3MessageDrivenBeanMetrics;
             </service>
@@ -2673,7 +2675,7 @@
                      discovery="Ejb3BeanDiscoveryComponent"
                      description="An EJB3 Stateless Session Bean (SLSB)">
                 &ejb3StatelessSessionBeanDefinition;
-                &ejbSessionBeanOperations;
+                &ejbInvocationStatsOperation;
                 &ejb3CommonMetrics;
                 &ejb3SessionBeanMetrics;
             </service>
@@ -2683,7 +2685,7 @@
                      discovery="Ejb3BeanDiscoveryComponent"
                      description="An EJB3 Stateful Session Bean (SFSB)">
                 &ejb3StatefulSessionBeanDefinition;
-                &ejbSessionBeanOperations;
+                &ejbInvocationStatsOperation;
                 &ejb3CommonMetrics;
                 &ejb3SessionBeanMetrics;
                 &ejb3StatefulSessionBeanMetrics;
@@ -2694,6 +2696,7 @@
                      discovery="Ejb3BeanDiscoveryComponent"
                      description="An EJB3 Message-Driven Bean (MDB)">
                 &ejb3MessageDrivenBeanDefinition;
+                &ejbInvocationStatsOperation;
                 &ejb3CommonMetrics;
                 &ejb3MessageDrivenBeanMetrics;
             </service>

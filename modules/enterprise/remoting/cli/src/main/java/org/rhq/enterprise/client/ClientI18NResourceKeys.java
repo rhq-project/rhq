@@ -16,7 +16,7 @@ public class ClientI18NResourceKeys {
 
     @I18NMessage("RHQ Client\\n\\\n"
         + "\\n\\\n"
-        + "Usage: {0} [options]\\n\\\n"
+        + "Usage: rhq-cli [options]\\n\\\n"
         + "\\n\\\n"
         + "options:\\n\\\n"
         + "\\   -s, --host=<host>             The host of the server to connect to\\n\\\n"

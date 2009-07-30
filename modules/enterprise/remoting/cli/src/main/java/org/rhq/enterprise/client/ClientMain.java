@@ -420,7 +420,7 @@ public class ClientMain {
             case 1: {
                 // this will catch non-option arguments (which we don't
                 // currently care about)
-                System.err.println(MSG.getMsg(ClientI18NResourceKeys.USAGE, getopt.getOptarg()));
+                System.err.println(MSG.getMsg(ClientI18NResourceKeys.USAGE));
                 break;
             }
 

@@ -42,7 +42,6 @@
         <module>gui</module>
         <module>server/plugins</module>
         <module>server/ear</module>
-        <module>remoting</module>
       </modules>
     </profile>
 

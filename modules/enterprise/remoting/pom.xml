@@ -31,7 +31,13 @@
          <modules>
             <module>webservices</module>
             <module>cli</module>
+            <!--
+            Temporarily commenting out scripts module from build. The scripts
+            tests require a running server and running agent which is not set
+            up yet in the continuous integration build.
+ 
             <module>scripts</module>
+            -->
          </modules>
       </profile>
    </profiles>

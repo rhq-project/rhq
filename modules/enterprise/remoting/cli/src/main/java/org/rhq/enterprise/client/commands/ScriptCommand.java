@@ -41,6 +41,7 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+import javax.script.Invocable;
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
@@ -137,7 +138,6 @@ public class ScriptCommand implements ClientCommand {
 
             return true;
         }
-
 
         isMultilineScript = "\\".equals(args[args.length - 1]);
         inMultilineScript = inMultilineScript || isMultilineScript;

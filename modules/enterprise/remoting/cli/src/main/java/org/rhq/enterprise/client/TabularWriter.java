@@ -127,7 +127,8 @@ public class TabularWriter {
             }
 
             out.println(object.getClass().getSimpleName() + ":");
-            Map<String, String> properties = new LinkedHashMap<String, String>();
+            //Map<String, String> properties = new LinkedHashMap<String, String>();
+            Map<String, PropertyInfo> properties = new LinkedHashMap<String, PropertyInfo>();
             int maxLength = 0;
 
 
@@ -142,7 +143,8 @@ public class TabularWriter {
                     try {
                         String str = String.valueOf(val);
                         maxLength = Math.max(maxLength, pd.getName().length());
-                        properties.put(pd.getName(), String.valueOf(val));
+                        //properties.put(pd.getName(), String.valueOf(val));
+                        properties.put(pd.getName(), new PropertyInfo(String.valueOf(val), pd.getPropertyType()));
                     } catch (Exception e) {
                     }
                 }
@@ -163,11 +165,28 @@ public class TabularWriter {
 
     }
 
-    private void printProperty(String name, String value, int maxLength) {
+    private static class PropertyInfo {
+        String value;
+
+        Class<?> type;
+
+        PropertyInfo(String propertyValue, Class<?> propertyType) {
+            value = propertyValue;
+            type = propertyType;
+        }
+    }
+
+    private void printProperty(String name, PropertyInfo propertyInfo, int maxLength) {
         out.print("\t");
         printPreSpaced(out, name, maxLength);
         out.print(": ");
-        out.println(abbreviate(value, width - 12 - maxLength));
+
+        if (exportMode || !String.class.equals(propertyInfo.type)) {
+            out.println(propertyInfo.value);
+        }
+        else {
+            out.println(abbreviate(propertyInfo.value, width - 12 - maxLength));
+        }
     }
 
     public void print(Collection list) {

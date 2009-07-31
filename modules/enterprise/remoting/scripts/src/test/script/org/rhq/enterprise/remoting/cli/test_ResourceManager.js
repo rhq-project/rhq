@@ -38,6 +38,24 @@ function testFindUnfiltered() {
     assertResourcesFound();
 }
 
+function testFilterByResourceTypeNameAndPluginName() {
+    resourceType = ResourceTypeManager.getResourceTypeByNameAndPlugin("service-a", "PerfTest");
+
+    criteria = new ResourceCriteria();
+    criteria.addFilterResourceTypeName(resourceType.name);
+    criteria.addFilterPluginName(resourceType.plugin);
+
+    resources = ResourceManager.findResourcesByCriteria(criteria);
+
+    assertResourcesFound("Failed to find resources when filtering by resource type name and plugin name");
+
+    for (i = 0; i < resources.size(); ++i) {
+        resource = resources.get(i);
+
+        assertEquals(resource.resourceType, resourceType, "Expected Resource to have ResourceType, " + resourceType);
+    }
+}
+
 function assertResourcesFound(msg) {
     if (msg == undefined) {
         msg =  "";

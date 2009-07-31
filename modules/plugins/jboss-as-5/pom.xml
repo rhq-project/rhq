@@ -120,9 +120,31 @@
               and the plugin classloader in our integration tests, we just include all
               the deps for the AS5 plugin in the test scope. -->
 
-        <!-- NOTE: An org.jboss.remoting:jboss-remoting dep is declared above in 'provided' scope, 
-                   so we do not need it here ('provided' applies to both compilation and tests). -->
+        <!-- NOTE: To shorten the list of required dependencies (as commented out below)
+            we now use the following method. -->
+            
+        <dependency>
+            <groupId>org.jboss.jbossas</groupId>
+            <artifactId>jboss-as-client</artifactId>
+            <version>${jbossas.version}</version>
+            <type>pom</type>
+            <scope>test</scope>
+        </dependency> 
+        
+        <dependency>
+          <groupId>org.jboss.microcontainer</groupId>
+          <artifactId>jboss-dependency</artifactId>
+          <scope>test</scope>
+        </dependency>
 
+        <dependency>
+          <groupId>org.jboss.aspects</groupId>
+          <artifactId>jboss-security-aspects</artifactId>
+          <scope>test</scope>
+        </dependency>
+
+        
+<!-- 
         <dependency>
             <groupId>org.jboss.microcontainer</groupId>
             <artifactId>jboss-kernel</artifactId>
@@ -329,7 +351,7 @@
             <artifactId>jboss-messaging-client</artifactId>
             <scope>test</scope>
         </dependency>
-
+-->
         <!-- Uncomment the below deps if you want to pull down the jboss-profileservice
              and jboss-system sources jars for debugging purposes. You will also need
              to make sure you have the JBoss snapshot repo in this POM or your settings.xml.

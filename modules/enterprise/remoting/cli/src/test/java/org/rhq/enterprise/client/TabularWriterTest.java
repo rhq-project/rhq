@@ -73,7 +73,7 @@ public class TabularWriterTest {
         assertEquals(actual, expected, "An int or Integer should have its value printed as a String");
     }
 
-    @Test(enabled = false)
+    @Test
     public void theSimpleClassNameShouldBePrintedFirstForAnEntity() {
         User user = new User(1, "rhqadmin", "rhqadmin");
 
@@ -83,7 +83,7 @@ public class TabularWriterTest {
         assertSimpleClassNameIsFirstLinePrinted(user);
     }
 
-    @Test(enabled = false)
+    @Test
     public void theIdShouldBeTheFirstPropertyPrintedForAnEntity() {
         User user = new User(1, "rhqadmin", "rhqadmin");
 
@@ -96,7 +96,7 @@ public class TabularWriterTest {
         assertLineEquals(idLineNumber, expected, "The id property should be the 2nd line printed");
     }
 
-    @Test(enabled = false)
+    @Test//(enabled = false)
     public void otherPropertiesShouldBePrintedAfterIdPropertyForAnEntity() {
         User user = new User(1, "rhqadmin", "rhqadmin");
 
@@ -113,7 +113,7 @@ public class TabularWriterTest {
         assertLineEquals(usernameLineNumber, expectedUsernameLine, "The username property should be the 4th line printed");
     }
 
-    @Test(enabled = false)
+    @Test
     public void toStringOfOneToOneAssociationShouldBePrintedForAnEntity() {
         User mgr = new User(1, "rhqadmin", "rhqadmin");
         Department department = new Department(1, mgr);
@@ -126,7 +126,7 @@ public class TabularWriterTest {
         assertLineEquals(lineNumber, expectedLine, "The manager property should be the 3rd line printed");
     }
 
-    @Test(enabled = false)
+    @Test(enabled=false)
     public void toStringOfCollectionShouldBePrintedForAnEntity() {
         User employee = new User(1, "rhq", "rhq");
 

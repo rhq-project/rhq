@@ -25,6 +25,7 @@ package org.rhq.enterprise.remoting.cli;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.testng.TestNG;
 import org.testng.xml.XmlClass;
 import org.testng.xml.XmlSuite;
@@ -146,7 +147,8 @@ public class ScriptTestRunner {
 
     private void addTestToSuite(XmlSuite suite, Script script) {
         XmlTest test = new XmlTest(suite);
-        test.setName(FilenameUtils.getBaseName(script.srcFile.getAbsolutePath()));
+        //test.setName(FilenameUtils.getBaseName(script.srcFile.getAbsolutePath()));
+        test.setName(getTestName(script));
         test.addParameter("script", script.srcFile.getAbsolutePath());
         if (script.args != null) {
             test.addParameter("args", script.args);
@@ -155,6 +157,16 @@ public class ScriptTestRunner {
         List<XmlClass> classes = new ArrayList<XmlClass>();
         classes.add(new XmlClass(ScriptTest.class));
         test.setXmlClasses(classes);
+    }
+
+    private String getTestName(Script script) {
+        String pathExcludingFileName = FilenameUtils.getFullPath(script.srcFile.getAbsolutePath());
+        String packagePath = StringUtils.difference(scriptDir.getAbsolutePath(), pathExcludingFileName);
+
+        packagePath = StringUtils.replace(packagePath, "/", ".");
+        packagePath = StringUtils.removeStart(packagePath, ".");
+
+        return packagePath + FilenameUtils.getBaseName(script.srcFile.getName());
     }
 
     private void runSuite(XmlSuite suite) {

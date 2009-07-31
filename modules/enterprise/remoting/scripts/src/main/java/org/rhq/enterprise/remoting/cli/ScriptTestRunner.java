@@ -163,7 +163,7 @@ public class ScriptTestRunner {
         String pathExcludingFileName = FilenameUtils.getFullPath(script.srcFile.getAbsolutePath());
         String packagePath = StringUtils.difference(scriptDir.getAbsolutePath(), pathExcludingFileName);
 
-        packagePath = StringUtils.replace(packagePath, "/", ".");
+        packagePath = StringUtils.replace(packagePath, File.separator, ".");
         packagePath = StringUtils.removeStart(packagePath, ".");
 
         return packagePath + FilenameUtils.getBaseName(script.srcFile.getName());

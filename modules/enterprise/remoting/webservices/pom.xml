@@ -55,13 +55,6 @@
          <scope>provided</scope>
       </dependency>
 
-      <dependency>
-         <groupId>ant</groupId>
-         <artifactId>ant-apache-oro</artifactId>
-         <version>${ant.apache.oro.version}</version>
-         <type>jar</type>
-      </dependency>
-
       <!--  This is needed for wsprovide's classpath. I'm not sure why, but it's not provided with jbossws -->
       <dependency>
          <groupId>javax.persistence</groupId>

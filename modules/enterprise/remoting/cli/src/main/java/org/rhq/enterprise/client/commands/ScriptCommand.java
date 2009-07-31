@@ -60,8 +60,6 @@ public class ScriptCommand implements ClientCommand {
     private ScriptEngineManager sem;
     private ScriptEngine jsEngine;
 
-    private Controller controller;
-
     private final Log log = LogFactory.getLog(ScriptCommand.class);
 
     private StringBuilder script = new StringBuilder();
@@ -80,13 +78,9 @@ public class ScriptCommand implements ClientCommand {
         try {
             jsEngine.eval("1+1");
         } catch (ScriptException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            e.printStackTrace();
         }
         importRecursive(jsEngine);
-    }
-
-    public void setController(Controller controller) {
-        this.controller = controller;
     }
 
     private void importRecursive(ScriptEngine jsEngine) {
@@ -190,9 +184,9 @@ public class ScriptCommand implements ClientCommand {
 
     public void initBindings(ClientMain client) {
         // These are prepared on every call in case the user logs out and logs into another server
-        if (controller.getSubject() != null) {
-            jsEngine.put("subject", controller.getSubject());
-            sem.getBindings().putAll(controller.getManagers());
+        if (client.getSubject() != null) {
+            jsEngine.put("subject", client.getSubject());
+            sem.getBindings().putAll(client.getRemoteClient().getManagers());
         }
         TabularWriter tw = new TabularWriter(client.getPrintWriter());
         tw.setWidth(client.getConsoleWidth());
@@ -200,8 +194,8 @@ public class ScriptCommand implements ClientCommand {
 
         sem.getBindings().put("ProxyFactory", new ResourceClientProxy.Factory(client.getRemoteClient()));
 
-        bindObjectAndGlobalFuctions(controller, "rhq");
-        bindObjectAndGlobalFuctions(new ScriptUtil(controller), "scriptUtil");
+        bindObjectAndGlobalFuctions(new Controller(client), "rhq");
+        bindObjectAndGlobalFuctions(new ScriptUtil(client), "scriptUtil");
         bindObjectAndGlobalFuctions(new ScriptAssert(jsEngine), "Assert");
     }
 

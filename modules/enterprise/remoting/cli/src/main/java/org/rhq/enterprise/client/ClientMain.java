@@ -73,8 +73,6 @@ public class ClientMain {
 
     private ServiceCompletor serviceCompletor;
 
-    private static Controller controller;
-
     private boolean interactiveMode = true;
 
     private Recorder recorder = new NoOpRecorder();
@@ -85,7 +83,6 @@ public class ClientMain {
         // instantiate
         ClientMain main = new ClientMain();
 
-        controller = new Controller(main);
         initCommands();
 
         // process startup arguments
@@ -102,7 +99,6 @@ public class ClientMain {
             ClientCommand command = null;
             try {
                 command = commandClass.newInstance();
-                command.setController(controller);
                 commands.put(command.getPromptCommandString(), command);
             } catch (InstantiationException e) {
                 e.printStackTrace();
@@ -159,8 +155,8 @@ public class ClientMain {
                     // prompt = host + ":" + port + "> ";
                     // Modify the prompt to display host:port(logged-in-user)
                     String loggedInUser = "";
-                    if ((controller.getSubject() != null) && (controller.getSubject().getName() != null)) {
-                        loggedInUser = controller.getSubject().getName();
+                    if ((getSubject() != null) && (getSubject().getName() != null)) {
+                        loggedInUser = getSubject().getName();
                     }
                     if (loggedInUser.trim().length() > 0) {
                         prompt = loggedInUser + "@" + host + ":" + port + "$ ";
@@ -191,17 +187,6 @@ public class ClientMain {
                 inputReader.close();
             } catch (IOException e1) {
             }
-
-            // if we are not in daemon mode, let's now start processing prompt
-            // commands coming in via stdin
-            // if (!m_daemonMode) {
-            // inputReader = new BufferedReader(new
-            // InputStreamReader(System.in));
-            // stdinInput = true;
-            // input_string = "";
-            // } else {
-            // inputReader = null;
-            // }
         }
 
         return input_string;
@@ -213,12 +198,7 @@ public class ClientMain {
      * @return flag indicating status of realtime check.
      */
     public boolean loggedIn() {
-        boolean loggedIn = false;
-        if ((controller.getSubject() != null) && (this.getRemoteClient() != null)
-            && (this.getRemoteClient().isConnected())) {
-            loggedIn = true;
-        }
-        return loggedIn;
+        return subject != null && remoteClient != null & remoteClient.isConnected();
     }
 
     /**
@@ -495,7 +475,6 @@ public class ClientMain {
 
     public void setSubject(Subject subject) {
         this.subject = subject;
-        this.remoteClient.setSubject(subject);
     }
 
     public String getHost() {

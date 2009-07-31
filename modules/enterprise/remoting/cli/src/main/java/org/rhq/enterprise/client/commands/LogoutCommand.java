@@ -26,21 +26,25 @@ import org.rhq.enterprise.client.Controller;
  */
 public class LogoutCommand implements ClientCommand {
 
-    private Controller controller;
-
-    public void setController(Controller controller) {
-        this.controller = controller;
-    }
-
     public String getPromptCommandString() {
         return "logout";
     }
 
     public boolean execute(ClientMain client, String[] args) {
-        controller.logout();
+        execute(client);
         client.getPrintWriter().println("Logout successful");
         
         return true;
+    }
+
+    public void execute(ClientMain client) {
+        client.setHost(null);
+        client.setPort(0);
+        client.getRemoteClient().setLoggedIn(false);
+        client.setRemoteClient(null);
+        client.setSubject(null);
+        client.setUser(null);
+        client.setPass(null);
     }
 
     public String getSyntax() {

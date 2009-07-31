@@ -44,12 +44,6 @@ import javax.jws.WebParam;
  */
 public class HelpCommand implements ClientCommand {
 
-    private Controller controller;
-
-    public void setController(Controller cliClient) {
-        this.controller = cliClient;
-    }
-
     public String getPromptCommandString() {
         return "help";
     }

@@ -21,7 +21,15 @@ package org.rhq.enterprise.client.commands;
 import org.rhq.enterprise.client.ClientMain;
 import org.rhq.enterprise.client.RHQServer;
 import org.rhq.enterprise.client.Controller;
+import org.rhq.enterprise.client.RemoteClient;
+import org.rhq.enterprise.server.exception.LoginException;
+import org.rhq.core.domain.auth.Subject;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import jline.ANSIBuffer;
+
+import javax.script.ScriptEngine;
+import javax.script.ScriptContext;
 
 /**
  * @author Greg Hinkle
@@ -29,41 +37,69 @@ import jline.ANSIBuffer;
  */
 public class LoginCommand implements ClientCommand {
 
-    private Controller controller;
-
-    public void setController(Controller client) {
-        controller = client;
-    }
+    private final Log log = LogFactory.getLog(LoginCommand.class);
 
     public String getPromptCommandString() {
         return "login";
     }
 
     public boolean execute(ClientMain client, String[] args) {
+        String user = null;
+        String pass = null;
+        String host = "localhost";
+        int port = 7080;
+
         try {
-            String user = args[1];
-            String pass = args[2];
-            String host;
-            int port;
+            user = args[1];
+            pass = args[2];
+
             if (args.length == 5) {
                 host = args[3];
                 port = Integer.parseInt(args[4]);
-            } else {
-                host = "localhost";
-                port = 7080;
             }
 
-            controller.setServer(new RHQServer(host, port));
-            controller.login(user, pass);
+            execute(client, user, pass, host, port);
 
-            if (client.isInteractiveMode())
-                client.getPrintWriter().println("Login successful");
-        } catch (Exception e) {
+            client.getPrintWriter().println("Login successful");
+        } catch (LoginException e) {
             client.getPrintWriter().println("Login failed: " + e.getMessage());
-            e.printStackTrace();
+            log.debug("Login failed for " + user + " on " + host + ":" + port, e);
         }
 
         return true;
+    }
+
+    public Subject execute(ClientMain client, String username, String password) throws LoginException {
+        return execute(client, username, password, "localhost", 7080);
+    }
+
+    public Subject execute(ClientMain client, String username, String password, String host, int port)
+            throws LoginException {
+        RemoteClient remoteClient = new RemoteClient(host, port);
+
+        client.setHost(host);
+        client.setPort(port);
+        client.setUser(username);
+        client.setPass(password);
+
+        Subject subject = remoteClient.getSubjectManagerRemote().login(username, password);
+
+        remoteClient.setSubject(subject);
+        remoteClient.setLoggedIn(true);
+
+        client.setRemoteClient(remoteClient);
+        client.setSubject(subject);
+
+        bindSubject(client, subject);
+
+        return subject;
+    }
+
+    private void bindSubject(ClientMain client, Subject subject) {
+        ScriptCommand cmd = (ScriptCommand) client.getCommands().get("exec");
+        ScriptEngine scriptEngine = cmd.getScriptEngine();
+        scriptEngine.put("subject", subject);
+        scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE).putAll(client.getRemoteClient().getManagers());
     }
 
     public String getSyntax() {

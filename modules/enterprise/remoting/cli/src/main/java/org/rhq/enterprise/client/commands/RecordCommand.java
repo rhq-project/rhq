@@ -39,9 +39,6 @@ import gnu.getopt.Getopt;
 
 public class RecordCommand implements ClientCommand {
 
-    public void setController(Controller controller) {
-    }
-
     public String getPromptCommandString() {
         return "record";
     }

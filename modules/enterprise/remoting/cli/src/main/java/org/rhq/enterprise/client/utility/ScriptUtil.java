@@ -4,6 +4,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.enterprise.client.Controller;
+import org.rhq.enterprise.client.ClientMain;
 import org.rhq.enterprise.server.resource.ResourceManagerRemote;
 
 import java.io.File;
@@ -13,18 +14,18 @@ import java.io.InputStream;
 
 public class ScriptUtil {
 
-    private Controller controller;
+    private ClientMain client;
 
-    public ScriptUtil(Controller controller) {
-        this.controller = controller;
+    public ScriptUtil(ClientMain client) {
+        this.client = client;
     }
 
     public PageList<Resource> findResources(String string) {
-        ResourceManagerRemote resourceManager = controller.getRemoteClient().getResourceManagerRemote();
+        ResourceManagerRemote resourceManager = client.getRemoteClient().getResourceManagerRemote();
 
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.addFilterName('%' + string + '%');
-        return resourceManager.findResourcesByCriteria(controller.getSubject(), criteria);
+        return resourceManager.findResourcesByCriteria(client.getSubject(), criteria);
     }
 
 

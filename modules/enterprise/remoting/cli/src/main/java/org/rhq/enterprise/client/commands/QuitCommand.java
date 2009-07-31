@@ -30,9 +30,6 @@ public class QuitCommand implements ClientCommand {
         return "quit";
     }
 
-    public void setController(Controller controller) {
-    }
-
     public boolean execute(ClientMain client, String[] args) {
         return false;
     }

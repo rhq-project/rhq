@@ -37,8 +37,6 @@ public interface ClientCommand {
         RecordCommand.class
     };
 
-    void setController(Controller controller);
-
     /**
      * All implementations must indicate what the prompt command is that will trigger its execution. This method returns
      * the prompt command name.

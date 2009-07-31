@@ -41,6 +41,11 @@ public class ProblemResourceComposite implements Serializable {
     private AvailabilityType availabilityType;
     private long numAlerts;
 
+    /** Private no args contstructor for JAXB serialization. */
+    @SuppressWarnings("unused")
+    private ProblemResourceComposite() {
+    }
+
     public ProblemResourceComposite(int resourceId, String resourceName, AvailabilityType availabilityType,
         long numAlerts) {
         this.resourceId = resourceId;

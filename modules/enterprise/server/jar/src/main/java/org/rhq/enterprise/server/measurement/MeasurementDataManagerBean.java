@@ -96,6 +96,7 @@ import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
  */
 @Stateless
 @javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
+//@WebService(endpointInterface = "org.rhq.enterprise.server.measurement.MeasurementDataManagerRemote")
 public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, MeasurementDataManagerRemote {
     // time_stamp, schedule_id, value, schedule_id, schedule_id, value, value, value, value
     private static final String TRAIT_INSERT_STATEMENT = "INSERT INTO RHQ_measurement_data_trait \n"

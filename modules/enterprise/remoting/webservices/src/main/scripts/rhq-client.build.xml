@@ -1,12 +1,38 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <project name="rhq-client" basedir=".">
-   
+
    <property name="jboss.home" location="${basedir}/target/rhq-server-${project.version}/jbossas" />
    <property name="wsdl.home" location="${project.build.outputDirectory}/wsdl" />
    <property name="wsconsume.home" location="${project.build.outputDirectory}/wsconsume-output" />
    <property name="wsprovide.home" location="${project.build.outputDirectory}/wsprovide-output" />
    <property name="include.client.jar" value="true" />
+
+   <!-- load all the Stateless Session Bean for WS exposure as properties. Must add bean as separate 
+   		property AND in the "ws-list" below for successful inclusion. ##TODO: collapse these to one list. -->
+   <property name="SimpleManager" value="org.rhq.enterprise.server.jaxb.SimpleManagerBean" />
+   <property name="AlertManager" value="org.rhq.enterprise.server.alert.AlertManagerBean" />
+   <property name="AlertDefinitionManager" value="org.rhq.enterprise.server.alert.AlertDefinitionManagerBean" />
+   <property name="AvailabilityManager" value="org.rhq.enterprise.server.measurement.AvailabilityManagerBean" />
+   <property name="CallTimeDataManager" value="org.rhq.enterprise.server.measurement.CallTimeDataManagerBean" />
+   <property name="ChannelManager" value="org.rhq.enterprise.server.content.ChannelManagerBean" />
+   <property name="ConfigurationManager" value="org.rhq.enterprise.server.configuration.ConfigurationManagerBean" />
+   <property name="ContentManager" value="org.rhq.enterprise.server.content.ContentManagerBean" />
+   <property name="EventManager" value="org.rhq.enterprise.server.event.EventManagerBean" />
+   <property name="MeasurementDefinitionManager" value="org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerBean" />
+   <property name="MeasurementBaselineManager" value="org.rhq.enterprise.server.measurement.MeasurementBaselineManagerBean" />
+   <property name="MeasurementDataManager" value="org.rhq.enterprise.server.measurement.MeasurementDataManagerBean" />
+   <property name="MeasurementProblemManager" value="org.rhq.enterprise.server.measurement.MeasurementProblemManagerBean" />
+   <property name="MeasurementScheduleManager" value="org.rhq.enterprise.server.measurement.MeasurementScheduleManagerBean" />
+   <property name="OperationManager" value="org.rhq.enterprise.server.operation.OperationManagerBean" />
+   <property name="ResourceGroupManager" value="org.rhq.enterprise.server.resource.group.ResourceGroupManagerBean" />
+   <property name="ResourceManager" value="org.rhq.enterprise.server.resource.ResourceManagerBean" />
+   <property name="RoleManager" value="org.rhq.enterprise.server.authz.RoleManagerBean" />
+   <property name="SubjectManager" value="org.rhq.enterprise.server.auth.SubjectManagerBean" />
+
+   <!-- List of all the simple bean names(Alert for AlertManagerBean, etc.) in alphabetical order -->
+   <property name="ws-list" value="Simple,Alert,AlertDefinition,Availability,CallTimeData,Channel,Configuration,Content,Event,MeasurementBaseline,MeasurementDefinition,MeasurementProblem,MeasurementSchedule,Operation,Resource,Role,Subject" />
+   <!--   value="Simple,Alert,AlertDefinition,Availability,CallTimeData,Channel,Configuration,Content,Event,MeasurementBaseline,MeasurementData,MeasurementDefinition,MeasurementProblem,MeasurementSchedule,Operation,Resource,ResourceGroup,Role,Subject"/> -->
 
    <target name="prepare-dist">
       <condition property="exclude.cli.jar" value="true">
@@ -45,15 +71,16 @@
       </unzip>
    </target>
 
-   <target name="prepare-wsdl" if="include.client.jar">
+   <target name="prepare-wsdl" if="include.client.jar" depends="prepare-jbossws">
       <echo>*** Creating new wsdl</echo>
       <mkdir dir="${wsconsume.home}" />
       <mkdir dir="${wsprovide.home}" />
 
-      <!--  This classpath basically provides the environment the wsprovide script creates.  So,it's
-         JBossws version specific (and assumes compatibility between JBossws and AS -->
-
       <echo>The JAVA HOME being used: ${java.jre.home}</echo>
+      <echo />
+
+      <!-- Classpath for WSConsume/WSProvide. Defined globally so that custom task defs can reference. -->
+      <!-- So,it's JBossws version specific (and assumes compatibility between JBossws and AS -->
       <path id="jbossws.native.classpath">
          <fileset dir="${java.jre.home}/../lib/" includes="*.jar" />
 
@@ -99,93 +126,50 @@
 
          <!-- not sure why not in the maven.runtime.classpath -->
          <fileset dir="${settings.localRepository}/org/opensymphony/quartz/quartz/${quartz.version}/">
-             <include name="quartz-${quartz.version}.jar" />
-          </fileset>
+            <include name="quartz-${quartz.version}.jar" />
+         </fileset>
 
       </path>
 
+      <!-- Include the WSProved/WSConsume ant task definitions from JBossWS -->
       <taskdef name="wsprovide" classname="org.jboss.wsf.spi.tools.ant.WSProvideTask" classpathref="jbossws.native.classpath" />
       <taskdef name="wsconsume" classname="org.jboss.wsf.spi.tools.ant.WSConsumeTask" classpathref="jbossws.native.classpath" />
 
-      <echo>*** Providing SimpleManagerRemote wsdl...</echo>
-      <wsprovide fork="true" destdir="${wsprovide.home}" resourcedestdir="${wsdl.home}" genwsdl="true" sei="org.rhq.enterprise.server.jaxb.SimpleManagerBean">
+      <!-- Include Ant-Contrib for looping -->
+      <taskdef resource="net/sf/antcontrib/antcontrib.properties">
+         <classpath>
+            <pathelement location="${settings.localRepository}/ant-contrib/ant-contrib/${ant.contrib.version}/ant-contrib-${ant.contrib.version}.jar" />
+         </classpath>
+      </taskdef>
+
+      <echo>List of Stateless Session Beans passed into WSProvide/WSConsume :${ws-list}</echo>
+      <!-- Call WS-Provide in loop -->
+      <foreach list="${ws-list}" target="iterate-wsprovide" param="bean" delimiter=",">
+      </foreach>
+
+      <!-- Call WS-Consume in loop -->
+      <foreach list="${ws-list}" target="iterate-wsconsume" param="bean" delimiter=",">
+      </foreach>
+
+   </target>
+
+   <!-- Target for looping over wsconsume with each bean -->
+   <target name="iterate-wsconsume">
+      <echo>*** Consuming ${bean}ManagerRemote wsdl...</echo>
+      <wsconsume fork="true" package="org.rhq.enterprise.server.ws" destdir="${wsconsume.home}" wsdl="${wsdl.home}/${bean}ManagerBeanService.wsdl" />
+   </target>
+
+   <!-- Target for looping over wsconsume with each bean -->
+   <target name="iterate-wsprovide">
+      <!-- Look up the full bean package and name stored as property -->
+      <propertycopy name="full-bean-name" from="${bean}Manager" override="true" />
+
+      <echo>*** Providing ${bean}ManagerRemote wsdl...</echo>
+      <wsprovide fork="true" destdir="${wsprovide.home}" resourcedestdir="${wsdl.home}" genwsdl="true" sei="${full-bean-name}">
          <classpath>
             <pathelement path="${maven.runtime.classpath}" />
          </classpath>
       </wsprovide>
-
-      <echo>*** Providing ChannelManagerRemote wsdl...</echo>
-      <wsprovide fork="true" destdir="${wsprovide.home}" resourcedestdir="${wsdl.home}" genwsdl="true" sei="org.rhq.enterprise.server.content.ChannelManagerBean">
-         <classpath>
-            <pathelement path="${maven.runtime.classpath}" />
-         </classpath>
-      </wsprovide>
-
-      <echo>*** Providing ConfigurationManagerRemote wsdl...</echo>
-      <wsprovide fork="true" destdir="${wsprovide.home}" resourcedestdir="${wsdl.home}" genwsdl="true" sei="org.rhq.enterprise.server.configuration.ConfigurationManagerBean">
-         <classpath>
-            <pathelement path="${maven.runtime.classpath}" />
-         </classpath>
-      </wsprovide>
-
-      <echo>*** Providing ContentManagerRemote wsdl...</echo>
-      <wsprovide fork="true" destdir="${wsprovide.home}" resourcedestdir="${wsdl.home}" genwsdl="true" sei="org.rhq.enterprise.server.content.ContentManagerBean">
-         <classpath>
-            <pathelement path="${maven.runtime.classpath}" />
-         </classpath>
-      </wsprovide>
-
-      <echo>*** Providing OperationManagerRemote wsdl...</echo>
-      <wsprovide fork="true" destdir="${wsprovide.home}" resourcedestdir="${wsdl.home}" genwsdl="true" sei="org.rhq.enterprise.server.operation.OperationManagerBean">
-         <classpath>
-            <pathelement path="${maven.runtime.classpath}" />
-         </classpath>
-      </wsprovide>
-
-      <echo>*** Providing ResourceManagerRemote wsdl...</echo>
-      <wsprovide fork="true" destdir="${wsprovide.home}" resourcedestdir="${wsdl.home}" genwsdl="true" sei="org.rhq.enterprise.server.resource.ResourceManagerBean">
-         <classpath>
-            <pathelement path="${maven.runtime.classpath}" />
-         </classpath>
-      </wsprovide>
-
-      <echo>*** Providing RoleManagerRemote wsdl...</echo>
-      <wsprovide fork="true" destdir="${wsprovide.home}" resourcedestdir="${wsdl.home}" genwsdl="true" sei="org.rhq.enterprise.server.authz.RoleManagerBean">
-         <classpath>
-            <pathelement path="${maven.runtime.classpath}" />
-         </classpath>
-      </wsprovide>
-
-      <echo>*** Providing SubjectManagerRemote wsdl...</echo>
-      <wsprovide fork="true" destdir="${wsprovide.home}" resourcedestdir="${wsdl.home}" genwsdl="true" sei="org.rhq.enterprise.server.auth.SubjectManagerBean">
-         <classpath>
-            <pathelement path="${maven.runtime.classpath}" />
-         </classpath>
-      </wsprovide>
-
-      <echo>*** Consuming SimpleManagerRemote wsdl...</echo>
-      <wsconsume fork="true" package="org.rhq.enterprise.server.ws" destdir="${wsconsume.home}" wsdl="${wsdl.home}/SimpleManagerBeanService.wsdl" />
-
-      <echo>*** Consuming ChannelManagerRemote wsdl...</echo>
-      <wsconsume fork="true" package="org.rhq.enterprise.server.ws" destdir="${wsconsume.home}" wsdl="${wsdl.home}/ChannelManagerBeanService.wsdl" />
-
-      <echo>*** Consuming ContentManagerRemote wsdl...</echo>
-      <wsconsume fork="true" package="org.rhq.enterprise.server.ws" destdir="${wsconsume.home}" wsdl="${wsdl.home}/ContentManagerBeanService.wsdl" />
-
-      <echo>*** Consuming ConfigurationManagerRemote wsdl...</echo>
-      <wsconsume fork="true" package="org.rhq.enterprise.server.ws" destdir="${wsconsume.home}" wsdl="${wsdl.home}/ConfigurationManagerBeanService.wsdl" />
-
-      <echo>*** Consuming OperationManagerRemote wsdl...</echo>
-      <wsconsume fork="true" package="org.rhq.enterprise.server.ws" destdir="${wsconsume.home}" wsdl="${wsdl.home}/OperationManagerBeanService.wsdl" />
-
-      <echo>*** Consuming ResourceManagerRemote wsdl...</echo>
-      <wsconsume fork="true" package="org.rhq.enterprise.server.ws" destdir="${wsconsume.home}" wsdl="${wsdl.home}/ResourceManagerBeanService.wsdl" />
-
-      <echo>*** Consuming RoleManagerRemote wsdl...</echo>
-      <wsconsume fork="true" package="org.rhq.enterprise.server.ws" destdir="${wsconsume.home}" wsdl="${wsdl.home}/RoleManagerBeanService.wsdl" />
-
-      <echo>*** Consuming SubjectManagerRemote wsdl...</echo>
-      <wsconsume fork="true" package="org.rhq.enterprise.server.ws" destdir="${wsconsume.home}" wsdl="${wsdl.home}/SubjectManagerBeanService.wsdl" />
    </target>
 
 </project>

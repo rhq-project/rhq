@@ -1,30 +1,30 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.domain.measurement.calltime;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.io.Serializable;
+
+import org.jetbrains.annotations.NotNull;
 
 /**
  * The composite object returned by GUI-initiated call-time data queries.
@@ -42,13 +42,13 @@ public class CallTimeDataComposite implements Serializable {
     private long count;
     private double average;
 
-    public CallTimeDataComposite(@NotNull
-    String callDestination, @NotNull
-    Number minimum, @NotNull
-    Number maximum, @NotNull
-    Number total, @NotNull
-    Number count, @NotNull
-    Number average) {
+    /** No-args constructor for JAXB serialization purposes */
+    @SuppressWarnings("unused")
+    private CallTimeDataComposite() {
+    }
+
+    public CallTimeDataComposite(@NotNull String callDestination, @NotNull Number minimum, @NotNull Number maximum,
+        @NotNull Number total, @NotNull Number count, @NotNull Number average) {
         this.callDestination = callDestination;
         this.minimum = minimum.doubleValue();
         this.maximum = maximum.doubleValue();

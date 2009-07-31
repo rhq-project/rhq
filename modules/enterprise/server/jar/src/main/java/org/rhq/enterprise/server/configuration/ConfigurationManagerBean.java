@@ -35,6 +35,7 @@ import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -87,6 +88,7 @@ import org.rhq.enterprise.server.configuration.job.AbstractGroupConfigurationUpd
 import org.rhq.enterprise.server.configuration.job.GroupPluginConfigurationUpdateJob;
 import org.rhq.enterprise.server.configuration.job.GroupResourceConfigurationUpdateJob;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
+import org.rhq.enterprise.server.jaxb.WebServiceTypeAdapter;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
@@ -1398,7 +1400,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return updateId;
     }
 
-    public int scheduleGroupResourceConfigurationUpdate(Subject subject, int compatibleGroupId,
+    public int scheduleGroupResourceConfigurationUpdate(Subject subject, int compatibleGroupId,//
+        @XmlJavaTypeAdapter(WebServiceTypeAdapter.class)//
         Map<Integer, Configuration> newResourceConfigurationMap) throws SchedulerException {
         if (newResourceConfigurationMap == null) {
             throw new IllegalArgumentException(

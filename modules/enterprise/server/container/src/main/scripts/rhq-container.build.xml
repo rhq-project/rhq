@@ -211,6 +211,8 @@
     <echo>Running upgrade script for JBossWS ${jbossws-native-dist.version} </echo>
     <ant antfile="${basedir}/target/${jboss-native-dir}/build.xml" target="deploy-jboss423" dir="${basedir}/target/${jboss-native-dir}" />
 
+  	<echo> </echo>
+  	
       <echo>Installing safe ejb3 web invoker ...</echo>
       <delete verbose="true">
          <fileset dir="${jboss.deploy.dir}/jbossws.sar">
@@ -223,7 +225,10 @@
     <copy file="${settings.localRepository}/org/rhq/safe-invoker/${rhq.version}/safe-invoker-${rhq.version}.jar"
            toDir="${jboss.deploy.dir}/jbossws.sar" verbose="true" />
     <copy file="${basedir}/src/main/resources/jbossas/server/default/deploy/jbossws.sar/jbossws.beans/META-INF/jboss-beans.xml"
-          toDir="${jboss.deploy.dir}/jbossws.sar/jbossws.beans/META-INF" verbose="true" />
+          toDir="${jboss.deploy.dir}/jbossws.sar/jbossws.beans/META-INF" verbose="true" /> 
+<!--    <copy file="${basedir}/target/${jboss-native-dir}/deploy/resources/jbossws-jboss423/jbossws.beans/META-INF/jboss-beans.xml"
+  	          toDir="${jboss.deploy.dir}/jbossws.sar/jbossws.beans/META-INF" verbose="true" /> --> 
+
 
       <echo>Installing patched hibernate jar ...</echo>
     <copy file="${settings.localRepository}/hibernate/hibernate3/${hibernate3.version}/hibernate3-${hibernate3.version}.jar"

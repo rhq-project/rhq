@@ -29,6 +29,7 @@ import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
+import javax.jws.WebService;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
@@ -67,6 +68,7 @@ import org.rhq.enterprise.server.system.SystemManagerLocal;
  * @author Joseph Marques
  */
 @Stateless
+@WebService(endpointInterface = "org.rhq.enterprise.server.measurement.MeasurementBaselineManagerRemote")
 public class MeasurementBaselineManagerBean implements MeasurementBaselineManagerLocal,
     MeasurementBaselineManagerRemote {
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)

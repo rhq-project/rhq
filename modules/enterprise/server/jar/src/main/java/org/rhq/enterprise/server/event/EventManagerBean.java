@@ -35,6 +35,7 @@ import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
+import javax.jws.WebService;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
@@ -83,6 +84,7 @@ import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
  */
 @Stateless
 @javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
+@WebService(endpointInterface = "org.rhq.enterprise.server.event.EventManagerRemote")
 public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
 
     // NOTE: We need to do the fancy subselects to figure out the event def id, because the PC does not know the id's of

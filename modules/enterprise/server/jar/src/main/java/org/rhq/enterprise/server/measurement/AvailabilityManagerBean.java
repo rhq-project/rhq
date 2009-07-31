@@ -27,6 +27,7 @@ import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
+import javax.jws.WebService;
 import javax.persistence.EntityManager;
 import javax.persistence.FlushModeType;
 import javax.persistence.NoResultException;
@@ -72,6 +73,7 @@ import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
  * @author John Mazzitelli
  */
 @Stateless
+@WebService(endpointInterface = "org.rhq.enterprise.server.measurement.AvailabilityManagerRemote")
 public class AvailabilityManagerBean implements AvailabilityManagerLocal, AvailabilityManagerRemote {
     private final Log log = LogFactory.getLog(AvailabilityManagerBean.class);
 

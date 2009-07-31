@@ -24,6 +24,7 @@ import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
+import javax.jws.WebService;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
@@ -60,6 +61,7 @@ import org.rhq.enterprise.server.cloud.StatusManagerLocal;
  */
 
 @Stateless
+@WebService(endpointInterface = "org.rhq.enterprise.server.alert.AlertDefinitionManagerRemote")
 public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, AlertDefinitionManagerRemote {
 
     private static final Log LOG = LogFactory.getLog(AlertDefinitionManagerBean.class);

@@ -123,13 +123,15 @@ public interface ConfigurationManagerRemote {
 
     /* this currently doesn't build because jaxws requires a default, no-arg constructor from all objects in the graph
      * in order to perform serialization correctly, and java.util.Map does not have one (because it's an interface)
+     * 
     @WebMethod
     int scheduleGroupResourceConfigurationUpdate(//
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "compatibleGroupId") int compatibleGroupId, //
+        @XmlJavaTypeAdapter(WebServiceTypeAdapter.class)//
         @WebParam(name = "newResourceConfigurationMap") Map<Integer, Configuration> newResourceConfigurationMap) //
         throws SchedulerException;
-        */
+    */
 
     /**
      * Updates the plugin configuration used to connect and communicate with the resource. The given <code>
@@ -233,8 +235,6 @@ public interface ConfigurationManagerRemote {
      */
     @WebMethod
     ConfigurationDefinition getPluginConfigurationDefinitionForResourceType(
-            @WebParam(name = "subject") Subject subject,
-            @WebParam(name = "resourceTypeId") int resourceTypeId);
-
+        @WebParam(name = "subject") Subject subject, @WebParam(name = "resourceTypeId") int resourceTypeId);
 
 }

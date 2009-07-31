@@ -100,6 +100,7 @@ import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
  */
 @Stateless
 @javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
+//@WebService(endpointInterface = "org.rhq.enterprise.server.resource.group.ResourceGroupManagerRemote")
 public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, ResourceGroupManagerRemote {
     private final Log log = LogFactory.getLog(ResourceGroupManagerBean.class);
 

@@ -85,6 +85,9 @@ public class Ejb3MDBResourceTest extends AbstractEjb3ResourceTest {
             sender.close();
             session.close();
             connection.close();
+
+            System.out.println("Giving some time for the messages to arrive...");
+            Thread.sleep(2000);
         } catch (Exception e) {
             fail("Failed to setup EJB3 Message Driven Bean test", e);
         }

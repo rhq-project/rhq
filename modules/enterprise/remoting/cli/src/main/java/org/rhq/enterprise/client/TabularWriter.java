@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.client;
 
+import static org.apache.commons.lang.StringUtils.abbreviate;
+
 import au.com.bytecode.opencsv.CSVWriter;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
@@ -165,17 +167,7 @@ public class TabularWriter {
         out.print("\t");
         printPreSpaced(out, name, maxLength);
         out.print(": ");
-
-        if (value.length() > width) {
-            out.println(truncate(value));        
-        }
-        else {
-            out.println(value);
-        }
-    }
-
-    private String truncate(String string) {
-        return string.substring(0, string.length() - width - 3) + "...";
+        out.println(abbreviate(value, width - 12 - maxLength));
     }
 
     public void print(Collection list) {
@@ -499,7 +491,7 @@ public class TabularWriter {
     private void printSpaced(PrintWriter out, String data, int length) {
         int dataLength = data.length();
         if (dataLength > length) {
-            out.print(data.substring(0, length - 3) + "...");
+            out.print(data.substring(0, length));
         } else {
             out.print(data);
 
@@ -513,7 +505,7 @@ public class TabularWriter {
     private void printPreSpaced(PrintWriter out, String data, int length) {
         int dataLength = data.length();
         if (dataLength > length) {
-            out.print(data.substring(0, length - 3) + "...");
+            out.print(data.substring(0, length));
         } else {
             for (int i = dataLength; i < length; i++) {
                 out.print(" ");

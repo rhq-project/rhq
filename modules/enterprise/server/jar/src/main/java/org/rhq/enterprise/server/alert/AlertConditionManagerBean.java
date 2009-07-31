@@ -135,6 +135,7 @@ public class AlertConditionManagerBean implements AlertConditionManagerLocal {
         return new PageList<AbstractAlertConditionCategoryComposite>(list, (int) totalCount, pageControl);
     }
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public InventoryStatus getResourceStatusByConditionId(int alertConditionId) {
         try {
             Query query = entityManager.createNamedQuery(AlertCondition.QUERY_FIND_RESOURCE_STATUS_BY_CONDITION_ID);

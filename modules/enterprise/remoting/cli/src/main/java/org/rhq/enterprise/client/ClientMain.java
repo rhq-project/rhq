@@ -234,11 +234,12 @@ public class ClientMain {
                 while (true) {
                     String cmd;
                     cmd = getUserInput(null);
+
                     try {
                         recorder.record(cmd);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
 
                     try {
                         // parse the command into separate arguments and execute
@@ -347,8 +348,6 @@ public class ClientMain {
      * @return the array of command line arguments
      */
     public String[] parseCommandLine(String cmdLine) {
-        // private String[] parseCommandLine(String cmdLine) {
-
         if (cmdLine == null) {
             return new String[] { "" };
         }

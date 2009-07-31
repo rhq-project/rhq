@@ -133,7 +133,6 @@ public class TabularWriter {
             }
 
             out.println(object.getClass().getSimpleName() + ":");
-            //Map<String, String> properties = new LinkedHashMap<String, String>();
             Map<String, PropertyInfo> properties = new LinkedHashMap<String, PropertyInfo>();
             int maxLength = 0;
 
@@ -149,7 +148,6 @@ public class TabularWriter {
                     try {
                         String str = String.valueOf(val);
                         maxLength = Math.max(maxLength, pd.getName().length());
-                        //properties.put(pd.getName(), String.valueOf(val));
                         properties.put(pd.getName(), new PropertyInfo(String.valueOf(val), pd.getPropertyType()));
                     } catch (Exception e) {
                     }
@@ -532,6 +530,7 @@ public class TabularWriter {
     private void printSpaced(PrintWriter out, String data, int length) {
         int dataLength = data.length();
         if (dataLength > length) {
+            //out.println(abbreviate(data, length));
             out.print(data.substring(0, length));
         } else {
             out.print(data);

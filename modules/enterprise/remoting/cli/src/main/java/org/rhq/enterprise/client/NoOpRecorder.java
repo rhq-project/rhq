@@ -25,11 +25,12 @@ package org.rhq.enterprise.client;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Writer;
 
 public class NoOpRecorder extends Recorder{
 
     @Override
-    public void setFile(File file) throws IOException {
+    public void setWriter(Writer writer) throws IOException {
     }
 
     @Override
@@ -37,6 +38,6 @@ public class NoOpRecorder extends Recorder{
     }
 
     @Override
-    public void stop() throws IOException {        
+    public void stop() throws IOException {
     }
 }

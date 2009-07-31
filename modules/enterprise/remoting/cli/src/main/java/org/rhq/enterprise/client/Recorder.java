@@ -23,19 +23,22 @@
 
 package org.rhq.enterprise.client;
 
-import java.io.FileWriter;
-import java.io.File;
 import java.io.IOException;
+import java.io.Writer;
 
 public class Recorder {
 
-    FileWriter writer;
+    private Writer writer;
 
-    public void setFile(File file) throws IOException {
-        writer = new FileWriter(file);
+    public void setWriter(Writer writer) throws IOException {
+        this.writer = writer;
     }
 
     public void record(String input) throws IOException {
+        // We won't record the 'record' command, at least not for now
+        if (input.startsWith("record")) {
+            return;
+        }
         writer.write(input + "\n");
         writer.flush();
     }

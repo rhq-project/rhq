@@ -152,11 +152,19 @@ public class ServiceCompletor implements Completor {
 
 
     public int contextComplete(Object baseObject, String s, int i, List list) {
-        if (!s.contains("(") && s.contains(".")) {
+        if (s.contains(".")) {
             String[] call = s.split("\\.", 2);
 
             Map<String, Object> matches = getContextMatches(baseObject, call[0]);
             Object rootObject = matches.get(call[0]);
+            if (rootObject instanceof PropertyDescriptor) {
+                try {
+                    rootObject =
+                            ((PropertyDescriptor)rootObject).getReadMethod().invoke(baseObject);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
 
             return call[0].length() + 1 + contextComplete(rootObject, call[1], i, list);
         } else {
@@ -492,7 +500,7 @@ public class ServiceCompletor implements Completor {
         buf.append(ReflectionUtility.getSimpleTypeString(m.getGenericReturnType()));
         buf.append(" ");
 
-        buf.append(ANSIBuffer.ANSICodes.attrib(4) + m.getName() + ANSIBuffer.ANSICodes.attrib(0));
+        buf.append(m.getName());
         buf.append("(");
         boolean first = true;
         for (Type type : params) {

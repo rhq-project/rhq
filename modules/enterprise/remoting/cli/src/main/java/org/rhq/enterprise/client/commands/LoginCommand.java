@@ -56,7 +56,8 @@ public class LoginCommand implements ClientCommand {
             controller.setServer(new RHQServer(host, port));
             controller.login(user, pass);
 
-            client.getPrintWriter().println(ANSIBuffer.ANSICodes.attrib(5) + "Login successful" + ANSIBuffer.ANSICodes.attrib(0));
+            if (client.isInteractiveMode())
+                client.getPrintWriter().println("Login successful");
         } catch (Exception e) {
             client.getPrintWriter().println("Login failed: " + e.getMessage());
             e.printStackTrace();

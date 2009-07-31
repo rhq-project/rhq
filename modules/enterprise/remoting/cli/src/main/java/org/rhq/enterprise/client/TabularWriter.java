@@ -109,10 +109,16 @@ public class TabularWriter {
 
     public void print(Object object) {
 
+        if (object instanceof Map) {
+            print((Map)object);
+        }
+
+
         if (object instanceof Collection) {
             print((Collection) object);
             return;
         }
+
 
         if (object instanceof Configuration) {
             print((Configuration) object);
@@ -188,6 +194,22 @@ public class TabularWriter {
             out.println(abbreviate(propertyInfo.value, width - 12 - maxLength));
         }
     }
+
+    public void print(Map map) {
+
+        String[][] data = new String[map.size()][];
+        int i = 0;
+        for (Object key : map.keySet()) {
+            Object value = map.get(key);
+            data[i] = new String[2];
+            data[i][0] = shortVersion(key);
+            data[i][1] = shortVersion(value);
+            i++;
+        }
+        this.headers = new String[] { "Key", "Value"};
+        print(data);
+    }
+
 
     public void print(Collection list) {
         // List of arbitrary objects

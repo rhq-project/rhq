@@ -390,14 +390,15 @@ public class ClientMain {
     }
 
     private void displayUsage() {
-        outputWriter.println("rhq-cli.sh [-h] [-u user] [-p [pass]] [-s host] [-t port] [-f file]|[-c command]");
+        outputWriter.println("rhq-cli.sh [-h] [-u user] [-p pass] [-P] [-s host] [-t port] [-f file]|[-c command]");
     }
 
     void processArguments(String[] args) throws IllegalArgumentException, IOException {
-        String sopts = "-:hu:p::s:t:c:f:";
+        String sopts = "-:hu:p:Ps:t:c:f:";
         LongOpt[] lopts = { new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'h'),
             new LongOpt("user", LongOpt.REQUIRED_ARGUMENT, null, 'u'),
-            new LongOpt("password", LongOpt.OPTIONAL_ARGUMENT, null, 'p'),
+            new LongOpt("password", LongOpt.REQUIRED_ARGUMENT, null, 'p'),
+            new LongOpt("prompt", LongOpt.OPTIONAL_ARGUMENT, null, 'P'),
             new LongOpt("host", LongOpt.REQUIRED_ARGUMENT, null, 's'),
             new LongOpt("port", LongOpt.REQUIRED_ARGUMENT, null, 't'),
             new LongOpt("command", LongOpt.REQUIRED_ARGUMENT, null, 'c'),
@@ -435,14 +436,15 @@ public class ClientMain {
             }
             case 'p': {
                 this.pass = getopt.getOptarg();
-                if (this.pass == null) {
-                    this.pass = this.consoleReader.readLine("password: ", (char) 0);
-                }
+                break;
+            }
+            case 'P': {
+                this.pass = this.consoleReader.readLine("password: ", (char)0);
                 break;
             }
             case 'c': {
                 interactiveMode = false;
-                command = new String[] { getopt.getOptarg() };
+                command = new String[] { getopt.getOptarg()};
                 break;
             }
             case 'f': {

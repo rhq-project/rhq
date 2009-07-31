@@ -151,6 +151,10 @@ public class ResourceClientProxy {
         return this.measurementMap.values();
     }
 
+    public Map<String, Measurement> getMeasurementMap() {
+        return this.measurementMap;
+    }
+
     public Collection<Operation> getOperations() {
         return this.operationMap.values();
     }

@@ -87,7 +87,7 @@ public class ResourceCriteria extends Criteria {
         filterOverrides.put("resourceTypeId", "resourceType.id = ?");
         filterOverrides.put("resourceTypeName", "resourceType.name like ?");
         filterOverrides.put("resourceCategory", "resourceType.category like ?");
-        filterOverrides.put("plugin", "resourceType.plugin = ?");
+        filterOverrides.put("pluginName", "resourceType.plugin = ?");
         filterOverrides.put("parentResourceId", "parentResource.id = ?");
         filterOverrides.put("parentResourceName", "parentResource.name like ?");
         filterOverrides.put("agentName", "agent.name like ?");

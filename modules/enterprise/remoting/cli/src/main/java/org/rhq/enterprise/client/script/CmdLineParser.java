@@ -4,6 +4,7 @@ import gnu.getopt.Getopt;
 import gnu.getopt.LongOpt;
 import static org.rhq.enterprise.client.script.ScriptCmdLine.ArgType.INDEXED;
 import static org.rhq.enterprise.client.script.ScriptCmdLine.ArgType.NAMED;
+import org.rhq.enterprise.client.ClientMain;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,12 +15,12 @@ public class CmdLineParser {
     public ScriptCmdLine parse(String[] cmdLine) throws CommandLineParseException {
         String[] args = Arrays.copyOfRange(cmdLine, 1, cmdLine.length);
         
-        String shortOpts = "-:f:s:";
+        String shortOpts = "-:f:";
         LongOpt[] longOpts = {
                 new LongOpt("file", LongOpt.REQUIRED_ARGUMENT, null, 'f'),
-                new LongOpt("style", LongOpt.REQUIRED_ARGUMENT, null, 's')
+                new LongOpt("args-style", LongOpt.REQUIRED_ARGUMENT, null, -2)
         };
-        Getopt getopt = new Getopt("exec", args, shortOpts, longOpts);
+        Getopt getopt = new Getopt("exec", args, shortOpts, longOpts, false);
 
         List<String> scriptArgs = new ArrayList<String>();
         String argStyle = "indexed";
@@ -37,7 +38,7 @@ public class CmdLineParser {
                 case 'f':
                     scriptName = getopt.getOptarg();
                     break;
-                case 's':
+                case -2://ClientMain.ARGS_STYLE_ID:
                     argStyle = getopt.getOptarg();
                     if (isInvalidArgStyle(argStyle)) {
                         throw new CommandLineParseException(argStyle + " - invalid value for style option");

@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Arrays;
 
 import jline.ArgumentCompletor;
 import jline.Completor;
@@ -29,6 +30,7 @@ import mazz.i18n.Msg;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.client.commands.ClientCommand;
 import org.rhq.enterprise.client.commands.ScriptCommand;
+import org.apache.commons.lang.ArrayUtils;
 
 /**
  * @author Greg Hinkle
@@ -374,16 +376,19 @@ public class ClientMain {
 
     void processArguments(String[] args) throws IllegalArgumentException, IOException {
         String sopts = "-:hu:p:Ps:t:c:f:";
-        LongOpt[] lopts = { new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'h'),
+        LongOpt[] lopts = {
+            new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'h'),
             new LongOpt("user", LongOpt.REQUIRED_ARGUMENT, null, 'u'),
             new LongOpt("password", LongOpt.REQUIRED_ARGUMENT, null, 'p'),
             new LongOpt("prompt", LongOpt.OPTIONAL_ARGUMENT, null, 'P'),
             new LongOpt("host", LongOpt.REQUIRED_ARGUMENT, null, 's'),
             new LongOpt("port", LongOpt.REQUIRED_ARGUMENT, null, 't'),
             new LongOpt("command", LongOpt.REQUIRED_ARGUMENT, null, 'c'),
-            new LongOpt("file", LongOpt.NO_ARGUMENT, null, 'f') };
+            new LongOpt("file", LongOpt.NO_ARGUMENT, null, 'f'),
+            new LongOpt("args-style", LongOpt.REQUIRED_ARGUMENT, new StringBuffer(), -2)
+        };
 
-        Getopt getopt = new Getopt("Cli", args, sopts, lopts);
+        Getopt getopt = new Getopt("Cli", args, sopts, lopts, false);
         int code;
 
         String[] command = null;
@@ -398,9 +403,8 @@ public class ClientMain {
             }
 
             case 1: {
-                // this will catch non-option arguments (which we don't
-                // currently care about)
-                System.err.println(MSG.getMsg(ClientI18NResourceKeys.USAGE));
+                // this catches non-option arguments which can be passed when running a script in non-interactive mode
+                // with -f or running a single command in non-interactive mode with -c.
                 break;
             }
 
@@ -423,19 +427,12 @@ public class ClientMain {
             }
             case 'c': {
                 interactiveMode = false;
-                command = new String[] { getopt.getOptarg()};
+                command = createExecArgs(removeCommandOptionFromArgs(args));
                 break;
             }
             case 'f': {
                 interactiveMode = false;
-
-                String[] inputArgs = getopt.getOptarg().split("\\W");
-                String[] commandArgs = new String[inputArgs.length + 2];
-                commandArgs[0] = "exec";
-                commandArgs[1] = "-f";
-                System.arraycopy(inputArgs, 0, commandArgs, 2, inputArgs.length);
-
-                command = commandArgs;
+                command = createExecArgs(args);
                 break;
             }
             }
@@ -448,6 +445,30 @@ public class ClientMain {
         if (command != null) {
             commands.get("exec").execute(this, command);
         }
+    }
+
+    private String[] removeCommandOptionFromArgs(String[] args) {
+        String[] newArgs = new String[args.length - 1];
+        int index = 0;
+
+        for (int i = 0; i < args.length; ++i) {
+            if (args[i].equals("-c")) {
+                continue;
+            }
+            newArgs[index++] = args[i];
+        }
+
+        return newArgs;
+    }
+
+    private String[] createExecArgs(String[] args) {
+        String[] execArgs = new String[args.length + 1];
+        execArgs[0] = "exec";
+        for (int i = 0; i < args.length; ++i) {
+            execArgs[i + 1] = args[i];
+        }
+
+        return execArgs;
     }
 
     public RemoteClient getRemoteClient() {

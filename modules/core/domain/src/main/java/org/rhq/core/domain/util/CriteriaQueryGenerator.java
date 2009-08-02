@@ -237,7 +237,7 @@ public final class CriteriaQueryGenerator {
             }
         }
         results.append(NL);
-        LOG.info(results);
+        LOG.debug(results);
         return results.toString();
     }
 
@@ -271,7 +271,7 @@ public final class CriteriaQueryGenerator {
                     value = formattedValue;
                 }
             }
-            LOG.info("Bind: (" + critField.getKey() + ", " + value + ")");
+            LOG.debug("Bind: (" + critField.getKey() + ", " + value + ")");
             query.setParameter(critField.getKey(), value);
         }
     }

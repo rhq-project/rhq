@@ -29,6 +29,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageOrdering;
 
@@ -36,6 +39,8 @@ import org.rhq.core.domain.util.PageOrdering;
  * @author Joseph Marques
  */
 public abstract class Criteria implements Serializable {
+
+    private static final Log LOG = LogFactory.getLog(Criteria.class);
 
     private enum Type {
         FILTER, FETCH, SORT;
@@ -45,6 +50,9 @@ public abstract class Criteria implements Serializable {
 
     private Integer pageNumber;
     private Integer pageSize;
+
+    private boolean filtersOptional;
+    private boolean caseSensitive;
 
     protected Map<String, String> filterOverrides;
     protected Map<String, String> sortOverrides;
@@ -90,6 +98,9 @@ public abstract class Criteria implements Serializable {
                 results.put(getCleansedFieldName(filterField, 6), filterFieldValue);
             }
         }
+        for (Map.Entry<String, Object> entries : results.entrySet()) {
+            LOG.info("Filter: (" + entries.getKey() + ", " + entries.getValue() + ")");
+        }
         return results;
     }
 
@@ -118,6 +129,9 @@ public abstract class Criteria implements Serializable {
                 }
             }
         }
+        for (String entry : results) {
+            LOG.info("Fetch: (" + entry + ")");
+        }
         return results;
     }
 
@@ -128,6 +142,30 @@ public abstract class Criteria implements Serializable {
     public void setPaging(int pageNumber, int pageSize) {
         this.pageNumber = pageNumber;
         this.pageSize = pageSize;
+    }
+
+    /*
+     * If set to true, then results will come back if they match ANY filter;
+     * Default is 'false', which means results must match all set filters.
+     */
+    public void setFiltersOptional(boolean filtersOptional) {
+        this.filtersOptional = filtersOptional;
+    }
+
+    public boolean isFiltersOptional() {
+        return filtersOptional;
+    }
+
+    /*
+     * If set to true, string-based filters will use case-sensitive matching;
+     * Default is 'false', which means results will match case-insensitively
+     */
+    public void setCaseSensitive(boolean caseSensitive) {
+        this.caseSensitive = caseSensitive;
+    }
+
+    public boolean isCaseSensitive() {
+        return this.caseSensitive;
     }
 
     public PageControl getPageControl() {
@@ -154,6 +192,7 @@ public abstract class Criteria implements Serializable {
                 }
             }
         }
+        LOG.info("Page Control: " + pc);
         return pc;
     }
 

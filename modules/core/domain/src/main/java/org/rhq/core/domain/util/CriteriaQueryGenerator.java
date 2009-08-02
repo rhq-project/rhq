@@ -22,19 +22,22 @@
  */
 package org.rhq.core.domain.util;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.Criteria;
+import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.operation.OperationRequestStatus;
+import org.rhq.core.domain.resource.ResourceCategory;
 
 /**
  * A query generator used to generate queries with specific filtering, prefetching, or sorting requirements.
@@ -42,19 +45,13 @@ import org.rhq.core.domain.operation.OperationRequestStatus;
  * @author Joseph Marques
  */
 public final class CriteriaQueryGenerator {
+
+    private static final Log LOG = LogFactory.getLog(CriteriaQueryGenerator.class);
+
     public enum AuthorizationTokenType {
         RESOURCE, // specifies the resource alias to join on for standard res-group-role-subject authorization checking 
         GROUP; // specifies the group alias to join on for standard group-role-subject authorization checking
     }
-
-    private static final String argPrefix = ":arg";
-    private int argumentCounter = 0;
-    private List<String> filterExpressions = new ArrayList<String>();
-    private List<Object> filterValues = new ArrayList<Object>();
-
-    private static final String relationshipPrefix = "rel";
-    private int relationshipCounter = 0;
-    private List<String> joinExpressions = new ArrayList<String>();
 
     private Criteria criteria;
 
@@ -90,51 +87,26 @@ public final class CriteriaQueryGenerator {
         setAuthorizationResourceFragment(type, defaultFragment, subjectId);
     }
 
-    /**
-     * Supports and arbitrarily style for adding more WHERE conditions. Use a question mark as a 
-     * place holder for where you want values to be inserted.  You should include as many values
-     * as you do question marks in the expression.  For example, if your criteria object contained
-     * a field called 'grams', the call to this method might look like:
-     * 
-     *    addFilter("grams between ? and ?", 100, 1000); 
-     * 
-     * @param propertyExpression an expression contained question marks that should be parameter
-     *                           replaced during query generation time
-     * @param values             a list of objects that should replace the question marks in the
-     *                           propertyExpression during query generation
-     */
-    public void addFilter(String expression, Object... values) {
-        addFilterWithAlias(this.alias, expression, values);
-    }
+    private String fixFilterOverride(String expression, String fieldName) {
+        boolean fuzzyMatch = expression.toLowerCase().indexOf(" like ") != -1;
+        boolean wantCaseInsensitiveMatch = !criteria.isCaseSensitive() && fuzzyMatch;
 
-    /**
-     * Supports and arbitrarily style for adding related JOIN and WHERE conditions. The relationship
-     * is what you want to join on, and the expression and value arguments follow the semantics laid
-     * out in {@link CriteriaQueryGenerator#addFilter(String, Object...)}.  For example, if you criteria
-     * object contained a relationship called 'children', and if each of the child objects contained
-     * a field called 'height', the call to this method might look like:
-     * 
-     *     addRelationshipFilter("children", "height between ? and ?", 42, 111);
-     */
-    public void addRelationshipFilter(String relationship, String expression, Object... values) {
-        String relationshipName = relationshipPrefix + String.valueOf(relationshipCounter++);
-        joinExpressions.add(this.alias + "." + relationship + " " + relationshipName);
-        addFilterWithAlias(relationshipName, expression, values);
-    }
-
-    private void addFilterWithAlias(String alias, String expression, Object... values) {
-        int argumentsFound = 0;
         while (expression.indexOf('?') != -1) {
-            expression = expression.replaceFirst("\\?", argPrefix + String.valueOf(argumentCounter++));
-            argumentsFound++;
-        }
-        if (argumentsFound != values.length) {
-            throw new IllegalArgumentException("Passed an expression with " + argumentsFound
-                + " placeholders, but provided " + values.length + " arguments");
+            String replacement = ":" + fieldName;
+            expression = expression.replaceFirst("\\?", replacement);
         }
 
-        filterExpressions.add(alias + "." + expression);
-        filterValues.addAll(Arrays.asList(values));
+        if (wantCaseInsensitiveMatch) {
+            int indexOfFirstSpace = expression.indexOf(" ");
+            String filterToken = expression.substring(0, indexOfFirstSpace);
+            expression = "LOWER( " + alias + "." + filterToken + " ) " + expression.substring(indexOfFirstSpace);
+        }
+
+        if (fuzzyMatch) {
+            expression += " ESCAPE '\\\\'";
+        }
+
+        return expression;
     }
 
     public void setAuthorizationResourceFragment(AuthorizationTokenType type, String fragment, int subjectId) {
@@ -191,47 +163,49 @@ public final class CriteriaQueryGenerator {
         if (authorizationJoinFragment != null) {
             results.append(authorizationJoinFragment);
         }
-        for (String customJoinFragment : joinExpressions) {
-            results.append("JOIN " + customJoinFragment).append(NL);
-        }
 
         Map<String, Object> filterFields = criteria.getFilterFields();
-        if (filterFields.size() > 0 || filterExpressions.size() > 0 || authorizationJoinFragment != null) {
+        if (filterFields.size() > 0 || authorizationJoinFragment != null) {
             results.append("WHERE ");
         }
 
+        String conjunctiveFragment = criteria.isFiltersOptional() ? "OR " : "AND ";
+        boolean wantCaseInsensitiveMatch = !criteria.isCaseSensitive();
+
         // criteria
+        StringBuilder conjunctiveResults = new StringBuilder();
         boolean firstCrit = true;
         for (Map.Entry<String, Object> filterField : filterFields.entrySet()) {
             if (firstCrit) {
                 firstCrit = false;
             } else {
-                results.append(NL).append("AND ");
+                conjunctiveResults.append(NL).append(conjunctiveFragment);
             }
             String fieldName = filterField.getKey();
             String override = criteria.getJPQLFilterOverride(fieldName);
             String fragment = null;
             if (override != null) {
-                fragment = override.replaceFirst("\\?", ":" + fieldName);
+                fragment = fixFilterOverride(override, fieldName);
             } else {
                 String operator = "=";
                 if (filterField.getValue() instanceof String) {
                     operator = "like";
+                    if (wantCaseInsensitiveMatch) {
+                        fragment = "LOWER( " + alias + "." + fieldName + " ) " + operator + " :" + fieldName;
+                    } else {
+                        fragment = alias + "." + fieldName + " " + operator + " :" + fieldName;
+                    }
+                    fragment += " ESCAPE '\\\\'";
+                } else {
+                    fragment = alias + "." + fieldName + " " + operator + " :" + fieldName;
                 }
-                fragment = fieldName + " " + operator + " :" + fieldName;
             }
 
-            results.append(alias).append('.').append(fragment + " ");
+            conjunctiveResults.append(fragment).append(' ');
         }
 
-        // custom filters
-        for (String filter : filterExpressions) {
-            if (firstCrit) {
-                firstCrit = false;
-            } else {
-                results.append(NL).append("AND ");
-            }
-            results.append(filter);
+        if (conjunctiveResults.length() > 0) {
+            results.append("( ").append(conjunctiveResults).append(")");
         }
 
         // authorization
@@ -239,7 +213,8 @@ public final class CriteriaQueryGenerator {
             if (firstCrit) {
                 firstCrit = false;
             } else {
-                results.append(NL).append("AND ");
+                // always want AND for security, regardless of conjunctiveFragment
+                results.append(NL).append(" AND ");
             }
             results.append("authSubject.id = " + authorizationSubjectId + " ");
         }
@@ -262,7 +237,7 @@ public final class CriteriaQueryGenerator {
             }
         }
         results.append(NL);
-        //System.out.println(results);
+        LOG.info(results);
         return results.toString();
     }
 
@@ -282,23 +257,30 @@ public final class CriteriaQueryGenerator {
     }
 
     private void setBindValues(Query query, boolean countQuery) {
+        boolean wantCaseInsensitiveMatch = !criteria.isCaseSensitive();
+
         for (Map.Entry<String, Object> critField : criteria.getFilterFields().entrySet()) {
-            query.setParameter(critField.getKey(), critField.getValue());
-        }
-        for (int i = 0; i < filterValues.size(); i++) {
-            String argumentName = argPrefix + i;
-            Object value = filterValues.get(i);
-            if (value instanceof String) {
-                value = PersistenceUtility.formatSearchParameter((String) value);
+            Object value = critField.getValue();
+            if (wantCaseInsensitiveMatch) {
+                if (value instanceof String) {
+                    String formattedValue = (String) value;
+                    if (wantCaseInsensitiveMatch) {
+                        formattedValue = formattedValue.toLowerCase();
+                    }
+                    formattedValue = "%" + ((String) formattedValue).replaceAll("\\_", "\\\\_") + "%";
+                    value = formattedValue;
+                }
             }
-            query.setParameter(argumentName, value);
+            LOG.info("Bind: (" + critField.getKey() + ", " + value + ")");
+            query.setParameter(critField.getKey(), value);
         }
     }
 
     public static void main(String[] args) {
-        testSubjectCriteria();
-        testAlertCriteria();
-        testInheritanceCriteria();
+        //testSubjectCriteria();
+        //testAlertCriteria();
+        //testInheritanceCriteria();
+        testResourceCriteria();
     }
 
     public static void testSubjectCriteria() {
@@ -316,11 +298,16 @@ public final class CriteriaQueryGenerator {
     public static void testAlertCriteria() {
         AlertCriteria alertCriteria = new AlertCriteria();
         alertCriteria.addFilterName("joe");
+        alertCriteria.addFilterDescription("query generation is cool");
+        alertCriteria.addFilterStartTime(42L);
+        alertCriteria.addFilterEndTime(100L);
         alertCriteria.addFilterResourceIds(Arrays.asList(1, 2, 3));
         alertCriteria.fetchAlertDefinition(true);
         alertCriteria.addSortPriority(PageOrdering.DESC);
         alertCriteria.addSortName(PageOrdering.ASC);
         alertCriteria.setPaging(0, 100);
+        alertCriteria.setFiltersOptional(true);
+        //alertCriteria.setCaseSensitive(false);
 
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(alertCriteria);
         System.out.println(generator.getQueryString(false));
@@ -339,5 +326,18 @@ public final class CriteriaQueryGenerator {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(historyCriteria);
         System.out.println(generator.getQueryString(false));
         System.out.println(generator.getQueryString(true));
+    }
+
+    public static void testResourceCriteria() {
+        ResourceCriteria resourceCriteria = new ResourceCriteria();
+        resourceCriteria.addFilterResourceCategory(ResourceCategory.SERVER);
+        resourceCriteria.addFilterName("marques");
+        resourceCriteria.addSortName(PageOrdering.ASC);
+        resourceCriteria.setCaseSensitive(true);
+        resourceCriteria.setFiltersOptional(true);
+
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(resourceCriteria);
+        generator.getQueryString(false);
+        generator.getQueryString(true);
     }
 }

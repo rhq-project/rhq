@@ -37,11 +37,11 @@ public class Ejb2SFSBResourceTest extends AbstractSessionBeanTest {
 
     private static class TestTemplate extends Ejb2SessionBeanTestTemplate {
 
-        protected MethodArgDef[] getEjbCreateMethodArgs() {
+        public MethodArgDef[] getEjbCreateMethodArgs() {
             return null;
         }
 
-        protected Class<?> getHomeInterface() {
+        public Class<?> getHomeInterface() {
             try {
                 return Class.forName("org.jboss.test.ejb.proxy.beans.StatefulCounterHome");
             } catch (ClassNotFoundException e) {
@@ -49,23 +49,23 @@ public class Ejb2SFSBResourceTest extends AbstractSessionBeanTest {
             }
         }
 
-        protected String getExpectedResourceKey() {
+        public String getExpectedResourceKey() {
             return "jboss.j2ee:jndiName=ejb/StatefulCounterEjb,service=EJB";
         }
 
-        protected String getTestedBeanName() {
+        public String getTestedBeanName() {
             return "ejb/StatefulCounterEjb";
         }
 
-        protected String getHomeInterfaceJndiName() {
+        public String getHomeInterfaceJndiName() {
             return "ejb/StatefulCounterEjb";
         }
 
-        protected MethodArgDef[] getTestedMethodArgs() {
+        public MethodArgDef[] getTestedMethodArgs() {
             return null;
         }
 
-        protected String getTestedMethodName() {
+        public String getTestedMethodName() {
             return "count";
         }
     }

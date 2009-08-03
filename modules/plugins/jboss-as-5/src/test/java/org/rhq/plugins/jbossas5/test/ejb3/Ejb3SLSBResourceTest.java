@@ -36,19 +36,19 @@ public class Ejb3SLSBResourceTest extends AbstractEjb3SessionBeanResourceTest {
 
     private static class TestTemplate extends Ejb3SessionBeanTestTemplate {
 
-        protected String getTestedBeanName() {
+        public String getTestedBeanName() {
             return "HelloWorldBean";
         }
 
-        protected String getExpectedResourceKey() {
+        public String getExpectedResourceKey() {
             return "HelloWorldBean";
         }
 
-        protected MethodArgDef[] getTestedMethodArgs() {
+        public MethodArgDef[] getTestedMethodArgs() {
             return new MethodArgDef[] { new MethodArgDef(String.class, "John Doe") };
         }
 
-        protected String getTestedMethodName() {
+        public String getTestedMethodName() {
             return "sayHelloTo";
         }        
     }

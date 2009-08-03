@@ -45,13 +45,13 @@ public abstract class AbstractSessionBeanTest extends AbstractEjb2ResourceTest {
 
     protected static abstract class Ejb2SessionBeanTestTemplate extends EjbSessionBeanTestTemplate {
 
-        protected abstract MethodArgDef[] getEjbCreateMethodArgs();
+        public abstract MethodArgDef[] getEjbCreateMethodArgs();
 
-        protected abstract Class<?> getHomeInterface();
+        public abstract Class<?> getHomeInterface();
         
-        protected abstract String getHomeInterfaceJndiName();
+        public abstract String getHomeInterfaceJndiName();
         
-        protected Object getRemoteBean() throws Exception {
+        public Object getRemoteBean() throws Exception {
             return createRemoteBean(getHomeInterfaceJndiName(), getHomeInterface(), getEjbCreateMethodArgs());
         }
         
@@ -81,7 +81,7 @@ public abstract class AbstractSessionBeanTest extends AbstractEjb2ResourceTest {
 
     @Override
     protected void validateNumericMetricValue(String metricName, Double value, Resource resource) {
-        if ("CreateCount".equals(metricName)) {
+        if ("CreateCount".equals(metricName) && testTemplate.getExpectedResourceKey().equals(resource.getResourceKey())) {
             assertEquals(value, Double.valueOf(1), "Unexpected Session Bean CreateCount.");
         } else {
             super.validateNumericMetricValue(metricName, value, resource);

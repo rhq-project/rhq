@@ -35,11 +35,11 @@ import org.testng.annotations.Test;
 public class Ejb2SLSBResourceTest extends AbstractSessionBeanTest {
 
     private static class TestTemplate extends Ejb2SessionBeanTestTemplate {
-        protected MethodArgDef[] getEjbCreateMethodArgs() {
+        public MethodArgDef[] getEjbCreateMethodArgs() {
             return null;
         }
 
-        protected Class<?> getHomeInterface() {
+        public Class<?> getHomeInterface() {
             try {
                 return Class.forName("org.jboss.test.cts.interfaces.StatelessSessionHome");
             } catch (ClassNotFoundException e) {
@@ -47,26 +47,26 @@ public class Ejb2SLSBResourceTest extends AbstractSessionBeanTest {
             }
         }
     
-        protected String getExpectedResourceKey() {
+        public String getExpectedResourceKey() {
             return "jboss.j2ee:jndiName=ejbcts/StatelessSessionHome,service=EJB";
         }
     
-        protected String getTestedBeanName() {
+        public String getTestedBeanName() {
             return getHomeInterfaceJndiName();
         }
         
-        protected String getHomeInterfaceJndiName() {
+        public String getHomeInterfaceJndiName() {
             return "ejbcts/StatelessSessionHome";
         }
     
-        protected MethodArgDef[] getTestedMethodArgs() {
+        public MethodArgDef[] getTestedMethodArgs() {
             return new MethodArgDef[] { new MethodArgDef(String.class, "") };
         }
     
         /**
          * We call the method on the session bean.
          */
-        protected String getTestedMethodName() {
+        public String getTestedMethodName() {
             return "method1";
         }
 
@@ -75,12 +75,12 @@ public class Ejb2SLSBResourceTest extends AbstractSessionBeanTest {
          * method stats.
          */
         @Override
-        protected String getExpectedMethodName() {
+        public String getExpectedMethodName() {
             return "create";
         }
         
         @Override
-        protected int getTestedMethodExpectedInvocationCount() {
+        public int getTestedMethodExpectedInvocationCount() {
             return 1;
         }
     }

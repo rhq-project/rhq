@@ -121,21 +121,21 @@ public abstract class EjbSessionBeanTestTemplate {
         return false;
     }
     
-    protected abstract String getTestedBeanName();
+    public abstract String getTestedBeanName();
     
-    protected abstract Object getRemoteBean() throws Exception;    
+    public abstract Object getRemoteBean() throws Exception;    
 
-    protected abstract String getExpectedResourceKey();
+    public abstract String getExpectedResourceKey();
 
-    protected abstract String getTestedMethodName();
+    public abstract String getTestedMethodName();
 
-    protected String getExpectedMethodName() {
+    public String getExpectedMethodName() {
         return getTestedMethodName();
     }
     
-    protected abstract MethodArgDef[] getTestedMethodArgs();
+    public abstract MethodArgDef[] getTestedMethodArgs();
 
-    protected int getTestedMethodExpectedInvocationCount() {
+    public int getTestedMethodExpectedInvocationCount() {
         return 10;
     }
 }

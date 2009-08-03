@@ -36,7 +36,7 @@ public abstract class AbstractEjb3SessionBeanResourceTest extends AbstractEjb3Re
 
     protected static abstract class Ejb3SessionBeanTestTemplate extends EjbSessionBeanTestTemplate {
 
-        protected Object getRemoteBean() throws Exception {
+        public Object getRemoteBean() throws Exception {
             String jndiName = getTestedBeanName() + "/remote";
             
             return AppServerUtils.getRemoteObject(jndiName, Object.class);

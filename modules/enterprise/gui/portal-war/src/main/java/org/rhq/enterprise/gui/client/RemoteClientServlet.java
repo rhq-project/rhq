@@ -78,6 +78,7 @@ public class RemoteClientServlet extends HttpServlet {
             log("Remote Client Binary File: " + getRemoteClientZip());
         } catch (Throwable t) {
             log("Remote client is not available for deployment. Cause: " + t.toString());
+            return;
         }
 
         // make sure we create a version file if we have to by getting the version file now

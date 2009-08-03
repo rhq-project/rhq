@@ -36,12 +36,14 @@ import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
+import javax.jws.WebService;
 import javax.persistence.EntityManager;
 import javax.persistence.FlushModeType;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.sql.DataSource;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -82,6 +84,7 @@ import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
+import org.rhq.enterprise.server.jaxb.adapter.MeasurementDataNumericHighLowCompositeAdapter;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
 import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
@@ -96,7 +99,7 @@ import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
  */
 @Stateless
 @javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
-//@WebService(endpointInterface = "org.rhq.enterprise.server.measurement.MeasurementDataManagerRemote")
+@WebService(endpointInterface = "org.rhq.enterprise.server.measurement.MeasurementDataManagerRemote")
 public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, MeasurementDataManagerRemote {
     // time_stamp, schedule_id, value, schedule_id, schedule_id, value, value, value, value
     private static final String TRAIT_INSERT_STATEMENT = "INSERT INTO RHQ_measurement_data_trait \n"
@@ -758,7 +761,8 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         return result;
     }
 
-    public List<List<MeasurementDataNumericHighLowComposite>> findDataForCompatibleGroup(Subject subject, int groupId,
+    public @XmlJavaTypeAdapter(MeasurementDataNumericHighLowCompositeAdapter.class)
+    List<List<MeasurementDataNumericHighLowComposite>> findDataForCompatibleGroup(Subject subject, int groupId,
         int definitionId, long beginTime, long endTime, int numPoints, boolean groupAggregateOnly) {
         if (authorizationManager.canViewGroup(subject, groupId) == false) {
             throw new PermissionException("User[" + subject.getName()

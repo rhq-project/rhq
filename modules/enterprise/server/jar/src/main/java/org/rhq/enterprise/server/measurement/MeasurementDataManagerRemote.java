@@ -26,12 +26,14 @@ import javax.jws.WebMethod;
 import javax.jws.WebParam;
 import javax.jws.WebService;
 import javax.jws.soap.SOAPBinding;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
+import org.rhq.enterprise.server.jaxb.adapter.MeasurementDataNumericHighLowCompositeAdapter;
 
 @SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
 @WebService
@@ -63,6 +65,7 @@ public interface MeasurementDataManagerRemote {
         @WebParam(name = "definitionIds") int[] definitionIds);
 
     @WebMethod
+    @XmlJavaTypeAdapter(MeasurementDataNumericHighLowCompositeAdapter.class)
     List<List<MeasurementDataNumericHighLowComposite>> findDataForCompatibleGroup(//
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "groupId") int groupId,//
@@ -73,6 +76,7 @@ public interface MeasurementDataManagerRemote {
         @WebParam(name = "groupAggregateOnly") boolean groupAggregateOnly);
 
     @WebMethod
+    @XmlJavaTypeAdapter(MeasurementDataNumericHighLowCompositeAdapter.class)
     List<List<MeasurementDataNumericHighLowComposite>> findDataForResource(//
         @WebParam(name = "subject") Subject subject,//
         @WebParam(name = "resourceId") int resourceId,//

@@ -37,22 +37,28 @@ public class ResourceGroupComposite implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private final Double implicitAvail;
-    private final Double explicitAvail;
-    private final ResourceGroup resourceGroup;
+    ////JAXB Needs no args constructor and final fields make that difficult. 
 
-    private final GroupCategory category;
-    private final long implicitUp;
-    private final long implicitDown;
-    private final long explicitUp;
-    private final long explicitDown;
+    private Double implicitAvail;
+    private Double explicitAvail;
+    private ResourceGroup resourceGroup;
 
-    private final ResourceFacets resourceFacets;
+    private GroupCategory category;
+    private long implicitUp;
+    private long implicitDown;
+    private long explicitUp;
+    private long explicitDown;
+
+    private ResourceFacets resourceFacets;
 
     private class GroupDefinitionMember extends ResourceGroup {
         public void setGroupCategory(GroupCategory category) {
             super.setGroupCategory(category);
         }
+    }
+
+    //def no args constructor for JAXB
+    private ResourceGroupComposite() {
     }
 
     public ResourceGroupComposite(long explicitCount, double explicitAvailability, long implicitCount,

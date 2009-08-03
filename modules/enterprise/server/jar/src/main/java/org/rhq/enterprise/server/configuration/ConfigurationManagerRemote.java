@@ -191,8 +191,6 @@ public interface ConfigurationManagerRemote {
         @WebParam(name = "pingAgentFirst") boolean pingAgentFirst) //
         throws Exception;
 
-
-
     /**
      * Return the resource configuration definition for the {@link org.rhq.core.domain.resource.ResourceType} with the
      * specified id.
@@ -205,8 +203,7 @@ public interface ConfigurationManagerRemote {
      */
     @WebMethod
     ConfigurationDefinition getResourceConfigurationDefinitionForResourceType(
-            @WebParam(name = "subject") Subject subject,
-            @WebParam(name = "resourceTypeId") int resourceTypeId);
+        @WebParam(name = "subject") Subject subject, @WebParam(name = "resourceTypeId") int resourceTypeId);
 
     /**
      * Return the resource configuration definition for the {@link org.rhq.core.domain.resource.ResourceType} with the
@@ -220,8 +217,7 @@ public interface ConfigurationManagerRemote {
      */
     @WebMethod
     ConfigurationDefinition getResourceConfigurationDefinitionWithTemplatesForResourceType(
-            @WebParam(name = "subject") Subject subject,
-            @WebParam(name = "resourceTypeId") int resourceTypeId);
+        @WebParam(name = "subject") Subject subject, @WebParam(name = "resourceTypeId") int resourceTypeId);
 
     /**
      * Return the plugin configuration definition for the {@link org.rhq.core.domain.resource.ResourceType} with the

@@ -517,7 +517,7 @@
             <rhq.rootDir>../../..</rhq.rootDir>
             <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
             <rhq.projectJar>${project.build.finalName}.jar</rhq.projectJar>
-            <rhq.deploymentJar>rhq-client-${project.version}.jar</rhq.deploymentJar>
+            <rhq.deploymentZip>rhq-client-${project.version}.zip</rhq.deploymentZip>
             <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/rhq-downloads/rhq-client</rhq.deploymentDir>
          </properties>
 
@@ -537,7 +537,7 @@
                               <delete failonerror="false">
                                  <fileset dir="${rhq.deploymentDir}" includes="*.properties" />
                               </delete>
-                              <property name="deployment.file" location="${rhq.deploymentDir}/${rhq.deploymentJar}" />
+                              <property name="deployment.file" location="${rhq.deploymentDir}/${rhq.deploymentZip}" />
                               <echo>*** Updating ${deployment.file}...</echo>
                               <copy file="${basedir}/target/${rhq.projectJar}" toFile="${deployment.file}" />
                            </tasks>

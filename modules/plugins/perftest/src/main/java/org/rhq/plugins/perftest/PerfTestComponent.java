@@ -21,6 +21,7 @@ package org.rhq.plugins.perftest;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Set;
+import java.util.Date;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
@@ -34,6 +35,8 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.domain.event.EventSeverity;
+import org.rhq.core.domain.event.Event;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.content.ContentFacet;
@@ -44,6 +47,8 @@ import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
+import org.rhq.core.pluginapi.operation.OperationFacet;
+import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.plugins.perftest.event.PerfTestEventPoller;
 import org.rhq.plugins.perftest.measurement.MeasurementFactory;
 import org.rhq.plugins.perftest.configuration.SimpleConfigurationFactory;
@@ -55,7 +60,8 @@ import org.apache.commons.logging.LogFactory;
  *
  * @author Jason Dobies
  */
-public class PerfTestComponent implements ResourceComponent, MeasurementFacet, ContentFacet, ConfigurationFacet {
+public class PerfTestComponent implements ResourceComponent, MeasurementFacet, ContentFacet, ConfigurationFacet,
+    OperationFacet {
     // Attributes  --------------------------------------------
     private Log log = LogFactory.getLog(PerfTestComponent.class);
 
@@ -147,6 +153,31 @@ public class PerfTestComponent implements ResourceComponent, MeasurementFacet, C
 
     public InputStream retrievePackageBits(ResourcePackageDetails packageDetails) {
         return null; //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public OperationResult invokeOperation(String name, Configuration parameters)
+        throws InterruptedException, Exception {
+
+        if (name.equals("createEvents")) {
+            createEvents(parameters);
+        }
+
+        return null;
+    }
+
+    private void createEvents(Configuration params) {
+        int count = params.getSimple("count").getIntegerValue();
+        String source = params.getSimple("source").getStringValue();
+        String details = params.getSimple("details").getStringValue();
+        EventSeverity severity = EventSeverity.valueOf(params.getSimple("severity").getStringValue());
+        String eventType = "ScriptTestEvent";
+
+        EventContext eventContext = resourceContext.getEventContext();
+
+        for (int i = 0; i < count; ++i) {
+            Event event = new Event(eventType, source, new Date().getTime(), severity, details);
+            eventContext.publishEvent(event);
+        }
     }
 
     private void startEventPollers() {

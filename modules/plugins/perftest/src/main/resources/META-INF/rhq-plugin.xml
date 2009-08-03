@@ -49,6 +49,15 @@
             <c:simple-property name="alpha-property1"/>
             <c:simple-property name="alpha-property2"/>
          </plugin-configuration>
+
+         <operation name="createEvents">
+            <parameters>
+               <c:simple-property name="source" required="true" type="string" description="The event source"/>
+               <c:simple-property name="details" required="true" type="string" description="The event details"/>
+               <c:simple-property name="severity" required="true" type="string" description="The event severity"/>
+               <c:simple-property name="count" required="true" type="integer" default="1" description="The number of events to create"/>
+            </parameters>
+         </operation>   
          
          <metric displayName="Alpha Metric 0" property="alpha-metric0" defaultOn="false"/>
          <metric displayName="Alpha Metric 1" property="alpha-metric1" defaultOn="true" displayType="summary"/>
@@ -56,6 +65,8 @@
          <metric displayName="Alpha Metric 3" property="alpha-metric3" defaultOn="true" displayType="detail"/>
          <metric displayName="Alpha Metric 4" property="alpha-metric4" defaultOn="true" displayType="detail"/>
          <metric displayName="Alpha Metric 5" property="alpha-metric5" defaultOn="true" displayType="detail"/>
+
+          <event name="ScriptTestEvent" description="A event that is generated from CLI test scripts"/>
          
          <content displayName="Alpha Content 0" name="alpha-content0" category="configuration"/>
          

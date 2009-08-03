@@ -517,7 +517,7 @@
             <rhq.rootDir>../../..</rhq.rootDir>
             <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
             <rhq.projectJar>${project.build.finalName}.jar</rhq.projectJar>
-            <rhq.deploymentZip>rhq-client-${project.version}.zip</rhq.deploymentZip>
+            <rhq.deploymentZip>rhq-remoting-cli-${project.version}.zip</rhq.deploymentZip>
             <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/rhq-downloads/rhq-client</rhq.deploymentDir>
          </properties>
 

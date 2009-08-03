@@ -36,19 +36,19 @@ public class Ejb3SFSBResourceTest extends AbstractEjb3SessionBeanResourceTest {
 
     private static class TestTemplate extends Ejb3SessionBeanTestTemplate {
 
-        protected String getExpectedResourceKey() {
+        public String getExpectedResourceKey() {
             return "CounterBean";
         }
 
-        protected String getTestedBeanName() {
+        public String getTestedBeanName() {
             return "CounterBean";
         }
 
-        protected MethodArgDef[] getTestedMethodArgs() {
+        public MethodArgDef[] getTestedMethodArgs() {
             return null;
         }
 
-        protected String getTestedMethodName() {
+        public String getTestedMethodName() {
             return "increment";
         }        
     }

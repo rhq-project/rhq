@@ -74,7 +74,7 @@ public class RemoteClientServlet extends HttpServlet {
         try {
             getRemoteClientZip();
         } catch (Exception e) {
-            log("Remote client is not available for deployment");
+            log("Remote client is not available for deployment", e);
             return;
         }
 

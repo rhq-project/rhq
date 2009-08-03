@@ -71,20 +71,13 @@ public class RemoteClientServlet extends HttpServlet {
 
     @Override
     public void init() throws ServletException {
-        try {
-            getRemoteClientZip();
-        } catch (Exception e) {
-            log("Remote client is not available for deployment", e);
-            return;
-        }
-
         log("Starting the remote client servlet");
 
-        // make sure we have a binary file; log its location
+        // make sure we have a binary distro file; log its location
         try {
-            log("Remote Client Binary File: " + getVersionFile());
+            log("Remote Client Binary File: " + getRemoteClientZip());
         } catch (Throwable t) {
-            log("Missing remote client binary file", t);
+            log("Remote client is not available for deployment", t);
         }
 
         // make sure we create a version file if we have to by getting the version file now

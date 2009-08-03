@@ -804,18 +804,20 @@
             defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
 '>
 
-<!ENTITY ejb2CommonMetrics '
-    <metric property="CreateCount" displayName="Create Count" displayType="summary" measurementType="trendsup"
-            description="The number of instances of this EJB2 Session Bean that have been created. since server start."/>
-
-    <metric property="RemoveCount" displayName="Remove Count" displayType="summary" measurementType="trendsup"
-            description="The number of instances of this EJB2 Session Bean that have been removed since server start."/>
-
+<!ENTITY ejb2PoolMetrics '
     <metric property="CurrentPoolSize" displayName="Current Pool Size" displayType="summary" measurementType="dynamic"
             description="The number of beans in the pool."/>
 
     <metric property="MaxPoolSize" displayName="Max Pool Size" displayType="summary" measurementType="dynamic"
             description="The maximum pool size."/>
+'>
+
+<!ENTITY ejb2CreateRemoveMetrics '
+    <metric property="CreateCount" displayName="Create Count" displayType="summary" measurementType="trendsup"
+            description="The number of instances of this EJB2 Session Bean that have been created. since server start."/>
+
+    <metric property="RemoveCount" displayName="Remove Count" displayType="summary" measurementType="trendsup"
+            description="The number of instances of this EJB2 Session Bean that have been removed since server start."/>
 '>
 
 <!ENTITY ejb2SessionBeanMetrics '
@@ -2453,7 +2455,8 @@
                      description="An EJB2 Stateless Session Bean">
                  &ejb2StatelessSessionBeanDefinition;
                  &ejbInvocationStatsOperation;
-                 &ejb2CommonMetrics;
+                 &ejb2CreateRemoveMetrics;
+                 &ejb2PoolMetrics;
                  &ejb2SessionBeanMetrics;
                  &ejb2StatelessSessionBeanMetrics;
 
@@ -2468,7 +2471,8 @@
                      description="An EJB2 Stateful Session Bean">
                  &ejb2StatefulSessionBeanDefinition;
                  &ejbInvocationStatsOperation;
-                 &ejb2CommonMetrics;
+                 &ejb2CreateRemoveMetrics;
+                 &ejb2PoolMetrics;
                  &ejb2SessionBeanMetrics;
                  &ejb2StatefulSessionBeanMetrics;
 
@@ -2482,7 +2486,7 @@
                      discovery="Ejb2BeanDiscoveryComponent"
                      description="An EJB2 Message Driven Bean">
                   &ejb2MessageDrivenBeanDefinition;
-                  &ejb2CommonMetrics;
+                  &ejb2PoolMetrics;
                   &ejb2MessageDrivenBeanMetrics;
             </service>
 
@@ -2491,7 +2495,8 @@
                      discovery="Ejb2BeanDiscoveryComponent"
                      description="An EJB2 Entity Bean">
                 &ejb2EntityBeanDefinition;
-                &ejb2CommonMetrics;
+                &ejb2CreateRemoveMetrics;
+                &ejb2PoolMetrics;
                 &ejb2EntityBeanMetrics;
             </service>
         </service>
@@ -2529,7 +2534,8 @@
                      description="An EJB2 Stateless Session Bean">
                  &ejb2StatelessSessionBeanDefinition;
                  &ejbInvocationStatsOperation;
-                 &ejb2CommonMetrics;
+                 &ejb2CreateRemoveMetrics;
+                 &ejb2PoolMetrics;
                  &ejb2SessionBeanMetrics;
                  &ejb2StatelessSessionBeanMetrics;
             </service>
@@ -2540,7 +2546,8 @@
                      description="An EJB2 Stateful Session Bean">
                  &ejb2StatefulSessionBeanDefinition;
                  &ejbInvocationStatsOperation;
-                 &ejb2CommonMetrics;
+                 &ejb2CreateRemoveMetrics;
+                 &ejb2PoolMetrics;
                  &ejb2SessionBeanMetrics;
                  &ejb2StatefulSessionBeanMetrics;
             </service>
@@ -2550,7 +2557,7 @@
                      discovery="Ejb2BeanDiscoveryComponent"
                      description="An EJB2 Message Driven Bean">
                   &ejb2MessageDrivenBeanDefinition;
-                  &ejb2CommonMetrics;
+                  &ejb2PoolMetrics;
                   &ejb2MessageDrivenBeanMetrics;
             </service>
 
@@ -2559,7 +2566,8 @@
                      discovery="Ejb2BeanDiscoveryComponent"
                      description="An EJB2 Entity Bean">
                 &ejb2EntityBeanDefinition;
-                &ejb2CommonMetrics;
+                &ejb2CreateRemoveMetrics;
+                &ejb2PoolMetrics;
                 &ejb2EntityBeanMetrics;
             </service>
         </service>

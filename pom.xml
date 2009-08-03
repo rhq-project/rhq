@@ -41,8 +41,6 @@
 
     <doUpdate>false</doUpdate>
 
-    <java5.home>${java.home}</java5.home>
-
     <!-- dependency versions -->
     
     <!-- Start: JBoss AS Dependency Versions

@@ -277,8 +277,8 @@ public class ClientMain {
                 outputWriter.println("");
                 return response;
             } catch (ArrayIndexOutOfBoundsException e) {
-                outputWriter.println("Unexpected syntax: " + args);
-                outputWriter.println("   [" + args[0] + " syntax: " + command.getPromptCommandString());
+                outputWriter.println("Too many arguments were specified.");
+                outputWriter.println("Expected syntax: " + command.getSyntax());
             }
         } else {
             boolean result = commands.get("exec").execute(this, args);

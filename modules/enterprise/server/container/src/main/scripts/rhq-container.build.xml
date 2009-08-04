@@ -211,8 +211,6 @@
     <echo>Running upgrade script for JBossWS ${jbossws-native-dist.version} </echo>
     <ant antfile="${basedir}/target/${jboss-native-dir}/build.xml" target="deploy-jboss423" dir="${basedir}/target/${jboss-native-dir}" />
 
-  	<echo> </echo>
-  	
       <echo>Installing safe ejb3 web invoker ...</echo>
       <delete verbose="true">
          <fileset dir="${jboss.deploy.dir}/jbossws.sar">

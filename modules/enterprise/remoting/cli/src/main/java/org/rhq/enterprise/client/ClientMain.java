@@ -75,7 +75,7 @@ public class ClientMain {
     private PrintWriter outputWriter;
 
     // Local storage of credentials for this session/client
-    private String host = "127.0.0.1";
+    private String host = null;
     private int port = 7080;
     private String user;
     private String pass;
@@ -473,7 +473,11 @@ public class ClientMain {
         }
 
         if (user != null && pass != null) {
-            commands.get("login").execute(this, new String[] { "login", user, pass });
+            if (host != null) {
+                commands.get("login").execute(this, new String[] { "login", user, pass, host, String.valueOf(port) });
+            } else {
+                commands.get("login").execute(this, new String[] { "login", user, pass });
+            }
         }
 
         if (command != null) {

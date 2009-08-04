@@ -2,7 +2,7 @@
 
 <project name="rhq-client" basedir=".">
 
-   <property name="output.dir" location="${basedir}/target/${project.artifactId}-${project.version}"/>
+   <property name="output.dir" location="${basedir}/target/${project.artifactId}-${project.version}" />
    <property name="bin.home" location="${output.dir}/bin" />
    <property name="cli.home" location="${output.dir}/cli" />
    <property name="conf.home" location="${output.dir}/conf" />
@@ -27,7 +27,7 @@
       <copy verbose="true" toDir="${bin.home}">
          <fileset dir="${basedir}/src/etc/" includes="rhq-cli*.*" />
       </copy>
-      <chmod dir="${bin.home}" perm="ug+rx" includes="*.sh"/>
+      <chmod dir="${bin.home}" perm="ug+rx" includes="*.sh" />
    </target>
 
    <target name="prepare-conf-dir">
@@ -44,7 +44,7 @@
       <mkdir dir="${lib.home}" />
       <mkdir dir="${lib.home}/endorsed" />
       <echo>*** Populating lib</echo>
-      <copy file="${settings.localRepository}/org/rhq/rhq-remoting-webservices/${rhq-remoting-ws.version}/rhq-remoting-webservices-${rhq-remoting-ws.version}.jar" tofile="${lib.home}/rhq-remoting-webservices-${rhq-remoting-ws.version}.jar" verbose="true"/>
+      <copy file="${settings.localRepository}/org/rhq/rhq-remoting-webservices/${rhq-remoting-ws.version}/rhq-remoting-webservices-${rhq-remoting-ws.version}.jar" tofile="${lib.home}/rhq-remoting-webservices-${rhq-remoting-ws.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/commons-logging/commons-logging/${commons-logging.version}/commons-logging-${commons-logging.version}.jar" tofile="${lib.home}/commons-logging-${commons-logging.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/commons-lang/commons-lang/${commons-lang.version}/commons-lang-${commons-lang.version}.jar" tofile="${lib.home}/commons-lang-${commons-lang.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/gnu-getopt/getopt/${getopt.version}/getopt-${getopt.version}.jar" tofile="${lib.home}/getopt-${getopt.version}.jar" verbose="true" />
@@ -54,15 +54,15 @@
       <copy file="${settings.localRepository}/org/rhq/rhq-core-domain/${project.version}/rhq-core-domain-${project.version}.jar" tofile="${lib.home}/rhq-core-domain-${project.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/org/rhq/rhq-enterprise-server/${project.version}/rhq-enterprise-server-${project.version}.jar" tofile="${lib.home}/rhq-enterprise-server-${project.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/jboss/jboss-common/${jboss-common.version}/jboss-common-${jboss-common.version}.jar" tofile="${lib.home}/jboss-common-${jboss-common.version}.jar" verbose="true" />
-      <copy file="${settings.localRepository}/jboss/jboss-remoting/${jboss-remoting.version}/jboss-remoting-${jboss-remoting.version}.jar" tofile="${lib.home}/jboss-remoting-${jboss-remoting.version}.jar" verbose="true" />     
-      <copy file="${settings.localRepository}/jboss/javassist/${jboss-javassist.version}/javassist-${jboss-javassist.version}.jar" tofile="${lib.home}/javassist-${jboss-javassist.version}.jar" verbose="true" />     
+      <copy file="${settings.localRepository}/jboss/jboss-remoting/${jboss-remoting.version}/jboss-remoting-${jboss-remoting.version}.jar" tofile="${lib.home}/jboss-remoting-${jboss-remoting.version}.jar" verbose="true" />
+      <copy file="${settings.localRepository}/jboss/javassist/${jboss-javassist.version}/javassist-${jboss-javassist.version}.jar" tofile="${lib.home}/javassist-${jboss-javassist.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/oswego-concurrent/concurrent/${concurrent.version}/concurrent-${concurrent.version}.jar" tofile="${lib.home}/concurrent-${concurrent.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/oswego-concurrent/concurrent/${concurrent.version}/concurrent-${concurrent.version}.jar" tofile="${lib.home}/concurrent-${concurrent.version}.jar" verbose="true" />
       <!-- TODO: This can probaby go away after we stop using EJB classes as Exceptions in the RemoteAPI -->
       <copy file="${settings.localRepository}/javax/persistence/persistence-api/${persistence-api.version}/persistence-api-${persistence-api.version}.jar" tofile="${lib.home}/persistence-api-${persistence-api.version}.jar" verbose="true" />
-      <copy file="${basedir}/target/${project.artifactId}-${project.version}.jar" tofile="${lib.home}/${project.artifactId}-${project.version}.jar" verbose="true"/>
-      <copy file="${settings.localRepository}/net/sf/opencsv/opencsv/${opencsv.version}/opencsv-${opencsv.version}.jar" tofile="${lib.home}/opencsv-${opencsv.version}.jar" verbose="true"/>
-      <copy file="${settings.localRepository}/org/testng/testng/${testng.version}/testng-${testng.version}-jdk15.jar" tofile="${lib.home}/testng-${testng.version}-jdk15.jar" verbose="true"/>
+      <copy file="${basedir}/target/${project.artifactId}-${project.version}.jar" tofile="${lib.home}/${project.artifactId}-${project.version}.jar" verbose="true" />
+      <copy file="${settings.localRepository}/net/sf/opencsv/opencsv/${opencsv.version}/opencsv-${opencsv.version}.jar" tofile="${lib.home}/opencsv-${opencsv.version}.jar" verbose="true" />
+      <copy file="${settings.localRepository}/org/testng/testng/${testng.version}/testng-${testng.version}-jdk15.jar" tofile="${lib.home}/testng-${testng.version}-jdk15.jar" verbose="true" />
    </target>
 
 </project>

@@ -368,8 +368,8 @@
 
       <!-- deploy the remote client binary to the downloads location. -->
       <echo>Deploying the latest remote client binary</echo>
-   <copy file="${settings.localRepository}/org/rhq/rhq-client/${rhq.version}/rhq-client-${rhq.version}.zip"
-         tofile="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-client/rhq-client-${rhq.version}.zip"
+   <copy file="${settings.localRepository}/org/rhq/rhq-remoting-cli/${rhq.version}/rhq-remoting-cli-${rhq.version}.zip"
+         tofile="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-client/rhq-remoting-cli-${rhq.version}.zip"
          verbose="true"
          failonerror="false"/>
 

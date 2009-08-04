@@ -294,7 +294,7 @@ public class ClientMain {
                 outputWriter.println("");
                 return response;
             } catch (ArrayIndexOutOfBoundsException e) {
-                outputWriter.println("Too many arguments were specified.");
+                outputWriter.println("An incorrect number of arguments was specified.");
                 outputWriter.println("Expected syntax: " + command.getSyntax());
             }
         } else {

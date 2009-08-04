@@ -54,7 +54,6 @@
     <jboss-remoting.version>2.2.2.SP8</jboss-remoting.version>    
     <jboss-serialization.version>1.0.3.GA</jboss-serialization.version>
     <jboss-javassist.version>3.8.0.GA</jboss-javassist.version>
-    <jbossws.version>3.0.1-native-2.0.4.GA</jbossws.version>
     <jbossws-native-dist.version>3.1.1.GA</jbossws-native-dist.version>
     <!-- End: JBoss AS Dependency Versions -->
     
@@ -123,8 +122,8 @@
      <dependency>
          <groupId>org.jboss.jbossws</groupId>
          <artifactId>jbossws-native-dist</artifactId>
-         <version>3.1.1.GA</version>
-         <type>zooloo</type>
+         <version>${jbossws-native-dist.version}</version>
+         <type>zip</type>
      </dependency>      
 
       <dependency>
@@ -206,21 +205,9 @@
       </dependency>
 
       <dependency>
-         <groupId>jboss.jbossws</groupId>
-         <artifactId>jboss-jaxws</artifactId>
-         <version>${jbossws.version}</version>
-      </dependency>      
-
-      <dependency>
-         <groupId>jboss.jbossws</groupId>
-         <artifactId>jbossws-client</artifactId>
-         <version>${jbossws.version}</version>
-      </dependency>
-
-      <dependency>
          <groupId>org.jboss.jbossws</groupId>
          <artifactId>jbossws-native-dist</artifactId>
-         <version>3.1.1.GA</version>
+         <version>jbossws-native-dist.version</version>
          <type>zip</type>
       </dependency>
       

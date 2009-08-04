@@ -242,14 +242,6 @@
 
       <!-- Needed due to JDK 1.5 bug. -->
       <dependency>
-         <groupId>jboss.jbossws</groupId>
-         <artifactId>jboss-jaxws</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope>
-      </dependency>
-
-      <!-- Needed due to JDK 1.5 bug. -->
-      <dependency>
          <groupId>jboss</groupId>
          <artifactId>jboss-annotations-ejb3</artifactId>
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->

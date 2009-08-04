@@ -26,10 +26,11 @@
 
    <dependencies>
 
+      <!--  This needs to be updated to 3.1.1.GA -->
       <dependency>
          <groupId>jboss.jbossws</groupId>
          <artifactId>jbossws-client</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->         
+         <version>3.0.1-native-2.0.4.GA</version>         
       </dependency>
 
       <dependency>

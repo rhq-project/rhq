@@ -22,13 +22,19 @@
    <properties>
       <scm.module.path>modules/enterprise/remoting/</scm.module.path>
       <persistence-api.version>1.0</persistence-api.version>
-      <ant.contrib.version>1.0b3</ant.contrib.version>      
+      <ant.contrib.version>1.0b3</ant.contrib.version>
    </properties>
 
    <dependencies>
       <dependency>
          <groupId>org.jboss.jbossas</groupId>
          <artifactId>jboss-as-dist</artifactId>
+         <type>zip</type>
+      </dependency>
+
+      <dependency>
+         <groupId>org.jboss.jbossws</groupId>
+         <artifactId>jbossws-native-dist</artifactId>
          <type>zip</type>
       </dependency>
 
@@ -55,7 +61,6 @@
          <scope>provided</scope>
       </dependency>
 
-      <!--  This is needed for wsprovide's classpath. I'm not sure why, but it's not provided with jbossws -->
       <dependency>
          <groupId>javax.persistence</groupId>
          <artifactId>persistence-api</artifactId>
@@ -100,7 +105,7 @@
                            <property name="settings.localRepository" value="${settings.localRepository}" />
                            <property name="persistence-api.version" value="${persistence-api.version}" />
                            <property name="jboss.version" value="${jboss.version}" />
-                           <property name="jbossws.version" value="${jbossws.version}" />
+                           <property name="jbossws-native-dist.version" value="${jbossws-native-dist.version}" />
                            <property name="rhq.client.build.exclude.cli.jar" value="${rhq.client.build.exclude.cli.jar}" />
                            <property name="rhq.client.build.include.client.jar" value="${rhq.client.build.include.client.jar}" />
                            <property name="quartz.version" value="${quartz.version}" />
@@ -128,10 +133,11 @@
                <archive>
                   <index>true</index>
                   <manifestEntries>
+                     <Implementation-Title>${rhq.product.name} - ${project.name}</Implementation-Title>
+                     <Implementation-Version>${project.version}</Implementation-Version>
+                     <Specification-Vendor>org.jboss</Specification-Vendor>                     
                      <Specification-Title>JBossWS</Specification-Title>
-                     <Implementation-Title>${project.name}</Implementation-Title>
-                     <Implementation-Version>${version}</Implementation-Version>
-                     <Implementation-Vendor-Id>${groupId}</Implementation-Vendor-Id>
+                     <Specification-Version>${jbossws-native-dist.version}</Specification-Version>
                      <Build-Number>${buildNumber}</Build-Number>
                   </manifestEntries>
                </archive>

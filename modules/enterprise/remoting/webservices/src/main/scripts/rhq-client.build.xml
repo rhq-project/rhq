@@ -2,173 +2,203 @@
 
 <project name="rhq-client" basedir=".">
 
-   <property name="jboss.home" location="${basedir}/target/rhq-server-${project.version}/jbossas" />
-   <property name="wsdl.home" location="${project.build.outputDirectory}/wsdl" />
-   <property name="wsconsume.home" location="${project.build.outputDirectory}/wsconsume-output" />
-   <property name="wsprovide.home" location="${project.build.outputDirectory}/wsprovide-output" />
-   <property name="include.client.jar" value="true" />
+	<property name="jboss.home" location="${basedir}/target/jboss-${jboss.version}" />
+	<property name="jbossws.home" location="${basedir}/target/jbossws-native-bin-dist" />
+	<property name="wsdl.home" location="${project.build.outputDirectory}/wsdl" />
+	<property name="wsconsume.home" location="${project.build.outputDirectory}/wsconsume-output" />
+	<property name="wsprovide.home" location="${project.build.outputDirectory}/wsprovide-output" />
+	<property name="include.client.jar" value="true" />
 
-   <!-- load all the Stateless Session Bean for WS exposure as properties. Must add bean as separate 
+	<!-- load all the Stateless Session Bean for WS exposure as properties. Must add bean as separate 
    		property AND in the "ws-list" below for successful inclusion. ##TODO: collapse these to one list. -->
-   <property name="AlertManager" value="org.rhq.enterprise.server.alert.AlertManagerBean" />
-   <property name="AlertDefinitionManager" value="org.rhq.enterprise.server.alert.AlertDefinitionManagerBean" />
-   <property name="AvailabilityManager" value="org.rhq.enterprise.server.measurement.AvailabilityManagerBean" />
-   <property name="CallTimeDataManager" value="org.rhq.enterprise.server.measurement.CallTimeDataManagerBean" />
-   <property name="ChannelManager" value="org.rhq.enterprise.server.content.ChannelManagerBean" />
-   <property name="ConfigurationManager" value="org.rhq.enterprise.server.configuration.ConfigurationManagerBean" />
-   <property name="ContentManager" value="org.rhq.enterprise.server.content.ContentManagerBean" />
-   <property name="EventManager" value="org.rhq.enterprise.server.event.EventManagerBean" />
-   <property name="MeasurementDefinitionManager" value="org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerBean" />
-   <property name="MeasurementBaselineManager" value="org.rhq.enterprise.server.measurement.MeasurementBaselineManagerBean" />
-   <property name="MeasurementDataManager" value="org.rhq.enterprise.server.measurement.MeasurementDataManagerBean" />
-   <property name="MeasurementProblemManager" value="org.rhq.enterprise.server.measurement.MeasurementProblemManagerBean" />
-   <property name="MeasurementScheduleManager" value="org.rhq.enterprise.server.measurement.MeasurementScheduleManagerBean" />
-   <property name="OperationManager" value="org.rhq.enterprise.server.operation.OperationManagerBean" />
-   <property name="ResourceGroupManager" value="org.rhq.enterprise.server.resource.group.ResourceGroupManagerBean" />
-   <property name="ResourceManager" value="org.rhq.enterprise.server.resource.ResourceManagerBean" />
-   <property name="RoleManager" value="org.rhq.enterprise.server.authz.RoleManagerBean" />
-   <property name="SubjectManager" value="org.rhq.enterprise.server.auth.SubjectManagerBean" />
+	<property name="AlertManager" value="org.rhq.enterprise.server.alert.AlertManagerBean" />
+	<property name="AlertDefinitionManager" value="org.rhq.enterprise.server.alert.AlertDefinitionManagerBean" />
+	<property name="AvailabilityManager" value="org.rhq.enterprise.server.measurement.AvailabilityManagerBean" />
+	<property name="CallTimeDataManager" value="org.rhq.enterprise.server.measurement.CallTimeDataManagerBean" />
+	<property name="ChannelManager" value="org.rhq.enterprise.server.content.ChannelManagerBean" />
+	<property name="ConfigurationManager" value="org.rhq.enterprise.server.configuration.ConfigurationManagerBean" />
+	<property name="ContentManager" value="org.rhq.enterprise.server.content.ContentManagerBean" />
+	<property name="EventManager" value="org.rhq.enterprise.server.event.EventManagerBean" />
+	<property name="MeasurementDefinitionManager" value="org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerBean" />
+	<property name="MeasurementBaselineManager" value="org.rhq.enterprise.server.measurement.MeasurementBaselineManagerBean" />
+	<property name="MeasurementDataManager" value="org.rhq.enterprise.server.measurement.MeasurementDataManagerBean" />
+	<property name="MeasurementProblemManager" value="org.rhq.enterprise.server.measurement.MeasurementProblemManagerBean" />
+	<property name="MeasurementScheduleManager" value="org.rhq.enterprise.server.measurement.MeasurementScheduleManagerBean" />
+	<property name="OperationManager" value="org.rhq.enterprise.server.operation.OperationManagerBean" />
+	<property name="ResourceGroupManager" value="org.rhq.enterprise.server.resource.group.ResourceGroupManagerBean" />
+	<property name="ResourceManager" value="org.rhq.enterprise.server.resource.ResourceManagerBean" />
+	<property name="RoleManager" value="org.rhq.enterprise.server.authz.RoleManagerBean" />
+	<property name="SubjectManager" value="org.rhq.enterprise.server.auth.SubjectManagerBean" />
 
-   <!-- List of all the simple bean names(Alert for AlertManagerBean, etc.) in alphabetical order. List used by wsprovide/wsconsume -->
-   <!--<property name="ws-list" value="Configuration" /> --> 
-   <property name="ws-list" value="Alert,AlertDefinition,Availability,CallTimeData,Channel,Configuration,Content,Event,MeasurementBaseline,MeasurementData,MeasurementDefinition,MeasurementProblem,MeasurementSchedule,Operation,Resource,ResourceGroup,Role,Subject" />  
+	<!-- List of all the simple bean names(Alert for AlertManagerBean, etc.) in alphabetical order. List used by wsprovide/wsconsume -->
+	<!--<property name="ws-list" value="Configuration" /> -->
+	<property name="ws-list" value="Alert,AlertDefinition,Availability,CallTimeData,Channel,Configuration,Content,Event,MeasurementBaseline,MeasurementData,MeasurementDefinition,MeasurementProblem,MeasurementSchedule,Operation,Resource,ResourceGroup,Role,Subject" />
 
-   <target name="prepare-dist">
-      <condition property="exclude.cli.jar" value="true">
-         <equals arg1="${rhq.client.build.exclude.cli.jar}" arg2="true" />
-      </condition>
-      <condition property="include.client.jar" value="true">
-         <equals arg1="${rhq.client.build.include.client.jar}" arg2="true" />
-      </condition>
+	<target name="prepare-dist">
+		<condition property="exclude.cli.jar" value="true">
+			<equals arg1="${rhq.client.build.exclude.cli.jar}" arg2="true" />
+		</condition>
+		<condition property="include.client.jar" value="true">
+			<equals arg1="${rhq.client.build.include.client.jar}" arg2="true" />
+		</condition>
 
-      <antcall target="prepare-jbossws" />
-      <antcall target="prepare-wsdl" />
-   </target>
+		<antcall target="prepare-jbossws" />
+		<antcall target="prepare-wsdl" />
+	</target>
 
 
-   <!-- To generate the client service classes we need portions of an AS distribution that provide
-	   jbossws.  Use the enterprise container build zip as it has the updated JBossWS content. -->
-   <target name="prepare-jbossws">
-      <property name="container.zip" location="${settings.localRepository}/org/rhq/rhq-enterprise-server-container/${project.version}/rhq-enterprise-server-container-${project.version}.zip" />
-      <condition property="container.uptodate">
-         <and>
-            <uptodate srcfile="${container.zip}" targetfile="${jboss.home}" />
-            <available file="${jboss.home}/bin/wsprovide.bat" type="file" />
-         </and>
-      </condition>
-      <antcall target="unzip-jboss" />
-   </target>
+	<!-- To generate the client service classes we need portions of an AS distribution that provide
+	   jbossws.  We can't use the enterprise container build zip as it is built last (it needs to contain
+	   the results of thie build).  So, we'll have to download and update a vanilla AS with WS -->
+	<target name="prepare-jbossws">
+		<property name="jboss.zip" location="${settings.localRepository}/org/jboss/jbossas/jboss-as-dist/${jboss.version}/jboss-as-dist-${jboss.version}.zip" />
+		<condition property="jboss.uptodate">
+			<and>
+				<uptodate srcfile="${jboss.zip}" targetfile="${jboss.home}" />
+				<available file="${jboss.home}/bin/wsprovide.bat" type="file" />
+			</and>
+		</condition>
+		<antcall target="unzip-jboss" />
+	</target>
 
-   <target name="unzip-jboss" unless="container.uptodate">
-      <unzip src="${settings.localRepository}/org/rhq/rhq-enterprise-server-container/${project.version}/rhq-enterprise-server-container-${project.version}.zip" dest="${basedir}/target">
-         <patternset>
-            <include name="rhq-server-${project.version}/jbossas/bin/ws*.*" />
-            <include name="rhq-server-${project.version}/jbossas/lib/*.jar" />
-            <include name="rhq-server-${project.version}/jbossas/lib/endorsed/*.jar" />
-            <include name="rhq-server-${project.version}/jbossas/client/*.jar" />
-         </patternset>
-      </unzip>
-   </target>
+	<target name="unzip-jboss" unless="jboss.uptodate">
+		<!-- No need to unzip everything, just what we need for jbossws (and the jbossws upgrade script) -->
+		<unzip src="${settings.localRepository}/org/jboss/jbossas/jboss-as-dist/${jboss.version}/jboss-as-dist-${jboss.version}.zip" dest="${basedir}/target">
+			<patternset>
+				<include name="jboss-${jboss.version}/bin/ws*.*" />
+				<include name="jboss-${jboss.version}/lib/*.jar" />
+				<include name="jboss-${jboss.version}/lib/endorsed/*.jar" />
+				<include name="jboss-${jboss.version}/client/*.jar" />
+				<include name="jboss-${jboss.version}/server/default" />
+			</patternset>
+		</unzip>
 
-   <target name="prepare-wsdl" if="include.client.jar" depends="prepare-jbossws">
-      <echo>*** Creating new wsdl</echo>
-      <mkdir dir="${wsconsume.home}" />
-      <mkdir dir="${wsprovide.home}" />
+		<!-- Run JBossWS 3.1.1 upgrade script on the JBossAS: 
+             i) pull upgrade bundle 
+            ii) unzip 
+           iii) run it on JBossAS instance (4.2.3) to 3.1.1.
+           These upgrade steps should be revisited when moving JBossAS version beyond 4.2.3 -->
 
-      <echo>The JAVA HOME being used: ${java.jre.home}</echo>
-      <echo />
+		<echo>...Upgrading JBossWS version from bundled version...</echo>
 
-      <!-- Classpath for WSConsume/WSProvide. Defined globally so that custom task defs can reference. -->
-      <!-- So,it's JBossws version specific (and assumes compatibility between JBossws and AS -->
-      <path id="jbossws.native.classpath">
-         <fileset dir="${java.jre.home}/../lib/" includes="*.jar" />
+		<!-- Unzip JBossWS dist zipfile... if necessary -->
+		<unzip src="${settings.localRepository}/org/jboss/jbossws/jbossws-native-dist/${jbossws-native-dist.version}/jbossws-native-dist-${jbossws-native-dist.version}.zip" dest="${basedir}/target" />
 
-         <!-- AS dependencies  -->
-         <fileset dir="${jboss.home}/lib/endorsed/" includes="*.jar" />
-         <fileset dir="${jboss.home}/lib/" includes="*.jar" />
+		<!-- Modify the properties file for upgrade -->
+		<copy file="${jbossws.home}/ant.properties.example" tofile="${jbossws.home}/ant.properties" filtering="true">
+			<!-- modify properties appropriately -->
+			<filterset>
+				<filter token="jboss423.home" value="${jboss.home}" />
+			</filterset>
+		</copy>
+		<replace file="${jbossws.home}/ant.properties" token="jbossws.integration.target=jboss500" value="jbossws.integration.target=jboss423" />
 
-         <!-- JBossws/AS client dependencies  -->
-         <fileset dir="${jboss.home}/client">
-            <include name="jbossws-spi.jar" />
-            <include name="jbossws-common.jar" />
-            <include name="jbossws-framework.jar" />
+		<!-- This line added to convert the \ in Window's paths to /.  Should have no effect on non-Windows  -->
+		<replace file="${jbossws.home}/ant.properties" token="\" value="/" />
 
-            <include name="activation.jar" />
-            <include name="getopt.jar" />
-            <include name="jbossall-client.jar" />
-            <include name="log4j.jar" />
-            <include name="mail.jar" />
+		<!-- Call the upgrade script -->
+		<ant antfile="${jbossws.home}/build.xml" target="deploy-jboss423" dir="${jbossws.home}" />
+	</target>
 
-            <include name="jaxb-api.jar" />
-            <include name="jaxb-impl.jar" />
-            <include name="jaxb-xjc.jar" />
-            <include name="jaxws-tools.jar" />
-            <include name="jaxws-rt.jar" />
-            <include name="streambuffer.jar" />
-            <include name="stax-ex.jar" />
+	<target name="prepare-wsdl" if="include.client.jar" depends="prepare-jbossws">
+		<echo>*** Creating new wsdl</echo>
+		<mkdir dir="${wsconsume.home}" />
+		<mkdir dir="${wsprovide.home}" />
 
-            <include name="jboss-xml-binding.jar" />
-            <include name="javassist.jar" />
-            <include name="jbossws-native-client.jar" />
-            <include name="jbossws-native-core.jar" />
-            <include name="jbossws-native-jaxws.jar" />
-            <include name="jbossws-native-jaxws-ext.jar" />
-            <include name="jbossws-native-jaxrpc.jar" />
-            <include name="jbossws-native-saaj.jar" />
+		<echo>The JAVA HOME being used: ${java.jre.home}</echo>
+		<echo />
 
-            <include name="policy.jar" />
-            <include name="wsdl4j.jar" />
-            
-            <!--Required for wsconsume -->
-            <include name="wstx.jar" />
-         </fileset>
+		<!-- Classpath for WSConsume/WSProvide. Defined globally so that custom task defs can reference. -->
+		<!-- So,it's JBossws version specific (and assumes compatibility between JBossws and AS -->
+		<path id="jbossws.native.classpath">
+			<fileset dir="${java.jre.home}/../lib/" includes="*.jar" />
 
-         <!-- not sure why not in the maven.runtime.classpath -->
-         <fileset dir="${settings.localRepository}/org/opensymphony/quartz/quartz/${quartz.version}/">
-            <include name="quartz-${quartz.version}.jar" />
-         </fileset>
+			<!-- AS dependencies  -->
+			<fileset dir="${jboss.home}/lib/endorsed/" includes="*.jar" />
+			<fileset dir="${jboss.home}/lib/" includes="*.jar" />
 
-      </path>
+			<!-- JBossws/AS client dependencies  -->
+			<fileset dir="${jboss.home}/client">
+				<include name="jbossws-spi.jar" />
+				<include name="jbossws-common.jar" />
+				<include name="jbossws-framework.jar" />
 
-      <!-- Include the WSProved/WSConsume ant task definitions from JBossWS -->
-      <taskdef name="wsprovide" classname="org.jboss.wsf.spi.tools.ant.WSProvideTask" classpathref="jbossws.native.classpath" />
-      <taskdef name="wsconsume" classname="org.jboss.wsf.spi.tools.ant.WSConsumeTask" classpathref="jbossws.native.classpath" />
+				<include name="activation.jar" />
+				<include name="getopt.jar" />
+				<include name="jbossall-client.jar" />
+				<include name="log4j.jar" />
+				<include name="mail.jar" />
 
-      <!-- Include Ant-Contrib for looping -->
-      <taskdef resource="net/sf/antcontrib/antcontrib.properties">
-         <classpath>
-            <pathelement location="${settings.localRepository}/ant-contrib/ant-contrib/${ant.contrib.version}/ant-contrib-${ant.contrib.version}.jar" />
-         </classpath>
-      </taskdef>
+				<include name="jaxb-api.jar" />
+				<include name="jaxb-impl.jar" />
+				<include name="jaxb-xjc.jar" />
+				<include name="jaxws-tools.jar" />
+				<include name="jaxws-rt.jar" />
+				<include name="streambuffer.jar" />
+				<include name="stax-ex.jar" />
 
-      <echo>List of Stateless Session Beans passed into WSProvide/WSConsume :${ws-list}</echo>
-      <!-- Call WS-Provide in loop -->
-      <foreach list="${ws-list}" target="iterate-wsprovide" param="bean" delimiter=",">
-      </foreach>
+				<include name="jboss-xml-binding.jar" />
+				<include name="javassist.jar" />
+				<include name="jbossws-native-client.jar" />
+				<include name="jbossws-native-core.jar" />
+				<include name="jbossws-native-jaxws.jar" />
+				<include name="jbossws-native-jaxws-ext.jar" />
+				<include name="jbossws-native-jaxrpc.jar" />
+				<include name="jbossws-native-saaj.jar" />
 
-      <!-- Call WS-Consume in loop -->
-      <foreach list="${ws-list}" target="iterate-wsconsume" param="bean" delimiter=",">
-      </foreach>
+				<include name="policy.jar" />
+				<include name="wsdl4j.jar" />
 
-   </target>
+				<!--Required for wsconsume -->
+				<include name="wstx.jar" />
+			</fileset>
 
-   <!-- Target for looping over wsconsume with each bean -->
-   <target name="iterate-wsconsume">
-      <echo>*** Consuming ${bean}ManagerRemote wsdl...</echo>
-      <wsconsume fork="true" package="org.rhq.enterprise.server.ws" destdir="${wsconsume.home}" wsdl="${wsdl.home}/${bean}ManagerBeanService.wsdl" />
-   </target>
+			<!-- not sure why not in the maven.runtime.classpath -->
+			<fileset dir="${settings.localRepository}/org/opensymphony/quartz/quartz/${quartz.version}/">
+				<include name="quartz-${quartz.version}.jar" />
+			</fileset>
 
-   <!-- Target for looping over wsconsume with each bean -->
-   <target name="iterate-wsprovide">
-      <!-- Look up the full bean package and name stored as property -->
-      <propertycopy name="full-bean-name" from="${bean}Manager" override="true" />
+		</path>
 
-      <echo>*** Providing ${bean}ManagerRemote wsdl...</echo>
-      <wsprovide fork="true" destdir="${wsprovide.home}" resourcedestdir="${wsdl.home}" genwsdl="true" sei="${full-bean-name}">
-         <classpath>
-            <pathelement path="${maven.runtime.classpath}" />
-         </classpath>
-      </wsprovide>
-   </target>
+		<!-- Include the WSProved/WSConsume ant task definitions from JBossWS -->
+		<taskdef name="wsprovide" classname="org.jboss.wsf.spi.tools.ant.WSProvideTask" classpathref="jbossws.native.classpath" />
+		<taskdef name="wsconsume" classname="org.jboss.wsf.spi.tools.ant.WSConsumeTask" classpathref="jbossws.native.classpath" />
+
+		<!-- Include Ant-Contrib for looping -->
+		<taskdef resource="net/sf/antcontrib/antcontrib.properties">
+			<classpath>
+				<pathelement location="${settings.localRepository}/ant-contrib/ant-contrib/${ant.contrib.version}/ant-contrib-${ant.contrib.version}.jar" />
+			</classpath>
+		</taskdef>
+
+		<echo>List of Stateless Session Beans passed into WSProvide/WSConsume :${ws-list}</echo>
+		<!-- Call WS-Provide in loop -->
+		<foreach list="${ws-list}" target="iterate-wsprovide" param="bean" delimiter=",">
+		</foreach>
+
+		<!-- Call WS-Consume in loop -->
+		<foreach list="${ws-list}" target="iterate-wsconsume" param="bean" delimiter=",">
+		</foreach>
+
+	</target>
+
+	<!-- Target for looping over wsconsume with each bean -->
+	<target name="iterate-wsconsume">
+		<echo>*** Consuming ${bean}ManagerRemote wsdl...</echo>
+		<wsconsume fork="true" package="org.rhq.enterprise.server.ws" destdir="${wsconsume.home}" wsdl="${wsdl.home}/${bean}ManagerBeanService.wsdl" />
+	</target>
+
+	<!-- Target for looping over wsconsume with each bean -->
+	<target name="iterate-wsprovide">
+		<!-- Look up the full bean package and name stored as property -->
+		<propertycopy name="full-bean-name" from="${bean}Manager" override="true" />
+
+		<echo>*** Providing ${bean}ManagerRemote wsdl...</echo>
+		<wsprovide fork="true" destdir="${wsprovide.home}" resourcedestdir="${wsdl.home}" genwsdl="true" sei="${full-bean-name}">
+			<classpath>
+				<pathelement path="${maven.runtime.classpath}" />
+			</classpath>
+		</wsprovide>
+	</target>
 
 </project>

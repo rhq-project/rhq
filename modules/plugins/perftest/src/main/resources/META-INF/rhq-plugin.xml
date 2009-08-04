@@ -66,7 +66,7 @@
          <metric displayName="Alpha Metric 4" property="alpha-metric4" defaultOn="true" displayType="detail"/>
          <metric displayName="Alpha Metric 5" property="alpha-metric5" defaultOn="true" displayType="detail"/>
 
-          <event name="ScriptTestEvent" description="A event that is generated from CLI test scripts"/>
+         <event name="service-alpha-event" description="An event for the service-alpha service"/>
          
          <content displayName="Alpha Content 0" name="alpha-content0" category="configuration"/>
          
@@ -77,6 +77,15 @@
          <plugin-configuration>
             <c:simple-property name="beta-property0"/>
          </plugin-configuration>
+
+         <operation name="createEvents">
+            <parameters>
+               <c:simple-property name="source" required="true" type="string" description="The event source"/>
+               <c:simple-property name="details" required="true" type="string" description="The event details"/>
+               <c:simple-property name="severity" required="true" type="string" description="The event severity"/>
+               <c:simple-property name="count" required="true" type="integer" default="1" description="The number of events to create"/>
+            </parameters>
+         </operation>
          
          <metric displayName="Beta Metric 0" property="beta-metric0" defaultOn="false"/>
          <metric displayName="Beta Metric 1" property="beta-metric1" defaultOn="true" displayType="summary"/>
@@ -89,6 +98,8 @@
          <metric displayName="Beta Metric 8" property="beta-metric8" defaultOn="true" displayType="detail"/>
          <metric displayName="Beta Metric 9" property="beta-metric9" defaultOn="true" displayType="detail"/>
          <metric displayName="Beta Metric 10" property="beta-metric10" defaultOn="true" displayType="detail"/>
+
+         <event name="service-beta-event" description="An event for the service-beta event"/>
          
          <resource-configuration>
             <c:simple-property name="beta-config0"/>

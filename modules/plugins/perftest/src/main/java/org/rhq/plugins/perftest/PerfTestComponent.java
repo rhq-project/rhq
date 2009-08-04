@@ -37,6 +37,7 @@ import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.event.Event;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.content.ContentFacet;
@@ -170,7 +171,7 @@ public class PerfTestComponent implements ResourceComponent, MeasurementFacet, C
         String source = params.getSimple("source").getStringValue();
         String details = params.getSimple("details").getStringValue();
         EventSeverity severity = EventSeverity.valueOf(params.getSimple("severity").getStringValue());
-        String eventType = "ScriptTestEvent";
+        String eventType = resourceContext.getResourceType().getName() + "-event";
 
         EventContext eventContext = resourceContext.getEventContext();
 

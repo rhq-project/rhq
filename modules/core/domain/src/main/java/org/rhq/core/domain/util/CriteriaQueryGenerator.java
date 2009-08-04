@@ -100,6 +100,8 @@ public final class CriteriaQueryGenerator {
             int indexOfFirstSpace = expression.indexOf(" ");
             String filterToken = expression.substring(0, indexOfFirstSpace);
             expression = "LOWER( " + alias + "." + filterToken + " ) " + expression.substring(indexOfFirstSpace);
+        } else {
+            expression = alias + "." + expression;
         }
 
         if (fuzzyMatch) {
@@ -278,9 +280,9 @@ public final class CriteriaQueryGenerator {
 
     public static void main(String[] args) {
         //testSubjectCriteria();
-        //testAlertCriteria();
+        testAlertCriteria();
         //testInheritanceCriteria();
-        testResourceCriteria();
+        //testResourceCriteria();
     }
 
     public static void testSubjectCriteria() {

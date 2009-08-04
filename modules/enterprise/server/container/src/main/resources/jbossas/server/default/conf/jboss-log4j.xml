@@ -145,6 +145,13 @@
    </category>
    -->
 
+   <!-- Top category for the serializers to log synchronized access to certain subsystems -->
+   <!--
+   <category name="org.rhq.enterprise.server.util.concurrent">
+     <priority value="DEBUG"/>
+   </category>
+   -->
+
    <!-- INFO level gives full stacks to all threads active in aborted transactions -->
    <!-- Set to WARN to only log these events with single-line messages -->
    <category name="org.rhq.enterprise.server.common.TransactionInterruptInterceptor">

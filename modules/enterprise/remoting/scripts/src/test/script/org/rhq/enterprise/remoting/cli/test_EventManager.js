@@ -25,11 +25,13 @@ rhq.login('rhqadmin', 'rhqadmin');
 
 alphaService0 = findService("service-alpha-0");
 alphaService1 = findService("service-alpha-1");
-betaService0 = findService("service-beta0-");
+betaService0 = findService("service-beta-0");
 
 fireEvent(alphaService0, "WARNING", 1);
 fireEvent(alphaService1, "ERROR", 1);
 fireEvent(betaService0, "FATAL", 1);
+
+rhq.logout();
 
 
 function findService(name) {
@@ -38,8 +40,7 @@ function findService(name) {
 
     resources = ResourceManager.findResourcesByCriteria(criteria);
 
-    assertEquals(new java.lang.Integer(resources.size()), new java.lang.Integer(1),
-            "Expected to find a single resource with name, '" + name + "' but " + resources.size() + " were found");
+    assertTrue(resources.size() > 0, "Expected to find a resource named '" + name + "'");
 
     return resources.get(0);
 }

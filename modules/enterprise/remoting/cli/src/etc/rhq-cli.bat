@@ -7,11 +7,13 @@ rem This file is used to execute the RHQ CLI on a Windows platform.
 rem Run this script with the --help option for the runtime options.
 rem
 rem This script is customizable by setting certain environment variables, which
-rem are described in comments in rhq-client-env.bat. The variables can also be
-rem set via rhq-client-env.bat, which is sourced by this script.
+rem are described in comments in rhq-cli-env.bat. The variables can also be
+rem set via rhq-cli-env.bat, which is sourced by this script.
 rem ===========================================================================
 
 setlocal
+
+title RHQ CLI
 
 rem if debug variable is set, it is assumed to be on, unless its value is false
 if "%RHQ_CLI_DEBUG%" == "false" (
@@ -57,7 +59,7 @@ rem Find the Java executable and verify we have a VM available
 rem ----------------------------------------------------------------------
 
 if not defined RHQ_CLI_JAVA_EXE_FILE_PATH (
-   if not defined RHQ_CLI_JAVA_HOME set RHQ_CLI_JAVA_HOME=%JAVA_HOME%
+   if not defined RHQ_CLI_JAVA_HOME call :prepare_embedded_jre
 )
 
 if not defined RHQ_CLI_JAVA_EXE_FILE_PATH (
@@ -102,6 +104,15 @@ if defined RHQ_CLI_DEBUG echo RHQ_CLI_JAVA_ENDORSED_DIRS: %RHQ_CLI_JAVA_ENDORSED
 set _JAVA_ENDORSED_DIRS_OPT="-Djava.endorsed.dirs=%RHQ_CLI_JAVA_ENDORSED_DIRS%"
 :skip_java_endorsed_dirs
 
+if "%RHQ_CLI_JAVA_LIBRARY_PATH%" == "none" (
+   if defined RHQ_CLI_DEBUG echo Not explicitly setting java.library.path
+   goto :skip_java_library_path
+)
+if not defined RHQ_CLI_JAVA_LIBRARY_PATH set RHQ_CLI_JAVA_LIBRARY_PATH=%RHQ_CLI_HOME%\lib
+if defined RHQ_CLI_DEBUG echo RHQ_CLI_JAVA_LIBRARY_PATH: %RHQ_CLI_JAVA_LIBRARY_PATH%
+set _JAVA_LIBRARY_PATH_OPT="-Djava.library.path=%RHQ_CLI_JAVA_LIBRARY_PATH%"
+:skip_java_library_path
+
 if defined RHQ_CLI_DEBUG echo RHQ_CLI_ADDITIONAL_JAVA_OPTS: %RHQ_CLI_ADDITIONAL_JAVA_OPTS%
 
 rem ----------------------------------------------------------------------
@@ -119,7 +130,7 @@ rem Execute the VM which starts the CLI
 rem ----------------------------------------------------------------------
 
 if defined RHQ_CLI_DEBUG (
-   set _LOG_CONFIG=-Dlog4j.configuration=log4j-debug.xml -Di18nlog.dump-stack-traces=true
+   set _LOG_CONFIG=-Dlog4j.configuration=log4j-debug.xml
 ) else (
    set _LOG_CONFIG=-Dlog4j.configuration=log4j.xml
 )
@@ -148,6 +159,19 @@ if not defined CLASSPATH (
    set CLASSPATH=%_entry:"=%
 ) else (
    set CLASSPATH=%CLASSPATH%;%_entry:"=%
+)
+goto :eof
+
+rem ----------------------------------------------------------------------
+rem CALL subroutine that prepares to use the embedded JRE
+rem ----------------------------------------------------------------------
+
+:prepare_embedded_jre
+set RHQ_CLI_JAVA_HOME=%RHQ_CLI_HOME%\jre
+if defined RHQ_CLI_DEBUG echo Using the embedded JRE
+if not exist "%RHQ_CLI_JAVA_HOME%" (
+   if defined RHQ_CLI_DEBUG echo No embedded JRE found - will try to use JAVA_HOME: %JAVA_HOME%
+   set RHQ_CLI_JAVA_HOME=%JAVA_HOME%
 )
 goto :eof
 

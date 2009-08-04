@@ -48,7 +48,7 @@ public class EventCriteria extends Criteria {
     public EventCriteria() {
         super();
 
-        filterOverrides.put("sourceName", "source.definition.name like ?");
+        filterOverrides.put("sourceName", "source.eventDefinition.name like ?");
         filterOverrides.put("startTime", "timestamp >= ?");
         filterOverrides.put("endTime", "timestamp <= ?");
         filterOverrides.put("resourceId", "source.resourceId = ?");

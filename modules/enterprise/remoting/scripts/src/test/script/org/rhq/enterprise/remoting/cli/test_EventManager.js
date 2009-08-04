@@ -31,6 +31,7 @@ rhq.logout();
 
 
 function setUp() {
+    parentServer = findServer("server-omega-0");
     alphaService0 = findService("service-alpha-0");
     alphaService1 = findService("service-alpha-1");
     betaService0 = findService("service-beta-0");
@@ -51,13 +52,26 @@ function testFilterByResource() {
     assertTrue(events.size() > 0, "Expected to find events when filtering by resource id for " + betaService0);
 }
 
-function findService(name) {
-    var criteria = new ResourceCriteria()
-    criteria.addFilterName(name);
+function findServer(name) {
+    var criteria = new ResourceCriteria();
+    criteria.addFilterName(name)
 
     resources = ResourceManager.findResourcesByCriteria(criteria);
 
-    assertTrue(resources.size() > 0, "Expected to find a resource named '" + name + "'");
+    assertNumberEqualsJS(resources.size(), 1, "Expected to find only one resource named '" + name + "'");
+
+    return resources.get(0);
+}
+
+function findService(name) {
+    var criteria = new ResourceCriteria()
+    criteria.addFilterName(name);
+    criteria.addFilterParentResourceId(parentServer.id);
+
+    resources = ResourceManager.findResourcesByCriteria(criteria);
+
+    assertNumberEqualsJS(resources.size(), 1, "Expected to find only one service named '" + name + "' having parent, '" +
+            parentServer.name + "'");
 
     return resources.get(0);
 }

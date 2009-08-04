@@ -212,4 +212,33 @@ public class ScriptAssert {
         assertNotNull(scriptEngine.get(identifier), identifier + " is not defined");
     }
 
+    /**
+     * JavaScript has only a single numeric type such that <code>x = 1</code> and <code>y = 1.0</code> are considered to
+     * be of the same type. From within a (JavaScript) script if you were to call <code>assertEquals(x, y)</code>, you
+     * would get an exception that looks something like,
+     *
+     * <pre>
+     * Caused by: javax.script.ScriptException: sun.org.mozilla.javascript.internal.EvaluatorException: The choice of
+     * Java constructor assertEquals matching JavaScript argument types (number,number,string) is ambiguous;
+     * candidate constructors are:
+     * void assertEquals(java.lang.String,java.lang.String,java.lang.String)
+     * void assertEquals(double,double,double)
+     * void assertEquals(float,float,float)
+     * void assertEquals(long,long,java.lang.String)
+     * void assertEquals(byte,byte,java.lang.String)
+     * void assertEquals(char,char,java.lang.String)
+     * void assertEquals(short,short,java.lang.String)
+     * void assertEquals(int,int,java.lang.String) (<Unknown source>#1) in <Unknown source> at line number 1
+     </pre>
+     *
+     * To avoid the ambiguity when comparing numbers in JavaScript scripts, it is recommended to use this method.
+     *
+     * @param actual The actual value
+     * @param expected The expected value
+     * @param msg A useful, meaningful error message
+     */
+    public void assertNumberEqualsJS(double actual, double expected, String msg) {
+        assertEquals(actual, expected, msg);
+    }
+
 }

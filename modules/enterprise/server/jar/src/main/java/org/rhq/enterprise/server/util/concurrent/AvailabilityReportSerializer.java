@@ -18,9 +18,11 @@
  */
 package org.rhq.enterprise.server.util.concurrent;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -28,6 +30,7 @@ public class AvailabilityReportSerializer {
     private final Log log = LogFactory.getLog(AvailabilityReportSerializer.class);
 
     private static Map<String, ReentrantReadWriteLock> locks = new HashMap<String, ReentrantReadWriteLock>();
+    private static Map<String, Long> lockTimes = Collections.synchronizedMap(new HashMap<String, Long>());
     private static AvailabilityReportSerializer singleton = new AvailabilityReportSerializer();
 
     public static AvailabilityReportSerializer getSingleton() {
@@ -35,37 +38,64 @@ public class AvailabilityReportSerializer {
     }
 
     public void lock(String agentName) {
-        ReentrantReadWriteLock lock = null;
-
         String msg = "tid=" + Thread.currentThread().getId() + "; agent=" + agentName;
+        boolean debug = this.log.isDebugEnabled();
 
-        log.debug(msg + ": about to synchronize");
+        ReentrantReadWriteLock lock = null;
+        logDebug(debug, msg, ": about to synchronize");
         synchronized (this) {
-            log.debug(msg + ": synchronized");
-            lock = locks.get(agentName);
+            logDebug(debug, msg, ": synchronized");
+            lock = AvailabilityReportSerializer.locks.get(agentName);
             if (lock == null) {
-                log.debug(msg + ": creating new lock");
+                logDebug(debug, msg, ": creating new lock");
                 lock = new ReentrantReadWriteLock();
-                locks.put(agentName, lock);
+                AvailabilityReportSerializer.locks.put(agentName, lock);
             }
         }
 
-        log.debug(msg + ": acquiring write lock");
+        logDebug(debug, msg, ": acquiring write lock");
+        long start = System.currentTimeMillis();
         lock.writeLock().lock();
-        log.debug(msg + ": acquired write lock");
+        long end = System.currentTimeMillis();
+        long duration = end - start;
+        AvailabilityReportSerializer.lockTimes.put(agentName, Long.valueOf(end));
+        if (duration < 5000L) {
+            logDebug(debug, msg, ": acquired write lock in millis=" + duration);
+        } else {
+            this.log.info(msg + ": acquired write lock in millis=" + duration);
+        }
+
+        return;
     }
 
     public void unlock(String agentName) {
-        ReentrantReadWriteLock lock = locks.get(agentName);
-
         String msg = "tid=" + Thread.currentThread().getId() + "; agent=" + agentName;
+        boolean debug = this.log.isDebugEnabled();
+
+        ReentrantReadWriteLock lock = AvailabilityReportSerializer.locks.get(agentName);
 
         if (lock != null) {
-            log.debug(msg + ": releasing write lock");
+            Long lockedTime = AvailabilityReportSerializer.lockTimes.get(agentName);
+            long duration = System.currentTimeMillis() - ((lockedTime != null) ? lockedTime : Long.MAX_VALUE);
+
+            if (duration < 5000L) {
+                logDebug(debug, msg, ": releasing write lock after being locked for millis=" + duration);
+            } else {
+                this.log.info(msg + ": releasing write lock after being locked for millis=" + duration);
+            }
+
             lock.writeLock().unlock();
-            log.debug(msg + ": released write lock");
+            logDebug(debug, msg, ": released write lock");
         } else {
-            log.warn(msg + ": cannot release write lock");
+            this.log.warn(msg + ": cannot release write lock");
+        }
+
+        return;
+    }
+
+    private void logDebug(boolean enabled, String arg1, String arg2) {
+        if (enabled) {
+            this.log.debug(arg1 + arg2);
         }
     }
 }

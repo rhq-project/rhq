@@ -191,11 +191,11 @@
       <fail unless="jboss.home.is.valid" message="${jboss.home} does not contain a valid JBoss 4.x installation - aborting..." />
 
     <!-- Run JBossWS 3.1.1 upgrade script on the JBossAS: 
-	    i) pull upgrade bundle ii) unzip iii) run it on JBossAS instance 
-	    (4.2.3) to 3.1.1. These upgrade steps should be revisited when moving JBossAS version beyond 4.2.3 -->
+         i) pull upgrade bundle ii) unzip iii) run it on JBossAS instance 
+        (4.2.3) to 3.1.1. These upgrade steps should be revisited when moving JBossAS version beyond 4.2.3 -->
     <echo>...Upgrading JBossWS version from bundled version...</echo>
 
-  	<!-- Unzip JBossWS dist zipfile... if necessary -->
+    <!-- Unzip JBossWS dist zipfile... if necessary -->
     <property name="jbossws-native.zip" location="${settings.localRepository}/org/jboss/jbossws/jbossws-native-dist/${jbossws-native-dist.version}/jbossws-native-dist-${jbossws-native-dist.version}.zip" />
     <condition property="jbossws-native.uptodate">
        <and>
@@ -224,8 +224,8 @@
            toDir="${jboss.deploy.dir}/jbossws.sar" verbose="true" />
     <copy file="${basedir}/src/main/resources/jbossas/server/default/deploy/jbossws.sar/jbossws.beans/META-INF/jboss-beans.xml"
           toDir="${jboss.deploy.dir}/jbossws.sar/jbossws.beans/META-INF" verbose="true" /> 
-<!--    <copy file="${basedir}/target/${jboss-native-dir}/deploy/resources/jbossws-jboss423/jbossws.beans/META-INF/jboss-beans.xml"
-  	          toDir="${jboss.deploy.dir}/jbossws.sar/jbossws.beans/META-INF" verbose="true" /> --> 
+<!--<copy file="${basedir}/target/${jboss-native-dir}/deploy/resources/jbossws-jboss423/jbossws.beans/META-INF/jboss-beans.xml"
+          toDir="${jboss.deploy.dir}/jbossws.sar/jbossws.beans/META-INF" verbose="true" /> --> 
 
 
       <echo>Installing patched hibernate jar ...</echo>

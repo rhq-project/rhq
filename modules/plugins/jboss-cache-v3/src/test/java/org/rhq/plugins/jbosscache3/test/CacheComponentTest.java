@@ -56,7 +56,7 @@ import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-@Test(groups = "JBossCache3-test", enabled = true)
+@Test(groups = "jbosscache3-test")
 public class CacheComponentTest {
 
 	private static final long MEASUREMENT_FACET_METHOD_TIMEOUT = 10000;
@@ -263,7 +263,7 @@ public class CacheComponentTest {
 		return;
 	}
 
-	@BeforeSuite(alwaysRun = true)
+	@BeforeSuite(groups = "jbosscache3-test")
 	@Parameters( { "principal", "credentials", "testJarPath" })
 	public void start(@Optional String principal, @Optional String credentials,
 			@Optional String testJarPath) {
@@ -312,7 +312,7 @@ public class CacheComponentTest {
 		}
 	}
 
-	@AfterSuite(alwaysRun = true)
+	@AfterSuite(groups = "jbosscache3-test")
 	public void stop() {
 		try {
 			System.out.println("Stopping PC...");

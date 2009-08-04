@@ -75,8 +75,8 @@ public class ClientMain {
     private PrintWriter outputWriter;
 
     // Local storage of credentials for this session/client
-    private String host;
-    private int port;
+    private String host = "127.0.0.1";
+    private int port = 7080;
     private String user;
     private String pass;
     private boolean isHttps = false;
@@ -449,6 +449,19 @@ public class ClientMain {
             case 'f': {
                 interactiveMode = false;
                 command = createExecArgs(args);
+                break;
+            }
+            case 's': {
+                setHost(getopt.getOptarg());
+                break;
+            }
+            case 't': {
+                String portArg = getopt.getOptarg();
+                try {
+                    setPort(Integer.parseInt(portArg));
+                } catch (Exception e) {
+                    outputWriter.println("Invalid port [" + portArg + "]");
+                }
                 break;
             }
             case 'v': {

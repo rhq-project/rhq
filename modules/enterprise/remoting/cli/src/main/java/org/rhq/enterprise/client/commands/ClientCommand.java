@@ -19,7 +19,6 @@
 package org.rhq.enterprise.client.commands;
 
 import org.rhq.enterprise.client.ClientMain;
-import org.rhq.enterprise.client.Controller;
 
 /**
  * @author Greg Hinkle
@@ -34,7 +33,8 @@ public interface ClientCommand {
         LogoutCommand.class,
         QuitCommand.class,
         ScriptCommand.class,
-        RecordCommand.class
+        RecordCommand.class,
+        VersionCommand.class
     };
 
     /**

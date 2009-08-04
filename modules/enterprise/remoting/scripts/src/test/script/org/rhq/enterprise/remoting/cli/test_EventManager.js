@@ -23,16 +23,33 @@
 
 rhq.login('rhqadmin', 'rhqadmin');
 
-alphaService0 = findService("service-alpha-0");
-alphaService1 = findService("service-alpha-1");
-betaService0 = findService("service-beta-0");
+setUp();
 
-fireEvent(alphaService0, "WARNING", 1);
-fireEvent(alphaService1, "ERROR", 1);
-fireEvent(betaService0, "FATAL", 1);
+testFilterByResource();
 
 rhq.logout();
 
+
+function setUp() {
+    alphaService0 = findService("service-alpha-0");
+    alphaService1 = findService("service-alpha-1");
+    betaService0 = findService("service-beta-0");
+
+    fireEvent(alphaService0, "WARNING", 1);
+    fireEvent(alphaService1, "ERROR", 1);
+    fireEvent(betaService0, "FATAL", 1);
+}
+
+function testFilterByResource() {
+    var events = findEventsByResource(alphaService0);
+    assertTrue(events.size() > 0, "Expected to find events when filtering by resource id for " + alphaService0);
+
+    events = findEventsByResource(alphaService1);
+    assertTrue(events.size() > 0, "Expected to find events when filtering by resource id for " + alphaService1);
+
+    events = findEventsByResource(betaService0);
+    assertTrue(events.size() > 0, "Expected to find events when filtering by resource id for " + betaService0);
+}
 
 function findService(name) {
     var criteria = new ResourceCriteria()
@@ -74,4 +91,11 @@ function createParameters(resource, severity, numberOfEvents) {
     params.put(new PropertySimple("count", new java.lang.Integer(numberOfEvents)));
 
     return params;
+}
+
+function findEventsByResource(resource) {
+    var criteria = new EventCriteria();
+    criteria.addFilterResourceId(resource.id);
+
+    return EventManager.findEventsByCriteria(criteria);
 }

@@ -35,7 +35,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Arrays;
 
 import jline.ArgumentCompletor;
 import jline.Completor;
@@ -47,7 +46,6 @@ import mazz.i18n.Msg;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.client.commands.ClientCommand;
 import org.rhq.enterprise.client.commands.ScriptCommand;
-import org.apache.commons.lang.ArrayUtils;
 
 /**
  * @author Greg Hinkle
@@ -106,6 +104,8 @@ public class ClientMain {
 
         // process startup arguments
         main.processArguments(args);
+
+        main.outputWriter.println(Version.getProductNameAndVersion());
 
         if (main.interactiveMode) {
             // begin client access loop
@@ -236,9 +236,9 @@ public class ClientMain {
 
                     try {
                         recorder.record(cmd);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
 
                     try {
                         // parse the command into separate arguments and execute
@@ -392,9 +392,8 @@ public class ClientMain {
     }
 
     void processArguments(String[] args) throws IllegalArgumentException, IOException {
-        String sopts = "-:hu:p:Ps:t:c:f:";
-        LongOpt[] lopts = {
-            new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'h'),
+        String sopts = "-:hu:p:Ps:t:c:f:v";
+        LongOpt[] lopts = { new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'h'),
             new LongOpt("user", LongOpt.REQUIRED_ARGUMENT, null, 'u'),
             new LongOpt("password", LongOpt.REQUIRED_ARGUMENT, null, 'p'),
             new LongOpt("prompt", LongOpt.OPTIONAL_ARGUMENT, null, 'P'),
@@ -402,8 +401,8 @@ public class ClientMain {
             new LongOpt("port", LongOpt.REQUIRED_ARGUMENT, null, 't'),
             new LongOpt("command", LongOpt.REQUIRED_ARGUMENT, null, 'c'),
             new LongOpt("file", LongOpt.NO_ARGUMENT, null, 'f'),
-            new LongOpt("args-style", LongOpt.REQUIRED_ARGUMENT, new StringBuffer(), -2)
-        };
+            new LongOpt("version", LongOpt.NO_ARGUMENT, null, 'v'),
+            new LongOpt("args-style", LongOpt.REQUIRED_ARGUMENT, new StringBuffer(), -2) };
 
         Getopt getopt = new Getopt("Cli", args, sopts, lopts, false);
         int code;
@@ -439,7 +438,7 @@ public class ClientMain {
                 break;
             }
             case 'P': {
-                this.pass = this.consoleReader.readLine("password: ", (char)0);
+                this.pass = this.consoleReader.readLine("password: ", (char) 0);
                 break;
             }
             case 'c': {
@@ -450,6 +449,11 @@ public class ClientMain {
             case 'f': {
                 interactiveMode = false;
                 command = createExecArgs(args);
+                break;
+            }
+            case 'v': {
+                String versionString = Version.getProductNameAndVersionBuildInfo();
+                outputWriter.println(versionString);
                 break;
             }
             }

@@ -24,7 +24,6 @@ import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.composite.IntegerOptionItem;
-import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.ContentRequestStatus;
 import org.rhq.core.domain.content.ContentServiceRequest;
 import org.rhq.core.domain.content.InstalledPackage;
@@ -65,8 +64,6 @@ public interface ContentUIManagerLocal {
     InstalledPackage getInstalledPackage(int id);
 
     List<IntegerOptionItem> getInstalledPackageTypes(Subject user, int resourceId);
-
-    List<String> getInstalledPackageVersions(Subject user, int resourceId);
 
     /**
      * Loads the package type identified by the ID from the database.
@@ -186,20 +183,6 @@ public interface ContentUIManagerLocal {
      */
     PageList<PackageVersionComposite> getPackageVersionComposites(Subject user, int[] packageVersionIds,
         PageControl pageControl);
-
-    /**
-     * Returns all architectures known to the system.
-     *
-     * @return list of all architectures in the database
-     */
-    List<Architecture> getArchitectures();
-
-    /**
-     * Returns the entity associated with no architecture.
-     *
-     * @return no architecture entity       
-     */
-    Architecture getNoArchitecture();
 
     /**
      * Retrieves a package version by its ID. One and only one package version must exist for the ID; an error

@@ -50,6 +50,7 @@ import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
+import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.ContentUIManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceFactoryManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
@@ -135,8 +136,8 @@ public class CreateNewPackageChildResourceUIBean {
 
             // If the type does not support architectures, load the no architecture entity and use that
             if (!packageType.isSupportsArchitecture()) {
-                ContentUIManagerLocal contentUIManager = LookupUtil.getContentUIManager();
-                Architecture noArchitecture = contentUIManager.getNoArchitecture();
+                ContentManagerLocal contentManager = LookupUtil.getContentManager();
+                Architecture noArchitecture = contentManager.getNoArchitecture();
 
                 selectedArchitectureId = noArchitecture.getId();
             }
@@ -205,8 +206,9 @@ public class CreateNewPackageChildResourceUIBean {
     }
 
     public SelectItem[] getArchitectures() {
-        ContentUIManagerLocal contentUIManager = LookupUtil.getContentUIManager();
-        List<Architecture> architectures = contentUIManager.getArchitectures();
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+        ContentManagerLocal contentManager = LookupUtil.getContentManager();
+        List<Architecture> architectures = contentManager.findArchitectures(subject);
 
         SelectItem[] items = new SelectItem[architectures.size()];
         int itemCounter = 0;

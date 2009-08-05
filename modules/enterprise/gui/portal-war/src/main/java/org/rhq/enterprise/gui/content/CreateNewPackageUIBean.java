@@ -276,8 +276,9 @@ public class CreateNewPackageUIBean {
     }
 
     public SelectItem[] getArchitectures() {
-        ContentUIManagerLocal contentUIManager = LookupUtil.getContentUIManager();
-        List<Architecture> architectures = contentUIManager.getArchitectures();
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+        ContentManagerLocal contentManager = LookupUtil.getContentManager();
+        List<Architecture> architectures = contentManager.findArchitectures(subject);
 
         SelectItem[] items = new SelectItem[architectures.size()];
         int itemCounter = 0;

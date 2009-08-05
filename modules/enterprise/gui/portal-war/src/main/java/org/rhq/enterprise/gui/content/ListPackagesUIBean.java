@@ -19,8 +19,10 @@
 package org.rhq.enterprise.gui.content;
 
 import java.util.List;
+
 import javax.faces.model.DataModel;
 import javax.faces.model.SelectItem;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.composite.IntegerOptionItem;
 import org.rhq.core.domain.content.PackageType;
@@ -35,6 +37,7 @@ import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.ContentUIManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -56,6 +59,7 @@ public class ListPackagesUIBean extends PagedDataTableUIBean {
 
     private String search;
 
+    private ContentManagerLocal contentManager = LookupUtil.getContentManager();
     private ContentUIManagerLocal contentUIManager = LookupUtil.getContentUIManager();
 
     // Constructors  --------------------------------------------
@@ -129,8 +133,7 @@ public class ListPackagesUIBean extends PagedDataTableUIBean {
                 resource = requestResource; // request switched the resource this UI bean is using
             }
 
-            PageList<PackageListItemComposite> pageList =
-                    contentUIManager.getInstalledPackages(subject,
+            PageList<PackageListItemComposite> pageList = contentUIManager.getInstalledPackages(subject,
                 requestResource.getId(), packageTypeFilter, packageVersionFilter, search, pc);
 
             return pageList;
@@ -171,8 +174,8 @@ public class ListPackagesUIBean extends PagedDataTableUIBean {
 
     public SelectItem[] getPackageVersions() {
         if (this.packageVersions == null) {
-            List<String> items = contentUIManager.getInstalledPackageVersions(EnterpriseFacesContextUtility
-                .getSubject(), EnterpriseFacesContextUtility.getResource().getId());
+            List<String> items = contentManager.getInstalledPackageVersions(EnterpriseFacesContextUtility.getSubject(),
+                EnterpriseFacesContextUtility.getResource().getId());
             this.packageVersions = SelectItemUtils.convertFromListString(items, true);
         }
         return packageVersions;

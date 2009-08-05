@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.resource;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.Calendar;
 import java.util.List;
@@ -76,7 +77,7 @@ import org.rhq.enterprise.server.core.AgentManagerLocal;
  * @author Jason Dobies
  */
 @Stateless
-public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal {
+public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, ResourceFactoryManagerRemote {
     // Constants  --------------------------------------------
 
     /**
@@ -154,8 +155,16 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal {
         }
     }
 
+    public void createResource(Subject subject, int parentResourceId, int newResourceTypeId, String newResourceName,
+        Configuration pluginConfiguration, String packageName, String packageVersionNumber, Integer architectureId,
+        Configuration deploymentTimeConfiguration, byte[] packageBits) {
+
+        createResource(subject, parentResourceId, newResourceTypeId, newResourceName, pluginConfiguration, packageName,
+            packageVersionNumber, architectureId, deploymentTimeConfiguration, new ByteArrayInputStream(packageBits));
+    }
+
     public void createResource(Subject user, int parentResourceId, int newResourceTypeId, String newResourceName,
-        Configuration pluginConfiguration, String packageName, String packageVersionNumber, int architectureId,
+        Configuration pluginConfiguration, String packageName, String packageVersionNumber, Integer architectureId,
         Configuration deploymentTimeConfiguration, InputStream packageBitStream) {
         log.info("Received call to create package backed resource under parent [" + parentResourceId + "]");
 
@@ -177,9 +186,10 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal {
          * exist and create them here. jdobies, Nov 28, 2007
          */
 
-        // Create package and package version
+        // Create package and package version        
         PackageVersion packageVersion = contentManagerLocal.createPackageVersion(packageName, newPackageType.getId(),
-            packageVersionNumber, architectureId, packageBitStream);
+            packageVersionNumber, (null != architectureId) ? architectureId : contentManagerLocal.getNoArchitecture()
+                .getId(), packageBitStream);
 
         // Persist in separate transaction so it is committed immediately, before the request is sent to the agent
         CreateResourceHistory persistedHistory = resourceFactoryManager.persistCreateHistory(user, parentResourceId,

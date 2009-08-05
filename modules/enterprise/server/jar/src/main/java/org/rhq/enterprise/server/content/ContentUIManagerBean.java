@@ -31,7 +31,6 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.composite.IntegerOptionItem;
-import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.ContentRequestStatus;
 import org.rhq.core.domain.content.ContentServiceRequest;
 import org.rhq.core.domain.content.InstalledPackage;
@@ -206,15 +205,6 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
-    public List<String> getInstalledPackageVersions(Subject user, int resourceId) {
-        Query query = entityManager.createNamedQuery(InstalledPackage.QUERY_FIND_PACKAGE_LIST_VERSIONS);
-        query.setParameter("resourceId", resourceId);
-
-        List<String> packages = query.getResultList();
-        return packages;
-    }
-
-    @SuppressWarnings("unchecked")
     public PageList<InstalledPackageHistory> getInstalledPackageHistory(Subject subject, int resourceId,
         int generalPackageId, PageControl pageControl) {
         pageControl.initDefaultOrderingField("iph.timestamp", PageOrdering.DESC);
@@ -307,21 +297,6 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
         List<PackageVersionComposite> results = query.getResultList();
 
         return new PageList<PackageVersionComposite>(results, (int) count, pageControl);
-    }
-
-    @SuppressWarnings("unchecked")
-    public List<Architecture> getArchitectures() {
-        Query q = entityManager.createNamedQuery(Architecture.QUERY_FIND_ALL);
-        List<Architecture> architectures = q.getResultList();
-        return architectures;
-    }
-
-    public Architecture getNoArchitecture() {
-        Query q = entityManager.createNamedQuery(Architecture.QUERY_FIND_BY_NAME);
-        q.setParameter("name", "noarch");
-        Architecture architecture = (Architecture) q.getSingleResult();
-
-        return architecture;
     }
 
     public PackageVersion getPackageVersion(int packageVersionId) {

@@ -88,6 +88,12 @@ public interface ChannelManagerRemote {
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "criteria") ChannelCriteria criteria);
 
+    /**
+     * @param subject
+     * @param criteria Caller must add a valid channelId via {@link PackageVersionCriteria.addFilterChannelId}
+     * @return PackageVersions for the channel
+     * @throws IllegalArgumentException for invalid channelId filter
+     */
     @WebMethod
     PageList<PackageVersion> findPackageVersionsInChannelByCriteria( //
         @WebParam(name = "subject") Subject subject, //

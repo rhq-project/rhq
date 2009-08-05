@@ -37,6 +37,8 @@ import org.rhq.core.domain.content.transfer.DeployPackageStep;
 import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
 import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
+import org.rhq.core.domain.criteria.PackageVersionCriteria;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 
 /**
@@ -264,38 +266,56 @@ public interface ContentManagerLocal {
      */
     Package persistOrMergePackageSafely(Package pkg);
 
+    /**
+     * Returns the entity associated with no architecture.
+     *
+     * @return no architecture entity       
+     */
+    Architecture getNoArchitecture();
+
+    /**
+     * Returns list of version strings for installed packages on the resource.
+     * @param subject
+     * @param resourceId
+     * @return List of InstalledPackage versions
+     */
+    List<String> getInstalledPackageVersions(Subject subject, int resourceId);
+
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
     // The following are shared with the Remote Interface
     //
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+    /**
+     * @see {@link createPackageVersion(Subject, String, int, String, int, byte[]);
+     */
     PackageVersion createPackageVersion(Subject subject, String packageName, int packageTypeId, String version,
         int architectureId, byte[] packageBytes);
 
     /**
-     * Deletes the specified package from the resource.
-     *
-     * @param user                the user who is requesting the delete
-     * @param resourceId          identifies the resource from which the packages should be deleted
-     * @param installedPackageIds identifies all of the packages to be deleted
-     * @param requestNotes        user-specified notes on what is contained in this request 
+     * @see {@link ContentManagerRemote#deletePackages(Subject, int, int[], String)}
      */
-    void deletePackages(Subject user, int resourceId, int[] installedPackageIds, String requestNotes);
+    void deletePackages(Subject subject, int resourceId, int[] installedPackageIds, String requestNotes);
 
     /**
-     * Deploys packages on the specified resources. Each installed package entry should be populated with the <code>
-     * PackageVersion</code> being installed, along with the deployment configuration values if any. This method will
-     * take care of populating the rest of the values in each installed package object.
-     *
-     * @param user              the user who is requesting the creation
-     * @param resourceIds       identifies the resources against which the package will be deployed
-     * @param packageVersionIds packageVersions we want to install
+     * @see {@link ContentManagerRemote#deployPackages(Subject, int[], int[])}
      */
-    void deployPackages(Subject user, int[] resourceIds, int[] packageVersionIds);
+    void deployPackages(Subject subject, int[] resourceIds, int[] packageVersionIds);
 
+    /**
+     * @see {@link ContentManagerRemote#findArchitectures(Subject)}
+     */
     List<Architecture> findArchitectures(Subject subject);
 
+    /**
+     * @see {@link ContentManagerRemote#findPackageTypes(Subject, String, String)}
+     */
     List<PackageType> findPackageTypes(Subject subject, String resourceTypeName, String pluginName)
         throws ResourceTypeNotFoundException;
+
+    /**
+     * @see {@link ContentManagerRemote#findInstalledPackageVersionsByCriteria(Subject, PackageVersionCriteria)}
+     */
+    PageList<PackageVersion> findInstalledPackageVersionsByCriteria(Subject subject, PackageVersionCriteria criteria);
 }

@@ -513,6 +513,12 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public PageList<PackageVersion> findPackageVersionsInChannelByCriteria(Subject subject,
         PackageVersionCriteria criteria) {
+        Integer channelId = criteria.getFilterChannelId();
+
+        if ((null == channelId) || (channelId < 1)) {
+            throw new IllegalArgumentException("Illegal filterResourceId: " + channelId);
+        }
+
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
 
         Query query = generator.getQuery(entityManager);

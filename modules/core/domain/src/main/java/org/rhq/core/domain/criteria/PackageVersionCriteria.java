@@ -2,8 +2,12 @@ package org.rhq.core.domain.criteria;
 
 import org.rhq.core.domain.util.PageOrdering;
 
+@SuppressWarnings("unused")
 public class PackageVersionCriteria extends Criteria {
-    private Integer channelId;
+    private static final long serialVersionUID = 1L;
+
+    private Integer filterChannelId; // requires overrides
+    private Integer filterResourceId; // requires overrides
     private String filterDisplayName;
     private String filterVersion;
     private String filterFileName;
@@ -25,12 +29,32 @@ public class PackageVersionCriteria extends Criteria {
     public PackageVersionCriteria() {
         super();
 
+        filterOverrides.put("channelId", "id IN " //
+            + "( SELECT cpv.packageVersion.id" //
+            + "    FROM channelPackageVersions cpv " //
+            + "   WHERE cpv.channel.id = ? )");
         filterOverrides.put("fileSizeMinimum", "fileSize >= ?");
         filterOverrides.put("fileSizeMaximum", "fileSize <= ?");
+        filterOverrides.put("resourceId", "id IN " //
+            + "( SELECT ip.packageVersion.id" //
+            + "    FROM installedPackages ip " //
+            + "   WHERE ip.resource.id = ? )");
     }
 
-    public void addChannelId(Integer channelId) {
-        this.channelId = channelId;
+    public void addFilterChannelId(Integer filterChannelId) {
+        this.filterChannelId = filterChannelId;
+    }
+
+    public Integer getFilterChannelId() {
+        return filterChannelId;
+    }
+
+    public void addFilterResourceId(Integer filterResourceId) {
+        this.filterResourceId = filterResourceId;
+    }
+
+    public Integer getFilterResourceId() {
+        return filterResourceId;
     }
 
     public void addFilterDisplayName(String filterDisplayName) {

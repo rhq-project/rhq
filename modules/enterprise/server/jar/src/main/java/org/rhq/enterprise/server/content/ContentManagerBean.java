@@ -76,9 +76,12 @@ import org.rhq.core.domain.content.transfer.RemoveIndividualPackageResponse;
 import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.content.transfer.RetrievePackageBitsRequest;
+import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.CriteriaQueryGenerator;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.stream.StreamUtil;
@@ -86,6 +89,7 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
+import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
@@ -1009,6 +1013,14 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         return architectures;
     }
 
+    public Architecture getNoArchitecture() {
+        Query q = entityManager.createNamedQuery(Architecture.QUERY_FIND_BY_NAME);
+        q.setParameter("name", "noarch");
+        Architecture architecture = (Architecture) q.getSingleResult();
+
+        return architecture;
+    }
+
     @SuppressWarnings("unchecked")
     public List<PackageType> findPackageTypes(Subject subject, String resourceTypeName, String pluginName)
         throws ResourceTypeNotFoundException {
@@ -1340,4 +1352,35 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
         return steps;
     }
+
+    @SuppressWarnings("unchecked")
+    public List<String> getInstalledPackageVersions(Subject user, int resourceId) {
+        Query query = entityManager.createNamedQuery(InstalledPackage.QUERY_FIND_PACKAGE_LIST_VERSIONS);
+        query.setParameter("resourceId", resourceId);
+
+        List<String> packages = query.getResultList();
+        return packages;
+    }
+
+    @SuppressWarnings("unchecked")
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public PageList<PackageVersion> findInstalledPackageVersionsByCriteria(Subject subject,
+        PackageVersionCriteria criteria) {
+        Integer resourceId = criteria.getFilterResourceId();
+
+        if ((null == resourceId) || (resourceId < 1)) {
+            throw new IllegalArgumentException("Illegal filterResourceId: " + resourceId);
+        }
+
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+
+        Query query = generator.getQuery(entityManager);
+        Query countQuery = generator.getCountQuery(entityManager);
+
+        long count = (Long) countQuery.getSingleResult();
+        List<PackageVersion> results = query.getResultList();
+
+        return new PageList<PackageVersion>(results, (int) count, criteria.getPageControl());
+    }
+
 }

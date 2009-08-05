@@ -100,12 +100,12 @@ public class ClientMain {
         // instantiate
         ClientMain main = new ClientMain();
 
+        main.outputWriter.println(Version.getProductNameAndVersion());
+
         initCommands();
 
         // process startup arguments
         main.processArguments(args);
-
-        main.outputWriter.println(Version.getProductNameAndVersion());
 
         if (main.interactiveMode) {
             // begin client access loop

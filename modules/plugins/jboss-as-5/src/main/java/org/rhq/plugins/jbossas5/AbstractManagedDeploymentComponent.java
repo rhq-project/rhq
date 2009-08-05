@@ -72,12 +72,12 @@ public abstract class AbstractManagedDeploymentComponent
     private final Log log = LogFactory.getLog(this.getClass());
 
     /**
-     * The name of the ManagedDeloyment (e.g.: vfszip:/C:/opt/jboss-5.0.0.GA/server/default/deploy/foo.war).
+     * The name of the ManagedDeployment (e.g.: vfszip:/C:/opt/jboss-5.0.0.GA/server/default/deploy/foo.war).
      */
     protected String deploymentName;
 
     /**
-     * The type of the ManagedDeloyment.
+     * The type of the ManagedDeployment.
      */
     protected KnownDeploymentTypes deploymentType;
 

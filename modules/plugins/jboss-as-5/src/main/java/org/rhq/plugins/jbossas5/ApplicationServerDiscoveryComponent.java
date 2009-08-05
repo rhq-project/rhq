@@ -76,6 +76,14 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
     private static final ComparableVersion AS_MINIMUM_VERSION = new ComparableVersion("5.1.0.CR1");
     private static final ComparableVersion EAP_MINIMUM_VERSION = new ComparableVersion("5.0.0.Beta");
 
+    private static final String[] CLIENT_JARS = new String[] {
+            "client/jbossall-client.jar",
+            "common/lib/jboss-security-aspects.jar",
+            "lib/jboss-managed.jar",
+            "lib/jboss-metatype.jar",
+            "lib/jboss-dependency.jar"
+    };
+
     private final Log log = LogFactory.getLog(this.getClass());
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext discoveryContext) {
@@ -113,13 +121,7 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
 
         List<URL> clientJars = new ArrayList<URL>();
 
-        String[] jarFileNames = { "client/jbossall-client.jar",
-                                  "common/lib/jboss-security-aspects.jar",
-                                  "lib/jboss-managed.jar",
-                                  "lib/jboss-metatype.jar",
-                                  "lib/jboss-dependency.jar"
-                                };
-        for (String jarFileName : jarFileNames) {
+        for (String jarFileName : CLIENT_JARS) {
             File clientJar = new File(homeDir, jarFileName);
             if (!clientJar.exists()) {
                 throw new FileNotFoundException("Cannot find [" + clientJar + "]; unable to manage server");

@@ -37,9 +37,12 @@ import org.jboss.deployers.spi.management.deploy.DeploymentStatus;
 import org.jboss.profileservice.spi.DeploymentOption;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.plugins.jbossas5.AbstractManagedDeploymentComponent;
 
 /**
+ * A set of utility methods for deploying applications.
+ *
  * @author Ian Springer
  */
 public class DeploymentUtils {
@@ -100,7 +103,8 @@ public class DeploymentUtils {
             distributeFailure = e;
         }
         if (distributeFailure != null) {
-            throw new Exception("Failed to distribute " + contentURL + ".", distributeFailure);
+            throw new Exception("Failed to distribute '" + contentURL + "' to '" + archiveFileName + "' - cause: "
+                    + ThrowableUtil.getAllMessages(distributeFailure));
         }
 
         // Now that we've successfully distributed the deployment, we need to start it.
@@ -122,7 +126,7 @@ public class DeploymentUtils {
             LOG.error("Failed to start deployment " + Arrays.asList(deploymentNames)
                 + " during deployment of '" + archiveFileName + "'. Backing out the deployment...", startFailure);
             // If start failed, the app is invalid, so back out the deployment.
-            DeploymentStatus removeStatus = null;
+            DeploymentStatus removeStatus;
             Exception removeFailure = null;
             try {
                 progress = deploymentManager.remove(deploymentNames);
@@ -140,7 +144,8 @@ public class DeploymentUtils {
                     + " after start failure.", removeFailure);
             }
             throw new Exception("Failed to start deployment " + Arrays.asList(deploymentNames)
-                + " during deployment of '" + archiveFileName + "'.");
+                + " during deployment of '" + archiveFileName + "' - cause: " +
+                    ThrowableUtil.getAllMessages(startFailure));
         }
         // If we made it this far, the deployment (distribution+start) was successful.
         return;

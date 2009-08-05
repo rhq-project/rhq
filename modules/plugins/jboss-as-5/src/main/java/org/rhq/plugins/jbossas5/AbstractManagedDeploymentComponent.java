@@ -163,7 +163,21 @@ public abstract class AbstractManagedDeploymentComponent
         DeploymentProgress progress;
         if (name.equals("start"))
         {
-            progress = deploymentManager.start(this.deploymentName);
+        	//FIXME: This is a workaround until JOPR-309 will be fixed.
+        	if(getAvailability() != AvailabilityType.UP)
+        	{
+        		progress = deploymentManager.start(this.deploymentName);
+        	}
+        	else
+        	{
+        		String errorMessage = "Operation '" + name + "' on " + getResourceDescription() + " The resource is already started";
+        		
+        		log.warn(errorMessage);
+
+        		OperationResult or = new OperationResult();
+        		or.setErrorMessage(errorMessage);
+        		return or;
+        	}
         }
         else if (name.equals("stop"))
         {

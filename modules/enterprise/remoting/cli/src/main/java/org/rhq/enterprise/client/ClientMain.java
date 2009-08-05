@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Arrays;
 
 import jline.ArgumentCompletor;
 import jline.Completor;
@@ -363,7 +364,6 @@ public class ClientMain {
         strtok.ordinaryChar('-');
         strtok.ordinaryChar('\'');
         strtok.wordChars(33, 127);
-        strtok.quoteChar('\"');
 
         // parse the command line
         while (keep_going) {
@@ -402,12 +402,13 @@ public class ClientMain {
             new LongOpt("command", LongOpt.REQUIRED_ARGUMENT, null, 'c'),
             new LongOpt("file", LongOpt.NO_ARGUMENT, null, 'f'),
             new LongOpt("version", LongOpt.NO_ARGUMENT, null, 'v'),
-            new LongOpt("args-style", LongOpt.REQUIRED_ARGUMENT, new StringBuffer(), -2) };
+            new LongOpt("args-style", LongOpt.REQUIRED_ARGUMENT, null, -2) };
 
         Getopt getopt = new Getopt("Cli", args, sopts, lopts, false);
         int code;
 
-        String[] command = null;
+        List<String> execCmdLine = new ArrayList<String>();
+        execCmdLine.add("exec");
 
         while ((code = getopt.getopt()) != -1) {
             switch (code) {
@@ -421,6 +422,7 @@ public class ClientMain {
             case 1: {
                 // this catches non-option arguments which can be passed when running a script in non-interactive mode
                 // with -f or running a single command in non-interactive mode with -c.
+                execCmdLine.add(getopt.getOptarg());
                 break;
             }
 
@@ -443,12 +445,17 @@ public class ClientMain {
             }
             case 'c': {
                 interactiveMode = false;
-                command = createExecArgs(removeCommandOptionFromArgs(args));
+                execCmdLine.add(getopt.getOptarg());
                 break;
             }
             case 'f': {
                 interactiveMode = false;
-                command = createExecArgs(args);
+                execCmdLine.add("-f");
+                execCmdLine.add(getopt.getOptarg());
+                break;
+            }
+            case -2: {
+                execCmdLine.add("--args-style=" + getopt.getOptarg());
                 break;
             }
             case 's': {
@@ -478,35 +485,14 @@ public class ClientMain {
             } else {
                 commands.get("login").execute(this, new String[] { "login", user, pass });
             }
-        }
-
-        if (command != null) {
-            commands.get("exec").execute(this, command);
-        }
-    }
-
-    private String[] removeCommandOptionFromArgs(String[] args) {
-        List<String> newArgs = new ArrayList<String>();
-        boolean startCommand = false;
-        for (String arg : args) {
-            if (startCommand) {
-                newArgs.add(arg);
-            } else if (arg.equals("-c")) {
-                startCommand = true;
+            if (!loggedIn()) {
+                return;
             }
         }
 
-        return (String[]) newArgs.toArray(new String[newArgs.size()]);
-    }
-
-    private String[] createExecArgs(String[] args) {
-        String[] execArgs = new String[args.length + 1];
-        execArgs[0] = "exec";
-        for (int i = 0; i < args.length; ++i) {
-            execArgs[i + 1] = args[i];
+        if (!interactiveMode) {
+            commands.get("exec").execute(this, execCmdLine.toArray(new String[] {}));
         }
-
-        return execArgs;
     }
 
     public RemoteClient getRemoteClient() {

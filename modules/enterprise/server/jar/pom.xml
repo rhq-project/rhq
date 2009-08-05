@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
    <modelVersion>4.0.0</modelVersion>
 
@@ -117,7 +118,7 @@
       <dependency>
          <groupId>hibernate</groupId>
          <artifactId>hibernate3</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->         
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 
@@ -159,56 +160,56 @@
       <dependency>
          <groupId>jboss</groupId>
          <artifactId>jboss-annotations-ejb3</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->         
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 
       <dependency>
          <groupId>jboss</groupId>
          <artifactId>jboss-cache</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->         
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
          <scope>compile</scope>
       </dependency>
 
       <dependency>
          <groupId>jboss</groupId>
          <artifactId>jboss-common</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->         
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 
       <dependency>
          <groupId>jboss</groupId>
          <artifactId>jboss-ejb3x</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->         
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 
       <dependency>
          <groupId>jboss</groupId>
          <artifactId>jboss-j2ee</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->         
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 
       <dependency>
          <groupId>jboss</groupId>
          <artifactId>jboss-jmx</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->         
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 
       <dependency>
          <groupId>jboss</groupId>
          <artifactId>jboss-system</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->         
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 
       <dependency>
          <groupId>jboss</groupId>
          <artifactId>jbosssx</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->         
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 
@@ -222,7 +223,7 @@
       <dependency>
          <groupId>org.jboss.transaction</groupId>
          <artifactId>jboss-jta</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->         
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 
@@ -331,7 +332,7 @@
       <dependency>
          <groupId>jboss</groupId>
          <artifactId>javassist</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->         
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
          <scope>test</scope>
       </dependency>
 
@@ -374,7 +375,8 @@
                         <!-- generate the I18N resource bundles -->
                         <taskdef name="i18n" classpathref="maven.runtime.classpath" classname="mazz.i18n.ant.I18NAntTask" />
 
-                        <i18n outputdir="${project.build.outputDirectory}" defaultlocale="en" verbose="false" append="false" verify="true">
+                        <i18n outputdir="${project.build.outputDirectory}" defaultlocale="en" verbose="false"
+                           append="false" verify="true">
                            <classpath refid="maven.runtime.classpath" />
                            <classfileset dir="${project.build.outputDirectory}">
                               <include name="**/ServerI18NResourceKeys.class" />
@@ -388,15 +390,15 @@
                         </tstamp>
 
                         <echo file="${project.build.outputDirectory}/rhq-server-version.properties" append="false">Product-Name=${rhq.product.name}
-Product-Version=${project.version}
-Module-Name=${pom.name}
-Module-Version=${pom.version}
-Build-Number=${buildNumber}
-Build-Date=${build.time}
-Build-Jdk-Vendor=${java.vendor}
-Build-Jdk=${java.version}
-Build-OS-Name=${os.name}
-Build-OS-Version=${os.version}
+                           Product-Version=${project.version}
+                           Module-Name=${pom.name}
+                           Module-Version=${pom.version}
+                           Build-Number=${buildNumber}
+                           Build-Date=${build.time}
+                           Build-Jdk-Vendor=${java.vendor}
+                           Build-Jdk=${java.version}
+                           Build-OS-Name=${os.name}
+                           Build-OS-Version=${os.version}
 </echo>
                      </tasks>
                   </configuration>
@@ -422,43 +424,47 @@ Build-OS-Version=${os.version}
                   </manifest>
                   <manifestEntries>
                      <Build-Number>${buildNumber}</Build-Number>
-                  </manifestEntries>                 
+                  </manifestEntries>
                </archive>
             </configuration>
          </plugin>
 
-           <!--  run the standard tests, by default, unless we are specifically running the remote API tests 
-                 (activate the ws-test profile to run just the remote API tests) -->
-           <plugin>
-              <artifactId>maven-surefire-plugin</artifactId>
-              <!-- Everything but the web service tests, this is the standard test execution -->
-              <configuration>         
-                 <excludes>  
-                    <exclude>com/**/*.java</exclude>
-                 </excludes>
-                 <excludedGroups>${rhq.testng.excludedGroups},ws</excludedGroups>
-                 <systemProperties>
-                    <property>
-                       <name>embeddedDeployment</name>
-                       <value>true</value>
-                    </property>
-                    <property>
-                       <name>deploymentDirectory</name>
-                       <value>target/classes</value>
-                    </property>
-                    <property>
-                       <name>hibernate.dialect</name>
-                       <value>${rhq.test.ds.hibernate-dialect}</value>
-                    </property>
-                 </systemProperties>
-                 <additionalClasspathElements>
-                    <!-- The below is required for tests to run against Oracle. -->               
-                    <!--<additionalClasspathElement>${settings.localRepository}/ojdbc14/ojdbc14/${ojdbc14.version}/ojdbc14-${ojdbc14.version}.jar</additionalClasspathElement>-->
-                    <additionalClasspathElement>${settings.localRepository}/com/oracle/ojdbc5/${ojdbc5.version}/ojdbc5-${ojdbc5.version}.jar</additionalClasspathElement>
-                 </additionalClasspathElements>
-              </configuration>               
-           </plugin>
-         
+         <!--
+            run the standard tests, by default, unless we are specifically running the remote API tests (activate the
+            ws-test profile to run just the remote API tests)
+         -->
+         <plugin>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <!-- Everything but the web service tests, this is the standard test execution -->
+            <configuration>
+               <excludes>
+                  <exclude>com/**/*.java</exclude>
+               </excludes>
+               <excludedGroups>${rhq.testng.excludedGroups},ws</excludedGroups>
+               <systemProperties>
+                  <property>
+                     <name>embeddedDeployment</name>
+                     <value>true</value>
+                  </property>
+                  <property>
+                     <name>deploymentDirectory</name>
+                     <value>target/classes</value>
+                  </property>
+                  <property>
+                     <name>hibernate.dialect</name>
+                     <value>${rhq.test.ds.hibernate-dialect}</value>
+                  </property>
+               </systemProperties>
+               <additionalClasspathElements>
+                  <!-- The below is required for tests to run against Oracle. -->
+                  <!--
+                     <additionalClasspathElement>${settings.localRepository}/ojdbc14/ojdbc14/${ojdbc14.version}/ojdbc14-${ojdbc14.version}.jar</additionalClasspathElement>
+                  -->
+                  <additionalClasspathElement>${settings.localRepository}/com/oracle/ojdbc5/${ojdbc5.version}/ojdbc5-${ojdbc5.version}.jar</additionalClasspathElement>
+               </additionalClasspathElements>
+            </configuration>
+         </plugin>
+
       </plugins>
    </build>
 
@@ -478,36 +484,39 @@ Build-OS-Version=${os.version}
             <plugins>
 
                <plugin>
-                 <artifactId>maven-antrun-plugin</artifactId>
-                 <version>1.1</version>
-                 <executions>
+                  <artifactId>maven-antrun-plugin</artifactId>
+                  <version>1.1</version>
+                  <executions>
 
                      <execution>
                         <id>deploy</id>
                         <phase>compile</phase>
                         <configuration>
-                          <tasks>
-                            <property name="deployment.dir" location="${rhq.deploymentDir}" />
-                            <echo>*** Copying updated files from target/classes to ${deployment.dir}...</echo>
-                            <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
-                               <fileset dir="target/classes" />
-                            </copy>
-                          </tasks>
+                           <tasks>
+                              <property name="deployment.dir" location="${rhq.deploymentDir}" />
+                              <echo>*** Copying updated files from target/classes to ${deployment.dir}...</echo>
+                              <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
+                                 <fileset dir="target/classes" />
+                              </copy>
+                           </tasks>
                         </configuration>
                         <goals>
-                          <goal>run</goal>
+                           <goal>run</goal>
                         </goals>
                      </execution>
 
-                     <!-- NOTE: The below execution is necessary to make sure the META-INF/MANIFEST.MF and
-                                META-INF/maven/** files, which get created by the ejb plugin during the
-                                package phase, get copied over to the deployment dir. -->
+                     <!--
+                        NOTE: The below execution is necessary to make sure the META-INF/MANIFEST.MF and
+                        META-INF/maven/** files, which get created by the ejb plugin during the package phase, get
+                        copied over to the deployment dir.
+                     -->
                      <execution>
                         <id>deploy-jar-meta-inf</id>
                         <phase>package</phase>
                         <configuration>
                            <tasks>
-                              <unjar src="${project.build.directory}/${project.build.finalName}.jar" dest="${rhq.deploymentDir}" overwrite="false">
+                              <unjar src="${project.build.directory}/${project.build.finalName}.jar" dest="${rhq.deploymentDir}"
+                                 overwrite="false">
                                  <patternset>
                                     <include name="META-INF/**" />
                                  </patternset>
@@ -523,14 +532,14 @@ Build-OS-Version=${os.version}
                         <id>undeploy</id>
                         <phase>clean</phase>
                         <configuration>
-                          <tasks>
-                            <property name="deployment.dir" location="${rhq.deploymentDir}" />
-                            <echo>*** Deleting ${deployment.dir}${file.separator}...</echo>
-                            <delete dir="${deployment.dir}" />
-                          </tasks>
+                           <tasks>
+                              <property name="deployment.dir" location="${rhq.deploymentDir}" />
+                              <echo>*** Deleting ${deployment.dir}${file.separator}...</echo>
+                              <delete dir="${deployment.dir}" />
+                           </tasks>
                         </configuration>
                         <goals>
-                          <goal>run</goal>
+                           <goal>run</goal>
                         </goals>
                      </execution>
 
@@ -540,7 +549,27 @@ Build-OS-Version=${os.version}
             </plugins>
          </build>
       </profile>
-      
+
+      <!--  Add dependencies need for jdk5 builds. Remove when we stop supporting jdk5 -->
+      <profile>
+         <id>java-5-dependencies</id>
+         <activation>
+            <jdk>1.5</jdk>
+            <property>
+               <name>java5.home</name>
+            </property>
+         </activation>
+
+         <dependencies>
+            <dependency>
+               <groupId>jboss.jbossws</groupId>
+               <artifactId>jboss-jaxws</artifactId>
+               <!-- NOTE: This version is old but is good enough to resolve the build dependency. -->
+               <version>3.0.1-native-2.0.4.GA</version>
+               <scope>provided</scope>
+            </dependency>
+         </dependencies>
+      </profile>
    </profiles>
 
 </project>

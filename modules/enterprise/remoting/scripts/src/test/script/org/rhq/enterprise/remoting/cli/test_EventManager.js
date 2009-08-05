@@ -54,7 +54,6 @@ function testFilterByResource() {
     //criteria.addFilterSourceName(alphaService0.name);
     criteria.addFilterSourceName("service-alpha-event");
 
-<<<<<<< Updated upstream:modules/enterprise/remoting/scripts/src/test/script/org/rhq/enterprise/remoting/cli/test_EventManager.js
     result = waitForScheduledOperationToComplete(operationSchedule);
 
     Assert.assertNotNull(result, "Failed to get result for scheduled operation");
@@ -72,15 +71,6 @@ function testFilterByResource() {
         }
     }
     Assert.assertTrue(foundEvent, "Failed to find event with details, '" + alphaService0Details + "'");
-=======
-    waitForScheduledOperationToComplete(operationSchedule);
-
-    //Assert.assertNotNull(configuration, "Failed to get result for scheduled operation");    
-
-    var events = EventManager.findEventsByCriteria(criteria);
-
-    Assert.assertTrue(events.size() > 0, "Expected to find events when filtering by resource id for " + alphaService0);
->>>>>>> Stashed changes:modules/enterprise/remoting/scripts/src/test/script/org/rhq/enterprise/remoting/cli/test_EventManager.js
     
     events = findEventsByResource(alphaService1);
     Assert.assertTrue(events.size() > 0, "Expected to find events when filtering by resource id for " + alphaService1);

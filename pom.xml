@@ -207,7 +207,7 @@
       <dependency>
          <groupId>org.jboss.jbossws</groupId>
          <artifactId>jbossws-native-dist</artifactId>
-         <version>jbossws-native-dist.version</version>
+         <version>${jbossws-native-dist.version}</version>
          <type>zip</type>
       </dependency>
       

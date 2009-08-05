@@ -36,15 +36,27 @@ function setUp() {
     alphaService1 = findService("service-alpha-1");
     betaService0 = findService("service-beta-0");
 
-    fireEvent(alphaService0, "WARNING", 1);
-    fireEvent(alphaService1, "ERROR", 1);
-    fireEvent(betaService0, "FATAL", 1);
+    alphaService0Details = java.util.Date() + " >> events created for " + alphaService0.name;
+    alphaService1Details = java.util.Date() + " >> events created for " + alphaService1.name;
+    betaService0Details = java.util.Date() + " >> events created for " + betaService0.name;
+
+    fireEvent(alphaService0, "WARNING", 1, alphaService0Details);
+    fireEvent(alphaService1, "ERROR", 1, alphaService1Details);
+    fireEvent(betaService0, "FATAL", 1, betaService0Details);
 }
 
 function testFilterByResource() {
-    var events = findEventsByResource(alphaService0);
-    assertTrue(events.size() > 0, "Expected to find events when filtering by resource id for " + alphaService0);
+    var criteria = new EventCriteria();
+    criteria.addFilterResourceId(alphaService0.id);
+    criteria.addFilterSeverity(EventSeverity.WARN);
+    criteria.addFilterDetail(alphaService0Details);
+    criteria.addFilterSourceName(alphaService0.name);
 
+    //var events = findEventsByResource(alphaService0);
+    var events = EventManager.findEventsByCriteria(criteria);
+
+    assertTrue(events.size() > 0, "Expected to find events when filtering by resource id for " + alphaService0);
+    
     events = findEventsByResource(alphaService1);
     assertTrue(events.size() > 0, "Expected to find events when filtering by resource id for " + alphaService1);
 
@@ -76,13 +88,13 @@ function findService(name) {
     return resources.get(0);
 }
 
-function fireEvent(resource, severity, numberOfEvents) {
+function fireEvent(resource, severity, numberOfEvents, details) {
     var operationName = "createEvents";
     var delay = 0;
     var repeatInterval = 0;
     var repeatCount = 0;
     var timeout = 0;
-    var parameters = createParameters(resource, severity, numberOfEvents);
+    var parameters = createParameters(resource, severity, numberOfEvents, details);
     var description = "Test script event for " + resource.name;
 
     OperationManager.scheduleResourceOperation(
@@ -97,12 +109,12 @@ function fireEvent(resource, severity, numberOfEvents) {
     );
 }
 
-function createParameters(resource, severity, numberOfEvents) {
+function createParameters(resource, severity, numberOfEvents, details) {
     var params = new Configuration();
     params.put(new PropertySimple("source", resource.name));
-    params.put(new PropertySimple("details", "Test event for " + resource.name));
+    params.put(new PropertySimple("details", details));
     params.put(new PropertySimple("severity", severity));
-    params.put(new PropertySimple("count", new java.lang.Integer(numberOfEvents)));
+    params.put(new PropertySimple("count", java.lang.Integer(numberOfEvents)));
 
     return params;
 }

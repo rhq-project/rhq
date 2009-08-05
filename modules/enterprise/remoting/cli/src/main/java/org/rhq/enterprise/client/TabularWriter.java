@@ -193,6 +193,7 @@ public class TabularWriter {
     }
 
     // This method is taken verbatim from the Commons Lang project in the org.apache.commons.lang.StringUtils class
+    // TODO Should this method go into one our StringUtil classes?
     private String abbreviate(String string, int maxWidth) {
         int offset = 0;
 

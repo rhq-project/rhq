@@ -45,18 +45,13 @@ public class ScriptAssertTest {
         }
     }
 
-    @Test
+    @Test(expectedExceptions={ScriptAssertionException.class})
     public void assertExistsShouldReturnFalseWhenVariableIsNotBound() {
         ScriptEngine scriptEngine = createScriptEngine();
 
         ScriptAssert scriptAssert = new ScriptAssert(scriptEngine);
 
-        try {
-            scriptAssert.assertExists("foo");
-            assert false : "Expected isDefined() to return false when the variable is not bound.";
-        } catch (AssertionError ae) {
-            assert true;
-        }
+        scriptAssert.assertExists("foo");
     }
 
     @Test

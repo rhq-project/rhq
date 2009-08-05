@@ -18,8 +18,6 @@
  */
 package org.rhq.enterprise.client;
 
-import static org.apache.commons.lang.StringUtils.abbreviate;
-
 import au.com.bytecode.opencsv.CSVWriter;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
@@ -192,6 +190,44 @@ public class TabularWriter {
         else {
             out.println(abbreviate(propertyInfo.value, width - 12 - maxLength));
         }
+    }
+
+    private String abbreviate(String string, int maxWidth) {
+        int offset = 0;
+
+        if (string == null) {
+            return null;
+        }
+
+        if (maxWidth < 4) {
+            throw new IllegalArgumentException("Minimum abbreviation width is 4");
+        }
+
+        if (string.length() <= maxWidth) {
+            return string;
+        }
+
+        if (offset > string.length()) {
+            offset = string.length();
+        }
+
+        if ((string.length() - offset) < (maxWidth - 3)) {
+            offset = string.length() - (maxWidth - 3);
+        }
+
+        if (offset <= 4) {
+            return string.substring(0, maxWidth - 3) + "...";
+        }
+
+        if (maxWidth < 7) {
+            throw new IllegalArgumentException("Minimum abbreviation width with offset is 7");
+        }
+
+        if ((offset + (maxWidth - 3)) < string.length()) {
+            return "..." + abbreviate(string.substring(offset), maxWidth - 3);            
+        }
+
+        return "..." + string.substring(string.length() - (maxWidth - 3));
     }
 
     public void print(Map map) {

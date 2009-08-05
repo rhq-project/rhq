@@ -31,7 +31,6 @@
       <hibernate-all.version>1.0.0.Alpha9</hibernate-all.version>
       <opencsv.version>1.8</opencsv.version>
       <testng.version>5.9</testng.version>
-      <commons-lang.version>2.4</commons-lang.version>
    </properties>
 
    <dependencies>
@@ -74,7 +73,8 @@
       <dependency>
          <groupId>commons-lang</groupId>
          <artifactId>commons-lang</artifactId>
-         <version>${commons-lang.version}</version>
+         <version>2.4</version>
+         <scope>test</scope>
       </dependency>
 
       <dependency>
@@ -204,9 +204,6 @@
                            <property
                               name="commons-logging.version"
                               value="${commons-logging.version}" />
-                           <property
-                              name="commons-lang.version"
-                              value="${commons-lang.version}" />
                            <property
                               name="opencsv.version"
                               value="${opencsv.version}" />

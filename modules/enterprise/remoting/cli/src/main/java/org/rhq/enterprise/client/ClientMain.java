@@ -486,17 +486,17 @@ public class ClientMain {
     }
 
     private String[] removeCommandOptionFromArgs(String[] args) {
-        String[] newArgs = new String[args.length - 1];
-        int index = 0;
-
-        for (int i = 0; i < args.length; ++i) {
-            if (args[i].equals("-c")) {
-                continue;
+        List<String> newArgs = new ArrayList<String>();
+        boolean startCommand = false;
+        for (String arg : args) {
+            if (startCommand) {
+                newArgs.add(arg);
+            } else if (arg.equals("-c")) {
+                startCommand = true;
             }
-            newArgs[index++] = args[i];
         }
 
-        return newArgs;
+        return (String[]) newArgs.toArray(new String[newArgs.size()]);
     }
 
     private String[] createExecArgs(String[] args) {

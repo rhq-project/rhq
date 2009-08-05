@@ -31,8 +31,6 @@ rhq.logout();
 
 
 function setUp() {
-    if (true) throw javax.script.ScriptException('set up failed');
-
     parentServer = findServer("server-omega-0");
     alphaService0 = findService("service-alpha-0");
     alphaService1 = findService("service-alpha-1");
@@ -42,27 +40,53 @@ function setUp() {
     alphaService1Details = java.util.Date() + " >> events created for " + alphaService1.name;
     betaService0Details = java.util.Date() + " >> events created for " + betaService0.name;
 
-    operationSchedule = fireEvent(alphaService0, "WARNING", 1, alphaService0Details);
+    operationSchedule = fireEvent(alphaService0, "WARN", 1, alphaService0Details);
     fireEvent(alphaService1, "ERROR", 1, alphaService1Details);
     fireEvent(betaService0, "FATAL", 1, betaService0Details);
 }
 
 function testFilterByResource() {
     var criteria = new EventCriteria();
-    criteria.addFilterResourceId(alphaService0.id);
-    criteria.addFilterSeverity(EventSeverity.WARN);
-    criteria.addFilterDetail(alphaService0Details);
-    criteria.addFilterSourceName(alphaService0.name);
+    criteria.caseSensitive = true;
+    //criteria.addFilterResourceId(alphaService0.id);
+    //criteria.addFilterSeverity(EventSeverity.WARN);
+    //criteria.addFilterDetail(alphaService0Details);
+    //criteria.addFilterSourceName(alphaService0.name);
+    criteria.addFilterSourceName("service-alpha-event");
+
+<<<<<<< Updated upstream:modules/enterprise/remoting/scripts/src/test/script/org/rhq/enterprise/remoting/cli/test_EventManager.js
+    result = waitForScheduledOperationToComplete(operationSchedule);
+
+    Assert.assertNotNull(result, "Failed to get result for scheduled operation");
+
+    var events = EventManager.findEventsByCriteria(criteria);
+    //var events = findEventsByResource(alphaService0);
+
+    //Assert.assertNumberEqualsJS(events.size(), 1, "Expected to find one event but found " + events.size());
+    Assert.assertTrue(events.size() > 0, "Expected to find events when filtering by resource id for " + alphaService0);
+    var foundEvent = false;
+    for (i = 0; i < events.size(); ++i) {
+        if (events.get(i).detail == alphaService0Details) {
+            foundEvent = true;
+            break;
+        }
+    }
+    Assert.assertTrue(foundEvent, "Failed to find event with details, '" + alphaService0Details + "'");
+=======
+    waitForScheduledOperationToComplete(operationSchedule);
+
+    //Assert.assertNotNull(configuration, "Failed to get result for scheduled operation");    
 
     var events = EventManager.findEventsByCriteria(criteria);
 
-    assertTrue(events.size() > 0, "Expected to find events when filtering by resource id for " + alphaService0);
+    Assert.assertTrue(events.size() > 0, "Expected to find events when filtering by resource id for " + alphaService0);
+>>>>>>> Stashed changes:modules/enterprise/remoting/scripts/src/test/script/org/rhq/enterprise/remoting/cli/test_EventManager.js
     
     events = findEventsByResource(alphaService1);
-    assertTrue(events.size() > 0, "Expected to find events when filtering by resource id for " + alphaService1);
+    Assert.assertTrue(events.size() > 0, "Expected to find events when filtering by resource id for " + alphaService1);
 
     events = findEventsByResource(betaService0);
-    assertTrue(events.size() > 0, "Expected to find events when filtering by resource id for " + betaService0);
+    Assert.assertTrue(events.size() > 0, "Expected to find events when filtering by resource id for " + betaService0);
 }
 
 function findServer(name) {

@@ -37,175 +37,335 @@ public class ScriptAssert {
     }
 
     public void assertTrue(boolean condition, String msg) {
-        Assert.assertTrue(condition, msg);
+        try {
+            Assert.assertTrue(condition, msg);
+        } catch (AssertionError e) {
+            throw new ScriptAssertionException(msg, e);
+        }
     }
 
     public void assertTrue(boolean condition) {
-        Assert.assertTrue(condition);
+        try {
+            Assert.assertTrue(condition);
+        } catch (AssertionError e) {
+            throw new ScriptAssertionException(e);
+        }
     }
 
     public void assertFalse(boolean condition, String msg) {
-        Assert.assertFalse(condition, msg);
+        try {
+            Assert.assertFalse(condition, msg);
+        } catch (AssertionError e) {
+            throw new ScriptAssertionException(msg, e);
+        }
     }
 
     public void assertFalse(boolean condition) {
-        Assert.assertFalse(condition);
+        try {
+            Assert.assertFalse(condition);
+        } catch (AssertionError e) {
+            throw new ScriptAssertionException(e);
+        }
     }
 
     public void fail(String msg, Throwable throwable) {
-        Assert.fail(msg, throwable);
+        throw new ScriptAssertionException(msg, throwable);
     }
 
     public void fail(String msg) {
-        Assert.fail(msg);
+        throw new ScriptAssertionException(msg);
     }
 
     public void fail() {
-        Assert.fail();
+        throw new ScriptAssertionException();
     }
 
     public void assertEquals(Object actual, Object expected, String msg) {
-        Assert.assertEquals(actual, expected, msg);
+        try {
+            Assert.assertEquals(actual, expected, msg);
+        } catch (AssertionError e) {
+            throw new ScriptAssertionException(msg, e);
+        }
     }
 
     public void assertEquals(Object actual, Object expected) {
-        Assert.assertEquals(actual, expected);
+        try {
+            Assert.assertEquals(actual, expected);
+        } catch (AssertionError e) {
+            throw new ScriptAssertionException(e);
+        }
     }
 
     public void assertEquals(String actual, String expected, String msg) {
-        Assert.assertEquals(actual, expected, msg);
+        try {
+            Assert.assertEquals(actual, expected, msg);
+        } catch (AssertionError e) {
+            throw new ScriptAssertionException(msg, e);
+        }
     }
 
     public void assertEquals(String actual, String expected) {
-        Assert.assertEquals(actual, expected);
+        try {
+            Assert.assertEquals(actual, expected);
+        } catch (AssertionError e) {
+            throw new ScriptAssertionException(e);
+        }
     }
 
     public void assertEquals(double actual, double expected, double delta, String msg) {
-        Assert.assertEquals(actual, expected, delta, msg);
+        try {
+            Assert.assertEquals(actual, expected, delta, msg);
+        } catch (AssertionError e) {
+            throw new ScriptAssertionException(msg, e);
+        }
     }
 
     public void assertEquals(double actual, double expected, double delta) {
-        Assert.assertEquals(actual, expected, delta);
+        try {
+            Assert.assertEquals(actual, expected, delta);
+        } catch (AssertionError e) {
+            throw new ScriptAssertionException(e);
+        }
     }
 
     public void assertEquals(float actual, float expected, float delta, String msg) {
-        Assert.assertEquals(actual, expected, delta, msg);
+        try {
+            Assert.assertEquals(actual, expected, delta, msg);
+        } catch (AssertionError e) {
+            throw new ScriptAssertionException(msg, e);
+        }
     }
 
     public void assertEquals(float actual, float expected, float delta) {
-        Assert.assertEquals(actual, expected, delta);
+        try {
+            Assert.assertEquals(actual, expected, delta);
+        } catch (AssertionError e) {
+            throw new ScriptAssertionException(e);
+        }
     }
 
     public void assertEquals(long actual, long expected, String msg) {
-        Assert.assertEquals(actual, expected, msg);
+        try {
+            Assert.assertEquals(actual, expected, msg);
+        } catch (AssertionError e) {
+            throw new ScriptAssertionException(msg, e);
+        }
     }
 
     public void assertEquals(long actual, long expected) {
-        Assert.assertEquals(actual, expected);
+        try {
+            Assert.assertEquals(actual, expected);
+        } catch (AssertionError e) {
+            throw new ScriptAssertionException(e);
+        }
     }
 
     public void assertEquals(boolean actual, boolean expected, String msg) {
-        Assert.assertEquals(actual, expected, msg);
+        try {
+            Assert.assertEquals(actual, expected, msg);
+        } catch (AssertionError e) {
+            throw new ScriptAssertionException(msg, e);
+        }
     }
 
     public void assertEquals(boolean actual, boolean expected) {
-        Assert.assertEquals(actual, expected);
+        try {
+            Assert.assertEquals(actual, expected);
+        } catch (AssertionError e) {
+            throw new ScriptAssertionException(e);
+        }
     }
 
     public void assertEquals(byte actual, byte expected, String msg) {
-        Assert.assertEquals(actual, expected, msg);
+        try {
+            Assert.assertEquals(actual, expected, msg);
+        } catch (AssertionError e) {
+            throw new ScriptAssertionException(msg, e);
+        }
     }
 
     public void assertEquals(byte actual, byte expected) {
-        Assert.assertEquals(actual, expected);
+        try {
+            Assert.assertEquals(actual, expected);
+        } catch (AssertionError e) {
+            throw new ScriptAssertionException(e);
+        }
     }
 
     public void assertEquals(char actual, char expected, String msg) {
-        Assert.assertEquals(actual, expected, msg);
+        try {
+            Assert.assertEquals(actual, expected, msg);
+        } catch (AssertionError e) {
+            throw new ScriptAssertionException(msg, e);
+        }
     }
 
     public void assertEquals(char actual, char expected) {
-        Assert.assertEquals(actual, expected);
+        try {
+            Assert.assertEquals(actual, expected);
+        } catch (AssertionError e) {
+            throw new ScriptAssertionException(e);
+        }
     }
 
     public void assertEquals(short actual, short expected, String msg) {
-        Assert.assertEquals(actual, expected, msg);
+        try {
+            Assert.assertEquals(actual, expected, msg);
+        } catch(AssertionError e) {
+            throw new ScriptAssertionException(msg, e);
+        }
     }
 
     public void assertEquals(short actual, short expected) {
-        Assert.assertEquals(actual, expected);
+        try {
+            Assert.assertEquals(actual, expected);
+        } catch (AssertionError e) {
+            throw new ScriptAssertionException(e);
+        }
     }
 
     public void assertEquals(int actual, int expected, String msg) {
-        Assert.assertEquals(actual, expected, msg);
+        try {
+            Assert.assertEquals(actual, expected, msg);
+        } catch (AssertionError e) {
+            throw new ScriptAssertionException(msg, e);
+        }
     }
 
     public void assertEquals(int actual, int expected) {
-        Assert.assertEquals(actual, expected);
+        try {
+            Assert.assertEquals(actual, expected);
+        } catch (AssertionError e) {
+            throw new ScriptAssertionException(e);
+        }
     }
 
     public void assertNotNull(Object object) {
-        Assert.assertNotNull(object);
+        try {
+            Assert.assertNotNull(object);
+        } catch (AssertionError e) {
+            throw new ScriptAssertionException(e);
+        }
     }
 
     public void assertNotNull(Object object, String msg) {
-        Assert.assertNotNull(object, msg);
+        try {
+            Assert.assertNotNull(object, msg);
+        } catch (AssertionError e) {
+            throw new ScriptAssertionException(msg, e);
+        }
     }
 
     public void assertNull(Object object) {
-        Assert.assertNull(object);
+        try {
+            Assert.assertNull(object);
+        } catch (AssertionError e) {
+            throw new ScriptAssertionException(e);
+        }
     }
 
     public void assertNull(Object object, String msg) {
-        Assert.assertNull(object, msg);
+        try {
+            Assert.assertNull(object, msg);
+        } catch (AssertionError e) {
+            throw new ScriptAssertionException(msg, e);
+        }
     }
 
     public void assertSame(Object actual, Object expected, String msg) {
-        Assert.assertSame(actual, expected, msg);
+        try {
+            Assert.assertSame(actual, expected, msg);
+        } catch (AssertionError e) {
+            throw new ScriptAssertionException(msg, e);
+        }
     }
 
     public void assertSame(Object actual, Object expected) {
-        Assert.assertSame(actual, expected);
+        try {
+            Assert.assertSame(actual, expected);
+        } catch (AssertionError e) {
+            throw new ScriptAssertionException(e);
+        }
     }
 
     public void assertNotSame(Object actual, Object expected, String msg) {
-        Assert.assertNotSame(actual, expected, msg);
+        try {
+            Assert.assertNotSame(actual, expected, msg);
+        } catch (AssertionError e) {
+            throw new ScriptAssertionException(msg, e);
+        }
     }
 
     public void assertNotSame(Object actual, Object expected) {
-        Assert.assertNotSame(actual, expected);
+        try {
+            Assert.assertNotSame(actual, expected);
+        } catch (AssertionError e) {
+            throw new ScriptAssertionException(e);
+        }
     }
 
     public void assertEquals(Collection actual, Collection expected) {
-        Assert.assertEquals(actual, expected);
+        try {
+            Assert.assertEquals(actual, expected);
+        } catch (AssertionError e) {
+            throw new ScriptAssertionException(e);
+        }
     }
 
     public void assertEquals(Collection actual, Collection expected, String msg) {
-        Assert.assertEquals(actual, expected, msg);
+        try {
+            Assert.assertEquals(actual, expected, msg);
+        } catch (AssertionError e) {
+            throw new ScriptAssertionException(msg, e);
+        }
     }
 
     public void assertEquals(Object[] actual, Object[] expected, String msg) {
-        Assert.assertEquals(actual, expected, msg);
+        try {
+            Assert.assertEquals(actual, expected, msg);
+        } catch (AssertionError e) {
+            throw new ScriptAssertionException(msg, e);
+        }
     }
 
     public void assertEqualsNoOrder(Object[] actual, Object[] expected, String msg) {
-        Assert.assertEqualsNoOrder(actual, expected, msg);
+        try {
+            Assert.assertEqualsNoOrder(actual, expected, msg);
+        } catch (AssertionError e) {
+            throw new ScriptAssertionException(msg, e);
+        }
     }
 
     public void assertEquals(Object[] actual, Object[] expected) {
-        Assert.assertEquals(actual, expected);
+        try {
+            Assert.assertEquals(actual, expected);
+        } catch (AssertionError e) {
+            throw new ScriptAssertionException(e);
+        }
     }
 
     public void assertEqualsNoOrder(Object[] actual, Object[] expected) {
-        Assert.assertEqualsNoOrder(actual, expected);
+        try {
+            Assert.assertEqualsNoOrder(actual, expected);
+        } catch (AssertionError e) {
+            throw new ScriptAssertionException(e);
+        }
     }
 
     public void assertEquals(byte[] actual, byte[] expected) {
-        Assert.assertEquals(actual, expected);
+        try {
+            Assert.assertEquals(actual, expected);
+        } catch (AssertionError e) {
+            throw new ScriptAssertionException(e);
+        }
     }
 
     public void assertEquals(byte[] actual, byte[] expected, String msg) {
-        Assert.assertEquals(actual, expected, msg);
+        try {
+            Assert.assertEquals(actual, expected, msg);
+        } catch (AssertionError e) {
+            throw new ScriptAssertionException(msg, e);
+        }
     }
 
     public void assertExists(String identifier) {

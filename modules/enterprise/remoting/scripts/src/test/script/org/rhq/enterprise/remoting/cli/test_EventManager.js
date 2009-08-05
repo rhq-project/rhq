@@ -31,6 +31,8 @@ rhq.logout();
 
 
 function setUp() {
+    if (true) throw javax.script.ScriptException('set up failed');
+
     parentServer = findServer("server-omega-0");
     alphaService0 = findService("service-alpha-0");
     alphaService1 = findService("service-alpha-1");
@@ -40,7 +42,7 @@ function setUp() {
     alphaService1Details = java.util.Date() + " >> events created for " + alphaService1.name;
     betaService0Details = java.util.Date() + " >> events created for " + betaService0.name;
 
-    fireEvent(alphaService0, "WARNING", 1, alphaService0Details);
+    operationSchedule = fireEvent(alphaService0, "WARNING", 1, alphaService0Details);
     fireEvent(alphaService1, "ERROR", 1, alphaService1Details);
     fireEvent(betaService0, "FATAL", 1, betaService0Details);
 }
@@ -52,7 +54,6 @@ function testFilterByResource() {
     criteria.addFilterDetail(alphaService0Details);
     criteria.addFilterSourceName(alphaService0.name);
 
-    //var events = findEventsByResource(alphaService0);
     var events = EventManager.findEventsByCriteria(criteria);
 
     assertTrue(events.size() > 0, "Expected to find events when filtering by resource id for " + alphaService0);
@@ -97,7 +98,7 @@ function fireEvent(resource, severity, numberOfEvents, details) {
     var parameters = createParameters(resource, severity, numberOfEvents, details);
     var description = "Test script event for " + resource.name;
 
-    OperationManager.scheduleResourceOperation(
+    return OperationManager.scheduleResourceOperation(
         resource.id,
         operationName,
         delay,

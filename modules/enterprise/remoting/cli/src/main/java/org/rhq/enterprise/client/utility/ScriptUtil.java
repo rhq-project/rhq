@@ -24,15 +24,22 @@ package org.rhq.enterprise.client.utility;
 
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.operation.ResourceOperationHistory;
+import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.enterprise.client.Controller;
 import org.rhq.enterprise.client.ClientMain;
 import org.rhq.enterprise.server.resource.ResourceManagerRemote;
+import org.rhq.enterprise.server.operation.ResourceOperationSchedule;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 
 public class ScriptUtil {
 
@@ -95,5 +102,31 @@ public class ScriptUtil {
         } catch (InterruptedException ie) {
             throw new RuntimeException(ie);
         }
+    }
+
+    public Configuration waitForScheduledOperationToComplete(ResourceOperationSchedule schedule)
+        throws InterruptedException{
+
+        ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
+        criteria.addFilterJobId(schedule.getJobId());
+        criteria.addFilterResourceIds(Arrays.asList(schedule.getResource().getId()));
+        criteria.addSortStartTime(PageOrdering.DESC);
+        criteria.setPaging(0, 1);
+        criteria.fetchOperationDefinition(true);
+        criteria.fetchParameters(true);
+        criteria.fetchResults(true);
+
+        ResourceOperationHistory history = null;
+
+        while(history == null) {
+            Thread.sleep(100L);
+            PageList<ResourceOperationHistory> histories = client.getRemoteClient().getOperationManagerRemote()
+                    .findResourceOperationHistoriesByCriteria(client.getRemoteClient().getSubject(), criteria);
+            if (histories.size() > 0 && histories.get(0).getStatus() != OperationRequestStatus.INPROGRESS) {
+                history = histories.get(0);
+            }
+        }
+
+        return history.getResults();
     }
 }

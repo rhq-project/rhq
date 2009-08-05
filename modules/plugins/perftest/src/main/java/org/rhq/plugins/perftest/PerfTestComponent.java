@@ -190,7 +190,7 @@ public class PerfTestComponent implements ResourceComponent, MeasurementFacet, C
         EventContext eventContext = resourceContext.getEventContext();
 
         for (int i = 0; i < count; ++i) {
-            Event event = new Event(eventType, source, System.currentTimeMillis(), severity, "event " + i);
+            Event event = new Event(eventType, source, System.currentTimeMillis(), severity, details);
             eventContext.publishEvent(event);
         }
 

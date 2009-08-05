@@ -22,6 +22,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.transfer.DeployPackageStep;
@@ -53,6 +54,7 @@ import org.rhq.plugins.perftest.measurement.MeasurementFactory;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Set;
+import java.util.Arrays;
 
 /**
  * JON resource component for handling resources defined in the performance test scenario.
@@ -158,18 +160,32 @@ public class PerfTestComponent implements ResourceComponent, MeasurementFacet, C
         throws InterruptedException, Exception {
 
         if (name.equals("createEvents")) {
-            createEvents(parameters);
+            return createEvents(parameters);
         }
 
         return null;
     }
 
-    private void createEvents(Configuration params) {
+    private OperationResult createEvents(Configuration params) {
+        OperationResult result;
+
         int count = params.getSimple("count").getIntegerValue();
         String source = params.getSimple("source").getStringValue();
         String details = params.getSimple("details").getStringValue();
-        EventSeverity severity = EventSeverity.valueOf(params.getSimple("severity").getStringValue());
         String eventType = resourceContext.getResourceType().getName() + "-event";
+        String severityArg = params.getSimple("severity").getStringValue();
+        EventSeverity severity;
+
+        try {
+            severity = EventSeverity.valueOf(severityArg);
+        } catch (IllegalArgumentException e) {
+            result = new OperationResult("passed");
+            result.setErrorMessage(severityArg + " - illegal value for severity. Supported values are " +
+                Arrays.toString(EventSeverity.values()));
+
+            return result;
+        }
+
 
         EventContext eventContext = resourceContext.getEventContext();
 
@@ -177,6 +193,9 @@ public class PerfTestComponent implements ResourceComponent, MeasurementFacet, C
             Event event = new Event(eventType, source, System.currentTimeMillis(), severity, "event " + i);
             eventContext.publishEvent(event);
         }
+
+        result = new OperationResult("failed");
+        return result;
     }
 
     private void startEventPollers() {

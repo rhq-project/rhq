@@ -60,11 +60,16 @@ public abstract class Criteria implements Serializable {
     private List<String> orderingFieldNames;
 
     public Criteria() {
-
         filterOverrides = new HashMap<String, String>();
         sortOverrides = new HashMap<String, String>();
 
         orderingFieldNames = new ArrayList<String>();
+
+        /* 
+         * reasonably large default, but prevent accidentally returning 100K objects 
+         * unless you use the setPaging method to explicit denote you want that many
+         */
+        setPaging(0, 200);
     }
 
     private List<Field> getFields(Type fieldType) {

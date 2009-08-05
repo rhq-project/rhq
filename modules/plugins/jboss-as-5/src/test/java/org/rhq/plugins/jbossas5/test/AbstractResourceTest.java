@@ -27,6 +27,7 @@ import static org.testng.Assert.fail;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
 import org.rhq.core.clientapi.agent.inventory.CreateResourceRequest;
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
@@ -53,6 +54,7 @@ import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.plugins.jbossas5.test.util.AppServerUtils;
 import org.testng.annotations.Test;
 
 /**
@@ -176,15 +178,12 @@ public abstract class AbstractResourceTest extends AbstractPluginTest {
 
     protected void testResourceConfigUpdate() throws Exception {
         if (supportsFacet(ConfigurationFacet.class) && getResourceType().getResourceConfigurationDefinition() != null) {
-            ConfigurationManager configurationManager = PluginContainer.getInstance().getConfigurationManager();
             Set<Resource> resources = getResources();
             for (Resource resource : resources) {
                 try {
                     Configuration testResourceConfig = getTestResourceConfiguration();
-                    ConfigurationUpdateRequest configurationUpdateRequest = new ConfigurationUpdateRequest(0,
-                        testResourceConfig, resource.getId());
-                    configurationManager.updateResourceConfiguration(configurationUpdateRequest);
-                    Configuration resourceConfig = configurationManager.loadResourceConfiguration(resource.getId());
+                    Configuration resourceConfig = updateResourceConfiguration(resource, testResourceConfig);
+                    
                     assert resourceConfig.equals(testResourceConfig);
                 } catch (Exception e) {
                     throw new Exception("Failed to update Resource config for " + resource + ".", e);
@@ -196,7 +195,15 @@ public abstract class AbstractResourceTest extends AbstractPluginTest {
 
     protected abstract String getResourceTypeName();
 
-    protected abstract Configuration getTestResourceConfiguration();
+    /**
+     * Used in {@link #testResourceCreation()} and {@link #testResourceConfigUpdate()}
+     * methods. The default implementation just throws UnsupportedOperationException.
+     * 
+     * @return the configuration to be used to create or update a resource.
+     */
+    protected Configuration getTestResourceConfiguration() {
+        throw new UnsupportedOperationException();
+    }
 
     protected Set<Resource> getResources() {
         InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
@@ -239,6 +246,23 @@ public abstract class AbstractResourceTest extends AbstractPluginTest {
         assert value != null;
     }
 
+    protected static Configuration updateResourceConfiguration(Resource resource, Configuration newConfiguration) throws Exception {
+        ConfigurationManager configurationManager = PluginContainer.getInstance().getConfigurationManager();
+        ConfigurationUpdateRequest configurationUpdateRequest = new ConfigurationUpdateRequest(0,
+            newConfiguration, resource.getId());
+        configurationManager.updateResourceConfiguration(configurationUpdateRequest);
+        
+        //give the component and the managed resource some time to properly persist the update
+        Thread.sleep(500);
+        
+        return configurationManager.loadResourceConfiguration(resource.getId());
+    }
+    
+    protected static Configuration loadResourceConfiguration(Resource resource) throws Exception {
+        ConfigurationManager configurationManager = PluginContainer.getInstance().getConfigurationManager();
+        return configurationManager.loadResourceConfiguration(resource.getId());
+    }
+    
     private OperationDefinition getOperationDefinition(String name) {
         Set<OperationDefinition> operationDefinitions = getResourceType().getOperationDefinitions();
         OperationDefinition matchingOperationDefinition = null;

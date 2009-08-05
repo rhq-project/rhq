@@ -111,6 +111,7 @@ public class TabularWriter {
 
         if (object instanceof Map) {
             print((Map)object);
+            return;
         }
 
 

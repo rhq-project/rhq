@@ -32,8 +32,8 @@
    <property name="SubjectManager" value="org.rhq.enterprise.server.auth.SubjectManagerBean" />
 
    <!-- List of all the simple bean names(Alert for AlertManagerBean, etc.) in alphabetical order. List used by wsprovide/wsconsume -->
-   <property name="ws-list" value="Subject,Role" /> 
-   <!-- <property name="ws-list" value="Alert,AlertDefinition,Availability,CallTimeData,Channel,Configuration,Content,Event,MeasurementBaseline,MeasurementData,MeasurementDefinition,MeasurementProblem,MeasurementSchedule,Operation,Resource,ResourceGroup,Role,Subject" /> -->
+   <!-- <property name="ws-list" value="Subject,Role" /> --> 
+   <property name="ws-list" value="Alert,AlertDefinition,Availability,CallTimeData,Channel,Configuration,Content,Event,MeasurementBaseline,MeasurementData,MeasurementDefinition,MeasurementProblem,MeasurementSchedule,Operation,Resource,ResourceGroup,Role,Subject" /> 
 
    <target name="prepare-dist">
       <condition property="exclude.cli.jar" value="true">

@@ -2214,11 +2214,11 @@
 
         <!-- =================================== ManagedDeployment Resource types ================================== -->
 
-        <service name="EAR"
+        <service name="Enterprise Application (EAR)"
                  subCategory="Applications"
                  class="StandaloneManagedDeploymentComponent"
                  discovery="StandaloneManagedDeploymentDiscoveryComponent"
-                 description="Enterprise Application"
+                 description="JEE enterprise application (EAR)"
                  createDeletePolicy="both"
                  creationDataType="content">
 
@@ -2262,7 +2262,7 @@
 
         </service>
 
-        <service name="WAR"
+        <service name="Web Application (WAR)"
                  subCategory="Applications"
                  class="StandaloneManagedDeploymentComponent"
                  discovery="StandaloneManagedDeploymentDiscoveryComponent"
@@ -2338,7 +2338,7 @@
 
         </service>
 
-        <service name="Embedded WAR"
+        <service name="Embedded Web Application (WAR)"
                  subCategory="Applications"
                  class="EmbeddedManagedDeploymentComponent"
                  discovery="EmbeddedManagedDeploymentDiscoveryComponent"
@@ -2711,11 +2711,11 @@
 
         </service>
 
-        <service name="RAR"
+        <service name="Resource Adapter Archive (RAR)"
                  subCategory="Applications"
                  class="StandaloneManagedDeploymentComponent"
                  discovery="StandaloneManagedDeploymentDiscoveryComponent"
-                 description="a standalone resource adapter"
+                 description="a standalone JCA resource adapter archive (RAR)"
                  createDeletePolicy="both"
                  creationDataType="content">
 
@@ -2759,11 +2759,11 @@
 
         </service>
 
-        <service name="Embedded RAR"
+        <service name="Embedded Resource Adapter Archive (RAR)"
                  subCategory="Applications"
                  class="EmbeddedManagedDeploymentComponent"
                  discovery="EmbeddedManagedDeploymentDiscoveryComponent"
-                 description="an embedded resource adapter">
+                 description="an embedded JCA resource adapter archive (RAR)">
 
             <plugin-configuration>
                 <c:group name="general" displayName="General">

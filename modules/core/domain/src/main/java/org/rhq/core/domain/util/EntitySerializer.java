@@ -53,7 +53,8 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy.Subsystem;
 
 /**
  * A utility specifically tailored to entities which will iterate over its persistence fields with a consistent
- * ordering for serialization and deserialization. 
+ * ordering for serialization and deserialization. If this class is passed a non-entity object, it will ignore
+ * field-level annotations and just serialize and deserialize all fields in that object.
  * 
  * @author Joseph Marques
  */
@@ -83,7 +84,37 @@ public class EntitySerializer {
         }
     };
 
-    private static Field[] getEntityFields(Object entity) {
+    private static Field[] getFields(Object object) {
+        Class<?> objectClass = object.getClass();
+        Entity entityAnnotation = objectClass.getAnnotation(Entity.class);
+
+        List<Field> serializableFields;
+        if (entityAnnotation == null) {
+            serializableFields = getNonEntityFieldList(object);
+        } else {
+            serializableFields = getEntityFieldList(object);
+        }
+
+        Collections.sort(serializableFields, fieldComparator);
+
+        Field[] results = serializableFields.toArray(new Field[serializableFields.size()]);
+        return results;
+    }
+
+    private static List<Field> getNonEntityFieldList(Object object) {
+        Class<?> objectClass = object.getClass();
+        Field[] fields = objectClass.getDeclaredFields();
+        List<Field> serializableFields = new ArrayList<Field>();
+
+        for (Field field : fields) {
+            serializableFields.add(field);
+            field.setAccessible(true);
+        }
+
+        return serializableFields;
+    }
+
+    private static List<Field> getEntityFieldList(Object entity) {
         Class<?> entityClass = entity.getClass();
         Entity entityAnnotation = entityClass.getAnnotation(Entity.class);
         if (entityAnnotation == null) {
@@ -104,19 +135,16 @@ public class EntitySerializer {
             }
         }
 
-        Collections.sort(serializableFields, fieldComparator);
-
-        Field[] results = serializableFields.toArray(new Field[serializableFields.size()]);
-        return results;
+        return serializableFields;
     }
 
-    public static void writeExternalRemote(Object entity, ObjectOutput out) throws IOException {
-        Field[] entityFields = getEntityFields(entity);
-        for (Field field : entityFields) {
+    public static void writeExternalRemote(Object object, ObjectOutput out) throws IOException {
+        Field[] fields = getFields(object);
+        for (Field field : fields) {
             //System.out.println("Serializing " + field.getName() + "...");
             try {
                 Class<?> type = field.getType();
-                Object value = field.get(entity);
+                Object value = field.get(object);
 
                 if (BASIC_TYPES.contains(type)) {
                     if (type.equals(Byte.TYPE)) {
@@ -148,28 +176,28 @@ public class EntitySerializer {
         }
     }
 
-    public static void readExternalRemote(Object entity, ObjectInput in) throws IOException, ClassNotFoundException {
-        Field[] entityFields = getEntityFields(entity);
-        for (Field field : entityFields) {
+    public static void readExternalRemote(Object object, ObjectInput in) throws IOException, ClassNotFoundException {
+        Field[] fields = getFields(object);
+        for (Field field : fields) {
             //System.out.println("Deserializing " + field.getName() + "...");
             try {
                 Class<?> type = field.getType();
 
                 if (BASIC_TYPES.contains(type)) {
                     if (type.equals(Byte.TYPE)) {
-                        field.setByte(entity, in.readByte());
+                        field.setByte(object, in.readByte());
                     } else if (type.equals(Short.TYPE)) {
-                        field.setShort(entity, in.readShort());
+                        field.setShort(object, in.readShort());
                     } else if (type.equals(Integer.TYPE)) {
-                        field.setInt(entity, in.readInt());
+                        field.setInt(object, in.readInt());
                     } else if (type.equals(Long.TYPE)) {
-                        field.setLong(entity, in.readLong());
+                        field.setLong(object, in.readLong());
                     } else if (type.equals(Float.TYPE)) {
-                        field.setFloat(entity, in.readFloat());
+                        field.setFloat(object, in.readFloat());
                     } else if (type.equals(Double.TYPE)) {
-                        field.setDouble(entity, in.readDouble());
+                        field.setDouble(object, in.readDouble());
                     } else if (type.equals(Boolean.TYPE)) {
-                        field.setBoolean(entity, in.readBoolean());
+                        field.setBoolean(object, in.readBoolean());
                     } else {
                         throw new IllegalStateException(
                             "BASIC_TYPES contains an entry that doesn't have deserialization support: " + type);
@@ -178,7 +206,7 @@ public class EntitySerializer {
                 }
 
                 // either a string, an enum, numeric wrapper, collection, or some other object
-                field.set(entity, in.readObject());
+                field.set(object, in.readObject());
             } catch (IllegalAccessException iae) {
                 throw new IllegalStateException("Could not access field '" + field.getName() + "' for deserialization");
             }

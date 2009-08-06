@@ -38,7 +38,7 @@ function testFindUnfiltered() {
     assertResourcesFound();
 }
 
-function testFilterResourceByNameAndParentName() {
+function testFindByCriteria() {
     var resourceName = "service-alpha-0";
     var parentResourceName = "server-omega-0";
 
@@ -48,27 +48,21 @@ function testFilterResourceByNameAndParentName() {
 
     resources = ResourceManager.findResourcesByCriteria(criteria);
 
-    Assert.assertNumberEqualsJS(resources.size(), 1, "Expected to get back a single resource named, '" + resourceName + "' " +
-            "and having a parent named '" + parentResourceName + "'");
+    Assert.assertNumberEqualsJS(resources.size(), 1, "Expected to get back a single resource named, '" + resourceName +
+        "' and having a parent named '" + parentResourceName + "'");
+
+    var description = resourceName + " description";
+    var version = "1.0";
+
+    criteria.addFilterDescription(description);
+    criteria.addFilterVersion(version);
+
+    resources = ResourceManager.findResourcesByCriteria(criteria);
+
+    Assert.assertNumberEqualsJS(resources.size(), 1, "Expected to get back a single resource with name, '" +
+        resourceName + "', parent resource name, '" + parentResourceName + "' and description, '" + description + "'");
 }
 
-//function testFilterByResourceTypeNameAndPluginName() {
-//    resourceType = ResourceTypeManager.getResourceTypeByNameAndPlugin("service-alpha", "PerfTest");
-//
-//    criteria = new ResourceCriteria();
-//    criteria.addFilterResourceTypeName(resourceType.name);
-//    //criteria.addFilterPluginName(resourceType.plugin);
-//
-//    resources = ResourceManager.findResourcesByCriteria(criteria);
-//
-//    assertResourcesFound("Failed to find resources when filtering by resource type name and plugin name");
-//
-//    for (i = 0; i < resources.size(); ++i) {
-//        resource = resources.get(i);
-//
-//        Assert.assertEquals(resource.resourceType, resourceType, "Expected Resource to have ResourceType, " + resourceType);
-//    }
-//}
 
 function assertResourcesFound(msg) {
     if (msg == undefined) {

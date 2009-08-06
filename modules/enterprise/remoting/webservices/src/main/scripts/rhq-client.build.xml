@@ -11,6 +11,7 @@
 
    <!-- load all the Stateless Session Bean for WS exposure as properties. Must add bean as separate 
    		property AND in the "ws-list" below for successful inclusion. ##TODO: collapse these to one list. -->
+   <property name="SimpleManager" value="org.rhq.enterprise.server.jaxb.SimpleManagerBean" />
    <property name="AlertManager" value="org.rhq.enterprise.server.alert.AlertManagerBean" />
    <property name="AlertDefinitionManager" value="org.rhq.enterprise.server.alert.AlertDefinitionManagerBean" />
    <property name="AvailabilityManager" value="org.rhq.enterprise.server.measurement.AvailabilityManagerBean" />
@@ -31,8 +32,8 @@
    <property name="SubjectManager" value="org.rhq.enterprise.server.auth.SubjectManagerBean" />
 
    <!-- List of all the simple bean names(Alert for AlertManagerBean, etc.) in alphabetical order. List used by wsprovide/wsconsume -->
-   <!--<property name="ws-list" value="Configuration" /> -->
-   <property name="ws-list" value="Alert,AlertDefinition,Availability,CallTimeData,Channel,Configuration,Content,Event,MeasurementBaseline,MeasurementData,MeasurementDefinition,MeasurementProblem,MeasurementSchedule,Operation,Resource,ResourceGroup,Role,Subject" />
+   <property name="ws-list" value="Subject,Role" /> 
+   <!-- <property name="ws-list" value="Alert,AlertDefinition,Availability,CallTimeData,Channel,Configuration,Content,Event,MeasurementBaseline,MeasurementData,MeasurementDefinition,MeasurementProblem,MeasurementSchedule,Operation,Resource,ResourceGroup,Role,Subject" /> -->
 
    <target name="prepare-dist">
       <condition property="exclude.cli.jar" value="true">
@@ -180,6 +181,13 @@
       <foreach list="${ws-list}" target="iterate-wsconsume" param="bean" delimiter=",">
       </foreach>
 
+      <echo>Copying generated content to the build output directory</echo>
+      <!-- Copy the Webservice specific classes over as well. -->
+      <copy todir="${project.build.outputDirectory}">
+         <fileset dir="${project.build.outputDirectory}/wsconsume-output" includes="**/*.class">
+         </fileset>
+      </copy>
+      
    </target>
 
    <!-- Target for looping over wsconsume with each bean -->

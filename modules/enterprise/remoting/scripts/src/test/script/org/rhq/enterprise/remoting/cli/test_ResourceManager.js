@@ -34,27 +34,41 @@ for (func in this) {
 
 function testFindUnfiltered() {
     resources = ResourceManager.findResourcesByCriteria(criteria);
-
+      
     assertResourcesFound();
 }
 
-function testFilterByResourceTypeNameAndPluginName() {
-    resourceType = ResourceTypeManager.getResourceTypeByNameAndPlugin("service-a", "PerfTest");
+function testFilterResourceByNameAndParentName() {
+    var resourceName = "service-alpha-0";
+    var parentResourceName = "server-omega-0";
 
     criteria = new ResourceCriteria();
-    criteria.addFilterResourceTypeName(resourceType.name);
-    criteria.addFilterPluginName(resourceType.plugin);
+    criteria.addFilterName(resourceName);
+    criteria.addFilterParentResourceName(parentResourceName);
 
     resources = ResourceManager.findResourcesByCriteria(criteria);
 
-    assertResourcesFound("Failed to find resources when filtering by resource type name and plugin name");
-
-    for (i = 0; i < resources.size(); ++i) {
-        resource = resources.get(i);
-
-        assertEquals(resource.resourceType, resourceType, "Expected Resource to have ResourceType, " + resourceType);
-    }
+    Assert.assertNumberEqualsJS(resources.size(), 1, "Expected to get back a single resource named, '" + resourceName + "' " +
+            "and having a parent named '" + parentResourceName + "'");
 }
+
+//function testFilterByResourceTypeNameAndPluginName() {
+//    resourceType = ResourceTypeManager.getResourceTypeByNameAndPlugin("service-alpha", "PerfTest");
+//
+//    criteria = new ResourceCriteria();
+//    criteria.addFilterResourceTypeName(resourceType.name);
+//    //criteria.addFilterPluginName(resourceType.plugin);
+//
+//    resources = ResourceManager.findResourcesByCriteria(criteria);
+//
+//    assertResourcesFound("Failed to find resources when filtering by resource type name and plugin name");
+//
+//    for (i = 0; i < resources.size(); ++i) {
+//        resource = resources.get(i);
+//
+//        Assert.assertEquals(resource.resourceType, resourceType, "Expected Resource to have ResourceType, " + resourceType);
+//    }
+//}
 
 function assertResourcesFound(msg) {
     if (msg == undefined) {
@@ -64,13 +78,13 @@ function assertResourcesFound(msg) {
         msg = msg + " - ";
     }
 
-    assertNotNull(resources, msg + "Expected findResourcesByCriteria() to return a non-null result");
-    assertTrue(resources.size() > 0, msg + "Expected findResourcesByCriteria() to return a non-empty result set");
+    Assert.assertNotNull(resources, msg + "Expected findResourcesByCriteria() to return a non-null result");
+    Assert.assertTrue(resources.size() > 0, msg + "Expected findResourcesByCriteria() to return a non-empty result set");
 
     for (i = 0; i < resources.size(); ++i) {
         resource = resources.get(i);
 
-        assertNotNull(ResourceManager.getResource(resource.id),
+        Assert.assertNotNull(ResourceManager.getResource(resource.id),
             'Expected getResourceTypeById to a return a ResourceType for id ' + resource.id);
     }
 }

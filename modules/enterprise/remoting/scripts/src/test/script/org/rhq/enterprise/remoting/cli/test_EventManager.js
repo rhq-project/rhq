@@ -50,7 +50,7 @@ function testFilterByResource() {
     criteria.caseSensitive = true;
     //criteria.addFilterResourceId(alphaService0.id);
     //criteria.addFilterSeverity(EventSeverity.WARN);
-    //criteria.addFilterDetail(alphaService0Details);
+    criteria.addFilterDetail(alphaService0Details);
     //criteria.addFilterSourceName(alphaService0.name);
     criteria.addFilterSourceName("service-alpha-event");
 
@@ -58,19 +58,21 @@ function testFilterByResource() {
 
     Assert.assertNotNull(result, "Failed to get result for scheduled operation");
 
+    java.lang.Thread.sleep(15000);
+
     var events = EventManager.findEventsByCriteria(criteria);
     //var events = findEventsByResource(alphaService0);
 
-    //Assert.assertNumberEqualsJS(events.size(), 1, "Expected to find one event but found " + events.size());
-    Assert.assertTrue(events.size() > 0, "Expected to find events when filtering by resource id for " + alphaService0);
-    var foundEvent = false;
-    for (i = 0; i < events.size(); ++i) {
-        if (events.get(i).detail == alphaService0Details) {
-            foundEvent = true;
-            break;
-        }
-    }
-    Assert.assertTrue(foundEvent, "Failed to find event with details, '" + alphaService0Details + "'");
+    Assert.assertNumberEqualsJS(events.size(), 1, "Expected to find one event but found " + events.size());
+//    Assert.assertTrue(events.size() > 0, "Expected to find events when filtering by resource id for " + alphaService0);
+//    var foundEvent = false;
+//    for (i = 0; i < events.size(); ++i) {
+//        if (events.get(i).detail == alphaService0Details) {
+//            foundEvent = true;
+//            break;
+//        }
+//    }
+//    Assert.assertTrue(foundEvent, "Failed to find event with details, '" + alphaService0Details + "'");
     
     events = findEventsByResource(alphaService1);
     Assert.assertTrue(events.size() > 0, "Expected to find events when filtering by resource id for " + alphaService1);

@@ -8,6 +8,7 @@ public class PackageVersionCriteria extends Criteria {
 
     private Integer filterChannelId; // requires overrides
     private Integer filterResourceId; // requires overrides
+    private Integer filterPackageTypeId; // requires overrides
     private String filterDisplayName;
     private String filterVersion;
     private String filterFileName;
@@ -35,6 +36,7 @@ public class PackageVersionCriteria extends Criteria {
             + "   WHERE cpv.channel.id = ? )");
         filterOverrides.put("fileSizeMinimum", "fileSize >= ?");
         filterOverrides.put("fileSizeMaximum", "fileSize <= ?");
+        filterOverrides.put("packageTypeId", "generalPackage.packageType.id = ? ");
         filterOverrides.put("resourceId", "id IN " //
             + "( SELECT ip.packageVersion.id" //
             + "    FROM installedPackages ip " //
@@ -55,6 +57,10 @@ public class PackageVersionCriteria extends Criteria {
 
     public Integer getFilterResourceId() {
         return filterResourceId;
+    }
+
+    public void addFilterPackageTypeId(Integer filterPackageTypeId) {
+        this.filterPackageTypeId = filterPackageTypeId;
     }
 
     public void addFilterDisplayName(String filterDisplayName) {

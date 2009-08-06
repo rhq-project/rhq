@@ -46,7 +46,7 @@ public class EmailNotification extends AlertNotification {
     public static final String QUERY_FIND_ALL_BY_ALERT_DEFINITION_ID = "EmailNotification.findAllByAlertDefinitionId";
     public static final String QUERY_FIND_BY_IDS = "EmailNotification.findByIds";
 
-    @Column(name = "EMAIL_ADDRESS", nullable = false)
+    @Column(name = "EMAIL_ADDRESS", nullable = true)
     private String emailAddress;
 
     protected EmailNotification() {
@@ -71,7 +71,7 @@ public class EmailNotification extends AlertNotification {
     }
 
     @Override
-    public AlertNotification copy() {
+    protected AlertNotification copy() {
         return new EmailNotification(this);
     }
 
@@ -106,4 +106,5 @@ public class EmailNotification extends AlertNotification {
         return this.getClass().getSimpleName() + "[" + "id=" + getId() + ", " + "emailAddress=" + this.emailAddress
             + ", " + "]";
     }
+
 }

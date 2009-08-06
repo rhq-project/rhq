@@ -9,10 +9,12 @@
         <column name="CTIME" type="LONG" required="true"/>
         <column name="MTIME" type="LONG" required="true"/>
         <column name="PARENT_ID" type="INTEGER" required="false"/>
+        <column name="GROUP_ALERT_DEF_ID" type="INTEGER" required="false"/>
         <column name="DESCRIPTION" required="false" size="250" type="VARCHAR2"/>
         <column name="PRIORITY" type="VARCHAR2" size="15" required="true"/>
         <column name="RESOURCE_TYPE_ID" type="INTEGER" references="RHQ_RESOURCE_TYPE" required="false"/>
         <column name="RESOURCE_ID" type="INTEGER" references="RHQ_RESOURCE" required="false"/>
+        <column name="RESOURCE_GROUP_ID" type="INTEGER" references="RHQ_RESOURCE_GROUP" required="false"/>
         <column name="ENABLED" required="true" default="TRUE" type="BOOLEAN"/>
 
         <column name="REQUIRED" required="true" type="SMALLINT"/>

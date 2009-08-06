@@ -24,6 +24,7 @@ package org.rhq.core.domain.resource.group;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -48,6 +49,7 @@ import javax.persistence.Table;
 
 import org.jetbrains.annotations.NotNull;
 
+import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.configuration.group.AbstractGroupConfigurationUpdate;
 import org.rhq.core.domain.operation.GroupOperationHistory;
@@ -429,6 +431,10 @@ public class ResourceGroup extends Group {
     @OneToMany(mappedBy = "clusterResourceGroup")
     private List<ResourceGroup> clusterBackingGroups = null;
 
+    // bulk delete @OneToMany(mappedBy = "resource", cascade = { CascadeType.ALL })
+    @OneToMany(mappedBy = "resourceGroup", cascade = { CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH })
+    private Set<AlertDefinition> alertDefinitions = new LinkedHashSet<AlertDefinition>();
+
     /* no-arg constructor required by EJB spec */
     protected ResourceGroup() {
     }
@@ -604,6 +610,18 @@ public class ResourceGroup extends Group {
 
     public void setClusterBackingGroups(List<ResourceGroup> clusterBackingGroups) {
         this.clusterBackingGroups = clusterBackingGroups;
+    }
+
+    public Set<AlertDefinition> getAlertDefinitions() {
+        if (this.alertDefinitions == null) {
+            this.alertDefinitions = new LinkedHashSet<AlertDefinition>();
+        }
+
+        return alertDefinitions;
+    }
+
+    public void setAlertDefinitions(Set<AlertDefinition> alertDefinitions) {
+        this.alertDefinitions = alertDefinitions;
     }
 
     @Override

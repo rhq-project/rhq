@@ -94,5 +94,17 @@ public abstract class AlertNotification implements Serializable {
         this.alertDefinition = alertDefinition;
     }
 
-    public abstract AlertNotification copy();
+    public AlertNotification copy(boolean copyIds) {
+        AlertNotification results = copy();
+        if (copyIds) {
+            results.id = this.id;
+        }
+        return results;
+    }
+
+    protected abstract AlertNotification copy();
+
+    public void prepareForOrphanDelete() {
+        this.alertDefinition = null;
+    }
 }

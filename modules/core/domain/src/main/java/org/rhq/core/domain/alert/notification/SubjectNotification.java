@@ -51,7 +51,7 @@ public class SubjectNotification extends AlertNotification {
     public static final String QUERY_FIND_BY_IDS = "SubjectNotification.findByIds";
     public static final String QUERY_FIND_BY_SUBJECT_IDS = "SubjectNotification.findBySubjectIds";
 
-    @JoinColumn(name = "SUBJECT_ID", referencedColumnName = "ID", nullable = false)
+    @JoinColumn(name = "SUBJECT_ID", referencedColumnName = "ID", nullable = true)
     @ManyToOne
     private Subject subject;
 
@@ -77,8 +77,14 @@ public class SubjectNotification extends AlertNotification {
     }
 
     @Override
-    public AlertNotification copy() {
+    protected AlertNotification copy() {
         return new SubjectNotification(this);
+    }
+
+    @Override
+    public void prepareForOrphanDelete() {
+        super.prepareForOrphanDelete();
+        subject = null;
     }
 
     @Override

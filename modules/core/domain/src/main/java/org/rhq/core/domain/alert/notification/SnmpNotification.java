@@ -97,7 +97,7 @@ public class SnmpNotification extends AlertNotification {
     }
 
     @Override
-    public AlertNotification copy() {
+    protected AlertNotification copy() {
         return new SnmpNotification(this);
     }
 

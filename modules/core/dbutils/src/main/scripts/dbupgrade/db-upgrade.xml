@@ -1374,6 +1374,11 @@ DB Upgrade:
         </schema-directSQL>
     </schemaSpec>
 
+    <schemaSpec version="2.53">
+        <schema-addColumn table="RHQ_ALERT_DEFINITION" column="RESOURCE_GROUP_ID" columnType="INTEGER" />
+        <schema-addColumn table="RHQ_ALERT_DEFINITION" column="GROUP_ALERT_DEF_ID" columnType="INTEGER" />
+    </schemaSpec>
+
 </dbupgrade>
 
 </target>

@@ -25,43 +25,18 @@ package org.rhq.core.domain.alert;
 /**
  * @author Joseph Marques
  */
-public enum AlertPriority {
-    LOW("! - Low"), MEDIUM("!! - Medium"), HIGH("!!! - High");
+public enum AlertDefinitionContext {
+    Type, Resource, Group;
 
-    private String displayName;
-
-    private AlertPriority(String displayName) {
-        this.displayName = displayName;
-    }
-
-    public static AlertPriority getByLegacyIndex(int index) {
-        AlertPriority[] priorities = AlertPriority.values();
-        if ((index > 0) && (index <= priorities.length)) {
-            return priorities[index - 1];
+    public static AlertDefinitionContext get(AlertDefinition definition) {
+        if (definition.getResourceType() != null) {
+            return Type;
+        } else if (definition.getResource() != null) {
+            return Resource;
+        } else if (definition.getResourceGroup() != null) {
+            return Group;
+        } else {
+            throw new IllegalArgumentException("Unknown AlertDefinitionContext: " + definition);
         }
-
-        /*
-         * this is a special case, signifying to callers they want to search for alerts of ANY priority
-         */
-        return null;
-    }
-
-    /**
-     * A Java bean style getter to allow us to access the enum name from JSP or Facelets pages (e.g.
-     * ${alert.alertDefinition.priority.name}).
-     *
-     * @return the enum name
-     */
-    public String getName() {
-        return name();
-    }
-
-    public String getDisplayName() {
-        return this.displayName;
-    }
-
-    @Override
-    public String toString() {
-        return this.displayName;
     }
 }

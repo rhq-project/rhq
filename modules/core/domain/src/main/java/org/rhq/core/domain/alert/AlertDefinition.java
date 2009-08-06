@@ -23,8 +23,10 @@
 package org.rhq.core.domain.alert;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
@@ -33,6 +35,7 @@ import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -51,6 +54,7 @@ import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 
 /**
  * @author Joseph Marques
@@ -73,6 +77,12 @@ import org.rhq.core.domain.resource.ResourceType;
         + "  FROM AlertDefinition a " //
         + " WHERE a.parentId = :alertTemplateId " //
         + "   AND a.deleted = false" //
+        + "   AND a.readOnly = false"), //
+    @NamedQuery(name = AlertDefinition.QUERY_FIND_BY_GROUP_ALERT_DEFINITION_ID, query = "" //
+        + "SELECT a.id " //
+        + "  FROM AlertDefinition a " //
+        + " WHERE a.groupAlertDefinition.id = :groupAlertDefinitionId " //
+        + "   AND a.deleted = false" //
         + "   AND a.readOnly = false"),
     @NamedQuery(name = AlertDefinition.QUERY_FIND_RESOURCE_IDS_NEEDING_TEMPLATE_APPLICATION, query = "" //
         + "SELECT res.id " //
@@ -84,18 +94,25 @@ import org.rhq.core.domain.resource.ResourceType;
         + "                     WHERE ad.parentId = :alertTemplateId " // find the definitions for this template
         + "                       AND ad.resource.id = res.id " // correlated to the resource
         + "                       AND ad.deleted = false ) "), // and not deleted
-    @NamedQuery(name = AlertDefinition.QUERY_FIND_OPTION_ITEMS_BY_RESOURCE, //
-    query = "SELECT new org.rhq.core.domain.common.composite.IntegerOptionItem(ad.id, ad.name) " //
+    @NamedQuery(name = AlertDefinition.QUERY_FIND_OPTION_ITEMS_BY_RESOURCE, query = "" //
+        + "  SELECT new org.rhq.core.domain.common.composite.IntegerOptionItem(ad.id, ad.name) " //
         + "    FROM AlertDefinition ad " //
         + "   WHERE ad.resource.id = :resourceId " //
-        + "     AND ad.deleted = false"), @NamedQuery(name = AlertDefinition.QUERY_FIND_BY_RESOURCE, query = "" //
+        + "     AND ad.deleted = false"), //
+    @NamedQuery(name = AlertDefinition.QUERY_FIND_BY_RESOURCE, query = "" //
         + "SELECT a " //
         + "  FROM AlertDefinition a " //
         + " WHERE a.resource.id = :id " //
-        + "   AND a.deleted = false"), @NamedQuery(name = AlertDefinition.QUERY_FIND_BY_RESOURCE_TYPE, query = "" //
+        + "   AND a.deleted = false"), //
+    @NamedQuery(name = AlertDefinition.QUERY_FIND_BY_RESOURCE_TYPE, query = "" //
         + "SELECT a " //
         + "  FROM AlertDefinition a " //
         + " WHERE a.resourceType.id = :typeId " //
+        + "   AND a.deleted = false"), //
+    @NamedQuery(name = AlertDefinition.QUERY_FIND_BY_RESOURCE_GROUP, query = "" //
+        + "SELECT a " //
+        + "  FROM AlertDefinition a " //
+        + " WHERE a.resourceGroup.id = :groupId " //
         + "   AND a.deleted = false"),
     @NamedQuery(name = AlertDefinition.QUERY_DELETE_BY_RESOURCES, query = "" //
         + "DELETE FROM AlertDefinition ad " //
@@ -165,7 +182,38 @@ import org.rhq.core.domain.resource.ResourceType;
         + "SELECT ad.id " //
         + "  FROM AlertDefinition ad " //
         + " WHERE ad.id = :alertDefinitionId " //
-        + "   AND ad.resourceType IS NOT NULL ") })
+        + "   AND ad.resourceType IS NOT NULL "), //
+    @NamedQuery(name = AlertDefinition.QUERY_UPDATE_SET_DELETED, query = "" //
+        + "UPDATE AlertDefinition ad " //
+        + "   SET ad.deleted = TRUE " //
+        + " WHERE ad.id IN ( :groupAlertDefinitionIds ) " //
+        + "    OR ad.groupAlertDefinition.id IN ( :groupAlertDefinitionIds ) "), //
+    @NamedQuery(name = AlertDefinition.QUERY_UPDATE_SET_ENABLED, query = "" //
+        + "UPDATE AlertDefinition ad " //
+        + "   SET ad.enabled = TRUE " //
+        + " WHERE ad.id IN ( :groupAlertDefinitionIds ) " //
+        + "    OR ad.groupAlertDefinition.id IN ( :groupAlertDefinitionIds ) "), //
+    @NamedQuery(name = AlertDefinition.QUERY_UPDATE_SET_DISABLED, query = "" //
+        + "UPDATE AlertDefinition ad " //
+        + "   SET ad.enabled = FALSE " //
+        + " WHERE ad.id IN ( :groupAlertDefinitionIds ) " //
+        + "    OR ad.groupAlertDefinition.id IN ( :groupAlertDefinitionIds ) "), //
+    @NamedQuery(name = AlertDefinition.QUERY_UPDATE_SET_PARENTS_NULL, query = "" //
+        + "UPDATE AlertDefinition ad " //
+        + "   SET ad.groupAlertDefinition = NULL " //
+        + " WHERE ad.id IN ( :childrenDefinitionIds ) "),
+    @NamedQuery(name = AlertDefinition.QUERY_FIND_RESOURCE_IDS_NEEDING_GROUP_APPLICATION, query = "" //
+        + "SELECT res.id " //
+        + "  FROM Resource res " //
+        + "  JOIN res.explicitGroups rg " //
+        + " WHERE rg.id = :resourceGroupId " //
+        + "   AND res.inventoryStatus = :inventoryStatus " //
+        + "   AND NOT EXISTS ( SELECT ad.id " //
+        + "                      FROM AlertDefinition ad " //
+        + "                     WHERE ad.groupAlertDefinition.id = :groupAlertDefinitionId " // find the children for this group alert def
+        + "                       AND ad.resource.id = res.id " // correlated to the resource
+        + "                       AND ad.deleted = false ) ") // and not deleted
+})
 @SequenceGenerator(name = "RHQ_ALERT_DEFINITION_ID_SEQ", sequenceName = "RHQ_ALERT_DEFINITION_ID_SEQ", allocationSize = 10)
 @Table(name = "RHQ_ALERT_DEFINITION")
 public class AlertDefinition implements Serializable {
@@ -174,15 +222,24 @@ public class AlertDefinition implements Serializable {
     public static final String QUERY_FIND_ALL = "AlertDefinition.findAll";
     public static final String QUERY_FIND_ALL_BY_RECOVERY_DEFINITION_ID = "AlertDefinition.findAllByRecoveryDefinitionId";
     public static final String QUERY_FIND_BY_ALERT_TEMPLATE_ID = "AlertDefinition.findByAlertTemplateId";
+    public static final String QUERY_FIND_BY_GROUP_ALERT_DEFINITION_ID = "AlertDefinition.findByGroupAlertDefinitionId";
     public static final String QUERY_FIND_RESOURCE_IDS_NEEDING_TEMPLATE_APPLICATION = "AlertDefinition.findResourceIdsNeedingTemplateApplication";
     public static final String QUERY_FIND_OPTION_ITEMS_BY_RESOURCE = "AlertDefinition.findOptionItemsByResource";
     public static final String QUERY_FIND_BY_RESOURCE = "AlertDefinition.findByResource";
     public static final String QUERY_FIND_BY_RESOURCE_TYPE = "AlertDefinition.findByResourceType";
+    public static final String QUERY_FIND_BY_RESOURCE_GROUP = "AlertDefinition.findByResourceGroup";
     public static final String QUERY_DELETE_BY_RESOURCES = "AlertDefinition.deleteByResources";
     public static final String QUERY_FIND_UNUSED_DEFINITION_IDS = "AlertDefinition.findUnusedDefinitionIds";
     public static final String QUERY_FIND_DEFINITION_ID_BY_CONDITION_ID = "AlertDefinition.findDefinitionIdByConditionId";
     public static final String QUERY_IS_ENABLED = "AlertDefinition.isEnabled";
     public static final String QUERY_IS_TEMPLATE = "AlertDefinition.isTemplate";
+
+    // group alert definitions
+    public static final String QUERY_UPDATE_SET_DELETED = "AlertDefinition.updateSetDeleted";
+    public static final String QUERY_UPDATE_SET_ENABLED = "AlertDefinition.updateSetEnabled";
+    public static final String QUERY_UPDATE_SET_DISABLED = "AlertDefinition.updateSetDisabled";
+    public static final String QUERY_UPDATE_SET_PARENTS_NULL = "AlertDefinition.updateSetParentsNull";
+    public static final String QUERY_FIND_RESOURCE_IDS_NEEDING_GROUP_APPLICATION = "AlertDefinition.findResourceIdsNeedingGroupApplication";
 
     // for subsystem view
     public static final String QUERY_FIND_ALL_COMPOSITES = "AlertDefinition.findAllComposites";
@@ -208,6 +265,16 @@ public class AlertDefinition implements Serializable {
     @Column(name = "PARENT_ID", nullable = false)
     private Integer parentId = new Integer(0);
 
+    @JoinColumn(name = "GROUP_ALERT_DEF_ID")
+    @ManyToOne
+    private AlertDefinition groupAlertDefinition;
+
+    // do not cascade remove - group removal will be detaching children alert defs from the group def,
+    // and then letting the children be deleted slowly by existing alert def removal mechanisms
+    @OneToMany(mappedBy = "groupAlertDefinition", fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST })
+    @OrderBy
+    private Set<AlertDefinition> groupAlertDefinitionChildren = new LinkedHashSet<AlertDefinition>();
+
     @Column(name = "DESCRIPTION")
     private String description;
 
@@ -222,6 +289,10 @@ public class AlertDefinition implements Serializable {
     @JoinColumn(name = "RESOURCE_ID", nullable = true)
     @ManyToOne
     private Resource resource;
+
+    @JoinColumn(name = "RESOURCE_GROUP_ID", nullable = true)
+    @ManyToOne
+    private ResourceGroup resourceGroup;
 
     @Column(name = "ENABLED", nullable = false)
     private boolean enabled;
@@ -263,6 +334,7 @@ public class AlertDefinition implements Serializable {
     private Set<AlertCondition> conditions = new LinkedHashSet<AlertCondition>(1); // Most alerts will only have one condition.
 
     @OneToMany(mappedBy = "alertDefinition", cascade = CascadeType.ALL)
+    @OrderBy
     @org.hibernate.annotations.Cascade(org.hibernate.annotations.CascadeType.DELETE_ORPHAN)
     private Set<AlertNotification> alertNotifications = new HashSet<AlertNotification>();
 
@@ -290,6 +362,8 @@ public class AlertDefinition implements Serializable {
     // primary key
     private Set<Alert> alerts = new LinkedHashSet<Alert>();
 
+    private transient AlertDefinitionContext context;
+
     /**
      * Creates a new alert definition.
      */
@@ -304,10 +378,15 @@ public class AlertDefinition implements Serializable {
      */
     public AlertDefinition(AlertDefinition alertDef) {
         this();
-        this.update(alertDef);
+        this.update(alertDef, false);
     }
 
-    public void update(AlertDefinition alertDef) {
+    public AlertDefinition(AlertDefinition alertDef, boolean copyIds) {
+        this();
+        this.update(alertDef, copyIds);
+    }
+
+    public void update(AlertDefinition alertDef, boolean copyIds) {
         /*
          * Don't copy the id, ctime, or mtime.
          */
@@ -342,21 +421,19 @@ public class AlertDefinition implements Serializable {
         // copy conditions
         Set<AlertCondition> copiedConditions = new HashSet<AlertCondition>();
         for (AlertCondition oldCondition : alertDef.getConditions()) {
-            AlertCondition newCondition = new AlertCondition(oldCondition);
+            AlertCondition newCondition = new AlertCondition(oldCondition, copyIds);
             newCondition.setAlertDefinition(this);
             copiedConditions.add(newCondition);
         }
-
         this.removeAllConditions();
         this.getConditions().addAll(copiedConditions);
 
         Set<AlertNotification> copiedNotifications = new HashSet<AlertNotification>();
-        for (AlertNotification oldNotification : alertDef.getAlertNotifications()) {
-            AlertNotification newNotification = oldNotification.copy();
+        for (AlertNotification oldNotification : new HashSet<AlertNotification>(alertDef.getAlertNotifications())) {
+            AlertNotification newNotification = oldNotification.copy(copyIds);
             newNotification.setAlertDefinition(this);
             copiedNotifications.add(newNotification);
         }
-
         this.removeAllAlertNotifications();
         this.getAlertNotifications().addAll(copiedNotifications);
 
@@ -405,13 +482,32 @@ public class AlertDefinition implements Serializable {
         this.parentId = parentId;
     }
 
+    public AlertDefinition getGroupAlertDefinition() {
+        return groupAlertDefinition;
+    }
+
+    public void setGroupAlertDefinition(AlertDefinition groupAlertDefinition) {
+        this.groupAlertDefinition = groupAlertDefinition;
+    }
+
     public Resource getResource() {
         return resource;
     }
 
     public void setResource(Resource resource) {
         this.resource = resource;
-        resource.getAlertDefinitions().add(this);
+        this.resource.getAlertDefinitions().add(this);
+    }
+
+    public ResourceGroup getResourceGroup() {
+        return resourceGroup;
+    }
+
+    public void setResourceGroup(ResourceGroup resourceGroup) {
+        this.resourceGroup = resourceGroup;
+        if (this.resourceGroup != null) {
+            this.resourceGroup.getAlertDefinitions().add(this);
+        }
     }
 
     public ResourceType getResourceType() {
@@ -563,8 +659,9 @@ public class AlertDefinition implements Serializable {
     }
 
     public void removeAllAlertNotifications() {
-        for (AlertNotification notification : this.alertNotifications) {
-            notification.setAlertDefinition(null);
+        List<AlertNotification> toBeRemoved = new ArrayList<AlertNotification>(this.alertNotifications);
+        for (AlertNotification notification : toBeRemoved) {
+            notification.prepareForOrphanDelete();
         }
 
         this.alertNotifications.clear();
@@ -584,6 +681,21 @@ public class AlertDefinition implements Serializable {
 
     public boolean removeAlertDampeningEvent(AlertDampeningEvent event) {
         return alertDampeningEvents.remove(event);
+    }
+
+    public void calculateContext() {
+        context = AlertDefinitionContext.get(this);
+    }
+
+    public void setContext(AlertDefinitionContext context) {
+        this.context = context;
+    }
+
+    public AlertDefinitionContext getContext() {
+        if (context == null) {
+            calculateContext();
+        }
+        return context;
     }
 
     @Override

@@ -51,7 +51,7 @@ public class RoleNotification extends AlertNotification {
     public static final String QUERY_FIND_BY_IDS = "RoleNotification.findByIds";
     public static final String QUERY_FIND_BY_ROLE_IDS = "SubjectNotification.findByRoleIds";
 
-    @JoinColumn(name = "ROLE_ID", referencedColumnName = "ID", nullable = false)
+    @JoinColumn(name = "ROLE_ID", referencedColumnName = "ID", nullable = true)
     @ManyToOne
     private Role role;
 
@@ -77,8 +77,14 @@ public class RoleNotification extends AlertNotification {
     }
 
     @Override
-    public AlertNotification copy() {
+    protected AlertNotification copy() {
         return new RoleNotification(this);
+    }
+
+    @Override
+    public void prepareForOrphanDelete() {
+        super.prepareForOrphanDelete();
+        role = null;
     }
 
     @Override

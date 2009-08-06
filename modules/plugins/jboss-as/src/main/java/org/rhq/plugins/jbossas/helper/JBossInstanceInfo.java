@@ -83,7 +83,7 @@ public class JBossInstanceInfo {
         processJvmArgs(jvmArgs);
         String[] jbossArgs = new String[args.length - jvmArgs.length];
         System.arraycopy(args, i + 1, jbossArgs, 0, jbossArgs.length);
-        processJBossArgs(jbossArgs);
+        processJBossArgs(processInfo.getCurrentWorkingDirectory(), jbossArgs);
         finalizeSysProps();
         printSysProps();
     }
@@ -114,7 +114,7 @@ public class JBossInstanceInfo {
         }
     }
 
-    private void processJBossArgs(String args[]) {
+    private void processJBossArgs(String currentWorkingDir, String args[]) {
         String programName = this.sysProps.getProperty("program.name", "jboss");
         String shortOpts = "-:b:c:D:P:";
         LongOpt longOpts[] = {
@@ -159,9 +159,8 @@ public class JBossInstanceInfo {
                     String arg = options.getOptarg();
                     URL url;
                     try {
-                        File currentWorkingDir; // e.g. /jon/dev-container/jbossas/bin
-                        currentWorkingDir = new File(getHomeDir(), "bin");
-                        url = JBossConfigurationUtility.makeURL(arg, currentWorkingDir);
+                        File workingDir = new File(currentWorkingDir);
+                        url = JBossConfigurationUtility.makeURL(arg, workingDir);
                     }
                     catch (Exception e) {
                         log.error("Failed to parse argument to --properties option: " + options.getOptarg());

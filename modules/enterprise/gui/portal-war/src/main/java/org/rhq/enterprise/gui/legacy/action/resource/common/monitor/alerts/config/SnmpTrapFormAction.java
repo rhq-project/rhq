@@ -37,7 +37,9 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.legacy.Constants;
+import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
+import org.rhq.enterprise.gui.legacy.action.resource.ResourceForm.FormContext;
 import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.AlertDefUtil;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
@@ -64,7 +66,7 @@ public class SnmpTrapFormAction extends BaseAction {
             SnmpNotification snmpNotification = getExistingSnmpNotification(alertDefinition, pageControl);
             if (snmpNotification != null) {
                 alertNotificationManager.removeNotifications(subject, alertDefinition.getId(),
-                    new Integer[] { snmpNotification.getId() }, snmpTrapForm.isAlertTemplate());
+                    new Integer[] { snmpNotification.getId() });
             }
         } else // SET button clicked
         {
@@ -73,8 +75,7 @@ public class SnmpTrapFormAction extends BaseAction {
 
             // NOTE: We currently only support associating a single SNMP notification with an alert definition,
             //       so the below manager method will delete any existing SNMP notifs and then add the new one.
-            alertNotificationManager.setSnmpNotification(subject, alertDefinition.getId(), snmpNotification,
-                snmpTrapForm.isAlertTemplate());
+            alertNotificationManager.setSnmpNotification(subject, alertDefinition.getId(), snmpNotification);
         }
 
         Map<String, Integer> requestParams = createRequestParamsMap(snmpTrapForm);
@@ -104,10 +105,16 @@ public class SnmpTrapFormAction extends BaseAction {
     private Map<String, Integer> createRequestParamsMap(SnmpTrapForm snmpTrapForm) {
         Map<String, Integer> params = new HashMap<String, Integer>();
         params.put(Constants.ALERT_DEFINITION_PARAM, snmpTrapForm.getAd());
-        if (snmpTrapForm.isAlertTemplate()) {
-            params.put(Constants.RESOURCE_TYPE_ID_PARAM, snmpTrapForm.getType());
+
+        FormContext context = snmpTrapForm.getContext();
+        if (context == FormContext.Type) {
+            params.put(ParamConstants.RESOURCE_TYPE_ID_PARAM, snmpTrapForm.getType());
+        } else if (context == FormContext.Resource) {
+            params.put(ParamConstants.RESOURCE_ID_PARAM, snmpTrapForm.getId());
+        } else if (context == FormContext.Group) {
+            params.put(ParamConstants.GROUP_ID_PARAM, snmpTrapForm.getGroupId());
         } else {
-            params.put(Constants.RESOURCE_ID_PARAM, snmpTrapForm.getId());
+            throw new IllegalArgumentException("Unsupported context: " + context);
         }
         return params;
     }

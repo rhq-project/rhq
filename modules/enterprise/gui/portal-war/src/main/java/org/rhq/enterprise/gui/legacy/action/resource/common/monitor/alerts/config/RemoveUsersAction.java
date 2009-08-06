@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.conf
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -37,7 +38,6 @@ public class RemoveUsersAction extends RemoveNotificationsAction {
 
         AlertNotificationManagerLocal alertNotificationManager = LookupUtil.getAlertNotificationManager();
 
-        return alertNotificationManager.removeNotifications(subject, alertDefinitionId, subjectNotificationIds,
-            removeForm.isAlertTemplate());
+        return alertNotificationManager.removeNotifications(subject, alertDefinitionId, subjectNotificationIds);
     }
 }

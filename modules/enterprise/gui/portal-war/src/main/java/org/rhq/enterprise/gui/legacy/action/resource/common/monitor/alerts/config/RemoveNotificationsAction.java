@@ -20,16 +20,21 @@ package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.conf
 
 import java.util.HashMap;
 import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.gui.legacy.Constants;
+import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
+import org.rhq.enterprise.gui.legacy.action.resource.ResourceForm.FormContext;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 
 /**
@@ -51,10 +56,15 @@ public abstract class RemoveNotificationsAction extends BaseAction {
 
         Map<String, Integer> params = new HashMap<String, Integer>();
         params.put(Constants.ALERT_DEFINITION_PARAM, rnForm.getAd());
-        if (rnForm.isAlertTemplate()) {
-            params.put(Constants.RESOURCE_TYPE_ID_PARAM, rnForm.getType());
+        FormContext context = rnForm.getContext();
+        if (context == FormContext.Type) {
+            params.put(ParamConstants.RESOURCE_TYPE_ID_PARAM, rnForm.getType());
+        } else if (context == FormContext.Resource) {
+            params.put(ParamConstants.RESOURCE_ID_PARAM, rnForm.getId());
+        } else if (context == FormContext.Group) {
+            params.put(ParamConstants.GROUP_ID_PARAM, rnForm.getGroupId());
         } else {
-            params.put(Constants.RESOURCE_ID_PARAM, rnForm.getId());
+            throw new IllegalArgumentException("Unsupported context: " + context);
         }
 
         if (recordsRemoved > 0) {

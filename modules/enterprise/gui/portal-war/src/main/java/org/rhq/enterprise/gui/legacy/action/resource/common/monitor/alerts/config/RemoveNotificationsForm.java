@@ -69,7 +69,4 @@ public class RemoveNotificationsForm extends ResourceForm {
         this.emails = emails;
     }
 
-    public boolean isAlertTemplate() {
-        return ((getType() != null) && (getType() != 0));
-    }
 }

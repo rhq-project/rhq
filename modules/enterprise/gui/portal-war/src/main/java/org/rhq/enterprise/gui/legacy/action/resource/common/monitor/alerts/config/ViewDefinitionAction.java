@@ -37,7 +37,6 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.AlertDefUtil;
 import org.rhq.enterprise.gui.legacy.beans.AlertConditionBean;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
-import org.rhq.enterprise.server.legacy.events.EventConstants;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -57,9 +56,7 @@ public class ViewDefinitionAction extends TilesAction {
         // conditions
         Set<AlertCondition> conds = alertDef.getConditions();
 
-        boolean isAlertTemplate = EventConstants.TYPE_ALERT_DEF_ID.equals(alertDef.getParentId());
-        List<AlertConditionBean> alertDefConditions = AlertDefUtil.getAlertConditionBeanList(subject, request, conds,
-            isAlertTemplate);
+        List<AlertConditionBean> alertDefConditions = AlertDefUtil.getAlertConditionBeanList(subject, request, conds);
         request.setAttribute("conditionExpression", alertDef.getConditionExpression().name());
         request.setAttribute("alertDefConditions", alertDefConditions);
 

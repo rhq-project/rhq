@@ -35,7 +35,7 @@ public class Authorization extends ConditionalTagSupport {
     private String permission;
 
     private enum Context {
-        Resource, Global;
+        Group, Resource, Global;
     }
 
     @Override
@@ -60,9 +60,15 @@ public class Authorization extends ConditionalTagSupport {
             if (objectId != 0) {
                 context = Context.Resource;
             }
+            objectId = getResourceGroupId(request);
+            if (objectId != 0) {
+                context = Context.Group;
+            }
 
             if (context == Context.Resource) {
                 return authorizationManager.hasResourcePermission(user, permission, objectId);
+            } else if (context == Context.Group) {
+                return authorizationManager.hasGroupPermission(user, permission, objectId);
             } else if (context == Context.Global) {
                 return authorizationManager.hasGlobalPermission(user, permission);
             } else {
@@ -81,6 +87,14 @@ public class Authorization extends ConditionalTagSupport {
             return 0;
         }
         return id.intValue();
+    }
+
+    private int getResourceGroupId(HttpServletRequest request) throws JspTagException {
+        Integer groupId = WebUtility.getResourceGroupId(request);
+        if (groupId == null) {
+            return 0;
+        }
+        return groupId.intValue();
     }
 
     private boolean isSuperuserCheck() {

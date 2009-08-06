@@ -116,7 +116,7 @@ public class TabDisplayCheckTag extends VarSetterBaseTag {
             ResourceUIBean resourceUIBean = new ResourceUIBean(resource, subject);
             resourceFacets = resourceUIBean.getFacets();
         } else {
-            ResourceGroup group = RequestUtils.getResourceGroup(request);
+            ResourceGroup group = RequestUtils.getResourceGroupIfExists(request);
             if (group != null) {
                 // TODO: Add support for retrieving the ResourceFacts for a group.
                 resourceFacets = ResourceFacets.ALL;

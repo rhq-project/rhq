@@ -22,6 +22,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -39,7 +40,7 @@ import org.rhq.core.domain.alert.AlertConditionLog;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.composite.AlertWithLatestConditionLog;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.common.composite.IntegerOptionItem;
+import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.measurement.util.MeasurementConverter;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
@@ -52,31 +53,30 @@ import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.AlertDefUtil;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
- * @author Greg Hinkle
  * @author Joseph Marques
  */
-public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
-    private static final Log log = LogFactory.getLog(ListAlertHistoryUIBean.class);
+public class ListGroupAlertHistoryUIBean extends PagedDataTableUIBean {
+    private static final Log log = LogFactory.getLog(ListGroupAlertHistoryUIBean.class);
 
-    public static final String MANAGED_BEAN_NAME = "ListAlertHistoryUIBean";
+    public static final String MANAGED_BEAN_NAME = "ListGroupAlertHistoryUIBean";
 
     // filter stuff
     private String dateFilter;
     private String dateErrors;
     private String alertDefinitionFilter;
     private String alertPriorityFilter;
-    private SelectItem[] alertDefinitionSelectItems;
+    //private SelectItem[] alertDefinitionSelectItems;
     private SelectItem[] alertPrioritySelectItems;
 
     private AlertManagerLocal alertManager = LookupUtil.getAlertManager();
-    private AlertDefinitionManagerLocal alertDefinitionManager = LookupUtil.getAlertDefinitionManager();
 
-    public ListAlertHistoryUIBean() {
+    //private AlertDefinitionManagerLocal alertDefinitionManager = LookupUtil.getAlertDefinitionManager();
+
+    public ListGroupAlertHistoryUIBean() {
     }
 
     public String getDateFilter() {
@@ -112,6 +112,7 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
         this.alertDefinitionFilter = alertDefinitionFilter;
     }
 
+    /*
     public SelectItem[] getAlertDefinitionSelectItems() {
         if (alertDefinitionSelectItems == null) {
             List<IntegerOptionItem> optionItems = alertDefinitionManager.findAlertDefinitionOptionItems(getSubject(),
@@ -125,6 +126,7 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
     public void setAlertDefinitionSelectItems(SelectItem[] alertDefinitionSelectItems) {
         this.alertDefinitionSelectItems = alertDefinitionSelectItems;
     }
+    */
 
     /*
      * priority filter stuff
@@ -190,14 +192,14 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
     @Override
     public DataModel getDataModel() {
         if (dataModel == null) {
-            dataModel = new ListAlertDefinitionsDataModel(PageControlView.AlertHistoryList, MANAGED_BEAN_NAME);
+            dataModel = new ListGroupAlertDefinitionsDataModel(PageControlView.AlertHistoryList, MANAGED_BEAN_NAME);
         }
 
         return dataModel;
     }
 
-    private class ListAlertDefinitionsDataModel extends PagedListDataModel<AlertWithLatestConditionLog> {
-        public ListAlertDefinitionsDataModel(PageControlView view, String beanName) {
+    private class ListGroupAlertDefinitionsDataModel extends PagedListDataModel<AlertWithLatestConditionLog> {
+        public ListGroupAlertDefinitionsDataModel(PageControlView view, String beanName) {
             super(view, beanName);
         }
 
@@ -206,13 +208,13 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
             String dateStr = getDateFilter(); // get the outer class's JSF-managed property
             Date date = null;
 
-            ListAlertHistoryUIBean.this.setDateErrors(null);
+            ListGroupAlertHistoryUIBean.this.setDateErrors(null);
             if ((dateStr != null) && !dateStr.equals("")) {
                 try {
                     DateFormat df = new SimpleDateFormat("MM/dd/yyyy");
                     date = df.parse(dateStr);
                 } catch (ParseException pe) {
-                    ListAlertHistoryUIBean.this.setDateErrors("Error: Invalid date filter, format is MM/dd/yyyy");
+                    ListGroupAlertHistoryUIBean.this.setDateErrors("Error: Invalid date filter, format is MM/dd/yyyy");
                     // do nothing else, things will pass through will a null date and function properly
                 }
             }
@@ -227,15 +229,24 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
                 beginTime = date.getTime();
                 endTime = new Date(beginTime + MILLIS_IN_DAY).getTime();
             }
-            Resource resource = getResource();
-            PageList<Alert> alerts = alertManager.findAlerts(resource.getId(), alertDefinitionId, alertPriority,
-                beginTime, endTime, pc);
+
+            AlertCriteria searchCriteria = new AlertCriteria();
+            searchCriteria.addFilterResourceGroupIds(Arrays.asList(getResourceGroup().getId()));
+            searchCriteria.addFilterPriority(alertPriority);
+            searchCriteria.addFilterStartTime(beginTime);
+            searchCriteria.addFilterEndTime(endTime);
+            searchCriteria.setPaging(pc.getPageNumber(), pc.getPageSize());
+            searchCriteria.fetchAlertDefinition(true);
+            searchCriteria.fetchConditionLogs(true);
+
+            PageList<Alert> alerts = alertManager.findAlertsByCriteria(getSubject(), searchCriteria);
 
             List<AlertWithLatestConditionLog> results = new ArrayList<AlertWithLatestConditionLog>(alerts.size());
 
             HttpServletRequest request = FacesContextUtility.getRequest();
             for (Alert alert : alerts) {
-                String recoveryInfo = AlertDefUtil.getAlertRecoveryInfo(alert, resource.getId());
+                Resource res = alert.getAlertDefinition().getResource();
+                String recoveryInfo = AlertDefUtil.getAlertRecoveryInfo(alert, res.getId());
 
                 if (alert.getConditionLogs().size() > 1) {
                     results.add(new AlertWithLatestConditionLog(alert, "Multiple Conditions", "--", recoveryInfo));

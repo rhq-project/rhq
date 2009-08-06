@@ -19,9 +19,12 @@
 package org.rhq.enterprise.gui.legacy.action.resource;
 
 import java.util.List;
+
 import javax.servlet.http.HttpServletRequest;
+
 import org.apache.struts.action.ActionErrors;
 import org.apache.struts.action.ActionMapping;
+
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.gui.legacy.action.ScheduleForm;
 
@@ -38,6 +41,7 @@ public class ResourceForm extends ScheduleForm {
     private Integer rid;
     private Integer id;
     private Integer type;
+    private Integer groupId;
     private Integer resourceType;
     private List resourceTypes;
 
@@ -211,7 +215,8 @@ public class ResourceForm extends ScheduleForm {
 
         s.append(" ");
         s.append("rid=" + rid + " ");
-        s.append("type=" + resourceType + " ");
+        s.append("type=" + type + " ");
+        s.append("gid=" + groupId + " ");
         s.append("name=" + name + " ");
         s.append("location=" + location + " ");
         s.append("description=" + description + " ");
@@ -233,5 +238,29 @@ public class ResourceForm extends ScheduleForm {
 
     public void setType(Integer type) {
         this.type = type;
+    }
+
+    public Integer getGroupId() {
+        return groupId;
+    }
+
+    public void setGroupId(Integer groupId) {
+        this.groupId = groupId;
+    }
+
+    public enum FormContext {
+        Resource, Group, Type;
+    }
+
+    public FormContext getContext() {
+        if ((getType() != null) && (getType() != 0)) {
+            return FormContext.Type;
+        } else if ((getId() != null) && (getId() != 0)) {
+            return FormContext.Resource;
+        } else if ((getGroupId() != null) && (getGroupId() != 0)) {
+            return FormContext.Group;
+        } else {
+            throw new IllegalArgumentException("Unknown Context for form: " + this.toString());
+        }
     }
 }

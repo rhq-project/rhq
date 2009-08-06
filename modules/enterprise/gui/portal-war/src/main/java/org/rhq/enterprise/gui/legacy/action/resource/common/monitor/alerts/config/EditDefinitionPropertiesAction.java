@@ -33,13 +33,15 @@ import org.apache.struts.action.ActionMapping;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.enterprise.gui.legacy.Constants;
+import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
+import org.rhq.enterprise.gui.legacy.action.resource.ResourceForm.FormContext;
 import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.AlertDefUtil;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.server.alert.AlertDefinitionException;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertTemplateManagerLocal;
+import org.rhq.enterprise.server.alert.GroupAlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -53,16 +55,20 @@ public class EditDefinitionPropertiesAction extends BaseAction {
     public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {
         DefinitionForm defForm = (DefinitionForm) form;
-        boolean isAlertTemplate = defForm.isAlertTemplate();
+        FormContext context = defForm.getContext();
         log.trace("defForm.id=" + defForm.getId());
 
         Map<String, Integer> params = new HashMap<String, Integer>();
         params.put("ad", defForm.getAd());
 
-        if (isAlertTemplate) {
-            params.put(Constants.RESOURCE_TYPE_ID_PARAM, defForm.getType());
+        if (context == FormContext.Type) {
+            params.put(ParamConstants.RESOURCE_TYPE_ID_PARAM, defForm.getType());
+        } else if (context == FormContext.Resource) {
+            params.put(ParamConstants.RESOURCE_ID_PARAM, defForm.getId());
+        } else if (context == FormContext.Group) {
+            params.put(ParamConstants.GROUP_ID_PARAM, defForm.getGroupId());
         } else {
-            params.put(Constants.RESOURCE_ID_PARAM, defForm.getId());
+            throw new IllegalArgumentException("Unsupported context: " + context);
         }
 
         ActionForward forward = checkSubmit(request, mapping, form, params);
@@ -72,9 +78,6 @@ public class EditDefinitionPropertiesAction extends BaseAction {
         }
 
         Subject subject = RequestUtils.getSubject(request);
-        AlertDefinitionManagerLocal alertDefinitionManager = LookupUtil.getAlertDefinitionManager();
-        AlertTemplateManagerLocal alertTemplateManager = LookupUtil.getAlertTemplateManager();
-
         AlertDefinition alertDef = AlertDefUtil.getAlertDefinition(request);
 
         alertDef.setName(defForm.getName());
@@ -83,12 +86,22 @@ public class EditDefinitionPropertiesAction extends BaseAction {
         alertDef.setEnabled(defForm.isActive());
 
         try {
-            if (isAlertTemplate) {
-                alertTemplateManager.updateAlertTemplate(subject, alertDef, false);
-            } else {
+            if (context == FormContext.Type) {
+                AlertTemplateManagerLocal alertTemplateManager = LookupUtil.getAlertTemplateManager();
                 // this will disallow updates if the alert definition has been deleted
                 alertDef.setReadOnly(defForm.isReadOnly());
+                alertTemplateManager.updateAlertTemplate(subject, alertDef, false);
+            } else if (context == FormContext.Resource) {
+                AlertDefinitionManagerLocal alertDefinitionManager = LookupUtil.getAlertDefinitionManager();
                 alertDefinitionManager.updateAlertDefinition(subject, alertDef.getId(), alertDef, false);
+            } else if (context == FormContext.Group) {
+                GroupAlertDefinitionManagerLocal groupAlertDefinitionManager = LookupUtil
+                    .getGroupAlertDefinitionManager();
+                // this will disallow updates if the alert definition has been deleted
+                alertDef.setReadOnly(defForm.isReadOnly());
+                groupAlertDefinitionManager.updateGroupAlertDefinitions(subject, alertDef, false);
+            } else {
+                throw new IllegalArgumentException("Unsupported context: " + context);
             }
         } catch (AlertDefinitionException iade) {
             log.debug("alert definition update failed:", iade);

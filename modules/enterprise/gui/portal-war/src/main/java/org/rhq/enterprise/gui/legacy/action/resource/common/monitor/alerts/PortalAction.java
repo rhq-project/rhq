@@ -75,7 +75,7 @@ public class PortalAction extends ResourceController {
             String categoryName = resourceCategory.name().toLowerCase();
 
             titleName = StringUtil.replace(titleName, "platform", categoryName);
-        } else if (RequestUtils.getResourceGroup(request) != null) {
+        } else if (RequestUtils.getResourceGroupIfExists(request) != null) {
             // we don't have different titles for groups
             titleName = StringUtil.replace(titleName, "platform", "group");
         } else {

@@ -21,8 +21,10 @@ package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.conf
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
@@ -30,9 +32,11 @@ import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.tiles.ComponentContext;
 import org.apache.struts.tiles.actions.TilesAction;
-import org.rhq.core.domain.auth.Subject;
+
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.gui.legacy.Constants;
+import org.rhq.enterprise.gui.legacy.action.resource.ResourceForm.FormContext;
 import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.AlertDefUtil;
 import org.rhq.enterprise.gui.legacy.beans.OptionItem;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
@@ -53,24 +57,29 @@ public class EditDefinitionControlActionFormPrepareAction extends TilesAction {
         log.debug("in edit definition control action form prepare ...");
 
         ControlActionForm operationsForm = (ControlActionForm) form;
-        boolean isAlertTemplate = operationsForm.isAlertTemplate();
         log.trace("defForm.id=" + operationsForm.getId());
 
         Map<String, Integer> params = new HashMap<String, Integer>();
         params.put("ad", operationsForm.getAd());
 
         Integer id = null;
-        if (isAlertTemplate) {
+        FormContext formContext = operationsForm.getContext();
+        if (formContext == FormContext.Type) {
             params.put(Constants.RESOURCE_TYPE_ID_PARAM, operationsForm.getType());
             id = operationsForm.getType();
-        } else {
+        } else if (formContext == FormContext.Group) {
+            params.put(Constants.GROUP_ID_PARAM, operationsForm.getGroupId());
+            id = operationsForm.getGroupId();
+        } else if (formContext == FormContext.Resource) {
             params.put(Constants.RESOURCE_ID_PARAM, operationsForm.getId());
             id = operationsForm.getId();
+        } else {
+            throw new IllegalArgumentException("Unsupported form context: " + formContext);
         }
 
         Subject subject = RequestUtils.getSubject(request);
         AlertDefinition alertDefinition = AlertDefUtil.getAlertDefinition(request);
-        List<OptionItem> operationNames = AlertDefUtil.getControlActions(subject, id, isAlertTemplate);
+        List<OptionItem> operationNames = AlertDefUtil.getControlActions(subject, id, formContext);
 
         // drop-downs
         operationsForm.setControlActions(operationNames);

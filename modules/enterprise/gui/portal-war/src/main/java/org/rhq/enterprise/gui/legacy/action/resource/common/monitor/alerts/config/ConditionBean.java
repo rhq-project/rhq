@@ -211,8 +211,7 @@ public final class ConditionBean {
         ConverterValidatorManager.importProperties(subject, cond, this);
     }
 
-    public AlertCondition exportProperties(HttpServletRequest request, Subject subject, boolean typeAlert)
-        throws Exception {
+    public AlertCondition exportProperties(HttpServletRequest request, Subject subject) throws Exception {
         return ConverterValidatorManager.exportProperties(subject, this);
     }
 

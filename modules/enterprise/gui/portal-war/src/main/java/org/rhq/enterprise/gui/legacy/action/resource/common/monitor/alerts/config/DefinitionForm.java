@@ -51,6 +51,7 @@ import org.rhq.enterprise.gui.legacy.beans.OptionItem;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertTemplateManagerLocal;
+import org.rhq.enterprise.server.alert.GroupAlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.legacy.events.EventConstants;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -450,17 +451,24 @@ public final class DefinitionForm extends ResourceForm {
 
             // if there's a "type" param, then its an alert template (can't use isAlertTemplate because the
             // definitionForm was just cleared on reset()
-            if (request.getParameter("type") == null || request.getParameter("type").equalsIgnoreCase("")) {
+            if (request.getParameter("id") != null && !request.getParameter("id").equals("")) {
                 AlertDefinitionManagerLocal alertDefinitionManager = LookupUtil.getAlertDefinitionManager();
                 Integer resourceId = RequestUtils.getResourceId(request);
 
                 alertDefinitions = alertDefinitionManager.findAlertDefinitions(subject, resourceId, PageControl
                     .getUnlimitedInstance());
-            } else {
+            } else if (request.getParameter("type") != null && !request.getParameter("type").equals("")) {
                 AlertTemplateManagerLocal alertTemplateManager = LookupUtil.getAlertTemplateManager();
                 Integer resourceTypeId = RequestUtils.getResourceTypeId(request);
 
                 alertDefinitions = alertTemplateManager.getAlertTemplates(subject, resourceTypeId, PageControl
+                    .getUnlimitedInstance());
+            } else {
+                GroupAlertDefinitionManagerLocal groupAlertDefinitionManager = LookupUtil
+                    .getGroupAlertDefinitionManager();
+                Integer groupId = RequestUtils.getGroupId(request);
+
+                alertDefinitions = groupAlertDefinitionManager.findGroupAlertDefinitions(subject, groupId, PageControl
                     .getUnlimitedInstance());
             }
 
@@ -572,8 +580,8 @@ public final class DefinitionForm extends ResourceForm {
     /**
      * Export the conditions and enablement properties from this form to the specified alert def.
      */
-    public void exportConditionsEnablement(AlertDefinition alertDef, HttpServletRequest request, Subject subject,
-        boolean typeAlert) throws Exception {
+    public void exportConditionsEnablement(AlertDefinition alertDef, HttpServletRequest request, Subject subject)
+        throws Exception {
         alertDef.setConditionExpression(BooleanExpression.valueOf(this.getConditionExpression()));
 
         /*
@@ -583,7 +591,7 @@ public final class DefinitionForm extends ResourceForm {
         alertDef.removeAllConditions();
         for (int i = 0; i < this.getNumConditions(); ++i) {
             ConditionBean condBean = this.getCondition(i);
-            AlertCondition newCondition = condBean.exportProperties(request, subject, typeAlert);
+            AlertCondition newCondition = condBean.exportProperties(request, subject);
             alertDef.addCondition(newCondition);
         }
 
@@ -746,18 +754,6 @@ public final class DefinitionForm extends ResourceForm {
     public void setInverseCountValue(String inverseCountValue) {
         this.inverseCountValue = inverseCountValue;
     }
-
-    public boolean isAlertTemplate() {
-        return ((getType() != null) && (getType() != 0));
-    }
-
-    //    public boolean isCascade() {
-    //        return cascade;
-    //    }
-    //
-    //    public void setCascade(boolean cascade) {
-    //        this.cascade = cascade;
-    //    }
 
     public boolean isReadOnly() {
         return readOnly;

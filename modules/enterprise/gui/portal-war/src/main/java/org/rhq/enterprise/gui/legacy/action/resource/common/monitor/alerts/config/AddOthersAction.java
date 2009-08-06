@@ -19,11 +19,14 @@
 package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config;
 
 import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
@@ -46,7 +49,7 @@ public class AddOthersAction extends AddNotificationsAction {
         String[] emails = addForm.getEmailAddresses().split(",");
 
         AlertNotificationManagerLocal alertNotificationManager = LookupUtil.getAlertNotificationManager();
-        alertNotificationManager.addEmailNotifications(subject, addForm.getAd(), emails, addForm.isAlertTemplate());
+        alertNotificationManager.addEmailNotifications(subject, addForm.getAd(), emails);
 
         RequestUtils.setConfirmation(request, "alerts.config.confirm.AddOthers");
         return returnSuccess(request, mapping, params);

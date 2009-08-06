@@ -21,19 +21,23 @@ package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.conf
 import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.Properties;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+
 import org.rhq.core.clientapi.util.StringUtil;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.Portal;
 import org.rhq.enterprise.gui.legacy.Portlet;
@@ -94,13 +98,17 @@ public class PortalAction extends ResourceController {
 
     private void setTitle(HttpServletRequest request, Portal portal, String titleName) throws Exception {
         Resource resource = RequestUtils.getResource(request);
+        ResourceGroup group = RequestUtils.getResourceGroupIfExists(request);
         ResourceType type;
-        if (resource == null) {
-            // template alert definition
-            type = RequestUtils.getResourceType(request);
-        } else {
+        if (resource != null) {
             // resource alert definition
             type = resource.getResourceType();
+        } else if (group != null) {
+            // group alert definition
+            type = group.getResourceType();
+        } else {
+            // template alert definition
+            type = RequestUtils.getResourceType(request);
         }
 
         ResourceCategory category = type.getCategory();

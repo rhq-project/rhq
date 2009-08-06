@@ -42,7 +42,9 @@ import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.gui.legacy.Constants;
+import org.rhq.enterprise.gui.legacy.action.resource.ResourceForm.FormContext;
 import org.rhq.enterprise.gui.legacy.beans.OptionItem;
 import org.rhq.enterprise.gui.legacy.beans.RelatedOptionBean;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
@@ -98,10 +100,16 @@ public abstract class DefinitionFormPrepareAction extends TilesAction {
 
         ResourceType type = null;
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
-        if (defForm.isAlertTemplate()) {
+        FormContext formContext = defForm.getContext();
+        if (formContext == FormContext.Type) {
             type = LookupUtil.getResourceTypeManager().getResourceTypeById(overlord, defForm.getType());
-        } else {
+        } else if (formContext == FormContext.Resource) {
             type = LookupUtil.getResourceManager().getResourceById(overlord, defForm.getId()).getResourceType();
+        } else if (formContext == FormContext.Group) {
+            type = LookupUtil.getResourceGroupManager().getResourceGroup(overlord, defForm.getGroupId())
+                .getResourceType();
+        } else {
+            throw new IllegalArgumentException("Unsupported context: " + formContext);
         }
         int eventDefinitionCount = LookupUtil.getEventManager().getEventDefinitionCountForResourceType(type.getId());
         request.setAttribute("showEvents", eventDefinitionCount > 0);
@@ -125,14 +133,18 @@ public abstract class DefinitionFormPrepareAction extends TilesAction {
 
         Subject subject = RequestUtils.getSubject(request);
         Resource resource = RequestUtils.getResource(request);
+        ResourceGroup group = RequestUtils.getResourceGroupIfExists(request);
 
         ResourceType type = null;
-        if (resource == null) {
-            // template alert definition
-            type = RequestUtils.getResourceType(request);
-        } else {
+        if (resource != null) {
             // resource alert definition
             type = resource.getResourceType();
+        } else if (group != null) {
+            // group alert definition
+            type = group.getResourceType();
+        } else {
+            // template alert definition
+            type = RequestUtils.getResourceType(request);
         }
 
         defForm.setResourceType(type.getId());
@@ -147,8 +159,8 @@ public abstract class DefinitionFormPrepareAction extends TilesAction {
 
         if (resource != null) {
             for (MeasurementDefinition definition : dataDefinitions) {
-                MeasurementSchedule schedule = scheduleManager.getSchedule(subject, resource.getId(),
-                    definition.getId(), false);
+                MeasurementSchedule schedule = scheduleManager.getSchedule(subject, resource.getId(), definition
+                    .getId(), false);
 
                 RelatedOptionBean rob = new RelatedOptionBean(definition.getName(), String.valueOf(definition.getId()),
                     getBaselineList(schedule));
@@ -158,8 +170,8 @@ public abstract class DefinitionFormPrepareAction extends TilesAction {
             }
 
             for (MeasurementDefinition definition : traitDefinitions) {
-                MeasurementSchedule schedule = scheduleManager.getSchedule(subject, resource.getId(), definition.getId(),
-                     false);
+                MeasurementSchedule schedule = scheduleManager.getSchedule(subject, resource.getId(), definition
+                    .getId(), false);
                 setDisabledName(schedule, definition);
             }
         } else {

@@ -58,6 +58,16 @@ public abstract class WebUtility {
         return resourceId;
     }
 
+    public static Integer getResourceGroupId(ServletRequest request) {
+        String groupIdString = request.getParameter(ParamConstants.GROUP_ID_PARAM);
+        Integer groupId = null;
+        if (groupIdString != null && !groupIdString.equals("")) {
+            groupId = Integer.parseInt(groupIdString);
+        }
+
+        return groupId;
+    }
+
     public static int[] getResourceIds(ServletRequest request) {
         String[] resourceIdStrings = request.getParameterValues(ParamConstants.RESOURCE_ID_PARAM);
         int[] ids;

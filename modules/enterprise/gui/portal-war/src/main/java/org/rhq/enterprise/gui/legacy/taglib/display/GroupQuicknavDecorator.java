@@ -44,7 +44,7 @@ public class GroupQuicknavDecorator extends QuicknavDecorator {
     private static final String INVENTORY_URL = "/rhq/group/inventory/view.xhtml";
     private static final String CONFIGURE_URL = "/rhq/group/configuration/viewCurrent.xhtml";
     private static final String OPERATIONS_URL = "/rhq/group/operation/groupOperationScheduleNew.xhtml";
-    private static final String ALERT_URL = "/rhq/group/alert/listAlertDefinitions.xhtml";
+    private static final String ALERT_URL = "/rhq/group/alert/listGroupAlertDefinitions.xhtml";
     private static final String CONTENT_URL = "/rhq/group/content/view.xhtml?mode=view";
 
     private ResourceGroupComposite resourceGroupComposite;
@@ -109,8 +109,7 @@ public class GroupQuicknavDecorator extends QuicknavDecorator {
 
     @Override
     protected boolean isAlertSupported() {
-        return false;
-        //return (isCompatibleGroup());
+        return (isCompatibleGroup());
     }
 
     @Override
@@ -153,8 +152,7 @@ public class GroupQuicknavDecorator extends QuicknavDecorator {
 
     @Override
     protected boolean isAlertAllowed() {
-        return false;
-        //return LookupUtil.getSystemManager().isMonitoringEnabled();
+        return LookupUtil.getSystemManager().isMonitoringEnabled();
     }
 
     @Override

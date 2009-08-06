@@ -51,7 +51,6 @@ public class AddOthersFormPrepareAction extends Action {
      * </ul>
      */
     @Override
-    @SuppressWarnings("deprecation")
     public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {
         @SuppressWarnings("unused")

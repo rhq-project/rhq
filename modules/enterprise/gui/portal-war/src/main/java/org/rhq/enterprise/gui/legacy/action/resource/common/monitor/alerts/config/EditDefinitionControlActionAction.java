@@ -35,11 +35,13 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
+import org.rhq.enterprise.gui.legacy.action.resource.ResourceForm.FormContext;
 import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.AlertDefUtil;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.server.alert.AlertDefinitionException;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertTemplateManagerLocal;
+import org.rhq.enterprise.server.alert.GroupAlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.legacy.events.EventConstants;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -56,19 +58,24 @@ public class EditDefinitionControlActionAction extends BaseAction {
         log.trace("in edit alert definition controlAction ...");
 
         ControlActionForm operationsForm = (ControlActionForm) form;
-        boolean isAlertTemplate = operationsForm.isAlertTemplate();
         log.trace("defForm.id=" + operationsForm.getId());
 
         Map<String, Integer> params = new HashMap<String, Integer>();
         params.put("ad", operationsForm.getAd());
 
         Integer id = null;
-        if (isAlertTemplate) {
+        FormContext context = operationsForm.getContext();
+        if (context == FormContext.Type) {
             params.put(Constants.RESOURCE_TYPE_ID_PARAM, operationsForm.getType());
             id = operationsForm.getType();
-        } else {
+        } else if (context == FormContext.Group) {
+            params.put(Constants.GROUP_ID_PARAM, operationsForm.getGroupId());
+            id = operationsForm.getGroupId();
+        } else if (context == FormContext.Resource) {
             params.put(Constants.RESOURCE_ID_PARAM, operationsForm.getId());
             id = operationsForm.getId();
+        } else {
+            throw new IllegalArgumentException("Unsupported form context: " + context);
         }
 
         // early return from a cancel button
@@ -83,6 +90,7 @@ public class EditDefinitionControlActionAction extends BaseAction {
         OperationManagerLocal operationManager = LookupUtil.getOperationManager();
         AlertTemplateManagerLocal alertTemplateManager = LookupUtil.getAlertTemplateManager();
         AlertDefinitionManagerLocal alertDefinitionManager = LookupUtil.getAlertDefinitionManager();
+        GroupAlertDefinitionManagerLocal groupAlertDefinitionManager = LookupUtil.getGroupAlertDefinitionManager();
 
         Subject subject = RequestUtils.getSubject(request);
         AlertDefinition alertDefinition = AlertDefUtil.getAlertDefinition(request);
@@ -98,10 +106,14 @@ public class EditDefinitionControlActionAction extends BaseAction {
         alertDefinition.setOperationDefinition(operationDefinition);
 
         try {
-            if (isAlertTemplate) {
+            if (context == FormContext.Type) {
                 alertTemplateManager.updateAlertTemplate(subject, alertDefinition, false);
-            } else {
+            } else if (context == FormContext.Group) {
+                groupAlertDefinitionManager.updateGroupAlertDefinitions(subject, alertDefinition, false);
+            } else if (context == FormContext.Resource) {
                 alertDefinitionManager.updateAlertDefinition(subject, alertDefinition.getId(), alertDefinition, false);
+            } else {
+                throw new IllegalArgumentException("Unsupported form context: " + context);
             }
         } catch (AlertDefinitionException iade) {
             log.debug("alert definition update failed:", iade);

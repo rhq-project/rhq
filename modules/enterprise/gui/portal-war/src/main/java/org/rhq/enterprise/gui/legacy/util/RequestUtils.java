@@ -53,6 +53,7 @@ import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.exception.ParameterNotFoundException;
 import org.rhq.enterprise.gui.util.WebUtility;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
+import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -262,8 +263,25 @@ public class RequestUtils {
         request.setAttribute(HubConstants.PARAM_GROUP_CATEGORY, category.name());
     }
 
-    public static ResourceGroup getResourceGroup(HttpServletRequest request) {
-        return (ResourceGroup) request.getAttribute(HubConstants.PARAM_GROUP);
+    public static ResourceGroup getResourceGroupIfExists(HttpServletRequest request) {
+        try {
+            ResourceGroup group = (ResourceGroup) request.getAttribute(HubConstants.PARAM_GROUP);
+            if (group != null) {
+                return group;
+            }
+
+            String groupId = request.getParameter(Constants.GROUP_ID_PARAM);
+            Subject subject = RequestUtils.getSubject(request);
+            ResourceGroupManagerLocal groupManager = LookupUtil.getResourceGroupManager();
+
+            group = groupManager.getResourceGroup(subject, Integer.valueOf(groupId));
+
+            request.setAttribute(Constants.RESOURCE_GROUP_ATTR, group);
+
+            return group;
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public static void setResourceGroup(HttpServletRequest request, ResourceGroup resourceGroup) {

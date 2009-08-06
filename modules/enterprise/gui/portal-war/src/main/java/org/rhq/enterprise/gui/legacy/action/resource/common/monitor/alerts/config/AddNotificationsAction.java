@@ -20,15 +20,19 @@ package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.conf
 
 import java.util.HashMap;
 import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
+import org.rhq.enterprise.gui.legacy.action.resource.ResourceForm.FormContext;
 
 /**
  * Abstract base class for adding notifications to an alert definition.
@@ -46,7 +50,17 @@ public abstract class AddNotificationsAction extends BaseAction {
         Map<String, Integer> params = new HashMap<String, Integer>();
 
         params.put(Constants.ALERT_DEFINITION_PARAM, addForm.getAd());
-        params.put(Constants.RESOURCE_ID_PARAM, addForm.getId());
+
+        FormContext context = addForm.getContext();
+        if (context == FormContext.Resource) {
+            params.put(Constants.RESOURCE_ID_PARAM, addForm.getId());
+        } else if (context == FormContext.Group) {
+            params.put(Constants.GROUP_ID_PARAM, addForm.getGroupId());
+        } else if (context == FormContext.Type) {
+            params.put(Constants.RESOURCE_TYPE_ID_PARAM, addForm.getType());
+        } else {
+            throw new IllegalArgumentException("Unknown form context: " + context);
+        }
 
         ActionForward forward = process(mapping, addForm, request, params);
         if (forward != null) {

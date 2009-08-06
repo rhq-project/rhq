@@ -37,8 +37,4 @@ public class AddNotificationsForm extends ResourceForm {
     public void setAd(Integer ad) {
         this.ad = ad;
     }
-
-    public boolean isAlertTemplate() {
-        return ((getType() != null) && (getType() != 0));
-    }
 }

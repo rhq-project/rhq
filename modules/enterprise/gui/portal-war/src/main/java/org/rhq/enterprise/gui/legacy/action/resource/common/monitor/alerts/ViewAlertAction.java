@@ -49,7 +49,6 @@ import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.beans.AlertConditionBean;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
-import org.rhq.enterprise.server.legacy.events.EventConstants;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -91,8 +90,7 @@ public class ViewAlertAction extends TilesAction {
             conds.add(condLog.getCondition());
         }
 
-        List<AlertConditionBean> alertCondBeans = AlertDefUtil.getAlertConditionBeanList(subject, request, conds,
-            EventConstants.TYPE_ALERT_DEF_ID.equals(adv.getParentId()));
+        List<AlertConditionBean> alertCondBeans = AlertDefUtil.getAlertConditionBeanList(subject, request, conds);
 
         Iterator<AlertCondition> condsIterator = conds.iterator();
         Iterator<AlertConditionLog> condLogsIterator = condLogs.iterator();

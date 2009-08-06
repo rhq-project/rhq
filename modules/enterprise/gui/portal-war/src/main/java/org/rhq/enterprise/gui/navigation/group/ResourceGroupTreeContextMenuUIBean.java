@@ -121,6 +121,7 @@ public class ResourceGroupTreeContextMenuUIBean extends TreeContextMenuBase {
 
         descriptor.setMonitoringUrl("/rhq/group/monitor/graphs.xhtml?" + attributes);
         descriptor.setInventoryUrl("/rhq/group/inventory/view.xhtml?" + attributes);
+        descriptor.setAlertsUrl("/rhq/group/alert/listGroupAlertDefinitions.xhtml?" + attributes);
         descriptor.setConfigurationUrl("/rhq/group/configuration/viewCurrent.xhtml?" + attributes);
         descriptor.setOperationUrl("/rhq/group/operation/groupOperationScheduleNew.xhtml?" + attributes);
         descriptor.setEventUrl("/rhq/group/events/history.xhtml?" + attributes);

@@ -32,11 +32,15 @@ import org.apache.struts.action.ActionMapping;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.enterprise.gui.legacy.Constants;
+import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
+import org.rhq.enterprise.gui.legacy.action.resource.ResourceForm.FormContext;
 import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.AlertDefUtil;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.server.alert.AlertDefinitionException;
+import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
+import org.rhq.enterprise.server.alert.AlertTemplateManagerLocal;
+import org.rhq.enterprise.server.alert.GroupAlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -51,13 +55,17 @@ public class EditDefinitionConditionsAction extends BaseAction {
         HttpServletResponse response) throws Exception {
         DefinitionForm defForm = (DefinitionForm) form;
         Map<String, Integer> params = new HashMap<String, Integer>();
-        boolean isAlertTemplate = defForm.isAlertTemplate();
+        FormContext context = defForm.getContext();
 
         params.put("ad", defForm.getAd());
-        if (isAlertTemplate) {
-            params.put(Constants.RESOURCE_TYPE_ID_PARAM, defForm.getType());
+        if (context == FormContext.Type) {
+            params.put(ParamConstants.RESOURCE_TYPE_ID_PARAM, defForm.getType());
+        } else if (context == FormContext.Resource) {
+            params.put(ParamConstants.RESOURCE_ID_PARAM, defForm.getId());
+        } else if (context == FormContext.Group) {
+            params.put(ParamConstants.GROUP_ID_PARAM, defForm.getGroupId());
         } else {
-            params.put(Constants.RESOURCE_ID_PARAM, defForm.getId());
+            throw new IllegalArgumentException("Unsupported context: " + context);
         }
 
         ActionForward forward = checkSubmit(request, mapping, form, params);
@@ -71,7 +79,7 @@ public class EditDefinitionConditionsAction extends BaseAction {
         AlertDefinition alertDef = AlertDefUtil.getAlertDefinition(request);
 
         try {
-            defForm.exportConditionsEnablement(alertDef, request, subject, isAlertTemplate);
+            defForm.exportConditionsEnablement(alertDef, request, subject);
         } catch (Exception e) {
             log.debug("alert definition update failed:", e);
             RequestUtils.setError(request, "alert.config.edit.definition.error", e.getMessage(), "global");
@@ -79,11 +87,18 @@ public class EditDefinitionConditionsAction extends BaseAction {
         }
 
         try {
-            if (isAlertTemplate) {
-                LookupUtil.getAlertTemplateManager().updateAlertTemplate(subject, alertDef, true);
+            if (context == FormContext.Type) {
+                AlertTemplateManagerLocal alertTemplateManager = LookupUtil.getAlertTemplateManager();
+                alertTemplateManager.updateAlertTemplate(subject, alertDef, true);
+            } else if (context == FormContext.Resource) {
+                AlertDefinitionManagerLocal alertDefinitionManager = LookupUtil.getAlertDefinitionManager();
+                alertDefinitionManager.updateAlertDefinition(subject, alertDef.getId(), alertDef, true);
+            } else if (context == FormContext.Group) {
+                GroupAlertDefinitionManagerLocal groupAlertDefinitionManager = LookupUtil
+                    .getGroupAlertDefinitionManager();
+                groupAlertDefinitionManager.updateGroupAlertDefinitions(subject, alertDef, true);
             } else {
-                // this will disallow updates if the alert definition has been deleted
-                LookupUtil.getAlertDefinitionManager().updateAlertDefinition(subject, alertDef.getId(), alertDef, true);
+                throw new IllegalArgumentException("Unsupported context: " + context);
             }
         } catch (AlertDefinitionException iade) {
             log.debug("alert definition update failed:", iade);

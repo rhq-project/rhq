@@ -33,12 +33,14 @@ import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertDampening;
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.alert.AlertDefinitionContext;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.util.MeasurementConverter;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.enterprise.gui.legacy.Constants;
+import org.rhq.enterprise.gui.legacy.action.resource.ResourceForm.FormContext;
 import org.rhq.enterprise.gui.legacy.beans.AlertConditionBean;
 import org.rhq.enterprise.gui.legacy.beans.OptionItem;
 import org.rhq.enterprise.gui.legacy.exception.ParameterNotFoundException;
@@ -66,7 +68,7 @@ public final class AlertDefUtil {
      * @param conds   @return List of AlertConditionBean objects
      */
     public static List<AlertConditionBean> getAlertConditionBeanList(Subject subject, HttpServletRequest request,
-        Set<AlertCondition> conds, boolean template) {
+        Set<AlertCondition> conds) {
         List<AlertConditionBean> alertCondBeans = new ArrayList<AlertConditionBean>(conds.size());
 
         boolean first = true;
@@ -225,8 +227,11 @@ public final class AlertDefUtil {
                     .getAlertDefinitionById(user, alertDefinitionId);
                 request.setAttribute(Constants.ALERT_DEFINITION_ATTR, alertDefinition);
 
-                if (alertDefinition.getResourceType() != null) {
+                AlertDefinitionContext context = AlertDefinitionContext.get(alertDefinition);
+                if (context == AlertDefinitionContext.Type) {
                     RequestUtils.setResourceType(request, alertDefinition.getResourceType());
+                } else if (context == AlertDefinitionContext.Group) {
+                    RequestUtils.setResourceGroup(request, alertDefinition.getResourceGroup());
                 } else {
                     RequestUtils.setResource(request, alertDefinition.getResource());
                 }
@@ -242,18 +247,22 @@ public final class AlertDefUtil {
      * Returns a List of LabelValueBean objects whose labels and values are both set to the string of the control
      * actions for the passed-in resource.
      */
-    public static List<OptionItem> getControlActions(Subject subject, Integer id, boolean isAlertTemplate)
-        throws Exception {
+    public static List<OptionItem> getControlActions(Subject subject, Integer id, FormContext context) throws Exception {
         List<OptionItem> operations = new ArrayList<OptionItem>();
 
         OperationManagerLocal operationManager = LookupUtil.getOperationManager();
         List<OperationDefinition> operationDefinitions = null;
 
         // need to eager load the definitions so the check against getParametersConfigurationDefinition succeeds below
-        if (isAlertTemplate) {
+
+        if (context == FormContext.Type) {
             operationDefinitions = operationManager.findSupportedResourceTypeOperations(subject, id, true);
-        } else {
+        } else if (context == FormContext.Group) {
+            operationDefinitions = operationManager.findSupportedGroupOperations(subject, id, true);
+        } else if (context == FormContext.Resource) {
             operationDefinitions = operationManager.findSupportedResourceOperations(subject, id, true);
+        } else {
+            throw new IllegalArgumentException("Unsupported form context: " + context);
         }
 
         for (OperationDefinition definition : operationDefinitions) {

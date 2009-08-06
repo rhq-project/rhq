@@ -35,9 +35,11 @@ import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
+import org.rhq.enterprise.gui.legacy.action.resource.ResourceForm.FormContext;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertTemplateManagerLocal;
+import org.rhq.enterprise.server.alert.GroupAlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.InvalidAlertDefinitionException;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -52,12 +54,16 @@ public class NewDefinitionAction extends BaseAction {
         HttpServletResponse response) throws Exception {
         DefinitionForm defForm = (DefinitionForm) form;
         Map<String, Integer> params = new HashMap<String, Integer>();
-        boolean isAlertTemplate = defForm.isAlertTemplate();
 
-        if (isAlertTemplate) {
+        FormContext context = defForm.getContext();
+        if (context == FormContext.Type) {
             params.put(ParamConstants.RESOURCE_TYPE_ID_PARAM, defForm.getType());
-        } else {
+        } else if (context == FormContext.Resource) {
             params.put(ParamConstants.RESOURCE_ID_PARAM, defForm.getId());
+        } else if (context == FormContext.Group) {
+            params.put(ParamConstants.GROUP_ID_PARAM, defForm.getGroupId());
+        } else {
+            throw new IllegalArgumentException("Unsupported context: " + context);
         }
 
         ActionForward forward = checkSubmit(request, mapping, form, params);
@@ -72,7 +78,7 @@ public class NewDefinitionAction extends BaseAction {
 
         try {
             defForm.exportProperties(alertDef);
-            defForm.exportConditionsEnablement(alertDef, request, subject, isAlertTemplate);
+            defForm.exportConditionsEnablement(alertDef, request, subject);
         } catch (Exception e) {
             log.debug("alert definition update failed:", e);
             RequestUtils.setError(request, "alert.config.edit.definition.error", e.getMessage(), "global");
@@ -81,12 +87,19 @@ public class NewDefinitionAction extends BaseAction {
 
         int alertDefinitionId;
         try {
-            if (isAlertTemplate) {
+            if (context == FormContext.Type) {
                 AlertTemplateManagerLocal alertTemplateManager = LookupUtil.getAlertTemplateManager();
                 alertDefinitionId = alertTemplateManager.createAlertTemplate(subject, alertDef, defForm.getType());
-            } else {
+            } else if (context == FormContext.Resource) {
                 AlertDefinitionManagerLocal alertDefinitionManager = LookupUtil.getAlertDefinitionManager();
                 alertDefinitionId = alertDefinitionManager.createAlertDefinition(subject, alertDef, defForm.getId());
+            } else if (context == FormContext.Group) {
+                GroupAlertDefinitionManagerLocal groupAlertDefinitionManager = LookupUtil
+                    .getGroupAlertDefinitionManager();
+                alertDefinitionId = groupAlertDefinitionManager.createGroupAlertDefinitions(subject, alertDef, defForm
+                    .getGroupId());
+            } else {
+                throw new IllegalArgumentException("Unsupported context: " + context);
             }
         } catch (InvalidAlertDefinitionException iade) {
             log.debug("alert definition update failed:", iade);

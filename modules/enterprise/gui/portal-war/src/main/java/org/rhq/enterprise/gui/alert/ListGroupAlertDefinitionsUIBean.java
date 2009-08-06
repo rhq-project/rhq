@@ -30,19 +30,18 @@ import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
+import org.rhq.enterprise.server.alert.GroupAlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
- * @author Greg Hinkle
  * @author Joseph Marques
  */
-public class ListAlertDefinitionsUIBean extends PagedDataTableUIBean {
-    public static final String MANAGED_BEAN_NAME = "ListAlertDefinitionsUIBean";
+public class ListGroupAlertDefinitionsUIBean extends PagedDataTableUIBean {
+    public static final String MANAGED_BEAN_NAME = "ListGroupAlertDefinitionsUIBean";
 
-    private AlertDefinitionManagerLocal alertDefinitionManager = LookupUtil.getAlertDefinitionManager();
+    private GroupAlertDefinitionManagerLocal groupAlertDefinitionManager = LookupUtil.getGroupAlertDefinitionManager();
 
-    public ListAlertDefinitionsUIBean() {
+    public ListGroupAlertDefinitionsUIBean() {
     }
 
     public String createNewAlertDefinition() {
@@ -55,10 +54,11 @@ public class ListAlertDefinitionsUIBean extends PagedDataTableUIBean {
         Integer[] alertDefinitionIds = getIntegerArray(selectedAlertDefinitions);
 
         try {
-            int deleted = alertDefinitionManager.removeAlertDefinitions(subject, alertDefinitionIds);
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Deleted " + deleted + " alert definitions.");
+            int deleted = groupAlertDefinitionManager.removeGroupAlertDefinitions(subject, alertDefinitionIds);
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Deleted " + deleted
+                + " group alert definitions.");
         } catch (Exception e) {
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to delete alert definitions.", e);
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to delete group alert definitions.", e);
         }
 
         return "success";
@@ -70,10 +70,11 @@ public class ListAlertDefinitionsUIBean extends PagedDataTableUIBean {
         Integer[] alertDefinitionIds = getIntegerArray(selectedAlertDefinitions);
 
         try {
-            int enabled = alertDefinitionManager.enableAlertDefinitions(subject, alertDefinitionIds);
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Enabled " + enabled + " alert definitions.");
+            int enabled = groupAlertDefinitionManager.enableGroupAlertDefinitions(subject, alertDefinitionIds);
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Enabled " + enabled
+                + " group alert definitions.");
         } catch (Exception e) {
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to enable alert definitions.", e);
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to enable group alert definitions.", e);
         }
 
         return "success";
@@ -85,26 +86,12 @@ public class ListAlertDefinitionsUIBean extends PagedDataTableUIBean {
         Integer[] alertDefinitionIds = getIntegerArray(selectedAlertDefinitions);
 
         try {
-            int disabled = alertDefinitionManager.disableAlertDefinitions(subject, alertDefinitionIds);
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Disabled " + disabled + " alert definitions.");
+            int disabled = groupAlertDefinitionManager.disableGroupAlertDefinitions(subject, alertDefinitionIds);
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Disabled " + disabled
+                + " group alert definitions.");
         } catch (Exception e) {
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to disable alert definitions.", e);
-        }
-
-        return "success";
-    }
-
-    public String copySelectedAlertDefinitions() {
-        Subject subject = EnterpriseFacesContextUtility.getSubject();
-        String[] selectedAlertDefinitions = getSelectedAlertDefinitions();
-        Integer[] alertDefinitionIds = getIntegerArray(selectedAlertDefinitions);
-
-        try {
-            alertDefinitionManager.copyAlertDefinitions(subject, alertDefinitionIds);
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Copied " + alertDefinitionIds.length
-                + " alert definitions into the disabled state.  Edit each as appropriate, and then renable.");
-        } catch (Exception e) {
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to copy alert definitions.", e);
+            FacesContextUtility
+                .addMessage(FacesMessage.SEVERITY_ERROR, "Failed to disable group alert definitions.", e);
         }
 
         return "success";
@@ -113,21 +100,21 @@ public class ListAlertDefinitionsUIBean extends PagedDataTableUIBean {
     @Override
     public DataModel getDataModel() {
         if (dataModel == null) {
-            dataModel = new ListAlertDefinitionsDataModel(PageControlView.AlertDefinitionsList, MANAGED_BEAN_NAME);
+            dataModel = new ListGroupAlertDefinitionsDataModel(PageControlView.AlertDefinitionsList, MANAGED_BEAN_NAME);
         }
 
         return dataModel;
     }
 
-    private class ListAlertDefinitionsDataModel extends PagedListDataModel<AlertDefinition> {
-        public ListAlertDefinitionsDataModel(PageControlView view, String beanName) {
+    private class ListGroupAlertDefinitionsDataModel extends PagedListDataModel<AlertDefinition> {
+        public ListGroupAlertDefinitionsDataModel(PageControlView view, String beanName) {
             super(view, beanName);
         }
 
         @Override
         public PageList<AlertDefinition> fetchPage(PageControl pc) {
-            PageList<AlertDefinition> results = alertDefinitionManager.findAlertDefinitions(getSubject(), getResource()
-                .getId(), pc);
+            PageList<AlertDefinition> results = groupAlertDefinitionManager.findGroupAlertDefinitions(getSubject(),
+                getResourceGroup().getId(), pc);
             return results;
         }
     }

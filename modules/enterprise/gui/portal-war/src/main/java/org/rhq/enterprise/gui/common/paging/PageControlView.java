@@ -22,6 +22,8 @@ import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.admin.ListAlertTemplatesUIBean;
 import org.rhq.enterprise.gui.alert.ListAlertDefinitionsUIBean;
 import org.rhq.enterprise.gui.alert.ListAlertHistoryUIBean;
+import org.rhq.enterprise.gui.alert.ListGroupAlertDefinitionsUIBean;
+import org.rhq.enterprise.gui.alert.ListGroupAlertHistoryUIBean;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.configuration.group.GroupResourceConfigurationHistoryDetailsUIBean;
 import org.rhq.enterprise.gui.configuration.group.GroupResourceConfigurationHistoryUIBean;
@@ -162,6 +164,10 @@ public enum PageControlView {
     AlertDefinitionsList(ListAlertDefinitionsUIBean.class),
     /** */
     AlertHistoryList(ListAlertHistoryUIBean.class),
+    /** */
+    GroupAlertDefinitionsList(ListGroupAlertDefinitionsUIBean.class),
+    /** */
+    GroupAlertHistoryList(ListGroupAlertHistoryUIBean.class),
     /** */
     AlertTemplatesList(ListAlertTemplatesUIBean.class),
 

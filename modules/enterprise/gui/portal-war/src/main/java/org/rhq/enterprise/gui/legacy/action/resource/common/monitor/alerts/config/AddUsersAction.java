@@ -19,12 +19,15 @@
 package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config;
 
 import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
@@ -72,8 +75,7 @@ public class AddUsersAction extends AddNotificationsAction {
         }
 
         AlertNotificationManagerLocal alertNotificationManager = LookupUtil.getAlertNotificationManager();
-        alertNotificationManager.addSubjectNotifications(subject, addForm.getAd(), pendingUserIds, addForm
-            .isAlertTemplate());
+        alertNotificationManager.addSubjectNotifications(subject, addForm.getAd(), pendingUserIds);
 
         log.debug("remove pending user list");
         SessionUtils.removeList(session, Constants.PENDING_USERS_SES_ATTR);

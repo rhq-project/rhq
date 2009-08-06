@@ -19,9 +19,11 @@
 package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config;
 
 import javax.servlet.http.HttpServletRequest;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionMapping;
+
 import org.rhq.enterprise.gui.legacy.action.resource.ResourceForm;
 
 /**
@@ -73,10 +75,6 @@ public final class ControlActionForm extends ResourceForm {
     public void reset(ActionMapping mapping, HttpServletRequest request) {
         super.reset(mapping, request);
         controlAction = null;
-    }
-
-    public boolean isAlertTemplate() {
-        return ((getType() != null) && (getType() != 0));
     }
 
     public boolean isCascade() {

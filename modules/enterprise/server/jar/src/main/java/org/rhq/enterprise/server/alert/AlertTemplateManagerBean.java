@@ -87,7 +87,7 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
-    private List<Integer> getAlertDefinitionIdsForTemplate(Subject user, int alertTemplateId) {
+    private List<Integer> getChildrenAlertDefinitionIds(Subject user, int alertTemplateId) {
         Query query = entityManager.createNamedQuery(AlertDefinition.QUERY_FIND_BY_ALERT_TEMPLATE_ID);
         query.setParameter("alertTemplateId", alertTemplateId);
 
@@ -194,7 +194,7 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
     public void removeAlertTemplates(Subject user, Integer[] alertTemplateIds) {
         Subject overlord = subjectManager.getOverlord();
         for (Integer alertTemplateId : alertTemplateIds) {
-            List<Integer> alertDefinitions = getAlertDefinitionIdsForTemplate(user, alertTemplateId);
+            List<Integer> alertDefinitions = getChildrenAlertDefinitionIds(user, alertTemplateId);
 
             alertDefinitionManager.removeAlertDefinitions(user, new Integer[] { alertTemplateId });
             alertDefinitionManager.removeAlertDefinitions(overlord, alertDefinitions
@@ -206,7 +206,7 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
     public void enableAlertTemplates(Subject user, Integer[] alertTemplateIds) {
         Subject overlord = subjectManager.getOverlord();
         for (Integer alertTemplateId : alertTemplateIds) {
-            List<Integer> alertDefinitions = getAlertDefinitionIdsForTemplate(user, alertTemplateId);
+            List<Integer> alertDefinitions = getChildrenAlertDefinitionIds(user, alertTemplateId);
 
             alertDefinitionManager.enableAlertDefinitions(user, new Integer[] { alertTemplateId });
             alertDefinitionManager.enableAlertDefinitions(overlord, alertDefinitions
@@ -218,7 +218,7 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
     public void disableAlertTemplates(Subject user, Integer[] alertTemplateIds) {
         Subject overlord = subjectManager.getOverlord();
         for (Integer alertTemplateId : alertTemplateIds) {
-            List<Integer> alertDefinitions = getAlertDefinitionIdsForTemplate(user, alertTemplateId);
+            List<Integer> alertDefinitions = getChildrenAlertDefinitionIds(user, alertTemplateId);
 
             alertDefinitionManager.disableAlertDefinitions(user, new Integer[] { alertTemplateId });
             alertDefinitionManager.disableAlertDefinitions(overlord, alertDefinitions
@@ -248,7 +248,7 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
         /*
          * update all of the definitions that were spawned from alert templates
          */
-        List<Integer> alertDefinitions = getAlertDefinitionIdsForTemplate(overlord, alertTemplate.getId());
+        List<Integer> alertDefinitions = getChildrenAlertDefinitionIds(overlord, alertTemplate.getId());
         for (Integer alertDefinitionId : alertDefinitions) {
             try {
 
@@ -281,7 +281,7 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
          * if the user deleted the alert definition spawned from a template, a cascade update will recreate it
          */
         List<Integer> resourceIds = getCommittedResourceIdsNeedingTemplateApplication(overlord, alertTemplate.getId(),
-            alertTemplate.getResourceType().getId());
+            getResourceTypeIdAlertTemplateId(alertTemplate.getId()));
         try {
             for (Integer resourceId : resourceIds) {
                 updateAlertDefinitionsForResource(overlord, alertTemplate, resourceId);
@@ -302,5 +302,15 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
         }
 
         return updatedTemplate;
+    }
+
+    private int getResourceTypeIdAlertTemplateId(int alertTemplateId) {
+        Query query = entityManager.createQuery("" //
+            + "SELECT template.resourceType.id " //
+            + "  FROM AlertDefinition template " //
+            + " WHERE template.id = :alertTemplateId");
+        query.setParameter("alertTemplateId", alertTemplateId);
+        int typeId = ((Number) query.getSingleResult()).intValue();
+        return typeId;
     }
 }

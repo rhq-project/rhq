@@ -43,6 +43,8 @@ import org.rhq.enterprise.server.alert.AlertNotificationManagerBean;
 import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
 import org.rhq.enterprise.server.alert.AlertTemplateManagerBean;
 import org.rhq.enterprise.server.alert.AlertTemplateManagerLocal;
+import org.rhq.enterprise.server.alert.GroupAlertDefinitionManagerBean;
+import org.rhq.enterprise.server.alert.GroupAlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerBean;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
 import org.rhq.enterprise.server.alert.engine.jms.AlertConditionConsumerBean;
@@ -262,6 +264,10 @@ public final class LookupUtil {
 
     public static AlertDefinitionManagerLocal getAlertDefinitionManager() {
         return lookupLocal(AlertDefinitionManagerBean.class);
+    }
+
+    public static GroupAlertDefinitionManagerLocal getGroupAlertDefinitionManager() {
+        return lookupLocal(GroupAlertDefinitionManagerBean.class);
     }
 
     public static AlertManagerLocal getAlertManager() {

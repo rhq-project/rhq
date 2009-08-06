@@ -76,11 +76,11 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
     private StatusManagerLocal agentStatusManager;
 
     private boolean checkViewPermission(Subject subject, AlertDefinition alertDefinition) {
-        if (alertDefinition.getResourceType() != null) // an alert template
-        {
-            return authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_INVENTORY);
-        } else // an alert definition
-        {
+        if (alertDefinition.getResourceType() != null) { // an alert template
+            return authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_SETTINGS);
+        } else if (alertDefinition.getResourceGroup() != null) { // a groupAlertDefinition
+            return authorizationManager.canViewGroup(subject, alertDefinition.getResourceGroup().getId());
+        } else { // an alert definition
             return authorizationManager.canViewResource(subject, alertDefinition.getResource().getId());
         }
     }
@@ -94,11 +94,12 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
             return true;
         }
 
-        if (alertDefinition.getResourceType() != null) // an alert template
-        {
-            return authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_INVENTORY);
-        } else // an alert definition
-        {
+        if (alertDefinition.getResourceType() != null) { // an alert template
+            return authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_SETTINGS);
+        } else if (alertDefinition.getResourceGroup() != null) { // a groupAlertDefinition
+            return authorizationManager.hasGroupPermission(subject, Permission.MANAGE_ALERTS, alertDefinition
+                .getResourceGroup().getId());
+        } else { // an alert definition
             return authorizationManager.hasResourcePermission(subject, Permission.MANAGE_ALERTS, alertDefinition
                 .getResource().getId());
         }
@@ -172,8 +173,8 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
 
         // if this is an alert definition, set up the link to a resource
         if (resourceId != null) {
-            // don't attach an alert template to any particular resource
-            // the template should have already been attached to the resourceType by the template manager
+            // don't attach an alertTemplate or groupAlertDefinition to any particular resource
+            // they should have already been attached to the resourceType or resourceGroup by the caller
 
             //Resource resource = LookupUtil.getResourceManager().getResourceById(user, resourceId);
             // use proxy trick to subvert having to load the entire resource into memory
@@ -182,13 +183,18 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
 
         // after the resource is set up (in the case of non-templates), we can use the checkPermission on it
         if (checkPermission(subject, alertDefinition) == false) {
-            if (resourceId != null) {
+            if (alertDefinition.getResourceType() != null) {
                 throw new PermissionException("User [" + subject.getName()
-                    + "] does not have permission to create alert definitions" + "for resource ["
-                    + alertDefinition.getResource() + "]");
+                    + "] does not have permission to create alert templates for type ["
+                    + alertDefinition.getResourceType() + "]");
+            } else if (alertDefinition.getResourceGroup() != null) {
+                throw new PermissionException("User [" + subject.getName()
+                    + "] does not have permission to create alert definitions for group ["
+                    + alertDefinition.getResourceGroup() + "]");
             } else {
                 throw new PermissionException("User [" + subject.getName()
-                    + "] does not have permission to create alert templates");
+                    + "] does not have permission to create alert definitions for resource ["
+                    + alertDefinition.getResource() + "]");
             }
         }
 
@@ -250,7 +256,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
 
     public int removeAlertDefinitions(Subject subject, Integer[] alertDefinitionIds) {
         int modifiedCount = 0;
-        boolean isAlertTemplate = false;
+        boolean isResourceLevel = false;
 
         for (int alertDefId : alertDefinitionIds) {
             AlertDefinition alertDefinition = entityManager.find(AlertDefinition.class, alertDefId);
@@ -260,13 +266,14 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
                 alertDefinition.setDeleted(true);
                 modifiedCount++;
 
-                // There is no need to update the cache if this is removal of an alert template condition
-                // because it is not associated with any resource/agent.
-                isAlertTemplate = (null != alertDefinition.getResourceType());
-
-                if (!isAlertTemplate) {
+                // alertTemplates and groupAlertDefinitions do not need to update the cache
+                isResourceLevel = (null != alertDefinition.getResource());
+                if (isResourceLevel) {
                     notifyAlertConditionCacheManager("removeAlertDefinitions", alertDefinition.getId(),
                         AlertDefinitionEvent.DELETED);
+                }
+                if (alertDefinition.getResourceGroup() != null) {
+                    alertDefinition.setResourceGroup(null); // break bonds so corresponding ResourceGroup can be purged
                 }
             }
         }
@@ -276,6 +283,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
 
     public int enableAlertDefinitions(Subject subject, Integer[] alertDefinitionIds) {
         int modifiedCount = 0;
+        boolean isResourceLevel = false;
         for (int alertDefId : alertDefinitionIds) {
             AlertDefinition alertDefinition = entityManager.find(AlertDefinition.class, alertDefId);
 
@@ -286,9 +294,12 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
                     alertDefinition.setEnabled(true);
                     modifiedCount++;
 
-                    // thus, add it to the cache since it (shouldn't) already exist
-                    notifyAlertConditionCacheManager("enableAlertDefinitions", alertDefinition.getId(),
-                        AlertDefinitionEvent.ENABLED);
+                    // alertTemplates and groupAlertDefinitions do not need to update the cache
+                    isResourceLevel = (null != alertDefinition.getResource());
+                    if (isResourceLevel) {
+                        notifyAlertConditionCacheManager("enableAlertDefinitions", alertDefinition.getId(),
+                            AlertDefinitionEvent.ENABLED);
+                    }
                 }
             }
         }
@@ -314,6 +325,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
 
     public int disableAlertDefinitions(Subject subject, Integer[] alertDefinitionIds) {
         int modifiedCount = 0;
+        boolean isResourceLevel;
         for (int alertDefId : alertDefinitionIds) {
             AlertDefinition alertDefinition = entityManager.find(AlertDefinition.class, alertDefId);
 
@@ -324,9 +336,12 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
                     alertDefinition.setEnabled(false);
                     modifiedCount++;
 
-                    // thus, remove it from the cache since it (should) already exist
-                    notifyAlertConditionCacheManager("disableAlertDefinitions", alertDefinition.getId(),
-                        AlertDefinitionEvent.DISABLED);
+                    // alertTemplates and groupAlertDefinitions do not need to update the cache
+                    isResourceLevel = (null != alertDefinition.getResource());
+                    if (isResourceLevel) {
+                        notifyAlertConditionCacheManager("disableAlertDefinitions", alertDefinition.getId(),
+                            AlertDefinitionEvent.DISABLED);
+                    }
                 }
             }
         }
@@ -382,15 +397,21 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
          * Method for catching ENABLE / DISABLE changes will use switch logic off of the delta instead of calling out to
          * the enable/disable functions
          */
-        AlertDefinition oldAlertDefinition = getAlertDefinitionById(subject, alertDefinitionId);
-
-        boolean isAlertTemplate = (oldAlertDefinition.getResourceType() != null);
+        AlertDefinition oldAlertDefinition = entityManager.find(AlertDefinition.class, alertDefinitionId);
 
         if (checkPermission(subject, oldAlertDefinition) == false) {
-            if (isAlertTemplate) {
-                throw new PermissionException("You do not have permission to modify this alert template");
+            if (oldAlertDefinition.getResourceType() != null) {
+                throw new PermissionException("User [" + subject.getName()
+                    + "] does not have permission to modify alert templates for type ["
+                    + oldAlertDefinition.getResourceType() + "]");
+            } else if (oldAlertDefinition.getResourceGroup() != null) {
+                throw new PermissionException("User [" + subject.getName()
+                    + "] does not have permission to modify alert definitions for group ["
+                    + oldAlertDefinition.getResourceGroup() + "]");
             } else {
-                throw new PermissionException("You do not have permission to modify this alert definition");
+                throw new PermissionException("User [" + subject.getName()
+                    + "] does not have permission to modify alert definitions for resource ["
+                    + oldAlertDefinition.getResource() + "]");
             }
         }
 
@@ -398,7 +419,8 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
          * only need to check the validity of the new alert definition if the authz checks pass *and* the old definition
          * is not currently deleted
          */
-        checkAlertDefinition(oldAlertDefinition, isAlertTemplate ? null : oldAlertDefinition.getResource().getId());
+        boolean isResourceLevel = (oldAlertDefinition.getResource() != null);
+        checkAlertDefinition(alertDefinition, isResourceLevel ? oldAlertDefinition.getResource().getId() : null);
 
         /*
          * Should not be able to update an alert definition if the old alert definition is in an invalid state
@@ -409,7 +431,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
 
         AlertDefinitionUpdateType updateType = AlertDefinitionUpdateType.get(oldAlertDefinition, alertDefinition);
 
-        if ((isAlertTemplate == false)
+        if (isResourceLevel
             && ((updateType == AlertDefinitionUpdateType.JUST_DISABLED) || (updateType == AlertDefinitionUpdateType.STILL_ENABLED))) {
             /*
              * if you were JUST_DISABLED or STILL_ENABLED, you are coming from the ENABLED state, which means you need
@@ -432,11 +454,11 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
             alertDefinition.setConditionExpression(BooleanExpression.ANY);
         }
 
-        oldAlertDefinition.update(alertDefinition);
+        oldAlertDefinition.update(alertDefinition, false);
         fixRecoveryId(oldAlertDefinition);
         AlertDefinition newAlertDefinition = entityManager.merge(oldAlertDefinition);
 
-        if ((isAlertTemplate == false)
+        if (isResourceLevel
             && ((updateType == AlertDefinitionUpdateType.JUST_ENABLED) || (updateType == AlertDefinitionUpdateType.STILL_ENABLED))) {
             /*
              * if you were JUST_ENABLED or STILL_ENABLED, you are moving to the ENABLED state, which means you need to

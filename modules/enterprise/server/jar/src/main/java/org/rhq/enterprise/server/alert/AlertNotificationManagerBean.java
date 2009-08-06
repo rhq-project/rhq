@@ -35,6 +35,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.alert.AlertDefinitionContext;
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.alert.notification.EmailNotification;
 import org.rhq.core.domain.alert.notification.RoleNotification;
@@ -65,6 +66,8 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
     @EJB
     private AlertTemplateManagerLocal alertTemplateManager;
     @EJB
+    private GroupAlertDefinitionManagerLocal groupAlertDefintionManager;
+    @EJB
     private AuthorizationManagerLocal authorizationManager;
     @EJB
     private RoleManagerLocal roleManager;
@@ -74,12 +77,36 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
-    private void checkPermission(Subject subject, AlertDefinition alertDefinition, boolean isAlertTemplate) {
+    /*
+     * Must use detached object in all circumstances where the AlertDefinition will eventually be passed to
+     * AlertDefinitionManager.updateAlertDefinition() to perform the actual modifications and persistence.
+     * If we use an attached AlertDefinity entity at this layer, modify the set of notifications, then call
+     * into AlertDefinitionManager.updateAlertDefinition() which starts a new transaction, the work will be
+     * performed at the AlertTemplate layer twice.  This would result in duplicate notifications (RHQ-629) as
+     * well as errors during removal (which would be attempted twice for each being removed).
+     * 
+     * Must, however, return an AlertDefinition with a copy of the ids because the removeNotifications method
+     * needs to compare ids to figure out what to remove from the set of notifications.
+     */
+    private AlertDefinition getDetachedAlertDefinition(int alertDefinitionId) {
+        AlertDefinition alertDefinition = alertDefinitionManager.getAlertDefinitionById(subjectManager.getOverlord(),
+            alertDefinitionId);
+        checkPermission(subjectManager.getOverlord(), alertDefinition);
+        AlertDefinition detachedDefinition = new AlertDefinition(alertDefinition, true);
+        detachedDefinition.setContext(alertDefinition.getContext());
+        detachedDefinition.setId(alertDefinition.getId());
+        return detachedDefinition;
+    }
+
+    private void checkPermission(Subject subject, AlertDefinition alertDefinition) {
         boolean hasPermission = false;
 
-        if (isAlertTemplate) {
+        if (alertDefinition.getResourceType() != null) { // an alert template
             hasPermission = authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_SETTINGS);
-        } else {
+        } else if (alertDefinition.getResourceGroup() != null) { // a groupAlertDefinition
+            hasPermission = authorizationManager.hasGroupPermission(subject, Permission.MANAGE_ALERTS, alertDefinition
+                .getResourceGroup().getId());
+        } else { // an alert definition
             hasPermission = authorizationManager.hasResourcePermission(subject, Permission.MANAGE_ALERTS,
                 alertDefinition.getResource().getId());
         }
@@ -89,12 +116,8 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         }
     }
 
-    public int addEmailNotifications(Subject subject, Integer alertDefinitionId, String[] emails,
-        boolean isAlertTemplate) {
-        AlertDefinition alertDefinition = alertDefinitionManager.getAlertDefinitionById(subjectManager.getOverlord(),
-            alertDefinitionId);
-        checkPermission(subject, alertDefinition, isAlertTemplate);
-
+    public int addEmailNotifications(Subject subject, Integer alertDefinitionId, String[] emails) {
+        AlertDefinition alertDefinition = getDetachedAlertDefinition(alertDefinitionId);
         Set<AlertNotification> notifications = alertDefinition.getAlertNotifications();
 
         int added = 0;
@@ -112,14 +135,7 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
             }
         }
 
-        if (isAlertTemplate) {
-            try {
-                alertTemplateManager.updateAlertTemplate(subjectManager.getOverlord(), alertDefinition, true);
-            } catch (InvalidAlertDefinitionException iade) {
-                // can this ever really happen?  if it does, the logs will know about it
-                LOG.error("Can not update alert template, invalid definition: " + alertDefinition);
-            }
-        }
+        postProcessAlertDefinition(alertDefinition);
 
         return added;
     }
@@ -163,12 +179,8 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         return new PageList<EmailNotification>(results, (int) count, pageControl);
     }
 
-    public int addRoleNotifications(Subject subject, Integer alertDefinitionId, Integer[] roleIds,
-        boolean isAlertTemplate) {
-        AlertDefinition alertDefinition = alertDefinitionManager.getAlertDefinitionById(subjectManager.getOverlord(),
-            alertDefinitionId);
-        checkPermission(subject, alertDefinition, isAlertTemplate);
-
+    public int addRoleNotifications(Subject subject, Integer alertDefinitionId, Integer[] roleIds) {
+        AlertDefinition alertDefinition = getDetachedAlertDefinition(alertDefinitionId);
         Set<AlertNotification> notifications = alertDefinition.getAlertNotifications();
 
         List<Role> roles = roleManager.findRolesByIds(roleIds, PageControl.getUnlimitedInstance());
@@ -184,14 +196,7 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
             }
         }
 
-        if (isAlertTemplate) {
-            try {
-                alertTemplateManager.updateAlertTemplate(subjectManager.getOverlord(), alertDefinition, true);
-            } catch (InvalidAlertDefinitionException iade) {
-                // can this ever really happen?  if it does, the logs will know about it
-                LOG.error("Can not update alert template, invalid definition: " + alertDefinition);
-            }
-        }
+        postProcessAlertDefinition(alertDefinition);
 
         return added;
     }
@@ -256,12 +261,8 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         return new PageList<RoleNotification>(results, (int) count, pageControl);
     }
 
-    public int addSubjectNotifications(Subject user, Integer alertDefinitionId, Integer[] subjectIds,
-        boolean isAlertTemplate) {
-        AlertDefinition alertDefinition = alertDefinitionManager.getAlertDefinitionById(subjectManager.getOverlord(),
-            alertDefinitionId);
-        checkPermission(user, alertDefinition, isAlertTemplate);
-
+    public int addSubjectNotifications(Subject user, Integer alertDefinitionId, Integer[] subjectIds) {
+        AlertDefinition alertDefinition = getDetachedAlertDefinition(alertDefinitionId);
         Set<AlertNotification> notifications = alertDefinition.getAlertNotifications();
 
         List<Subject> subjects = subjectManager.findSubjectsById(subjectIds, PageControl.getUnlimitedInstance());
@@ -277,14 +278,7 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
             }
         }
 
-        if (isAlertTemplate) {
-            try {
-                alertTemplateManager.updateAlertTemplate(subjectManager.getOverlord(), alertDefinition, true);
-            } catch (InvalidAlertDefinitionException iade) {
-                // can this ever really happen?  if it does, the logs will know about it
-                LOG.error("Can not update alert template, invalid definition: " + alertDefinition);
-            }
-        }
+        postProcessAlertDefinition(alertDefinition);
 
         return added;
     }
@@ -368,12 +362,8 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         return new PageList<SubjectNotification>(results, (int) count, pageControl);
     }
 
-    public int removeNotifications(Subject subject, Integer alertDefinitionId, Integer[] notificationIds,
-        boolean isAlertTemplate) {
-        AlertDefinition alertDefinition = alertDefinitionManager.getAlertDefinitionById(subjectManager.getOverlord(),
-            alertDefinitionId);
-        checkPermission(subject, alertDefinition, isAlertTemplate);
-
+    public int removeNotifications(Subject subject, Integer alertDefinitionId, Integer[] notificationIds) {
+        AlertDefinition alertDefinition = getDetachedAlertDefinition(alertDefinitionId);
         if ((notificationIds == null) || (notificationIds.length == 0)) {
             return 0;
         }
@@ -393,24 +383,13 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
 
         alertDefinition.getAlertNotifications().removeAll(toBeRemoved);
 
-        if (isAlertTemplate) {
-            try {
-                alertTemplateManager.updateAlertTemplate(subjectManager.getOverlord(), alertDefinition, true);
-            } catch (InvalidAlertDefinitionException iade) {
-                // can this ever really happen?  if it does, the logs will know about it
-                LOG.error("Can not update alert template, invalid definition: " + alertDefinition);
-            }
-        }
+        postProcessAlertDefinition(alertDefinition);
 
         return removed;
     }
 
-    public void setSnmpNotification(Subject subject, Integer alertDefinitionId, SnmpNotification snmpNotification,
-        boolean isAlertTemplate) {
-        AlertDefinition alertDefinition = alertDefinitionManager.getAlertDefinitionById(subjectManager.getOverlord(),
-            alertDefinitionId);
-        checkPermission(subject, alertDefinition, isAlertTemplate);
-
+    public void setSnmpNotification(Subject subject, Integer alertDefinitionId, SnmpNotification snmpNotification) {
+        AlertDefinition alertDefinition = getDetachedAlertDefinition(alertDefinitionId);
         Set<AlertNotification> alertNotifications = alertDefinition.getAlertNotifications();
         for (AlertNotification alertNotification : alertNotifications) {
             if (alertNotification instanceof SnmpNotification) {
@@ -420,18 +399,30 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
 
         alertNotifications.add(snmpNotification);
 
-        if (isAlertTemplate) {
-            try {
-                alertTemplateManager.updateAlertTemplate(subjectManager.getOverlord(), alertDefinition, true);
-            } catch (InvalidAlertDefinitionException iade) {
-                // can this ever really happen?  if it does, the logs will know about it
-                LOG.error("Can not update alert template, invalid definition: " + alertDefinition);
-            }
-        }
+        postProcessAlertDefinition(alertDefinition);
     }
 
     public int purgeOrphanedAlertNotifications() {
         Query purgeQuery = entityManager.createNamedQuery(AlertNotification.QUERY_DELETE_ORPHANED);
         return purgeQuery.executeUpdate();
+    }
+
+    private void postProcessAlertDefinition(AlertDefinition definition) {
+        AlertDefinitionContext context = definition.getContext();
+        if (context == AlertDefinitionContext.Type) {
+            try {
+                alertTemplateManager.updateAlertTemplate(subjectManager.getOverlord(), definition, true);
+            } catch (InvalidAlertDefinitionException iade) {
+                // can this ever really happen?  if it does, the logs will know about it
+                LOG.error("Can not update alert template, invalid definition: " + definition);
+            }
+        } else if (context == AlertDefinitionContext.Group) {
+            try {
+                groupAlertDefintionManager.updateGroupAlertDefinitions(subjectManager.getOverlord(), definition, true);
+            } catch (InvalidAlertDefinitionException iade) {
+                // can this ever really happen?  if it does, the logs will know about it
+                LOG.error("Can not update alert template, invalid definition: " + definition);
+            }
+        }
     }
 }

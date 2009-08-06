@@ -34,14 +34,13 @@ import org.rhq.core.domain.util.PageList;
 
 @Local
 public interface AlertNotificationManagerLocal {
-    int addEmailNotifications(Subject subject, Integer alertDefinitionId, String[] emails, boolean isAlertTemplate);
+    int addEmailNotifications(Subject subject, Integer alertDefinitionId, String[] emails);
 
-    int addRoleNotifications(Subject subject, Integer alertDefinitionId, Integer[] roleIds, boolean isAlertTemplate);
+    int addRoleNotifications(Subject subject, Integer alertDefinitionId, Integer[] roleIds);
 
-    int addSubjectNotifications(Subject subject, Integer alertDefinitionId, Integer[] subjectId, boolean isAlertTemplate);
+    int addSubjectNotifications(Subject subject, Integer alertDefinitionId, Integer[] subjectId);
 
-    void setSnmpNotification(Subject subject, Integer alertDefinitionId, SnmpNotification snmpNotification,
-        boolean isAlertTemplate);
+    void setSnmpNotification(Subject subject, Integer alertDefinitionId, SnmpNotification snmpNotification);
 
     PageList<EmailNotification> getEmailNotifications(Integer alertDefinitionId, PageControl pageControl);
 
@@ -61,8 +60,7 @@ public interface AlertNotificationManagerLocal {
 
     PageList<SubjectNotification> getSubjectNotificationsBySubjects(Integer[] subjectId, PageControl pageControl);
 
-    int removeNotifications(Subject subject, Integer alertDefinitionId, Integer[] notificationIds,
-        boolean isAlertTemplate);
+    int removeNotifications(Subject subject, Integer alertDefinitionId, Integer[] notificationIds);
 
     int purgeOrphanedAlertNotifications();
 }

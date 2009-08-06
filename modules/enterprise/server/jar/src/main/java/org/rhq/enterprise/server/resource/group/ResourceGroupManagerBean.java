@@ -81,6 +81,7 @@ import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.alert.GroupAlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
@@ -123,6 +124,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
     private ResourceManagerLocal resourceManager;
     @EJB
     private ResourceGroupManagerLocal resourceGroupManager;
+    @EJB
+    private GroupAlertDefinitionManagerLocal groupAlertDefinitionManager;
 
     @javax.annotation.Resource(name = "RHQ_DS")
     private DataSource rhqDs;
@@ -242,14 +245,14 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public void deleteResourceGroup(Subject user, int groupId) throws ResourceGroupNotFoundException,
+    public void deleteResourceGroup(Subject subject, int groupId) throws ResourceGroupNotFoundException,
         ResourceGroupDeleteException {
-        ResourceGroup group = getResourceGroupById(user, groupId, null);
+        ResourceGroup group = getResourceGroupById(subject, groupId, null);
 
         // for compatible groups, first recursively remove any referring backing groups for auto-clusters
         if (group.getGroupCategory() == GroupCategory.COMPATIBLE) {
             for (ResourceGroup referringGroup : group.getClusterBackingGroups()) {
-                deleteResourceGroup(user, referringGroup.getId());
+                deleteResourceGroup(subject, referringGroup.getId());
             }
         }
 
@@ -273,13 +276,15 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             }
         }
 
+        groupAlertDefinitionManager.purgeAllGroupAlertDefinitions(subject, groupId);
+
         for (Role doomedRoleRelationship : group.getRoles()) {
             group.removeRole(doomedRoleRelationship);
             entityManager.merge(doomedRoleRelationship);
         }
 
         // remove all resources in the group
-        resourceGroupManager.removeAllResourcesFromGroup(user, groupId);
+        resourceGroupManager.removeAllResourcesFromGroup(subject, groupId);
 
         // break resource and plugin configuration update links in order to preserve individual change history
         Query q = null;
@@ -391,6 +396,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             return;
         }
         int[] resourceIdsToAdd = ArrayUtils.unwrapCollection(nonMemberResources);
+        groupAlertDefinitionManager.addGroupAlertDefinitions(subject, groupId, resourceIdsToAdd);
 
         Connection conn = null;
         PreparedStatement insertExplicitStatement = null;
@@ -523,6 +529,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         }
 
         int[] resourceIdsToRemove = ArrayUtils.unwrapArray(resourceIds);
+        groupAlertDefinitionManager.removeGroupAlertDefinitions(subject, groupId, resourceIdsToRemove);
 
         Connection conn = null;
         PreparedStatement deleteExplicitStatement = null;

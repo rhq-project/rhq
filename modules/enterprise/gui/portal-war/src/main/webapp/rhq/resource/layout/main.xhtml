@@ -92,12 +92,8 @@ REQUEST PARAMETERS:
          </onc:tab>
 
          <onc:tab name="Alert" image="/images/icons/Alert_grey_16.png" rendered="#{monitorEnabled}">
-            <onc:subtab name="Definitions" url="/rhq/resource/alert/listAlertDefinitions.xhtml">
-               <f:param name="mode" value="listDefinitions" />
-            </onc:subtab>
-            <onc:subtab name="History"     url="/rhq/resource/alert/listAlertHistory.xhtml">
-               <f:param name="mode" value="list" />
-            </onc:subtab>
+            <onc:subtab name="Definitions" url="/rhq/resource/alert/listAlertDefinitions.xhtml" />
+            <onc:subtab name="History"     url="/rhq/resource/alert/listAlertHistory.xhtml" />
          </onc:tab>
 
          <onc:tab name="Configuration" image="/images/icons/Configure_grey_16.png" displayName="Configure" rendered="#{ResourceUIBean.facets.configuration}">

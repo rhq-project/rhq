@@ -36,6 +36,7 @@
 <html:hidden property="ad"/>
 <html:hidden property="id"/>
 <html:hidden property="type"/>
+<html:hidden property="groupId"/>
 
 </html:form>
 

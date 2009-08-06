@@ -50,8 +50,8 @@
     <td width="20%" class="BlockLabel"><fmt:message key="alert.config.props.PB.DateMod"/></td>
     <td width="30%" class="BlockContent"><hq:dateFormatter time="false" value="${alertDef.mtime}"/></td>
   </tr>
-  <c:if test="${alertDef.parentId > 0}">
   
+  <c:if test="${alertDef.parentId > 0}">
   <tr>
     <td colspan="4" class="BlockContent"><span style="height: 3px;"></span></td>
   </tr>
@@ -81,6 +81,16 @@
   <hq:authorization permission="MANAGE_ALERTS">
     <tiles:insert definition=".toolbar.edit">
       <tiles:put name="editUrl"><c:out value="/alerts/Config.do?mode=editProperties&ad=${alertDef.id}&id=${Resource.id}"/></tiles:put>
+    </tiles:insert>
+  </hq:authorization>
+  </c:if>
+</c:if>
+
+<c:if test="${not empty ResourceGroup}">
+ <c:if test="${!alertDef.deleted}">
+  <hq:authorization permission="MANAGE_ALERTS">
+    <tiles:insert definition=".toolbar.edit">
+      <tiles:put name="editUrl"><c:out value="/alerts/Config.do?mode=editProperties&ad=${alertDef.id}&groupId=${ResourceGroup.id}"/></tiles:put>
     </tiles:insert>
   </hq:authorization>
   </c:if>

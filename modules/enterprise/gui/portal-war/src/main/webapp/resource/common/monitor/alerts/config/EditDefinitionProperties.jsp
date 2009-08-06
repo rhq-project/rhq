@@ -19,6 +19,9 @@
   <c:when test="${not empty Resource}">
     <html:hidden property="id" value="${Resource.id}"/>
   </c:when>
+  <c:when test="${not empty ResourceGroup}">
+    <html:hidden property="groupId" value="${ResourceGroup.id}"/>
+  </c:when>
   <c:otherwise>
     <html:hidden property="type" value="${ResourceType.id}"/>
   </c:otherwise>

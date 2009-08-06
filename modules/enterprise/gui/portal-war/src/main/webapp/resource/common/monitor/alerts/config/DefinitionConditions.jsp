@@ -60,7 +60,5 @@ ignore: 'ignore'
   </tr>
 
   <tiles:insert definition=".events.config.conditions.enablement"/>
-  <!--  
-  <tiles:insert definition=".events.config.template.cascade"/>
-  -->
+
 </table>

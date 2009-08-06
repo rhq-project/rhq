@@ -84,8 +84,7 @@
   </tr>
   
   <!-- Enablement option section -->
-  <c:choose>
-  <c:when test="${alertDef.recoveryId > 0}">
+  <c:if test="${alertDef.recoveryId > 0}">
   
   <tr valign="top">
     <td class="BlockLabel">
@@ -93,14 +92,27 @@
     </td>
     <td width="80%" class="BlockContent">
    	  <fmt:message key="alert.config.props.CB.RecoveryFor"/>
-   	  <html:link page="/alerts/Config.do?mode=viewRoles&id=${Resource.id}&ad=${alertDef.recoveryId}">
-   	  	<c:out value="${recoveryAlertName}" />
-   	  </html:link>
+      <c:choose>
+         <c:when test="${not empty Resource}">
+            <html:link page="/alerts/Config.do?mode=viewRoles&id=${Resource.id}&ad=${alertDef.recoveryId}">
+               <c:out value="${recoveryAlertName}" />
+            </html:link>
+         </c:when>
+         <c:when test="${not empty ResourceType}">
+            <html:link page="/alerts/Config.do?mode=viewRoles&type=${ResourceType.id}&ad=${alertDef.recoveryId}">
+               <c:out value="${recoveryAlertName}" />
+            </html:link>
+         </c:when>
+         <c:otherwise>
+            <html:link page="/alerts/Config.do?mode=viewRoles&groupId=${ResourceGroup.id}&ad=${alertDef.recoveryId}">
+               <c:out value="${recoveryAlertName}" />
+            </html:link>
+         </c:otherwise>
+      </c:choose>
   	</td>
   </tr>
   
-  </c:when>
-  </c:choose>
+  </c:if>
   
   <tr>
     <td colspan="2" class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1" border="0"/></td>

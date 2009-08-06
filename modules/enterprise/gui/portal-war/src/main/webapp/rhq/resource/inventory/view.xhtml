@@ -647,7 +647,7 @@
                </ui:remove>
 
                <onc:icon name="Monitor" url="/rhq/group/monitor/graphs.xhtml" alt="Monitor"
-                         visible="#{resourceGroupComposite.category.name eq 'COMPATIBLE'}">
+                         visible="#{monitorEnabled and resourceGroupComposite.category.name eq 'COMPATIBLE'}">
                   <f:param name="category" value="#{resourceGroupComposite.category.name}"/>
                </onc:icon>
 
@@ -655,8 +655,8 @@
                   <f:param name="category" value="#{resourceGroupComposite.category.name}"/>
                </onc:icon>
 
-               <onc:icon name="Alert" url="/rhq/group/alert/listAlertDefinitions.xhtml" alt="Alert"
-                         visible="#{false and resourceGroupComposite.category.name eq 'COMPATIBLE'}"/>
+               <onc:icon name="Alert" url="/rhq/group/alert/listGroupAlertDefinitions.xhtml" alt="Alert"
+                         visible="#{monitorEnabled and resourceGroupComposite.category.name eq 'COMPATIBLE'}"/>
 
                <onc:icon name="Configure" url="/rhq/group/configuration/viewCurrent.xhtml" alt="Configure"
                          visible="#{resourceGroupComposite.category.name eq 'COMPATIBLE' and

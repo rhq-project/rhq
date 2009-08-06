@@ -66,6 +66,12 @@ THIS TEXT WILL BE REMOVED AS WELL.
             <onc:subtab name="Connection" url="/rhq/group/inventory/view-connection.xhtml" />
          </c:if>
       </onc:tab>
+      
+      <onc:tab name="Alert" image="/images/icons/Alert_grey_16.png" 
+               rendered="#{monitorEnabled and ResourceGroupUIBean.compatible}">
+         <onc:subtab name="Definitions" url="/rhq/group/alert/listGroupAlertDefinitions.xhtml" />
+         <onc:subtab name="History"     url="/rhq/group/alert/listGroupAlertHistory.xhtml" />
+      </onc:tab>
 
       <onc:tab name="Configuration" displayName="Configure" image="/images/icons/Configure_grey_16.png"
                rendered="#{ResourceGroupUIBean.compatible and ResourceGroupUIBean.facets.configuration}">

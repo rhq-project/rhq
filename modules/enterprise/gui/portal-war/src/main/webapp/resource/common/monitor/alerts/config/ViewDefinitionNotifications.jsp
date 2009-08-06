@@ -12,29 +12,25 @@
   <c:when test="${not empty Resource}">
     <c:param name="id" value="${Resource.id}"/>
   </c:when>
+  <c:when test="${not empty ResourceGroup}">
+    <c:param name="groupId" value="${ResourceGroup.id}"/>
+  </c:when>
   <c:otherwise>
     <c:param name="type" value="${ResourceType.id}"/>
   </c:otherwise>
   </c:choose>
   <c:param name="ad" value="${alertDef.id}"/>
 </c:url>
+
+
 <c:url var="viewUsersUrl" value="/alerts/Config.do">
   <c:param name="mode" value="viewUsers"/>
   <c:choose>
   <c:when test="${not empty Resource}">
     <c:param name="id" value="${Resource.id}"/>
   </c:when>
-  <c:otherwise>
-    <c:param name="type" value="${ResourceType.id}"/>
-  </c:otherwise>
-  </c:choose>
-  <c:param name="ad" value="${alertDef.id}"/>
-</c:url>
-<c:url var="viewOthersUrl" value="/alerts/Config.do">
-  <c:param name="mode" value="viewOthers"/>
-  <c:choose>
-  <c:when test="${not empty Resource}">
-    <c:param name="id" value="${Resource.id}"/>
+  <c:when test="${not empty ResourceGroup}">
+    <c:param name="groupId" value="${ResourceGroup.id}"/>
   </c:when>
   <c:otherwise>
     <c:param name="type" value="${ResourceType.id}"/>
@@ -42,11 +38,33 @@
   </c:choose>
   <c:param name="ad" value="${alertDef.id}"/>
 </c:url>
+
+
+<c:url var="viewOthersUrl" value="/alerts/Config.do">
+  <c:param name="mode" value="viewOthers"/>
+  <c:choose>
+  <c:when test="${not empty Resource}">
+    <c:param name="id" value="${Resource.id}"/>
+  </c:when>
+  <c:when test="${not empty ResourceGroup}">
+    <c:param name="groupId" value="${ResourceGroup.id}"/>
+  </c:when>
+  <c:otherwise>
+    <c:param name="type" value="${ResourceType.id}"/>
+  </c:otherwise>
+  </c:choose>
+  <c:param name="ad" value="${alertDef.id}"/>
+</c:url>
+
+
 <c:url var="viewSnmpUrl" value="/alerts/Config.do">
   <c:param name="mode" value="viewSnmp"/>
   <c:choose>
   <c:when test="${not empty Resource}">
     <c:param name="id" value="${Resource.id}"/>
+  </c:when>
+  <c:when test="${not empty ResourceGroup}">
+    <c:param name="groupId" value="${ResourceGroup.id}"/>
   </c:when>
   <c:otherwise>
     <c:param name="type" value="${ResourceType.id}"/>
@@ -108,12 +126,16 @@ var pageData = new Array();
 initializeWidgetProperties('<c:out value="${widgetInstanceName}"/>');
 widgetProperties = getWidgetProperties('<c:out value="${widgetInstanceName}"/>');
 </script>
+
 <!-- FORM -->
 <html:form action="${formAction}">
 <html:hidden property="ad" value="${alertDef.id}"/>
 <c:choose>
 <c:when test="${not empty Resource}">
   <html:hidden property="id" value="${Resource.id}"/>
+</c:when>
+<c:when test="${not empty ResourceGroup}">
+  <html:hidden property="groupId" value="${ResourceGroup.id}"/>
 </c:when>
 <c:otherwise>
   <html:hidden property="type" value="${ResourceType.id}"/>
@@ -138,6 +160,18 @@ widgetProperties = getWidgetProperties('<c:out value="${widgetInstanceName}"/>')
          <hq:authorization permission="MANAGE_ALERTS">
           <tiles:insert definition=".toolbar.addToList">
             <tiles:put name="addToListUrl"><c:out value="/alerts/Config.do?mode=${addMode}&id=${Resource.id}&ad=${alertDef.id}"/></tiles:put>
+            <tiles:put name="widgetInstanceName" beanName="widgetInstanceName"/>
+            <tiles:put name="pageList" beanName="notifyList"/>
+            <tiles:put name="pageAction" beanName="selfUrl"/>
+          </tiles:insert>
+         </hq:authorization>
+        </c:if>
+      </c:if>
+      <c:if test="${not empty ResourceGroup}">
+       <c:if test="${!alertDef.deleted}">
+         <hq:authorization permission="MANAGE_ALERTS">
+          <tiles:insert definition=".toolbar.addToList">
+            <tiles:put name="addToListUrl"><c:out value="/alerts/Config.do?mode=${addMode}&groupId=${ResourceGroup.id}&ad=${alertDef.id}"/></tiles:put>
             <tiles:put name="widgetInstanceName" beanName="widgetInstanceName"/>
             <tiles:put name="pageList" beanName="notifyList"/>
             <tiles:put name="pageAction" beanName="selfUrl"/>

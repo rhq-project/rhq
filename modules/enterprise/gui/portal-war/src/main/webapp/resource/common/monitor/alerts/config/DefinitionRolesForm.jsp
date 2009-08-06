@@ -28,6 +28,9 @@ widgetProperties = getWidgetProperties('<c:out value="${widgetInstanceName}"/>')
   <c:if test="${not empty param.type}">
     <c:param name="type" value="${param.type}"/>
   </c:if>
+  <c:if test="${not empty param.groupId}">
+    <c:param name="type" value="${param.groupId}"/>
+  </c:if>
   <c:if test="${not empty param.psa}">
     <c:param name="psa" value="${param.psa}"/>
   </c:if>
@@ -59,6 +62,9 @@ widgetProperties = getWidgetProperties('<c:out value="${widgetInstanceName}"/>')
   </c:if>
   <c:if test="${not empty param.type}">
     <c:param name="type" value="${param.type}"/>
+  </c:if>
+  <c:if test="${not empty param.groupId}">
+    <c:param name="type" value="${param.groupId}"/>
   </c:if>
   <c:if test="${not empty param.psa}">
     <c:param name="psa" value="${param.psa}"/>
@@ -92,6 +98,9 @@ widgetProperties = getWidgetProperties('<c:out value="${widgetInstanceName}"/>')
   <c:if test="${not empty param.type}">
     <c:param name="type" value="${param.type}"/>
   </c:if>
+  <c:if test="${not empty param.groupId}">
+    <c:param name="type" value="${param.groupId}"/>
+  </c:if>
   <c:if test="${not empty param.pna}">
     <c:param name="pna" value="${param.pna}"/>
   </c:if>
@@ -123,6 +132,9 @@ widgetProperties = getWidgetProperties('<c:out value="${widgetInstanceName}"/>')
   </c:if>
   <c:if test="${not empty param.type}">
     <c:param name="type" value="${param.type}"/>
+  </c:if>
+  <c:if test="${not empty param.groupId}">
+    <c:param name="type" value="${param.groupId}"/>
   </c:if>
   <c:if test="${not empty param.pna}">
     <c:param name="pna" value="${param.pna}"/>
@@ -156,6 +168,9 @@ widgetProperties = getWidgetProperties('<c:out value="${widgetInstanceName}"/>')
   <c:if test="${not empty param.type}">
     <c:param name="type" value="${param.type}"/>
   </c:if>
+  <c:if test="${not empty param.groupId}">
+    <c:param name="type" value="${param.groupId}"/>
+  </c:if>
   <c:if test="${not empty param.pna}">
     <c:param name="pna" value="${param.pna}"/>
   </c:if>
@@ -184,6 +199,9 @@ widgetProperties = getWidgetProperties('<c:out value="${widgetInstanceName}"/>')
   </c:if>
   <c:if test="${not empty param.type}">
     <c:param name="type" value="${param.type}"/>
+  </c:if>
+  <c:if test="${not empty param.groupId}">
+    <c:param name="type" value="${param.groupId}"/>
   </c:if>
   <c:if test="${not empty param.pna}">
     <c:param name="pna" value="${param.pna}"/>

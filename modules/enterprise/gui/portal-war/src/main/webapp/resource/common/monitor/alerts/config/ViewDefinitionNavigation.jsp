@@ -9,6 +9,10 @@
   <c:when test="${not empty Resource}">
     <html:link page="/rhq/resource/alert/listAlertDefinitions.xhtml?id=${Resource.id}"><fmt:message key="alert.config.props.ReturnLink"/></html:link>
   </c:when>
+
+  <c:when test="${not empty ResourceGroup}">
+    <html:link page="/rhq/group/alert/listGroupAlertDefinitions.xhtml?groupId=${ResourceGroup.id}"><fmt:message key="alert.config.props.ReturnGroupLink"/></html:link>
+  </c:when>
   
   <c:when test="${not empty ResourceType}">
     <html:link page="/rhq/admin/listAlertTemplates.xhtml?type=${ResourceType.id}"><fmt:message key="alert.config.props.ReturnTemplateLink"/></html:link>

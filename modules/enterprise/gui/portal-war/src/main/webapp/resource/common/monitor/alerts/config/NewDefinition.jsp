@@ -18,9 +18,12 @@
 <c:if test="${not empty ResourceType}" >
   <html:hidden property="type" value="${ResourceType.id}"/>
 </c:if>
+<c:if test="${not empty ResourceGroup}" >
+  <html:hidden property="groupId" value="${ResourceGroup.id}"/>
+</c:if>
 
 <tiles:insert definition=".events.config.view.nav"/>
- 
+
 <tiles:insert definition=".events.config.new.properties"/>
 
 <tiles:insert definition=".events.config.conditions">

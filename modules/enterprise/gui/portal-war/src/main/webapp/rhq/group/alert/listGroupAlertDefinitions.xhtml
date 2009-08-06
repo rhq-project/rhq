@@ -13,14 +13,14 @@
       xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
-<ui:composition template="/rhq/resource/layout/main.xhtml">
+<ui:composition template="/rhq/group/layout/main.xhtml">
 
-   <ui:param name="pageTitle" value="List Alert Definitions for Resource '#{ResourceUIBean.name}'"/>
+   <ui:param name="pageTitle" value="List Alert Definitions for Group '#{ResourceGroupUIBean.name}'"/>
    <ui:param name="selectedTabName" value="Alert.Definitions"/>
    <ui:define name="content">
    
       <h:form id="alertDefinitionsListForm">
-         <input type="hidden" name="id" value="${param.id}"/>
+         <input type="hidden" name="groupId" value="${param.groupId}"/>
          
          <rich:panel styleClass="BlockContent">
             <f:facet name="header">
@@ -29,15 +29,15 @@
 
             <h:panelGrid columns="1" styleClass="data-table">
 
-                <a4j:keepAlive beanName="ListAlertDefinitionsUIBean"/>
+            <a4j:keepAlive beanName="ListGroupAlertDefinitionsUIBean"/>
 
-            <ui:param name="alertDefinitionsDataModel" value="#{ListAlertDefinitionsUIBean.dataModel}"/>
+            <ui:param name="alertDefinitionsDataModel" value="#{ListGroupAlertDefinitionsUIBean.dataModel}"/>
             <rich:dataTable id="alertDefinitionsDataTable"
-                            rows="#{PageControl.AlertDefinitionsList.pageSize}"
+                            rows="#{PageControl.GroupAlertDefinitionsList.pageSize}"
                             value="#{alertDefinitionsDataModel}"
                             var="item"
                             width="100%"
-                            columnsWidth="1%, 25%, 30%, 20%, 12%, 12%"
+                            columnsWidth="1%, 25%, 35%, 20%, 19%"
                             styleClass="resources-table"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer"
@@ -46,7 +46,7 @@
 
 
                <f:facet name="PageControlView">
-                  <onc:paginationControl id="AlertDefinitionsList" />
+                  <onc:paginationControl id="GroupAlertDefinitionsList" />
                </f:facet>
       
                <rich:column>
@@ -55,16 +55,6 @@
                   </f:facet>
                   
                   <onc:select name="selectedAlertDefinitions" value="#{item.id}" />
-               </rich:column>
-      
-               <rich:column rendered="#{param.debug}">
-                  <f:facet name="header">
-                     <onc:sortableColumnHeader sort="a.id">
-                        <h:outputText styleClass="headerText" value="ID" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
-                  
-                  <h:outputText value="#{item.id}"/>
                </rich:column>
 
                <rich:column>
@@ -76,7 +66,7 @@
                
                   <h:outputLink value="/alerts/Config.do">
                      <f:param name="mode" value="viewRoles"/>
-                     <f:param name="id" value="#{Resource.id}"/>
+                     <f:param name="groupId" value="#{param.groupId}"/>
                      <f:param name="ad" value="#{item.id}"/>
                      <h:outputText value="#{item.name}" />
                   </h:outputLink>
@@ -114,55 +104,29 @@
                   <h:outputText value="#{item.enabled}"/>
                </rich:column>
 
-               <rich:column>
-                  <f:facet name="header">
-                     <h:outputText styleClass="headerText" value="Parent" />
-                  </f:facet>
-                  
-                  <h:outputLink value="/alerts/Config.do" rendered="#{not empty item.parentId and item.parentId ne 0}">
-                     <f:param name="mode" value="viewRoles"/>
-                     <f:param name="type" value="#{item.resource.resourceType.id}"/>
-                     <f:param name="from" value="#{item.id}"/>
-                     <f:param name="ad" value="#{item.parentId}"/>
-                     <h:outputText value="View Template" />
-                  </h:outputLink>
-                  
-                  <h:outputLink value="/alerts/Config.do" rendered="#{not empty item.groupAlertDefinition}">
-                     <f:param name="mode" value="viewRoles"/>
-                     <f:param name="groupId" value="#{item.groupAlertDefinition.resourceGroup.id}"/>
-                     <f:param name="from" value="#{item.id}"/>
-                     <f:param name="ad" value="#{item.groupAlertDefinition.id}"/>
-                     <h:outputText value="View Group Definition" />
-                  </h:outputLink>
-               </rich:column>
-
                <f:facet name="footer">
                   <rich:columnGroup>
-                     <!-- colspan 7:6 for the debug 'id' column -->
-                     <rich:column colspan="#{param.debug ? 7 : 6}" width="100%">
-                        <h:commandButton action="#{ListAlertDefinitionsUIBean.createNewAlertDefinition}"
+                     <rich:column colspan="5" width="100%">
+                        <h:commandButton action="#{ListGroupAlertDefinitionsUIBean.createNewAlertDefinition}"
                                          value="NEW DEFINITION" styleClass="on-pager-button buttonsmall"
-                                         rendered="#{ResourceUIBean.permissions.alert}" >
-                           <f:param name="id" value="${param.id}"/>
+                                         rendered="#{ResourceGroupUIBean.permissions.alert}" >
+                           <f:param name="groupId" value="${param.groupId}"/>
                            <f:param name="mode" value="new"/>
                         </h:commandButton>
                         <onc:selectCommandButton action="#{ListAlertDefinitionsUIBean.enableSelectedAlertDefinitions}"
                                                  value="ENABLE SELECTED" target="selectedAlertDefinitions" styleClass="on-pager-button buttonsmall"
-                                                 rendered="#{ResourceUIBean.permissions.alert}" />
+                                                 rendered="#{ResourceGroupUIBean.permissions.alert}" />
                         <onc:selectCommandButton action="#{ListAlertDefinitionsUIBean.disableSelectedAlertDefinitions}"
                                                  value="DISABLE SELECTED" target="selectedAlertDefinitions" styleClass="on-pager-button buttonsmall"
-                                                 rendered="#{ResourceUIBean.permissions.alert}" />
+                                                 rendered="#{ResourceGroupUIBean.permissions.alert}" />
                         <onc:selectCommandButton action="#{ListAlertDefinitionsUIBean.deleteSelectedAlertDefinitions}"
                                                  value="DELETE SELECTED" target="selectedAlertDefinitions" styleClass="on-pager-button buttonsmall"
-                                                 rendered="#{ResourceUIBean.permissions.alert}" />
-                        <onc:selectCommandButton action="#{ListAlertDefinitionsUIBean.copySelectedAlertDefinitions}"
-                                                 value="COPY SELECTED" target="selectedAlertDefinitions" styleClass="on-pager-button buttonsmall"
-                                                 rendered="#{ResourceUIBean.permissions.alert and param.debug}" />
+                                                 rendered="#{ResourceGroupUIBean.permissions.alert}" />
 
                         <ui:param name="paginationDataTableName" value="alertDefinitionsDataTable"/>
                         <ui:param name="paginationDataModel" value="#{alertDefinitionsDataModel}"/>
-                        <ui:param name="paginationPageControl" value="#{PageControl.AlertDefinitionsList}"/>
-                        <ui:include src="../include/pagination.xhtml"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.GroupAlertDefinitionsList}"/>
+                        <ui:include src="/rhq/resource/include/pagination.xhtml"/>
                      </rich:column>
                   </rich:columnGroup>
                </f:facet>

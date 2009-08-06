@@ -30,4 +30,14 @@
   </c:if>
 </c:if>
 
+<c:if test="${not empty ResourceGroup}">
+ <c:if test="${!alertDef.deleted}">
+   <hq:authorization permission="MANAGE_SETTINGS">
+    <tiles:insert definition=".toolbar.edit">
+      <tiles:put name="editUrl"><c:out value="/alerts/Config.do?mode=editConditions&ad=${alertDef.id}&groupId=${ResourceGroup.id}"/></tiles:put>
+    </tiles:insert>
+   </hq:authorization>
+  </c:if>
+</c:if>
+
 <br>

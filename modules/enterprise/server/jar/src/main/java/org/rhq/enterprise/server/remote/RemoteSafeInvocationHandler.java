@@ -116,7 +116,7 @@ public class RemoteSafeInvocationHandler implements ServerInvocationHandler {
         } finally {
             if (result != null) {
                 // set the strategy guiding how the return information is serialized
-                ExternalizableStrategy.setStrategy(ExternalizableStrategy.Subsystem.REMOTEAPI);
+                ExternalizableStrategy.setStrategy(ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION);
 
                 // scrub the return data if Hibernate proxies
                 try {

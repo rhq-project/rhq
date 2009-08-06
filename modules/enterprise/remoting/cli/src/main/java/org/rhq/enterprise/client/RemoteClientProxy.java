@@ -158,7 +158,7 @@ public class RemoteClientProxy implements InvocationHandler {
 
         try {
             // make sure we're serializing in Remote Client mode for rich serialization
-            ExternalizableStrategy.setStrategy(ExternalizableStrategy.Subsystem.REMOTEAPI);
+            ExternalizableStrategy.setStrategy(ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION);
 
             String methodName = manager.beanName() + ":" + method.getName();
 

@@ -1022,11 +1022,15 @@ public class ServerInformation {
         PreparedStatement stm = null;
         ResultSet rs = null;
 
-        if (null == affinityGroup)
+        // don't insert anything if the affinity group is null or empty string
+        if (null == affinityGroup) {
             return;
+        }
+
         affinityGroup = affinityGroup.trim();
-        if ("".equals(affinityGroup))
+        if ("".equals(affinityGroup)) {
             return;
+        }
 
         try {
             int i = 1;
@@ -1057,8 +1061,9 @@ public class ServerInformation {
         ResultSet rs = null;
         ServerInformation.Server result = null;
 
-        if (null == serverName)
+        if (null == serverName) {
             return result;
+        }
 
         try {
             stm = conn
@@ -1111,8 +1116,9 @@ public class ServerInformation {
         PreparedStatement stm = null;
         ResultSet rs = null;
 
-        if ((affinityGroupId < 0) || (null == serverName))
+        if ((affinityGroupId < 0) || (null == serverName)) {
             return;
+        }
 
         try {
             stm = conn.prepareStatement("UPDATE rhq_server SET affinity_group_id = ? WHERE name = ?");
@@ -1134,12 +1140,12 @@ public class ServerInformation {
         PreparedStatement stm = null;
         ResultSet rs = null;
 
-        if (null == server)
+        if (null == server || null == server.name) {
             return;
-        if (null == server.name)
+        }
+        if ("".equals(server.name.trim())) {
             return;
-        if ("".equals(server.name.trim()))
-            return;
+        }
 
         try {
             stm = conn.prepareStatement("UPDATE rhq_server SET address=?, port=?, secure_port=? WHERE name=?");

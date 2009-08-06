@@ -79,36 +79,37 @@ function testFindByCriteria() {
 }
 
 function testFindByCriteriaWithSorting() {
-    criteria = ResourceCriteria();
+    verifySortByResourceName();
+    verifySortByPluginName();
+}
+
+function verifySortByResourceName() {
+    var criteria = ResourceCriteria();
     criteria.addFilterParentResourceName("server-omega-0");
     criteria.addFilterResourceTypeName('service-beta');
     criteria.addSortName(PageOrdering.ASC);
 
-    var size = 10;
-
     var ascResources = ResourceManager.findResourcesByCriteria(criteria);
-
-    Assert.assertNumberEqualsJS(ascResources.size(), size, "Expected to get back " + size + " service-beta services.");
 
     criteria.addSortName(PageOrdering.DESC);
 
     var descResources = ResourceManager.findResourcesByCriteria(criteria);
 
-    Assert.assertNumberEqualsJS(descResources.size(), 10, "Expected to get back " + size + " service-beta services.");
+    assertResourcesSorted(ascResources, descResources, "name");
 }
 
-function assertResourcesSorted(ascResources, descResources, sortProperties) {
-    var sortedCorrectly = true;
-    for (i = 0, j = 9; i < size && j >= 0; ++i, --j) {
-        if (!ascResources.get(i).equals(descResources.get(j))) {
-            sortedCorrectly = false;
-            break;
-        }
-    }
+function verifySortByPluginName() {
+    var criteria = new ResourceCriteria();
+    criteria.addFilterParentResourceName("localhost.localdomain");
+    criteria.addSortPluginName(PageOrdering.ASC);
 
-    Assert.assertTrue(sortedCorrectly, "Failed to sort resources by name.\nResources in ascending order:\n" +
-            ascResources + "\n\nResources in descending order:\n" + descResources + "\n");
+    var ascResources = ResourceManager.findResourcesByCriteria(criteria);
 
+    criteria.addSortPluginName(PageOrdering.DESC);
+
+    var descResources = ResourceManager.findResourcesByCriteria(criteria);
+
+    assertResourcesSorted(ascResources, descResources, "resourceType.plugin");
 }
 
 function testFindResourceLineage() {
@@ -175,6 +176,25 @@ function assertResourcesFound(msg) {
         Assert.assertNotNull(ResourceManager.getResource(resource.id),
             'Expected getResourceTypeById to a return a ResourceType for id ' + resource.id);
     }
+}
+
+function assertResourcesSorted(ascResources, descResources, sortProperties) {
+    Assert.assertNumberEqualsJS(ascResources.size(), descResources.size(), "The same number of resources should be " +
+            "returned for the ASC and DESC sorts. " + ascResources.size() + " were returned for the ASC sort and " +
+            descResources.size() + " were returned for the DESC sort.");
+
+    var size = ascResources.size();
+    var sortedCorrectly = true;
+    for (i = 0, j = size - 1; i < size && j >= 0; ++i, --j) {
+        if (!ascResources.get(i).equals(descResources.get(j))) {
+            sortedCorrectly = false;
+            break;
+        }
+    }
+
+    Assert.assertTrue(sortedCorrectly, "Failed to sort resources by " + sortProperties + ".\nResources in ascending order:\n" +
+            ascResources + "\n\nResources in descending order:\n" + descResources + "\n");
+
 }
 
 function assertSingleResourceReturned(resources) {

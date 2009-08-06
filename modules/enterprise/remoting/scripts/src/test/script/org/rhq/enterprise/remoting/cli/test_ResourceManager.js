@@ -24,7 +24,7 @@
 rhq.login('rhqadmin', 'rhqadmin');
 
 criteria = ResourceCriteria();
-sortedResources = null;
+resources = null;
 
 for (func in this) {
     if (func.indexOf('test') == 0) {
@@ -33,7 +33,7 @@ for (func in this) {
 }
 
 function testFindUnfiltered() {
-    sortedResources = ResourceManager.findResourcesByCriteria(criteria);
+    resources = ResourceManager.findResourcesByCriteria(criteria);
       
     assertResourcesFound();
 }
@@ -63,11 +63,11 @@ function testFindByCriteria() {
     criteria.fetchResourceConfiguration(true);
     criteria.fetchResourceErrors(true);
 
-    sortedResources = ResourceManager.findResourcesByCriteria(criteria);
+    resources = ResourceManager.findResourcesByCriteria(criteria);
 
-    assertSingleResourceReturned(sortedResources);
+    assertSingleResourceReturned(resources);
 
-    var resource = sortedResources.get(0);
+    var resource = resources.get(0);
 
     assertPropertyLoaded(resource, "agent");
     assertPropertyLoaded(resource, "resourceType");
@@ -95,7 +95,9 @@ function testFindByCriteriaWithSorting() {
     var descResources = ResourceManager.findResourcesByCriteria(criteria);
 
     Assert.assertNumberEqualsJS(descResources.size(), 10, "Expected to get back " + size + " service-beta services.");
+}
 
+function assertResourcesSorted(ascResources, descResources, sortProperties) {
     var sortedCorrectly = true;
     for (i = 0, j = 9; i < size && j >= 0; ++i, --j) {
         if (!ascResources.get(i).equals(descResources.get(j))) {
@@ -106,6 +108,7 @@ function testFindByCriteriaWithSorting() {
 
     Assert.assertTrue(sortedCorrectly, "Failed to sort resources by name.\nResources in ascending order:\n" +
             ascResources + "\n\nResources in descending order:\n" + descResources + "\n");
+
 }
 
 function testFindResourceLineage() {
@@ -113,15 +116,15 @@ function testFindResourceLineage() {
     criteria.addFilterName("service-alpha-0");
     criteria.addFilterParentResourceName("server-omega-0");
 
-    sortedResources = ResourceManager.findResourcesByCriteria(criteria);
-    resource = sortedResources.get(0);
+    resources = ResourceManager.findResourcesByCriteria(criteria);
+    resource = resources.get(0);
 
-    sortedResources = ResourceManager.findResourceLineage(resource.id);
+    resources = ResourceManager.findResourceLineage(resource.id);
 
-    Assert.assertNumberEqualsJS(sortedResources.size(), 3, "The wrong resource lineage returned for resource " + resource);
-    Assert.assertEquals(sortedResources.get(0).name, "localhost.localdomain", "The wrong root resource was returned");
-    Assert.assertEquals(sortedResources.get(1).name,  "server-omega-0", "The wrong parent resource was returned");
-    Assert.assertEquals(sortedResources.get(2).name, "service-alpha-0", "The last resource in the lineage is wrong");
+    Assert.assertNumberEqualsJS(resources.size(), 3, "The wrong resource lineage returned for resource " + resource);
+    Assert.assertEquals(resources.get(0).name, "localhost.localdomain", "The wrong root resource was returned");
+    Assert.assertEquals(resources.get(1).name,  "server-omega-0", "The wrong parent resource was returned");
+    Assert.assertEquals(resources.get(2).name, "service-alpha-0", "The last resource in the lineage is wrong");
 }
 
 // testUninventoryResources() is commented out for now because the test will fail after an initial run.
@@ -163,11 +166,11 @@ function assertResourcesFound(msg) {
         msg = msg + " - ";
     }
 
-    Assert.assertNotNull(sortedResources, msg + "Expected findResourcesByCriteria() to return a non-null result");
-    Assert.assertTrue(sortedResources.size() > 0, msg + "Expected findResourcesByCriteria() to return a non-empty result set");
+    Assert.assertNotNull(resources, msg + "Expected findResourcesByCriteria() to return a non-null result");
+    Assert.assertTrue(resources.size() > 0, msg + "Expected findResourcesByCriteria() to return a non-empty result set");
 
-    for (i = 0; i < sortedResources.size(); ++i) {
-        resource = sortedResources.get(i);
+    for (i = 0; i < resources.size(); ++i) {
+        resource = resources.get(i);
 
         Assert.assertNotNull(ResourceManager.getResource(resource.id),
             'Expected getResourceTypeById to a return a ResourceType for id ' + resource.id);
@@ -175,8 +178,8 @@ function assertResourcesFound(msg) {
 }
 
 function assertSingleResourceReturned(resources) {
-    Assert.assertNotNull(sortedResources, "resources should not be null");
-    Assert.assertNumberEqualsJS(sortedResources.size(), 1, "Expceted to get back a single resource but " + sortedResources.size() +
+    Assert.assertNotNull(resources, "resources should not be null");
+    Assert.assertNumberEqualsJS(resources.size(), 1, "Expceted to get back a single resource but " + resources.size() +
             " were returned");
 }
 

@@ -35,7 +35,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Arrays;
 
 import jline.ArgumentCompletor;
 import jline.Completor;
@@ -334,7 +333,7 @@ public class ClientMain {
     private void processNotes(PrintWriter outputWriter2) {
         if ((outputWriter2 != null) && (notes.size() > 0)) {
             for (String line : notes) {
-                outputWriter2.println("-> " + notes);
+                outputWriter2.println("-> " + line);
             }
             notes.clear();
         }

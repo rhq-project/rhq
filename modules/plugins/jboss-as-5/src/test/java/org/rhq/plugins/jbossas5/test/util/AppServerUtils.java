@@ -263,7 +263,7 @@ public class AppServerUtils {
             throw new Exception("Starting the server failed.");
         }
         
-        System.out.println("The start operation finished. Let's see if the plugin noticed it back up...");
+        System.out.println("The start operation finished. Let's see if the plugin noticed the server back up...");
 
         waitForServerUp();
         
@@ -289,7 +289,7 @@ public class AppServerUtils {
             throw new Exception("Restart of the server failed.");
         }
         
-        System.out.println("The restart operation finished. Let's see if the plugin noticed it back up...");
+        System.out.println("The restart operation finished. Let's see if the plugin noticed the server back up...");
         
         waitForServerUp();
         
@@ -322,5 +322,9 @@ public class AppServerUtils {
 
             serverUp = inventoryManager.getCurrentAvailability(asResource).getAvailabilityType() == AvailabilityType.UP;
         }
+        
+        //cool, the component reports the server up, but we need to wait a bit more
+        //so that the server can finish up its start up procedures...
+        Thread.sleep(3000);
     }    
 }

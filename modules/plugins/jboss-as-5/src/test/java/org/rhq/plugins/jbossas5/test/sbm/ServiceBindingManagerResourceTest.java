@@ -25,15 +25,18 @@ package org.rhq.plugins.jbossas5.test.sbm;
 
 import static org.testng.Assert.fail;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
 
 import java.util.Set;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertyList;
+import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.inventory.InventoryManager;
-import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.plugins.jbossas5.test.AbstractResourceTest;
 import org.rhq.plugins.jbossas5.test.util.AppServerUtils;
 import org.testng.annotations.AfterTest;
@@ -57,20 +60,23 @@ public class ServiceBindingManagerResourceTest extends AbstractResourceTest {
     @BeforeTest
     public void rememberSBMConfiguration() {
         try {
-        System.out.println("Saving the original SBM configuration before the SBM tests.");
-        originalSBMConfiguration = loadResourceConfiguration(getSBMResource());
-        originalPluginConfiguration = AppServerUtils.getASResource().getPluginConfiguration().clone();
+            System.out.println("Saving the original SBM configuration before the SBM tests.");
+            originalSBMConfiguration = loadResourceConfiguration(getSBMResource());
+            originalPluginConfiguration = AppServerUtils.getASResource().getPluginConfiguration().clone();
         } catch (Exception e) {
             fail("Could not save the SBM configuration before SBM tests.", e);
         }
     }
     
+    @Test(dependsOnMethods = "testActiveBindingSetNameChange")
     public void testMetrics() throws Exception {
         super.testMetrics();
     }
 
     public void testActiveBindingSetNameChange() {
         try {
+            System.out.println("Running SBM active binding set name change test...");
+            
             Resource sbmResource = getSBMResource();
             Configuration configuration = loadResourceConfiguration(sbmResource);
             
@@ -94,6 +100,8 @@ public class ServiceBindingManagerResourceTest extends AbstractResourceTest {
             InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
             inventoryManager.updatePluginConfiguration(asResource.getId(), newServerConfig);
             
+            System.out.println("Expecting the server to come up with JNP url jnp://localhost:1199");
+            
             AppServerUtils.startServer();
             
             Configuration configurationAfterRestart = loadResourceConfiguration(getSBMResource());
@@ -104,13 +112,85 @@ public class ServiceBindingManagerResourceTest extends AbstractResourceTest {
         }
     }
     
+    public void testInvalidActiveBindingSetNameChangeFailure() {
+        try {
+            System.out.println("Running SBM invalid active binding set name change test...");
+            
+            Resource sbmResource = getSBMResource();
+            Configuration configuration;
+            configuration = loadResourceConfiguration(sbmResource);
+
+            PropertySimple activeBindingSetProperty = configuration.getSimple("activeBindingSetName");
+            String origActiveBindingSetName = activeBindingSetProperty.getStringValue();
+            //well - technically we should check if there is a binding set with this name, but hey...
+            activeBindingSetProperty.setStringValue("*(^$*)(@&_#(*@#@^$&(*^%@)*&#@)#_&_&(#&^#(@%#@^%");
+            
+            Configuration updatedConfiguration = updateResourceConfiguration(sbmResource, configuration);
+            PropertySimple updatedActiveBindingSetProperty = updatedConfiguration.getSimple("activeBindingSetName");
+            String updatedActiveBindingSetName = updatedActiveBindingSetProperty.getStringValue();
+            
+            assertEquals(updatedActiveBindingSetName, origActiveBindingSetName);
+        } catch (Exception e) {
+            fail("Failed to check that active binding name cannot be set to an invalid name.");
+        }        
+    }
+    
+    @Test(dependsOnMethods = "testActiveBindingSetNameChange")
     public void testStandardBindingsChangeTest() {
-        //TODO implement
+        try {
+            System.out.println("Running SBM standard bindings change test...");
+            
+            Resource sbmResource = getSBMResource();
+            Configuration configuration = loadResourceConfiguration(sbmResource);
+            
+            PropertyMap jnpURLBinding = findBinding(configuration.getList("standardBindings"), "jboss:service=Naming", "Port");
+            
+            assertNotNull(jnpURLBinding, "Could not find jnp URL binding in the SBM. This should not happen.");
+            
+            PropertySimple jnpPortProperty = jnpURLBinding.getSimple("port");
+            int jnpPort = jnpPortProperty.getIntegerValue();
+            
+            jnpPort += 100;
+            
+            jnpPortProperty.setIntegerValue(jnpPort);
+            
+            updateResourceConfiguration(sbmResource, configuration);
+            
+            Configuration updatedConfiguration = loadResourceConfiguration(sbmResource);
+            
+            assertEquals(updatedConfiguration, configuration, "A change to JNP URL port standard binding wasn't persisted.");
+            
+            AppServerUtils.shutdownServer();
+            
+            Resource asResource = AppServerUtils.getASResource();
+            Configuration newServerConfig = asResource.getPluginConfiguration();
+            
+            //this test depends on the active binding set name change test that set the active binding set to
+            //ports-01 that adds 100 to all standard bindings. We changed the standard binding above
+            //so now we have to add that 100 to the expected port.
+            newServerConfig.put(new PropertySimple("namingURL", "jnp://localhost:" + (jnpPort + 100))); 
+
+            InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
+            inventoryManager.updatePluginConfiguration(asResource.getId(), newServerConfig);
+            
+            System.out.println("Expecting the server to come up with JNP URL jnp://localhost:" + (jnpPort + 100));
+            
+            AppServerUtils.startServer();
+            
+            Configuration configurationAfterRestart = loadResourceConfiguration(getSBMResource());
+            
+            assertEquals(configurationAfterRestart, configuration, "Change to JNP URL port standard binding didn't survive a restart.");
+        } catch (Exception e) {
+            fail("Failed to test changing the standard bindings.", e);
+        }
     }
     
     protected void validateTraitMetricValue(String metricName, String value, Resource resource) {
-        //TODO do we need to do anything here?
-        super.validateTraitMetricValue(metricName, value, resource);
+        if ("activeBindingSetName".equals(metricName) && getSBMResource().equals(resource)) {
+            assertEquals(value, "ports-01");
+        } else {
+            super.validateTraitMetricValue(metricName, value, resource);
+        }
     }
 
     @AfterTest
@@ -139,5 +219,31 @@ public class ServiceBindingManagerResourceTest extends AbstractResourceTest {
         }
         
         return sbms.iterator().next();
+    }
+    
+    private PropertyMap findBinding(PropertyList bindings, String serviceName, String bindingName) {
+    
+        for(Property p : bindings.getList()) {
+            PropertyMap binding = (PropertyMap) p;
+            
+            String currentBindingName = binding.getSimpleValue("bindingName", null);
+            String currentServiceName = binding.getSimpleValue("serviceName", null);
+            
+            if (safeEquals(currentBindingName, bindingName) &&
+                safeEquals(currentServiceName, serviceName)) {
+                
+                return binding;
+            }
+        }
+        
+        return null;
+    }
+    
+    private static boolean safeEquals(Object o1, Object o2) {
+        if (o1 == o2) return true;
+        
+        if (o1 == null || o2 == null) return false;
+        
+        return o1.equals(o2);
     }
 }

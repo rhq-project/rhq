@@ -24,9 +24,8 @@
 package org.rhq.enterprise.client.utility;
 
 /**
- * An exception that is thrown from script assertion methods in {@link ScriptAssert}. {@link java.lang.AssertionError}s
- * should be wrapped in an instance of ScriptAssertionException. The default (i.e., rhino) scripting engine catches any
- * exception, checked or unchecked, thrown from a script and wraps it in an instance of
+ * This is a wrapper exception class for {@link java.lang.AssertionError}. The default (i.e., rhino) scripting engine
+ * catches any exception, checked or unchecked, thrown from a script and wraps it in an instance of
  * {@link javax.script.ScriptException}. ScriptException provides useful context information such as the script name
  * and line number on which the exception occurred. For reasons unknown instances of {@link Error} are not caught and
  * wrapped in a ScriptException; consequently, no context information is provided about the error, particularly, a line
@@ -34,19 +33,23 @@ package org.rhq.enterprise.client.utility;
  */
 public class ScriptAssertionException extends RuntimeException {
 
-    public ScriptAssertionException() {
-        super();
-    }
+//    public ScriptAssertionException() {
+//        super();
+//    }
+//
+//    public ScriptAssertionException(String message) {
+//        super(message);
+//    }
+//
+//    public ScriptAssertionException(String message, Throwable cause) {
+//        super(message, cause);
+//    }
+//
+//    public ScriptAssertionException(Throwable cause) {
+//        super(cause);
+//    }
 
-    public ScriptAssertionException(String message) {
-        super(message);
-    }
-
-    public ScriptAssertionException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public ScriptAssertionException(Throwable cause) {
-        super(cause);
+    public ScriptAssertionException(AssertionError error) {
+        super(error);
     }
 }

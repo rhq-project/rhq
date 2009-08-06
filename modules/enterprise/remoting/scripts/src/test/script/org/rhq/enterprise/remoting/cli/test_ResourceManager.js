@@ -41,28 +41,58 @@ function testFindUnfiltered() {
 function testFindByCriteria() {
     var resourceName = "service-alpha-0";
     var parentResourceName = "server-omega-0";
-
-    criteria = new ResourceCriteria();
-    criteria.addFilterName(resourceName);
-    criteria.addFilterParentResourceName(parentResourceName);
-
-    resources = ResourceManager.findResourcesByCriteria(criteria);
-
-    Assert.assertNumberEqualsJS(resources.size(), 1, "Expected to get back a single resource named, '" + resourceName +
-        "' and having a parent named '" + parentResourceName + "'");
-
     var description = resourceName + " description";
     var version = "1.0";
 
+    criteria = new ResourceCriteria();
+    criteria.caseSensitive = true;
+    criteria.addFilterName(resourceName);
+    criteria.addFilterParentResourceName(parentResourceName);
+
     criteria.addFilterDescription(description);
     criteria.addFilterVersion(version);
+    criteria.addFilterPluginName("PerfTest");
+    criteria.addFilterResourceKey(resourceName);
+    criteria.addFilterAgentName("localhost.localdomain");
+
+    criteria.fetchAgent(true);
+    criteria.fetchAlertDefinitions(true);
+    criteria.fetchResourceType(true);
+    criteria.fetchChildResources(true);
+    criteria.fetchParentResource(true);
+    criteria.fetchResourceConfiguration(true);
+    criteria.fetchResourceErrors(true);
 
     resources = ResourceManager.findResourcesByCriteria(criteria);
 
-    Assert.assertNumberEqualsJS(resources.size(), 1, "Expected to get back a single resource with name, '" +
-        resourceName + "', parent resource name, '" + parentResourceName + "' and description, '" + description + "'");
+    assertSingleResourceReturned(resources);
+
+    var resource = resources.get(0);
+
+    assertPropertyLoaded(resource, "agent");
+    assertPropertyLoaded(resource, "resourceType");
+    assertPropertyLoaded(resource, "parentResource");
+    assertPropertyLoaded(resource, "resourceConfiguration");
+    assertPropertyLoaded(resource, "childResources");
+    assertPropertyLoaded(resource, "currentAvailability");
+    assertPropertyLoaded(resource, "resourceErrors");
 }
 
+function testFindResourceLineage() {
+    criteria = new ResourceCriteria();
+    criteria.addFilterName("service-alpha-0");
+    criteria.addFilterParentResourceName("server-omega-0");
+
+    resources = ResourceManager.findResourcesByCriteria(criteria);
+    resource = resources.get(0);
+
+    resources = ResourceManager.findResourceLineage(resource.id);
+
+    Assert.assertNumberEqualsJS(resources.size(), 3, "The wrong resource lineage returned for resource " + resource);
+    Assert.assertEquals(resources.get(0).name, "localhost.localdomain", "The wrong root resource was returned");
+    Assert.assertEquals(resources.get(1).name,  "server-omega-0", "The wrong parent resource was returned");
+    Assert.assertEquals(resources.get(2).name, "service-alpha-0", "The last resource in the lineage is wrong");
+}
 
 function assertResourcesFound(msg) {
     if (msg == undefined) {
@@ -81,5 +111,15 @@ function assertResourcesFound(msg) {
         Assert.assertNotNull(ResourceManager.getResource(resource.id),
             'Expected getResourceTypeById to a return a ResourceType for id ' + resource.id);
     }
+}
+
+function assertSingleResourceReturned(resources) {
+    Assert.assertNotNull(resources, "resources should not be null");
+    Assert.assertNumberEqualsJS(resources.size(), 1, "Expceted to get back a single resource but " + resources.size() +
+            " were returned");
+}
+
+function assertPropertyLoaded(resource, propertyName) {
+    Assert.assertNotNull(resource[propertyName], "resource." + propertyName + " should have been fetched and loaded");
 }
 

@@ -40,7 +40,7 @@ public class ScriptAssert {
         try {
             Assert.assertTrue(condition, msg);
         } catch (AssertionError e) {
-            throw new ScriptAssertionException(msg, e);
+            throw new ScriptAssertionException(e);
         }
     }
 
@@ -56,7 +56,7 @@ public class ScriptAssert {
         try {
             Assert.assertFalse(condition, msg);
         } catch (AssertionError e) {
-            throw new ScriptAssertionException(msg, e);
+            throw new ScriptAssertionException(e);
         }
     }
 
@@ -69,22 +69,30 @@ public class ScriptAssert {
     }
 
     public void fail(String msg, Throwable throwable) {
-        throw new ScriptAssertionException(msg, throwable);
+        try {
+            Assert.fail(msg, throwable);
+        } catch (AssertionError e) {
+            throw new ScriptAssertionException(e);
+        }
     }
 
     public void fail(String msg) {
-        throw new ScriptAssertionException(msg);
+        try {
+            Assert.fail(msg);
+        } catch (AssertionError e) {
+            throw new ScriptAssertionException(e);
+        }
     }
 
     public void fail() {
-        throw new ScriptAssertionException();
+        throw new ScriptAssertionException(new AssertionError());
     }
 
     public void assertEquals(Object actual, Object expected, String msg) {
         try {
             Assert.assertEquals(actual, expected, msg);
         } catch (AssertionError e) {
-            throw new ScriptAssertionException(msg, e);
+            throw new ScriptAssertionException(e);
         }
     }
 
@@ -100,7 +108,7 @@ public class ScriptAssert {
         try {
             Assert.assertEquals(actual, expected, msg);
         } catch (AssertionError e) {
-            throw new ScriptAssertionException(msg, e);
+            throw new ScriptAssertionException(e);
         }
     }
 
@@ -116,7 +124,7 @@ public class ScriptAssert {
         try {
             Assert.assertEquals(actual, expected, delta, msg);
         } catch (AssertionError e) {
-            throw new ScriptAssertionException(msg, e);
+            throw new ScriptAssertionException(e);
         }
     }
 
@@ -132,7 +140,7 @@ public class ScriptAssert {
         try {
             Assert.assertEquals(actual, expected, delta, msg);
         } catch (AssertionError e) {
-            throw new ScriptAssertionException(msg, e);
+            throw new ScriptAssertionException(e);
         }
     }
 
@@ -148,7 +156,7 @@ public class ScriptAssert {
         try {
             Assert.assertEquals(actual, expected, msg);
         } catch (AssertionError e) {
-            throw new ScriptAssertionException(msg, e);
+            throw new ScriptAssertionException(e);
         }
     }
 
@@ -164,7 +172,7 @@ public class ScriptAssert {
         try {
             Assert.assertEquals(actual, expected, msg);
         } catch (AssertionError e) {
-            throw new ScriptAssertionException(msg, e);
+            throw new ScriptAssertionException(e);
         }
     }
 
@@ -180,7 +188,7 @@ public class ScriptAssert {
         try {
             Assert.assertEquals(actual, expected, msg);
         } catch (AssertionError e) {
-            throw new ScriptAssertionException(msg, e);
+            throw new ScriptAssertionException(e);
         }
     }
 
@@ -196,7 +204,7 @@ public class ScriptAssert {
         try {
             Assert.assertEquals(actual, expected, msg);
         } catch (AssertionError e) {
-            throw new ScriptAssertionException(msg, e);
+            throw new ScriptAssertionException(e);
         }
     }
 
@@ -212,7 +220,7 @@ public class ScriptAssert {
         try {
             Assert.assertEquals(actual, expected, msg);
         } catch(AssertionError e) {
-            throw new ScriptAssertionException(msg, e);
+            throw new ScriptAssertionException(e);
         }
     }
 
@@ -228,7 +236,7 @@ public class ScriptAssert {
         try {
             Assert.assertEquals(actual, expected, msg);
         } catch (AssertionError e) {
-            throw new ScriptAssertionException(msg, e);
+            throw new ScriptAssertionException(e);
         }
     }
 
@@ -252,7 +260,7 @@ public class ScriptAssert {
         try {
             Assert.assertNotNull(object, msg);
         } catch (AssertionError e) {
-            throw new ScriptAssertionException(msg, e);
+            throw new ScriptAssertionException(e);
         }
     }
 
@@ -268,7 +276,7 @@ public class ScriptAssert {
         try {
             Assert.assertNull(object, msg);
         } catch (AssertionError e) {
-            throw new ScriptAssertionException(msg, e);
+            throw new ScriptAssertionException(e);
         }
     }
 
@@ -276,7 +284,7 @@ public class ScriptAssert {
         try {
             Assert.assertSame(actual, expected, msg);
         } catch (AssertionError e) {
-            throw new ScriptAssertionException(msg, e);
+            throw new ScriptAssertionException(e);
         }
     }
 
@@ -292,7 +300,7 @@ public class ScriptAssert {
         try {
             Assert.assertNotSame(actual, expected, msg);
         } catch (AssertionError e) {
-            throw new ScriptAssertionException(msg, e);
+            throw new ScriptAssertionException(e);
         }
     }
 
@@ -316,7 +324,7 @@ public class ScriptAssert {
         try {
             Assert.assertEquals(actual, expected, msg);
         } catch (AssertionError e) {
-            throw new ScriptAssertionException(msg, e);
+            throw new ScriptAssertionException(e);
         }
     }
 
@@ -324,7 +332,7 @@ public class ScriptAssert {
         try {
             Assert.assertEquals(actual, expected, msg);
         } catch (AssertionError e) {
-            throw new ScriptAssertionException(msg, e);
+            throw new ScriptAssertionException(e);
         }
     }
 
@@ -332,7 +340,7 @@ public class ScriptAssert {
         try {
             Assert.assertEqualsNoOrder(actual, expected, msg);
         } catch (AssertionError e) {
-            throw new ScriptAssertionException(msg, e);
+            throw new ScriptAssertionException(e);
         }
     }
 
@@ -364,7 +372,7 @@ public class ScriptAssert {
         try {
             Assert.assertEquals(actual, expected, msg);
         } catch (AssertionError e) {
-            throw new ScriptAssertionException(msg, e);
+            throw new ScriptAssertionException(e);
         }
     }
 

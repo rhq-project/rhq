@@ -42,6 +42,7 @@ public class AlertCriteria extends Criteria {
     private String filterResourceTypeId; // requires overrides
     private String filterResourceTypeName; // requires overrides
     private List<Integer> filterResourceIds; // requires overrides
+    private List<Integer> filterResourceGroupIds; // requires overrides
 
     private boolean fetchAlertDefinition;
     private boolean fetchConditionLogs;
@@ -63,6 +64,11 @@ public class AlertCriteria extends Criteria {
         filterOverrides.put("resourceTypeId", "alertDefinition.resourceType.id = ?");
         filterOverrides.put("resourceTypeName", "alertDefinition.resourceType.name like ?");
         filterOverrides.put("resourceIds", "alertDefinition.resource.id IN ( ? )");
+        filterOverrides.put("resourceGroupIds", "alertDefinition.resource.id IN " //
+            + "( SELECT res.id " //
+            + "    FROM ResourceGroup rg " //
+            + "    JOIN rg.explicitResources res " //
+            + "   WHERE rg.id = ? )");
 
         sortOverrides.put("name", "alertDefinition.name");
         sortOverrides.put("priority", "alertDefinition.priority");
@@ -106,6 +112,10 @@ public class AlertCriteria extends Criteria {
 
     public void addFilterResourceIds(List<Integer> filterResourceIds) {
         this.filterResourceIds = filterResourceIds;
+    }
+
+    public void addFilterResourceGroupIds(List<Integer> filterResourceGroupIds) {
+        this.filterResourceGroupIds = filterResourceGroupIds;
     }
 
     public void fetchAlertDefinition(boolean fetchAlertDefinition) {

@@ -35,7 +35,7 @@ public class ResourceCriteria extends Criteria {
     private Integer filterId;
     private String filterName;
     private String filterResourceKey;
-    private InventoryStatus filterInventoryStatus;
+    private InventoryStatus filterInventoryStatus = InventoryStatus.COMMITTED; // default
     private String filterVersion;
     private String filterDescription;
     private String filterResourceTypeId; // needs overrides

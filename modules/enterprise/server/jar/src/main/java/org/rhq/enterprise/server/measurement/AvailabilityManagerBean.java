@@ -487,6 +487,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                 }
             }
 
+            MeasurementMonitor.getMBean().incrementAvailabilityReports(report.isChangesOnlyReport());
             MeasurementMonitor.getMBean().incrementAvailabilitiesInserted(numInserted);
             MeasurementMonitor.getMBean().incrementAvailabilityInsertTime(watch.getElapsed());
             watch.reset();

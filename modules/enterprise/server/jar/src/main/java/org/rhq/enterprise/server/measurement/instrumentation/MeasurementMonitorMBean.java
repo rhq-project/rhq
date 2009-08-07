@@ -53,6 +53,14 @@ public interface MeasurementMonitorMBean {
 
     void incrementAvailabilitiesInserted(long delta);
 
+    long getChangesOnlyAvailabilityReports();
+
+    long getFullAvailabilityReports();
+
+    long getTotalAvailabilityReports();
+
+    void incrementAvailabilityReports(boolean changesOnlyReport);
+
     long getPurgedAlerts();
 
     void setPurgedAlerts(long delta);

@@ -39,6 +39,10 @@ public class MeasurementMonitor implements MeasurementMonitorMBean, MBeanRegistr
 
     private AtomicLong availabilitiesInserted = new AtomicLong();
 
+    private AtomicLong changesOnlyAvailabilityReports = new AtomicLong();
+
+    private AtomicLong fullAvailabilityReports = new AtomicLong();
+
     private AtomicLong compressionTime = new AtomicLong();
 
     private AtomicLong purgeTime = new AtomicLong();
@@ -111,6 +115,26 @@ public class MeasurementMonitor implements MeasurementMonitorMBean, MBeanRegistr
 
     public void incrementAvailabilitiesInserted(long delta) {
         this.availabilitiesInserted.addAndGet(delta);
+    }
+
+    public long getChangesOnlyAvailabilityReports() {
+        return changesOnlyAvailabilityReports.get();
+    }
+
+    public long getFullAvailabilityReports() {
+        return fullAvailabilityReports.get();
+    }
+
+    public long getTotalAvailabilityReports() {
+        return getChangesOnlyAvailabilityReports() + getFullAvailabilityReports();
+    }
+
+    public void incrementAvailabilityReports(boolean changesOnlyReport) {
+        if (changesOnlyReport) {
+            this.changesOnlyAvailabilityReports.incrementAndGet();
+        } else {
+            this.fullAvailabilityReports.incrementAndGet();
+        }
     }
 
     public int getScheduledMeasurementsPerMinute() {

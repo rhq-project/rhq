@@ -301,8 +301,7 @@ public class PropertyRenderingUtility {
     public static void addPropertyDescription(UIComponent parent, PropertyDefinition propertyDefinition) {
         // <span class="description">DESCRIPTION</span>
         if (propertyDefinition.getDescription() == null || propertyDefinition.getDescription().trim().equals("")) {
-            FacesComponentUtility
-                .addOutputText(parent, null, "<No Description Available>", CssStyleClasses.DESCRIPTION);
+            FacesComponentUtility.addOutputText(parent, null, "", CssStyleClasses.DESCRIPTION);
         } else {
             FacesComponentUtility.addOutputText(parent, null, propertyDefinition.getDescription(),
                 CssStyleClasses.DESCRIPTION);

@@ -148,7 +148,7 @@ public final class CriteriaQueryGenerator {
         StringBuilder results = new StringBuilder();
         results.append("SELECT ");
         if (countQuery) {
-            results.append("COUNT(distinct ").append(alias).append(")").append(NL);
+            results.append("COUNT(").append(alias).append(")").append(NL);
         } else {
             results.append("distinct ").append(alias).append(NL);
         }

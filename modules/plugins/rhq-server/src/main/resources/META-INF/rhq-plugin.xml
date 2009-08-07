@@ -109,6 +109,12 @@
               description="The total amount of time taken to insert availability data into the database by this RHQ Server instance since it was started"/>
       <metric property="AvailabilitiesInserted" displayType="summary" measurementType="trendsup"
               description="The total number of availability records inserted into the database by this RHQ Server instance since it was started"/>
+      <metric property="TotalAvailabilityReports" displayType="summary" measurementType="trendsup"
+              description="The total number of availability reports received and processed by this RHQ Server since it was started"/>
+      <metric property="ChangesOnlyAvailabilityReports" displayType="summary" measurementType="trendsup"
+              description="The number of changes-only availability reports received and processed by this RHQ Server since it was started"/>
+      <metric property="FullAvailabilityReports" displayType="summary" measurementType="trendsup"
+              description="The number of full availability reports received and processed by this RHQ Server since it was started"/>
 
       <metric property="PurgedAlerts" displayType="summary" measurementType="dynamic" category="utilization" defaultInterval="900000" 
               description="Number of alerts purged by the last purge job"/>

@@ -239,18 +239,6 @@ public final class CriteriaQueryGenerator {
             }
         }
         results.append(NL);
-        if (countQuery == false && criteria.getFetchFields().size() > 0) {
-            /*
-             * Use 'group by' instead of 'select distinct' for non-count queries that fetch at least one association,
-             * otherwise the generated query makes the database unhappy.
-             * 
-             * query    - SELECT DISTINCT r FROM Resource r ORDER BY r.resourceType.name
-             * postgres - org.postgresql.util.PSQLException: 
-             *            ERROR: for SELECT DISTINCT, ORDER BY expressions must appear in select list
-             * oracle   - java.sql.SQLException: ORA-01791: not a SELECTed expression
-             */
-            results.append("GROUP BY ").append(alias).append(NL);
-        }
 
         LOG.debug(results);
         System.out.println(results);

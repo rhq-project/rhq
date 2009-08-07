@@ -56,6 +56,8 @@ import org.rhq.core.gui.util.PropertyIdGeneratorUtility;
 import org.rhq.core.gui.validator.PropertySimpleValueValidator;
 
 /**
+ * A class that provides methods for rendering RHQ {@link Property}s. 
+ *
  * @author Ian Springer
  */
 public class PropertyRenderingUtility {
@@ -300,12 +302,8 @@ public class PropertyRenderingUtility {
 
     public static void addPropertyDescription(UIComponent parent, PropertyDefinition propertyDefinition) {
         // <span class="description">DESCRIPTION</span>
-        if (propertyDefinition.getDescription() == null || propertyDefinition.getDescription().trim().equals("")) {
-            FacesComponentUtility.addOutputText(parent, null, "", CssStyleClasses.DESCRIPTION);
-        } else {
-            FacesComponentUtility.addOutputText(parent, null, propertyDefinition.getDescription(),
-                CssStyleClasses.DESCRIPTION);
-        }
+        FacesComponentUtility.addOutputText(parent, null, propertyDefinition.getDescription(),
+            CssStyleClasses.DESCRIPTION);
     }
 
     static String getHtmlDomReference(String clientId) {

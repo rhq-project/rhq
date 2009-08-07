@@ -44,6 +44,13 @@
       <load-on-startup>1</load-on-startup>
    </servlet>
 
+   <!-- this servlet checks to see if the server is preconfigured; if so, it performs auto-install -->
+   <servlet>
+      <servlet-name>Autoinstaller Servlet</servlet-name>
+      <servlet-class>org.rhq.enterprise.installer.AutoInstallServlet</servlet-class>
+      <load-on-startup>2</load-on-startup>
+   </servlet>
+
    <servlet-mapping>
       <servlet-name>Faces Servlet</servlet-name>
       <url-pattern>*.jsf</url-pattern>

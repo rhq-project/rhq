@@ -98,6 +98,11 @@ public class ServerInformation {
     private File logDirectory = null;
     private File dataDirectory = null;
 
+    public ServerInformation() {
+        // This is called both within the context of the GUI and the auto-install startup servlet.
+        // Make sure you don't do anything that shouldn't be done from within the startup servlet.
+    }
+
     /**
      * Returns <code>true</code> if the given set of properties provides settings that allow for a successful database
      * connection. If <code>props</code> is <code>null</code>, it will use the server properties from
@@ -798,9 +803,9 @@ public class ServerInformation {
     }
 
     public static class Server {
-        static public final String DEFAULT_AFFINITY_GROUP = "";
-        static public final int DEFAULT_ENDPOINT_PORT = 7080;
-        static public final int DEFAULT_ENDPOINT_SECURE_PORT = 7443;
+        public static final String DEFAULT_AFFINITY_GROUP = "";
+        public static final int DEFAULT_ENDPOINT_PORT = 7080;
+        public static final int DEFAULT_ENDPOINT_SECURE_PORT = 7443;
 
         private String name;
         private String endpointAddress;
@@ -808,13 +813,11 @@ public class ServerInformation {
         private int endpointSecurePort;
         private String affinityGroup;
 
-        public Server(String name, String endpointAddress, int endpointPort, int endpointSecurePort,
-            String affinityGroup) {
-            super();
+        public Server(String name, String endpointAddress, int port, int securePort, String affinityGroup) {
             this.name = name;
             this.endpointAddress = endpointAddress;
-            this.endpointPort = endpointPort;
-            this.endpointSecurePort = endpointSecurePort;
+            this.endpointPort = port;
+            this.endpointSecurePort = securePort;
             this.affinityGroup = affinityGroup;
         }
 
@@ -823,8 +826,9 @@ public class ServerInformation {
         }
 
         public void setName(String name) {
-            if ((null != name) && (!"".equals(name.trim())))
+            if ((null != name) && (!"".equals(name.trim()))) {
                 this.name = name;
+            }
         }
 
         public String getEndpointAddress() {
@@ -832,8 +836,9 @@ public class ServerInformation {
         }
 
         public void setEndpointAddress(String endpointAddress) {
-            if ((null != endpointAddress) && (!"".equals(endpointAddress.trim())))
+            if ((null != endpointAddress) && (!"".equals(endpointAddress.trim()))) {
                 this.endpointAddress = endpointAddress;
+            }
         }
 
         public int getEndpointPort() {
@@ -852,7 +857,7 @@ public class ServerInformation {
             try {
                 this.endpointPort = Integer.valueOf(endpointPort).intValue();
             } catch (NumberFormatException e) {
-                // no change
+                LOG.debug("Failed to set port with invalid number: " + endpointPort);
             }
         }
 
@@ -872,7 +877,7 @@ public class ServerInformation {
             try {
                 this.endpointSecurePort = Integer.valueOf(endpointSecurePort).intValue();
             } catch (NumberFormatException e) {
-                // no change
+                LOG.debug("Failed to set secure port with invalid number: " + endpointSecurePort);
             }
         }
 
@@ -881,13 +886,13 @@ public class ServerInformation {
         }
 
         public void setAffinityGroup(String affinityGroup) {
-            if ((null != affinityGroup) && (!"".equals(affinityGroup.trim())))
+            if ((null != affinityGroup) && (!"".equals(affinityGroup.trim()))) {
                 this.affinityGroup = affinityGroup;
+            }
         }
 
         @Override
         public String toString() {
-
             return "[name=" + name + " address=" + endpointAddress + " port=" + endpointPort + " secureport="
                 + endpointSecurePort + " affinitygroup=" + affinityGroup + "]";
         }

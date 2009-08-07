@@ -116,14 +116,12 @@
     </dependency>
     -->
 
-    <!--
     <dependency>
-      <groupId>javax.servlet</groupId>
-      <artifactId>servlet-api</artifactId>
-      <version>2.5</version>
-      <scope>provided</scope>
+        <groupId>javax.servlet</groupId>
+        <artifactId>servlet-api</artifactId>
+        <version>2.4</version>
+        <scope>provided</scope> <!-- by JBossAS -->
     </dependency>
-    -->
 
     <!--
     <dependency>

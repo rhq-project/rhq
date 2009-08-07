@@ -580,6 +580,29 @@ rhq.server.content.filesystem=${jboss.server.data.dir}/packagebits
 # The frequency (in millis) the server checks for updated agent plugins
 rhq.server.agent-plugin-scan-period-ms=${rhq.server.agent-plugin-scan-period-ms}
 
+# Auto-Install Pre-Configuration Settings
+# If you wish to circumvent the installer webapp and auto-install the server
+# immediately upon first startup, make sure all of the settings above are
+# correctly set for your server's deployment environment. Then make sure the
+# following rhq.autoinstall properties are defined appropriately:
+# rhq.autoinstall.enabled: must be true to trigger the automatic install
+# rhq.autoinstall.database: allowed values: auto, overwrite, skip
+#                           "auto" will create a new schema if one does not
+#                           yet exist or, if a schema does exist, will simply
+#                           upgrade it as needed (which keeps existing data).
+#                           "overwrite" if you want to create an empty schema,
+#                           even if one already exists (loses existing data).
+#                           "skip" if you don't want to do any database
+#                           upgrade or creation. WARNING! You must ensure your
+#                           database schema already exists and is up to date.
+# rhq.autoinstall.public-endpoint-address: public IP/hostname that all agents
+#                                          will use to talk to this server.
+#                                          If not set, a value to use is
+#                                          determined at auto-install time.
+rhq.autoinstall.enabled=false
+rhq.autoinstall.database=auto
+rhq.autoinstall.public-endpoint-address=
+
 </echo>
 
    </target>

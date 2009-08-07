@@ -142,6 +142,11 @@ public class ServerProperties {
     public static final String PROP_HIGH_AVAILABILITY_NAME = "rhq.server.high-availability.name";
     public static final String PROP_MM_AT_START = "rhq.server.maintenance-mode-at-startup";
 
+    public static final String PREFIX_PROP_AUTOINSTALL = "rhq.autoinstall.";
+    public static final String PROP_AUTOINSTALL_ENABLE = PREFIX_PROP_AUTOINSTALL + "enabled";
+    public static final String PROP_AUTOINSTALL_DB = PREFIX_PROP_AUTOINSTALL + "database";
+    public static final String PROP_AUTOINSTALL_PUBLIC_ENDPOINT = PREFIX_PROP_AUTOINSTALL + "public-endpoint-address";
+
     public static final List<SelectItem> DATABASE_TYPES;
     static {
         DATABASE_TYPES = new ArrayList<SelectItem>();
@@ -430,7 +435,11 @@ public class ServerProperties {
             InstallerI18NResourceKeys.PROP_HIGH_AVAILABILITY_NAME,
             InstallerI18NResourceKeys.PROP_HIGH_AVAILABILITY_NAME_HELP, false, false, false, true),
         new PropertyItem(PROP_MM_AT_START, Boolean.class, InstallerI18NResourceKeys.PROP_MM_AT_START,
-            InstallerI18NResourceKeys.PROP_MM_AT_START_HELP, false, false, true, false) };
+            InstallerI18NResourceKeys.PROP_MM_AT_START_HELP, false, false, true, false),
+
+        new PropertyItem(PROP_AUTOINSTALL_ENABLE, Boolean.class, "", "", false, false, true, true),
+        new PropertyItem(PROP_AUTOINSTALL_DB, String.class, "", "", false, false, true, true),
+        new PropertyItem(PROP_AUTOINSTALL_PUBLIC_ENDPOINT, String.class, "", "", false, false, true, true) };
 
     /**
      * Returns the list of all known property items the server supports, in an order that is appropriate for display.

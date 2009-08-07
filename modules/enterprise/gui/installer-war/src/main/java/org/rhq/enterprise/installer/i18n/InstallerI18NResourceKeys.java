@@ -104,6 +104,10 @@ public interface InstallerI18NResourceKeys {
         @I18NMessage(locale = "de", value = "Behalten (existierende Daten werden aktualisiert)") })
     String EXISTING_SCHEMA_OPTION_KEEP = "existingSchemaAnswerUpgrade";
 
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Skip (leave database as-is)"),
+        @I18NMessage(locale = "de", value = "Umgehen (Datenbank bleibt wie sie ist)") })
+    String EXISTING_SCHEMA_OPTION_SKIP = "existingSchemaAnswerSkip";
+
     @I18NMessages( { @I18NMessage(locale = "en", value = "The {0} property value was an invalid number [{1}]"),
         @I18NMessage(locale = "de", value = "[{1}] ist ein ungültiger Zahlenwert für die Eigenschaft {0}") })
     String INVALID_NUMBER = "invalidNumber";
@@ -158,10 +162,10 @@ public interface InstallerI18NResourceKeys {
     @I18NMessages( {
         @I18NMessage(locale = "en", value = "Press the 'Production Installation' button for a normal installation.\\n\\\n"
             + "Press the 'Embedded Installation' button to quickly create a complete environment with the help of the embedded database and embedded agent. "
-                +"The embedded installation is for demonstration and evaluation purposes ONLY!"),
+            + "The embedded installation is for demonstration and evaluation purposes ONLY!"),
         @I18NMessage(locale = "de", value = "Drücken Sie die 'Produktion Installation'-Taste für eine normale Installation durchzuführen.\\n\\\n"
-            + "Drücken Sie die 'Embedded Installation'-Taste, um schnell eine vollständige Umgebung mit Hilfe der eingebetteten Datenbank und Embedded Agenten zu erstellen. "+
-                "Die Embedded-Installation ist nur für Demonstrations- und Evaluierungszwecke geeignet!") })
+            + "Drücken Sie die 'Embedded Installation'-Taste, um schnell eine vollständige Umgebung mit Hilfe der eingebetteten Datenbank und Embedded Agenten zu erstellen. "
+            + "Die Embedded-Installation ist nur für Demonstrations- und Evaluierungszwecke geeignet!") })
     String INSTALL_BUTTONS_TEXT = "installButtonsText";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "-- or --"), @I18NMessage(locale = "de", value = "-- oder --") })

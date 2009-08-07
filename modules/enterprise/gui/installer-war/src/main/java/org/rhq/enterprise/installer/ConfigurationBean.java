@@ -23,6 +23,7 @@ import java.sql.Connection;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -49,23 +50,12 @@ import org.rhq.enterprise.installer.i18n.InstallerI18NResourceKeys;
 public class ConfigurationBean {
     private static final Log LOG = LogFactory.getLog(ConfigurationBean.class);
 
-    private static final Msg I18NMSG = new Msg(InstallerI18NResourceKeys.BUNDLE_BASE_NAME, FacesContext
-        .getCurrentInstance().getViewRoot().getLocale());
-
     private enum ExistingSchemaOption {
-        OVERWRITE, KEEP
+        OVERWRITE, KEEP, SKIP
     };
 
-    public static final List<SelectItem> EXISTING_SCHEMA_OPTIONS;
-
-    static {
-        EXISTING_SCHEMA_OPTIONS = new ArrayList<SelectItem>();
-        EXISTING_SCHEMA_OPTIONS.add(new SelectItem(ExistingSchemaOption.OVERWRITE.name(), I18NMSG
-            .getMsg(InstallerI18NResourceKeys.EXISTING_SCHEMA_OPTION_OVERWRITE)));
-        EXISTING_SCHEMA_OPTIONS.add(new SelectItem(ExistingSchemaOption.KEEP.name(), I18NMSG
-            .getMsg(InstallerI18NResourceKeys.EXISTING_SCHEMA_OPTION_KEEP)));
-    }
-
+    private Msg I18Nmsg;
+    private List<SelectItem> existingSchemaOptions;
     private ServerInformation serverInfo;
     private Boolean showAdvancedSettings;
     private List<PropertyItemWithValue> configuration;
@@ -81,12 +71,21 @@ public class ConfigurationBean {
     private String selectedRegisteredServerName;
 
     public ConfigurationBean() {
+        FacesContext currentInstance = FacesContext.getCurrentInstance();
+        if (currentInstance != null) {
+            I18Nmsg = new Msg(InstallerI18NResourceKeys.BUNDLE_BASE_NAME, currentInstance.getViewRoot().getLocale());
+        } else {
+            I18Nmsg = new Msg(InstallerI18NResourceKeys.BUNDLE_BASE_NAME, Locale.getDefault());
+        }
         serverInfo = new ServerInformation();
         showAdvancedSettings = Boolean.FALSE;
         existingSchemaOption = ExistingSchemaOption.KEEP.name();
         // this will initialize 'configuration'
         initConfiguration();
-        setHaServerName(getDefaultServerName());
+
+        if (!isAutoinstallEnabled()) {
+            setHaServerName(getDefaultServerName());
+        }
     }
 
     private String getDefaultServerName() {
@@ -103,11 +102,22 @@ public class ConfigurationBean {
 
     /**
      * Loads in the server's current configuration and returns all the settings.
+     * This only returns the property if it is a basic setting or the UI is showing advanced, too.
      *
      * @return the requested server setting
      */
     public PropertyItemWithValue getConfigurationProperty(String propertyName) {
         return getConfigurationProperty(getConfiguration(), propertyName);
+    }
+
+    /**
+     * Loads in the server's current configuration and returns all the settings.
+     * This returns any property, basic or advanced, no matter what the "show advanced" setting is.
+     *
+     * @return the requested server setting
+     */
+    private PropertyItemWithValue getConfigurationPropertyFromAll(String propertyName) {
+        return getConfigurationProperty(this.configuration, propertyName);
     }
 
     private PropertyItemWithValue getConfigurationProperty(List<PropertyItemWithValue> config, String propertyName) {
@@ -205,6 +215,22 @@ public class ConfigurationBean {
         }
 
         return retConfig;
+    }
+
+    /**
+     * Checks to see if the server has been preconfigured and should be auto-installed. If <code>true</code>
+     * is returned, the installer webapp should not be needed to install the server and the installer should
+     * immediately begin the installation process.
+     * 
+     * @return <code>true</code> if auto-install should occur; <code>false</code> means the user needs to use
+     *         the installer GUI before the installation can begin
+     */
+    public boolean isAutoinstallEnabled() {
+        PropertyItemWithValue enableProp = getConfigurationPropertyFromAll(ServerProperties.PROP_AUTOINSTALL_ENABLE);
+        if (enableProp != null) {
+            return Boolean.parseBoolean(enableProp.getValue());
+        }
+        return false;
     }
 
     public void setConfiguration(List<PropertyItemWithValue> newConfig) {
@@ -449,18 +475,20 @@ public class ConfigurationBean {
     }
 
     public void setExistingSchemaOption(String existingSchemaOption) {
+        // this is allowed to be null to support auto-installer
         this.existingSchemaOption = existingSchemaOption;
     }
 
     public boolean isKeepExistingSchema() {
-        return ExistingSchemaOption.KEEP.name().equals(existingSchemaOption);
+        return ExistingSchemaOption.KEEP.name().equals(existingSchemaOption)
+            || ExistingSchemaOption.SKIP.name().equals(existingSchemaOption);
     }
 
     public StartPageResults saveEmbeddedMode() {
         // embedded mode simply means use our embedded database and the embedded agent - used mainly for demo purposes
 
         // set embedded agent enabled to true
-        PropertyItemWithValue prop = getConfigurationProperty(ServerProperties.PROP_EMBEDDED_AGENT_ENABLED);
+        PropertyItemWithValue prop = getConfigurationPropertyFromAll(ServerProperties.PROP_EMBEDDED_AGENT_ENABLED);
         prop.setValue(Boolean.TRUE.toString());
         List<PropertyItemWithValue> newConfig = new ArrayList<PropertyItemWithValue>(1);
         newConfig.add(prop);
@@ -496,32 +524,30 @@ public class ConfigurationBean {
 
         try {
             // update server properties with the latest ha info to keep the form and server properties file up to date
-            getConfigurationProperty(configuration, ServerProperties.PROP_HIGH_AVAILABILITY_NAME).setValue(
+            getConfigurationPropertyFromAll(ServerProperties.PROP_HIGH_AVAILABILITY_NAME).setValue(
                 getHaServer().getName());
-            getConfigurationProperty(configuration, ServerProperties.PROP_HTTP_PORT).setValue(
+            getConfigurationPropertyFromAll(ServerProperties.PROP_HTTP_PORT).setValue(
                 getHaServer().getEndpointPortString());
-            getConfigurationProperty(configuration, ServerProperties.PROP_HTTPS_PORT).setValue(
+            getConfigurationPropertyFromAll(ServerProperties.PROP_HTTPS_PORT).setValue(
                 getHaServer().getEndpointSecurePortString());
 
             // the comm bind port is a special setting - it is allowed to be blank;
             // if it was originally blank, it will have been set to 0 because its an integer property;
             // but we do not want it to be 0, so make sure we switch it back to empty
-            PropertyItemWithValue portConfig = getConfigurationProperty(configuration,
-                ServerProperties.PROP_CONNECTOR_BIND_PORT);
+            PropertyItemWithValue portConfig = getConfigurationPropertyFromAll(ServerProperties.PROP_CONNECTOR_BIND_PORT);
             if ("0".equals(portConfig.getValue())) {
                 portConfig.setRawValue("");
             }
         } catch (Exception e) {
             LOG.fatal("Could not save the settings for some reason", e);
-            lastError = I18NMSG.getMsg(InstallerI18NResourceKeys.SAVE_ERROR, ThrowableUtil.getAllMessages(e));
+            lastError = I18Nmsg.getMsg(InstallerI18NResourceKeys.SAVE_ERROR, ThrowableUtil.getAllMessages(e));
 
             return StartPageResults.ERROR;
         }
 
         try {
-            String url = getConfigurationProperty(configuration, ServerProperties.PROP_DATABASE_CONNECTION_URL)
-                .getValue();
-            String db = getConfigurationProperty(configuration, ServerProperties.PROP_DATABASE_TYPE).getValue();
+            String url = getConfigurationPropertyFromAll(ServerProperties.PROP_DATABASE_CONNECTION_URL).getValue();
+            String db = getConfigurationPropertyFromAll(ServerProperties.PROP_DATABASE_TYPE).getValue();
             Pattern pattern = null;
             if (db.toLowerCase().indexOf("postgres") > -1) {
                 pattern = Pattern.compile(".*://(.*):([0123456789]+)/(.*)"); // jdbc:postgresql://host.name:5432/rhq
@@ -543,27 +569,26 @@ public class ConfigurationBean {
                     String serverName = match.group(1);
                     String port = match.group(2);
                     String dbName = match.group(3);
-                    getConfigurationProperty(configuration, ServerProperties.PROP_DATABASE_SERVER_NAME).setValue(
-                        serverName);
-                    getConfigurationProperty(configuration, ServerProperties.PROP_DATABASE_PORT).setValue(port);
-                    getConfigurationProperty(configuration, ServerProperties.PROP_DATABASE_DB_NAME).setValue(dbName);
+                    getConfigurationPropertyFromAll(ServerProperties.PROP_DATABASE_SERVER_NAME).setValue(serverName);
+                    getConfigurationPropertyFromAll(ServerProperties.PROP_DATABASE_PORT).setValue(port);
+                    getConfigurationPropertyFromAll(ServerProperties.PROP_DATABASE_DB_NAME).setValue(dbName);
                 } else {
                     throw new Exception("Cannot get server, port or db name from connection URL: " + url);
                 }
             } else {
-                getConfigurationProperty(configuration, ServerProperties.PROP_DATABASE_SERVER_NAME).setValue("");
-                getConfigurationProperty(configuration, ServerProperties.PROP_DATABASE_PORT).setValue("");
-                getConfigurationProperty(configuration, ServerProperties.PROP_DATABASE_DB_NAME).setValue("");
+                getConfigurationPropertyFromAll(ServerProperties.PROP_DATABASE_SERVER_NAME).setValue("");
+                getConfigurationPropertyFromAll(ServerProperties.PROP_DATABASE_PORT).setValue("");
+                getConfigurationPropertyFromAll(ServerProperties.PROP_DATABASE_DB_NAME).setValue("");
             }
         } catch (Exception e) {
             LOG.fatal("JDBC connection URL seems to be invalid", e);
-            lastError = I18NMSG.getMsg(InstallerI18NResourceKeys.SAVE_ERROR, ThrowableUtil.getAllMessages(e));
+            lastError = I18Nmsg.getMsg(InstallerI18NResourceKeys.SAVE_ERROR, ThrowableUtil.getAllMessages(e));
 
             return StartPageResults.ERROR;
         }
 
         try {
-            String db = getConfigurationProperty(configuration, ServerProperties.PROP_DATABASE_TYPE).getValue();
+            String db = getConfigurationPropertyFromAll(ServerProperties.PROP_DATABASE_TYPE).getValue();
             String dialect;
             String quartzDriverDelegateClass = "org.quartz.impl.jdbcjobstore.StdJDBCDelegate";
             String quartzSelectWithLockSQL = "SELECT * FROM {0}LOCKS ROWLOCK WHERE LOCK_NAME = ? FOR UPDATE";
@@ -589,17 +614,17 @@ public class ConfigurationBean {
                 throw new Exception("Unknown db type: " + db);
             }
 
-            getConfigurationProperty(configuration, ServerProperties.PROP_DATABASE_HIBERNATE_DIALECT).setValue(dialect);
-            getConfigurationProperty(configuration, ServerProperties.PROP_QUARTZ_DRIVER_DELEGATE_CLASS).setValue(
+            getConfigurationPropertyFromAll(ServerProperties.PROP_DATABASE_HIBERNATE_DIALECT).setValue(dialect);
+            getConfigurationPropertyFromAll(ServerProperties.PROP_QUARTZ_DRIVER_DELEGATE_CLASS).setValue(
                 quartzDriverDelegateClass);
-            getConfigurationProperty(configuration, ServerProperties.PROP_QUARTZ_SELECT_WITH_LOCK_SQL).setValue(
+            getConfigurationPropertyFromAll(ServerProperties.PROP_QUARTZ_SELECT_WITH_LOCK_SQL).setValue(
                 quartzSelectWithLockSQL);
-            getConfigurationProperty(configuration, ServerProperties.PROP_QUARTZ_LOCK_HANDLER_CLASS).setValue(
+            getConfigurationPropertyFromAll(ServerProperties.PROP_QUARTZ_LOCK_HANDLER_CLASS).setValue(
                 quartzLockHandlerClass);
 
         } catch (Exception e) {
             LOG.fatal("Invalid database type", e);
-            lastError = I18NMSG.getMsg(InstallerI18NResourceKeys.SAVE_ERROR, ThrowableUtil.getAllMessages(e));
+            lastError = I18Nmsg.getMsg(InstallerI18NResourceKeys.SAVE_ERROR, ThrowableUtil.getAllMessages(e));
 
             return StartPageResults.ERROR;
         }
@@ -613,7 +638,7 @@ public class ConfigurationBean {
 
         // Ensure server info has been set
         if ((null == haServer) || (null == haServer.getName()) || "".equals(haServer.getName().trim())) {
-            lastError = I18NMSG.getMsg(InstallerI18NResourceKeys.INVALID_STRING, I18NMSG
+            lastError = I18Nmsg.getMsg(InstallerI18NResourceKeys.INVALID_STRING, I18Nmsg
                 .getMsg(InstallerI18NResourceKeys.PROP_HIGH_AVAILABILITY_NAME));
             return StartPageResults.ERROR;
         }
@@ -627,7 +652,7 @@ public class ConfigurationBean {
                     // ignore this error if we are looking at that property and its empty; otherwise, this is an error
                     if (!(newValue.getItemDefinition().getPropertyName().equals(
                         ServerProperties.PROP_CONNECTOR_BIND_PORT) && newValue.getValue().length() == 0)) {
-                        lastError = I18NMSG.getMsg(InstallerI18NResourceKeys.INVALID_NUMBER, newValue
+                        lastError = I18Nmsg.getMsg(InstallerI18NResourceKeys.INVALID_NUMBER, newValue
                             .getItemDefinition().getPropertyLabel(), newValue.getValue());
                         return StartPageResults.ERROR;
                     }
@@ -640,7 +665,7 @@ public class ConfigurationBean {
 
                     Boolean.parseBoolean(newValue.getValue());
                 } catch (Exception e) {
-                    lastError = I18NMSG.getMsg(InstallerI18NResourceKeys.INVALID_BOOLEAN, newValue.getItemDefinition()
+                    lastError = I18Nmsg.getMsg(InstallerI18NResourceKeys.INVALID_BOOLEAN, newValue.getItemDefinition()
                         .getPropertyLabel(), newValue.getValue());
                     return StartPageResults.ERROR;
                 }
@@ -655,18 +680,24 @@ public class ConfigurationBean {
             serverInfo.setServerProperties(configurationAsProperties);
 
             // prepare the db schema
-            if (serverInfo.isDatabaseSchemaExist(configurationAsProperties)) {
-                if (existingSchemaOption == null)
-                    return StartPageResults.STAY; // user didn't tell us what to do, re-display the page with the question
+            if (!ExistingSchemaOption.SKIP.name().equals(existingSchemaOption)) {
+                if (serverInfo.isDatabaseSchemaExist(configurationAsProperties)) {
+                    if (existingSchemaOption == null) {
+                        if (!isAutoinstallEnabled()) {
+                            return StartPageResults.STAY; // user didn't tell us what to do, re-display the page with the question
+                        }
+                        // we are supposed to auto-install but wasn't explicitly told what to do - the default is "auto"
+                        // and since we know the database schema exists, that means we upgrade it
+                    }
 
-                if (existingSchemaOption.equals(ExistingSchemaOption.OVERWRITE.name())) {
+                    if (ExistingSchemaOption.OVERWRITE.name().equals(existingSchemaOption)) {
+                        serverInfo.createNewDatabaseSchema(configurationAsProperties);
+                    } else {
+                        serverInfo.upgradeExistingDatabaseSchema(configurationAsProperties);
+                    }
+                } else {
                     serverInfo.createNewDatabaseSchema(configurationAsProperties);
-                    // clean out existing JMS messages
-                    serverInfo.cleanJmsTables(configurationAsProperties);
-                } else
-                    serverInfo.upgradeExistingDatabaseSchema(configurationAsProperties);
-            } else {
-                serverInfo.createNewDatabaseSchema(configurationAsProperties);
+                }
             }
 
             // Ensure the install server info is up to date and stored in the DB
@@ -676,7 +707,7 @@ public class ConfigurationBean {
             serverInfo.moveDeploymentArtifacts(true);
         } catch (Exception e) {
             LOG.fatal("Failed to updated properties and fully deploy - RHQ Server will not function properly", e);
-            lastError = I18NMSG.getMsg(InstallerI18NResourceKeys.SAVE_FAILURE, ThrowableUtil.getAllMessages(e));
+            lastError = I18Nmsg.getMsg(InstallerI18NResourceKeys.SAVE_FAILURE, ThrowableUtil.getAllMessages(e));
 
             return StartPageResults.ERROR;
         }
@@ -707,20 +738,29 @@ public class ConfigurationBean {
     }
 
     public List<SelectItem> getExistingSchemaOptions() {
-        return EXISTING_SCHEMA_OPTIONS;
+        if (existingSchemaOptions == null) {
+            existingSchemaOptions = new ArrayList<SelectItem>();
+            existingSchemaOptions.add(new SelectItem(ExistingSchemaOption.OVERWRITE.name(), I18Nmsg
+                .getMsg(InstallerI18NResourceKeys.EXISTING_SCHEMA_OPTION_OVERWRITE)));
+            existingSchemaOptions.add(new SelectItem(ExistingSchemaOption.KEEP.name(), I18Nmsg
+                .getMsg(InstallerI18NResourceKeys.EXISTING_SCHEMA_OPTION_KEEP)));
+            existingSchemaOptions.add(new SelectItem(ExistingSchemaOption.SKIP.name(), I18Nmsg
+                .getMsg(InstallerI18NResourceKeys.EXISTING_SCHEMA_OPTION_SKIP)));
+        }
+        return existingSchemaOptions;
     }
 
     /** To set the server name use setServerName() */
     public PropertyItemWithValue getPropHaServerName() {
-        return getConfigurationProperty(ServerProperties.PROP_HIGH_AVAILABILITY_NAME);
+        return getConfigurationPropertyFromAll(ServerProperties.PROP_HIGH_AVAILABILITY_NAME);
     }
 
     public PropertyItemWithValue getPropHaEndpointPort() {
-        return getConfigurationProperty(ServerProperties.PROP_HTTP_PORT);
+        return getConfigurationPropertyFromAll(ServerProperties.PROP_HTTP_PORT);
     }
 
     public PropertyItemWithValue getPropHaEndpointSecurePort() {
-        return getConfigurationProperty(ServerProperties.PROP_HTTPS_PORT);
+        return getConfigurationPropertyFromAll(ServerProperties.PROP_HTTPS_PORT);
     }
 
     public boolean isRegisteredServers() {
@@ -745,7 +785,7 @@ public class ConfigurationBean {
                 result.add(new SelectItem(serverName));
             }
             if (!result.isEmpty()) {
-                result.add(0, new SelectItem(I18NMSG.getMsg(InstallerI18NResourceKeys.NEW_SERVER_SELECT_ITEM)));
+                result.add(0, new SelectItem(I18Nmsg.getMsg(InstallerI18NResourceKeys.NEW_SERVER_SELECT_ITEM)));
             }
         } catch (Exception e) {
             // Should not be able to get here since we checked for schema above
@@ -771,7 +811,7 @@ public class ConfigurationBean {
 
     public void setHaServerName(String serverName) {
         // handle the case where the user selected the dummy entry in the registered servers drop down
-        if (I18NMSG.getMsg(InstallerI18NResourceKeys.NEW_SERVER_SELECT_ITEM).equals(serverName)) {
+        if (I18Nmsg.getMsg(InstallerI18NResourceKeys.NEW_SERVER_SELECT_ITEM).equals(serverName)) {
             serverName = this.getDefaultServerName();
         }
 
@@ -800,20 +840,138 @@ public class ConfigurationBean {
             // override default settings with current property values
             try {
                 getHaServer().setEndpointPortString(
-                    getConfigurationProperty(ServerProperties.PROP_HTTP_PORT).getValue());
+                    getConfigurationPropertyFromAll(ServerProperties.PROP_HTTP_PORT).getValue());
             } catch (Exception e) {
                 LOG.debug("Could not determine default port: ", e);
             }
 
             try {
                 getHaServer().setEndpointSecurePortString(
-                    getConfigurationProperty(ServerProperties.PROP_HTTPS_PORT).getValue());
+                    getConfigurationPropertyFromAll(ServerProperties.PROP_HTTPS_PORT).getValue());
             } catch (Exception e) {
                 LOG.debug("Could not determine default secure port: ", e);
             }
         } else {
             getHaServer().setName(serverName);
         }
+    }
+
+    /**
+     * This method will set the HA Server information based solely on the server configuration
+     * properties. It does not rely on any database access.
+     * 
+     * This is used by the auto-installation process - see {@link AutoInstallServlet}.
+     *
+     * @throws Exception 
+     */
+    public void setHaServerFromPropertiesOnly() throws Exception {
+
+        PropertyItemWithValue preconfigDb = getConfigurationPropertyFromAll(ServerProperties.PROP_AUTOINSTALL_DB);
+        if (preconfigDb != null && preconfigDb.getValue() != null) {
+            if ("overwrite".equals(preconfigDb.getValue().toLowerCase())) {
+                setExistingSchemaOption(ExistingSchemaOption.OVERWRITE.name());
+            } else if ("skip".equals(preconfigDb.getValue().toLowerCase())) {
+                setExistingSchemaOption(ExistingSchemaOption.SKIP.name());
+            } else if ("auto".equals(preconfigDb.getValue().toLowerCase())) {
+                setExistingSchemaOption(null);
+            } else {
+                LOG.warn("An invalid setting for [" + ServerProperties.PROP_AUTOINSTALL_DB + "] was provided: ["
+                    + preconfigDb.getValue()
+                    + "]. Valid values are 'auto', 'overwrite' or 'skip'. Defaulting to 'auto'");
+                preconfigDb.setRawValue("auto");
+                setExistingSchemaOption(null);
+            }
+        } else {
+            LOG.debug("[" + ServerProperties.PROP_AUTOINSTALL_DB + "] was not provided. Defaulting to 'auto'");
+            setExistingSchemaOption(null);
+        }
+
+        // create a ha server stub with some defaults - we'll fill this in based on our property settings
+        ServerInformation.Server preconfiguredHaServer = new ServerInformation.Server("", "",
+            ServerInformation.Server.DEFAULT_ENDPOINT_PORT, ServerInformation.Server.DEFAULT_ENDPOINT_SECURE_PORT,
+            ServerInformation.Server.DEFAULT_AFFINITY_GROUP);
+
+        // determine the name of the server - its either preconfigured as the high availability name, or
+        // we auto-determine it by using the machine's canonical hostname
+        PropertyItemWithValue haNameProp = getPropHaServerName();
+        if (haNameProp != null) {
+            preconfiguredHaServer.setName(haNameProp.getValue()); // this leaves it alone if value is null or empty
+        }
+        if (preconfiguredHaServer.getName().equals("")) {
+            String serverName = getDefaultServerName(); // gets hostname
+            if (serverName == null || "".equals(serverName)) {
+                throw new Exception("Server name is not preconfigured and could not be determined automatically");
+            }
+            preconfiguredHaServer.setName(serverName);
+        }
+
+        // the public endpoint address is one that can be preconfigured in the special autoinstall property.
+        // if that is not specified, then we use either the connector's bind address or the server bind address.
+        // if nothing was specified, we'll default to the canonical host name.
+        String publicEndpointAddress;
+
+        PropertyItemWithValue preconfigAddr = getConfigurationPropertyFromAll(ServerProperties.PROP_AUTOINSTALL_PUBLIC_ENDPOINT);
+        if (preconfigAddr != null && preconfigAddr.getValue() != null && !"".equals(preconfigAddr.getValue().trim())) {
+            // its preconfigured using the autoinstall setting, use that and ignore the other settings
+            publicEndpointAddress = preconfigAddr.getValue().trim();
+        } else {
+            PropertyItemWithValue connBindAddress = getConfigurationPropertyFromAll(ServerProperties.PROP_CONNECTOR_BIND_ADDRESS);
+            if (connBindAddress != null && connBindAddress.getValue() != null
+                && !"".equals(connBindAddress.getValue().trim())
+                && !"0.0.0.0".equals(connBindAddress.getValue().trim())) {
+                // the server-side connector bind address is explicitly set, use that
+                publicEndpointAddress = connBindAddress.getValue().trim();
+            } else {
+                PropertyItemWithValue serverBindAddress = getConfigurationPropertyFromAll(ServerProperties.PROP_SERVER_BIND_ADDRESS);
+                if (serverBindAddress != null && serverBindAddress.getValue() != null
+                    && !"".equals(serverBindAddress.getValue().trim())
+                    && !"0.0.0.0".equals(serverBindAddress.getValue().trim())) {
+                    // the main JBossAS server bind address is set and it isn't 0.0.0.0, use that
+                    publicEndpointAddress = serverBindAddress.getValue().trim();
+                } else {
+                    publicEndpointAddress = InetAddress.getLocalHost().getCanonicalHostName();
+                }
+            }
+        }
+        preconfiguredHaServer.setEndpointAddress(publicEndpointAddress);
+
+        // define the public endpoint ports.
+        // note that if using a different transport other than (ssl)servlet, we'll
+        // take the connector's bind port and use it for both ports. This is to support a special deployment
+        // use-case - 99% of the time, the agents will go through the web/tomcat connector and thus we'll use
+        // the http/https ports for the public endpoints.
+        PropertyItemWithValue connectorTransport = getConfigurationPropertyFromAll(ServerProperties.PROP_CONNECTOR_TRANSPORT);
+        if (connectorTransport != null && connectorTransport.getValue() != null
+            && connectorTransport.getValue().contains("socket")) {
+
+            // we aren't using the (ssl)servlet protocol, take the connector bind port and use it for the public endpoint ports
+            PropertyItemWithValue connectorBindPort = getConfigurationPropertyFromAll(ServerProperties.PROP_CONNECTOR_BIND_PORT);
+            if (connectorBindPort == null || connectorBindPort.getValue() == null
+                || "".equals(connectorBindPort.getValue().trim()) || "0".equals(connectorBindPort.getValue().trim())) {
+                throw new Exception("Using non-servlet transport [" + connectorTransport + "] but didn't define a port");
+            }
+            preconfiguredHaServer.setEndpointPort(Integer.parseInt(connectorBindPort.getValue()));
+            preconfiguredHaServer.setEndpointSecurePort(Integer.parseInt(connectorBindPort.getValue()));
+        } else {
+            // this is the typical use-case - the transport is probably (ssl)servlet so use the web http/https ports
+            try {
+                PropertyItemWithValue httpPort = getPropHaEndpointPort();
+                preconfiguredHaServer.setEndpointPortString(httpPort.getValue());
+            } catch (Exception e) {
+                LOG.warn("Could not determine port, will use default: " + e);
+            }
+
+            try {
+                PropertyItemWithValue httpsPort = getPropHaEndpointSecurePort();
+                preconfiguredHaServer.setEndpointSecurePortString(httpsPort.getValue());
+            } catch (Exception e) {
+                LOG.warn("Could not determine secure port, will use default: " + e);
+            }
+        }
+
+        // everything looks good - remember these
+        setHaServer(preconfiguredHaServer);
+        this.haServerName = preconfiguredHaServer.getName();
     }
 
     public ServerInformation.Server getHaServer() {

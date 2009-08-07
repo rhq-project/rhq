@@ -150,7 +150,7 @@ public final class CriteriaQueryGenerator {
         if (countQuery) {
             results.append("COUNT(").append(alias).append(")").append(NL);
         } else {
-            results.append("distinct ").append(alias).append(NL);
+            results.append(alias).append(NL);
         }
         results.append("FROM ").append(className).append(' ').append(alias).append(NL);
         if (countQuery == false) {
@@ -239,7 +239,21 @@ public final class CriteriaQueryGenerator {
             }
         }
         results.append(NL);
+        if (countQuery == false && criteria.getFetchFields().size() > 0) {
+            /*
+             * Use 'group by' instead of 'select distinct' for non-count queries that fetch at least one association,
+             * otherwise the generated query makes the database unhappy.
+             * 
+             * query    - SELECT DISTINCT r FROM Resource r ORDER BY r.resourceType.name
+             * postgres - org.postgresql.util.PSQLException: 
+             *            ERROR: for SELECT DISTINCT, ORDER BY expressions must appear in select list
+             * oracle   - java.sql.SQLException: ORA-01791: not a SELECTed expression
+             */
+            results.append("GROUP BY " + alias).append(NL);
+        }
+
         LOG.debug(results);
+        System.out.println(results);
         return results.toString();
     }
 
@@ -280,9 +294,9 @@ public final class CriteriaQueryGenerator {
 
     public static void main(String[] args) {
         //testSubjectCriteria();
-        testAlertCriteria();
+        //testAlertCriteria();
         //testInheritanceCriteria();
-        //testResourceCriteria();
+        testResourceCriteria();
     }
 
     public static void testSubjectCriteria() {
@@ -334,7 +348,8 @@ public final class CriteriaQueryGenerator {
         ResourceCriteria resourceCriteria = new ResourceCriteria();
         resourceCriteria.addFilterResourceCategory(ResourceCategory.SERVER);
         resourceCriteria.addFilterName("marques");
-        resourceCriteria.addSortName(PageOrdering.ASC);
+        resourceCriteria.fetchAgent(true);
+        resourceCriteria.addSortResourceTypeName(PageOrdering.ASC);
         resourceCriteria.setCaseSensitive(true);
         resourceCriteria.setFiltersOptional(true);
 

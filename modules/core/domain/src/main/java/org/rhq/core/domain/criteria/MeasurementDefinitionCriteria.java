@@ -91,6 +91,10 @@ public class MeasurementDefinitionCriteria extends Criteria {
         this.filterResourceTypeName = filterResourceTypeName;
     }
 
+    public void addFilterResourceTypeId(Integer filterResourceTypeId) {
+        this.filterResourceTypeId = filterResourceTypeId;
+    }
+
     public void addFilterCategory(MeasurementCategory filterCategory) {
         this.filterCategory = filterCategory;
     }

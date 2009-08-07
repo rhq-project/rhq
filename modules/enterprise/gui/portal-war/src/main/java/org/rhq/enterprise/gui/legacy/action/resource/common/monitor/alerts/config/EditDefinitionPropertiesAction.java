@@ -88,17 +88,15 @@ public class EditDefinitionPropertiesAction extends BaseAction {
         try {
             if (context == FormContext.Type) {
                 AlertTemplateManagerLocal alertTemplateManager = LookupUtil.getAlertTemplateManager();
-                // this will disallow updates if the alert definition has been deleted
-                alertDef.setReadOnly(defForm.isReadOnly());
                 alertTemplateManager.updateAlertTemplate(subject, alertDef, false);
             } else if (context == FormContext.Resource) {
                 AlertDefinitionManagerLocal alertDefinitionManager = LookupUtil.getAlertDefinitionManager();
+                // this will disallow updates if the alert definition has been deleted
+                alertDef.setReadOnly(defForm.isReadOnly());
                 alertDefinitionManager.updateAlertDefinition(subject, alertDef.getId(), alertDef, false);
             } else if (context == FormContext.Group) {
                 GroupAlertDefinitionManagerLocal groupAlertDefinitionManager = LookupUtil
                     .getGroupAlertDefinitionManager();
-                // this will disallow updates if the alert definition has been deleted
-                alertDef.setReadOnly(defForm.isReadOnly());
                 groupAlertDefinitionManager.updateGroupAlertDefinitions(subject, alertDef, false);
             } else {
                 throw new IllegalArgumentException("Unsupported context: " + context);

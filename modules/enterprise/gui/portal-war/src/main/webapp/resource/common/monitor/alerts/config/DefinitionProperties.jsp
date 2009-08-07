@@ -103,7 +103,7 @@
     </td>
     </logic:messagesNotPresent>
   </tr>
-  <c:if test="${alertDef.parentId > 0}">
+  <c:if test="${alertDef.parentId > 0 or not empty alertDef.groupAlertDefinition}">
   <tr>
   	<td width="20%" class="BlockLabel">
       <fmt:message key="common.label.ReadOnly"/>

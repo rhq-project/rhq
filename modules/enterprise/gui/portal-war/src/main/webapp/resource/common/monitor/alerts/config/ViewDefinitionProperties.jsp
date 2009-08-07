@@ -34,7 +34,7 @@
   </tr>
   <tr valign="top">
     <c:choose>
-    <c:when test="${alertDef.parentId > 0}">
+    <c:when test="${alertDef.parentId > 0 or not empty alertDef.groupAlertDefinition}">
     <td width="20%" class="BlockLabel"><fmt:message key="common.label.ReadOnly"/></td>
     <td width="30%" class="BlockContent" rowspan="2"><c:out value="${alertDef.readOnly}"/></td>
     </c:when>
@@ -66,8 +66,25 @@
     </td>
   </tr>
   </c:if>
-  
   </c:if>
+  
+  <c:if test="${not empty alertDef.groupAlertDefinition}">
+  <tr>
+    <td colspan="4" class="BlockContent"><span style="height: 3px;"></span></td>
+  </tr>
+  <c:if test="${!alertDef.deleted}">
+  <tr>
+    <td colspan="4" class="BlockContent">
+      <span class="red" style="padding-left: 15px;">
+        <fmt:message key="alerts.config.service.DefinitionList.isResourceAlert.false"/>
+      </span> 
+      <fmt:message key="alert.config.props.PB.IsGroupAlert"/>
+      (<html:link page="/alerts/Config.do?mode=viewRoles&group=${alertDef.groupAlertDefinition.resourceGroup.id}&ad=${alertDef.groupAlertDefinition.id}"><fmt:message key="alert.config.props.ViewGroupAlertDefinition"/></html:link>)
+    </td>
+  </tr>
+  </c:if>
+  </c:if>
+  
   <tr>
     <td colspan="4" class="BlockContent"><span style="height: 1px;"></span></td>
   </tr>

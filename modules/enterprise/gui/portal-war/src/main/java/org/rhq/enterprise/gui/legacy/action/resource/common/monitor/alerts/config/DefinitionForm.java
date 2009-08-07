@@ -52,7 +52,6 @@ import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertTemplateManagerLocal;
 import org.rhq.enterprise.server.alert.GroupAlertDefinitionManagerLocal;
-import org.rhq.enterprise.server.legacy.events.EventConstants;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -534,8 +533,6 @@ public final class DefinitionForm extends ResourceForm {
 
         this.setConditionExpression(alertDef.getConditionExpression().name());
 
-        boolean isTypeAlert = EventConstants.TYPE_ALERT_DEF_ID.equals(alertDef.getParentId());
-
         /*
          * conditions
          */
@@ -544,7 +541,7 @@ public final class DefinitionForm extends ResourceForm {
         int i = 0;
         for (AlertCondition cond : conds) {
             ConditionBean condBean = conditions.get(i++);
-            condBean.importProperties(cond, isTypeAlert, subject);
+            condBean.importProperties(cond, subject);
         }
 
         /*
@@ -756,6 +753,10 @@ public final class DefinitionForm extends ResourceForm {
     }
 
     public boolean isReadOnly() {
+        return readOnly;
+    }
+
+    public boolean getReadOnly() {
         return readOnly;
     }
 

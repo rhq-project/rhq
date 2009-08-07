@@ -207,7 +207,7 @@ public final class ConditionBean {
         this.traitName = traitName;
     }
 
-    public void importProperties(AlertCondition cond, boolean isTypeAlert, Subject subject) throws Exception {
+    public void importProperties(AlertCondition cond, Subject subject) throws Exception {
         ConverterValidatorManager.importProperties(subject, cond, this);
     }
 

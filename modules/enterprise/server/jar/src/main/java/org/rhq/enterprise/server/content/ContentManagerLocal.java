@@ -28,6 +28,7 @@ import org.rhq.core.clientapi.server.content.ContentServiceResponse;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.ContentServiceRequest;
+import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageType;
@@ -318,4 +319,9 @@ public interface ContentManagerLocal {
      * @see {@link ContentManagerRemote#findInstalledPackageVersionsByCriteria(Subject, PackageVersionCriteria)}
      */
     PageList<PackageVersion> findInstalledPackageVersionsByCriteria(Subject subject, PackageVersionCriteria criteria);
+
+    /**
+     * @see {@link ContentManagerRemote#getBackingPackageForResource(Subject, int)}
+     */
+    InstalledPackage getBackingPackageForResource(Subject subject, int resourceId);
 }

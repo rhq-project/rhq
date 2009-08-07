@@ -28,6 +28,7 @@ import javax.jws.soap.SOAPBinding;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.Architecture;
+import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
@@ -129,4 +130,20 @@ public interface ContentManagerRemote {
     PageList<PackageVersion> findInstalledPackageVersionsByCriteria( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "criteria") PackageVersionCriteria criteria);
+
+    /**
+     * For a resource that is package-backed, this call will return a reference to the package that caused the
+     * resource.
+     *
+     * NOTE: This is not fully implemented, see the implementation itself for more details. In short,
+     * This assumes there will only be one installed package against the resource.
+     *
+     * @param resourceId must identify a valid resource
+     * @return package if it is inventoried for the resource and the resource is package-backed; <code>null</code>
+     *         otherwise
+     */
+    @WebMethod
+    InstalledPackage getBackingPackageForResource( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "resourceId") int resourceId);
 }

@@ -358,8 +358,9 @@ public class CreateNewPackageUIBean {
         if (backingPackage == null) {
             Resource resource = EnterpriseFacesContextUtility.getResource();
 
-            ContentUIManagerLocal contentUIManager = LookupUtil.getContentUIManager();
-            backingPackage = contentUIManager.getBackingPackageForResource(resource.getId());
+            ContentManagerLocal contentManager = LookupUtil.getContentManager();
+            backingPackage = contentManager.getBackingPackageForResource(EnterpriseFacesContextUtility.getSubject(),
+                resource.getId());
         }
 
         return backingPackage;

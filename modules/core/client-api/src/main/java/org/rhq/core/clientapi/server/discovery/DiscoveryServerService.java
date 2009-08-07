@@ -94,7 +94,7 @@ public interface DiscoveryServerService {
      *
      * @param resourceError all information about the error that occurred
      */
-    @Asynchronous(guaranteedDelivery = true)
+    @Asynchronous(guaranteedDelivery = false)
     void setResourceError(ResourceError resourceError);
 
     /**

@@ -38,7 +38,8 @@ public class MeasurementDefinitionCriteria extends Criteria {
     private String filterName;
     private String filterDisplayName;
     private String filterDescription;
-    private String filterResourceTypeName;
+    private String filterResourceTypeName; // requires overrides
+    private Integer filterResourceTypeId; // requires overrides
     private MeasurementCategory filterCategory;
     private MeasurementUnits filterUnits;
     private NumericType filterNumericType;
@@ -52,7 +53,7 @@ public class MeasurementDefinitionCriteria extends Criteria {
 
     private PageOrdering sortName;
     private PageOrdering sortDisplayName;
-    private PageOrdering sortResourceTypeName;
+    private PageOrdering sortResourceTypeName; // requires overrides
     private PageOrdering sortCategory;
     private PageOrdering sortUnits;
     private PageOrdering sortNumericType;
@@ -65,6 +66,7 @@ public class MeasurementDefinitionCriteria extends Criteria {
         super();
 
         filterOverrides.put("resourceTypeName", "resourceType.name like ?");
+        filterOverrides.put("resourceTypeId", "resourceType.id = ?");
 
         sortOverrides.put("resourceTypeName", "resourceType.name");
     }

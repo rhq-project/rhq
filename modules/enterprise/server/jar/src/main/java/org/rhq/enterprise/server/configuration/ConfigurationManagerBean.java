@@ -93,6 +93,7 @@ import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
+import org.rhq.enterprise.server.resource.group.ResourceGroupUpdateException;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.util.QuartzUtil;
 
@@ -1402,7 +1403,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
     public int scheduleGroupResourceConfigurationUpdate(Subject subject, int compatibleGroupId,//
         @XmlJavaTypeAdapter(WebServiceTypeAdapter.class)//
-        Map<Integer, Configuration> newResourceConfigurationMap) throws SchedulerException {
+        Map<Integer, Configuration> newResourceConfigurationMap) {
         if (newResourceConfigurationMap == null) {
             throw new IllegalArgumentException(
                 "GroupResourceConfigurationUpdate must have non-null member configurations.");
@@ -1424,7 +1425,14 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
          * from Hibernate because of our use of flush/clear (we're trying to update it before it actually exists)
          */
         GroupResourceConfigurationUpdate groupUpdate = new GroupResourceConfigurationUpdate(group, subject.getName());
-        int updateId = configurationManager.createGroupConfigurationUpdate(groupUpdate);
+        int updateId = -1;
+        try {
+            updateId = configurationManager.createGroupConfigurationUpdate(groupUpdate);
+        } catch (SchedulerException sche) {
+            String message = "Error scheduling update for group[id=" + group.getId() + "]:";
+            log.error(message, sche);
+            new ResourceGroupUpdateException(message + sche.getMessage());
+        }
 
         // Create and persist updates for each of the members.
         for (Integer resourceId : newResourceConfigurationMap.keySet()) {
@@ -1446,7 +1454,13 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
          */
         JobDetail jobDetail = GroupResourceConfigurationUpdateJob.getJobDetail(group, subject, jobDataMap);
         Trigger trigger = QuartzUtil.getFireOnceOffsetTrigger(jobDetail, 10000);
-        scheduler.scheduleJob(jobDetail, trigger);
+        try {
+            scheduler.scheduleJob(jobDetail, trigger);
+        } catch (SchedulerException e) {
+            String message = "Error scheduling job named '" + jobDetail.getName() + "':";
+            log.error(message, e);
+            new ResourceGroupUpdateException(message + e.getMessage());
+        }
 
         log.debug("Scheduled Resource configuration update against compatible ResourceGroup[id=" + compatibleGroupId
             + "].");

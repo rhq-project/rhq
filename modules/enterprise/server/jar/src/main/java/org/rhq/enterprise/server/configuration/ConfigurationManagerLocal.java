@@ -430,7 +430,7 @@ public interface ConfigurationManagerLocal {
     boolean isGroupResourceConfigurationUpdateInProgress(Subject subject, int groupId);
 
     int scheduleGroupResourceConfigurationUpdate(Subject subject, int compatibleGroupId,
-        Map<Integer, Configuration> newResourceConfigurationMap) throws SchedulerException;
+        Map<Integer, Configuration> newResourceConfigurationMap);
 
     /**
      * Updates the plugin configuration used to connect and communicate with the resource. The given <code>

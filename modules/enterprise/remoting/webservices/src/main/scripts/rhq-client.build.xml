@@ -11,7 +11,6 @@
 
    <!-- load all the Stateless Session Bean for WS exposure as properties. Must add bean as separate 
    		property AND in the "ws-list" below for successful inclusion. ##TODO: collapse these to one list. -->
-   <property name="SimpleManager" value="org.rhq.enterprise.server.jaxb.SimpleManagerBean" />
    <property name="AlertManager" value="org.rhq.enterprise.server.alert.AlertManagerBean" />
    <property name="AlertDefinitionManager" value="org.rhq.enterprise.server.alert.AlertDefinitionManagerBean" />
    <property name="AvailabilityManager" value="org.rhq.enterprise.server.measurement.AvailabilityManagerBean" />

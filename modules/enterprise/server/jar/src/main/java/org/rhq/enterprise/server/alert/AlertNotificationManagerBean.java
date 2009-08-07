@@ -92,8 +92,13 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         AlertDefinition alertDefinition = alertDefinitionManager.getAlertDefinitionById(subjectManager.getOverlord(),
             alertDefinitionId);
         checkPermission(subjectManager.getOverlord(), alertDefinition);
+        AlertDefinitionContext context = alertDefinition.getContext();
+        if (context == AlertDefinitionContext.Resource) {
+            return alertDefinition; // return attached to make modifications directly on
+        }
+        // otherwise, return detached to pass to alertTemplateManager.update or groupAlertDefinitionManager.update
         AlertDefinition detachedDefinition = new AlertDefinition(alertDefinition, true);
-        detachedDefinition.setContext(alertDefinition.getContext());
+        detachedDefinition.setContext(context);
         detachedDefinition.setId(alertDefinition.getId());
         return detachedDefinition;
     }

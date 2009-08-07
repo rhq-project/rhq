@@ -22,7 +22,6 @@
  */
 package org.rhq.core.domain.util;
 
-import java.util.Arrays;
 import java.util.Map;
 
 import javax.persistence.EntityManager;
@@ -305,7 +304,7 @@ public final class CriteriaQueryGenerator {
         alertCriteria.addFilterDescription("query generation is cool");
         alertCriteria.addFilterStartTime(42L);
         alertCriteria.addFilterEndTime(100L);
-        alertCriteria.addFilterResourceIds(Arrays.asList(1, 2, 3));
+        alertCriteria.addFilterResourceIds(1, 2, 3);
         alertCriteria.fetchAlertDefinition(true);
         alertCriteria.addSortPriority(PageOrdering.DESC);
         alertCriteria.addSortName(PageOrdering.ASC);
@@ -324,7 +323,7 @@ public final class CriteriaQueryGenerator {
 
     public static void testInheritanceCriteria() {
         ResourceOperationHistoryCriteria historyCriteria = new ResourceOperationHistoryCriteria();
-        historyCriteria.addFilterResourceIds(Arrays.asList(1));
+        historyCriteria.addFilterResourceIds(1);
         historyCriteria.addFilterStatus(OperationRequestStatus.FAILURE);
 
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(historyCriteria);

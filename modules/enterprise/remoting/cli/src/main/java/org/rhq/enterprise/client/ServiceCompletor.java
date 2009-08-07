@@ -72,6 +72,7 @@ public class ServiceCompletor implements Completor {
         IGNORED_METHODS.add("hashCode");
         IGNORED_METHODS.add("equals");
         IGNORED_METHODS.add("getInvocationHandler");
+        IGNORED_METHODS.add("setHandler");
         IGNORED_METHODS.add("isProxyClass");
         IGNORED_METHODS.add("newProxyInstance");
         IGNORED_METHODS.add("getProxyClass");
@@ -155,8 +156,13 @@ public class ServiceCompletor implements Completor {
         if (s.contains(".")) {
             String[] call = s.split("\\.", 2);
 
-            Map<String, Object> matches = getContextMatches(baseObject, call[0]);
-            Object rootObject = matches.get(call[0]);
+            String next = call[0];
+            if (next.contains("(")) {
+                next = next.substring(0, next.indexOf("("));
+            }
+
+            Map<String, Object> matches = getContextMatches(baseObject.getClass(), next);
+            Object rootObject = matches.get(next);
             if (rootObject instanceof PropertyDescriptor) {
                 try {
                     rootObject =
@@ -164,13 +170,16 @@ public class ServiceCompletor implements Completor {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+            } else if (rootObject instanceof Method) {
+                rootObject =
+                        ((Method)rootObject).getReturnType();
             }
 
             return call[0].length() + 1 + contextComplete(rootObject, call[1], i, list);
         } else {
             String[] call = s.split("\\(", 2);
 
-            Map<String, Object> matches = getContextMatches(baseObject, call[0]);
+            Map<String, Object> matches = getContextMatches(baseObject instanceof Class ? ((Class) baseObject) : baseObject.getClass(), call[0]);
 
 
             if (call.length == 2 && matches.containsKey(call[0])) {
@@ -306,6 +315,9 @@ public class ServiceCompletor implements Completor {
                         list.add(lookupChoice);
                     }
                 }
+                if (list.size() == 1) {
+                    list.set(0,list.get(0) + ")");
+                }
 
             } else {
                 Map<String, Object> matches = getContextMatches(lastParam, c[paramIndex]);
@@ -381,18 +393,24 @@ public class ServiceCompletor implements Completor {
 
 
 
-    private Map<String, Object> getContextMatches(Object baseObject, String start) {
+    private Map<String, Object> getContextMatches(Class baseObjectClass, String start) {
         Map<String, Object> found = new HashMap<String, Object>();
 
         try {
 
-            BeanInfo info = Introspector.getBeanInfo(baseObject.getClass(), Object.class);
+            BeanInfo info = null;
+            if (baseObjectClass.isInterface() || baseObjectClass.equals(Object.class)) {
+                info = Introspector.getBeanInfo(baseObjectClass);
+            } else {
+                info = Introspector.getBeanInfo(baseObjectClass, Object.class);
+            }
 
             Set<Method> methodsCovered = new HashSet<Method>();
 
             PropertyDescriptor[] descriptors = info.getPropertyDescriptors();
             for (PropertyDescriptor desc : descriptors) {
-                if (desc.getName().startsWith(start)) {
+                if (desc.getName().startsWith(start)
+                       && (!IGNORED_METHODS.contains(desc.getName()))) {
                     found.put(desc.getName(), desc);
                     methodsCovered.add(desc.getReadMethod());
                     methodsCovered.add(desc.getWriteMethod());
@@ -411,8 +429,8 @@ public class ServiceCompletor implements Completor {
             }
 
 
-        } catch (IntrospectionException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         return found;
     }

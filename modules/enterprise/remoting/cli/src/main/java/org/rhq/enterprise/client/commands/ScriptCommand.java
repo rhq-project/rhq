@@ -169,7 +169,11 @@ public class ScriptCommand implements ClientCommand {
                 new TabularWriter(client.getPrintWriter()).print(result);
             }
         } catch (ScriptException e) {
-            client.getPrintWriter().println(e.getCause() != null ? e.getCause().getMessage() : e.getMessage());
+
+            String message = e.getCause() != null ? e.getCause().getMessage() : e.getMessage();
+            message = message.replace("sun.org.mozilla.javascript.internal.EcmaError: ","");
+
+            client.getPrintWriter().println(message);
             client.getPrintWriter().println(script);
             for (int i = 0; i < e.getColumnNumber(); i++) {
                 client.getPrintWriter().print(" ");

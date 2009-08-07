@@ -140,7 +140,7 @@ public class TabularWriter {
                 Method m = pd.getReadMethod();
                 Object val = null;
                 if (m != null) {
-                    val = m.invoke(object);
+                    val = invoke(object,m);
                 }
 
                 if (val != null) {
@@ -296,7 +296,7 @@ public class TabularWriter {
                                         Method m = pd.getReadMethod();
                                         Object val = null;
                                         if (m != null) {
-                                            val = pd.getReadMethod().invoke(row);
+                                            val = invoke(row, pd.getReadMethod());
                                         }
                                         if ((val != null && !(val instanceof Collection)) ||
                                                 ((val != null && (val instanceof Collection) && !((Collection) val).isEmpty())))
@@ -323,11 +323,7 @@ public class TabularWriter {
                                 for (PropertyDescriptor pd : pdList) {
 
                                     Object val = "?";
-                                    try {
-                                        val = pd.getReadMethod().invoke(row);
-                                    } catch (Throwable e) {
-                                        e.printStackTrace();
-                                    }
+                                    val = invoke(row, pd.getReadMethod());
                                     data[i][j++] = shortVersion(val);
                                 }
                                 i++;
@@ -608,5 +604,16 @@ public class TabularWriter {
 
     public void setExportMode(boolean exportMode) {
         this.exportMode = exportMode;
+    }
+
+
+    private static Object invoke(Object o, Method m) throws IllegalAccessException, InvocationTargetException {
+        boolean access = m.isAccessible();
+        m.setAccessible(true);
+        try {
+            return m.invoke(o);
+        } finally {
+            m.setAccessible(access);
+        }
     }
 }

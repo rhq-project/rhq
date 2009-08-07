@@ -100,8 +100,6 @@ public class ClientMain {
         // instantiate
         ClientMain main = new ClientMain();
 
-        main.outputWriter.println(Version.getProductNameAndVersion());
-
         initCommands();
 
         // process startup arguments
@@ -412,75 +410,79 @@ public class ClientMain {
 
         while ((code = getopt.getopt()) != -1) {
             switch (code) {
-            case ':':
-            case '?': {
-                // for now both of these should exit
-                displayUsage();
-                throw new IllegalArgumentException(MSG.getMsg(ClientI18NResourceKeys.BAD_ARGS));
-            }
+                case ':':
+                case '?': {
+                    // for now both of these should exit
+                    displayUsage();
+                    throw new IllegalArgumentException(MSG.getMsg(ClientI18NResourceKeys.BAD_ARGS));
+                }
 
-            case 1: {
-                // this catches non-option arguments which can be passed when running a script in non-interactive mode
-                // with -f or running a single command in non-interactive mode with -c.
-                execCmdLine.add(getopt.getOptarg());
-                break;
-            }
+                case 1: {
+                    // this catches non-option arguments which can be passed when running a script in non-interactive mode
+                    // with -f or running a single command in non-interactive mode with -c.
+                    execCmdLine.add(getopt.getOptarg());
+                    break;
+                }
 
-            case 'h': {
-                displayUsage();
-                break;
-            }
+                case 'h': {
+                    displayUsage();
+                    break;
+                }
 
-            case 'u': {
-                this.user = getopt.getOptarg();
-                break;
-            }
-            case 'p': {
-                this.pass = getopt.getOptarg();
-                break;
-            }
-            case 'P': {
-                this.pass = this.consoleReader.readLine("password: ", (char) 0);
-                break;
-            }
-            case 'c': {
-                interactiveMode = false;
-                execCmdLine.add(getopt.getOptarg());
-                break;
-            }
-            case 'f': {
-                interactiveMode = false;
-                execCmdLine.add("-f");
-                execCmdLine.add(getopt.getOptarg());
-                break;
-            }
-            case -2: {
-                execCmdLine.add("--args-style=" + getopt.getOptarg());
-                break;
-            }
-            case 's': {
-                setHost(getopt.getOptarg());
-                break;
-            }
+                case 'u': {
+                    this.user = getopt.getOptarg();
+                    break;
+                }
+                case 'p': {
+                    this.pass = getopt.getOptarg();
+                    break;
+                }
+                case 'P': {
+                    this.pass = this.consoleReader.readLine("password: ", (char) 0);
+                    break;
+                }
+                case 'c': {
+                    interactiveMode = false;
+                    execCmdLine.add(getopt.getOptarg());
+                    break;
+                }
+                case 'f': {
+                    interactiveMode = false;
+                    execCmdLine.add("-f");
+                    execCmdLine.add(getopt.getOptarg());
+                    break;
+                }
+                case -2: {
+                    execCmdLine.add("--args-style=" + getopt.getOptarg());
+                    break;
+                }
+                case 's': {
+                    setHost(getopt.getOptarg());
+                    break;
+                }
             case 'r': {
                 setTransport(getopt.getOptarg());
                 break;
             }
-            case 't': {
-                String portArg = getopt.getOptarg();
-                try {
-                    setPort(Integer.parseInt(portArg));
-                } catch (Exception e) {
-                    outputWriter.println("Invalid port [" + portArg + "]");
+                case 't': {
+                    String portArg = getopt.getOptarg();
+                    try {
+                        setPort(Integer.parseInt(portArg));
+                    } catch (Exception e) {
+                        outputWriter.println("Invalid port [" + portArg + "]");
+                    }
+                    break;
                 }
-                break;
+                case 'v': {
+                    String versionString = Version.getProductNameAndVersionBuildInfo();
+                    outputWriter.println(versionString);
+                    break;
+                }
             }
-            case 'v': {
-                String versionString = Version.getProductNameAndVersionBuildInfo();
-                outputWriter.println(versionString);
-                break;
-            }
-            }
+        }
+
+        if (interactiveMode) {
+            outputWriter.println(Version.getProductNameAndVersion());
         }
 
         if (user != null && pass != null) {

@@ -220,6 +220,27 @@
          </build>
       </profile>
 
+      <!--  Add dependencies need for jdk5 builds. Remove when we stop supporting jdk5 -->
+      <profile>
+         <id>java-5-dependencies</id>
+         <activation>
+            <jdk>1.5</jdk>
+            <property>
+               <name>java5.home</name>
+            </property>
+         </activation>
+
+         <dependencies>
+            <dependency>
+               <groupId>jboss.jbossws</groupId>
+               <artifactId>jboss-jaxws</artifactId>
+               <!-- NOTE: This version is old but is good enough to resolve the build dependency. -->
+               <version>3.0.1-native-2.0.4.GA</version>
+               <scope>provided</scope>
+            </dependency>
+         </dependencies>
+      </profile>
+
    </profiles>
 
 </project>

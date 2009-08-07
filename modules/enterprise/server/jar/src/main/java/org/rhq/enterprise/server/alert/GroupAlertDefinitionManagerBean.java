@@ -92,6 +92,10 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
     }
 
     public int removeGroupAlertDefinitions(Subject subject, Integer[] groupAlertDefinitionIds) {
+        if (groupAlertDefinitionIds == null || groupAlertDefinitionIds.length == 0) {
+            return 0;
+        }
+
         int modified = 0;
         List<Integer> allChildDefinitionIds = new ArrayList<Integer>();
         Subject overlord = subjectManager.getOverlord();
@@ -179,6 +183,10 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
     }
 
     public int disableGroupAlertDefinitions(Subject subject, Integer[] groupAlertDefinitionIds) {
+        if (groupAlertDefinitionIds == null || groupAlertDefinitionIds.length == 0) {
+            return 0;
+        }
+
         int modified = 0;
         Subject overlord = subjectManager.getOverlord();
         for (Integer groupAlertDefinitionId : groupAlertDefinitionIds) {
@@ -193,6 +201,10 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
     }
 
     public int enableGroupAlertDefinitions(Subject subject, Integer[] groupAlertDefinitionIds) {
+        if (groupAlertDefinitionIds == null || groupAlertDefinitionIds.length == 0) {
+            return 0;
+        }
+
         int modified = 0;
         Subject overlord = subjectManager.getOverlord();
         for (Integer groupAlertDefinitionId : groupAlertDefinitionIds) {
@@ -284,6 +296,10 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
     }
 
     public void addGroupAlertDefinitions(Subject subject, int resourceGroupId, int[] resourcesIdsToAdd) {
+        if (resourcesIdsToAdd == null || resourcesIdsToAdd.length == 0) {
+            return;
+        }
+
         List<AlertDefinition> groupAlertDefinitions = findGroupAlertDefinitions(subject, resourceGroupId, PageControl
             .getUnlimitedInstance());
 
@@ -336,6 +352,10 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
     }
 
     public void removeGroupAlertDefinitions(Subject subject, int resourceGroupId, int[] resourceIdsToRemove) {
+        if (resourceIdsToRemove == null || resourceIdsToRemove.length == 0) {
+            return;
+        }
+
         List<AlertDefinition> groupAlertDefinitions = findGroupAlertDefinitions(subject, resourceGroupId, PageControl
             .getUnlimitedInstance());
 

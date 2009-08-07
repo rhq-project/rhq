@@ -18,33 +18,28 @@
  */
 package org.rhq.enterprise.server.util;
 
-import java.beans.BeanInfo;
-import java.beans.Introspector;
-import java.beans.PropertyDescriptor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.Array;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Constructor;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Arrays;
-
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlTransient;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.Hibernate;
 import org.hibernate.proxy.HibernateProxy;
+
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlTransient;
+import java.beans.BeanInfo;
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Greg Hinkle
@@ -61,13 +56,18 @@ public class HibernateDetachUtility {
         long start = System.currentTimeMillis();
         Set<Integer> checkedObjs = new HashSet<Integer>();
         nullOutUninitializedFields(value, checkedObjs, 0, serializationType);
-        LOG.debug("Checked [" + checkedObjs.size() + "] in [" + (System.currentTimeMillis() - start) + "]ms");
+        long duration = System.currentTimeMillis() - start;
+        if (duration > 1000) {
+            LOG.info("Detached [" + checkedObjs.size() + "] objects in [" + duration + "]ms");
+        } else {
+            LOG.debug("Detached [" + checkedObjs.size() + "] objects in [" + duration + "]ms");
+        }
     }
 
     private static void nullOutUninitializedFields(Object value, Set<Integer> nulledObjects, int depth,
         SerializationType serializationType) throws Exception {
         if (depth > 50) {
-            //         LOG.warn("Getting different object hierarchies back from calls: " + value.getClass().getName());
+            LOG.warn("Getting different object hierarchies back from calls: " + value.getClass().getName());
             return;
         }
 
@@ -94,22 +94,23 @@ public class HibernateDetachUtility {
                 nullOutUninitializedFields(((Map)value).get(key), nulledObjects, depth+1, serializationType);
                 nullOutUninitializedFields(key, nulledObjects, depth+1, serializationType);
             }
-        } else {
+        } 
 
-            if (serializationType == SerializationType.JAXB) {
-                XmlAccessorType at = value.getClass().getAnnotation(XmlAccessorType.class);
-                if (at != null && at.value() == XmlAccessType.FIELD) {
-                    //System.out.println("----------XML--------- field access");
-                    nullOutFieldsByFieldAccess(value, nulledObjects, depth, serializationType);
-                } else {
-                    //System.out.println("----------XML--------- accessor access");
-                    nullOutFieldsByAccessors(value, nulledObjects, depth, serializationType);
-                }
-            } else if (serializationType == SerializationType.SERIALIZATION) {
-                //                System.out.println("-----------JRMP-------- field access");
+
+        if (serializationType == SerializationType.JAXB) {
+            XmlAccessorType at = value.getClass().getAnnotation(XmlAccessorType.class);
+            if (at != null && at.value() == XmlAccessType.FIELD) {
+                //System.out.println("----------XML--------- field access");
                 nullOutFieldsByFieldAccess(value, nulledObjects, depth, serializationType);
+            } else {
+                //System.out.println("----------XML--------- accessor access");
+                nullOutFieldsByAccessors(value, nulledObjects, depth, serializationType);
             }
+        } else if (serializationType == SerializationType.SERIALIZATION) {
+            //                System.out.println("-----------JRMP-------- field access");
+            nullOutFieldsByFieldAccess(value, nulledObjects, depth, serializationType);
         }
+
     }
 
     private static void nullOutFieldsByFieldAccess(Object object, Set<Integer> nulledObjects, int depth,
@@ -176,8 +177,22 @@ public class HibernateDetachUtility {
                         construct = clazz.getConstructor(constArgs);
                         replacement = construct.newInstance((Integer) ((HibernateProxy) fieldValue).getHibernateLazyInitializer().getIdentifier());
                         field.set(object, replacement);
-                    } catch (NoSuchMethodException e) {
-                        System.out.println("No id constructor for base bean " + className);
+                    } catch (NoSuchMethodException nsme) {
+
+                        try {
+                            Field idField = clazz.getDeclaredField("id");
+                            Constructor ct = clazz.getDeclaredConstructor();
+                            ct.setAccessible(true);
+                            replacement = ct.newInstance();
+                            if (!idField.isAccessible()) {
+                                idField.setAccessible(true);
+                            }
+                            idField.set(replacement, (Integer) ((HibernateProxy) fieldValue).getHibernateLazyInitializer().getIdentifier());
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            System.out.println("No id constructor and unable to set field id for base bean " + className);
+                        }
+
                         field.set(object, replacement);
                     }
                 }
@@ -185,8 +200,7 @@ public class HibernateDetachUtility {
 
             } else {
                 if (fieldValue instanceof org.hibernate.collection.PersistentCollection) {
-                    // checking if it is a set, list, or bag (simply if it is a
-                    // collection)
+                    // Replace hibernate specific collection types
 
                     if (!((org.hibernate.collection.PersistentCollection) fieldValue).wasInitialized()) {
                         field.set(object, null);

@@ -22,6 +22,7 @@
  */
 package org.rhq.core.domain.criteria;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.rhq.core.domain.alert.AlertPriority;
@@ -88,8 +89,8 @@ public class AlertDefinitionCriteria extends Criteria {
         this.filterAlertTemplateResourceTypeName = filterAlertTemplateResourceTypeName;
     }
 
-    public void addFilterResourceIds(List<Integer> filterResourceIds) {
-        this.filterResourceIds = filterResourceIds;
+    public void addFilterResourceIds(Integer... filterResourceIds) {
+        this.filterResourceIds = Arrays.asList(filterResourceIds);
     }
 
     public void addFilterEnabled(Boolean filterEnabled) {

@@ -22,6 +22,7 @@
  */
 package org.rhq.core.domain.criteria;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.rhq.core.domain.alert.AlertPriority;
@@ -110,12 +111,12 @@ public class AlertCriteria extends Criteria {
         this.filterResourceTypeName = filterResourceTypeName;
     }
 
-    public void addFilterResourceIds(List<Integer> filterResourceIds) {
-        this.filterResourceIds = filterResourceIds;
+    public void addFilterResourceIds(Integer... filterResourceIds) {
+        this.filterResourceIds = Arrays.asList(filterResourceIds);
     }
 
-    public void addFilterResourceGroupIds(List<Integer> filterResourceGroupIds) {
-        this.filterResourceGroupIds = filterResourceGroupIds;
+    public void addFilterResourceGroupIds(Integer... filterResourceGroupIds) {
+        this.filterResourceGroupIds = Arrays.asList(filterResourceGroupIds);
     }
 
     public void fetchAlertDefinition(boolean fetchAlertDefinition) {

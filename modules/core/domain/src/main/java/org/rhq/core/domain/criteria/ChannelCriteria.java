@@ -22,6 +22,7 @@
  */
 package org.rhq.core.domain.criteria;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.rhq.core.domain.util.PageOrdering;
@@ -59,8 +60,8 @@ public class ChannelCriteria extends Criteria {
         this.filterDescription = filterDescription;
     }
 
-    public void addFilterResourceIds(List<Integer> filterResourceIds) {
-        this.filterResourceIds = filterResourceIds;
+    public void addFilterResourceIds(Integer... filterResourceIds) {
+        this.filterResourceIds = Arrays.asList(filterResourceIds);
     }
 
     public void fetchResourceChannels(boolean fetchResourceChannels) {

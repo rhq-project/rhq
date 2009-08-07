@@ -22,6 +22,7 @@
  */
 package org.rhq.core.domain.criteria;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.rhq.core.domain.resource.group.GroupCategory;
@@ -100,12 +101,12 @@ public class ResourceGroupCriteria extends Criteria {
         this.filterGroupCategory = filterGroupCategory;
     }
 
-    public void addFilterExplicitResourceIds(List<Integer> filterExplicitResourceIds) {
-        this.filterExplicitResourceIds = filterExplicitResourceIds;
+    public void addFilterExplicitResourceIds(Integer... filterExplicitResourceIds) {
+        this.filterExplicitResourceIds = Arrays.asList(filterExplicitResourceIds);
     }
 
-    public void addFilterImplicitResourceIds(List<Integer> filterImplicitResourceIds) {
-        this.filterImplicitResourceIds = filterImplicitResourceIds;
+    public void addFilterImplicitResourceIds(Integer... filterImplicitResourceIds) {
+        this.filterImplicitResourceIds = Arrays.asList(filterImplicitResourceIds);
     }
 
     public void fetchExplicitResources(boolean fetchExplicitResources) {

@@ -26,6 +26,7 @@ import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.jws.WebService;
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
@@ -237,20 +238,36 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
     }
 
     private void fixRecoveryId(AlertDefinition definition) {
-        // this was a recovery alert created from a template
-        if (definition.getParentId() != 0 && definition.getRecoveryId() != 0) {
-            // so we need to set the resource-level recovery id properly
-            String findCorrectRecoveryId = "" //
-                + " SELECT toBeRecovered.id " //
-                + "   FROM AlertDefinition toBeRecovered " //
-                + "  WHERE toBeRecovered.resource.id = :resourceId " //
-                + "    AND toBeRecovered.parentId = :parentId ";
-            Query fixRecoveryIdQuery = entityManager.createQuery(findCorrectRecoveryId);
-            fixRecoveryIdQuery.setParameter("resourceId", definition.getResource().getId());
-            // definition.recoveryId current points at the toBeRecovered template, we want the definition
-            fixRecoveryIdQuery.setParameter("parentId", definition.getRecoveryId()); // wrong one to be replaced
-            Integer correctRecoveryId = (Integer) fixRecoveryIdQuery.getSingleResult();
-            definition.setRecoveryId(correctRecoveryId);
+        try {
+            if (definition.getParentId() != 0 && definition.getRecoveryId() != 0) {
+                // so we need to set the resource-level recovery id properly
+                String findCorrectRecoveryId = "" //
+                    + " SELECT toBeRecovered.id " //
+                    + "   FROM AlertDefinition toBeRecovered " //
+                    + "  WHERE toBeRecovered.resource.id = :resourceId " //
+                    + "    AND toBeRecovered.parentId = :parentId ";
+                Query fixRecoveryIdQuery = entityManager.createQuery(findCorrectRecoveryId);
+                fixRecoveryIdQuery.setParameter("resourceId", definition.getResource().getId());
+                // definition.recoveryId current points at the toBeRecovered template, we want the definition
+                fixRecoveryIdQuery.setParameter("parentId", definition.getRecoveryId()); // wrong one to be replaced
+                Integer correctRecoveryId = (Integer) fixRecoveryIdQuery.getSingleResult();
+                definition.setRecoveryId(correctRecoveryId);
+            } else if (definition.getGroupAlertDefinition() != null && definition.getRecoveryId() != 0) {
+                // so we need to set the resource-level recovery id properly
+                String findCorrectRecoveryId = "" //
+                    + " SELECT toBeRecovered.id " //
+                    + "   FROM AlertDefinition toBeRecovered " //
+                    + "  WHERE toBeRecovered.resource.id = :resourceId " //
+                    + "    AND toBeRecovered.groupAlertDefinition.id = :groupAlertDefinitionId ";
+                Query fixRecoveryIdQuery = entityManager.createQuery(findCorrectRecoveryId);
+                fixRecoveryIdQuery.setParameter("resourceId", definition.getResource().getId());
+                // definition.recoveryId current points at the toBeRecovered template, we want the definition
+                fixRecoveryIdQuery.setParameter("groupAlertDefinitionId", definition.getRecoveryId()); // wrong one to be replaced
+                Integer correctRecoveryId = (Integer) fixRecoveryIdQuery.getSingleResult();
+                definition.setRecoveryId(correctRecoveryId);
+            }
+        } catch (NoResultException nre) {
+            // expected when the recovery ids have already been fixed
         }
     }
 
@@ -358,10 +375,12 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
                 AlertDefinition newAlertDefinition = new AlertDefinition(alertDefinition);
                 newAlertDefinition.setEnabled(false);
 
-                // this is a "true" copy, so update parentId, resource, and resourceType
+                // this is a "true" copy, so update parentId, resource, and resourceType, group, groupAlertDefinition
                 newAlertDefinition.setParentId(alertDefinition.getParentId());
                 newAlertDefinition.setResource(alertDefinition.getResource());
                 newAlertDefinition.setResourceType(alertDefinition.getResourceType());
+                newAlertDefinition.setResourceGroup(alertDefinition.getResourceGroup());
+                newAlertDefinition.setGroupAlertDefinition(alertDefinition.getGroupAlertDefinition());
 
                 entityManager.persist(newAlertDefinition);
 

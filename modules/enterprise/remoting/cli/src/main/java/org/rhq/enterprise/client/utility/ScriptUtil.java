@@ -109,7 +109,7 @@ public class ScriptUtil {
 
         ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
         criteria.addFilterJobId(schedule.getJobId());
-        criteria.addFilterResourceIds(Arrays.asList(schedule.getResource().getId()));
+        criteria.addFilterResourceIds(schedule.getResource().getId());
         criteria.addSortStartTime(PageOrdering.DESC);
         criteria.setPaging(0, 1);
         criteria.fetchOperationDefinition(true);

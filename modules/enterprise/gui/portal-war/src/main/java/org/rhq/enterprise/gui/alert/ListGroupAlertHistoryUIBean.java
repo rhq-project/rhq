@@ -22,7 +22,6 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -231,7 +230,7 @@ public class ListGroupAlertHistoryUIBean extends PagedDataTableUIBean {
             }
 
             AlertCriteria searchCriteria = new AlertCriteria();
-            searchCriteria.addFilterResourceGroupIds(Arrays.asList(getResourceGroup().getId()));
+            searchCriteria.addFilterResourceGroupIds(getResourceGroup().getId());
             searchCriteria.addFilterPriority(alertPriority);
             searchCriteria.addFilterStartTime(beginTime);
             searchCriteria.addFilterEndTime(endTime);

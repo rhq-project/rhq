@@ -75,7 +75,7 @@ public class ClientMain {
     private PrintWriter outputWriter;
 
     // Local storage of credentials for this session/client
-    private String transport = "servlet";
+    private String transport = null;
     private String host = null;
     private int port = 7080;
     private String user;

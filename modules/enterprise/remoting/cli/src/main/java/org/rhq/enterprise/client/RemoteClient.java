@@ -37,7 +37,6 @@ import org.rhq.enterprise.server.configuration.ConfigurationManagerRemote;
 import org.rhq.enterprise.server.content.ChannelManagerRemote;
 import org.rhq.enterprise.server.content.ContentManagerRemote;
 import org.rhq.enterprise.server.event.EventManagerRemote;
-import org.rhq.enterprise.server.exception.LoginException;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerRemote;
 import org.rhq.enterprise.server.measurement.CallTimeDataManagerRemote;
 import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerRemote;
@@ -112,6 +111,9 @@ public class RemoteClient {
         }
     };
 
+    public static final String NONSECURE_TRANSPORT = "servlet";
+    public static final String SECURE_TRANSPORT = "sslservlet";
+
     private String transport;
     private final String host;
     private final int port;
@@ -138,14 +140,12 @@ public class RemoteClient {
      * This constructor will not attempt to connect or login
      * to the remote server - use {@link #login(String, String)} for that.
      * 
-     * @param transport valid values are "servlet" and "sslservlet" - if <code>null</code>, "servlet" is used
+     * @param transport valid values are "servlet" and "sslservlet" - if <code>null</code>,
+     *                  sslservlet will be used for ports that end with "443", servlet otherwise
      * @param host
      * @param port
      */
     public RemoteClient(String transport, String host, int port) {
-        if (transport == null) {
-            transport = "servlet";
-        }
         this.transport = transport;
         this.host = host;
         this.port = port;
@@ -164,31 +164,12 @@ public class RemoteClient {
      * @throws Exception if failed to connect to the server or log in
      */
     public Subject login(String user, String password) throws Exception {
-        Subject loggedInSubject;
 
-        try {
-            logout();
-            connect();
-            loggedInSubject = getSubjectManagerRemote().login(user, password);
-            this.loggedIn = true;
-        } catch (LoginException le) {
-            throw le;
-        } catch (Exception e) {
-            try {
-                this.transport = "sslservlet";
-                logout();
-                connect();
-                loggedInSubject = getSubjectManagerRemote().login(user, password);
-                this.loggedIn = true;
-            } catch (LoginException le) {
-                throw le;
-            } catch (Exception e2) {
-                this.transport = "servlet";
-                throw e; // still got an error, must not be an https vs. http issue - throw the first exception
-            }
-        }
+        logout();
+        connect();
 
-        this.subject = loggedInSubject;
+        this.subject = getSubjectManagerRemote().login(user, password);
+        this.loggedIn = true;
 
         ServerVersion version = getSystemManagerRemote().getServerVersion(this.subject);
         // TODO: what to do with this?
@@ -244,12 +225,22 @@ public class RemoteClient {
     }
 
     public String getTransport() {
-        return this.transport;
+        if (this.transport != null) {
+            return this.transport;
+        } else if (String.valueOf(this.port).endsWith("443")) {
+            return SECURE_TRANSPORT;
+        } else {
+            return NONSECURE_TRANSPORT;
+        }
     }
 
     /**
      * Sets the underlying transport to use to communicate with the server.
      * Available transports are "servlet" and "sslservlet".
+     * If you set it to <code>null</code>, then the transport to be used will
+     * be set appropriately for the {@link #getPort()} (e.g. a secure transport
+     * will be used for ports that end with 443, a non-secure transport will be
+     * used for all other ports).
      * 
      * @param transport
      */
@@ -398,7 +389,7 @@ public class RemoteClient {
     }
 
     private void connect() throws Exception {
-        String locatorURI = this.transport + "://" + this.host + ":" + this.port
+        String locatorURI = getTransport() + "://" + this.host + ":" + this.port
             + "/jboss-remoting-servlet-invoker/ServerInvokerServlet";
         InvokerLocator locator = new InvokerLocator(locatorURI);
 

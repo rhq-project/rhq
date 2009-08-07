@@ -37,7 +37,7 @@ public class LogoutCommand implements ClientCommand {
     }
 
     public void execute(ClientMain client) {
-        client.setTransport("servlet");
+        client.setTransport(null);
         client.setHost(null);
         client.setPort(0);
         client.getRemoteClient().logout();

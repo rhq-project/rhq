@@ -44,7 +44,7 @@ public class LoginCommand implements ClientCommand {
         String user = null;
         String pass = null;
         String host = "localhost";
-        String transport = "servlet";
+        String transport = null;
         int port = 7080;
 
         try {
@@ -73,7 +73,7 @@ public class LoginCommand implements ClientCommand {
     }
 
     public Subject execute(ClientMain client, String username, String password) throws Exception {
-        return execute(client, username, password, "localhost", 7080, "servlet");
+        return execute(client, username, password, "localhost", 7080, null);
     }
 
     public Subject execute(ClientMain client, String username, String password, String host, int port, String transport)
@@ -81,7 +81,7 @@ public class LoginCommand implements ClientCommand {
 
         RemoteClient remoteClient = new RemoteClient(transport, host, port);
 
-        client.setTransport(transport);
+        client.setTransport(remoteClient.getTransport()); // in case transport was null, let the client tell us what it'll use
         client.setHost(host);
         client.setPort(port);
         client.setUser(username);
@@ -116,7 +116,7 @@ public class LoginCommand implements ClientCommand {
         return "Log into a server with the specified username and password. The server host "
             + "name and port may optionally be specified. The host name defaults to "
             + "localhost and the port to 7080. You may also specify the transport "
-            + "to use when communicating with the server; it must be one "
-            + "of 'servlet' or 'sslservlet'. The default is 'servlet'.";
+            + "to use when communicating with the server; it must be one " //
+            + "of 'servlet' or 'sslservlet'.";
     }
 }

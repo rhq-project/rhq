@@ -160,4 +160,12 @@ public interface SystemManagerLocal {
     void updateLicense(Subject subject, byte[] licenseData);
 
     Date getExpiration();
+
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    //
+    // The following are shared with the Remote Interface
+    //
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    ServerVersion getServerVersion(Subject subject) throws Exception;
 }

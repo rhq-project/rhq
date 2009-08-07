@@ -65,14 +65,16 @@ import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.core.util.StopWatch;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.RequiredPermission;
+import org.rhq.enterprise.server.core.CoreServerMBean;
 import org.rhq.enterprise.server.core.CustomJaasDeploymentServiceMBean;
 import org.rhq.enterprise.server.license.FeatureUnavailableException;
 import org.rhq.enterprise.server.license.License;
 import org.rhq.enterprise.server.license.LicenseManager;
 import org.rhq.enterprise.server.license.LicenseStoreManager;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 @Stateless
-public class SystemManagerBean implements SystemManagerLocal {
+public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemote {
     private final String SQL_VACUUM = "VACUUM ANALYZE {0}";
 
     private final String SQL_ANALYZE = "ANALYZE";
@@ -615,5 +617,13 @@ public class SystemManagerBean implements SystemManagerLocal {
         }
 
         return new Date(exp);
+    }
+
+    public ServerVersion getServerVersion(Subject subject) throws Exception {
+        CoreServerMBean coreServer = LookupUtil.getCoreServer();
+        String version = coreServer.getVersion();
+        String buildNumber = coreServer.getBuildNumber();
+        ServerVersion serverVersion = new ServerVersion(version, buildNumber);
+        return serverVersion;
     }
 }

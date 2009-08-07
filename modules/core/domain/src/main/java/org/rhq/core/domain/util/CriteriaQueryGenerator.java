@@ -249,7 +249,7 @@ public final class CriteriaQueryGenerator {
              *            ERROR: for SELECT DISTINCT, ORDER BY expressions must appear in select list
              * oracle   - java.sql.SQLException: ORA-01791: not a SELECTed expression
              */
-            results.append("GROUP BY " + alias).append(NL);
+            results.append("GROUP BY ").append(alias).append(NL);
         }
 
         LOG.debug(results);

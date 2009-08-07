@@ -149,6 +149,12 @@ public abstract class Criteria implements Serializable {
         this.pageSize = pageSize;
     }
 
+    public void clearPaging() {
+        PageControl unlimited = PageControl.getUnlimitedInstance();
+        this.pageNumber = unlimited.getPageNumber();
+        this.pageSize = unlimited.getPageSize();
+    }
+
     /*
      * If set to true, then results will come back if they match ANY filter;
      * Default is 'false', which means results must match all set filters.

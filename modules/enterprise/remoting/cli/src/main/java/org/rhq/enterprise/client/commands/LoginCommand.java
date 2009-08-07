@@ -18,18 +18,15 @@
  */
 package org.rhq.enterprise.client.commands;
 
-import org.rhq.enterprise.client.ClientMain;
-import org.rhq.enterprise.client.RHQServer;
-import org.rhq.enterprise.client.Controller;
-import org.rhq.enterprise.client.RemoteClient;
-import org.rhq.enterprise.server.exception.LoginException;
-import org.rhq.core.domain.auth.Subject;
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import jline.ANSIBuffer;
 
-import javax.script.ScriptEngine;
-import javax.script.ScriptContext;
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.enterprise.client.ClientMain;
+import org.rhq.enterprise.client.RemoteClient;
 
 /**
  * @author Greg Hinkle
@@ -47,6 +44,7 @@ public class LoginCommand implements ClientCommand {
         String user = null;
         String pass = null;
         String host = "localhost";
+        String transport = "servlet";
         int port = 7080;
 
         try {
@@ -56,36 +54,40 @@ public class LoginCommand implements ClientCommand {
             if (args.length == 5) {
                 host = args[3];
                 port = Integer.parseInt(args[4]);
+            } else if (args.length == 6) {
+                host = args[3];
+                port = Integer.parseInt(args[4]);
+                transport = args[5];
             }
 
-            execute(client, user, pass, host, port);
+            execute(client, user, pass, host, port, transport);
 
             client.getPrintWriter().println("Login successful");
-        } catch (LoginException e) {
-            client.getPrintWriter().println("Login failed: " + e.getMessage());
-            log.debug("Login failed for " + user + " on " + host + ":" + port, e);
+        } catch (Exception e) {
+            client.getPrintWriter().println("Login failed: " + e);
+            client.getPrintWriter().println(getSyntax());
+            log.debug("Login failed for " + user + " on " + host + ":" + port + " over transport: " + transport, e);
         }
 
         return true;
     }
 
-    public Subject execute(ClientMain client, String username, String password) throws LoginException {
-        return execute(client, username, password, "localhost", 7080);
+    public Subject execute(ClientMain client, String username, String password) throws Exception {
+        return execute(client, username, password, "localhost", 7080, "servlet");
     }
 
-    public Subject execute(ClientMain client, String username, String password, String host, int port)
-            throws LoginException {
-        RemoteClient remoteClient = new RemoteClient(host, port);
+    public Subject execute(ClientMain client, String username, String password, String host, int port, String transport)
+        throws Exception {
 
+        RemoteClient remoteClient = new RemoteClient(transport, host, port);
+
+        client.setTransport(transport);
         client.setHost(host);
         client.setPort(port);
         client.setUser(username);
         client.setPass(password);
 
-        Subject subject = remoteClient.getSubjectManagerRemote().login(username, password);
-
-        remoteClient.setSubject(subject);
-        remoteClient.setLoggedIn(true);
+        Subject subject = remoteClient.login(username, password);
 
         client.setRemoteClient(remoteClient);
         client.setSubject(subject);
@@ -103,7 +105,7 @@ public class LoginCommand implements ClientCommand {
     }
 
     public String getSyntax() {
-        return "login username password [host] [port]";
+        return "login username password [host port [transport]]";
     }
 
     public String getHelp() {
@@ -111,7 +113,10 @@ public class LoginCommand implements ClientCommand {
     }
 
     public String getDetailedHelp() {
-        return "Log into a server with the specified username and password. The server host name and port may " +
-                "optionally be specified. The host name defaults to localhost and the port to 7080.";
+        return "Log into a server with the specified username and password. The server host "
+            + "name and port may optionally be specified. The host name defaults to "
+            + "localhost and the port to 7080. You may also specify the transport "
+            + "to use when communicating with the server; it must be one "
+            + "of 'servlet' or 'sslservlet'. The default is 'servlet'.";
     }
 }

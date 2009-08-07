@@ -75,11 +75,11 @@ public class ClientMain {
     private PrintWriter outputWriter;
 
     // Local storage of credentials for this session/client
+    private String transport = "servlet";
     private String host = null;
     private int port = 7080;
     private String user;
     private String pass;
-    private boolean isHttps = false;
     private ArrayList<String> notes = new ArrayList<String>();
 
     // reference to the webservice reference factory
@@ -217,7 +217,7 @@ public class ClientMain {
      * @return flag indicating status of realtime check.
      */
     public boolean loggedIn() {
-        return subject != null && remoteClient != null & remoteClient.isConnected();
+        return subject != null && remoteClient != null & remoteClient.isLoggedIn();
     }
 
     /**
@@ -391,13 +391,14 @@ public class ClientMain {
     }
 
     void processArguments(String[] args) throws IllegalArgumentException, IOException {
-        String sopts = "-:hu:p:Ps:t:c:f:v";
+        String sopts = "-:hu:p:Ps:t:r:c:f:v";
         LongOpt[] lopts = { new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'h'),
             new LongOpt("user", LongOpt.REQUIRED_ARGUMENT, null, 'u'),
             new LongOpt("password", LongOpt.REQUIRED_ARGUMENT, null, 'p'),
             new LongOpt("prompt", LongOpt.OPTIONAL_ARGUMENT, null, 'P'),
             new LongOpt("host", LongOpt.REQUIRED_ARGUMENT, null, 's'),
             new LongOpt("port", LongOpt.REQUIRED_ARGUMENT, null, 't'),
+            new LongOpt("transport", LongOpt.REQUIRED_ARGUMENT, null, 'r'),
             new LongOpt("command", LongOpt.REQUIRED_ARGUMENT, null, 'c'),
             new LongOpt("file", LongOpt.NO_ARGUMENT, null, 'f'),
             new LongOpt("version", LongOpt.NO_ARGUMENT, null, 'v'),
@@ -461,6 +462,10 @@ public class ClientMain {
                 setHost(getopt.getOptarg());
                 break;
             }
+            case 'r': {
+                setTransport(getopt.getOptarg());
+                break;
+            }
             case 't': {
                 String portArg = getopt.getOptarg();
                 try {
@@ -479,10 +484,11 @@ public class ClientMain {
         }
 
         if (user != null && pass != null) {
+            ClientCommand loginCmd = commands.get("login");
             if (host != null) {
-                commands.get("login").execute(this, new String[] { "login", user, pass, host, String.valueOf(port) });
+                loginCmd.execute(this, new String[] { "login", user, pass, host, String.valueOf(port), transport });
             } else {
-                commands.get("login").execute(this, new String[] { "login", user, pass });
+                loginCmd.execute(this, new String[] { "login", user, pass });
             }
             if (!loggedIn()) {
                 return;
@@ -501,11 +507,7 @@ public class ClientMain {
     public void setRemoteClient(RemoteClient remoteClient) {
         this.remoteClient = remoteClient;
 
-        setHttps(false);
-
         if (remoteClient != null) {
-            remoteClient.reinitialize();
-
             ScriptCommand sc = (ScriptCommand) commands.get("exec");
             sc.initBindings(this);
             this.serviceCompletor.setContext(sc.getContext());
@@ -519,6 +521,14 @@ public class ClientMain {
 
     public void setSubject(Subject subject) {
         this.subject = subject;
+    }
+
+    public String getTransport() {
+        return transport;
+    }
+
+    public void setTransport(String transport) {
+        this.transport = transport;
     }
 
     public String getHost() {
@@ -567,14 +577,6 @@ public class ClientMain {
 
     public Map<String, ClientCommand> getCommands() {
         return commands;
-    }
-
-    public boolean isHttps() {
-        return isHttps;
-    }
-
-    public void setHttps(boolean isHttps) {
-        this.isHttps = isHttps;
     }
 
     /**

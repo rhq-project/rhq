@@ -51,7 +51,9 @@
       <copy file="${settings.localRepository}/jline/jline/${jline.version}/jline-${jline.version}.jar" tofile="${lib.home}/jline-${jline.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/log4j/log4j/${log4j.version}/log4j-${log4j.version}.jar" tofile="${lib.home}/log4j-${log4j.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/org/rhq/rhq-core-domain/${project.version}/rhq-core-domain-${project.version}.jar" tofile="${lib.home}/rhq-core-domain-${project.version}.jar" verbose="true" />
+      <copy file="${settings.localRepository}/org/rhq/rhq-core-util/${project.version}/rhq-core-util-${project.version}.jar" tofile="${lib.home}/rhq-core-util-${project.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/org/rhq/rhq-enterprise-server/${project.version}/rhq-enterprise-server-${project.version}.jar" tofile="${lib.home}/rhq-enterprise-server-${project.version}.jar" verbose="true" />
+      <copy file="${settings.localRepository}/org/rhq/rhq-enterprise-comm/${project.version}/rhq-enterprise-comm-${project.version}.jar" tofile="${lib.home}/rhq-enterprise-comm-${project.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/jboss/jboss-common/${jboss-common.version}/jboss-common-${jboss-common.version}.jar" tofile="${lib.home}/jboss-common-${jboss-common.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/jboss/jboss-remoting/${jboss-remoting.version}/jboss-remoting-${jboss-remoting.version}.jar" tofile="${lib.home}/jboss-remoting-${jboss-remoting.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/jboss/javassist/${jboss-javassist.version}/javassist-${jboss-javassist.version}.jar" tofile="${lib.home}/javassist-${jboss-javassist.version}.jar" verbose="true" />

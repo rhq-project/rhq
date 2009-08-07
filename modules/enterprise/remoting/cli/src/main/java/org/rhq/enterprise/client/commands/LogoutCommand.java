@@ -19,7 +19,6 @@
 package org.rhq.enterprise.client.commands;
 
 import org.rhq.enterprise.client.ClientMain;
-import org.rhq.enterprise.client.Controller;
 
 /**
  * @author Greg Hinkle
@@ -33,14 +32,15 @@ public class LogoutCommand implements ClientCommand {
     public boolean execute(ClientMain client, String[] args) {
         execute(client);
         client.getPrintWriter().println("Logout successful");
-        
+
         return true;
     }
 
     public void execute(ClientMain client) {
+        client.setTransport("servlet");
         client.setHost(null);
         client.setPort(0);
-        client.getRemoteClient().setLoggedIn(false);
+        client.getRemoteClient().logout();
         client.setRemoteClient(null);
         client.setSubject(null);
         client.setUser(null);

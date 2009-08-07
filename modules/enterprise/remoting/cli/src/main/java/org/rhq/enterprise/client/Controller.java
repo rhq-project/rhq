@@ -25,7 +25,6 @@ package org.rhq.enterprise.client;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.client.commands.LoginCommand;
 import org.rhq.enterprise.client.commands.LogoutCommand;
-import org.rhq.enterprise.server.exception.LoginException;
 
 public class Controller {
 
@@ -40,9 +39,9 @@ public class Controller {
         return cmd.execute(client, username, password);
     }
 
-    public Subject login(String username, String password, String host, int port) throws LoginException {
+    public Subject login(String username, String password, String host, int port) throws Exception {
         LoginCommand cmd = (LoginCommand) client.getCommands().get("login");
-        return cmd.execute(client, username, password, host, port);
+        return cmd.execute(client, username, password, host, port, "servlet");
     }
 
     public void logout() {

@@ -46,6 +46,12 @@
 
       <dependency>
          <groupId>${groupId}</groupId>
+         <artifactId>rhq-enterprise-comm</artifactId>
+         <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>${groupId}</groupId>
          <artifactId>rhq-enterprise-server</artifactId>
          <version>${project.version}</version>
          <type>ejb</type>
@@ -56,6 +62,12 @@
          <artifactId>rhq-core-domain</artifactId>
          <version>${project.version}</version>
          <type>ejb</type>
+      </dependency>
+
+      <dependency>
+         <groupId>${groupId}</groupId>
+         <artifactId>rhq-core-util</artifactId>
+         <version>${project.version}</version>
       </dependency>
 
       <dependency>

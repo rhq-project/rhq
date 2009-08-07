@@ -24,8 +24,11 @@ import java.util.Map;
 
 import org.jboss.remoting.Client;
 import org.jboss.remoting.InvokerLocator;
+import org.jboss.remoting.security.SSLSocketBuilder;
+import org.jboss.remoting.transport.http.ssl.HTTPSClientInvoker;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.enterprise.communications.util.SecurityUtil;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerRemote;
 import org.rhq.enterprise.server.alert.AlertManagerRemote;
 import org.rhq.enterprise.server.auth.SubjectManagerRemote;
@@ -47,6 +50,8 @@ import org.rhq.enterprise.server.resource.ResourceManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerRemote;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerRemote;
 import org.rhq.enterprise.server.support.SupportManagerRemote;
+import org.rhq.enterprise.server.system.ServerVersion;
+import org.rhq.enterprise.server.system.SystemManagerRemote;
 
 /**
  * A remote access client with transparent proxies to RHQ servers.
@@ -54,6 +59,7 @@ import org.rhq.enterprise.server.support.SupportManagerRemote;
  * @author Greg Hinkle
  * @author Simeon Pinder
  * @author Jay Shaughnessy
+ * @author John Mazzitelli
  */
 public class RemoteClient {
 
@@ -78,7 +84,8 @@ public class RemoteClient {
         ResourceTypeManager(ResourceTypeManagerRemote.class), //
         RoleManager(RoleManagerRemote.class), //
         SubjectManager(SubjectManagerRemote.class), //
-        SupportManager(SupportManagerRemote.class),
+        SupportManager(SupportManagerRemote.class), //
+        SystemManager(SystemManagerRemote.class), //
         //        RemoteInstallManager(RemoteInstallManagerRemote.class),
         ;
 
@@ -105,42 +112,149 @@ public class RemoteClient {
         }
     };
 
-    // Default locator values
-    private String transport = "servlet";
-    private String host = "localhost";
-    private int port = 7080;
-    private boolean loggedIn = false;
+    private String transport;
+    private final String host;
+    private final int port;
+    private boolean loggedIn;
+    private Map<String, Object> managers;
+    private Subject subject;
+    private Client remotingClient;
 
-    public void setLoggedIn(boolean value) {
-        this.loggedIn = value;
-
+    /**
+     * Creates a client that will communicate with the server running on the given host
+     * listening on the given port. This constructor will not attempt to connect or login
+     * to the remote server - use {@link #login(String, String)} for that.
+     * 
+     * @param host
+     * @param port
+     */
+    public RemoteClient(String host, int port) {
+        this(null, host, port);
     }
 
-    /** Map K=ManagerName V=RemoteProxy */
-    private Map<String, Object> managers;
-    private Subject subject = null;
-
-    public RemoteClient(String host, int port) {
+    /**
+     * Creates a client that will communicate with the server running on the given host
+     * listening on the given port over the given transport.
+     * This constructor will not attempt to connect or login
+     * to the remote server - use {@link #login(String, String)} for that.
+     * 
+     * @param transport valid values are "servlet" and "sslservlet" - if <code>null</code>, "servlet" is used
+     * @param host
+     * @param port
+     */
+    public RemoteClient(String transport, String host, int port) {
+        if (transport == null) {
+            transport = "servlet";
+        }
+        this.transport = transport;
         this.host = host;
         this.port = port;
-        init();
     }
 
-    public Subject login(String user, String password) throws LoginException {
-        this.subject = getSubjectManagerRemote().login(user, password);
-        return subject;
+    /**
+     * Connects to the remote server and logs in with the given credentials.
+     * After successfully executing this, {@link #isConnected()} will be <code>true</code>
+     * and {@link #getSubject()} will return the subject that this method returns.
+     * 
+     * @param user
+     * @param password
+     *
+     * @return the logged in user
+     *
+     * @throws Exception if failed to connect to the server or log in
+     */
+    public Subject login(String user, String password) throws Exception {
+        Subject loggedInSubject;
+
+        try {
+            logout();
+            connect();
+            loggedInSubject = getSubjectManagerRemote().login(user, password);
+            this.loggedIn = true;
+        } catch (LoginException le) {
+            throw le;
+        } catch (Exception e) {
+            try {
+                this.transport = "sslservlet";
+                logout();
+                connect();
+                loggedInSubject = getSubjectManagerRemote().login(user, password);
+                this.loggedIn = true;
+            } catch (LoginException le) {
+                throw le;
+            } catch (Exception e2) {
+                this.transport = "servlet";
+                throw e; // still got an error, must not be an https vs. http issue - throw the first exception
+            }
+        }
+
+        this.subject = loggedInSubject;
+
+        ServerVersion version = getSystemManagerRemote().getServerVersion(this.subject);
+        // TODO: what to do with this?
+        System.out.println("Remote server version is: " + version);
+
+        return this.subject;
     }
 
-    public boolean isConnected() {
+    /**
+     * Logs out from the server and disconnects this client.
+     */
+    public void logout() {
+        try {
+            if (this.loggedIn && this.subject != null) {
+                getSubjectManagerRemote().logout(this.subject);
+            }
+        } catch (Exception e) {
+            // just keep going so we can disconnect this client
+        }
+
+        disconnect();
+
+        this.subject = null;
+        this.loggedIn = false;
+    }
+
+    /**
+     * Returns <code>true</code> if and only if this client successfully connected
+     * to the remote server and the user successfully logged in.
+     * 
+     * @return if the user was able to connect and log into the server
+     */
+    public boolean isLoggedIn() {
         return this.loggedIn;
     }
 
+    /**
+     * Returns the information on the user that is logged in.
+     * May be <code>null</code> if the user never logged in successfully.
+     * 
+     * @return user information or <code>null</code>
+     */
+    public Subject getSubject() {
+        return this.subject;
+    }
+
     public String getHost() {
-        return host;
+        return this.host;
     }
 
     public int getPort() {
-        return port;
+        return this.port;
+    }
+
+    public String getTransport() {
+        return this.transport;
+    }
+
+    /**
+     * Sets the underlying transport to use to communicate with the server.
+     * Available transports are "servlet" and "sslservlet".
+     * 
+     * @param transport
+     */
+    public void setTransport(String transport) {
+        this.transport = transport;
     }
 
     public AlertManagerRemote getAlertManagerRemote() {
@@ -167,11 +281,9 @@ public class RemoteClient {
         return RemoteClientProxy.getProcessor(this, Manager.ConfigurationManager);
     }
 
-    /*
-    public ContentHelperRemote getContentHelperRemote() {
-        return RemoteClientProxy.getProcessor(this, Manager.ContentHelperManager);
-    }
-    */
+    //    public ContentHelperRemote getContentHelperRemote() {
+    //        return RemoteClientProxy.getProcessor(this, Manager.ContentHelperManager);
+    //    }
 
     public ContentManagerRemote getContentManagerRemote() {
         return RemoteClientProxy.getProcessor(this, Manager.ContentManager);
@@ -229,19 +341,17 @@ public class RemoteClient {
         return RemoteClientProxy.getProcessor(this, Manager.SupportManager);
     }
 
+    public SystemManagerRemote getSystemManagerRemote() {
+        return RemoteClientProxy.getProcessor(this, Manager.SystemManager);
+    }
+
     //    public RemoteInstallManagerRemote getRemoteInstallManagerRemote() {
     //        return RemoteClientProxy.getProcessor(this, Manager.RemoteInstallManager);
     //    }
 
-    public Subject getSubject() {
-        return subject;
-    }
-
-    public void setSubject(Subject subject) {
-        this.subject = subject;
-    }
-
     /**
+     * Returns the map of all remote managers running in the server that this
+     * client can talk to.
      * 
      * @return Map K=manager name V=remote proxy
      */
@@ -260,40 +370,103 @@ public class RemoteClient {
             }
         }
 
-        return managers;
+        return this.managers;
     }
 
     /**
-     * Called after host and port have been changed/set on login.
+     * Returns the internal JBoss/Remoting client used to perform the low-level
+     * comm with the server.
+     * 
+     * This is package-scoped so the proxy can use it.
+     * 
+     * @return remoting client used to talk to the server
      */
-    public void reinitialize() {
-        try {
-            init();
-        } catch (Exception ex) {
-            System.out.println("Exception reinitalizing with new host :" + ex.getMessage());
-        }
-
+    Client getRemotingClient() {
+        return this.remotingClient;
     }
 
-    public Client getRemotingClient() {
-        return remotingClient;
-    }
-
-    private Client remotingClient = null;
-
-    private void init() {
+    private void disconnect() {
         try {
-            // create InvokerLocator with the url type string indicating the target remoting server to call upon.
-            String locatorURI = transport + "://" + host + ":" + port
-                + "/jboss-remoting-servlet-invoker/ServerInvokerServlet";
-            InvokerLocator locator = new InvokerLocator(locatorURI);
-
-            remotingClient = new Client(locator);
-            remotingClient.setSubsystem("REMOTEAPI");
-            remotingClient.connect();
+            if (this.remotingClient != null && this.remotingClient.isConnected()) {
+                this.remotingClient.disconnect();
+            }
         } catch (Exception e) {
-            e.printStackTrace(); // To change body of catch statement use File | Settings | File Templates.
+            e.printStackTrace(); // TODO what to do here?
+        } finally {
+            this.remotingClient = null;
         }
     }
 
+    private void connect() throws Exception {
+        String locatorURI = this.transport + "://" + this.host + ":" + this.port
+            + "/jboss-remoting-servlet-invoker/ServerInvokerServlet";
+        InvokerLocator locator = new InvokerLocator(locatorURI);
+
+        String subsystem = "REMOTEAPI";
+        Map<String, String> remotingConfig = buildRemotingConfig(locatorURI);
+        this.remotingClient = new Client(locator, subsystem, remotingConfig);
+        this.remotingClient.connect();
+    }
+
+    private Map<String, String> buildRemotingConfig(String locatorURI) {
+        Map<String, String> config = new HashMap<String, String>();
+        if (SecurityUtil.isTransportSecure(locatorURI)) {
+            setConfigProp(config, SSLSocketBuilder.REMOTING_KEY_STORE_FILE_PATH, true);
+            setConfigProp(config, SSLSocketBuilder.REMOTING_KEY_STORE_ALGORITHM, true);
+            setConfigProp(config, SSLSocketBuilder.REMOTING_KEY_STORE_TYPE, true);
+            setConfigProp(config, SSLSocketBuilder.REMOTING_KEY_STORE_PASSWORD, true);
+            setConfigProp(config, SSLSocketBuilder.REMOTING_KEY_PASSWORD, true);
+            setConfigProp(config, SSLSocketBuilder.REMOTING_TRUST_STORE_FILE_PATH, false);
+            setConfigProp(config, SSLSocketBuilder.REMOTING_TRUST_STORE_ALGORITHM, false);
+            setConfigProp(config, SSLSocketBuilder.REMOTING_TRUST_STORE_TYPE, false);
+            setConfigProp(config, SSLSocketBuilder.REMOTING_TRUST_STORE_PASSWORD, false);
+            setConfigProp(config, SSLSocketBuilder.REMOTING_SSL_PROTOCOL, false);
+            setConfigProp(config, SSLSocketBuilder.REMOTING_KEY_ALIAS, true);
+            setConfigProp(config, SSLSocketBuilder.REMOTING_SERVER_AUTH_MODE, false);
+            config.put(SSLSocketBuilder.REMOTING_SOCKET_USE_CLIENT_MODE, "true");
+
+            // if some of the non-required settings aren't set, define the defaults
+            if (!config.containsKey(SSLSocketBuilder.REMOTING_SERVER_AUTH_MODE)) {
+                config.put(SSLSocketBuilder.REMOTING_SERVER_AUTH_MODE, "false");
+            }
+
+            // since we do not know the server's client-auth mode, assume we need a keystore and let's make sure we have one
+            SSLSocketBuilder dummy_sslbuilder = new SSLSocketBuilder(); // just so we can test finding our keystore
+            try {
+                // this allows the configured keystore file to be a URL, file path or a resource relative to our classloader
+                dummy_sslbuilder.setKeyStoreURL(config.get(SSLSocketBuilder.REMOTING_KEY_STORE_FILE_PATH));
+            } catch (Exception e) {
+                // this probably is due to the fact that the keystore doesn't exist yet - let's prepare one now
+                SecurityUtil.createKeyStore(config.get(SSLSocketBuilder.REMOTING_KEY_STORE_FILE_PATH), config
+                    .get(SSLSocketBuilder.REMOTING_KEY_ALIAS), "CN=RHQ, OU=RedHat, O=redhat.com, C=US", config
+                    .get(SSLSocketBuilder.REMOTING_KEY_STORE_PASSWORD), config
+                    .get(SSLSocketBuilder.REMOTING_KEY_PASSWORD), "DSA", 36500);
+
+                // now try to set it again, if an exception is still thrown, it's an unrecoverable error
+                dummy_sslbuilder.setKeyStoreURL(config.get(SSLSocketBuilder.REMOTING_KEY_STORE_FILE_PATH));
+            }
+
+            // in case the transport floats over https - we want to make sure a hostname verifier is installed and allows all hosts
+            config.put(HTTPSClientInvoker.IGNORE_HTTPS_HOST, "true");
+        }
+        return config;
+    }
+
+    /**
+     * Looks up the prop name in system properties and puts the value in the map. If the value is null,
+     * nothing is placed in the map.
+     * 
+     * @param config
+     * @param propName
+     * @param mustExist if <code>true</code>, the property must exist, otherwise, an exception will be thrown
+     */
+    private void setConfigProp(Map<String, String> config, String propName, boolean mustExist) {
+        String propValue = System.getProperty(propName);
+        if (propValue != null) {
+            config.put(propName, propValue);
+        } else if (mustExist) {
+            throw new IllegalArgumentException("You must set property [" + propName + "]");
+        }
+        return;
+    }
 }

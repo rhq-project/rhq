@@ -576,7 +576,7 @@ public class ResourceClientProxy {
 
 
 
-    public static void main(String[] args) throws LoginException {
+    public static void main(String[] args) throws Exception {
         RemoteClient rc = new RemoteClient("localhost", 7080);
 
         rc.login("rhqadmin", "rhqadmin");

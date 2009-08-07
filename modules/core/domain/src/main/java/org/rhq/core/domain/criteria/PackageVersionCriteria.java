@@ -32,14 +32,14 @@ public class PackageVersionCriteria extends Criteria {
 
         filterOverrides.put("channelId", "id IN " //
             + "( SELECT cpv.packageVersion.id" //
-            + "    FROM channelPackageVersions cpv " //
+            + "    FROM pv.channelPackageVersions cpv " //
             + "   WHERE cpv.channel.id = ? )");
         filterOverrides.put("fileSizeMinimum", "fileSize >= ?");
         filterOverrides.put("fileSizeMaximum", "fileSize <= ?");
         filterOverrides.put("packageTypeId", "generalPackage.packageType.id = ? ");
         filterOverrides.put("resourceId", "id IN " //
             + "( SELECT ip.packageVersion.id" //
-            + "    FROM installedPackages ip " //
+            + "    FROM pv.installedPackages ip " //
             + "   WHERE ip.resource.id = ? )");
     }
 

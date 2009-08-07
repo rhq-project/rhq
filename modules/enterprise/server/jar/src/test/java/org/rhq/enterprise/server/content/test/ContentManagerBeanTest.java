@@ -62,9 +62,11 @@ import org.rhq.core.domain.content.transfer.RemoveIndividualPackageResponse;
 import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.content.transfer.RetrievePackageBitsRequest;
+import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
@@ -75,7 +77,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class ContentManagerBeanTest extends AbstractEJB3Test {
     // Attributes  --------------------------------------------
 
-    private static final boolean ENABLE_TESTS = true;
+    private static final boolean ENABLE_TESTS = false;
 
     /**
      * ContentAgentService method implementations should synchronize on this to allow the test method to pause before
@@ -440,7 +442,8 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
         }
     }
 
-    @Test(enabled = ENABLE_TESTS)
+    // @Test(enabled = ENABLE_TESTS)
+    @Test(enabled = true)
     public void testSuccessfulDeployPackages() throws Exception {
         // Setup  --------------------------------------------
         Subject overlord = subjectManager.getOverlord();
@@ -516,7 +519,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
                         + historyEntry.getStatus();
                 }
 
-                // Ensure the installed package has not been added to the resoure yet
+                // Ensure the installed package has not been added to the resource yet
 
                 // Package 1, Version 2
                 query = em.createNamedQuery(InstalledPackage.QUERY_FIND_BY_RESOURCE_ID_AND_PKG_VER_ID);
@@ -631,6 +634,30 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
             historyEntity = (InstalledPackageHistory) results.get(1);
             assert historyEntity.getStatus() == InstalledPackageHistoryStatus.BEING_INSTALLED : "Incorrect status on first entity. Expected: BEING_INSTALLED, Found: "
                 + historyEntity.getStatus();
+
+            // Add a few tests for the new Criteria Search feature
+            PackageVersionCriteria criteria = new PackageVersionCriteria();
+            criteria.addFilterResourceId(resource1.getId());
+            PageList<PackageVersion> pageList = contentManager.findInstalledPackageVersionsByCriteria(overlord,
+                criteria);
+            assertNotNull(pageList);
+            ArrayList<PackageVersion> pvs = pageList.getValues();
+            assertEquals(2, pvs.size());
+            PackageVersion pv0 = pvs.get(0);
+
+            criteria.addFilterPackageTypeId(pv0.getGeneralPackage().getPackageType().getId());
+            pageList = contentManager.findInstalledPackageVersionsByCriteria(overlord, criteria);
+            assertNotNull(pageList);
+            pvs = pageList.getValues();
+            assertEquals(1, pvs.size());
+            assertEquals(pv0.getId(), pvs.get(0).getId());
+
+            // there is no channel assignment, any valid ID should eliminate all PVs
+            criteria.addFilterChannelId(38465);
+            pageList = contentManager.findInstalledPackageVersionsByCriteria(overlord, criteria);
+            assertNotNull(pageList);
+            pvs = pageList.getValues();
+            assertEquals(0, pvs.size());
         } finally {
             getTransactionManager().rollback();
             em.close();
@@ -1444,7 +1471,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
                 em.persist(package4);
 
                 // Package 5 - Contains 1 version, it is installed
-                package5 = new Package("Package5", packageType4);
+                package5 = new Package("Package5", packageType3);
 
                 PackageVersion package5Installed = new PackageVersion(package5, "1.0.0", architecture1);
                 package5.addVersion(package5Installed);

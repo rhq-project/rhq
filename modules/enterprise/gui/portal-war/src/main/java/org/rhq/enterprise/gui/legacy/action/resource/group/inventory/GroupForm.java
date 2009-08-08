@@ -22,10 +22,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
+
 import org.apache.struts.action.ActionErrors;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.action.ActionMessage;
+
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
@@ -167,13 +170,23 @@ public class GroupForm extends BaseValidatorForm {
     }
 
     private List<Map<String, Object>> getOptionListItemsWithDashes(List<ResourceType> types) {
+        Map<String, Integer> typeNameCounts = new HashMap<String, Integer>();
+        for (ResourceType type : types) {
+            if (typeNameCounts.containsKey(type.getName()) == false) {
+                typeNameCounts.put(type.getName(), 1);
+            } else {
+                typeNameCounts.put(type.getName(), typeNameCounts.get(type.getName()) + 1);
+            }
+        }
+
         List<Map<String, Object>> items = new ArrayList<Map<String, Object>>();
         if (types != null) {
             for (ResourceType type : types) {
                 // GroupTypeForm needs this data format - a map with "value" and "label" keys
                 Map<String, Object> map = new HashMap<String, Object>(2);
                 map.put("value", type.getId());
-                map.put("label", "- " + type.getName());
+                Integer count = typeNameCounts.get(type.getName());
+                map.put("label", "- " + type.getName() + (count > 1 ? (" (" + type.getPlugin() + " Plugin)") : ""));
                 items.add(map);
             }
         }

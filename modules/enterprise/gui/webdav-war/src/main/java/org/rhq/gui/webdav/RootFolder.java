@@ -104,7 +104,7 @@ public class RootFolder extends Authenticator implements AuthenticatedCollection
             ResourceManagerLocal rm = LookupUtil.getResourceManager();
 
             List<ResourceComposite> foundRoots = rm.findResourceComposites(subject, ResourceCategory.PLATFORM, null,
-                null, null, true, PageControl.getUnlimitedInstance());
+                null, null, null, true, PageControl.getUnlimitedInstance());
 
             if (foundRoots != null) {
                 this.roots = new ArrayList<ResourceFolder>(foundRoots.size());

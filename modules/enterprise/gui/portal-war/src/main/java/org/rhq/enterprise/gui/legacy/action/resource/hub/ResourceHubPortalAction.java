@@ -35,10 +35,9 @@ import org.apache.struts.util.MessageResources;
 import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.ResourceCategory;
-import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
-import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.Portal;
@@ -50,8 +49,6 @@ import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
 import org.rhq.enterprise.server.resource.InventorySummary;
-import org.rhq.enterprise.server.resource.ResourceBossLocal;
-import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -62,18 +59,21 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class ResourceHubPortalAction extends BaseAction {
     public static final int SELECTOR_GROUP_COMPAT = 1;
-
     public static final int SELECTOR_GROUP_ADHOC = 2;
 
     private static final String DEFAULT_RESOURCE_CATEGORY = ResourceCategory.PLATFORM.name();
-
     private static final String DEFAULT_RESOURCE_NAME = null;
-
     private static final String HIERARCHY_SEPARATOR = " > ";
-
-    private static final ResourceType ALL_RESOURCE_TYPES = null;
+    private static final String ALL_RESOURCE_TYPES = null;
+    private static final String ALL_PLUGINS = null;
 
     protected Log log = LogFactory.getLog(ResourceHubPortalAction.class.getName());
+
+    private MessageResources messages;
+
+    private ResourceTypeManagerLocal resourceTypeManager = LookupUtil.getResourceTypeManager();
+
+    private static String CHARSET = "UTF-16";
 
     // ---------------------------------------------------- Public Methods
 
@@ -83,14 +83,10 @@ public class ResourceHubPortalAction extends BaseAction {
     @Override
     public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {
+        messages = getResources(request);
         ResourceHubForm hubForm = (ResourceHubForm) form;
         org.rhq.core.domain.util.PageControl pageControl = WebUtility.getPageControl(request);
         Subject subject = RequestUtils.getSubject(request);
-
-        //ControlBoss controlBoss = ContextUtils.getControlBoss(context); // TODO: Get rid of this.
-        ResourceBossLocal resourceBoss = LookupUtil.getResourceBoss();
-        ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
-        ResourceTypeManagerLocal resourceTypeManager = LookupUtil.getResourceTypeManager();
 
         HttpSession session = request.getSession();
         WebUser user = SessionUtils.getWebUser(request.getSession());
@@ -101,10 +97,9 @@ public class ResourceHubPortalAction extends BaseAction {
         // Find resources specified by category and potentially type.
         // Collect query params and replace invalid ones with defaults.
         String resourceName = getResourceName(request, hubForm);
-        ResourceType resourceType = ALL_RESOURCE_TYPES;
+        String resourceType = ALL_RESOURCE_TYPES;
         if ((hubForm.getResourceType() != null) && !hubForm.getResourceType().trim().equals("")) {
-            resourceType = resourceTypeManager
-                .getResourceTypeById(subject, Integer.parseInt(hubForm.getResourceType()));
+            resourceType = decode(hubForm.getResourceType());
         }
 
         if ((hubForm.getResourceCategory() == null) || hubForm.getResourceCategory().equals("")) {
@@ -112,28 +107,33 @@ public class ResourceHubPortalAction extends BaseAction {
         }
 
         ResourceCategory resourceCategory = ResourceCategory.valueOf(hubForm.getResourceCategory());
-        PageList<ResourceComposite> resources = getResources(hubForm, subject, resourceManager, resourceCategory,
-            resourceType, resourceName, pageControl);
+        String pluginName = ALL_PLUGINS;
+        if ((hubForm.getPlugin() != null) && !hubForm.getPlugin().trim().equals("")) {
+            pluginName = decode(hubForm.getPlugin());
+        }
+        PageList<ResourceComposite> resources = LookupUtil.getResourceManager().findResourceComposites(subject,
+            resourceCategory, resourceType, pluginName, null, hubForm.getKeywords(), true, pageControl);
         request.setAttribute(Constants.ALL_RESOURCES_ATTR, resources);
 
-        initResourceTypesPulldownMenu(request, hubForm, subject, resourceTypeManager, resourceCategory, resourceName);
+        initResourceTypesAndPluginsPulldownMenu(hubForm, subject, resourceCategory, resourceName, resourceType,
+            pluginName);
 
         request.setAttribute(Constants.ALL_RESOURCES_CONTROLLABLE, new ArrayList());
-        initInventorySummary(subject, request, resourceBoss);
+        initInventorySummary(subject, request);
         SessionUtils.resetReturnPath(request.getSession());
-        Portal portal = createPortal();
-        request.setAttribute(Constants.PORTAL_KEY, portal);
+        request.setAttribute(Constants.PORTAL_KEY, Portal
+            .createPortal("resource.hub.ResourceHubTitle", ".resource.hub"));
 
         String navHierarchy = buildResourceNavHierarchy(resourceCategory, resourceType);
         request.setAttribute(Constants.INVENTORY_HIERARCHY_ATTR, navHierarchy);
         return returnSuccess(request, mapping);
     }
 
-    private String buildResourceNavHierarchy(ResourceCategory resourceCategory, ResourceType resourceType) {
+    private String buildResourceNavHierarchy(ResourceCategory resourceCategory, String resourceTypeName) {
         String navHierarchy; // Start the navHierarchy with the resource category.
         navHierarchy = StringUtil.toUpperCaseAt(resourceCategory.toString(), 0) + "s" + HIERARCHY_SEPARATOR;
-        if (resourceType != null) {
-            navHierarchy += getResourceTypeDisplayName(resourceType);
+        if (resourceTypeName != null) {
+            navHierarchy += resourceTypeName;
         } else {
             navHierarchy += "All " + StringUtil.toUpperCaseAt(resourceCategory.toString(), 0) + "s";
         }
@@ -141,16 +141,15 @@ public class ResourceHubPortalAction extends BaseAction {
         return navHierarchy;
     }
 
-    private void initInventorySummary(Subject user, HttpServletRequest request, ResourceBossLocal resourceBoss)
+    private void initInventorySummary(Subject user, HttpServletRequest request)
         throws org.rhq.enterprise.server.auth.SessionNotFoundException,
         org.rhq.enterprise.server.auth.SessionTimeoutException, java.rmi.RemoteException {
-        InventorySummary summary = resourceBoss.getInventorySummary(user);
+        InventorySummary summary = LookupUtil.getResourceBoss().getInventorySummary(user);
         request.setAttribute(Constants.RESOURCE_SUMMARY_ATTR, summary);
     }
 
     private String getResourceName(HttpServletRequest request, ResourceHubForm hubForm) {
-        MessageResources res = getResources(request);
-        String jsInserted = res.getMessage("resource.hub.search.KeywordSearchText");
+        String jsInserted = messages.getMessage("resource.hub.search.KeywordSearchText");
         String resourceName = hubForm.getKeywords();
         if ((resourceName != null) && (resourceName.equals("") || resourceName.equals(jsInserted))) {
             resourceName = DEFAULT_RESOURCE_NAME;
@@ -160,37 +159,26 @@ public class ResourceHubPortalAction extends BaseAction {
         return resourceName;
     }
 
-    protected Portal createPortal() {
-        Portal portal = Portal.createPortal("resource.hub.ResourceHubTitle", ".resource.hub");
-        return portal;
-    }
-
-    protected PageList<ResourceComposite> getResources(ResourceHubForm hubForm, Subject subject,
-        ResourceManagerLocal resourceManager, ResourceCategory resourceCategory, ResourceType resourceType,
-        String nameFilter, PageControl pageControl) throws Exception {
-        if (log.isTraceEnabled()) {
-            log.trace("Finding all resources with category [" + resourceCategory + "] and resource type ["
-                + resourceType + "] and resource name [" + nameFilter + "]...");
+    protected void initResourceTypesAndPluginsPulldownMenu(ResourceHubForm hubForm, Subject subject,
+        ResourceCategory resourceCategory, String nameFilter, String typeName, String pluginName) throws Exception {
+        // Set the first entry in the menu to the label "All <ResourceCategory> Types".
+        hubForm.addType(buildResourceTypeMenuCategoryLabel(resourceCategory));
+        List<String> resourceTypeNames = resourceTypeManager.getUtilizedResourceTypeNamesByCategory(subject,
+            resourceCategory, nameFilter, pluginName);
+        for (String resourceTypeName : resourceTypeNames) {
+            hubForm.addType(new LabelValueBean(resourceTypeName, encode(resourceTypeName)));
         }
 
-        return resourceManager.findResourceComposites(subject, resourceCategory, resourceType, null, hubForm
-            .getKeywords(), true, pageControl);
+        // Set the first entry in the menu to the label "All Plugins Types"
+        hubForm.addPlugin(new LabelValueBean(messages.getMessage("resource.hub.filter.AllPlugins"), ""));
+        List<Plugin> plugins = LookupUtil.getResourceMetadataManager().getPluginsByResourceTypeAndCategory(typeName,
+            resourceCategory);
+        for (Plugin plugin : plugins) {
+            hubForm.addPlugin(new LabelValueBean(plugin.getDisplayName(), encode(plugin.getName())));
+        }
     }
 
-    protected void initResourceTypesPulldownMenu(HttpServletRequest request, ResourceHubForm hubForm, Subject subject,
-        ResourceTypeManagerLocal resourceTypeManager, ResourceCategory resourceCategory, String nameFilter)
-        throws Exception {
-        // Set the first entry in the menu to the label "All <ResourceCategory> Types".
-        hubForm.addType(buildResourceTypeMenuCategoryLabel(request, resourceCategory));
-        List<ResourceType> resourceTypes = resourceTypeManager.getUtilizedResourceTypesByCategory(subject,
-            resourceCategory, nameFilter);
-
-        //Set<ResourceType> resourceTypes = getResourceTypesRepresentedByResources(resources);
-        addTypeMenuItems(hubForm, resourceTypes);
-    }
-
-    protected LabelValueBean buildResourceTypeMenuCategoryLabel(HttpServletRequest request,
-        @NotNull ResourceCategory resourceCategory) {
+    protected LabelValueBean buildResourceTypeMenuCategoryLabel(@NotNull ResourceCategory resourceCategory) {
         String key = null;
         switch (resourceCategory) {
         case PLATFORM: {
@@ -209,26 +197,15 @@ public class ResourceHubPortalAction extends BaseAction {
         }
         }
 
-        LabelValueBean menuLabel = createMenuLabel(request, key, "");
+        LabelValueBean menuLabel = new LabelValueBean(messages.getMessage(key), "");
         return menuLabel;
     }
 
-    protected LabelValueBean createMenuLabel(HttpServletRequest req, String key, String value) {
-        MessageResources messages = getResources(req);
-        return new LabelValueBean(messages.getMessage(key), value);
+    private String encode(String parameter) {
+        return parameter.replaceAll(" ", "_");
     }
 
-    protected void addTypeMenuItems(ResourceHubForm hubForm, List<ResourceType> resourceTypes) {
-        for (ResourceType resourceType : resourceTypes) {
-            String typeDisplayName = getResourceTypeDisplayName(resourceType);
-            hubForm.addType(new LabelValueBean(typeDisplayName, Integer.toString(resourceType.getId())));
-        }
-    }
-
-    private String getResourceTypeDisplayName(ResourceType resourceType) {
-        // TODO: Type display name should probably also include ancestor server/service type names.
-        //       (e.g. "JBoss Datasource" rather than simply "Datasource" to distinguish a JBoss datasource from a
-        //       WebLogic datasource)
-        return resourceType.getName();
+    private String decode(String parameter) {
+        return parameter.replaceAll("_", " ");
     }
 }

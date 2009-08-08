@@ -191,9 +191,28 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
         return res;
     }
 
-    @SuppressWarnings("unchecked")
+    public List<String> getUtilizedResourceTypeNamesByCategory(Subject subject, ResourceCategory category,
+        String nameFilter, String pluginName) {
+
+        List<ResourceType> types = getUtilizeTypes_helper(subject, category, nameFilter, pluginName);
+        List<String> typeNames = new ArrayList<String>();
+        for (ResourceType type : types) {
+            if (typeNames.contains(type.getName()) == false) {
+                typeNames.add(type.getName());
+            }
+        }
+        return typeNames;
+    }
+
     public List<ResourceType> getUtilizedResourceTypesByCategory(Subject subject, ResourceCategory category,
         String nameFilter) {
+        List<ResourceType> types = getUtilizeTypes_helper(subject, category, nameFilter, null);
+        return types;
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<ResourceType> getUtilizeTypes_helper(Subject subject, ResourceCategory category, String nameFilter,
+        String pluginName) {
 
         Query query = null;
         if (authorizationManager.isInventoryManager(subject)) {
@@ -205,6 +224,7 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
 
         query.setParameter("category", category);
         query.setParameter("nameFilter", PersistenceUtility.formatSearchParameter(nameFilter));
+        query.setParameter("pluginName", pluginName);
         query.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
 
         List<ResourceType> results = query.getResultList();

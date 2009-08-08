@@ -56,6 +56,7 @@
    </c:when>
 </c:choose>
 
+<fmt:message var="pluginTH" key="resource.hub.PluginTH"/>
 
 <c:url var="resourceTypeAction" value="/ResourceHub.do">
    <c:if test="${not empty param.keywords}">
@@ -72,6 +73,9 @@
    </c:if>
    <c:if test="${not empty param.resourceType}">
       <c:param name="resourceType" value="${param.resourceType}"/>
+   </c:if>
+   <c:if test="${not empty param.plugin}">
+      <c:param name="plugin" value="${param.plugin}"/>
    </c:if>
    <c:param name="resourceCategory" value="${ResourceHubForm.resourceCategory}"/>
    <c:param name="view" value="${ResourceHubForm.view}"/>
@@ -179,12 +183,12 @@
 <!-- FILTER TOOLBAR CONTENTS -->
 <table width="100%" cellpadding="0" cellspacing="0" border="0">
    <tr>
-      <td class="FilterLine" colspan="2">
+      <td class="FilterLine" colspan="3">
          <html:img page="/images/spacer.gif" width="1" height="1" border="0"/>
       </td>
    </tr>
    <tr>
-      <td class="FilterLabelText" nowrap align="right">
+      <td class="FilterLabelText" nowrap="nowrap" align="right">
          <c:choose>
          <c:when test="${ResourceHubForm.types == null}">
             <html:hidden property="resourceType" value=""/>
@@ -193,10 +197,24 @@
          <c:otherwise>
          <fmt:message key="Filter.ViewLabel"/>
       </td>
-      <td class="FilterLabelText" width="100%">
+      <td class="FilterLabelText">
          <html:select property="resourceType" styleClass="FilterFormText" size="1"
                       onchange="goToSelectLocation(this, 'resourceType', '${resourceTypeAction}');">
             <html:optionsCollection property="types"/>
+         </html:select>
+         </c:otherwise>
+         </c:choose>
+      </td>
+      <td class="FilterLabelText" width="100%">
+         <c:choose>
+         <c:when test="${ResourceHubForm.plugins == null}">
+            <html:hidden property="plugin" value=""/>
+            &nbsp;
+         </c:when>
+         <c:otherwise>
+         <html:select property="plugin" styleClass="FilterFormText" size="1"
+                      onchange="goToSelectLocation(this, 'plugin', '${resourceTypeAction}');">
+            <html:optionsCollection property="plugins"/>
          </html:select>
          </c:otherwise>
          </c:choose>
@@ -218,6 +236,9 @@
          <c:if test="${not empty param.resourceType}">
             <c:param name="resourceType" value="${param.resourceType}"/>
          </c:if>
+         <c:if test="${not empty param.plugin}">
+            <c:param name="plugin" value="${param.plugin}"/>
+         </c:if>
 
          <c:param name="resourceCategory" value="${ResourceHubForm.resourceCategory}"/>
       </c:url>
@@ -233,6 +254,9 @@
    </c:if>
    <c:if test="${not empty param.resourceType}">
       <c:param name="resourceType" value="${param.resourceType}"/>
+   </c:if>
+   <c:if test="${not empty param.plugin}">
+      <c:param name="plugin" value="${param.plugin}"/>
    </c:if>
       <c:if test="${not empty param.ps}">
          <c:param name="ps" value="${param.ps}"/>
@@ -274,8 +298,10 @@
          </c:if>
 
          <c:if test="${not empty resourceTypeTH}">
-            <display:column width="25%" property="resource.resourceType.name"
+            <display:column width="15%" property="resource.resourceType.name"
                             title="${resourceTypeTH}" isLocalizedTitle="false" sortAttr="res.resourceType.name"/>
+            <display:column width="10%" property="resource.resourceType.plugin"
+                            title="${pluginTH}" isLocalizedTitle="false" sortAttr="res.resourceType.plugin"/>
          </c:if>
 
          <display:column width="30%" property="resource.description" title="common.header.Description" sortAttr="res.description"/>
@@ -296,6 +322,9 @@
    </c:if>  
    <c:if test="${not empty param.resourceType}">
       <c:param name="resourceType" value="${param.resourceType}"/>
+   </c:if>
+   <c:if test="${not empty param.plugin}">
+      <c:param name="plugin" value="${param.plugin}"/>
    </c:if>
    <c:param name="resourceCategory" value="${param.resourceCategory}"/>
 

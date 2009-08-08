@@ -797,7 +797,9 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             parentResource = getResourceById(user, parentResourceId);
         }
 
-        return findResourceComposites(user, category, type, parentResource, searchString, false, pageControl);
+        String typeNameFilter = type == null ? null : type.getName();
+        return findResourceComposites(user, category, typeNameFilter, null, parentResource, searchString, false,
+            pageControl);
     }
 
     /**
@@ -815,8 +817,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
      * @return
      */
     @SuppressWarnings("unchecked")
-    public PageList<ResourceComposite> findResourceComposites(Subject user, ResourceCategory category,
-        ResourceType type, Resource parentResource, String searchString, boolean attachParentResource,
+    public PageList<ResourceComposite> findResourceComposites(Subject user, ResourceCategory category, String typeName,
+        String pluginName, Resource parentResource, String searchString, boolean attachParentResource,
         PageControl pageControl) {
         pageControl.initDefaultOrderingField("res.name");
         pageControl.addDefaultOrderingField("res.id");
@@ -852,8 +854,10 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
         query.setParameter("category", category);
         queryCount.setParameter("category", category);
-        query.setParameter("resourceType", type);
-        queryCount.setParameter("resourceType", type);
+        query.setParameter("resourceTypeName", typeName);
+        queryCount.setParameter("resourceTypeName", typeName);
+        query.setParameter("pluginName", pluginName);
+        queryCount.setParameter("pluginName", pluginName);
         query.setParameter("search", searchString);
         queryCount.setParameter("search", searchString);
         query.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
@@ -890,7 +894,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             }
         }
 
-        return findResourceComposites(user, category, resourceType, parentResource, null, false, pageControl);
+        String typeNameFilter = resourceType == null ? null : resourceType.getName();
+        return findResourceComposites(user, category, typeNameFilter, null, parentResource, null, false, pageControl);
     }
 
     @SuppressWarnings("unchecked")

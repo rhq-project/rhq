@@ -27,6 +27,7 @@ import javax.persistence.NoResultException;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.plugin.Plugin;
+import org.rhq.core.domain.resource.ResourceCategory;
 
 /**
  * Provides functionality surrounding agent plugins and their resource metadata.
@@ -56,6 +57,8 @@ public interface ResourceMetadataManagerLocal {
      * @return list of plugins deployed
      */
     List<Plugin> getPlugins();
+
+    List<Plugin> getPluginsByResourceTypeAndCategory(String resourceTypeName, ResourceCategory resourceCategory);
 
     /**
      * Given the plugin name, will return that plugin.  The name is defined in the plugin descriptor.

@@ -18,21 +18,20 @@
  */
 package org.rhq.enterprise.gui.navigation.resource;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageControl;
+import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
-import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-
-import java.util.List;
-import java.util.ArrayList;
 
 /**
  * @author Greg Hinkle
  */
 public class ResourceSelectUIBean {
-
 
     private Resource resource;
 
@@ -57,20 +56,14 @@ public class ResourceSelectUIBean {
     }
 
     public List<ResourceComposite> autocomplete(Object suggest) {
-        String pref = (String)suggest;
+        String pref = (String) suggest;
         ArrayList<ResourceComposite> result;
 
         PageControl pc = new PageControl();
         pc.setPageSize(50);
 
-        result = resourceManager.findResourceComposites(
-                EnterpriseFacesContextUtility.getSubject(),
-                null,
-                null,
-                null,
-                pref,
-                true,
-                pc);
+        result = resourceManager.findResourceComposites(EnterpriseFacesContextUtility.getSubject(), null, null, null,
+            null, pref, true, pc);
 
         return result;
     }

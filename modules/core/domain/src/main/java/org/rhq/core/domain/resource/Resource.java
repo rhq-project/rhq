@@ -589,7 +589,8 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "WHERE res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
         + "  AND (:category = res.resourceType.category OR :category is null) " //
         + "  AND (:parentResource = res.parentResource OR :parentResource is null)" //
-        + "  AND (:resourceType = res.resourceType OR :resourceType is null) " //
+        + "  AND (:resourceTypeName = res.resourceType.name OR :resourceTypeName is null) " //
+        + "  AND (:pluginName = res.resourceType.plugin OR :pluginName is null) " //
         + "  AND (res.inventoryStatus = :inventoryStatus OR :inventoryStatus is null) " //
         + "  AND (UPPER(res.name) LIKE :search OR UPPER(res.description) LIKE :search OR :search is null) "),
     @NamedQuery(name = Resource.QUERY_FIND_COMPOSITE_WITH_PARENT, query = "" //
@@ -610,7 +611,8 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "WHERE res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
         + "  AND (:category = res.resourceType.category OR :category is null) " //
         + "  AND (:parentResource = res.parentResource OR :parentResource is null)" //
-        + "  AND (:resourceType = res.resourceType OR :resourceType is null) " //
+        + "  AND (:resourceTypeName = res.resourceType.name OR :resourceTypeName is null) " //
+        + "  AND (:pluginName = res.resourceType.plugin OR :pluginName is null) " //
         + "  AND (res.inventoryStatus = :inventoryStatus OR :inventoryStatus is null) " //
         + "  AND (UPPER(res.name) LIKE :search OR UPPER(res.description) LIKE :search OR :search is null) "),
     @NamedQuery(name = Resource.QUERY_FIND_COMPOSITE_COUNT, query = "SELECT count(res) " //
@@ -618,7 +620,8 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + " WHERE res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
         + "   AND (:category = res.resourceType.category OR :category is null) " //
         + "   AND (:parentResource = res.parentResource OR :parentResource is null)" //
-        + "   AND (:resourceType = res.resourceType OR :resourceType is null) " //
+        + "   AND (:resourceTypeName = res.resourceType.name OR :resourceTypeName is null) " //
+        + "   AND (:pluginName = res.resourceType.plugin OR :pluginName is null) " //
         + "   AND (res.inventoryStatus = :inventoryStatus OR :inventoryStatus is null) " //
         + "   AND (UPPER(res.name) LIKE :search OR UPPER(res.description) LIKE :search OR :search is null) "),
     @NamedQuery(name = Resource.QUERY_FIND_COMPOSITE_ADMIN, query = "" //
@@ -627,7 +630,8 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "       LEFT JOIN res.currentAvailability a " //
         + " WHERE (:category = res.resourceType.category OR :category is null) " //
         + "   AND (:parentResource = res.parentResource OR :parentResource is null)" //
-        + "   AND (:resourceType = res.resourceType OR :resourceType is null) " //
+        + "   AND (:resourceTypeName = res.resourceType.name OR :resourceTypeName is null) " //
+        + "   AND (:pluginName = res.resourceType.plugin OR :pluginName is null) " //
         + "   AND (res.inventoryStatus = :inventoryStatus OR :inventoryStatus is null) " //
         + "   AND (UPPER(res.name) LIKE :search OR UPPER(res.description) LIKE :search OR :search is null) "),
     @NamedQuery(name = Resource.QUERY_FIND_COMPOSITE_WITH_PARENT_ADMIN, query = "" //
@@ -639,7 +643,8 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "       LEFT JOIN res.currentAvailability a " //
         + " WHERE (:category = res.resourceType.category OR :category is null) " //
         + "   AND (:parentResource = res.parentResource OR :parentResource is null)" //
-        + "   AND (:resourceType = res.resourceType OR :resourceType is null) " //
+        + "   AND (:resourceTypeName = res.resourceType.name OR :resourceTypeName is null) " //
+        + "   AND (:pluginName = res.resourceType.plugin OR :pluginName is null) " //
         + "   AND (res.inventoryStatus = :inventoryStatus OR :inventoryStatus is null) " //
         + "   AND (UPPER(res.name) LIKE :search OR UPPER(res.description) LIKE :search OR :search is null) "),
     @NamedQuery(name = Resource.QUERY_FIND_COMPOSITE_COUNT_ADMIN, query = "" //
@@ -647,7 +652,8 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "  FROM Resource res " //
         + " WHERE (:category = res.resourceType.category OR :category is null) " //
         + "   AND (:parentResource = res.parentResource OR :parentResource is null)" //
-        + "   AND (:resourceType = res.resourceType OR :resourceType is null) " //
+        + "   AND (:resourceTypeName = res.resourceType.name OR :resourceTypeName is null) " //
+        + "   AND (:pluginName = res.resourceType.plugin OR :pluginName is null) " //
         + "   AND (res.inventoryStatus = :inventoryStatus OR :inventoryStatus is null) " //
         + "   AND (UPPER(res.name) LIKE :search OR UPPER(res.description) LIKE :search OR :search is null) "),
     @NamedQuery(name = Resource.QUERY_GET_STATUSES_BY_PARENT, query = "" //

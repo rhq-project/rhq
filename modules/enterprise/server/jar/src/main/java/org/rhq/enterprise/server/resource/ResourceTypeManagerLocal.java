@@ -82,6 +82,9 @@ public interface ResourceTypeManagerLocal {
 
     List<ResourceType> getUtilizedResourceTypesByCategory(Subject subject, ResourceCategory category, String nameFilter);
 
+    List<String> getUtilizedResourceTypeNamesByCategory(Subject subject, ResourceCategory category, String nameFilter,
+        String pluginName);
+
     List<ResourceType> getResourceTypesForCompatibleGroups(Subject subject);
 
     Map<String, Integer> getResourceTypeCountsByGroup(Subject subject, ResourceGroup group, boolean recursive);

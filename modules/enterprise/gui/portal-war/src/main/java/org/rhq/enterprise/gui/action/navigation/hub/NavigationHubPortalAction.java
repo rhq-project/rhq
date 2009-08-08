@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.action.navigation.hub;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.enterprise.gui.legacy.Portal;
 import org.rhq.enterprise.gui.legacy.action.resource.hub.ResourceHubPortalAction;
 
@@ -97,7 +98,6 @@ public class NavigationHubPortalAction extends ResourceHubPortalAction {
      * ApplicationResource.properties   // e.g. resource.navigation.JBossEntityEJBs.filter
      * hubForm.addTypeFirst(createMenuLabel(request, hubForm.getCategoryName() + ".filter", ""));}*/
 
-    @Override
     protected Portal createPortal() {
         Portal portal = Portal.createPortal("resource.hub.ResourceHubTitle", ".navigation.hub");
         return portal;

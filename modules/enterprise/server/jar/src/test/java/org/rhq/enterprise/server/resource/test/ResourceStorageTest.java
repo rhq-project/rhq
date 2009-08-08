@@ -65,8 +65,9 @@ public class ResourceStorageTest extends AbstractEJB3Test {
             //Subject subject = subjectManager.getOverlord();
             createSession(subject);
             ResourceType t = em.getReference(ResourceType.class, new Integer(501064));
+            String typeNameFilter = t == null ? null : t.getName();
             PageList<ResourceComposite> resources = resourceManager.findResourceComposites(subject,
-                ResourceCategory.SERVER, t, null, "g", false, pc);
+                ResourceCategory.SERVER, typeNameFilter, null, null, "g", false, pc);
             System.out.println("Found resource composites: " + resources.size());
             for (ResourceComposite resourceComposite : resources) {
                 System.out.println("\t" + resourceComposite);
@@ -106,8 +107,8 @@ public class ResourceStorageTest extends AbstractEJB3Test {
             //Subject subject = subjectManager.loginUnauthenticated("ghinkle");
             Subject subject = subjectManager.getOverlord();
             createSession(subject);
-            List<ResourceGroupComposite> groups = groupManager.findResourceGroupComposites(subject, GroupCategory.MIXED,
-                null, null, null, null, null, pc);
+            List<ResourceGroupComposite> groups = groupManager.findResourceGroupComposites(subject,
+                GroupCategory.MIXED, null, null, null, null, null, pc);
             System.out.println("Found mixed groups: " + groups.size());
             for (ResourceGroupComposite group : groups) {
                 System.out.println("\t" + group);

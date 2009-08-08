@@ -113,14 +113,18 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_CATEGORY, query = "SELECT rt FROM ResourceType AS rt "
         + "WHERE rt.category = :category"),
     @NamedQuery(name = ResourceType.QUERY_FIND_UTILIZED_BY_CATEGORY, query = "SELECT DISTINCT res.resourceType "
-        + "FROM Resource res, IN (res.implicitGroups) g, IN (g.roles) r, IN (r.subjects) s " + "WHERE s = :subject "
+        + "FROM Resource res, IN (res.implicitGroups) g, IN (g.roles) r, IN (r.subjects) s " //
+        + "WHERE s = :subject " //
         + "AND res.resourceType.category = :category "
         + "AND (UPPER(res.name) LIKE :nameFilter OR :nameFilter is null) "
+        + "AND (res.resourceType.plugin = :pluginName OR :pluginName is null) "
         + "AND (:inventoryStatus = res.inventoryStatus OR :inventoryStatus is null) "
         + "ORDER BY res.resourceType.name "),
     @NamedQuery(name = ResourceType.QUERY_FIND_UTILIZED_BY_CATEGORY_admin, query = "SELECT DISTINCT res.resourceType "
-        + "FROM Resource res " + "WHERE res.resourceType.category = :category "
+        + "FROM Resource res " //
+        + "WHERE res.resourceType.category = :category "
         + "AND (UPPER(res.name) LIKE :nameFilter OR :nameFilter is null) "
+        + "AND (res.resourceType.plugin = :pluginName OR :pluginName is null) "
         + "AND (:inventoryStatus = res.inventoryStatus OR :inventoryStatus is null) "
         + "ORDER BY res.resourceType.name "
 

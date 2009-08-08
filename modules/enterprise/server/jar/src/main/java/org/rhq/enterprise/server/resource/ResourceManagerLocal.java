@@ -211,8 +211,9 @@ public interface ResourceManagerLocal {
     /**
      * @see ResourceManagerRemote#findResourceComposites(Subject, ResourceCategory, String, int, String, PageControl)
      */
-    PageList<ResourceComposite> findResourceComposites(Subject user, ResourceCategory category, ResourceType type,
-        Resource parentResource, String searchString, boolean attachParentResource, PageControl pageControl);
+    PageList<ResourceComposite> findResourceComposites(Subject user, ResourceCategory category, String typeName,
+        String pluginName, Resource parentResource, String searchString, boolean attachParentResource,
+        PageControl pageControl);
 
     // TODO GH: This would be more useful if it used a groupby to return a map of categories to their size
     int getResourceCountByCategory(Subject user, ResourceCategory category, InventoryStatus status);

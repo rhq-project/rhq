@@ -94,7 +94,29 @@ import org.rhq.core.util.MD5Generator;
         + "       p.path = :path, " //
         + "       p.md5 = :md5, " //
         + "       p.mtime = :mtime " //
-        + " WHERE p.id = :id") })
+        + " WHERE p.id = :id"),
+
+    // this query does not load the content blob, but loads everything else
+    @NamedQuery(name = Plugin.QUERY_FIND_BY_RESOURCE_TYPE_AND_CATEGORY, query = "" //
+        + "  SELECT new org.rhq.core.domain.plugin.Plugin( " //
+        + "         p.id, " //
+        + "         p.name, " //
+        + "         p.path, " //
+        + "         p.displayName, " //
+        + "         p.enabled, " //
+        + "         p.description, " //
+        + "         p.help, " //
+        + "         p.md5, " //
+        + "         p.version, " //
+        + "         p.ctime, " //
+        + "         p.mtime) " //
+        + "    FROM Plugin p " //
+        + "   WHERE p.name IN ( SELECT rt.plugin " //
+        + "                       FROM Resource res " //
+        + "                       JOIN res.resourceType rt " //
+        + "                      WHERE ( rt.category = :resourceCategory OR :resourceCategory IS NULL ) " //
+        + "                        AND ( rt.name = :resourceTypeName OR :resourceTypeName IS NULL ) ) " //
+        + "ORDER BY p.name") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_PLUGIN_ID_SEQ")
 @Table(name = Plugin.TABLE_NAME)
 public class Plugin implements Serializable {
@@ -102,6 +124,7 @@ public class Plugin implements Serializable {
 
     public static final String TABLE_NAME = "RHQ_PLUGIN";
 
+    public static final String QUERY_FIND_BY_RESOURCE_TYPE_AND_CATEGORY = "Plugin.findByResourceType";
     public static final String QUERY_FIND_ALL = "Plugin.findAll";
     public static final String QUERY_FIND_BY_NAME = "Plugin.findByName";
     public static final String UPDATE_ALL_BUT_CONTENT = "Plugin.updateAllButContent";

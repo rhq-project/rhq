@@ -264,7 +264,7 @@ function goToSelectLocation (e, param, base) {
     var newParam = param + "=" + e.options[e.selectedIndex].value;
     var newUrl;
     
-    var reg = new RegExp("" + param + "=[a-zA-Z0-9]+");
+    var reg = new RegExp("" + param + "=[a-zA-Z0-9_]+");
     
     if ( reg.test(base) )
     {

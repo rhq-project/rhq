@@ -59,6 +59,7 @@ import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.ProcessScan;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceSubCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.util.jdbc.JDBCUtil;
@@ -125,6 +126,15 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     public List<Plugin> getPlugins() {
         Query q = entityManager.createNamedQuery(Plugin.QUERY_FIND_ALL);
         return q.getResultList();
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<Plugin> getPluginsByResourceTypeAndCategory(String resourceTypeName, ResourceCategory resourceCategory) {
+        Query query = entityManager.createNamedQuery(Plugin.QUERY_FIND_BY_RESOURCE_TYPE_AND_CATEGORY);
+        query.setParameter("resourceTypeName", resourceTypeName);
+        query.setParameter("resourceCategory", resourceCategory);
+        List<Plugin> results = query.getResultList();
+        return results;
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)

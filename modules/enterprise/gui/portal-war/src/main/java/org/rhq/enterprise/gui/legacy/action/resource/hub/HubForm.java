@@ -44,9 +44,11 @@ public abstract class HubForm extends BaseValidatorForm {
      * indicates the group's resource type.
      */
     protected String resourceType;
+    protected String plugin;
 
     protected List<LabelValueBean> functions;
     protected List<LabelValueBean> types;
+    protected List<LabelValueBean> plugins;
     protected String keywords;
     protected String[] resources;
 
@@ -62,6 +64,14 @@ public abstract class HubForm extends BaseValidatorForm {
 
     public void setResourceType(String resourceType) {
         this.resourceType = resourceType;
+    }
+
+    public String getPlugin() {
+        return plugin;
+    }
+
+    public void setPlugin(String plugin) {
+        this.plugin = plugin;
     }
 
     public List<LabelValueBean> getFunctions() {
@@ -100,6 +110,22 @@ public abstract class HubForm extends BaseValidatorForm {
         if ((this.types != null) && (type != null)) {
             this.types.add(0, type);
         }
+    }
+
+    public List<LabelValueBean> getPlugins() {
+        return this.plugins;
+    }
+
+    public void setPlugins(List<LabelValueBean> plugins) {
+        this.plugins = plugins;
+    }
+
+    public void addPlugin(LabelValueBean plugin) {
+        if (this.plugins == null) {
+            this.plugins = new ArrayList<LabelValueBean>();
+        }
+
+        this.plugins.add(plugin);
     }
 
     public void setKeywords(String keywords) {
@@ -142,8 +168,11 @@ public abstract class HubForm extends BaseValidatorForm {
     @Override
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder(super.toString());
-        stringBuilder.append(" resourceType=").append(resourceType).append(" functions=").append(functions).append(
-            " types=").append(types).append(" view=").append(view);
+        stringBuilder.append(" resourceType=").append(resourceType);
+        stringBuilder.append(" plugin=").append(plugin);
+        stringBuilder.append(" functions=").append(functions);
+        stringBuilder.append(" types=").append(types);
+        stringBuilder.append(" view=").append(view);
         stringBuilder.append(" resources=");
         if (resources != null) {
             for (int i = 0; i < resources.length; i++) {

@@ -152,6 +152,27 @@ public class ServiceCompletor implements Completor {
     }
 
 
+    /**
+     * Base Object can be an object where we're looking for methods on it, or an
+     * interface. This recursively works off the completions left to right.
+     *
+     * Objects can be completed with fields or method calls.
+     * method parameters are completed with type matching
+     * method result chainings are completed based on declared return types
+     *
+     * e.g. have a Resource in context as myResource. Original string is
+     * "myResource.name". This method would be called with a baseObject ==
+     * to myResource and the string "name".
+     *
+     * Note: this method will not and should not execute methods, but will
+     * read field properties to continue chained completions.
+     *
+     * @param baseObject the context object or class to complete from
+     * @param s the relative command string to check
+     * @param i
+     * @param list
+     * @return location of relative completion
+     */
     public int contextComplete(Object baseObject, String s, int i, List list) {
         if (s.contains(".")) {
             String[] call = s.split("\\.", 2);
@@ -161,9 +182,17 @@ public class ServiceCompletor implements Completor {
                 next = next.substring(0, next.indexOf("("));
             }
 
-            Map<String, Object> matches = getContextMatches(baseObject.getClass(), next);
+            Class baseObjectClass = null;
+            if (baseObject instanceof Class) {
+                baseObjectClass = (Class) baseObject;
+            } else {
+                baseObjectClass = baseObject.getClass();
+            }
+
+
+            Map<String, Object> matches = getContextMatches(baseObjectClass, next);
             Object rootObject = matches.get(next);
-            if (rootObject instanceof PropertyDescriptor) {
+            if (rootObject instanceof PropertyDescriptor && !(baseObject instanceof Class)) {
                 try {
                     rootObject =
                             ((PropertyDescriptor)rootObject).getReadMethod().invoke(baseObject);

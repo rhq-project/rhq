@@ -166,7 +166,9 @@ public class ScriptCommand implements ClientCommand {
             script = new StringBuilder();
             if (result != null) {
                 //                client.getPrintWriter().print("result: ");
-                new TabularWriter(client.getPrintWriter()).print(result);
+                TabularWriter writer = new TabularWriter(client.getPrintWriter());
+                writer.setWidth(client.getConsoleWidth());
+                writer.print(result);
             }
         } catch (ScriptException e) {
 

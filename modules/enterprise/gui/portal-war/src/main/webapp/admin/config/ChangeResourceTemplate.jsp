@@ -29,7 +29,7 @@
   	<c:set var="PlatformServices" value="${PlatformServices}"/>
     <c:forEach var="entry" varStatus="status" items="${platformTypes}">
     <tr class="ListRowSelected">
-      <td class="ListCellPrimary"><c:out value="${entry.type.name}"/></td>
+      <td class="ListCellPrimary"><c:out value="${entry.type.name}"/> <c:out value="${entry.pluginInfo}"/></td>
       <td class="ListCell" align="left" nowrap="nowrap">
          <c:if test="${monitorEnabled}">
          <html:link page="/admin/platform/monitor/Config.do?mode=configure&id=${entry.type.id}&type=${entry.type.id}" styleClass="buttonsmall">
@@ -96,7 +96,7 @@
   	<c:set var="Services" value="${Services}"/> 
     <c:forEach var="entry" varStatus="status" items="${serverTypes}">
     <tr class="ListRowSelected">
-      <td class="ListCellPrimary"><c:out value="${entry.type.name}"/></td>
+      <td class="ListCellPrimary"><c:out value="${entry.type.name}"/> <c:out value="${entry.pluginInfo}"/></td>
       <td class="ListCell" align="left">
          <c:if test="${monitorEnabled}">
          <html:link page="/admin/platform/monitor/Config.do?mode=configure&type=${entry.type.id}" styleClass="buttonsmall">

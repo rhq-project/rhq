@@ -407,4 +407,11 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
 
         return new PageList<ResourceType>(results, (int) count, criteria.getPageControl());
     }
+
+    @SuppressWarnings("unchecked")
+    public List<String> getDuplicateTypeNames() {
+        Query query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_DUPLICATE_TYPE_NAMES);
+        List<String> results = query.getResultList();
+        return results;
+    }
 }

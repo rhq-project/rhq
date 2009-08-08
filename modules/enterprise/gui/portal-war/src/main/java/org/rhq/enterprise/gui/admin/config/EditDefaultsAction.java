@@ -140,5 +140,11 @@ public class EditDefaultsAction extends BaseDispatchAction {
 
     private void initCompositeMap() {
         compositeMap = typeMgr.getTemplateCountCompositeMap();
+        List<String> duplicateTypeNames = typeMgr.getDuplicateTypeNames();
+        for (ResourceTypeTemplateCountComposite composite : compositeMap.values()) {
+            if (duplicateTypeNames.contains(composite.getType().getName())) {
+                composite.setPluginInfo("(" + composite.getType().getPlugin() + " Plugin)");
+            }
+        }
     }
 }

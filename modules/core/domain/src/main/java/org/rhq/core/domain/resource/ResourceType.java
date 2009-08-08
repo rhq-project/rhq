@@ -167,7 +167,12 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "         (SELECT COUNT(metricDef) FROM rt.metricDefinitions metricDef WHERE metricDef.dataType = 3)" // calltime
         + "       ) " //
         + "  FROM ResourceType rt " //
-        + " WHERE ( rt.id = :resourceTypeId OR :resourceTypeId IS NULL )") })
+        + " WHERE ( rt.id = :resourceTypeId OR :resourceTypeId IS NULL )"),
+    @NamedQuery(name = ResourceType.QUERY_FIND_DUPLICATE_TYPE_NAMES, query = "" //
+        + "  SELECT rt.name " //
+        + "    FROM ResourceType rt " //
+        + "GROUP BY rt.name " //
+        + "  HAVING COUNT(rt.name) > 1") })
 @NamedNativeQueries( {
     // TODO: Add authz conditions to the below query.
     @NamedNativeQuery(name = ResourceType.QUERY_FIND_CHILDREN_BY_CATEGORY, query = "" //
@@ -249,6 +254,7 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
 
     public static final String MAPPING_FIND_CHILDREN_BY_CATEGORY = "ResourceType.findChildrenByCategoryMapping";
     public static final String QUERY_FIND_RESOURCE_FACETS = "ResourceType.findResourceFacets";
+    public static final String QUERY_FIND_DUPLICATE_TYPE_NAMES = "ResourceType.findDuplicateTypeNames";
 
     @Id
     @Column(name = "ID", nullable = false)

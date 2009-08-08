@@ -402,24 +402,19 @@ public class RemoteClient {
     private Map<String, String> buildRemotingConfig(String locatorURI) {
         Map<String, String> config = new HashMap<String, String>();
         if (SecurityUtil.isTransportSecure(locatorURI)) {
-            setConfigProp(config, SSLSocketBuilder.REMOTING_KEY_STORE_FILE_PATH, true);
-            setConfigProp(config, SSLSocketBuilder.REMOTING_KEY_STORE_ALGORITHM, true);
-            setConfigProp(config, SSLSocketBuilder.REMOTING_KEY_STORE_TYPE, true);
-            setConfigProp(config, SSLSocketBuilder.REMOTING_KEY_STORE_PASSWORD, true);
-            setConfigProp(config, SSLSocketBuilder.REMOTING_KEY_PASSWORD, true);
-            setConfigProp(config, SSLSocketBuilder.REMOTING_TRUST_STORE_FILE_PATH, false);
-            setConfigProp(config, SSLSocketBuilder.REMOTING_TRUST_STORE_ALGORITHM, false);
-            setConfigProp(config, SSLSocketBuilder.REMOTING_TRUST_STORE_TYPE, false);
-            setConfigProp(config, SSLSocketBuilder.REMOTING_TRUST_STORE_PASSWORD, false);
-            setConfigProp(config, SSLSocketBuilder.REMOTING_SSL_PROTOCOL, false);
-            setConfigProp(config, SSLSocketBuilder.REMOTING_KEY_ALIAS, true);
-            setConfigProp(config, SSLSocketBuilder.REMOTING_SERVER_AUTH_MODE, false);
+            setConfigProp(config, SSLSocketBuilder.REMOTING_KEY_STORE_FILE_PATH, "data/keystore.dat");
+            setConfigProp(config, SSLSocketBuilder.REMOTING_KEY_STORE_ALGORITHM, "SunX509");
+            setConfigProp(config, SSLSocketBuilder.REMOTING_KEY_STORE_TYPE, "JKS");
+            setConfigProp(config, SSLSocketBuilder.REMOTING_KEY_STORE_PASSWORD, "password");
+            setConfigProp(config, SSLSocketBuilder.REMOTING_KEY_PASSWORD, "password");
+            setConfigProp(config, SSLSocketBuilder.REMOTING_TRUST_STORE_FILE_PATH, null);
+            setConfigProp(config, SSLSocketBuilder.REMOTING_TRUST_STORE_ALGORITHM, null);
+            setConfigProp(config, SSLSocketBuilder.REMOTING_TRUST_STORE_TYPE, null);
+            setConfigProp(config, SSLSocketBuilder.REMOTING_TRUST_STORE_PASSWORD, null);
+            setConfigProp(config, SSLSocketBuilder.REMOTING_SSL_PROTOCOL, null);
+            setConfigProp(config, SSLSocketBuilder.REMOTING_KEY_ALIAS, "self");
+            setConfigProp(config, SSLSocketBuilder.REMOTING_SERVER_AUTH_MODE, "false");
             config.put(SSLSocketBuilder.REMOTING_SOCKET_USE_CLIENT_MODE, "true");
-
-            // if some of the non-required settings aren't set, define the defaults
-            if (!config.containsKey(SSLSocketBuilder.REMOTING_SERVER_AUTH_MODE)) {
-                config.put(SSLSocketBuilder.REMOTING_SERVER_AUTH_MODE, "false");
-            }
 
             // since we do not know the server's client-auth mode, assume we need a keystore and let's make sure we have one
             SSLSocketBuilder dummy_sslbuilder = new SSLSocketBuilder(); // just so we can test finding our keystore
@@ -444,19 +439,18 @@ public class RemoteClient {
     }
 
     /**
-     * Looks up the prop name in system properties and puts the value in the map. If the value is null,
-     * nothing is placed in the map.
+     * Looks up the prop name in system properties and puts the value in the map. If the property
+     * isn't set, the given default is used. If the given default is null and the property isn't
+     * set, then the map is not populated.
      * 
-     * @param config
+     * @param configMap
      * @param propName
-     * @param mustExist if <code>true</code>, the property must exist, otherwise, an exception will be thrown
+     * @param defaultValue
      */
-    private void setConfigProp(Map<String, String> config, String propName, boolean mustExist) {
-        String propValue = System.getProperty(propName);
+    private void setConfigProp(Map<String, String> configMap, String propName, String defaultValue) {
+        String propValue = System.getProperty(propName, defaultValue);
         if (propValue != null) {
-            config.put(propName, propValue);
-        } else if (mustExist) {
-            throw new IllegalArgumentException("You must set property [" + propName + "]");
+            configMap.put(propName, propValue);
         }
         return;
     }

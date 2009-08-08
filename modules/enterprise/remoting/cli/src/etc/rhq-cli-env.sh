@@ -62,7 +62,7 @@
 #                                     left unset if it is not needed.
 #
 #RHQ_CLI_ADDITIONAL_JAVA_OPTS="-agentlib:jdwp=transport=dt_socket,address=9787,server=y,suspend=n"
-#RHQ_CLI_ADDITIONAL_JAVA_OPTS="-Dorg.jboss.remoting.keyStore=data/keystore.dat -Dorg.jboss.remoting.keyStoreAlgorithm=SunX509 -Dorg.jboss.remoting.keyStoreType=JKS -Dorg.jboss.remoting.keyStorePassword=password -Dorg.jboss.remoting.keyPassword=password -Dorg.jboss.remoting.keyAlias=rhq"
+#RHQ_CLI_ADDITIONAL_JAVA_OPTS="-Dorg.jboss.remoting.keyStore=data/keystore.dat -Dorg.jboss.remoting.keyStoreAlgorithm=SunX509 -Dorg.jboss.remoting.keyStoreType=JKS -Dorg.jboss.remoting.keyStorePassword=password -Dorg.jboss.remoting.keyPassword=password -Dorg.jboss.remoting.keyAlias=self"
 
 #    RHQ_CLI_CMDLINE_OPTS - If this is defined, these are the command line
 #                             arguments that will be passed to the RHQ CLI.

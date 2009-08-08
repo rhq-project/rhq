@@ -35,6 +35,7 @@ import org.apache.struts.util.LabelValueBean;
 import org.apache.struts.util.MessageResources;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupCategory;
@@ -51,9 +52,6 @@ import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
 import org.rhq.enterprise.server.resource.InventorySummary;
-import org.rhq.enterprise.server.resource.ResourceBossLocal;
-import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
-import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -81,10 +79,6 @@ public class GroupHubPortalAction extends BaseAction {
         PageControl pageControl = WebUtility.getPageControl(request);
         Subject subject = RequestUtils.getSubject(request);
 
-        ResourceBossLocal resourceBoss = LookupUtil.getResourceBoss();
-        ResourceTypeManagerLocal resourceTypeManager = LookupUtil.getResourceTypeManager();
-        ResourceGroupManagerLocal groupManager = LookupUtil.getResourceGroupManager();
-
         HttpSession session = request.getSession();
         WebUser user = SessionUtils.getWebUser(request.getSession());
 
@@ -94,7 +88,7 @@ public class GroupHubPortalAction extends BaseAction {
         // Find resources specified by category and potentially type.
         // Collect query params and replace invalid ones with defaults.
         String groupName = getGroupName(request, hubForm);
-        ResourceType resourceType = HubConstants.ALL_RESOURCE_TYPES;
+        String resourceTypeName = HubConstants.ALL_RESOURCE_TYPES;
         ResourceCategory resourceCategory = null;
         if (hubForm.getResourceType() != null) {
             /* resourceCategory and resourceType are mutually exclusive
@@ -116,11 +110,19 @@ public class GroupHubPortalAction extends BaseAction {
             } else if (typeId == -3) {
                 resourceCategory = ResourceCategory.SERVICE;
             } else {
-                // check for != 0 to suppress bad stack traces, even though this should never happen
-                if (typeId != 0) {
-                    resourceType = resourceTypeManager.getResourceTypeById(subject, typeId);
+                resourceTypeName = decode(hubForm.getResourceType());
+                if (resourceTypeName.equals("") || resourceTypeName.equals("ALL")) {
+                    resourceTypeName = HubConstants.ALL_RESOURCE_TYPES;
                 }
             }
+        }
+
+        String pluginName = hubForm.getPlugin();
+        if (pluginName != null && pluginName.trim().equals("")) {
+            pluginName = null;
+        }
+        if (pluginName != null) {
+            pluginName = decode(pluginName);
         }
 
         if (hubForm.getGroupCategory() == null) {
@@ -128,27 +130,28 @@ public class GroupHubPortalAction extends BaseAction {
         }
 
         GroupCategory groupCategory = GroupCategory.valueOf(hubForm.getGroupCategory());
-        PageList<ResourceGroupComposite> groups = getGroups(subject, groupManager, groupCategory, resourceCategory,
-            resourceType, groupName, pageControl);
+        PageList<ResourceGroupComposite> groups = getGroups(subject, groupCategory, resourceCategory, resourceTypeName,
+            pluginName, groupName, pageControl);
         request.setAttribute(Constants.ALL_RESOURCES_ATTR, groups);
 
-        initGroupTypesPulldownMenu(request, hubForm, subject, resourceTypeManager, groupCategory, groupName);
-        initInventorySummary(subject, request, resourceBoss);
+        initGroupTypesPulldownMenu(request, hubForm, subject, groupCategory, groupName, resourceCategory,
+            resourceTypeName, pluginName);
+        initInventorySummary(subject, request);
 
         SessionUtils.resetReturnPath(request.getSession());
 
         Portal portal = Portal.createPortal("resource.hub.ResourceHubTitle", ".group.hub");
         request.setAttribute(Constants.PORTAL_KEY, portal);
 
-        String navHierarchy = HubUtils.buildNavHierarchy(groupCategory.toString(), resourceType);
+        String navHierarchy = HubUtils.buildNavHierarchy(groupCategory.toString(), resourceTypeName);
         request.setAttribute(Constants.INVENTORY_HIERARCHY_ATTR, navHierarchy);
         return returnSuccess(request, mapping);
     }
 
-    private void initInventorySummary(Subject user, HttpServletRequest request, ResourceBossLocal resourceBoss)
+    private void initInventorySummary(Subject user, HttpServletRequest request)
         throws org.rhq.enterprise.server.auth.SessionNotFoundException,
         org.rhq.enterprise.server.auth.SessionTimeoutException, java.rmi.RemoteException {
-        InventorySummary summary = resourceBoss.getInventorySummary(user);
+        InventorySummary summary = LookupUtil.getResourceBoss().getInventorySummary(user);
         request.setAttribute(Constants.RESOURCE_SUMMARY_ATTR, summary);
     }
 
@@ -166,34 +169,50 @@ public class GroupHubPortalAction extends BaseAction {
 
     @SuppressWarnings("deprecation")
     private void initGroupTypesPulldownMenu(HttpServletRequest request, GroupHubForm hubForm, Subject subject,
-        ResourceTypeManagerLocal resourceTypeManager, GroupCategory groupCategory, String nameFilter) throws Exception {
+        GroupCategory groupCategory, String nameFilter, ResourceCategory resourceCategory, String resourceTypeName,
+        String pluginName) throws Exception {
         // Set the first entry in the menu to the label "All Group Types".
-        hubForm.addType(createMenuLabel(request, "resource.hub.filter.AllGroupTypes", ""));
+        hubForm.addType(createMenuLabel(request, "resource.hub.filter.AllGroupTypes", "ALL"));
         if (groupCategory == GroupCategory.COMPATIBLE) {
-            List<ResourceType> allResourceTypes = resourceTypeManager.getResourceTypesForCompatibleGroups(subject);
-            Set<ResourceType> platformTypes = new TreeSet<ResourceType>();
-            Set<ResourceType> serverTypes = new TreeSet<ResourceType>();
-            Set<ResourceType> serviceTypes = new TreeSet<ResourceType>();
+            List<ResourceType> allResourceTypes = LookupUtil.getResourceTypeManager()
+                .getResourceTypesForCompatibleGroups(subject, pluginName);
+            Set<String> platformTypes = new TreeSet<String>();
+            Set<String> serverTypes = new TreeSet<String>();
+            Set<String> serviceTypes = new TreeSet<String>();
             for (ResourceType type : allResourceTypes) {
                 ResourceCategory category = type.getCategory();
                 if (category == ResourceCategory.PLATFORM) {
-                    platformTypes.add(type);
+                    platformTypes.add(type.getName());
                 } else if (category == ResourceCategory.SERVER) {
-                    serverTypes.add(type);
+                    serverTypes.add(type.getName());
                 } else if (category == ResourceCategory.SERVICE) {
-                    serviceTypes.add(type);
+                    serviceTypes.add(type.getName());
                 } else {
                     throw new IllegalArgumentException("Unsupported ResourceCategory '" + category.name()
                         + "' in GroupHubPortalAction.initGroupTypesPulldownMenu");
                 }
             }
 
-            HubUtils.addResourceTypeMenuItems(hubForm, platformTypes, RequestUtils.message(request, ALL_PLATFORMS_KEY),
-                "-1");
-            HubUtils.addResourceTypeMenuItems(hubForm, serverTypes, RequestUtils.message(request, ALL_SERVERS_KEY),
-                "-2");
-            HubUtils.addResourceTypeMenuItems(hubForm, serviceTypes, RequestUtils.message(request, ALL_SERVICES_KEY),
-                "-3");
+            addResourceTypeMenuItems(hubForm, platformTypes, RequestUtils.message(request, ALL_PLATFORMS_KEY), "-1");
+            addResourceTypeMenuItems(hubForm, serverTypes, RequestUtils.message(request, ALL_SERVERS_KEY), "-2");
+            addResourceTypeMenuItems(hubForm, serviceTypes, RequestUtils.message(request, ALL_SERVICES_KEY), "-3");
+
+            hubForm.addPlugin(createMenuLabel(request, "resource.hub.filter.AllPlugins", ""));
+            List<Plugin> plugins = LookupUtil.getResourceMetadataManager().getPluginsByResourceTypeAndCategory(
+                resourceTypeName, resourceCategory);
+            for (Plugin plugin : plugins) {
+                hubForm.addPlugin(new LabelValueBean(plugin.getDisplayName(), encode(plugin.getName())));
+            }
+        }
+    }
+
+    public void addResourceTypeMenuItems(HubForm form, Set<String> typeNames, String headerLabel, String headerValue) {
+        if (!typeNames.isEmpty()) {
+            form.addType(new LabelValueBean("", ""));
+            form.addType(new LabelValueBean(headerLabel, headerValue));
+            for (String resourceTypeName : typeNames) {
+                form.addType(new LabelValueBean(resourceTypeName, encode(resourceTypeName)));
+            }
         }
     }
 
@@ -202,18 +221,18 @@ public class GroupHubPortalAction extends BaseAction {
         return new LabelValueBean(messages.getMessage(key), value);
     }
 
-    private PageList<ResourceGroupComposite> getGroups(Subject subject, ResourceGroupManagerLocal groupManager,
-        GroupCategory groupCategory, ResourceCategory resourceCategory, ResourceType resourceType, String nameFilter,
+    private PageList<ResourceGroupComposite> getGroups(Subject subject, GroupCategory groupCategory,
+        ResourceCategory resourceCategory, String resourceTypeName, String pluginName, String nameFilter,
         PageControl pageControl) throws Exception {
         log.debug("Finding all " + groupCategory + "s with " + "resource category [" + resourceCategory + "] and "
-            + "resource type [" + resourceType + "] and " + "resource name [" + nameFilter + "]...");
+            + "resource type [" + resourceTypeName + "] and " + "resource name [" + nameFilter + "]...");
 
         PageList<ResourceGroupComposite> groups;
 
         if ((groupCategory == GroupCategory.COMPATIBLE) || (groupCategory == GroupCategory.MIXED)) {
             log.debug("getting compatible group list");
-            groups = groupManager.findResourceGroupComposites(subject, groupCategory, resourceCategory, resourceType,
-                nameFilter, null, null, pageControl);
+            groups = LookupUtil.getResourceGroupManager().findResourceGroupComposites(subject, groupCategory,
+                resourceCategory, resourceTypeName, pluginName, nameFilter, null, null, pageControl);
         } else {
             throw new RuntimeException("ResourceHub doesn't currently support " + groupCategory.toString()
                 + " groupCategory");
@@ -221,5 +240,13 @@ public class GroupHubPortalAction extends BaseAction {
 
         log.debug("found " + groups.size() + " groups");
         return groups;
+    }
+
+    private String encode(String parameter) {
+        return parameter.replaceAll(" ", "_");
+    }
+
+    private String decode(String parameter) {
+        return parameter.replaceAll("_", " ");
     }
 }

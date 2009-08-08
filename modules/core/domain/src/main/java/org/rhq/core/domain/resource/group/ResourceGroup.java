@@ -76,10 +76,10 @@ import org.rhq.core.domain.resource.ResourceType;
         + " AND (UPPER(g.name) LIKE :search " //
         + " OR UPPER(g.description) LIKE :search " //
         + "OR :search is null) " //
-        + "AND ( type is null OR ( " //
-        + "      (type = :resourceType AND :resourceType is not null) "
-        + "    OR (type.category = :category AND :category is not null) "
-        + "    OR (:resourceType is null AND :category is null )     ) ) "),
+        + "AND ( type is null " //
+        + "      OR ( (type.name = :resourceTypeName OR :resourceTypeName is null) "
+        + "           AND (type.plugin = :pluginName OR :pluginName is null) "
+        + "           AND (type.category = :category OR :category is null) ) ) "),
     @NamedQuery(name = ResourceGroup.QUERY_FIND_ALL_FILTERED_COUNT_ADMIN, query = "SELECT count(DISTINCT g) FROM ResourceGroup g "
         + "LEFT JOIN g.resourceType type "
         + "LEFT JOIN g.implicitResources res " // used for inventory>overview "member in groups" section, authz-related
@@ -90,10 +90,10 @@ import org.rhq.core.domain.resource.ResourceType;
         + " AND (UPPER(g.name) LIKE :search "
         + " OR UPPER(g.description) LIKE :search "
         + " OR :search is null) "
-        + " AND ( type is null OR ( "
-        + "      (type = :resourceType AND :resourceType is not null) "
-        + "    OR (type.category = :category AND :category is not null) "
-        + "    OR (:resourceType is null AND :category is null)    ) ) "),
+        + "AND ( type is null " //
+        + "      OR ( (type.name = :resourceTypeName OR :resourceTypeName is null) "
+        + "           AND (type.plugin = :pluginName OR :pluginName is null) "
+        + "           AND (type.category = :category OR :category is null) ) ) "),
 
     @NamedQuery(name = ResourceGroup.QUERY_FIND_ALL_BY_CATEGORY_COUNT, query = "SELECT COUNT(DISTINCT rg) "
         + "  FROM ResourceGroup AS rg JOIN rg.roles r JOIN r.subjects s " + " WHERE s = :subject "
@@ -273,9 +273,9 @@ public class ResourceGroup extends Group {
         + "                  OR UPPER(rg.name) LIKE ? " // :search
         + "                  OR UPPER(rg.description) LIKE ? ) " // :search
         + "            AND ( rg.resource_type_id IS NULL " //
-        + "                  OR ( rg.resource_type_id = ? AND ? IS NOT NULL ) " // :resourceTypeId x2
-        + "                  OR ( resType.category = ? AND ? IS NOT NULL ) " // :resourceCategory x2
-        + "                  OR ( ? IS NULL AND ? IS NULL ) ) " // :resourceTypeId, :resourceCategory
+        + "                  OR ( ( resType.name = ? OR ? IS NULL ) " // :resourceTypeName x2
+        + "                      AND ( resType.plugin = ? OR ? IS NULL ) " // :pluginName x2
+        + "                      AND ( resType.category = ? OR ? IS NULL ) ) ) " // :resourceCategory x2
         + "            AND ( rg.category = ? OR ? IS NULL ) " // :groupCategory x2
         + "                %SECURITY_FRAGMENT_WHERE%" //
         + "       GROUP BY rg.id, rg.category, rg.name, rg.group_by, rg.description, resType.name ";

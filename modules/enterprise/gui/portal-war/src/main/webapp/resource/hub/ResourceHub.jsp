@@ -71,11 +71,27 @@
    <c:if test="${not empty param.sc}">
       <c:param name="sc" value="${param.sc}"/>
    </c:if>
-   <c:if test="${not empty param.resourceType}">
-      <c:param name="resourceType" value="${param.resourceType}"/>
-   </c:if>
    <c:if test="${not empty param.plugin}">
       <c:param name="plugin" value="${param.plugin}"/>
+   </c:if>
+   <c:param name="resourceCategory" value="${ResourceHubForm.resourceCategory}"/>
+   <c:param name="view" value="${ResourceHubForm.view}"/>
+</c:url>
+<c:url var="pluginAction" value="/ResourceHub.do">
+   <c:if test="${not empty param.keywords}">
+      <c:param name="keywords" value="${param.keywords}"/>
+   </c:if>
+   <c:if test="${not empty param.ps}">
+      <c:param name="ps" value="${param.ps}"/>
+   </c:if>
+   <c:if test="${not empty param.so}">
+      <c:param name="so" value="${param.so}"/>
+   </c:if>
+   <c:if test="${not empty param.sc}">
+      <c:param name="sc" value="${param.sc}"/>
+   </c:if>
+   <c:if test="${not empty param.resourceType}">
+      <c:param name="resourceType" value="${param.resourceType}"/>
    </c:if>
    <c:param name="resourceCategory" value="${ResourceHubForm.resourceCategory}"/>
    <c:param name="view" value="${ResourceHubForm.view}"/>
@@ -213,7 +229,7 @@
          </c:when>
          <c:otherwise>
          <html:select property="plugin" styleClass="FilterFormText" size="1"
-                      onchange="goToSelectLocation(this, 'plugin', '${resourceTypeAction}');">
+                      onchange="goToSelectLocation(this, 'plugin', '${pluginAction}');">
             <html:optionsCollection property="plugins"/>
          </html:select>
          </c:otherwise>

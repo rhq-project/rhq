@@ -98,8 +98,8 @@ public interface ResourceGroupManagerLocal {
     int getImplicitGroupMemberCount(int resourceGroupId);
 
     PageList<ResourceGroupComposite> findResourceGroupComposites(Subject subject, GroupCategory groupCategory,
-        ResourceCategory resourceCategory, ResourceType resourceType, String nameFilter, Integer resourceId,
-        Integer groupId, PageControl pc);
+        ResourceCategory resourceCategory, String resourceTypeName, String pluginName, String nameFilter,
+        Integer resourceId, Integer groupId, PageControl pc);
 
     List<Integer> findDeletedResourceGroupIds(int[] groupIds);
 

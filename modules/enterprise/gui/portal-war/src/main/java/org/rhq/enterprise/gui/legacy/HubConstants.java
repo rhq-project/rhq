@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.gui.legacy;
 
-import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupCategory;
 
 public class HubConstants {
@@ -32,5 +31,5 @@ public class HubConstants {
     public static final String HIERARCHY_SEPARATOR = " > ";
     public static final String VIEW_ATTRIB = "Resource Hub View";
 
-    public static final ResourceType ALL_RESOURCE_TYPES = null;
+    public static final String ALL_RESOURCE_TYPES = null;
 }

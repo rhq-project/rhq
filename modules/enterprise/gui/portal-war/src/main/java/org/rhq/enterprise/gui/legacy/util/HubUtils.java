@@ -18,10 +18,6 @@
  */
 package org.rhq.enterprise.gui.legacy.util;
 
-import java.util.Set;
-
-import org.apache.struts.util.LabelValueBean;
-
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.legacy.HubConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
@@ -31,8 +27,6 @@ import org.rhq.enterprise.gui.legacy.action.resource.hub.HubView;
 import org.rhq.enterprise.gui.legacy.taglib.display.StringUtil;
 
 public class HubUtils {
-    public static final String BLANK = "";
-
     public static void initView(HubForm hubForm, WebUser user) throws Exception {
         WebUserPreferences preferences = user.getWebPreferences();
 
@@ -49,12 +43,11 @@ public class HubUtils {
         }
     }
 
-    public static String buildNavHierarchy(String categoryString, ResourceType resourceType) {
+    public static String buildNavHierarchy(String categoryString, String resourceTypeName) {
         String navHierarchy; // Start the navHierarchy with the group category.
         navHierarchy = StringUtil.toUpperCaseAt(categoryString, 0) + "s" + HubConstants.HIERARCHY_SEPARATOR;
-        if (resourceType != null) {
-            navHierarchy += getResourceTypeDisplayName(resourceType) + " "
-                + StringUtil.toUpperCaseAt(categoryString, 0) + "s";
+        if (resourceTypeName != null) {
+            navHierarchy += resourceTypeName + " " + StringUtil.toUpperCaseAt(categoryString, 0) + "s";
         } else {
             navHierarchy += "All " + StringUtil.toUpperCaseAt(categoryString, 0) + "s";
         }
@@ -67,17 +60,5 @@ public class HubUtils {
         //       (e.g. "JBoss Datasource" rather than simply "Datasource" to distinguish a JBoss datasource from a
         //       WebLogic datasource)
         return resourceType.getName();
-    }
-
-    public static void addResourceTypeMenuItems(HubForm form, Set<ResourceType> types, String headerLabel,
-        String headerValue) {
-        if (!types.isEmpty()) {
-            form.addType(new LabelValueBean(BLANK, BLANK));
-            form.addType(new LabelValueBean(headerLabel, headerValue));
-            for (ResourceType resourceType : types) {
-                String typeDisplayName = getResourceTypeDisplayName(resourceType);
-                form.addType(new LabelValueBean(typeDisplayName, Integer.toString(resourceType.getId())));
-            }
-        }
     }
 }

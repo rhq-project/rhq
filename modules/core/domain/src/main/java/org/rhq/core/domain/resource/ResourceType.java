@@ -140,10 +140,18 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "WHERE res.parentResource = :parentResource "
         + "AND res.resourceType.category = :category "
         + "AND (:inventoryStatus = res.inventoryStatus OR :inventoryStatus is null) "),
-    @NamedQuery(name = ResourceType.QUERY_FIND_BY_RESOURCE_GROUP, query = "SELECT DISTINCT rg.resourceType "
-        + "FROM ResourceGroup AS rg, IN (rg.roles) r, IN (r.subjects) s " + "WHERE s = :subject "),
-    @NamedQuery(name = ResourceType.QUERY_FIND_BY_RESOURCE_GROUP_admin, query = "SELECT DISTINCT rg.resourceType "
-        + "FROM ResourceGroup AS rg "),
+    @NamedQuery(name = ResourceType.QUERY_FIND_BY_RESOURCE_GROUP, query = "" //
+        + "SELECT DISTINCT rt " //
+        + "  FROM ResourceGroup rg " //
+        + "  JOIN rg.resourceType rt" //
+        + "  JOIN rg.roles r JOIN r.subjects s " //
+        + " WHERE s = :subject " //
+        + "   AND ( rt.plugin = :pluginName OR :pluginName is null ) "),
+    @NamedQuery(name = ResourceType.QUERY_FIND_BY_RESOURCE_GROUP_admin, query = "" //
+        + "SELECT DISTINCT rt " //
+        + "  FROM ResourceGroup rg " //
+        + "  JOIN rg.resourceType rt" //
+        + " WHERE ( rt.plugin = :pluginName OR :pluginName is null ) "),
     @NamedQuery(name = ResourceType.QUERY_GET_EXPLICIT_RESOURCE_TYPE_COUNTS_BY_GROUP, query = "SELECT type.id, type.name, COUNT(type.id) "
         + "FROM ResourceGroup rg JOIN rg.explicitResources res JOIN res.resourceType type "
         + "WHERE rg.id = :groupId "

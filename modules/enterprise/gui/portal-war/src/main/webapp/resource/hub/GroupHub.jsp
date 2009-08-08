@@ -137,6 +137,8 @@
    </tr>
    </table>
    </c:if>
+   
+   <fmt:message var="pluginTH" key="resource.hub.PluginTH"/>
 
    <tiles:insert definition=".portlet.confirm"/>
    <tiles:insert definition=".portlet.error"/>
@@ -156,17 +158,38 @@
       <c:if test="${not empty param.sc}">
          <c:param name="sc" value="${param.sc}"/>
       </c:if>
+      <c:if test="${not empty param.plugin}">
+         <c:param name="plugin" value="${param.plugin}"/>
+      </c:if>
+      <c:param name="groupCategory" value="${GroupHubForm.groupCategory}"/>
+   </c:url>
+   <c:url var="pluginAction" value="/GroupHub.do">
+      <c:if test="${not empty param.keywords}">
+         <c:param name="keywords" value="${param.keywords}"/>
+      </c:if>
+      <c:if test="${not empty param.ps}">
+         <c:param name="ps" value="${param.ps}"/>
+      </c:if>
+      <c:if test="${not empty param.so}">
+         <c:param name="so" value="${param.so}"/>
+      </c:if>
+      <c:if test="${not empty param.sc}">
+         <c:param name="sc" value="${param.sc}"/>
+      </c:if>
+      <c:if test="${not empty param.resourceType}">
+         <c:param name="resourceType" value="${param.resourceType}"/>
+      </c:if>
       <c:param name="groupCategory" value="${GroupHubForm.groupCategory}"/>
    </c:url>
 
    <table width="100%" cellpadding="0" cellspacing="0" border="0">
    <tr>
-   <td class="FilterLine" colspan="2">
+   <td class="FilterLine" colspan="3">
       <html:img page="/images/spacer.gif" width="1" height="1" border="0"/>
    </td>
    </tr>
    <tr>
-   <td class="FilterLabelText" nowrap align="right">
+   <td class="FilterLabelText" nowrap="nowrap" align="right">
       <c:choose>
       <c:when test="${GroupHubForm.types == null}">
          <html:hidden property="resourceType" value=""/>
@@ -175,10 +198,24 @@
       <c:otherwise>
       <fmt:message key="Filter.ViewLabel"/>
    </td>
-   <td class="FilterLabelText" width="100%">
+   <td class="FilterLabelText">
       <html:select property="resourceType" styleClass="FilterFormText" size="1"
                    onchange="goToSelectLocation(this, 'resourceType', '${resourceTypeAction}');">
          <html:optionsCollection property="types"/>
+      </html:select>
+      </c:otherwise>
+      </c:choose>
+   </td>
+   <td class="FilterLabelText" width="100%">
+      <c:choose>
+      <c:when test="${GroupHubForm.plugins == null}">
+         <html:hidden property="plugin" value=""/>
+         &nbsp;
+      </c:when>
+      <c:otherwise>
+      <html:select property="plugin" styleClass="FilterFormText" size="1"
+                   onchange="goToSelectLocation(this, 'plugin', '${pluginAction}');">
+         <html:optionsCollection property="plugins"/>
       </html:select>
       </c:otherwise>
       </c:choose>
@@ -199,6 +236,9 @@
       </c:if>
       <c:if test="${not empty param.resourceType}">
          <c:param name="resourceType" value="${param.resourceType}"/>
+      </c:if>
+      <c:if test="${not empty param.plugin}">
+         <c:param name="plugin" value="${param.plugin}"/>
       </c:if>
 
       <c:param name="groupCategory" value="${GroupHubForm.groupCategory}"/>
@@ -227,6 +267,9 @@
       </c:if>
       <c:if test="${not empty param.resourceType}">
          <c:param name="resourceType" value="${param.resourceType}"/>
+      </c:if>
+      <c:if test="${not empty param.plugin}">
+         <c:param name="plugin" value="${param.plugin}"/>
       </c:if>
       <c:param name="groupCategory" value="${GroupHubForm.groupCategory}"/>
    </c:url>
@@ -258,9 +301,10 @@
             </c:otherwise>
          </c:choose>
          <c:if test="${not empty resourceTypeTH}">
-            <display:column width="25%" property="resourceGroup.resourceType.name" title="${resourceTypeTH}"
-                            isLocalizedTitle="false" sortAttr="resourceTypeName">
-            </display:column>
+            <display:column width="15%" property="resourceGroup.resourceType.name" title="${resourceTypeTH}"
+                            isLocalizedTitle="false" sortAttr="resourceTypeName" />
+            <display:column width="10%" property="resourceGroup.resourceType.plugin" title="${pluginTH}" 
+                            isLocalizedTitle="false" sortAttr="res.resourceType.plugin" />
          </c:if>
 
          <display:column width="30%" property="resourceGroup.description"
@@ -283,6 +327,9 @@
       </c:if>
       <c:if test="${not empty param.resourceType}">
          <c:param name="resourceType" value="${param.resourceType}"/>
+      </c:if>
+      <c:if test="${not empty param.plugin}">
+         <c:param name="plugin" value="${param.plugin}"/>
       </c:if>
 
       <c:param name="groupCategory" value="${GroupHubForm.groupCategory}"/>

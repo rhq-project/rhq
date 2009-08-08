@@ -64,8 +64,8 @@ public class ResourceGroupSelectUIBean {
         PageControl pc = new PageControl();
         pc.setPageSize(50);
 
-        result = resourceGroupManager.findResourceGroupComposites(EnterpriseFacesContextUtility.getSubject(), null, null,
-            null, pref, null, null, pc);
+        result = resourceGroupManager.findResourceGroupComposites(EnterpriseFacesContextUtility.getSubject(), null,
+            null, null, null, pref, null, null, pc);
 
         return result;
     }

@@ -322,7 +322,7 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
     }
 
     @SuppressWarnings("unchecked")
-    public List<ResourceType> getResourceTypesForCompatibleGroups(Subject subject) {
+    public List<ResourceType> getResourceTypesForCompatibleGroups(Subject subject, String pluginName) {
         Query query = null;
         if (authorizationManager.isInventoryManager(subject)) {
             query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_BY_RESOURCE_GROUP_admin);
@@ -330,6 +330,7 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
             query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_BY_RESOURCE_GROUP);
             query.setParameter("subject", subject);
         }
+        query.setParameter("pluginName", pluginName);
 
         List<ResourceType> results = query.getResultList();
         return results;

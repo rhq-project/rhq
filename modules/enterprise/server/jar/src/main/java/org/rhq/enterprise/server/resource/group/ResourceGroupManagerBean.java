@@ -936,8 +936,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
 
     // note, resourceId and groupId can both be NULL, and so must use the numeric wrapper classes
     public PageList<ResourceGroupComposite> findResourceGroupComposites(Subject subject, GroupCategory groupCategory,
-        ResourceCategory resourceCategory, ResourceType resourceType, String nameFilter, Integer resourceId,
-        Integer groupId, PageControl pc) {
+        ResourceCategory resourceCategory, String resourceTypeName, String pluginName, String nameFilter,
+        Integer resourceId, Integer groupId, PageControl pc) {
 
         String query = ResourceGroup.QUERY_NATIVE_FIND_FILTERED_MEMBER;
         if (authorizationManager.isInventoryManager(subject)) {
@@ -1008,7 +1008,6 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             stmt = conn.prepareStatement(query);
 
             String search = nameFilter;
-            Integer resourceTypeId = resourceType == null ? null : resourceType.getId();
             String resourceCategoryName = resourceCategory == null ? null : resourceCategory.name();
             String groupCategoryName = groupCategory == null ? null : groupCategory.name();
 
@@ -1019,26 +1018,48 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             if (groupId != null) {
                 stmt.setInt(++i, groupId);
             }
-            stmt.setString(++i, search);
-            stmt.setString(++i, search);
-            stmt.setString(++i, search);
-            if (resourceTypeId == null) {
-                stmt.setNull(++i, Types.INTEGER);
-                stmt.setNull(++i, Types.INTEGER);
+
+            if (search == null) {
+                stmt.setNull(++i, Types.VARCHAR);
+                stmt.setNull(++i, Types.VARCHAR);
+                stmt.setNull(++i, Types.VARCHAR);
             } else {
-                stmt.setInt(++i, resourceTypeId);
-                stmt.setInt(++i, resourceTypeId);
+                stmt.setString(++i, search);
+                stmt.setString(++i, search);
+                stmt.setString(++i, search);
             }
-            stmt.setString(++i, resourceCategoryName);
-            stmt.setString(++i, resourceCategoryName);
-            if (resourceTypeId == null) {
-                stmt.setNull(++i, Types.INTEGER);
+
+            if (resourceTypeName == null) {
+                stmt.setNull(++i, Types.VARCHAR);
+                stmt.setNull(++i, Types.VARCHAR);
             } else {
-                stmt.setInt(++i, resourceTypeId);
+                stmt.setString(++i, resourceTypeName);
+                stmt.setString(++i, resourceTypeName);
             }
-            stmt.setString(++i, resourceCategoryName);
-            stmt.setString(++i, groupCategoryName);
-            stmt.setString(++i, groupCategoryName);
+
+            if (pluginName == null) {
+                stmt.setNull(++i, Types.VARCHAR);
+                stmt.setNull(++i, Types.VARCHAR);
+            } else {
+                stmt.setString(++i, pluginName);
+                stmt.setString(++i, pluginName);
+            }
+
+            if (resourceCategoryName == null) {
+                stmt.setNull(++i, Types.VARCHAR);
+                stmt.setNull(++i, Types.VARCHAR);
+            } else {
+                stmt.setString(++i, resourceCategoryName);
+                stmt.setString(++i, resourceCategoryName);
+            }
+
+            if (groupCategoryName == null) {
+                stmt.setNull(++i, Types.VARCHAR);
+                stmt.setNull(++i, Types.VARCHAR);
+            } else {
+                stmt.setString(++i, groupCategoryName);
+                stmt.setString(++i, groupCategoryName);
+            }
 
             if (authorizationManager.isInventoryManager(subject) == false) {
                 stmt.setInt(++i, subject.getId());
@@ -1071,7 +1092,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
 
         queryCount.setParameter("groupCategory", groupCategory);
         queryCount.setParameter("category", resourceCategory);
-        queryCount.setParameter("resourceType", resourceType);
+        queryCount.setParameter("resourceTypeName", resourceTypeName);
+        queryCount.setParameter("pluginName", pluginName);
         queryCount.setParameter("search", nameFilter);
         queryCount.setParameter("resourceId", resourceId);
         queryCount.setParameter("groupId", groupId);

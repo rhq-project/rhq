@@ -18,10 +18,10 @@
  */
 package org.rhq.plugins.platform;
 
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -310,38 +310,42 @@ public class SyslogProcessor {
         return severity;
     }
 
-    protected Date parseRFC3339Date(String rfc3999String) throws Exception {
-        Date d = new Date();
-
-        //if there is no time zone, we don't need to do any special parsing.
-        if (rfc3999String.endsWith("Z")) {
-            try {
-                SimpleDateFormat s = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");//spec for RFC3339                                      
-                d = s.parse(rfc3999String);
-            } catch (ParseException pe) {//try again with optional decimals
-                SimpleDateFormat s = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'");//spec for RFC3339 (with fractional seconds)
-                s.setLenient(true);
-                d = s.parse(rfc3999String);
-            }
-            return d;
-        }
-
-        //step one, split off the timezone. 
-        String firstpart = rfc3999String.substring(0, rfc3999String.lastIndexOf('-'));
-        String secondpart = rfc3999String.substring(rfc3999String.lastIndexOf('-'));
-
-        //step two, remove the colon from the timezone offset
-        secondpart = secondpart.substring(0, secondpart.indexOf(':'))
-            + secondpart.substring(secondpart.indexOf(':') + 1);
-        rfc3999String = firstpart + secondpart;
-        SimpleDateFormat s = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");//spec for RFC3339            
+    /**
+     * Parses RFC3339 dates, but assumes the given RFC3339 represents the same timezone
+     * as our default (which it should be, the syslog entry is on the same box as we are).
+     * This makes the parsing easier and quicker. If the string cannot be parsed,
+     * the current time is returned.
+     */
+    private static SimpleDateFormat RFC3339_FORMAT_ZULU;
+    private static SimpleDateFormat RFC3339_FORMAT;
+    static {
         try {
-            d = s.parse(rfc3999String);
-        } catch (ParseException pe) {//try again with optional decimals
-            s = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSZ");//spec for RFC3339 (with fractional seconds)
-            s.setLenient(true);
-            d = s.parse(rfc3999String);
+            RFC3339_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+            RFC3339_FORMAT_ZULU = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+            RFC3339_FORMAT_ZULU.setTimeZone(TimeZone.getTimeZone("UTC"));
+        } catch (Throwable t) {
+            LogFactory.getLog(SyslogProcessor.class).warn("Cannot setup rfc3999 formats", t);
         }
-        return d;
+    }
+
+    protected Date parseRFC3339Date(String rfc3339String) throws Exception {
+        // we will truncate the millis since there seems to be a VM bug or at least odd behavior when parsing millis.
+        // also need to remove the : from the timezone offset if it exists, SimpleDateFormat doesn't like it
+        // end up with the format: yyyy-MM-ddTHH:mm:ss(+|-)####
+        rfc3339String = rfc3339String.replaceFirst("\\.\\d*", ""); // remove millis
+
+        // if there is no timezone, parse it as if in zulu timezone
+        if (rfc3339String.endsWith("Z")) {
+            Date date = RFC3339_FORMAT_ZULU.parse(rfc3339String);
+            return date;
+        }
+
+        // remove any colon found in timezone and parse it
+        if (rfc3339String.matches(".*[\\+\\-]\\d\\d:\\d\\d.*")) {
+            int length = rfc3339String.length();
+            rfc3339String = rfc3339String.substring(0, length - 3) + rfc3339String.substring(length - 2);
+        }
+        Date date = RFC3339_FORMAT.parse(rfc3339String);
+        return date;
     }
 }

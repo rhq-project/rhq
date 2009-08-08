@@ -28,6 +28,7 @@ import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
+import java.beans.IndexedPropertyDescriptor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -98,17 +99,28 @@ public class SummaryFilter {
     private Field getField(PropertyDescriptor property) throws NoSuchFieldException {
         String propertyName = property.getName();
         Class<?> declaringClass = getDeclaringClass(property);
+
         return declaringClass.getDeclaredField(propertyName);
     }
 
     private Class<?> getDeclaringClass(PropertyDescriptor property) {
-        Method method = property.getReadMethod();
+        Method method = null;
 
-        if (method == null) {
-            method = property.getWriteMethod();
+        if (property instanceof IndexedPropertyDescriptor) {
+            method = ((IndexedPropertyDescriptor)property).getIndexedReadMethod();
+            if (method == null) {
+                method = ((IndexedPropertyDescriptor)property).getIndexedWriteMethod();
+            }
+        } else {
+            method = property.getReadMethod();
+
+            if (method == null) {
+                method = property.getWriteMethod();
+            }
         }
 
         return method.getDeclaringClass();
+
     }
 
 

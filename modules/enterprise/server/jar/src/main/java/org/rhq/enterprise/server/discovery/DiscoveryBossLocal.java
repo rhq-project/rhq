@@ -166,4 +166,17 @@ public interface DiscoveryBossLocal {
      *         <code>false</code> if the Resource was not in inventory
      */
     boolean updateResourceVersion(int resourceId, String version);
+
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    //
+    // The following are shared with the Remote Interface
+    //
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    void importResources(Subject subject, Integer[] resourceIds);
+
+    void ignoreResources(Subject subject, Integer[] resourceIds);
+
+    void unignoreResources(Subject subject, Integer[] resourceIds);
+
 }

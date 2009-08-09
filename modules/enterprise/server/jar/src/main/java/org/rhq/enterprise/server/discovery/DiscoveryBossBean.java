@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.discovery;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -59,6 +60,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -80,7 +82,7 @@ import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
  * @author Greg Hinkle
  */
 @Stateless
-public class DiscoveryBossBean implements DiscoveryBossLocal {
+public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemote {
     private final Log log = LogFactory.getLog(DiscoveryBossBean.class.getName());
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
@@ -205,8 +207,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public List<Resource> getQueuedPlatformChildServers(Subject user, InventoryStatus status, Resource platform) {
-        PageList<Resource> childServers = resourceManager.findChildResourcesByCategoryAndInventoryStatus(user, platform,
-            ResourceCategory.SERVER, status, PageControl.getUnlimitedInstance());
+        PageList<Resource> childServers = resourceManager.findChildResourcesByCategoryAndInventoryStatus(user,
+            platform, ResourceCategory.SERVER, status, PageControl.getUnlimitedInstance());
 
         return childServers;
     }
@@ -673,5 +675,62 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
         for (Resource childResource : resource.getChildResources()) {
             initAutoDiscoveredResource(childResource, resource);
         }
+    }
+
+    public void importResources(Subject subject, Integer[] resourceIds) {
+        if (resourceIds == null || resourceIds.length == 0) {
+            return;
+        }
+        checkStatus(subject, resourceIds, InventoryStatus.COMMITTED, EnumSet.of(InventoryStatus.NEW));
+    }
+
+    public void ignoreResources(Subject subject, Integer[] resourceIds) {
+        if (resourceIds == null || resourceIds.length == 0) {
+            return;
+        }
+        checkStatus(subject, resourceIds, InventoryStatus.IGNORED, EnumSet.of(InventoryStatus.NEW));
+    }
+
+    public void unignoreResources(Subject subject, Integer[] resourceIds) {
+        if (resourceIds == null || resourceIds.length == 0) {
+            return;
+        }
+        checkStatus(subject, resourceIds, InventoryStatus.NEW, EnumSet.of(InventoryStatus.IGNORED));
+    }
+
+    @SuppressWarnings("unchecked")
+    private void checkStatus(Subject subject, Integer[] resourceIds, InventoryStatus target,
+        EnumSet<InventoryStatus> validStatuses) {
+        Query query = entityManager.createQuery("" //
+            + "  SELECT res.inventoryStatus " //
+            + "    FROM Resource res " //
+            + "   WHERE res.id IN ( :resourceIds ) " //
+            + "GROUP BY res.inventoryStatus ");
+        query.setParameter("resourceIds", Arrays.asList(resourceIds));
+        List<InventoryStatus> results = query.getResultList();
+
+        for (InventoryStatus expected : validStatuses) {
+            results.remove(expected);
+        }
+        if (results.size() > 0) {
+            throw new IllegalArgumentException("Can only commit resources with status: " + results);
+        }
+
+        PageList<Resource> resources = resourceManager.findResourceByIds(subject, ArrayUtils.unwrapArray(resourceIds),
+            false, PageControl.getUnlimitedInstance());
+        List<Resource> platforms = new ArrayList<Resource>();
+        List<Resource> servers = new ArrayList<Resource>();
+        for (Resource res : resources) {
+            ResourceCategory category = res.getResourceType().getCategory();
+            if (category == ResourceCategory.PLATFORM) {
+                platforms.add(res);
+            } else if (category == ResourceCategory.SERVER) {
+                servers.add(res);
+            } else {
+                throw new IllegalArgumentException("Can not directly change the inventory status of a service");
+            }
+        }
+
+        updateInventoryStatus(subject, platforms, servers, target);
     }
 }

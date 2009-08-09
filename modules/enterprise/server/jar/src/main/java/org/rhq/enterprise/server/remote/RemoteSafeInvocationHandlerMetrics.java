@@ -67,6 +67,17 @@ public class RemoteSafeInvocationHandlerMetrics implements RemoteSafeInvocationH
         }
     }
 
+    public Map<String, long[]> getCallTimeDataAsPrimitives() {
+        Map<String, Calltime> calltimeData = getCallTimeData();
+        Map<String, long[]> calltimeDataPrimitives = new HashMap<String, long[]>(calltimeData.size());
+        for (Map.Entry<String, Calltime> entry : calltimeData.entrySet()) {
+            Calltime calltime = entry.getValue();
+            calltimeDataPrimitives.put(entry.getKey(), new long[] { calltime.getCount(), calltime.getSuccesses(),
+                calltime.getFailures(), calltime.getMinimum(), calltime.getMaximum(), calltime.getAverage() });
+        }
+        return calltimeDataPrimitives;
+    }
+
     public long getNumberFailedInvocations() {
         readLock();
         try {
@@ -133,8 +144,8 @@ public class RemoteSafeInvocationHandlerMetrics implements RemoteSafeInvocationH
             calltime.count++;
             if (successful) {
                 this.numberSuccessfulInvocations++;
-                this.averageExecutionTime = (((this.numberSuccessfulInvocations - 1) * this.averageExecutionTime) + executionTime
-                    / this.numberSuccessfulInvocations);
+                this.averageExecutionTime = (((this.numberSuccessfulInvocations - 1) * this.averageExecutionTime) + executionTime)
+                    / this.numberSuccessfulInvocations;
 
                 if (executionTime > calltime.max) {
                     calltime.max = executionTime;

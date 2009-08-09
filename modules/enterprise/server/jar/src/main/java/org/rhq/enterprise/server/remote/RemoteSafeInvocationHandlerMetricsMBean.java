@@ -73,6 +73,24 @@ public interface RemoteSafeInvocationHandlerMetricsMBean {
      * 
      * @return calltime data
      */
-    public Map<String, Calltime> getCallTimeData();
+    Map<String, Calltime> getCallTimeData();
 
+    /**
+     * This obtains the same calltime data as {@link #getCallTimeData()} except the
+     * map that is returned contains only primitive objects so remote clients do not have
+     * to have this MBean class definition in their classloaders. The order of the map
+     * values is important - each element in the array is as follows:
+     * 
+     * <ol>
+     * <li>count</li>
+     * <li>successes</li>
+     * <li>failures</li>
+     * <li>minimum execution time</li>
+     * <li>maximum execution time</li>
+     * <li>average execution time</li>
+     * </ol>
+     * 
+     * @return the calltime data stored in a map containing primitive arrays. Keyed on API name.
+     */
+    Map<String, long[]> getCallTimeDataAsPrimitives();
 }

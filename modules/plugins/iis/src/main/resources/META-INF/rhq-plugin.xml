@@ -280,16 +280,14 @@
 
     <!-- Plugin help -->
     <help>
-        <![CDATA[
-  <h3>Configuring IIS for response time collection</h3>
-  <p>
-  In order to collection response time data for IIS the IIS log file format must be
-  configured to include the "Date" and "Time Taken" information. This can be enabled
-  in the IIS snap-in for the MMC. For each Web Site, select the
-  properties -> Web Site -> Enable Logging (Properties) -> Extended Properties tab and
-  enable these options. Your Web Site must be stopped and started to enable the settings.
-  </p>
-  ]]>
+         <![CDATA[
+            <h3>Configuring IIS for response time collection</h3>
+           
+            <p>In order to collection response time data for IIS the IIS log file format must be configured to include
+            the "Date" and "Time Taken" information. This can be enabled in the IIS snap-in for the MMC. For each Web
+            Site, select the properties -> Web Site -> Enable Logging (Properties) -> Extended Properties tab and enable
+            these options. Your Web Site must be stopped and started to enable the settings.</p>
+        ]]>
     </help>
 
 

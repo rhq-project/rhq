@@ -3,7 +3,11 @@
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
 
-   <help>This is a test help</help>
+   <help>
+      <![CDATA[
+         <p>This is a test help.</p>
+      ]]>
+   </help>
 
    <!-- The configuration for this server should not throw any errors. -->
    <server name="testServer1">

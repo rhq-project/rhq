@@ -19,7 +19,8 @@ for /R "%RHQ_PLUGINDOC_HOME%\lib" %%G in ("*.jar") do (
 set RHQ_PLUGINDOC_CMDLINE_OPTS=%*
 set RHQ_PLUGINDOC_MAINCLASS=org.rhq.core.tool.plugindoc.PluginDocGenerator
 
-set CMD=java.exe -cp "%CLASSPATH%" %RHQ_PLUGINDOC_MAINCLASS% %RHQ_PLUGINDOC_CMDLINE_OPTS%
+rem set RHQ_PLUGINDOC_ADDITIONAL_JAVA_OPTS=-agentlib:jdwp=transport=dt_socket,address=9797,server=y,suspend=y
+set CMD=java.exe %RHQ_PLUGINDOC_ADDITIONAL_JAVA_OPTS% -cp "%CLASSPATH%" %RHQ_PLUGINDOC_MAINCLASS% %RHQ_PLUGINDOC_CMDLINE_OPTS%
 cmd.exe /S /C "%CMD%"
 
 rem ----------------------------------------------------------------------

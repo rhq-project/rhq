@@ -351,18 +351,19 @@
 
    <help>
       <![CDATA[
-      To enable the perftest plugin, start the agent with <i>-Don.perftest.scenario=scenario-name</i> where the scenario
-      name matches one of the included scenario files for an inventory structure you would like to simulated.
+         <p>To enable the perftest plugin, start the agent with <tt>-Don.perftest.scenario=scenario-name</tt> where the 
+         scenario name matches one of the included scenario files for an inventory structure you would like to 
+         simulated.</p>
 
-      The following setup, for example, will use some typical server and service configurations resulting in 10 servers
-      each with 25 child services and each of those will have 2 child-child services.
+         <p>The following setup, for example, will use some typical server and service configurations resulting in 10 
+         servers each with 25 child services and each of those will have 2 child-child services.<p>
       
-      <code>
-         -Don.perftest.scenario=configurable-average
-         -Don.perftest.server-a-count=10
-         -Don.perftest.service-a-count=25
-         -Don.perftest.service-ab-count=2
-      </code>
+         <code><pre>
+            -Don.perftest.scenario=configurable-average
+            -Don.perftest.server-a-count=10
+            -Don.perftest.service-a-count=25
+            -Don.perftest.service-ab-count=2
+         </pre></code>
       ]]>
    </help>
 

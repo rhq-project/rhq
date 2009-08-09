@@ -35,9 +35,18 @@ public class EscapeDocBookReference extends EscapeXmlReference {
 
     @Override
     protected String escape(Object text) {
-        String results = super.escape(text);
-        results = results.replaceAll("&apos;", "'");
-        return results;
+        if (text == null) {
+            return null;
+        }
+        return text.toString();
+        /*
+         * Now that we're using generating proper docbok format for the <help> tag for resource types,
+         * we don't want to escape values because they are already in the correct target format. 
+         * 
+         * String results = super.escape(text);
+         * results = results.replaceAll("&apos;", "'");
+         * return results;
+         */
     }
 
 }

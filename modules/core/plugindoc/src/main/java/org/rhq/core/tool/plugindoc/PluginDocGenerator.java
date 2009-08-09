@@ -142,6 +142,10 @@ public class PluginDocGenerator {
             String endpoint = this.confluenceUrl + "/rpc/xmlrpc";
 
             for (ResourceType resourceType : resourceTypes) {
+                String htmlHelpText = resourceType.getHelpText();
+                String confluenceHelpText = DocConverter.htmlToConfluence(htmlHelpText);
+                resourceType.setHelpText(confluenceHelpText);
+
                 log.info("Generating Confluence content for '" + resourceType.getName() + "' Resource type...");
 
                 confluenceTemplateProcessor.getContext().put("resourceType", resourceType);
@@ -154,6 +158,10 @@ public class PluginDocGenerator {
 
         // generate content for docbook
         for (ResourceType resourceType : resourceTypes) {
+            String htmlHelpText = resourceType.getHelpText();
+            String docBookHelpText = DocConverter.htmlToDocBook(htmlHelpText);
+            resourceType.setHelpText(docBookHelpText);
+
             log.info("Generating Docbook content for '" + resourceType.getName() + "' Resource type...");
 
             docbookTemplateProcessor.getContext().put("resourceType", resourceType);

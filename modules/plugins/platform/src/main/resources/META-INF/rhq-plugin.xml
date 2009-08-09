@@ -572,10 +572,11 @@
 
    </service>
 
-
    <help>
-      This plugin handles interaction with the operating system and is the base on which other plugins run. It is
-      required for the operation of any other plugin and can not be disabled.
+      <![CDATA[
+         <p>This plugin handles interaction with the operating system and is the base on which other plugins run. It is
+         required for the operation of any other plugin and can not be disabled.</p>
+      ]]>
    </help>
-   
+
 </plugin>

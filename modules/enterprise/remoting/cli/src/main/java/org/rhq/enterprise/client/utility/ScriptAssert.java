@@ -26,6 +26,7 @@ package org.rhq.enterprise.client.utility;
 import org.testng.Assert;
 
 import javax.script.ScriptEngine;
+import javax.script.ScriptException;
 import java.util.Collection;
 
 public class ScriptAssert {

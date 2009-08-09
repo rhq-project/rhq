@@ -26,32 +26,34 @@ import org.rhq.enterprise.client.Controller;
 import org.rhq.enterprise.client.Exporter;
 import org.rhq.enterprise.client.RemoteClient;
 import org.rhq.enterprise.client.TabularWriter;
+import org.rhq.enterprise.client.script.CLIScriptException;
 import org.rhq.enterprise.client.script.CmdLineParser;
-import org.rhq.enterprise.client.script.NamedScriptArg;
 import org.rhq.enterprise.client.script.CommandLineParseException;
+import org.rhq.enterprise.client.script.NamedScriptArg;
 import org.rhq.enterprise.client.script.ScriptArg;
 import org.rhq.enterprise.client.script.ScriptCmdLine;
-import org.rhq.enterprise.client.script.CLIScriptException;
 import org.rhq.enterprise.client.utility.PackageFinder;
 import org.rhq.enterprise.client.utility.ResourceClientProxy;
-import org.rhq.enterprise.client.utility.ScriptUtil;
 import org.rhq.enterprise.client.utility.ScriptAssert;
+import org.rhq.enterprise.client.utility.ScriptUtil;
 
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
-import javax.script.Invocable;
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.MethodDescriptor;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.InputStream;
 import java.io.Reader;
+import java.io.InputStreamReader;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
-import java.lang.reflect.Method;
 
 /**
  * @author Greg Hinkle
@@ -93,7 +95,6 @@ public class ScriptCommand implements ClientCommand {
             for (String pkg : packages) {
                 jsEngine.eval("importPackage(" + pkg + ")");
             }
-
         } catch (ScriptException e) {
             e.printStackTrace();
         }
@@ -117,6 +118,7 @@ public class ScriptCommand implements ClientCommand {
                 ScriptCmdLine scriptCmdLine = cmdLineParser.parse(args);
 
                 bindScriptArgs(scriptCmdLine);
+                executeUtilScripts();
 
                 return executeScriptFile(new FileReader(scriptCmdLine.getScriptFileName()), client);
             } catch (FileNotFoundException e) {
@@ -244,6 +246,17 @@ public class ScriptCommand implements ClientCommand {
         }
     }
 
+    private void executeUtilScripts() {
+        InputStream stream = getClass().getResourceAsStream("test_utils.js");
+        InputStreamReader reader = new InputStreamReader(stream);
+
+        try {
+            jsEngine.eval(reader);
+        } catch (ScriptException e) {
+            log.warn("An error occurred while executing test_utils.js", e);
+        }
+    }
+
     private boolean isScriptFileCommandLine(String[] args) {
         if (args == null || args.length < 3) {
             return false;
@@ -265,6 +278,8 @@ public class ScriptCommand implements ClientCommand {
         if (cmdLine.getArgType() == ScriptCmdLine.ArgType.NAMED) {
             bindNamedArgs(cmdLine);
         }
+
+        jsEngine.put("script", new File(cmdLine.getScriptFileName()).getName());
     }
 
     private void bindArgsArray(ScriptCmdLine cmdLine) {

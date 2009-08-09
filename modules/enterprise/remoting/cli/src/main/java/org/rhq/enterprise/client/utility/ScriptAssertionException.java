@@ -23,6 +23,8 @@
 
 package org.rhq.enterprise.client.utility;
 
+import javax.script.ScriptException;
+
 /**
  * This is a wrapper exception class for {@link java.lang.AssertionError}. The default (i.e., rhino) scripting engine
  * catches any exception, checked or unchecked, thrown from a script and wraps it in an instance of
@@ -50,6 +52,6 @@ public class ScriptAssertionException extends RuntimeException {
 //    }
 
     public ScriptAssertionException(AssertionError error) {
-        super(error);
+        super(new ScriptException(error.getMessage()));
     }
 }

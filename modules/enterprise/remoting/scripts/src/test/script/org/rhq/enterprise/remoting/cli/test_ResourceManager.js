@@ -78,12 +78,7 @@ function testFindByCriteria() {
     assertPropertyLoaded(resource, "resourceErrors");
 }
 
-function testFindByCriteriaWithSorting() {
-    verifySortByResourceName();
-    verifySortByPluginName();
-}
-
-function verifySortByResourceName() {
+function testSortByResourceName() {
     var criteria = ResourceCriteria();
     criteria.addFilterParentResourceName("server-omega-0");
     criteria.addFilterResourceTypeName('service-beta');
@@ -98,18 +93,50 @@ function verifySortByResourceName() {
     assertResourcesSorted(ascResources, descResources, "name");
 }
 
-function verifySortByPluginName() {
-    var criteria = new ResourceCriteria();
-    criteria.addFilterParentResourceName("localhost.localdomain");
-    criteria.addSortPluginName(PageOrdering.ASC);
+//function testSortByPluginName() {
+//    var criteria = ResourceCriteria();
+//    criteria.addFilterParentResourceName("localhost.localdomain");
+//    criteria.addSortPluginName(PageOrdering.ASC);
+//
+//    var ascResources = ResourceManager.findResourcesByCriteria(criteria);
+//
+//    criteria.addSortPluginName(PageOrdering.DESC);
+//
+//    var descResources = ResourceManager.findResourcesByCriteria(criteria);
+//
+//    assertResourcesSorted(ascResources, descResources, "resourceType.plugin");
+//}
 
-    var ascResources = ResourceManager.findResourcesByCriteria(criteria);
+//function testSortByPluginNameAndByResourceTypeNameAndAgentName() {
+//    var criteria = ResourceCriteria();
+//    criteria.addSortPluginName(PageOrdering.ASC);
+//    criteria.addSortResourceTypeName(PageOrdering.ASC);
+//    criteria.addSortAgentName(PageOrdering.ASC);
+//
+//    var ascResources = ResourceManager.findResourcesByCriteria(criteria);
+//
+//    criteria.addSortPluginName(PageOrdering.DESC);
+//    criteria.addSortResourceTypeName(PageOrdering.DESC);
+//    criteria.addSortAgentName(PageOrdering.DESC);
+//
+//    var descResources = ResourceManager.findResourcesByCriteria(criteria);
+//
+//    assertResourcesSorted(ascResources, descResources, ["resourceType.plugin", "resourceType.name", "agent.name"]);
+//}
 
-    criteria.addSortPluginName(PageOrdering.DESC);
+function testFindResourcesWithAssociations() {
+    var criteria = ResourceCriteria();
+    criteria.addFilterParentResourceName('server-omega-0');
+    criteria.fetchAgent(true);
+    criteria.fetchResourceType(true);
+    criteria.fetchChildResources(true);
+    criteria.fetchAlertDefinitions(true);
+    criteria.fetchParentResource(true);
 
-    var descResources = ResourceManager.findResourcesByCriteria(criteria);
+    var resources = ResourceManager.findResourcesByCriteria(criteria);
 
-    assertResourcesSorted(ascResources, descResources, "resourceType.plugin");
+    Assert.assertNotNull(resources, "Expected to get back non-null results.");
+    Assert.assertTrue(resources.size() > "Expected to get back resources when fetch associations.");
 }
 
 function testFindResourceLineage() {

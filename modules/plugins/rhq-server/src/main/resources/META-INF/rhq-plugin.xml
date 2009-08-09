@@ -224,7 +224,7 @@
       <metric property="NumberNotProcessedCommandsReceived" category="throughput" displayType="summary" measurementType="trendsup"
               description="Total number of commands that were received but were not processed usually due to the suspension of global command processing."/>
       <metric property="AverageExecutionTimeReceived" category="performance" displayType="summary" measurementType="dynamic" units="milliseconds"
-              description="Average time it took to process incoming commands that are ultimately successful"/>
+              description="Average time it took to process incoming commands that were ultimately successful"/>
 
       <resource-configuration>
          <c:group name="concurrencylimits" displayName="Concurrency Limits" hiddenByDefault="false">
@@ -251,6 +251,50 @@
                                description="If true, the server will start in Maintenance Mode, regardless of the state it was in when it was shutdown. Therefore, if true, no agents will be allowed to talk to this server when it starts up."/>
          </c:group>
       </resource-configuration>
+
+   </service>
+
+   <service name="RHQ Server Remote API Subsystem"
+            discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+            class="RemoteAPIResourceComponent"
+            description="Details on remote API communications with external clients, including the CLI">
+
+      <runs-inside>
+         <parent-resource-type name="JBossAS Server" plugin="JBossAS"/>
+      </runs-inside>
+
+      <plugin-configuration>
+         <c:simple-property name="objectName" readOnly="true" default="rhq.remoting:type=RemoteApiMetrics"/>
+         <c:simple-property name="nameTemplate" default="RHQ Server Remote API Subsystem"/>
+         <c:simple-property name="descriptionTemplate" default="Details on remote API communications with external clients, including the CLI"/>
+      </plugin-configuration>
+
+      <operation name="clear" displayName="Clear Metrics" description="Clear the collected metric data and start collecting anew"/>
+
+      <operation name="viewReceivedCallTimeData" description="View statistical information about each subsystem call into the server">
+         <results>
+            <c:list-property name="requests">
+               <c:map-property name="request">
+                  <c:simple-property name="api" summary="true" type="string"/>
+                  <c:simple-property name="totalCount" summary="true" type="long"/>
+                  <c:simple-property name="successCount" summary="true" type="long"/>
+                  <c:simple-property name="failureCount" summary="true" type="long"/>
+                  <c:simple-property name="executionMinTime" summary="true" type="long"/>
+                  <c:simple-property name="executionMaxTime" summary="true" type="long"/>
+                  <c:simple-property name="executionAvgTime" summary="true" type="long"/>
+               </c:map-property>
+            </c:list-property>
+         </results>
+      </operation>
+
+      <metric property="NumberFailedInvocations" category="throughput" displayType="summary" measurementType="trendsup"
+              description="Total number of remote API requests that were received but failed to be processed successfully"/>
+      <metric property="NumberSuccessfulInvocations" category="throughput" displayType="summary" measurementType="trendsup"
+              description="Total number of remote API requests that were received and successfully processed"/>
+      <metric property="NumberTotalInvocations" category="throughput" displayType="summary" measurementType="trendsup"
+              description="Total number of remote API requests that were received regardless of their success or failure"/>
+      <metric property="AverageExecutionTime" category="performance" displayType="summary" measurementType="dynamic" units="milliseconds"
+              description="Average time it took to process incoming remote API requests that were ultimately successful"/>
 
    </service>
 

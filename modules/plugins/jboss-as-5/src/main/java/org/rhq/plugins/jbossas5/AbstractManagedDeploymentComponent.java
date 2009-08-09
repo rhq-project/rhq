@@ -103,7 +103,7 @@ public abstract class AbstractManagedDeploymentComponent
         try {
             getManagedDeployment();
         } catch (Exception e) {
-        	log.error("The underlying file [" + this.deploymentFile + "] no longer exists. It may have been deleted from the filesystem external to Jopr. If you wish to remove this Resource from inventory, you may add &debug=true to the URL for the Browse Resources > Services page and then click the UNINVENTORY button next to this Resource");
+        	log.warn("The underlying file [" + this.deploymentFile + "] no longer exists. It may have been deleted from the filesystem external to Jopr. If you wish to remove this Resource from inventory, you may add &debug=true to the URL for the Browse Resources > Services page and then click the UNINVENTORY button next to this Resource");
         }
     }
 

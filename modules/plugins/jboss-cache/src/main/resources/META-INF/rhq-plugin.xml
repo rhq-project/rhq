@@ -152,7 +152,10 @@
                              
          </resource-configuration>
          <help>
-         Please note that the number of possible metrics varies depending on the configuration and flavour of Cache used.
+            <![CDATA[
+            <p>Please note that the number of possible metrics varies depending on the configuration and flavour of 
+            Cache used.</p>
+            ]]>
          </help>
                   
          <service name="JGroupsChannel"

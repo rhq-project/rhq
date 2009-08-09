@@ -234,82 +234,81 @@
          </configuration>
       </content>
 
-       <help>
-       <![CDATA[
-        h3. Binding to IP addresses
+      <help>
+      <![CDATA[
+        <h3>Binding to IP addresses</h3>
 
-        When starting JBossAS instances that need to be monitored using remote JMX (i.e. JNP), it is necessary for the
-        {{java.rmi.server.hostname}} System property to be set to the same value as the server's JNP address (which is
-        set to the {{jboss.bind.address}} System property by default). Due to bugs in JBossAS \[1]\[2],
-        {{java.rmi.server.hostname}} will default to "127.0.0.1", unless JBossAS is started using -b, in which case
-        {{java.rmi.server.hostname}} will default to the bind address specified as the argument to -b.
+        <p>When starting JBossAS instances that need to be monitored using remote JMX (i.e. JNP), it is necessary for 
+        the <tt>java.rmi.server.hostname</tt> System property to be set to the same value as the server's JNP 
+        address (which is set to the <tt>jboss.bind.address</tt> System property by default). Due to bugs in JBossAS 
+        (for more information please see <a href="http://jira.jboss.com/jira/browse/JBAS-4736">JBAS-4736</a> and 
+        <a href="http://jira.jboss.com/jira/browse/JBAS-4955">JBAS-4955</a>),
+        <tt>java.rmi.server.hostname</tt> will default to <tt>127.0.0.1</tt>, unless JBossAS is started using 
+        <tt>-b</tt>, in which case <tt>java.rmi.server.hostname</tt> will default to the bind address specified 
+        as the argument to <tt>-b</tt>.</p>
 
-        Therefore, you must start your JBossAS instances using either -b, e.g.:
+        <p>Therefore, you must start your JBossAS instances by using either <tt>-b</tt>:</p>
 
-        {code}
+        <code><pre>
         run -b 12.34.56.78 ...
-        {code}
+        </pre></code>
 
-        or by explicitly specifying a value for {{java.rmi.server.hostname}} via -D or -P, e.g.:
+        <p>or by explicitly specifying a value for <tt>java.rmi.server.hostname</tt> via <tt>-D</tt> or 
+        <tt>-P</tt>, e.g.:</p>
 
-        {code}
+        <code><pre>
         run -Djboss.bind.address=12.34.56.78 -Djava.rmi.server.hostname=12.34.56.78 ...
-        {code}
+        </pre></code>
 
-        Otherwise, you will not be able to manage the instance via JON.
+        <p>Otherwise, you will not be able to manage the instance via JON.</p>
 
-        {note}
-        Using -b is the recommended way to specify the bind address, since, in addition to setting
-        {{jboss.bind.address}} and {{java.rmi.server.hostname}}, it will also set a couple other JGroups-related System
-        properties to the specified address.
-        {note}
+        <div class="note">
+        Using <tt>-b</tt> is the recommended way to specify the bind address, since, in addition to setting
+        <tt>jboss.bind.address</tt> and <tt>java.rmi.server.hostname</tt>, it will also set other JGroups-related 
+        System properties to the specified address.
+        </div>
 
-        \[1] http://jira.jboss.com/jira/browse/JBAS-4736
-        \[2] http://jira.jboss.com/jira/browse/JBAS-4955
+        <h3>Monitoring of EJB 2.x EJBs</h3>
 
-        h3. Monitoring of EJB 2.x EJBs
+        <p>The issue here is that JBossAS changed the way it creates the MBean names of the deployed EJBs from the
+        JNDI names / EJB names (this happened around version 4.0.3.sp1). Basically the &lt;jndi-name&gt;, or
+        &lt;local-jndi-name&gt; if &lt;jndi-name&gt; is not present, from jboss.xml is used.</p>
 
-        The issue here is that JBossAS changed the way it creates the MBean names of the deployed EJBs from the
-        JNDI names / EJB names (this happened around version 4.0.3.sp1). Basically the <jndi-name>, or
-        <local-jndi-name> if <jndi-name> is not present, from jboss.xml is used.
-
-        So the workaround is to set the <jndi-name> to the ejb-name in your application.
+        <p>So the workaround is to set the &lt;jndi-name&gt; to the ejb-name in your application.
         As this probably breaks client code, you will want to setup a naming reference that restores the original
-        hierarchy. For example:
+        hierarchy. For example, if you have in jboss.xml:</p>
 
-        If you have in jboss.xml:
-        {code:title=jboss.xml}
-<session>
-   <ejb-name>Ability</ejb-name>
-   <local-jndi-name>flower.AbilityLocal</local-jndi-name>
-...
-        {code}
+        <code><pre>
+           &lt;session&gt;
+           &lt;ejb-name&gt;Ability&lt;/ejb-name&gt;
+           &lt;local-jndi-name&gt;flower.AbilityLocal&lt;/local-jndi-name&gt;
+        </pre></code>
 
-        You might change this to:
+        <p>You might change this to:</p>
 
-        {code:title=jboss.xml}
-<session>
-   <ejb-name>Ability</ejb-name>
-   <local-jndi-name>Ability</local-jndi-name>
-        {code}
+        <code><pre>
+           &lt;session&gt;
+           &lt;ejb-name&gt;Ability&lt;/ejb-name&gt;
+           &lt;local-jndi-name&gt;Ability&lt;/local-jndi-name&gt;
+        </pre></code>
 
-        And then add an MBean flowsys-naming-alias-service.xml:
+        <p>And then add an MBean flowsys-naming-alias-service.xml:</p>
 
-        {code:title=flower-naming-alias-service.xml}
-<mbean code="org.jboss.naming.NamingAlias"
-       name=":service=naming-alias">
-    <attribute name="ToName">flower.AbilityLocal</attribute>
-    <attribute name="FromName">Ability</attribute>
-</mbean>
-        {code}
+        <code><pre>
+           &lt;mbean code=&quot;org.jboss.naming.NamingAlias&quot;
+                  name=&quot;:service=naming-alias&quot;&gt;
+              &lt;attribute name=&quot;ToName&quot;&gt;flower.AbilityLocal&lt;/attribute&gt;
+              &lt;attribute name=&quot;FromName&quot;&gt;Ability&lt;/attribute&gt;
+           &lt;/mbean&gt;
+        </pre></code>
 
-        When you have done this, you probably still need to go into the inventory of the respective beans, edit the
-        configuration and just click ok.
+        <p>After you have done this, go into the inventory of the respective beans, edit the
+        configuration and then click OK.</p>
 
-        The naming alias ensures that clients of the Ability EJB can still find the bean in JNDI at the original
-        location. Naming aliases appear in JNDIView (within JMX-Console) as LinkRef.
-       ]]>
-       </help>
+        <p>The naming alias ensures that clients of the Ability EJB can still find the bean in JNDI at the original
+        location. Naming aliases appear in JNDIView (within JMX-Console) as LinkRef.</p>
+      ]]>
+      </help>
 
       <server name="Embedded Tomcat Server"
               description="Tomcat Web Application Container embedded in a JBossAS Server"

@@ -143,12 +143,13 @@
 
       <help>
          <![CDATA[
-          In order to monitor Hibernate statistics via JON, the Hibernate Session Manager MBean
-          must be deployed to an object name of the format _"Hibernate:application=%application%,type=statistics"_,
-          and statistics must be enabled.
+          <p>In order to monitor Hibernate statistics via JON, the Hibernate Session Manager MBean
+          must be deployed to an object name of the format 
+          <tt>_"Hibernate:application=%application%,type=statistics"_</tt>, and statistics must be enabled.</p>
 
-          Some example code is provided below to register the Hibernate Session MBean within an EJB3 application.
-          {code}
+          <p>Some example code is provided below to register the Hibernate Session MBean within an EJB3 application.</p>
+          
+          <code><pre>
  public static void enableHibernateStatistics(EntityManager entityManager)
  {
     try
@@ -195,9 +196,10 @@
     }
     return jbossServer;
  }
-          {code}
-          See also http://hibernate.org/216.html and
-          http://www.redhat.com/docs/manuals/jboss/jboss-eap-4.3/doc/hibernate/Hibernate_Reference_Guide/Optional_configuration_properties-Hibernate_statistics.html
+          </pre></code>
+          
+          <p>See also <a href="http://hibernate.org/216.html">Publishing statistics through JMX</a> and
+          <a href="http://www.redhat.com/docs/manuals/jboss/jboss-eap-4.3/doc/hibernate/Hibernate_Reference_Guide/Optional_configuration_properties-Hibernate_statistics.html">Enabling Hibernate statistics</a></p>
          ]]>
       </help>
 

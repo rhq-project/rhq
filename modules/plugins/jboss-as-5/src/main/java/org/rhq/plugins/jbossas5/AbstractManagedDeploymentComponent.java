@@ -47,6 +47,7 @@ import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
@@ -98,6 +99,12 @@ public abstract class AbstractManagedDeploymentComponent
         this.deploymentType = KnownDeploymentTypes.valueOf(deploymentTypeName);
         log.trace("Started ResourceComponent for " + getResourceDescription() + ", managing " + this.deploymentType
                 + " deployment '" + this.deploymentName + "' with path '" + this.deploymentFile + "'.");
+        
+        try {
+            getManagedDeployment();
+        } catch (Exception e) {
+        	log.error("The underlying file [" + this.deploymentFile + "] no longer exists. It may have been deleted from the filesystem external to Jopr. If you wish to remove this Resource from inventory, you may add &debug=true to the URL for the Browse Resources > Services page and then click the UNINVENTORY button next to this Resource");
+        }
     }
 
     public AvailabilityType getAvailability()

@@ -294,11 +294,13 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
         DeploymentManager deploymentManager = getConnection().getDeploymentManager();
         try {
             getManagedDeployment();
-        } catch (NoSuchDeploymentException e) {
+        } catch (Exception e) {
             // The deployment no longer exists, so there's nothing for us to do. Someone most likely undeployed it
             // outside of Jopr or EmbJopr, e.g. via the jmx-console or by deleting the app file from the deploy dir.
+        	log.warn("Cannot delete the deployment [" + this.deploymentName + "], since it no longer exists");
             return;
         }
+        
         log.debug("Stopping deployment [" + this.deploymentName + "]...");
         DeploymentProgress progress = deploymentManager.stop(this.deploymentName);
         DeploymentStatus stopStatus = DeploymentUtils.run(progress);

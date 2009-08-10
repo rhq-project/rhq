@@ -1182,7 +1182,6 @@ public class AgentConfiguration {
             // Hide some Apache libraries used by the agent.
             // If the plugins want these, they should include their own implementations.
             defaultRegex.append("(org\\.apache\\.commons\\.httpclient\\..*)|");
-            defaultRegex.append("(org\\.apache\\.xerces\\..*)|");
 
             // Provide to the plugins some logging frameworks. These are such common
             // dependencies that we provide them for the plugins, thus eliminating every plugin
@@ -1231,7 +1230,7 @@ public class AgentConfiguration {
                 .append("(org\\.rhq\\.enterprise\\.communications\\.(?!command\\.server\\.CommandProcessorMetrics.*).*)");
 
             // Other packages from other jars in the agent lib directory allowed to be used by the plugins.
-            // Therefore, they are no excluded here. This includes things like the plugin API and the core domain objects.
+            // Therefore, they are not excluded here. This includes things like the plugin API and the core domain objects.
 
             clRegex = defaultRegex.toString();
         }

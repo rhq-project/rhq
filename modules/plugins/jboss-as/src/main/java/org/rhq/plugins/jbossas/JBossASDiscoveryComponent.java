@@ -280,11 +280,8 @@ public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent {
         String configName = absoluteConfigPath.getName();
         String baseName = discoveryContext.getSystemInformation().getHostname();
         String description = installInfo.getProductType().DESCRIPTION;
-        File deployDir = new File(absoluteConfigPath, "deploy");
-        File rhqInstallerWar = new File(deployDir, "rhq-installer.war");
-        File rhqInstallerWarUndeployed = new File(deployDir, "rhq-installer.war.rej");
-        boolean isRhqServer = rhqInstallerWar.exists() || rhqInstallerWarUndeployed.exists();
-        if (isRhqServer) {
+        boolean isInServer = isEmbeddedInServer(absoluteConfigPath);
+        if (isInServer) {
             baseName += " Jopr Server, ";
             description += " hosting the Jopr Server";
 
@@ -315,6 +312,18 @@ public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent {
 
         return new DiscoveredResourceDetails(discoveryContext.getResourceType(), key, name, installInfo.getVersion(),
             description, pluginConfiguration, processInfo);
+    }
+
+    /**
+     * @param absoluteConfigPath
+     * @return true if this plugin is in an Agent that is embedded in the Server
+     */
+    private boolean isEmbeddedInServer(File absoluteConfigPath) {
+        File deployDir = new File(absoluteConfigPath, "deploy");
+        File rhqInstallerWar = new File(deployDir, "rhq-installer.war");
+        File rhqInstallerWarUndeployed = new File(deployDir, "rhq-installer.war.rej");
+        boolean isInServer = rhqInstallerWar.exists() || rhqInstallerWarUndeployed.exists();
+        return isInServer;
     }
 
     @Nullable
@@ -354,6 +363,11 @@ public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent {
                     throw new IllegalStateException(e);
                 }
                 File configDir = (File) server.getAttribute(configObjectName, "ServerHomeDir");
+                
+                //if (isEmbeddedInServer(configDir)) {
+                //    return null; // abort - we are embedded, but we're inside the enterprise Server
+                //}
+
                 String configName = (String) server.getAttribute(configObjectName, "ServerName");
                 String version = (String) server.getAttribute(configObjectName, "SpecificationVersion");
 
@@ -376,7 +390,7 @@ public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent {
                     jnpPort, configName, installInfo);
                 DiscoveredResourceDetails resource = new DiscoveredResourceDetails(context.getResourceType(), configDir
                     .getAbsolutePath(), resourceName, version,
-                    "JBossAS server that RHQ Plugin Container is running within", pluginConfiguration, null);
+                    "JBossAS server that the Plugin Container is running within", pluginConfiguration, null);
 
                 return resource;
             }

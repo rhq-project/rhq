@@ -81,7 +81,7 @@ function testFindWithFilteringAndFetchingAssociations() {
     Assert.assertNotNull(resource.opertionHistories, "resource.operationHistories should have been loaded");
 }
 
-function testSortWithSimpleProperty() {
+function testSortBySingleProperty() {
     var criteria = ResourceCriteria();
     criteria.caseSensitive = true;
     criteria.addFilterParentResourceName('server-omega-0');
@@ -90,10 +90,31 @@ function testSortWithSimpleProperty() {
 
     var resources = ResourceManager.findResourcesByCriteria(criteria);
 
-    Assert.assertTrue(resources.size() > 0, "Expected to get back resources when sorting by a simple property, resource.name");
+    Assert.assertTrue(resources.size() > 0, "Expected to get back resources when sorting by a single property, resource.name");
 
     // TODO verify resources are actually sorted
 }
+
+function testSortByMultipleProperties() {
+    var criteria = ResourceCriteria();
+    criteria.caseSensitive = true;
+    criteria.addFilterParentResourceName('server-omega-0');
+    criteria.addFilterResourceTypeName('service-beta');
+
+    criteria.addSortName(PageOrdering.DESC);
+    criteria.addSortResourceTypeName(PageOrdering.DESC);
+    criteria.addSortInventoryStatus(PageOrdering.DESC);
+    criteria.addSortVersion(PageOrdering.DESC);
+    criteria.addSortResourceCategory(PageOrdering.DESC);
+
+    var resources= ResourceManager.findResourcesByCriteria(criteria);
+
+    Assert.assertTrue(resources.size() > 0, "Expected to get resources when sorting by multiple proerties.");
+}
+
+//function addSortingToCriteria(criteria) {
+//
+//}
 
 function testFindResourceLineage() {
     criteria = ResourceCriteria();

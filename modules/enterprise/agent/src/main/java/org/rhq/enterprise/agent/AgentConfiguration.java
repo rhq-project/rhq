@@ -1207,6 +1207,7 @@ public class AgentConfiguration {
             defaultRegex.append("(org\\.dom4j\\..*)|");
             defaultRegex.append("(EDU\\.oswego\\..*)|");
             defaultRegex.append("(gnu\\.getopt\\..*)|");
+            defaultRegex.append("(javax\\.persistence\\..*)|");
 
             // These core agent/plugin container libraries are not to be used by the plugins.
             // We hide them to enforce this - plugin developers should not be using these.

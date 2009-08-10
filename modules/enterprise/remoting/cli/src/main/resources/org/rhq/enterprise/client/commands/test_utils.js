@@ -38,16 +38,10 @@ function executeTests(tests) {
             this[functionName]();
         }
         catch (e if e.javaException instanceof org.rhq.enterprise.client.utility.ScriptAssertionException) {
-            var error = errors +
-                functionName + '() failed:\n' +
-                e.javaException.message + ' at line ' + e.lineNumber + ' in ' + script + '\n\n'; 
-            errors = errors + error;
-        } 
+            errors = errors + createErrorMsg(functionName, e.javaException.message, e.lineNumber);
+        }
         catch (e) {
-            var error = errors +
-                functionName + '() failed:\n' +
-                e.message + ' at line ' + e.lineNumber + ' in ' + script + '\n\n'; 
-            errors = errors + error;
+            errors = errors + createErrorMsg(functionName, e.message, e.lineNumber);
         }
     }
     if (errors.length > 0) {
@@ -63,6 +57,11 @@ function isSkippedTest(test) {
         }
     }
     return false;
+}
+
+function createErrorMsg(functionName, msg, lineNumber) {
+    return functionName + '() failed:\n' +
+           exception.message + ' at line ' + exception.lineNumber + ' in ' + script + '\n\n';
 }
 
 function executeAllTests() {

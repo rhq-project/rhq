@@ -62,7 +62,7 @@ public class RecordCommand implements ClientCommand {
         String shortOpts = "-:f:abe";
         LongOpt[] longOpts = {
                 new LongOpt("file", LongOpt.REQUIRED_ARGUMENT, null, 'f'),
-                new LongOpt("append", LongOpt.OPTIONAL_ARGUMENT, null, 's'),
+                new LongOpt("append", LongOpt.OPTIONAL_ARGUMENT, null, 'a'),
                 new LongOpt("start", LongOpt.OPTIONAL_ARGUMENT, null, 'b'),
                 new LongOpt("end", LongOpt.OPTIONAL_ARGUMENT, null, 'e')
         };
@@ -126,11 +126,13 @@ public class RecordCommand implements ClientCommand {
     }
 
     public String getSyntax() {
-        return "record <file>";
+        return "record [[-b | --start] | [-e | --end]] [-a | --append] -f <file>";
     }
 
     public String getHelp() {
-        return "Records user input commands to a specified file";
+        return "Records user input commands to a specified file. Use the --start option to begin recording. Use the " +
+            "--end option to stop recording. Use --append to append output to the end of an existing file; otherwise, " +
+            "recording will start at the begining of the file.";
     }
 
     public String getDetailedHelp() {

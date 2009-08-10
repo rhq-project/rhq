@@ -90,7 +90,6 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
-import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
@@ -1364,9 +1363,20 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
     }
 
     @SuppressWarnings("unchecked")
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
     public PageList<InstalledPackage> findInstalledPackagesByCriteria(Subject subject, InstalledPackageCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+
+        if (authorizationManager.isInventoryManager(subject) == false) {
+            if (null == criteria.getFilterResourceId()) {
+                throw new PermissionException(
+                    "Subject ["
+                        + subject.getName()
+                        + "] does not have InventoryManager permission. Specify a resourceId filter for an accessible resource.");
+            }
+
+            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE,
+                "resource", subject.getId());
+        }
 
         Query query = generator.getQuery(entityManager);
         Query countQuery = generator.getCountQuery(entityManager);
@@ -1378,12 +1388,18 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
     }
 
     @SuppressWarnings("unchecked")
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
     public PageList<PackageVersion> findPackageVersionsByCriteria(Subject subject, PackageVersionCriteria criteria) {
         Integer resourceId = criteria.getFilterResourceId();
 
         if ((null == resourceId) || (resourceId < 1)) {
             throw new IllegalArgumentException("Illegal filterResourceId: " + resourceId);
+        }
+
+        if (authorizationManager.isInventoryManager(subject) == false) {
+            if (!authorizationManager.canViewResource(subject, resourceId)) {
+                throw new PermissionException("Subject [" + subject.getName()
+                    + "] does not have permission to view the specified resource.");
+            }
         }
 
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
@@ -1397,7 +1413,6 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         return new PageList<PackageVersion>(results, (int) count, criteria.getPageControl());
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
     public InstalledPackage getBackingPackageForResource(Subject subject, int resourceId) {
         InstalledPackage result = null;
 

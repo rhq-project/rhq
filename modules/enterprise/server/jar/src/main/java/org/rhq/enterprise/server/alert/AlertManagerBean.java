@@ -831,7 +831,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
         if (authorizationManager.isInventoryManager(subject) == false) {
             generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE,
-                "definition.resource", subject.getId());
+                "alertDefinition.resource", subject.getId());
         }
 
         Query query = generator.getQuery(entityManager);

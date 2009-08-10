@@ -41,6 +41,10 @@ public class InstalledPackageCriteria extends Criteria {
         this.filterResourceId = filterResourceId;
     }
 
+    public Integer getFilterResourceId() {
+        return filterResourceId;
+    }
+
     public void addFilterSubjectId(Integer filterSubjectId) {
         this.filterSubjectId = filterSubjectId;
     }

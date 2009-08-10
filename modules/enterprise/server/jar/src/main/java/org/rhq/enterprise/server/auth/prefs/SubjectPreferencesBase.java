@@ -119,8 +119,12 @@ public abstract class SubjectPreferencesBase {
     protected String getPreference(String key) throws IllegalArgumentException {
         PropertySimple prop = SubjectPreferencesCache.getInstance().getUserProperty(subjectId, key);
 
-        if (prop == null)
+        if (prop == null) {
+            if (this.subjectId == 0) {
+                return ""; // this is probably an LDAP user that needs to register first
+            }
             throw new IllegalArgumentException("preference '" + key + "' requested is not valid");
+        }
 
         String value = prop.getStringValue();
 

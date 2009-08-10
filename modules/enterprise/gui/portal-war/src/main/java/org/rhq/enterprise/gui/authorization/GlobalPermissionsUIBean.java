@@ -37,12 +37,15 @@ public class GlobalPermissionsUIBean {
 
     public GlobalPermissionsUIBean() {
         Subject user = EnterpriseFacesContextUtility.getSubject();
-        Set<Permission> globalPermissions = LookupUtil.getAuthorizationManager().getExplicitGlobalPermissions(user);
 
-        security = globalPermissions.contains(Permission.MANAGE_SECURITY);
-        inventory = globalPermissions.contains(Permission.MANAGE_INVENTORY);
-        settings = globalPermissions.contains(Permission.MANAGE_SETTINGS);
-        isSuperuser = LookupUtil.getAuthorizationManager().isSystemSuperuser(user);
+        // if a subject ID is 0, it probably means this is a new LDAP user that needs to be registered
+        if (user.getId() != 0) {
+            Set<Permission> globalPermissions = LookupUtil.getAuthorizationManager().getExplicitGlobalPermissions(user);
+            security = globalPermissions.contains(Permission.MANAGE_SECURITY);
+            inventory = globalPermissions.contains(Permission.MANAGE_INVENTORY);
+            settings = globalPermissions.contains(Permission.MANAGE_SETTINGS);
+            isSuperuser = LookupUtil.getAuthorizationManager().isSystemSuperuser(user);
+        }
 
         SystemManagerLocal systemManager = LookupUtil.getSystemManager();
         isDebugMode = Boolean.valueOf(systemManager.getSystemConfiguration().getProperty(RHQConstants.EnableDebugMode));

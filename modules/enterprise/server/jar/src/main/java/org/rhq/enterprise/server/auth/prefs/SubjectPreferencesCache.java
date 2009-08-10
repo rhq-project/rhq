@@ -39,7 +39,8 @@ public class SubjectPreferencesCache {
     }
 
     private void load(int subjectId) {
-        if (!subjectPreferences.containsKey(subjectId)) {
+        // if subject ID is 0, it probably means this is a new LDAP user that needs to be registered
+        if (subjectId != 0 && !subjectPreferences.containsKey(subjectId)) {
             try {
                 Subject subject = subjectManager.loadUserConfiguration(subjectId);
                 Configuration configuration = subject.getUserConfiguration();

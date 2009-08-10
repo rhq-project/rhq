@@ -582,6 +582,14 @@ public class PackageVersion implements Serializable {
         return mapping;
     }
 
+    public Set<InstalledPackage> getInstalledPackages() {
+        return installedPackages;
+    }
+
+    public Set<InstalledPackageHistory> getInstalledPackageHistory() {
+        return installedPackageHistory;
+    }
+
     /**
      * Removes the channel as one that this package version is related to. The mapping that was removed is returned; if
      * the given package version was not a member of the channel, <code>null</code> is returned.

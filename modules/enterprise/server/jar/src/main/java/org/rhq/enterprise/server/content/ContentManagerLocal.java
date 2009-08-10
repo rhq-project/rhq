@@ -282,6 +282,21 @@ public interface ContentManagerLocal {
      */
     List<String> getInstalledPackageVersions(Subject subject, int resourceId);
 
+    /**
+     * For a resource that is package-backed, this call will return a reference to the package that caused the
+     * resource.
+     *
+     * NOTE: This is not fully implemented, see the implementation itself for more details. In short,
+     * This assumes there will only be one installed package against the resource.
+     *
+     * @param resourceId must identify a valid resource
+     * @return package if it is inventoried for the resource and the resource is package-backed; <code>null</code>
+     *         otherwise
+     * @deprecated use findInstalledPackageVersionsByCriteria with addResourceIdFilter and fetchInstalledPackages( true )
+     * 
+     */
+    InstalledPackage getBackingPackageForResource(Subject subject, int resourceId);
+
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
     // The following are shared with the Remote Interface
@@ -319,9 +334,4 @@ public interface ContentManagerLocal {
      * @see {@link ContentManagerRemote#findInstalledPackageVersionsByCriteria(Subject, PackageVersionCriteria)}
      */
     PageList<PackageVersion> findInstalledPackageVersionsByCriteria(Subject subject, PackageVersionCriteria criteria);
-
-    /**
-     * @see {@link ContentManagerRemote#getBackingPackageForResource(Subject, int)}
-     */
-    InstalledPackage getBackingPackageForResource(Subject subject, int resourceId);
 }

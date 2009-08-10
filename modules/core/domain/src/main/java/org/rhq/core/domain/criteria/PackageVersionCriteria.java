@@ -6,6 +6,7 @@ import org.rhq.core.domain.util.PageOrdering;
 public class PackageVersionCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 
+    private Integer filterId;
     private Integer filterChannelId; // requires overrides
     private Integer filterResourceId; // requires overrides
     private Integer filterPackageTypeId; // requires overrides
@@ -41,6 +42,10 @@ public class PackageVersionCriteria extends Criteria {
             + "( SELECT ip.packageVersion.id" //
             + "    FROM pv.installedPackages ip " //
             + "   WHERE ip.resource.id = ? )");
+    }
+
+    public void addFilterId(Integer filterId) {
+        this.filterId = filterId;
     }
 
     public void addFilterChannelId(Integer filterChannelId) {

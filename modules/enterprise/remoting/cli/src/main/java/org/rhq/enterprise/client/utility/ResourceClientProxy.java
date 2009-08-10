@@ -46,11 +46,14 @@ import javax.jws.WebParam;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.content.InstalledPackage;
+import org.rhq.core.domain.content.PackageType;
+import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
 import org.rhq.core.domain.criteria.OperationDefinitionCriteria;
+import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
-import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementCategory;
 import org.rhq.core.domain.measurement.MeasurementData;
@@ -66,12 +69,9 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.Summary;
-import org.rhq.core.domain.content.PackageType;
-import org.rhq.core.domain.content.InstalledPackage;
-import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.enterprise.client.RemoteClient;
-import org.rhq.enterprise.server.operation.ResourceOperationSchedule;
 import org.rhq.enterprise.server.content.ContentManagerRemote;
+import org.rhq.enterprise.server.operation.ResourceOperationSchedule;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 
 /**
@@ -265,23 +265,19 @@ public class ResourceClientProxy {
 
     private void initContent() {
         ContentManagerRemote contentManager = remoteClient.getContentManagerRemote();
-        List<PackageType> types =
-                null;
+        List<PackageType> types = null;
         try {
-            types = contentManager.findPackageTypes(
-                        remoteClient.getSubject(),
-                        resource.getResourceType().getName(),
-                        resource.getResourceType().getPlugin());
+            types = contentManager.findPackageTypes(remoteClient.getSubject(), resource.getResourceType().getName(),
+                resource.getResourceType().getPlugin());
 
             for (PackageType packageType : types) {
                 contentTypes.put(packageType.getName(), new ContentType(packageType));
             }
         } catch (ResourceTypeNotFoundException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            e.printStackTrace(); //To change body of catch statement use File | Settings | File Templates.
         }
 
     }
-
 
     public class ContentType {
 
@@ -301,18 +297,15 @@ public class ResourceClientProxy {
             PackageVersionCriteria criteria = new PackageVersionCriteria();
             criteria.addFilterResourceId(resourceId);
             // criteria.addFilterPackageTypeId()  TODO ADD this when the filter is added
-            
-            return contentManager.findInstalledPackageVersionsByCriteria(
-                    remoteClient.getSubject(), criteria);
-        }
 
+            return contentManager.findInstalledPackageVersionsByCriteria(remoteClient.getSubject(), criteria);
+        }
 
         public String toString() {
             return this.packageType.getDisplayName();
         }
 
     }
-
 
     public class Measurement {
 
@@ -428,7 +421,8 @@ public class ResourceClientProxy {
         }
     }
 
-    public static class ClientProxyMethodHandler implements MethodHandler, ContentBackedResource, PluginConfigurable, ResourceConfigurable {
+    public static class ClientProxyMethodHandler implements MethodHandler, ContentBackedResource, PluginConfigurable,
+        ResourceConfigurable {
 
         ResourceClientProxy resourceClientProxy;
         RemoteClient remoteClient;
@@ -459,9 +453,21 @@ public class ResourceClientProxy {
         }
 
         public InstalledPackage getBackingContent() {
-            return remoteClient.getContentManagerRemote().getBackingPackageForResource(remoteClient.getSubject(), resourceClientProxy.resourceId);
-        }
+            InstalledPackage result = null;
 
+            PackageVersionCriteria criteria = new PackageVersionCriteria();
+            criteria.addFilterResourceId(resourceClientProxy.resourceId);
+            criteria.fetchInstalledPackages(true);
+            PageList<PackageVersion> pvs = remoteClient.getContentManagerRemote()
+                .findInstalledPackageVersionsByCriteria(remoteClient.getSubject(), criteria);
+
+            if (!((null == pvs) || pvs.isEmpty() || pvs.get(0).getInstalledPackages().isEmpty())) {
+                // Do we want to check for more than 1 result?
+                result = pvs.get(0).getInstalledPackages().iterator().next();
+            }
+
+            return result;
+        }
 
         public Object invoke(Object proxy, Method method, Method proceedMethod, Object[] args) throws Throwable {
 
@@ -595,7 +601,6 @@ public class ResourceClientProxy {
                     interfaces.add(ContentBackedResource.class);
                 }
 
-
                 ProxyFactory proxyFactory = new ProxyFactory();
                 proxyFactory.setInterfaces(interfaces.toArray(new Class[interfaces.size()]));
                 proxyFactory.setSuperclass(ResourceClientProxy.class);
@@ -648,8 +653,6 @@ public class ResourceClientProxy {
         public InstalledPackage getBackingContent();
 
     }
-
-
 
     public static void main(String[] args) throws Exception {
         RemoteClient rc = new RemoteClient("localhost", 7080);

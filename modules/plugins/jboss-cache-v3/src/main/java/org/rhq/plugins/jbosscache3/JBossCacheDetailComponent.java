@@ -102,8 +102,9 @@ public class JBossCacheDetailComponent implements MeasurementFacet,
 
 	public void getValues(MeasurementReport report,
 			Set<MeasurementScheduleRequest> metrics) throws Exception {
+		EmsConnection connection = getEmsConnection();
 
-		EmsBean detailComponent = getEmsConnection().getBean(beanName);
+		EmsBean detailComponent = connection.getBean(beanName);
 
 		for (MeasurementScheduleRequest request : metrics) {
 
@@ -112,7 +113,7 @@ public class JBossCacheDetailComponent implements MeasurementFacet,
 				EmsAttribute atribute = detailComponent
 						.getAttribute(metricName);
 
-				Object value = atribute.getValue();
+				Object value = atribute.refresh();
 
 				if (value != null)
 					if (request.getDataType() == DataType.MEASUREMENT) {

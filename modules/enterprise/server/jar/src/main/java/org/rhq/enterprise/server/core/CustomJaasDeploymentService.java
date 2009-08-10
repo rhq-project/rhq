@@ -40,6 +40,7 @@ import org.rhq.enterprise.server.core.jaas.JDBCLoginModule;
 import org.rhq.enterprise.server.core.jaas.LdapLoginModule;
 import org.rhq.enterprise.server.core.jaas.TempSessionLoginModule;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.util.security.UntrustedSSLSocketFactory;
 
 /**
  * Deploy the JAAS login modules that are configured. JDBC login module is always deployed, however, the LDAP login
@@ -187,9 +188,11 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
 
         String protocol = options.get(Context.SECURITY_PROTOCOL);
         if ((protocol != null) && protocol.equals("ssl")) {
-            env.put("java.naming.ldap.factory.socket",
-                "org.rhq.enterprise.server.util.security.UntrustedSSLSocketFactory");
-            env.put(Context.SECURITY_PROTOCOL, protocol);
+            String ldapSocketFactory = env.getProperty("java.naming.ldap.factory.socket");
+            if (ldapSocketFactory == null) {
+                env.put("java.naming.ldap.factory.socket", UntrustedSSLSocketFactory.class.getName());
+            }
+            env.put(Context.SECURITY_PROTOCOL, "ssl");
         }
 
         env.setProperty(Context.INITIAL_CONTEXT_FACTORY, factory);

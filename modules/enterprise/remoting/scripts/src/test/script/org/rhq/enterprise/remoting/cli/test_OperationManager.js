@@ -21,6 +21,10 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
+/**
+ * These tests assume that there is a jopr server and an agent running on localhost.
+ */
+
 rhq.login('rhqadmin', 'rhqadmin');
 
 executeAllTests();
@@ -55,8 +59,34 @@ function testFindOperationDefinitionsWithOptionalFiltering() {
 
     var opDefinitions = OperationManager.findOperationDefinitionsByCriteria(criteria);
 
-    Assert.assertTrue(opDefinitions.size() > 0, 'Expected non-empty result list for criteria search with optional ' +
-            'filters for operation definitions.');
+    Assert.assertTrue(opDefinitions.size() > 0, "Expected non-empty result list for criteria search with optional " +
+            "filters for operation definitions");
+}
+
+function testFindSingleOperationDefinitionWithFilteringAndFetchingAssociations() {
+    // TODO This test is failing. It is returning 'start' and 'restart' as well as duplicates of them. Shouldn't we only get back the start operation?
+    var criteria = OperationDefinitionCriteria();
+    criteria.addFilterPluginName('JBossAS');
+    criteria.addFilterName('start');
+    criteria.addFilterDisplayName('Start');
+    criteria.addFilterResourceTypeName('JBossAS Server');
+    criteria.fetchParametersConfigurationDefinition(true);
+    criteria.fetchResultsConfigurationDefinition(true);
+
+    var opDefinitions = OperationManager.findOperationDefinitionsByCriteria(criteria);
+
+    var names = [];
+    for (i = 0; i < opDefinitions.size(); ++i) {
+        names.push(opDefinitions.get(i).name);
+    }
+
+    Assert.assertNumberEqualsJS(opDefinitions.size(), 1, "Expected to get back one operation definition when " +
+            "filtering and fetching associations but got back, '" + names + "'");
+
+    var opDefinition = opDefinitions.get(0);
+
+    Assert.assertNotNull(opDefinition.parametersConfigurationDefinition, 'operationDefinition.parametersConfigurationDefinition should have been loaded');
+    Assert.assertNotNull(opDefinition.resultsConfigurationDefinition, 'operationDefinition.resultsConfigurationDefinition should have been loaded');
 }
 
 function testFindResourceOperationHistoriesUnfiltered() {

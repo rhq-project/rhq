@@ -21,6 +21,10 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
+/**
+ * These tests assume that there is a jopr server and an agent running on localhost.
+ */
+
 rhq.login('rhqadmin', 'rhqadmin');
 
 skippedTests.push('testUninventoryResources');

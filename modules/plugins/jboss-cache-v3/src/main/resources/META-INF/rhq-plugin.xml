@@ -213,8 +213,7 @@
               <plugin-configuration>
                 <c:simple-property name="jmx-resource" default="jmx-resource=TransactionTable"/>
               </plugin-configuration>         
-              <operation name="resetStatistics" displayName="Reset Statistics" description="Reset all statistics." />
-                   
+                  
               <metric property="numberOfRegisteredTransactions" displayType="summary"
                 description="the number of registered transactions"  category="performance"/>
               <metric property="transactionMap"  dataType="trait"

@@ -52,7 +52,6 @@ public class ResourceTypeCriteria extends Criteria {
     private boolean fetchProcessScans;
     private boolean fetchPackageTypes;
     private boolean fetchSubCategories;
-    private boolean fetchResources;
     private boolean fetchProductVersions;
 
     private PageOrdering sortName;
@@ -141,10 +140,6 @@ public class ResourceTypeCriteria extends Criteria {
 
     public void fetchSubCategories(boolean fetchSubCategories) {
         this.fetchSubCategories = fetchSubCategories;
-    }
-
-    public void fetchResources(boolean fetchResources) {
-        this.fetchResources = fetchResources;
     }
 
     public void fetchProductVersions(boolean fetchProductVersions) {

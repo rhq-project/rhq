@@ -31,6 +31,19 @@ function testFindOperationDefinitionsUnfiltered() {
     Assert.assertNotNull(operationDefinitions, 'Expected non-null results for criteria search of operation definitions');    
 }
 
+function testFindOperationDefinitionsWithFiltering() {
+    var criteria = OperationDefinitionCriteria();
+    criteria.addFilterDisplayName('Start');
+    criteria.addFilterDescription('Start this application server. The script used is specified in the Operations group of connection properties.');
+    criteria.addFilterPluginName('JBossAS');
+    criteria.addFilterResourceTypeName('JBossAS Server');
+
+    var opDefinitions = OperationManager.findOperationDefinitionsByCriteria(criteria);
+
+    Assert.assertTrue(opDefinitions.size() > 0, 'Expected non-empty result list for criteria search with filters ' +
+            ' for operation definitions.');
+}
+
 function testFindResourceOperationHistoriesUnfiltered() {
     var histories = OperationManager.findResourceOperationHistoriesByCriteria(ResourceOperationHistoryCriteria());
 

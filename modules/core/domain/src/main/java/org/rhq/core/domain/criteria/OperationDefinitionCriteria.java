@@ -37,8 +37,8 @@ public class OperationDefinitionCriteria extends Criteria {
     private String filterDescription;
     private Integer filterTimeout;
     private Integer filterResourceTypeId; // requires overrides
-    private Integer filterResourceTypeName; // requires overrides
-    private Integer filterPluginName; // requires overrides
+    private String filterResourceTypeName; // requires overrides
+    private String filterPluginName; // requires overrides
     private List<Integer> filterResourceIds; // requires overrides
     private List<Integer> filterResourceGroupIds; // requires overrides
 
@@ -89,11 +89,11 @@ public class OperationDefinitionCriteria extends Criteria {
         this.filterResourceTypeId = filterResourceTypeId;
     }
 
-    public void addFilterResourceTypeName(Integer filterResourceTypeName) {
+    public void addFilterResourceTypeName(String filterResourceTypeName) {
         this.filterResourceTypeName = filterResourceTypeName;
     }
 
-    public void addFilterPluginName(Integer filterPluginName) {
+    public void addFilterPluginName(String filterPluginName) {
         this.filterPluginName = filterPluginName;
     }
 

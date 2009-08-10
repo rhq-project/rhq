@@ -57,6 +57,8 @@ import org.rhq.plugins.jbossas.util.JBossMBeanUtility;
 import org.rhq.plugins.jbossas.util.JnpConfig;
 import org.rhq.plugins.jmx.JMXDiscoveryComponent;
 
+import org.jboss.on.common.jbossas.JBossASDiscoveryUtils;
+
 /**
  * Discovers JBossAS 3.2.x and 4.x server instances.
  *
@@ -155,6 +157,16 @@ public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent {
                 .getSystemProperties().getProperty(JBossProperties.SERVER_NAME)));
             pluginConfiguration.put(new PropertySimple(JBossASServerComponent.BINDING_ADDRESS_CONFIG_PROP, cmdLine
                 .getSystemProperties().getProperty(JBossProperties.BIND_ADDRESS)));
+
+            JBossASDiscoveryUtils.UserInfo userInfo = JBossASDiscoveryUtils.getJmxInvokerUserInfo(configDir);
+            if (userInfo != null) {
+                pluginConfiguration.put(
+                        new PropertySimple(JBossASServerComponent.PRINCIPAL_CONFIG_PROP,
+                                userInfo.getUsername()));
+                pluginConfiguration.put(
+                        new PropertySimple(JBossASServerComponent.CREDENTIALS_CONFIG_PROP,
+                                userInfo.getPassword()));
+            }
 
             String javaHome = processInfo.getEnvironmentVariable(JAVA_HOME_ENV_VAR);
             if (javaHome == null && log.isDebugEnabled()) {

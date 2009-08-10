@@ -54,11 +54,16 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.system.ProcessInfo;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.plugins.jbossas5.helper.JBossInstallationInfo;
 import org.rhq.plugins.jbossas5.helper.JBossInstanceInfo;
 import org.rhq.plugins.jbossas5.helper.JBossProperties;
 import org.rhq.plugins.jbossas5.helper.JBossProductType;
 import org.rhq.plugins.jbossas5.util.JnpConfig;
+
+import org.jboss.on.common.jbossas.JmxInvokerServiceConfiguration;
+import org.jboss.on.common.jbossas.SecurityDomainInfo;
+import org.jboss.on.common.jbossas.JBossASDiscoveryUtils;
 
 /**
  * A Resource discovery component for JBoss AS, 5.1.0.CR1 or later, and JBoss EAP, 5.0.0.Beta or later, Servers.
@@ -209,6 +214,16 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
                 cmdLine.getSystemProperties().getProperty(JBossProperties.SERVER_NAME)));
             pluginConfiguration.put(new PropertySimple(ApplicationServerPluginConfigurationProperties.BIND_ADDRESS,
                 cmdLine.getSystemProperties().getProperty(JBossProperties.BIND_ADDRESS)));
+
+            JBossASDiscoveryUtils.UserInfo userInfo = JBossASDiscoveryUtils.getJmxInvokerUserInfo(configDir);
+            if (userInfo != null) {
+                pluginConfiguration.put(
+                        new PropertySimple(ApplicationServerPluginConfigurationProperties.PRINCIPAL,
+                                userInfo.getUsername()));
+                pluginConfiguration.put(
+                        new PropertySimple(ApplicationServerPluginConfigurationProperties.CREDENTIALS,
+                                userInfo.getPassword()));
+            }
 
             String javaHome = processInfo.getEnvironmentVariable(JAVA_HOME_ENV_VAR);
             if (javaHome == null && log.isDebugEnabled()) {

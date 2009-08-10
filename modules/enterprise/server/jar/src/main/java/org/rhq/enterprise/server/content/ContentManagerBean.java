@@ -76,6 +76,7 @@ import org.rhq.core.domain.content.transfer.RemoveIndividualPackageResponse;
 import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.content.transfer.RetrievePackageBitsRequest;
+import org.rhq.core.domain.criteria.InstalledPackageCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
@@ -1364,8 +1365,21 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public PageList<PackageVersion> findInstalledPackageVersionsByCriteria(Subject subject,
-        PackageVersionCriteria criteria) {
+    public PageList<InstalledPackage> findInstalledPackagesByCriteria(Subject subject, InstalledPackageCriteria criteria) {
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+
+        Query query = generator.getQuery(entityManager);
+        Query countQuery = generator.getCountQuery(entityManager);
+
+        long count = (Long) countQuery.getSingleResult();
+        List<InstalledPackage> results = query.getResultList();
+
+        return new PageList<InstalledPackage>(results, (int) count, criteria.getPageControl());
+    }
+
+    @SuppressWarnings("unchecked")
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public PageList<PackageVersion> findPackageVersionsByCriteria(Subject subject, PackageVersionCriteria criteria) {
         Integer resourceId = criteria.getFilterResourceId();
 
         if ((null == resourceId) || (resourceId < 1)) {
@@ -1383,25 +1397,18 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         return new PageList<PackageVersion>(results, (int) count, criteria.getPageControl());
     }
 
-    @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public InstalledPackage getBackingPackageForResource(Subject subject, int resourceId) {
+        InstalledPackage result = null;
 
-        // TODO: jdobies, Apr 30, 2008: Tighten up getBackingPackageForResource implementation
-        // This implementation is not complete. This assumes there will only be one installed package against
-        // the resource. The likely place this will break is if the resource defines more than one package type,
-        // since this query does not take into account looking for the resource's backing package type specifically.
+        InstalledPackageCriteria criteria = new InstalledPackageCriteria();
+        criteria.addFilterResourceId(resourceId);
+        PageList<InstalledPackage> ips = findInstalledPackagesByCriteria(subject, criteria);
 
-        Query query = entityManager.createNamedQuery(InstalledPackage.QUERY_FIND_BY_RESOURCE_ID);
-        query.setParameter("resourceId", resourceId);
-
-        List<InstalledPackage> resultList = query.getResultList();
-
-        if (resultList == null || resultList.size() != 1) {
-            return null;
+        if ((null != ips) || (1 == ips.size())) {
+            result = ips.get(0);
         }
 
-        return resultList.get(0);
+        return result;
     }
-
 }

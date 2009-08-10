@@ -638,7 +638,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
             // Add a few tests for the new Criteria Search feature
             PackageVersionCriteria criteria = new PackageVersionCriteria();
             criteria.addFilterResourceId(resource1.getId());
-            PageList<PackageVersion> pageList = contentManager.findInstalledPackageVersionsByCriteria(overlord,
+            PageList<PackageVersion> pageList = contentManager.findPackageVersionsByCriteria(overlord,
                 criteria);
             assertNotNull(pageList);
             ArrayList<PackageVersion> pvs = pageList.getValues();
@@ -646,7 +646,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
             PackageVersion pv0 = pvs.get(0);
 
             criteria.addFilterPackageTypeId(pv0.getGeneralPackage().getPackageType().getId());
-            pageList = contentManager.findInstalledPackageVersionsByCriteria(overlord, criteria);
+            pageList = contentManager.findPackageVersionsByCriteria(overlord, criteria);
             assertNotNull(pageList);
             pvs = pageList.getValues();
             assertEquals(1, pvs.size());
@@ -654,7 +654,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
 
             // there is no channel assignment, any valid ID should eliminate all PVs
             criteria.addFilterChannelId(38465);
-            pageList = contentManager.findInstalledPackageVersionsByCriteria(overlord, criteria);
+            pageList = contentManager.findPackageVersionsByCriteria(overlord, criteria);
             assertNotNull(pageList);
             pvs = pageList.getValues();
             assertEquals(0, pvs.size());

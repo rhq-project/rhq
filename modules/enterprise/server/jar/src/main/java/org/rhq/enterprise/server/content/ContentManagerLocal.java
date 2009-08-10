@@ -38,6 +38,7 @@ import org.rhq.core.domain.content.transfer.DeployPackageStep;
 import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
 import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
+import org.rhq.core.domain.criteria.InstalledPackageCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
@@ -282,21 +283,6 @@ public interface ContentManagerLocal {
      */
     List<String> getInstalledPackageVersions(Subject subject, int resourceId);
 
-    /**
-     * For a resource that is package-backed, this call will return a reference to the package that caused the
-     * resource.
-     *
-     * NOTE: This is not fully implemented, see the implementation itself for more details. In short,
-     * This assumes there will only be one installed package against the resource.
-     *
-     * @param resourceId must identify a valid resource
-     * @return package if it is inventoried for the resource and the resource is package-backed; <code>null</code>
-     *         otherwise
-     * @deprecated use findInstalledPackageVersionsByCriteria with addResourceIdFilter and fetchInstalledPackages( true )
-     * 
-     */
-    InstalledPackage getBackingPackageForResource(Subject subject, int resourceId);
-
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
     // The following are shared with the Remote Interface
@@ -331,7 +317,18 @@ public interface ContentManagerLocal {
         throws ResourceTypeNotFoundException;
 
     /**
-     * @see {@link ContentManagerRemote#findInstalledPackageVersionsByCriteria(Subject, PackageVersionCriteria)}
+     * @see {@link ContentManagerRemote#findInstalledPackagesByCriteria(Subject, InstalledPackageCriteria)}
      */
-    PageList<PackageVersion> findInstalledPackageVersionsByCriteria(Subject subject, PackageVersionCriteria criteria);
+    PageList<InstalledPackage> findInstalledPackagesByCriteria(Subject subject, InstalledPackageCriteria criteria);
+
+    /**
+     * @see {@link ContentManagerRemote#findPackageVersionsByCriteria(Subject, PackageVersionCriteria)}
+     */
+    PageList<PackageVersion> findPackageVersionsByCriteria(Subject subject, PackageVersionCriteria criteria);
+
+    /**
+     * @see {@link ContentManagerRemote#getBackingPackageForResource(Subject, int)
+     */
+    InstalledPackage getBackingPackageForResource(Subject subject, int resourceId);
+
 }

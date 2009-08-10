@@ -298,7 +298,7 @@ public class ResourceClientProxy {
             criteria.addFilterResourceId(resourceId);
             // criteria.addFilterPackageTypeId()  TODO ADD this when the filter is added
 
-            return contentManager.findInstalledPackageVersionsByCriteria(remoteClient.getSubject(), criteria);
+            return contentManager.findPackageVersionsByCriteria(remoteClient.getSubject(), criteria);
         }
 
         public String toString() {
@@ -453,20 +453,8 @@ public class ResourceClientProxy {
         }
 
         public InstalledPackage getBackingContent() {
-            InstalledPackage result = null;
-
-            PackageVersionCriteria criteria = new PackageVersionCriteria();
-            criteria.addFilterResourceId(resourceClientProxy.resourceId);
-            criteria.fetchInstalledPackages(true);
-            PageList<PackageVersion> pvs = remoteClient.getContentManagerRemote()
-                .findInstalledPackageVersionsByCriteria(remoteClient.getSubject(), criteria);
-
-            if (!((null == pvs) || pvs.isEmpty() || pvs.get(0).getInstalledPackages().isEmpty())) {
-                // Do we want to check for more than 1 result?
-                result = pvs.get(0).getInstalledPackages().iterator().next();
-            }
-
-            return result;
+            return remoteClient.getContentManagerRemote().getBackingPackageForResource(remoteClient.getSubject(),
+                resourceClientProxy.resourceId);
         }
 
         public Object invoke(Object proxy, Method method, Method proceedMethod, Object[] args) throws Throwable {

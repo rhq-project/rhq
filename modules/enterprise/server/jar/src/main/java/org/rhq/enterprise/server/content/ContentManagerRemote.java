@@ -28,8 +28,10 @@ import javax.jws.soap.SOAPBinding;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.Architecture;
+import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.criteria.InstalledPackageCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
@@ -121,13 +123,34 @@ public interface ContentManagerRemote {
 
     /**
      * @param subject
+     * @param criteria {@link InstalledPackageCriteria}
+     * @return InstalledPackages for the criteria
+     */
+    @WebMethod
+    PageList<InstalledPackage> findInstalledPackagesByCriteria( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "criteria") InstalledPackageCriteria criteria);
+
+    /**
+     * @param subject
      * @param criteria Caller must add a valid resourceId via {@link PackageVersionCriteria.addFilterResourceId}
      * @return Installed PackageVersions for the resource
      * @throws IllegalArgumentException for invalid resourceId filter
      */
     @WebMethod
-    PageList<PackageVersion> findInstalledPackageVersionsByCriteria( //
+    PageList<PackageVersion> findPackageVersionsByCriteria( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "criteria") PackageVersionCriteria criteria);
 
+    /**
+     * For a resource that is content-backed (aka package-backed), this call will return InstalledPackage information
+     * for the backing content (package).
+     *
+     * @param resourceId a valid resource
+     * @return The InstalledPackage object for the content-packed resource. Or null for non-existent or non-package backed resource.
+     */
+    @WebMethod
+    InstalledPackage getBackingPackageForResource( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "resourceId") int resourceId);
 }

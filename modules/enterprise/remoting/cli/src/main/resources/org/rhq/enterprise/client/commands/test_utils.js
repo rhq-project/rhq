@@ -61,7 +61,7 @@ function isSkippedTest(test) {
 
 function createErrorMsg(functionName, msg, lineNumber) {
     return functionName + '() failed:\n' +
-           exception.message + ' at line ' + exception.lineNumber + ' in ' + script + '\n\n';
+           msg + ' at line ' + lineNumber + ' in ' + script + '\n\n';
 }
 
 function executeAllTests() {

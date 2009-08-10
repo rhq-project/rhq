@@ -112,9 +112,34 @@ function testSortByMultipleProperties() {
     Assert.assertTrue(resources.size() > 0, "Expected to get resources when sorting by multiple proerties.");
 }
 
-//function addSortingToCriteria(criteria) {
-//
-//}
+function testFindWithFilteringAndSortingAndFetchingAssociations() {
+    var criteria = ResourceCriteria();
+    criteria.caseSensitive = true;
+    criteria.addFilterParentResourceName('server-omega-0');
+    criteria.addFilterResourceTypeName('service-beta');
+
+    criteria.fetchAgent(true);
+    criteria.fetchAlertDefinitions(true);
+    criteria.fetchResourceType(true);
+    criteria.fetchChildResources(true);
+    criteria.fetchParentResource(true);
+    criteria.fetchResourceConfiguration(true);
+    criteria.fetchResourceErrors(true);
+    criteria.fetchPluginConfigurationUpdates(true);
+    criteria.fetchImplicitGroups(true);
+    criteria.fetchExplicitGroups(true);
+    criteria.fetchOperationHistories(true);
+
+    criteria.addSortName(PageOrdering.DESC);
+    criteria.addSortResourceTypeName(PageOrdering.ASC);
+    criteria.addSortInventoryStatus(PageOrdering.DESC);
+    criteria.addSortVersion(PageOrdering.DESC);
+    criteria.addSortResourceCategory(PageOrdering.ASC)
+
+    var resources = ResourceManager.findResourcesByCriteria(criteria);
+
+    Assert.assertTrue(resources.size() > 0, 'Expected get resources when filtering, sorting, and fetching associations.');
+}
 
 function testFindResourceLineage() {
     criteria = ResourceCriteria();

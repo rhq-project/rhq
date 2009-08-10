@@ -35,8 +35,9 @@ function testFindOperationDefinitionsUnfiltered() {
     Assert.assertNotNull(operationDefinitions, 'Expected non-null results for criteria search of operation definitions');    
 }
 
-function testFindOperationDefinitionsWithFiltering() {
+function testFindSingleOperationDefinitionsWithFiltering() {
     var criteria = OperationDefinitionCriteria();
+    criteria.addFilterName('start');
     criteria.addFilterDisplayName('Start');
     criteria.addFilterDescription('Start this application server. The script used is specified in the Operations group of connection properties.');
     criteria.addFilterPluginName('JBossAS');
@@ -44,8 +45,8 @@ function testFindOperationDefinitionsWithFiltering() {
 
     var opDefinitions = OperationManager.findOperationDefinitionsByCriteria(criteria);
 
-    Assert.assertTrue(opDefinitions.size() > 0, 'Expected non-empty result list for criteria search with filters ' +
-            ' for operation definitions.');
+    Assert.assertNumberEqualsJS(opDefinitions.size(), 1, "Expected to get back a single operation definition that " +
+            "corresponds to the Start operation but got back, '" + getNames(opDefinitions) + "'");
 }
 
 function testFindOperationDefinitionsWithOptionalFiltering() {
@@ -75,13 +76,8 @@ function testFindSingleOperationDefinitionWithFilteringAndFetchingAssociations()
 
     var opDefinitions = OperationManager.findOperationDefinitionsByCriteria(criteria);
 
-    var names = [];
-    for (i = 0; i < opDefinitions.size(); ++i) {
-        names.push(opDefinitions.get(i).name);
-    }
-
     Assert.assertNumberEqualsJS(opDefinitions.size(), 1, "Expected to get back one operation definition when " +
-            "filtering and fetching associations but got back, '" + names + "'");
+            "filtering and fetching associations but got back, '" + getNames(opDefinitions) + "'");
 
     var opDefinition = opDefinitions.get(0);
 
@@ -99,4 +95,12 @@ function testFindGroupOperationHistoriesUnfiltered() {
     var histories = OperationManager.findGroupOperationHistoriesByCriteria(GroupOperationHistoryCriteria());
 
     Assert.assertNotNull(histories, 'Expected non-null results for criteria search of group operation histories');
+}
+
+function getNames(list) {
+    var names = [];
+    for (i = 0; i < list.size(); ++i) {
+        names.push(list.get(i).name);
+    }
+    return names;
 }

@@ -44,6 +44,21 @@ function testFindOperationDefinitionsWithFiltering() {
             ' for operation definitions.');
 }
 
+function testFindOperationDefinitionsWithOptionalFiltering() {
+    var criteria = OperationDefinitionCriteria();
+    criteria.filtersOptional = true;
+
+    criteria.addFilterDisplayName('Start');
+    criteria.addFilterDescription('_non-existent description_');
+    criteria.addFilterPluginName('JBossAS');
+    criteria.addFilterResourceTypeName('JBossAS Server');
+
+    var opDefinitions = OperationManager.findOperationDefinitionsByCriteria(criteria);
+
+    Assert.assertTrue(opDefinitions.size() > 0, 'Expected non-empty result list for criteria search with optional ' +
+            'filters for operation definitions.');
+}
+
 function testFindResourceOperationHistoriesUnfiltered() {
     var histories = OperationManager.findResourceOperationHistoriesByCriteria(ResourceOperationHistoryCriteria());
 

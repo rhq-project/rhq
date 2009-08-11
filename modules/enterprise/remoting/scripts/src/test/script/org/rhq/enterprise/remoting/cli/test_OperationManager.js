@@ -65,7 +65,6 @@ function testFindOperationDefinitionsWithOptionalFiltering() {
 }
 
 function testFindSingleOperationDefinitionWithFilteringAndFetchingAssociations() {
-    // TODO This test is failing. It is returning 'start' and 'restart' as well as duplicates of them. Shouldn't we only get back the start operation?
     var criteria = OperationDefinitionCriteria();
     criteria.addFilterPluginName('JBossAS');
     criteria.addFilterName('start');
@@ -83,6 +82,34 @@ function testFindSingleOperationDefinitionWithFilteringAndFetchingAssociations()
 
     Assert.assertNotNull(opDefinition.parametersConfigurationDefinition, 'operationDefinition.parametersConfigurationDefinition should have been loaded');
     Assert.assertNotNull(opDefinition.resultsConfigurationDefinition, 'operationDefinition.resultsConfigurationDefinition should have been loaded');
+}
+
+function testFindMultipleOperationDefinitionsWithFilteringAndFetchingAssociations() {
+    var criteria = OperationDefinitionCriteria();
+    criteria.addFilterPluginName('JBossAS');
+    criteria.addFilterResourceTypeName('JBossAS Server');
+    criteria.fetchParametersConfigurationDefinition(true);
+    criteria.fetchResultsConfigurationDefinition(true);
+
+    var opDefinitions = OperationManager.findOperationDefinitionsByCriteria(criteria);
+
+    Assert.assertNumberEqualsJS(opDefinitions.size(), 3, "Expected to get back three operation definitions when " +
+            "filtering and fetching associations but got back, '" + getNames(opDefinitions) + "'");
+}
+
+function testFindMultipleOperationDefinitionsWithSorting() {
+    var criteria = OperationDefinitionCriteria();
+    criteria.addFilterPluginName('JBossAS');
+    criteria.addFilterResourceTypeName('JBossAS Server');
+    criteria.fetchParametersConfigurationDefinition(true);
+    criteria.fetchResultsConfigurationDefinition(true);
+    criteria.addSortName(PageOrdering.DESC);
+
+    var opDefinitions = OperationManager.findOperationDefinitionsByCriteria(criteria);
+
+    Assert.assertTrue(opDefinitions.size() > 0, "Expected to get back operation definitions when sorting");
+
+    // TODO verify sorting
 }
 
 function testFindResourceOperationHistoriesUnfiltered() {

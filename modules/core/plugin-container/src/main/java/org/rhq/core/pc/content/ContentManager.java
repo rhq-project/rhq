@@ -31,7 +31,6 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -75,10 +74,8 @@ import org.rhq.core.pluginapi.content.ContentFacet;
 import org.rhq.core.pluginapi.content.ContentServices;
 
 public class ContentManager extends AgentService implements ContainerService, ContentAgentService, ContentServices {
+
     private static final int FACET_METHOD_TIMEOUT = 30 * 60 * 1000; // 30 minutes
-
-    // Attributes  --------------------------------------------
-
     private final Log log = LogFactory.getLog(ContentManager.class);
 
     /**
@@ -111,13 +108,9 @@ public class ContentManager extends AgentService implements ContainerService, Co
      */
     private ContentInventoryEventListener inventoryEventListener;
 
-    // Constructors  --------------------------------------------
-
     public ContentManager() {
         super(ContentAgentService.class);
     }
-
-    // ContainerService Implementation  --------------------------------------------
 
     public void initialize() {
         log.info("Initializing Content Manager...");
@@ -134,9 +127,8 @@ public class ContentManager extends AgentService implements ContainerService, Co
         discoveryThreadPoolExecutor.setContinueExistingPeriodicTasksAfterShutdownPolicy(false);
         discoveryThreadPoolExecutor.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
 
-        crudExecutor = new ThreadPoolExecutor(1, 5, 60, TimeUnit.SECONDS,
-                new LinkedBlockingQueue<Runnable>(10000),
-                new LoggingThreadFactory("Content.crud", true));
+        crudExecutor = new ThreadPoolExecutor(1, 5, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(10000),
+            new LoggingThreadFactory("Content.crud", true));
 
         // When running in scheduled mode, create and schedule the thread pool for discovering content
         if (scheduledDiscoveriesEnabled) {
@@ -154,7 +146,13 @@ public class ContentManager extends AgentService implements ContainerService, Co
 
             // Add inventory event listener so we can keep the scheduled discoveries consistent with the resources
             inventoryEventListener = new ContentInventoryEventListener();
-            PluginContainer.getInstance().getInventoryManager().addInventoryEventListener(inventoryEventListener);
+
+            // the inventory manager has probably already activated some resources, so let's prepopulate our schedules
+            InventoryManager im = PluginContainer.getInstance().getInventoryManager();
+            im.notifyForAllActivatedResources(inventoryEventListener);
+
+            // now ask that the inventory manager tell us about resources that will be activated in the future
+            im.addInventoryEventListener(inventoryEventListener);
         }
         log.info("Content Manager initialized...");
     }
@@ -170,8 +168,6 @@ public class ContentManager extends AgentService implements ContainerService, Co
         this.configuration = configuration;
     }
 
-    // ContentAgentService Implementation  --------------------------------------------
-
     public Set<ResourcePackageDetails> getLastDiscoveredResourcePackages(int resourceId) {
         // Get the resource component
         InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
@@ -180,7 +176,8 @@ public class ContentManager extends AgentService implements ContainerService, Co
         // Nothing to do if the container doesn't exist or isn't running, so punch out
         if ((container == null)
             || (ResourceContainer.ResourceComponentState.STARTED != container.getResourceComponentState())) {
-            throw new RuntimeException("Container does not exist or is not running for Resource with id [" + resourceId + "].");
+            throw new RuntimeException("Container is non-existent or is not running for resource id [" + resourceId
+                + "]");
         }
 
         return container.getInstalledPackages();
@@ -191,7 +188,7 @@ public class ContentManager extends AgentService implements ContainerService, Co
         // Load the package type object
         PackageType packageType = findPackageType(resourceId, packageTypeName);
         if (packageType == null) {
-            throw new PluginContainerException("Could not load package type: " + packageTypeName + " under resource: "
+            throw new PluginContainerException("Could not load package type [" + packageTypeName + "] for resource: "
                 + resourceId);
         }
 
@@ -203,9 +200,7 @@ public class ContentManager extends AgentService implements ContainerService, Co
         ContentDiscoveryReport results;
         try {
             results = discoveryThreadPoolExecutor.submit((Callable<ContentDiscoveryReport>) oneTimeRunner).get();
-        } catch (InterruptedException e) {
-            throw new PluginContainerException("Exception occurred during execution of discovery", e);
-        } catch (ExecutionException e) {
+        } catch (Exception e) {
             throw new PluginContainerException("Exception occurred during execution of discovery", e);
         }
 
@@ -217,13 +212,13 @@ public class ContentManager extends AgentService implements ContainerService, Co
         crudExecutor.submit(runner);
     }
 
-    public DeployPackagesResponse deployPackagesImmediately(DeployPackagesRequest request) throws PluginContainerException {
+    public DeployPackagesResponse deployPackagesImmediately(DeployPackagesRequest request)
+        throws PluginContainerException {
         Callable<DeployPackagesResponse> runner = new CreateContentRunner(this, request);
         try {
             return crudExecutor.submit(runner).get();
-        }
-        catch (Exception e) {
-            throw new PluginContainerException("Exception occurred during deployment of packages - request: " + request, e);
+        } catch (Exception e) {
+            throw new PluginContainerException("Error during deployment of packages. request: " + request, e);
         }
     }
 
@@ -272,8 +267,8 @@ public class ContentManager extends AgentService implements ContainerService, Co
         outputStream = remoteOutputStream(outputStream);
         long count = 0;
         if (resourceExists) {
-            count = serverService
-                .downloadPackageBitsGivenResource(contextImpl.getResourceId(), packageDetailsKey, outputStream);
+            count = serverService.downloadPackageBitsGivenResource(contextImpl.getResourceId(), packageDetailsKey,
+                outputStream);
         } else {
             // TODO: Figure out how to support this; the APIs require the resource to get the bits
         }
@@ -359,7 +354,7 @@ public class ContentManager extends AgentService implements ContainerService, Co
             discoveryInfo.getResourceId());
 
         if (resourceContainer != null) {
-            log.debug("Rescheduling " + discoveryInfo + "...");
+            log.debug("Rescheduling [" + discoveryInfo + "]...");
             discoveryInfo.setNextDiscovery(System.currentTimeMillis() + discoveryInfo.getInterval());
             addToQueue(discoveryInfo);
             log.debug("Finished rescheduling: " + discoveryInfo);
@@ -372,7 +367,9 @@ public class ContentManager extends AgentService implements ContainerService, Co
      * @param resource resource whose discoveries to remove; cannot be <code>null</code>
      */
     synchronized void unscheduleDiscoveries(Resource resource) {
-        log.debug("Unscheduling content discoveries for " + resource);
+        if (log.isDebugEnabled()) {
+            log.debug("Unscheduling content discoveries for resource id [" + resource + ']');
+        }
 
         // Find all scheduled items for this resource
         Set<ScheduledContentDiscoveryInfo> unscheduleUs = new HashSet<ScheduledContentDiscoveryInfo>();
@@ -401,10 +398,14 @@ public class ContentManager extends AgentService implements ContainerService, Co
     ContentDiscoveryReport performContentDiscovery(int resourceId, PackageType type) throws Exception {
         // Perform the discovery
         // Use only a read-locked component proxy
-        ContentFacet contentFacet = ComponentUtil.getComponent(resourceId, ContentFacet.class, FacetLockType.READ, FACET_METHOD_TIMEOUT, false, true);
+        ContentFacet contentFacet = ComponentUtil.getComponent(resourceId, ContentFacet.class, FacetLockType.READ,
+            FACET_METHOD_TIMEOUT, false, true);
 
         Set<ResourcePackageDetails> details = contentFacet.discoverDeployedPackages(type);
-        log.debug("Discovered " + ((details != null) ? details.size() : null) + " packages of type " + type);
+
+        if (log.isDebugEnabled()) {
+            log.debug("Discovered [" + ((details != null) ? details.size() : 0) + "] packages of type=" + type);
+        }
 
         // Process the results
         ContentDiscoveryReport report = handleDiscoveredContent(details, resourceId);
@@ -428,7 +429,7 @@ public class ContentManager extends AgentService implements ContainerService, Co
         // Perform the create
         ContentFacet contentFacet = findContentFacet(resourceId);
         DeployPackagesResponse response = contentFacet.deployPackages(packagesToDeploy, this);
-        
+
         return response;
     }
 
@@ -481,7 +482,9 @@ public class ContentManager extends AgentService implements ContainerService, Co
 
     /**
      * Schedules any necessary discoveries for the specified resource.
-     *
+     * This is called when a resource is newly activated - as when a plugin configuration change is made.
+     * If a schedule is already in place, it will remain.
+     * 
      * @param resource resource for which discoveries are being scheduled
      */
     private synchronized void scheduleDiscoveries(Resource resource) {
@@ -494,36 +497,41 @@ public class ContentManager extends AgentService implements ContainerService, Co
         ResourceType resourceType = resource.getResourceType();
         Set<PackageType> packageTypes = resourceType.getPackageTypes();
 
-        // InventoryManager firing of activated resources is spotty, so do a quick check on the queue to make
-        // sure we haven't already scheduled anything for this resource
-        synchronized (scheduledDiscoveries) {
-            for (Iterator<ScheduledContentDiscoveryInfo> iterator = scheduledDiscoveries.iterator(); iterator.hasNext();) {
+        if ((packageTypes != null) && (packageTypes.size() > 0)) {
+
+            int resourceId = resource.getId();
+
+            // Check the queue to make sure we haven't already scheduled anything for this resource.
+            // If a schedule already exists, we'll remove it so we reschedule it to trigger soon.
+            Iterator<ScheduledContentDiscoveryInfo> iterator = scheduledDiscoveries.iterator();
+            while (iterator.hasNext()) {
                 ScheduledContentDiscoveryInfo contentDiscoveryInfo = iterator.next();
-                if (contentDiscoveryInfo.getResourceId() == resource.getId()) {
-                    log.info("Already found scheduled content discoveries for resource [" + resource.getId()
-                        + "]. Not creating schedules.");
-                    return;
+                if (contentDiscoveryInfo.getResourceId() == resourceId) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Already found scheduled content discovery for resource id [" + resourceId
+                            + "], package type=[" + contentDiscoveryInfo.getPackageType()
+                            + "]. Will reschedule to be triggered soon.");
+                    }
+                    iterator.remove();
                 }
             }
-        }
 
-        log.debug("Scheduling content discovery for resource with id [" + resource.getId() + "]...");
+            if (log.isDebugEnabled()) {
+                log.debug("Scheduling [" + packageTypes.size() + "] content discoveries for resource id [" + resourceId
+                    + "]");
+            }
 
-        // Add discovery items for each type
-        // Since intervals will vary per type, create separate scheduled items for each type
-        // that can be found for this resource
-        if ((packageTypes != null) && (packageTypes.size() > 0)) {
-            log.debug("Number of package types: " + packageTypes.size());
+            // Add discovery items for each type. Since intervals will vary per type, create separate scheduled
+            // items for each package type that can be found for this resource
             for (PackageType type : packageTypes) {
-                ScheduledContentDiscoveryInfo contentDiscovery = new ScheduledContentDiscoveryInfo(resource.getId(),
-                    type);
-
-                // Schedule to discover as soon as possible
-                contentDiscovery.setNextDiscovery(System.currentTimeMillis());
-
+                ScheduledContentDiscoveryInfo contentDiscovery;
+                contentDiscovery = new ScheduledContentDiscoveryInfo(resourceId, type);
+                contentDiscovery.setNextDiscovery(System.currentTimeMillis()); // schedule the first one as soon as possible
                 addToQueue(contentDiscovery);
             }
         }
+
+        return;
     }
 
     /**
@@ -577,16 +585,19 @@ public class ContentManager extends AgentService implements ContainerService, Co
         existingInstalledPackagesSet.retainAll(updatedPackageSet);
         int removedPackagesCount = originalPackageCount - existingInstalledPackagesSet.size();
         if (removedPackagesCount > 0)
-           log.debug("Removed " + removedPackagesCount + " obsolete packages for Resource with id ["
-                    + resourceId + "].");
+            if (log.isDebugEnabled()) {
+                log.debug("Removed [" + removedPackagesCount + "] obsolete packages for resource id [" + resourceId
+                    + "]");
+            }
 
         // Strip from updated list content that are already known for the resource, we don't need to do anything
         updatedPackageSet.removeAll(existingInstalledPackagesSet);
 
         // Remaining content in updated list are "new" content
         if (!updatedPackageSet.isEmpty())
-            log.debug("Discovered " + updatedPackageSet.size() + " new packages for Resource with id ["
-                    + resourceId + "].");
+            if (log.isDebugEnabled()) {
+                log.debug("Found [" + updatedPackageSet.size() + "] new packages for resource id [" + resourceId + "]");
+            }
 
         // Add new content
         existingInstalledPackagesSet.addAll(updatedPackageSet);
@@ -603,8 +614,10 @@ public class ContentManager extends AgentService implements ContainerService, Co
         if (contentServerService != null) {
             // Make sure there are actually contents to send
             if (!existingInstalledPackagesSet.isEmpty()) {
-                log.debug("Merging " + existingInstalledPackagesSet.size()
-                        + " discovered packages for Resource with id [" + resourceId + "] with Server...");
+                if (log.isDebugEnabled()) {
+                    log.debug("Merging [" + existingInstalledPackagesSet.size()
+                        + "] discovered packages for resource id [" + resourceId + "] with Server");
+                }
                 contentServerService.mergeDiscoveredPackages(report);
             }
         }
@@ -623,7 +636,8 @@ public class ContentManager extends AgentService implements ContainerService, Co
      */
     private ContentFacet findContentFacet(int resourceId) throws Exception {
         // in case some calls to here need only the read lock - for now, always lock down with the write lock
-        return ComponentUtil.getComponent(resourceId, ContentFacet.class, FacetLockType.WRITE, FACET_METHOD_TIMEOUT, false, true);
+        return ComponentUtil.getComponent(resourceId, ContentFacet.class, FacetLockType.WRITE, FACET_METHOD_TIMEOUT,
+            false, true);
     }
 
     /**
@@ -655,14 +669,17 @@ public class ContentManager extends AgentService implements ContainerService, Co
      * class has no effect when the PC is running in embedded mode and should not be registered as a listener.
      */
     private class ContentInventoryEventListener implements InventoryEventListener {
-        // InventoryEventListener Implementation  --------------------------------------------
 
         public void resourceActivated(Resource resource) {
-            log.debug("Checking to see if resource has content types to schedule discovery for: " + resource);
             ContentManager.this.scheduleDiscoveries(resource);
         }
 
+        public void resourceDeactivated(Resource resource) {
+            ContentManager.this.unscheduleDiscoveries(resource);
+        }
+
         public void resourcesAdded(Set<Resource> resources) {
+            // when activated, we'll add the schedules
         }
 
         public void resourcesRemoved(Set<Resource> resources) {

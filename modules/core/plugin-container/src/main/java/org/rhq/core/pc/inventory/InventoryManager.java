@@ -1080,6 +1080,40 @@ public class InventoryManager extends AgentService implements ContainerService, 
         return resource;
     }
 
+    /**
+     * During initialization time, the inventory manager will active resources after loading them
+     * from disk. Any other manager that starts up and is initialized after the Inventory Manager
+     * is initialized will miss the activation notifications. This method is here so those managers
+     * can be notified during their initialization phase by simply passing in their listener
+     * which will be called for every resource currently activated in inventory.
+     *  
+     * @param listener the listener that will be notified for every resource currently active 
+     */
+    public void notifyForAllActivatedResources(InventoryEventListener listener) {
+        List<Resource> activatedResources = new ArrayList<Resource>();
+        this.inventoryLock.readLock().lock();
+        try {
+            for (ResourceContainer container : this.resourceContainers.values()) {
+                if ((container != null) && (container.getResourceComponentState() == ResourceComponentState.STARTED)) {
+                    activatedResources.add(container.getResource());
+                }
+            }
+
+            for (Resource resource : activatedResources) {
+                try {
+                    listener.resourceActivated(resource);
+                } catch (Throwable t) {
+                    log.warn("Listener [" + listener + "] of activated resource [" + resource + "] failed", t);
+                }
+            }
+        } finally {
+            this.inventoryLock.readLock().unlock();
+            activatedResources.clear();
+        }
+
+        return;
+    }
+
     private ResourceContainer initResourceContainer(Resource resource) {
         ResourceContainer resourceContainer = getResourceContainer(resource);
         if (resourceContainer == null) {
@@ -1460,6 +1494,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 if (log.isDebugEnabled()) {
                     log.debug("Set component state to STOPPED for resource with id [" + resource.getId() + "].");
                 }
+
+                fireResourceDeactivated(resource);
             }
         } finally {
             this.inventoryLock.writeLock().unlock();
@@ -1744,6 +1780,32 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 log.error("Error while invoking resource activated event on listener", t);
             }
         }
+        return;
+    }
+
+    private void fireResourceDeactivated(Resource resource) {
+        if ((resource == null) || (resource.getId() == 0)) {
+            if (log.isDebugEnabled()) {
+                log.debug("Not firing deactivated event for resource: " + resource);
+            }
+            return;
+        }
+
+        if (log.isDebugEnabled()) {
+            log.debug("Firing deactivated for resource: " + resource);
+        }
+
+        InventoryEventListener[] iteratorSafeListeners = new InventoryEventListener[inventoryEventListeners.size()];
+        iteratorSafeListeners = inventoryEventListeners.toArray(iteratorSafeListeners);
+        for (InventoryEventListener listener : iteratorSafeListeners) {
+            // Catch anything to make sure we don't stop firing to other listeners
+            try {
+                listener.resourceDeactivated(resource);
+            } catch (Throwable t) {
+                log.error("Error while invoking resource deactivated event on listener", t);
+            }
+        }
+        return;
     }
 
     /**
@@ -2225,15 +2287,16 @@ public class InventoryManager extends AgentService implements ContainerService, 
             removeInventoryEventListener(this);
         }
 
+        public void resourceDeactivated(Resource resource) {
+            // nothing to do
+        }
+
         public void resourcesAdded(Set<Resource> resources) {
             // nothing to do
-
         }
 
         public void resourcesRemoved(Set<Resource> resources) {
             // nothing to do
-
         }
-
     }
 }

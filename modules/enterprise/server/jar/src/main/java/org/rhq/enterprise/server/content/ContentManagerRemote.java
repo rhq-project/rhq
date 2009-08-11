@@ -151,6 +151,14 @@ public interface ContentManagerRemote {
      */
     @WebMethod
     InstalledPackage getBackingPackageForResource( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int resourceId);
+            @WebParam(name = "subject") Subject subject, //
+            @WebParam(name = "resourceId") int resourceId);
+
+
+    @WebMethod
+    byte[] getPackageBytes(
+            @WebParam(name = "subject") Subject user,
+            @WebParam(name = "resourceId") int resourceId,
+            @WebParam(name = "installedPackageId") int installedPackageId);
+
 }

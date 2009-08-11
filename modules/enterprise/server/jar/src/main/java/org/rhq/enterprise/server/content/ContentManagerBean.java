@@ -65,6 +65,7 @@ import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageInstallationStep;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.content.composite.PackageListItemComposite;
 import org.rhq.core.domain.content.transfer.ContentDiscoveryReport;
 import org.rhq.core.domain.content.transfer.ContentResponseResult;
 import org.rhq.core.domain.content.transfer.DeletePackagesRequest;
@@ -83,6 +84,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.CriteriaQueryGenerator;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.stream.StreamUtil;
@@ -128,6 +130,9 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
     @EJB
     private ContentManagerLocal contentManager;
+
+    @EJB
+    private ContentUIManagerLocal contentUIManager;
 
     @EJB
     private ResourceTypeManagerLocal resourceTypeManager;
@@ -780,6 +785,27 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         }
     }
 
+
+    public byte[] getPackageBytes(Subject user, int resourceId, int installedPackageId) {
+        // Check permissions first
+        if (!authorizationManager.hasResourcePermission(user, Permission.MANAGE_CONTENT, resourceId)) {
+            throw new PermissionException("User [" + user.getName() + "] does not have permission to delete package "
+                + installedPackageId + " for resource ID [" + resourceId + "]");
+        }
+
+        InstalledPackage installedPackage = entityManager.find(InstalledPackage.class, installedPackageId);
+        PackageBits bits = installedPackage.getPackageVersion().getPackageBits();
+        if (bits == null) {
+            retrieveBitsFromResource(user, resourceId, installedPackageId);
+
+            bits = installedPackage.getPackageVersion().getPackageBits();
+        }
+
+        return bits.getBits();
+    }
+
+
+
     public List<DeployPackageStep> translateInstallationSteps(int resourceId, ResourcePackageDetails packageDetails)
         throws Exception {
         log.info("Retrieving installation steps for package [" + packageDetails + "]");
@@ -808,7 +834,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         Resource resource = entityManager.find(Resource.class, resourceId);
 
         ContentServiceRequest persistedRequest = new ContentServiceRequest(resource, username,
-            ContentRequestType.DEPLOY);
+            ContentRequestType.GET_BITS);
         persistedRequest.setStatus(ContentRequestStatus.IN_PROGRESS);
 
         long timestamp = System.currentTimeMillis();
@@ -852,48 +878,50 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         InstalledPackageHistory initialRequestHistory = persistedRequest.getInstalledPackageHistory().iterator().next();
         PackageVersion packageVersion = initialRequestHistory.getPackageVersion();
 
-        // Read the stream from the agent and store in the package version
-        try {
-            log.debug("Saving content for response: " + response);
-
-            PackageBits packageBits = new PackageBits();
-            entityManager.persist(packageBits);
-
-            packageVersion.setPackageBits(packageBits);
-            entityManager.flush(); // push the new package bits row to the DB
-
-            Connection conn = null;
-            PreparedStatement ps = null;
-
+        if (response.getStatus() == ContentRequestStatus.SUCCESS) {
+            // Read the stream from the agent and store in the package version
             try {
-                // fallback to JDBC so we can stream the data to the blob column
-                conn = dataSource.getConnection();
-                ps = conn.prepareStatement("UPDATE " + PackageBits.TABLE_NAME + " SET BITS = ? WHERE ID = ?");
-                ps.setBinaryStream(1, bitStream, packageVersion.getFileSize().intValue()); // TODO: DO I HAVE FILESIZE???
-                ps.setInt(2, packageBits.getId());
-                if (ps.executeUpdate() != 1) {
-                    throw new SQLException("Did not stream the package bits to the DB for [" + packageVersion + "]");
-                }
-            } finally {
-                if (ps != null) {
-                    try {
-                        ps.close();
-                    } catch (Exception e) {
-                        log.warn("Failed to close prepared statement for package version [" + packageVersion + "]");
-                    }
-                }
+                log.debug("Saving content for response: " + response);
 
-                if (conn != null) {
-                    try {
-                        conn.close();
-                    } catch (Exception e) {
-                        log.warn("Failed to close connection for package version [" + packageVersion + "]");
+                PackageBits packageBits = new PackageBits();
+                entityManager.persist(packageBits);
+
+                packageVersion.setPackageBits(packageBits);
+                entityManager.flush(); // push the new package bits row to the DB
+
+                Connection conn = null;
+                PreparedStatement ps = null;
+
+                try {
+                    // fallback to JDBC so we can stream the data to the blob column
+                    conn = dataSource.getConnection();
+                    ps = conn.prepareStatement("UPDATE " + PackageBits.TABLE_NAME + " SET BITS = ? WHERE ID = ?");
+                    ps.setBinaryStream(1, bitStream, packageVersion.getFileSize().intValue()); // TODO: DO I HAVE FILESIZE???
+                    ps.setInt(2, packageBits.getId());
+                    if (ps.executeUpdate() != 1) {
+                        throw new SQLException("Did not stream the package bits to the DB for [" + packageVersion + "]");
+                    }
+                } finally {
+                    if (ps != null) {
+                        try {
+                            ps.close();
+                        } catch (Exception e) {
+                            log.warn("Failed to close prepared statement for package version [" + packageVersion + "]");
+                        }
+                    }
+
+                    if (conn != null) {
+                        try {
+                            conn.close();
+                        } catch (Exception e) {
+                            log.warn("Failed to close connection for package version [" + packageVersion + "]");
+                        }
                     }
                 }
+            } catch (SQLException e) {
+                log.error("Error while reading content from agent stream", e);
+                // TODO: don't want to throw exception here? does the tx rollback automatically anyway?
             }
-        } catch (SQLException e) {
-            log.error("Error while reading content from agent stream", e);
-            // TODO: don't want to throw exception here? does the tx rollback automatically anyway?
         }
 
         // Update the persisted request
@@ -1036,6 +1064,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
         return result;
     }
+
 
     @SuppressWarnings("unchecked")
     public void checkForTimedOutRequests(Subject subject) {

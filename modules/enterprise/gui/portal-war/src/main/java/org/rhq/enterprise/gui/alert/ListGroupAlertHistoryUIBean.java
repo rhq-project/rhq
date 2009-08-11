@@ -191,7 +191,7 @@ public class ListGroupAlertHistoryUIBean extends PagedDataTableUIBean {
     @Override
     public DataModel getDataModel() {
         if (dataModel == null) {
-            dataModel = new ListGroupAlertDefinitionsDataModel(PageControlView.AlertHistoryList, MANAGED_BEAN_NAME);
+            dataModel = new ListGroupAlertDefinitionsDataModel(PageControlView.GroupAlertHistoryList, MANAGED_BEAN_NAME);
         }
 
         return dataModel;

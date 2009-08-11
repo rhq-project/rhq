@@ -100,7 +100,8 @@ public class ListGroupAlertDefinitionsUIBean extends PagedDataTableUIBean {
     @Override
     public DataModel getDataModel() {
         if (dataModel == null) {
-            dataModel = new ListGroupAlertDefinitionsDataModel(PageControlView.AlertDefinitionsList, MANAGED_BEAN_NAME);
+            dataModel = new ListGroupAlertDefinitionsDataModel(PageControlView.GroupAlertDefinitionsList,
+                MANAGED_BEAN_NAME);
         }
 
         return dataModel;

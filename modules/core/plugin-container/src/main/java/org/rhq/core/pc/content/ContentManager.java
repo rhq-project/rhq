@@ -570,11 +570,7 @@ public class ContentManager extends AgentService implements ContainerService, Co
         InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
         ResourceContainer container = inventoryManager.getResourceContainer(resourceId);
 
-        Set<ResourcePackageDetails> updatedPackageSet = new HashSet<ResourcePackageDetails>(details.size());
-        for (ResourcePackageDetails detail : details) {
-            updatedPackageSet.add(detail);
-        }
-
+        Set<ResourcePackageDetails> updatedPackageSet = new HashSet<ResourcePackageDetails>(details);
         Set<ResourcePackageDetails> existingInstalledPackagesSet = container.getInstalledPackages();
         if (existingInstalledPackagesSet == null) {
             existingInstalledPackagesSet = new HashSet<ResourcePackageDetails>();
@@ -584,22 +580,24 @@ public class ContentManager extends AgentService implements ContainerService, Co
         int originalPackageCount = existingInstalledPackagesSet.size();
         existingInstalledPackagesSet.retainAll(updatedPackageSet);
         int removedPackagesCount = originalPackageCount - existingInstalledPackagesSet.size();
-        if (removedPackagesCount > 0)
+        if (removedPackagesCount > 0) {
             if (log.isDebugEnabled()) {
                 log.debug("Removed [" + removedPackagesCount + "] obsolete packages for resource id [" + resourceId
                     + "]");
             }
+        }
 
         // Strip from updated list content that are already known for the resource, we don't need to do anything
         updatedPackageSet.removeAll(existingInstalledPackagesSet);
 
         // Remaining content in updated list are "new" content
-        if (!updatedPackageSet.isEmpty())
+        if (!updatedPackageSet.isEmpty()) {
             if (log.isDebugEnabled()) {
                 log.debug("Found [" + updatedPackageSet.size() + "] new packages for resource id [" + resourceId + "]");
             }
+        }
 
-        // Add new content
+        // Add new content (yes, existingInstalledPackagesSet is same as details, but use the container's reference)
         existingInstalledPackagesSet.addAll(updatedPackageSet);
 
         // Add merged (current) list to the resource container
@@ -612,8 +610,9 @@ public class ContentManager extends AgentService implements ContainerService, Co
 
         ContentServerService contentServerService = getContentServerService();
         if (contentServerService != null) {
-            // Make sure there are actually contents to send
-            if (!existingInstalledPackagesSet.isEmpty()) {
+            // if there are 1+ installed packages to report OR there are 0 but there used to be packages installed,
+            // then send up the report to be merged
+            if (!existingInstalledPackagesSet.isEmpty() || originalPackageCount != 0) {
                 if (log.isDebugEnabled()) {
                     log.debug("Merging [" + existingInstalledPackagesSet.size()
                         + "] discovered packages for resource id [" + resourceId + "] with Server");

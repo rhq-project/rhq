@@ -301,6 +301,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
         // For any previously active installed packages that were not found again (and thus removed from the doomed
         // list), delete them.
+        int deletedPackages = 0;
         for (InstalledPackage doomedPackage : doomedPackages) {
             doomedPackage = entityManager.find(InstalledPackage.class, doomedPackage.getId());
 
@@ -310,8 +311,14 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             history.setResource(resource);
             history.setStatus(InstalledPackageHistoryStatus.MISSING);
             history.setTimestamp(timestamp);
+            entityManager.persist(history);
 
             entityManager.remove(doomedPackage);
+
+            // no idea if this helps, but if we are deleting large numbers of packages, it probably does
+            if ((++deletedPackages) % 100 == 0) {
+                entityManager.flush();
+            }
         }
 
         log.info("Finished merging " + report.getDeployedPackages().size() + " packages in "

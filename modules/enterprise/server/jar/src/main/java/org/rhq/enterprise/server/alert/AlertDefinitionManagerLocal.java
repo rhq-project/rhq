@@ -53,6 +53,8 @@ public interface AlertDefinitionManagerLocal {
 
     boolean isTemplate(Integer definitionId);
 
+    boolean isGroupAlertDefinition(Integer definitionId);
+
     int disableAlertDefinitions(Subject subject, Integer[] alertDefinitionIds);
 
     List<AlertDefinition> findAllRecoveryDefinitionsById(Subject subject, Integer alertDefinitionId);

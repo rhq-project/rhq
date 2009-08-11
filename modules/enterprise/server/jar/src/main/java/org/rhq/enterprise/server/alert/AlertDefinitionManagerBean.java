@@ -334,9 +334,17 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
 
     @SuppressWarnings("unchecked")
     public boolean isTemplate(Integer definitionId) {
-        Query enabledQuery = entityManager.createNamedQuery(AlertDefinition.QUERY_IS_TEMPLATE);
-        enabledQuery.setParameter("alertDefinitionId", definitionId);
-        List<Integer> resultIds = enabledQuery.getResultList();
+        Query query = entityManager.createNamedQuery(AlertDefinition.QUERY_IS_TEMPLATE);
+        query.setParameter("alertDefinitionId", definitionId);
+        List<Integer> resultIds = query.getResultList();
+        return (resultIds.size() == 1);
+    }
+
+    @SuppressWarnings("unchecked")
+    public boolean isGroupAlertDefinition(Integer definitionId) {
+        Query query = entityManager.createNamedQuery(AlertDefinition.QUERY_IS_GROUP_ALERT_DEFINITION);
+        query.setParameter("alertDefinitionId", definitionId);
+        List<Integer> resultIds = query.getResultList();
         return (resultIds.size() == 1);
     }
 

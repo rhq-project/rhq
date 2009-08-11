@@ -20,7 +20,9 @@ package org.rhq.enterprise.gui.subsystem;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 
 import javax.faces.application.FacesMessage;
@@ -31,6 +33,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.composite.AlertDefinitionComposite;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
@@ -40,6 +43,8 @@ import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.AlertDefUtil;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
+import org.rhq.enterprise.server.alert.AlertTemplateManagerLocal;
+import org.rhq.enterprise.server.alert.GroupAlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.subsystem.AlertSubsystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -53,6 +58,8 @@ public class SubsystemAlertDefinitionUIBean extends SubsystemView {
 
     private AlertSubsystemManagerLocal manager = LookupUtil.getAlertSubsystemManager();
     private AlertDefinitionManagerLocal alertDefinitionManager = LookupUtil.getAlertDefinitionManager();
+    private GroupAlertDefinitionManagerLocal groupAlertDefinitionManager = LookupUtil.getGroupAlertDefinitionManager();
+    private AlertTemplateManagerLocal alertTemplateManager = LookupUtil.getAlertTemplateManager();
 
     private static String datePattern;
     private String resourceFilter;
@@ -125,8 +132,33 @@ public class SubsystemAlertDefinitionUIBean extends SubsystemView {
         Integer[] selected = getSelectedItems();
 
         try {
-            int numDeleted = alertDefinitionManager.removeAlertDefinitions(getSubject(), selected);
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Deleted " + numDeleted + " alert definitions.");
+            Subject subject = getSubject();
+
+            List<Integer> resourceDefinitions = new ArrayList<Integer>();
+            List<Integer> groupDefinitions = new ArrayList<Integer>();
+            List<Integer> typeDefinitions = new ArrayList<Integer>();
+
+            for (Integer definitionId : selected) {
+                if (alertDefinitionManager.isTemplate(definitionId)) {
+                    typeDefinitions.add(definitionId);
+                } else if (alertDefinitionManager.isGroupAlertDefinition(definitionId)) {
+                    groupDefinitions.add(definitionId);
+                } else {
+                    resourceDefinitions.add(definitionId);
+                }
+            }
+
+            // delete resources first
+            alertDefinitionManager.removeAlertDefinitions(subject, resourceDefinitions
+                .toArray(new Integer[resourceDefinitions.size()]));
+
+            // then delete templates and group alert defs, which are both tolerant of missing child definitions
+            groupAlertDefinitionManager.removeGroupAlertDefinitions(subject, groupDefinitions
+                .toArray(new Integer[groupDefinitions.size()]));
+            alertTemplateManager.removeAlertTemplates(subject, typeDefinitions.toArray(new Integer[typeDefinitions
+                .size()]));
+
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Deleted selected alert definitions.");
         } catch (Exception e) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to delete selected alert definitions.",
                 e);

@@ -124,6 +124,7 @@
                   <f:facet name="header">
                      <h:outputText styleClass="headerText" value="Type" />
                   </f:facet>
+                  <h:outputText value="Group Alert Definition" rendered="#{not empty item.alertDefinition.resourceGroup}" />
                   <h:outputText value="Alert Template" rendered="#{not empty item.alertDefinition.resourceType}" />
                   <h:outputText value="Child Definition" rendered="#{item.alertDefinition.parentId ne 0}" />
                   <h:outputText value="Alert Definition" rendered="#{not empty item.alertDefinition.resource and item.alertDefinition.parentId eq 0}" />
@@ -181,16 +182,27 @@
 
                <rich:column>
                   <f:facet name="header">
-                     <h:outputText styleClass="headerText" value="Template" />
+                     <h:outputText styleClass="headerText" value="Parent" />
                   </f:facet>
 
-                  <h:outputLink value="/alerts/Config.do" rendered="#{not empty item.alertDefinition.parentId and item.alertDefinition.parentId ne 0}">
+                  <h:outputLink value="/alerts/Config.do" rendered="#{item.alertDefinition.parentId ne 0}">
                      <f:param name="mode" value="viewRoles"/>
                      <f:param name="type" value="#{item.alertDefinition.resource.resourceType.id}"/>
                      <f:param name="from" value="#{item.alertDefinition.id}"/>
                      <f:param name="ad" value="#{item.alertDefinition.parentId}"/>
                      <h:outputText value="View Template" />
                   </h:outputLink>
+                  
+                  <h:outputLink value="/alerts/Config.do" rendered="#{not empty item.alertDefinition.groupAlertDefinition}">
+                     <f:param name="mode" value="viewRoles"/>
+                     <f:param name="groupId" value="#{item.alertDefinition.groupAlertDefinition.resourceGroup.id}"/>
+                     <f:param name="from" value="#{item.alertDefinition.id}"/>
+                     <f:param name="ad" value="#{item.alertDefinition.groupAlertDefinition.id}"/>
+                     <h:outputText value="View Group Definition" />
+                  </h:outputLink>
+                  
+                  <h:outputText value="N/A" 
+                                rendered="#{item.alertDefinition.parentId eq 0 and empty item.alertDefinition.groupAlertDefinition}" />
                </rich:column>
 
                <f:facet name="footer">

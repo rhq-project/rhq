@@ -112,9 +112,11 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
          * break the Hibernate relationships used for navigating between the groupAlertDefinition and the
          * children alertDefinitions so that the async deletion mechanism can delete without FK violations
          */
-        Query breakLinksQuery = entityManager.createNamedQuery(AlertDefinition.QUERY_UPDATE_SET_PARENTS_NULL);
-        breakLinksQuery.setParameter("childrenDefinitionIds", allChildDefinitionIds);
-        breakLinksQuery.executeUpdate();
+        if (allChildDefinitionIds.size() > 0) {
+            Query breakLinksQuery = entityManager.createNamedQuery(AlertDefinition.QUERY_UPDATE_SET_PARENTS_NULL);
+            breakLinksQuery.setParameter("childrenDefinitionIds", allChildDefinitionIds);
+            breakLinksQuery.executeUpdate();
+        }
 
         return modified;
     }

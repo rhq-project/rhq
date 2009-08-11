@@ -74,7 +74,7 @@
                             value="#{alertHistoryDataModel}"
                             var="item"
                             width="100%"
-                            columnsWidth="15%, 15%, 15%, 15%, 15%, 15%, 10%"
+                            columnsWidth="1%, 15%, 15%, 15%, 15%, 15%, 15%, 10%"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer"
                             onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
@@ -83,6 +83,15 @@
                <f:facet name="PageControlView">
                   <onc:paginationControl id="SubsystemAlertHistory" />
                </f:facet>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:allSelect target="selectedItems" />
+                  </f:facet>
+
+                  <onc:select name="selectedItems"
+                              value="#{item.alert.id}" />
+               </rich:column>
 
                <rich:column>
                   <f:facet name="header">
@@ -171,7 +180,7 @@
 
                <f:facet name="footer">
                   <rich:columnGroup>
-                     <rich:column colspan="7" width="100%">
+                     <rich:column colspan="8" width="100%">
                         <onc:selectCommandButton action="#{SubsystemAlertHistoryUIBean.deleteSelected}"
                                                  value="DELETE SELECTED" target="selectedItems" styleClass="on-pager-button buttonsmall"
                                                  rendered="#{GlobalPermissionsUIBean.superuser}" />

@@ -111,10 +111,21 @@ public class AppServerUtils {
     public static void undeployFromAS(String archiveName) throws Exception {
         DeploymentManager deploymentManager = getDeploymentManager();
 
-        DeploymentProgress progress = deploymentManager.remove(archiveName);
+        
+        DeploymentProgress progress = deploymentManager.stop(archiveName);
         progress.run();
 
         DeploymentStatus status = progress.getDeploymentStatus();
+
+        if (status.isFailed()) {
+            throw new IllegalStateException("Failed to stop " + archiveName + " with message: "
+                + status.getMessage());
+        }
+
+        progress = deploymentManager.remove(archiveName);
+        progress.run();
+
+        status = progress.getDeploymentStatus();
 
         if (status.isFailed()) {
             throw new IllegalStateException("Failed to undeploy " + archiveName + " with message: "

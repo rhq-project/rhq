@@ -79,7 +79,7 @@
         <fmt:message key="alerts.config.service.DefinitionList.isResourceAlert.false"/>
       </span> 
       <fmt:message key="alert.config.props.PB.IsGroupAlert"/>
-      (<html:link page="/alerts/Config.do?mode=viewRoles&group=${alertDef.groupAlertDefinition.resourceGroup.id}&ad=${alertDef.groupAlertDefinition.id}"><fmt:message key="alert.config.props.ViewGroupAlertDefinition"/></html:link>)
+      (<html:link page="/alerts/Config.do?mode=viewRoles&groupId=${alertDef.groupAlertDefinition.resourceGroup.id}&ad=${alertDef.groupAlertDefinition.id}"><fmt:message key="alert.config.props.ViewGroupAlertDefinition"/></html:link>)
     </td>
   </tr>
   </c:if>

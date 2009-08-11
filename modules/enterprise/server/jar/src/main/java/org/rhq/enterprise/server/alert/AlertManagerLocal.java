@@ -42,6 +42,8 @@ public interface AlertManagerLocal {
 
     void deleteAlerts(Subject user, int resourceId, Integer[] ids);
 
+    void deleteAlertsForResourceGroup(Subject user, int resourceGroupId, Integer[] ids);
+
     int deleteAlerts(Subject user, int resourceId);
 
     int deleteAlerts(long beginTime, long endTime);

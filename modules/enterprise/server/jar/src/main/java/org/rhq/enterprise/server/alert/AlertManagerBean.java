@@ -155,6 +155,15 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         deleteAlerts(ids);
     }
 
+    public void deleteAlertsForResourceGroup(Subject user, int resourceGroupId, Integer[] ids) {
+        if (!authorizationManager.hasGroupPermission(user, Permission.MANAGE_ALERTS, resourceGroupId)) {
+            throw new PermissionException("User [" + user.getName() + "] does not have permissions to delete alerts "
+                + "for groupId=" + resourceGroupId);
+        }
+
+        deleteAlerts(ids);
+    }
+
     // gonna use bulk delete, make sure we are in new tx to not screw up caller's hibernate session
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     @TransactionTimeout(30 * 60)

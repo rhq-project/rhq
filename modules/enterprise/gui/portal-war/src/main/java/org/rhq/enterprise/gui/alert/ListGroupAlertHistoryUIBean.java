@@ -42,6 +42,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.measurement.util.MeasurementConverter;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
@@ -53,6 +54,7 @@ import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.AlertDefUtil;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -72,6 +74,7 @@ public class ListGroupAlertHistoryUIBean extends PagedDataTableUIBean {
     private SelectItem[] alertPrioritySelectItems;
 
     private AlertManagerLocal alertManager = LookupUtil.getAlertManager();
+    private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
 
     //private AlertDefinitionManagerLocal alertDefinitionManager = LookupUtil.getAlertDefinitionManager();
 
@@ -155,13 +158,13 @@ public class ListGroupAlertHistoryUIBean extends PagedDataTableUIBean {
 
     public String deleteSelectedAlerts() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
-        Resource resource = EnterpriseFacesContextUtility.getResource();
+        ResourceGroup resourceGroup = EnterpriseFacesContextUtility.getResourceGroup();
 
         String[] selectedAlerts = getSelectedAlerts();
         Integer[] alertDefinitionIds = StringUtility.getIntegerArray(selectedAlerts);
 
         try {
-            alertManager.deleteAlerts(subject, resource.getId(), alertDefinitionIds);
+            alertManager.deleteAlertsForResourceGroup(subject, resourceGroup.getId(), alertDefinitionIds);
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Deleted " + alertDefinitionIds.length
                 + " alerts.");
         } catch (Exception e) {
@@ -173,16 +176,19 @@ public class ListGroupAlertHistoryUIBean extends PagedDataTableUIBean {
 
     public String purgeAllAlerts() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
-        Resource resource = EnterpriseFacesContextUtility.getResource();
+        ResourceGroup resourceGroup = EnterpriseFacesContextUtility.getResourceGroup();
 
         try {
-            int numDeleted = alertManager.deleteAlerts(subject, resource.getId());
+            int numDeleted = 0;
+            for (Integer resourceId : resourceManager.findImplicitResourceIdsByResourceGroup(resourceGroup.getId())) {
+                numDeleted += alertManager.deleteAlerts(subject, resourceId);
+            }
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Deleted " + numDeleted
-                + " alerts on this resource");
+                + " alerts on this group");
         } catch (Exception e) {
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to delete alerts for resource[ "
-                + resource.getId() + " ]", e);
-            log.error("failed to delete alerts for resource[ " + resource.getId() + " ]", e);
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to delete alerts for group[ "
+                + resourceGroup.getId() + " ]", e);
+            log.error("failed to delete alerts for group[ " + resourceGroup.getId() + " ]", e);
         }
 
         return "success";

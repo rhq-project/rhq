@@ -113,13 +113,13 @@
                            <f:param name="groupId" value="${param.groupId}"/>
                            <f:param name="mode" value="new"/>
                         </h:commandButton>
-                        <onc:selectCommandButton action="#{ListAlertDefinitionsUIBean.enableSelectedAlertDefinitions}"
+                        <onc:selectCommandButton action="#{ListGroupAlertDefinitionsUIBean.enableSelectedAlertDefinitions}"
                                                  value="ENABLE SELECTED" target="selectedAlertDefinitions" styleClass="on-pager-button buttonsmall"
                                                  rendered="#{ResourceGroupUIBean.permissions.alert}" />
-                        <onc:selectCommandButton action="#{ListAlertDefinitionsUIBean.disableSelectedAlertDefinitions}"
+                        <onc:selectCommandButton action="#{ListGroupAlertDefinitionsUIBean.disableSelectedAlertDefinitions}"
                                                  value="DISABLE SELECTED" target="selectedAlertDefinitions" styleClass="on-pager-button buttonsmall"
                                                  rendered="#{ResourceGroupUIBean.permissions.alert}" />
-                        <onc:selectCommandButton action="#{ListAlertDefinitionsUIBean.deleteSelectedAlertDefinitions}"
+                        <onc:selectCommandButton action="#{ListGroupAlertDefinitionsUIBean.deleteSelectedAlertDefinitions}"
                                                  value="DELETE SELECTED" target="selectedAlertDefinitions" styleClass="on-pager-button buttonsmall"
                                                  rendered="#{ResourceGroupUIBean.permissions.alert}" />
 

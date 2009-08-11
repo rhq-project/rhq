@@ -65,7 +65,6 @@ import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageInstallationStep;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
-import org.rhq.core.domain.content.composite.PackageListItemComposite;
 import org.rhq.core.domain.content.transfer.ContentDiscoveryReport;
 import org.rhq.core.domain.content.transfer.ContentResponseResult;
 import org.rhq.core.domain.content.transfer.DeletePackagesRequest;
@@ -84,7 +83,6 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.CriteriaQueryGenerator;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.stream.StreamUtil;
@@ -130,9 +128,6 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
     @EJB
     private ContentManagerLocal contentManager;
-
-    @EJB
-    private ContentUIManagerLocal contentUIManager;
 
     @EJB
     private ResourceTypeManagerLocal resourceTypeManager;
@@ -785,12 +780,12 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         }
     }
 
-
     public byte[] getPackageBytes(Subject user, int resourceId, int installedPackageId) {
         // Check permissions first
         if (!authorizationManager.hasResourcePermission(user, Permission.MANAGE_CONTENT, resourceId)) {
-            throw new PermissionException("User [" + user.getName() + "] does not have permission to delete package "
-                + installedPackageId + " for resource ID [" + resourceId + "]");
+            throw new PermissionException("User [" + user.getName()
+                + "] does not have permission to obtain package content for installed package id ["
+                + installedPackageId + "] for resource ID [" + resourceId + "]");
         }
 
         InstalledPackage installedPackage = entityManager.find(InstalledPackage.class, installedPackageId);
@@ -803,8 +798,6 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
         return bits.getBits();
     }
-
-
 
     public List<DeployPackageStep> translateInstallationSteps(int resourceId, ResourcePackageDetails packageDetails)
         throws Exception {
@@ -1064,7 +1057,6 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
         return result;
     }
-
 
     @SuppressWarnings("unchecked")
     public void checkForTimedOutRequests(Subject subject) {

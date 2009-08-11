@@ -168,7 +168,15 @@ public class RemoteClientProxy implements InvocationHandler {
 
 
             try {
-                Class originalClass = method.getDeclaringClass().getInterfaces()[0];
+                Class[] interfaces = method.getDeclaringClass().getInterfaces();
+
+                Class originalClass = null;
+                if (interfaces != null && interfaces.length > 0) {
+                    originalClass = interfaces[0];
+                } else {
+                    originalClass = method.getDeclaringClass();
+                }
+                
                 // See if this method really exists or if its a simplified set of parameters
                 originalClass.getMethod(method.getName(), method.getParameterTypes());
 

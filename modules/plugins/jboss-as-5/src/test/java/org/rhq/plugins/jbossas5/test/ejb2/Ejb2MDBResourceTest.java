@@ -38,6 +38,7 @@ import javax.naming.InitialContext;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.plugins.jbossas5.test.util.AppServerUtils;
+import org.rhq.plugins.jbossas5.test.util.JMSQueueUtil;
 import org.testng.annotations.BeforeGroups;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
@@ -61,33 +62,7 @@ public class Ejb2MDBResourceTest extends AbstractEjb2ResourceTest {
     @BeforeGroups(groups = "as5-plugin-ejb2", dependsOnMethods = "deployEjb2TestJars")
     public void setupBean() {
         try {
-            System.out.println("Sending " + MESSAGES_SENT + " messages to " + QUEUE_NAME);
-            
-            InitialContext ctx = AppServerUtils.getAppServerInitialContext();
-
-            QueueConnectionFactory factory = (QueueConnectionFactory) ctx.lookup("ConnectionFactory");
-            Queue queue = (Queue) ctx.lookup(QUEUE_NAME);
-
-            QueueConnection connection = factory.createQueueConnection();
-            connection.start();
-
-            QueueSession session = connection.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
-
-            QueueSender sender = session.createSender(queue);
-            
-            TextMessage message = session.createTextMessage();
-
-            for (int i = 0; i < MESSAGES_SENT; ++i) {
-                message.setText("Message no. " + i);
-                sender.send(message);
-            }
-            
-            sender.close();
-            session.close();
-            connection.close();
-            
-            System.out.println("Giving some time for the messages to arrive...");
-            Thread.sleep(2000);
+            JMSQueueUtil.sendMessages(QUEUE_NAME, MESSAGES_SENT);
         } catch (Exception e) {
             fail("Failed to setup Message Driven Bean test", e);
         }

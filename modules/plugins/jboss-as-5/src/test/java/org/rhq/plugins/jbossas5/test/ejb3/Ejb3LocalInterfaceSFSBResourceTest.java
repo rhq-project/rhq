@@ -31,33 +31,33 @@ import org.testng.annotations.Test;
  * 
  * @author Lukas Krejci
  */
-@Test(groups = { "as5-plugin", "as5-plugin-ejb3", "as5-plugin-ejb3-slsb" })
-public class Ejb3SLSBResourceTest extends AbstractEjb3SessionBeanResourceTest {
+@Test(groups = { "as5-plugin", "as5-plugin-ejb3", "as5-plugin-ejb3-local-interface-sfsb"})
+public class Ejb3LocalInterfaceSFSBResourceTest extends AbstractEjb3SessionBeanResourceTest {
 
     private static class TestTemplate extends Ejb3SessionBeanTestTemplate {
 
-        public String getTestedBeanName() {
-            return "HelloWorldBean";
-        }
-
         public String getExpectedParentResourceKeyUniquePart() {
-            return "jars/ejb3-slsb-test.jar";
+            return "jars/ejb3-local-interface-test.jar";
         }
 
         public String getExpectedResourceKey() {
-            return "HelloWorldBean";
+            return "CounterBean";
+        }
+
+        public String getTestedBeanName() {
+            return "InterfaceBean";
         }
 
         public MethodArgDef[] getTestedMethodArgs() {
-            return new MethodArgDef[] { new MethodArgDef(String.class, "John Doe") };
+            return null;
         }
 
         public String getTestedMethodName() {
-            return "sayHelloTo";
+            return "increment";
         }        
     }
     
-    public Ejb3SLSBResourceTest() {
+    public Ejb3LocalInterfaceSFSBResourceTest() {
         super(new TestTemplate());
     }
     
@@ -66,6 +66,10 @@ public class Ejb3SLSBResourceTest extends AbstractEjb3SessionBeanResourceTest {
         super.setupBean();
     }
     
+    protected String getResourceTypeName() {
+        return "EJB3 Stateful Session Bean";
+    }
+
     @Override
     public void testMetrics() throws Exception {
         super.testMetrics();
@@ -75,9 +79,4 @@ public class Ejb3SLSBResourceTest extends AbstractEjb3SessionBeanResourceTest {
     public void testOperations() throws Exception {
         super.testOperations();
     }
-
-    protected String getResourceTypeName() {
-        return "EJB3 Stateless Session Bean";
-    }
-
 }

@@ -85,7 +85,7 @@ public abstract class EjbSessionBeanTestTemplate {
      *         false if the validation should be performed by the caller
      */
     public boolean validateOperationResult(String name, OperationResult result, Resource resource) {
-        if ("viewInvocationStats".equals(name) && resource.getResourceKey().contains(getExpectedResourceKey())) {
+        if ("viewInvocationStats".equals(name) && isTestedResource(resource)) {
             //the method was invoked ten times in the setup. we should see it in the results here...
             Configuration resultValueConfig = result.getComplexResults();
 
@@ -125,8 +125,8 @@ public abstract class EjbSessionBeanTestTemplate {
     
     public abstract Object getRemoteBean() throws Exception;    
 
-    public abstract String getExpectedResourceKey();
-
+    public abstract boolean isTestedResource(Resource resource);
+    
     public abstract String getTestedMethodName();
 
     public String getExpectedMethodName() {

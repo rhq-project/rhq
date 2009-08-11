@@ -23,7 +23,9 @@
 
 package org.rhq.plugins.jbossas5.test.ejb3;
 
-import org.rhq.plugins.jbossas5.test.util.MethodArgDef;
+import static org.testng.Assert.fail;
+
+import org.rhq.plugins.jbossas5.test.util.JMSQueueUtil;
 import org.testng.annotations.BeforeGroups;
 import org.testng.annotations.Test;
 
@@ -31,41 +33,26 @@ import org.testng.annotations.Test;
  * 
  * @author Lukas Krejci
  */
-@Test(groups = { "as5-plugin", "as5-plugin-ejb3", "as5-plugin-ejb3-slsb" })
-public class Ejb3SLSBResourceTest extends AbstractEjb3SessionBeanResourceTest {
+@Test(groups = { "as5-plugin", "as5-plugin-ejb3", "as5-plugin-ejb3-embedded-mdb"})
+public class Ejb3EmbeddedMDBResourceTest extends AbstractEjb3MessageDrivenBeanResourceTest {
 
-    private static class TestTemplate extends Ejb3SessionBeanTestTemplate {
-
-        public String getTestedBeanName() {
-            return "HelloWorldBean";
+    private static final int MESSAGES_SENT = 10;
+    private static final String QUEUE_NAME = "queue/tutorial/example-embedded";
+    private static final String MDB_NAME = "ExampleMDBEmbedded";
+    
+    @BeforeGroups(groups = "as5-plugin-ejb3", dependsOnMethods="deployTestJars")
+    public void setup() {
+        try {
+            JMSQueueUtil.sendMessages(QUEUE_NAME, MESSAGES_SENT);
+        } catch (Exception e) {
+            fail("Failed to setup embedded EJB3 Message Driven Bean test", e);
         }
-
-        public String getExpectedParentResourceKeyUniquePart() {
-            return "jars/ejb3-slsb-test.jar";
-        }
-
-        public String getExpectedResourceKey() {
-            return "HelloWorldBean";
-        }
-
-        public MethodArgDef[] getTestedMethodArgs() {
-            return new MethodArgDef[] { new MethodArgDef(String.class, "John Doe") };
-        }
-
-        public String getTestedMethodName() {
-            return "sayHelloTo";
-        }        
     }
     
-    public Ejb3SLSBResourceTest() {
-        super(new TestTemplate());
+    protected String getResourceTypeName() {
+        return "EJB3 Message-Driven Bean (Embedded)";
     }
-    
-    @BeforeGroups(groups = "as5-plugin-ejb3", dependsOnMethods = "deployTestJars")
-    public void setupBean() {
-        super.setupBean();
-    }
-    
+
     @Override
     public void testMetrics() throws Exception {
         super.testMetrics();
@@ -76,8 +63,11 @@ public class Ejb3SLSBResourceTest extends AbstractEjb3SessionBeanResourceTest {
         super.testOperations();
     }
 
-    protected String getResourceTypeName() {
-        return "EJB3 Stateless Session Bean";
+    protected String getTestedBeanName() {
+        return MDB_NAME;
     }
-
+    
+    protected int getMessagesSent() {
+        return MESSAGES_SENT;
+    }
 }

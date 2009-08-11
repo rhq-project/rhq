@@ -41,7 +41,7 @@ import org.testng.annotations.BeforeTest;
  */
 public abstract class AbstractSessionBeanTest extends AbstractEjb2ResourceTest {
 
-    private EjbSessionBeanTestTemplate testTemplate;
+    private Ejb2SessionBeanTestTemplate testTemplate;
 
     protected static abstract class Ejb2SessionBeanTestTemplate extends EjbSessionBeanTestTemplate {
 
@@ -61,10 +61,16 @@ public abstract class AbstractSessionBeanTest extends AbstractEjb2ResourceTest {
             Object narrowed = PortableRemoteObject.narrow(home, homeInterface);
             
             return AppServerUtils.invokeMethod("create", narrowed, createMethodArgs);
-        }            
+        }
+
+        public boolean isTestedResource(Resource resource) {
+            return resource.getResourceKey().equals(getExpectedResourceKey());
+        }
+
+        protected abstract String getExpectedResourceKey();
     }
     
-    protected AbstractSessionBeanTest(EjbSessionBeanTestTemplate testTemplate) {
+    protected AbstractSessionBeanTest(Ejb2SessionBeanTestTemplate testTemplate) {
         this.testTemplate = testTemplate;
     }
 
@@ -81,7 +87,7 @@ public abstract class AbstractSessionBeanTest extends AbstractEjb2ResourceTest {
 
     @Override
     protected void validateNumericMetricValue(String metricName, Double value, Resource resource) {
-        if ("CreateCount".equals(metricName) && testTemplate.getExpectedResourceKey().equals(resource.getResourceKey())) {
+        if ("CreateCount".equals(metricName) && testTemplate.isTestedResource(resource)) {
             assertEquals(value, Double.valueOf(1), "Unexpected Session Bean CreateCount.");
         } else {
             super.validateNumericMetricValue(metricName, value, resource);

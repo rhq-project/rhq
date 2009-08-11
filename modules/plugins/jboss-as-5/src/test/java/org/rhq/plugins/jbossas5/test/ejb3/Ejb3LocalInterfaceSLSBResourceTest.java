@@ -31,25 +31,25 @@ import org.testng.annotations.Test;
  * 
  * @author Lukas Krejci
  */
-@Test(groups = { "as5-plugin", "as5-plugin-ejb3", "as5-plugin-ejb3-slsb" })
-public class Ejb3SLSBResourceTest extends AbstractEjb3SessionBeanResourceTest {
-
+@Test(groups = { "as5-plugin", "as5-plugin-ejb3", "as5-plugin-ejb3-local-interface-slsb"})
+public class Ejb3LocalInterfaceSLSBResourceTest extends AbstractEjb3SessionBeanResourceTest {
+    
     private static class TestTemplate extends Ejb3SessionBeanTestTemplate {
 
-        public String getTestedBeanName() {
-            return "HelloWorldBean";
-        }
-
         public String getExpectedParentResourceKeyUniquePart() {
-            return "jars/ejb3-slsb-test.jar";
+            return "jars/ejb3-local-interface-test.jar";
         }
 
         public String getExpectedResourceKey() {
-            return "HelloWorldBean";
+            return "HelloBean";
+        }
+
+        public String getTestedBeanName() {
+            return "InterfaceBean";
         }
 
         public MethodArgDef[] getTestedMethodArgs() {
-            return new MethodArgDef[] { new MethodArgDef(String.class, "John Doe") };
+            return new MethodArgDef[] { new MethodArgDef(String.class, "John Doe")};
         }
 
         public String getTestedMethodName() {
@@ -57,7 +57,7 @@ public class Ejb3SLSBResourceTest extends AbstractEjb3SessionBeanResourceTest {
         }        
     }
     
-    public Ejb3SLSBResourceTest() {
+    public Ejb3LocalInterfaceSLSBResourceTest() {
         super(new TestTemplate());
     }
     
@@ -66,6 +66,10 @@ public class Ejb3SLSBResourceTest extends AbstractEjb3SessionBeanResourceTest {
         super.setupBean();
     }
     
+    protected String getResourceTypeName() {
+        return "EJB3 Stateless Session Bean";
+    }
+
     @Override
     public void testMetrics() throws Exception {
         super.testMetrics();
@@ -74,10 +78,6 @@ public class Ejb3SLSBResourceTest extends AbstractEjb3SessionBeanResourceTest {
     @Override
     public void testOperations() throws Exception {
         super.testOperations();
-    }
-
-    protected String getResourceTypeName() {
-        return "EJB3 Stateless Session Bean";
     }
 
 }

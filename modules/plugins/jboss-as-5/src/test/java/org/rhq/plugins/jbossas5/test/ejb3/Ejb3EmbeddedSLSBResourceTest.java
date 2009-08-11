@@ -31,17 +31,17 @@ import org.testng.annotations.Test;
  * 
  * @author Lukas Krejci
  */
-@Test(groups = { "as5-plugin", "as5-plugin-ejb3", "as5-plugin-ejb3-slsb" })
-public class Ejb3SLSBResourceTest extends AbstractEjb3SessionBeanResourceTest {
-
+@Test(groups = { "as5-plugin", "as5-plugin-ejb3", "as5-plugin-ejb3-embedded-slsb" })
+public class Ejb3EmbeddedSLSBResourceTest extends AbstractEjb3SessionBeanResourceTest {
+    
     private static class TestTemplate extends Ejb3SessionBeanTestTemplate {
 
         public String getTestedBeanName() {
-            return "HelloWorldBean";
+            return "ejb3-embedded-test/HelloWorldBean";
         }
 
         public String getExpectedParentResourceKeyUniquePart() {
-            return "jars/ejb3-slsb-test.jar";
+            return "jars/ejb3-embedded-test.ear";
         }
 
         public String getExpectedResourceKey() {
@@ -57,7 +57,7 @@ public class Ejb3SLSBResourceTest extends AbstractEjb3SessionBeanResourceTest {
         }        
     }
     
-    public Ejb3SLSBResourceTest() {
+    public Ejb3EmbeddedSLSBResourceTest() {
         super(new TestTemplate());
     }
     
@@ -77,7 +77,7 @@ public class Ejb3SLSBResourceTest extends AbstractEjb3SessionBeanResourceTest {
     }
 
     protected String getResourceTypeName() {
-        return "EJB3 Stateless Session Bean";
+        return "EJB3 Stateless Session Bean (Embedded)";
     }
 
 }

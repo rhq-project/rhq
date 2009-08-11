@@ -41,6 +41,25 @@ public abstract class AbstractEjb3SessionBeanResourceTest extends AbstractEjb3Re
             
             return AppServerUtils.getRemoteObject(jndiName, Object.class);
         }
+
+        public boolean isTestedResource(Resource resource) {
+            String resourceKey = resource.getResourceKey();
+            
+            Resource parentResource = resource.getParentResource();
+            
+            String parentResourceKey = parentResource == null ? null : parentResource.getResourceKey();
+            
+            boolean resourceKeyMatch = resourceKey.equals(getExpectedResourceKey());
+            boolean parentResourceKeyMatch = (parentResourceKey == null && getExpectedParentResourceKeyUniquePart() == null)
+                || (parentResourceKey.contains(getExpectedParentResourceKeyUniquePart()));
+            
+            
+            return resourceKeyMatch && parentResourceKeyMatch;
+        }
+        
+
+        public abstract String getExpectedResourceKey();
+        public abstract String getExpectedParentResourceKeyUniquePart();
     }
     
     private Ejb3SessionBeanTestTemplate testTemplate;

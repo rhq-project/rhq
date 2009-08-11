@@ -40,6 +40,10 @@ public class Ejb3SFSBResourceTest extends AbstractEjb3SessionBeanResourceTest {
             return "CounterBean";
         }
 
+        public String getExpectedParentResourceKeyUniquePart() {
+            return "jars/ejb3-sfsb-test.jar";
+        }
+
         public String getTestedBeanName() {
             return "CounterBean";
         }
@@ -75,6 +79,4 @@ public class Ejb3SFSBResourceTest extends AbstractEjb3SessionBeanResourceTest {
     public void testOperations() throws Exception {
         super.testOperations();
     }
-
-    
 }

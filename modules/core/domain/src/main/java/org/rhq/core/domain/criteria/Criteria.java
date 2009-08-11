@@ -53,6 +53,7 @@ public abstract class Criteria implements Serializable {
 
     private boolean filtersOptional;
     private boolean caseSensitive;
+    private boolean strict;
 
     protected Map<String, String> filterOverrides;
     protected Map<String, String> sortOverrides;
@@ -177,6 +178,18 @@ public abstract class Criteria implements Serializable {
 
     public boolean isCaseSensitive() {
         return this.caseSensitive;
+    }
+
+    /*
+     * If set to true, string-based filters will use exact string matches;
+     * Default is 'false', which means we'll fuzzy match 
+     */
+    public void setStrict(boolean strict) {
+        this.strict = strict;
+    }
+
+    public boolean isStrict() {
+        return this.strict;
     }
 
     public PageControl getPageControl() {

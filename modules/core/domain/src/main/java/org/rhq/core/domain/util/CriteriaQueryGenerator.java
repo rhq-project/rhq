@@ -196,6 +196,10 @@ public final class CriteriaQueryGenerator {
                     } else {
                         fragment = alias + "." + fieldName + " " + operator + " :" + fieldName;
                     }
+                    /* 
+                     * Double escape backslashes because strings might be escaped at the database level that
+                     * Hibernate calls into -- http://opensource.atlassian.com/projects/hibernate/browse/HHH-2674
+                     */
                     fragment += " ESCAPE '\\\\'";
                 } else {
                     fragment = alias + "." + fieldName + " " + operator + " :" + fieldName;
@@ -261,6 +265,7 @@ public final class CriteriaQueryGenerator {
 
     private void setBindValues(Query query, boolean countQuery) {
         boolean wantCaseInsensitiveMatch = !criteria.isCaseSensitive();
+        boolean wantsFuzzyMatching = !criteria.isStrict();
 
         for (Map.Entry<String, Object> critField : criteria.getFilterFields().entrySet()) {
             Object value = critField.getValue();
@@ -270,7 +275,16 @@ public final class CriteriaQueryGenerator {
                     if (wantCaseInsensitiveMatch) {
                         formattedValue = formattedValue.toLowerCase();
                     }
-                    formattedValue = "%" + ((String) formattedValue).replaceAll("\\_", "\\\\_") + "%";
+                    /* 
+                     * Double escape backslashes because strings might be escaped at the database level that
+                     * Hibernate calls into -- http://opensource.atlassian.com/projects/hibernate/browse/HHH-2674
+                     */
+                    formattedValue = ((String) formattedValue).replaceAll("\\_", "\\\\_");
+                    if (wantsFuzzyMatching) {
+                        // append '%' onto edges that don't already have '%' explicitly set from the caller
+                        formattedValue = (formattedValue.startsWith("%") ? "" : "%") + formattedValue
+                            + (formattedValue.endsWith("%") ? "" : "%");
+                    }
                     value = formattedValue;
                 }
             }

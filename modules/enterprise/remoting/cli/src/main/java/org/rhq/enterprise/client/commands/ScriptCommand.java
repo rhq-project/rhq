@@ -169,7 +169,10 @@ public class ScriptCommand implements ClientCommand {
             if (result != null) {
                 //                client.getPrintWriter().print("result: ");
                 TabularWriter writer = new TabularWriter(client.getPrintWriter());
-                writer.setWidth(client.getConsoleWidth());
+
+                if (client.isInteractiveMode()) {
+                    writer.setWidth(client.getConsoleWidth());
+                }
                 writer.print(result);
             }
         } catch (ScriptException e) {
@@ -210,7 +213,7 @@ public class ScriptCommand implements ClientCommand {
     private void bindObjectAndGlobalFuctions(Object object, String bindingName) {
         jsEngine.put(bindingName, object);
         try {
-            BeanInfo beanInfo = Introspector.getBeanInfo(object.getClass());
+            BeanInfo beanInfo = Introspector.getBeanInfo(object.getClass(),Object.class);
             MethodDescriptor[] methodDescriptors = beanInfo.getMethodDescriptors();
 
             for (MethodDescriptor methodDescriptor : methodDescriptors) {

@@ -22,9 +22,11 @@ import org.rhq.core.pluginapi.operation.OperationResult;
 public class OperationTest {
 	private Log log = LogFactory.getLog(OperationTest.class);
 	private EmsConnection connection;
+	private static String INTERCEPTOR_NAME = "CacheMgmtInterceptor";
 	private String[] INTERCEPTOR_STATISTIC_FIELDS = { "HitMissRatio",
 			"ReadWriteRatio", "AverageWriteTime", "AverageReadTime" };
 
+	private static String RESET_STATISTICS_OPERATION_NAME = "resetStatistics";
 	private static String CACHE_STATUS_ATRIBUTE = "CacheStatus";
 
 	public OperationTest(EmsConnection connection) {
@@ -54,9 +56,6 @@ public class OperationTest {
 				for (OperationDefinition operationDefinition : operationDefinitions) {
 					String name = operationDefinition.getName();
 
-					if (name.equals("printDetails")) {
-						System.out.println("cnec");
-					}
 					OperationResult result = operationFacet.invokeOperation(
 							name, new Configuration());
 
@@ -90,6 +89,13 @@ public class OperationTest {
 							assert (TestHelper.compareValues(value, type,
 									emsOperationRes));
 						}
+					}
+
+					if (name.equals(RESET_STATISTICS_OPERATION_NAME)) {
+						String resourceName = resource.getResourceKey();
+						if (resourceName.contains("INTERCEPTOR_NAME"))
+							assert testResetFields(
+									INTERCEPTOR_STATISTIC_FIELDS, resource);
 					}
 
 				}

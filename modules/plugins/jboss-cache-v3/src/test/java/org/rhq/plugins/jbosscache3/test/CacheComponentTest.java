@@ -58,14 +58,9 @@ public class CacheComponentTest {
 	private OperationTest operationTest;
 	private RemoteClientTest remoteClientTest;
 
-	private String[] nullableMetrics = { "ClusterConfig",
-			"CacheLoaderConfiguration", "CacheLoaderConfig",
-			"BuddyReplicationConfig", "EvictionPolicyConfig",
-			"ClusterProperties", "TransactionManagerLookupClass" };
-
 	public static String[] RESOURCE_TYPES = { "Interceptor", "Data Container",
 			"RPC Manager", "RegionManager", "Transaction Table",
-			"Tx Interceptor", "Lock Manager" };
+			"Tx Interceptor", "Lock Manager", "Cache" };
 
 	public static String[] JMX_COMPONENT_NAMES = { "CacheMgmtInterceptor",
 			"DataContainer", "RPCManager", "RegionManager", "TransactionTable",
@@ -84,7 +79,7 @@ public class CacheComponentTest {
 
 		ObjectName testResource = new ObjectName(ADDED_RESOURCE);
 
-		for (int i = 0; i < RESOURCE_TYPES.length; i++) {
+		for (int i = 0; i < RESOURCE_TYPES.length - 1; i++) {
 			System.out.println(RESOURCE_TYPES[i]);
 			ResourceType type = TestHelper.getResourceType(RESOURCE_TYPES[i],
 					CACHE_PLUGIN_NAME);
@@ -143,38 +138,18 @@ public class CacheComponentTest {
 	@Test
 	public void testMetrics() {
 		try {
+			PluginContainer.getInstance().getInventoryManager()
+					.executeServiceScanImmediately();
+
+			for (String resourceTypeName : RESOURCE_TYPES) {
+				ResourceType cacheResourceType = TestHelper.getResourceType(
+						resourceTypeName, CACHE_PLUGIN_NAME);
+				testResouceTypeMetrics(cacheResourceType);
+			}
+
 			ResourceType cacheResourceType = TestHelper.getResourceType(
 					CACHE_RESOURCE_TYPE_NAME, CACHE_PLUGIN_NAME);
-			Set<MeasurementDefinition> metricDefinitions = cacheResourceType
-					.getMetricDefinitions();
-
-			Set<Resource> resources = TestHelper
-					.getResources(cacheResourceType);
-
-			for (Resource resource : resources) {
-				log.info("Validating metrics for " + resource + "...");
-
-				MeasurementFacet measurementFacet = ComponentUtil.getComponent(
-						resource.getId(), MeasurementFacet.class,
-						FacetLockType.READ, MEASUREMENT_FACET_METHOD_TIMEOUT,
-						true, true);
-				EmsBean relatedBean = connection.getBean(resource
-						.getResourceKey());
-
-				for (MeasurementDefinition metricDefinition : metricDefinitions) {
-
-					String compValue = TestHelper.getMetricValue(
-							metricDefinition, measurementFacet);
-					EmsAttribute atr = relatedBean
-							.getAttribute(metricDefinition.getName());
-					log.info("            Validating Metric "
-							+ metricDefinition.getName());
-					String beanValue = String.valueOf(atr.getValue());
-
-					assert (TestHelper.compareValues(compValue, atr.getType(),
-							atr.getValue()));
-				}
-			}
+			testResouceTypeMetrics(cacheResourceType);
 
 			return;
 		} catch (Exception e) {
@@ -183,17 +158,43 @@ public class CacheComponentTest {
 		}
 	}
 
-	protected boolean isNullableMetric(String name) {
-		for (int i = 0; i < nullableMetrics.length; i++) {
-			if (name.equals(nullableMetrics[i]))
-				return true;
+	private void testResouceTypeMetrics(ResourceType cacheResourceType)
+			throws Exception {
+		Set<MeasurementDefinition> metricDefinitions = cacheResourceType
+				.getMetricDefinitions();
+
+		Set<Resource> resources = TestHelper.getResources(cacheResourceType);
+
+		for (Resource resource : resources) {
+			log.info("Validating metrics for " + resource + "...");
+
+			MeasurementFacet measurementFacet = ComponentUtil.getComponent(
+					resource.getId(), MeasurementFacet.class,
+					FacetLockType.READ, MEASUREMENT_FACET_METHOD_TIMEOUT, true,
+					true);
+			EmsBean relatedBean = connection.getBean(resource.getResourceKey());
+
+			for (MeasurementDefinition metricDefinition : metricDefinitions) {
+
+				String compValue = TestHelper.getMetricValue(metricDefinition,
+						measurementFacet);
+				EmsAttribute atr = relatedBean.getAttribute(metricDefinition
+						.getName());
+				log.info("            Validating Metric "
+						+ metricDefinition.getName());
+				String beanValue = String.valueOf(atr.getValue());
+
+				assert (TestHelper.compareValues(compValue, atr.getType(), atr
+						.getValue()));
+			}
 		}
-		return false;
 	}
 
 	@Test
 	public void testOperations() {
 		try {
+			PluginContainer.getInstance().getInventoryManager()
+					.executeServiceScanImmediately();
 			operationTest = new OperationTest(connection);
 			operationTest.testOperations();
 		} catch (Exception e) {
@@ -232,8 +233,8 @@ public class CacheComponentTest {
 	public void stop() {
 		try {
 			log.info("Stopping PC...");
-			remoteClientTest.undeployCacheExample();
 			remoteClientTest.runClientClean();
+			remoteClientTest.undeployCacheExample();
 			PluginContainer.getInstance().shutdown();
 			log.info("PC stopped.");
 		} catch (Exception e) {

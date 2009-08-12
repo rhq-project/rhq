@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -73,6 +74,9 @@ public class TestHelper {
 		}
 		if (type.equals("double")) {
 			Double val = Double.valueOf(value);
+			Double orig = (Double) obj;
+			orig = round(orig, 1);
+
 			return obj.equals(val);
 		}
 		if (type.equals("long")) {
@@ -85,6 +89,12 @@ public class TestHelper {
 			val2 = val2.substring(0, value.length());
 		}
 		return value.equals(val2);
+	}
+
+	private static double round(double d, int decimalPlace) {
+		BigDecimal bd = new BigDecimal(Double.toString(d));
+		bd = bd.setScale(decimalPlace, BigDecimal.ROUND_HALF_UP);
+		return bd.doubleValue();
 	}
 
 	public static String getMetricValue(Resource resource, String metricName)

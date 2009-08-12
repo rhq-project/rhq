@@ -124,8 +124,8 @@ public class TomcatConfig {
             }
 
             if (attributes.getValue("protocol") != null) {
-                // JbossAS 4.2 now has Tomcat6 and it explicitly defines the protocol now
-                if (!attributes.getValue("protocol").startsWith("HTTP")) {
+                // JbossAS 4.2 now has Tomcat6 and it explicitly defines the protocol
+                if (!attributes.getValue("protocol").toLowerCase().contains("http")) {
                     //e.g. probably AJP/1.3
                     return;
                 }

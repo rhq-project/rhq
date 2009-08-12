@@ -438,8 +438,15 @@ public class MBeanResourceComponent<T extends JMXComponent> implements Measureme
         return configuration;
     }
 
+    /**
+     * Equivalent to updateResourceConfiguration(report, false);
+     */
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
-        ConfigurationDefinition configurationDefinition = this.resourceContext.getResourceType()
+        updateResourceConfiguration(report, false);
+    }
+
+    public void updateResourceConfiguration(ConfigurationUpdateReport report, boolean ignoreReadOnly) {
+        ConfigurationDefinition configurationDefinition = this.getResourceContext().getResourceType()
             .getResourceConfigurationDefinition();
 
         // assume we succeed - we'll set to failure if we can't set all properties
@@ -450,36 +457,40 @@ public class MBeanResourceComponent<T extends JMXComponent> implements Measureme
             if (property != null) {
                 EmsAttribute attribute = this.bean.getAttribute(key);
                 try {
-                    switch (configurationDefinition.getPropertyDefinitionSimple(property.getName()).getType()) {
-                    case INTEGER: {
-                        attribute.setValue(property.getIntegerValue());
-                        break;
-                    }
+                    PropertyDefinitionSimple def = configurationDefinition.getPropertyDefinitionSimple(property
+                        .getName());
+                    if (!(ignoreReadOnly && def.isReadOnly())) {
+                        switch (def.getType()) {
+                        case INTEGER: {
+                            attribute.setValue(property.getIntegerValue());
+                            break;
+                        }
 
-                    case LONG: {
-                        attribute.setValue(property.getLongValue());
-                        break;
-                    }
+                        case LONG: {
+                            attribute.setValue(property.getLongValue());
+                            break;
+                        }
 
-                    case BOOLEAN: {
-                        attribute.setValue(property.getBooleanValue());
-                        break;
-                    }
+                        case BOOLEAN: {
+                            attribute.setValue(property.getBooleanValue());
+                            break;
+                        }
 
-                    case FLOAT: {
-                        attribute.setValue(property.getFloatValue());
-                        break;
-                    }
+                        case FLOAT: {
+                            attribute.setValue(property.getFloatValue());
+                            break;
+                        }
 
-                    case DOUBLE: {
-                        attribute.setValue(property.getDoubleValue());
-                        break;
-                    }
+                        case DOUBLE: {
+                            attribute.setValue(property.getDoubleValue());
+                            break;
+                        }
 
-                    default: {
-                        attribute.setValue(property.getStringValue());
-                        break;
-                    }
+                        default: {
+                            attribute.setValue(property.getStringValue());
+                            break;
+                        }
+                        }
                     }
                 } catch (Exception e) {
                     property.setErrorMessageFromThrowable(e);

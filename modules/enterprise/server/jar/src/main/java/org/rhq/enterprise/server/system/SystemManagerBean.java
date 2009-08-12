@@ -198,6 +198,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         Properties properties = new Properties();
 
         for (SystemConfiguration config : configs) {
+            transformSystemConfigurationProperty(config);
             if (config.getPropertyValue() == null) {
                 // for some reason, the configuration is not found in the DB, so fallback to the persisted default.
                 // if there isn't even a persisted default, just use an empty string.
@@ -241,6 +242,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
             SystemConfiguration existingConfig = existingConfigMap.get(name);
             if (existingConfig == null) {
                 existingConfig = new SystemConfiguration(name, value);
+                transformSystemConfigurationProperty(existingConfig);
                 entityManager.persist(existingConfig);
             } else {
                 if ((existingConfig.getPropertyValue() == null) || !existingConfig.getPropertyValue().equals(value)) {
@@ -249,12 +251,32 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
                             + "] is read-only - you cannot change its current value!");
                     }
                     existingConfig.setPropertyValue(value);
+                    transformSystemConfigurationProperty(existingConfig);
                     entityManager.merge(existingConfig);
                 }
             }
         }
 
         systemConfigurationCache = newCacheProperties;
+    }
+
+    /**
+     * Call this to transform a system property to a more appropriate value.
+     * @param prop
+     */
+    private void transformSystemConfigurationProperty(SystemConfiguration prop) {
+        // to support Oracle (whose booleans may be 1 or 0) transform the boolean settings properly
+        String propName = prop.getPropertyKey();
+        if (RHQConstants.EnableAgentAutoUpdate.equals(propName) || RHQConstants.EnableDebugMode.equals(propName)
+            || RHQConstants.DataReindex.equals(propName)) {
+            String booleanValue = prop.getPropertyValue();
+            if ("0".equals(booleanValue)) {
+                prop.setPropertyValue(Boolean.FALSE.toString());
+            } else if ("1".equals(booleanValue)) {
+                prop.setPropertyValue(Boolean.TRUE.toString());
+            }
+        }
+        return;
     }
 
     /**

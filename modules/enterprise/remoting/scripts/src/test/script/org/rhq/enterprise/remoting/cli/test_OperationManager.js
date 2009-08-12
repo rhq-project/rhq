@@ -118,6 +118,20 @@ function testFindResourceOperationHistoriesUnfiltered() {
     Assert.assertNotNull(histories, 'Expected non-null results for criteria search of resource operation histories');
 }
 
+function testFindResourceOperationHistoriesWithFiltering() {
+    var criteria = ResourceOperationHistoryCriteria();
+    criteria.addFilterId(1);
+    criteria.addFilterJobId(JobId(['job_id_1', 'job_id_2']));
+    criteria.addFilterErrorMessage('failed');
+    criteria.addFilterOperationDefinitionId(1);
+    criteria.addFilterStatus(OperationRequestStatus.SUCCESS);
+    criteria.addFilterOperationName('start');
+
+    var histories = OperationManager.findResourceOperationHistoriesByCriteria(criteria);
+
+    // TODO add verification
+}
+
 function testFindGroupOperationHistoriesUnfiltered() {
     var histories = OperationManager.findGroupOperationHistoriesByCriteria(GroupOperationHistoryCriteria());
 

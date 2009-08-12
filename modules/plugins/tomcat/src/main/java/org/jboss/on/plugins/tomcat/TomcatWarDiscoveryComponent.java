@@ -108,7 +108,7 @@ public class TomcatWarDiscoveryComponent extends MBeanResourceDiscoveryComponent
                 pluginConfiguration.put(new PropertySimple(TomcatWarComponent.PROPERTY_CONTEXT_ROOT, contextRoot));
                 pluginConfiguration.put(new PropertySimple(TomcatWarComponent.PROPERTY_FILENAME, filename));
                 pluginConfiguration.put(new PropertySimple(TomcatWarComponent.PROPERTY_RESPONSE_TIME_LOG_FILE,
-                    getResponseTimeLogFile(parentComponent.getInstallationPath(), host, contextRoot)));
+                    getResponseTimeLogFile(parentComponent.getCatalinaBase(), host, contextRoot)));
                 resource.setResourceName(resource.getResourceName().replace("{contextRoot}",
                     (("/".equals(contextRoot)) ? docBase : contextRoot)));
 
@@ -202,7 +202,7 @@ public class TomcatWarDiscoveryComponent extends MBeanResourceDiscoveryComponent
                     .put(new PropertySimple(TomcatWarComponent.PROPERTY_FILENAME, file.getAbsolutePath()));
             }
             pluginConfiguration.put(new PropertySimple(TomcatWarComponent.PROPERTY_RESPONSE_TIME_LOG_FILE,
-                getResponseTimeLogFile(vhost.getInstallationPath(), vhost.getName(), contextRoot)));
+                getResponseTimeLogFile(vhost.getCatalinaBase(), vhost.getName(), contextRoot)));
 
             resources.add(resource);
         }

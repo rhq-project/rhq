@@ -55,6 +55,7 @@ import org.rhq.plugins.jmx.JMXDiscoveryComponent;
  *
  * @author Jay Shaughnessy
  */
+@SuppressWarnings("unchecked")
 public class TomcatServerComponent implements JMXComponent, MeasurementFacet, OperationFacet {
 
     public enum SupportedOperations {
@@ -92,7 +93,9 @@ public class TomcatServerComponent implements JMXComponent, MeasurementFacet, Op
      * Plugin configuration properties.
      */
     public static final String PLUGIN_CONFIG_CONTROL_METHOD = "controlMethod";
-    public static final String PLUGIN_CONFIG_INSTALLATION_PATH = "installationPath";
+    // has legacy property name
+    public static final String PLUGIN_CONFIG_CATALINA_HOME_PATH = "installationPath";
+    public static final String PLUGIN_CONFIG_CATALINA_BASE_PATH = "catalinaBase";
     public static final String PLUGIN_CONFIG_SCRIPT_PREFIX = "scriptPrefix";
     public static final String PLUGIN_CONFIG_SHUTDOWN_SCRIPT = "shutdownScript";
     public static final String PLUGIN_CONFIG_START_SCRIPT = "startScript";
@@ -182,11 +185,11 @@ public class TomcatServerComponent implements JMXComponent, MeasurementFacet, Op
                 // the jars then use them if they are available. Note, for a remote TC Server that would mean you'd have
                 // to have a version compatible local install and set the install path to the local path, even though
                 // the server url was remote. 
-                String installationPath = pluginConfig.getSimpleValue(PLUGIN_CONFIG_INSTALLATION_PATH, null);
-                boolean hasLocalJars = new File(installationPath).isDirectory();
+                String catalinaHome = pluginConfig.getSimpleValue(PLUGIN_CONFIG_CATALINA_HOME_PATH, null);
+                boolean hasLocalJars = new File(catalinaHome).isDirectory();
 
                 if (hasLocalJars) {
-                    connectionSettings.setLibraryURI(installationPath);
+                    connectionSettings.setLibraryURI(catalinaHome);
                     connectionFactory.discoverServerClasses(connectionSettings);
 
                     // Tell EMS to make copies of jar files so that the ems classloader doesn't lock
@@ -207,7 +210,7 @@ public class TomcatServerComponent implements JMXComponent, MeasurementFacet, Op
                         + "]");
                 } else {
                     log.info("Loading connection [" + connectionSettings.getServerUrl()
-                        + "] ignoring remote install path [" + installationPath + "]");
+                        + "] ignoring remote install path [" + catalinaHome + "]");
                 }
 
                 ConnectionProvider connectionProvider = connectionFactory.getConnectionProvider(connectionSettings);
@@ -218,7 +221,7 @@ public class TomcatServerComponent implements JMXComponent, MeasurementFacet, Op
                 this.consecutiveConnectionErrors = 0;
 
                 if (log.isDebugEnabled())
-                    log.debug("Successfully made connection to the AS instance for resource ["
+                    log.debug("Successfully made connection to the Tomcat Server for resource ["
                         + this.resourceContext.getResourceKey() + "]");
             } catch (Exception e) {
 
@@ -347,7 +350,6 @@ public class TomcatServerComponent implements JMXComponent, MeasurementFacet, Op
         }
     }
 
-    @SuppressWarnings("unchecked")
     ResourceContext getResourceContext() {
         return this.resourceContext;
     }
@@ -359,9 +361,16 @@ public class TomcatServerComponent implements JMXComponent, MeasurementFacet, Op
         return scriptFile;
     }
 
-    public File getInstallationPath() {
+    public File getCatalinaHome() {
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
-        return new File(pluginConfig.getSimpleValue(TomcatServerComponent.PLUGIN_CONFIG_INSTALLATION_PATH, ""));
+        return new File(pluginConfig.getSimpleValue(TomcatServerComponent.PLUGIN_CONFIG_CATALINA_HOME_PATH, ""));
+    }
+
+    public File getCatalinaBase() {
+        Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
+        String base = pluginConfig.getSimpleValue(TomcatServerComponent.PLUGIN_CONFIG_CATALINA_BASE_PATH, null);
+
+        return (null != base) ? new File(base) : getCatalinaHome();
     }
 
     public File getShutdownScriptPath() {
@@ -371,8 +380,7 @@ public class TomcatServerComponent implements JMXComponent, MeasurementFacet, Op
         return scriptFile;
     }
 
-    private File resolvePathRelativeToHomeDir(@NotNull
-    String path) {
+    private File resolvePathRelativeToHomeDir(@NotNull String path) {
         return resolvePathRelativeToHomeDir(this.resourceContext.getPluginConfiguration(), path);
     }
 
@@ -380,7 +388,7 @@ public class TomcatServerComponent implements JMXComponent, MeasurementFacet, Op
         File configDir = new File(path);
         if (!configDir.isAbsolute()) {
             String jbossHomeDir = getRequiredPropertyValue(pluginConfig,
-                TomcatServerComponent.PLUGIN_CONFIG_INSTALLATION_PATH);
+                TomcatServerComponent.PLUGIN_CONFIG_CATALINA_HOME_PATH);
             configDir = new File(jbossHomeDir, path);
         }
 

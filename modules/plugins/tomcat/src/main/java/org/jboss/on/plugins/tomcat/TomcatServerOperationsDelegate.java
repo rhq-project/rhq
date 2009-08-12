@@ -30,11 +30,13 @@ import java.util.StringTokenizer;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jboss.on.plugins.tomcat.TomcatServerComponent.ControlMethod;
-import org.jboss.on.plugins.tomcat.TomcatServerComponent.SupportedOperations;
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
 import org.mc4j.ems.connection.bean.operation.EmsOperation;
+
+import org.jboss.on.plugins.tomcat.TomcatServerComponent.ControlMethod;
+import org.jboss.on.plugins.tomcat.TomcatServerComponent.SupportedOperations;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.operation.OperationResult;
@@ -222,9 +224,9 @@ public class TomcatServerOperationsDelegate {
 
     private ProcessExecution getRpmStart(Configuration pluginConfiguration) {
         ProcessExecution processExecution;
-        String installationPath = this.serverComponent.getInstallationPath().getPath();
-        String rpm = TomcatDiscoveryComponent.isEWSTomcat5(installationPath) ? TomcatDiscoveryComponent.EWS_TOMCAT_5
-            : TomcatDiscoveryComponent.EWS_TOMCAT_6;
+        String catalinaHome = this.serverComponent.getCatalinaHome().getPath();
+        String rpm = TomcatDiscoveryComponent.isEWSTomcat6(catalinaHome) ? TomcatDiscoveryComponent.EWS_TOMCAT_6
+            : TomcatDiscoveryComponent.EWS_TOMCAT_5;
 
         processExecution = new ProcessExecution("service");
         // disable the executable existence check because it is a command on the supplied PATH
@@ -298,9 +300,9 @@ public class TomcatServerOperationsDelegate {
 
     private ProcessExecution getRpmShutdown(Configuration pluginConfiguration) {
         ProcessExecution processExecution;
-        String installationPath = this.serverComponent.getInstallationPath().getPath();
-        String rpm = TomcatDiscoveryComponent.isEWSTomcat5(installationPath) ? TomcatDiscoveryComponent.EWS_TOMCAT_5
-            : TomcatDiscoveryComponent.EWS_TOMCAT_6;
+        String catalinaHome = this.serverComponent.getCatalinaHome().getPath();
+        String rpm = TomcatDiscoveryComponent.isEWSTomcat6(catalinaHome) ? TomcatDiscoveryComponent.EWS_TOMCAT_6
+            : TomcatDiscoveryComponent.EWS_TOMCAT_5;
 
         processExecution = new ProcessExecution("service");
         // disable the executable existence check because it is a command on the supplied PATH
@@ -318,7 +320,8 @@ public class TomcatServerOperationsDelegate {
         return processExecution;
     }
 
-    static public void setProcessExecutionEnvironment(ProcessExecution processExecution, String installationPath) {
+    static public void setProcessExecutionEnvironment(ProcessExecution processExecution, String catalinaHome,
+        String catalinaBase) {
         String javaHomeDir = System.getProperty("java.home");
         if (null == javaHomeDir) {
             throw new IllegalStateException(
@@ -337,9 +340,9 @@ public class TomcatServerOperationsDelegate {
         }
 
         processExecutionEnvironmentVariables.put("JAVA_HOME", new File(javaHomeDir).getPath());
-        processExecutionEnvironmentVariables.put("CATALINA_HOME", installationPath);
-        processExecutionEnvironmentVariables.put("CATALINA_BASE", installationPath);
-        processExecutionEnvironmentVariables.put("CATALINA_TMPDIR", installationPath + File.separator + "temp");
+        processExecutionEnvironmentVariables.put("CATALINA_HOME", catalinaHome);
+        processExecutionEnvironmentVariables.put("CATALINA_BASE", catalinaBase);
+        processExecutionEnvironmentVariables.put("CATALINA_TMPDIR", catalinaBase + File.separator + "temp");
 
     }
 
@@ -348,9 +351,8 @@ public class TomcatServerOperationsDelegate {
         processExecution.setWorkingDirectory(scriptFile.getParent());
 
         // Set necessary environment variables
-        String installationPath = this.serverComponent.getPluginConfiguration().getSimple(
-            TomcatServerComponent.PLUGIN_CONFIG_INSTALLATION_PATH).getStringValue();
-        setProcessExecutionEnvironment(processExecution, installationPath);
+        setProcessExecutionEnvironment(processExecution, this.serverComponent.getCatalinaHome().getPath(),
+            this.serverComponent.getCatalinaBase().getPath());
 
         initProcessExecution(processExecution);
     }

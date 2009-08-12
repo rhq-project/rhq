@@ -25,10 +25,16 @@
             displayName="Connection Info">
             <c:simple-property
                name="installationPath"
-               displayName="Installation Home"
+               displayName="Catalina Home"
                type="directory"
                readOnly="true"
                description="The home directory path of the Tomcat installation." />
+            <c:simple-property
+               name="catalinaBase"
+               displayName="Catalina Base"
+               type="directory"
+               readOnly="true"
+               description="The base directory path of the Tomcat instance. Defaults to Catalina Home." />
             <c:simple-property
                name="connectorAddress"
                displayName="Manager URL"
@@ -474,7 +480,7 @@
                      readOnly="true"
                      required="true"
                      description="The docBase set for this application" />
-                  <!-- Although it claims to be writable, update failed in my V5 test, so read only for now. -->
+                  <!-- Although it claims to be writable, update failed in my V5 and V6 test, so read only for now. -->
                   <c:simple-property
                      name="eventProvider"
                      type="boolean"
@@ -492,13 +498,13 @@
                      name="saveConfig"
                      type="boolean"
                      description="Write the configuration as needed on startup?" />
-                  <!-- Although it claims to be writable, update failed in my V5 test, so read only for now. -->
+                  <!-- Although it claims to be writable, update failed in my V5 and V6 test, so read only for now. -->
                   <c:simple-property
                      name="stateManageable"
                      type="boolean"
                      description="State management support for this managed object?"
                      readOnly="true" />
-                  <!-- Although it claims to be writable, update failed in my V5 test, so read only for now. -->
+                  <!-- Although it claims to be writable, update failed in my V5 and V6 test, so read only for now. -->
                   <c:simple-property
                      name="statisticsProvider"
                      type="boolean"

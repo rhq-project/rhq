@@ -35,11 +35,13 @@ import java.util.StringTokenizer;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import org.mc4j.ems.connection.EmsConnection;
+import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
+
 import org.jboss.on.plugins.tomcat.helper.CreateResourceHelper;
 import org.jboss.on.plugins.tomcat.helper.FileContentDelegate;
 import org.jboss.on.plugins.tomcat.helper.TomcatApplicationDeployer;
-import org.mc4j.ems.connection.EmsConnection;
-import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -192,8 +194,8 @@ public class TomcatVHostComponent extends MBeanResourceComponent<TomcatServerCom
         }
     }
 
-    public File getInstallationPath() {
-        return getResourceContext().getParentResourceComponent().getInstallationPath();
+    public File getCatalinaBase() {
+        return getResourceContext().getParentResourceComponent().getCatalinaBase();
     }
 
     public String getName() {
@@ -206,7 +208,7 @@ public class TomcatVHostComponent extends MBeanResourceComponent<TomcatServerCom
             appBase = "webapps";
         }
 
-        return new File(getInstallationPath(), appBase);
+        return new File(getCatalinaBase(), appBase);
     }
 
     private boolean isUnpackWars() {

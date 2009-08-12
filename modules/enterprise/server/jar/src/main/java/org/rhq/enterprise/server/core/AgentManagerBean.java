@@ -204,7 +204,7 @@ public class AgentManagerBean implements AgentManagerLocal {
     public void checkForSuspectAgents() {
         log.debug("Checking to see if there are agents that we suspect are down...");
 
-        long maximumQuietTimeAllowed = 120000L;
+        long maximumQuietTimeAllowed = 900000L;
         try {
             String prop = systemManager.getSystemConfiguration().getProperty(RHQConstants.AgentMaxQuietTimeAllowed);
             if (prop != null) {

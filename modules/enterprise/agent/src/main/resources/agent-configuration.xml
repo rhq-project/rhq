@@ -59,7 +59,7 @@ commands named "config", "setconfig" and "setup" and the command line options
                file conforms to.  This is the schema for the rhq.agent
                preferences.
                -->
-               <entry key="rhq.agent.configuration-schema-version" value="3" />
+               <entry key="rhq.agent.configuration-schema-version" value="4" />
 
                <!--
                _______________________________________________________________
@@ -606,7 +606,7 @@ commands named "config", "setconfig" and "setup" and the command line options
                seconds.
                -->
                <!--
-               <entry key="rhq.agent.plugins.availability-scan.period-secs" value="60"/>
+               <entry key="rhq.agent.plugins.availability-scan.period-secs" value="300"/>
                -->
 
                <!--

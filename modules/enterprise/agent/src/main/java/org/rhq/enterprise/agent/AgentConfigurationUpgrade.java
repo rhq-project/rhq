@@ -56,6 +56,7 @@ public class AgentConfigurationUpgrade extends PreferencesUpgrade {
         List<PreferencesUpgradeStep> list = new ArrayList<PreferencesUpgradeStep>();
         list.add(new Step1to2()); // goes from v1 to v2
         list.add(new Step2to3()); // goes from v2 to v3
+        list.add(new Step3to4()); // goes from v3 to v4
         return list;
     }
 
@@ -88,6 +89,22 @@ public class AgentConfigurationUpgrade extends PreferencesUpgrade {
             // add the agent update enable flag
             preferences.putBoolean(AgentConfigurationConstants.AGENT_UPDATE_ENABLED,
                 AgentConfigurationConstants.DEFAULT_AGENT_UPDATE_ENABLED);
+        }
+    }
+
+    static class Step3to4 extends PreferencesUpgradeStep {
+        public int getSupportedConfigurationSchemaVersion() {
+            return 4;
+        }
+
+        public void upgrade(Preferences preferences) {
+            // availability reports have a new default, make sure it isn't lower than the new default
+            long val;
+            val = preferences.getLong(AgentConfigurationConstants.PLUGINS_AVAILABILITY_SCAN_PERIOD, Long.MAX_VALUE);
+            if (val < AgentConfigurationConstants.DEFAULT_PLUGINS_AVAILABILITY_SCAN_PERIOD) {
+                preferences.putLong(AgentConfigurationConstants.PLUGINS_AVAILABILITY_SCAN_PERIOD,
+                    AgentConfigurationConstants.DEFAULT_PLUGINS_AVAILABILITY_SCAN_PERIOD);
+            }
         }
     }
 }

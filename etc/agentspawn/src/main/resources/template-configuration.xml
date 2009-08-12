@@ -15,7 +15,7 @@ RHQ Agent Configuration - Default Template For Agent Spawn Utility
          <map />
          <node name="spawn"> <!-- TO BE OVERRIDDEN -->
             <map>
-               <entry key="rhq.agent.configuration-schema-version" value="3" />
+               <entry key="rhq.agent.configuration-schema-version" value="4" />
                <entry key="rhq.agent.configuration-setup-flag" value="true" />
                <entry key="rhq.agent.name" value="127.0.0.1"/> <!-- TO BE OVERRIDDEN -->
 
@@ -60,7 +60,7 @@ RHQ Agent Configuration - Default Template For Agent Spawn Utility
                <entry key="rhq.agent.plugins.service-discovery.initial-delay-secs" value="20"/>
                <entry key="rhq.agent.plugins.service-discovery.period-secs" value="86400"/>
                <entry key="rhq.agent.plugins.availability-scan.initial-delay-secs" value="5"/>
-               <entry key="rhq.agent.plugins.availability-scan.period-secs" value="60"/>
+               <entry key="rhq.agent.plugins.availability-scan.period-secs" value="300"/>
                <entry key="rhq.agent.plugins.measurement-collection.threadpool-size" value="2"/>
                <entry key="rhq.agent.plugins.measurement-collection.initial-delay-secs" value="30"/>
                <entry key="rhq.agent.plugins.content-discovery.threadpool-size" value="2"/>

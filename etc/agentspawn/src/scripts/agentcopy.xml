@@ -131,7 +131,7 @@
          <replacefilter token="@@@rhq.agent.plugins.service-discovery.initial-delay-secs@@@" value="20"/>
          <replacefilter token="@@@rhq.agent.plugins.service-discovery.period-secs@@@" value="86400"/>
          <replacefilter token="@@@rhq.agent.plugins.availability-scan.initial-delay-secs@@@" value="5"/>
-         <replacefilter token="@@@rhq.agent.plugins.availability-scan.period-secs@@@" value="60"/>
+         <replacefilter token="@@@rhq.agent.plugins.availability-scan.period-secs@@@" value="300"/>
          <replacefilter token="@@@rhq.agent.plugins.measurement-collection.threadpool-size@@@" value="5"/>
          <replacefilter token="@@@rhq.agent.plugins.measurement-collection.initial-delay-secs@@@" value="30"/>
          <replacefilter token="@@@rhq.agent.plugins.content-discovery.threadpool-size@@@" value="10"/>

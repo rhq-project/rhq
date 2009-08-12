@@ -1361,23 +1361,31 @@ DB Upgrade:
       <schema-addColumn table="RHQ_QRTZ_FIRED_TRIGGERS" column="PRIORITY" columnType="INTEGER" />
    </schemaSpec>
 
-    <schemaSpec version="2.52">
-        <schema-directSQL>
-            <statement desc="Deleting unique name constraint on RHQ_RESOURCE_GROUP">
-                DROP INDEX RHQ_RES_GROUP_NAME
-            </statement>
-        </schema-directSQL>
-        <schema-directSQL>
-            <statement desc="Deleting unique name constraint on RHQ_RESOURCE_GROUP">
-                CREATE INDEX RHQ_RES_GROUP_NAME ON RHQ_RESOURCE_GROUP (name)
-            </statement>
-        </schema-directSQL>
-    </schemaSpec>
+   <schemaSpec version="2.52">
+      <schema-directSQL>
+         <statement desc="Deleting unique name constraint on RHQ_RESOURCE_GROUP">
+            DROP INDEX RHQ_RES_GROUP_NAME
+         </statement>
+      </schema-directSQL>
+      <schema-directSQL>
+         <statement desc="Deleting unique name constraint on RHQ_RESOURCE_GROUP">
+            CREATE INDEX RHQ_RES_GROUP_NAME ON RHQ_RESOURCE_GROUP (name)
+         </statement>
+      </schema-directSQL>
+   </schemaSpec>
 
-    <schemaSpec version="2.53">
-        <schema-addColumn table="RHQ_ALERT_DEFINITION" column="RESOURCE_GROUP_ID" columnType="INTEGER" />
-        <schema-addColumn table="RHQ_ALERT_DEFINITION" column="GROUP_ALERT_DEF_ID" columnType="INTEGER" />
-    </schemaSpec>
+   <schemaSpec version="2.53">
+      <schema-addColumn table="RHQ_ALERT_DEFINITION" column="RESOURCE_GROUP_ID" columnType="INTEGER" />
+      <schema-addColumn table="RHQ_ALERT_DEFINITION" column="GROUP_ALERT_DEF_ID" columnType="INTEGER" />
+   </schemaSpec>
+
+   <schemaSpec version="2.54">
+      <schema-directSQL>
+         <statement desc="Updating Agent Max Quiet Time Allowed system configuration setting">
+            UPDATE rhq_system_config SET property_value = '900000' WHERE property_key = 'AGENT_MAX_QUIET_TIME_ALLOWED'
+         </statement>
+      </schema-directSQL>
+   </schemaSpec>
 
 </dbupgrade>
 

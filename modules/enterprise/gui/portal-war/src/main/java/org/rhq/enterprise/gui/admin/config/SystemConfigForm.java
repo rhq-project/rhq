@@ -182,9 +182,23 @@ public class SystemConfigForm extends BaseValidatorForm {
         agentMaxQuietTimeAllowedVal = calcTimeUnit(agentMaxQuietTimeAllowedLong.longValue());
 
         String enableAgentAutoUpdateStr = prop.getProperty(RHQConstants.EnableAgentAutoUpdate);
+        if (enableAgentAutoUpdateStr == null) {
+            enableAgentAutoUpdateStr = Boolean.FALSE.toString();
+        } else if (enableAgentAutoUpdateStr.equals("0")) {
+            enableAgentAutoUpdateStr = Boolean.FALSE.toString();
+        } else if (enableAgentAutoUpdateStr.equals("1")) {
+            enableAgentAutoUpdateStr = Boolean.TRUE.toString();
+        }
         enableAgentAutoUpdate = Boolean.valueOf(enableAgentAutoUpdateStr).booleanValue();
 
         String enableDebugModeStr = prop.getProperty(RHQConstants.EnableDebugMode);
+        if (enableDebugModeStr == null) {
+            enableDebugModeStr = Boolean.FALSE.toString();
+        } else if (enableDebugModeStr.equals("0")) {
+            enableDebugModeStr = Boolean.FALSE.toString();
+        } else if (enableDebugModeStr.equals("1")) {
+            enableDebugModeStr = Boolean.TRUE.toString();
+        }
         enableDebugMode = Boolean.valueOf(enableDebugModeStr).booleanValue();
 
         String maintIntervalValStr = prop.getProperty(RHQConstants.DataMaintenance);
@@ -193,6 +207,13 @@ public class SystemConfigForm extends BaseValidatorForm {
         maintIntervalVal = calcTimeUnit(maintIntervalLong.longValue());
 
         String nightlyReindexStr = prop.getProperty(RHQConstants.DataReindex);
+        if (nightlyReindexStr == null) {
+            nightlyReindexStr = Boolean.FALSE.toString();
+        } else if (nightlyReindexStr.equals("0")) {
+            nightlyReindexStr = Boolean.FALSE.toString();
+        } else if (nightlyReindexStr.equals("1")) {
+            nightlyReindexStr = Boolean.TRUE.toString();
+        }
         reindex = Boolean.valueOf(nightlyReindexStr).booleanValue();
 
         String rtPurgeValStr = prop.getProperty(RHQConstants.RtDataPurge);

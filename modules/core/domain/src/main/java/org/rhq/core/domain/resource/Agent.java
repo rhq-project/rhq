@@ -56,6 +56,7 @@ import org.rhq.core.domain.cloud.Server;
     @NamedQuery(name = Agent.QUERY_FIND_BY_AGENT_TOKEN, query = "SELECT a FROM Agent a WHERE a.agentToken = :agentToken"),
     @NamedQuery(name = Agent.QUERY_FIND_BY_RESOURCE_ID, query = "SELECT r.agent FROM Resource r WHERE r.id = :resourceId"),
     @NamedQuery(name = Agent.QUERY_FIND_AGENT_ID_BY_RESOURCE_ID, query = "SELECT r.agent.id FROM Resource r WHERE r.id = :resourceId"),
+    @NamedQuery(name = Agent.QUERY_FIND_AGENT_ID_BY_NAME, query = "SELECT a.id FROM Agent a WHERE a.name = :name"),
     @NamedQuery(name = Agent.QUERY_FIND_AGENT_ID_BY_SCHEDULE_ID, query = "SELECT r.agent.id FROM MeasurementSchedule sched JOIN sched.resource r WHERE sched.id = :scheduleId"),
     @NamedQuery(name = Agent.QUERY_FIND_ALL, query = "SELECT a FROM Agent a"),
     @NamedQuery(name = Agent.QUERY_FIND_BY_SERVER, query = "SELECT a FROM Agent a WHERE (a.server.id = :serverId OR :serverId IS NULL)"),
@@ -126,6 +127,7 @@ public class Agent implements Serializable {
     public static final String QUERY_FIND_BY_AGENT_TOKEN = "Agent.findByAgentToken";
     public static final String QUERY_FIND_BY_RESOURCE_ID = "Agent.findByResourceId";
     public static final String QUERY_FIND_AGENT_ID_BY_RESOURCE_ID = "Agent.findAgentIdByResourceId";
+    public static final String QUERY_FIND_AGENT_ID_BY_NAME = "Agent.findAgentIdByName";
     public static final String QUERY_FIND_AGENT_ID_BY_SCHEDULE_ID = "Agent.findAgentIdByScheduleId";
     public static final String QUERY_FIND_ALL = "Agent.findAll";
     public static final String QUERY_FIND_BY_SERVER = "Agent.findByServer";

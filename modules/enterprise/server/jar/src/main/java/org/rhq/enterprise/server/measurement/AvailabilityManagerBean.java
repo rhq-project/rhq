@@ -45,7 +45,6 @@ import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.ResourceAvailability;
-import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ResourceIdWithAvailabilityComposite;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
@@ -391,11 +390,11 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
             new Availability[report.getResourceAvailability().size()]));
 
         boolean askForFullReport = false;
-        Agent agentToUpdate = agentManager.getAgentByName(agentName);
+        Integer agentToUpdate = agentManager.getAgentIdByName(agentName);
 
         if (agentToUpdate != null) {
             // do this now, before we might clear() the entity manager
-            availabilityManager.updateLastAvailabilityReport(agentToUpdate.getId());
+            availabilityManager.updateLastAvailabilityReport(agentToUpdate.intValue());
             //agentToUpdate.setLastAvailabilityReport(System.currentTimeMillis());
         }
 
@@ -405,7 +404,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         // to skip this report so as not to waste our time and immediately request and process
         // a full report because, obviously, the agent is no longer down but the server thinks
         // it still is down - we need to know the availabilities for all the resources on that agent
-        if (report.isChangesOnlyReport() && isAgentBackfilled(agentToUpdate.getId())) {
+        if (report.isChangesOnlyReport() && isAgentBackfilled(agentToUpdate.intValue())) {
             askForFullReport = true;
         } else {
             Query q = entityManager.createNamedQuery(Availability.FIND_CURRENT_BY_RESOURCE);
@@ -497,8 +496,8 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         if (agentToUpdate != null) {
             // don't bother asking for a full report if the one we are currently processing is already full
             if (askForFullReport && report.isChangesOnlyReport()) {
-                log.debug("The server is unsure that it has up-to-date availabilities for agent ["
-                    + agentToUpdate.getName() + "]; asking for a full report to be sent");
+                log.debug("The server is unsure that it has up-to-date availabilities for agent [" + agentName
+                    + "]; asking for a full report to be sent");
                 return false;
             }
         } else {

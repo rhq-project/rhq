@@ -168,6 +168,15 @@ public interface AgentManagerLocal {
     Integer getAgentIdByResourceId(int resourceId);
 
     /**
+     * Given an agent name, this will return the agent id.
+     *
+     * @param  agentName
+     *
+     * @return the agent ID or <code>null</code> if there is no agent with the given name
+     */
+    Integer getAgentIdByName(String agentName);
+
+    /**
      * Given a schedule ID, this will return the agent responsible for servicing that scheduleId.
      *
      * @param  scheduleId

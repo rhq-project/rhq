@@ -383,6 +383,22 @@ public class AgentManagerBean implements AgentManagerLocal {
     }
 
     @ExcludeDefaultInterceptors
+    public Integer getAgentIdByName(String agentName) {
+        Integer agentId;
+
+        try {
+            Query query = entityManager.createNamedQuery(Agent.QUERY_FIND_AGENT_ID_BY_NAME);
+            query.setParameter("name", agentName);
+            agentId = (Integer) query.getSingleResult();
+        } catch (NoResultException e) {
+            log.debug("Failed to lookup agent for name of [" + agentName + "] : " + e);
+            agentId = null;
+        }
+
+        return agentId;
+    }
+
+    @ExcludeDefaultInterceptors
     public Integer getAgentIdByScheduleId(int scheduleId) {
         Integer agentId;
 

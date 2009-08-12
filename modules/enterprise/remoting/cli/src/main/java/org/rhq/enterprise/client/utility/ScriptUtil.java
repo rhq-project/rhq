@@ -104,9 +104,15 @@ public class ScriptUtil {
         }
     }
 
-    public Configuration waitForScheduledOperationToComplete(ResourceOperationSchedule schedule)
+    public ResourceOperationHistory waitForScheduledOperationToComplete(ResourceOperationSchedule schedule)
         throws InterruptedException{
 
+        return waitForScheduledOperationToComplete(schedule, 1000L, 10);
+    }
+
+    public ResourceOperationHistory waitForScheduledOperationToComplete(ResourceOperationSchedule schedule,
+                                                                        long intervalDuration,
+                                                                        int maxIntervals) throws InterruptedException {
         ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
         criteria.addFilterJobId(schedule.getJobId());
         criteria.addFilterResourceIds(schedule.getResource().getId());
@@ -118,15 +124,18 @@ public class ScriptUtil {
 
         ResourceOperationHistory history = null;
 
-        while(history == null) {
-            Thread.sleep(100L);
+        int i = 0;
+
+        while(history == null && i < maxIntervals) {
+            Thread.sleep(intervalDuration);
             PageList<ResourceOperationHistory> histories = client.getRemoteClient().getOperationManagerRemote()
                     .findResourceOperationHistoriesByCriteria(client.getRemoteClient().getSubject(), criteria);
             if (histories.size() > 0 && histories.get(0).getStatus() != OperationRequestStatus.INPROGRESS) {
                 history = histories.get(0);
             }
+            ++i;
         }
 
-        return history.getResults();
+        return history;
     }
 }

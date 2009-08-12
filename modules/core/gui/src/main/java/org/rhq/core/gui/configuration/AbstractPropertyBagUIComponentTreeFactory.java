@@ -576,16 +576,15 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
 
         PropertyMap listMemberPropertyMap = (PropertyMap) listMemberProperty;
 
-        HtmlPanelGroup panel = FacesComponentUtility.addBlockPanel(parent, getConfigurationComponent(),
-            FacesComponentUtility.NO_STYLE_CLASS);
-        String listIndex = String.valueOf(index);
-        String panelId = PropertyIdGeneratorUtility.getIdentifier(listMemberProperty, index, PANEL_ID_SUFFIX);
-        panel.setId(panelId);
+        NullComponent wrapper = new NullComponent();
+        parent.getChildren().add(wrapper);
+        String wrapperId = PropertyIdGeneratorUtility.getIdentifier(listMemberProperty, index, PANEL_ID_SUFFIX);
+        wrapper.setId(wrapperId);
 
-        FacesComponentUtility.addVerbatimText(panel, "<tr>\n");
+        FacesComponentUtility.addVerbatimText(wrapper, "<tr>\n");
 
         // add the simple property data cells
-        addPropertyMapSummaryDataCells(panel, listMemberMapPropertyDefinition, listMemberPropertyMap);
+        addPropertyMapSummaryDataCells(wrapper, listMemberMapPropertyDefinition, listMemberPropertyMap);
 
         int numberOfButtons = 1;
         if (!this.config.isReadOnly()) {
@@ -593,9 +592,9 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
         }
 
         // add the Actions cell
-        FacesComponentUtility.addVerbatimText(panel, "<td class='" + PROPERTY_MAP_SUMMARY_BUTTONS_CELL_STYLE_CLASS
+        FacesComponentUtility.addVerbatimText(wrapper, "<td class='" + PROPERTY_MAP_SUMMARY_BUTTONS_CELL_STYLE_CLASS
             + "'>");
-        HtmlPanelGrid buttonsPanelGrid = FacesComponentUtility.addPanelGrid(panel, this.config, numberOfButtons,
+        HtmlPanelGrid buttonsPanelGrid = FacesComponentUtility.addPanelGrid(wrapper, this.config, numberOfButtons,
             BUTTONS_TABLE_STYLE_CLASS);
 
         // view/edit button
@@ -606,6 +605,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
         viewEditLink.setActionExpression(actionExpression);
         FacesComponentUtility.addParameter(viewEditLink, this.config, RequestParameterNameConstants.LIST_NAME_PARAM,
             listName);
+        String listIndex = String.valueOf(index);
         FacesComponentUtility.addParameter(viewEditLink, this.config, RequestParameterNameConstants.LIST_INDEX_PARAM,
             listIndex);
         int configId = this.config.getConfiguration().getId();
@@ -631,9 +631,9 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
             FacesComponentUtility.addButton(deleteLink, DELETE_MAP_BUTTON_LABEL, CssStyleClasses.BUTTON_SMALL);
         }
 
-        FacesComponentUtility.addVerbatimText(panel, "</td>\n");
+        FacesComponentUtility.addVerbatimText(wrapper, "</td>\n");
 
-        FacesComponentUtility.addVerbatimText(panel, "</tr>\n");
+        FacesComponentUtility.addVerbatimText(wrapper, "</tr>\n");
         addDebug(parent, false, ".addListMemberMapProperty()");
     }
 

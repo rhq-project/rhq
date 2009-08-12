@@ -37,6 +37,7 @@ function testFindOperationDefinitionsUnfiltered() {
 
 function testFindSingleOperationDefinitionsWithFiltering() {
     var criteria = OperationDefinitionCriteria();
+    criteria.strict = true;
     criteria.addFilterName('start');
     criteria.addFilterDisplayName('Start');
     criteria.addFilterDescription('Start this application server. The script used is specified in the Operations group of connection properties.');
@@ -66,6 +67,7 @@ function testFindOperationDefinitionsWithOptionalFiltering() {
 
 function testFindSingleOperationDefinitionWithFilteringAndFetchingAssociations() {
     var criteria = OperationDefinitionCriteria();
+    criteria.strict = true;
     criteria.addFilterPluginName('JBossAS');
     criteria.addFilterName('start');
     criteria.addFilterDisplayName('Start');
@@ -79,13 +81,11 @@ function testFindSingleOperationDefinitionWithFilteringAndFetchingAssociations()
             "filtering and fetching associations but got back, '" + getNames(opDefinitions) + "'");
 
     var opDefinition = opDefinitions.get(0);
-
-    Assert.assertNotNull(opDefinition.parametersConfigurationDefinition, 'operationDefinition.parametersConfigurationDefinition should have been loaded');
-    Assert.assertNotNull(opDefinition.resultsConfigurationDefinition, 'operationDefinition.resultsConfigurationDefinition should have been loaded');
 }
 
 function testFindMultipleOperationDefinitionsWithFilteringAndFetchingAssociations() {
     var criteria = OperationDefinitionCriteria();
+    criteria.strict = true;
     criteria.addFilterPluginName('JBossAS');
     criteria.addFilterResourceTypeName('JBossAS Server');
     criteria.fetchParametersConfigurationDefinition(true);
@@ -121,7 +121,7 @@ function testFindResourceOperationHistoriesUnfiltered() {
 function testFindResourceOperationHistoriesWithFiltering() {
     var criteria = ResourceOperationHistoryCriteria();
     criteria.addFilterId(1);
-    criteria.addFilterJobId(JobId(['job_id_1', 'job_id_2']));
+    criteria.addFilterJobId(JobId('x_=_y'));
     criteria.addFilterErrorMessage('failed');
     criteria.addFilterOperationDefinitionId(1);
     criteria.addFilterStatus(OperationRequestStatus.SUCCESS);

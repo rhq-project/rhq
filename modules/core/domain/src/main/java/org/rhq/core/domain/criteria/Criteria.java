@@ -54,6 +54,7 @@ public abstract class Criteria implements Serializable {
     private boolean filtersOptional;
     private boolean caseSensitive;
     private boolean strict;
+    private boolean inventoryManagerRequired;
 
     protected Map<String, String> filterOverrides;
     protected Map<String, String> sortOverrides;
@@ -190,6 +191,14 @@ public abstract class Criteria implements Serializable {
 
     public boolean isStrict() {
         return this.strict;
+    }
+
+    public boolean isInventoryManagerRequired() {
+        return inventoryManagerRequired;
+    }
+
+    public void setInventoryManagerRequired(boolean inventoryManagerRequired) {
+        this.inventoryManagerRequired = inventoryManagerRequired;
     }
 
     public PageControl getPageControl() {

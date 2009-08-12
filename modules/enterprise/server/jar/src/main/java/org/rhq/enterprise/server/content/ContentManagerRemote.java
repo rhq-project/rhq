@@ -132,8 +132,12 @@ public interface ContentManagerRemote {
         @WebParam(name = "criteria") InstalledPackageCriteria criteria);
 
     /**
+     * If a resourceId filter is not set via {@link PackageVersionCriteria.addFilterResourceId()} then
+     * this method requires InventoryManager permissions. When set the user must have permission to view
+     * the resource.
+     * 
      * @param subject
-     * @param criteria Caller must add a valid resourceId via {@link PackageVersionCriteria.addFilterResourceId}
+     * @param criteria
      * @return Installed PackageVersions for the resource
      * @throws IllegalArgumentException for invalid resourceId filter
      */
@@ -151,14 +155,11 @@ public interface ContentManagerRemote {
      */
     @WebMethod
     InstalledPackage getBackingPackageForResource( //
-            @WebParam(name = "subject") Subject subject, //
-            @WebParam(name = "resourceId") int resourceId);
-
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "resourceId") int resourceId);
 
     @WebMethod
-    byte[] getPackageBytes(
-            @WebParam(name = "subject") Subject user,
-            @WebParam(name = "resourceId") int resourceId,
-            @WebParam(name = "installedPackageId") int installedPackageId);
+    byte[] getPackageBytes(@WebParam(name = "subject") Subject user, @WebParam(name = "resourceId") int resourceId,
+        @WebParam(name = "installedPackageId") int installedPackageId);
 
 }

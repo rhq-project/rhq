@@ -112,12 +112,22 @@ public class PackageVersionCriteria extends Criteria {
         this.fetchChannelPackageVersions = fetchChannelPackageVersions;
     }
 
+    /**
+     * Requires ManageInventory permissions.
+     * @param fetchInstalledPackages
+     */
     public void fetchInstalledPackages(boolean fetchInstalledPackages) {
         this.fetchInstalledPackages = fetchInstalledPackages;
+        this.setInventoryManagerRequired(fetchInstalledPackages || this.isInventoryManagerRequired());
     }
 
+    /**
+     * Requires ManageInventory permissions.
+     * @param fetchInstalledPackages
+     */
     public void fetchInstalledPackageHistory(boolean fetchInstalledPackageHistory) {
         this.fetchInstalledPackageHistory = fetchInstalledPackageHistory;
+        this.setInventoryManagerRequired(fetchInstalledPackageHistory || this.isInventoryManagerRequired());
     }
 
     public void fetchProductVersionPackageVersions(boolean fetchProductVersionPackageVersions) {

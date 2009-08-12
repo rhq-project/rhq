@@ -1392,16 +1392,11 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
     @SuppressWarnings("unchecked")
     public PageList<InstalledPackage> findInstalledPackagesByCriteria(Subject subject, InstalledPackageCriteria criteria) {
+
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
 
-        if (authorizationManager.isInventoryManager(subject) == false) {
-            if (null == criteria.getFilterResourceId()) {
-                throw new PermissionException(
-                    "Subject ["
-                        + subject.getName()
-                        + "] does not have InventoryManager permission. Specify a resourceId filter for an accessible resource.");
-            }
-
+        if (!authorizationManager.isInventoryManager(subject)) {
+            // Ensure we limit to packages installed to viewable resources
             generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE,
                 "resource", subject.getId());
         }
@@ -1417,14 +1412,14 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
     @SuppressWarnings("unchecked")
     public PageList<PackageVersion> findPackageVersionsByCriteria(Subject subject, PackageVersionCriteria criteria) {
+
         Integer resourceId = criteria.getFilterResourceId();
 
-        if ((null == resourceId) || (resourceId < 1)) {
-            throw new IllegalArgumentException("Illegal filterResourceId: " + resourceId);
-        }
-
-        if (authorizationManager.isInventoryManager(subject) == false) {
-            if (!authorizationManager.canViewResource(subject, resourceId)) {
+        if (!authorizationManager.isInventoryManager(subject)) {
+            if ((null == resourceId) || criteria.isInventoryManagerRequired()) {
+                throw new PermissionException("Subject [" + subject.getName()
+                    + "] requires InventoryManager permission for requested query criteria.");
+            } else if (!authorizationManager.canViewResource(subject, resourceId)) {
                 throw new PermissionException("Subject [" + subject.getName()
                     + "] does not have permission to view the specified resource.");
             }

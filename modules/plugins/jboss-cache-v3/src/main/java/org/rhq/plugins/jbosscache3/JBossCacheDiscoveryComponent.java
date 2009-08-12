@@ -28,6 +28,8 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.management.ObjectName;
+
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
 import org.rhq.core.domain.configuration.Configuration;
@@ -50,6 +52,7 @@ public class JBossCacheDiscoveryComponent implements
 
 	private Configuration defaultConfig;
 	private String REGEX = "(,|:)jmx-resource=[^,]*(,|\\z)";
+	private static String[] CACHE_OBJECT_NAME = { "cluster", "config" };
 
 	public Set<DiscoveredResourceDetails> discoverResources(
 			ResourceDiscoveryContext<ProfileServiceComponent> context)
@@ -81,19 +84,19 @@ public class JBossCacheDiscoveryComponent implements
 
 			HashSet<String> names = new HashSet<String>();
 
-            for (EmsBean bean : cacheBeans) {
-                String beanName = bean.getBeanName().toString();
+			for (EmsBean bean : cacheBeans) {
+				String beanName = bean.getBeanName().toString();
 
-                Matcher m = p.matcher(beanName);
-                if (m.find()) {
-                    beanName = m.replaceFirst(m.group(2).equals(",") ? m
-                            .group(1) : "");
+				Matcher m = p.matcher(beanName);
+				if (m.find()) {
+					beanName = m.replaceFirst(m.group(2).equals(",") ? m
+							.group(1) : "");
 
-                    if (!names.contains(beanName)) {
-                        names.add(beanName);
-                    }
-                }
-            }
+					if (!names.contains(beanName)) {
+						names.add(beanName);
+					}
+				}
+			}
 
 			for (String key : names) {
 				Configuration conf = new Configuration();
@@ -101,9 +104,16 @@ public class JBossCacheDiscoveryComponent implements
 				conf.put(new PropertySimple(
 						JBossCacheComponent.CACHE_SEARCH_STRING, key));
 
+				String resourceName = key;
+				ObjectName obName = new ObjectName(key);
+				for (String objectName : CACHE_OBJECT_NAME) {
+					if (obName.getKeyProperty(objectName) != null)
+						resourceName = obName.getKeyProperty(objectName);
+				}
+
 				ResourceType resourceType = context.getResourceType();
 				resources.add(new DiscoveredResourceDetails(resourceType, key,
-						key, "", "JBoss Cache", conf, null));
+						resourceName, "", "JBoss Cache", conf, null));
 
 			}
 		}

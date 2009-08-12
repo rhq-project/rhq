@@ -37,12 +37,14 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jboss.on.plugins.tomcat.helper.TomcatApplicationDeployer;
 import org.jetbrains.annotations.Nullable;
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
 import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 import org.mc4j.ems.connection.bean.operation.EmsOperation;
+
+import org.jboss.on.plugins.tomcat.helper.TomcatApplicationDeployer;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageType;
@@ -816,7 +818,8 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
 
     @Override
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
-        super.updateResourceConfiguration(report);
+        // don't try to update the read only properties, it will fail
+        super.updateResourceConfiguration(report, true);
 
         // If all went well, persist the changes to the Tomcat user Database
         try {

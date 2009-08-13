@@ -30,7 +30,10 @@ import org.rhq.core.domain.util.PageOrdering;
 /**
  * @author Joseph Marques
  */
+@SuppressWarnings("unused")
 public class ChannelCriteria extends Criteria {
+    private static final long serialVersionUID = 1L;
+
     private String filterId;
     private String filterName;
     private String filterDescription;

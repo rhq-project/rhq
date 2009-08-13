@@ -188,8 +188,9 @@
         Interval in seconds between initiating the periodic recovery modules.
         Default is 120 seconds.
       -->
+        <!-- RHQ - do not check pending transactions very often -->
         <property
-            name="com.arjuna.ats.arjuna.recovery.periodicRecoveryPeriod" value="120"/>
+            name="com.arjuna.ats.arjuna.recovery.periodicRecoveryPeriod" value="900"/>
         <!--
         Interval in seconds between first and second pass of periodic recovery.
         Default is 10 seconds.

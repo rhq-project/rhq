@@ -29,7 +29,7 @@ rhq.logout();
 
 
 function testFindAlertDefinitionsWithoutFiltering() {
-    var alertDefs = AlertDefinitionManager.findAlertDefinitions(AlertDefinitionCriteria());
+    var alertDefs = AlertDefinitionManager.findAlertDefinitionsByCriteria(AlertDefinitionCriteria());
 
     Assert.assertNotNull(alertDefs, 'Expected to get back non-null results when fetch alert definitions without filtering');
 }
@@ -44,7 +44,7 @@ function testFindSingleAlertDefinitionWithFiltering() {
     criteria.addFilterEnabled(true);
     criteria.addFilterResourceIds([service.id]);
 
-    var alertDefs = AlertDefinitionManager.findAlertDefinitions(criteria);
+    var alertDefs = AlertDefinitionManager.findAlertDefinitionsByCriteria(criteria);
 
     Assert.assertNumberEqualsJS(alertDefs.size(), 1, 'Expected to get back one alert definition but got ' +
         alertDefs.size());

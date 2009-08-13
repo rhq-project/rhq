@@ -645,6 +645,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         return new PageList<Subject>(subjects, (int) count, pc);
     }
 
+    @RequiredPermission(Permission.MANAGE_SECURITY)
     @SuppressWarnings("unchecked")
     public PageList<Subject> findSubjectsByCriteria(Subject subject, SubjectCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);

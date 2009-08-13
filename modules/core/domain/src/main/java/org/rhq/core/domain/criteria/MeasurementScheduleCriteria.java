@@ -30,7 +30,9 @@ import org.rhq.core.domain.util.PageOrdering;
 /**
  * @author Joseph Marques
  */
+@SuppressWarnings("unused")
 public class MeasurementScheduleCriteria extends Criteria {
+    private static final long serialVersionUID = 1L;
 
     private Integer filterId;
     private List<Integer> filterDefinitionIds; // requires overrides

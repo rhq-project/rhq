@@ -25,13 +25,17 @@ package org.rhq.core.domain.criteria;
 import java.util.Arrays;
 import java.util.List;
 
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.util.PageOrdering;
 
 /**
  * @author Joseph Marques
  */
+@SuppressWarnings("unused")
 public class ResourceGroupCriteria extends Criteria {
+    private static final long serialVersionUID = 1L;
+
     private Integer filterId;
     private String filterName;
     private Boolean filterRecursive;
@@ -133,8 +137,15 @@ public class ResourceGroupCriteria extends Criteria {
         this.fetchResourceType = fetchResourceType;
     }
 
+    /**
+     * Requires MANAGE_SECURITY
+     * @param fetchRoles
+     */
     public void fetchRoles(boolean fetchRoles) {
         this.fetchRoles = fetchRoles;
+        if (fetchRoles) {
+            this.addRequiredPermission(Permission.MANAGE_SECURITY);
+        }
     }
 
     public void addSortName(PageOrdering sortName) {

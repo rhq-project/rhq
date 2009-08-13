@@ -1443,7 +1443,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         criteria.addFilterResourceId(resourceId);
         PageList<InstalledPackage> ips = findInstalledPackagesByCriteria(subject, criteria);
 
-        if ((null != ips) || (1 == ips.size())) {
+        if ((null != ips) && (1 == ips.size())) {
             result = ips.get(0);
         }
 

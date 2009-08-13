@@ -39,7 +39,7 @@ public interface AlertDefinitionManagerRemote {
         @WebParam(name = "alertDefinitionId") int alertDefinitionId);
 
     @WebMethod
-    PageList<AlertDefinition> findAlertDefinitions( //
+    PageList<AlertDefinition> findAlertDefinitionsByCriteria( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "criteria") AlertDefinitionCriteria criteria);
 

@@ -1,5 +1,6 @@
 package org.rhq.core.domain.criteria;
 
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.util.PageOrdering;
 
 @SuppressWarnings("unused")
@@ -113,21 +114,25 @@ public class PackageVersionCriteria extends Criteria {
     }
 
     /**
-     * Requires ManageInventory permissions.
+     * Requires MANAGE_INVENTORY permission.
      * @param fetchInstalledPackages
      */
     public void fetchInstalledPackages(boolean fetchInstalledPackages) {
         this.fetchInstalledPackages = fetchInstalledPackages;
-        this.setInventoryManagerRequired(fetchInstalledPackages || this.isInventoryManagerRequired());
+        if (fetchInstalledPackages) {
+            this.addRequiredPermission(Permission.MANAGE_INVENTORY);
+        }
     }
 
     /**
-     * Requires ManageInventory permissions.
+     * Requires MANAGE_INVENTORY permission.
      * @param fetchInstalledPackages
      */
     public void fetchInstalledPackageHistory(boolean fetchInstalledPackageHistory) {
         this.fetchInstalledPackageHistory = fetchInstalledPackageHistory;
-        this.setInventoryManagerRequired(fetchInstalledPackageHistory || this.isInventoryManagerRequired());
+        if (fetchInstalledPackageHistory) {
+            this.addRequiredPermission(Permission.MANAGE_INVENTORY);
+        }
     }
 
     public void fetchProductVersionPackageVersions(boolean fetchProductVersionPackageVersions) {

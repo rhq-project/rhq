@@ -30,7 +30,9 @@ import org.rhq.core.domain.util.PageOrdering;
 /**
  * @author Joseph Marques
  */
+@SuppressWarnings("unused")
 public class ResourceTypeCriteria extends Criteria {
+    private static final long serialVersionUID = 1L;
 
     private Integer filterId;
     private String filterName;

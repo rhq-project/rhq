@@ -22,12 +22,15 @@
  */
 package org.rhq.core.domain.criteria;
 
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.util.PageOrdering;
 
 /**
  * @author Joseph Marques
  */
+@SuppressWarnings("unused")
 public class RoleCriteria extends Criteria {
+    private static final long serialVersionUID = 1L;
 
     private Integer filterId;
     private String filterName;
@@ -52,12 +55,26 @@ public class RoleCriteria extends Criteria {
         this.filterDescription = filterDescription;
     }
 
+    /**
+     * Requires MANAGE_SECURITY
+     * @param fetchSubjects
+     */
     public void fetchSubjects(boolean fetchSubjects) {
         this.fetchSubjects = fetchSubjects;
+        if (fetchSubjects) {
+            this.addRequiredPermission(Permission.MANAGE_SECURITY);
+        }
     }
 
+    /**
+     * Requires MANAGE_SECURITY
+     * @param fetchSubjects
+     */
     public void fetchResourceGroups(boolean fetchResourceGroups) {
         this.fetchResourceGroups = fetchResourceGroups;
+        if (fetchResourceGroups) {
+            this.addRequiredPermission(Permission.MANAGE_SECURITY);
+        }
     }
 
     public void fetchPermissions(boolean fetchPermissions) {

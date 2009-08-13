@@ -28,7 +28,10 @@ import java.util.List;
 /**
  * @author Joseph Marques
  */
+@SuppressWarnings("unused")
 public class ResourceOperationHistoryCriteria extends OperationHistoryCriteria {
+    private static final long serialVersionUID = 1L;
+
     private List<Integer> filterResourceIds; // requires override
 
     private boolean fetchResults;

@@ -2037,6 +2037,11 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     public PageList<Resource> findResourcesByCriteria(Subject subject, ResourceCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
         if (authorizationManager.isInventoryManager(subject) == false) {
+            if (criteria.isInventoryManagerRequired()) {
+                throw new PermissionException("Subject [" + subject.getName()
+                    + "] requires InventoryManager permission for requested query criteria.");
+            }
+
             generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE, null,
                 subject.getId());
         }

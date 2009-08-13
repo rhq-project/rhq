@@ -26,12 +26,15 @@ import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageOrdering;
 
@@ -54,7 +57,8 @@ public abstract class Criteria implements Serializable {
     private boolean filtersOptional;
     private boolean caseSensitive;
     private boolean strict;
-    private boolean inventoryManagerRequired;
+
+    private Set<Permission> requiredPermissions;
 
     protected Map<String, String> filterOverrides;
     protected Map<String, String> sortOverrides;
@@ -66,6 +70,8 @@ public abstract class Criteria implements Serializable {
         sortOverrides = new HashMap<String, String>();
 
         orderingFieldNames = new ArrayList<String>();
+
+        requiredPermissions = new HashSet<Permission>();
 
         /* 
          * reasonably large default, but prevent accidentally returning 100K objects 
@@ -194,11 +200,19 @@ public abstract class Criteria implements Serializable {
     }
 
     public boolean isInventoryManagerRequired() {
-        return inventoryManagerRequired;
+        return requiredPermissions.contains(Permission.MANAGE_INVENTORY);
     }
 
-    public void setInventoryManagerRequired(boolean inventoryManagerRequired) {
-        this.inventoryManagerRequired = inventoryManagerRequired;
+    public boolean isSecurityManagerRequired() {
+        return requiredPermissions.contains(Permission.MANAGE_SECURITY);
+    }
+
+    public Set<Permission> getRequiredPermissions() {
+        return requiredPermissions;
+    }
+
+    public void addRequiredPermission(Permission requiredPermission) {
+        this.requiredPermissions.add(requiredPermission);
     }
 
     public PageControl getPageControl() {

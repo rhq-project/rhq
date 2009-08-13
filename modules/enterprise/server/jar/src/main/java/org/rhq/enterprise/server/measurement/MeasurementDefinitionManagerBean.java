@@ -145,8 +145,8 @@ public class MeasurementDefinitionManagerBean implements MeasurementDefinitionMa
         Query countQuery = generator.getCountQuery(entityManager);
 
         long count = (Long) countQuery.getSingleResult();
-        List<MeasurementDefinition> alertDefinitions = query.getResultList();
+        List<MeasurementDefinition> measurementDefinitions = query.getResultList();
 
-        return new PageList<MeasurementDefinition>(alertDefinitions, (int) count, criteria.getPageControl());
+        return new PageList<MeasurementDefinition>(measurementDefinitions, (int) count, criteria.getPageControl());
     }
 }

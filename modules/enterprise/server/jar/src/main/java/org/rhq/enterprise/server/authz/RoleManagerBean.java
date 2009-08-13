@@ -558,6 +558,13 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
 
     @SuppressWarnings("unchecked")
     public PageList<Role> findRolesByCriteria(Subject subject, RoleCriteria criteria) {
+
+        if (criteria.isSecurityManagerRequired()
+            && !authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_SECURITY)) {
+            throw new PermissionException("Subject [" + subject.getName()
+                + "] requires SecurityManager permission for requested query criteria.");
+        }
+
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
 
         Query query = generator.getQuery(entityManager);

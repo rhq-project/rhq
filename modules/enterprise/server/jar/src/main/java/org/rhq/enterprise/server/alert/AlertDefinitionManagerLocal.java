@@ -74,5 +74,5 @@ public interface AlertDefinitionManagerLocal {
 
     AlertDefinition getAlertDefinition(Subject subject, int alertDefinitionId);
 
-    PageList<AlertDefinition> findAlertDefinitions(Subject subject, AlertDefinitionCriteria criteria);
+    PageList<AlertDefinition> findAlertDefinitionsByCriteria(Subject subject, AlertDefinitionCriteria criteria);
 }

@@ -1302,6 +1302,13 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
     @SuppressWarnings("unchecked")
     public PageList<ResourceGroup> findResourceGroupsByCriteria(Subject subject, ResourceGroupCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+
+        if (criteria.isSecurityManagerRequired()
+            && !authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_SECURITY)) {
+            throw new PermissionException("Subject [" + subject.getName()
+                + "] requires SecurityManager permission for requested query criteria.");
+        }
+
         if (authorizationManager.isInventoryManager(subject) == false) {
             generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.GROUP, null,
                 subject.getId());

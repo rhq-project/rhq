@@ -22,6 +22,7 @@
  */
 package org.rhq.core.domain.criteria;
 
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -30,7 +31,9 @@ import org.rhq.core.domain.util.PageOrdering;
 /**
  * @author Joseph Marques
  */
+@SuppressWarnings("unused")
 public class ResourceCriteria extends Criteria {
+    private static final long serialVersionUID = 1L;
 
     private Integer filterId;
     private String filterName;
@@ -157,12 +160,26 @@ public class ResourceCriteria extends Criteria {
         this.fetchResourceType = fetchResourceType;
     }
 
+    /**
+     * Requires MANAGE_INVENTORY
+     * @param fetchChildResources
+     */
     public void fetchChildResources(boolean fetchChildResources) {
         this.fetchChildResources = fetchChildResources;
+        if (fetchChildResources) {
+            this.addRequiredPermission(Permission.MANAGE_INVENTORY);
+        }
     }
 
+    /**
+     * Requires MANAGE_INVENTORY
+     * @param fetchParentResource
+     */
     public void fetchParentResource(boolean fetchParentResource) {
         this.fetchParentResource = fetchParentResource;
+        if (fetchParentResource) {
+            this.addRequiredPermission(Permission.MANAGE_INVENTORY);
+        }
     }
 
     public void fetchResourceConfiguration(boolean fetchResourceConfiguration) {

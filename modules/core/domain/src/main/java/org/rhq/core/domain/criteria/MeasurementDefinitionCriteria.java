@@ -32,7 +32,9 @@ import org.rhq.core.domain.util.PageOrdering;
 /**
  * @author Joseph Marques
  */
+@SuppressWarnings("unused")
 public class MeasurementDefinitionCriteria extends Criteria {
+    private static final long serialVersionUID = 1L;
 
     private Integer filterId;
     private String filterName;
@@ -47,9 +49,6 @@ public class MeasurementDefinitionCriteria extends Criteria {
     private DisplayType filterDisplayType;
     private Boolean filterDefaultOn;
     private Long filterDefaultInterval;
-
-    private boolean fetchSchedules;
-    private boolean fetchAlertConditions;
 
     private PageOrdering sortName;
     private PageOrdering sortDisplayName;
@@ -121,14 +120,6 @@ public class MeasurementDefinitionCriteria extends Criteria {
 
     public void addFilterDefaultInterval(Long filterDefaultInterval) {
         this.filterDefaultInterval = filterDefaultInterval;
-    }
-
-    public void fetchSchedules(boolean fetchSchedules) {
-        this.fetchSchedules = fetchSchedules;
-    }
-
-    public void fetchAlertConditions(boolean fetchAlertConditions) {
-        this.fetchAlertConditions = fetchAlertConditions;
     }
 
     public void addSortName(PageOrdering sortName) {

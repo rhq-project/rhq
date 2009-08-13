@@ -315,9 +315,9 @@ public class StartupServlet extends HttpServlet {
 
         // Suspected Agents Job
         try {
-            // Do not check until we are up at least 10 mins, but check every 30 secs thereafter.
+            // Do not check until we are up at least 10 mins, but check every 60 secs thereafter.
             final long initialDelay = 1000L * 60 * 10; // 10 mins
-            final long interval = 1000L * 30; // 30 secs
+            final long interval = 1000L * 60; // 60 secs
             scheduler.scheduleSimpleRepeatingJob(CheckForSuspectedAgentsJob.class, true, false, initialDelay, interval);
         } catch (Exception e) {
             log("Cannot schedule suspected Agents job: " + e.getMessage());

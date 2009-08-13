@@ -1375,8 +1375,20 @@ DB Upgrade:
    </schemaSpec>
 
    <schemaSpec version="2.53">
-      <schema-addColumn table="RHQ_ALERT_DEFINITION" column="RESOURCE_GROUP_ID" columnType="INTEGER" />
-      <schema-addColumn table="RHQ_ALERT_DEFINITION" column="GROUP_ALERT_DEF_ID" columnType="INTEGER" />
+      <!-- ENABLE THIS ONCE JOE COMMITS HIS BACKFILL CHANGES FROM PERF BRANCH TO TRUNK
+        <schema-addColumn table="RHQ_AGENT" column="BACKFILLED" columnType="BOOLEAN" />
+        <schema-directSQL>
+            <statement targetDBVendor="postgresql"
+                       desc="Updating backfilled bit for all agents">
+              UPDATE RHQ_AGENT SET BACKFILLED = FALSE
+            </statement>
+            <statement targetDBVendor="oracle"
+                       desc="Updating backfilled bit for all agents">
+              UPDATE RHQ_AGENT SET BACKFILLED = 0
+            </statement>
+        </schema-directSQL>
+        <schema-alterColumn table="RHQ_AGENT" column="BACKFILLED" nullable="FALSE" />
+      -->
    </schemaSpec>
 
    <schemaSpec version="2.54">
@@ -1385,6 +1397,11 @@ DB Upgrade:
             UPDATE rhq_system_config SET property_value = '900000' WHERE property_key = 'AGENT_MAX_QUIET_TIME_ALLOWED'
          </statement>
       </schema-directSQL>
+   </schemaSpec>
+
+   <schemaSpec version="2.55">
+      <schema-addColumn table="RHQ_ALERT_DEFINITION" column="RESOURCE_GROUP_ID" columnType="INTEGER" />
+      <schema-addColumn table="RHQ_ALERT_DEFINITION" column="GROUP_ALERT_DEF_ID" columnType="INTEGER" />
    </schemaSpec>
 
 </dbupgrade>

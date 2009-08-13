@@ -29,7 +29,7 @@
       <plugin>
         <artifactId>maven-javadoc-plugin</artifactId>
         <configuration>          
-          <doctitle>RHQ 1.0 Plugin API</doctitle>
+          <doctitle>RHQ ${project.version} Plugin API</doctitle>
           <aggregate>true</aggregate>
           <encoding>UTF-8</encoding>
           <charset>UTF-8</charset>

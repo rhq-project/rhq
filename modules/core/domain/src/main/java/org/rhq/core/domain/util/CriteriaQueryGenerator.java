@@ -269,24 +269,22 @@ public final class CriteriaQueryGenerator {
 
         for (Map.Entry<String, Object> critField : criteria.getFilterFields().entrySet()) {
             Object value = critField.getValue();
-            if (wantCaseInsensitiveMatch) {
-                if (value instanceof String) {
-                    String formattedValue = (String) value;
-                    if (wantCaseInsensitiveMatch) {
-                        formattedValue = formattedValue.toLowerCase();
-                    }
-                    /* 
-                     * Double escape backslashes because strings might be escaped at the database level that
-                     * Hibernate calls into -- http://opensource.atlassian.com/projects/hibernate/browse/HHH-2674
-                     */
-                    formattedValue = ((String) formattedValue).replaceAll("\\_", "\\\\_");
-                    if (wantsFuzzyMatching) {
-                        // append '%' onto edges that don't already have '%' explicitly set from the caller
-                        formattedValue = (formattedValue.startsWith("%") ? "" : "%") + formattedValue
-                            + (formattedValue.endsWith("%") ? "" : "%");
-                    }
-                    value = formattedValue;
+            if (value instanceof String) {
+                String formattedValue = (String) value;
+                if (wantCaseInsensitiveMatch) {
+                    formattedValue = formattedValue.toLowerCase();
                 }
+                /* 
+                 * Double escape backslashes because strings might be escaped at the database level that
+                 * Hibernate calls into -- http://opensource.atlassian.com/projects/hibernate/browse/HHH-2674
+                 */
+                formattedValue = ((String) formattedValue).replaceAll("\\_", "\\\\_");
+                if (wantsFuzzyMatching) {
+                    // append '%' onto edges that don't already have '%' explicitly set from the caller
+                    formattedValue = (formattedValue.startsWith("%") ? "" : "%") + formattedValue
+                        + (formattedValue.endsWith("%") ? "" : "%");
+                }
+                value = formattedValue;
             }
             LOG.debug("Bind: (" + critField.getKey() + ", " + value + ")");
             query.setParameter(critField.getKey(), value);

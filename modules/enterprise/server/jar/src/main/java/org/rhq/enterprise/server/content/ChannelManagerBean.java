@@ -257,7 +257,9 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public Channel updateChannel(Subject subject, Channel channel) throws ChannelException {
-        validateChannel(channel);
+        if (channel.getName() == null || channel.getName().trim().equals("")) {
+            throw new ChannelException("Channel name is required");
+        }
 
         // should we check non-null channel relationships and warn that we aren't changing them?
         log.debug("User [" + subject + "] is updating channel [" + channel + "]");
@@ -265,19 +267,6 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
         log.debug("User [" + subject + "] updated channel [" + channel + "]");
 
         return channel;
-    }
-
-    private void validateChannel(Channel c) throws ChannelException {
-        if (c.getName() == null || c.getName().trim().equals("")) {
-            throw new ChannelException("Channel name is required");
-        }
-
-        List<Channel> channels = getChannelByName(c.getName());
-
-        if (channels.size() != 0) {
-            throw new ChannelException("There is already a channel with the name of [" + c.getName() + "]");
-        }
-
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
@@ -289,6 +278,17 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
         log.debug("User [" + subject + "] created channel [" + channel + "]");
 
         return channel; // now has the ID set
+    }
+
+    private void validateChannel(Channel c) throws ChannelException {
+        if (c.getName() == null || c.getName().trim().equals("")) {
+            throw new ChannelException("Channel name is required");
+        }
+
+        List<Channel> channels = getChannelByName(c.getName());
+        if (channels.size() != 0) {
+            throw new ChannelException("There is already a channel with the name of [" + c.getName() + "]");
+        }
     }
 
     @SuppressWarnings("unchecked")

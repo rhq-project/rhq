@@ -46,9 +46,9 @@ public class AlertDefinitionCriteria extends Criteria {
     private Boolean filterEnabled;
     private String filterOperationName; // requires overrides
 
-    private boolean fetchAlertDefinition;
-    private boolean fetchConditionLogs;
-    private boolean fetchNotificationLogs;
+    private boolean fetchAlerts;
+    private boolean fetchConditions;
+    private boolean fetchAlertNotifications;
 
     private PageOrdering sortName;
     private PageOrdering sortPriority;
@@ -103,16 +103,16 @@ public class AlertDefinitionCriteria extends Criteria {
         this.filterOperationName = filterOperationName;
     }
 
-    public void fetchAlertDefinition(boolean fetchAlertDefinition) {
-        this.fetchAlertDefinition = fetchAlertDefinition;
+    public void fetchAlerts(boolean fetchAlerts) {
+        this.fetchAlerts = fetchAlerts;
     }
 
-    public void fetchConditionLogs(boolean fetchConditionLogs) {
-        this.fetchConditionLogs = fetchConditionLogs;
+    public void fetchConditions(boolean fetchConditions) {
+        this.fetchConditions = fetchConditions;
     }
 
-    public void fetchNotificationLogs(boolean fetchNotificationLogs) {
-        this.fetchNotificationLogs = fetchNotificationLogs;
+    public void fetchAlertNotifications(boolean fetchAlertNotifications) {
+        this.fetchAlertNotifications = fetchAlertNotifications;
     }
 
     public void addSortName(PageOrdering sortName) {

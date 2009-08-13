@@ -50,6 +50,33 @@ function testFindSingleAlertDefinitionWithFiltering() {
         alertDefs.size());
 }
 
+function testFindMultipleAlertDefinitionsWithFiltering() {
+    var serviceAlpha = findService('service-alpha-0', 'server-omega-0');
+    var serviceBeta = findService('service-alpha-1', 'server-omega-0');
+
+    var criteria = AlertDefinitionCriteria();
+    criteria.addFilterPriority(AlertPriority.MEDIUM);
+    criteria.addFilterResourceIds([serviceAlpha.id, serviceBeta.id]);
+
+    var alertDefs = AlertDefinitionManager.findAlertDefinitionsByCriteria(criteria);
+
+    Assert.assertNumberEqualsJS(alertDefs.size(), 2, 'Expected to get back two alert definitions but got ' + alertDefs.size());
+}
+
+function testFindAlertDefinitionWithFilteringAndFetchingAssociations() {
+    var criteria = AlertDefinitionCriteria();
+    criteria.addFilterName('service-alpha-0');
+    criteria.addFilterDescription('Test alert definition 1 for service-alpha-0');
+
+    criteria.fetchAlerts(true);
+    criteria.fetchConditions(true);
+    criteria.fetchAlertNotifications(true);
+
+    var alertDefs = AlertDefinitionManager.findAlertDefinitionsByCriteria(criteria);
+
+    Assert.assertNumberEqualsJS(alertDefs.size(), 1, 'Expected to get back one alert when filtering and fetching associations');
+}
+
 function findService(name, parentName) {
     var criteria = ResourceCriteria();
     criteria.addFilterName(name);

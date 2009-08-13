@@ -196,15 +196,10 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
 
     private long compactData(String fromTable, String toTable, long begin, long now, long interval) throws SQLException {
         Connection conn = null;
-        PreparedStatement selStmt = null;
         PreparedStatement insStmt = null;
-        ResultSet rs = null;
 
         try {
             conn = ((DataSource) ctx.lookup(DATASOURCE_NAME)).getConnection();
-
-            selStmt = conn.prepareStatement("SELECT count(DISTINCT schedule_id) FROM " + fromTable
-                + " WHERE time_stamp >= ? AND time_stamp < ?");
 
             // One special case. If we are compressing from an
             // already compressed table, we'll take the MIN and
@@ -226,21 +221,7 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
                 watch.reset();
                 long end = begin + interval;
 
-                // Get the list of measurement id's for this interval.
-                selStmt.setLong(1, begin);
-                selStmt.setLong(2, end);
-
                 log.debug("Compression interval: " + TimeUtil.toString(begin) + " to " + TimeUtil.toString(end));
-
-                try {
-                    rs = selStmt.executeQuery();
-
-                    while (rs.next()) {
-                        log.debug("Compressing [" + rs.getInt(1) + "] measurements");
-                    }
-                } finally {
-                    close(rs);
-                }
 
                 // Compress.
                 int rows = 0;
@@ -249,21 +230,24 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
                     insStmt.setLong(2, begin);
                     insStmt.setLong(3, end);
                     rows = insStmt.executeUpdate();
-                    log.debug("Rows merged: " + rows);
+                    log.info("Compressed from " + fromTable + " into " + rows + " rows in " + toTable + " in ("
+                        + (watch.getElapsed() / SECOND) + " seconds)");
                 } catch (SQLException e) {
                     // Just log the error and continue
-                    log.debug("SQL exception when inserting data at " + TimeUtil.toString(begin), e);
+                    if (log.isDebugEnabled()) {
+                        log.error("SQL exception when inserting data at " + TimeUtil.toString(begin), e);
+                    } else {
+                        log.error("SQL exception when inserting data at " + TimeUtil.toString(begin) + ": "
+                            + e.getMessage());
+                    }
                 }
 
                 MeasurementMonitor.getMBean().incrementMeasurementCompressionTime(watch.getElapsed());
-                log.info("Compressed from " + fromTable + " into " + rows + " rows in " + toTable + " in ("
-                    + (watch.getElapsed() / SECOND) + " seconds)");
 
                 // Increment for next iteration.
                 begin = end;
             }
         } finally {
-            close(selStmt);
             close(insStmt);
             close(conn);
         }

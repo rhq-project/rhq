@@ -32,6 +32,8 @@ skippedTests.push('testFindResourceOperationHistoriesWithFiltering');
 
 executeAllTests();
 
+rhq.logout();
+
 function testFindOperationDefinitionsUnfiltered() {
     var operationDefinitions = OperationManager.findOperationDefinitionsByCriteria(OperationDefinitionCriteria());
 

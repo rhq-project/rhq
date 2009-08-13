@@ -57,9 +57,9 @@ public class AlertDefinitionCriteria extends Criteria {
         super();
 
         filterOverrides.put("alertTemplateParentId", "parentId = ?");
-        filterOverrides.put("alertTemplateResourceTypeId", "alertDefinition.resourceType.id = ?");
-        filterOverrides.put("alertTemplateResourceTypeName", "alertDefinition.resourceType.name like ?");
-        filterOverrides.put("resourceIds", "alertDefinition.resource.id IN ( ? )");
+        filterOverrides.put("alertTemplateResourceTypeId", "resourceType.id = ?");
+        filterOverrides.put("alertTemplateResourceTypeName", "resourceType.name like ?");
+        filterOverrides.put("resourceIds", "resource.id IN ( ? )");
         filterOverrides.put("operationName", "operationDefinition.name like ?");
     }
 

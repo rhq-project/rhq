@@ -43,11 +43,12 @@ function testFindSingleAlertDefinitionWithFiltering() {
     criteria.addFilterPriority(AlertPriority.MEDIUM);
     criteria.addFilterEnabled(true);
     criteria.addFilterResourceIds([service.id]);
+    criteria.addFilterDeleted(false);
 
     var alertDefs = AlertDefinitionManager.findAlertDefinitionsByCriteria(criteria);
 
-    Assert.assertNumberEqualsJS(alertDefs.size(), 1, 'Expected to get back one alert definition but got ' +
-        alertDefs.size());
+    Assert.assertNumberEqualsJS(alertDefs.size(), 1, "Expected to get back one alert definition but got '" +
+        getNames(alertDefs) + "'");
 }
 
 function testFindMultipleAlertDefinitionsWithFiltering() {
@@ -57,6 +58,7 @@ function testFindMultipleAlertDefinitionsWithFiltering() {
     var criteria = AlertDefinitionCriteria();
     criteria.addFilterPriority(AlertPriority.MEDIUM);
     criteria.addFilterResourceIds([serviceAlpha.id, serviceBeta.id]);
+    criteria.addFilterDeleted(false);
 
     var alertDefs = AlertDefinitionManager.findAlertDefinitionsByCriteria(criteria);
 
@@ -71,6 +73,7 @@ function testFindAlertDefinitionWithFilteringAndFetchingAssociations() {
     criteria.fetchAlerts(true);
     criteria.fetchConditions(true);
     criteria.fetchAlertNotifications(true);
+    criteria.addFilterDeleted(false);
 
     var alertDefs = AlertDefinitionManager.findAlertDefinitionsByCriteria(criteria);
 
@@ -84,6 +87,7 @@ function testFindAlertDefinitionsWithFilteringAndSortingAndFetchingAssociations(
     var criteria = AlertDefinitionCriteria();
     criteria.addFilterPriority(AlertPriority.MEDIUM);
     criteria.addFilterResourceIds([serviceAlpha.id, serviceBeta.id]);
+    criteria.addFilterDeleted(false);
 
     criteria.addSortName(PageOrdering.ASC);
     criteria.addSortPriority(PageOrdering.DESC);
@@ -134,6 +138,15 @@ function testFindAlertsWithFiltering() {
     var alerts = AlertManager.findAlertsByCriteria(alertCriteria);
 
     Assert.assertNumberEqualsJS(alerts.size(), 1, "Expected to get back one alert for alert definition '" + alertDef1Name + "'");
+}
+
+function getNames(entities) {
+    var names = [];
+    for (i = 0; i < entities.size(); ++i) {
+        names.push(entities.get(i).name);
+    }
+
+    return names;
 }
 
 function findService(name, parentName) {

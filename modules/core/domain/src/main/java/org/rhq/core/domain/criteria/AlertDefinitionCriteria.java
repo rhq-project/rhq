@@ -45,6 +45,7 @@ public class AlertDefinitionCriteria extends Criteria {
     private List<Integer> filterResourceIds; // requires overrides
     private Boolean filterEnabled;
     private String filterOperationName; // requires overrides
+    private Boolean filterDeleted;
 
     private boolean fetchAlerts;
     private boolean fetchConditions;
@@ -101,6 +102,10 @@ public class AlertDefinitionCriteria extends Criteria {
 
     public void addFilterOperationName(String filterOperationName) {
         this.filterOperationName = filterOperationName;
+    }
+
+    public void addFilterDeleted(Boolean filterDeleted) {
+        this.filterDeleted = filterDeleted;
     }
 
     public void fetchAlerts(boolean fetchAlerts) {

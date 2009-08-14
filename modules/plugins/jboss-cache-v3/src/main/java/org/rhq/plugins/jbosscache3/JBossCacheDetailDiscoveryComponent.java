@@ -46,10 +46,11 @@ import org.rhq.plugins.jbossas5.ProfileServiceComponent;
  */
 public class JBossCacheDetailDiscoveryComponent implements
 		ResourceDiscoveryComponent<ProfileServiceComponent> {
+    public static String CACHE_JMX_NAME = "jmx-resource";
+
+    private final Log log = LogFactory.getLog(this.getClass());
 
 	private ProfileServiceComponent parentComponent;
-	public static String CACHE_JMX_NAME = "jmx-resource";
-	private final Log log = LogFactory.getLog(this.getClass());
 
 	public Set<DiscoveredResourceDetails> discoverResources(
 			ResourceDiscoveryContext<ProfileServiceComponent> context)
@@ -61,13 +62,12 @@ public class JBossCacheDetailDiscoveryComponent implements
 
 		parentComponent = context.getParentResourceComponent();
 
-		Configuration parentConfiguration = context.getParentResourceContext()
+		Configuration parentPluginConfig = context.getParentResourceContext()
 				.getPluginConfiguration();
 
 		String beanName;
-
-		if (parentConfiguration.get(JBossCacheComponent.CACHE_SEARCH_STRING) != null)
-			beanName = parentConfiguration.getSimple(
+		if (parentPluginConfig.get(JBossCacheComponent.CACHE_SEARCH_STRING) != null)
+			beanName = parentPluginConfig.getSimple(
 					JBossCacheComponent.CACHE_SEARCH_STRING).getStringValue();
 		else
 			throw new InvalidPluginConfigurationException(
@@ -75,43 +75,31 @@ public class JBossCacheDetailDiscoveryComponent implements
 
 		Configuration defaultConfig = context.getDefaultPluginConfiguration();
 
-		List<Configuration> configurations = context.getPluginConfigurations();
-
-		if (configurations.isEmpty())
-			configurations.add(defaultConfig);
-
 		EmsConnection connection = parentComponent.getEmsConnection();
 		Set<DiscoveredResourceDetails> resources = new HashSet<DiscoveredResourceDetails>();
 
-		String jmxName;
+		String jmxName = defaultConfig.getSimple(CACHE_JMX_NAME).getStringValue();
 
-		for (Configuration config : configurations) {
-			jmxName = config.getSimple(CACHE_JMX_NAME).getStringValue();
+        beanName += (jmxName.equals("") ? "" : "," + jmxName);
 
-			beanName = (beanName + (jmxName.equals("") ? "" : "," + jmxName));
+        // This is a singleton ResourceType, so we are only looking for a single MBean.
+        EmsBean emsBean = connection.getBean(beanName);
+        if (emsBean == null) {
+            connection.refresh();
+            emsBean = connection.getBean(beanName);
+        }
 
-			EmsBean emsBean = connection.getBean(beanName);
-			if (emsBean == null) {
-				connection.refresh();
-				emsBean = connection.getBean(beanName);
+        if (emsBean != null) {
+            Configuration conf = new Configuration();
+            conf.put(new PropertySimple(
+                    JBossCacheDetailComponent.CACHE_DETAIL_BEAN_NAME,
+                    beanName));
+            resources.add(new DiscoveredResourceDetails(resourceType,
+                    beanName, resourceType.getName(), "", "JBoss Cache",
+                    conf, null));
+        }
 
-			}
-
-			if (emsBean != null) {
-				Configuration conf = new Configuration();
-				conf.put(new PropertySimple(
-						JBossCacheDetailComponent.CACHE_DETAIL_BEAN_NAME,
-						beanName));
-				resources.add(new DiscoveredResourceDetails(resourceType,
-						beanName, resourceType.getName(), "", "JBoss Cache",
-						conf, null));
-
-			}
-		}
-
-		log.trace("Discovered " + resources.size() + " "
-				+ resourceType.getName() + " Resources.");
+		log.trace("Discovered " + resources.size() + " " + resourceType.getName() + " Resources.");
 		return resources;
-
 	}
 }

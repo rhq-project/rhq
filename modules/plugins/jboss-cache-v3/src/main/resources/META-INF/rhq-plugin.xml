@@ -162,19 +162,19 @@
             <operation name="getNumberOfAttributes" displayName="Get the number of attributes."
                        description="Returns the number of nodes in the data container">
                 <results>
-                    <c:simple-property name="output"></c:simple-property>
+                    <c:simple-property name="operationResult"/>
                 </results>
             </operation>
             <operation name="printDetails" displayName="Print details as plain text."
                        description="Prints details about the data container">
                 <results>
-                    <c:simple-property name="output"></c:simple-property>
+                    <c:simple-property name="operationResult"/>
                 </results>
             </operation>
             <operation name="printDetailsAsHtml" displayName="Print details as HTML."
                        description="Prints details about the data container, formatted as HTML">
                 <results>
-                    <c:simple-property name="output"></c:simple-property>
+                    <c:simple-property name="operationResult"/>
                 </results>
             </operation>
 
@@ -221,7 +221,7 @@
             <operation name="dumpRegions" displayName="Dump Regions"
                        description="Dump a list of all registered regions.">
                 <results>
-                    <c:simple-property name="output"></c:simple-property>
+                    <c:simple-property name="operationResult"/>
                 </results>
             </operation>
 

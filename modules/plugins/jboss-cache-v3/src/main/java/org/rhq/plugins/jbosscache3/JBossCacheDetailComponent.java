@@ -148,7 +148,7 @@ public class JBossCacheDetailComponent implements MeasurementFacet,
 			if (obj != null) {
 				result = new OperationResult();
 				result.getComplexResults().put(
-						new PropertySimple("output", String.valueOf(obj)));
+						new PropertySimple(OperationResult.SIMPLE_OPERATION_RESULT_NAME, String.valueOf(obj)));
 			}
 		} catch (Exception e) {
 			log.error(" Failure to invoke operation " + name + " on bean "

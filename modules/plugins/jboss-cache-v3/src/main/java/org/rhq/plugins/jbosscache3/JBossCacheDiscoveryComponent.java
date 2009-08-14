@@ -49,83 +49,66 @@ import org.rhq.plugins.jmx.ObjectNameQueryUtility;
  */
 public class JBossCacheDiscoveryComponent implements
 		ResourceDiscoveryComponent<ProfileServiceComponent> {
-
-	private Configuration defaultConfig;
 	private String REGEX = "(,|:)jmx-resource=[^,]*(,|\\z)";
-	private static String[] CACHE_OBJECT_NAME = { "cluster", "config" };
+	private static String[] RESOURCE_NAME_KEY_PROPS = { "cluster", "config" };
+    private static final String DEFAULT_RESOURCE_DESCRIPTION = "JBoss Cache";
 
-	public Set<DiscoveredResourceDetails> discoverResources(
+    public Set<DiscoveredResourceDetails> discoverResources(
 			ResourceDiscoveryContext<ProfileServiceComponent> context)
 			throws InvalidPluginConfigurationException, Exception {
 
 		ProfileServiceComponent parentComponent = context
 				.getParentResourceComponent();
 
-		this.defaultConfig = context.getDefaultPluginConfiguration();
-
-		List<Configuration> configurations = context.getPluginConfigurations();
+		Configuration defaultPluginConfig = context.getDefaultPluginConfiguration();
 
 		EmsConnection connection = parentComponent.getEmsConnection();
 
 		Set<DiscoveredResourceDetails> resources = new HashSet<DiscoveredResourceDetails>();
 
-		Pattern p = Pattern.compile(REGEX);
+		Pattern pattern = Pattern.compile(REGEX);
 
-		if (configurations.isEmpty())
-			configurations.add(defaultConfig);
+        ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(
+                defaultPluginConfig.getSimple(JBossCacheComponent.CACHE_SEARCH_STRING).getStringValue());
 
-		for (Configuration config : configurations) {
+        List<EmsBean> cacheBeans = connection.queryBeans(queryUtility
+                .getTranslatedQuery());
 
-			ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(
-					getValue(config, JBossCacheComponent.CACHE_SEARCH_STRING));
+        HashSet<String> beanNames = new HashSet<String>();
 
-			List<EmsBean> cacheBeans = connection.queryBeans(queryUtility
-					.getTranslatedQuery());
+        for (EmsBean bean : cacheBeans) {
+            String beanName = bean.getBeanName().toString();
 
-			HashSet<String> names = new HashSet<String>();
+            Matcher m = pattern.matcher(beanName);
+            if (m.find()) {
+                beanName = m.replaceFirst(m.group(2).equals(",") ? m
+                        .group(1) : "");
 
-			for (EmsBean bean : cacheBeans) {
-				String beanName = bean.getBeanName().toString();
+                if (!beanNames.contains(beanName)) {
+                    beanNames.add(beanName);
+                }
+            }
+        }
 
-				Matcher m = p.matcher(beanName);
-				if (m.find()) {
-					beanName = m.replaceFirst(m.group(2).equals(",") ? m
-							.group(1) : "");
+        for (String beanName : beanNames) {
+            Configuration pluginConfig = context.getDefaultPluginConfiguration();
 
-					if (!names.contains(beanName)) {
-						names.add(beanName);
-					}
-				}
-			}
+            pluginConfig.put(new PropertySimple(
+                    JBossCacheComponent.CACHE_SEARCH_STRING, beanName));
 
-			for (String key : names) {
-				Configuration conf = new Configuration();
+            String resourceName = beanName;
+            ObjectName objName = new ObjectName(beanName);
+            for (String objectName : RESOURCE_NAME_KEY_PROPS) {
+                if (objName.getKeyProperty(objectName) != null) {
+                    resourceName = objName.getKeyProperty(objectName);
+                }
+            }
 
-				conf.put(new PropertySimple(
-						JBossCacheComponent.CACHE_SEARCH_STRING, key));
+            ResourceType resourceType = context.getResourceType();
+            resources.add(new DiscoveredResourceDetails(resourceType, beanName,
+                    resourceName, null, DEFAULT_RESOURCE_DESCRIPTION, pluginConfig, null));
+        }
 
-				String resourceName = key;
-				ObjectName obName = new ObjectName(key);
-				for (String objectName : CACHE_OBJECT_NAME) {
-					if (obName.getKeyProperty(objectName) != null)
-						resourceName = obName.getKeyProperty(objectName);
-				}
-
-				ResourceType resourceType = context.getResourceType();
-				resources.add(new DiscoveredResourceDetails(resourceType, key,
-						resourceName, "", "JBoss Cache", conf, null));
-
-			}
-		}
 		return resources;
 	}
-
-	private String getValue(Configuration config, String name) {
-
-		if (config.get(name) != null)
-			return config.getSimple(name).getStringValue();
-		else
-			return defaultConfig.getSimple(name).getStringValue();
-	}
-
 }

@@ -47,14 +47,6 @@ public interface MeasurementOOBManagerLocal {
     void computeOOBsFromHourBeginingAt(Subject subject, long begin);
 
     /**
-     * Remove old OOB entries from the database
-     * @param subject caller
-     * @param end oldest value to keep
-     */
-    @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
-    void removeOldOOBs(Subject subject, long end);
-
-    /**
      * Return OOB Composites that contain all information about the OOBs in a given time as aggregates.
      * @param subject The caller
      * @param metricNameFilter
@@ -83,7 +75,7 @@ public interface MeasurementOOBManagerLocal {
      * @param cutoffTime The reference time to determine new baselines
      */
     @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
-    void removeOutdatedOObs(Subject subject, long cutoffTime);
+    void removeOutdatedOOBs(Subject subject, long cutoffTime);
 
     /**
      * Remove all OOB data for the passed schedule

@@ -219,24 +219,6 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
     }
 
     /**
-     * Remove old OOB entries from the database
-     * @param subject Subject of the caller
-     * @param end oldest value to keep
-     */
-    @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
-    public void removeOldOOBs(Subject subject, long end) {
-
-        if (log.isDebugEnabled())
-            log.debug("Removing OOBs older than " + new Date(end));
-        Query q = entityManager.createQuery("DELETE FROM MeasurementOOB mo WHERE mo.timestamp < :time");
-        q.setParameter("time", end);
-        long t0 = System.currentTimeMillis();
-        int count = q.executeUpdate();
-        long t1 = System.currentTimeMillis();
-        log.info("Removed [" + count + "] old OOB entries in [" + (t1 - t0) + "] ms");
-    }
-
-    /**
      * Remove OOBs for schedules that had their baselines calculated after
      * a certain cutoff point. This is used to get rid of outdated OOB data for
      * baselines that got recalculated, as the new baselines will be 'big' enough for
@@ -245,7 +227,7 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
      * @param cutoffTime The reference time to determine new baselines
      */
     @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
-    public void removeOutdatedOObs(Subject subject, long cutoffTime) {
+    public void removeOutdatedOOBs(Subject subject, long cutoffTime) {
 
         Query q = entityManager.createNamedQuery(MeasurementOOB.DELETE_OUTDATED);
         q.setParameter("cutOff", cutoffTime);

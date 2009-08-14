@@ -329,7 +329,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
         // For now just assume that our system is fast, so a cutoff of 30mins is ok,
         // as the calculate baseline job runs hourly
         long cutOff = System.currentTimeMillis() - (30L * 60L * 1000L);
-        manager.removeOutdatedOObs(overlord, cutOff);
+        manager.removeOutdatedOOBs(overlord, cutOff);
 
         // clean up
         LookupUtil.getSystemManager().vacuum(overlord, new String[] { "RHQ_MEASUREMENT_OOB" });

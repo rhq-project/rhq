@@ -45,6 +45,7 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.NumericType;
+import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -132,6 +133,8 @@ public class ProblemResourceTest extends AbstractEJB3Test {
             assertResults(entityManager, fiveMinutesAgo, 0);
             assertCount(entityManager, fiveMinutesAgo, 0);
 
+            ResourceAvailability resourceAvail = new ResourceAvailability(platform, AvailabilityType.DOWN);
+            entityManager.persist(resourceAvail);
             Availability avail = new Availability(platform, null, AvailabilityType.DOWN);
             entityManager.persist(avail);
 
@@ -143,6 +146,8 @@ public class ProblemResourceTest extends AbstractEJB3Test {
             assertComposite(results.get(0), platform, 0);
             assert results.get(0).getAvailabilityType() == AvailabilityType.DOWN;
 
+            ResourceAvailability resourceAvail2 = new ResourceAvailability(platform2, AvailabilityType.DOWN);
+            entityManager.persist(resourceAvail2);
             Availability avail2 = new Availability(platform2, null, AvailabilityType.DOWN);
             entityManager.persist(avail2);
 

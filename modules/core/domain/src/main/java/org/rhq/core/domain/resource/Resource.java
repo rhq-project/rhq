@@ -92,50 +92,44 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
     @NamedQuery(name = Resource.QUERY_FIND_PROBLEM_RESOURCES_ALERT_ADMIN, query = "" //
         + "  SELECT DISTINCT new org.rhq.core.domain.resource.composite.ProblemResourceComposite"
         + "         ( "
-        + "         res.id, res.name, avail.availabilityType, COUNT(DISTINCT alert.id)"
+        + "         res.id, res.name, res.currentAvailability.availabilityType, COUNT(DISTINCT alert.id)"
         + "         ) "
         + "    FROM Resource res "
-        + "         LEFT JOIN res.availability avail "
         + "         LEFT JOIN res.alertDefinitions alertDef "
         + "         LEFT JOIN alertDef.alerts alert  "
-        + "   WHERE avail.endTime IS NULL "
-        + "     AND res.inventoryStatus = 'COMMITTED' "
-        + "     AND (( avail.availabilityType = 0 AND avail.startTime >= :oldest) "
-        + "          OR (alert.ctime >= :oldest)) " + "GROUP BY res.id, res.name, avail.availabilityType "),
+        + "   WHERE res.inventoryStatus = 'COMMITTED' "
+        + "     AND (( res.currentAvailability.availabilityType = 0) " //
+        + "          OR (alert.ctime >= :oldest)) "
+        + "GROUP BY res.id, res.name, res.currentAvailability.availabilityType "),
     @NamedQuery(name = Resource.QUERY_FIND_PROBLEM_RESOURCES_ALERT, query = "" //
         + "  SELECT DISTINCT new org.rhq.core.domain.resource.composite.ProblemResourceComposite"
         + "         ( "
-        + "         res.id, res.name, avail.availabilityType, COUNT(DISTINCT alert.id)"
+        + "         res.id, res.name, res.currentAvailability.availabilityType, COUNT(DISTINCT alert.id)"
         + "         ) "
         + "    FROM Resource res "
-        + "         LEFT JOIN res.availability avail "
         + "         LEFT JOIN res.alertDefinitions alertDef "
         + "         LEFT JOIN alertDef.alerts alert  "
-        + "   WHERE avail.endTime IS NULL "
-        + "     AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
+        + "   WHERE res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
         + "     AND res.inventoryStatus = 'COMMITTED' "
-        + "     AND (( avail.availabilityType = 0 AND avail.startTime >= :oldest) "
-        + "          OR (alert.ctime >= :oldest)) " + "GROUP BY res.id, res.name, avail.availabilityType "),
+        + "     AND (( res.currentAvailability.availabilityType = 0) " //
+        + "          OR (alert.ctime >= :oldest)) "
+        + "GROUP BY res.id, res.name, res.currentAvailability.availabilityType "),
     @NamedQuery(name = Resource.QUERY_FIND_PROBLEM_RESOURCES_ALERT_COUNT_ADMIN, query = "" //
         + "  SELECT COUNT( DISTINCT res.id ) "
         + "    FROM Resource res "
-        + "         LEFT JOIN res.availability avail "
         + "         LEFT JOIN res.alertDefinitions alertDef "
         + "         LEFT JOIN alertDef.alerts alert  "
-        + "   WHERE avail.endTime IS NULL "
-        + "     AND res.inventoryStatus = 'COMMITTED' "
-        + "     AND (( avail.availabilityType = 0 AND avail.startTime >= :oldest) "
+        + "   WHERE res.inventoryStatus = 'COMMITTED' " //
+        + "     AND (( res.currentAvailability.availabilityType = 0) " //
         + "          OR (alert.ctime >= :oldest)) "),
     @NamedQuery(name = Resource.QUERY_FIND_PROBLEM_RESOURCES_ALERT_COUNT, query = "" //
         + "  SELECT COUNT( DISTINCT res.id ) "
         + "    FROM Resource res " //
-        + "         LEFT JOIN res.availability avail " //
         + "         LEFT JOIN res.alertDefinitions alertDef " //
-        + "         LEFT JOIN alertDef.alerts alert  " //
-        + "   WHERE avail.endTime IS NULL " //
-        + "     AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
+        + "         LEFT JOIN alertDef.alerts alert  "
+        + "   WHERE res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
         + "     AND res.inventoryStatus = 'COMMITTED' " //
-        + "     AND (( avail.availabilityType = 0 AND avail.startTime >= :oldest) " //
+        + "     AND (( res.currentAvailability.availabilityType = 0) " //
         + "          OR (alert.ctime >= :oldest)) "),
 
     /* the following three are for auto-group details */

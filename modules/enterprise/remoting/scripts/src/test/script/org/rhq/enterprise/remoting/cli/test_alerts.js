@@ -23,9 +23,9 @@
 
 rhq.login('rhqadmin', 'rhqadmin');
 
-//skippedTests.push('testFindAlertsWithFiltering');
+//executeAllTests();
 
-executeAllTests();
+executeTests(['testFindAlertsWithFiltering'])
 
 rhq.logout();
 
@@ -124,7 +124,9 @@ function testFindAlertsWithFiltering() {
     var numberOfIntervals = 10;
 
     var eventCriteria = EventCriteria();
-    eventCriteria.addFilterDetail(eventDetails);
+    eventCriteria.caseSensitive = true;
+    eventCriteria.addFilterResourceId(service.id);
+    //eventCriteria.addFilterDetail(eventDetails);
 
     var events = waitForEventsToBeCommitted(pauseLength, numberOfIntervals, eventCriteria, numberOfEvents);
 
@@ -202,6 +204,7 @@ function findEventsByResource(resource) {
 function waitForEventsToBeCommitted(intervalLength, numberOfIntervals, eventCriteria, numberOfEvents) {
     for (i = 0; i < numberOfIntervals; ++i) {
         events = EventManager.findEventsByCriteria(eventCriteria);
+        java.lang.System.out.println('SIZE = ' + events.size() + ', NUM_EVENTS = ' + numberOfEvents);
         if (events.size() == numberOfEvents) {
             return events;
         }

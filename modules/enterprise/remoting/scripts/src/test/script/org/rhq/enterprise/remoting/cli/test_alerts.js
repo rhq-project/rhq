@@ -23,7 +23,7 @@
 
 rhq.login('rhqadmin', 'rhqadmin');
 
-skippedTests.push('testFindAlertsWithFiltering');
+//skippedTests.push('testFindAlertsWithFiltering');
 
 executeAllTests();
 
@@ -116,7 +116,9 @@ function testFindAlertsWithFiltering() {
     var severity = 'WARN';
     var numberOfEvents = 1;
 
-    fireEvents(service, severity, numberOfEvents, eventDetails);
+    var opSchedule = fireEvents(service, severity, numberOfEvents, eventDetails);
+
+    scriptUtil.waitForScheduledOperationToComplete(opSchedule);
 
     var pauseLength = 1000; // in milliseconds
     var numberOfIntervals = 10;

@@ -27,9 +27,6 @@
 
 rhq.login('rhqadmin', 'rhqadmin');
 
-// testFindResourceOperationHistoriesWithFiltering() is failing due to an entity serialization issue 
-skippedTests.push('testFindResourceOperationHistoriesWithFiltering');
-
 executeAllTests();
 
 rhq.logout();
@@ -142,17 +139,13 @@ function testFindResourceOperationHistoriesWithFiltering() {
 
     var serviceBetaOpHistory = scriptUtil.waitForScheduledOperationToComplete(serviceBetaOperationSchedule);
 
-//    var criteria = ResourceOperationHistoryCriteria();
-//    criteria.addFilterId(1);
-//    criteria.addFilterJobId(JobId('x_=_y'));
-//    criteria.addFilterErrorMessage('failed');
-//    criteria.addFilterOperationDefinitionId(1);
-//    criteria.addFilterStatus(OperationRequestStatus.SUCCESS);
-//    criteria.addFilterOperationName('start');
-//
-//    var histories = OperationManager.findResourceOperationHistoriesByCriteria(criteria);
+    var criteria = ResourceOperationHistoryCriteria();
+    criteria.addFilterOperationName('createEvents');
 
-    // TODO add verification
+    var histories = OperationManager.findResourceOperationHistoriesByCriteria(criteria);
+
+    Assert.assertTrue(histories.size() > 1, 'Expected to find at least two resource operation histories for the ' +
+            'createEvents operations that were executed for service-alpha-0 and for service-beta-0');
 }
 
 function testFindGroupOperationHistoriesUnfiltered() {

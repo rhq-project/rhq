@@ -45,6 +45,7 @@ import org.jboss.managed.api.ComponentType;
 import org.jboss.managed.api.DeploymentTemplateInfo;
 import org.jboss.managed.api.ManagedComponent;
 import org.jboss.managed.api.ManagedProperty;
+import org.jboss.metatype.api.values.SimpleValue;
 import org.jboss.on.common.jbossas.JBPMWorkflowManager;
 import org.jboss.on.common.jbossas.JBossASPaths;
 import org.jboss.profileservice.spi.NoSuchDeploymentException;
@@ -136,10 +137,28 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
         AvailabilityType availability;
         if (this.connection != null) {
             try {
-                // Ping the connection to make sure it's not defunct.
-                this.connection.getManagementView().getComponentTypes();
-                availability = AvailabilityType.UP;
-            } catch (CannotConnectException e) {
+                ManagementView managementView = this.connection.getManagementView();
+                managementView.load();
+                
+                //let's see if the connection corresponds to the server
+                //this component represents. This is to prevent 2 servers
+                //with the same JNP URL to be reported as UP when just one
+                //of them can be up at a time.
+                ManagedComponent serverConfig = managementView.getComponentsForType(new ComponentType("MCBean", "ServerConfig")).iterator().next();
+                
+                String reportedServerHomeDirPath = (String)((SimpleValue)serverConfig.getProperty("serverHomeDir").getValue()).getValue();
+                
+                String configuredServerHomeDirPath = resourceContext.getPluginConfiguration()
+                    .getSimpleValue(ApplicationServerPluginConfigurationProperties.SERVER_HOME_DIR, null);
+                
+                //the paths might be symlinked
+                File reportedServerHomeDir = new File(reportedServerHomeDirPath);
+                File configuredServerHomeDir = new File(configuredServerHomeDirPath);
+                
+                availability = reportedServerHomeDir.getCanonicalPath().equals(configuredServerHomeDir.getCanonicalPath())
+                               ? AvailabilityType.UP
+                               : AvailabilityType.DOWN;    
+            } catch (Exception e) {
                 availability = AvailabilityType.DOWN;
             }
         } else {

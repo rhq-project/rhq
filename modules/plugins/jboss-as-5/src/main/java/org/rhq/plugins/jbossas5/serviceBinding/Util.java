@@ -207,12 +207,11 @@ class Util {
     public static SimpleValue wrap(PropertySimple value, Class<?> type) {
         Serializable ret = null;
 
-        if (value == null)
+        if (value == null) {
             ret = null;
-        if (value.getStringValue() == null)
+        } else if (value.getStringValue() == null) {
             ret = null;
-
-        if (type == Integer.class) {
+        } else if (type == Integer.class) {
             ret = value.getIntegerValue();
         } else if (type == Long.class) {
             ret = value.getLongValue();

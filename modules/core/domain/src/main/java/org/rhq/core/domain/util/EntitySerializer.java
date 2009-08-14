@@ -121,18 +121,22 @@ public class EntitySerializer {
             throw new IllegalArgumentException("EntitySerializer only introspects objects annotated with @Entity ");
         }
 
-        Field[] fields = entityClass.getDeclaredFields();
         List<Field> serializableFields = new ArrayList<Field>();
 
-        for (Field field : fields) {
-            Annotation[] fieldAnnotations = field.getAnnotations();
-            for (Annotation fieldAnnotation : fieldAnnotations) {
-                if (PERSISTENCE_ANNOTATIONS.contains(fieldAnnotation.annotationType())) {
-                    serializableFields.add(field);
-                    field.setAccessible(true);
-                    break;
+        while (entityClass != null) {
+
+            Field[] fields = entityClass.getDeclaredFields();        
+            for (Field field : fields) {
+                Annotation[] fieldAnnotations = field.getAnnotations();
+                for (Annotation fieldAnnotation : fieldAnnotations) {
+                    if (PERSISTENCE_ANNOTATIONS.contains(fieldAnnotation.annotationType())) {
+                        serializableFields.add(field);
+                        field.setAccessible(true);
+                        break;
+                    }
                 }
             }
+            entityClass = entityClass.getSuperclass();
         }
 
         return serializableFields;

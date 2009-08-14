@@ -119,7 +119,6 @@ public class DataPurgeJob extends AbstractStatefulJob {
         purgeOrphanedAlertNotifications(LookupUtil.getAlertNotificationManager());
         purgeMeasurementTraitData(LookupUtil.getMeasurementDataManager(), systemConfig);
         purgeAvailabilityData(LookupUtil.getAvailabilityManager(), systemConfig);
-        //purgeOOBData(LookupUtil.getOOBManager());
     }
 
     private void purgeMeasurementTraitData(MeasurementDataManagerLocal measurementDataManager, Properties systemConfig) {
@@ -341,21 +340,4 @@ public class DataPurgeJob extends AbstractStatefulJob {
         long duration = System.currentTimeMillis() - timeStart;
         LOG.info("Auto-calculation of OOBs completed in [" + duration + "]ms");
     }
-
-    /**
-     * Purge outdated OOB data after 72h (we don't show a bigger time frame
-     * to the user anyway)
-     * @param oobManager MeasurementOOBManager to use
-     */
-    private void purgeOOBData(MeasurementOOBManagerLocal oobManager) {
-        long timeStart = System.currentTimeMillis();
-        LOG.info("Purging OOBs older than 72h ...");
-        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
-
-        long end = System.currentTimeMillis() - (3L * DAY);
-        oobManager.removeOldOOBs(overlord, end);
-        long duration = System.currentTimeMillis() - timeStart;
-        LOG.info("Purging of old OOBs completed in [" + duration + "]ms");
-    }
-
 }

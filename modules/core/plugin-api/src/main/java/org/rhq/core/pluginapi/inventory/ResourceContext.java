@@ -73,6 +73,7 @@ public class ResourceContext<T extends ResourceComponent> {
     private final OperationContext operationContext;
     private final ContentContext contentContext;
     private final Executor availCollectionThreadPool;
+    private final PluginContainerDeployment pluginContainerDeployment;
 
     private ProcessInfo processInfo;
 
@@ -101,11 +102,13 @@ public class ResourceContext<T extends ResourceComponent> {
      * @param availCollectorThreadPool   a thread pool that can be used by the plugin component should it wish
      *                                   or need to perform asynchronous availability checking. See the javadoc on
      *                                   {@link AvailabilityCollectorRunnable} for more information on this.
+     * @param pluginContainerDeployment  indicates where the plugin container is running
      */
     public ResourceContext(Resource resource, T parentResourceComponent,
         ResourceDiscoveryComponent resourceDiscoveryComponent, SystemInfo systemInfo, File temporaryDirectory,
         File dataDirectory, String pluginContainerName, EventContext eventContext, OperationContext operationContext,
-        ContentContext contentContext, Executor availCollectorThreadPool) {
+        ContentContext contentContext, Executor availCollectorThreadPool,
+        PluginContainerDeployment pluginContainerDeployment) {
 
         this.resourceKey = resource.getResourceKey();
         this.resourceType = resource.getResourceType();
@@ -116,6 +119,7 @@ public class ResourceContext<T extends ResourceComponent> {
         this.pluginConfiguration = resource.getPluginConfiguration();
         this.dataDirectory = dataDirectory;
         this.pluginContainerName = pluginContainerName;
+        this.pluginContainerDeployment = pluginContainerDeployment;
         if (temporaryDirectory == null) {
             this.temporaryDirectory = new File(System.getProperty("java.io.tmpdir"), "AGENT_TMP");
             this.temporaryDirectory.mkdirs();
@@ -207,7 +211,7 @@ public class ResourceContext<T extends ResourceComponent> {
 
                     context = new ResourceDiscoveryContext(this.resourceType, this.parentResourceComponent, this,
                         this.systemInformation, getNativeProcessesForType(), Collections.EMPTY_LIST,
-                        getPluginContainerName());
+                        getPluginContainerName(), getPluginContainerDeployment());
 
                     details = this.resourceDiscoveryComponent.discoverResources(context);
 
@@ -293,6 +297,16 @@ public class ResourceContext<T extends ResourceComponent> {
      */
     public String getPluginContainerName() {
         return pluginContainerName;
+    }
+
+    /**
+     * Indicates where the plugin container (and therefore where the plugins) are deployed and running.
+     * See {@link PluginContainerDeployment} for more information on what the return value means.
+     * 
+     * @return indicator of where the plugin container is deployed and running
+     */
+    public PluginContainerDeployment getPluginContainerDeployment() {
+        return pluginContainerDeployment;
     }
 
     /**

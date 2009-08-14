@@ -29,6 +29,7 @@ import java.util.Map;
 
 import org.rhq.core.pc.plugin.PluginFinder;
 import org.rhq.core.pc.plugin.RootPluginClassLoader;
+import org.rhq.core.pluginapi.inventory.PluginContainerDeployment;
 
 /**
  * Configuration properties for the plugin container and all its internal managers.
@@ -706,6 +707,7 @@ public class PluginContainerConfiguration {
     /**
      * Returns whether or not the plugin container is running inside an agent, which means it is running external to any
      * managed product.
+     * Note: Use {@link #getPluginContainerDeployment()} instead, this method might get deprecated later. 
      *
      * @return <code>true</code> if the container is deployed inside an external agent process; <code>false</code> if
      *         the plugin container is embedded directly in a managed product
@@ -718,6 +720,20 @@ public class PluginContainerConfiguration {
         }
 
         return ((Boolean) val).booleanValue();
+    }
+
+    /**
+     * Indicates where the plugin container is deployed. This is analogous to the {@link #isInsideAgent()} except
+     * it returns the plugin API enum, rather than a boolean.
+     *   
+     * @return indicator of where the plugin is deployed
+     */
+    public PluginContainerDeployment getPluginContainerDeployment() {
+        if (isInsideAgent()) {
+            return PluginContainerDeployment.AGENT;
+        } else {
+            return PluginContainerDeployment.EMBEDDED;
+        }
     }
 
     /**

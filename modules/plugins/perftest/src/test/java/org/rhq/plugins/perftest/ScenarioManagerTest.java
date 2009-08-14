@@ -34,6 +34,7 @@ import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
+import org.rhq.core.pluginapi.inventory.PluginContainerDeployment;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.plugins.perftest.content.ContentFactory;
 import org.rhq.plugins.perftest.measurement.MeasurementFactory;
@@ -53,7 +54,7 @@ public class ScenarioManagerTest {
         // Setup
         ResourceType resourceType = new ResourceType("server-a", "plugin", ResourceCategory.SERVER, null);
         ResourceDiscoveryContext context = new ResourceDiscoveryContext(resourceType, null, null, null, null, null,
-            "test");
+            "test", PluginContainerDeployment.AGENT);
 
         // Test
         ScenarioManager manager = ScenarioManager.getInstance();
@@ -71,7 +72,7 @@ public class ScenarioManagerTest {
         // Setup
         ResourceType resourceType = new ResourceType("server-c", "plugin", ResourceCategory.SERVER, null);
         ResourceDiscoveryContext context = new ResourceDiscoveryContext(resourceType, null, null, null, null, null,
-            "test");
+            "test", PluginContainerDeployment.AGENT);
 
         // Test
         ScenarioManager manager = ScenarioManager.getInstance();
@@ -91,7 +92,7 @@ public class ScenarioManagerTest {
 
         ResourceType resourceType = new ResourceType("server-b", "plugin", ResourceCategory.SERVER, null);
         ResourceDiscoveryContext context = new ResourceDiscoveryContext(resourceType, null, null, null, null, null,
-            "test");
+            "test", PluginContainerDeployment.AGENT);
 
         // Test
         ScenarioManager manager = ScenarioManager.getInstance();

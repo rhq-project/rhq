@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.pluginapi.inventory;
 
 import java.util.ArrayList;
@@ -56,6 +56,7 @@ import org.rhq.core.system.SystemInfo;
 public class ResourceDiscoveryContext<T extends ResourceComponent> {
     private final ResourceType resourceType;
     private final T parentComponent;
+    private final PluginContainerDeployment pluginContainerDeployment;
 
     /**
      * @since 1.0.1
@@ -87,10 +88,13 @@ public class ResourceDiscoveryContext<T extends ResourceComponent> {
      *                             if there are no other known resources)
      * @param pluginContainerName  the name of the plugin container in which the discovery component is running. Components
      *                             can be assured this name is unique across <b>all</b> plugin containers/agents running
+     * @param pluginContainerDeployment  indicates where the plugin container is running
      */
     @SuppressWarnings("unchecked")
-    public ResourceDiscoveryContext(ResourceType resourceType, T parentComponent, ResourceContext parentResourceContext, SystemInfo systemInfo,
-                                    List<ProcessScanResult> processScanResults, List<Configuration> pluginConfigurations, String pluginContainerName) {
+    public ResourceDiscoveryContext(ResourceType resourceType, T parentComponent,
+        ResourceContext parentResourceContext, SystemInfo systemInfo, List<ProcessScanResult> processScanResults,
+        List<Configuration> pluginConfigurations, String pluginContainerName,
+        PluginContainerDeployment pluginContainerDeployment) {
         this.resourceType = resourceType;
         this.parentComponent = parentComponent;
         this.parentResourceContext = parentResourceContext;
@@ -98,6 +102,7 @@ public class ResourceDiscoveryContext<T extends ResourceComponent> {
         this.processScanResults = (processScanResults != null) ? processScanResults : Collections.EMPTY_LIST;
         this.pluginConfigurations = (pluginConfigurations != null) ? pluginConfigurations : Collections.EMPTY_LIST;
         this.pluginContainerName = pluginContainerName;
+        this.pluginContainerDeployment = pluginContainerDeployment;
     }
 
     /**
@@ -201,5 +206,15 @@ public class ResourceDiscoveryContext<T extends ResourceComponent> {
      */
     public String getPluginContainerName() {
         return pluginContainerName;
+    }
+
+    /**
+     * Indicates where the plugin container (and therefore where the plugins) are deployed and running.
+     * See {@link PluginContainerDeployment} for more information on what the return value means.
+     * 
+     * @return indicator of where the plugin container is deployed and running
+     */
+    public PluginContainerDeployment getPluginContainerDeployment() {
+        return pluginContainerDeployment;
     }
 }

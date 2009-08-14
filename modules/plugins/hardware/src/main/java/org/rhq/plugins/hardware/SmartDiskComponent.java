@@ -18,27 +18,27 @@
  */
 package org.rhq.plugins.hardware;
 
-import org.rhq.core.pluginapi.inventory.ResourceComponent;
-import org.rhq.core.pluginapi.inventory.ResourceContext;
-import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
-import org.rhq.core.pluginapi.measurement.MeasurementFacet;
+import java.io.BufferedReader;
+import java.io.StringReader;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
-import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+import org.rhq.core.pluginapi.inventory.PluginContainerDeployment;
+import org.rhq.core.pluginapi.inventory.ResourceComponent;
+import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.system.ProcessExecution;
 import org.rhq.core.system.ProcessExecutionResults;
-import org.rhq.core.system.NativeSystemInfo;
-
-import java.util.Set;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
-import java.io.StringReader;
-import java.io.BufferedReader;
 
 /**
  * @author Greg Hinkle
@@ -75,14 +75,13 @@ public class SmartDiskComponent implements ResourceComponent, MeasurementFacet {
         String prefix = context.getPluginConfiguration().getSimple("prefix").getStringValue();
         String command = context.getPluginConfiguration().getSimple("command").getStringValue();
 
-
         ProcessExecution proc;
         if (prefix != null) {
             proc = new ProcessExecution(prefix);
-            proc.setArguments(new String[]{command, "--attributes", context.getResourceKey()});
+            proc.setArguments(new String[] { command, "--attributes", context.getResourceKey() });
         } else {
             proc = new ProcessExecution(command);
-            proc.setArguments(new String[]{"--attributes", context.getResourceKey()});
+            proc.setArguments(new String[] { "--attributes", context.getResourceKey() });
         }
 
         proc.setCaptureOutput(true);
@@ -114,10 +113,10 @@ public class SmartDiskComponent implements ResourceComponent, MeasurementFacet {
         }
     }
 
-
     public static void main(String[] args) throws Exception {
         SmartDiskComponent sdc = new SmartDiskComponent();
-        sdc.start(new ResourceContext(new Resource("/dev/sda", "foo", new ResourceType()), null, null, null, null, null, null, null, null, null, null));
+        sdc.start(new ResourceContext(new Resource("/dev/sda", "foo", new ResourceType()), null, null, null, null,
+            null, null, null, null, null, null, PluginContainerDeployment.AGENT));
         sdc.getValues(null, null);
 
     }

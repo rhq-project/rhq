@@ -311,7 +311,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
         ResourceDiscoveryContext discoveryContext = new ResourceDiscoveryContext(resourceType, parentComponent,
             parentResourceContext, SystemInfoFactory.createSystemInfo(), null, null, this.configuration
-                .getContainerName());
+                .getContainerName(), this.configuration.getPluginContainerDeployment());
 
         DiscoveredResourceDetails details = new DiscoveredResourceDetails(resourceType, resource.getResourceKey(),
             resource.getName(), resource.getVersion(), resource.getDescription(), resource.getPluginConfiguration(),
@@ -545,7 +545,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             ResourceDiscoveryContext<ResourceComponent> resourceDiscoveryContext = new ResourceDiscoveryContext<ResourceComponent>(
                 resourceType, parentResourceComponent, parentResourceContainer.getResourceContext(), SystemInfoFactory
                     .createSystemInfo(), new ArrayList<ProcessScanResult>(0), pluginConfigurations, configuration
-                    .getContainerName());
+                    .getContainerName(), this.configuration.getPluginContainerDeployment());
 
             // Ask the plugin's discovery component to find the new resource, throwing exceptions if it cannot be found at all.
             Set<DiscoveredResourceDetails> discoveredResources = invokeDiscoveryComponent(discoveryComponent,
@@ -1250,8 +1250,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 getEventContext(resource), // for event access
                 getOperationContext(resource), // for operation manager access
                 getContentContext(resource), // for content manager access
-                this.availabilityCollectors); // for components that want to perform async avail checking
-
+                this.availabilityCollectors, // for components that want to perform async avail checking
+                this.configuration.getPluginContainerDeployment()); // helps components make determinations of what to do
             container.setResourceContext(context);
 
             // Wrap the component in a proxy that will provide locking and a timeout for the call to start().
@@ -1537,7 +1537,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 try {
                     ResourceDiscoveryComponent component = componentFactory.getDiscoveryComponent(platformType, null);
                     ResourceDiscoveryContext context = new ResourceDiscoveryContext(platformType, null, null,
-                        systemInfo, Collections.EMPTY_LIST, Collections.EMPTY_LIST, configuration.getContainerName());
+                        systemInfo, Collections.EMPTY_LIST, Collections.EMPTY_LIST, configuration.getContainerName(),
+                        this.configuration.getPluginContainerDeployment());
                     Set<DiscoveredResourceDetails> discoveredResources = null;
 
                     try {
@@ -1849,7 +1850,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
         try {
             ResourceDiscoveryContext context = new ResourceDiscoveryContext(resourceType, parentComponent,
                 parentResourceContext, SystemInfoFactory.createSystemInfo(), processScanResults,
-                Collections.EMPTY_LIST, this.configuration.getContainerName());
+                Collections.EMPTY_LIST, this.configuration.getContainerName(), this.configuration
+                    .getPluginContainerDeployment());
             Set<DiscoveredResourceDetails> discoveredResources = invokeDiscoveryComponent(discoveryComponent, context);
             newResources = new HashSet<Resource>();
             if ((discoveredResources != null) && (!discoveredResources.isEmpty())) {

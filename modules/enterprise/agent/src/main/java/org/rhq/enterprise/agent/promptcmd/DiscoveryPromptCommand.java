@@ -46,6 +46,7 @@ import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pc.plugin.PluginComponentFactory;
 import org.rhq.core.pc.util.DiscoveryComponentProxyFactory;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
+import org.rhq.core.pluginapi.inventory.PluginContainerDeployment;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
@@ -307,7 +308,8 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
                 platformContainer);
 
             ResourceDiscoveryContext context = new ResourceDiscoveryContext(resourceType, platformComponent,
-                platformContainer.getResourceContext(), systemInfo, scanResults, Collections.EMPTY_LIST, pcName);
+                platformContainer.getResourceContext(), systemInfo, scanResults, Collections.EMPTY_LIST, pcName,
+                PluginContainerDeployment.AGENT);
 
             Set<DiscoveredResourceDetails> discoveredResources;
             discoveredResources = inventoryManager.invokeDiscoveryComponent(discoveryComponent, context);

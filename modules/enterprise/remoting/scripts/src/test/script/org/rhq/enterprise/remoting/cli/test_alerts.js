@@ -23,6 +23,8 @@
 
 rhq.login('rhqadmin', 'rhqadmin');
 
+skippedTests.push('testFindAlertsWithFiltering');
+
 executeAllTests();
 
 rhq.logout();
@@ -116,13 +118,13 @@ function testFindAlertsWithFiltering() {
 
     fireEvents(service, severity, numberOfEvents, eventDetails);
 
-    var pauseLenth = 1000; // in milliseconds
+    var pauseLength = 1000; // in milliseconds
     var numberOfIntervals = 10;
 
     var eventCriteria = EventCriteria();
     eventCriteria.addFilterDetail(eventDetails);
 
-    var events = waitForEventsToBeCommitted(pauseLenth, numberOfIntervals, eventCriteria, numberOfEvents);
+    var events = waitForEventsToBeCommitted(pauseLength, numberOfIntervals, eventCriteria, numberOfEvents);
 
     Assert.assertNumberEqualsJS(events.size(), numberOfEvents, 'Failed to find all fired events when finding alerts ' +
         'with filtering. This could just be a timeout. You may want to check your database and server logs to be sure though');

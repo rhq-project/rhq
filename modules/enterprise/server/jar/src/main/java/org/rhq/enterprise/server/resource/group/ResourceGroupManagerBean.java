@@ -719,9 +719,10 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         /*
          * now add this resource and all of its descendants to whatever recursive groups it's parent is already in
          */
+        Connection conn = null;
+        PreparedStatement insertImplicitStatement = null;
         try {
-            Connection conn = rhqDs.getConnection();
-            PreparedStatement insertImplicitStatement = null;
+            conn = rhqDs.getConnection();
             for (Integer implicitRecursiveGroupId : implicitRecursiveGroupIds) {
                 /*
                  * do have to worry about whether these resources are already in the explicit resource list because
@@ -751,6 +752,9 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         } catch (Exception e) {
             throw new ResourceGroupUpdateException("Could not add resource[id=" + resource.getId()
                 + "] to necessary implicit groups", e);
+        } finally {
+            JDBCUtil.safeClose(insertImplicitStatement);
+            JDBCUtil.safeClose(conn);
         }
     }
 

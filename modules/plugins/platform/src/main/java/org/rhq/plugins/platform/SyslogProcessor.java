@@ -164,8 +164,14 @@ public class SyslogProcessor {
             if (event != null) {
                 if (this.minimumEventSeverity != null
                     && !event.getSeverity().isAtLeastAsSevereAs(this.minimumEventSeverity)) {
+                    if (log.isTraceEnabled()) {
+                        log.trace("event is not at minimum severity: " + event);
+                    }
                     event = null;
                 } else if (this.includesPattern != null && !this.includesPattern.matcher(event.getDetail()).matches()) {
+                    if (log.isTraceEnabled()) {
+                        log.trace("event does not match includes pattern [" + this.includesPattern + "]: " + event);
+                    }
                     event = null;
                 }
             }
@@ -190,6 +196,10 @@ public class SyslogProcessor {
                 event = new Event(EVENT_LOG_TYPE, this.sourceLocation, timestamp, severity, detailsString);
             } else {
                 event = null;
+                if (log.isTraceEnabled()) {
+                    log.trace("Message [" + syslogMessage + "] did not match parser regex: "
+                        + this.parserRegex.pattern());
+                }
             }
         } catch (Exception e) {
             event = null;
@@ -278,8 +288,10 @@ public class SyslogProcessor {
             }
             return cal.getTimeInMillis();
         } catch (Exception e) {
-            log.debug("Failed to parse date/time [" + dateTimeString + "] with format ["
-                + this.dateTimeFormatter.toPattern() + "]. " + e);
+            if (log.isTraceEnabled()) {
+                log.trace("Failed to parse date/time [" + dateTimeString + "] with format ["
+                    + this.dateTimeFormatter.toPattern() + "]. " + e);
+            }
             return System.currentTimeMillis();
         }
     }

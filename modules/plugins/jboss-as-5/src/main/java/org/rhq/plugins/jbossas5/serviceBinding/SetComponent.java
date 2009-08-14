@@ -127,7 +127,7 @@ public class SetComponent implements ResourceComponent<ManagerComponent>, Config
 
             bindingSetsProperty.setValue(newBindingSetsValue);
 
-            context.getParentResourceComponent().updateBindingManager();
+            context.getParentResourceComponent().updateBindingManager(bindingManagerComponent);
 
             report.setStatus(ConfigurationUpdateStatus.SUCCESS);
         } catch (Exception e) {
@@ -174,7 +174,7 @@ public class SetComponent implements ResourceComponent<ManagerComponent>, Config
 
         bindingSetsProperty.setValue(newBindingSetsValue);
 
-        context.getParentResourceComponent().updateBindingManager();
+        context.getParentResourceComponent().updateBindingManager(bindingManagerComponent);
     }
 
     

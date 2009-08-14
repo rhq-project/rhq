@@ -48,7 +48,11 @@ public class SetDiscoveryComponent implements ResourceDiscoveryComponent<Manager
 
         ResourceType resourceType = context.getResourceType();
 
-        ManagedComponent bindingManagerComponent = context.getParentResourceComponent().getBindingManager();
+        //refresh the management view
+        ManagerComponent managerResourceComponent = context.getParentResourceComponent();
+        managerResourceComponent.getConnection().getManagementView().load();
+
+        ManagedComponent bindingManagerComponent = managerResourceComponent.getBindingManager();
 
         CollectionValue bindingSets = (CollectionValue) bindingManagerComponent.getProperty(Util.BINDING_SETS_PROPERTY)
             .getValue();
@@ -59,7 +63,7 @@ public class SetDiscoveryComponent implements ResourceDiscoveryComponent<Manager
         for (MetaValue m : bindingSets.getElements()) {
             CompositeValue bindingSet = (CompositeValue) m;
 
-            String bindingSetName = Util.getValue(bindingSet, "name", String.class);
+            String bindingSetName = Util.getValue(bindingSet, Util.NAME_PROPERTY, String.class);
             String resourceKey = context.getParentResourceComponent().getBindingSetResourceKey(bindingSetName);
 
             DiscoveredResourceDetails resource = new DiscoveredResourceDetails(resourceType, resourceKey,

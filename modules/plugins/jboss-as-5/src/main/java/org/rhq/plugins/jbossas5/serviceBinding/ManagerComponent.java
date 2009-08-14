@@ -67,8 +67,6 @@ public class ManagerComponent extends ManagedComponentComponent implements Creat
     private static final String BINDING_SET_SERVICE_NAME = "Service Binding Set";
     private static final String RESOURCE_KEY_SEPARATOR = "!)@(#*";
 
-    private ManagedComponent bindingManagerComponent;
-
     @Override
     public AvailabilityType getAvailability() {
         RunState runState = getManagedComponent().getRunState();
@@ -80,7 +78,7 @@ public class ManagerComponent extends ManagedComponentComponent implements Creat
 
     @Override
     public Configuration loadResourceConfiguration() {
-        bindingManagerComponent = getManagedComponent();
+        ManagedComponent bindingManagerComponent = getBindingManager();
 
         Configuration configuration = new Configuration();
 
@@ -174,7 +172,7 @@ public class ManagerComponent extends ManagedComponentComponent implements Creat
 
             bindingManagerComponent.getProperty(Util.STANDARD_BINDINGS_PROPERTY).setValue(standardBindingsValue);
 
-            updateBindingManager();
+            updateBindingManager(bindingManagerComponent);
 
             configurationUpdateReport.setStatus(ConfigurationUpdateStatus.SUCCESS);
         } catch (Exception e) {
@@ -225,7 +223,7 @@ public class ManagerComponent extends ManagedComponentComponent implements Creat
 
                 bindingSetsProperty.setValue(newBindingSetsValue);
 
-                updateBindingManager();
+                updateBindingManager(bindingManagerComponent);
 
                 report.setResourceKey(getBindingSetResourceKey(newBindingSetName));
                 report.setResourceName(newBindingSetName);
@@ -247,15 +245,12 @@ public class ManagerComponent extends ManagedComponentComponent implements Creat
     }
 
     public ManagedComponent getBindingManager() {
-        if (bindingManagerComponent == null) {
-            loadResourceConfiguration();
-        }
-        return bindingManagerComponent;
+        return getManagedComponent();
     }
 
-    public void updateBindingManager() throws Exception {
+    public void updateBindingManager(ManagedComponent bindingManagerComponent) throws Exception {
         ManagementView managementView = getConnection().getManagementView();
-        managementView.updateComponent(getBindingManager());
+        managementView.updateComponent(bindingManagerComponent);
         managementView.load();
     }
 

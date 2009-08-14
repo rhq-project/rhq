@@ -95,7 +95,6 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
      * @param subject Subject of the caller
      * @param begin Start time of the 1h entries to look at
      */
-    //@TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
     public void computeOOBsFromHourBeginingAt(Subject subject, long begin) {
 
         Connection conn = null;
@@ -194,7 +193,7 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
      * #computeOOBsFromHourBeginingAt
      * @param subject Caller
      */
-    //    @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
+    @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
     public void computeOOBsFromLastHour(Subject subject) {
 
         Query q = entityManager.createNamedQuery(MeasurementDataNumeric1H.GET_MAX_TIMESTAMP);

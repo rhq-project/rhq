@@ -19,8 +19,6 @@
 package org.rhq.enterprise.server.measurement;
 
 import javax.ejb.Local;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
@@ -63,7 +61,6 @@ public interface MeasurementOOBManagerLocal {
      * #computeOOBsFromHourBeginingAt
      * @param subject caller
      */
-    @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
     void computeOOBsFromLastHour(Subject subject);
 
     /**
@@ -74,7 +71,6 @@ public interface MeasurementOOBManagerLocal {
      * @param subject The caller
      * @param cutoffTime The reference time to determine new baselines
      */
-    @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
     void removeOutdatedOOBs(Subject subject, long cutoffTime);
 
     /**

@@ -25,9 +25,13 @@ package org.rhq.core.domain.criteria;
 import java.util.Arrays;
 import java.util.List;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+
 /**
  * @author Joseph Marques
  */
+@XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings("unused")
 public class ResourceOperationHistoryCriteria extends OperationHistoryCriteria {
     private static final long serialVersionUID = 1L;

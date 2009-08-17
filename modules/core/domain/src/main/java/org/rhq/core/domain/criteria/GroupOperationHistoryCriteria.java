@@ -24,9 +24,13 @@ package org.rhq.core.domain.criteria;
 
 import java.util.List;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+
 /**
  * @author Joseph Marques
  */
+@XmlAccessorType(XmlAccessType.FIELD)
 public class GroupOperationHistoryCriteria extends OperationHistoryCriteria {
     private List<Integer> filterResourceGroupIds; // requires override
 

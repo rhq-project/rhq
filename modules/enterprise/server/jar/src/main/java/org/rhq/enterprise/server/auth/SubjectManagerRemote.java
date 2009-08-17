@@ -30,9 +30,10 @@ import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
 import org.rhq.enterprise.server.exception.LoginException;
+import org.rhq.enterprise.server.system.ServerVersion;
 
 @SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
-@WebService
+@WebService(targetNamespace = ServerVersion.namespace)
 @Remote
 public interface SubjectManagerRemote {
 
@@ -151,4 +152,12 @@ public interface SubjectManagerRemote {
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "criteria") SubjectCriteria criteria);
 
+    /**This method should return the NameSpace server version without authentication/verification/etc.
+     * Clients of all versions should always be able to make a call to this method to determine
+     * the version of the server apis that are being exposed by the wsdl(s).
+     * 
+     * @return String representation of the version of the server. Ex. 
+     */
+    @WebMethod
+    String getServerNamespaceVersion();
 }

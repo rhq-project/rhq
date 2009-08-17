@@ -28,7 +28,7 @@ import org.rhq.core.domain.auth.Subject;
 /**
  * @author John Mazzitelli
  */
-@WebService
+@WebService(targetNamespace = ServerVersion.namespace)
 @Remote
 public interface SystemManagerRemote {
     /**

@@ -26,6 +26,7 @@ import javax.jws.WebParam;
 import javax.jws.WebService;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.enterprise.server.system.ServerVersion;
 
 /**
  * Provides some methods that are useful for supporting managed resources. This includes being
@@ -34,7 +35,7 @@ import org.rhq.core.domain.auth.Subject;
  * 
  * @author John Mazzitelli
  */
-@WebService
+@WebService(targetNamespace = ServerVersion.namespace)
 @Remote
 public interface SupportManagerRemote {
     /**

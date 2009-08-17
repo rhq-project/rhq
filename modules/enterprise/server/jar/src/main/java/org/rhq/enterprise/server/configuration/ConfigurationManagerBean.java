@@ -29,7 +29,6 @@ import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
-import javax.jws.WebService;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;
@@ -104,7 +103,6 @@ import org.rhq.enterprise.server.util.QuartzUtil;
  * @author Ian Springer
  */
 @Stateless
-@WebService(endpointInterface = "org.rhq.enterprise.server.configuration.ConfigurationManagerRemote")
 public class ConfigurationManagerBean implements ConfigurationManagerLocal, ConfigurationManagerRemote {
     private final Log log = LogFactory.getLog(ConfigurationManagerBean.class);
 

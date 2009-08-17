@@ -35,7 +35,6 @@ import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
-import javax.jws.WebService;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
@@ -124,8 +123,6 @@ import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
  * @author Jay Shaughnessy (delete operations)
  */
 @Stateless
-@WebService(endpointInterface = "org.rhq.enterprise.server.resource.ResourceManagerRemote")
-//@WebContext(contextRoot = "/webservices")
 public class ResourceManagerBean implements ResourceManagerLocal, ResourceManagerRemote {
     private final Log log = LogFactory.getLog(ResourceManagerBean.class);
 

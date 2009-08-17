@@ -26,14 +26,28 @@ import java.io.Serializable;
  * @author John Mazzitelli
  */
 public class ServerVersion implements Serializable {
+    public static String getNamespace() {
+        return namespace;
+    }
+
     private static final long serialVersionUID = 1L;
 
-    private final String version;
-    private final String build;
+    //removed final typing info for no-args constructor and JAXB requirement
+    private String version;
+    private String build;
+
+    //This value must be set by build system just before Build Time.
+    public static final String namespace = "http://jon.rhq.org/JON_2.3/2009/9/JON.xsd";
+
+    //    private final String namespace = "@ws-namespace@";
 
     public ServerVersion(String version, String build) {
         this.version = version;
         this.build = build;
+    }
+
+    //No args constructor for JAXB serialization/bean requirement.
+    private ServerVersion() {
     }
 
     /**

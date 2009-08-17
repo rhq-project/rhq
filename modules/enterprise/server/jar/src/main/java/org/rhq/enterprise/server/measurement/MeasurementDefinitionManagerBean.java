@@ -24,7 +24,6 @@ import java.util.List;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
-import javax.jws.WebService;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
@@ -49,7 +48,6 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
  * A manager for {@link MeasurementDefinition}s.
  */
 @Stateless
-@WebService(endpointInterface = "org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerRemote")
 public class MeasurementDefinitionManagerBean implements MeasurementDefinitionManagerLocal,
     MeasurementDefinitionManagerRemote {
     private Log log = LogFactory.getLog(MeasurementDefinitionManagerBean.class);

@@ -25,7 +25,6 @@ import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
-import javax.jws.WebService;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
@@ -57,7 +56,6 @@ import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.plugin.content.ContentSourcePluginContainer;
 
 @Stateless
-@WebService(endpointInterface = "org.rhq.enterprise.server.content.ChannelManagerRemote")
 public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRemote {
     private final Log log = LogFactory.getLog(ChannelManagerBean.class);
 

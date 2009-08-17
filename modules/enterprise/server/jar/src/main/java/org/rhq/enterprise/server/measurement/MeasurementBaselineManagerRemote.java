@@ -28,9 +28,10 @@ import javax.jws.soap.SOAPBinding;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
+import org.rhq.enterprise.server.system.ServerVersion;
 
 @SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
-@WebService
+@WebService(targetNamespace = ServerVersion.namespace)
 @Remote
 public interface MeasurementBaselineManagerRemote {
 

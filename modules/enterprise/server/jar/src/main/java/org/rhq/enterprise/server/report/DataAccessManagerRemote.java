@@ -28,14 +28,15 @@ import javax.jws.soap.SOAPBinding;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.util.PageControl;
+import org.rhq.enterprise.server.system.ServerVersion;
 
 /**
  * @author Greg Hinkle
  */
 @SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
-@WebService
+@WebService(targetNamespace = ServerVersion.namespace)
 @Remote
-public interface DataAccessRemote {
+public interface DataAccessManagerRemote {
 
     /**
      * Execute a query. Requires a user with the MANAGE_INVENTORY permission.
@@ -58,7 +59,7 @@ public interface DataAccessRemote {
      * @return list of object array results
      */
     @WebMethod
-    public List<Object[]> executeQuery(//
+    public List<Object[]> executeQueryWithPageControl(//
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "query") String query, //
         @WebParam(name = "pageControl") PageControl pageControl);

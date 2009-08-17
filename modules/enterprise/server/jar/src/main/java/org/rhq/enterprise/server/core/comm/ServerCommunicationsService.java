@@ -71,6 +71,7 @@ import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.agentclient.impl.AgentClientImpl;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.remote.RemoteSafeInvocationHandler;
+import org.rhq.enterprise.server.remote.RemoteWsInvocationHandler;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -91,6 +92,7 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
      * The remoting subsystem name that identifies remote API client messages.
      */
     private static final String REMOTE_API_SUBSYSTEM = "REMOTEAPI";
+    private static final String WS_REMOTE_API_SUBSYSTEM = "WSREMOTEAPI";
 
     /**
      * The MBeanServer where this bootstrap service is registered and where the server-side comm services will be
@@ -149,6 +151,7 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
      * The invocation handler used to process incoming remote API requests from things such as the CLI.
      */
     private RemoteSafeInvocationHandler m_remoteApiHandler;
+    private RemoteWsInvocationHandler m_remoteWsApiHandler;
 
     /**
      * Sets up some internal state.
@@ -200,6 +203,11 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
             m_remoteApiHandler.registerMetricsMBean(container.getMBeanServer());
             container.addInvocationHandler(REMOTE_API_SUBSYSTEM, m_remoteApiHandler);
 
+            // now let's add our additional handler to support the remote clients (e.g. CLI)
+            m_remoteWsApiHandler = new RemoteWsInvocationHandler();
+            //            m_remoteWsApiHandler.registerMetricsMBean(container.getMBeanServer());
+            container.addInvocationHandler(WS_REMOTE_API_SUBSYSTEM, m_remoteWsApiHandler);
+
             m_container = container;
             m_configuration = config;
             m_started = true;
@@ -220,6 +228,8 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
             try {
                 m_remoteApiHandler.unregisterMetricsMBean(m_container.getMBeanServer());
                 m_container.removeInvocationHandler(REMOTE_API_SUBSYSTEM);
+
+                m_container.removeInvocationHandler(WS_REMOTE_API_SUBSYSTEM);
             } catch (Exception e) {
                 LOG.warn(ServerI18NResourceKeys.REMOTE_API_REMOVAL_FAILURE, ThrowableUtil.getAllMessages(e));
             }
@@ -227,6 +237,7 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
             m_container.shutdown();
             m_container = null;
             m_remoteApiHandler = null;
+            m_remoteWsApiHandler = null;
             m_started = false;
         }
 

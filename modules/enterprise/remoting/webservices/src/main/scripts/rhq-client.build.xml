@@ -10,7 +10,8 @@
    <property name="include.client.jar" value="true" />
 
    <!-- load all the Stateless Session Bean for WS exposure as properties. Must add bean as separate 
-   		property AND in the "ws-list" below for successful inclusion. ##TODO: collapse these to one list. -->
+   		property AND in the "ws-list" below for successful inclusion. ##TODO SP: collapse these to one list. -->
+   <property name="SimpleManager" value="org.rhq.enterprise.server.jaxb.SimpleManagerBean" />
    <property name="AlertManager" value="org.rhq.enterprise.server.alert.AlertManagerBean" />
    <property name="AlertDefinitionManager" value="org.rhq.enterprise.server.alert.AlertDefinitionManagerBean" />
    <property name="AvailabilityManager" value="org.rhq.enterprise.server.measurement.AvailabilityManagerBean" />
@@ -18,6 +19,7 @@
    <property name="ChannelManager" value="org.rhq.enterprise.server.content.ChannelManagerBean" />
    <property name="ConfigurationManager" value="org.rhq.enterprise.server.configuration.ConfigurationManagerBean" />
    <property name="ContentManager" value="org.rhq.enterprise.server.content.ContentManagerBean" />
+   <property name="DataAccessManager" value="org.rhq.enterprise.server.report.DataAccessManagerBean" />
    <property name="EventManager" value="org.rhq.enterprise.server.event.EventManagerBean" />
    <property name="MeasurementDefinitionManager" value="org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerBean" />
    <property name="MeasurementBaselineManager" value="org.rhq.enterprise.server.measurement.MeasurementBaselineManagerBean" />
@@ -29,10 +31,14 @@
    <property name="ResourceManager" value="org.rhq.enterprise.server.resource.ResourceManagerBean" />
    <property name="RoleManager" value="org.rhq.enterprise.server.authz.RoleManagerBean" />
    <property name="SubjectManager" value="org.rhq.enterprise.server.auth.SubjectManagerBean" />
+   <property name="SupportManager" value="org.rhq.enterprise.server.support.SupportManagerBean" />
+   <property name="SystemManager" value="org.rhq.enterprise.server.system.SystemManagerBean" />
+   <property name="JonWebserviceManager" value="org.rhq.enterprise.server.webservices.JonWebserviceManagerBean" />
 
    <!-- List of all the simple bean names(Alert for AlertManagerBean, etc.) in alphabetical order. List used by wsprovide/wsconsume -->
-   <!-- <property name="ws-list" value="Subject,Role" /> --> 
-   <property name="ws-list" value="Alert,AlertDefinition,Availability,CallTimeData,Channel,Configuration,Content,Event,MeasurementBaseline,MeasurementData,MeasurementDefinition,MeasurementProblem,MeasurementSchedule,Operation,Resource,ResourceGroup,Role,Subject" /> 
+   <!-- <property name="ws-list" value="Subject,Role" /> -->
+   <property name="ws-list" value="JonWebservice" /> 
+   <!-- <property name="ws-list" value="Alert,AlertDefinition,Availability,CallTimeData,Channel,Configuration,Content,DataAccess,Event,MeasurementBaseline,MeasurementData,MeasurementDefinition,MeasurementProblem,MeasurementSchedule,Operation,Resource,ResourceGroup,Role,Subject,Support,System" /> -->
 
    <target name="prepare-dist">
       <condition property="exclude.cli.jar" value="true">

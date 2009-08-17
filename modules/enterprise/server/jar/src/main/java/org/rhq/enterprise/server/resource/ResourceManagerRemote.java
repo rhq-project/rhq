@@ -33,6 +33,7 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.system.ServerVersion;
 
 /**
  * @author Asaf Shakarchi
@@ -41,7 +42,7 @@ import org.rhq.core.domain.util.PageList;
  */
 
 @SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
-@WebService
+@WebService(targetNamespace = ServerVersion.namespace)
 @Remote
 public interface ResourceManagerRemote {
 

@@ -39,6 +39,7 @@ import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.server.jaxb.WebServiceTypeAdapter;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
+import org.rhq.enterprise.server.system.ServerVersion;
 
 /**
  * The configuration manager which allows you to request resource configuration changes, view current resource
@@ -48,7 +49,7 @@ import org.rhq.enterprise.server.resource.ResourceNotFoundException;
  * @author Ian Springer
  */
 @SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
-@WebService
+@WebService(targetNamespace = ServerVersion.namespace)
 @Remote
 public interface ConfigurationManagerRemote {
 
@@ -132,7 +133,7 @@ public interface ConfigurationManagerRemote {
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "compatibleGroupId") int compatibleGroupId, //
         @XmlJavaTypeAdapter(WebServiceTypeAdapter.class)//
-        @WebParam(name = "newResourceConfigurationMap") Map<Integer, Configuration> newResourceConfigurationMap);
+        @WebParam(name = "newResourceConfigurationMap", targetNamespace = ServerVersion.namespace) Map<Integer, Configuration> newResourceConfigurationMap);
 
     /**
      * Updates the plugin configuration used to connect and communicate with the resource. The given <code>

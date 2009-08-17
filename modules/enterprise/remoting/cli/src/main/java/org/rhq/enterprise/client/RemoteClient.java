@@ -44,7 +44,7 @@ import org.rhq.enterprise.server.measurement.MeasurementDataManagerRemote;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerRemote;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerRemote;
 import org.rhq.enterprise.server.operation.OperationManagerRemote;
-import org.rhq.enterprise.server.report.DataAccessRemote;
+import org.rhq.enterprise.server.report.DataAccessManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerRemote;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerRemote;
@@ -71,7 +71,7 @@ public class RemoteClient {
         ConfigurationManager(ConfigurationManagerRemote.class), //
         //ContentHelperManager(ContentHelperRemote.class), //
         ContentManager(ContentManagerRemote.class), //
-        DataAccess(DataAccessRemote.class), //
+        DataAccess(DataAccessManagerRemote.class), //
         EventManager(EventManagerRemote.class), //
         MeasurementBaselineManager(MeasurementBaselineManagerRemote.class), //
         MeasurementDataManager(MeasurementDataManagerRemote.class), //
@@ -121,6 +121,7 @@ public class RemoteClient {
     private Map<String, Object> managers;
     private Subject subject;
     private Client remotingClient;
+    private String subsystem = null;
 
     /**
      * Creates a client that will communicate with the server running on the given host
@@ -149,6 +150,11 @@ public class RemoteClient {
         this.transport = transport;
         this.host = host;
         this.port = port;
+    }
+
+    public RemoteClient(String transport, String host, int port, String subsystem) {
+        this(null, host, port);
+        this.subsystem = subsystem;
     }
 
     /**
@@ -280,7 +286,7 @@ public class RemoteClient {
         return RemoteClientProxy.getProcessor(this, Manager.ContentManager);
     }
 
-    public DataAccessRemote getDataAccessRemote() {
+    public DataAccessManagerRemote getDataAccessRemote() {
         return RemoteClientProxy.getProcessor(this, Manager.DataAccess);
     }
 
@@ -394,6 +400,9 @@ public class RemoteClient {
         InvokerLocator locator = new InvokerLocator(locatorURI);
 
         String subsystem = "REMOTEAPI";
+        if ((this.subsystem != null) && (this.subsystem.trim().equalsIgnoreCase("WSREMOTEAPI"))) {
+            subsystem = "WSREMOTEAPI";
+        }
         Map<String, String> remotingConfig = buildRemotingConfig(locatorURI);
         this.remotingClient = new Client(locator, subsystem, remotingConfig);
         this.remotingClient.connect();

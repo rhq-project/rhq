@@ -36,6 +36,9 @@ public class LoginCommand implements ClientCommand {
 
     private final Log log = LogFactory.getLog(LoginCommand.class);
 
+    //Added to switch between jbossRemoting and WS subsystems
+    private String subsystem = null;
+
     public String getPromptCommandString() {
         return "login";
     }
@@ -58,6 +61,12 @@ public class LoginCommand implements ClientCommand {
                 host = args[3];
                 port = Integer.parseInt(args[4]);
                 transport = args[5];
+            } else if (args.length == 7) {
+                host = args[3];
+                port = Integer.parseInt(args[4]);
+                transport = args[5];
+                //to activate subsystem must pass in all 7 parameters ex. ... https WSREMOTEAPI
+                subsystem = args[6];
             }
 
             execute(client, user, pass, host, port, transport);
@@ -79,7 +88,13 @@ public class LoginCommand implements ClientCommand {
     public Subject execute(ClientMain client, String username, String password, String host, int port, String transport)
         throws Exception {
 
-        RemoteClient remoteClient = new RemoteClient(transport, host, port);
+        //add call to different subsystem if it exists
+        RemoteClient remoteClient = null;
+        if ((subsystem != null) && (subsystem.trim().equalsIgnoreCase("WSREMOTEAPI"))) {
+            remoteClient = new RemoteClient(transport, host, port, subsystem);
+        } else {
+            remoteClient = new RemoteClient(transport, host, port);
+        }
 
         client.setTransport(remoteClient.getTransport()); // in case transport was null, let the client tell us what it'll use
         client.setHost(host);

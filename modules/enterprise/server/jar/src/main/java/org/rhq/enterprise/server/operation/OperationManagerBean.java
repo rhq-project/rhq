@@ -25,7 +25,6 @@ import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
-import javax.jws.WebService;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
@@ -91,7 +90,6 @@ import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 
 @Stateless
-@WebService(endpointInterface = "org.rhq.enterprise.server.operation.OperationManagerRemote")
 public class OperationManagerBean implements OperationManagerLocal, OperationManagerRemote {
     private static final Log LOG = LogFactory.getLog(OperationManagerBean.class);
 

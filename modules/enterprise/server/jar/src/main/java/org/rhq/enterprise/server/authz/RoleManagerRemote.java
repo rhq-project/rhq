@@ -29,6 +29,7 @@ import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.criteria.RoleCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.system.ServerVersion;
 
 /**
  * The remote interface to the role manager, providing a restricted set of Role Management services. that provides the API to manipulate the security rules within the JON Server.
@@ -36,7 +37,7 @@ import org.rhq.core.domain.util.PageList;
  * @author Jay Shaughnessy
  */
 @SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
-@WebService
+@WebService(targetNamespace = ServerVersion.namespace)
 @Remote
 public interface RoleManagerRemote {
 

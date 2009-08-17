@@ -122,6 +122,8 @@ import org.rhq.enterprise.server.operation.OperationManagerBean;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.perspective.PerspectiveManagerBean;
 import org.rhq.enterprise.server.perspective.PerspectiveManagerLocal;
+import org.rhq.enterprise.server.report.DataAccessManagerBean;
+import org.rhq.enterprise.server.report.DataAccessManagerLocal;
 import org.rhq.enterprise.server.resource.ProductVersionManagerBean;
 import org.rhq.enterprise.server.resource.ProductVersionManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceAvailabilityManagerBean;
@@ -584,6 +586,10 @@ public final class LookupUtil {
      */
     private static Object lookup(String name) throws NamingException {
         return new InitialContext().lookup(name);
+    }
+
+    public static DataAccessManagerLocal getDataAccessManager() {
+        return lookupLocal(DataAccessManagerBean.class);
     }
 
 }

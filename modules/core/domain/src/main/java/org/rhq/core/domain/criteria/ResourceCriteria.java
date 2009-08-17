@@ -22,6 +22,9 @@
  */
 package org.rhq.core.domain.criteria;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlRootElement;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.InventoryStatus;
@@ -31,6 +34,8 @@ import org.rhq.core.domain.util.PageOrdering;
 /**
  * @author Joseph Marques
  */
+@XmlRootElement
+@XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings("unused")
 public class ResourceCriteria extends Criteria {
     private static final long serialVersionUID = 1L;

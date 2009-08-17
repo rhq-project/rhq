@@ -41,7 +41,7 @@ import org.rhq.enterprise.server.authz.RequiredPermission;
  * @author Greg Hinkle
  */
 @Stateless
-public class DataAccessBean implements DataAccessLocal, DataAccessRemote {
+public class DataAccessManagerBean implements DataAccessManagerLocal, DataAccessManagerRemote {
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
@@ -54,9 +54,12 @@ public class DataAccessBean implements DataAccessLocal, DataAccessRemote {
         return q.getResultList();
     }
 
+    /** Refactored method name to be unique for WSDL and Base Profile compliance. 
+     * 
+     */
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public List<Object[]> executeQuery(Subject subject, String query, PageControl pageControl) {
+    public List<Object[]> executeQueryWithPageControl(Subject subject, String query, PageControl pageControl) {
         Query q = buildQuery(query, pageControl);
 
         return q.getResultList();

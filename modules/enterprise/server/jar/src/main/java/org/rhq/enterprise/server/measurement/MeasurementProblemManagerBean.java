@@ -22,7 +22,6 @@ import java.util.List;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
-import javax.jws.WebService;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
@@ -43,7 +42,6 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
  * A manager for working with problems such as out-of-bounds measurements.
  */
 @Stateless
-@WebService(endpointInterface = "org.rhq.enterprise.server.measurement.MeasurementProblemManagerRemote")
 public class MeasurementProblemManagerBean implements MeasurementProblemManagerLocal, MeasurementProblemManagerRemote {
     @SuppressWarnings("unused")
     private final Log log = LogFactory.getLog(MeasurementProblemManagerBean.class);

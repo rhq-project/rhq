@@ -27,7 +27,6 @@ import java.util.Set;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.ExcludeDefaultInterceptors;
-import javax.jws.WebService;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
@@ -54,7 +53,6 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
  * @author John Mazzitelli
  */
 @Stateless
-@WebService(endpointInterface = "org.rhq.enterprise.server.authz.RoleManagerRemote")
 public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     @SuppressWarnings("unused")
     private final Log log = LogFactory.getLog(RoleManagerBean.class);

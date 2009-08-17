@@ -31,7 +31,6 @@ import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
-import javax.jws.WebService;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
@@ -89,7 +88,6 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Ian Springer
  */
 @Stateless
-@WebService(endpointInterface = "org.rhq.enterprise.server.alert.AlertManagerRemote")
 public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;

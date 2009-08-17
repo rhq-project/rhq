@@ -29,7 +29,6 @@ import java.util.Set;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.ExcludeDefaultInterceptors;
-import javax.jws.WebService;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
@@ -58,6 +57,7 @@ import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.CustomJaasDeploymentServiceMBean;
 import org.rhq.enterprise.server.exception.LoginException;
+import org.rhq.enterprise.server.system.ServerVersion;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 
 /**
@@ -66,7 +66,6 @@ import org.rhq.enterprise.server.system.SystemManagerLocal;
  * @author John Mazzitelli
  */
 @Stateless
-@WebService(endpointInterface = "org.rhq.enterprise.server.auth.SubjectManagerRemote")
 public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRemote {
     @SuppressWarnings("unused")
     private final Log log = LogFactory.getLog(SubjectManagerBean.class);
@@ -656,5 +655,9 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         List<Subject> subjects = query.getResultList();
 
         return new PageList<Subject>(subjects, (int) count, criteria.getPageControl());
+    }
+
+    public String getServerNamespaceVersion() {
+        return ServerVersion.getNamespace();
     }
 }

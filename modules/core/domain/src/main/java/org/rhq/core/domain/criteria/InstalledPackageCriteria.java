@@ -1,7 +1,11 @@
 package org.rhq.core.domain.criteria;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+
 import org.rhq.core.domain.util.PageOrdering;
 
+@XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings("unused")
 public class InstalledPackageCriteria extends Criteria {
     private static final long serialVersionUID = 1L;

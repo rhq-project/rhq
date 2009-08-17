@@ -62,7 +62,6 @@ import org.rhq.enterprise.server.cloud.StatusManagerLocal;
  */
 
 @Stateless
-@WebService(endpointInterface = "org.rhq.enterprise.server.alert.AlertDefinitionManagerRemote")
 public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, AlertDefinitionManagerRemote {
 
     private static final Log LOG = LogFactory.getLog(AlertDefinitionManagerBean.class);

@@ -28,12 +28,12 @@ import javax.ejb.Local;
 import java.util.List;
 
 @Local
-public interface DataAccessLocal {
+public interface DataAccessManagerLocal {
 
 
     public List<Object[]> executeQuery(Subject subject, String query);
 
-    public List<Object[]> executeQuery(Subject subject, String query, PageControl pageControl);
+    public List<Object[]> executeQueryWithPageControl(Subject subject, String query, PageControl pageControl);
 
 
 }

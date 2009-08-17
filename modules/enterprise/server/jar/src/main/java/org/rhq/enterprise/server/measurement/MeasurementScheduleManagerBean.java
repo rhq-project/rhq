@@ -34,7 +34,6 @@ import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
-import javax.jws.WebService;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
@@ -103,7 +102,6 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 @Stateless
 @javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
-@WebService(endpointInterface = "org.rhq.enterprise.server.measurement.MeasurementScheduleManagerRemote")
 public class MeasurementScheduleManagerBean implements MeasurementScheduleManagerLocal,
     MeasurementScheduleManagerRemote {
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)

@@ -260,4 +260,6 @@ public interface SubjectManagerLocal {
     Subject updateSubject(Subject subject, Subject subjectToModify);
 
     PageList<Subject> findSubjectsByCriteria(Subject subject, SubjectCriteria criteria);
+
+    String getServerNamespaceVersion();
 }

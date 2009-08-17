@@ -23,12 +23,13 @@ import org.rhq.enterprise.server.report.DataAccessManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceManagerRemote;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerRemote;
 import org.rhq.enterprise.server.support.SupportManagerRemote;
+import org.rhq.enterprise.server.system.ServerVersion;
 import org.rhq.enterprise.server.system.SystemManagerRemote;
 
 @SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
-@WebService
+@WebService(targetNamespace = ServerVersion.namespace)
 @Remote
-public interface WebserviceRemotes extends ConfigurationManagerRemote, DataAccessManagerRemote, RoleManagerRemote,
+public interface JonWebservicesRemote extends ConfigurationManagerRemote, DataAccessManagerRemote, RoleManagerRemote,
     SubjectManagerRemote, ContentManagerRemote, MeasurementDefinitionManagerRemote, AvailabilityManagerRemote,
     EventManagerRemote, MeasurementDataManagerRemote, ResourceGroupManagerRemote, MeasurementProblemManagerRemote,
     CallTimeDataManagerRemote, AlertManagerRemote, OperationManagerRemote, ChannelManagerRemote,

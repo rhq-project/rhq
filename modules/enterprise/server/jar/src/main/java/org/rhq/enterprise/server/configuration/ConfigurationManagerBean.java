@@ -34,6 +34,7 @@ import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.apache.commons.logging.Log;
@@ -94,6 +95,7 @@ import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupUpdateException;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
+import org.rhq.enterprise.server.system.ServerVersion;
 import org.rhq.enterprise.server.util.QuartzUtil;
 
 /**
@@ -103,6 +105,7 @@ import org.rhq.enterprise.server.util.QuartzUtil;
  * @author Ian Springer
  */
 @Stateless
+@XmlType(namespace = ServerVersion.namespace)
 public class ConfigurationManagerBean implements ConfigurationManagerLocal, ConfigurationManagerRemote {
     private final Log log = LogFactory.getLog(ConfigurationManagerBean.class);
 

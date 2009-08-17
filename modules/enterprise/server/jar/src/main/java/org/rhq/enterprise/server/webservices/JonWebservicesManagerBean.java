@@ -126,8 +126,8 @@ import org.rhq.enterprise.server.util.LookupUtil;
  *
  */
 @Stateless
-@WebService(endpointInterface = "org.rhq.enterprise.server.webservices.WebserviceRemotes", targetNamespace = ServerVersion.namespace)
-public class JonWebserviceManagerBean implements AlertManagerRemote, AlertDefinitionManagerRemote,
+@WebService(endpointInterface = "org.rhq.enterprise.server.webservices.JonWebservicesRemote", targetNamespace = ServerVersion.namespace)
+public class JonWebservicesManagerBean implements AlertManagerRemote, AlertDefinitionManagerRemote,
     AvailabilityManagerRemote, CallTimeDataManagerRemote, ChannelManagerRemote, ConfigurationManagerRemote,
     ContentManagerRemote, DataAccessManagerRemote, EventManagerRemote, MeasurementBaselineManagerRemote,
     MeasurementDataManagerRemote, MeasurementDefinitionManagerRemote, MeasurementProblemManagerRemote,

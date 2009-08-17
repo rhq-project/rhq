@@ -33,11 +33,11 @@
    <property name="SubjectManager" value="org.rhq.enterprise.server.auth.SubjectManagerBean" />
    <property name="SupportManager" value="org.rhq.enterprise.server.support.SupportManagerBean" />
    <property name="SystemManager" value="org.rhq.enterprise.server.system.SystemManagerBean" />
-   <property name="JonWebserviceManager" value="org.rhq.enterprise.server.webservices.JonWebserviceManagerBean" />
+   <property name="JonWebservicesManager" value="org.rhq.enterprise.server.webservices.JonWebservicesManagerBean" />
 
    <!-- List of all the simple bean names(Alert for AlertManagerBean, etc.) in alphabetical order. List used by wsprovide/wsconsume -->
    <!-- <property name="ws-list" value="Subject,Role" /> -->
-   <property name="ws-list" value="JonWebservice" /> 
+   <property name="ws-list" value="JonWebservices" /> 
    <!-- <property name="ws-list" value="Alert,AlertDefinition,Availability,CallTimeData,Channel,Configuration,Content,DataAccess,Event,MeasurementBaseline,MeasurementData,MeasurementDefinition,MeasurementProblem,MeasurementSchedule,Operation,Resource,ResourceGroup,Role,Subject,Support,System" /> -->
 
    <target name="prepare-dist">

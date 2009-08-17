@@ -15,7 +15,7 @@ public class WsUtility {
      * @return valid URL
      * @throws MalformedURLException
      */
-    public static URL generateRhqRemoteWebserviceURL(Class remote, String host, int port, boolean useHttps)
+    public static URL generateRemoteWebserviceURL(Class remote, String host, int port, boolean useHttps)
         throws MalformedURLException {
 
         URL wsdlLocation = null;
@@ -39,7 +39,7 @@ public class WsUtility {
 
     }
 
-    public static QName generateRhqRemoteWebserviceQName(Class remote) {
+    public static QName generateRemoteWebserviceQName(Class remote) {
 
         QName generated = null;
         //check for reference with right annotation

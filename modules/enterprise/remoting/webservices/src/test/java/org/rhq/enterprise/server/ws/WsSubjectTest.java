@@ -38,18 +38,18 @@ public class WsSubjectTest extends AssertJUnit {
     protected static int port = 7080;
     protected static boolean useSSL = false;
     private ObjectFactory WS_OBJECT_FACTORY;
-    private JonWebservicesRemote WEBSERVICE_REMOTE;
+    private WebservicesRemote WEBSERVICE_REMOTE;
 
     @BeforeClass
     public void init() throws ClassNotFoundException, MalformedURLException, SecurityException, NoSuchMethodException,
         IllegalArgumentException, InstantiationException, IllegalAccessException, InvocationTargetException {
 
         //build reference variable bits
-        URL gUrl = WsUtility.generateRhqRemoteWebserviceURL(JonWebservicesManagerBeanService.class, host, port, useSSL);
-        QName gQName = WsUtility.generateRhqRemoteWebserviceQName(JonWebservicesManagerBeanService.class);
-        JonWebservicesManagerBeanService jws = new JonWebservicesManagerBeanService(gUrl, gQName);
+        URL gUrl = WsUtility.generateRemoteWebserviceURL(WebservicesManagerBeanService.class, host, port, useSSL);
+        QName gQName = WsUtility.generateRemoteWebserviceQName(WebservicesManagerBeanService.class);
+        WebservicesManagerBeanService jws = new WebservicesManagerBeanService(gUrl, gQName);
 
-        WEBSERVICE_REMOTE = jws.getJonWebservicesManagerBeanPort();
+        WEBSERVICE_REMOTE = jws.getWebservicesManagerBeanPort();
         WS_OBJECT_FACTORY = new ObjectFactory();
     }
 

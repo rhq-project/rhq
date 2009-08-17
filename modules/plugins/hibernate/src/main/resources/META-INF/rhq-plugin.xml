@@ -184,7 +184,7 @@
  }
 
  private static MBeanServer getJBossMBeanServer() {
-    List<MBeanServer> servers = MBeanServerFactory.findMBeanServer(null);
+    List&lt;MBeanServer&gt; servers = MBeanServerFactory.findMBeanServer(null);
     MBeanServer jbossServer = null;
     for (MBeanServer server : servers) {
         if ("jboss".equals(server.getDefaultDomain())) {

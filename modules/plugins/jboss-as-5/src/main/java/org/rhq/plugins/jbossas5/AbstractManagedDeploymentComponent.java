@@ -42,12 +42,8 @@ import org.jboss.remoting.CannotConnectException;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.domain.measurement.DataType;
-import org.rhq.core.domain.measurement.MeasurementDataNumeric;
-import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
-import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
@@ -136,30 +132,6 @@ public abstract class AbstractManagedDeploymentComponent
             WarMeasurementFacetDelegate warMeasurementFacetDelegate = new WarMeasurementFacetDelegate(this);
             warMeasurementFacetDelegate.getValues(report, requests);
         }
-    }
-
-    // TODO (ips): This method could be useful to other plugins, so move it to MeasurementReport.
-    private static boolean isRequestInReport(MeasurementReport report, MeasurementScheduleRequest request)
-    {
-        if (request.getDataType() == DataType.MEASUREMENT)
-        {
-            for (MeasurementDataNumeric numericDatum : report.getNumericData())
-            {
-                if (numericDatum.getName().equals(request.getName()))
-                    return true;
-            }
-            for (MeasurementDataTrait traitDatum : report.getTraitData())
-            {
-                if (traitDatum.getName().equals(request.getName()))
-                    return true;
-            }
-            // TODO
-            /*for (CallTimeData callTimeDatum : report.getCallTimeData()) {
-                if (callTimeDatum.getName().equals(request.getName()))
-                    return true;
-            }*/
-        }
-        return false;
     }
 
     // ------------ OperationFacet Implementation ------------

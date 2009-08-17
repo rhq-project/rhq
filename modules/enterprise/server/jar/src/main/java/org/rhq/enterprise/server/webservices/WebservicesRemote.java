@@ -29,7 +29,7 @@ import org.rhq.enterprise.server.system.SystemManagerRemote;
 @SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
 @WebService(targetNamespace = ServerVersion.namespace)
 @Remote
-public interface JonWebservicesRemote extends ConfigurationManagerRemote, DataAccessManagerRemote, RoleManagerRemote,
+public interface WebservicesRemote extends ConfigurationManagerRemote, DataAccessManagerRemote, RoleManagerRemote,
     SubjectManagerRemote, ContentManagerRemote, MeasurementDefinitionManagerRemote, AvailabilityManagerRemote,
     EventManagerRemote, MeasurementDataManagerRemote, ResourceGroupManagerRemote, MeasurementProblemManagerRemote,
     CallTimeDataManagerRemote, AlertManagerRemote, OperationManagerRemote, ChannelManagerRemote,

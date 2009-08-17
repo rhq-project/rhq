@@ -177,13 +177,10 @@ public abstract class AbstractManagedDeploymentComponent
         	}
         	else
         	{
-        		String errorMessage = "Operation '" + name + "' on " + getResourceDescription() + " The resource is already started";
-        		
-        		log.warn(errorMessage);
-
-        		OperationResult or = new OperationResult();
-        		or.setErrorMessage(errorMessage);
-        		return or;
+        		log.warn("Operation '" + name + "' on " + getResourceDescription() + " failed because the Resource is already started.");
+        		OperationResult result = new OperationResult();
+        		result.setErrorMessage(this.deploymentFile.getName() + " is already started.");
+        		return result;
         	}
         }
         else if (name.equals("stop"))

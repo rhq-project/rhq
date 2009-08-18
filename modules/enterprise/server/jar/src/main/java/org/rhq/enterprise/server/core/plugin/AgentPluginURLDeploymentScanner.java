@@ -340,7 +340,7 @@ public class AgentPluginURLDeploymentScanner extends URLDeploymentScanner {
                         cachedPluginOnFilesystem.setVersion(version);
                         cachedPluginOnFilesystem.setMd5(md5);
                     } else {
-                        log.debug("It appears that the plugin [" + dbPlugin
+                        log.info("It appears that the plugin [" + dbPlugin
                             + "] in the database may be obsolete. If so, it will be updated by the plugin deployer.");
                     }
                 } else {
@@ -553,7 +553,7 @@ public class AgentPluginURLDeploymentScanner extends URLDeploymentScanner {
             ps.setString(5, name);
             int updateResults = ps.executeUpdate();
             if (updateResults == 1) {
-                log.debug("Stored content for plugin [" + name + "] in the db. file=" + file);
+                log.info("Stored content for plugin [" + name + "] in the db. file=" + file);
             } else {
                 throw new Exception("Failed to update content for plugin [" + name + "] from [" + file + "]");
             }

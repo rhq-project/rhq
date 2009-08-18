@@ -35,7 +35,9 @@ public interface MeasurementCompressionManagerLocal {
 
     long compressData(String fromTable, String toTable, long interval, long now) throws SQLException;
 
-    void purgeMeasurements(String tableName, long purgeAfter) throws SQLException;
+    void purgeMeasurements(String tableName, long purgeAfter, long purgeBefore) throws SQLException;
+
+    int purgeMeasurementInterval(String tableName, long purgeAfter, long purgeBefore) throws SQLException;
 
     void truncateMeasurements(String tableName) throws SQLException;
 }

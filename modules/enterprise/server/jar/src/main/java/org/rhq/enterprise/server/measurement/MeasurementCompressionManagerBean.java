@@ -24,6 +24,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Properties;
+import java.util.Date;
 
 import javax.ejb.EJB;
 import javax.ejb.SessionContext;
@@ -94,8 +95,7 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
         }
     }
 
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    @TransactionTimeout(6 * 60 * 60)
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public void compressData() throws SQLException {
         loadPurgeDefaults();
 
@@ -130,16 +130,16 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
         last = compressionManager.compressData(TAB_DATA_1H, TAB_DATA_6H, SIX_HOUR, now);
 
         // Purge, ensuring we don't purge data not yet compressed.
-        compressionManager.purgeMeasurements(TAB_DATA_1H, Math.min(now - this.purge1h, last));
+        compressionManager.purgeMeasurements(TAB_DATA_1H, Math.min(now - this.purge1h, last), this.purge1h);
 
         // Compress daily data
         last = compressionManager.compressData(TAB_DATA_6H, TAB_DATA_1D, DAY, now);
 
         // Purge, ensuring we don't purge data not yet compressed.
-        compressionManager.purgeMeasurements(TAB_DATA_6H, Math.min(now - this.purge6h, last));
+        compressionManager.purgeMeasurements(TAB_DATA_6H, Math.min(now - this.purge6h, last), this.purge6h);
 
         // Purge, we never store more than 1 year of data.
-        compressionManager.purgeMeasurements(TAB_DATA_1D, now - this.purge1d);
+        compressionManager.purgeMeasurements(TAB_DATA_1D, now - this.purge1d, this.purge1d);
     }
 
     /**
@@ -314,12 +314,38 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
         }
     }
 
+
+    public void purgeMeasurements(String tableName, long purgeBefore, long interval) {
+
+        int rows = 1;
+        int iterations = 0;
+        long start = purgeBefore - interval;
+        while (rows > 0) {
+
+            try {
+                rows = compressionManager.purgeMeasurementInterval(tableName, start, start + interval);
+                log.info("Deleted " + rows + " from " + tableName);
+            } catch (SQLException e) {
+                log.error("Unable to delete from " + tableName + " between " + new Date(start) + " and " + new Date(start + interval));
+            }
+
+            start -= interval;
+            iterations++;
+
+            if (iterations > 30) {
+                break;
+            }
+        }
+
+
+    }
+
     /**
      * Purge data older than a given time.
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     @TransactionTimeout(6 * 60 * 60)
-    public void purgeMeasurements(String tableName, long purgeAfter) throws SQLException {
+    public int purgeMeasurementInterval(String tableName, long purgeAfter, long purgeBefore) throws SQLException {
         Connection conn = null;
         PreparedStatement stmt = null;
 
@@ -329,10 +355,11 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
         try {
             conn = ((DataSource) ctx.lookup(DATASOURCE_NAME)).getConnection();
 
-            String sql = "DELETE FROM " + tableName + " WHERE time_stamp < ?";
+            String sql = "DELETE FROM " + tableName + " WHERE time_stamp > ? AND time_stamp < ?";
 
             stmt = conn.prepareStatement(sql);
             stmt.setLong(1, purgeAfter);
+            stmt.setLong(2, purgeBefore);
 
             rows = stmt.executeUpdate();
         } finally {
@@ -343,7 +370,13 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
         MeasurementMonitor.getMBean().incrementPurgeTime(watch.getElapsed());
         log.info("Done purging [" + rows + "] rows older than " + TimeUtil.toString(purgeAfter) + " from " + tableName
             + " in (" + ((watch.getElapsed()) / SECOND) + " seconds)");
+        return rows;
     }
+
+
+
+
+
 
     // this is "NOT_SUPPORTED" because the database will auto-commit the DDL "truncate table"
     // and this causes havoc with the XA transaction when set to "REQUIRES_NEW"

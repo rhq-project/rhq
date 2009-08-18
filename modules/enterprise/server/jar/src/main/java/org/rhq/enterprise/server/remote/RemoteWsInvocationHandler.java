@@ -52,11 +52,9 @@ public class RemoteWsInvocationHandler implements ServerInvocationHandler {
         PRIMITIVE_CLASSES.put(Byte.TYPE.getName(), Byte.TYPE);
     }
 
-    @Override
     public void addListener(InvokerCallbackHandler arg0) {
     }
 
-    @Override
     public Object invoke(InvocationRequest invocationRequest) throws Throwable {
 
         //        System.out.println("In WS Invocation handler ...:" + invocationRequest);
@@ -173,7 +171,7 @@ public class RemoteWsInvocationHandler implements ServerInvocationHandler {
                     Class<?> newSignatureInstance = getClass(type);
                     Class<?> locatedWsClass = null;
                     if (!WS_MAP_CLASSES.containsKey(terminal)) {//check for signature elements with mappings
-                    //                        System.out.println("Map Key '" + terminal + "' is not located");
+                        // System.out.println("Map Key '" + terminal + "' is not located");
                         //Check for class in ws.* package and if it exists then return it and store it.
                         try {
                             locatedWsClass = Class.forName("org.rhq.enterprise.server.ws." + terminal);
@@ -399,7 +397,7 @@ public class RemoteWsInvocationHandler implements ServerInvocationHandler {
                 if (methodOutputInputSame(rhqSetMethod.getParameterTypes(), method.getReturnType())) {
                     rhqSetMethod.invoke(rhqType, method.invoke(jaxbType, null));
                 } else {// extract param and translate then invoke 
-                //                    System.out.println("$$$$$$$$$$$ PROBLEM@@@ type mismatch ");
+                    // System.out.println("$$$$$$$$$$$ PROBLEM@@@ type mismatch ");
                     String from = method.getReturnType().getCanonicalName();
                     String to = rhqSetMethod.getParameterTypes()[0].getCanonicalName();
 
@@ -541,15 +539,12 @@ public class RemoteWsInvocationHandler implements ServerInvocationHandler {
 
     }
 
-    @Override
     public void removeListener(InvokerCallbackHandler arg0) {
     }
 
-    @Override
     public void setInvoker(ServerInvoker arg0) {
     }
 
-    @Override
     public void setMBeanServer(MBeanServer arg0) {
     }
 

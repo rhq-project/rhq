@@ -158,7 +158,7 @@ public class CreateContentSourceUIBean extends PagedDataTableUIBean {
     @Override
     public DataModel getDataModel() {
         if (dataModel == null) {
-            dataModel = new ListAlertDefinitionsDataModel(PageControlView.NONE, MANAGED_BEAN_NAME);
+            dataModel = new ListContentSourceTypesDataModel(PageControlView.NONE, MANAGED_BEAN_NAME);
         } else {
             String typeName = FacesContextUtility.getOptionalRequestParameter("typeName");
             if (typeName != null) {
@@ -174,8 +174,8 @@ public class CreateContentSourceUIBean extends PagedDataTableUIBean {
         return dataModel;
     }
 
-    private class ListAlertDefinitionsDataModel extends PagedListDataModel<ContentSourceType> {
-        public ListAlertDefinitionsDataModel(PageControlView view, String beanName) {
+    private class ListContentSourceTypesDataModel extends PagedListDataModel<ContentSourceType> {
+        public ListContentSourceTypesDataModel(PageControlView view, String beanName) {
             super(view, beanName);
         }
 

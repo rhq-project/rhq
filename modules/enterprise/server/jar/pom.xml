@@ -1,12 +1,11 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
    <modelVersion>4.0.0</modelVersion>
 
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-parent</artifactId>
-      <version>1.3.0-SNAPSHOT</version>
+      <version>1.3.0.EmbJopr.1.3.0-4</version>
    </parent>
 
    <groupId>org.rhq</groupId>
@@ -17,8 +16,8 @@
    <description>RHQ enterprise server main JAR</description>
 
    <scm>
-      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/jar/</connection>
-      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/jar/</developerConnection>
+      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_3_0_EmbJopr_1_3_0-4/modules/enterprise/server/jar</connection>
+      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_3_0_EmbJopr_1_3_0-4/modules/enterprise/server/jar</developerConnection>
    </scm>
 
    <properties>
@@ -375,8 +374,7 @@
                         <!-- generate the I18N resource bundles -->
                         <taskdef name="i18n" classpathref="maven.runtime.classpath" classname="mazz.i18n.ant.I18NAntTask" />
 
-                        <i18n outputdir="${project.build.outputDirectory}" defaultlocale="en" verbose="false"
-                           append="false" verify="true">
+                        <i18n outputdir="${project.build.outputDirectory}" defaultlocale="en" verbose="false" append="false" verify="true">
                            <classpath refid="maven.runtime.classpath" />
                            <classfileset dir="${project.build.outputDirectory}">
                               <include name="**/ServerI18NResourceKeys.class" />
@@ -508,8 +506,7 @@
                         <phase>package</phase>
                         <configuration>
                            <tasks>
-                              <unjar src="${project.build.directory}/${project.build.finalName}.jar" dest="${rhq.deploymentDir}"
-                                 overwrite="false">
+                              <unjar src="${project.build.directory}/${project.build.finalName}.jar" dest="${rhq.deploymentDir}" overwrite="false">
                                  <patternset>
                                     <include name="META-INF/**" />
                                  </patternset>

@@ -138,6 +138,13 @@
    </category>
    -->
 
+   <!-- Agent plugin deployer -->
+   <!--
+   <category name="org.rhq.enterprise.server.core.plugin">
+     <priority value="DEBUG"/>
+   </category>
+   -->
+
    <!-- Top category for the enterprise GUI module -->
    <!--
    <category name="org.rhq.enterprise.gui">

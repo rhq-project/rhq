@@ -23,8 +23,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Properties;
 import java.util.Date;
+import java.util.Properties;
 
 import javax.ejb.EJB;
 import javax.ejb.SessionContext;
@@ -40,6 +40,7 @@ import org.jboss.annotation.ejb.TransactionTimeout;
 
 import org.rhq.core.clientapi.util.TimeUtil;
 import org.rhq.core.util.StopWatch;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
@@ -140,6 +141,8 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
 
         // Purge, we never store more than 1 year of data.
         compressionManager.purgeMeasurements(TAB_DATA_1D, now - this.purge1d, this.purge1d);
+
+        return;
     }
 
     /**
@@ -187,7 +190,7 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
         }
 
         if (log.isDebugEnabled()) {
-            log.debug("Compressing from: " + fromTable + " to " + toTable);
+            log.debug("Compressing from [" + fromTable + "] to [" + toTable + "]");
         }
 
         // Compress all the way up to now.
@@ -221,7 +224,9 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
                 watch.reset();
                 long end = begin + interval;
 
-                log.debug("Compression interval: " + TimeUtil.toString(begin) + " to " + TimeUtil.toString(end));
+                if (log.isDebugEnabled()) {
+                    log.debug("Compression interval: " + TimeUtil.toString(begin) + " to " + TimeUtil.toString(end));
+                }
 
                 // Compress.
                 int rows = 0;
@@ -230,15 +235,15 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
                     insStmt.setLong(2, begin);
                     insStmt.setLong(3, end);
                     rows = insStmt.executeUpdate();
-                    log.info("Compressed from " + fromTable + " into " + rows + " rows in " + toTable + " in ("
-                        + (watch.getElapsed() / SECOND) + " seconds)");
+                    log.info("Compressed from [" + fromTable + "] into [" + rows + "] rows in [" + toTable + "] in ["
+                        + (watch.getElapsed() / SECOND) + "] seconds");
                 } catch (SQLException e) {
                     // Just log the error and continue
                     if (log.isDebugEnabled()) {
                         log.error("SQL exception when inserting data at " + TimeUtil.toString(begin), e);
                     } else {
                         log.error("SQL exception when inserting data at " + TimeUtil.toString(begin) + ": "
-                            + e.getMessage());
+                            + ThrowableUtil.getAllMessages(e));
                     }
                 }
 
@@ -314,9 +319,10 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
         }
     }
 
-
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public void purgeMeasurements(String tableName, long purgeBefore, long interval) {
 
+        int totalRows = 0;
         int rows = 1;
         int iterations = 0;
         long start = purgeBefore - interval;
@@ -324,20 +330,23 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
 
             try {
                 rows = compressionManager.purgeMeasurementInterval(tableName, start, start + interval);
-                log.info("Deleted " + rows + " from " + tableName);
+                totalRows += rows;
             } catch (SQLException e) {
-                log.error("Unable to delete from " + tableName + " between " + new Date(start) + " and " + new Date(start + interval));
+                log.error("Unable to delete from [" + tableName + "] between [" + new Date(start) + "] and ["
+                    + new Date(start + interval) + "]. Cause: " + ThrowableUtil.getAllMessages(e));
             }
 
             start -= interval;
             iterations++;
 
+            // fail-safe - just make sure we don't go into an infinite loop
             if (iterations > 30) {
                 break;
             }
         }
 
-
+        log.info("Purged [" + totalRows + "] measurement rows from table: " + tableName);
+        return;
     }
 
     /**
@@ -349,7 +358,10 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
         Connection conn = null;
         PreparedStatement stmt = null;
 
-        log.debug("Purging data older than " + TimeUtil.toString(purgeAfter) + " in " + tableName);
+        if (log.isDebugEnabled()) {
+            log.debug("Purging data older than [" + TimeUtil.toString(purgeAfter) + "] from table: " + tableName);
+        }
+
         StopWatch watch = new StopWatch();
         int rows;
         try {
@@ -368,21 +380,19 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
         }
 
         MeasurementMonitor.getMBean().incrementPurgeTime(watch.getElapsed());
-        log.info("Done purging [" + rows + "] rows older than " + TimeUtil.toString(purgeAfter) + " from " + tableName
-            + " in (" + ((watch.getElapsed()) / SECOND) + " seconds)");
+
+        if (log.isDebugEnabled()) {
+            log.debug("Done purging [" + rows + "] rows older than [" + TimeUtil.toString(purgeAfter) + "] from ["
+                + tableName + "] in [" + ((watch.getElapsed()) / SECOND) + "] seconds)");
+        }
+
         return rows;
     }
-
-
-
-
-
 
     // this is "NOT_SUPPORTED" because the database will auto-commit the DDL "truncate table"
     // and this causes havoc with the XA transaction when set to "REQUIRES_NEW"
     // for example, on oracle, this method would throw SQLException: ORA-02089: COMMIT is not allowed in a subordinate session
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
-    @TransactionTimeout(6 * 60 * 60)
     public void truncateMeasurements(String tableName) throws SQLException {
         // Make sure we only truncate the dead table... other tables may have live data in them
         if (tableName.equals(MeasurementDataManagerUtility.getDeadTable(System.currentTimeMillis()))) {
@@ -398,7 +408,7 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
             } finally {
                 close(stmt);
                 close(conn);
-                log.info("Truncated table: " + tableName + " in (" + (watch.getElapsed() / SECOND) + " seconds)");
+                log.info("Truncated table [" + tableName + "] in [" + (watch.getElapsed() / SECOND) + "] seconds");
             }
         }
     }

@@ -120,9 +120,9 @@
               and the plugin classloader in our integration tests, we just include all
               the deps for the AS5 plugin in the test scope. -->
 
-        <!-- NOTE: To shorten the list of required dependencies (as commented out below)
-            we now use the following method. -->
-<!--            
+        <!-- NOTE: To shorten the list of required dependencies (as commented out below),
+                   we now use the following method. -->
+            
         <dependency>
             <groupId>org.jboss.jbossas</groupId>
             <artifactId>jboss-as-client</artifactId>
@@ -142,7 +142,6 @@
           <artifactId>jboss-security-aspects</artifactId>
           <scope>test</scope>
         </dependency>
--->
         
 <!-- 
         <dependency>

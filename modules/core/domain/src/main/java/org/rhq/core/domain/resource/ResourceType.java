@@ -67,6 +67,7 @@ import org.rhq.core.domain.event.EventDefinition;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.util.EntitySerializer;
+import org.rhq.core.domain.util.Summary;
 import org.rhq.core.domain.util.serial.ExternalizableStrategy;
 
 /**
@@ -271,9 +272,11 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
     @Id
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
+    @Summary(index = 0)
     private int id;
 
     @Column(name = "NAME", nullable = false)
+    @Summary(index = 1)
     private String name;
 
     @Column(name = "DESCRIPTION")
@@ -281,6 +284,7 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
 
     @Column(name = "CATEGORY", nullable = false)
     @Enumerated(EnumType.STRING)
+    @Summary(index = 2)
     private ResourceCategory category;
 
     @Column(name = "CREATION_DATA_TYPE", nullable = false)
@@ -298,6 +302,7 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
     private boolean singleton;
 
     @Column(name = "PLUGIN", nullable = false)
+    @Summary(index = 3)
     private String plugin;
 
     @Column(name = "CTIME")
@@ -755,8 +760,12 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
     @Override
     public int hashCode() {
         int result;
-        result = this.name.hashCode();
-        result = 31 * result + (this.plugin != null ? plugin.hashCode() : 0);
+        if (name != null && this.plugin != null) {
+            result = this.name.hashCode();
+            result = 31 * result + (this.plugin != null ? plugin.hashCode() : 0);
+        } else {
+            result = 31 * id;
+        }
         return result;
     }
 

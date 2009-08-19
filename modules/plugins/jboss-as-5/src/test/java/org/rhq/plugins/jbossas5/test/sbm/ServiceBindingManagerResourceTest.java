@@ -27,17 +27,12 @@ import static org.testng.Assert.fail;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
-import java.util.Set;
-
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.Property;
-import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.inventory.InventoryManager;
-import org.rhq.plugins.jbossas5.test.AbstractResourceTest;
 import org.rhq.plugins.jbossas5.test.util.AppServerUtils;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
@@ -48,24 +43,16 @@ import org.testng.annotations.Test;
  * @author Lukas Krejci
  */
 @Test(groups = {"as5-plugin", "as5-plugin-sbm"})
-public class ServiceBindingManagerResourceTest extends AbstractResourceTest {
+public class ServiceBindingManagerResourceTest extends AbstractServiceBindingTest {
 
-    private Configuration originalSBMConfiguration;
-    private Configuration originalPluginConfiguration;
-    
     protected String getResourceTypeName() {
-        return "Service Binding Manager";
+        return SERVICE_BINDING_MANAGER_SERVICE_NAME;
     }
 
     @BeforeTest
-    public void rememberSBMConfiguration() {
-        try {
-            System.out.println("Saving the original SBM configuration before the SBM tests.");
-            originalSBMConfiguration = loadResourceConfiguration(getSBMResource());
-            originalPluginConfiguration = AppServerUtils.getASResource().getPluginConfiguration().clone();
-        } catch (Exception e) {
-            fail("Could not save the SBM configuration before SBM tests.", e);
-        }
+    @Override
+    public void saveConfiguration() {
+        super.saveConfiguration();
     }
     
     @Test(dependsOnMethods = "testActiveBindingSetNameChange")
@@ -143,7 +130,7 @@ public class ServiceBindingManagerResourceTest extends AbstractResourceTest {
             Resource sbmResource = getSBMResource();
             Configuration configuration = loadResourceConfiguration(sbmResource);
             
-            PropertyMap jnpURLBinding = findBinding(configuration.getList("standardBindings"), "jboss:service=Naming", "Port");
+            PropertyMap jnpURLBinding = findBinding(configuration.getList("standardBindings"), JNP_PORT_BINDING_SERVICE_NAME, JNP_PORT_BINDING_BINDING_NAME);
             
             assertNotNull(jnpURLBinding, "Could not find jnp URL binding in the SBM. This should not happen.");
             
@@ -194,56 +181,8 @@ public class ServiceBindingManagerResourceTest extends AbstractResourceTest {
     }
 
     @AfterTest
-    public void restoreSBMConfiguration() {
-        try {
-            System.out.println("Restoring the saved SBM configuration after the SBM tests.");
-            
-            updateResourceConfiguration(getSBMResource(), originalSBMConfiguration);
-            
-            AppServerUtils.shutdownServer();
-            
-            InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
-            inventoryManager.updatePluginConfiguration(AppServerUtils.getASResource().getId(), originalPluginConfiguration);
-
-            AppServerUtils.startServer();
-        } catch (Exception e) {
-            fail("Failed to restore the SBM configuration after the tests!!!", e);
-        }
-    }
-    
-    private Resource getSBMResource() {
-        Set<Resource> sbms = getResources();
-        
-        if (sbms.size() == 0 || sbms.size() > 1) {
-            throw new IllegalStateException("There should be exactly 1 SBM in the inventory but there is " + sbms.size());
-        }
-        
-        return sbms.iterator().next();
-    }
-    
-    private PropertyMap findBinding(PropertyList bindings, String serviceName, String bindingName) {
-    
-        for(Property p : bindings.getList()) {
-            PropertyMap binding = (PropertyMap) p;
-            
-            String currentBindingName = binding.getSimpleValue("bindingName", null);
-            String currentServiceName = binding.getSimpleValue("serviceName", null);
-            
-            if (safeEquals(currentBindingName, bindingName) &&
-                safeEquals(currentServiceName, serviceName)) {
-                
-                return binding;
-            }
-        }
-        
-        return null;
-    }
-    
-    private static boolean safeEquals(Object o1, Object o2) {
-        if (o1 == o2) return true;
-        
-        if (o1 == null || o2 == null) return false;
-        
-        return o1.equals(o2);
+    @Override
+    public void restoreConfiguration() {
+        super.restoreConfiguration();
     }
 }

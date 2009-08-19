@@ -240,6 +240,11 @@ public class SetComponent implements ResourceComponent<ManagerComponent>, Config
                 overrideHostName = overrideHostName == null ? defaultHostName : overrideHostName;
                 
                 hostNameToSet = fixedHostName ? hostNameToSet : overrideHostName;
+                
+                String overrideDescription = override.getSimpleValue(Util.DESCRIPTION_PROPERTY, null);
+                if (overrideDescription != null) {
+                    bindingMap.put(new PropertySimple(Util.DESCRIPTION_PROPERTY, overrideDescription));
+                }
             }
             
             resultingPort.setIntegerValue(portToSet);   
@@ -247,6 +252,9 @@ public class SetComponent implements ResourceComponent<ManagerComponent>, Config
         }
         
         for(PropertyMap override : overridesMap.values()) {
+            if (override.getSimpleValue(Util.HOST_NAME_PROPERTY, null) == null) {
+                override.put(new PropertySimple(Util.HOST_NAME_PROPERTY, defaultHostName));
+            }
             resultingBindings.add(override);
         }
         

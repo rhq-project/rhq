@@ -29,14 +29,16 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pc.util.ComponentUtil;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
+import org.rhq.core.util.exception.ThrowableUtil;
 
-/**
+ /**
  * Executes the collection of measurements. Every call results in one new batch of measurements collected. Each batch is
  * limited to a single resource and the measurements that are due to be collected at that time.
  *
@@ -73,8 +75,8 @@ public class MeasurementCollectorRunner implements Callable<MeasurementReport>, 
                     return report;
                 }
 
-                Integer id = requests.iterator().next().getResourceId();
-                ResourceContainer container = im.getResourceContainer(id);
+                Integer resourceId = requests.iterator().next().getResourceId();
+                ResourceContainer container = im.getResourceContainer(resourceId);
                 if (container.getResourceComponentState() != ResourceContainer.ResourceComponentState.STARTED
                     || container.getAvailability() == null
                     || container.getAvailability().getAvailabilityType() == AvailabilityType.DOWN) {
@@ -83,10 +85,10 @@ public class MeasurementCollectorRunner implements Callable<MeasurementReport>, 
                         log.debug("Measurements not collected for inactive resource component: " + container.getResource());
                     }
                 } else {
-                    MeasurementFacet measurementComponent = ComponentUtil.getComponent(id, MeasurementFacet.class,
+                    MeasurementFacet measurementComponent = ComponentUtil.getComponent(resourceId, MeasurementFacet.class,
                         FacetLockType.READ, MeasurementManager.FACET_METHOD_TIMEOUT, true, true);
 
-                    getValues(measurementComponent, report, requests);
+                    getValues(measurementComponent, report, requests, container.getResource());
                 }
 
                 this.measurementManager.reschedule(requests);
@@ -103,17 +105,23 @@ public class MeasurementCollectorRunner implements Callable<MeasurementReport>, 
     }
 
     private void getValues(MeasurementFacet measurementComponent, MeasurementReport report,
-        Set<? extends MeasurementScheduleRequest> requests) {
+                           Set<? extends MeasurementScheduleRequest> requests, Resource resource) {
         try {
             long start = System.currentTimeMillis();
             measurementComponent.getValues(report, (Set<MeasurementScheduleRequest>) requests);
             long duration = (System.currentTimeMillis() - start);
             if (duration > 2000) {
-                log.info("Collection of measurements for [" + measurementComponent + "] took [" + duration + "ms]");
+                log.info("[PERF] Collection of measurements for [" + measurementComponent + "] took [" + duration + "ms]");
             }
         } catch (Throwable t) {
             this.measurementManager.incrementFailedCollections(requests.size());
-            log.warn("Failure to collect measurement data from: " + measurementComponent, t);
+            if (log.isDebugEnabled()) {
+                log.warn("Failure to collect measurement data for " + resource + ", requests=" + requests
+                        + ", report.size()=" + report.getDataCount(), t);
+            } else {
+                log.warn("Failure to collect measurement data for " + resource + " - cause: "
+                        + ThrowableUtil.getAllMessages(t));
+            }
         }
     }
 
@@ -121,7 +129,7 @@ public class MeasurementCollectorRunner implements Callable<MeasurementReport>, 
         try {
             call();
         } catch (Exception e) {
-            log.error("Could not get measurement report", e);
+            log.error("Could not get measurement report.", e);
         }
     }
 }

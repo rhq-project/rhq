@@ -329,7 +329,7 @@
     <repository>
       <id>java.net-m1-releases</id>
       <name>Java.net Maven1 Repository - for javax.faces, javax.el, com.sun.el, and com.sun.facelets releases</name>
-      <url>https://maven-repository.dev.java.net/repository/</url>
+      <url>http://download.java.net/maven/1/</url>
       <layout>legacy</layout>
     </repository>
   </repositories>

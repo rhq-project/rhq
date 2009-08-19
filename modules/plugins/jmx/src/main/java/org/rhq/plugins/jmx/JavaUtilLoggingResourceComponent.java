@@ -34,6 +34,7 @@ import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
+import org.rhq.core.pluginapi.inventory.PluginContainerDeployment;
 
 /**
  * @author Greg Hinkle
@@ -41,6 +42,14 @@ import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 public class JavaUtilLoggingResourceComponent extends MBeanResourceComponent {
     @Override
     public Configuration loadResourceConfiguration() {
+
+        PropertySimple configManagementEnabled = getResourceContext().getPluginConfiguration().getSimple("configManagementEnabled");
+        if (getResourceContext().getPluginContainerDeployment() == PluginContainerDeployment.AGENT) {
+            if (configManagementEnabled == null || !configManagementEnabled.getBooleanValue()) {
+                throw new RuntimeException("Configuration management is currently disabled for this resource. It can be enabled in the connection properties tab.");
+            }
+        }
+
         EmsAttribute namesAttribute = getEmsBean().getAttribute("LoggerNames");
 
         String[] names = (String[]) namesAttribute.refresh();

@@ -426,6 +426,7 @@
          <plugin-configuration>
             <c:simple-property name="objectName" readOnly="true" default="java.util.logging:type=Logging"/>
             <c:simple-property name="nameTemplate" default="Logging"/>
+            <c:simple-property name="configManagementEnabled" type="boolean" default="false" description="When false, configuration reading for this resource will fail."/>
          </plugin-configuration>
 
          <resource-configuration>

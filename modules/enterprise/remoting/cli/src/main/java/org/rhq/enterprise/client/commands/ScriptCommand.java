@@ -27,6 +27,7 @@ import org.rhq.enterprise.client.export.Exporter;
 import org.rhq.enterprise.client.RemoteClient;
 import org.rhq.enterprise.client.TabularWriter;
 import org.rhq.enterprise.client.proxy.ResourceClientFactory;
+import org.rhq.enterprise.client.proxy.ConfigurationEditor;
 import org.rhq.enterprise.client.script.CLIScriptException;
 import org.rhq.enterprise.client.script.CmdLineParser;
 import org.rhq.enterprise.client.script.CommandLineParseException;
@@ -208,6 +209,7 @@ public class ScriptCommand implements ClientCommand {
 
         bindObjectAndGlobalFuctions(new Controller(client), "rhq");
         bindObjectAndGlobalFuctions(new ScriptUtil(client), "scriptUtil");
+        bindObjectAndGlobalFuctions(new ConfigurationEditor(client), "configurationEditor");
         bindObjectAndGlobalFuctions(new ScriptAssert(jsEngine), "Assert");
     }
 

@@ -247,7 +247,7 @@ public class ConfigurationEditor {
     }
 
 
-    public Object question(Map map, String currentValue, String prompt, String help) throws IOException, QuitException {
+    private Object question(Map map, String currentValue, String prompt, String help) throws IOException, QuitException {
         PrintWriter writer = client.getPrintWriter();
 
         if (map != null && map.size() > 0) {

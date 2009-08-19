@@ -26,6 +26,8 @@ import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.measurement.ResourceAvailability;
+import org.rhq.enterprise.client.utility.LazyLoadScenario;
+import org.rhq.enterprise.client.utility.ShortOutput;
 
 import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
@@ -39,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.LinkedHashMap;
+import java.util.Arrays;
 
 /**
  * @author Greg Hinkle
@@ -49,6 +52,7 @@ public class TabularWriter {
 
     String[] headers;
     int[] maxColumnLength;
+    boolean[] noShrinkColumns;
     int width = 160;
     PrintWriter out;
     private String format = "raw";
@@ -124,6 +128,12 @@ public class TabularWriter {
             return;
         }
 
+        if (object != null && object.getClass().isArray()) {
+            print((Object[])object);
+            return;
+        }
+
+
         try {
 
             if (SIMPLE_TYPES.contains(object.getClass())) {
@@ -145,9 +155,9 @@ public class TabularWriter {
 
                 if (val != null) {
                     try {
-                        String str = String.valueOf(val);
+                        String str = shortVersion(val);
                         maxLength = Math.max(maxLength, pd.getName().length());
-                        properties.put(pd.getName(), new PropertyInfo(String.valueOf(val), pd.getPropertyType()));
+                        properties.put(pd.getName(), new PropertyInfo(str, pd.getPropertyType()));
                     } catch (Exception e) {
                     }
                 }
@@ -346,19 +356,6 @@ public class TabularWriter {
     }
 
 
-    private String shortVersion(Object object) {
-
-        if (object instanceof PropertySimple) {
-            return ((PropertySimple) object).getStringValue();
-        } else if (object instanceof ResourceType) {
-            return ((ResourceType) object).getName();
-        } else if (object instanceof ResourceAvailability) {
-            return ((ResourceAvailability) object).getAvailabilityType().getName();
-        } else {
-            return String.valueOf(object);
-        }
-
-    }
 
 
     private boolean consistentMaps(Collection list) {
@@ -366,24 +363,24 @@ public class TabularWriter {
         String[][] data = new String[list.size()][];
         int i = 0;
         for (Object row : list) {
-            if (!(row instanceof Map)) {
+            if (!(row instanceof Map) && !(row instanceof PropertyMap)) {
                 return false;
             }
             if (keys == null) {
                 keys = new ArrayList<String>();
 
                 for (Object key : ((Map) row).keySet()) {
-                    String headerKey = String.valueOf(key);
+                    String headerKey = stringValueOf(key);
                     keys.add(headerKey);
                 }
             }
 
             data[i] = new String[keys.size()];
             for (Object key : ((Map) row).keySet()) {
-                if (!keys.contains(String.valueOf(key))) {
+                if (!keys.contains(stringValueOf(key))) {
                     return false;
                 }
-                data[i][keys.lastIndexOf(String.valueOf(key))] = shortVersion(((Map) row).get(key));
+                data[i][keys.lastIndexOf(stringValueOf(key))] = shortVersion(((Map) row).get(key));
             }
             i++;
         }
@@ -419,11 +416,17 @@ public class TabularWriter {
 
     public void print(PropertyList p, int depth) {
         out.println(indent(depth) + p.getName() + " [" + p.getList().size() + "] {");
-        for (Property entry : p.getList()) {
-            if (entry instanceof PropertySimple) {
-                print((PropertySimple) entry, depth + 1);
-            } else if (entry instanceof PropertyMap) {
-                print((PropertyMap) entry, depth + 1);
+        if (p.getList().get(0) instanceof PropertyMap) {
+            consistentMaps(p.getList());
+
+
+        } else {
+            for (Property entry : p.getList()) {
+                if (entry instanceof PropertySimple) {
+                    print((PropertySimple) entry, depth + 1);
+                } else if (entry instanceof PropertyMap) {
+                    print((PropertyMap) entry, depth + 1);
+                }
             }
         }
 
@@ -455,7 +458,7 @@ public class TabularWriter {
 
     private void printStrings(Collection list) {
         for (Object object : list) {
-            out.println(String.valueOf(object));
+            out.println(stringValueOf(object));
         }
     }
 
@@ -477,9 +480,8 @@ public class TabularWriter {
             return;
         }
         out.println("Array of " + (data.getClass().getComponentType().getName()));
-        for (Object row : data) {
-            out.println("\t" + row);
-        }
+
+        print(Arrays.asList(data));
     }
 
     public void print(String[][] data) {
@@ -607,13 +609,51 @@ public class TabularWriter {
     }
 
 
+
+    private static String shortVersion(Object object) {
+
+        if (object instanceof ShortOutput) {
+            return ((ShortOutput)object).getShortOutput();
+        } else if (object instanceof PropertySimple) {
+            return ((PropertySimple) object).getStringValue();
+        } else if (object instanceof ResourceType) {
+            return ((ResourceType) object).getName();
+        } else if (object instanceof ResourceAvailability) {
+            return ((ResourceAvailability) object).getAvailabilityType().getName();
+        } else if (object != null && object.getClass().isArray()) {
+            return Arrays.toString((Object[]) object);
+        } else {
+            return stringValueOf(object);
+        }
+    }
+
+
+
+
     private static Object invoke(Object o, Method m) throws IllegalAccessException, InvocationTargetException {
         boolean access = m.isAccessible();
         m.setAccessible(true);
         try {
+            LazyLoadScenario.setShouldLoad(false);
+
             return m.invoke(o);
+        } catch (Exception e) {
+            // That's fine
+            return null;
         } finally {
+            LazyLoadScenario.setShouldLoad(true);
             m.setAccessible(access);
+        }
+    }
+
+    private static String stringValueOf(Object object) {
+        try {
+            LazyLoadScenario.setShouldLoad(false);
+            return String.valueOf(object);
+        } catch (Exception e) {
+            return "null";
+        } finally {
+            LazyLoadScenario.setShouldLoad(true);
         }
     }
 }

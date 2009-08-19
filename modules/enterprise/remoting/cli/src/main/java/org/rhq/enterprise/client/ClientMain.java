@@ -88,7 +88,7 @@ public class ClientMain {
     // The subject that will be used to carry out all requested actions
     private Subject subject;
 
-    private ServiceCompletor serviceCompletor;
+    private InteractiveJavascriptCompletor serviceCompletor;
 
     private boolean interactiveMode = true;
 
@@ -144,7 +144,7 @@ public class ClientMain {
         Completor helpCompletor = new ArgumentCompletor(new Completor[] { new SimpleCompletor("help"),
             new SimpleCompletor(commands.keySet().toArray(new String[commands.size()])) });
 
-        this.serviceCompletor = new ServiceCompletor(consoleReader);
+        this.serviceCompletor = new InteractiveJavascriptCompletor(consoleReader);
         consoleReader.addCompletor(new MultiCompletor(new Completor[] { serviceCompletor, helpCompletor,
             commandCompletor }));
 
@@ -207,6 +207,10 @@ public class ClientMain {
         }
 
         return input_string;
+    }
+
+    public ConsoleReader getConsoleReader() {
+        return consoleReader;
     }
 
     /**

@@ -21,7 +21,9 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-package org.rhq.enterprise.client;
+package org.rhq.enterprise.client.export;
+
+import org.rhq.enterprise.client.TabularWriter;
 
 import java.io.FileWriter;
 import java.io.IOException;

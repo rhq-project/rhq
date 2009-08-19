@@ -23,9 +23,10 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.client.ClientMain;
 import org.rhq.enterprise.client.Controller;
-import org.rhq.enterprise.client.Exporter;
+import org.rhq.enterprise.client.export.Exporter;
 import org.rhq.enterprise.client.RemoteClient;
 import org.rhq.enterprise.client.TabularWriter;
+import org.rhq.enterprise.client.proxy.ResourceClientFactory;
 import org.rhq.enterprise.client.script.CLIScriptException;
 import org.rhq.enterprise.client.script.CmdLineParser;
 import org.rhq.enterprise.client.script.CommandLineParseException;
@@ -33,7 +34,6 @@ import org.rhq.enterprise.client.script.NamedScriptArg;
 import org.rhq.enterprise.client.script.ScriptArg;
 import org.rhq.enterprise.client.script.ScriptCmdLine;
 import org.rhq.enterprise.client.utility.PackageFinder;
-import org.rhq.enterprise.client.utility.ResourceClientProxy;
 import org.rhq.enterprise.client.utility.ScriptAssert;
 import org.rhq.enterprise.client.utility.ScriptUtil;
 
@@ -179,6 +179,7 @@ public class ScriptCommand implements ClientCommand {
 
             String message = e.getCause() != null ? e.getCause().getMessage() : e.getMessage();
             message = message.replace("sun.org.mozilla.javascript.internal.EcmaError: ","");
+            message = message.replace("(<Unknown source>#1) in <Unknown source> at line number 1","");
 
             client.getPrintWriter().println(message);
             client.getPrintWriter().println(script);
@@ -203,7 +204,7 @@ public class ScriptCommand implements ClientCommand {
         tw.setWidth(client.getConsoleWidth());
         sem.getBindings().put("pretty", tw);
 
-        sem.getBindings().put("ProxyFactory", new ResourceClientProxy.Factory(client.getRemoteClient()));
+        sem.getBindings().put("ProxyFactory", new ResourceClientFactory(client));
 
         bindObjectAndGlobalFuctions(new Controller(client), "rhq");
         bindObjectAndGlobalFuctions(new ScriptUtil(client), "scriptUtil");

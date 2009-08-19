@@ -47,6 +47,7 @@ import org.rhq.enterprise.server.operation.OperationManagerRemote;
 import org.rhq.enterprise.server.report.DataAccessManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerRemote;
+import org.rhq.enterprise.server.resource.ResourceFactoryManagerRemote;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerRemote;
 import org.rhq.enterprise.server.support.SupportManagerRemote;
 import org.rhq.enterprise.server.system.ServerVersion;
@@ -79,6 +80,7 @@ public class RemoteClient {
         MeasurementScheduleManager(MeasurementScheduleManagerRemote.class), //
         OperationManager(OperationManagerRemote.class), //
         ResourceManager(ResourceManagerRemote.class), //
+        ResourceFactoryManager(ResourceFactoryManagerRemote.class), //
         ResourceGroupManager(ResourceGroupManagerRemote.class), //
         ResourceTypeManager(ResourceTypeManagerRemote.class), //
         RoleManager(RoleManagerRemote.class), //
@@ -278,10 +280,6 @@ public class RemoteClient {
         return RemoteClientProxy.getProcessor(this, Manager.ConfigurationManager);
     }
 
-    //    public ContentHelperRemote getContentHelperRemote() {
-    //        return RemoteClientProxy.getProcessor(this, Manager.ContentHelperManager);
-    //    }
-
     public ContentManagerRemote getContentManagerRemote() {
         return RemoteClientProxy.getProcessor(this, Manager.ContentManager);
     }
@@ -316,6 +314,10 @@ public class RemoteClient {
 
     public ResourceManagerRemote getResourceManagerRemote() {
         return RemoteClientProxy.getProcessor(this, Manager.ResourceManager);
+    }
+
+    public ResourceFactoryManagerRemote getResourceFactoryManagerRemote() {
+        return RemoteClientProxy.getProcessor(this, Manager.ResourceFactoryManager);
     }
 
     public ResourceGroupManagerRemote getResourceGroupManagerRemote() {

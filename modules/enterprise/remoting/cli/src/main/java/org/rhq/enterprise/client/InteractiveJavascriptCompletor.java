@@ -34,6 +34,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.lang.reflect.Type;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -53,7 +54,7 @@ import org.rhq.core.domain.auth.Subject;
  *
  * @author Greg Hinkle
  */
-public class ServiceCompletor implements Completor {
+public class InteractiveJavascriptCompletor implements Completor {
 
     private Map<String, Object> services;
 
@@ -84,7 +85,7 @@ public class ServiceCompletor implements Completor {
         IGNORED_METHODS.add("initOperations");
     }
 
-    public ServiceCompletor(ConsoleReader reader) {
+    public InteractiveJavascriptCompletor(ConsoleReader reader) {
         this.consoleReader = reader;
     }
 
@@ -174,8 +175,9 @@ public class ServiceCompletor implements Completor {
      * @return location of relative completion
      */
     public int contextComplete(Object baseObject, String s, int i, List list) {
-        if (s.contains(".")) {
-            String[] call = s.split("\\.", 2);
+        String temp = s.split("\\(",2)[0];
+        if (temp.contains(".")) {
+            String[] call = temp.split("\\.", 2);
 
             String next = call[0];
             if (next.contains("(")) {
@@ -190,43 +192,56 @@ public class ServiceCompletor implements Completor {
             }
 
 
-            Map<String, Object> matches = getContextMatches(baseObjectClass, next);
-            Object rootObject = matches.get(next);
-            if (rootObject instanceof PropertyDescriptor && !(baseObject instanceof Class)) {
-                try {
+            Map<String, List<Object>> matches = getContextMatches(baseObjectClass, next);
+            if (!matches.isEmpty()) {
+                Object rootObject = matches.get(next).get(0);
+                if (rootObject instanceof PropertyDescriptor && !(baseObject instanceof Class)) {
+                    try {
+                        rootObject = invoke(baseObject, ((PropertyDescriptor)rootObject).getReadMethod());
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                } else if (rootObject instanceof Method) {
                     rootObject =
-                            ((PropertyDescriptor)rootObject).getReadMethod().invoke(baseObject);
-                } catch (Exception e) {
-                    e.printStackTrace();
+                            ((Method)rootObject).getReturnType();
                 }
-            } else if (rootObject instanceof Method) {
-                rootObject =
-                        ((Method)rootObject).getReturnType();
-            }
 
-            return call[0].length() + 1 + contextComplete(rootObject, call[1], i, list);
+                return call[0].length() + 1 + contextComplete(rootObject, call[1], i, list);
+            } else {
+                return -1;
+            }
         } else {
             String[] call = s.split("\\(", 2);
 
-            Map<String, Object> matches = getContextMatches(baseObject instanceof Class ? ((Class) baseObject) : baseObject.getClass(), call[0]);
+            Map<String, List<Object>> matches = getContextMatches(baseObject instanceof Class ? ((Class) baseObject) : baseObject.getClass(), call[0]);
 
 
             if (call.length == 2 && matches.containsKey(call[0])) {
 
-                List<Object> exactMatches = getExactContextMatches(baseObject, call[0]);
                 int x = 0;
-                for (Object match : exactMatches) {
-                    if (match instanceof Method) {
+                for (String key : matches.keySet()) {
 
-                        if (recomplete == 3) {
-                            displaySignatures(baseObject, (Method)match);
+                    List matchList = matches.get(key);
 
-                            return -1;
+                    if (recomplete == 2) {
+                        List<Method> methods = new ArrayList<Method>();
+                        for (Object match : matchList) {
+                            if (match instanceof Method) {
+                                methods.add((Method) match);
+                            }
                         }
+                        displaySignatures(baseObject, methods.toArray(new Method[methods.size()]));
+                        return -1;
+                    }
 
-                        int result = completeParameters(baseObject, call[1], i, list, (Method) match);  // x should be the same for all calls
-                        if (result > 0) {
-                            x = result;
+                    for (Object match : matchList) {
+
+                        if (key.equals(call[0]) && match instanceof Method) {
+
+                            int result = completeParameters(baseObject, call[1], i, list, (Method) match);  // x should be the same for all calls
+                            if (result > 0) {
+                                x = result;
+                            }
                         }
                     }
                 }
@@ -234,23 +249,25 @@ public class ServiceCompletor implements Completor {
             }
 
             if (matches.size() == 1 && matches.containsKey(call[0])) {
-                if (matches.get(call[0]) instanceof Method) {
-                    list.add("(" + (((Method)matches.get(call[0])).getParameterTypes().length == 0 ? ")" : ""));
+                if (matches.get(call[0]).get(0) instanceof Method) {
+                    list.add("(" + (((Method)matches.get(call[0]).get(0)).getParameterTypes().length == 0 ? ")" : ""));
                 }
                 return call[0].length() + 1;
             }
 
             if (recomplete == 2) {
                 List<Method> methods = new ArrayList<Method>();
-                for (Object val : matches.values()) {
-                    if (val instanceof Method) {
-                        methods.add((Method) val);
+                for (List<Object> matchList : matches.values()) {
+                    for (Object val : matchList) {
+                        if (val instanceof Method) {
+                            methods.add((Method) val);
+                        }
                     }
                 }
                 displaySignatures(baseObject,methods.toArray(new Method[methods.size()]));
             } else {
-                if (matches.size() == 1 && matches.values().iterator().next() instanceof Method) {
-                    list.add(matches.keySet().iterator().next() + "(" + ((((Method)matches.values().iterator().next()).getParameterTypes().length == 0 ? ")" : "")));
+                if (matches.size() == 1 && matches.values().iterator().next().get(0) instanceof Method) {
+                    list.add(matches.keySet().iterator().next() + "(" + ((((Method)matches.values().iterator().next().get(0)).getParameterTypes().length == 0 ? ")" : "")));
                 } else {
                     list.addAll(matches.keySet());
                 }
@@ -301,6 +318,19 @@ public class ServiceCompletor implements Completor {
     }
 
 
+    /**
+     * Split apart the parameters to a method call and complete the last parameter. If the last
+     * paramater has a valid value close that field with a "," for the next param or a ")" if is
+     * the last parameter. Does all machting according to the type of the parameters of the
+     * supplied method.
+     *
+     * @param baseObject
+     * @param params
+     * @param i
+     * @param list
+     * @param method
+     * @return
+     */
     public int completeParameters(Object baseObject, String params, int i, List list, Method method) {
 
         String[] paramList = params.split(",");
@@ -349,7 +379,9 @@ public class ServiceCompletor implements Completor {
                 }
 
             } else {
-                Map<String, Object> matches = getContextMatches(lastParam, c[paramIndex]);
+                Class parameterType = c[paramIndex];
+
+                Map<String, Object> matches = getContextMatches(lastParam, parameterType);
 
                 if (matches.size() == 1 && matches.containsKey(lastParam)) {
 
@@ -360,19 +392,6 @@ public class ServiceCompletor implements Completor {
                 }
             }
 
-//            if (list.size() == 0 && recomplete == 3) {
-//                Annotation[][] annotations = method.getParameterAnnotations();
-//
-//                if (annotations != null && annotations.length >= i) {
-//                    Annotation[] as = annotations[paramIndex];
-//                    for (Annotation a : as) {
-//                        if (a instanceof WebParam) {
-//                            list.add("name: " + ((WebParam) a).name());
-//                        }
-//                    }
-//                }
-//                list.add("type: " + c[paramIndex].getSimpleName());
-//            }
             return baseLength;
         }
     }
@@ -401,6 +420,13 @@ public class ServiceCompletor implements Completor {
     }
 
 
+    /**
+     * Look through all available contexts to find bindings that both start with
+     * the supplied start and match the typeFilter.
+     * @param start
+     * @param typeFilter
+     * @return
+     */
     private Map<String, Object> getContextMatches(String start, Class typeFilter) {
         Map<String, Object> found = new HashMap<String, Object>();
         if (context != null) {
@@ -410,9 +436,19 @@ public class ServiceCompletor implements Completor {
                     if (var.startsWith(start)) {
 
                         if ((bindings.get(var) != null && typeFilter.isAssignableFrom(bindings.get(var).getClass()))
-                                || recomplete == 2) {
+                                || recomplete == 3) {
                             found.put(var, bindings.get(var));
                         }
+                    }
+                }
+            }
+
+            if (typeFilter.isEnum()) {
+                for (Object ec : typeFilter.getEnumConstants()) {
+                    Enum e = (Enum) ec;
+                    String code = typeFilter.getSimpleName() + "." + e.name();
+                    if (code.startsWith(start)) {
+                        found.put(typeFilter.getSimpleName() + "." + e.name(), e);
                     }
                 }
             }
@@ -422,10 +458,12 @@ public class ServiceCompletor implements Completor {
 
 
 
-    private Map<String, Object> getContextMatches(Class baseObjectClass, String start) {
-        Map<String, Object> found = new HashMap<String, Object>();
+    private Map<String, List<Object>> getContextMatches(Class baseObjectClass, String start) {
+        Map<String, List<Object>> found = new HashMap<String, List<Object>>();
 
         try {
+            if (baseObjectClass.equals(Void.TYPE))
+                return found;
 
             BeanInfo info = null;
             if (baseObjectClass.isInterface() || baseObjectClass.equals(Object.class)) {
@@ -440,7 +478,14 @@ public class ServiceCompletor implements Completor {
             for (PropertyDescriptor desc : descriptors) {
                 if (desc.getName().startsWith(start)
                        && (!IGNORED_METHODS.contains(desc.getName()))) {
-                    found.put(desc.getName(), desc);
+
+                    List list = found.get(desc.getName());
+                    if (list == null) {
+                        list = new ArrayList();
+                        found.put(desc.getName(),list);
+                    }
+                    list.add(desc);
+
                     methodsCovered.add(desc.getReadMethod());
                     methodsCovered.add(desc.getWriteMethod());
                 }
@@ -453,7 +498,16 @@ public class ServiceCompletor implements Completor {
                         && !desc.getName().startsWith("_d")
                         && !IGNORED_METHODS.contains(desc.getName())) {
 
-                    found.put(desc.getName(), desc.getMethod());
+                    Class[] parameters = desc.getMethod().getParameterTypes();
+                    if (parameters.length == 0 || (!parameters[0].equals(Subject.class))) {
+
+                        List list = found.get(desc.getName());
+                        if (list == null) {
+                            list = new ArrayList();
+                            found.put(desc.getName(),list);
+                        }
+                        list.add(desc.getMethod());
+                    }
                 }
             }
 
@@ -462,53 +516,6 @@ public class ServiceCompletor implements Completor {
             e.printStackTrace();
         }
         return found;
-    }
-
-    private List<Object> getExactContextMatches(Object baseObject, String attribute) {
-        List<Object> found = new ArrayList<Object>();
-
-        try {
-
-            BeanInfo info = Introspector.getBeanInfo(baseObject.getClass(), Object.class);
-
-            Set<Method> methodsCovered = new HashSet<Method>();
-
-            PropertyDescriptor[] descriptors = info.getPropertyDescriptors();
-            for (PropertyDescriptor desc : descriptors) {
-                if (desc.getName().equals(attribute)) {
-                    found.add(desc);
-                    methodsCovered.add(desc.getReadMethod());
-                    methodsCovered.add(desc.getWriteMethod());
-                }
-            }
-
-            MethodDescriptor[] methods = info.getMethodDescriptors();
-            for (MethodDescriptor desc : methods) {
-                if (desc.getName().equals(attribute) && !methodsCovered.contains(desc.getMethod())) {
-                    found.add(desc.getMethod());
-                }
-            }
-
-
-        } catch (IntrospectionException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-        }
-
-        return found;
-    }
-
-
-    private List<Method> getMethods(Object service) {
-        Class intf = service.getClass().getInterfaces()[0];
-        Method[] methods = intf.getMethods();
-        Arrays.sort(methods, new Comparator<Method>() {
-            public int compare(Method o1, Method o2) {
-                return o1.getName().compareTo(o2.getName());
-            }
-        });
-        List<Method> methodList = new ArrayList<Method>();
-        methodList.addAll(Arrays.asList(methods));
-        return methodList;
     }
 
 
@@ -591,5 +598,16 @@ public class ServiceCompletor implements Completor {
 
     public void setContext(ScriptContext context) {
         this.context = context;
+    }
+
+
+    private static Object invoke(Object o, Method m) throws IllegalAccessException, InvocationTargetException {
+        boolean access = m.isAccessible();
+        m.setAccessible(true);
+        try {
+            return m.invoke(o);
+        } finally {
+            m.setAccessible(access);
+        }
     }
 }

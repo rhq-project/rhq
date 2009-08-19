@@ -16,12 +16,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.client.utility;
+package org.rhq.enterprise.client.proxy;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -29,6 +28,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 import javassist.CannotCompileException;
 import javassist.ClassPool;
@@ -45,6 +47,8 @@ import javassist.util.proxy.ProxyFactory;
 import javax.jws.WebParam;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
+import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.PackageType;
@@ -70,9 +74,15 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.Summary;
 import org.rhq.enterprise.client.RemoteClient;
+import org.rhq.enterprise.client.ClientMain;
+import org.rhq.enterprise.client.utility.LazyLoadScenario;
+import org.rhq.enterprise.client.utility.ShortOutput;
+import org.rhq.enterprise.client.utility.ConfigurationClassBuilder;
+import org.rhq.enterprise.client.utility.ScriptUtil;
 import org.rhq.enterprise.server.content.ContentManagerRemote;
 import org.rhq.enterprise.server.operation.ResourceOperationSchedule;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
+import com.sun.xml.internal.ws.util.VersionUtil;
 
 /**
  * Implements a local object that exposes resource related data as
@@ -82,6 +92,7 @@ import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
  */
 public class ResourceClientProxy {
 
+    private ClientMain client;
     private RemoteClient remoteClient;
     private int resourceId;
     private Resource resource;
@@ -98,13 +109,14 @@ public class ResourceClientProxy {
     private Map<String, ContentType> contentTypes = new HashMap<String, ContentType>();
 
     private List<ResourceClientProxy> children;
-    private ConfigurationDefinition resourceConfigurationDefinition;
-    private ConfigurationDefinition pluginConfigurationDefinition;
+    ConfigurationDefinition resourceConfigurationDefinition;
+    ConfigurationDefinition pluginConfigurationDefinition;
 
     public ResourceClientProxy() {
     }
 
     public ResourceClientProxy(ResourceClientProxy parentProxy) {
+        this.client = parentProxy.client;
         this.remoteClient = parentProxy.remoteClient;
         this.resourceId = parentProxy.resourceId;
         this.resource = parentProxy.resource;
@@ -115,8 +127,9 @@ public class ResourceClientProxy {
 
     }
 
-    public ResourceClientProxy(RemoteClient remoteClient, int resourceId) {
-        this.remoteClient = remoteClient;
+    public ResourceClientProxy(ClientMain clientMain, int resourceId) {
+        this.client = clientMain;
+        this.remoteClient = client.getRemoteClient();
         this.resourceId = resourceId;
 
         init();
@@ -158,30 +171,26 @@ public class ResourceClientProxy {
         return this.measurementMap.get(name);
     }
 
-    public Collection<Measurement> getMeasurements() {
-        return this.measurementMap.values();
+    public Measurement[] getMeasurements() {
+        return this.measurementMap.values().toArray(new Measurement[this.measurementMap.size()]);
     }
 
-    public Map<String, Measurement> getMeasurementMap() {
-        return this.measurementMap;
-    }
-
-    public Collection<Operation> getOperations() {
-        return this.operationMap.values();
+    public Operation[] getOperations() {
+        return this.operationMap.values().toArray(new Operation[this.operationMap.size()]);
     }
 
     public Map<String, ContentType> getContentTypes() {
         return contentTypes;
     }
 
-    public List<ResourceClientProxy> getChildren() {
-        if (children == null) {
+    public ResourceClientProxy[] getChildren() {
+        if (children == null && LazyLoadScenario.isShouldLoad()) {
             children = new ArrayList<ResourceClientProxy>();
 
             initChildren();
 
         }
-        return children;
+        return children.toArray(new ResourceClientProxy[children.size()]);
     }
 
     public ResourceClientProxy getChild(String name) {
@@ -224,7 +233,7 @@ public class ResourceClientProxy {
             remoteClient.getSubject(), criteria);
 
         for (Resource child : childResources) {
-            this.children.add(new Factory(remoteClient).getResource(child.getId()));
+            this.children.add(new ResourceClientFactory(client).getResource(child.getId()));
         }
     }
 
@@ -307,7 +316,7 @@ public class ResourceClientProxy {
 
     }
 
-    public class Measurement {
+    public class Measurement implements ShortOutput {
 
         MeasurementDefinition definition;
 
@@ -359,6 +368,9 @@ public class ResourceClientProxy {
         }
 
         public String toString() {
+            return getName();
+        }
+        public String getShortOutput() {
             return getDisplayValue();
         }
     }
@@ -385,6 +397,9 @@ public class ResourceClientProxy {
         }
 
         public Object invoke(Object[] args) throws Exception {
+            if (!LazyLoadScenario.isShouldLoad())
+                return null;
+
             Configuration parameters = ConfigurationClassBuilder.translateParametersToConfig(definition
                 .getParametersConfigurationDefinition(), args);
 
@@ -432,9 +447,12 @@ public class ResourceClientProxy {
             this.remoteClient = remoteClient;
         }
 
+        // ------------------------------------------------------------------------------------------------------
         // Methods here are optional and only accessible if their declared on the custom resource interface class
 
         public Configuration getPluginConfiguration() {
+            if (!LazyLoadScenario.isShouldLoad())
+                return null;
             return remoteClient.getConfigurationManagerRemote().getPluginConfiguration(remoteClient.getSubject(),
                 resourceClientProxy.resourceId);
         }
@@ -443,7 +461,36 @@ public class ResourceClientProxy {
             return resourceClientProxy.pluginConfigurationDefinition;
         }
 
+        public PluginConfigurationUpdate updatePluginConfiguration(Configuration configuration) {
+            PluginConfigurationUpdate update =
+                remoteClient.getConfigurationManagerRemote().updatePluginConfiguration(
+                    remoteClient.getSubject(),
+                    resourceClientProxy.getId(),
+                    configuration);
+
+            return update;
+        }
+
+        public void editPluginConfiguration() {
+            ConfigurationEditor editor = new ConfigurationEditor(resourceClientProxy.client);
+            Configuration config = editor.editConfiguration(getPluginConfigurationDefinition(), getPluginConfiguration());
+            if (config != null) {
+                updatePluginConfiguration(config);
+            }
+        }
+
+        public void editResourceConfiguration() {
+            ConfigurationEditor editor = new ConfigurationEditor(resourceClientProxy.client);
+            Configuration config = editor.editConfiguration(getResourceConfigurationDefinition(), getResourceConfiguration());
+            if (config != null) {
+                updateResourceConfiguration(config);
+            }
+        }
+
         public Configuration getResourceConfiguration() {
+            if (!LazyLoadScenario.isShouldLoad())
+                return null;
+
             return remoteClient.getConfigurationManagerRemote().getResourceConfiguration(remoteClient.getSubject(),
                 resourceClientProxy.resourceId);
         }
@@ -452,10 +499,90 @@ public class ResourceClientProxy {
             return resourceClientProxy.resourceConfigurationDefinition;
         }
 
-        public InstalledPackage getBackingContent() {
-            return remoteClient.getContentManagerRemote().getBackingPackageForResource(remoteClient.getSubject(),
-                resourceClientProxy.resourceId);
+        public ResourceConfigurationUpdate updateResourceConfiguration(Configuration configuration) {
+            ResourceConfigurationUpdate update =
+                remoteClient.getConfigurationManagerRemote().updateResourceConfiguration(
+                    remoteClient.getSubject(),
+                    resourceClientProxy.getId(),
+                    configuration);
+
+            return update;
+
         }
+
+        public InstalledPackage getBackingContent() {
+
+            return remoteClient.getContentManagerRemote().getBackingPackageForResource(remoteClient.getSubject(), resourceClientProxy.resourceId);
+        }
+
+        public void updateBackingContent(String filename) {
+            File file = new File(filename);
+            if (!file.exists()) {
+                throw new IllegalArgumentException("File not found: " + file.getAbsolutePath());
+            }
+            if (file.isDirectory()) {
+                throw new IllegalArgumentException("File expected, found directory: " + file.getAbsolutePath());
+            }
+
+
+            InstalledPackage oldPackage = getBackingContent();
+
+
+            String oldVersion = oldPackage.getPackageVersion().getVersion();
+            String newVersion = "1.0";
+            if (oldVersion != null && oldVersion.length() != 0) {
+                String[] parts = oldVersion.split("[^a-zA-Z0-9]");
+                String lastPart = parts[parts.length-1];
+                try {
+                    int lastNumber = Integer.parseInt(lastPart);
+                    newVersion = oldVersion.substring(0, oldVersion.length() - lastPart.length()) + (lastNumber + 1);
+                } catch (NumberFormatException nfe) {
+                    newVersion = oldVersion + ".1";
+                }
+            }
+
+            byte[] fileContents = new ScriptUtil(null).getFileBytes(filename);
+
+
+            PackageVersion pv =
+                    remoteClient.getContentManagerRemote().createPackageVersion(
+                        remoteClient.getSubject(),
+                        oldPackage.getPackageVersion().getGeneralPackage().getName(),
+                        oldPackage.getPackageVersion().getGeneralPackage().getPackageType().getId(),
+                        newVersion,
+                        oldPackage.getPackageVersion().getArchitecture().getId(),
+                        fileContents);
+
+            remoteClient.getContentManagerRemote().deployPackages(
+                    remoteClient.getSubject(),
+                    new int[] { resourceClientProxy.getId()},
+                    new int[] {pv.getId()});
+
+
+        }
+
+        public void retrieveBackingContent(String fileName) throws IOException {
+
+            InstalledPackage installedPackage = getBackingContent();
+
+            if (fileName == null )
+                fileName = installedPackage.getPackageVersion().getFileName();
+            
+            File file = new File(fileName);
+
+            byte[] data =
+                    remoteClient.getContentManagerRemote().getPackageBytes(
+                            remoteClient.getSubject(), resourceClientProxy.resourceId, installedPackage.getId());
+
+            FileOutputStream fos = new FileOutputStream(file);
+            fos.write(data);
+            fos.close();
+
+        }
+
+        // ------------------------------------------------------------------------------------------------------
+
+
 
         public Object invoke(Object proxy, Method method, Method proceedMethod, Object[] args) throws Throwable {
 
@@ -494,125 +621,8 @@ public class ResourceClientProxy {
         }
     }
 
-    public static class Factory {
-        private RemoteClient remoteClient;
 
-        public Factory(RemoteClient remoteClient) {
-            this.remoteClient = remoteClient;
-        }
-
-        private static AtomicInteger classIndex = new AtomicInteger();
-
-        public ResourceClientProxy getResource(int resourceId) {
-
-            ResourceClientProxy proxy = new ResourceClientProxy(remoteClient, resourceId);
-            Class customInterface = null;
-            try {
-                // define the dynamic class
-                ClassPool pool = ClassPool.getDefault();
-                CtClass customClass = pool.makeInterface(ResourceClientProxy.class.getName() + "__Custom__"
-                    + classIndex.getAndIncrement());
-
-                for (String key : proxy.allProperties.keySet()) {
-                    Object prop = proxy.allProperties.get(key);
-
-                    if (prop instanceof Measurement) {
-                        Measurement m = (Measurement) prop;
-                        String name = getterName(key);
-
-                        try {
-                            ResourceClientProxy.class.getMethod(name);
-                        } catch (NoSuchMethodException nsme) {
-                            CtMethod method = CtNewMethod.abstractMethod(pool.get(Measurement.class.getName()),
-                                getterName(key), new CtClass[0], new CtClass[0], customClass);
-                            customClass.addMethod(method);
-                        }
-                    } else if (prop instanceof Operation) {
-                        Operation o = (Operation) prop;
-
-                        LinkedHashMap<String, CtClass> types = ConfigurationClassBuilder.translateParameters(o
-                            .getDefinition().getParametersConfigurationDefinition());
-
-                        CtClass[] params = new CtClass[types.size()];
-                        int x = 0;
-                        for (String param : types.keySet()) {
-                            params[x++] = types.get(param);
-                        }
-
-                        CtMethod method = CtNewMethod.abstractMethod(ConfigurationClassBuilder.translateConfiguration(o
-                            .getDefinition().getResultsConfigurationDefinition()), simpleName(key), params,
-                            new CtClass[0], customClass);
-
-                        // Setup @WebParam annotations so the signatures have the config prop names
-                        javassist.bytecode.annotation.Annotation[][] newAnnotations = new javassist.bytecode.annotation.Annotation[params.length][1];
-                        int i = 0;
-                        for (String paramName : types.keySet()) {
-                            newAnnotations[i] = new Annotation[1];
-
-                            newAnnotations[i][0] = new Annotation(WebParam.class.getName(), method.getMethodInfo()
-                                .getConstPool());
-                            newAnnotations[i][0].addMemberValue("name", new StringMemberValue(paramName, method
-                                .getMethodInfo().getConstPool()));
-                            i++;
-                        }
-
-                        ParameterAnnotationsAttribute newAnnotationsAttribute = new ParameterAnnotationsAttribute(
-                            method.getMethodInfo().getConstPool(), ParameterAnnotationsAttribute.visibleTag);
-                        newAnnotationsAttribute.setAnnotations(newAnnotations);
-                        method.getMethodInfo().addAttribute(newAnnotationsAttribute);
-
-                        customClass.addMethod(method);
-                    }
-                }
-
-                customInterface = customClass.toClass();
-            } catch (NotFoundException e) {
-                e.printStackTrace();
-            } catch (CannotCompileException e) {
-                e.printStackTrace();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            if (customInterface != null) {
-
-                List<Class> interfaces = new ArrayList<Class>();
-                interfaces.add(customInterface);
-                if (proxy.resourceConfigurationDefinition != null) {
-                    interfaces.add(ResourceConfigurable.class);
-                }
-                if (proxy.pluginConfigurationDefinition != null) {
-                    interfaces.add(PluginConfigurable.class);
-                }
-
-                if (proxy.getResourceType().getCreationDataType() == ResourceCreationDataType.CONTENT) {
-                    interfaces.add(ContentBackedResource.class);
-                }
-
-                ProxyFactory proxyFactory = new ProxyFactory();
-                proxyFactory.setInterfaces(interfaces.toArray(new Class[interfaces.size()]));
-                proxyFactory.setSuperclass(ResourceClientProxy.class);
-                ResourceClientProxy proxied = null;
-                try {
-                    proxied = (ResourceClientProxy) proxyFactory.create(new Class[] {}, new Object[] {},
-                        new ClientProxyMethodHandler(proxy, remoteClient));
-                } catch (InstantiationException e) {
-                    e.printStackTrace(); //To change body of catch statement use File | Settings | File Templates.
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace(); //To change body of catch statement use File | Settings | File Templates.
-                } catch (NoSuchMethodException e) {
-                    e.printStackTrace(); //To change body of catch statement use File | Settings | File Templates.
-                } catch (InvocationTargetException e) {
-                    e.printStackTrace(); //To change body of catch statement use File | Settings | File Templates.
-                }
-                return proxied;
-            }
-            return proxy;
-
-        }
-    }
-
-    private static String simpleName(String name) {
+    static String simpleName(String name) {
         return decapitalize(name.replaceAll("\\W", ""));
     }
 
@@ -620,7 +630,7 @@ public class ResourceClientProxy {
         return Character.toLowerCase(name.charAt(0)) + name.substring(1, name.length());
     }
 
-    private static String getterName(String name) {
+    static String getterName(String name) {
         return "get" + Character.toUpperCase(name.charAt(0)) + name.substring(1, name.length());
     }
 
@@ -628,17 +638,31 @@ public class ResourceClientProxy {
         public Configuration getPluginConfiguration();
 
         public ConfigurationDefinition getPluginConfigurationDefinition();
+
+        public PluginConfigurationUpdate updatePluginConfiguration(Configuration configuration);
+
+        public void editPluginConfiguration();
     }
 
     public static interface ResourceConfigurable {
         public Configuration getResourceConfiguration();
 
         public ConfigurationDefinition getResourceConfigurationDefinition();
+
+        public ResourceConfigurationUpdate updateResourceConfiguration(Configuration configuration);
+
+        public void editResourceConfiguration();
     }
 
     public static interface ContentBackedResource {
 
         public InstalledPackage getBackingContent();
+
+
+        public void updateBackingContent(String fileName);
+
+
+        public void retrieveBackingContent(String fileName) throws IOException;
 
     }
 
@@ -646,8 +670,10 @@ public class ResourceClientProxy {
         RemoteClient rc = new RemoteClient("localhost", 7080);
 
         rc.login("rhqadmin", "rhqadmin");
+        ClientMain cm = new ClientMain();
+        cm.setRemoteClient(rc);
 
-        Factory factory = new Factory(rc);
+        ResourceClientFactory factory = new ResourceClientFactory(cm);
 
         ResourceClientProxy resource = factory.getResource(10571);
 

@@ -22,32 +22,32 @@
  */
 package org.rhq.enterprise.client.utility;
 
+import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
+import org.rhq.core.domain.operation.OperationRequestStatus;
+import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
-import org.rhq.core.domain.criteria.ResourceCriteria;
-import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.operation.ResourceOperationHistory;
-import org.rhq.core.domain.operation.OperationRequestStatus;
-import org.rhq.enterprise.client.Controller;
 import org.rhq.enterprise.client.ClientMain;
-import org.rhq.enterprise.server.resource.ResourceManagerRemote;
 import org.rhq.enterprise.server.operation.ResourceOperationSchedule;
+import org.rhq.enterprise.server.resource.ResourceManagerRemote;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
 
 public class ScriptUtil {
 
     private ClientMain client;
 
+
     public ScriptUtil(ClientMain client) {
         this.client = client;
     }
+
+
 
     public PageList<Resource> findResources(String string) {
         ResourceManagerRemote resourceManager = client.getRemoteClient().getResourceManagerRemote();

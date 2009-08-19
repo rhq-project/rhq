@@ -82,7 +82,6 @@ import org.rhq.enterprise.client.utility.ScriptUtil;
 import org.rhq.enterprise.server.content.ContentManagerRemote;
 import org.rhq.enterprise.server.operation.ResourceOperationSchedule;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
-import com.sun.xml.internal.ws.util.VersionUtil;
 
 /**
  * Implements a local object that exposes resource related data as

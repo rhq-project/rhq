@@ -36,6 +36,7 @@ import org.jboss.remoting.callback.InvokerCallbackHandler;
 import org.jboss.remoting.invocation.NameBasedInvocation;
 
 import org.rhq.core.domain.util.serial.ExternalizableStrategy;
+import org.rhq.core.util.exception.WrappedRemotingException;
 import org.rhq.enterprise.server.util.HibernateDetachUtility;
 
 /**
@@ -109,10 +110,10 @@ public class RemoteSafeInvocationHandler implements ServerInvocationHandler {
             successful = true;
         } catch (InvocationTargetException e) {
             log.error("Failed to invoke remote request", e);
-            return e.getTargetException();
+            return new WrappedRemotingException(e.getTargetException());
         } catch (Exception e) {
             log.error("Failed to invoke remote request", e);
-            return e;
+            return new WrappedRemotingException(e);
         } finally {
             if (result != null) {
                 // set the strategy guiding how the return information is serialized
@@ -125,7 +126,8 @@ public class RemoteSafeInvocationHandler implements ServerInvocationHandler {
                 } catch (Exception e) {
                     log.error("Failed to null out uninitialized fields", e);
                     this.metrics.addData(methodName, System.currentTimeMillis() - time, false);
-                    return e;
+
+                    return new WrappedRemotingException(e);
                 }
             }
 

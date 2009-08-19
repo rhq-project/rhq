@@ -307,8 +307,9 @@ public class AppServerUtils {
         long diff = System.currentTimeMillis() - now;
         
         System.out.println("Server back up in " + (diff / 1000D) + " seconds.");
-        System.out.println("Issuing availability scan after the server restart...");
+        System.out.println("Issuing availability and service scan after the server restart...");
         PluginContainer.getInstance().getInventoryManager().executeAvailabilityScanImmediately(false);
+        PluginContainer.getInstance().getInventoryManager().executeServiceScanImmediately();
         System.out.println("Server restart procedure completed.");
     }
     

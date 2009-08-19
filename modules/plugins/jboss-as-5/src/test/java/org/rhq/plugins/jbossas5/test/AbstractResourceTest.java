@@ -71,6 +71,7 @@ public abstract class AbstractResourceTest extends AbstractPluginTest {
         assert !resources.isEmpty();
     }
 
+    @Deprecated
     protected void testResourceCreation() throws Exception {
         ResourceType resourceType = getResourceType();
         if (!resourceType.isCreatable()) {
@@ -204,19 +205,27 @@ public abstract class AbstractResourceTest extends AbstractPluginTest {
     protected Configuration getTestResourceConfiguration() {
         throw new UnsupportedOperationException();
     }
-
-    protected Set<Resource> getResources() {
+    
+    protected static Set<Resource> getResources(ResourceType resourceType) {
         InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
-        ResourceType resourceType = getResourceType();
         return inventoryManager.getResourcesWithType(resourceType);
     }
 
-    protected ResourceType getResourceType() {
-        PluginManager pluginManager = PluginContainer.getInstance().getPluginManager();
-        PluginMetadataManager pluginMetadataManager = pluginManager.getMetadataManager();
-        return pluginMetadataManager.getType(getResourceTypeName(), getPluginName());
+    protected Set<Resource> getResources() {
+        return getResources(getResourceType());
     }
 
+    protected static ResourceType getResourceType(String resourceTypeName, String pluginName) {
+        PluginManager pluginManager = PluginContainer.getInstance().getPluginManager();
+        PluginMetadataManager pluginMetadataManager = pluginManager.getMetadataManager();
+        return pluginMetadataManager.getType(resourceTypeName, pluginName);        
+    }
+    
+    protected ResourceType getResourceType() {
+        return getResourceType(getResourceTypeName(), getPluginName());
+    }
+
+    @Deprecated
     protected ResourceType getServerResource() {
         PluginManager pluginManager = PluginContainer.getInstance().getPluginManager();
         PluginMetadataManager pluginMetadataManager = pluginManager.getMetadataManager();

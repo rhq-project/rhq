@@ -20,6 +20,9 @@ package org.rhq.enterprise.server.content;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileInputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -795,10 +798,24 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
         InstalledPackage installedPackage = entityManager.find(InstalledPackage.class, installedPackageId);
         PackageBits bits = installedPackage.getPackageVersion().getPackageBits();
-        if (bits == null) {
+        if (bits == null || bits.getBits() == null) {
+            long start = System.currentTimeMillis();
             retrieveBitsFromResource(user, resourceId, installedPackageId);
 
             bits = installedPackage.getPackageVersion().getPackageBits();
+            while ((bits == null || bits.getBits() == null) && (System.currentTimeMillis() - start < 30000)) {
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) { }
+                entityManager.clear();
+                installedPackage = entityManager.find(InstalledPackage.class, installedPackageId);
+                bits = installedPackage.getPackageVersion().getPackageBits();
+            }
+
+            if (bits == null) {
+                throw new RuntimeException("Unable to retrieve package bits for resource: " + resourceId
+                        + " and package: " + installedPackageId + " before timeout.");
+            }
         }
 
         return bits.getBits();
@@ -887,6 +904,18 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 packageVersion.setPackageBits(packageBits);
                 entityManager.flush(); // push the new package bits row to the DB
 
+                // Could use the following, but only on jdk6 as builds
+                // @since 1.6
+                // void setBinaryStream(int parameterIndex, java.io.InputStream x) throws SQLException;
+
+                Long length = packageVersion.getFileSize();
+                if (length == null) {
+                    File tmpFile = File.createTempFile("rhq", ".stream");
+                    FileOutputStream fos = new FileOutputStream(tmpFile);
+                    length = StreamUtil.copy(bitStream, fos,true);
+
+                    bitStream = new FileInputStream(tmpFile);
+                }
                 Connection conn = null;
                 PreparedStatement ps = null;
 
@@ -894,12 +923,13 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                     // fallback to JDBC so we can stream the data to the blob column
                     conn = dataSource.getConnection();
                     ps = conn.prepareStatement("UPDATE " + PackageBits.TABLE_NAME + " SET BITS = ? WHERE ID = ?");
-                    ps.setBinaryStream(1, bitStream, packageVersion.getFileSize().intValue()); // TODO: DO I HAVE FILESIZE???
+                    ps.setBinaryStream(1, bitStream, (int) length.longValue());
                     ps.setInt(2, packageBits.getId());
                     if (ps.executeUpdate() != 1) {
                         throw new SQLException("Did not stream the package bits to the DB for [" + packageVersion + "]");
                     }
                 } finally {
+
                     if (ps != null) {
                         try {
                             ps.close();
@@ -916,7 +946,8 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                         }
                     }
                 }
-            } catch (SQLException e) {
+
+            } catch (Exception e) {
                 log.error("Error while reading content from agent stream", e);
                 // TODO: don't want to throw exception here? does the tx rollback automatically anyway?
             }
@@ -1444,6 +1475,11 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         if ((null != ips) && (1 == ips.size())) {
             result = ips.get(0);
         }
+
+        // fetch these
+        result.getPackageVersion().getGeneralPackage().getId();
+        result.getPackageVersion().getGeneralPackage().getPackageType().getId();
+        result.getPackageVersion().getArchitecture().getId();
 
         return result;
     }

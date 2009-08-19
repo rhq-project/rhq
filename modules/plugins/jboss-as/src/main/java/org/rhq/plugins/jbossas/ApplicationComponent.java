@@ -96,7 +96,11 @@ public class ApplicationComponent
     // ContentFacet Implementation  --------------------------------------------
 
     public InputStream retrievePackageBits(ResourcePackageDetails packageDetails) {
-        File packageFile = new File(packageDetails.getName());
+
+        Configuration pluginConfiguration = getResourceContext().getPluginConfiguration();
+        String fullFileName = pluginConfiguration.getSimpleValue(FILENAME_PLUGIN_CONFIG_PROP, null);
+
+        File packageFile = new File(fullFileName);
         File fileToSend;
         try {
             if (packageFile.isDirectory()) {
@@ -146,7 +150,8 @@ public class ApplicationComponent
             details.setLocation(file.getPath());
             if (!file.isDirectory())
                 details.setFileSize(file.length());
-            details.setFileCreatedDate(null); // TODO: get created date via SIGAR
+
+            details.setFileCreatedDate(file.lastModified()); // TODO: get created date via SIGAR
 
             packages.add(details);
         }

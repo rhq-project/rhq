@@ -46,7 +46,7 @@ public interface ResourceFactoryManagerRemote {
      * are defined with a creation data type of {@link ResourceCreationDataType#CONFIGURATION}. If this call is made for
      * a resource type that cannot be created via a configuration, the plugin container will throw an exception.
      *
-     * @param user                  user requesting the creation
+     * @param subject               user requesting the creation
      * @param parentResourceId      parent resource under which the new resource should be created
      * @param resourceTypeId        type of resource to create
      * @param resourceName          name of the resource being created
@@ -71,7 +71,7 @@ public interface ResourceFactoryManagerRemote {
      * are defined with a creation data type of {@link ResourceCreationDataType#CONTENT}. If this call is made for a
      * resource type that cannot be created via an package, the plugin container will throw an exception.
      *
-     * @param user                        user requesting the creation
+     * @param subject                     user requesting the creation
      * @param parentResourceId            parent resource under which the new resource should be created
      * @param newResourceTypeId           identifies the type of resource being created
      * @param newResourceName             name of the resource being created
@@ -96,4 +96,16 @@ public interface ResourceFactoryManagerRemote {
         @WebParam(name = "deploymentTimeConfiguration") Configuration deploymentTimeConfiguration, //
         @WebParam(name = "packageBits") byte[] packageBits);
 
+    /**
+     * Deletes a physical resource from the agent machine. After this call, the resource will no longer be accessible
+     * not only to JON, but in general. It is up to the plugin to determine how to complete the delete, but a deleted
+     * resource will no longer be returned from resource discoveries.
+     *
+     * @param subject    user requesting the creation
+     * @param resourceId resource being deleted
+     */
+    @WebMethod
+    void deleteResource( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "resourceId") int resourceId);
 }

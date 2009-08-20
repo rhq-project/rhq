@@ -115,110 +115,6 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
 
     // ResourceFactoryManagerLocal Implementation  --------------------------------------------
 
-    public void createResource(Subject user, int parentResourceId, int resourceTypeId, String resourceName,
-        Configuration pluginConfiguration, Configuration resourceConfiguration) {
-        log.debug("Received call to create configuration backed resource under parent: " + parentResourceId
-            + " of type: " + resourceTypeId);
-
-        ResourceType resourceType = entityManager.find(ResourceType.class, resourceTypeId);
-        Resource resource = entityManager.find(Resource.class, parentResourceId);
-        Agent agent = resource.getAgent();
-
-        // Check permissions first
-        if (!authorizationManager.hasResourcePermission(user, Permission.CREATE_CHILD_RESOURCES, resource.getId())) {
-            throw new PermissionException("User [" + user.getName()
-                + "] does not have permission to create a child resource for resource [" + resource + "]");
-        }
-
-        // Persist in separate transaction so it is committed immediately, before the request is sent to the agent
-        CreateResourceHistory persistedHistory = resourceFactoryManager.persistCreateHistory(user, parentResourceId,
-            resourceTypeId, resourceName, resourceConfiguration);
-
-        // Package into transfer object
-        CreateResourceRequest request = new CreateResourceRequest(persistedHistory.getId(), parentResourceId,
-            resourceName, resourceType.getName(), resourceType.getPlugin(), pluginConfiguration, resourceConfiguration);
-
-        try {
-            AgentClient agentClient = agentManager.getAgentClient(agent);
-            ResourceFactoryAgentService resourceFactoryAgentService = agentClient.getResourceFactoryAgentService();
-            resourceFactoryAgentService.createResource(request);
-        } catch (Exception e) {
-            log.error("Error while sending create resource request to agent service", e);
-
-            // Submit the error as a failure response
-            String errorMessage = ThrowableUtil.getAllMessages(e);
-            CreateResourceResponse response = new CreateResourceResponse(persistedHistory.getId(), null, null,
-                CreateResourceStatus.FAILURE, errorMessage, resourceConfiguration);
-            resourceFactoryManager.completeCreateResource(response);
-
-            throw new RuntimeException("Error while sending create resource request to agent service", e);
-        }
-    }
-
-    public void createResource(Subject subject, int parentResourceId, int newResourceTypeId, String newResourceName,
-        Configuration pluginConfiguration, String packageName, String packageVersionNumber, Integer architectureId,
-        Configuration deploymentTimeConfiguration, byte[] packageBits) {
-
-        createResource(subject, parentResourceId, newResourceTypeId, newResourceName, pluginConfiguration, packageName,
-            packageVersionNumber, architectureId, deploymentTimeConfiguration, new ByteArrayInputStream(packageBits));
-    }
-
-    public void createResource(Subject user, int parentResourceId, int newResourceTypeId, String newResourceName,
-        Configuration pluginConfiguration, String packageName, String packageVersionNumber, Integer architectureId,
-        Configuration deploymentTimeConfiguration, InputStream packageBitStream) {
-        log.info("Received call to create package backed resource under parent [" + parentResourceId + "]");
-
-        Resource resource = entityManager.find(Resource.class, parentResourceId);
-        ResourceType newResourceType = entityManager.find(ResourceType.class, newResourceTypeId);
-        PackageType newPackageType = contentUIManagerLocal.getResourceCreationPackageType(newResourceTypeId);
-        Agent agent = resource.getAgent();
-
-        // Check permissions first
-        if (!authorizationManager.hasResourcePermission(user, Permission.CREATE_CHILD_RESOURCES, resource.getId())) {
-            throw new PermissionException("User [" + user.getName()
-                + "] does not have permission to create a child resource for resource [" + resource + "]");
-        }
-
-        /* Once we add support for selecting an existing package to deploy, that lookup will probably go here. We'll
-         * probably split it into a different call for selecting an existing package v. deploying a new one. For now
-         * since we don't have the full content source and package infrastructure in place, plus the need to get JON
-         * Beta 1 functionality back, I'm going to proceed with the idea that the package and package version do not
-         * exist and create them here. jdobies, Nov 28, 2007
-         */
-
-        // Create package and package version        
-        PackageVersion packageVersion = contentManagerLocal.createPackageVersion(packageName, newPackageType.getId(),
-            packageVersionNumber, (null != architectureId) ? architectureId : contentManagerLocal.getNoArchitecture()
-                .getId(), packageBitStream);
-
-        // Persist in separate transaction so it is committed immediately, before the request is sent to the agent
-        CreateResourceHistory persistedHistory = resourceFactoryManager.persistCreateHistory(user, parentResourceId,
-            newResourceTypeId, newResourceName, packageVersion, deploymentTimeConfiguration);
-
-        // Package into transfer object
-        ResourcePackageDetails packageDetails = ContentManagerHelper.packageVersionToDetails(packageVersion);
-        packageDetails.setDeploymentTimeConfiguration(deploymentTimeConfiguration);
-        CreateResourceRequest request = new CreateResourceRequest(persistedHistory.getId(), parentResourceId,
-            newResourceName, newResourceType.getName(), newResourceType.getPlugin(), pluginConfiguration,
-            packageDetails);
-
-        try {
-            AgentClient agentClient = agentManager.getAgentClient(agent);
-            ResourceFactoryAgentService resourceFactoryAgentService = agentClient.getResourceFactoryAgentService();
-            resourceFactoryAgentService.createResource(request);
-        } catch (Exception e) {
-            log.error("Error while sending create resource request to agent service", e);
-
-            // Submit the error as a failure response
-            String errorMessage = ThrowableUtil.getAllMessages(e);
-            CreateResourceResponse response = new CreateResourceResponse(persistedHistory.getId(), null, null,
-                CreateResourceStatus.FAILURE, errorMessage, null);
-            resourceFactoryManager.completeCreateResource(response);
-
-            throw new RuntimeException("Error while sending create resource request to agent service", e);
-        }
-    }
-
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public Resource createInventoryResource(int parentResourceId, int resourceTypeId, String resourceName,
         String resourceKey) {
@@ -290,41 +186,6 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         //            resourceFactoryManager.createInventoryResource(history.getParentResource().getId(), history
         //                .getResourceType().getId(), newResourceName, response.getResourceKey());
         //        }
-    }
-
-    public void deleteResource(Subject user, int resourceId) {
-        log.debug("Received call to delete resource: " + resourceId);
-
-        Resource resource = entityManager.find(Resource.class, resourceId);
-        Agent agent = resource.getAgent();
-
-        // Check permissions first
-        if (!authorizationManager.hasResourcePermission(user, Permission.DELETE_RESOURCE, resource.getId())) {
-            throw new PermissionException("User [" + user.getName() + "] does not have permission to delete resource ["
-                + resource + "]");
-        }
-
-        // Persist in separate transaction so it is committed immediately, before the request is sent to the agent
-        DeleteResourceHistory persistedHistory = resourceFactoryManager.persistDeleteHistory(user, resourceId);
-
-        // Package into transfer object
-        DeleteResourceRequest request = new DeleteResourceRequest(persistedHistory.getId(), resourceId);
-
-        try {
-            AgentClient agentClient = agentManager.getAgentClient(agent);
-            ResourceFactoryAgentService resourceFactoryAgentService = agentClient.getResourceFactoryAgentService();
-            resourceFactoryAgentService.deleteResource(request);
-        } catch (Exception e) {
-            log.error("Error while sending delete resource request to agent service", e);
-
-            // Submit the error as a failure response
-            String errorMessage = ThrowableUtil.getAllMessages(e);
-            DeleteResourceResponse response = new DeleteResourceResponse(persistedHistory.getId(),
-                DeleteResourceStatus.FAILURE, errorMessage);
-            resourceFactoryManager.completeDeleteResourceRequest(response);
-
-            throw new RuntimeException("Error while sending delete resource request to agent service", e);
-        }
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
@@ -556,4 +417,150 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         PageList<DeleteResourceHistory> pageList = new PageList<DeleteResourceHistory>(history, totalCount, pageControl);
         return pageList;
     }
+
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    //
+    // Remote Interface Impl
+    //
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    public void createResource(Subject user, int parentResourceId, int resourceTypeId, String resourceName,
+        Configuration pluginConfiguration, Configuration resourceConfiguration) {
+        log.debug("Received call to create configuration backed resource under parent: " + parentResourceId
+            + " of type: " + resourceTypeId);
+
+        ResourceType resourceType = entityManager.find(ResourceType.class, resourceTypeId);
+        Resource resource = entityManager.find(Resource.class, parentResourceId);
+        Agent agent = resource.getAgent();
+
+        // Check permissions first
+        if (!authorizationManager.hasResourcePermission(user, Permission.CREATE_CHILD_RESOURCES, resource.getId())) {
+            throw new PermissionException("User [" + user.getName()
+                + "] does not have permission to create a child resource for resource [" + resource + "]");
+        }
+
+        // Persist in separate transaction so it is committed immediately, before the request is sent to the agent
+        CreateResourceHistory persistedHistory = resourceFactoryManager.persistCreateHistory(user, parentResourceId,
+            resourceTypeId, resourceName, resourceConfiguration);
+
+        // Package into transfer object
+        CreateResourceRequest request = new CreateResourceRequest(persistedHistory.getId(), parentResourceId,
+            resourceName, resourceType.getName(), resourceType.getPlugin(), pluginConfiguration, resourceConfiguration);
+
+        try {
+            AgentClient agentClient = agentManager.getAgentClient(agent);
+            ResourceFactoryAgentService resourceFactoryAgentService = agentClient.getResourceFactoryAgentService();
+            resourceFactoryAgentService.createResource(request);
+        } catch (Exception e) {
+            log.error("Error while sending create resource request to agent service", e);
+
+            // Submit the error as a failure response
+            String errorMessage = ThrowableUtil.getAllMessages(e);
+            CreateResourceResponse response = new CreateResourceResponse(persistedHistory.getId(), null, null,
+                CreateResourceStatus.FAILURE, errorMessage, resourceConfiguration);
+            resourceFactoryManager.completeCreateResource(response);
+
+            throw new RuntimeException("Error while sending create resource request to agent service", e);
+        }
+    }
+
+    public void createResource(Subject subject, int parentResourceId, int newResourceTypeId, String newResourceName,
+        Configuration pluginConfiguration, String packageName, String packageVersionNumber, Integer architectureId,
+        Configuration deploymentTimeConfiguration, byte[] packageBits) {
+
+        createResource(subject, parentResourceId, newResourceTypeId, newResourceName, pluginConfiguration, packageName,
+            packageVersionNumber, architectureId, deploymentTimeConfiguration, new ByteArrayInputStream(packageBits));
+    }
+
+    public void createResource(Subject user, int parentResourceId, int newResourceTypeId, String newResourceName,
+        Configuration pluginConfiguration, String packageName, String packageVersionNumber, Integer architectureId,
+        Configuration deploymentTimeConfiguration, InputStream packageBitStream) {
+        log.info("Received call to create package backed resource under parent [" + parentResourceId + "]");
+
+        Resource resource = entityManager.find(Resource.class, parentResourceId);
+        ResourceType newResourceType = entityManager.find(ResourceType.class, newResourceTypeId);
+        PackageType newPackageType = contentUIManagerLocal.getResourceCreationPackageType(newResourceTypeId);
+        Agent agent = resource.getAgent();
+
+        // Check permissions first
+        if (!authorizationManager.hasResourcePermission(user, Permission.CREATE_CHILD_RESOURCES, resource.getId())) {
+            throw new PermissionException("User [" + user.getName()
+                + "] does not have permission to create a child resource for resource [" + resource + "]");
+        }
+
+        /* Once we add support for selecting an existing package to deploy, that lookup will probably go here. We'll
+         * probably split it into a different call for selecting an existing package v. deploying a new one. For now
+         * since we don't have the full content source and package infrastructure in place, plus the need to get JON
+         * Beta 1 functionality back, I'm going to proceed with the idea that the package and package version do not
+         * exist and create them here. jdobies, Nov 28, 2007
+         */
+
+        // Create package and package version        
+        PackageVersion packageVersion = contentManagerLocal.createPackageVersion(packageName, newPackageType.getId(),
+            (null != packageVersionNumber) ? packageVersionNumber : "1.0", (null != architectureId) ? architectureId
+                : contentManagerLocal.getNoArchitecture().getId(), packageBitStream);
+
+        // Persist in separate transaction so it is committed immediately, before the request is sent to the agent
+        CreateResourceHistory persistedHistory = resourceFactoryManager.persistCreateHistory(user, parentResourceId,
+            newResourceTypeId, newResourceName, packageVersion, deploymentTimeConfiguration);
+
+        // Package into transfer object
+        ResourcePackageDetails packageDetails = ContentManagerHelper.packageVersionToDetails(packageVersion);
+        packageDetails.setDeploymentTimeConfiguration(deploymentTimeConfiguration);
+        CreateResourceRequest request = new CreateResourceRequest(persistedHistory.getId(), parentResourceId,
+            newResourceName, newResourceType.getName(), newResourceType.getPlugin(), pluginConfiguration,
+            packageDetails);
+
+        try {
+            AgentClient agentClient = agentManager.getAgentClient(agent);
+            ResourceFactoryAgentService resourceFactoryAgentService = agentClient.getResourceFactoryAgentService();
+            resourceFactoryAgentService.createResource(request);
+        } catch (Exception e) {
+            log.error("Error while sending create resource request to agent service", e);
+
+            // Submit the error as a failure response
+            String errorMessage = ThrowableUtil.getAllMessages(e);
+            CreateResourceResponse response = new CreateResourceResponse(persistedHistory.getId(), null, null,
+                CreateResourceStatus.FAILURE, errorMessage, null);
+            resourceFactoryManager.completeCreateResource(response);
+
+            throw new RuntimeException("Error while sending create resource request to agent service", e);
+        }
+    }
+
+    public void deleteResource(Subject subject, int resourceId) {
+        log.debug("Received call to delete resource: " + resourceId);
+
+        Resource resource = entityManager.find(Resource.class, resourceId);
+        Agent agent = resource.getAgent();
+
+        // Check permissions first
+        if (!authorizationManager.hasResourcePermission(subject, Permission.DELETE_RESOURCE, resource.getId())) {
+            throw new PermissionException("User [" + subject.getName()
+                + "] does not have permission to delete resource [" + resource + "]");
+        }
+
+        // Persist in separate transaction so it is committed immediately, before the request is sent to the agent
+        DeleteResourceHistory persistedHistory = resourceFactoryManager.persistDeleteHistory(subject, resourceId);
+
+        // Package into transfer object
+        DeleteResourceRequest request = new DeleteResourceRequest(persistedHistory.getId(), resourceId);
+
+        try {
+            AgentClient agentClient = agentManager.getAgentClient(agent);
+            ResourceFactoryAgentService resourceFactoryAgentService = agentClient.getResourceFactoryAgentService();
+            resourceFactoryAgentService.deleteResource(request);
+        } catch (Exception e) {
+            log.error("Error while sending delete resource request to agent service", e);
+
+            // Submit the error as a failure response
+            String errorMessage = ThrowableUtil.getAllMessages(e);
+            DeleteResourceResponse response = new DeleteResourceResponse(persistedHistory.getId(),
+                DeleteResourceStatus.FAILURE, errorMessage);
+            resourceFactoryManager.completeDeleteResourceRequest(response);
+
+            throw new RuntimeException("Error while sending delete resource request to agent service", e);
+        }
+    }
+
 }

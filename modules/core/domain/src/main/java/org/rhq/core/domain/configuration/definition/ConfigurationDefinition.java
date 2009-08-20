@@ -61,6 +61,8 @@ import org.jetbrains.annotations.Nullable;
 @Entity
 // TODO: non-admin version of the below query
 @NamedQueries( {
+    @NamedQuery(name = ConfigurationDefinition.QUERY_FIND_DEPLOYMENT_BY_PACKAGE_TYPE_ID, query = "SELECT cd FROM PackageType pt JOIN pt.deploymentConfigurationDefinition cd "
+        + "WHERE pt.id = :packageTypeId"),
     @NamedQuery(name = ConfigurationDefinition.QUERY_FIND_RESOURCE_BY_RESOURCE_TYPE_ID, query = "SELECT cd FROM ResourceType rt JOIN rt.resourceConfigurationDefinition cd "
         + "WHERE rt.id = :resourceTypeId"),
     @NamedQuery(name = ConfigurationDefinition.QUERY_FIND_PLUGIN_BY_RESOURCE_TYPE_ID, query = "SELECT cd FROM ResourceType rt JOIN rt.pluginConfigurationDefinition cd "
@@ -70,6 +72,7 @@ import org.jetbrains.annotations.Nullable;
 public class ConfigurationDefinition implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    public static final String QUERY_FIND_DEPLOYMENT_BY_PACKAGE_TYPE_ID = "ConfigurationDefinition.findDeploymentByPackageTypeId";
     public static final String QUERY_FIND_RESOURCE_BY_RESOURCE_TYPE_ID = "ConfigurationDefinition.findResourceByResourceTypeId";
     public static final String QUERY_FIND_PLUGIN_BY_RESOURCE_TYPE_ID = "ConfigurationDefinition.findPluginByResourceTypeId";
 

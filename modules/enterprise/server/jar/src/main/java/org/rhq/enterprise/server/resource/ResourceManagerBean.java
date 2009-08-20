@@ -2052,4 +2052,20 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return new PageList<Resource>(results, (int) count, criteria.getPageControl());
     }
 
+    public Resource getParentResource(Subject subject, int resourceId) {
+        Resource resource = getParentResource(resourceId);
+
+        if (!authorizationManager.canViewResource(subject, resource.getId())) {
+            throw new PermissionException("User [" + subject + "] does not have permission to view resource ["
+                + resource.getId() + "]");
+        }
+
+        return resource;
+    }
+
+    public PageList<Resource> findChildResources(Subject subject, int resourceId, PageControl pageControl) {
+        Resource resource = getParentResource(resourceId);
+
+        return (findChildResources(subject, resource, pageControl));
+    }
 }

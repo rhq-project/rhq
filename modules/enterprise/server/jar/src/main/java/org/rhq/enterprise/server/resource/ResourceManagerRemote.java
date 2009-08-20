@@ -105,4 +105,15 @@ public interface ResourceManagerRemote {
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "criteria") ResourceCriteria criteria);
 
+    @WebMethod
+    PageList<Resource> findChildResources( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "resourceId") int resourceId, //
+        @WebParam(name = "pageControl") PageControl pageControl);
+
+    @WebMethod
+    Resource getParentResource( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "resourceId") int resourceId);
+
 }

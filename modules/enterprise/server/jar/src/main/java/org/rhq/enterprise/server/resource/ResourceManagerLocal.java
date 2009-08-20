@@ -186,8 +186,6 @@ public interface ResourceManagerLocal {
 
     List<ResourceWithAvailability> findResourcesByParentAndType(Subject user, Resource parent, ResourceType type);
 
-    PageList<Resource> findChildResources(Subject user, Resource parent, PageControl pageControl);
-
     List<Integer> findChildrenResourceIds(int parentResourceId, InventoryStatus status);
 
     PageList<Resource> findChildResourcesByCategoryAndInventoryStatus(Subject user, Resource parent,
@@ -425,4 +423,8 @@ public interface ResourceManagerLocal {
     List<ResourceInstallCount> findResourceInstallCounts(Subject subject, boolean groupByVersions);
 
     PageList<Resource> findResourcesByCriteria(Subject subject, ResourceCriteria criteria);
+
+    PageList<Resource> findChildResources(Subject subject, int resourceId, PageControl pageControl);
+
+    Resource getParentResource(Subject subject, int resourceId);
 }

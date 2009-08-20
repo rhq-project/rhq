@@ -36,6 +36,7 @@ import org.rhq.enterprise.server.authz.RoleManagerRemote;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerRemote;
 import org.rhq.enterprise.server.content.ChannelManagerRemote;
 import org.rhq.enterprise.server.content.ContentManagerRemote;
+import org.rhq.enterprise.server.discovery.DiscoveryBossRemote;
 import org.rhq.enterprise.server.event.EventManagerRemote;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerRemote;
 import org.rhq.enterprise.server.measurement.CallTimeDataManagerRemote;
@@ -45,9 +46,9 @@ import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerRemote;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerRemote;
 import org.rhq.enterprise.server.operation.OperationManagerRemote;
 import org.rhq.enterprise.server.report.DataAccessManagerRemote;
+import org.rhq.enterprise.server.resource.ResourceFactoryManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerRemote;
-import org.rhq.enterprise.server.resource.ResourceFactoryManagerRemote;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerRemote;
 import org.rhq.enterprise.server.support.SupportManagerRemote;
 import org.rhq.enterprise.server.system.ServerVersion;
@@ -73,6 +74,7 @@ public class RemoteClient {
         //ContentHelperManager(ContentHelperRemote.class), //
         ContentManager(ContentManagerRemote.class), //
         DataAccess(DataAccessManagerRemote.class), //
+        DiscoveryBoss(DiscoveryBossRemote.class), //
         EventManager(EventManagerRemote.class), //
         MeasurementBaselineManager(MeasurementBaselineManagerRemote.class), //
         MeasurementDataManager(MeasurementDataManagerRemote.class), //
@@ -286,6 +288,10 @@ public class RemoteClient {
 
     public DataAccessManagerRemote getDataAccessRemote() {
         return RemoteClientProxy.getProcessor(this, Manager.DataAccess);
+    }
+
+    public DiscoveryBossRemote getDiscoveryBossRemote() {
+        return RemoteClientProxy.getProcessor(this, Manager.DiscoveryBoss);
     }
 
     public EventManagerRemote getEventManagerRemote() {

@@ -89,7 +89,7 @@ public class ClusterManagerBeanTest extends AbstractEJB3Test {
             resourceGroupManager.addResourcesToGroup(subject, clusterGroup.getId(), new int[] { nodeA.getId(),
                 nodeB.getId() });
 
-            PageList<Resource> AChildren = resourceManager.findChildResources(subject, nodeA, PageControl
+            PageList<Resource> AChildren = resourceManager.findChildResources(subject, nodeA.getId(), PageControl
                 .getUnlimitedInstance());
             assert !AChildren.isEmpty() : "Expected Children for Node A";
 
@@ -165,7 +165,7 @@ public class ClusterManagerBeanTest extends AbstractEJB3Test {
             resourceGroupManager.addResourcesToGroup(subject, clusterGroup.getId(), new int[] { nodeA.getId(),
                 nodeB.getId() });
 
-            PageList<Resource> AChildren = resourceManager.findChildResources(subject, nodeA, PageControl
+            PageList<Resource> AChildren = resourceManager.findChildResources(subject, nodeA.getId(), PageControl
                 .getUnlimitedInstance());
             assert !AChildren.isEmpty() : "Expected Children for Node A";
 
@@ -173,7 +173,7 @@ public class ClusterManagerBeanTest extends AbstractEJB3Test {
             int AChildResourceTypeId = AChild.getResourceType().getId();
             String AChildResourceKey = AChild.getResourceKey();
 
-            PageList<Resource> AGrandChildren = resourceManager.findChildResources(subject, AChild, PageControl
+            PageList<Resource> AGrandChildren = resourceManager.findChildResources(subject, AChild.getId(), PageControl
                 .getUnlimitedInstance());
 
             Resource AGrandChild = AGrandChildren.get(0);

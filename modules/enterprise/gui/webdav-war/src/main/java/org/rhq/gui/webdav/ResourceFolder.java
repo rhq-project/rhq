@@ -84,7 +84,7 @@ public class ResourceFolder extends BasicResource implements AuthenticatedCollec
         if (this.children == null) {
             PageList<org.rhq.core.domain.resource.Resource> childs;
             ResourceManagerLocal rm = LookupUtil.getResourceManager();
-            childs = rm.findChildResources(subject, getManagedResource(), PageControl.getUnlimitedInstance());
+            childs = rm.findChildResources(subject, getManagedResource().getId(), PageControl.getUnlimitedInstance());
 
             // inventory
             this.children = new ArrayList<Resource>(childs.size());

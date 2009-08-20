@@ -25,6 +25,7 @@ package org.rhq.core.domain.criteria;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
+
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.InventoryStatus;
@@ -159,6 +160,10 @@ public class ResourceCriteria extends Criteria {
 
     public void addFilterAgentName(String filterAgentName) {
         this.filterAgentName = filterAgentName;
+    }
+
+    public void addFilterCurrentAvailability(AvailabilityType filterCurrentAvailability) {
+        this.filterCurrentAvailability = filterCurrentAvailability;
     }
 
     public void fetchResourceType(boolean fetchResourceType) {

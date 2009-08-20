@@ -2063,9 +2063,9 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return resource;
     }
 
-    public PageList<Resource> findChildResources(Subject subject, int resourceId, PageControl pageControl) {
-        Resource resource = getParentResource(resourceId);
+    public PageList<Resource> findChildResources(Subject subject, int parentResourceId, PageControl pageControl) {
+        Resource parentResource = getResourceById(subject, parentResourceId);
 
-        return (findChildResources(subject, resource, pageControl));
+        return (findChildResources(subject, parentResource, pageControl));
     }
 }

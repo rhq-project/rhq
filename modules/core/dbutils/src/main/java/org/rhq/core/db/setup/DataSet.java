@@ -101,7 +101,6 @@ abstract class DataSet {
     }
 
     protected String getInsertCommand() throws SQLException {
-        System.out.println("DATASET TYPE IS " + this.getClass().getSimpleName());
         int iCols = this.getNumberColumns();
 
         StringBuffer strCmd = new StringBuffer("INSERT INTO ");

@@ -89,14 +89,12 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
         return resourceType;
     }
 
-    /**
-     * Returns the resource type by name and plugin or null if the type is not found
-     *
-     * @param  name
-     * @param  plugin
-     *
-     * @return
-     */
+    // remote
+    public ResourceType getResourceTypeByNameAndPlugin(Subject subject, String name, String plugin) {
+        return getResourceTypeByNameAndPlugin(name, plugin);
+    }
+
+    // local
     public ResourceType getResourceTypeByNameAndPlugin(String name, String plugin) {
         try {
             Query query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_BY_NAME_AND_PLUGIN);

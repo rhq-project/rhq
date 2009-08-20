@@ -40,8 +40,16 @@ public interface ResourceTypeManagerRemote {
         @WebParam(name = "resourceTypeId") int resourceTypeId) //
         throws ResourceTypeNotFoundException;
 
+    /**
+     * @param  subject
+     * @param  name
+     * @param  plugin
+     *
+     * @return the resource type by name and plugin or null if the type is not found
+     */
     @WebMethod
     ResourceType getResourceTypeByNameAndPlugin(//
+        @WebParam(name = "subject") Subject subject, //        
         @WebParam(name = "name") String name, //
         @WebParam(name = "plugin") String plugin);
 

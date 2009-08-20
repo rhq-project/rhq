@@ -36,6 +36,7 @@ import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
+import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.criteria.RoleCriteria;
 import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.event.Event;
@@ -54,6 +55,7 @@ import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.group.ResourceGroup;
@@ -77,6 +79,8 @@ import org.rhq.enterprise.server.content.ChannelManagerLocal;
 import org.rhq.enterprise.server.content.ChannelManagerRemote;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.ContentManagerRemote;
+import org.rhq.enterprise.server.discovery.DiscoveryBossLocal;
+import org.rhq.enterprise.server.discovery.DiscoveryBossRemote;
 import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.event.EventManagerRemote;
 import org.rhq.enterprise.server.exception.LoginException;
@@ -106,6 +110,8 @@ import org.rhq.enterprise.server.report.DataAccessManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
+import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceTypeManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupDeleteException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
@@ -127,12 +133,30 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 @Stateless
 @WebService(endpointInterface = "org.rhq.enterprise.server.webservices.WebservicesRemote", targetNamespace = ServerVersion.namespace)
-public class WebservicesManagerBean implements AlertManagerRemote, AlertDefinitionManagerRemote,
-    AvailabilityManagerRemote, CallTimeDataManagerRemote, ChannelManagerRemote, ConfigurationManagerRemote,
-    ContentManagerRemote, DataAccessManagerRemote, EventManagerRemote, MeasurementBaselineManagerRemote,
-    MeasurementDataManagerRemote, MeasurementDefinitionManagerRemote, MeasurementProblemManagerRemote,
-    MeasurementScheduleManagerRemote, OperationManagerRemote, ResourceManagerRemote, ResourceGroupManagerRemote,
-    RoleManagerRemote, SubjectManagerRemote, SupportManagerRemote, SystemManagerRemote {
+public class WebservicesManagerBean implements //
+    AlertManagerRemote, //
+    AlertDefinitionManagerRemote, //
+    AvailabilityManagerRemote, //
+    CallTimeDataManagerRemote, //
+    ChannelManagerRemote, //
+    ConfigurationManagerRemote, //    
+    ContentManagerRemote, //
+    DataAccessManagerRemote, //
+    DiscoveryBossRemote, //
+    EventManagerRemote, //
+    MeasurementBaselineManagerRemote, //    
+    MeasurementDataManagerRemote, //
+    MeasurementDefinitionManagerRemote, //
+    MeasurementProblemManagerRemote, //    
+    MeasurementScheduleManagerRemote, //
+    OperationManagerRemote, //
+    ResourceManagerRemote, //
+    ResourceGroupManagerRemote, //
+    ResourceTypeManagerRemote, //
+    RoleManagerRemote, //
+    SubjectManagerRemote, //
+    SupportManagerRemote, //
+    SystemManagerRemote {
 
     //Lookup the required beans as local references
     private AlertManagerLocal alertManager = LookupUtil.getAlertManager();
@@ -143,6 +167,7 @@ public class WebservicesManagerBean implements AlertManagerRemote, AlertDefiniti
     private ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
     private ContentManagerLocal contentManager = LookupUtil.getContentManager();
     private DataAccessManagerLocal dataAccessManager = LookupUtil.getDataAccessManager();
+    private DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
     private EventManagerLocal eventManager = LookupUtil.getEventManager();
     private MeasurementBaselineManagerLocal measurementBaselineManager = LookupUtil.getMeasurementBaselineManager();
     private MeasurementDataManagerLocal measurementDataManager = LookupUtil.getMeasurementDataManager();
@@ -153,6 +178,7 @@ public class WebservicesManagerBean implements AlertManagerRemote, AlertDefiniti
     private OperationManagerLocal operationManager = LookupUtil.getOperationManager();
     private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
     private ResourceGroupManagerLocal resourceGroupManager = LookupUtil.getResourceGroupManager();
+    private ResourceTypeManagerLocal resourceTypeManager = LookupUtil.getResourceTypeManager();
     private RoleManagerLocal roleManager = LookupUtil.getRoleManager();
     private SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
     private SupportManagerLocal supportManager = LookupUtil.getSupportManager();
@@ -326,6 +352,10 @@ public class WebservicesManagerBean implements AlertManagerRemote, AlertDefiniti
         return configurationManager.updateResourceConfiguration(subject, resourceId, newConfiguration);
     }
 
+    public ConfigurationDefinition getPackageTypeConfigurationDefinition(Subject subject, int packageTypeId) {
+        return configurationManager.getPackageTypeConfigurationDefinition(subject, packageTypeId);
+    }
+
     //CONFIGURATIONMANAGER: END ----------------------------------
 
     //CONTENTMANAGER: BEGIN ----------------------------------
@@ -376,6 +406,21 @@ public class WebservicesManagerBean implements AlertManagerRemote, AlertDefiniti
     }
 
     //DATAACCESSMANAGER: END ----------------------------------
+
+    //DISCOVERYBOSS: BEGIN ------------------------------------    
+    public void ignoreResources(Subject subject, Integer[] resourceIds) {
+        discoveryBoss.ignoreResources(subject, resourceIds);
+    }
+
+    public void importResources(Subject subject, Integer[] resourceIds) {
+        discoveryBoss.importResources(subject, resourceIds);
+    }
+
+    public void unignoreResources(Subject subject, Integer[] resourceIds) {
+        discoveryBoss.unignoreResources(subject, resourceIds);
+    }
+
+    //DISCOVERYBOSS: END ------------------------------------
 
     //EVENTMANAGER: BEGIN ----------------------------------
     public PageList<Event> findEventsByCriteria(Subject subject, EventCriteria criteria) {
@@ -552,6 +597,14 @@ public class WebservicesManagerBean implements AlertManagerRemote, AlertDefiniti
         return resourceManager.findResourcesByCriteria(subject, criteria);
     }
 
+    public PageList<Resource> findChildResources(Subject subject, int resourceId, PageControl pageControl) {
+        return resourceManager.findChildResources(subject, resourceId, pageControl);
+    }
+
+    public Resource getParentResource(Subject subject, int resourceId) {
+        return resourceManager.getParentResource(subject, resourceId);
+    }
+
     public Resource getResource(Subject subject, int resourceId) {
         return resourceManager.getResource(subject, resourceId);
     }
@@ -605,6 +658,21 @@ public class WebservicesManagerBean implements AlertManagerRemote, AlertDefiniti
     }
 
     //RESOURCEGROUPMANAGER: END ----------------------------------
+
+    //RESOURCETYPEMANAGER: BEGIN ------------------------------------    
+    public PageList<ResourceType> findResourceTypesByCriteria(Subject subject, ResourceTypeCriteria criteria) {
+        return resourceTypeManager.findResourceTypesByCriteria(subject, criteria);
+    }
+
+    public ResourceType getResourceTypeById(Subject subject, int resourceTypeId) throws ResourceTypeNotFoundException {
+        return resourceTypeManager.getResourceTypeById(subject, resourceTypeId);
+    }
+
+    public ResourceType getResourceTypeByNameAndPlugin(Subject subject, String name, String plugin) {
+        return resourceTypeManager.getResourceTypeByNameAndPlugin(subject, name, plugin);
+    }
+
+    //RESOURCETYPEMANAGER: END ------------------------------------
 
     //ROLEMANAGER: BEGIN ----------------------------------
     public void addResourceGroupsToRole(Subject subject, int roleId, int[] pendingGroupIds) {
@@ -707,11 +775,11 @@ public class WebservicesManagerBean implements AlertManagerRemote, AlertDefiniti
 
     //SUPPORTMANAGER: END ------------------------------------
 
-    //SYSTEMMANAGER: BEGIN ------------------------------------
+    //SYSTEMMANAGER: BEGIN ------------------------------------    
     public ServerVersion getServerVersion(Subject subject) throws Exception {
         return systemManager.getServerVersion(subject);
     }
 
-    //SYSTEMMANAGER: END ------------------------------------
+    //SYSTEMMANAGER: END ------------------------------------    
 
 }

@@ -1082,7 +1082,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
     public List<PackageType> findPackageTypes(Subject subject, String resourceTypeName, String pluginName)
         throws ResourceTypeNotFoundException {
 
-        ResourceType rt = resourceTypeManager.getResourceTypeByNameAndPlugin(resourceTypeName, pluginName);
+        ResourceType rt = resourceTypeManager.getResourceTypeByNameAndPlugin(subject, resourceTypeName, pluginName);
         if (null == rt) {
             throw new ResourceTypeNotFoundException(resourceTypeName);
         }

@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.configuration;
 
 import java.util.Map;
+
 import javax.ejb.Remote;
 import javax.jws.WebMethod;
 import javax.jws.WebParam;
@@ -234,5 +235,20 @@ public interface ConfigurationManagerRemote {
     @WebMethod
     ConfigurationDefinition getPluginConfigurationDefinitionForResourceType(
         @WebParam(name = "subject") Subject subject, @WebParam(name = "resourceTypeId") int resourceTypeId);
+
+    /**
+     * Return the deploy configuration definition for the {@link org.rhq.core.domain.content.PackageType} with the
+     * specified id.
+     *
+     * @param  subject        the user who is requesting the plugin configuration definition
+     * @param  packageTypeId  identifies the package type whose configuration definition is being requested
+     *
+     * @return the  the deploy configuration definition for the {@link org.rhq.core.domain.content.PackageType} with the
+     * specified id.
+     */
+    @WebMethod
+    ConfigurationDefinition getPackageTypeConfigurationDefinition( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "packageTypeId") int packageTypeId);
 
 }

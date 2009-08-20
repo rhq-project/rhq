@@ -466,4 +466,10 @@ public interface ConfigurationManagerLocal {
         Configuration newConfiguration) throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException;
 
     Configuration getResourceConfiguration(Subject subject, int resourceId);
+
+    /**
+     * @see ConfigurationManagerRemote#getPackageTypeConfigurationDefinition(Subject,int)
+     */
+    ConfigurationDefinition getPackageTypeConfigurationDefinition(Subject subject, int packageTypeId);
+
 }

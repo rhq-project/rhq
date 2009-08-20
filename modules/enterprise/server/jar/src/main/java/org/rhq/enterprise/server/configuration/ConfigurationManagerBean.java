@@ -60,6 +60,7 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.group.AbstractGroupConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
+import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
@@ -1193,6 +1194,22 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 + " member updates still in progress.");
         }
         return;
+    }
+
+    public ConfigurationDefinition getPackageTypeConfigurationDefinition(Subject subject, int packageTypeId) {
+        Query query = entityManager.createNamedQuery(ConfigurationDefinition.QUERY_FIND_DEPLOYMENT_BY_PACKAGE_TYPE_ID);
+        query.setParameter("packageTypeId", packageTypeId);
+        ConfigurationDefinition configurationDefinition = null;
+        try {
+            configurationDefinition = (ConfigurationDefinition) query.getSingleResult();
+        } catch (NoResultException e) {
+            PackageType packageType = entityManager.find(PackageType.class, packageTypeId);
+            if (packageType == null) {
+                throw new EntityNotFoundException("A package type with id " + packageTypeId + " does not exist.");
+            }
+        }
+
+        return configurationDefinition;
     }
 
     @Nullable

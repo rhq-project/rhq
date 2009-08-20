@@ -599,8 +599,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
     private boolean initResourceTypes(Resource resource) {
         ResourceType resourceType;
-        resourceType = this.resourceTypeManager.getResourceTypeByNameAndPlugin(resource.getResourceType().getName(),
-            resource.getResourceType().getPlugin());
+        resourceType = this.resourceTypeManager.getResourceTypeByNameAndPlugin(subjectManager.getOverlord(), resource
+            .getResourceType().getName(), resource.getResourceType().getPlugin());
         if (resourceType == null) {
             log.error("Reported resource [" + resource + "] has an unknown type [" + resource.getResourceType()
                 + "]. The Agent most likely has a plugin named '" + resource.getResourceType().getPlugin()

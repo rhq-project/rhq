@@ -20,6 +20,8 @@ package org.rhq.enterprise.gui.inventory.resource;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 
 import javax.faces.model.DataModel;
 import javax.faces.model.SelectItem;
@@ -293,14 +295,31 @@ public class ListChildResourcesUIBean extends PagedDataTableUIBean {
     private List<SelectItem> convertToSelectItems(List<ResourceType> resourceTypes, boolean pluralize) {
         List<SelectItem> selectItems = new ArrayList<SelectItem>();
         Pluralizer customPluralizer = new CustomEnglishPluralizer();
+        Set<String> dupResourceTypeNames = getDuplicateResourceTypeNames(resourceTypes);
         for (ResourceType resourceType : resourceTypes) {
             String label = NBSP + " - "
                 + ((pluralize) ? customPluralizer.pluralize(resourceType.getName()) : resourceType.getName());
+            if (dupResourceTypeNames.contains(resourceType.getName())) {
+                label += " (" + resourceType.getPlugin() + " plugin)";
+            }
             SelectItem selectItem = new SelectItem(resourceType.getId(), label);
             selectItem.setEscape(false); // so that the ampersands in the non-blanking spaces will not be escaped to &amp;
             selectItems.add(selectItem);
         }
         return selectItems;
+    }
+
+    private static Set<String> getDuplicateResourceTypeNames(List<ResourceType> resourceTypes) {
+        Set<String> resourceTypeNames = new HashSet();
+        Set<String> dupResourceTypeNames = new HashSet();
+        for (ResourceType resourceType : resourceTypes) {            
+            String resourceTypeName = resourceType.getName();
+            if (resourceTypeNames.contains(resourceTypeName)) {
+                dupResourceTypeNames.add(resourceTypeName);
+            }
+            resourceTypeNames.add(resourceTypeName);
+        }
+        return dupResourceTypeNames;
     }
 
     protected class ListChildResourcesDataModel extends PagedListDataModel<ResourceComposite> {

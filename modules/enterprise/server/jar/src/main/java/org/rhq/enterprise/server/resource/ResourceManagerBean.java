@@ -887,12 +887,15 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             try {
                 resourceType = entityManager.find(ResourceType.class, resourceTypeId);
             } catch (NoResultException nre) {
-                ; // No problem
+                // No problem
             }
         }
 
-        String typeNameFilter = resourceType == null ? null : resourceType.getName();
-        return findResourceComposites(user, category, typeNameFilter, null, parentResource, null, false, pageControl);
+        String typeNameFilter = (resourceType == null) ? null : resourceType.getName();
+        String pluginNameFilter = (resourceType == null) ? null : resourceType.getPlugin();
+
+        return findResourceComposites(user, category, typeNameFilter, pluginNameFilter, parentResource, null, false,
+                pageControl);
     }
 
     @SuppressWarnings("unchecked")

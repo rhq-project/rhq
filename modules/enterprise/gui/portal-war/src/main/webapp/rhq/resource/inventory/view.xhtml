@@ -149,7 +149,7 @@
                 rendered="#{ListChildResourcesUIBean.dataModel.rowCount > 0}"
                 var="resourceComposite"
                 styleClass="resources-table"
-                columnClasses="resource-checkbox, resource-quicknav-cell, resource-name-cell, resource-category-cell, resource-type-cell, resource-description-cell, resource-availability-cell"
+                columnClasses="resource-checkbox, resource-quicknav-cell, resource-name-cell, resource-category-cell, resource-type-cell, resource-plugin-cell, resource-description-cell, resource-availability-cell"
                 columnsWidth="1%,1%"
                 headerClass="tableRowHeader"
                 footerClass="on-pager-footer"
@@ -246,6 +246,16 @@
       </f:facet>
 
       <h:outputText value="#{resourceComposite.resource.resourceType.name}"/>
+   </rich:column>
+
+   <rich:column>
+      <f:facet name="header">
+         <onc:sortableColumnHeader sort="res.resourceType.plugin">
+            <h:outputText styleClass="headerText" value="Plugin"/>
+         </onc:sortableColumnHeader>
+      </f:facet>
+
+      <h:outputText value="#{resourceComposite.resource.resourceType.plugin}"/>
    </rich:column>
 
    <rich:column>

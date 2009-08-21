@@ -1976,7 +1976,7 @@ ul.radio-group .unspecified {
     border-collapse: collapse;
 }
 
-.resource-checkbox,.resource-quicknav-cell,.resource-name-cell,.resource-category-cell,.resource-type-cell,.resource-description-cell,.resource-availability-cell,.count-cell,group-category-cell
+.resource-checkbox,.resource-quicknav-cell,.resource-name-cell,.resource-category-cell,.resource-type-cell,.resource-plugin-cell,.resource-description-cell,.resource-availability-cell,.count-cell,group-category-cell
     {
     border-style: none;
     border-bottom: 1px solid #999;
@@ -2004,7 +2004,7 @@ ul.radio-group .unspecified {
 }
 
 .resource-category-cell {
-    width: 70px;
+    width: 50px;
 }
 
 .group-category-cell {
@@ -2013,11 +2013,15 @@ ul.radio-group .unspecified {
 }
 
 .resource-type-cell {
-    width: 170px;
+    width: 120px;
+}
+
+.resource-plugin-cell {
+    width: 70px;
 }
 
 .resource-availability-cell {
-    width: 100px;
+    width: 90px;
     text-align: center;
     white-space: nowrap;
 }

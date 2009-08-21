@@ -47,6 +47,7 @@ public class AutoGroupComposite implements Serializable {
     private int depth;
     private boolean mainResource;
     private Resource parentResource;
+    private String name;
 
     private List<Resource> resources;
 
@@ -68,13 +69,24 @@ public class AutoGroupComposite implements Serializable {
         if (other.resources != null) {
             this.resources.addAll(other.resources);
         }
+        this.name = other.name;
     }
 
     public AutoGroupComposite(Double availability, Resource parentResource, ResourceType resourceType, long memberCount) {
+        this(availability, parentResource, resourceType, memberCount, false);
+    }
+
+    public AutoGroupComposite(Double availability, Resource parentResource, ResourceType resourceType, long memberCount,
+                              boolean isDuplicateResourceTypeName) {
         this.availability = availability;
         this.parentResource = parentResource;
         this.resourceType = resourceType;
         this.memberCount = memberCount;
+        if (isDuplicateResourceTypeName) {
+            this.name = String.format("%s (%s plugin)", this.resourceType.getName(), this.resourceType.getPlugin());
+        } else {
+            this.name = this.resourceType.getName();
+        }
     }
 
     public AutoGroupComposite(Double availability, Resource parentResource, ResourceSubCategory subcategory,
@@ -83,6 +95,7 @@ public class AutoGroupComposite implements Serializable {
         this.parentResource = parentResource;
         this.subcategory = subcategory;
         this.memberCount = memberCount;
+        this.name = this.subcategory.getName();
     }
 
     public Double getAvailability() {
@@ -138,10 +151,13 @@ public class AutoGroupComposite implements Serializable {
         this.mainResource = mainResource;
     }
 
+    public String getName() {
+        return name;
+    }
+
     @Override
     public String toString() {
-        return "AutoGroupComposite[" + ((resourceType != null) ? "Resource: " : "Subcategory: ") + "name="
-            + ((resourceType != null) ? resourceType.getName() : subcategory.getName()) + ", members=" + memberCount
-            + ", availability=" + availability + "]";
+        return "AutoGroupComposite[" + ((this.resourceType != null) ? "Resource: " : "Subcategory: ") + "name="
+                + this.name + ", members=" + this.memberCount + ", availability=" + this.availability + "]";
     }
 }

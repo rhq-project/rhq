@@ -19,7 +19,6 @@
 package org.rhq.enterprise.gui.navigation.resource;
 
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
 import org.rhq.core.util.sort.HumaneStringComparator;
@@ -42,13 +41,9 @@ public class ResourceTreeNode implements Comparable<ResourceTreeNode> {
 
     private Object level;
 
-    private String shortPath;
-
-
     public ResourceTreeNode(Object level) {
-           this.level = level;
-       }
-
+        this.level = level;
+    }
 
     public ResourceTreeNode(Object level, List<Resource> resources) {
         this.level = level;
@@ -65,12 +60,7 @@ public class ResourceTreeNode implements Comparable<ResourceTreeNode> {
     public String toString() {
         if (level instanceof AutoGroupComposite) {
             AutoGroupComposite composite = ((AutoGroupComposite) level) ;
-            ResourceType type = composite.getResourceType();
-            if (type != null) {
-                return type.getName();
-            } else {
-                return composite.getSubcategory().getName();
-            }
+            return composite.getName();
         } else if (level instanceof ResourceWithAvailability) {
             return ((ResourceWithAvailability) level).getResource().getName();
         } else if (level instanceof Resource) {

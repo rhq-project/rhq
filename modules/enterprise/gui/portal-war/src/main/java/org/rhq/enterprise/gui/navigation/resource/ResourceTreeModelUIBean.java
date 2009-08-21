@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -150,6 +152,8 @@ public class ResourceTreeModelUIBean {
 
             }
 
+            Set<String> dupResourceTypeNames = getDuplicateResourceTypeNames(children, alwaysGroup);
+
             for (Object rsc : children.keySet()) {
                 if (rsc != null
                     && (rsc instanceof ResourceSubCategory || children.get(rsc).size() > 1 || (alwaysGroup && children
@@ -165,7 +169,9 @@ public class ResourceTreeModelUIBean {
                     if (rsc instanceof ResourceSubCategory) {
                         agc = new AutoGroupComposite(avail, parentResource, (ResourceSubCategory) rsc, entries.size());
                     } else if (rsc instanceof ResourceType) {
-                        agc = new AutoGroupComposite(avail, parentResource, (ResourceType) rsc, entries.size());
+                        boolean isDupResourceTypeName = dupResourceTypeNames.contains(((ResourceType)rsc).getName());
+                        agc = new AutoGroupComposite(avail, parentResource, (ResourceType) rsc, entries.size(),
+                                isDupResourceTypeName);
                     }
                     ResourceTreeNode node = new ResourceTreeNode(agc);
                     load(node, alwaysGroup);
@@ -250,7 +256,7 @@ public class ResourceTreeModelUIBean {
                             (ResourceSubCategory) rsc, entries.size());
                     } else if (rsc instanceof ResourceType) {
                         agc = new AutoGroupComposite(avail, compositeParent.getParentResource(), (ResourceType) rsc,
-                            entries.size());
+                            entries.size(), false);
                     }
                     ResourceTreeNode node = new ResourceTreeNode(agc);
                     load(node, alwaysGroup);
@@ -311,5 +317,22 @@ public class ResourceTreeModelUIBean {
 
     public void setNodeTitle(String nodeTitle) {
         this.nodeTitle = nodeTitle;
+    }
+
+    private static Set<String> getDuplicateResourceTypeNames(Map<Object, List<Resource>> children, boolean alwaysGroup) {
+        Set<String> resourceTypeNames = new HashSet();
+        Set<String> dupResourceTypeNames = new HashSet();
+        for (Object rsc : children.keySet()) {
+            if (rsc != null
+                && (rsc instanceof ResourceType && (children.get(rsc).size() > 1 || (alwaysGroup && children
+                    .get(rsc).size() == 1)))) {
+                String resourceTypeName = ((ResourceType)rsc).getName();
+                if (resourceTypeNames.contains(resourceTypeName)) {
+                    dupResourceTypeNames.add(resourceTypeName);
+                }
+                resourceTypeNames.add(resourceTypeName);
+            }
+        }
+        return dupResourceTypeNames;
     }
 }

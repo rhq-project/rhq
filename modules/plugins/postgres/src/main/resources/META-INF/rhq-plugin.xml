@@ -391,7 +391,7 @@
                     description="The count of rows in the table. Warning: This may be an expensive operation"/>
             <metric displayName="Approximate rows" property="rows_approx" measurementType="dynamic"
                     defaultOn="false" defaultInterval="300000"
-                    description="The approximate count of rows in the table. This is basically the number of rows of the last ANALYZE of the table. This metric is not epensive."/>
+                    description="The approximate count of rows in the table. This is basically the number of rows of the last ANALYZE of the table. This metric is not expensive."/>
 
             <!-- TODO GH: add metrics for data and index space used -->
 

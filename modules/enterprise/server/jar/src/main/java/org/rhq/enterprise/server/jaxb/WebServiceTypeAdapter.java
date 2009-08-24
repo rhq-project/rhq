@@ -3,9 +3,12 @@ package org.rhq.enterprise.server.jaxb;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.jws.WebResult;
+import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.enterprise.server.system.ServerVersion;
 
 /** See the javadoc for the XmlAdapter itself for a more complete explanation, but simply 
  *  put the adapter maps types that JAXB has difficulty serializing(Ex. Map<int,Configuration>) 
@@ -16,9 +19,10 @@ import org.rhq.core.domain.configuration.Configuration;
  * @author Simeon Pinder
  *
  */
+@XmlType(namespace = ServerVersion.namespace)
 public class WebServiceTypeAdapter extends XmlAdapter<Object[], Map<Integer, Configuration>> {
 
-    @Override
+    @WebResult(targetNamespace = ServerVersion.namespace)
     public Object[] marshal(Map<Integer, Configuration> opaque) throws Exception {
         Object[] bag = null;
         if (opaque != null) {
@@ -34,7 +38,7 @@ public class WebServiceTypeAdapter extends XmlAdapter<Object[], Map<Integer, Con
         return bag;
     }
 
-    @Override
+    @WebResult(targetNamespace = ServerVersion.namespace)
     public Map<Integer, Configuration> unmarshal(Object[] marshallable) throws Exception {
         Map<Integer, Configuration> map = new HashMap<Integer, Configuration>();
         if (marshallable != null) {

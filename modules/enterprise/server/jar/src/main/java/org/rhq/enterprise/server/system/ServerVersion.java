@@ -20,11 +20,17 @@ package org.rhq.enterprise.server.system;
 
 import java.io.Serializable;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlRootElement;
+
 /**
  * Provides version information on the server itself.
  *
  * @author John Mazzitelli
  */
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlRootElement
 public class ServerVersion implements Serializable {
     public static String getNamespace() {
         return namespace;
@@ -37,7 +43,7 @@ public class ServerVersion implements Serializable {
     private String build;
 
     //This value must be set by build system just before Build Time.
-    public static final String namespace = "http://jon.rhq.org/JON_2.3/2009/9/JON.xsd";
+    public static final String namespace = "http://jon.redhat.com/JON_2.3/2009/9/JON.xsd";
 
     //    private final String namespace = "@ws-namespace@";
 

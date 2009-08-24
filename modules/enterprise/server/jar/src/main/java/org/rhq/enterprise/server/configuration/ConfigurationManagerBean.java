@@ -29,6 +29,7 @@ import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
+import javax.jws.WebParam;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;
@@ -1420,6 +1421,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     public int scheduleGroupResourceConfigurationUpdate(Subject subject, int compatibleGroupId,//
+        @WebParam(targetNamespace = ServerVersion.namespace)//
         @XmlJavaTypeAdapter(WebServiceTypeAdapter.class)//
         Map<Integer, Configuration> newResourceConfigurationMap) {
         if (newResourceConfigurationMap == null) {

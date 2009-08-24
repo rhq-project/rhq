@@ -27,6 +27,7 @@ import java.util.List;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlRootElement;
 
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.util.PageOrdering;
@@ -34,6 +35,7 @@ import org.rhq.core.domain.util.PageOrdering;
 /**
  * @author Joseph Marques
  */
+@XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings("unused")
 public class AlertDefinitionCriteria extends Criteria {

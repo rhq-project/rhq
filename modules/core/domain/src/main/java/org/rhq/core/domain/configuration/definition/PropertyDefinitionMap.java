@@ -1,31 +1,32 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.domain.configuration.definition;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
 import javax.persistence.CascadeType;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
@@ -34,6 +35,7 @@ import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlSeeAlso;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -46,6 +48,7 @@ import org.jetbrains.annotations.NotNull;
 @DiscriminatorValue("map")
 @Entity(name = "PropertyDefinitionMap")
 @XmlRootElement(name = "PropertyDefinitionMap")
+@XmlSeeAlso( { PropertyDefinitionSimple.class, PropertyDefinitionList.class, PropertyDefinitionMap.class })
 public class PropertyDefinitionMap extends PropertyDefinition {
     private static final long serialVersionUID = 1L;
 
@@ -56,8 +59,8 @@ public class PropertyDefinitionMap extends PropertyDefinition {
     @OrderBy
     private Map<String, PropertyDefinition> map;
 
-    public PropertyDefinitionMap(@NotNull
-    String name, String description, boolean required, PropertyDefinition... properties) {
+    public PropertyDefinitionMap(@NotNull String name, String description, boolean required,
+        PropertyDefinition... properties) {
         super(name, description, required);
         if (properties != null) {
             for (PropertyDefinition property : properties) {
@@ -78,8 +81,7 @@ public class PropertyDefinitionMap extends PropertyDefinition {
         return map;
     }
 
-    public void setPropertyDefinitions(@NotNull
-    Map<String, PropertyDefinition> propertyDefinitions) {
+    public void setPropertyDefinitions(@NotNull Map<String, PropertyDefinition> propertyDefinitions) {
         this.map = propertyDefinitions;
     }
 

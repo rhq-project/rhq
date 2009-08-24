@@ -22,9 +22,15 @@
  */
 package org.rhq.core.domain.resource;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlEnum;
+
 /**
  * Represents a resource's current inventory status. TODO: Javadoc what the different statuses mean.
  */
+@XmlEnum
+@XmlAccessorType(XmlAccessType.FIELD)
 public enum InventoryStatus {
     NEW, IGNORED, COMMITTED, DELETED, UNINVENTORIED
 }

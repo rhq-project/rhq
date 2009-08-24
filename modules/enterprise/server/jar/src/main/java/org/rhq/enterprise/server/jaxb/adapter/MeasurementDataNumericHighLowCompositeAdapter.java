@@ -3,9 +3,12 @@ package org.rhq.enterprise.server.jaxb.adapter;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.jws.WebResult;
+import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
+import org.rhq.enterprise.server.system.ServerVersion;
 
 /** See the javadoc for the XmlAdapter itself for a more complete explanation, but simply 
  *  put the adapter maps types that JAXB has difficulty serializing(Ex. Map<int,Configuration>) 
@@ -16,11 +19,11 @@ import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowCo
  * @author Simeon Pinder
  *
  */
+@XmlType(namespace = ServerVersion.namespace)
 public class MeasurementDataNumericHighLowCompositeAdapter
     extends
     XmlAdapter<ArrayList<ArrayList<MeasurementDataNumericHighLowComposite>>, List<List<MeasurementDataNumericHighLowComposite>>> {
 
-    @Override
     public ArrayList<ArrayList<MeasurementDataNumericHighLowComposite>> marshal(
         List<List<MeasurementDataNumericHighLowComposite>> opaque) throws Exception {
         ArrayList<ArrayList<MeasurementDataNumericHighLowComposite>> converted = new ArrayList<ArrayList<MeasurementDataNumericHighLowComposite>>();
@@ -32,7 +35,7 @@ public class MeasurementDataNumericHighLowCompositeAdapter
         return converted;
     }
 
-    @Override
+    @WebResult(targetNamespace = ServerVersion.namespace)
     public List<List<MeasurementDataNumericHighLowComposite>> unmarshal(
         ArrayList<ArrayList<MeasurementDataNumericHighLowComposite>> marshallable) throws Exception {
         return new ArrayList<List<MeasurementDataNumericHighLowComposite>>(marshallable);

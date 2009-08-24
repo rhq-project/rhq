@@ -22,6 +22,9 @@
  */
 package org.rhq.core.domain.criteria;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+
 import org.rhq.core.domain.operation.JobId;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.util.PageOrdering;
@@ -29,6 +32,7 @@ import org.rhq.core.domain.util.PageOrdering;
 /**
  * @author Joseph Marques
  */
+@XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings("unused")
 public abstract class OperationHistoryCriteria extends Criteria {
     private static final long serialVersionUID = 1L;

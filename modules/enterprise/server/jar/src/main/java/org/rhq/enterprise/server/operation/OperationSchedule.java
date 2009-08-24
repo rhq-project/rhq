@@ -18,18 +18,25 @@
  */
 package org.rhq.enterprise.server.operation;
 
+import java.io.Serializable;
+
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.operation.HistoryJobId;
 import org.rhq.core.domain.operation.JobId;
-
-import java.io.Serializable;
 
 /**
  * A simple non-entity POJO that describes a particular scheduled operation.
  *
  * @author John Mazzitelli
  */
+@XmlRootElement
+@XmlAccessorType(XmlAccessType.FIELD)
 public abstract class OperationSchedule implements Serializable {
     private String jobName;
     private String jobGroup;
@@ -122,6 +129,7 @@ public abstract class OperationSchedule implements Serializable {
      *
      * @return job ID
      */
+    @XmlElement
     public JobId getJobId() {
         return new JobId(this.jobName, this.jobGroup);
     }

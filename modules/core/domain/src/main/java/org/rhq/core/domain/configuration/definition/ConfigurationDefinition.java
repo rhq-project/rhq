@@ -46,6 +46,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.xml.bind.annotation.XmlSeeAlso;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,6 +70,7 @@ import org.jetbrains.annotations.Nullable;
         + "WHERE rt.id = :resourceTypeId") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CONFIG_DEF_ID_SEQ")
 @Table(name = "RHQ_CONFIG_DEF")
+@XmlSeeAlso( { PropertyDefinitionSimple.class, PropertyDefinitionList.class, PropertyDefinitionMap.class })
 public class ConfigurationDefinition implements Serializable {
     private static final long serialVersionUID = 1L;
 

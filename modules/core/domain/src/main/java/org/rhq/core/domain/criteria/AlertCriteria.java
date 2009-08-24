@@ -70,8 +70,8 @@ public class AlertCriteria extends Criteria {
         filterOverrides.put("name", "alertDefinition.name like ?");
         filterOverrides.put("description", "alertDefinition.description like ?");
         filterOverrides.put("priority", "alertDefinition.priority = ?");
-        filterOverrides.put("resourceTypeId", "alertDefinition.resourceType.id = ?");
-        filterOverrides.put("resourceTypeName", "alertDefinition.resourceType.name like ?");
+        filterOverrides.put("resourceTypeId", "alertDefinition.resource.resourceType.id = ?");
+        filterOverrides.put("resourceTypeName", "alertDefinition.resource.resourceType.name like ?");
         filterOverrides.put("resourceIds", "alertDefinition.resource.id IN ( ? )");
         filterOverrides.put("resourceGroupIds", "alertDefinition.resource.id IN " //
             + "( SELECT res.id " //

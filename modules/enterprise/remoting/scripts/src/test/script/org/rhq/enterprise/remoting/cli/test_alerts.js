@@ -23,9 +23,9 @@
 
 rhq.login('rhqadmin', 'rhqadmin');
 
-//executeAllTests();
+executeAllTests();
 
-executeTests(['testFindAlertsWithFiltering'])
+//executeTests(['testFindAlertsWithFiltering'])
 
 rhq.logout();
 
@@ -116,17 +116,20 @@ function testFindAlertsWithFiltering() {
     var severity = 'WARN';
     var numberOfEvents = 1;
 
+    var startDate = java.util.Date().getTime();
+
     var opSchedule = fireEvents(service, severity, numberOfEvents, eventDetails);
 
     scriptUtil.waitForScheduledOperationToComplete(opSchedule);
 
     var pauseLength = 1000; // in milliseconds
-    var numberOfIntervals = 10;
+    var numberOfIntervals = 30;
 
     var eventCriteria = EventCriteria();
     eventCriteria.caseSensitive = true;
     eventCriteria.addFilterResourceId(service.id);
-    //eventCriteria.addFilterDetail(eventDetails);
+    eventCriteria.addFilterDetail(eventDetails);
+    eventCriteria.fetchSource(true);
 
     var events = waitForEventsToBeCommitted(pauseLength, numberOfIntervals, eventCriteria, numberOfEvents);
 
@@ -136,10 +139,13 @@ function testFindAlertsWithFiltering() {
     var alertDef1Name = 'service-alpha-0-alert-def-1';
 
     var alertCriteria = AlertCriteria();
+    alertCriteria.caseSensitive = true;
+    alertCriteria.strict = true;
     alertCriteria.addFilterName(alertDef1Name);
     alertCriteria.addFilterDescription('Test alert definition 1 for service-alpha-0');
     alertCriteria.addFilterPriority(AlertPriority.MEDIUM);
-    alertCriteria.addFilterResourceTypeName('service-alpha-0');
+    alertCriteria.addFilterResourceTypeName('service-alpha');
+    alertCriteria.addFilterStartTime(startDate);
 
     var alerts = AlertManager.findAlertsByCriteria(alertCriteria);
 
@@ -204,7 +210,6 @@ function findEventsByResource(resource) {
 function waitForEventsToBeCommitted(intervalLength, numberOfIntervals, eventCriteria, numberOfEvents) {
     for (i = 0; i < numberOfIntervals; ++i) {
         events = EventManager.findEventsByCriteria(eventCriteria);
-        java.lang.System.out.println('SIZE = ' + events.size() + ', NUM_EVENTS = ' + numberOfEvents);
         if (events.size() == numberOfEvents) {
             return events;
         }

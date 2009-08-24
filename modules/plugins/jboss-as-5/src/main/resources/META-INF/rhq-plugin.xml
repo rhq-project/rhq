@@ -1684,7 +1684,7 @@
 
             <metric property="createdProgrammatically" displayType="summary"
                     defaultOn="true" defaultInterval="600000" dataType="trait" category="performance"
-                    description="A flag indicating whether this queue was created programmatically"/>
+                    description="Was this queue created programmatically? If Yes, the queue will not survive a restart of the application server. If No, the queue was created via a deployment XML file."/>
 
             <!-- NOTE: We have to make this a trait rather than a resource config prop due to a bug in JBMESSAGING
                        (see https://jira.jboss.org/jira/browse/JBAS-6721). -->
@@ -2019,7 +2019,7 @@
 
             <metric property="createdProgrammatically" displayType="summary"
                     defaultOn="true" defaultInterval="600000" dataType="trait" category="performance"
-                    description="A flag indicating whether this topic was created programmatically"/>
+                    description="Was this topic created programmatically? If Yes, the topic will not survive a restart of the application server. If No, the topic was created via a deployment XML file."/>
 
             <!-- NOTE: We have to make this a trait rather than a resource config prop due to a bug in JBMESSAGING
                        (see https://jira.jboss.org/jira/browse/JBAS-6721). -->

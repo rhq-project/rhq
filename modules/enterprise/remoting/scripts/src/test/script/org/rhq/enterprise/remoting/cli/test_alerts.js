@@ -53,6 +53,24 @@ function testFindSingleAlertDefinitionWithFiltering() {
         getNames(alertDefs) + "'");
 }
 
+function testGetAlertDefinitionById() {
+    var service = findService('service-alpha-0', 'server-omega-0');
+
+    var criteria = AlertDefinitionCriteria();
+    criteria.addFilterName('service-alpha-0-alert-def-1');
+    criteria.addFilterDescription('Test alert definition 1 for service-alpha-0');
+    criteria.addFilterPriority(AlertPriority.MEDIUM);
+    criteria.addFilterEnabled(true);
+    criteria.addFilterResourceIds([service.id]);
+    criteria.addFilterDeleted(false);
+
+    var alertDefs = AlertDefinitionManager.findAlertDefinitionsByCriteria(criteria);
+    var alertDef = alertDefs.get(0);
+
+    Assert.assertNotNull(AlertDefinitionManager.getAlertDefinition(alertDef.id), 'Expected to get back an alert ' +
+        'definition for id ' + alertDef.id);
+}
+
 function testFindMultipleAlertDefinitionsWithFiltering() {
     var serviceAlpha = findService('service-alpha-0', 'server-omega-0');
     var serviceBeta = findService('service-alpha-1', 'server-omega-0');

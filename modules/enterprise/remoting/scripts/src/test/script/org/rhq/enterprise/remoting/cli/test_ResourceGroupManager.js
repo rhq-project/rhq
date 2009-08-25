@@ -85,6 +85,41 @@ function testFindWithFiltering() {
     Assert.assertNumberEqualsJS(resourceGroups.size(), 1, 'Failed to find resource groups when applying filters.');
 }
 
+function testFindWithFetchingAssociations() {
+    var resourceGroup = createResourceGroup();
+    var resources = findAlphaServices();
+
+    addResourcesToGroup(resourceGroup, resources);
+
+    var criteria = ResourceGroupCriteria();
+    criteria.addFilterId(resourceGroup.id);
+    criteria.fetchExplicitResources(true);
+    criteria.fetchImplicitResources(true);
+    criteria.fetchOperationHistories(true);
+    criteria.fetchConfigurationUpdates(true);
+    criteria.fetchGroupDefinition(true);
+    criteria.fetchResourceType(true);
+
+    var resourceGroups = ResourceGroupManager.findResourceGroupsByCriteria(criteria);
+
+    Assert.assertNumberEqualsJS(resourceGroups.size(), 1, 'Failed to find resource groups when fetching associations.');
+}
+
+function testFindWithSorting() {
+    var resourceGroup = createResourceGroup();
+    var resources = findAlphaServices();
+
+    addResourcesToGroup(resourceGroup, resources);
+
+    var criteria = ResourceGroupCriteria();
+    criteria.addSortName(PageOrdering.ASC);
+    criteria.addSortResourceTypeName(PageOrdering.DESC);
+
+    var resourceGroups = ResourceGroupManager.findResourceGroupsByCriteria(criteria);
+
+    Assert.assertTrue(resourceGroups.size() > 0, 'Failed to find resource groups when sorting');
+}
+
 function createResourceGroup() {
     var resourceType = getResourceType();
     Assert.assertNotNull(resourceType, 'Failed to find resource type for new resource group.');

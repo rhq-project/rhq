@@ -37,8 +37,7 @@ skippedTests.push('testUninventoryResources');
 skippedTests.push('testFindWithFilteringAndSortingAndFetchingAssociations');
 skippedTests.push('testFindWithFilteringAndFetchingAssociations');
 
-//executeAllTests();
-executeTests(['testFindWithFiltering']);
+executeAllTests();
 
 function testFindUnfiltered() {
     var resources = ResourceManager.findResourcesByCriteria(ResourceCriteria());

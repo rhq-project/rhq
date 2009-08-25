@@ -37,7 +37,8 @@ skippedTests.push('testUninventoryResources');
 skippedTests.push('testFindWithFilteringAndSortingAndFetchingAssociations');
 skippedTests.push('testFindWithFilteringAndFetchingAssociations');
 
-executeAllTests();
+//executeAllTests();
+executeTests(['testFindWithFiltering']);
 
 function testFindUnfiltered() {
     var resources = ResourceManager.findResourcesByCriteria(ResourceCriteria());
@@ -48,6 +49,7 @@ function testFindUnfiltered() {
 
 function testFindWithFiltering() {
     var criteria = createCriteria();
+    criteria.strict = true;
     var resources = ResourceManager.findResourcesByCriteria(criteria);
 
     Assert.assertNumberEqualsJS(resources.size(), 1, "Expected to get back a single resource");

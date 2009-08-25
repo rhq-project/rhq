@@ -25,8 +25,6 @@ rhq.login('rhqadmin', 'rhqadmin');
 
 executeAllTests();
 
-//executeTests(['testFindAlertsWithFiltering'])
-
 rhq.logout();
 
 

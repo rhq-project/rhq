@@ -11,7 +11,7 @@ rhq-agent.sh --purgedata \
              -Don.perftest.scenario=configurable-alphaomega \
              -Don.perftest.server-omega-count=10 \
              -Don.perftest.service-alpha-count=10 \
-             -Don.perftest.server-beta-count=10 \
+             -Don.perftest.service-beta-count=10 \
              -Don.perftest.omega-content0-count=10 \
              -Don.perftest.omega-content1-count=10 \
              -Don.perftest.alpha-content0-count=10 \

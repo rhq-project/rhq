@@ -53,12 +53,7 @@ function testAddResourcesToGroup() {
     var resources = findAlphaServices();
     Assert.assertNumberEqualsJS(resources.size(), 10, 'Cannot add resources to group. Failed to find the correct number of resources.');
 
-    var resourceIds = []
-    for (i = 0; i < resources.size(); ++i) {
-        resourceIds.push(resources.get(i).id);
-    }
-
-    ResourceGroupManager.addResourcesToGroup(resourceGroup.id, resourceIds);
+    addResourcesToGroup(resourceGroup, resources);
 
     var criteria = ResourceGroupCriteria();
     criteria.addFilterId(resourceGroup.id);
@@ -67,6 +62,27 @@ function testAddResourcesToGroup() {
     resourceGroup = ResourceGroupManager.findResourceGroupsByCriteria(criteria).get(0);
 
     Assert.assertNumberEqualsJS(resourceGroup.explicitResources.size(), 10, 'Failed to find resources in group. Resources may not have been added.');
+}
+
+function testFindWithFiltering() {
+    var resourceGroup = createResourceGroup();
+    var resources = findAlphaServices();
+    var resource = resources.get(0);
+
+    addResourcesToGroup(resourceGroup, resources);
+
+    var criteria = ResourceGroupCriteria();
+    criteria.addFilterId(resourceGroup.id);
+    criteria.addFilterPluginName('PerfTest');
+    criteria.addFilterResourceTypeId(resource.resourceType.id);
+    criteria.addFilterResourceTypeName(resource.resourceType.name);
+    criteria.addFilterName(resourceGroup.name);
+    criteria.addFilterGroupCategory(GroupCategory.COMPATIBLE);
+    criteria.addFilterExplicitResourceIds(getIds(resources));
+
+    var resourceGroups = ResourceGroupManager.findResourceGroupsByCriteria(criteria);
+
+    Assert.assertNumberEqualsJS(resourceGroups.size(), 1, 'Failed to find resource groups when applying filters.');
 }
 
 function createResourceGroup() {
@@ -91,6 +107,22 @@ function findAlphaServices() {
     criteria.strict = true;
     criteria.addFilterParentResourceName('server-omega-0');
     criteria.addFilterResourceTypeName('service-alpha');
+    criteria.fetchResourceType(true);
 
     return ResourceManager.findResourcesByCriteria(criteria);
+}
+
+function addResourcesToGroup(group, resources) {
+    var resourceIds = getIds(resources);
+    ResourceGroupManager.addResourcesToGroup(group.id, resourceIds);
+}
+
+function getIds(resources) {
+    var ids = [];
+
+    for (i = 0; i < resources.size(); ++i) {
+        ids.push(resources.get(i).id);
+    }
+
+    return ids;
 }

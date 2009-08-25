@@ -126,6 +126,13 @@ public class TwitterComponent implements ResourceComponent, OperationFacet, Meas
              if (statuses.size()>0)
                 lastId = statuses.get(0).getId(); // This is always newest first
           }
+          else if (req.getName().equals("followerCount")) {
+              Twitter twitter = new Twitter(username,password);
+              int count = twitter.getFollowersIDs().getIDs().length;
+              MeasurementDataNumeric res;
+              res = new MeasurementDataNumeric(req,(double)count);
+              report.addData(res);
+          }
        }
     }
 

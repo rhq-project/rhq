@@ -18,13 +18,14 @@
  */
 package org.rhq.plugins.twitter;
 
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.Set;
 
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 
 /**
  * Discovery class - just set up a fixed twitter subsystem.
@@ -35,31 +36,34 @@ public class TwitterDiscovery implements ResourceDiscoveryComponent {
 
 
     /**
-     * Run the discovery
+     * Run the discovery - actually we only react on manual add
      */
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext discoveryContext) throws Exception {
 
-        Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
 
-        /**
-         * A discovered resource must have a unique key, that must
-         * stay the same when the resource is discovered the next
-         * time
-         */
-        DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
-            discoveryContext.getResourceType(), // ResourceType
-                "Twitter", // ResourceKey
-                "Twitter feed",
+       for (Configuration config : (Iterable<? extends Configuration>) discoveryContext.getPluginConfigurations()) {
+          /**
+           * A discovered resource must have a unique key, that must
+           * stay the same when the resource is discovered the next
+           * time
+           */
+         String user = config.getSimpleValue("user",null);
+         String password = config.getSimpleValue("password",null);
+         if (user==null || password==null)
+            throw new InvalidPluginConfigurationException("User or password were not set");
+
+         DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
+                discoveryContext.getResourceType(), // ResourceType
+                "Twitter" + user, // ResourceKey
+                "Twitter feed for " +user,
                 null,
                 "One twitter user",
-                null,
+                config,
                 null  );
 
-
-        // Add to return values
-        discoveredResources.add(detail);
-
-        return discoveredResources;
+          return Collections.singleton(detail);
+       }
+       return null;
 
     }
 }

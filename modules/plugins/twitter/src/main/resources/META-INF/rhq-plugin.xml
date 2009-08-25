@@ -14,11 +14,12 @@
             class="TwitterComponent"
             singleton="true"
             description="Twitter monitoring subsystem"
+            supportsManualAdd="true"
         >
 
         <plugin-configuration>
-            <c:simple-property name="user" required="false" description="Twitter user to post statuses"/>
-            <c:simple-property name="password" required="false" description="Password of the user" type="password"/>
+            <c:simple-property name="user" required="true" description="Twitter user to post statuses"/>
+            <c:simple-property name="password" required="true" description="Password of the user" type="password"/>
         </plugin-configuration>
 
         <operation name="postStatus"
@@ -34,6 +35,11 @@
         <metric property="tweetCount" displayName="Tweet count" category="utilization" dataType="measurement"
                 defaultOn="true" displayType="summary" measurementType="dynamic"
                 description="Number of new tweets since last poll"/>
+
+        <metric property="followerCount" displayName="Follower count" dataType="measurement"
+                defaultOn="true" displayType="summary" measurementType="dynamic" defaultInterval="14400000"
+                description="Number of followers" />
+
 
         <event name="TwitterEvent"/>
 

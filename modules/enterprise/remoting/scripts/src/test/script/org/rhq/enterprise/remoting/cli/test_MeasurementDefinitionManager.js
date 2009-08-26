@@ -47,3 +47,22 @@ function testFindWithFiltering() {
 
     Assert.assertNumberEqualsJS(measurementDefs.size(), 1, 'Failed to find measurement definition when filtering');
 }
+
+function testFindWithSorting() {
+    var criteria = MeasurementDefinitionCriteria();
+    criteria.addFilterResourceTypeName('service-alpha');
+    criteria.addSortName(PageOrdering.ASC);
+    criteria.addSortDisplayName(PageOrdering.DESC);
+    criteria.addSortResourceTypeName(PageOrdering.ASC);
+    criteria.addSortCategory(PageOrdering.DESC);
+    criteria.addSortUnits(PageOrdering.ASC);
+    criteria.addSortNumericType(PageOrdering.DESC);
+    criteria.addSortDataType(PageOrdering.ASC);
+    criteria.addSortDisplayType(PageOrdering.DESC);
+    criteria.addSortDefaultOn(PageOrdering.ASC);
+    criteria.addSortDefaultInterval(PageOrdering.DESC);
+
+    var measurementDefs = MeasurementDefinitionManager.findMeasurementDefinitionsByCriteria(criteria);
+
+    Assert.assertTrue(measurementDefs.size() > 0, 'Failed to find measurement definitions when sorting');
+}

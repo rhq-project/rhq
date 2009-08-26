@@ -23,75 +23,58 @@
 
 rhq.login('rhqadmin', 'rhqadmin');
 
-criteria = new ResourceTypeCriteria();
-resourceTypes = null;
+executeAllTests();
 
-for (func in this) {
-    if (func.indexOf('test') == 0) {
-        this[func]();
-    }
-}
+rhq.logout();
 
-//testFindUnfiltered();
-//testFilterByPluginName();
+function testFindWithFiltering() {
+    var resourceType = ResourceTypeManager.getResourceTypeByNameAndPlugin('service-alpha', 'PerfTest');
 
-logout();
-
-function testFindUnfiltered() {
-    resourceTypes = ResourceTypeManager.findResourceTypesByCriteria(criteria);
-
-    assertResourceTypesFound();
-
-    for (i = 0; i < resourceTypes.size(); ++i) {
-        resourceType = resourceTypes.get(i);
-    
-        assertNotNull(ResourceTypeManager.getResourceTypeById(resourceType.id),
-            'Expected getResourceTypeById to a return a ResourceType for id ' + resourceType.id);
-
-        assertNotNull(ResourceTypeManager.getResourceTypeByNameAndPlugin(resourceType.name, resourceType.plugin),
-            'Expected getResourceTypeByNameAndPLugin to return a ResourceType for ' + resourceType.name + ', ' +
-            resourceType.plugin);
-    }
-}
-
-function testFilterByPluginName() {
-    criteria.addFilterPluginName('PerfTest');
-    resourceTypes = ResourceTypeManager.findResourceTypesByCriteria(criteria);
-
-    assertResourceTypesFound('Failed to find ResourceTypes when filtering by plugin name');
-
-    for (i = 0; i < resourceTypes.size(); ++i) {
-        resourceType = resourceTypes.get(i);
-    
-        assertEquals(resourceType.plugin, 'PerfTest', 'Expected only ResourceTypes from the PerfTest plugin');
-    }
-}
-
-function testFilterByNameAndPluginName() {
-    criteria = new ResourceTypeCriteria();
-    criteria.addFilterPluginName('PerfTest');
+    var criteria = ResourceTypeCriteria();
     criteria.addFilterName('service-alpha');
+    criteria.addFilterDescription(resourceType.description);
+    criteria.addFilterCategory(ResourceCategory.SERVICE);
+    criteria.addFilterPluginName('PerfTest');
+    criteria.addFilterCreationDataType(ResourceCreationDataType.CONFIGURATION);
+    criteria.addFilterCreateDeletePolicy(CreateDeletePolicy.NEITHER);
+    criteria.addFilterSupportsManualAdd(false);
 
-    resourceTypes = ResourceTypeManager.findResourceTypesByCriteria(criteria);
+    var resourceTypes = ResourceTypeManager.findResourceTypesByCriteria(criteria);
 
-    assertResourceTypesFound('Failed to find ResourceTypes when filtering by name and by plugin name');
-    
-    importClass(java.lang.Integer);
-    assertEquals(new Integer(resourceTypes.size()), new Integer(1), 'Expected to get back one ResourceType when filtering by name and by plugin name');
-
-    resourceType = resourceTypes.get(0);
-
-    assertEquals(resourceType.name, 'service-alpha');
-    assertEquals(resourceType.plugin, 'PerfTest');
+    Assert.assertNumberEqualsJS(resourceTypes.size(), 1, 'Failed to find resource type when filtering');
 }
 
-function assertResourceTypesFound(msg) {
-    if (msg == undefined) {
-        msg = '';
-    }
-    else {
-        msg = msg + ' - ';
-    }
-    assertNotNull(resourceTypes, msg + 'Expected findByResourceTypesByCriteria() to a reutrn a non-null result');
-    assertTrue(resourceTypes.size() > 0, msg + 'Expected findResourceTypesByCriteria() to return a non-empty results set');
+function testFindWithFetchingAssociations() {
+    var resourceType = ResourceTypeManager.getResourceTypeByNameAndPlugin('service-alpha', 'PerfTest');
+
+    var criteria = ResourceTypeCriteria();
+    criteria.addFilterId(resourceType.id);
+    criteria.fetchSubCategory(true);
+    criteria.fetchChildResourceTypes(true);
+    criteria.fetchParentResourceTypes(true);
+    criteria.fetchPluginConfigurationDefinition(true);
+    criteria.fetchResourceConfigurationDefinition(true);
+    criteria.fetchMetricDefinitions(true);
+    criteria.fetchEventDefinitions(true);
+    criteria.fetchOperationDefinitions(true);
+    criteria.fetchProcessScans(true);
+    criteria.fetchPackageTypes(true);
+    criteria.fetchSubCategories(true);
+    criteria.fetchProductVersions(true);
+
+    var resourceTypes = ResourceTypeManager.findResourceTypesByCriteria(criteria);
+
+    Assert.assertNumberEqualsJS(resourceTypes.size(), 1, 'Failed to find resource type when fetching associations');
 }
+
+function testFindWithSorting() {
+    var criteria = ResourceTypeCriteria();
+    criteria.addSortName(PageOrdering.ASC);
+    criteria.addSortCategory(PageOrdering.DESC);
+    criteria.addSortPluginName(PageOrdering.ASC);
+
+    var resourceTypes = ResourceTypeManager.findResourceTypesByCriteria(criteria);
+
+    Assert.assertTrue(resourceTypes.size() > 0, 'Failed to find resource types when sorting');
+}
+

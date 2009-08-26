@@ -1883,6 +1883,19 @@
                 </c:list-property>
 
             </resource-configuration>
+
+            <help>
+               <![CDATA[
+                  <p>The message counter metrics will not be collected by default. In order
+                     for these metrics to be collected for all Topics and Queues for a given application server instance,
+                     go to the instance's JMX Console, and invoke the
+                     <tt>enableMessageCounters</tt> operation on the <tt>jboss.messaging:service=ServerPeer</tt> MBean.
+                     To ensure the message counters are still enabled when the application server is restarted,
+                     edit that instance's <tt>deploy/messaging/messaging-service.xml</tt> file and set the
+                     <tt>EnableMessageCounters</tt> attribute to "true".</p>
+               ]]>
+            </help>
+
         </service>
 
         <service name="Topic"
@@ -2205,6 +2218,19 @@
                 </c:list-property>
 
             </resource-configuration>
+
+            <help>
+               <![CDATA[
+                  <p>The message counter metrics will not be collected by default. In order
+                     for these metrics to be collected for all Topics and Queues for a given application server instance,
+                     go to the instance's JMX Console, and invoke the
+                     <tt>enableMessageCounters</tt> operation on the <tt>jboss.messaging:service=ServerPeer</tt> MBean.
+                     To ensure the message counters are still enabled when the application server is restarted,
+                     edit that instance's <tt>deploy/messaging/messaging-service.xml</tt> file and set the
+                     <tt>EnableMessageCounters</tt> attribute to "true".</p>
+               ]]>
+            </help>
+
         </service>
 
 

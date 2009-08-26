@@ -180,6 +180,11 @@ public class AgentMain {
 
     private static final String FILENAME_SERVER_FAILOVER_LIST = "failover-list.dat";
 
+    /**
+     * This Java Logging config file - lives inside the agent jar.
+     */
+    private static final String JAVA_UTIL_LOGGING_PROPERTIES_RESOURCE_PATH = "java.util.logging.properties";
+
     static final String PROMPT_INPUT_THREAD_NAME = "RHQ Agent Prompt Input Thread";
 
     /**
@@ -366,6 +371,8 @@ public class AgentMain {
      * @param args
      */
     public static void main(String[] args) {
+        reconfigureJavaLogging();
+
         AgentMain agent = null;
         int retries = 0;
         final int MAX_RETRIES = 5;
@@ -3099,6 +3106,20 @@ public class AgentMain {
         } catch (Exception e) {
             LOG.warn(e, AgentI18NResourceKeys.UPDATING_PLUGINS_FAILURE);
             return false;
+        }
+    }
+
+    private static void reconfigureJavaLogging() {
+        try {
+            LOG.debug("Reconfiguring Java Logging...");
+            ClassLoader classLoader = AgentMain.class.getClassLoader();
+            InputStream loggingPropsInputStream = classLoader.getResourceAsStream(JAVA_UTIL_LOGGING_PROPERTIES_RESOURCE_PATH);
+            java.util.logging.LogManager logManager = java.util.logging.LogManager.getLogManager();
+            logManager.readConfiguration(loggingPropsInputStream);
+            LOG.debug("Done reconfiguring Java Logging.");
+        }
+        catch (Exception e) {
+            LOG.error(e, "Failed to reconfigure Java Logging.");
         }
     }
 

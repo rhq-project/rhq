@@ -45,3 +45,15 @@ function testFindWithFiltering() {
 
     Assert.assertNumberEqualsJS(subjects.size(), 1, 'Failed to find subjects when filtering');
 }
+
+function testFindWithFetchingAssociations() {
+    var criteria = SubjectCriteria();
+    criteria.addFilterName('rhqadmin');
+    criteria.fetchConfiguration(true);
+    criteria.fetchRoles(true);
+    criteria.fetchSubjectNotifications(true);
+
+    var subjects = SubjectManager.findSubjectsByCriteria(criteria);
+
+    Assert.assertNumberEqualsJS(subjects.size(), 1, 'Failed to find subject when fetching associations');
+}

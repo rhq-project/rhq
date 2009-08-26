@@ -28,13 +28,14 @@ executeAllTests();
 rhq.logout();
 
 function testFindWithFiltering() {
+    var resourceType = findResourceType();
+
     var criteria = MeasurementDefinitionCriteria();
-    criteria.addFilterId(10098);
     criteria.addFilterName('alpha-metric0');
     criteria.addFilterDisplayName('Alpha Metric 0');
     criteria.addFilterDescription('Alpha Metric 0');
-    criteria.addFilterResourceTypeName('service-alpha');
-    criteria.addFilterResourceTypeId(10035);
+    criteria.addFilterResourceTypeName(resourceType.name);
+    criteria.addFilterResourceTypeId(resourceType.id);
     criteria.addFilterCategory(MeasurementCategory.PERFORMANCE);
     criteria.addFilterNumericType(NumericType.DYNAMIC);
     criteria.addFilterDataType(DataType.MEASUREMENT);
@@ -65,4 +66,12 @@ function testFindWithSorting() {
     var measurementDefs = MeasurementDefinitionManager.findMeasurementDefinitionsByCriteria(criteria);
 
     Assert.assertTrue(measurementDefs.size() > 0, 'Failed to find measurement definitions when sorting');
+}
+
+function findResourceType() {
+    var criteria = ResourceTypeCriteria();
+    criteria.addFilterName('service-alpha');
+    criteria.addFilterPluginName('PerfTest');
+
+    return ResourceTypeManager.findResourceTypesByCriteria(criteria).get(0);
 }

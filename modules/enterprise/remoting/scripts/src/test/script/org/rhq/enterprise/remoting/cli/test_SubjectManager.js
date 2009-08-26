@@ -57,3 +57,19 @@ function testFindWithFetchingAssociations() {
 
     Assert.assertNumberEqualsJS(subjects.size(), 1, 'Failed to find subject when fetching associations');
 }
+
+function testFindWithSorting() {
+    var criteria = SubjectCriteria();
+    criteria.addSortFirstName(PageOrdering.ASC);
+    criteria.addSortLastName(PageOrdering.DESC);
+    criteria.addSortEmailAddress(PageOrdering.ASC);
+    criteria.addSortSmsAddress(PageOrdering.DESC);
+    criteria.addSortPhoneNumber(PageOrdering.ASC);
+    criteria.addSortDepartment(PageOrdering.DESC);
+
+    var subjects = SubjectManager.findSubjectsByCriteria(criteria);
+
+    Assert.assertTrue(subjects.size() > 0, 'Failed to find subjects when sorting');
+
+    // TODO verify sort order
+}

@@ -17,6 +17,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
@@ -30,6 +31,7 @@ import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.criteria.ChannelCriteria;
+import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.criteria.EventCriteria;
 import org.rhq.core.domain.criteria.GroupOperationHistoryCriteria;
 import org.rhq.core.domain.criteria.InstalledPackageCriteria;
@@ -137,7 +139,8 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 @Stateless
 @WebService(endpointInterface = "org.rhq.enterprise.server.webservices.WebservicesRemote", targetNamespace = ServerVersion.namespace)
-@XmlSeeAlso( { PropertyDefinitionSimple.class, PropertyDefinitionList.class, PropertyDefinitionMap.class })
+@XmlSeeAlso( { PropertyDefinition.class, PropertyDefinitionSimple.class, PropertyDefinitionList.class,
+    PropertyDefinitionMap.class })
 public class WebservicesManagerBean implements //
     AlertManagerRemote, //
     AlertDefinitionManagerRemote, //
@@ -203,6 +206,7 @@ public class WebservicesManagerBean implements //
     }
 
     public PageList<AlertDefinition> findAlertDefinitionsByCriteria(Subject subject, AlertDefinitionCriteria criteria) {
+        checkParametersPassedIn(subject, criteria);
         return alertDefinitionManager.findAlertDefinitionsByCriteria(subject, criteria);
     }
 
@@ -245,6 +249,7 @@ public class WebservicesManagerBean implements //
     }
 
     public PageList<Channel> findChannelsByCriteria(Subject subject, ChannelCriteria criteria) {
+        checkParametersPassedIn(subject, criteria);
         return channelManager.findChannelsByCriteria(subject, criteria);
     }
 
@@ -279,6 +284,7 @@ public class WebservicesManagerBean implements //
     }
 
     public PageList<PackageVersion> findPackageVersionsByCriteria(Subject subject, PackageVersionCriteria criteria) {
+        checkParametersPassedIn(subject, criteria);
         return channelManager.findPackageVersionsInChannelByCriteria(subject, criteria);
     }
 
@@ -383,6 +389,7 @@ public class WebservicesManagerBean implements //
     }
 
     public PageList<InstalledPackage> findInstalledPackagesByCriteria(Subject subject, InstalledPackageCriteria criteria) {
+        checkParametersPassedIn(subject, criteria);
         return contentManager.findInstalledPackagesByCriteria(subject, criteria);
     }
 
@@ -429,6 +436,7 @@ public class WebservicesManagerBean implements //
 
     //EVENTMANAGER: BEGIN ----------------------------------
     public PageList<Event> findEventsByCriteria(Subject subject, EventCriteria criteria) {
+        checkParametersPassedIn(subject, criteria);
         return eventManager.findEventsByCriteria(subject, criteria);
     }
 
@@ -491,6 +499,7 @@ public class WebservicesManagerBean implements //
     //MEASUREMENTDEFINITIONMANAGER: BEGIN ----------------------------------
     public PageList<MeasurementDefinition> findMeasurementDefinitionsByCriteria(Subject subject,
         MeasurementDefinitionCriteria criteria) {
+        checkParametersPassedIn(subject, criteria);
         return measurementDefinitionManager.findMeasurementDefinitionsByCriteria(subject, criteria);
     }
 
@@ -525,6 +534,7 @@ public class WebservicesManagerBean implements //
     }
 
     public PageList<MeasurementSchedule> getSchedulesByCriteria(Subject subject, MeasurementScheduleCriteria criteria) {
+        checkParametersPassedIn(subject, criteria);
         return measurementScheduleManager.getSchedulesByCriteria(subject, criteria);
     }
 
@@ -541,16 +551,19 @@ public class WebservicesManagerBean implements //
 
     public PageList<GroupOperationHistory> findGroupOperationHistoriesByCriteria(Subject subject,
         GroupOperationHistoryCriteria criteria) {
+        checkParametersPassedIn(subject, criteria);
         return operationManager.findGroupOperationHistoriesByCriteria(subject, criteria);
     }
 
     public List<OperationDefinition> findOperationDefinitionsByCriteria(Subject subject,
         OperationDefinitionCriteria criteria) {
+        checkParametersPassedIn(subject, criteria);
         return operationManager.findOperationDefinitionsByCriteria(subject, criteria);
     }
 
     public PageList<ResourceOperationHistory> findResourceOperationHistoriesByCriteria(Subject subject,
         ResourceOperationHistoryCriteria criteria) {
+        checkParametersPassedIn(subject, criteria);
         return operationManager.findResourceOperationHistoriesByCriteria(subject, criteria);
     }
 
@@ -599,6 +612,7 @@ public class WebservicesManagerBean implements //
     }
 
     public PageList<Resource> findResourcesByCriteria(Subject subject, ResourceCriteria criteria) {
+        checkParametersPassedIn(subject, criteria);
         return resourceManager.findResourcesByCriteria(subject, criteria);
     }
 
@@ -635,6 +649,7 @@ public class WebservicesManagerBean implements //
     }
 
     public PageList<ResourceGroup> findResourceGroupsByCriteria(Subject subject, ResourceGroupCriteria criteria) {
+        checkParametersPassedIn(subject, criteria);
         return resourceGroupManager.findResourceGroupsByCriteria(subject, criteria);
     }
 
@@ -697,6 +712,7 @@ public class WebservicesManagerBean implements //
     }
 
     public PageList<Role> findRolesByCriteria(Subject subject, RoleCriteria criteria) {
+        checkParametersPassedIn(subject, criteria);
         return roleManager.findRolesByCriteria(subject, criteria);
     }
 
@@ -748,6 +764,7 @@ public class WebservicesManagerBean implements //
     }
 
     public PageList<Subject> findSubjectsByCriteria(Subject subject, SubjectCriteria criteria) {
+        checkParametersPassedIn(subject, criteria);
         return subjectManager.findSubjectsByCriteria(subject, criteria);
     }
 
@@ -786,5 +803,14 @@ public class WebservicesManagerBean implements //
     }
 
     //SYSTEMMANAGER: END ------------------------------------    
+
+    private void checkParametersPassedIn(Subject subject, Criteria criteria) {
+        if (subject == null) {
+            throw new IllegalArgumentException("Subject cannot be null.");
+        }
+        if (criteria == null) {
+            throw new IllegalArgumentException("Criteria cannot be null.");
+        }
+    }
 
 }

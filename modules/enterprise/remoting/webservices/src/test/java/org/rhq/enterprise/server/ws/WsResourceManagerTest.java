@@ -31,14 +31,15 @@ import org.rhq.enterprise.server.ws.utility.WsUtility;
  * @author Jay Shaughnessy, Simeon Pinder
  */
 @Test(groups = "ws")
-public class WsResourceManagerTest extends AssertJUnit {
+public class WsResourceManagerTest extends AssertJUnit implements TestPropertiesInterface {
 
     //Test variables
-    private static final boolean TESTS_ENABLED = true;
-    protected static String credentials = "ws-test";
-    protected static String host = "127.0.0.1";
-    protected static int port = 7080;
-    protected static boolean useSSL = false;
+    //    private static final boolean TESTS_ENABLED = true;
+    ////    protected static String credentials = "ws-test";
+    //    protected static String credentials = "rhqadmin";
+    //    protected static String host = "127.0.0.1";
+    //    protected static int port = 7080;
+    //    protected static boolean useSSL = false;
     private static ObjectFactory WS_OBJECT_FACTORY;
     private static WebservicesRemote WEBSERVICE_REMOTE;
     private static Subject subject = null;
@@ -55,6 +56,7 @@ public class WsResourceManagerTest extends AssertJUnit {
 
         WEBSERVICE_REMOTE = jws.getWebservicesManagerBeanPort();
         WS_OBJECT_FACTORY = new ObjectFactory();
+        WsSubjectTest.checkForWsTestUserAndRole();
         subject = WEBSERVICE_REMOTE.login(credentials, credentials);
     }
 
@@ -252,10 +254,14 @@ public class WsResourceManagerTest extends AssertJUnit {
         Resource resource = resources.get(0);
 
         resources = WEBSERVICE_REMOTE.findResourceLineage(subject, resource.id);
-
-        //        System.out.println("NAME:"+resources.get(0).getName()+":"+resources.get(0).getName());
-        //        System.out.println("NAME:"+resources.get(1).getName()+":"+resources.get(1).getName());
-        //        System.out.println("NAME:"+resources.get(2).getName()+":"+resources.get(2).getName());
+        System.out.println("User:" + credentials);
+        //JAXBContext.
+        System.out.println("NAME:" + resources.get(0).getName() + ":" + resources.get(0).getName());
+        System.out.println("NAME:" + resources.get(1).getName() + ":" + resources.get(1).getName());
+        System.out.println("NAME:" + resources.get(2).getName() + ":" + resources.get(2).getName());
+        System.out.println("ID:" + resources.get(0).getId() + ":" + resources.get(0).getId());
+        System.out.println("ID:" + resources.get(1).getId() + ":" + resources.get(1).getId());
+        System.out.println("ID:" + resources.get(2).getId() + ":" + resources.get(2).getId());
 
         assertEquals("The wrong resource lineage returned for resource " + resource, resources.size(), 3);
         //        assertEquals("The wrong root resource was returned", "localhost.localdomain", resources.get(0).name);

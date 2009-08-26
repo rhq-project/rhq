@@ -28,14 +28,14 @@ import org.rhq.enterprise.server.ws.utility.WsUtility;
  * @author Jay Shaughnessy, Simeon Pinder
  */
 @Test(groups = "ws")
-public class WsResourceTypeManagerTest extends AssertJUnit {
+public class WsResourceTypeManagerTest extends AssertJUnit implements TestPropertiesInterface {
 
     //Test variables
-    private static final boolean TESTS_ENABLED = true;
-    protected static String credentials = "ws-test";
-    protected static String host = "127.0.0.1";
-    protected static int port = 7080;
-    protected static boolean useSSL = false;
+    //    private static final boolean TESTS_ENABLED = true;
+    //    protected static String credentials = "ws-test";
+    //    protected static String host = "127.0.0.1";
+    //    protected static int port = 7080;
+    //    protected static boolean useSSL = false;
     private static ObjectFactory WS_OBJECT_FACTORY;
     private static WebservicesRemote WEBSERVICE_REMOTE;
     private static Subject subject = null;
@@ -52,6 +52,7 @@ public class WsResourceTypeManagerTest extends AssertJUnit {
 
         WEBSERVICE_REMOTE = jws.getWebservicesManagerBeanPort();
         WS_OBJECT_FACTORY = new ObjectFactory();
+        WsSubjectTest.checkForWsTestUserAndRole();
         subject = WEBSERVICE_REMOTE.login(credentials, credentials);
     }
 

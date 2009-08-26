@@ -32,28 +32,109 @@ import org.rhq.enterprise.server.ws.utility.WsUtility;
  * @author Jay Shaughnessy, Simeon Pinder
  */
 @Test(groups = "ws")
-public class WsSubjectTest extends AssertJUnit {
+public class WsSubjectTest extends AssertJUnit implements TestPropertiesInterface {
 
     //Test variables
-    private static final boolean TESTS_ENABLED = true;
-    protected static String credentials = "ws-test";
-    protected static String host = "127.0.0.1";
-    protected static int port = 7080;
-    protected static boolean useSSL = false;
-    private ObjectFactory WS_OBJECT_FACTORY;
-    private WebservicesRemote WEBSERVICE_REMOTE;
+    //    private static final boolean TESTS_ENABLED = true;
+    //    protected static String credentials = "ws-test";
+    //    protected static String host = "127.0.0.1";
+    //    protected static int port = 7080;
+    //    protected static boolean useSSL = false;
+    private static ObjectFactory WS_OBJECT_FACTORY;
+    private static WebservicesRemote WEBSERVICE_REMOTE;
+    private static Subject subject;
 
     @BeforeClass
     public void init() throws ClassNotFoundException, MalformedURLException, SecurityException, NoSuchMethodException,
-        IllegalArgumentException, InstantiationException, IllegalAccessException, InvocationTargetException {
+        IllegalArgumentException, InstantiationException, IllegalAccessException, InvocationTargetException,
+        LoginException_Exception {
 
-        //build reference variable bits
-        URL gUrl = WsUtility.generateRemoteWebserviceURL(WebservicesManagerBeanService.class, host, port, useSSL);
-        QName gQName = WsUtility.generateRemoteWebserviceQName(WebservicesManagerBeanService.class);
-        WebservicesManagerBeanService jws = new WebservicesManagerBeanService(gUrl, gQName);
+        //        //build reference variable bits
+        //        URL gUrl = WsUtility.generateRemoteWebserviceURL(WebservicesManagerBeanService.class, host, port, useSSL);
+        //        QName gQName = WsUtility.generateRemoteWebserviceQName(WebservicesManagerBeanService.class);
+        //        WebservicesManagerBeanService jws = new WebservicesManagerBeanService(gUrl, gQName);
+        //
+        //        WEBSERVICE_REMOTE = jws.getWebservicesManagerBeanPort();
+        //        WS_OBJECT_FACTORY = new ObjectFactory();
+        //insert ws-test user creation and role addition
+        checkForWsTestUserAndRole();
 
-        WEBSERVICE_REMOTE = jws.getWebservicesManagerBeanPort();
-        WS_OBJECT_FACTORY = new ObjectFactory();
+        subject = WEBSERVICE_REMOTE.login(credentials, credentials);
+    }
+
+    static void checkForWsTestUserAndRole() {
+        try {
+            //build reference variable bits
+            URL gUrl = WsUtility.generateRemoteWebserviceURL(WebservicesManagerBeanService.class, host, port, useSSL);
+            QName gQName = WsUtility.generateRemoteWebserviceQName(WebservicesManagerBeanService.class);
+            WebservicesManagerBeanService jws = new WebservicesManagerBeanService(gUrl, gQName);
+
+            WEBSERVICE_REMOTE = jws.getWebservicesManagerBeanPort();
+            WS_OBJECT_FACTORY = new ObjectFactory();
+
+            //login with rhqadmin creds
+            Subject adminSubject = null;
+
+            adminSubject = WEBSERVICE_REMOTE.login("rhqadmin", "rhqadmin");
+            //search for user ws-test
+            String name = "ws-test";
+            Subject user = WEBSERVICE_REMOTE.getSubjectByName(name);
+            //if user exists, then bail
+            if (user == null) {
+                //else create user, find default roles and add them	
+                Subject wstest = new Subject();
+                wstest.setName(name);
+                wstest.setFirstName("WS");
+                wstest.setLastName("Test");
+                wstest.setEmailAddress("ws-test@test.org");
+                wstest.setDepartment("test-department");
+                wstest.setFactive(true);
+                Subject sub = WEBSERVICE_REMOTE.createSubject(adminSubject, wstest);
+
+                user = WEBSERVICE_REMOTE.getSubjectByName(name);
+
+                //locate all available roles and assign them to the test user
+                RoleCriteria criteria = WS_OBJECT_FACTORY.createRoleCriteria();
+                List<Role> allRoles = WEBSERVICE_REMOTE.findRolesByCriteria(adminSubject, criteria);
+                List<Integer> roleIds = new ArrayList<Integer>();
+                for (Role r : allRoles) {
+                    roleIds.add(r.getId());
+                }
+                WEBSERVICE_REMOTE.addRolesToSubject(adminSubject, user.getId(), roleIds);
+                //	    	 WEBSERVICE_REMOTE.changePassword(adminSubject, user.getName(),"ws-test");
+                WEBSERVICE_REMOTE.createPrincipal(adminSubject, user.getName(), "ws-test");
+
+                //	    	 //Create perf test group for testing
+                //	    	 String groupName = "All Perf Test Servers";
+                //	    	 ResourceGroup group = new ResourceGroup();
+                //	    	  group.setName(groupName);
+                //	    	  group.setDescription(groupName);
+                //	    	  group.setRecursive(true);
+                //	    	  WEBSERVICE_REMOTE.createResourceGroup(adminSubject, group);
+
+                //	    	 //Create AlertDefinitions
+                //	    	 String alName1 = "service-alpha-0-alert-def-1";
+                //	    	 String alDesc1 = "Test alert definition 1 for service-alpha-0";
+                //	    	 //Find resource 'service-alpha-0'
+                //	    	 ResourceCriteria perfCriteria = WS_OBJECT_FACTORY.createResourceCriteria();
+                //	    	   perfCriteria.setFilterName("service-alpha-0");
+                //	    	 List<Resource> resources = WEBSERVICE_REMOTE.findResourcesByCriteria(adminSubject, perfCriteria);
+                //	    	 if(resources.size()==1){//then able to proceed
+                //	    		 AlertDefinition alertDef1 = WS_OBJECT_FACTORY.createAlertDefinition();
+                //	    		 alertDef1.setName(alName1);
+                //	    		 alertDef1.setDescription(alDesc1);
+                //	    		 alertDef1.setEnabled(true);
+                //	    		 alertDef1.setConditionExpression(BooleanExpression.)
+                //	    	 }
+            }
+        } catch (LoginException_Exception e) {
+            System.out.println("Error trying to login to test/setup test environment.");
+            System.out.println("You need to manually create the 'ws-test' user with all roles added.");
+            e.printStackTrace();
+        } catch (MalformedURLException e) {
+            System.out.println("Problem detected with Url passed in.");
+            e.printStackTrace();
+        }
     }
 
     @BeforeTest
@@ -202,7 +283,7 @@ public class WsSubjectTest extends AssertJUnit {
         assertNull(WEBSERVICE_REMOTE.getSubjectByName("ws-test-user"));
 
     }
-    
+
     //TODO: add tests/test condition for findSubjectsByCritera
     //TODO: add test for getServerVersion
     //TODO: ROLE test for: findSubjectUnassignedRoles, removeRolesFromSubject, addSubjectsToRole, 

@@ -43,6 +43,9 @@ import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlTransient;
 
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 
@@ -252,6 +255,7 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
         + "   WHERE ac.id = :alertConditionId ") })
 @SequenceGenerator(name = "RHQ_ALERT_CONDITION_ID_SEQ", sequenceName = "RHQ_ALERT_CONDITION_ID_SEQ")
 @Table(name = "RHQ_ALERT_CONDITION")
+@XmlAccessorType(XmlAccessType.FIELD)
 public class AlertCondition implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -292,6 +296,7 @@ public class AlertCondition implements Serializable {
 
     @JoinColumn(name = "MEASUREMENT_DEFINITION_ID", referencedColumnName = "ID")
     @ManyToOne(fetch = FetchType.LAZY)
+    @XmlTransient
     private MeasurementDefinition measurementDefinition;
 
     @Column(name = "NAME")
@@ -311,6 +316,7 @@ public class AlertCondition implements Serializable {
 
     @JoinColumn(name = "ALERT_DEFINITION_ID", referencedColumnName = "ID")
     @ManyToOne(fetch = FetchType.LAZY)
+    @XmlTransient
     private AlertDefinition alertDefinition;
 
     @OneToMany(mappedBy = "condition", cascade = CascadeType.ALL)

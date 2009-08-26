@@ -1,8 +1,11 @@
 package org.rhq.enterprise.server.ws;
 
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.List;
 
 import javax.xml.namespace.QName;
 
@@ -28,14 +31,14 @@ import org.rhq.enterprise.server.ws.utility.WsUtility;
  * @author Jay Shaughnessy, Simeon Pinder
  */
 @Test(groups = "ws")
-public class WsSystemManagerTest extends AssertJUnit implements TestPropertiesInterface {
+public class WsResourceGroupManagerTest extends AssertJUnit implements TestPropertiesInterface {
 
     //Test variables
-    //    private static final boolean TESTS_ENABLED = true;
-    //    protected static String credentials = "ws-test";
-    //    protected static String host = "127.0.0.1";
-    //    protected static int port = 7080;
-    //    protected static boolean useSSL = false;
+//    private static final boolean TESTS_ENABLED = true;
+//    protected static String credentials = "ws-test";
+//    protected static String host = "127.0.0.1";
+//    protected static int port = 7080;
+//    protected static boolean useSSL = false;
     private static ObjectFactory WS_OBJECT_FACTORY;
     private static WebservicesRemote WEBSERVICE_REMOTE;
     private static Subject subject = null;
@@ -53,16 +56,23 @@ public class WsSystemManagerTest extends AssertJUnit implements TestPropertiesIn
         WEBSERVICE_REMOTE = jws.getWebservicesManagerBeanPort();
         WS_OBJECT_FACTORY = new ObjectFactory();
         WsSubjectTest.checkForWsTestUserAndRole();
+        subject = WEBSERVICE_REMOTE.login(credentials, credentials);
     }
 
     @Test(enabled = TESTS_ENABLED)
-    public void testServerNameSpaceVersion() throws java.lang.Exception {
-        //Check that servernames is not null
-        String ns = WEBSERVICE_REMOTE.getServerNamespaceVersion();
-        assertNotNull("The namespace passed back was null.", ns);
-        assertTrue("Namespace string is empty", (ns.trim().length() > 0));
-        //Check the server version
-        ServerVersion version = WEBSERVICE_REMOTE.getServerVersion(subject);
-        assertNotNull("ServerVersion was not located.", version);
+    public void testResourceGroup() throws java.lang.Exception {
+    	
+    	assertNotNull("Webservice Remote is null.",WEBSERVICE_REMOTE);
+    	assertNotNull("JAXB ObjectFactory is null.",WS_OBJECT_FACTORY);
+    	assertNotNull("You have not logged in successfully.",subject);
+    	
+    	//locate group
+    	ResourceGroupCriteria groupCriteria = WS_OBJECT_FACTORY.createResourceGroupCriteria();
+    	groupCriteria.setFilterName("All Perf Test Servers");
+    	List<ResourceGroup> groups = WEBSERVICE_REMOTE.findResourceGroupsByCriteria(subject, groupCriteria);
+    	assertNotNull("The ResourceGroup reference was null.",groups);
+    	assertTrue("Group was not located.",groups.size()>0);
+    	//
+    	
     }
 }

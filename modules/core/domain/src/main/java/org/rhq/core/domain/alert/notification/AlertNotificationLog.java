@@ -36,6 +36,9 @@ import javax.persistence.NamedQuery;
 import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlTransient;
 
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertDefinition;
@@ -59,6 +62,7 @@ import org.rhq.core.domain.alert.AlertDefinition;
         "                        WHERE a.alertDefinition.resource.id IN ( :resourceIds ) )") })
 @SequenceGenerator(name = "RHQ_ALERT_NOTIF_LOG_ID_SEQ", sequenceName = "RHQ_ALERT_NOTIF_LOG_ID_SEQ")
 @Table(name = "RHQ_ALERT_NOTIF_LOG")
+@XmlAccessorType(XmlAccessType.FIELD)
 public class AlertNotificationLog implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -86,6 +90,7 @@ public class AlertNotificationLog implements Serializable {
 
     @JoinColumn(name = "ALERT_ID", referencedColumnName = "ID")
     @OneToOne
+    @XmlTransient
     private Alert alert;
 
     protected AlertNotificationLog() {

@@ -562,17 +562,17 @@
        </plugin-configuration>
 
        <metric displayName="User Time" property="Process.cpu.user" measurementType="trendsup" units="milliseconds" displayType="summary"
-               description="The aggregate amount of CPU user time spent by all postgres processes"/>
+               description="The aggregate amount of CPU user time spent by all processes"/>
        <metric displayName="Kernel Time" property="Process.cpu.sys" measurementType="trendsup" units="milliseconds" displayType="summary"
-               description="The aggregate amount of CPU kernel time spent by all postgres processes"/>
+               description="The aggregate amount of CPU kernel time spent by all processes"/>
        <metric displayName="CPU Percentage" property="Process.cpu.percent" measurementType="dynamic" units="percentage" displayType="summary"
-               description="The percentage of CPU currently being used by all postgres processes"/>
+               description="The percentage of CPU currently being used by all processes"/>
        <metric displayName="Physical Memory" property="Process.memory.resident" measurementType="dynamic" units="bytes" displayType="summary"
-               description="The aggregate amount of resident memory used by all postgres processes"/>
+               description="The aggregate amount of resident memory used by all processes"/>
        <metric displayName="Virtual Memory" property="Process.memory.size" measurementType="dynamic" units="bytes" displayType="summary"
-               description="The aggregate amount of virtual memory used by all postgres processes"/>
+               description="The aggregate amount of virtual memory used by all processes"/>
        <metric displayName="Open File Descriptors" property="Process.fileDescriptor.total" measurementType="dynamic" displayType="summary"
-               description="The aggregate number of file descriptors open by all postgres processes"/>
+               description="The aggregate number of file descriptors open by all processes"/>
 
    </service>
 

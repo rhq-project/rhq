@@ -36,6 +36,7 @@ import org.mc4j.ems.connection.support.ConnectionProvider;
 import org.mc4j.ems.connection.support.metadata.ConnectionTypeDescriptor;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
@@ -413,7 +414,9 @@ public class TomcatServerComponent implements JMXComponent, MeasurementFacet, Op
     public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException,
         Exception {
         SupportedOperations operation = Enum.valueOf(SupportedOperations.class, name.toUpperCase());
-
+        
+        addScriptsEnvironment(parameters);
+        
         return operationsDelegate.invoke(operation, parameters);
     }
 
@@ -440,6 +443,24 @@ public class TomcatServerComponent implements JMXComponent, MeasurementFacet, Op
             } catch (Exception e) {
                 log.error("Failed to obtain measurement [" + name + "]", e);
             }
+        }
+    }
+    
+    private void addScriptsEnvironment(Configuration operationParameters) {
+        Configuration pluginConfiguration = resourceContext.getPluginConfiguration();
+        
+        PropertyList startScriptEnv = pluginConfiguration.getList(
+            TomcatServerOperationsDelegate.START_SCRIPT_ENVIRONMENT_PROPERTY);
+        
+        PropertyList shutdownScriptEnv = pluginConfiguration.getList(
+            TomcatServerOperationsDelegate.SHUTDOWN_SCRIPT_ENVIRONMENT_PROPERTY);
+        
+        if (startScriptEnv != null) {
+            operationParameters.put(startScriptEnv);
+        }
+        
+        if (shutdownScriptEnv != null) {
+            operationParameters.put(shutdownScriptEnv);
         }
     }
 }

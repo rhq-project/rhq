@@ -48,6 +48,18 @@ public class TomcatConfig {
     private TomcatConfig() {
     }
 
+    /**
+     * This constructor is intended to provide TomcatConfig instances not
+     * based on an XML file (as opposed to the (cached) instances obtained from {@link #getConfig(File)} method).
+     * 
+     * @param port
+     * @param address
+     */
+    public TomcatConfig(String port, String address) {
+        this.port = port;
+        this.address = address;
+    }
+    
     public static synchronized TomcatConfig getConfig(File configXML) {
         if (cache == null) {
             cache = new HashMap<File, TomcatConfig>();

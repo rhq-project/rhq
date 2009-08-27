@@ -38,6 +38,9 @@ import org.jboss.on.plugins.tomcat.TomcatServerComponent.ControlMethod;
 import org.jboss.on.plugins.tomcat.TomcatServerComponent.SupportedOperations;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertyList;
+import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.pluginapi.util.ProcessExecutionUtility;
@@ -51,8 +54,12 @@ import org.rhq.core.system.SystemInfo;
  * @author Jay Shaughnessy
  * @author Ian Springer
  * @author Jason Dobies
+ * @author Lukas Krejci
  */
 public class TomcatServerOperationsDelegate {
+
+    public static final String SHUTDOWN_SCRIPT_ENVIRONMENT_PROPERTY = "shutdownScriptEnvironment";
+    public static final String START_SCRIPT_ENVIRONMENT_PROPERTY = "startScriptEnvironment";
 
     private static final String SERVER_MBEAN_NAME = "Catalina:type=Server";
 
@@ -113,17 +120,17 @@ public class TomcatServerOperationsDelegate {
         switch (operation) {
 
         case RESTART: {
-            message = restart();
+            message = restart(parameters);
             break;
         }
 
         case SHUTDOWN: {
-            message = shutdown();
+            message = shutdown(parameters);
             break;
         }
 
         case START: {
-            message = start();
+            message = start(parameters);
             break;
         }
 
@@ -139,19 +146,26 @@ public class TomcatServerOperationsDelegate {
 
     // Private  --------------------------------------------
 
+    private String start(Configuration parameters) throws InterruptedException {
+        PropertyList env = parameters.getList(START_SCRIPT_ENVIRONMENT_PROPERTY);
+        return start(env);
+    }
+    
     /**
      * Starts the underlying server.
      *
      * @return success message if no errors are encountered
      * @throws InterruptedException if the plugin container stops this operation while its executing
      */
-    private String start() throws InterruptedException {
+    private String start(PropertyList environment) throws InterruptedException {
         Configuration pluginConfiguration = this.serverComponent.getPluginConfiguration();
         String controlMethod = pluginConfiguration.getSimpleValue(TomcatServerComponent.PLUGIN_CONFIG_CONTROL_METHOD,
             ControlMethod.SCRIPT.name());
         ProcessExecution processExecution = (ControlMethod.SCRIPT.name().equals(controlMethod)) ? getScriptStart(pluginConfiguration)
             : getRpmStart(pluginConfiguration);
 
+        applyEnvironmentVars(environment, processExecution);
+        
         long start = System.currentTimeMillis();
         if (log.isDebugEnabled()) {
             log.debug("About to execute the following process: [" + processExecution + "]");
@@ -243,8 +257,13 @@ public class TomcatServerOperationsDelegate {
         return processExecution;
     }
 
-    private String shutdown() throws InterruptedException {
-        String result = doShutdown();
+    private String shutdown(Configuration parameters) throws InterruptedException {
+        PropertyList env = parameters.getList(SHUTDOWN_SCRIPT_ENVIRONMENT_PROPERTY);
+        return shutdown(env);
+    }
+    
+    private String shutdown(PropertyList environment) throws InterruptedException {
+        String result = doShutdown(environment);
         AvailabilityType avail = waitForServerToShutdown();
         if (avail == AvailabilityType.UP) {
             throw new RuntimeException("Server failed to shutdown");
@@ -258,13 +277,15 @@ public class TomcatServerOperationsDelegate {
      *
      * @return success message if no errors are encountered
      */
-    private String doShutdown() {
+    private String doShutdown(PropertyList environment) {
         Configuration pluginConfiguration = this.serverComponent.getPluginConfiguration();
         String controlMethod = pluginConfiguration.getSimpleValue(TomcatServerComponent.PLUGIN_CONFIG_CONTROL_METHOD,
             ControlMethod.SCRIPT.name());
         ProcessExecution processExecution = (ControlMethod.SCRIPT.name().equals(controlMethod)) ? getScriptShutdown(pluginConfiguration)
             : getRpmShutdown(pluginConfiguration);
-
+        
+        applyEnvironmentVars(environment, processExecution);
+        
         if (log.isDebugEnabled()) {
             log.debug("About to execute the following process: [" + processExecution + "]");
         }
@@ -370,12 +391,12 @@ public class TomcatServerOperationsDelegate {
         }
     }
 
-    private String restart() {
+    private String restart(Configuration parameters) {
         StringBuffer result = new StringBuffer();
         boolean problem = false;
 
         try {
-            shutdown();
+            shutdown(parameters);
         } catch (Exception e) {
             problem = true;
             result.append("Shutdown may have failed: ");
@@ -390,7 +411,7 @@ public class TomcatServerOperationsDelegate {
                     result.append("Shutdown may have failed (server appears to still be running), ");
                 }
                 // Perform the restart.
-                start();
+                start(parameters);
 
             } catch (Exception e) {
                 problem = true;
@@ -463,5 +484,16 @@ public class TomcatServerOperationsDelegate {
         operation.invoke(new Object[0]);
 
         return ("Tomcat configuration updated.");
+    }
+    
+    private static void applyEnvironmentVars(PropertyList environment, ProcessExecution processExecution) {
+        if (environment != null) {
+            Map<String, String> environmentVariables = processExecution.getEnvironmentVariables();
+            for(Property prop : environment.getList()) {
+                PropertyMap var = (PropertyMap) prop;
+                environmentVariables.put(var.getSimpleValue("name", null), var.getSimpleValue("value", null));
+            }
+            processExecution.setEnvironmentVariables(environmentVariables);
+        }
     }
 }

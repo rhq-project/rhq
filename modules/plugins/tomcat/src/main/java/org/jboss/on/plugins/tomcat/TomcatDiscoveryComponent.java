@@ -190,7 +190,8 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent {
         SystemInfo systemInfo = context.getSystemInformation();
         String hostname = systemInfo.getHostname();
         TomcatConfig tomcatConfig = parseTomcatConfig(catalinaBase);
-
+        tomcatConfig = applyEnvironmentVariables(tomcatConfig, commandLine);
+        
         // Create pieces necessary for the resource creation
         String resourceVersion = determineVersion(catalinaHome, catalinaBase, systemInfo);
         String productName = PRODUCT_NAME;
@@ -261,6 +262,10 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent {
                 port = matcher.group(2);
             }
         } else {
+            //TODO if some of the tomcat configuration is parametrized using environment variables
+            //in the configuration files, we have no chance of guessing the (future) values those here.
+            //We can therefore end up with the resource like like Tomcat(${address}:${port}).
+            //Don't know how to tackle that problem in a manual add.
             TomcatConfig tomcatConfig = parseTomcatConfig(catalinaBase);
             version = determineVersion(catalinaHome, catalinaBase, systemInfo);
             address = tomcatConfig.getAddress();
@@ -532,4 +537,23 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent {
         }
     }
 
+    private TomcatConfig applyEnvironmentVariables(TomcatConfig config, String[] commandLine) {
+        String port = applyEnvironmentVariable(config.getPort(), commandLine);
+        String address = applyEnvironmentVariable(config.getAddress(), commandLine);
+        return new TomcatConfig(port, address);
+    }
+    
+    private String applyEnvironmentVariable(String variable, String[] commandLine) {
+        if (variable != null && variable.startsWith("${") && variable.endsWith("}")) {
+            String variableName = variable.substring(2, variable.length() - 1); //${var}
+            
+            String envVarDefine = "-D" + variableName + "=";
+            for(String commandLineArg : commandLine) {
+                if (commandLineArg.startsWith(envVarDefine)) {
+                    return commandLineArg.substring(envVarDefine.length());
+                }
+            }
+        }
+        return variable;
+    }
 }

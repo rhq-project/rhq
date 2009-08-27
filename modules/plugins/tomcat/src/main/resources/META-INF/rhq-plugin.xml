@@ -96,6 +96,32 @@
                required="false"
                description="The path to the script used by the 'Shutdown' operation to shutdown this Tomcat server;
                                             if the path is not absolute it will be resolved relative to {installationPath}." />
+            
+            <c:list-property 
+                name="startScriptEnvironment" 
+                displayName="Start Script Environment Variables" 
+                required="false">
+                <c:description>
+                    Define the environment variables to be set when executing the start script. 
+                </c:description>
+                <c:map-property name="variable">
+                    <c:simple-property name="name" />
+                    <c:simple-property name="value" />
+                </c:map-property>
+            </c:list-property>
+
+            <c:list-property 
+                name="shutdownScriptEnvironment" 
+                displayName="Shutdown Script Environment Variables" 
+                required="false">
+                <c:description>
+                    Define the environment variables to be set when executing the shutdown script. 
+                </c:description>
+                <c:map-property name="variable">
+                    <c:simple-property name="name" />
+                    <c:simple-property name="value" />
+                </c:map-property>
+            </c:list-property>
          </c:group>
 
          <c:group

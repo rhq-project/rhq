@@ -497,10 +497,11 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
                 packageDetails);
         }
 
-        // Undeploy (delete) the current app.  Back up the bits in case we need to restore if the new app fails to deploy
+        // delete the current app but don't undeploy.  This option should maintain the existing mbeans while
+        // removing the app. Back up the bits in case we need to restore if the new app fails to deploy
         File backupFile = null;
         try {
-            backupFile = this.deleteApp(pluginConfig, appFile, true);
+            backupFile = deleteApp(pluginConfig, appFile, true, false);
         } catch (Exception e) {
             if (appFile.exists()) {
                 return failApplicationDeployment("Error undeploying existing app - cause: " + e, packageDetails);
@@ -736,11 +737,25 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
                 .warn("Could not delete web application files (perhaps removed manually?). Proceeding with resource removal for: "
                     + fullFileName);
         } else {
-            deleteApp(pluginConfiguration, file, false);
+            deleteApp(pluginConfiguration, file, false, true);
         }
     }
 
-    private File deleteApp(Configuration pluginConfiguration, File appFile, boolean keepBackup) throws Exception {
+    /**
+     * Deletes the application by removing the physical files. The removal can be a full undeploy, or in anticipation
+     * of a redeploy of an updated version. Note that if the vhost is not configured for autoDeploy then a TC restart
+     * will still be required to pick up an updated version of the app.  
+     * 
+     * @param pluginConfiguration
+     * @param appFile
+     * @param keepBackup
+     * @param undeploy if true then destroy the app completely, if false don't undeploy.  This option should maintain
+     *                 the existing mbeans while removing the app (by leaving the docBase directory in place)
+     * @return
+     * @throws Exception
+     */
+    private File deleteApp(Configuration pluginConfiguration, File appFile, boolean keepBackup, boolean undeploy)
+        throws Exception {
         String contextRoot = pluginConfiguration.getSimple(PROPERTY_CONTEXT_ROOT).getStringValue();
         File backupFile = null;
         boolean doPhysicalDelete = true;
@@ -756,7 +771,9 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
                     + contextRoot + "].", e);
             }
 
-            getParentResourceComponent().undeployWar(contextRoot);
+            if (undeploy) {
+                getParentResourceComponent().undeployWar(contextRoot);
+            }
 
             if (keepBackup) {
                 try {
@@ -790,7 +807,7 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
                 }
 
                 try {
-                    FileUtils.purge(appFile, true);
+                    FileUtils.purge(appFile, undeploy);
                 } catch (IOException e) {
                     log.error("Failed to delete file [" + appFile + "].", e);
                     // if the undeploy also failed that exception will be lost
@@ -801,14 +818,16 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
                     throw e;
                 }
 
-                // Finally, try a destroy of the app.  This is typically not necessary if the vhost
-                // is monitoring the docbase dir (i.e. autodeploy is true) but should ensure the
-                // mbean is destroyed.
-                try {
-                    invokeOperation("destroy", null);
-                } catch (Exception e) {
-                    log.debug("Failed to destroy WAR. This is often ok, the vhost may have taken care of it already ["
-                        + contextRoot + "].", e);
+                // Finally, if requested, try a destroy of the app.  This is typically not necessary if the vhost
+                // is monitoring the docbase dir (i.e. autodeploy is true) but should ensure the mbean is destroyed.
+                if (undeploy) {
+                    try {
+                        invokeOperation("destroy", null);
+                    } catch (Exception e) {
+                        log.debug(
+                            "Failed to destroy WAR. This is often ok, the vhost may have taken care of it already ["
+                                + contextRoot + "].", e);
+                    }
                 }
             }
         }

@@ -242,12 +242,18 @@ public class TomcatVHostComponent extends MBeanResourceComponent<TomcatServerCom
             return;
         }
 
+        // validate explode option
         Configuration deployTimeConfiguration = details.getDeploymentTimeConfiguration();
 
-        // validate explode option
+        if (null == deployTimeConfiguration) {
+            CreateResourceHelper.setErrorOnReport(report,
+                "Explode On Deploy property is required. Deploy configuration missing.");
+            return;
+        }
+
         PropertySimple explodeOnDeployProp = deployTimeConfiguration.getSimple(CONTENT_CONFIG_EXPLODE_ON_DEPLOY);
 
-        if (explodeOnDeployProp == null || explodeOnDeployProp.getBooleanValue() == null) {
+        if ((null == explodeOnDeployProp) || (null == explodeOnDeployProp.getBooleanValue())) {
             CreateResourceHelper.setErrorOnReport(report, "Explode On Deploy property is required.");
             return;
         }

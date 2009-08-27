@@ -24,11 +24,14 @@
 /**
  * These tests assume that there is a jopr server and an agent running on
  * localhost.
+ * 
+ * The test also requires an available Tomcat Server in inventory. 
+ * 
+ * TODO The Tomcat restriction should be removed to be able to use an AS server via the 
+ * perf plugin script test scenario.
  */
 
-var TestsEnabled = false;
-
-// skippedTests.push('testCRUD, testFindByCriteria');
+var TestsEnabled = true;
 
 // note, super-user, will not test any security constraints
 rhq.login('rhqadmin', 'rhqadmin');
@@ -63,7 +66,7 @@ function testCRUD() {
    var newChannel = new Channel("test-channel-0");
    newChannel.setDescription("description-0");
    var testChannel = ChannelManager.createChannel(newChannel);
-   Assert.assertNotNull(testChannel);
+   Assert.assertNotNull(testChannel, "test channel should exist");
    Assert.assertEquals("test-channel-0", testChannel.getName());
 
    channels = ChannelManager.findChannelsByCriteria(criteria);
@@ -181,6 +184,9 @@ function testFindByCriteria() {
 }
 
 function testDeploy() {
+   if ( !TestsEnabled ) {
+      return;
+   }
 
    // check prequisites
 
@@ -197,17 +203,20 @@ function testDeploy() {
       
    // delete test-channel-war if in inventory
    criteria = new ResourceCriteria();
-   criteria.strict = true;
+   criteria.strict = false;
    criteria.addFilterName( "test-channel-war" );
+   criteria.addFilterResourceTypeName( "Tomcat Web Application (WAR)");
    var wars = ResourceManager.findResourcesByCriteria( criteria );
    var war = null;
    
    if (( null != wars ) && !wars.isEmpty() ) {
+      print( "\n Deleting existing test-channel-war in order to test create...")
       Assert.assertNumberEqualsJS( wars.size(), 1, "Found more than 1 test-channel-war");
       war = wars.get(0);
       ResourceFactoryManager.deleteResource(war.getId());
       
-      for( i=0; ( i<10 ); ++i ) {
+      // up to 60 seconds to get the job done.
+      for( i=0; ( i<60 ); ++i ) {
          sleep( 1000 );
 
          wars = ResourceManager.findResourcesByCriteria( criteria );
@@ -217,12 +226,19 @@ function testDeploy() {
       }
       
       wars = ResourceManager.findResourcesByCriteria( criteria );
-      Assert.assertTrue(( ( null == wars ) || wars.isEmpty() ), "test-channel-war should not exist" );      
+      Assert.assertTrue(( ( null == wars ) || wars.isEmpty() ), "test-channel-war should not exist" );
+      print( "\n Done deleting existing test-channel-war in order to test create...")
+      
+      // Give Tomcat a few additional seconds to perform its cleanup of the app, just in case the resource is
+      // gone but TC is still mopping up, before we try and deploy the same exact app
+      sleep( 10000 );
    }
 
    // Create the war resource
    
    // Get the parent
+   criteria = new ResourceCriteria();
+   criteria.strict = true;
    criteria.addFilterName( "Tomcat VHost (localhost)" );
    criteria.addFilterCurrentAvailability( AvailabilityType.UP );
    var vhosts = ResourceManager.findResourcesByCriteria( criteria );
@@ -235,7 +251,7 @@ function testDeploy() {
    Assert.assertNotNull( warType, "Test requires Tomcat WAR resource type.");
    
    // read in the file
-   var file = new java.io.File("./src/test/resources/test-channel-war-1.0.war");   
+   var file = new java.io.File("./src/test/resources/test-channel-war.war");   
    var inputStream = new java.io.FileInputStream( file );
    var fileLength = file.length();
    var fileBytes = java.lang.reflect.Array.newInstance(java.lang.Byte.TYPE, fileLength);
@@ -247,7 +263,7 @@ function testDeploy() {
    inputStream.close();
    Assert.assertTrue( (offset == fileBytes.length), "Could not completely read file " + file.getName() );   
    
-   // get package type for both crate and update
+   // get package type for both create and update
    
    var packageTypes = ContentManager.findPackageTypes( "Tomcat Web Application (WAR)", "Tomcat" );
    Assert.assertNotNull( packageTypes, "missing package type" );
@@ -256,25 +272,126 @@ function testDeploy() {
    
    // get package config def
    var deployConfigDef = ConfigurationManager.getPackageTypeConfigurationDefinition( packageType.getId() );
-   Assert.assertNotNull( deployConfigDef );
+   Assert.assertNotNull( deployConfigDef, "deployConfigDef should exist." );
    var explodeOnDeploy = deployConfigDef.getPropertyDefinitionSimple( "explodeOnDeploy" )
-   Assert.assertNotNull( explodeOnDeploy );
+   Assert.assertNotNull( explodeOnDeploy, "explodeOnDeploy prop should exist." );
    var deployConfig = new Configuration();
    var property = new PropertySimple(explodeOnDeploy.getName(), "true");
    deployConfig.put( property );
    
-   // Hail Mary...
    // null arch -> noarch
-   // null version -> 1.0
    // no required plugin config for this resource type
    // no required resource config for this resource type
-   ResourceFactoryManager.createResource( vhost.getId(), warType.getId(), "test-channel-war", null, file.getName(), "1.0", null, deployConfig, fileBytes);
+   // resource name defaults to war file name / context root
+   ResourceFactoryManager.createResource( vhost.getId(), warType.getId(), null, null, file.getName(), "1.0", null, deployConfig, fileBytes);
 
    criteria = new ResourceCriteria();
-   criteria.strict = true;
-   criteria.addFilterName( "test-channel-war" );
+   criteria.strict = false;
+   criteria.addFilterName( "test-channel-war" );   
+   criteria.addFilterResourceTypeName( "Tomcat Web Application (WAR)");
+   criteria.addFilterCurrentAvailability( AvailabilityType.UP );
+   
+   // up to 60 seconds to get the job done.
+   for( i=0; ( i<60 ); ++i ) {
+      sleep( 1000 );
 
-   for( i=0; ( i<10 ); ++i ) {
+      wars = ResourceManager.findResourcesByCriteria( criteria );
+      if (( null != wars ) && !wars.isEmpty() ) {
+         break;
+      }
+   }
+
+   wars = ResourceManager.findResourcesByCriteria( criteria );
+   war = null;
+   if (( null != wars ) && !wars.isEmpty() ) {
+      Assert.assertNumberEqualsJS( wars.size(), 1, "Found more than 1 test-channel-war" );
+      war = wars.get(0);
+   }
+   Assert.assertNotNull( war, "War should have been created" );
+   
+   var backingPackage = ContentManager.getBackingPackageForResource( war.getId() );
+   assertNotNull( backingPackage, "backing package should exist after create" );
+   print( "\n After Create: Backing Package=" + backingPackage.getId() );
+   
+   // delete existing test channel in the db, this will unsubscribe resources and remove orphaned pvs
+   var criteria = new ChannelCriteria();
+   criteria.caseSensitive = true;
+   criteria.strict = true;
+   criteria.addFilterName('test-channel-0');
+
+   var channels = channels = ChannelManager.findChannelsByCriteria(criteria);
+   if ( !channels.isEmpty() ) {
+      channel = channels.get(0);
+      ChannelManager.deleteChannel(channel.getId());
+   }
+
+   // create a test channel
+   var newChannel = new Channel("test-channel-0");
+   newChannel.setDescription("description-0");
+   channel = ChannelManager.createChannel(newChannel);
+
+   Assert.assertNotNull( channel, "channel should have existed or been created")
+   Assert.assertTrue( (channel.getId() > 0), "channel should have existed or been created")   
+
+   // test channel subscription
+   var subscribedResources;
+   subscribedResources = ChannelManager.findSubscribedResources( channel.getId(), PageControl.getUnlimitedInstance() );
+   Assert.assertTrue(( ( null == subscribedResources ) || subscribedResources.isEmpty()), "test channel should not have resources" );
+
+   ChannelManager.subscribeResourceToChannels( war.getId(), [channel.getId()] );
+   
+   subscribedResources = ChannelManager.findSubscribedResources( channel.getId(), PageControl.getUnlimitedInstance() );
+   Assert.assertNumberEqualsJS( subscribedResources.size(), 1, "channel should have the test war" );
+   
+   ChannelManager.unsubscribeResourceFromChannels( war.getId(), [channel.getId()] );
+
+   subscribedResources = ChannelManager.findSubscribedResources( channel.getId(), PageControl.getUnlimitedInstance() );
+   Assert.assertTrue(( ( null == subscribedResources ) || subscribedResources.isEmpty()), "test channel should not have resources" );
+   
+   // Create packageVersion in an attempt to upgrade the web-app
+
+   var pvsInChannel = ChannelManager.findPackageVersionsInChannel( channel.getId(), null, PageControl.getUnlimitedInstance() );
+   Assert.assertTrue(( ( null == pvsInChannel ) || pvsInChannel.isEmpty()), "test channel should not have pvs" );
+
+   var architectures = ContentManager.findArchitectures();
+   Assert.assertNotNull( architectures, "missing architectures" );
+   Assert.assertTrue( !architectures.isEmpty(), "missing architectures" );
+   
+   // read in the package file
+   file = new java.io.File("./src/test/resources/test-channel-war-2.0.war");
+   inputStream = new java.io.FileInputStream( file );
+   fileLength = file.length();
+   fileBytes = java.lang.reflect.Array.newInstance(java.lang.Byte.TYPE, fileLength);
+   for (numRead=0, offset=0; ((numRead >= 0) && (offset < fileBytes.length)); offset += numRead ) {
+     numRead = inputStream.read(fileBytes, offset, fileBytes.length - offset); 
+   }
+   inputStream.close();
+   Assert.assertTrue( (offset == fileBytes.length), "Could not completely read file " + file.getName() );
+   
+   var pv = ContentManager.createPackageVersion( "test-channel-war-2.0.war", packageType.getId(), "2.0", null, fileBytes);
+   Assert.assertNotNull( pv, "failed to create packageVersion" );
+   Assert.assertTrue( (pv.getId() > 0), " Bad PV Id from createPV");
+
+   ChannelManager.addPackageVersionsToChannel( channel.getId(), [pv.getId()] );
+   
+   var pvsInChannel = ChannelManager.findPackageVersionsInChannel( channel.getId(), null, PageControl.getUnlimitedInstance() );
+   Assert.assertNotNull( pvsInChannel, "pv should be in channel" );
+   Assert.assertNumberEqualsJS( pvsInChannel.size(), 1, "unexpected pvs" );   
+   Assert.assertNumberEqualsJS( pvsInChannel.get(0).getId(), pv.getId(), "unexpected pv returned" );
+
+   // do the update
+   ContentManager.deployPackages( [war.getId()], [pv.getId()] );
+      
+   // Make sure things still look good
+   
+   criteria = new ResourceCriteria();
+   criteria.strict = false;
+   criteria.addFilterName( "test-channel-war" );   
+   criteria.addFilterResourceTypeName( "Tomcat Web Application (WAR)");
+   criteria.addFilterCurrentAvailability( AvailabilityType.UP );
+   
+   // up to 60 seconds to get the job done.
+   for( i=0; ( i<60 ); ++i ) {
       sleep( 1000 );
 
       wars = ResourceManager.findResourcesByCriteria( criteria );
@@ -284,82 +401,20 @@ function testDeploy() {
    }
       
    wars = ResourceManager.findResourcesByCriteria( criteria );
+   war = null;
    if (( null != wars ) && !wars.isEmpty() ) {
       Assert.assertNumberEqualsJS( wars.size(), 1, "Found more than 1 test-channel-war" );
       war = wars.get(0);
    }
-   Assert.assertNotNull( war, "War should have been created" );
-         
-   // if necessary, create a test channel
-   var criteria = new ChannelCriteria();
-   criteria.caseSensitive = true;
-   criteria.addFilterName('test-channel-0');
-
-   var channels = ChannelManager.findChannelsByCriteria(criteria);
-   var channel;
-   var subscribedResources;
-   if ( !channels.isEmpty() ) {
-      channel = channels.get(0);
-      
-      // empty channel of subscribed resources
-      subscribedResources = ChannelManager.findSubscribedResources( channel.getId(), PageControl.getUnlimitedInstance() );
-      for( i=0; i < subscribedResources.size(); ++i ) {
-         ChannelManager.unsubscribeResourceFromChannels( subscribedResources.get(i).getId(), [channel.getId()]); 
-      }      
-   }
-   else {   
-      var newChannel = new Channel("test-channel-0");
-      newChannel.setDescription("description-0");
-      channel = ChannelManager.createChannel(newChannel);
-   }
-   Assert.assertNotNull( channel, "channel should have existed or been created")
-   Assert.assertTrue( (channel.getId() > 0), "channel should have existed or been created")   
+   Assert.assertNotNull( war, "War should have been updated" );
    
-   // Subscribe test-channel-war to the channel
+   var newBackingPackage = ContentManager.getBackingPackageForResource( war.getId() );
+   Assert.assertNotNull( newBackingPackage, "backing package should exist after update." );
+   print( "\n After Update: BackingPackage=" + newBackingPackage.getId() );
    
-   subscribedResources = ChannelManager.findSubscribedResources( channel.getId(), PageControl.getUnlimitedInstance() );
-   Assert.assertTrue(( ( null == subscribedResources ) || subscribedResources.isEmpty()), "test channel should not have resources" );
+   // TODO: This test may fail due to RHQ-2387, uncomment when fixed 
+   // Assert.assertTrue( ( backingPackage,getId() != newBackingPackage.getId() ), "Backing ackage should differ after update" );
    
-   ChannelManager.subscribeResourceToChannels( war.getId(), [channel.getId()] );
-   
-   subscribedResources = ChannelManager.findSubscribedResources( PageControl.getUnlimitedInstance() );
-   Assert.assertNumberEqualsJS( subscribedResources.size(), 1, "channel should have the test war" );
-   
-   ChannelManager.unsubscribeResourceFromChannels( war.getId(), [channel.getId()] );
-
-   subscribedResources = ChannelManager.findSubscribedResources( PageControl.getUnlimitedInstance() );
-   Assert.assertTrue(( ( null == subscribedResources ) || subscribedResources.isEmpty()), "test channel should not have resources" );
-   
-   // Create packageVersion in an attempt to upgrade the web-app
-      
-   var architectures = ContentManager.findArchitectures();
-   Assert.assertNotNull( architectures, "missing architectures" );
-   Assert.assertTrue( !architectures.isEmpty(), "missing architectures" );
-   
-   // read in the package file
-   file = new java.io.File("./src/test/resources/test-channel-war-2.0.war");
-   inputStream = new java.io.FileInputStream( file );
-   fileLength = file.length();
-   fileBytes = java.lang.reflect.Array.newInstance(java.lang.Character.TYPE, fileLength);
-   for (numRead=0, offset=0; ((numRead >= 0) && (offset < fileBytes.length)); offset += numRead ) {
-      numRead = inputStream.read(fileBytes, offset, fileBytes.length - offset);
-   }
-   inputStream.close();
-   Assert.assertTrue( (offset == fileBytes.length), "Could not completely read file " + file.getName() );
-   
-   var pv = ContentManager.createPackageVersion( "test-channel-war-2.0.war", packageType.getId(), "2.0", null, fileBytes);
-   Assert.assertNotNull( pv, "filed to create packageVersion" );
-   Assert.assertTrue(pv.getId() > 0);
-
-   ChannelManager.addPackageVersionsToChannel( channel.getId(), [pv.getId()] );
-   
-   var pvsInChannel = ChannelManager.findPackageVersionsInChannel( channel.getId(), null, PageControl.getUnlimitedInstance() );
-   Assert.assertNotNull( pvsInChannel, "pv should be in channel" );
-   Assert.assertNumberEqualsJS( pvsInChannel.size(), 1, "unexpected pvs" );   
-   Assert.assertNumberEqualsJS( pvsInChannel.get(0).getId(), pv.getId(), "unexpected pv returned" );
-   
-   ContentManager.deployPackages( [war.getId()], [pv.getId] );
-
    // delete any existing test channels in the db
    channels = ChannelManager.findChannels(PageControl.getUnlimitedInstance());
    for (i = 0; (i < channels.size()); ++i) {

@@ -1092,6 +1092,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @SuppressWarnings("unchecked")
+    @NotNull
     public List<AutoGroupComposite> findChildrenAutoGroups(Subject user, int parentResourceId, int[] resourceTypeIds) {
         Query query;
 
@@ -1197,7 +1198,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                     depth + 1, fullComposites);
             }
 
-            // We matched all descendents above, but only list children directly as the child sub categories will already
+            // We matched all descendants above, but only list children directly as the child sub categories will already
             // be listed above and will show matches as necessary
             for (AutoGroupComposite match : matches) {
                 if (match.getResourceType().getSubCategory().equals(subCategory)) {

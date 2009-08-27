@@ -127,11 +127,15 @@ public class AutoGroupTreeContextMenuUIBean extends TreeContextMenuBase {
     private AutoGroupComposite getAutoGroupForResourceType(Subject subject, int parentId, int resourceTypeId) {
         List<AutoGroupComposite> autogroups = resourceManager.findChildrenAutoGroups(subject, parentId,
             new int[] { resourceTypeId });
-        if (autogroups == null || autogroups.size() == 0) {
-            return null;
+        for (AutoGroupComposite autogroup : autogroups) {
+            // The list could contain two items if the ResourceType belongs to a subcategory - the auto-group
+            // AutoGroupComposite and a subcategory AutoGroupComposite - we want the auto-group, which will have a
+            // non-null resourceType.
+            if (autogroup.getResourceType() != null) {
+                return autogroup;
+            }
         }
-
-        return autogroups.get(0);
+        return null;
     }
 
     private List<MetricMenuItemDescriptor> createGraphMenuItemDescriptors(AutoGroupComposite autoGroup,

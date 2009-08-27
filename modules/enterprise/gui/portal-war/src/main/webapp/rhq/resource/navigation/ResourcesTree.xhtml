@@ -54,7 +54,7 @@
 
                         <a4j:support event="oncontextmenu" reRender="autoGroupMenu" timeout="5000"
                                      disableDefault="true" status="commonStatus" limitToList="true"
-                                     ajaxSingle="true">
+                                     ajaxSingle="true" rendered="#{resourceTreeItem.data.resourceType != null}">
                                      
                             <f:param name="contextParentResourceId" value="#{resourceTreeItem.data.parentResource.id}"/>
                             <f:param name="contextAutoGroupResourceTypeId" value="#{resourceTreeItem.data.resourceType.id}"/>                           

@@ -120,17 +120,17 @@ public interface ResourceManagerLocal {
     boolean bulkNamedQueryDeleteInNewTransaction(Subject subject, String namedQuery, List<Integer> resourceIds);
 
     /**
-     * Changes the inventory status of the specified resource and optionally its descendents to the provided inventory
+     * Changes the inventory status of the specified resource and optionally its descendants to the provided inventory
      * status if the user is authorized to do so.
      *
      * @param  user           user doing the resource status changing
      * @param  resource       the Resource to change
      * @param  newStatus      the new status to change it to
-     * @param  setDescendents if true, all descendent resources will also have their status set
+     * @param  setDescendants if true, all descendent resources will also have their status set
      *
      * @return an updated copy of the resource
      */
-    Resource setResourceStatus(Subject user, Resource resource, InventoryStatus newStatus, boolean setDescendents);
+    Resource setResourceStatus(Subject user, Resource resource, InventoryStatus newStatus, boolean setDescendants);
 
     @NotNull
     Resource getResourceById(Subject user, int resourceId);
@@ -335,11 +335,12 @@ public interface ResourceManagerLocal {
 
     List<AutoGroupComposite> findChildrenAutoGroups(Subject user, int parentResourceId);
 
+    @NotNull
     List<AutoGroupComposite> findChildrenAutoGroups(Subject user, int parentResourceId, int[] resourceTypeIds);
 
     AutoGroupComposite getResourceAutoGroup(Subject user, int resourceId);
 
-    Map<Integer, InventoryStatus> getResourceStatuses(int rootResourceId, boolean descendents);
+    Map<Integer, InventoryStatus> getResourceStatuses(int rootResourceId, boolean descendants);
 
     /**
      * Gets the "health" of a set of resources, where the health composite gives you the resource's availability status

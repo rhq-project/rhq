@@ -61,6 +61,8 @@ public class FeedComponent implements ResourceComponent<TwitterComponent>, Measu
    private boolean isSearch = false;
    private String keyword;
    private TwitterEventPoller eventPoller;
+   private String serverUrl;
+   private String searchBase;
 
    /**
      * Return availability of this resource
@@ -84,6 +86,8 @@ public class FeedComponent implements ResourceComponent<TwitterComponent>, Measu
                 isSearch = true;
         keyword = conf.getSimpleValue("keyword","Jopr"); // Jopr is fallback .. just in case
 
+        serverUrl = context.getParentResourceComponent().getServerUrl();
+        searchBase = context.getParentResourceComponent().getSearchUrl();
 
         eventContext = context.getEventContext();
         eventPoller = new TwitterEventPoller(TOPIC_EVENT);
@@ -112,11 +116,12 @@ public class FeedComponent implements ResourceComponent<TwitterComponent>, Measu
 
        for (MeasurementScheduleRequest req : metrics) {
           if (req.getName().equals("tweetCount")) {
-             Twitter twitter = new Twitter();
+             Twitter twitter = new Twitter(serverUrl);
              Paging paging = new Paging();
 
              MeasurementDataNumeric res;
              if (isSearch) {
+                twitter.setSearchBaseURL(searchBase);
                 Query q = new Query(keyword);
                 q.setSinceId(lastId);
                 if (lastId == NOT_YET_SET)

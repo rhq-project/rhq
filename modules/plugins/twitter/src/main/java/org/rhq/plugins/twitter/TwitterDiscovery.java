@@ -49,15 +49,16 @@ public class TwitterDiscovery implements ResourceDiscoveryComponent {
            */
          String user = config.getSimpleValue("user",null);
          String password = config.getSimpleValue("password",null);
+         String url = config.getSimpleValue("baseurl","http://twitter.com/");
          if (user==null || password==null)
             throw new InvalidPluginConfigurationException("User or password were not set");
 
          DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
                 discoveryContext.getResourceType(), // ResourceType
-                "Twitter" + user, // ResourceKey
-                "Twitter feed for " +user,
+                url + "_"+ user, // ResourceKey
+                url + " feed for " +user,
                 null,
-                "One twitter user",
+                "One " + url + " user",
                 config,
                 null  );
 

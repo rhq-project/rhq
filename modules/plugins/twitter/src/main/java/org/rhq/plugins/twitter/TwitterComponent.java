@@ -18,6 +18,8 @@
  */
 package org.rhq.plugins.twitter;
 
+import java.net.URL;
+import java.net.MalformedURLException;
 import java.util.List;
 import java.util.Set;
 
@@ -36,6 +38,7 @@ import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.event.EventContext;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
@@ -58,8 +61,11 @@ public class TwitterComponent implements ResourceComponent, OperationFacet, Meas
    EventContext eventContext;
    private String username;
    private String password;
+   private String serverUrl;
+   private String searchBaseUrl;
    private TwitterEventPoller eventPoller;
    private long lastId = NOT_YET_SET;
+   private static final String HTTP_TWITTER_COM = "http://twitter.com/";
 
    /**
      * Return availability of this resource
@@ -79,6 +85,28 @@ public class TwitterComponent implements ResourceComponent, OperationFacet, Meas
         Configuration conf = context.getPluginConfiguration();
         username = conf.getSimpleValue("user",null);
         password = conf.getSimpleValue("password",null);
+        String url = conf.getSimpleValue("baseurl", HTTP_TWITTER_COM);
+        if (!url.endsWith("/"))
+           url= url+"/";
+        try {
+           new URL(url);
+           serverUrl = url;
+        }
+        catch (MalformedURLException e) {
+           throw new InvalidPluginConfigurationException(e.getMessage());
+        }
+        url = conf.getSimpleValue("searchBaseUrl", "http://search.twitter.com/");
+        if (!url.endsWith("/"))
+           url= url+"/";
+        try {
+           new URL(url);
+           searchBaseUrl = url;
+        }
+        catch (MalformedURLException e) {
+           throw new InvalidPluginConfigurationException(e.getMessage());
+        }
+
+
 
         eventContext = context.getEventContext();
         eventPoller = new TwitterEventPoller(TWIT_EVENT);
@@ -104,7 +132,7 @@ public class TwitterComponent implements ResourceComponent, OperationFacet, Meas
 
        for (MeasurementScheduleRequest req : metrics) {
           if (req.getName().equals("tweetCount")) {
-             Twitter twitter = new Twitter(username,password);
+             Twitter twitter = new Twitter(username,password,serverUrl);
              Paging paging = new Paging();
              if (lastId == NOT_YET_SET) {
                 paging.setSinceId(1);
@@ -127,7 +155,7 @@ public class TwitterComponent implements ResourceComponent, OperationFacet, Meas
                 lastId = statuses.get(0).getId(); // This is always newest first
           }
           else if (req.getName().equals("followerCount")) {
-              Twitter twitter = new Twitter(username,password);
+              Twitter twitter = new Twitter(username,password,serverUrl);
               int count = twitter.getFollowersIDs().getIDs().length;
               MeasurementDataNumeric res;
               res = new MeasurementDataNumeric(req,(double)count);
@@ -153,7 +181,7 @@ public class TwitterComponent implements ResourceComponent, OperationFacet, Meas
 
             String message = configuration.getSimpleValue("message",null);
 
-            Twitter twitter = new Twitter(username,password);
+            Twitter twitter = new Twitter(username,password,serverUrl);
             twitter.setSource("Jopr");
             twitter.setUserAgent("Jopr");
             Status status = twitter.updateStatus(message);
@@ -165,4 +193,11 @@ public class TwitterComponent implements ResourceComponent, OperationFacet, Meas
         throw new UnsupportedOperationException("Operation " + name + " is not valid");
     }
 
+
+    protected String getServerUrl() {
+       return serverUrl;
+    }
+    protected String getSearchUrl() {
+       return searchBaseUrl;
+    }
 }

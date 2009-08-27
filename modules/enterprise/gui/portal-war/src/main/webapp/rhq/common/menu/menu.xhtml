@@ -342,7 +342,7 @@
             <h:outputText value="License"/>
         </rich:menuItem>
     </rich:dropDownMenu>
-    
+
     <ui:remove>===== DEBUG =====</ui:remove>
 
     <rich:dropDownMenu rendered="#{GlobalPermissionsUIBean.superuser and
@@ -352,33 +352,33 @@
                 <h:outputText value="Debug"/>
             </h:panelGroup>
         </f:facet>
-        
-        <rich:menuItem submitMode="none" 
+
+        <rich:menuItem submitMode="none"
                        onclick="window.open('/admin/test/sql.jsp')"
                        target="blank_">
             <h:outputText value="SQL Interface"/>
         </rich:menuItem>
-        <rich:menuItem submitMode="none" 
+        <rich:menuItem submitMode="none"
                        onclick="window.open('/admin/test/hibernate.jsp')"
                        target="blank_">
             <h:outputText value="JPQL/HQL Interface"/>
         </rich:menuItem>
-        <rich:menuItem submitMode="none" 
+        <rich:menuItem submitMode="none"
                        onclick="window.open('/admin/test/browser.jsp')"
                        target="blank_">
             <h:outputText value="Hibernate Entity Browser"/>
         </rich:menuItem>
-        <rich:menuItem submitMode="none" 
+        <rich:menuItem submitMode="none"
                        onclick="window.open('/admin/test/control.jsp')"
                        target="blank_">
             <h:outputText value="Administrative Control"/>
         </rich:menuItem>
-        <rich:menuItem submitMode="none" 
+        <rich:menuItem submitMode="none"
                        onclick="window.open('/admin/test/email.jsp')"
                        target="blank_">
             <h:outputText value="Test Email Configuration"/>
         </rich:menuItem>
-v        <rich:menuItem submitMode="none" 
+v        <rich:menuItem submitMode="none"
                        onclick="window.open('/admin/test/agent.jsp')"
                        target="blank_">
             <h:outputText value="Test Agent Communications"/>
@@ -439,7 +439,7 @@ v        <rich:menuItem submitMode="none"
                 <h:graphicImage value="/images/refreshRunning.gif" rendered="#{UserPreferencesUIBean.pageRefresh != 0}"/>
                 <h:graphicImage value="/images/refreshStopped.gif" rendered="#{UserPreferencesUIBean.pageRefresh == 0}"/>
                 <span id="refreshTimeLeft" style="width: 0px;"><h:outputText value="#{UserPreferencesUIBean.pageRefresh}" rendered="#{UserPreferencesUIBean.pageRefresh != 0}"/></span>
-                
+
             </h:panelGroup>
         </f:facet>
 
@@ -453,22 +453,22 @@ v        <rich:menuItem submitMode="none"
                     <h:graphicImage value="/images/#{UserPreferencesUIBean.pageRefresh == 0 ? 'check.png' : 'spacer.gif'}" width="16" height="16"/>
                 </f:facet>
             </rich:menuItem>
-            <rich:menuItem submitMode="none" onclick="updatePageRefresh('#{request.getAttribute('javax.servlet.forward.request_uri')}',10)">
-                <h:outputText value="Refresh every 10 seconds"/>
-                <f:facet name="icon">
-                    <h:graphicImage value="/images/#{UserPreferencesUIBean.pageRefresh == 10 ? 'check.png' : 'spacer.gif'}" width="16" height="16"/>
-                </f:facet>
-            </rich:menuItem>
-            <rich:menuItem submitMode="none" onclick="updatePageRefresh('#{request.getAttribute('javax.servlet.forward.request_uri')}',30)">
-                <h:outputText value="Refresh every 30 seconds"/>
-                <f:facet name="icon">
-                    <h:graphicImage value="/images/#{UserPreferencesUIBean.pageRefresh == 30 ? 'check.png' : 'spacer.gif'}" width="16" height="16"/>
-                </f:facet>
-            </rich:menuItem>
             <rich:menuItem submitMode="none" onclick="updatePageRefresh('#{request.getAttribute('javax.servlet.forward.request_uri')}',60)">
-                <h:outputText value="Refresh every 60 seconds"/>
+                <h:outputText value="Refresh every 1 minute"/>
                 <f:facet name="icon">
                     <h:graphicImage value="/images/#{UserPreferencesUIBean.pageRefresh == 60 ? 'check.png' : 'spacer.gif'}" width="16" height="16"/>
+                </f:facet>
+            </rich:menuItem>
+            <rich:menuItem submitMode="none" onclick="updatePageRefresh('#{request.getAttribute('javax.servlet.forward.request_uri')}',300)">
+                <h:outputText value="Refresh every 5 minutes"/>
+                <f:facet name="icon">
+                    <h:graphicImage value="/images/#{UserPreferencesUIBean.pageRefresh == 300 ? 'check.png' : 'spacer.gif'}" width="16" height="16"/>
+                </f:facet>
+            </rich:menuItem>
+            <rich:menuItem submitMode="none" onclick="updatePageRefresh('#{request.getAttribute('javax.servlet.forward.request_uri')}',600)">
+                <h:outputText value="Refresh every 10 minutes"/>
+                <f:facet name="icon">
+                    <h:graphicImage value="/images/#{UserPreferencesUIBean.pageRefresh == 600 ? 'check.png' : 'spacer.gif'}" width="16" height="16"/>
                 </f:facet>
             </rich:menuItem>
 
@@ -582,7 +582,7 @@ v        <rich:menuItem submitMode="none"
             setTimeout("refresh()", 1000);
         }
 
-        
+
 
     </script>
 

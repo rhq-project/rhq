@@ -51,7 +51,6 @@ import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
-import org.rhq.enterprise.server.content.ContentUIManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceFactoryManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
@@ -71,14 +70,13 @@ public class CreateNewPackageChildResourceUIBean {
     public static final String MANAGED_BEAN_NAME = "CreateNewPackageChildResourceUIBean";
 
     private static final String OUTCOME_SUCCESS_OR_FAILURE = "successOrFailure";
-    private static final String OUTCOME_SUCCESS = "success";
+    // private static final String OUTCOME_SUCCESS = "success";
     private static final String OUTCOME_CANCEL = "cancel";
 
     // Attributes  --------------------------------------------
 
     private ResourceType resourceType;
     private PackageType packageType;
-    private String packageVersion;
 
     private int selectedArchitectureId;
 
@@ -157,17 +155,13 @@ public class CreateNewPackageChildResourceUIBean {
                 packageName = new File(packageName).getName();
             }
 
-            // For JON 2.0 RC3, no longer request the package version on a package-backed create, simply
-            // use the timestamp. The timestamp will also be used when creating new packages of this type, so
-            // we are effectively controlling the versioning for the user
-            packageVersion = Long.toString(System.currentTimeMillis());
-
             try {
                 ResourceFactoryManagerLocal resourceFactoryManager = LookupUtil.getResourceFactoryManager();
 
                 // RHQ-666 - Changed to not request the resource name from the user; simply pass null
+                // JON 2.0 RC3 - use timestamp versioning; pass null for version
                 resourceFactoryManager.createResource(user, parentResource.getId(), getResourceTypeId(), null,
-                    pluginConfiguration, packageName, packageVersion, selectedArchitectureId, deployTimeConfiguration,
+                    pluginConfiguration, packageName, null, selectedArchitectureId, deployTimeConfiguration,
                     packageContentStream);
             } catch (Exception e) {
                 String errorMessages = ThrowableUtil.getAllMessages(e);
@@ -236,8 +230,8 @@ public class CreateNewPackageChildResourceUIBean {
     private PackageType lookupPackageType() {
         if (resourceType == null)
             resourceType = lookupResourceType();
-        ContentUIManagerLocal contentUIManager = LookupUtil.getContentUIManager();
-        PackageType packageType = contentUIManager.getResourceCreationPackageType(this.resourceType.getId());
+        ContentManagerLocal contentManager = LookupUtil.getContentManager();
+        PackageType packageType = contentManager.getResourceCreationPackageType(this.resourceType.getId());
         return packageType;
     }
 
@@ -315,14 +309,6 @@ public class CreateNewPackageChildResourceUIBean {
 
     public void setResourceType(ResourceType resourceType) {
         this.resourceType = resourceType;
-    }
-
-    public String getPackageVersion() {
-        return packageVersion;
-    }
-
-    public void setPackageVersion(String packageVersion) {
-        this.packageVersion = packageVersion;
     }
 
     public int getSelectedArchitectureId() {

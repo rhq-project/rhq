@@ -371,7 +371,7 @@ public class WebservicesManagerBean implements //
 
     //CONTENTMANAGER: BEGIN ----------------------------------
     public PackageVersion createPackageVersion(Subject subject, String packageName, int packageTypeId, String version,
-        int architectureId, byte[] packageBytes) {
+        Integer architectureId, byte[] packageBytes) {
         return contentManager.createPackageVersion(subject, packageName, packageTypeId, version, architectureId,
             packageBytes);
     }

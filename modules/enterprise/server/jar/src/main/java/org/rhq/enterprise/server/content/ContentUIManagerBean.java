@@ -93,14 +93,6 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
         return packageList;
     }
 
-    public PackageType getResourceCreationPackageType(int resourceTypeId) {
-        Query query = entityManager.createNamedQuery(PackageType.QUERY_FIND_BY_RESOURCE_TYPE_ID_AND_CREATION_FLAG);
-        query.setParameter("typeId", resourceTypeId);
-
-        PackageType packageType = (PackageType) query.getSingleResult();
-        return packageType;
-    }
-
     @SuppressWarnings("unchecked")
     public PageList<PackageType> getPackageTypes(int resourceTypeId, PageControl pageControl) {
         pageControl.setPrimarySort("pt.name", PageOrdering.ASC);

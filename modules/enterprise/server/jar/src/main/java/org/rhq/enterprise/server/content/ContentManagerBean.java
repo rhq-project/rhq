@@ -19,10 +19,10 @@
 package org.rhq.enterprise.server.content;
 
 import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -341,6 +341,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                     packageVersion.getGeneralPackage().getPackageType().getName(), //
                     packageVersion.getArchitecture().getName());
                 ResourcePackageDetails details = new ResourcePackageDetails(key);
+                details.setInstallationTimestamp(System.currentTimeMillis());
                 packages.add(details);
             }
 
@@ -806,7 +807,8 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             while ((bits == null || bits.getBits() == null) && (System.currentTimeMillis() - start < 30000)) {
                 try {
                     Thread.sleep(2000);
-                } catch (InterruptedException e) { }
+                } catch (InterruptedException e) {
+                }
                 entityManager.clear();
                 installedPackage = entityManager.find(InstalledPackage.class, installedPackageId);
                 bits = installedPackage.getPackageVersion().getPackageBits();
@@ -814,7 +816,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
             if (bits == null) {
                 throw new RuntimeException("Unable to retrieve package bits for resource: " + resourceId
-                        + " and package: " + installedPackageId + " before timeout.");
+                    + " and package: " + installedPackageId + " before timeout.");
             }
         }
 
@@ -912,7 +914,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 if (length == null) {
                     File tmpFile = File.createTempFile("rhq", ".stream");
                     FileOutputStream fos = new FileOutputStream(tmpFile);
-                    length = StreamUtil.copy(bitStream, fos,true);
+                    length = StreamUtil.copy(bitStream, fos, true);
 
                     bitStream = new FileInputStream(tmpFile);
                 }
@@ -1163,7 +1165,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
     }
 
     public PackageVersion createPackageVersion(Subject subject, String packageName, int packageTypeId, String version,
-        int architectureId, byte[] packageBytes) {
+        Integer architectureId, byte[] packageBytes) {
 
         // Check permissions first
         if (!authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_CONTENT)) {
@@ -1171,8 +1173,8 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 + "] does not have permission to create package versions");
         }
 
-        return createPackageVersion(packageName, packageTypeId, version, architectureId, new ByteArrayInputStream(
-            packageBytes));
+        return createPackageVersion(packageName, packageTypeId, version, (null == architectureId) ? getNoArchitecture()
+            .getId() : architectureId, new ByteArrayInputStream(packageBytes));
     }
 
     @SuppressWarnings("unchecked")
@@ -1368,6 +1370,14 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         return persisted;
     }
 
+    public PackageType getResourceCreationPackageType(int resourceTypeId) {
+        Query query = entityManager.createNamedQuery(PackageType.QUERY_FIND_BY_RESOURCE_TYPE_ID_AND_CREATION_FLAG);
+        query.setParameter("typeId", resourceTypeId);
+
+        PackageType packageType = (PackageType) query.getSingleResult();
+        return packageType;
+    }
+
     // Private  --------------------------------------------
 
     private ContentRequestStatus translateRequestResultStatus(ContentResponseResult result) {
@@ -1472,14 +1482,15 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         criteria.addFilterResourceId(resourceId);
         PageList<InstalledPackage> ips = findInstalledPackagesByCriteria(subject, criteria);
 
+        // should not be more than 1
         if ((null != ips) && (1 == ips.size())) {
             result = ips.get(0);
-        }
 
-        // fetch these
-        result.getPackageVersion().getGeneralPackage().getId();
-        result.getPackageVersion().getGeneralPackage().getPackageType().getId();
-        result.getPackageVersion().getArchitecture().getId();
+            // fetch these
+            result.getPackageVersion().getGeneralPackage().getId();
+            result.getPackageVersion().getGeneralPackage().getPackageType().getId();
+            result.getPackageVersion().getArchitecture().getId();
+        }
 
         return result;
     }

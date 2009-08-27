@@ -211,7 +211,7 @@ public interface ContentManagerLocal {
         InputStream packageBitStream);
 
     /**
-     * Very simple method that pesists the given package version within its own transaction.
+     * Very simple method that persists the given package version within its own transaction.
      *
      * <p>This method is here to support {@link #persistOrMergePackageVersionSafely(PackageVersion)},
      * it is not meant for general consumption.</p>
@@ -283,6 +283,14 @@ public interface ContentManagerLocal {
      */
     List<String> getInstalledPackageVersions(Subject subject, int resourceId);
 
+    /**
+     * Returns the package type that backs resources of the specified type.
+     *
+     * @param resourceTypeId identifies the resource type.
+     * @return backing package type if one exists; <code>null</code> otherwise
+     */
+    PackageType getResourceCreationPackageType(int resourceTypeId);
+
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
     // The following are shared with the Remote Interface
@@ -293,7 +301,7 @@ public interface ContentManagerLocal {
      * @see {@link createPackageVersion(Subject, String, int, String, int, byte[]);
      */
     PackageVersion createPackageVersion(Subject subject, String packageName, int packageTypeId, String version,
-        int architectureId, byte[] packageBytes);
+        Integer architectureId, byte[] packageBytes);
 
     /**
      * @see {@link ContentManagerRemote#deletePackages(Subject, int, int[], String)}
@@ -329,10 +337,8 @@ public interface ContentManagerLocal {
     /**
      * @see {@link ContentManagerRemote#getBackingPackageForResource(Subject, int)
      */
-    InstalledPackage getBackingPackageForResource(Subject subject,int resourceId);
-
+    InstalledPackage getBackingPackageForResource(Subject subject, int resourceId);
 
     byte[] getPackageBytes(Subject user, int resourceId, int installedPackageId);
-
 
 }

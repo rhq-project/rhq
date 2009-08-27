@@ -82,14 +82,6 @@ public interface ContentUIManagerLocal {
     List<PackageType> getPackageTypes(int resourceTypeId);
 
     /**
-     * Returns the package type that backs resources of the specified type.
-     *
-     * @param resourceTypeId identifies the resource type.
-     * @return backing package type if one exists; <code>null</code> otherwise
-     */
-    PackageType getResourceCreationPackageType(int resourceTypeId);
-
-    /**
      * Returns all package types that are available to the specified resource type in a page control.
      *
      * @param resourceTypeId identifies the resource type

@@ -22,6 +22,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -66,7 +67,6 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.content.ContentManagerHelper;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
-import org.rhq.enterprise.server.content.ContentUIManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 
 /**
@@ -99,19 +99,16 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
     private AuthorizationManagerLocal authorizationManager;
 
     @EJB
-    private SubjectManagerLocal subjectManagerBean;
+    private SubjectManagerLocal subjectManager;
 
     @EJB
     private ResourceFactoryManagerLocal resourceFactoryManager;
 
     @EJB
-    private ResourceManagerLocal resourceManagerBean;
+    private ResourceManagerLocal resourceManager;
 
     @EJB
-    private ContentManagerLocal contentManagerLocal;
-
-    @EJB
-    private ContentUIManagerLocal contentUIManagerLocal;
+    private ContentManagerLocal contentManager;
 
     // ResourceFactoryManagerLocal Implementation  --------------------------------------------
 
@@ -122,9 +119,9 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         Resource parentResource = entityManager.find(Resource.class, parentResourceId);
         ResourceType resourceType = entityManager.find(ResourceType.class, resourceTypeId);
 
-        Subject overLord = subjectManagerBean.getOverlord();
+        Subject overLord = subjectManager.getOverlord();
         // Check to see if the resource exists but marked as deleted
-        Resource resource = resourceManagerBean.getResourceByParentAndKey(overLord, parentResource, resourceKey,
+        Resource resource = resourceManager.getResourceByParentAndKey(overLord, parentResource, resourceKey,
             resourceType.getPlugin(), resourceType.getName());
 
         if (resource == null) {
@@ -205,11 +202,26 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         history.setErrorMessage(response.getErrorMessage());
         history.setStatus(response.getStatus());
 
-        // Mark resource as deleted if the response was successful
+        // Mark resource and all children as deleted if the response was successful
         if (response.getStatus() == DeleteResourceStatus.SUCCESS) {
             Resource resource = history.getResource();
+
+            // get doomed children
+            Set<Resource> children = resource.getChildResources();
+
+            // set the resource deleted and update the db in case it matters to the child operations
             resource.setInventoryStatus(InventoryStatus.DELETED);
             resource.setItime(System.currentTimeMillis());
+            entityManager.merge(resource);
+
+            // uninventory the children of the deleted resource
+            uninventoryChildren(children);
+        }
+    }
+
+    private void uninventoryChildren(Set<Resource> children) {
+        for (Resource child : children) {
+            resourceManager.deleteResource(subjectManager.getOverlord(), child.getId());
         }
     }
 
@@ -479,7 +491,7 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
 
         Resource resource = entityManager.find(Resource.class, parentResourceId);
         ResourceType newResourceType = entityManager.find(ResourceType.class, newResourceTypeId);
-        PackageType newPackageType = contentUIManagerLocal.getResourceCreationPackageType(newResourceTypeId);
+        PackageType newPackageType = contentManager.getResourceCreationPackageType(newResourceTypeId);
         Agent agent = resource.getAgent();
 
         // Check permissions first
@@ -495,10 +507,16 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
          * exist and create them here. jdobies, Nov 28, 2007
          */
 
+        // unless version is set start versioning the package by timestamp
+        packageVersionNumber = (null == packageVersionNumber) ? Long.toString(System.currentTimeMillis())
+            : packageVersionNumber;
+
+        // default to no required architecture
+        architectureId = (null != architectureId) ? architectureId : contentManager.getNoArchitecture().getId();
+
         // Create package and package version        
-        PackageVersion packageVersion = contentManagerLocal.createPackageVersion(packageName, newPackageType.getId(),
-            (null != packageVersionNumber) ? packageVersionNumber : "1.0", (null != architectureId) ? architectureId
-                : contentManagerLocal.getNoArchitecture().getId(), packageBitStream);
+        PackageVersion packageVersion = contentManager.createPackageVersion(packageName, newPackageType.getId(),
+            packageVersionNumber, architectureId, packageBitStream);
 
         // Persist in separate transaction so it is committed immediately, before the request is sent to the agent
         CreateResourceHistory persistedHistory = resourceFactoryManager.persistCreateHistory(user, parentResourceId,

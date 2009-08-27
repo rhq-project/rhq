@@ -54,7 +54,7 @@ public interface ContentManagerRemote {
      * @param packageName    parent package name; uniquely identifies the package under which this version goes
      * @param packageTypeId  identifies the type of package in case the general package needs to be created
      * @param version        identifies the version to be create
-     * @param architectureId architecture of the newly created package version
+     * @param architectureId architecture of the newly created package version. If null then no architecture restriction.
      *
      * @return newly created package version if one did not exist; existing package version that matches these data if
      *         one was found
@@ -65,7 +65,7 @@ public interface ContentManagerRemote {
         @WebParam(name = "packageName") String packageName, //
         @WebParam(name = "packageTypeId") int packageTypeId, //
         @WebParam(name = "version") String version, //
-        @WebParam(name = "architectureId") int architectureId, //
+        @WebParam(name = "architectureId") Integer architectureId, //
         @WebParam(name = "packageBytes") byte[] packageBytes);
 
     /**

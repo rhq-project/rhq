@@ -74,11 +74,11 @@ public interface ResourceFactoryManagerRemote {
      * @param subject                     user requesting the creation
      * @param parentResourceId            parent resource under which the new resource should be created
      * @param newResourceTypeId           identifies the type of resource being created
-     * @param newResourceName             name of the resource being created
+     * @param newResourceName             Ignored, pass null. This is determined from the package.
      * @param pluginConfiguration         optional plugin configuration that may be needed in order to create the new
      *                                    resource
      * @param packageName                 name of the package that will be created as a result of this resource create
-     * @param packageVersion              machine formatted identifier of the specific version of the package
+     * @param packageVersion              The string version of the package. If null will be set to system timestamp (long)
      * @param architectureId              Id of the target architecture of the package, null indicates NoArch (any). 
      * @param deploymentTimeConfiguration dictates how the package will be deployed
      * @param packageBits                 content of the package to create

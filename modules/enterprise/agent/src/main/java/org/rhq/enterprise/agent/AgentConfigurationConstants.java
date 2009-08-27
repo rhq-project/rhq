@@ -355,7 +355,8 @@ public interface AgentConfigurationConstants {
     /**
      * The default preprocessor which is the security token preprocessor.
      */
-    String DEFAULT_CLIENT_SENDER_COMMAND_PREPROCESSORS = SecurityTokenCommandPreprocessor.class.getName();
+    String DEFAULT_CLIENT_SENDER_COMMAND_PREPROCESSORS = SecurityTokenCommandPreprocessor.class.getName() + ":"
+        + ExternalizableStrategyCommandPreprocessor.class.getName();
 
     /**
      * The secure protocol used by the agent's communications layer to the remote server.

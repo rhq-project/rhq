@@ -41,7 +41,7 @@
                <entry key="rhq.agent.client.command-spool-file.compressed" value="true" />
                <entry key="rhq.agent.client.send-throttling" value="@@@rhq.agent.client.send-throttling@@@" />
                <entry key="rhq.agent.client.queue-throttling" value="@@@rhq.agent.client.queue-throttling@@@" />
-               <entry key="rhq.agent.client.command-preprocessors" value="org.rhq.enterprise.agent.SecurityTokenCommandPreprocessor" />
+               <entry key="rhq.agent.client.command-preprocessors" value="org.rhq.enterprise.agent.SecurityTokenCommandPreprocessor:org.rhq.enterprise.agent.ExternalizableStrategyCommandPreprocessor" />
                <entry key="rhq.agent.disable-native-system" value="@@@rhq.agent.disable-native-system@@@"/>
                <entry key="rhq.agent.primary-server-switchover-check-interval-msecs" value="3600000" />
                <entry key="rhq.agent.plugins.directory" value="plugins"/>

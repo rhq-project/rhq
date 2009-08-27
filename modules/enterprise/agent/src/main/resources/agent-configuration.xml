@@ -482,7 +482,7 @@ commands named "config", "setconfig" and "setup" and the command line options
                You should never have to change this unless you know what
                you are doing.
                -->
-               <entry key="rhq.agent.client.command-preprocessors" value="org.rhq.enterprise.agent.SecurityTokenCommandPreprocessor" />
+               <entry key="rhq.agent.client.command-preprocessors" value="org.rhq.enterprise.agent.SecurityTokenCommandPreprocessor:org.rhq.enterprise.agent.ExternalizableStrategyCommandPreprocessor" />
 
                <!--
                _______________________________________________________________

@@ -369,7 +369,7 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
     @NamedQuery(name = Resource.QUERY_FIND_EXPLICIT_IDS_BY_RESOURCE_GROUP_ADMIN, query = "" //
         + "SELECT res.id " //
         + "  FROM ResourceGroup rg, IN (rg.explicitResources) res " //
-        + " WHERE rg.id = :groupId "),
+        + " WHERE rg.id = :groupId AND res.inventoryStatus = :inventoryStatus"),
     @NamedQuery(name = Resource.QUERY_FIND_IMPLICIT_IDS_BY_RESOURCE_GROUP_ADMIN, query = "" //
         + "SELECT res.id " //
         + "  FROM ResourceGroup rg, IN (rg.implicitResources) res " //

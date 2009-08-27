@@ -88,7 +88,7 @@ public class ResourceGroupTreeModelUIBean {
         List<Integer> members = resourceManager.findExplicitResourceIdsByResourceGroup(parentGroup.getId());
         end = System.currentTimeMillis();
         HibernatePerformanceMonitor.get().stop(monitorId, "ResourceGroupTree group members");
-        log.debug("Loaded  " + members.size() + " memebers by group in " + (end - start));
+        log.debug("Loaded  " + members.size() + " members by group in " + (end - start));
 
         start = System.currentTimeMillis();
         monitorId = HibernatePerformanceMonitor.get().start();

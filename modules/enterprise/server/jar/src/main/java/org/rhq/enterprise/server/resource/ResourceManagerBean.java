@@ -1242,6 +1242,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     public List<Integer> findExplicitResourceIdsByResourceGroup(int resourceGroupId) {
         Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_EXPLICIT_IDS_BY_RESOURCE_GROUP_ADMIN);
         query.setParameter("groupId", resourceGroupId);
+        query.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
 
         List<Integer> results = query.getResultList();
         return results;
@@ -1894,7 +1895,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
     @SuppressWarnings("unchecked")
     public List<Resource> findResourcesByCompatibleGroup(Subject user, int compatibleGroupId, PageControl pageControl) {
-        // Note: I didn't put these queries in as named queries since they have very specific prefeching
+        // Note: I didn't put these queries in as named queries since they have very specific pre-fetching
         // for this use case.
 
         String reportingQueryString = "" //

@@ -18,6 +18,10 @@
  */
 package org.rhq.enterprise.client;
 
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+
 import javassist.CannotCompileException;
 import javassist.ClassPool;
 import javassist.CtClass;
@@ -25,13 +29,11 @@ import javassist.CtMethod;
 import javassist.CtNewMethod;
 import javassist.NotFoundException;
 import javassist.bytecode.ParameterAnnotationsAttribute;
+
 import org.jboss.remoting.invocation.NameBasedInvocation;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.util.serial.ExternalizableStrategy;
-
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 
 /**
  * This class acts as a local SLSB proxy to make remote invocations
@@ -62,17 +64,13 @@ public class RemoteClientProxy implements InvocationHandler {
 
             Class intf = simplifyInterface(gpc.manager.remote());
 
-            return (T) Proxy.newProxyInstance(
-                    Thread.currentThread().getContextClassLoader(),
-                    new Class[]{intf},
-                    gpc);
+            return (T) Proxy
+                .newProxyInstance(Thread.currentThread().getContextClassLoader(), new Class[] { intf }, gpc);
         } catch (Exception e) {
             throw new RuntimeException("Failed to get remote connection proxy", e);
         }
     }
 
-
-    
     private static Class simplifyInterface(Class intf) {
         try {
             ClassPool cp = ClassPool.getDefault();
@@ -86,15 +84,13 @@ public class RemoteClientProxy implements InvocationHandler {
             } catch (NotFoundException e) {
                 // ok... load it
             } catch (ClassNotFoundException e) {
-                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                e.printStackTrace(); //To change body of catch statement use File | Settings | File Templates.
             }
-
 
             CtClass cc = cp.get(intf.getName());
 
-
             CtClass cz = cp.getAndRename(intf.getName(), simpleName);
-//            CtClass cz = cp.makeInterface(simpleName, cc);
+            //            CtClass cz = cp.makeInterface(simpleName, cc);
 
             cz.defrost();
 
@@ -112,26 +108,28 @@ public class RemoteClientProxy implements InvocationHandler {
                     System.arraycopy(params, 1, simpleParams, 0, params.length - 1);
                     cz.defrost();
 
-                    CtMethod newMethod = CtNewMethod.abstractMethod(originalMethod.getReturnType(), originalMethod.getName(), simpleParams, null, cz);
+                    CtMethod newMethod = CtNewMethod.abstractMethod(originalMethod.getReturnType(), originalMethod
+                        .getName(), simpleParams, null, cz);
 
-                    ParameterAnnotationsAttribute originalAnnotationsAttribute =
-                            (ParameterAnnotationsAttribute) originalMethod.getMethodInfo().getAttribute(ParameterAnnotationsAttribute.visibleTag);
+                    ParameterAnnotationsAttribute originalAnnotationsAttribute = (ParameterAnnotationsAttribute) originalMethod
+                        .getMethodInfo().getAttribute(ParameterAnnotationsAttribute.visibleTag);
 
                     // If there are any parameter annotations, copy the one's we're keeping
                     if (originalAnnotationsAttribute != null) {
 
-                        javassist.bytecode.annotation.Annotation[][] originalAnnotations = originalAnnotationsAttribute.getAnnotations();
+                        javassist.bytecode.annotation.Annotation[][] originalAnnotations = originalAnnotationsAttribute
+                            .getAnnotations();
                         javassist.bytecode.annotation.Annotation[][] newAnnotations = new javassist.bytecode.annotation.Annotation[originalAnnotations.length - 1][];
 
                         int i = 1;
                         for (int x = 1; x < originalAnnotations.length; x++) {
                             newAnnotations[x - 1] = new javassist.bytecode.annotation.Annotation[originalAnnotations[x].length];
-                            System.arraycopy(originalAnnotations[x], 0, newAnnotations[x - 1], 0, originalAnnotations[x].length);
+                            System.arraycopy(originalAnnotations[x], 0, newAnnotations[x - 1], 0,
+                                originalAnnotations[x].length);
                         }
 
-
-                        ParameterAnnotationsAttribute newAnnotationsAttribute =
-                                new ParameterAnnotationsAttribute(newMethod.getMethodInfo().getConstPool(), ParameterAnnotationsAttribute.visibleTag);
+                        ParameterAnnotationsAttribute newAnnotationsAttribute = new ParameterAnnotationsAttribute(
+                            newMethod.getMethodInfo().getConstPool(), ParameterAnnotationsAttribute.visibleTag);
 
                         newAnnotationsAttribute.setAnnotations(newAnnotations);
 
@@ -143,13 +141,12 @@ public class RemoteClientProxy implements InvocationHandler {
                 }
             }
 
-
             return cz.toClass();
 
         } catch (NotFoundException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            e.printStackTrace(); //To change body of catch statement use File | Settings | File Templates.
         } catch (CannotCompileException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            e.printStackTrace(); //To change body of catch statement use File | Settings | File Templates.
         }
         return intf;
     }
@@ -162,10 +159,7 @@ public class RemoteClientProxy implements InvocationHandler {
 
             String methodName = manager.beanName() + ":" + method.getName();
 
-
             Class[] params = method.getParameterTypes();
-
-
 
             try {
                 Class[] interfaces = method.getDeclaringClass().getInterfaces();
@@ -176,25 +170,28 @@ public class RemoteClientProxy implements InvocationHandler {
                 } else {
                     originalClass = method.getDeclaringClass();
                 }
-                
+
                 // See if this method really exists or if its a simplified set of parameters
                 originalClass.getMethod(method.getName(), method.getParameterTypes());
 
             } catch (Exception e) {
-                
                 // If this was not in the original interface it must've been added in the Simplifier... add back the subject argument
-                    // if (!method.getName().equals("login") &&  == null) {
-                Object[] newArgs = new Object[args.length + 1];
-                System.arraycopy(args, 0, newArgs, 1, args.length);
+                int numArgs = (null == args) ? 0 : args.length;
+                Object[] newArgs = new Object[numArgs + 1];
+                if (numArgs > 0) {
+                    System.arraycopy(args, 0, newArgs, 1, numArgs);
+                }
                 newArgs[0] = client.getSubject();
                 args = newArgs;
 
-                Class[] newParams = new Class[params.length + 1];
-                System.arraycopy(params, 0, newParams, 1, params.length);
+                int numParams = (null == params) ? 0 : params.length;
+                Class[] newParams = new Class[numParams + 1];
+                if (numParams > 0) {
+                    System.arraycopy(params, 0, newParams, 1, numParams);
+                }
                 newParams[0] = Subject.class;
                 params = newParams;
             }
-
 
             String[] paramSig = createParamSignature(params);
             NameBasedInvocation request = new NameBasedInvocation(methodName, args, paramSig);

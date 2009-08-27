@@ -71,11 +71,10 @@ function testGetAlertDefinitionById() {
 
 function testFindMultipleAlertDefinitionsWithFiltering() {
     var serviceAlpha = findService('service-alpha-0', 'server-omega-0');
-    var serviceBeta = findService('service-alpha-1', 'server-omega-0');
 
     var criteria = AlertDefinitionCriteria();
     criteria.addFilterPriority(AlertPriority.MEDIUM);
-    criteria.addFilterResourceIds([serviceAlpha.id, serviceBeta.id]);
+    criteria.addFilterResourceIds([serviceAlpha.id]);
     criteria.addFilterDeleted(false);
 
     var alertDefs = AlertDefinitionManager.findAlertDefinitionsByCriteria(criteria);

@@ -28,7 +28,7 @@ executeAllTests();
 rhq.logout();
 
 function testUpdateResourceConfiguration() {
-    var resource = findResource('service-beta-0', 'server-omega-0');
+    var resource = findService('service-beta-0', 'server-omega-0');
     var config = ConfigurationManager.getResourceConfiguration(resource.id);
 
     var propertyName = 'beta-config0';
@@ -50,7 +50,26 @@ function testUpdateResourceConfiguration() {
     Assert.assertEquals(updatedProperty.stringValue, propertyValue, 'Failed to update resource configuration');
 }
 
-function findResource(name, parentName) {
+function testUpdatePluginConfiguration() {
+    var resource = findService('service-beta-0', 'server-omega-0');
+    var pluginConfig = ConfigurationManager.getPluginConfiguration(resource.id);
+
+    var propertyName = 'beta-property0';
+    var propertyValue = 'updated property value -- ' + java.util.Date();
+
+    var property = pluginConfig.getSimple(propertyName);
+
+    property.setStringValue(propertyValue);
+
+    var configUpdate = ConfigurationManager.updatePluginConfiguration(resource.id, pluginConfig);
+
+    pluginConfig = ConfigurationManager.getPluginConfiguration(resource.id);
+    var updatedProperty = pluginConfig.getSimple(propertyName);
+
+    Assert.assertEquals(updatedProperty.stringValue, propertyValue, 'Failed to update plugin configuration');
+}
+
+function findService(name, parentName) {
     var criteria = ResourceCriteria();
     criteria.addFilterName(name);
     criteria.addFilterParentResourceName(parentName);

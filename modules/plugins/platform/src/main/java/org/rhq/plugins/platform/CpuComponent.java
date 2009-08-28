@@ -79,8 +79,8 @@ public class CpuComponent implements ResourceComponent<PlatformComponent>, Measu
 
                     property = property.substring(property.indexOf(".") + 1);
                     Long longValue = (Long) ObjectUtil.lookupAttributeProperty(cpu, property);
-                    // A value of -1 indicates SIGAR does not support the metric on the Agent platform.
-                    if (longValue != -1) {
+                    // A value of -1 indicates SIGAR does not support the metric on the Agent platform type.
+                    if (longValue != null && longValue != -1) {
                         report.addData(new MeasurementDataNumeric(request, longValue.doubleValue()));
                     }
                 } else if (property.startsWith("CpuPerc.")) {
@@ -89,31 +89,36 @@ public class CpuComponent implements ResourceComponent<PlatformComponent>, Measu
                     }
 
                     property = property.substring(property.indexOf(".") + 1);
-                    double value = ((Number) ObjectUtil.lookupAttributeProperty(cpuPerc, property)).doubleValue();
-                    report.addData(new MeasurementDataNumeric(request, value));
+                    Number num = ((Number) ObjectUtil.lookupAttributeProperty(cpuPerc, property));
+                    if (num != null) {
+                        report.addData(new MeasurementDataNumeric(request, num.doubleValue()));
+                    }
                 } else if (property.startsWith("CpuInfo.")) {
                     if (cpuInfo == null) {
                         cpuInfo = cpuInformation.getCpuInfo();
                     }
 
                     property = property.substring(property.indexOf(".") + 1);
-                    double value = ((Number) ObjectUtil.lookupAttributeProperty(cpuInfo, property)).doubleValue();
-                    report.addData(new MeasurementDataNumeric(request, value));
+                    Number num = ((Number) ObjectUtil.lookupAttributeProperty(cpuInfo, property));
+                    if (num != null) {
+                        report.addData(new MeasurementDataNumeric(request, num.doubleValue()));
+                    }
                 } else if (property.startsWith("CpuTrait.")) {
                     if (cpuInfo == null) {
                         cpuInfo = cpuInformation.getCpuInfo();
                     }
                     property = property.substring(property.indexOf(".") + 1);
                     Object o = ObjectUtil.lookupAttributeProperty(cpuInfo, property);
-                    String res;
-                    if ("model".equals(property) || "vendor".equals(property)) {
-                        res = (String) o;
-                    } else {
-                        res = String.valueOf(o);
+                    if (o != null) {
+                        String res;
+                        if ("model".equals(property) || "vendor".equals(property)) {
+                            res = (String) o;
+                        } else {
+                            res = String.valueOf(o);
+                        }
+                        report.addData(new MeasurementDataTrait(request, res));
                     }
-                    report.addData(new MeasurementDataTrait(request, res));
                 }
-
             }
         }
     }

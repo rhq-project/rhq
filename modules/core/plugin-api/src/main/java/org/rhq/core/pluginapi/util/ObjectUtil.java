@@ -26,37 +26,66 @@ import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.util.HashSet;
 import java.util.Set;
+import java.lang.reflect.Method;
+
 import javax.management.openmbean.CompositeData;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.jetbrains.annotations.Nullable;
 
-/**
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.util.exception.ThrowableUtil;
+
+ /**
  * @author Greg Hinkle
  */
 public class ObjectUtil {
-    private static Log log = LogFactory.getLog(ObjectUtil.class);
+    private static final Log LOG = LogFactory.getLog(ObjectUtil.class);
 
-    public static Object lookupAttributeProperty(Object value, String property) {
-        if (value instanceof CompositeData) {
-            CompositeData compositeData = ((CompositeData) value);
-            if (compositeData.containsKey(property)) {
-                value = compositeData.get(property);
+     /**
+     * Returns the value of the property with the specified name for the given Object, or null if the Object has no such
+     * property.
+     *
+     * @param obj an Object
+     * @param propertyName the name of the property whose value should be returned
+     *
+     * @return the value of the property with the specified name for the given Object, or null if the Object has no such
+     *         property
+     */
+    @Nullable
+    public static Object lookupAttributeProperty(Object obj, String propertyName) {
+        Object value = null;
+        if (obj instanceof CompositeData) {
+            CompositeData compositeData = ((CompositeData)obj);
+            if (compositeData.containsKey(propertyName)) {
+                value = compositeData.get(propertyName);
             } else {
-                log.debug("Unable to read attribute property [" + property + "] from object data value");
+                LOG.debug("Unable to read attribute/property [" + propertyName + "] from object [" + obj + "] using OpenMBean API - no such property.");
             }
         } else {
-            // Try to use reflection
+            // Try to use reflection.
             try {
-                PropertyDescriptor[] pds = Introspector.getBeanInfo(value.getClass()).getPropertyDescriptors();
+                PropertyDescriptor[] pds = Introspector.getBeanInfo(obj.getClass()).getPropertyDescriptors();
+                boolean propertyFound = false;
                 for (PropertyDescriptor pd : pds) {
-                    if (pd.getName().equals(property)) {
-                        value = pd.getReadMethod().invoke(value);
+                    if (pd.getName().equals(propertyName)) {
+                        propertyFound = true;
+                        Method readMethod = pd.getReadMethod();
+                        if (readMethod == null) {
+                            LOG.debug("Unable to read attribute/property [" + propertyName + "] from object [" + obj
+                                + "] using Reflection - property is not readable (i.e. it has no getter).");
+                        } else {
+                            value = readMethod.invoke(obj);
+                        }
                     }
                 }
+                if (!propertyFound) {
+                    LOG.debug("Unable to read attribute/property [" + propertyName + "] from object [" + obj
+                        + "] using Reflection - no such property.");
+                }
             } catch (Exception e) {
-                log.debug("Unable to read property from measurement attribute [" + property + "] not found on ["
-                    + value + "]");
+                LOG.debug("Unable to read attribute/property [" + propertyName + "] from object [" + obj
+                        + "] using Reflection - cause: " + ThrowableUtil.getAllMessages(e));
             }
         }
 
@@ -125,7 +154,7 @@ public class ObjectUtil {
             if (compositeData.containsKey(searchProperty)) {
                 value = compositeData.get(searchProperty);
             } else {
-                log.debug("Unable to read attribute property [" + propertyPath + "] from composite data value");
+                LOG.debug("Unable to read attribute property [" + propertyPath + "] from composite data value");
             }
         } else {
             // Try to use reflection
@@ -137,7 +166,7 @@ public class ObjectUtil {
                     }
                 }
             } catch (Exception e) {
-                log.debug("Unable to read property from measurement attribute [" + searchProperty + "] not found on ["
+                LOG.debug("Unable to read property from measurement attribute [" + searchProperty + "] not found on ["
                     + ((value != null) ? value.getClass().getSimpleName() : "null") + "]");
             }
         }
@@ -148,4 +177,8 @@ public class ObjectUtil {
 
         return value;
     }
-}
+
+    // Prevent instantiation of this class.
+    private ObjectUtil() {
+    }
+ }

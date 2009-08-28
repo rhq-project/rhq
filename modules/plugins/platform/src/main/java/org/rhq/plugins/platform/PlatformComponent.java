@@ -163,8 +163,10 @@ public class PlatformComponent implements ResourceComponent, ConfigurationFacet,
 
                 if (cpuPerc != null) {
                     property = property.substring(property.indexOf(".") + 1);
-                    double value = ((Number) ObjectUtil.lookupAttributeProperty(cpuPerc, property)).doubleValue();
-                    report.addData(new MeasurementDataNumeric(request, value));
+                    Number num = ((Number) ObjectUtil.lookupAttributeProperty(cpuPerc, property));
+                    if (num != null) {
+                        report.addData(new MeasurementDataNumeric(request, num.doubleValue()));
+                    }
                 }
             }
         }

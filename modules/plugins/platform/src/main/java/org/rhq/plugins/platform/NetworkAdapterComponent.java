@@ -89,7 +89,9 @@ public class NetworkAdapterComponent implements ResourceComponent<PlatformCompon
                 report.addData(new MeasurementDataTrait(request, info.getAllFlags()));
             } else {
                 Number number = ((Number) ObjectUtil.lookupAttributeProperty(stats, request.getName()));
-                report.addData(new MeasurementDataNumeric(request, number.doubleValue()));
+                if (number != null) {
+                    report.addData(new MeasurementDataNumeric(request, number.doubleValue()));
+                }
             }
         }
 

@@ -35,6 +35,9 @@ import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlTransient;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -44,6 +47,7 @@ import org.jetbrains.annotations.NotNull;
 @Entity
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CONF_PROP_DEF_ENUM_ID_SEQ")
 @Table(name = "RHQ_CONF_PROP_DEF_ENUM")
+@XmlAccessorType(XmlAccessType.FIELD)
 public class PropertyDefinitionEnumeration implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -66,6 +70,7 @@ public class PropertyDefinitionEnumeration implements Serializable {
 
     @JoinColumn(name = "PROPERTY_DEF_ID")
     @ManyToOne
+    @XmlTransient
     private PropertyDefinitionSimple propertyDefinitionSimple;
 
     protected PropertyDefinitionEnumeration() {

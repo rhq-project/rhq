@@ -3,6 +3,7 @@ package org.rhq.enterprise.server.ws;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.List;
 
 import javax.xml.namespace.QName;
 
@@ -28,14 +29,8 @@ import org.rhq.enterprise.server.ws.utility.WsUtility;
  * @author Jay Shaughnessy, Simeon Pinder
  */
 @Test(groups = "ws")
-public class WsResourceTypeManagerTest extends AssertJUnit implements TestPropertiesInterface {
+public class WsResourceTypeManagerTest extends AssertJUnit implements TestPropertiesInterface{
 
-    //Test variables
-    //    private static final boolean TESTS_ENABLED = true;
-    //    protected static String credentials = "ws-test";
-    //    protected static String host = "127.0.0.1";
-    //    protected static int port = 7080;
-    //    protected static boolean useSSL = false;
     private static ObjectFactory WS_OBJECT_FACTORY;
     private static WebservicesRemote WEBSERVICE_REMOTE;
     private static Subject subject = null;
@@ -54,6 +49,60 @@ public class WsResourceTypeManagerTest extends AssertJUnit implements TestProper
         WS_OBJECT_FACTORY = new ObjectFactory();
         WsSubjectTest.checkForWsTestUserAndRole();
         subject = WEBSERVICE_REMOTE.login(credentials, credentials);
+    }
+    
+    @Test(enabled=TESTS_ENABLED)
+    void testFindWithFiltering() {
+        ResourceType resourceType = WEBSERVICE_REMOTE.getResourceTypeByNameAndPlugin(subject, "service-alpha", "PerfTest");
+
+        ResourceTypeCriteria criteria = new ResourceTypeCriteria();
+        criteria.setFilterName("service-alpha");
+        criteria.setFilterDescription(resourceType.description);
+        criteria.setFilterCategory(ResourceCategory.SERVICE);
+        criteria.setFilterPluginName("PerfTest");
+        criteria.setFilterCreationDataType(ResourceCreationDataType.CONFIGURATION);
+        criteria.setFilterCreateDeletePolicy(CreateDeletePolicy.NEITHER);
+        criteria.setFilterSupportsManualAdd(false);
+
+        List<ResourceType> resourceTypes = WEBSERVICE_REMOTE.findResourceTypesByCriteria(subject, criteria);
+
+        assertEquals("Failed to find resource type when filtering", resourceTypes.size(), 1);
+    }
+
+    @Test(enabled=TESTS_ENABLED)
+    void testFindWithFetchingAssociations() {
+        ResourceType resourceType = WEBSERVICE_REMOTE.getResourceTypeByNameAndPlugin(subject, "service-alpha", "PerfTest");
+
+        ResourceTypeCriteria criteria = new ResourceTypeCriteria();
+        criteria.setFilterId(resourceType.id);
+        criteria.setFetchSubCategory(true);
+        criteria.setFetchChildResourceTypes(true);
+        criteria.setFetchParentResourceTypes(true);
+        criteria.setFetchPluginConfigurationDefinition(true);
+        criteria.setFetchResourceConfigurationDefinition(true);
+        criteria.setFetchMetricDefinitions(true);
+        criteria.setFetchEventDefinitions(true);
+        criteria.setFetchOperationDefinitions(true);
+        criteria.setFetchProcessScans(true);
+        criteria.setFetchPackageTypes(true);
+        criteria.setFetchSubCategories(true);
+        criteria.setFetchProductVersions(true);
+
+        List<ResourceType> resourceTypes = WEBSERVICE_REMOTE.findResourceTypesByCriteria(subject, criteria);
+
+        assertEquals("Failed to find resource type when fetching associations",resourceTypes.size(), 1);
+    }
+
+    @Test(enabled=TESTS_ENABLED)
+    void testFindWithSorting() {
+        ResourceTypeCriteria criteria = new ResourceTypeCriteria();
+        criteria.setSortName(PageOrdering.ASC);
+        criteria.setSortCategory(PageOrdering.DESC);
+        criteria.setSortPluginName(PageOrdering.ASC);
+
+        List<ResourceType> resourceTypes = WEBSERVICE_REMOTE.findResourceTypesByCriteria(subject, criteria);
+
+        assertTrue("Failed to find resource types when sorting",resourceTypes.size() > 0 );
     }
 
 }

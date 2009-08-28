@@ -31,14 +31,9 @@ import org.rhq.enterprise.server.ws.utility.WsUtility;
  * @author Jay Shaughnessy, Simeon Pinder
  */
 @Test(groups = "ws")
-public class WsAlertManagerTest extends AssertJUnit implements TestPropertiesInterface {
+public class WsAlertManagerTest extends AssertJUnit implements TestPropertiesInterface{
 
     //Test variables
-    //    private static final boolean TESTS_ENABLED = true;
-    //    protected static String credentials = "ws-test";
-    //    protected static String host = "127.0.0.1";
-    //    protected static int port = 7080;
-    //    protected static boolean useSSL = false;
     private static ObjectFactory WS_OBJECT_FACTORY;
     private static WebservicesRemote WEBSERVICE_REMOTE;
     private static Subject subject = null;
@@ -90,19 +85,20 @@ public class WsAlertManagerTest extends AssertJUnit implements TestPropertiesInt
     @Test(enabled = TESTS_ENABLED)
     void testFindMultipleAlertDefinitionsWithFiltering() {
         Resource serviceAlpha = findService("service-alpha-0", "server-omega-0");
-        Resource serviceBeta = findService("service-alpha-1", "server-omega-0");
+//        Resource serviceBeta = findService("service-alpha-1", "server-omega-0");
 
         AlertDefinitionCriteria criteria = WS_OBJECT_FACTORY.createAlertDefinitionCriteria();
         criteria.setFilterPriority(AlertPriority.MEDIUM);
         List<Integer> filterResourceIds = new ArrayList<Integer>();
         filterResourceIds.add(serviceAlpha.getId());
-        filterResourceIds.add(serviceBeta.getId());
+//        filterResourceIds.add(serviceBeta.getId());
         criteria.filterResourceIds = filterResourceIds;
         criteria.setFilterDeleted(false);
 
         List<AlertDefinition> alertDefs = WEBSERVICE_REMOTE.findAlertDefinitionsByCriteria(subject, criteria);
 
         assertEquals("Expected to get back two alert definitions but got " + alertDefs.size(), alertDefs.size(), 2);
+        
     }
 
     @Test(enabled = TESTS_ENABLED)
@@ -162,47 +158,51 @@ public class WsAlertManagerTest extends AssertJUnit implements TestPropertiesInt
         assertNotNull("Expected to get back non-null results when fetching alerts without filtering", alerts);
     }
 
+
     @Test(enabled = TESTS_ENABLED)
-    void testFindAlertsWithFiltering() throws InterruptedException {
+    void testFindAlertsWithFiltering() throws InterruptedException, MalformedURLException, SecurityException, IllegalArgumentException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException, LoginException_Exception {
         Resource service = findService("service-alpha-0", "server-omega-0");
-        SimpleDateFormat sdf = new SimpleDateFormat();
-        String eventDetails = sdf.format(new java.util.Date()) + " >> events created for " + service.name;
+        String eventDetails = new java.util.Date() + " >> events created for " + service.name;
         String severity = "WARN";
         int numberOfEvents = 1;
 
-        //	    opSchedule = fireEvents(service, severity, numberOfEvents, eventDetails);
-        ResourceOperationSchedule opSchedule = fireEvents(service, severity, numberOfEvents);
+        long startDate = new java.util.Date().getTime();
 
+        ResourceOperationSchedule opSchedule = fireEvents(service, severity, numberOfEvents, eventDetails);
+
+//        scriptUtil.waitForScheduledOperationToComplete(opSchedule);
         WsEventManagerTest.waitForScheduledOperationToComplete(opSchedule);
-
+        
         int pauseLength = 1000; // in milliseconds
-        int numberOfIntervals = 10;
+        int numberOfIntervals = 30;
 
-        EventCriteria eventCriteria = WS_OBJECT_FACTORY.createEventCriteria();
+        EventCriteria eventCriteria = new EventCriteria();
         eventCriteria.caseSensitive = true;
         eventCriteria.setFilterResourceId(service.id);
-        //eventCriteria.addFilterDetail(eventDetails);
+        eventCriteria.setFilterDetail(eventDetails);
+        eventCriteria.setFetchSource(true);
 
         List<Event> events = waitForEventsToBeCommitted(pauseLength, numberOfIntervals, eventCriteria, numberOfEvents);
 
-        assertEquals(
-            "Failed to find all fired events when finding alerts "
-                + "with filtering. This could just be a timeout. You may want to check your database and server logs to be sure though",
-            events.size(), numberOfEvents);
+        assertEquals("Failed to find all fired events when finding alerts " +
+                "with filtering. This could just be a timeout. You may want to check your database and server logs to be sure though",events.size(), numberOfEvents);
 
         String alertDef1Name = "service-alpha-0-alert-def-1";
 
-        AlertCriteria alertCriteria = WS_OBJECT_FACTORY.createAlertCriteria();
+        AlertCriteria alertCriteria = new AlertCriteria();
+        alertCriteria.caseSensitive = true;
+        alertCriteria.strict = true;
         alertCriteria.setFilterName(alertDef1Name);
         alertCriteria.setFilterDescription("Test alert definition 1 for service-alpha-0");
         alertCriteria.setFilterPriority(AlertPriority.MEDIUM);
-        alertCriteria.setFilterResourceTypeName("service-alpha-0");
+        alertCriteria.setFilterResourceTypeName("service-alpha");
+        alertCriteria.setFilterStartTime(startDate);
 
         List<Alert> alerts = WEBSERVICE_REMOTE.findAlertsByCriteria(subject, alertCriteria);
 
-        assertEquals("Expected to get back one alert for alert definition '" + alertDef1Name + "'", alerts.size(), 1);
+        assertEquals("Expected to get back one alert for alert definition '" + alertDef1Name + "'",alerts.size(), 1);
     }
-
+    
     String[] getNames(List<OperationDefinition> list) {
         String[] names = new String[list.size()];
         for (int i = 0; i < list.size(); ++i) {
@@ -263,23 +263,40 @@ public class WsAlertManagerTest extends AssertJUnit implements TestPropertiesInt
         return params;
     }
 
-    List<Event> findEventsByResource(Resource resource) {
-        EventCriteria criteria = WS_OBJECT_FACTORY.createEventCriteria();
-        criteria.setFilterResourceId(resource.id);
+    ResourceOperationSchedule fireEvents(Resource resource, String severity, int numberOfEvents, String details) {
+        String operationName = "createEvents";
+        int delay = 0;
+        int repeatInterval = 0;
+        int repeatCount = 0;
+        int timeout = 0;
+        Configuration parameters = createParameters(resource, severity, numberOfEvents, details);
+        String description = "Test script event for " + resource.name;
 
-        return WEBSERVICE_REMOTE.findEventsByCriteria(subject, criteria);
+        return WEBSERVICE_REMOTE.scheduleResourceOperation(
+            subject, resource.id,
+            operationName,
+            delay,
+            repeatInterval,
+            repeatCount,
+            timeout,
+            parameters,
+            description
+        );
     }
 
     List<Event> waitForEventsToBeCommitted(int intervalLength, int numberOfIntervals, EventCriteria eventCriteria,
         int numberOfEvents) throws InterruptedException {
+
+    	List<Event> events = null;
         for (int i = 0; i < numberOfIntervals; ++i) {
-            List<Event> events = WEBSERVICE_REMOTE.findEventsByCriteria(subject, eventCriteria);
+            events = WEBSERVICE_REMOTE.findEventsByCriteria(subject, eventCriteria);
             java.lang.System.out.println("SIZE = " + events.size() + ", NUM_EVENTS = " + numberOfEvents);
             if (events.size() == numberOfEvents) {
                 return events;
             }
             java.lang.Thread.sleep(intervalLength);
         }
-        return null;
+        return events;
+
     }
 }

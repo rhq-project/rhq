@@ -61,7 +61,7 @@ import org.jetbrains.annotations.NotNull;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlSeeAlso( { PropertyDefinitionSimple.class, PropertyDefinitionList.class, PropertyDefinitionMap.class })
 @XmlRootElement
-public abstract class PropertyDefinition implements Serializable {
+public class PropertyDefinition implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Column(name = "id")

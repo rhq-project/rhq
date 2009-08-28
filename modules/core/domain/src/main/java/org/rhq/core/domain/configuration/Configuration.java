@@ -345,7 +345,6 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
      * @return map containing of all of the Configuration's direct {@link PropertyMap} children
      */
     @NotNull
-    @XmlTransient
     public Map<String, PropertyMap> getMapProperties() {
         Map<String, PropertyMap> map = new LinkedHashMap<String, PropertyMap>();
         for (Property prop : this.getProperties()) {
@@ -364,7 +363,6 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
      * @return map containing of all of the Configuration's direct {@link PropertyList} children
      */
     @NotNull
-    @XmlTransient
     public Map<String, PropertyList> getListProperties() {
         Map<String, PropertyList> map = new LinkedHashMap<String, PropertyList>();
         for (Property prop : this.getProperties()) {
@@ -383,7 +381,6 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
      * @return map containing of all of the Configuration's direct {@link PropertySimple} children
      */
     @NotNull
-    @XmlTransient
     public Map<String, PropertySimple> getSimpleProperties() {
         Map<String, PropertySimple> map = new LinkedHashMap<String, PropertySimple>();
         for (Property prop : this.getProperties()) {

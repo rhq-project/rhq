@@ -33,12 +33,6 @@ import org.rhq.enterprise.server.ws.utility.WsUtility;
 @Test(groups = "ws")
 public class WsAlertDefinitionManagerTest extends AssertJUnit implements TestPropertiesInterface {
 
-    //Test variables
-//    private static final boolean TESTS_ENABLED = true;
-//    protected static String credentials = "ws-test";
-//    protected static String host = "127.0.0.1";
-//    protected static int port = 7080;
-//    protected static boolean useSSL = false;
     private static ObjectFactory WS_OBJECT_FACTORY;
     private static WebservicesRemote WEBSERVICE_REMOTE;
     private static Subject subject = null;
@@ -85,6 +79,28 @@ public class WsAlertDefinitionManagerTest extends AssertJUnit implements TestPro
         List<AlertDefinition> alertDefs = WEBSERVICE_REMOTE.findAlertDefinitionsByCriteria(subject, criteria);
 
         assertEquals("Expected to get back one alert definition.", alertDefs.size(), 1);
+    }
+    
+    @Test(enabled = TESTS_ENABLED)
+    void testGetAlertDefinitionById() {
+        Resource service = findService("service-alpha-0", "server-omega-0");
+
+        AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
+        criteria.setFilterName("service-alpha-0-alert-def-1");
+        criteria.setFilterDescription("Test alert definition 1 for service-alpha-0");
+        criteria.setFilterPriority(AlertPriority.MEDIUM);
+        criteria.setFilterEnabled(true);
+//        criteria.addFilterResourceIds(service.getId());
+        List<Integer> filterResourceIds = new ArrayList<Integer>();
+        filterResourceIds.add(service.getId());
+        criteria.filterResourceIds = filterResourceIds;
+        criteria.setFilterDeleted(false);
+
+        List<AlertDefinition> alertDefs = WEBSERVICE_REMOTE.findAlertDefinitionsByCriteria(subject, criteria);
+        AlertDefinition alertDef = alertDefs.get(0);
+
+        assertNotNull("Expected to get back an alert " +
+                "definition for id " + alertDef.id, WEBSERVICE_REMOTE.getAlertDefinition(subject, alertDef.id) );
     }
 
     @Test(enabled = TESTS_ENABLED)
@@ -156,10 +172,9 @@ public class WsAlertDefinitionManagerTest extends AssertJUnit implements TestPro
     }
 
     @Test(enabled = TESTS_ENABLED)
-    void testFindAlertsWithFiltering() throws InterruptedException {
+    void testFindAlertsWithFiltering() throws InterruptedException, MalformedURLException, SecurityException, IllegalArgumentException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException, LoginException_Exception {
         Resource service = findService("service-alpha-0", "server-omega-0");
-        SimpleDateFormat sdf = new SimpleDateFormat();
-        String eventDetails = sdf.format(new java.util.Date()) + " >> events created for " + service.name;
+        String eventDetails = new java.util.Date() + " >> events created for " + service.name;
         String severity = "WARN";
         int numberOfEvents = 1;
 
@@ -174,7 +189,7 @@ public class WsAlertDefinitionManagerTest extends AssertJUnit implements TestPro
         EventCriteria eventCriteria = WS_OBJECT_FACTORY.createEventCriteria();
         eventCriteria.caseSensitive = true;
         eventCriteria.setFilterResourceId(service.id);
-        //eventCriteria.addFilterDetail(eventDetails);
+        eventCriteria.setFilterDetail(eventDetails);
 
         List<Event> events = waitForEventsToBeCommitted(pauseLength, numberOfIntervals, eventCriteria, numberOfEvents);
 
@@ -261,14 +276,15 @@ public class WsAlertDefinitionManagerTest extends AssertJUnit implements TestPro
 
     List<Event> waitForEventsToBeCommitted(int intervalLength, int numberOfIntervals, EventCriteria eventCriteria,
         int numberOfEvents) throws InterruptedException {
+    	List<Event> events = null;
         for (int i = 0; i < numberOfIntervals; ++i) {
-            List<Event> events = WEBSERVICE_REMOTE.findEventsByCriteria(subject, eventCriteria);
+            events = WEBSERVICE_REMOTE.findEventsByCriteria(subject, eventCriteria);
             java.lang.System.out.println("SIZE = " + events.size() + ", NUM_EVENTS = " + numberOfEvents);
             if (events.size() == numberOfEvents) {
                 return events;
             }
             java.lang.Thread.sleep(intervalLength);
         }
-        return null;
+        return events;
     }
 }

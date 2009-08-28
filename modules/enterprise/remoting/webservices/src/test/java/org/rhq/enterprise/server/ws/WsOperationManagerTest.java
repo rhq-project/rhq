@@ -4,8 +4,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.ArrayList;
 
 import javax.xml.namespace.QName;
 
@@ -31,14 +31,9 @@ import org.rhq.enterprise.server.ws.utility.WsUtility;
  * @author Jay Shaughnessy, Simeon Pinder
  */
 @Test(groups = "ws")
-public class WsOperationManagerTest extends AssertJUnit implements TestPropertiesInterface {
+public class WsOperationManagerTest extends AssertJUnit implements TestPropertiesInterface{
 
     //Test variables
-    //    private static final boolean TESTS_ENABLED = true;
-    //    protected static String credentials = "ws-test";
-    //    protected static String host = "127.0.0.1";
-    //    protected static int port = 7080;
-    //    protected static boolean useSSL = false;
     private static ObjectFactory WS_OBJECT_FACTORY;
     private static WebservicesRemote WEBSERVICE_REMOTE;
     private static Subject subject = null;
@@ -169,7 +164,7 @@ public class WsOperationManagerTest extends AssertJUnit implements TestPropertie
     }
 
     @Test(enabled = TESTS_ENABLED)
-    void testFindResourceOperationHistoriesWithFiltering() throws InterruptedException {
+    void testFindResourceOperationHistoriesWithFiltering() throws InterruptedException, MalformedURLException, SecurityException, IllegalArgumentException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException, LoginException_Exception {
         Resource serviceAlpha = findResource("service-alpha-0", "server-omega-0");
         Resource serviceBeta = findResource("service-beta-0", "server-omega-0");
 

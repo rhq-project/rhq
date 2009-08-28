@@ -91,4 +91,39 @@ public class WsConfigurationManagerTest extends AssertJUnit implements TestPrope
         assertNotNull("The property definition map should not be null.", pluginConfig
             .getPropertyListOrPropertySimpleOrPropertyMap());
     }
+
+    //    @Test(enabled = TESTS_ENABLED)
+    //    void testUpdateResourceConfiguration() {
+    //        Resource resource = findResource("service-beta-0", "server-omega-0");
+    //        Configuration config = WEBSERVICE_REMOTE.getResourceConfiguration(subject, resource.id);
+    //
+    //        String propertyName = "beta-config0";
+    //        String propertyValue = "updated property value -- " + new java.util.Date();
+    //
+    //        List<Property> bag = config.getPropertyListOrPropertySimpleOrPropertyMap();
+    //        	
+    //        property = config.getSimple(propertyName);
+    //
+    //        property.setStringValue(propertyValue);
+    //
+    //        ResourceConfigurationUpdate configUpdate = WEBSERVICE_REMOTE.updateResourceConfiguration(subject, resource.id, config);
+    //
+    //        while (WEBSERVICE_REMOTE.isResourceConfigurationUpdateInProgress(subject, resource.id)) {
+    //            java.lang.Thread.sleep(1000);        
+    //        }
+    //
+    //        config = WEBSERVICE_REMOTE.getResourceConfiguration(subject, resource.id);
+    //        var updatedProperty = config.getSimple(propertyName);
+    //
+    //        assertEquals("Failed to update resource configuration",updatedProperty.stringValue, propertyValue);
+    //    }
+
+    @Test(enabled = TESTS_ENABLED)
+    Resource findResource(String name, String parentName) {
+        ResourceCriteria criteria = new ResourceCriteria();
+        criteria.setFilterName(name);
+        criteria.setFilterParentResourceName(parentName);
+
+        return WEBSERVICE_REMOTE.findResourcesByCriteria(subject, criteria).get(0);
+    }
 }

@@ -4,6 +4,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.lang.Exception;
 import java.util.HashMap;
 import java.util.List;
 
@@ -60,19 +62,163 @@ public class WsResourceGroupManagerTest extends AssertJUnit implements TestPrope
     }
 
     @Test(enabled = TESTS_ENABLED)
-    public void testResourceGroup() throws java.lang.Exception {
-    	
-    	assertNotNull("Webservice Remote is null.",WEBSERVICE_REMOTE);
-    	assertNotNull("JAXB ObjectFactory is null.",WS_OBJECT_FACTORY);
-    	assertNotNull("You have not logged in successfully.",subject);
-    	
-    	//locate group
-    	ResourceGroupCriteria groupCriteria = WS_OBJECT_FACTORY.createResourceGroupCriteria();
-    	groupCriteria.setFilterName("All Perf Test Servers");
-    	List<ResourceGroup> groups = WEBSERVICE_REMOTE.findResourceGroupsByCriteria(subject, groupCriteria);
-    	assertNotNull("The ResourceGroup reference was null.",groups);
-    	assertTrue("Group was not located.",groups.size()>0);
-    	//
-    	
+    void testCreateAndDeleteResourceGroup() throws ResourceGroupDeleteException_Exception {
+        ResourceGroup resourceGroup = createResourceGroup();
+
+        assertFalse("Failed to create resource group",resourceGroup.id == 0);
+
+        WEBSERVICE_REMOTE.deleteResourceGroup(subject, resourceGroup.id);
+
+        Exception exception = null;
+        try {
+            WEBSERVICE_REMOTE.getResourceGroup(subject, resourceGroup.id);
+        }catch (Exception e) {
+			exception = e;
+		}
+
+        assertNotNull("Failed to delete resource group", exception );
     }
+
+    @Test(enabled = TESTS_ENABLED)
+    void testAddResourcesToGroup() {
+        ResourceGroup resourceGroup = createResourceGroup();
+
+        assertFalse("Cannot add resources to group. Failed to create resource group.", resourceGroup.id == 0);
+
+        List<Resource> resources = findAlphaServices();
+        assertEquals("Cannot add resources to group. Failed to find the correct number of resources.", resources.size(), 10);
+
+        addResourcesToGroup(resourceGroup, resources);
+
+        ResourceGroupCriteria criteria = new ResourceGroupCriteria();
+        criteria.setFilterId(resourceGroup.id);
+        criteria.setFetchExplicitResources(true);
+
+        resourceGroup = WEBSERVICE_REMOTE.findResourceGroupsByCriteria(subject, criteria).get(0);
+
+        assertEquals("Failed to find resources in group. Resources may not have been added.",resourceGroup.explicitResources.size(), 10);
+    }
+
+    @Test(enabled = TESTS_ENABLED)
+    void testFindWithFiltering() {
+        ResourceGroup resourceGroup = createResourceGroup();
+        List<Resource> resources = findAlphaServices();
+        Resource resource = resources.get(0);
+
+        addResourcesToGroup(resourceGroup, resources);
+
+        ResourceGroupCriteria criteria = new ResourceGroupCriteria();
+        criteria.setFilterId(resourceGroup.id);
+        criteria.setFilterPluginName("PerfTest");
+        criteria.setFilterResourceTypeId(resource.resourceType.id);
+        criteria.setFilterResourceTypeName(resource.resourceType.name);
+        criteria.setFilterName(resourceGroup.name);
+        criteria.setFilterGroupCategory(GroupCategory.COMPATIBLE);
+//        criteria.addFilterExplicitResourceIds(getIds(resources));
+        criteria.filterExplicitResourceIds = getIds(resources);   
+        
+        List<ResourceGroup> resourceGroups = WEBSERVICE_REMOTE.findResourceGroupsByCriteria(subject, criteria);
+
+        assertEquals("Failed to find resource groups when applying filters.",resourceGroups.size(), 1);
+    }
+
+    @Test(enabled = TESTS_ENABLED)
+    void testFindWithFetchingAssociations() {
+         ResourceGroup resourceGroup = createResourceGroup();
+         List<Resource> resources = findAlphaServices();
+
+        addResourcesToGroup(resourceGroup, resources);
+
+        ResourceGroupCriteria criteria = new ResourceGroupCriteria();
+        criteria.setFilterId(resourceGroup.id);
+        criteria.setFetchExplicitResources(true);
+        criteria.setFetchImplicitResources(true);
+        criteria.setFetchOperationHistories(true);
+        criteria.setFetchConfigurationUpdates(true);
+        criteria.setFetchGroupDefinition(true);
+        criteria.setFetchResourceType(true);
+
+        List<ResourceGroup> resourceGroups = WEBSERVICE_REMOTE.findResourceGroupsByCriteria(subject, criteria);
+
+        assertEquals("Failed to find resource groups when fetching associations.",resourceGroups.size(), 1);
+    }
+
+    @Test(enabled = TESTS_ENABLED)
+    void testFindWithSorting() {
+         ResourceGroup resourceGroup = createResourceGroup();
+         List<Resource> resources = findAlphaServices();
+
+        addResourcesToGroup(resourceGroup, resources);
+
+        ResourceGroupCriteria criteria = new ResourceGroupCriteria();
+        criteria.setSortName(PageOrdering.ASC);
+        criteria.setSortResourceTypeName(PageOrdering.DESC);
+
+        List<ResourceGroup> resourceGroups = WEBSERVICE_REMOTE.findResourceGroupsByCriteria(subject, criteria);
+
+        assertTrue("Failed to find resource groups when sorting",resourceGroups.size() > 0);
+    }
+
+     ResourceGroup createResourceGroup() {
+        ResourceType resourceType = getResourceType();
+        assertNotNull("Failed to find resource type for new resource group.", resourceType );
+
+        String groupName = "test-group-" + new java.util.Date().getTime();
+        ResourceGroup resGroup = new ResourceGroup();
+          resGroup.setName(groupName);
+          resGroup.setResourceType(resourceType);
+         
+        return WEBSERVICE_REMOTE.createResourceGroup(subject, resGroup);
+    }
+
+    ResourceType getResourceType() {
+        String resourceTypeName = "service-alpha";
+        String pluginName = "PerfTest";
+
+        return WEBSERVICE_REMOTE.getResourceTypeByNameAndPlugin(subject, resourceTypeName, pluginName);
+    }
+
+    List<Resource> findAlphaServices() {
+        ResourceCriteria criteria = new ResourceCriteria();
+        criteria.caseSensitive = true;
+        criteria.strict = true;
+        criteria.setFilterParentResourceName("server-omega-0");
+        criteria.setFilterResourceTypeName("service-alpha");
+        criteria.setFetchResourceType(true);
+
+        return WEBSERVICE_REMOTE.findResourcesByCriteria(subject, criteria);
+    }
+
+    void addResourcesToGroup(ResourceGroup group, List<Resource> resources) {
+        List<Integer> resourceIds = getIds(resources);
+        WEBSERVICE_REMOTE.addResourcesToGroup(subject, group.id, resourceIds);
+    }
+
+    List<Integer> getIds(List<Resource> resources) {
+//        var ids = [];
+    	List<Integer> ids = new ArrayList<Integer>();
+
+        for (int i = 0; i < resources.size(); ++i) {
+//            ids.push(resources.get(i).id);
+            ids.add(resources.get(i).getId());
+        }
+
+        return ids;
+    }
+
+//    public void testResourceGroup() throws java.lang.Exception {
+//    	
+//    	assertNotNull("Webservice Remote is null.",WEBSERVICE_REMOTE);
+//    	assertNotNull("JAXB ObjectFactory is null.",WS_OBJECT_FACTORY);
+//    	assertNotNull("You have not logged in successfully.",subject);
+//    	
+//    	//locate group
+//    	ResourceGroupCriteria groupCriteria = WS_OBJECT_FACTORY.createResourceGroupCriteria();
+//    	groupCriteria.setFilterName("All Perf Test Servers");
+//    	List<ResourceGroup> groups = WEBSERVICE_REMOTE.findResourceGroupsByCriteria(subject, groupCriteria);
+//    	assertNotNull("The ResourceGroup reference was null.",groups);
+//    	assertTrue("Group was not located.",groups.size()>0);
+//    	//
+//    	
+//    }
 }

@@ -37,20 +37,20 @@ import org.rhq.enterprise.server.ws.utility.WsUtility;
 @Test(groups = "ws")
 @XmlSeeAlso( { PropertyDefinitionSimple.class, PropertyDefinitionList.class, PropertyDefinitionMap.class,
     ObjectFactory.class })
-public class WsEventManagerTest extends AssertJUnit implements TestPropertiesInterface {
+public class WsEventManagerTest extends AssertJUnit implements TestPropertiesInterface{
 
     //Test variables
-    //    private static final boolean TESTS_ENABLED = true;
-    //    protected static String credentials = "ws-test";
-    //    protected static String host = "127.0.0.1";
-    //    protected static int port = 7080;
-    //    protected static boolean useSSL = false;
+//    private static final boolean TESTS_ENABLED = true;
+//    protected static String credentials = "ws-test";
+//    protected static String host = "127.0.0.1";
+//    protected static int port = 7080;
+//    protected static boolean useSSL = false;
     private static ObjectFactory WS_OBJECT_FACTORY;
     private static WebservicesRemote WEBSERVICE_REMOTE;
     private static Subject subject = null;
 
     @BeforeClass
-    public void init() throws ClassNotFoundException, MalformedURLException, SecurityException, NoSuchMethodException,
+    public static void init() throws ClassNotFoundException, MalformedURLException, SecurityException, NoSuchMethodException,
         IllegalArgumentException, InstantiationException, IllegalAccessException, InvocationTargetException,
         LoginException_Exception {
 
@@ -74,7 +74,8 @@ public class WsEventManagerTest extends AssertJUnit implements TestPropertiesInt
     static Resource betaService0;
 
     @BeforeClass
-    static void setUp() {
+    static void setUp() throws MalformedURLException, SecurityException, IllegalArgumentException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException, LoginException_Exception {
+    	init();
         Resource parentServer = findServer("server-omega-0");
         alphaService0 = findService("service-alpha-0", parentServer);
         alphaService1 = findService("service-alpha-1", parentServer);
@@ -94,7 +95,7 @@ public class WsEventManagerTest extends AssertJUnit implements TestPropertiesInt
     }
 
     @Test(enabled = TESTS_ENABLED)
-    void testFilterByResource() throws InterruptedException, JAXBException {
+    void testFilterByResource() throws InterruptedException, JAXBException, MalformedURLException, SecurityException, IllegalArgumentException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException, LoginException_Exception {
         PropertyDefinitionSimple propertyDef = WS_OBJECT_FACTORY.createPropertyDefinitionSimple();
         propertyDef.setName("test property definition");
         System.out.println("PropertyDefinition has been created.");
@@ -137,9 +138,9 @@ public class WsEventManagerTest extends AssertJUnit implements TestPropertiesInt
     }
 
     static Resource findServer(String name) {
-        if (WS_OBJECT_FACTORY == null) {
-            setUp();
-        }
+//        if (WS_OBJECT_FACTORY == null) {
+//            setUp();
+//        }
         ResourceCriteria criteria = WS_OBJECT_FACTORY.createResourceCriteria();
         criteria.setFilterName(name);
 
@@ -211,16 +212,16 @@ public class WsEventManagerTest extends AssertJUnit implements TestPropertiesInt
     }
 
     public static ResourceOperationHistory waitForScheduledOperationToComplete(ResourceOperationSchedule schedule)
-        throws InterruptedException {
+        throws InterruptedException, MalformedURLException, SecurityException, IllegalArgumentException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException, LoginException_Exception {
 
         return waitForScheduledOperationToComplete(schedule, 1000L, 10);
     }
 
     public static ResourceOperationHistory waitForScheduledOperationToComplete(ResourceOperationSchedule schedule,
-        long intervalDuration, int maxIntervals) throws InterruptedException {
+        long intervalDuration, int maxIntervals) throws InterruptedException, MalformedURLException, SecurityException, IllegalArgumentException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException, LoginException_Exception {
         //        ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
         if (WS_OBJECT_FACTORY == null) {
-            setUp();
+            init();
         }
         ResourceOperationHistoryCriteria criteria = WS_OBJECT_FACTORY.createResourceOperationHistoryCriteria();
         //TODO: doc below on wiki

@@ -190,7 +190,7 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent {
         SystemInfo systemInfo = context.getSystemInformation();
         String hostname = systemInfo.getHostname();
         TomcatConfig tomcatConfig = parseTomcatConfig(catalinaBase);
-        tomcatConfig = applyEnvironmentVariables(tomcatConfig, commandLine);
+        tomcatConfig = applySystemProperties(tomcatConfig, commandLine);
         
         // Create pieces necessary for the resource creation
         String resourceVersion = determineVersion(catalinaHome, catalinaBase, systemInfo);
@@ -537,13 +537,13 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent {
         }
     }
 
-    private TomcatConfig applyEnvironmentVariables(TomcatConfig config, String[] commandLine) {
-        String port = applyEnvironmentVariable(config.getPort(), commandLine);
-        String address = applyEnvironmentVariable(config.getAddress(), commandLine);
+    private TomcatConfig applySystemProperties(TomcatConfig config, String[] commandLine) {
+        String port = applySystemProperty(config.getPort(), commandLine);
+        String address = applySystemProperty(config.getAddress(), commandLine);
         return new TomcatConfig(port, address);
     }
     
-    private String applyEnvironmentVariable(String variable, String[] commandLine) {
+    private String applySystemProperty(String variable, String[] commandLine) {
         if (variable != null && variable.startsWith("${") && variable.endsWith("}")) {
             String variableName = variable.substring(2, variable.length() - 1); //${var}
             

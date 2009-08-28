@@ -42,6 +42,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
@@ -297,11 +298,12 @@ public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent {
             baseName += " Jopr Server, ";
             description += " hosting the Jopr Server";
 
-            // RHQ-633 : We know this is an RHQ Server. Let's auto configure for tracking its log file
-            // JOPR-53 : Tracking will be disabled, user will have to explicitly enable it now
+            // RHQ-633 : We know this is an RHQ Server. Let's auto-configure for tracking its log file, which is not in
+            //           the standard JBoss AS location.
+            // JOPR-53 : Log tracking will be disabled - user will have to explicitly enable it now.
             File rhqLogFile = JBossASServerComponent.resolvePathRelativeToHomeDir(pluginConfiguration,
                 "../logs/rhq-server-log4j.log");
-            /*if (rhqLogFile.exists() && !rhqLogFile.isDirectory()) {
+            if (rhqLogFile.exists() && !rhqLogFile.isDirectory()) {
                 try {
                     PropertyMap serverLogEventSource = new PropertyMap("serverLog");
                     serverLogEventSource.put(
@@ -310,15 +312,15 @@ public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent {
                     serverLogEventSource.put(new PropertySimple(
                         LogFileEventResourceComponentHelper.LogEventSourcePropertyNames.ENABLED, Boolean.FALSE));
                     serverLogEventSource.put(new PropertySimple(
-                        LogFileEventResourceComponentHelper.LogEventSourcePropertyNames.MINIMUM_SEVERITY, "info"));
+                        LogFileEventResourceComponentHelper.LogEventSourcePropertyNames.MINIMUM_SEVERITY,
+                            EventSeverity.INFO.name().toLowerCase()));
                     PropertyList logEventSources = pluginConfiguration
                         .getList(LogFileEventResourceComponentHelper.LOG_EVENT_SOURCES_CONFIG_PROP);
                     logEventSources.add(serverLogEventSource);
                 } catch (IOException e) {
                     log.warn("Unable to setup RHQ Server log file monitoring.", e);
                 }
-
-            }*/
+            }
         }
         String name = formatServerName(baseName, bindingAddress, namingPort, configName, installInfo);
 

@@ -437,9 +437,9 @@
 
       <metric property="txErrors" displayName="Transmit Errors" measurementType="trendsup"
               description="'errors' statistic for transmitted packets across this network interface since it started"/>
-      <metric property="TxDropped" displayName="Transmit Packets Dropped" measurementType="trendsup"
+      <metric property="txDropped" displayName="Transmit Packets Dropped" measurementType="trendsup"
               description="'dropped' statistic for transmitted packets across this network interface since it started"/>
-      <metric property="txOverruns" displayName="Transmit Overrurns" measurementType="trendsup"
+      <metric property="txOverruns" displayName="Transmit Overruns" measurementType="trendsup"
               description="'overruns' statistic for transmitted packets across this network interface since it started"/>
       <metric property="txCollisions" displayName="Transmit Collisions" measurementType="trendsup"
               description="'collisions' statistic for transmitted packets across this network interface since it started"/>
@@ -511,7 +511,7 @@
 
       <metric displayName="User Time" property="Cpu.user" units="milliseconds" measurementType="trendsup" 
               description="The total system CPU user time"/>
-      <metric displayName="Niced Time" property="Cpu.nice" units="milliseconds" measurementType="trendsup" 
+      <metric displayName="Nice Time" property="Cpu.nice" units="milliseconds" measurementType="trendsup"
               description="The total system CPU nice time"/>
       <metric displayName="System Time" property="Cpu.sys" units="milliseconds" measurementType="trendsup" 
               description="The total system CPU kernel time"/>

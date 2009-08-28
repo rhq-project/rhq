@@ -27,6 +27,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.net.URLDecoder;
+import java.io.UnsupportedEncodingException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -76,25 +78,40 @@ public class JBossASTomcatConnectorDiscoveryComponent extends MBeanResourceDisco
                 log.debug("jboss.web:type=GlobalRequestProcessor,name=* MBeans are not fully deployed yet - aborting...");
             return Collections.emptySet();
         }
-        // Map <port, schema>
-        Map<String, String> schemaMap = new HashMap<String, String>(beans.size());
+        // Map <port, scheme>
+        Map<String, String> schemeMap = new HashMap<String, String>(beans.size());
 
         // Map <port, addressPresent>
         Map<String, Boolean> addressPresentMap = new HashMap<String, Boolean>(beans.size());
 
         for (EmsBean bean : beans) {
             EmsBeanName eName = bean.getBeanName();
+
+            // There are a two possible formats for the value of the 'name' key property. When parsing, it's important
+            // to remember that the hostname can potentially contain a '-'. Note, %2F is a URL-encoded '/'.
+            //   1) http-foo-bar.example.com-8080
+            //   2) http-foo-bar.example.com%2F192.168.10.11-8080
             String oName = eName.getKeyProperty("name");
-            String[] comps = oName.split("-");
-            if (comps.length == 2) {
-                schemaMap.put(comps[1], comps[0]);
-                addressPresentMap.put(comps[1], false);
-            } else if (comps.length == 3) {
-                schemaMap.put(comps[2], comps[0]);
-                addressPresentMap.put(comps[2], true);
-            } else {
-                log.warn("Unknown ObjectName for GlobalRequestProcessor: " + oName);
+
+            int firstDashIndex = oName.indexOf('-');
+            String scheme = oName.substring(0, firstDashIndex);
+            String remainder = oName.substring(firstDashIndex + 1);
+
+            int lastDashIndex = remainder.lastIndexOf('-');
+            String host = remainder.substring(0, lastDashIndex);
+            String port = remainder.substring(lastDashIndex + 1);
+
+            schemeMap.put(port, scheme);
+
+            try {
+                host = URLDecoder.decode(host, "UTF-8");
             }
+            catch (UnsupportedEncodingException e) {
+                log.error("Failed to decode host portion of GlobalRequestProcessor name: " + oName, e);
+                continue;
+            }
+
+            addressPresentMap.put(port, host.contains("/"));
         }
 
         // The address may be read with %2F at the start of it. Parse that out before returning the resources.
@@ -136,10 +153,10 @@ public class JBossASTomcatConnectorDiscoveryComponent extends MBeanResourceDisco
                 }
             }
 
-            String schema = schemaMap.get(port);
-            pluginConfiguration.put(new PropertySimple(JBossASTomcatConnectorComponent.PROPERTY_SCHEMA, schema));
+            String scheme = schemeMap.get(port);
+            pluginConfiguration.put(new PropertySimple(JBossASTomcatConnectorComponent.PROPERTY_SCHEMA, scheme));
             //         if (log.isDebugEnabled())
-            log.debug("Found a connector: " + schema + "-" + dirtyAddress + ":" + port);
+            log.debug("Found a connector: " + scheme + "-" + dirtyAddress + ":" + port);
         }
 
         return resourceDetails;

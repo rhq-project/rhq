@@ -8,9 +8,21 @@
 <f:loadBundle var="bundle" basename="InstallerMessages" />
 
 <html>
+    <head>
+      <script type="text/javascript">
+         function hideDiv( _levelId) {
+            var thisDiv = document.getElementById( _levelId );
+            thisDiv.style.display = "none";
+         }
+
+         function showDiv( _levelId) {
+            var thisDiv = document.getElementById( _levelId );
+            thisDiv.style.display = "block";
+          }
+      </script>
+   </head>
 
    <body>
-
    <f:subview id="header">
       <jsp:include page="/header.jsp" flush="true" />
    </f:subview>
@@ -37,6 +49,16 @@
       <h4 align="left">
          <h:outputText value="#{bundle.databaseSettingsInstructions}" />
       </h4>
+      <div id="experimentalDbMsg" style="display: none;">
+        <table>
+            <tr>
+                <td><img alt="warning" src="images/warning.gif"/></td>
+                <td><h:outputText value="#{bundle.experimentalDb}" styleClass="javascriptWarning"/></td>
+            </tr>
+        </table>
+
+      </div>
+
       <h:panelGrid columns="1">
          <h:panelGrid columns="2"
                       rowClasses="evenRow,oddRow">
@@ -52,25 +74,30 @@
                                           document.getElementById('propForm:databaseconnectionurl').value = 'jdbc:postgresql://127.0.0.1:5432/rhq';
                                           document.getElementById('propForm:databasedriverclass').value = 'org.postgresql.Driver';
                                           document.getElementById('propForm:databasexadatasourceclass').value = 'org.postgresql.xa.PGXADataSource';
+                                          hideDiv('experimentalDbMsg');
                                        } else if (this.options[this.selectedIndex].value == 'Oracle10g') {
                                           document.getElementById('propForm:databaseconnectionurl').value = 'jdbc:oracle:thin:@127.0.0.1:1521:rhq';
                                           document.getElementById('propForm:databasedriverclass').value = 'oracle.jdbc.driver.OracleDriver';
                                           document.getElementById('propForm:databasexadatasourceclass').value = 'oracle.jdbc.xa.client.OracleXADataSource';
+                                          hideDiv('experimentalDbMsg');
                                        } else if (this.options[this.selectedIndex].value == 'H2') {
                                           document.getElementById('propForm:databaseconnectionurl').value = 'jdbc:h2:#{configurationBean.dataDirectory}/rhq;MVCC=TRUE;DB_CLOSE_ON_EXIT=FALSE;LOG=2';
                                           document.getElementById('propForm:databasedriverclass').value = 'org.h2.Driver';
                                           document.getElementById('propForm:databasexadatasourceclass').value = 'org.h2.jdbcx.JdbcDataSource';
                                           alert('#{bundle.experimentalDb}');
+                                          showDiv('experimentalDbMsg');
                                        } else if (this.options[this.selectedIndex].value == 'sqlserver') {
                                           document.getElementById('propForm:databaseconnectionurl').value = 'jdbc:jtds:sqlserver://localhost:1433;databaseName=rhq';
                                           document.getElementById('propForm:databasedriverclass').value = 'net.sourceforge.jtds.jdbc.Driver';
                                           document.getElementById('propForm:databasexadatasourceclass').value = 'net.sourceforge.jtds.jdbcx.JtdsDataSource';
                                           alert('#{bundle.experimentalDb}');
+                                          showDiv('experimentalDbMsg');
                                        } else if (this.options[this.selectedIndex].value == 'MySQL') {
                                           document.getElementById('propForm:databaseconnectionurl').value = 'jdbc:mysql://127.0.0.1/rhq';
                                           document.getElementById('propForm:databasedriverclass').value = 'com.mysql.jdbc.Driver';
                                           document.getElementById('propForm:databasexadatasourceclass').value = 'com.mysql.jdbc.jdbc2.optional.MysqlXADataSource';
                                           alert('#{bundle.experimentalDb}');
+                                          showDiv('experimentalDbMsg');
                                        }
                                       ">
                <f:selectItems value="#{configurationBean.databaseConfiguration[0].itemDefinition.options}" />

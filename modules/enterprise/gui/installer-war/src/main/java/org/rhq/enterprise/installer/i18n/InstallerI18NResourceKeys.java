@@ -72,7 +72,7 @@ public interface InstallerI18NResourceKeys {
     String ADMIN_PASSWORD = "adminPassword";
 
     @I18NMessages( {
-        @I18NMessage(locale = "en", value = "Support for this database is experimental and is to be used for demo and testing purposes only."),
+        @I18NMessage(locale = "en", value = "Usage of the selected database is for demo purposes only. It should not be used in production installations. No support is available for installations that use H2 or MS SQL Server for their database."),
         @I18NMessage(locale = "de", value = "Unterstützung für diese Datenbank ist experimentell und ist nur für Demo-und Testzwecke geeignet.") })
     String EXPERIMENTAL_DB = "experimentalDb";
 

@@ -26,8 +26,8 @@ import static org.testng.Assert.fail;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.TreeSet;
 
-import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
 import org.rhq.core.clientapi.agent.inventory.CreateResourceRequest;
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
@@ -54,8 +54,6 @@ import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
-import org.rhq.plugins.jbossas5.test.util.AppServerUtils;
-import org.testng.annotations.Test;
 
 /**
  * @author Ian Springer
@@ -138,20 +136,31 @@ public abstract class AbstractResourceTest extends AbstractPluginTest {
     }
 
     protected void testOperations() throws Exception {
-        if (supportsFacet(OperationFacet.class)) {
-            Set<OperationDefinition> operationDefinitions = getResourceType().getOperationDefinitions();
-            Set<Resource> resources = getResources();
+        Set<OperationDefinition> operationDefinitions = getResourceType().getOperationDefinitions();
+        Set<String> operationNames = new TreeSet<String>();
+        for (OperationDefinition operationDefinition : operationDefinitions) {
+        	operationNames.add(operationDefinition.getName());
+        }
+        
+        Set<Resource> resources = getResources();
+        testOperations(resources, operationNames);
+    }
+    
+    protected void testOperations(Set<Resource> resources, Set<String> operationNames) throws Exception {
+    	if (supportsFacet(OperationFacet.class)) {
+            //Set<OperationDefinition> operationDefinitions = getResourceType().getOperationDefinitions();
+            //Set<Resource> resources = getResources();
             for (Resource resource : resources) {
                 System.out.println("Validating operations for " + resource + "...");
                 // TODO: Execute lifecycle operations in a specific order, so they don't break the other operations.
                 //       For example, execute 'restart' first, followed by 'stop', followed by 'start'.
-                for (OperationDefinition operationDefinition : operationDefinitions) {
+                for (String name : operationNames) {
                     //we must get a new operation facet for each operation so that each operation gets
                     //the 3 seconds to finish. Otherwise all the operations would have to finish in 3 secs
                     //which can be a bit harsh limit.
                     OperationFacet operationFacet = ComponentUtil.getComponent(resource.getId(), OperationFacet.class,
                         FacetLockType.WRITE, OPERATION_FACET_METHOD_TIMEOUT, true, true);
-                    String name = operationDefinition.getName();
+                    //String name = operationDefinition.getName();
                     OperationResult result = operationFacet.invokeOperation(name, getTestOperationParameters(name));
                     System.out.println("Validating operation '" + name + "' result (" + result + ")...");
                     validateOperationResult(name, result, resource);
@@ -160,6 +169,7 @@ public abstract class AbstractResourceTest extends AbstractPluginTest {
         }
         return;
     }
+    
 
     protected void testResourceConfigLoad() throws Exception {
         if (supportsFacet(ConfigurationFacet.class) && getResourceType().getResourceConfigurationDefinition() != null) {
@@ -178,8 +188,13 @@ public abstract class AbstractResourceTest extends AbstractPluginTest {
     }
 
     protected void testResourceConfigUpdate() throws Exception {
-        if (supportsFacet(ConfigurationFacet.class) && getResourceType().getResourceConfigurationDefinition() != null) {
-            Set<Resource> resources = getResources();
+    	Set<Resource> resources = getResources();
+    	testResourceConfigUpdate(resources);
+    }
+    
+    protected void testResourceConfigUpdate(Set<Resource> resources) throws Exception {
+    	if (supportsFacet(ConfigurationFacet.class) && getResourceType().getResourceConfigurationDefinition() != null) {
+            //Set<Resource> resources = getResources();
             for (Resource resource : resources) {
                 try {
                     Configuration testResourceConfig = getTestResourceConfiguration();

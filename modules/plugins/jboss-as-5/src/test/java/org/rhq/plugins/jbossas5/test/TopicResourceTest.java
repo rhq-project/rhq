@@ -22,22 +22,38 @@
  */
 package org.rhq.plugins.jbossas5.test;
 
+import java.util.Set;
+import java.util.TreeSet;
+
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
-import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.Resource;
 
 /**
  * @author Ian Springer
+ * @author Noam Malki
  */
 @Test(groups = { "as5-plugin", "as5-plugin-topic" })
-public class TopicResourceTest extends AbstractResourceTest {
+public class TopicResourceTest extends AbstractDestinationTest {
 
+	
+	protected String getDestinationName()
+	{
+		return "TestTopic";
+	}
+	
+	protected String getDestinationJndi()
+	{
+		return "/topic/testTopic";
+	}
+	
+	
     @BeforeTest(groups = "as5-plugin-topic" )
-    public void setup() {
+    public void setup() throws Exception {
         System.out.println("Running Topic test...");
-        // TODO: Create a topic, subscribe to it, and send a message to it (i.e. to generate some metrics).
+        
+		initDestination();
     }
 
     @Override
@@ -46,31 +62,41 @@ public class TopicResourceTest extends AbstractResourceTest {
     }
 
     @Override
+    @Test(dependsOnMethods = "testMetrics") //the test may affect the metrics so it is important that this test will run after the metric test
     public void testOperations() throws Exception {
-        super.testOperations();
-    }
 
-    @Override
-    public void testResourceConfigLoad() throws Exception {
-        super.testResourceConfigLoad();
-    }
-
-    @Override
-    public void testResourceConfigUpdate() throws Exception {
-        super.testResourceConfigUpdate();
-    }
-
-    @Override
-    public void testResourceCreation() throws Exception {
-        super.testResourceCreation();
+    	Set<Resource> resources = getResources();
+        for (Resource resource : resources) {
+        	if(resource.getName().equals(getDestinationName()))
+        	{
+        		Set<Resource> testResources = new TreeSet<Resource>();
+        		testResources.add(resource);
+        		
+        		Set<String> testOperation = new TreeSet<String>();
+        		testOperation.add("listAllSubscriptions");
+        		testOperation.add("listAllSubscriptionsAsHTML");
+        		testOperation.add("listDurableSubscriptions");
+        		testOperation.add("listDurableSubscriptionsAsHTML");
+        		testOperation.add("listNonDurableSubscriptions");
+        		testOperation.add("listNonDurableSubscriptionsAsHTML");
+        		testOperations(testResources , testOperation);
+        		
+        		Thread.sleep(2000);
+        		testOperation = new TreeSet<String>();
+        		testOperation.add("stop");
+        		testOperations(testResources , testOperation);
+        		
+        		Thread.sleep(2000);
+        		testOperation = new TreeSet<String>();
+        		testOperation.add("start");
+        		testOperations(testResources , testOperation);
+        		
+        	}
+        }
     }
     
     protected String getResourceTypeName() {
         return "Topic";
-    }
-
-    protected Configuration getTestResourceConfiguration() {
-        return new Configuration(); // TODO...
     }
 
     @Override
@@ -85,7 +111,7 @@ public class TopicResourceTest extends AbstractResourceTest {
     @Override
     protected void validateTraitMetricValue(String metricName, String value, Resource resource) {
         if (metricName.equals("createdProgrammatically")) {
-            assert value.equals("true");
+            assert value.equals("false"); //In this case we are using DeploymentTemplates a deployment descriptor is generated and this value should be false.
         }
     }
 }

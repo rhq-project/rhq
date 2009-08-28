@@ -22,23 +22,42 @@
  */
 package org.rhq.plugins.jbossas5.test;
 
+import java.util.Set;
+import java.util.TreeSet;
+
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
-import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.Resource;
-
 /**
  * @author Ian Springer
+ * @author Noam Malki
  */
 @Test(groups = {"as5-plugin", "as5-plugin-queue"})
-public class QueueResourceTest extends AbstractResourceTest {
+public class QueueResourceTest extends AbstractDestinationTest {
+	
+	//private Integer nOfMessages = 10;
+	
+	
+	//private static final String QUEUE_NAME = "TestQueue";
+	
+	protected String getDestinationName()
+	{
+		return "TestQueue";
+	}
+	
+	protected String getDestinationJndi()
+	{
+		return "/queue/testQueue";
+	}
+	
 
-    @BeforeTest(groups = "as5-plugin-queue")
-    public void setup() {
-        System.out.println("Running Queue test...");
-        // TODO: Create a queue and send a message to it (i.e. to generate some metrics).
-    }
+	@BeforeTest(groups = "as5-plugin-queue")
+	public void setup() throws Exception{
+		System.out.println("Running Queue test...");
+		
+		initDestination();
+	}
     
     protected String getResourceTypeName() {
         return "Queue";
@@ -48,33 +67,49 @@ public class QueueResourceTest extends AbstractResourceTest {
     public void testMetrics() throws Exception {
         super.testMetrics();
     }
+    
 
     @Override
+    @Test(dependsOnMethods = "testMetrics") //the test may affect the metrics so it is important that this test will run after the metric test
     public void testOperations() throws Exception {
-        super.testOperations();
+    	
+    	Set<Resource> resources = getResources();
+        for (Resource resource : resources) {
+        	if(resource.getName().equals(getDestinationName()))
+        	{
+        		Set<Resource> testResources = new TreeSet<Resource>();
+        		testResources.add(resource);
+        		
+        		Set<String> testOperation = new TreeSet<String>();
+        		//testOperation.add("start");
+        		testOperation.add("listMessageCounterAsHTML");
+        		testOperation.add("listMessageCounterHistoryAsHTML");
+        		testOperation.add("resetMessageCounter");
+        		testOperation.add("resetMessageCounterHistory");
+        		testOperations(testResources , testOperation);
+        		
+        		Thread.sleep(2000);
+        		testOperation = new TreeSet<String>();
+        		testOperation.add("stop");
+        		testOperations(testResources , testOperation);
+        		
+        		Thread.sleep(2000);
+        		testOperation = new TreeSet<String>();
+        		testOperation.add("start");
+        		testOperations(testResources , testOperation);
+        		
+        	}
+        }
     }
 
-    @Override
-    public void testResourceConfigLoad() throws Exception {
-        super.testResourceConfigLoad();
-    }
 
-    @Override
-    public void testResourceConfigUpdate() throws Exception {
-        super.testResourceConfigUpdate();
-    }
-
-    @Override
-    public void testResourceCreation() throws Exception {
-        super.testResourceCreation();
-    }
-
-    protected Configuration getTestResourceConfiguration() {
-        return new Configuration(); // TODO...
-    }
+    
 
     @Override
     protected void validateNumericMetricValue(String metricName, Double value, Resource resource) {
+        if (metricName.equals("messageStatistics.count") && resource.getName().equals(getDestinationName())) {       	
+            assert value ==  NUM_OF_MESSAGES.doubleValue();
+        }
         if (metricName.endsWith("Count")) {
             assert value >= 0;
         } else {
@@ -85,7 +120,8 @@ public class QueueResourceTest extends AbstractResourceTest {
     @Override
     protected void validateTraitMetricValue(String metricName, String value, Resource resource) {
         if (metricName.equals("createdProgrammatically")) {
-            assert value.equals("true");
+            assert value.equals("false"); //In this case we are using DeploymentTemplates a deployment descriptor is generated and this value should be false. 
         }
+
     }
 }

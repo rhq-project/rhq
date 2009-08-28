@@ -23,12 +23,13 @@
 
 rhq.login('rhqadmin', 'rhqadmin');
 
-executeAllTests();
+//executeAllTests();
+executeTests(['testUpdateResourceConfiguration']);
 
 rhq.logout();
 
 function testUpdateResourceConfiguration() {
-    var resource = findService('service-beta-0', 'server-omega-0');
+    var resource = findService('service-beta-1', 'server-omega-1');
     var config = ConfigurationManager.getResourceConfiguration(resource.id);
 
     var propertyName = 'beta-config0';
@@ -41,7 +42,7 @@ function testUpdateResourceConfiguration() {
     var configUpdate = ConfigurationManager.updateResourceConfiguration(resource.id, config);
 
     while (ConfigurationManager.isResourceConfigurationUpdateInProgress(resource.id)) {
-        java.lang.Thread.sleep(1000);        
+        java.lang.Thread.sleep(1000);
     }
 
     config = ConfigurationManager.getResourceConfiguration(resource.id);
@@ -69,10 +70,56 @@ function testUpdatePluginConfiguration() {
     Assert.assertEquals(updatedProperty.stringValue, propertyValue, 'Failed to update plugin configuration');
 }
 
+function testUpdateResourceGroupConfiguration() {
+    var groupName = 'service-beta-group -- ' + java.util.Date();
+    var group = createResourceGroup(groupName);
+
+    var services = findBetaServices('server-omega-0');
+
+    Assert.assertNumberEqualsJS(services.size(), 10, 'Failed to find beta services');
+
+    var configs = loadConfigs(services);
+
+    Assert.assertNumberEqualsJS(configs.length, 10, 'Failed to load all resource configurations');
+}
+
 function findService(name, parentName) {
     var criteria = ResourceCriteria();
     criteria.addFilterName(name);
     criteria.addFilterParentResourceName(parentName);
 
     return ResourceManager.findResourcesByCriteria(criteria).get(0);
+}
+
+function findBetaServices(parentName) {
+    var criteria = ResourceCriteria();
+    criteria.addFilterParentResourceName(parentName);
+    criteria.addFilterResourceTypeName('service-beta');
+    criteria.caseSensitive = true;
+    criteria.strict = true;
+
+    return ResourceManager.findResourcesByCriteria(criteria);
+}
+
+function createResourceGroup(name) {
+    var resourceType = getResourceType('service-beta');
+    Assert.assertNotNull(resourceType, 'Failed to find resource type for new resource group.');
+
+    return ResourceGroupManager.createResourceGroup(ResourceGroup(name, resourceType));
+}
+
+function getResourceType(resourceTypeName) {
+    var pluginName = 'PerfTest';
+
+    return ResourceTypeManager.getResourceTypeByNameAndPlugin(resourceTypeName, pluginName);
+}
+
+function loadConfigs(resources) {
+    var configs = [];
+
+    for (i = 0; i < resources.size(); ++i) {
+        configs.push(ConfigurationManager.getResourceConfiguration(resources.get(i).id));
+    }
+
+    return configs;
 }

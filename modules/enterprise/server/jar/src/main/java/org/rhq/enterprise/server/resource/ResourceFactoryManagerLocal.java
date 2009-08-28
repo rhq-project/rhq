@@ -217,17 +217,17 @@ public interface ResourceFactoryManagerLocal {
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     /**
-     * @see {@link ResourceFactoryManagerRemote.deleteResource(Subject,int,int,String,Configuration,Configuration) 
+     * @see {@link ResourceFactoryManagerRemote.createResource(Subject,int,int,String,Configuration,Configuration) 
      */
     void createResource(Subject subject, int parentResourceId, int resourceTypeId, String resourceName,
         Configuration pluginConfiguration, Configuration resourceConfiguration);
 
     /**
-     * @see {@link ResourceFactoryManagerRemote.deleteResource(Subject,int,int,String,Configuration,String,String,Integer,Configuration,byte[]) 
+     * @see {@link ResourceFactoryManagerRemote.createPackageBackedResource(Subject,int,int,String,Configuration,String,String,Integer,Configuration,byte[]) 
      */
-    void createResource(Subject subject, int parentResourceId, int newResourceTypeId, String newResourceName,
-        Configuration pluginConfiguration, String packageName, String packageVersion, Integer architectureId,
-        Configuration deploymentTimeConfiguration, byte[] packageBits);
+    void createPackageBackedResource(Subject subject, int parentResourceId, int newResourceTypeId,
+        String newResourceName, Configuration pluginConfiguration, String packageName, String packageVersion,
+        Integer architectureId, Configuration deploymentTimeConfiguration, byte[] packageBits);
 
     /**
      * @see {@link ResourceFactoryManagerRemote.deleteResource(Subject,int) 

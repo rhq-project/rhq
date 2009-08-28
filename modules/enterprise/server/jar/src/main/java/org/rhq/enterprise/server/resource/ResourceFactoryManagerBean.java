@@ -476,9 +476,9 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         }
     }
 
-    public void createResource(Subject subject, int parentResourceId, int newResourceTypeId, String newResourceName,
-        Configuration pluginConfiguration, String packageName, String packageVersionNumber, Integer architectureId,
-        Configuration deploymentTimeConfiguration, byte[] packageBits) {
+    public void createPackageBackedResource(Subject subject, int parentResourceId, int newResourceTypeId,
+        String newResourceName, Configuration pluginConfiguration, String packageName, String packageVersionNumber,
+        Integer architectureId, Configuration deploymentTimeConfiguration, byte[] packageBits) {
 
         createResource(subject, parentResourceId, newResourceTypeId, newResourceName, pluginConfiguration, packageName,
             packageVersionNumber, architectureId, deploymentTimeConfiguration, new ByteArrayInputStream(packageBits));

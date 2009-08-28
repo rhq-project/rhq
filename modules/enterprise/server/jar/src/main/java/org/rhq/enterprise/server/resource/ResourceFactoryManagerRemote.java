@@ -84,7 +84,7 @@ public interface ResourceFactoryManagerRemote {
      * @param packageBits                 content of the package to create
      */
     @WebMethod
-    void createResource(//
+    void createPackageBackedResource(//
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "parentResourceId") int parentResourceId, //
         @WebParam(name = "newResourceTypeId") int newResourceTypeId, //

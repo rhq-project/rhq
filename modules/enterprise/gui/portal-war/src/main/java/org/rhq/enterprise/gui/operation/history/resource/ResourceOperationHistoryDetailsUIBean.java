@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.operation.history.resource;
 
+import org.ajax4jsf.model.KeepAlive;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.operation.OperationHistory;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
@@ -28,6 +30,7 @@ import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
+@KeepAlive(ajaxOnly = true)
 public class ResourceOperationHistoryDetailsUIBean {
     private OperationHistory history;
     private OperationParameters parameters;
@@ -40,28 +43,23 @@ public class ResourceOperationHistoryDetailsUIBean {
             OperationManagerLocal operationManager = LookupUtil.getOperationManager();
 
             this.history = operationManager.getOperationHistoryByHistoryId(subject, operationId);
-
             this.parameters = new OperationParameters(this.history);
-
             this.results = new OperationResults((ResourceOperationHistory) history);
         }
     }
 
     public OperationHistory getHistory() {
         init();
-
         return this.history;
     }
 
     public OperationParameters getParameters() {
         init();
-
-        return parameters;
+        return this.parameters;
     }
 
     public OperationResults getResults() {
         init();
-
-        return results;
+        return this.results;
     }
 }

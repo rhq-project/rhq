@@ -69,6 +69,18 @@ public class PropertyListTest {
         assertNotSame(copy.getList().get(0), original.getList().get(0), "Properties in the list should be copied by value as opposed to just copying the references");
     }
 
+    @Test
+    public void deepCopyShouldSetParentOfCopiedProperty() {
+        PropertyList original = createPropertyList();
+
+        PropertySimple simpleProperty = new PropertySimple("simpleProperty", "Simple Property");
+        original.add(simpleProperty);
+
+        PropertyList copy = original.deepCopy();
+
+        assertSame(copy.getList().get(0).getParentList(), copy, "The parentList property of copied properties should be set to the new PropertyList");
+    }
+
     private PropertyList createPropertyList() {
         PropertyList propertyList = new PropertyList("listProperty");
         propertyList.setId(1);

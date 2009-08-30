@@ -86,6 +86,10 @@ public class PropertyList extends Property {
         setName(name);
     }
 
+    protected PropertyList(PropertyList original) {
+        super(original);
+    }
+
     /**
      * Creates a new {@link PropertyList} object that is associated with the given name and has the given properties as
      * its initial list of child properties. All properties found in <code>startingList</code> will have their
@@ -208,8 +212,14 @@ public class PropertyList extends Property {
         return result;
     }
 
-    public Property deepCopy() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    public PropertyList deepCopy() {
+        PropertyList copy = new PropertyList(this);
+
+        for (Property property : list) {
+            copy.add(property.deepCopy());
+        }
+
+        return copy;
     }
 
     @Override

@@ -32,12 +32,20 @@ function testUpdateResourceConfiguration() {
     var resource = findService('service-beta-1', 'server-omega-1');
     var config = ConfigurationManager.getResourceConfiguration(resource.id);
 
+//    var interfaces = config.getClass().interfaces;
+//    for (i = 0; i < interfaces.length; ++i) {
+//        println(interfaces[i].getName());
+//    }
+//
+//    if (true) return;
+
     var propertyName = 'beta-config0';
     var propertyValue = 'updated property value -- ' + java.util.Date();
 
     var property = config.getSimple(propertyName);
 
     property.setStringValue(propertyValue);
+    config.put(property);
 
     var configUpdate = ConfigurationManager.updateResourceConfiguration(resource.id, config);
 

@@ -67,7 +67,27 @@ public class PropertyMapTest {
 
         assertEquals(copy.getMap().size(), original.getMap().size(), "Failed to copy simple property contained in original property map");
 
-        assertNotSame(copy.getMap().get(0), original.getMap().get(0), "Properties in the map should be copied by value as opposed to just copying the references");
+        assertNotSame(
+            copy.getMap().get(simpleProperty.getName()),
+            original.getMap().get(simpleProperty.getName()),
+            "Properties in the map should be copied by value as opposed to just copying the references"
+        );
+    }
+
+    @Test
+    public void deepCopyShouldSetParentOfCopiedProperty() {
+        PropertyMap original = createPropertyMap();
+
+        PropertySimple simpleProperty = new PropertySimple("simpleProperty", "Simple Property");
+        original.put(simpleProperty);
+
+        PropertyMap copy = original.deepCopy();
+
+        assertSame(
+            copy.get(simpleProperty.getName()).getParentMap(),
+            copy,
+            "The parentMap property of copied properties should be set to the new PropertyMap"
+        );
     }
 
     private PropertyMap createPropertyMap() {

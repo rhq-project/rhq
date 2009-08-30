@@ -259,6 +259,10 @@ public class PropertyMap extends Property implements AbstractPropertyMap {
         return result;
     }
 
+    public Property deepCopy() {
+        return null;
+    }
+
     @Override
     protected void appendToStringInternals(StringBuilder str) {
         super.appendToStringInternals(str);

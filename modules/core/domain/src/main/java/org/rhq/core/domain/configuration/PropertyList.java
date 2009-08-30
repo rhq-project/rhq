@@ -208,6 +208,10 @@ public class PropertyList extends Property {
         return result;
     }
 
+    public Property deepCopy() {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
     @Override
     protected void appendToStringInternals(StringBuilder str) {
         super.appendToStringInternals(str);

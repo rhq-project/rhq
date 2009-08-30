@@ -70,6 +70,13 @@ public class PropertySimple extends Property implements Externalizable {
         override = Boolean.FALSE;
     }
 
+    protected PropertySimple(PropertySimple original) {
+        super(original);
+        this.override = original.override;
+        this.unmaskedStringValue = original.unmaskedStringValue;
+        this.stringValue = original.stringValue;
+    }
+
     /**
      * Constructs a property that has the given name with the given value. The value's <code>toString</code>
      * representation will be stored in this object - <code>value</code> itself will not be stored (that is, this object
@@ -327,6 +334,10 @@ public class PropertySimple extends Property implements Externalizable {
         int result = super.hashCode(); // superclass hashCode is derived from the name field
         result = (31 * result) + ((this.stringValue != null) ? this.stringValue.hashCode() : 0);
         return result;
+    }
+
+    public PropertySimple deepCopy() {
+        return new PropertySimple(this);
     }
 
     @Override

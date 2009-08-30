@@ -127,6 +127,12 @@ public abstract class Property implements Externalizable {
     public Property() {
     }
 
+    protected Property(Property original) {
+        this.errorMessage = original.errorMessage;
+        this.id = original.id;
+        this.name = original.name;
+    }
+
     public int getId() {
         return id;
     }
@@ -278,6 +284,8 @@ public abstract class Property implements Externalizable {
     public int hashCode() {
         return ((this.name != null) ? this.name.hashCode() : 0);
     }
+
+    public abstract <P extends Property> P deepCopy();
 
     // It's not clear to me why this class implements Externalizable.  It seems to write out every field
     // using standard serialization. Also, it's sub-classes seem to write out every field. To be safe I'm leaving

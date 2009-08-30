@@ -35,9 +35,16 @@ public class PropertyListTest {
 
         PropertyList copy = original.deepCopy();
 
-        assertEquals(copy.getId(), original.getId(), "Failed to copy the id property");
         assertEquals(copy.getName(), original.getName(), "Failed to copy the name property");
         assertEquals(copy.getErrorMessage(), original.getErrorMessage(), "Failed to copy the errorMessage property");
+    }
+
+    @Test
+    public void deepCopyShouldNotCopyIdField() {
+        PropertyList original = createPropertyList();
+        PropertyList copy = original.deepCopy();
+
+        assertFalse(copy.getId() == original.getId(), "The original id property should not be copied.");
     }
 
     @Test

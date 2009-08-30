@@ -129,7 +129,6 @@ public abstract class Property implements Externalizable {
 
     protected Property(Property original) {
         this.errorMessage = original.errorMessage;
-        this.id = original.id;
         this.name = original.name;
     }
 

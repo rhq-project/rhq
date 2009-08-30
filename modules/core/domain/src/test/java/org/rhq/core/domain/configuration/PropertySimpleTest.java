@@ -30,20 +30,33 @@ import org.testng.annotations.Test;
 public class PropertySimpleTest {
 
     @Test
-    public void deepCopyShouldCopyAllSimpleFields() {
-        PropertySimple original = new PropertySimple("simpleProperty", "Simple Property");
-        original.setId(1);
-        original.setErrorMessage("error message");
-        original.setUnmaskedStringValue("Unmasked Simple Property");
+    public void deepCopyShouldCopySimpleFields() {
+        PropertySimple original = createProperty();
 
         PropertySimple copy = original.deepCopy();
 
-        assertEquals(copy.getId(), original.getId(), "Failed to copy the id property");
         assertEquals(copy.getName(), original.getName(), "Failed to copy the name property");
         assertEquals(copy.getErrorMessage(), original.getErrorMessage(), "Failed to copy the errorMessage property");
         assertEquals(copy.getOverride(), original.getOverride(), "Failed to copy the override property");
         assertEquals(copy.getUnmaskedStringValue(), original.getUnmaskedStringValue(), "Failed to copy the unmaskedStringValue property");
         assertEquals(copy.getStringValue(), original.getStringValue(), "Failed to copy the stringValue property");
+    }
+
+    @Test
+    public void deepCopyShouldNotCopyIdField() {
+        PropertySimple original = createProperty();
+
+        PropertySimple copy = original.deepCopy();
+
+        assertFalse(copy.getId() == original.getId(), "The original id property should not be copied.");
+    }
+
+    private PropertySimple createProperty() {
+        PropertySimple original = new PropertySimple("simpleProperty", "Simple Property");
+        original.setId(1);
+        original.setErrorMessage("error message");
+        original.setUnmaskedStringValue("Unmasked Simple Property");
+        return original;
     }
 
 }

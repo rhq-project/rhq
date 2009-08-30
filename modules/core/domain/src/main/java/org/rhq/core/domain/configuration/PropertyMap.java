@@ -76,6 +76,10 @@ public class PropertyMap extends Property implements AbstractPropertyMap {
     public PropertyMap() {
     }
 
+    protected PropertyMap(PropertyMap original) {
+        super(original);
+    }
+
     /**
      * Creates a new, empty {@link PropertyMap} object that is associated with the given name.
      *
@@ -259,8 +263,14 @@ public class PropertyMap extends Property implements AbstractPropertyMap {
         return result;
     }
 
-    public Property deepCopy() {
-        return null;
+    public PropertyMap deepCopy() {
+        PropertyMap copy = new PropertyMap(this);
+
+        for (Property property : map.values()) {
+            copy.put(property.deepCopy());
+        }
+
+        return copy;
     }
 
     @Override

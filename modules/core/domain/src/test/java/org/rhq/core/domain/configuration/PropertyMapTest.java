@@ -27,38 +27,58 @@ import static org.testng.Assert.*;
 
 import org.testng.annotations.Test;
 
-public class PropertySimpleTest {
+public class PropertyMapTest {
 
     @Test
     public void deepCopyShouldCopySimpleFields() {
-        PropertySimple original = createProperty();
-
-        PropertySimple copy = original.deepCopy();
+        PropertyMap original = createPropertyMap();
+        PropertyMap copy = original.deepCopy();
 
         assertNotSame(copy, original, "The copy should not reference the original object");
-        
+
         assertEquals(copy.getName(), original.getName(), "Failed to copy the name property");
         assertEquals(copy.getErrorMessage(), original.getErrorMessage(), "Failed to copy the errorMessage property");
-        assertEquals(copy.getOverride(), original.getOverride(), "Failed to copy the override property");
-        assertEquals(copy.getUnmaskedStringValue(), original.getUnmaskedStringValue(), "Failed to copy the unmaskedStringValue property");
-        assertEquals(copy.getStringValue(), original.getStringValue(), "Failed to copy the stringValue property");
     }
 
     @Test
     public void deepCopyShouldNotCopyIdField() {
-        PropertySimple original = createProperty();
-
-        PropertySimple copy = original.deepCopy();
+        PropertyMap original = createPropertyMap();
+        PropertyMap copy = original.deepCopy();
 
         assertFalse(copy.getId() == original.getId(), "The original id property should not be copied.");
     }
 
-    private PropertySimple createProperty() {
-        PropertySimple original = new PropertySimple("simpleProperty", "Simple Property");
-        original.setId(1);
-        original.setErrorMessage("error message");
-        original.setUnmaskedStringValue("Unmasked Simple Property");
-        return original;
+    @Test
+    public void deepCopyShouldNotCopyReferenceOfUnderlyingMap() {
+        PropertyMap original = createPropertyMap();
+        PropertyMap copy = original.deepCopy();
+
+        assertNotSame(copy.getMap(), original.getMap(), "The values in the underlying map should be copied, not the reference to the map itself");
+    }
+
+    @Test
+    public void deepCopyShouldCopyProperty() {
+        PropertyMap original = createPropertyMap();
+
+        PropertySimple simpleProperty = new PropertySimple("simeplProperty", "Simple Property");
+        original.put(simpleProperty);
+
+        PropertyMap copy = original.deepCopy();
+
+        assertEquals(copy.getMap().size(), original.getMap().size(), "Failed to copy simple property contained in original property map");
+
+        assertNotSame(copy.getMap().get(0), original.getMap().get(0), "Properties in the map should be copied by value as opposed to just copying the references");
+    }
+
+    private PropertyMap createPropertyMap() {
+        PropertyMap map = new PropertyMap("mapProperty");
+        map.setId(1);
+        map.setErrorMessage("error message");
+
+        // This is done to ensure that the underlying map is initialized.
+        map.getMap();
+
+        return map;
     }
 
 }

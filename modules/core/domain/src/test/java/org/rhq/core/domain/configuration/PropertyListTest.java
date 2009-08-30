@@ -35,6 +35,8 @@ public class PropertyListTest {
 
         PropertyList copy = original.deepCopy();
 
+        assertNotSame(copy, original, "The copy should not reference the original object");
+        
         assertEquals(copy.getName(), original.getName(), "Failed to copy the name property");
         assertEquals(copy.getErrorMessage(), original.getErrorMessage(), "Failed to copy the errorMessage property");
     }
@@ -56,7 +58,7 @@ public class PropertyListTest {
     }
 
     @Test
-    public void deepCopyShouldCopySimpleProperties() {
+    public void deepCopyShouldCopyProperty() {
         PropertyList original = createPropertyList();
 
         PropertySimple simpleProperty = new PropertySimple("simeplProperty", "Simple Property");

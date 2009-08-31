@@ -216,10 +216,10 @@ public class ListGroupAlertHistoryUIBean extends PagedDataTableUIBean {
             ListGroupAlertHistoryUIBean.this.setDateErrors(null);
             if ((dateStr != null) && !dateStr.equals("")) {
                 try {
-                    DateFormat df = new SimpleDateFormat("MM/dd/yyyy");
+                    DateFormat df = new SimpleDateFormat("MM/dd/yy");
                     date = df.parse(dateStr);
                 } catch (ParseException pe) {
-                    ListGroupAlertHistoryUIBean.this.setDateErrors("Error: Invalid date filter, format is MM/dd/yyyy");
+                    ListGroupAlertHistoryUIBean.this.setDateErrors("Error: Invalid date filter, format is MM/dd/yy");
                     // do nothing else, things will pass through will a null date and function properly
                 }
             }

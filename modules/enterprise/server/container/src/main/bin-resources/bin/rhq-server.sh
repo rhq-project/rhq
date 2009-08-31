@@ -255,7 +255,9 @@ export JAVA
 if [ -z "$RHQ_SERVER_JAVA_OPTS" ]; then
    RHQ_SERVER_JAVA_OPTS="-Xms1024M -Xmx1024M -XX:PermSize=256M -XX:MaxPermSize=256M -Djava.net.preferIPv4Stack=true -Djboss.server.log.dir=${_LOG_DIR_PATH}"
 fi
-RHQ_SERVER_JAVA_OPTS="-Dapp.name=rhq-server $RHQ_SERVER_JAVA_OPTS -Djava.awt.headless=true -Djboss.platform.mbeanserver -Dsun.lang.ClassLoader.allowArraySyntax=true"
+# Add the JVM opts that we always want to specify, whether or not the user set RHQ_SERVER_JAVA_OPTS.
+RHQ_SERVER_JAVA_OPTS="-Dapp.name=rhq-server $RHQ_SERVER_JAVA_OPTS -Djava.awt.headless=true -Djboss.platform.mbeanserver -Dsun.lang.ClassLoader.allowArraySyntax=true -Djava.util.logging.config.file=$RHQ_SERVER_HOME/jbossas/server/default/conf/logging.properties"
+
 debug_msg "RHQ_SERVER_JAVA_OPTS: $RHQ_SERVER_JAVA_OPTS"
 debug_msg "RHQ_SERVER_ADDITIONAL_JAVA_OPTS: $RHQ_SERVER_ADDITIONAL_JAVA_OPTS"
 

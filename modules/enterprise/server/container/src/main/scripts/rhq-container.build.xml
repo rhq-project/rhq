@@ -394,8 +394,7 @@
          <fileset dir="${jboss.home}/server/default/lib">
             <include name="activation.jar" />
          </fileset>
-      </move>
-      <delete file="${jboss.home}/lib/endorsed/xalan.jar" verbose="true" />
+      </move>      
 
       <echo>Adding support for the embedded agent ...</echo>
       <move todir="${jboss.home}/lib/endorsed" verbose="true">

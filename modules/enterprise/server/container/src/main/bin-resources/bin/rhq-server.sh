@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # chkconfig: 2345 92 26
-# description: Starts and stops the RHQ server
+# description: Starts and stops the RHQ Server
 #
 # processname: java
 
@@ -15,7 +15,7 @@
 # This script is customizable by setting the following environment variables:
 #
 # Note that if this script is to be used as an init.d script, you must set
-# RHQ_SERVER_HOME so this script knows where to find the server installation.
+# RHQ_SERVER_HOME so this script knows where to find the Server installation.
 #
 #    RHQ_SERVER_DEBUG - If this is defined, the script will emit debug
 #                       messages. If this is not defined or set to "false"
@@ -29,7 +29,7 @@
 #                           use. This will be ignored if
 #                           RHQ_SERVER_JAVA_EXE_FILE_PATH is set.
 #                           If this and RHQ_SERVER_JAVA_EXE_FILE_PATH are
-#                           not set, the server's embedded JRE will be used.
+#                           not set, the Server's embedded JRE will be used.
 #
 #    RHQ_SERVER_JAVA_EXE_FILE_PATH - Defines the full path to the Java
 #                                    executable to use. If this is set,
@@ -38,29 +38,40 @@
 #                                    $RHQ_SERVER_JAVA_HOME/bin/java
 #                                    is used. If this and
 #                                    RHQ_SERVER_JAVA_HOME are not set, the
-#                                    server's embedded JRE will be used.
+#                                    Server's embedded JRE will be used.
 #
 #    RHQ_SERVER_JAVA_OPTS - Java VM command line options to be
-#                           passed into the server's VM. If this is not defined
+#                           passed into the Server's VM. If this is not defined
 #                           this script will pass in a default set of options.
 #                           If this is set, it completely overrides the
-#                           server's defaults. If you only want to add options
-#                           to the server's defaults, then you will want to
+#                           Server's defaults. If you only want to add options
+#                           to the Server's defaults, then you will want to
 #                           use RHQ_SERVER_ADDITIONAL_JAVA_OPTS instead.
 #
 #    RHQ_SERVER_ADDITIONAL_JAVA_OPTS - additional Java VM command line options
-#                                      to be passed into the server's VM. This
+#                                      to be passed into the Server's VM. This
 #                                      is added to RHQ_SERVER_JAVA_OPTS; it
-#                                      is mainly used to augment the server's
+#                                      is mainly used to augment the Server's
 #                                      default set of options. This can be
 #                                      left unset if it is not needed.
 #
 #    RHQ_SERVER_CMDLINE_OPTS - If this is defined, these are the command line
-#                              arguments that will be passed to the RHQ Server.
+#                              arguments that will be passed to the RHQ Server
+#                              JBossAS run.sh. If you only want to add options
+#                              to the Server's defaults, then you will want to
+#                              use RHQ_SERVER_ADDITIONAL_CMDLINE_OPTS instead.
+#
+#    RHQ_SERVER_ADDITIONAL_CMDLINE_OPTS - additional command line arguments to
+#                                         be passed to the RHQ Server JBossAS 
+#                                         run.sh. This is added to 
+#                                         RHQ_SERVER_CMDLINE_OPTS; it is mainly
+#                                         used to augment the Server's default
+#                                         set of options. This can be left unset
+#                                         if it is not needed.
 #
 #    RHQ_SERVER_PIDFILE_DIR - a full path to a writable directory where this
 #                             script can write its pidfile to.
-#                             If not defined, this defaults to the server's
+#                             If not defined, this defaults to the Server's
 #                             bin directory.
 #
 # If the embedded JRE is to be used but is not available, the fallback
@@ -79,7 +90,8 @@
 # RHQ_SERVER_JAVA_EXE_FILE_PATH=/path/directly/to/java/executable
 # RHQ_SERVER_JAVA_OPTS=VM options
 # RHQ_SERVER_ADDITIONAL_JAVA_OPTS=additional VM options
-# RHQ_SERVER_CMDLINE_OPTS=additional run.sh options
+# RHQ_SERVER_CMDLINE_OPTS=run.sh options
+# RHQ_SERVER_ADDITIONAL_CMDLINE_OPTS=additional run.sh options
 
 # ----------------------------------------------------------------------
 # Make sure we unset any lingering JBossAS environment variables that
@@ -151,10 +163,10 @@ check_status ()
 remove_pid_files ()
 {
    if [ -f "$_SERVER_PIDFILE" ]; then
-      rm "$_SERVER_PIDFILE"
+      rm -f "$_SERVER_PIDFILE"
    fi
    if [ -f "$_JVM_PIDFILE" ]; then
-      rm "$_JVM_PIDFILE"
+      rm -f "$_JVM_PIDFILE"
    fi
 }
 
@@ -170,6 +182,8 @@ case "`uname`" in
             ;;
    SunOS*) _SOLARIS=true
             ;;
+   AIX*) _AIX=true
+            ;;            
 esac
 
 # ----------------------------------------------------------------------
@@ -266,11 +280,11 @@ JAVA_OPTS="$RHQ_SERVER_JAVA_OPTS $RHQ_SERVER_ADDITIONAL_JAVA_OPTS"
 export JAVA_OPTS
 
 # ----------------------------------------------------------------------
-# Prepare the command line arguments passed to the RHQ Server
+# Prepare the command line arguments passed to the RHQ Server JBossAS
+# run.sh script
 # ----------------------------------------------------------------------
 
 if [ -z "$RHQ_SERVER_CMDLINE_OPTS" ]; then
-
    _PROPS_FILE_PATH="${RHQ_SERVER_HOME}/bin/rhq-server.properties"
 
    # convert paths if we are on Windows
@@ -279,11 +293,25 @@ if [ -z "$RHQ_SERVER_CMDLINE_OPTS" ]; then
    fi
 
    RHQ_SERVER_CMDLINE_OPTS="-P ${_PROPS_FILE_PATH}"
+   
+   if [ -n "$_AIX" ]; then
+      # the IBM JDK uses a different SSL certificate encoding algorithm;
+      # override the default of "SunX509" that's set in rhq-server.properties
+      RHQ_SERVER_CMDLINE_OPTS="$RHQ_SERVER_CMDLINE_OPTS -Drhq.server.tomcat.security.algorithm=IbmX509"
+   fi   
 fi
+
 debug_msg "RHQ_SERVER_CMDLINE_OPTS: $RHQ_SERVER_CMDLINE_OPTS"
+debug_msg "RHQ_SERVER_ADDITIONAL_CMDLINE_OPTS: $RHQ_SERVER_ADDITIONAL_CMDLINE_OPTS"
+
+# org.jboss.Main parses its command line args such that later options of a 
+# certain type, override earlier options of that same type, so make sure the
+# additional opts are added after the base opts, since we want the additional
+# opts to take precedence
+_CMDLINE_OPTS="$RHQ_SERVER_CMDLINE_OPTS $RHQ_SERVER_ADDITIONAL_CMDLINE_OPTS"
 
 # ----------------------------------------------------------------------
-# Now find the JBoss run.sh script
+# Now find the JBossAS run.sh script
 # ----------------------------------------------------------------------
 
 _JBOSS_RUN_SCRIPT="${RHQ_SERVER_HOME}/jbossas/bin/run.sh"
@@ -331,7 +359,7 @@ case "$1" in
 
         # start the server, making sure its working directory is the JBossAS bin directory
         cd "${RHQ_SERVER_HOME}/jbossas/bin"
-        "$_JBOSS_RUN_SCRIPT" $RHQ_SERVER_CMDLINE_OPTS
+        "$_JBOSS_RUN_SCRIPT" $_CMDLINE_OPTS
 
         _JBOSS_STATUS=$?
 
@@ -354,10 +382,10 @@ case "$1" in
 
         # start the server, making sure its working directory is the JBossAS bin directory
         cd "${RHQ_SERVER_HOME}/jbossas/bin"
-        if [ "x$RHQ_SERVER_DEBUG" != "x" ] && [ "$RHQ_SERVER_DEBUG" != "false" ]; then
-           "$_JBOSS_RUN_SCRIPT" $RHQ_SERVER_CMDLINE_OPTS &
+        if [ -n "$RHQ_SERVER_DEBUG" ] && [ "$RHQ_SERVER_DEBUG" != "false" ]; then
+           "$_JBOSS_RUN_SCRIPT" $_CMDLINE_OPTS &
         else
-           "$_JBOSS_RUN_SCRIPT" $RHQ_SERVER_CMDLINE_OPTS > /dev/null 2>&1 &
+           "$_JBOSS_RUN_SCRIPT" $_CMDLINE_OPTS > /dev/null 2>&1 &
         fi
 
         echo "$!" > "$_SERVER_PIDFILE"

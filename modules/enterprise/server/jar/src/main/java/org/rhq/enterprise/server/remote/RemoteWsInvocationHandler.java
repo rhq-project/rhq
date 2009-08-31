@@ -57,7 +57,7 @@ public class RemoteWsInvocationHandler implements ServerInvocationHandler {
 
     public Object invoke(InvocationRequest invocationRequest) throws Throwable {
 
-        //        System.out.println("In WS Invocation handler ...:" + invocationRequest);
+        System.out.println("In WS Invocation handler ...:" + invocationRequest);
 
         if (invocationRequest == null) {
             throw new IllegalArgumentException("WS-InvocationRequest was null.");
@@ -99,16 +99,16 @@ public class RemoteWsInvocationHandler implements ServerInvocationHandler {
             //RETAIN all of the above from original remoteInvocationHandler as JBossWs gets us into server
             // side ...
 
-            //following functionality is meant to be replicated via static types generated.
+            //            //following functionality is meant to be replicated via static types generated.
             Method m = target.getClass().getMethod(methodInfo[1], sig);
             result = m.invoke(target, nbi.getParameters());
-            successful = true;
+            //            successful = true;
             //to be commented above when all WS methods work correctly
 
             //Attempt to create static types and make the call reflectively
             System.out.println("echo curr meth SIGNATURE:" + signature + ":size:" + signature.length);
             for (int i = 0; i < signature.length; i++) {
-                //                System.out.println("SIG:" + signature[i] + ":");
+                System.out.println("SIG:" + signature[i] + ":");
             }
 
             try {//wrap everything in exceptions and handle accordingly
@@ -120,39 +120,44 @@ public class RemoteWsInvocationHandler implements ServerInvocationHandler {
                 // nbi.getMethodName() ex. [SubjectManagerBean:login]
                 //String remoteClassKey = "org.rhq.enterprise.server.ws." + methodInfo[0] + "Service";
                 // Ex. SubjectManagerBeanService
-                String remoteClassKey = methodInfo[0] + "Service";
+
+                //                String remoteClassKey = methodInfo[0] + "Service";
+                //this is hard coded now
+                String remoteClassKey = "WebservicesManagerBeanService";
 
                 //locate the WsRemote references
                 if (!remoteList.containsKey(remoteClassKey)) {//if not there lazily instantiate
                     //locate Service
                     Class<?> located = Class.forName("org.rhq.enterprise.server.ws." + remoteClassKey);
-                    //                    System.out.println("Located service ref:" + located);
+                    System.out.println("Located service ref:" + located);
                     //Generate URL: is on local host as well.
-                    URL sUrl = generateRhqRemoteWebserviceURL(located, "127.0.0.1", 7080, false);
+                    URL sUrl = generateRemoteWebserviceURL(located, "127.0.0.1", 7080, false);
                     //Generate QName
-                    QName sQName = generateRhqRemoteWebserviceQName(located);
+                    QName sQName = generateRemoteWebserviceQName(located);
                     //locate constructor and call it
                     Constructor<?> constructor = located.getConstructor(URL.class, QName.class);
-                    //                    System.out.println("Constructor for service located:" + constructor);
+                    System.out.println("Constructor for service located:" + constructor);
                     //instantiate
                     Object servInstance = constructor.newInstance(sUrl, sQName);
-                    //                    System.out.println("ServiceInstance:" + servInstance);
+                    System.out.println("ServiceInstance:" + servInstance);
                     //Finally get the remote instance A.K.A port
                     //find method Ex. smService.getSubjectManagerBeanPort();
-                    Method portMethod = servInstance.getClass().getMethod("get" + methodInfo[0] + "Port", null);
+                    //                    Method portMethod = servInstance.getClass().getMethod("get" + methodInfo[0] + "Port", null);
+                    Method portMethod = servInstance.getClass().getMethod("getWebservicesManagerBeanPort", null);
+
                     //call method
                     Object remoteInst = portMethod.invoke(servInstance, null);
-                    //                    System.out.println("Remote Instance:" + remoteInst);
+                    System.out.println("Remote Instance:" + remoteInst);
                     remoteWsRef = remoteInst;
                     remoteList.put(remoteClassKey, remoteInst);//store away
-                    //                    System.out.println("Added key:" + remoteClassKey + " value:" + remoteInst);
+                    System.out.println("Added key:" + remoteClassKey + " value:" + remoteInst);
                     //now cache remote for later user with key.
                 } else { //retrieve from cache
                     remoteWsRef = remoteList.get(remoteClassKey);
                 }
 
                 //Now make call to the method passed in
-                //translate rhq-signature into static jaxb type signature objects
+                //so need to translate rhq-signature into static jaxb type signature objects
                 Class<?>[] statSignature = new Class<?>[nbi.getSignature().length];
                 int index = 0;
 
@@ -166,12 +171,12 @@ public class RemoteWsInvocationHandler implements ServerInvocationHandler {
                     while (bag.hasMoreTokens()) {
                         terminal = bag.nextToken();
                     }
-                    //                    System.out.println("terminal bagToken:" + terminal + ":");
+                    System.out.println("terminal bagToken:" + terminal + ":");
                     //pull existing type information and use if it's non-RHQ or jaxb type
                     Class<?> newSignatureInstance = getClass(type);
                     Class<?> locatedWsClass = null;
                     if (!WS_MAP_CLASSES.containsKey(terminal)) {//check for signature elements with mappings
-                        // System.out.println("Map Key '" + terminal + "' is not located");
+                        System.out.println("Map Key '" + terminal + "' is not located");
                         //Check for class in ws.* package and if it exists then return it and store it.
                         try {
                             locatedWsClass = Class.forName("org.rhq.enterprise.server.ws." + terminal);
@@ -180,7 +185,7 @@ public class RemoteWsInvocationHandler implements ServerInvocationHandler {
                         } catch (ClassNotFoundException cnfe) {
                             //do nothing
                         }
-                        //                        System.out.println("Located Class is :" + locatedWsClass + ":");
+                        System.out.println("Located Class is :" + locatedWsClass + ":");
                         if (locatedWsClass != null) {
                             WS_MAP_CLASSES.put(terminal, locatedWsClass);
                         }
@@ -190,42 +195,44 @@ public class RemoteWsInvocationHandler implements ServerInvocationHandler {
                     }
                     statSignature[index++] = newSignatureInstance;
                 }
-                //                System.out.println("Static signature Map:" + statSignature);
+                System.out.println("Static signature Map:" + statSignature);
                 for (int kl = 0; kl < statSignature.length; kl++) {
-                    //                    System.out.println("Signature :" + statSignature[kl] + ":");
+                    System.out.println("Signature :" + statSignature[kl] + ":");
                 }
 
                 //TODO: SP not sure if need to non rhq/jaxb types in here .. Ex. java.util.Set -> java.util.List. Revisit if signature mismatch occurs
                 //look up method
-                //                System.out.println("Meth lookup for:" + methodInfo[1] + ":" + statSignature + ":");
+                System.out.println("Meth lookup for:" + methodInfo[1] + ":" + statSignature + ":");
                 Method methodCall = remoteWsRef.getClass().getMethod(methodInfo[1], statSignature);
-                //                System.out.println("Successfully found Method call:" + methodCall);
+                System.out.println("Successfully found Method call:" + methodCall);
 
                 //translate param values content: 
                 Object[] values = new Object[nbi.getParameters().length];
                 //iterate over params and translate/copy if neccesary
                 for (int k = 0; k < nbi.getParameters().length; k++) {
                     Object passedIn = nbi.getParameters()[k];
-                    //                    System.out.println("Object passed in :" + passedIn + ":class:" + passedIn.getClass());
+                    System.out.println("Object passed in :" + passedIn + ":class:" + passedIn.getClass());
                     Object translated = copyValue(passedIn);
-                    //                    System.out.println("Object translated:" + translated + ":class:" + translated.getClass());
+                    System.out.println("Object translated:" + translated + ":class:" + translated.getClass());
                     //now pass in the new values
                     values[k] = translated;
                 }
                 //finally call the jaxb static ws method with parameters
                 Object wsResult = methodCall.invoke(remoteWsRef, values);
-                //                System.out.println("Type Returned is:" + wsResult + ":class:" + wsResult.getClass());
-                //                System.out.println("OrigType Returned is:" + result + ":class:" + result.getClass());
+                System.out.println("Type Returned is:" + wsResult + ":class:" + wsResult.getClass());
+                System.out.println("OrigType Returned is:" + result + ":class:" + result.getClass());
 
                 //Now translate back and override return type appropriately
                 Object updated = updateRhqType(wsResult, result);
-                //                System.out.println("Updated type returned:" + updated);
+                System.out.println("Updated type returned:" + updated);
                 //now over write the result to be returned
                 result = updated;
+                successful = true;
 
             } catch (Exception ex) {
                 //TODO: SP wrap these exception in correct type for jbossremoting? 
                 System.out.println("Exception [" + methodInfo[0] + "Service]" + " is:" + ex);
+                throw new InvocationTargetException(ex);
             }
 
         } catch (InvocationTargetException e) {
@@ -276,8 +283,8 @@ public class RemoteWsInvocationHandler implements ServerInvocationHandler {
             terminal = bag.nextToken();
         }
 
-        //        System.out.println("Terminal value is :" + terminal);
-        //        System.out.println("Does map contain key:" + WS_MAP_CLASSES.containsKey(terminal) + ":");
+        System.out.println("Terminal value is :" + terminal);
+        System.out.println("Does map contain key:" + WS_MAP_CLASSES.containsKey(terminal) + ":");
         //check to see if parameter passed needs JAXB translation
         if (WS_MAP_CLASSES.containsKey(terminal)) {
             //create the comparable jaxb type but need objectFactory
@@ -286,11 +293,11 @@ public class RemoteWsInvocationHandler implements ServerInvocationHandler {
                 if (objFactory == null) {
                     //Get Object from classpath
                     Class<?> ofRef = Class.forName("org.rhq.enterprise.server.ws.ObjectFactory");
-                    //                    System.out.println("Located object factory class:" + ofRef + ":");
+                    System.out.println("Located object factory class:" + ofRef + ":");
                     Constructor<?> ofConstructor = ofRef.getConstructor(null);
                     // Ex.                   objFactory = (Class) ofConstructor.newInstance(null);
                     Object retValue = ofConstructor.newInstance(null);
-                    //                    System.out.println("ObjectFactory instantiated:" + retValue + ":");
+                    System.out.println("ObjectFactory instantiated:" + retValue + ":");
                     objFactory = retValue;
                 }
             }
@@ -318,16 +325,17 @@ public class RemoteWsInvocationHandler implements ServerInvocationHandler {
             //create Type
             //locate Method to create type Ex. org.rhq.enterprise.server.ws.ObjectFactory.createSubject()
             Method mJxbType = objFactory.getClass().getMethod("create" + terminal, null);
-            //            System.out.println("Located CreateMethod for type passed in:" + mJxbType + ":");
+            System.out.println("Located CreateMethod for type passed in:" + mJxbType + ":");
             //instantiate jaxb type
             Object jaxbType = mJxbType.invoke(objFactory, null);
-            //            System.out.println("Jaxb Type created:" + jaxbType + ":");
+            System.out.println("Jaxb Type created:" + jaxbType + ":");
 
             //get all 'set' methods for jaxbType. Seems to be sufficient TODO: verify assumption here for generated types.
             Method[] jxbTypeMethList = jaxbType.getClass().getDeclaredMethods();
             //retrieve rhqTypeMethods
             Method[] rhqTypeMethList = passedIn.getClass().getDeclaredMethods();
-            HashMap<String, Method> getRhqMethmap = createReferenceMap(rhqTypeMethList, "get");
+            //            HashMap<String, Method> getRhqMethmap = createReferenceMap(rhqTypeMethList, "get");
+            HashMap<String, Method> getRhqMethmap = createReferenceMap(rhqTypeMethList, "");
 
             //iterate over rhqType get methods calling with values
             for (int m = 0; m < jxbTypeMethList.length; m++) {
@@ -335,33 +343,120 @@ public class RemoteWsInvocationHandler implements ServerInvocationHandler {
                 String meth = jxbTypeMethList[m].getName();
                 //TODO: put in special handling for non-trivial types. 
                 if (meth.startsWith("set")) {
-                    //                    System.out.println("Working on method:" + meth + ":obj:" + jxbTypeMethList[m] + ":"
-                    //                        + meth.substring(3) + ":");
+                    System.out.println("Working on method:" + meth + ":obj:" + jxbTypeMethList[m] + ":"
+                        + meth.substring(3) + ":");
                     //lookup get method on rhqType
                     Method getMethod = getRhqMethmap.get("get" + meth.substring(3));
-                    //                    System.out.println("Just located coreMeth:" + getMethod + ":");
-                    //wrap get in set, aka... do the transfer
-                    jxbTypeMethList[m].invoke(jaxbType, getMethod.invoke(passedIn, null));
+                    System.out.println("Just located coreMeth:" + getMethod + ":");
+                    if (getMethod == null) {//non set method detected
+                        //look for 'is' prefixed getters as well
+                        getMethod = getRhqMethmap.get("is" + meth.substring(3));
+                        System.out.println("2nd Attempt: Looked up coreMeth for rhq:" + getMethod + ": meth:"
+                            + meth.substring(3) + ":F:" + meth);
+                        //if still null check 'fetch'
+                        if (getMethod == null) {
+                            //look for 'fetch' prefixed getters as well
+                            getMethod = getRhqMethmap.get("fetch" + meth.substring(3));
+                            System.out.println("3rd Attempt: Looked up coreMeth for rhq:" + getMethod + ": meth:"
+                                + meth.substring(3) + ":F:" + meth);
+                        }
+                    }
+
+                    System.out.println("ABOUT to RUN with in/out:" + jxbTypeMethList[m].getParameterTypes()[0]
+                        + " # with input " + getMethod.getReturnType());
+                    Class<?> inParam = jxbTypeMethList[m].getParameterTypes()[0];
+                    Class<?> outParam = getMethod.getReturnType();
+                    if (inParam.getCanonicalName().equals(outParam.getCanonicalName())) {
+                        System.out.println("In/out parms equal.jx:" + jaxbType + " ## passedIn:" + passedIn);
+                        //wrap get in set, aka... do the transfer
+                        jxbTypeMethList[m].invoke(jaxbType, getMethod.invoke(passedIn, null));
+                    } else {//deal with the mismatch
+                        System.out.println("@@@@@ copyVal in/out NOT MATCHING @@@@@@@@@@@");
+                        System.out.println("inP:" + inParam.getCanonicalName());
+                        System.out.println("outParam:" + outParam.getCanonicalName());
+                        //get return value out
+                        Object returnValue = getMethod.invoke(passedIn, null);
+                        if (returnValue == null) {
+                            System.out.println("NULL VALUE DETECTED .. bailing .. not transfer necessary.");
+                        } else {
+                            //create input type it's supposed to be ex. org.rhq.enterprise.server.ws.InventoryStatus
+                            String terminalString = locateTerminalString(inParam.getCanonicalName());
+                            System.out.println("Term Str:" + terminalString + " # meth: " + "create" + terminalString);
+                            //CHECK for ENUM .. different approach.
+                            if (inParam.getEnumConstants() == null) {
+                                Method obFacMethod = objFactory.getClass().getMethod("create" + terminalString, null);
+                                System.out.println("Located method:" + obFacMethod);
+                                //TODO: need to finish this impl for non-enum or non-trivial types. See below.
+                                System.out.println("UNFINISHED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                            } else {
+                                System.out.println("LOCATED an ENUM:... processing");
+                                //get instance of the passed in type .. aka returned value
+                                Object rtype = getMethod.invoke(passedIn, null);
+                                System.out.println("Input value evaluated:" + rtype + ":running :" + getMethod);
+                                //get jaxbtype then do jaxbtype.valueOf(rtype);
+                                Method valueOfMethod = inParam.getMethod("valueOf", String.class);
+                                String value = rtype.toString();
+                                //                                Method valueMethod = rtype.getClass().getMethod("value", null);
+                                System.out.println("RETRIEVED ENUM methods:" + valueOfMethod + "##"
+                                    + rtype.getClass().getCanonicalName() + "ValueAsString:" + value);
+                                //assign to jaxbType
+                                //                                jaxbType = valueOfMethod.invoke(inParam, valueOfMethod.invoke(rtype, String.class));
+                                //                                jaxbType = valueOfMethod.invoke(inParam, valueOfMethod.invoke(rtype, value));
+                                jaxbType = valueOfMethod.invoke(inParam, value);
+                                System.out.println("Completed assignment...should be good:" + jaxbType);
+                            }
+                        }
+                        //                        Method obFacMethod = objFactory.getClass().getMethod("create" + terminalString, null);
+                        //                        System.out.println("Located method:" + obFacMethod);
+                        //                        Object jaxbInst = obFacMethod.invoke(objFactory, null);
+                        //                        System.out.println("Instantiated jaxbType:" + jaxbInst);
+                        //                        //TODO: now copy over .. recurse?
+                        //                        Object updated = updateRhqType(returnValue, jaxbInst);
+                        //                        jxbTypeMethList[m].invoke(jaxbType, updated);
+                    }
+
+                    //                    //wrap get in set, aka... do the transfer
+                    //                    jxbTypeMethList[m].invoke(jaxbType, getMethod.invoke(passedIn, null));
+
+                    //                    //split out the return type for easier type checking
+                    //                    Object input = getMethod.invoke(passedIn, null);
+                    //                    //now check to make sure types(input/output) are compatible
+                    //                    if (methodOutputInputSame(jxbTypeMethList[m].getParameterTypes(), getMethod.getDeclaringClass())) {
+                    //                        System.out.println("$$$$$$$$$ COPYVALUE TYPE mismatch detected $$$$$$$$$$$$");
+                    //                        //therefor operate on input value to fix. recursive?
+                    //                    }
+                    //                    jxbTypeMethList[m].invoke(jaxbType, input);
                 }
             }
             translated = jaxbType;
         }
-        //        System.out.println("Exiting translation method.");
+        System.out.println("Exiting translation method.");
         return translated;
+    }
+
+    private String locateTerminalString(String canonicalName) {
+        String terminal = "";
+        if ((canonicalName != null) && (canonicalName.trim().length() > 0)) {
+            StringTokenizer bag = new StringTokenizer(canonicalName, ".");
+            while (bag.hasMoreTokens()) {
+                terminal = bag.nextToken();
+            }
+        }
+        return terminal;
     }
 
     private Object updateRhqType(Object jaxbType, Object rhqType) throws ClassNotFoundException, SecurityException,
         NoSuchMethodException, IllegalArgumentException, InstantiationException, IllegalAccessException,
         InvocationTargetException {
 
-        //        System.out.println("In updateRhqType the translation method:");
-        //        System.out.println("JAXBTYPE:" + jaxbType + ":class:" + jaxbType.getClass() + ":canon:"
-        //            + jaxbType.getClass().getCanonicalName());
-        //        System.out.println("RHQTYPE:" + rhqType + ":class:" + rhqType.getClass() + ":canon:"
-        //            + rhqType.getClass().getCanonicalName());
+        System.out.println("In updateRhqType the translation method:");
+        System.out.println("JAXBTYPE:" + jaxbType + ":class:" + jaxbType.getClass() + ":canon:"
+            + jaxbType.getClass().getCanonicalName());
+        System.out.println("RHQTYPE:" + rhqType + ":class:" + rhqType.getClass() + ":canon:"
+            + rhqType.getClass().getCanonicalName());
         Object updated = rhqType;
 
-        //        System.out.println("Jaxb Type passed in:" + jaxbType + ":");
+        System.out.println("Jaxb Type passed in:" + jaxbType + ":");
         //get all 'get' methods for jaxbType: TODO: add 'is" to this list for boolean values.
         Method[] jaxbTypeMethList = jaxbType.getClass().getDeclaredMethods();
         //retrieve rhqTypeMethod
@@ -375,21 +470,31 @@ public class RemoteWsInvocationHandler implements ServerInvocationHandler {
         //TODO: put in the correct filters 'get'set is, etc...
         HashMap<String, Method> rMap = createReferenceMap(rhqTypeMethList, "");
         HashMap<String, Method> map = createReferenceMap(jaxbTypeMethList, "");
-        //        System.out.println("Ref r-map created:" + rMap + ":");
-        //        System.out.println("Ref j-map created:" + map + ":");
+        System.out.println("Ref r-map created:" + rMap + ":");
+        System.out.println("Ref j-map created:" + map + ":");
 
         for (Method method : jaxbTypeMethList) {
             //only work on methods that have a 'get' in jaxbtype
             String meth = method.getName();
             //now look up Rhq set method
             Method rhqSetMethod = rMap.get("set" + meth.substring(3));
-            //            System.out.println("Looked up set method for rhq:" + rhqSetMethod + ": meth:" + meth.substring(3));
+            System.out.println("Looked up set method for rhq:" + rhqSetMethod + ": meth:" + meth.substring(3) + ":F:"
+                + meth);
+            //TODO: what about other method names
+            if (rhqSetMethod == null) {//non set method detected
+                //look for 'is' prefixed getters as well
+                rhqSetMethod = rMap.get("set" + meth.substring(2));
+                System.out.println("2nd Attempt: Looked up set method for rhq:" + rhqSetMethod + ": meth:"
+                    + meth.substring(2) + ":F:" + meth);
+            }
+
             //TODO: put in special handling for non-trivial types. 
-            if (meth.startsWith("get")) {
-                //                System.out
-                //                    .println("Working on j-get-method:" + meth + ":obj:" + method + ":" + meth.substring(3) + ":");
-                //                System.out.println("Working on r-set-method:" + meth + ":obj:" + rhqSetMethod + ":" + meth.substring(3)
-                //                    + ":");
+            //            if (meth.startsWith("get")) {
+            if (meth.startsWith("get") || meth.startsWith("is")) {
+                System.out.println("Working on j-get-method:" + meth + ":obj:" + method + ":" + meth.substring(3)
+                    + ":f:" + meth);
+                System.out.println("Working on r-set-method:" + meth + ":obj:" + rhqSetMethod + ":" + meth.substring(3)
+                    + ":f:" + meth);
                 //wrap get in set
 
                 //                rhqSetMethod.invoke(rhqType, method.invoke(jaxbType, null));
@@ -397,13 +502,13 @@ public class RemoteWsInvocationHandler implements ServerInvocationHandler {
                 if (methodOutputInputSame(rhqSetMethod.getParameterTypes(), method.getReturnType())) {
                     rhqSetMethod.invoke(rhqType, method.invoke(jaxbType, null));
                 } else {// extract param and translate then invoke 
-                    // System.out.println("$$$$$$$$$$$ PROBLEM@@@ type mismatch ");
+                    System.out.println("$$$$$$$$$$$ PROBLEM@@@ type mismatch ");
                     String from = method.getReturnType().getCanonicalName();
                     String to = rhqSetMethod.getParameterTypes()[0].getCanonicalName();
 
                     //copy data over
-                    //                    System.out.println("moving:" + method.getReturnType() + ": data to "
-                    //                        + rhqSetMethod.getParameterTypes()[0]);
+                    System.out.println("moving:" + method.getReturnType() + ": data to "
+                        + rhqSetMethod.getParameterTypes()[0]);
                     if (from.equals("java.util.List") && to.equals("java.util.Set")) {//This is common enough case just hard code.
                         Set input = new HashSet();
                         //retrieve return type data as object
@@ -412,26 +517,26 @@ public class RemoteWsInvocationHandler implements ServerInvocationHandler {
                         input.addAll((Collection) jxbReturnValue);
                         //now make the call with translated type
                         rhqSetMethod.invoke(rhqType, input);
-                        //                        System.out.println("Completed List to Set translation.");
+                        System.out.println("Completed List to Set translation.");
                     } else {
-                        //                        System.out.println("Assuming a JAXB -> RHQ copy needs to occur");
+                        System.out.println("Assuming a JAXB -> RHQ copy needs to occur");
                         //recursive call to method to handle non-trivial types...
                         //                        Object updatedRhqValue = updateRhqType(method.getReturnType(),
                         //                            rhqSetMethod.getParameterTypes()[0]);
-                        //                        System.out.println("JAXBtype:" + jaxbType + ":method:" + meth + ":");
+                        System.out.println("JAXBtype:" + jaxbType + ":method:" + meth + ":");
                         Object jxbNonTrivType = method.invoke(jaxbType, null);
-                        //                        System.out.println("Retrieved non-trivial jxb type:" + jxbNonTrivType + ":");
+                        System.out.println("Retrieved non-trivial jxb type:" + jxbNonTrivType + ":");
                         if (jxbNonTrivType != null) {
                             //Now get instance of type from RHQtype .. otherwise transfer not possible
                             //locate method to instantiate/retrieve it
                             Method rhqNonTrivTypeMethod = rMap.get("get" + rhqSetMethod.getName().substring(3));
-                            //                            System.out.println("Retrieved Meth for non-triv type:" + rhqNonTrivTypeMethod + ":");
+                            System.out.println("Retrieved Meth for non-triv type:" + rhqNonTrivTypeMethod + ":");
                             Object rhqNonTrivTypeInst = rhqNonTrivTypeMethod.invoke(rhqType, null);
                             //now recurse ...
                             Object updatedRhqValue = updateRhqType(jxbNonTrivType, rhqNonTrivTypeInst);
                             //now make the call with translated type
                             rhqSetMethod.invoke(rhqType, updatedRhqValue);
-                            //                            System.out.println("Completed RHQ type update.");
+                            System.out.println("Completed RHQ type update.");
                         } else {
                             System.out.println("NULL value detected. Not copying result of method:" + method);
                         }
@@ -444,7 +549,7 @@ public class RemoteWsInvocationHandler implements ServerInvocationHandler {
 
         updated = rhqType;
         //    }
-        //        System.out.println("Exiting update method.");
+        System.out.println("Exiting update method.");
         return updated;
     }
 
@@ -452,7 +557,7 @@ public class RemoteWsInvocationHandler implements ServerInvocationHandler {
         boolean paramsEqual = true;
         //iterate over parameters in order and
         if (rhqParamTypeList.length > 1) {
-            //            System.out.println("##### parameter count mismatch!!! ATTENTION REQUIRED.");
+            System.out.println("##### parameter count mismatch!!! ATTENTION REQUIRED.");
             return false;
         }
         for (int i = 0; i < rhqParamTypeList.length; i++) {
@@ -460,9 +565,9 @@ public class RemoteWsInvocationHandler implements ServerInvocationHandler {
             //            System.out.println("PARAM-J-" + i + ":" + paramTypeList.getCanonicalName());
             if (!rhqParamTypeList[i].getCanonicalName().equals(paramTypeList.getCanonicalName())) {
                 paramsEqual = false;
-                //                System.out.println("###########Mismatch detected####################");
-                //                System.out.println("PARAM-R-" + i + ":" + rhqParamTypeList[i].getCanonicalName());
-                //                System.out.println("PARAM-J-" + i + ":" + paramTypeList.getCanonicalName());
+                System.out.println("###########Mismatch detected####################");
+                System.out.println("PARAM-R-" + i + ":" + rhqParamTypeList[i].getCanonicalName());
+                System.out.println("PARAM-J-" + i + ":" + paramTypeList.getCanonicalName());
             }
         }
         return paramsEqual;
@@ -498,7 +603,7 @@ public class RemoteWsInvocationHandler implements ServerInvocationHandler {
     * @return valid URL
     * @throws MalformedURLException
     */
-    public static URL generateRhqRemoteWebserviceURL(Class remote, String host, int port, boolean useHttps)
+    public static URL generateRemoteWebserviceURL(Class remote, String host, int port, boolean useHttps)
         throws MalformedURLException {
 
         URL wsdlLocation = null;
@@ -522,7 +627,7 @@ public class RemoteWsInvocationHandler implements ServerInvocationHandler {
 
     }
 
-    public static QName generateRhqRemoteWebserviceQName(Class remote) {
+    public static QName generateRemoteWebserviceQName(Class remote) {
 
         QName generated = null;
         //check for reference with right annotation

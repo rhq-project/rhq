@@ -22,6 +22,7 @@ import org.rhq.enterprise.server.measurement.MeasurementProblemManagerRemote;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerRemote;
 import org.rhq.enterprise.server.operation.OperationManagerRemote;
 import org.rhq.enterprise.server.report.DataAccessManagerRemote;
+import org.rhq.enterprise.server.resource.ResourceFactoryManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerRemote;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerRemote;
@@ -49,6 +50,7 @@ public interface WebservicesRemote extends //
     MeasurementProblemManagerRemote,//
     MeasurementScheduleManagerRemote,//
     OperationManagerRemote,//
+    ResourceFactoryManagerRemote,//
     ResourceGroupManagerRemote,//
     ResourceManagerRemote,//
     ResourceTypeManagerRemote,//

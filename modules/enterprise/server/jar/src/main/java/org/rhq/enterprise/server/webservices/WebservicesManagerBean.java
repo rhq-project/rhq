@@ -69,65 +69,43 @@ import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
-import org.rhq.enterprise.server.alert.AlertDefinitionManagerRemote;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
-import org.rhq.enterprise.server.alert.AlertManagerRemote;
 import org.rhq.enterprise.server.auth.SubjectException;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.auth.SubjectManagerRemote;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
-import org.rhq.enterprise.server.authz.RoleManagerRemote;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
-import org.rhq.enterprise.server.configuration.ConfigurationManagerRemote;
 import org.rhq.enterprise.server.configuration.ConfigurationUpdateStillInProgressException;
 import org.rhq.enterprise.server.content.ChannelException;
 import org.rhq.enterprise.server.content.ChannelManagerLocal;
-import org.rhq.enterprise.server.content.ChannelManagerRemote;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
-import org.rhq.enterprise.server.content.ContentManagerRemote;
 import org.rhq.enterprise.server.discovery.DiscoveryBossLocal;
-import org.rhq.enterprise.server.discovery.DiscoveryBossRemote;
 import org.rhq.enterprise.server.event.EventManagerLocal;
-import org.rhq.enterprise.server.event.EventManagerRemote;
 import org.rhq.enterprise.server.exception.LoginException;
 import org.rhq.enterprise.server.exception.ScheduleException;
 import org.rhq.enterprise.server.exception.UnscheduleException;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
-import org.rhq.enterprise.server.measurement.AvailabilityManagerRemote;
 import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
-import org.rhq.enterprise.server.measurement.CallTimeDataManagerRemote;
 import org.rhq.enterprise.server.measurement.MeasurementAggregate;
 import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal;
-import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerRemote;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
-import org.rhq.enterprise.server.measurement.MeasurementDataManagerRemote;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
-import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerRemote;
 import org.rhq.enterprise.server.measurement.MeasurementProblemManagerLocal;
-import org.rhq.enterprise.server.measurement.MeasurementProblemManagerRemote;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
-import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerRemote;
 import org.rhq.enterprise.server.operation.GroupOperationSchedule;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
-import org.rhq.enterprise.server.operation.OperationManagerRemote;
 import org.rhq.enterprise.server.operation.ResourceOperationSchedule;
 import org.rhq.enterprise.server.report.DataAccessManagerLocal;
-import org.rhq.enterprise.server.report.DataAccessManagerRemote;
+import org.rhq.enterprise.server.resource.ResourceFactoryManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
-import org.rhq.enterprise.server.resource.ResourceManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
-import org.rhq.enterprise.server.resource.ResourceTypeManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupDeleteException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
-import org.rhq.enterprise.server.resource.group.ResourceGroupManagerRemote;
 import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
 import org.rhq.enterprise.server.support.SupportManagerLocal;
-import org.rhq.enterprise.server.support.SupportManagerRemote;
 import org.rhq.enterprise.server.system.ServerVersion;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
-import org.rhq.enterprise.server.system.SystemManagerRemote;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /** The purpose of this class is to aggregate all the EJB remote implementation into one
@@ -141,30 +119,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 @WebService(endpointInterface = "org.rhq.enterprise.server.webservices.WebservicesRemote", targetNamespace = ServerVersion.namespace)
 @XmlSeeAlso( { PropertyDefinition.class, PropertyDefinitionSimple.class, PropertyDefinitionList.class,
     PropertyDefinitionMap.class })
-public class WebservicesManagerBean implements //
-    AlertManagerRemote, //
-    AlertDefinitionManagerRemote, //
-    AvailabilityManagerRemote, //
-    CallTimeDataManagerRemote, //
-    ChannelManagerRemote, //
-    ConfigurationManagerRemote, //    
-    ContentManagerRemote, //
-    DataAccessManagerRemote, //
-    DiscoveryBossRemote, //
-    EventManagerRemote, //
-    MeasurementBaselineManagerRemote, //    
-    MeasurementDataManagerRemote, //
-    MeasurementDefinitionManagerRemote, //
-    MeasurementProblemManagerRemote, //    
-    MeasurementScheduleManagerRemote, //
-    OperationManagerRemote, //
-    ResourceManagerRemote, //
-    ResourceGroupManagerRemote, //
-    ResourceTypeManagerRemote, //
-    RoleManagerRemote, //
-    SubjectManagerRemote, //
-    SupportManagerRemote, //
-    SystemManagerRemote {
+public class WebservicesManagerBean implements WebservicesRemote {
 
     //Lookup the required beans as local references
     private AlertManagerLocal alertManager = LookupUtil.getAlertManager();
@@ -184,6 +139,7 @@ public class WebservicesManagerBean implements //
     private MeasurementProblemManagerLocal measurementProblemManager = LookupUtil.getMeasurementProblemManager();
     private MeasurementScheduleManagerLocal measurementScheduleManager = LookupUtil.getMeasurementScheduleManager();
     private OperationManagerLocal operationManager = LookupUtil.getOperationManager();
+    private ResourceFactoryManagerLocal resourceFactoryManager = LookupUtil.getResourceFactoryManager();
     private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
     private ResourceGroupManagerLocal resourceGroupManager = LookupUtil.getResourceGroupManager();
     private ResourceTypeManagerLocal resourceTypeManager = LookupUtil.getResourceTypeManager();
@@ -599,6 +555,27 @@ public class WebservicesManagerBean implements //
     }
 
     //OPERATIONMANAGER: END ----------------------------------
+
+    //RESOURCEFACTORYMANAGER: BEGIN ----------------------------------
+    public void createResource(Subject subject, int parentResourceId, int resourceTypeId, String resourceName,
+        Configuration pluginConfiguration, Configuration resourceConfiguration) {
+        resourceFactoryManager.createResource(subject, parentResourceId, resourceTypeId, resourceName,
+            pluginConfiguration, resourceConfiguration);
+    }
+
+    public void createPackageBackedResource(Subject subject, int parentResourceId, int newResourceTypeId,
+        String newResourceName, Configuration pluginConfiguration, String packageName, String packageVersion,
+        Integer architectureId, Configuration deploymentTimeConfiguration, byte[] packageBits) {
+        resourceFactoryManager.createPackageBackedResource(subject, parentResourceId, newResourceTypeId,
+            newResourceName, pluginConfiguration, packageName, packageVersion, architectureId,
+            deploymentTimeConfiguration, packageBits);
+    }
+
+    public void deleteResource(Subject subject, int resourceId) {
+        resourceFactoryManager.deleteResource(subject, resourceId);
+    }
+
+    //RESOURCEFACTORYMANAGER: END ----------------------------------
 
     //RESOURCEMANAGER: BEGIN ----------------------------------
     public PageList<ResourceComposite> findResourceComposites(Subject subject, ResourceCategory category,

@@ -20,13 +20,16 @@ import org.rhq.enterprise.server.ws.utility.WsUtility;
  * require a running RHQ Server with our web services deployed.
  * 
  * This is still in development and has the current restrictions: - add
- * [dev_root
- * ]/modules/enterprise/remoting/webservices/target/rhq-remoting-webservices
- * -{version}.jar to TOP of IDE classpath for development/testing. - Server
- * running on localhost. - ws-test user defined in database with full
- * permissions - Non RHQ Server JBossAS in inventory. - The ws.test.package-path
- * and ws.test.package-version environment variables must be defined to a test
- * .war file.
+ * [dev_root]/modules/enterprise/remoting/webservices/target/rhq-remoting-webservices
+ * -{version}.jar to TOP of eclipse classpath to run from your IDE(actually need to use 
+ *  classpath setup from bin/jbossas/bin/wsrunclient.sh to take advantage of type
+ *  substitution correctly) 
+ * - Server running on localhost. 
+ * - ws-test user defined in database with full permissions 
+ * - Non RHQ Server JBossAS in inventory. 
+ * - The -Ptest-ws profile specified when running mvn test from webservices dir 
+ * - Perftest plugin installed and agent started as described in 
+ *    modules/enterprise/remoting/scripts/README.txt
  * 
  * @author Jay Shaughnessy, Simeon Pinder
  */

@@ -28,12 +28,13 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.CreateDeletePolicy;
 import org.rhq.core.domain.resource.ResourceCreationDataType;
+import org.rhq.enterprise.server.system.ServerVersion;
 
 /*
  * @author Jay Shaughnessy
  */
 @SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
-@WebService
+@WebService(targetNamespace = ServerVersion.namespace)
 @Remote
 public interface ResourceFactoryManagerRemote {
 

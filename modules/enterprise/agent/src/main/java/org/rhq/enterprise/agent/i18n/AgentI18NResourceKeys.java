@@ -275,6 +275,15 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("Failed to update the plugins.")
     String UPDATING_PLUGINS_FAILURE = "AgentMain.plugin-update-failure";
 
+    @I18NMessage("Reconfiguring Java Logging...")
+    String RECONFIGURE_JAVA_LOGGING_START = "AgentMain.java-logging-start";
+
+    @I18NMessage("Done reconfiguring Java Logging.")
+    String RECONFIGURE_JAVA_LOGGING_DONE = "AgentMain.java-logging-done";
+
+    @I18NMessage("Failed to reconfigure Java Logging.")
+    String RECONFIGURE_JAVA_LOGGING_ERROR = "AgentMain.java-logging-error";
+
     @I18NMessage("The server has [{0}] plugins available for download")
     String LATEST_PLUGINS_COUNT = "PluginUpdate.latest-plugins-count";
 

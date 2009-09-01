@@ -3111,15 +3111,14 @@ public class AgentMain {
 
     private static void reconfigureJavaLogging() {
         try {
-            LOG.debug("Reconfiguring Java Logging...");
+            LOG.debug(AgentI18NResourceKeys.RECONFIGURE_JAVA_LOGGING_START);
             ClassLoader classLoader = AgentMain.class.getClassLoader();
-            InputStream loggingPropsInputStream = classLoader.getResourceAsStream(JAVA_UTIL_LOGGING_PROPERTIES_RESOURCE_PATH);
+            InputStream stream = classLoader.getResourceAsStream(JAVA_UTIL_LOGGING_PROPERTIES_RESOURCE_PATH);
             java.util.logging.LogManager logManager = java.util.logging.LogManager.getLogManager();
-            logManager.readConfiguration(loggingPropsInputStream);
-            LOG.debug("Done reconfiguring Java Logging.");
-        }
-        catch (Exception e) {
-            LOG.error(e, "Failed to reconfigure Java Logging.");
+            logManager.readConfiguration(stream);
+            LOG.debug(AgentI18NResourceKeys.RECONFIGURE_JAVA_LOGGING_DONE);
+        } catch (Exception e) {
+            LOG.error(e, AgentI18NResourceKeys.RECONFIGURE_JAVA_LOGGING_ERROR);
         }
     }
 

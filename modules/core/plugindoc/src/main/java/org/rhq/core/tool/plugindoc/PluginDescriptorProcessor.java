@@ -154,8 +154,10 @@ public class PluginDescriptorProcessor {
         if (runsInside != null) {
             List<ParentResourceType> parentTypesDescriptor = runsInside.getParentResourceType();
             for (ParentResourceType parentTypeDescriptor : parentTypesDescriptor) {
+                ResourceCategory parentResourceCategory = parentTypeDescriptor.getPlugin().equals("Platforms") ? ResourceCategory.PLATFORM
+                    : ResourceCategory.SERVER;
                 ResourceType parentResourceType = new ResourceType(parentTypeDescriptor.getName(), parentTypeDescriptor
-                    .getPlugin(), ResourceCategory.SERVER, ResourceType.ANY_PLATFORM_TYPE);
+                    .getPlugin(), parentResourceCategory, ResourceType.ANY_PLATFORM_TYPE);
                 serverResourceType.addParentResourceType(parentResourceType);
             }
         }
@@ -235,7 +237,7 @@ public class PluginDescriptorProcessor {
                 List<ParentResourceType> parentTypesDescriptor = runsInside.getParentResourceType();
                 for (ParentResourceType parentTypeDescriptor : parentTypesDescriptor) {
                     ResourceType parentResourceType = new ResourceType(parentTypeDescriptor.getName(),
-                        parentTypeDescriptor.getPlugin(), ResourceCategory.SERVER, ResourceType.ANY_PLATFORM_TYPE);
+                        parentTypeDescriptor.getPlugin(), ResourceCategory.PLATFORM, ResourceType.ANY_PLATFORM_TYPE);
                     serviceResourceType.addParentResourceType(parentResourceType);
                 }
             }

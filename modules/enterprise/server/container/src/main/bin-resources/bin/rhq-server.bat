@@ -15,15 +15,15 @@ rem    RHQ_SERVER_DEBUG - If this is defined, the script will emit debug
 rem                       messages.
 rem                       If not set or set to "false", debug is turned off.
 rem
-rem    RHQ_SERVER_HOME - Defines where the server's home install directory is.
+rem    RHQ_SERVER_HOME - Defines where the Server's home install directory is.
 rem                      If not defined, it will be assumed to be the parent
 rem                      directory of the directory where this script lives.
 rem
-rem    RHQ_SERVER_JAVA_HOME - The location of the JRE that the server will
+rem    RHQ_SERVER_JAVA_HOME - The location of the JRE that the Server will
 rem                           use. This will be ignored if
 rem                           RHQ_SERVER_JAVA_EXE_FILE_PATH is set.
 rem                           If this and RHQ_SERVER_JAVA_EXE_FILE_PATH are
-rem                           not set, the server's embedded JRE will be used.
+rem                           not set, the Server's embedded JRE will be used.
 rem
 rem    RHQ_SERVER_JAVA_EXE_FILE_PATH - Defines the full path to the Java
 rem                                    executable to use. If this is set,
@@ -32,7 +32,7 @@ rem                                    If this is not set, then
 rem                                    %RHQ_SERVER_JAVA_HOME%\bin\java.exe
 rem                                    is used. If this and
 rem                                    RHQ_SERVER_JAVA_HOME are not set, the
-rem                                    server's embedded JRE will be used.
+rem                                    Server's embedded JRE will be used.
 rem
 rem    RHQ_SERVER_INSTANCE_NAME - The name of the Windows Service; it must
 rem                               conform to the Windows Service naming
@@ -52,9 +52,9 @@ rem                           user that the Windows Service will run as will
 rem                           be the current user (.\%USERNAME%).  This takes
 rem                           precedence over RHQ_SERVER_RUN_AS.
 rem                       
-rem Note that you cannot define custom Java VM parameters or server
-rem command line arguments to pass to the RHQ Server VM.  If you wish to
-rem pass in specific arguments, modify the rhq-server-wrapper.conf file.
+rem Note that you cannot define custom Java VM parameters or command line
+rem arguments to pass to the RHQ Server run.sh.  If you wish to pass in 
+rem specific arguments, modify the rhq-server-wrapper.conf file.
 rem
 rem If the embedded JRE is to be used but is not available, the fallback
 rem JRE to be used will be determined by the JAVA_HOME environment variable.
@@ -70,7 +70,7 @@ if "%RHQ_SERVER_DEBUG%" == "false" (
 )
 
 rem ----------------------------------------------------------------------
-rem Change directory so the current directory is the server home.
+rem Change directory so the current directory is the Server home.
 rem ----------------------------------------------------------------------
 
 set RHQ_SERVER_BIN_DIR_PATH=%~dp0
@@ -89,7 +89,7 @@ set RHQ_SERVER_HOME=%CD%
 if defined RHQ_SERVER_DEBUG echo RHQ_SERVER_HOME: %RHQ_SERVER_HOME%
 
 rem ----------------------------------------------------------------------
-rem Find the Java executable and verify we have a VM available
+rem Find the Java executable and verify we have a VM available.
 rem ----------------------------------------------------------------------
 
 if not defined RHQ_SERVER_JAVA_EXE_FILE_PATH (
@@ -139,7 +139,7 @@ set RHQ_SERVER_WRAPPER_EXE_FILE_PATH=%RHQ_SERVER_WRAPPER_DIR_PATH%\%RHQ_SERVER_O
 if defined RHQ_SERVER_DEBUG echo RHQ_SERVER_WRAPPER_EXE_FILE_PATH: %RHQ_SERVER_WRAPPER_EXE_FILE_PATH%
 
 rem ----------------------------------------------------------------------
-rem Determine the server wrapper configuration file.
+rem Determine the Server wrapper configuration file.
 rem ----------------------------------------------------------------------
 
 set RHQ_SERVER_WRAPPER_CONF_FILE_PATH=%RHQ_SERVER_WRAPPER_DIR_PATH%\rhq-server-wrapper.conf
@@ -161,11 +161,11 @@ rem ----------------------------------------------------------------------
 rem Determine what to do and do it.
 rem ----------------------------------------------------------------------
 
-rem Determine if there should be debug VM options passed into it
-rem For some reason, this can't go inside another if statement
+rem Determine if there should be debug VM options passed into it.
+rem For some reason, this can't go inside another if statement.
 if defined RHQ_SERVER_DEBUG set _DEBUG_OPTS=wrapper.debug=true
 
-rem Determine what user the Windows Service will run as
+rem Determine what user the Windows Service will run as.
 if defined RHQ_SERVER_RUN_AS set _WRAPPER_NTSERVICE_ACCOUNT="wrapper.ntservice.account=%RHQ_SERVER_RUN_AS%"
 if defined RHQ_SERVER_RUN_AS_ME set _WRAPPER_NTSERVICE_ACCOUNT="wrapper.ntservice.account=.\%USERNAME%"
 

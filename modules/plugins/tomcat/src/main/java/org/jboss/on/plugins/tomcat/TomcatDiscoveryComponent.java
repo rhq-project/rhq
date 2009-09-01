@@ -222,20 +222,22 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent {
     private DiscoveredResourceDetails parsePluginConfig(ResourceDiscoveryContext context,
         Configuration pluginConfiguration) {
 
-        String catalinaHome = pluginConfiguration.getSimpleValue(
-            TomcatServerComponent.PLUGIN_CONFIG_CATALINA_HOME_PATH, "invalid");
+        String catalinaHome = pluginConfiguration.getSimple(
+            TomcatServerComponent.PLUGIN_CONFIG_CATALINA_HOME_PATH).getStringValue();
         try {
             catalinaHome = FileUtils.getCanonicalPath(catalinaHome);
         } catch (Exception e) {
+            log.warn("Failed to canonicalize catalina.home path [" + catalinaHome + "] - cause: " + e);
             // leave as is
         }
         File catalinaHomeDir = new File(catalinaHome);
 
-        String catalinaBase = pluginConfiguration.getSimpleValue(
-            TomcatServerComponent.PLUGIN_CONFIG_CATALINA_HOME_PATH, catalinaHome);
+        String catalinaBase = pluginConfiguration.getSimple(
+            TomcatServerComponent.PLUGIN_CONFIG_CATALINA_BASE_PATH).getStringValue();
         try {
             catalinaBase = FileUtils.getCanonicalPath(catalinaBase);
         } catch (Exception e) {
+            log.warn("Failed to canonicalize catalina.base path [" + catalinaBase + "] - cause: " + e);
             // leave as is
         }
 
@@ -245,7 +247,7 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent {
         String port = UNKNOWN_PORT;
         String address = null;
 
-        // TODO : Should we even allow this remote server stuff? I think we risk a resourceKey collsion with a local
+        // TODO : Should we even allow this remote server stuff? I think we risk a resourceKey collision with a local
         // server.
 
         // if the specified home dir does not exist locally assume this is a remote Tomcat server
@@ -268,9 +270,12 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent {
             //Don't know how to tackle that problem in a manual add.
             TomcatConfig tomcatConfig = parseTomcatConfig(catalinaBase);
             version = determineVersion(catalinaHome, catalinaBase, systemInfo);
-            address = tomcatConfig.getAddress();
-            hostname = systemInfo.getHostname();
-            port = tomcatConfig.getPort();
+            if (tomcatConfig.getAddress() != null) {
+               address = tomcatConfig.getAddress();
+            }
+            if (tomcatConfig.getPort() != null) {
+               port = tomcatConfig.getPort();
+            }
         }
 
         String productName = PRODUCT_NAME;

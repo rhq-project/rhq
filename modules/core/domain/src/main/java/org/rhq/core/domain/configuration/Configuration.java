@@ -166,6 +166,9 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
     @Column(name = "MTIME")
     private long mtime = System.currentTimeMillis();
 
+    public Configuration() {
+    }
+
     public int getId() {
         return id;
     }
@@ -432,7 +435,7 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
      * @return the new copy
      */
     public Configuration deepCopy(boolean keepIds) {
-        Configuration copy;
+        Configuration copy = new Configuration();
 
         try {
             copy = clone();
@@ -465,6 +468,18 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
         }
 
         return;
+    }
+
+    public Configuration deepCopyWithoutProxies() {
+        Configuration copy = new Configuration();
+        copy.notes = this.notes;
+        copy.version = this.version;
+
+        for (Property property : this.properties.values()) {
+            copy.put(property);
+        }
+
+        return copy;
     }
 
     /**

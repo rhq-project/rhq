@@ -1136,7 +1136,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         } else if (response.getStatus() == ConfigurationUpdateStatus.SUCCESS) {
             // link to the newer, persisted configuration object
             Resource resource = update.getResource();
-            resource.setResourceConfiguration(update.getConfiguration().deepCopy(false));
+            resource.setResourceConfiguration(update.getConfiguration().deepCopyWithoutProxies());
             notifyAlertConditionCacheManager("completeResourceConfigurationUpdate", update);
         }
 

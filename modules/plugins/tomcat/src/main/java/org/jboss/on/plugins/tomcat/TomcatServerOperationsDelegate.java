@@ -159,9 +159,10 @@ public class TomcatServerOperationsDelegate {
      */
     private String start(PropertyList environment) throws InterruptedException {
         Configuration pluginConfiguration = this.serverComponent.getPluginConfiguration();
-        String controlMethod = pluginConfiguration.getSimpleValue(TomcatServerComponent.PLUGIN_CONFIG_CONTROL_METHOD,
+        String controlMethodName = pluginConfiguration.getSimpleValue(TomcatServerComponent.PLUGIN_CONFIG_CONTROL_METHOD,
             ControlMethod.SCRIPT.name());
-        ProcessExecution processExecution = (ControlMethod.SCRIPT.name().equals(controlMethod)) ? getScriptStart(pluginConfiguration)
+        ControlMethod controlMethod = ControlMethod.valueOf(controlMethodName);
+        ProcessExecution processExecution = (controlMethod == ControlMethod.SCRIPT) ? getScriptStart(pluginConfiguration)
             : getRpmStart(pluginConfiguration);
 
         applyEnvironmentVars(environment, processExecution);
@@ -176,16 +177,16 @@ public class TomcatServerOperationsDelegate {
         Integer exitCode = results.getExitCode();
         AvailabilityType avail;
 
-        if ((null != error) || ((null != exitCode) && (0 != exitCode))) {
-            String message = "Script returned error or non-zero exit code while starting the Tomcat instance. Exit code ["
-                + exitCode + "]";
-            if (null == error) {
+        if (startScriptFailed(controlMethod, error, exitCode)) {
+            String output = results.getCapturedOutput();
+            String message = "Script returned error or non-zero exit code while starting the Tomcat instance - exitCode=["
+                + ((exitCode != null) ? exitCode : "UNKNOWN") + "], output=[" + output + "].";
+            if (error == null) {
                 log.error(message);
             } else {
                 log.error(message, error);
             }
             avail = this.serverComponent.getAvailability();
-
         } else {
             avail = waitForServerToStart(start);
         }
@@ -196,7 +197,18 @@ public class TomcatServerOperationsDelegate {
         } else {
             return "Server has been started.";
         }
+    }
 
+    private static boolean startScriptFailed(ControlMethod controlMethod, Throwable error, Integer exitCode) {
+        if (error != null || exitCode == null) {
+            return true;
+        }
+        if (controlMethod == ControlMethod.SCRIPT && isWindows()) {
+            // Believe it or not, an exit code of 1 from startup.bat does not indicate an error.
+            return exitCode != 0 && exitCode != 1;
+        } else {
+            return exitCode != 0;
+        }
     }
 
     private ProcessExecution getScriptStart(Configuration pluginConfiguration) {
@@ -282,7 +294,7 @@ public class TomcatServerOperationsDelegate {
         String controlMethod = pluginConfiguration.getSimpleValue(TomcatServerComponent.PLUGIN_CONFIG_CONTROL_METHOD,
             ControlMethod.SCRIPT.name());
         ProcessExecution processExecution = (ControlMethod.SCRIPT.name().equals(controlMethod)) ? getScriptShutdown(pluginConfiguration)
-            : getRpmShutdown(pluginConfiguration);
+            : getRpmShutdown();
         
         applyEnvironmentVars(environment, processExecution);
         
@@ -319,7 +331,7 @@ public class TomcatServerOperationsDelegate {
         return processExecution;
     }
 
-    private ProcessExecution getRpmShutdown(Configuration pluginConfiguration) {
+    private ProcessExecution getRpmShutdown() {
         ProcessExecution processExecution;
         String catalinaHome = this.serverComponent.getCatalinaHome().getPath();
         String rpm = TomcatDiscoveryComponent.isEWSTomcat6(catalinaHome) ? TomcatDiscoveryComponent.EWS_TOMCAT_6
@@ -495,5 +507,9 @@ public class TomcatServerOperationsDelegate {
             }
             processExecution.setEnvironmentVariables(environmentVariables);
         }
+    }
+
+    private static boolean isWindows() {
+        return File.separatorChar == '\\';
     }
 }

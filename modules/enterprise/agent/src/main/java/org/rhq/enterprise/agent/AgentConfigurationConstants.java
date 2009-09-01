@@ -58,7 +58,7 @@ public interface AgentConfigurationConstants {
     /**
      * This is the current schema version that our agent configuration knows about.
      */
-    int CURRENT_CONFIG_SCHEMA_VERSION = 4;
+    int CURRENT_CONFIG_SCHEMA_VERSION = 5;
 
     /**
      * Flag to indicate if the agent's configuration has been setup.

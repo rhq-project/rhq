@@ -57,6 +57,7 @@ public class AgentConfigurationUpgrade extends PreferencesUpgrade {
         list.add(new Step1to2()); // goes from v1 to v2
         list.add(new Step2to3()); // goes from v2 to v3
         list.add(new Step3to4()); // goes from v3 to v4
+        list.add(new Step4to5()); // goes from v4 to v5
         return list;
     }
 
@@ -104,6 +105,24 @@ public class AgentConfigurationUpgrade extends PreferencesUpgrade {
             if (val < AgentConfigurationConstants.DEFAULT_PLUGINS_AVAILABILITY_SCAN_PERIOD) {
                 preferences.putLong(AgentConfigurationConstants.PLUGINS_AVAILABILITY_SCAN_PERIOD,
                     AgentConfigurationConstants.DEFAULT_PLUGINS_AVAILABILITY_SCAN_PERIOD);
+            }
+        }
+    }
+
+    static class Step4to5 extends PreferencesUpgradeStep {
+        public int getSupportedConfigurationSchemaVersion() {
+            return 5;
+        }
+
+        public void upgrade(Preferences preferences) {
+            // This new schema version added a new preprocessor to support proper serialization to/from server.
+            // If the preprocessor value is null, then don't do anything (we are probably running inside of tests).
+            // A "real" agent from a previous schema version already had one preprocessor, we just need to add another.
+            String newPreprocessor = ExternalizableStrategyCommandPreprocessor.class.getName();
+            String val = preferences.get(AgentConfigurationConstants.CLIENT_SENDER_COMMAND_PREPROCESSORS, null);
+            if (val != null && !val.contains(newPreprocessor)) {
+                val = val + ':' + newPreprocessor;
+                preferences.put(AgentConfigurationConstants.CLIENT_SENDER_COMMAND_PREPROCESSORS, val);
             }
         }
     }

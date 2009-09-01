@@ -144,7 +144,26 @@ public class ConfigurationBean {
                 PropertyItemWithValue value = new PropertyItemWithValue(itemDef, property);
                 configuration.add(value);
             }
+
+            // force some hardcoded defaults for IBM JVMs that must have specific values
+            boolean isIBM = System.getProperty("java.vendor", "").contains("IBM");
+            if (isIBM) {
+                String[] algPropNames = { ServerProperties.PROP_TOMCAT_SECURITY_ALGORITHM,
+                    ServerProperties.PROP_SECURITY_CLIENT_KEYSTORE_ALGORITHM,
+                    ServerProperties.PROP_SECURITY_CLIENT_TRUSTSTORE_ALGORITHM,
+                    ServerProperties.PROP_SECURITY_SERVER_KEYSTORE_ALGORITHM,
+                    ServerProperties.PROP_SECURITY_SERVER_TRUSTSTORE_ALGORITHM };
+
+                for (String algPropName : algPropNames) {
+                    PropertyItemWithValue prop = getConfigurationProperty(this.configuration, algPropName);
+                    if (prop != null) {
+                        prop.setValue("IbmX509");
+                    }
+                }
+            }
         }
+
+        return;
     }
 
     /**

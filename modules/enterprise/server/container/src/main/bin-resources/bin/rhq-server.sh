@@ -292,17 +292,7 @@ if [ -z "$RHQ_SERVER_CMDLINE_OPTS" ]; then
       _PROPS_FILE_PATH=`cygpath --windows --path "$_PROPS_FILE_PATH"`
    fi
 
-   RHQ_SERVER_CMDLINE_OPTS="-P ${_PROPS_FILE_PATH}"
-   
-   if [ -n "$_AIX" ]; then
-      # the IBM JDK uses a different SSL certificate encoding algorithm;
-      # override the default of "SunX509" that's set in five places in rhq-server.properties
-      RHQ_SERVER_CMDLINE_OPTS="$RHQ_SERVER_CMDLINE_OPTS -Drhq.server.tomcat.security.algorithm=IbmX509"
-      RHQ_SERVER_CMDLINE_OPTS="$RHQ_SERVER_CMDLINE_OPTS -Drhq.communications.connector.security.keystore.algorithm=IbmX509"
-      RHQ_SERVER_CMDLINE_OPTS="$RHQ_SERVER_CMDLINE_OPTS -Drhq.communications.connector.security.truststore.algorithm=IbmX509"
-      RHQ_SERVER_CMDLINE_OPTS="$RHQ_SERVER_CMDLINE_OPTS -Drhq.server.client.security.keystore.algorithm=IbmX509"
-      RHQ_SERVER_CMDLINE_OPTS="$RHQ_SERVER_CMDLINE_OPTS -Drhq.server.client.security.truststore.algorithm=IbmX509"              
-   fi   
+   RHQ_SERVER_CMDLINE_OPTS="-P ${_PROPS_FILE_PATH}"   
 fi
 
 debug_msg "RHQ_SERVER_CMDLINE_OPTS: $RHQ_SERVER_CMDLINE_OPTS"

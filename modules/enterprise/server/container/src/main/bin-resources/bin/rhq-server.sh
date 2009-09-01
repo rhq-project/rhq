@@ -300,7 +300,7 @@ if [ -z "$RHQ_SERVER_CMDLINE_OPTS" ]; then
       RHQ_SERVER_CMDLINE_OPTS="$RHQ_SERVER_CMDLINE_OPTS -Drhq.server.tomcat.security.algorithm=IbmX509"
       RHQ_SERVER_CMDLINE_OPTS="$RHQ_SERVER_CMDLINE_OPTS -Drhq.communications.connector.security.keystore.algorithm=IbmX509"
       RHQ_SERVER_CMDLINE_OPTS="$RHQ_SERVER_CMDLINE_OPTS -Drhq.communications.connector.security.truststore.algorithm=IbmX509"
-      RHQ_SERVER_CMDLINE_OPTS="$RHQ_SERVER_CMDLINE_OPTS -Drhq.server.client.security.keystore.algorithm=IbmX509""
+      RHQ_SERVER_CMDLINE_OPTS="$RHQ_SERVER_CMDLINE_OPTS -Drhq.server.client.security.keystore.algorithm=IbmX509"
       RHQ_SERVER_CMDLINE_OPTS="$RHQ_SERVER_CMDLINE_OPTS -Drhq.server.client.security.truststore.algorithm=IbmX509"              
    fi   
 fi

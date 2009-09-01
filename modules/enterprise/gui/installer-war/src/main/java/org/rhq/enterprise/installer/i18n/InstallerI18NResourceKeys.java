@@ -201,8 +201,8 @@ public interface InstallerI18NResourceKeys {
         @I18NMessage(locale = "de", value = "Diese Servereinstellungen konfigurieren den Server für diese Installation. Alle Einstellungen werden benötigt.") })
     String SERVER_SETTINGS_INSTRUCTIONS = "serverSettingsInstructions";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Production Installation"),
-        @I18NMessage(locale = "de", value = "Produktion Installation") })
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Install Server!"),
+        @I18NMessage(locale = "de", value = "Server installieren!") })
     String SAVE = "save";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Yes"), @I18NMessage(locale = "de", value = "Ja") })

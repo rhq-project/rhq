@@ -155,7 +155,7 @@
                </h:panelGrid>
             </h:panelGrid>
 
-<!-- this is confusing people, don't show this
+<%-- this is confusing people, don't show this
             <h:panelGrid columns="1">
                <h:outputText value="#{bundle.createDatabaseNote}" style="font-size: 100%"/>
                <h:panelGrid columns="2">
@@ -168,7 +168,7 @@
                   </h:panelGroup>
                </h:panelGrid>
             </h:panelGrid>
--->
+--%>
          </h:panelGrid>
       </h:panelGrid>
 
@@ -315,6 +315,7 @@
 
       <br/>
       <p align="left">
+<%-- this is confusing people, don't show this
          <h4 align="left">
             <h:outputText value="#{bundle.installButtonsText}" />
          </h4>
@@ -322,6 +323,10 @@
             <td><h:commandButton id="save" action="#{configurationBean.save}" value="#{bundle.save}" /></td>
             <td><h:outputText value="#{bundle.orText}" /></td>
             <td><h:commandButton id="saveEmbeddedMode" action="#{configurationBean.saveEmbeddedMode}" value="#{bundle.saveEmbeddedMode}" /></td>
+         </tr></table>
+--%>
+         <table border="1"><tr>
+            <td><h:commandButton id="save" action="#{configurationBean.save}" value="#{bundle.save}" /></td>
          </tr></table>
       </p>
    </h:form>

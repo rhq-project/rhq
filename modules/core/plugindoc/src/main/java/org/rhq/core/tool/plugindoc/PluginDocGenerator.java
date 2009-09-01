@@ -269,6 +269,10 @@ public class PluginDocGenerator {
     }
 
     private static String escapeFileName(String fileName) {
+        // docbook doesn't like parentheses in filenames
+        fileName = fileName.replaceAll("\\(", "").replaceAll("\\)", "");
+
+        // remove other characters
         return fileName.replace('/', '-').replace('\\', '-').replace(' ', '_');
     }
 

@@ -36,11 +36,6 @@ public class ExternalizableStrategyCommandPreprocessor implements CommandPreproc
     private static final String CMDCONFIG_PROP_EXTERNALIZABLE_STRATEGY = "rhq.externalizable-strategy";
 
     /**
-     * The agent configuration that will be used to persist the security token.
-     */
-    private AgentConfiguration m_agentConfiguration = null;
-
-    /**
      * Ensure the AGENT strategy is employed.
      *
      * @see CommandPreprocessor#preprocess(Command, ClientCommandSender)

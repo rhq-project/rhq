@@ -771,8 +771,10 @@ public class ServerInformation {
     }
 
     /**
-     * Clean up messages in the JMS message table. It is safe to just delete all of them, as 
-     * we are alone on the RHQ server and thus noone else is expected to have messages in there. 
+     * Clean up messages in the JMS message table. Make sure you call this when no other Servers
+     * are communicating with the database, otherwise, its possible in-flight messages will get lost
+     * or go into a bad state.
+     * 
      * @param props 
      */
     public void cleanJmsTables(Properties props) {
@@ -783,7 +785,7 @@ public class ServerInformation {
         try {
             conn = getDatabaseConnection(props);
             stm = conn.createStatement();
-            stm.executeUpdate("DELETE FROM JMS_MESSAGES");
+            stm.executeUpdate("DELETE FROM JMS_MESSAGES"); // TODO: we should do truncate, no?
         } catch (SQLException e) {
             LOG.info("Was not able to delete existing JMS messages: " + e.getMessage());
         } finally {

@@ -35,7 +35,7 @@ public class ExternalizableStrategyCommandListener implements CommandListener {
 
     private final String CMDCONFIG_PROP_EXTERNALIZABLE_STRATEGY = "rhq.externalizable-strategy";
 
-    private ExternalizableStrategy.Subsystem defaultSubsystem;
+    private final ExternalizableStrategy.Subsystem defaultSubsystem;
 
     public ExternalizableStrategyCommandListener(ExternalizableStrategy.Subsystem defaultSubsystem) {
         this.defaultSubsystem = (null != defaultSubsystem) ? defaultSubsystem : ExternalizableStrategy.Subsystem.AGENT;
@@ -72,14 +72,17 @@ public class ExternalizableStrategyCommandListener implements CommandListener {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (!(obj instanceof ExternalizableStrategyCommandListener))
+        }
+
+        if (!(obj instanceof ExternalizableStrategyCommandListener)) {
             return false;
+        }
 
         ExternalizableStrategyCommandListener listener = (ExternalizableStrategyCommandListener) obj;
 
-        return (this.defaultSubsystem.equals(listener.defaultSubsystem));
+        return (this.defaultSubsystem == listener.defaultSubsystem);
     }
 
     @Override

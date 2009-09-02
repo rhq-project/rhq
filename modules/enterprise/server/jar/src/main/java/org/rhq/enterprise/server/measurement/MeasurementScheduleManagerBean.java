@@ -1259,7 +1259,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<MeasurementSchedule> getSchedulesByCriteria(Subject subject, MeasurementScheduleCriteria criteria) {
+    public PageList<MeasurementSchedule> findSchedulesByCriteria(Subject subject, MeasurementScheduleCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
         if (authorizationManager.isInventoryManager(subject) == false) {
             generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE, subject

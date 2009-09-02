@@ -60,7 +60,7 @@ public interface MeasurementScheduleManagerRemote {
         @WebParam(name = "measurementDefinitionIds") int[] measurementDefinitionIds);
 
     @WebMethod
-    PageList<MeasurementSchedule> getSchedulesByCriteria(//
+    PageList<MeasurementSchedule> findSchedulesByCriteria(//
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "criteria") MeasurementScheduleCriteria criteria);
 

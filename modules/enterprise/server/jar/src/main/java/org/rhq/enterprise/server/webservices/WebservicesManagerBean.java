@@ -489,9 +489,9 @@ public class WebservicesManagerBean implements WebservicesRemote {
         measurementScheduleManager.enableSchedulesForCompatibleGroup(subject, groupId, measurementDefinitionIds);
     }
 
-    public PageList<MeasurementSchedule> getSchedulesByCriteria(Subject subject, MeasurementScheduleCriteria criteria) {
+    public PageList<MeasurementSchedule> findSchedulesByCriteria(Subject subject, MeasurementScheduleCriteria criteria) {
         checkParametersPassedIn(subject, criteria);
-        return measurementScheduleManager.getSchedulesByCriteria(subject, criteria);
+        return measurementScheduleManager.findSchedulesByCriteria(subject, criteria);
     }
 
     //MEASUREMENTSCHEDULEMANAGER: END ----------------------------------

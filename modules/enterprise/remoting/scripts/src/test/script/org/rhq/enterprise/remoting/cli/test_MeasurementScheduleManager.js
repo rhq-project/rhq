@@ -35,7 +35,7 @@ function testFindWithFiltering() {
     criteria.addFilterDefinitionIds([measurementDef.id])
     criteria.addFilterResourceId(resource.id);
 
-    var measurementSchedules = MeasurementScheduleManager.getSchedulesByCriteria(criteria);
+    var measurementSchedules = MeasurementScheduleManager.findSchedulesByCriteria(criteria);
 
     Assert.assertNumberEqualsJS(measurementSchedules.size(), 1, 'Failed to find measurement schedules when filtering');
 }
@@ -51,7 +51,7 @@ function testFindWithFetchingAssociations() {
     criteria.fetchDefinition(true);
     criteria.fetchResource(true);
 
-    var measurementSchedules = MeasurementScheduleManager.getSchedulesByCriteria(criteria);
+    var measurementSchedules = MeasurementScheduleManager.findSchedulesByCriteria(criteria);
 
     Assert.assertNumberEqualsJS(measurementSchedules.size(), 1, 'Failed to find measurement schedules when fetching associations');
 }
@@ -63,7 +63,7 @@ function testFindWithSorting() {
     var criteria = MeasurementScheduleCriteria();
     criteria.addSortName(PageOrdering.ASC);
 
-    var measurementSchedules = MeasurementScheduleManager.getSchedulesByCriteria(criteria);
+    var measurementSchedules = MeasurementScheduleManager.findSchedulesByCriteria(criteria);
 
     Assert.assertTrue(measurementSchedules.size() > 0, 'Failed to find measurement schedules when sorting');
 }

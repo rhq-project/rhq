@@ -355,6 +355,6 @@ public interface MeasurementScheduleManagerLocal {
     PageList<MeasurementScheduleComposite> findSchedulesForResource(Subject subject, int resourceId,
         PageControl pageControl);
 
-    PageList<MeasurementSchedule> getSchedulesByCriteria(Subject subject, MeasurementScheduleCriteria criteria);
+    PageList<MeasurementSchedule> findSchedulesByCriteria(Subject subject, MeasurementScheduleCriteria criteria);
 
 }

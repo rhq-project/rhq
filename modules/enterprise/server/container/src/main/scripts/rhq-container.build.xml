@@ -394,7 +394,14 @@
          <fileset dir="${jboss.home}/server/default/lib">
             <include name="activation.jar" />
          </fileset>
-      </move>      
+      </move>
+
+      <!-- Having xalan.jar in lib/endorsed/ causes issues with some version of Sun Java, 
+           so remove it by default, but hold onto it, since we'll need to put it back
+           when using IBM Java. -->      
+      <mkdir dir="${project.build.outputDirectory}/etc/ibm" />
+      <move file="${jboss.home}/lib/endorsed/xalan.jar" 
+            todir="${project.build.outputDirectory}/etc/ibm" />
 
       <echo>Adding support for the embedded agent ...</echo>
       <move todir="${jboss.home}/lib/endorsed" verbose="true">

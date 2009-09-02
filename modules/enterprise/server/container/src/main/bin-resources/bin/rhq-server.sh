@@ -262,6 +262,16 @@ fi
 JAVA="$RHQ_SERVER_JAVA_EXE_FILE_PATH"
 export JAVA
 
+# If we're using IBM Java, we need to copy xalan.jar into the AS lib/endorsed dir.
+if $JAVA -version 2>&1 | grep "IBM J9" >/dev/null 2>&1; then
+   XALAN_JAR="${RHQ_SERVER_HOME}/etc/ibm/xalan.jar"
+   INSTALLED_XALAN_JAR="${RHQ_SERVER_HOME}/jbossas/lib/endorsed/xalan.jar"
+   if [ -f "$XALAN_JAR" ] && [ ! -f "$INSTALLED_XALAN_JAR" ]; then
+      echo "Detected IBM Java - installing xalan.jar..."
+      cp "$XALAN_JAR" "$INSTALLED_XALAN_JAR"
+   fi
+fi
+
 # ----------------------------------------------------------------------
 # Prepare the VM command line options to be passed in
 # ----------------------------------------------------------------------

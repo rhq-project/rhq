@@ -34,7 +34,7 @@
 var TestsEnabled = true;
 
 // note, super-user, will not test any security constraints
-rhq.login('rhqadmin', 'rhqadmin');
+var subject = rhq.login('rhqadmin', 'rhqadmin');
 
 executeAllTests();
 
@@ -126,6 +126,9 @@ function testFindByCriteria() {
    var testChannel = ChannelManager.createChannel(newChannel);
 
    var criteria = new ChannelCriteria();
+   criteria.fetchResourceChannels( true );   
+   criteria.fetchChannelContentSources( true );   
+   criteria.fetchChannelPackageVersions( true );
    channels = ChannelManager.findChannelsByCriteria(criteria);
    Assert.assertNumberEqualsJS(channels.size(), numRealChannels + 3, "empty criteria failed.");
 
@@ -283,7 +286,7 @@ function testDeploy() {
    // no required plugin config for this resource type
    // no required resource config for this resource type
    // resource name defaults to war file name / context root
-   ResourceFactoryManager.createResource( vhost.getId(), warType.getId(), null, null, file.getName(), "1.0", null, deployConfig, fileBytes);
+   ResourceFactoryManager.createPackageBackedResource( vhost.getId(), warType.getId(), null, null, file.getName(), "1.0", null, deployConfig, fileBytes);
 
    criteria = new ResourceCriteria();
    criteria.strict = false;
@@ -308,10 +311,56 @@ function testDeploy() {
       war = wars.get(0);
    }
    Assert.assertNotNull( war, "War should have been created" );
-   
-   var backingPackage = ContentManager.getBackingPackageForResource( war.getId() );
-   assertNotNull( backingPackage, "backing package should exist after create" );
+      
+   // The backing package (InstalledPackage) for a new PBR may not exist immediately. It
+   // requires an agent-side content discovery. Wait for up to 120 seconds (to take care of initial delay
+   // and schedule interval timing.
+   var backingPackage;
+   for( i=0; ( i<120 ); ++i ) {
+      sleep( 1000 );
+      
+      backingPackage = ContentManager.getBackingPackageForResource( war.getId() );
+      if ( null != backingPackage ) {
+         break;
+      }
+   }
+
+   backingPackage = ContentManager.getBackingPackageForResource( war.getId() );
+   Assert.assertNotNull( backingPackage, "backing package should exist after create" );
    print( "\n After Create: Backing Package=" + backingPackage.getId() );
+   
+   // compare bytes to make sure we're good
+   // Due to issues in PBR creation the bytes will be pulled from the plugin. There is a 30 second
+   // timeout on this (see ContentManagerBean) Also, this means we may not get back
+   // exactly what we put in as the plugin may have exploded the .war and then re-zipped. So, exact match
+   // is not appropriate.
+   var packageBytes = ContentManager.getPackageBytes( war.getId(), backingPackage.getId() );
+   Assert.assertNotNull( packageBytes, "package bytes should have been returned");
+   Assert.assertTrue( packageBytes.length > (fileBytes.length * 0.2), "not enough package bytes");
+   Assert.assertTrue( packageBytes.length < (fileBytes.length * 1.2), "too many package bytes");   
+   
+   // throw in some criteria tests
+   criteria = new InstalledPackageCriteria();
+   criteria.addFilterId( backingPackage.getId() );
+   criteria.addFilterInstallationTimeMinimum( 0 );
+   criteria.addFilterInstallationTimeMaximum( new Date().getTime() );
+   criteria.addFilterResourceId( war.getId() );
+   // omit this criteria, it's not being set today
+   // criteria.addFilterSubjectId( subject.getId() );
+   criteria.fetchPackageVersion( true );
+   criteria.fetchResource( true );
+   criteria.fetchSubject( true );
+   criteria.addSortInstallationTime( PageOrdering.DESC );
+   
+   var installedPackages = ContentManager.findInstalledPackagesByCriteria(criteria);
+   Assert.assertNotNull( installedPackages, "installedPackage should exist" );
+   Assert.assertNumberEqualsJS( installedPackages.size(), 1, "unexpected number of iPkgs" );
+   Assert.assertNumberEqualsJS( installedPackages.get(0).getId(), backingPackage.getId(), "unexpected iPkg returned" );
+   
+   // negative test
+   criteria.addFilterPackageVersionId( -81 );
+   installedPackages = ContentManager.findInstalledPackagesByCriteria(criteria);
+   Assert.assertTrue( (( null == pvsInChannel ) || pvsInChannel.isEmpty() ), "pv should not be returned" );   
    
    // delete existing test channel in the db, this will unsubscribe resources and remove orphaned pvs
    var criteria = new ChannelCriteria();
@@ -368,13 +417,46 @@ function testDeploy() {
    inputStream.close();
    Assert.assertTrue( (offset == fileBytes.length), "Could not completely read file " + file.getName() );
    
-   var pv = ContentManager.createPackageVersion( "test-channel-war-2.0.war", packageType.getId(), "2.0", null, fileBytes);
+   var pv = ContentManager.createPackageVersion( "test-channel-war", packageType.getId(), "2.0", null, fileBytes);
    Assert.assertNotNull( pv, "failed to create packageVersion" );
    Assert.assertTrue( (pv.getId() > 0), " Bad PV Id from createPV");
 
    ChannelManager.addPackageVersionsToChannel( channel.getId(), [pv.getId()] );
    
-   var pvsInChannel = ChannelManager.findPackageVersionsInChannel( channel.getId(), null, PageControl.getUnlimitedInstance() );
+   // throw in some criteria search tests while we have a pv in play...
+   criteria = new PackageVersionCriteria();
+   criteria.addFilterPackageTypeId( packageType.getId() );
+   criteria.fetchGeneralPackage( true );
+   criteria.fetchArchitecture( true );
+   criteria.fetchExtraProperties( true );
+   criteria.fetchChannelPackageVersions( true );
+   criteria.fetchInstalledPackages( true );
+   criteria.fetchInstalledPackageHistory( true );
+   criteria.fetchProductVersionPackageVersions( true );
+   criteria.addSortDisplayName(PageOrdering.ASC);
+   var pvsInChannel = ContentManager.findPackageVersionsByCriteria( criteria );
+   Assert.assertNotNull( pvsInChannel, "pvs should exist" );
+   Assert.assertTrue( (pvsInChannel.size() >= 2), "unexpected number of pvs" );
+   
+   // Now let's try with other restriction that should reduce to only the 2.0 version
+   // 1.0 package is not associated with the channel.
+   criteria.addFilterId( pv.getId());
+   criteria.addFilterChannelId( channel.getId() );
+   criteria.addFilterDisplayName( "test-channel-war" );
+   criteria.addFilterVersion( "2.0" );         
+   pvsInChannel = ChannelManager.findPackageVersionsInChannelByCriteria( criteria );
+   Assert.assertNotNull( pvsInChannel, "pv should exist" );
+   Assert.assertNumberEqualsJS( pvsInChannel.size(), 1, "unexpected number of pvs" );
+   Assert.assertNumberEqualsJS( pvsInChannel.get(0).getId(), pv.getId(), "unexpected pv returned" );
+   Assert.assertEquals( pvsInChannel.get(0).getVersion(), pv.getVersion(), "unexpected pv returned" );
+      
+   // negative test
+   criteria.addFilterVersion( "1.0" );
+   pvsInChannel = ChannelManager.findPackageVersionsInChannelByCriteria( criteria );
+   Assert.assertTrue( (( null == pvsInChannel ) || pvsInChannel.isEmpty() ), "pv should not be returned" );
+
+   // do a non-criteria find and continue from there...
+   pvsInChannel = ChannelManager.findPackageVersionsInChannel( channel.getId(), null, PageControl.getUnlimitedInstance() );
    Assert.assertNotNull( pvsInChannel, "pv should be in channel" );
    Assert.assertNumberEqualsJS( pvsInChannel.size(), 1, "unexpected pvs" );   
    Assert.assertNumberEqualsJS( pvsInChannel.get(0).getId(), pv.getId(), "unexpected pv returned" );

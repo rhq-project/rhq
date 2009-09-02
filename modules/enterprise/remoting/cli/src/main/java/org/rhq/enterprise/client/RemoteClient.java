@@ -73,7 +73,7 @@ public class RemoteClient {
         ConfigurationManager(ConfigurationManagerRemote.class), //
         //ContentHelperManager(ContentHelperRemote.class), //
         ContentManager(ContentManagerRemote.class), //
-        DataAccess(DataAccessManagerRemote.class), //
+        DataAccessManager(DataAccessManagerRemote.class), //
         DiscoveryBoss(DiscoveryBossRemote.class), //
         EventManager(EventManagerRemote.class), //
         MeasurementBaselineManager(MeasurementBaselineManagerRemote.class), //
@@ -88,7 +88,7 @@ public class RemoteClient {
         RoleManager(RoleManagerRemote.class), //
         SubjectManager(SubjectManagerRemote.class), //
         SupportManager(SupportManagerRemote.class), //
-        SystemManager(SystemManagerRemote.class), //
+        SystemManager(SystemManagerRemote.class) //
         //        RemoteInstallManager(RemoteInstallManagerRemote.class),
         ;
 
@@ -286,8 +286,8 @@ public class RemoteClient {
         return RemoteClientProxy.getProcessor(this, Manager.ContentManager);
     }
 
-    public DataAccessManagerRemote getDataAccessRemote() {
-        return RemoteClientProxy.getProcessor(this, Manager.DataAccess);
+    public DataAccessManagerRemote getDataAccessManagerRemote() {
+        return RemoteClientProxy.getProcessor(this, Manager.DataAccessManager);
     }
 
     public DiscoveryBossRemote getDiscoveryBossRemote() {

@@ -408,13 +408,13 @@
                property="Session.sessionAverageAliveTime"
                displayName="Session Average alive time"
                units="seconds"
-               description="Average alive time of a Sessions" />
+               description="Average alive time of a Session" />
 
             <metric
                property="Session.sessionMaxAliveTime"
                displayName="Max Session alive time"
                units="seconds"
-               description="Maximum alive time of a Sessions" />
+               description="Maximum alive time of a Session" />
 
             <metric
                property="VHost.name"
@@ -683,13 +683,15 @@
             description="Maximum time it took to process a request."
             units="milliseconds"
             defaultOn="true"
+            defaultInterval="300000"
             category="performance" />
 
          <metric
             property="Catalina:type=GlobalRequestProcessor,name=%handler%%address%-%port%:requestCount"
             displayName="Request count"
             description="Total number of requests processed since last restart."
-            defaultOn="false"
+            defaultOn="true"
+            defaultInterval="300000"
             category="utilization"
             measurementType="trendsup" />
 
@@ -698,6 +700,7 @@
             displayName="Error count"
             description="Number of errors while processing since last restart."
             defaultOn="true"
+            defaultInterval="300000"
             category="utilization"
             measurementType="trendsup" />
 
@@ -706,6 +709,7 @@
             displayName="Threadpool Threads Active"
             description="Number of current busy threads."
             defaultOn="true"
+            defaultInterval="300000"
             category="utilization"
             displayType="summary" />
 
@@ -714,6 +718,7 @@
             displayName="Threadpool Threads Allocated"
             description="Number of current threads."
             defaultOn="true"
+            defaultInterval="300000"
             category="utilization"
             displayType="summary" />
 
@@ -898,7 +903,7 @@
                <c:simple-property
                   name="keystoreFile"
                   type="string"
-                  description="Pathname to the keystore file used to validate client certificates."
+                  description="Path to the keystore file used to validate client certificates."
                   required="false" />
                <c:simple-property
                   name="keystoreType"
@@ -914,7 +919,7 @@
                <c:simple-property
                   name="trustStoreFile"
                   type="string"
-                  description="Pathname to the trust store file used to validate client certificates."
+                  description="Path to the trust store file used to validate client certificates."
                   required="false" />
                <c:simple-property
                   name="trustStorePass"
@@ -933,7 +938,7 @@
                <c:simple-property
                   name="tomcatAuthentication"
                   type="boolean"
-                  description="If set to true, the authentication will be done in Tomcat. Otherwise, the authenticated principal will be propagated from the native webserver and used for authorization in Tomcat. The default value is true."
+                  description="If set to true, the authentication will be done in Tomcat. Otherwise, the authenticated principal will be propagated from the native web server and used for authorization in Tomcat. The default value is true."
                   required="false" />
             </c:group>
          </resource-configuration>

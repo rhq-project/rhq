@@ -79,7 +79,7 @@
 	<classpathentry excluding="**" kind="src" path="modules/enterprise/agent/src/main/resources"/>
 	<classpathentry excluding="**" kind="src" path="modules/enterprise/agent/src/test/resources"/>
 	<classpathentry kind="src" path="modules/enterprise/remoting/webservices/src/main/java"/>
-	<classpathentry kind="src" path="modules/enterprise/remoting/webservices/src/test/java"/>
+<!--	<classpathentry kind="src" path="modules/enterprise/remoting/webservices/src/test/java"/> -->
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6">
 		<accessrules>
 			<accessrule kind="accessible" pattern="sun/misc/**"/>

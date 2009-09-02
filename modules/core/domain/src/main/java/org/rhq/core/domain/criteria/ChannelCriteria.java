@@ -44,8 +44,8 @@ public class ChannelCriteria extends Criteria {
     private List<Integer> filterResourceIds; // needs overrides
 
     private boolean fetchResourceChannels;
-    private boolean fetchContentSources;
-    private boolean fetchPackageVersions;
+    private boolean fetchChannelContentSources;
+    private boolean fetchChannelPackageVersions;
 
     private PageOrdering sortName;
 
@@ -75,12 +75,12 @@ public class ChannelCriteria extends Criteria {
         this.fetchResourceChannels = fetchResourceChannels;
     }
 
-    public void fetchContentSources(boolean fetchContentSources) {
-        this.fetchContentSources = fetchContentSources;
+    public void fetchChannelContentSources(boolean fetchChannelContentSources) {
+        this.fetchChannelContentSources = fetchChannelContentSources;
     }
 
-    public void fetchPackageVersions(boolean fetchPackageVersions) {
-        this.fetchPackageVersions = fetchPackageVersions;
+    public void fetchChannelPackageVersions(boolean fetchChannelPackageVersions) {
+        this.fetchChannelPackageVersions = fetchChannelPackageVersions;
     }
 
     public void addSortName(PageOrdering sortName) {

@@ -1,14 +1,11 @@
-<project
-   xmlns="http://maven.apache.org/POM/4.0.0"
-   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
    <modelVersion>4.0.0</modelVersion>
 
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-parent</artifactId>
-      <version>1.3.0-SNAPSHOT</version>
+      <version>1.3.0</version>
    </parent>
 
    <artifactId>rhq-remoting-cli</artifactId>
@@ -17,8 +14,8 @@
    <description>RHQ Enterprise Remote Command Line Interface</description>
 
    <scm>
-      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/client/</connection>
-      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/client/</developerConnection>
+      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_3_0/modules/enterprise/client</connection>
+      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_3_0/modules/enterprise/client</developerConnection>
    </scm>
 
    <properties>
@@ -173,91 +170,34 @@
                   <phase>package</phase>
                   <configuration>
                      <tasks>
-                        <ant
-                           antfile="${basedir}/src/main/scripts/rhq-client.build.xml"
-                           dir="${basedir}"
-                           target="prepare-dist"
-                           inheritAll="false"
-                           inheritRefs="false">
+                        <ant antfile="${basedir}/src/main/scripts/rhq-client.build.xml" dir="${basedir}" target="prepare-dist" inheritAll="false" inheritRefs="false">
 
-                           <property
-                              name="buildNumber"
-                              value="${buildNumber}" />
-                           <property
-                              name="java.jre.home"
-                              value="${java.home}" />
-                           <property
-                              name="maven.compile.classpath"
-                              refid="maven.compile.classpath" />
-                           <property
-                              name="maven.runtime.classpath"
-                              refid="maven.runtime.classpath" />
-                           <property
-                              name="project.build.outputDirectory"
-                              value="${project.build.outputDirectory}" />
-                           <property
-                              name="project.name"
-                              value="${project.name}" />
-                           <property
-                              name="project.artifactId"
-                              value="${project.artifactId}" />
-                           <property
-                              name="project.groupId"
-                              value="${project.groupId}" />
-                           <property
-                              name="project.version"
-                              value="${project.version}" />
-                           <property
-                              name="settings.localRepository"
-                              value="${settings.localRepository}" />
-                           <property
-                              name="rhq-remoting-ws.version"
-                              value="${version}" />
-                           <property
-                              name="commons-logging.version"
-                              value="${commons-logging.version}" />
-                           <property
-                              name="opencsv.version"
-                              value="${opencsv.version}" />
-                           <property
-                              name="concurrent.version"
-                              value="${concurrent.version}" />
-                           <property
-                              name="getopt.version"
-                              value="${getopt.version}" />
-                           <property
-                              name="i18nlog.version"
-                              value="${i18nlog.version}" />
-                           <property
-                              name="jboss-common.version"
-                              value="${jboss-common.version}" />
-                           <property
-                              name="jboss.version"
-                              value="${jboss.version}" />
-                           <property
-                              name="jboss-remoting.version"
-                              value="${jboss-remoting.version}" />
-                           <property
-                              name="jboss-javassist.version"
-                              value="${jboss-javassist.version}" />
-                           <property
-                              name="jline.version"
-                              value="${jline.version}" />
-                           <property
-                              name="log4j.version"
-                              value="${log4j.version}" />
-                           <property
-                              name="testng.version"
-                              value="${testng.version}" />
-                           <property
-                              name="persistence-api.version"
-                              value="${persistence-api.version}" />
-                           <property
-                              name="rhq.client.build.exclude.cli.jar"
-                              value="${rhq.client.build.exclude.cli.jar}" />
-                           <property
-                              name="rhq.client.build.include.client.jar"
-                              value="${rhq.client.build.include.client.jar}" />
+                           <property name="buildNumber" value="${buildNumber}" />
+                           <property name="java.jre.home" value="${java.home}" />
+                           <property name="maven.compile.classpath" refid="maven.compile.classpath" />
+                           <property name="maven.runtime.classpath" refid="maven.runtime.classpath" />
+                           <property name="project.build.outputDirectory" value="${project.build.outputDirectory}" />
+                           <property name="project.name" value="${project.name}" />
+                           <property name="project.artifactId" value="${project.artifactId}" />
+                           <property name="project.groupId" value="${project.groupId}" />
+                           <property name="project.version" value="${project.version}" />
+                           <property name="settings.localRepository" value="${settings.localRepository}" />
+                           <property name="rhq-remoting-ws.version" value="${version}" />
+                           <property name="commons-logging.version" value="${commons-logging.version}" />
+                           <property name="opencsv.version" value="${opencsv.version}" />
+                           <property name="concurrent.version" value="${concurrent.version}" />
+                           <property name="getopt.version" value="${getopt.version}" />
+                           <property name="i18nlog.version" value="${i18nlog.version}" />
+                           <property name="jboss-common.version" value="${jboss-common.version}" />
+                           <property name="jboss.version" value="${jboss.version}" />
+                           <property name="jboss-remoting.version" value="${jboss-remoting.version}" />
+                           <property name="jboss-javassist.version" value="${jboss-javassist.version}" />
+                           <property name="jline.version" value="${jline.version}" />
+                           <property name="log4j.version" value="${log4j.version}" />
+                           <property name="testng.version" value="${testng.version}" />
+                           <property name="persistence-api.version" value="${persistence-api.version}" />
+                           <property name="rhq.client.build.exclude.cli.jar" value="${rhq.client.build.exclude.cli.jar}" />
+                           <property name="rhq.client.build.include.client.jar" value="${rhq.client.build.include.client.jar}" />
                         </ant>
                      </tasks>
                   </configuration>

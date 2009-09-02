@@ -12,6 +12,7 @@ public class PackageVersionCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 
     private Integer filterId;
+    private Integer filterPackageId; // requires override    
     private Integer filterChannelId; // requires overrides
     private Integer filterResourceId; // requires overrides
     private Integer filterPackageTypeId; // requires overrides
@@ -23,7 +24,7 @@ public class PackageVersionCriteria extends Criteria {
     private String filterLicenseName;
     private String filterLicenseVersion;
 
-    private boolean fetchPackage;
+    private boolean fetchGeneralPackage;
     private boolean fetchArchitecture;
     private boolean fetchExtraProperties;
     private boolean fetchChannelPackageVersions;
@@ -42,6 +43,7 @@ public class PackageVersionCriteria extends Criteria {
             + "   WHERE cpv.channel.id = ? )");
         filterOverrides.put("fileSizeMinimum", "fileSize >= ?");
         filterOverrides.put("fileSizeMaximum", "fileSize <= ?");
+        filterOverrides.put("packageId", "generalPackage.id = ? ");
         filterOverrides.put("packageTypeId", "generalPackage.packageType.id = ? ");
         filterOverrides.put("resourceId", "id IN " //
             + "( SELECT ip.packageVersion.id" //
@@ -67,6 +69,10 @@ public class PackageVersionCriteria extends Criteria {
 
     public Integer getFilterResourceId() {
         return filterResourceId;
+    }
+
+    public void addFilterPackageId(Integer filterPackageId) {
+        this.filterPackageId = filterPackageId;
     }
 
     public void addFilterPackageTypeId(Integer filterPackageTypeId) {
@@ -101,8 +107,8 @@ public class PackageVersionCriteria extends Criteria {
         this.filterLicenseVersion = filterLicenseVersion;
     }
 
-    public void fetchPackage(boolean fetchPackage) {
-        this.fetchPackage = fetchPackage;
+    public void fetchGeneralPackage(boolean fetchGeneralPackage) {
+        this.fetchGeneralPackage = fetchGeneralPackage;
     }
 
     public void fetchArchitecture(boolean fetchArchitecture) {

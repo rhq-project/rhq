@@ -435,7 +435,7 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
      * @return the new copy
      */
     public Configuration deepCopy(boolean keepIds) {
-        Configuration copy = new Configuration();
+        Configuration copy;
 
         try {
             copy = clone();
@@ -476,7 +476,7 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
         copy.version = this.version;
 
         for (Property property : this.properties.values()) {
-            copy.put(property);
+            copy.put(property.deepCopy());
         }
 
         return copy;

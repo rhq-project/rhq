@@ -71,6 +71,17 @@ public class ConfigurationTest {
     }
 
     @Test
+    public void deepCopyWithoutProxiesShouldNotReturnCopyReferenceOfOriginalProperty() {
+        Configuration original = createConfiguration();
+        String propertyName = "simpleProperty";
+        original.put(new PropertySimple(propertyName, "Simple Property"));
+
+        Configuration copy = original.deepCopyWithoutProxies();
+
+        assertNotSame(copy.get(propertyName), original.get(propertyName), "Expected a refernce to a new property, not the original property being copied");
+    }
+
+    @Test
     public void deepCopyWithoutProxiesShouldSetParentReferenceOfCopiedProperties() {
         Configuration original = createConfiguration();
         String propertyName = "simpleProperty";
@@ -80,7 +91,7 @@ public class ConfigurationTest {
 
         assertSame(
             copy.get(propertyName).getConfiguration(),
-            original.get(propertyName).getConfiguration(),
+            copy,
             "The reference to the parent configuration should point to the newly copied configuration, not the original configuration"
         );
     }

@@ -15,11 +15,11 @@ public class InstalledPackageCriteria extends Criteria {
     private Long filterInstallationTimeMaximum; // requires overrides
     private Integer filterPackageVersionId; // requires overrides
     private Integer filterResourceId; // requires overrides
-    private Integer filterSubjectId; // requires overrides
+    private Integer filterUserId; // requires overrides
 
     private boolean fetchPackageVersion;
     private boolean fetchResource;
-    private boolean fetchSubject;
+    private boolean fetchUser;
 
     private PageOrdering sortInstallationDate;
 
@@ -30,7 +30,7 @@ public class InstalledPackageCriteria extends Criteria {
         filterOverrides.put("installationTimeMaximum", "installationDate <= ?");
         filterOverrides.put("packageVersionId", "packageVersion.id = ? ");
         filterOverrides.put("resourceId", "resource.id = ? ");
-        filterOverrides.put("subjectId", "user.id = ? ");
+        filterOverrides.put("userId", "user.id = ? ");
     }
 
     public void addFilterId(Integer filterId) {
@@ -50,7 +50,7 @@ public class InstalledPackageCriteria extends Criteria {
     }
 
     public void addFilterSubjectId(Integer filterSubjectId) {
-        this.filterSubjectId = filterSubjectId;
+        this.filterUserId = filterSubjectId;
     }
 
     public void addFilterInstallationTimeMinimum(Long filterInstallationTimeMinimum) {
@@ -70,7 +70,7 @@ public class InstalledPackageCriteria extends Criteria {
     }
 
     public void fetchSubject(boolean fetchSubject) {
-        this.fetchSubject = fetchSubject;
+        this.fetchUser = fetchSubject;
     }
 
     public void addSortInstallationTime(PageOrdering sortInstallationDate) {

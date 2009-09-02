@@ -660,7 +660,9 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
     }
 
     public InputStream retrievePackageBits(ResourcePackageDetails packageDetails) {
-        File packageFile = new File(packageDetails.getName());
+        Configuration pluginConfiguration = getResourceContext().getPluginConfiguration();
+        File packageFile = new File(pluginConfiguration.getSimpleValue(PROPERTY_FILENAME, null));
+
         File fileToSend;
         try {
             if (packageFile.isDirectory()) {
@@ -730,12 +732,13 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
 
     public void deleteResource() throws Exception {
         Configuration pluginConfiguration = getResourceContext().getPluginConfiguration();
-        String fullFileName = pluginConfiguration.getSimple(PROPERTY_FILENAME).getStringValue();
-        File file = new File(fullFileName);
+        String fileName = pluginConfiguration.getSimple(PROPERTY_FILENAME).getStringValue();
+
+        File file = new File(fileName);
         if (!file.exists()) {
             log
                 .warn("Could not delete web application files (perhaps removed manually?). Proceeding with resource removal for: "
-                    + fullFileName);
+                    + fileName);
         } else {
             deleteApp(pluginConfiguration, file, false, true);
         }

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="lib" path="/home/spinder/workspace/remoting/modules/enterprise/remoting/webservices/target/rhq-remoting-webservices-1.3.0-SNAPSHOT.jar"/>
 	<classpathentry kind="src" path="modules/core/util/src/main/java"/>
+	<classpathentry kind="src" path="modules/enterprise/remoting/webservices/target/rhq-remoting-webservices-1.3.0-SNAPSHOT/wsconsume-output"/>
 	<classpathentry kind="src" path="modules/enterprise/remoting/cli/src/test/java"/>
 	<classpathentry kind="src" path="modules/enterprise/remoting/cli/src/main/java"/>
 	<classpathentry kind="src" path="modules/core/util/src/test/java"/>

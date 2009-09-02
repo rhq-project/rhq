@@ -23,9 +23,9 @@
 
 rhq.login('rhqadmin', 'rhqadmin');
 
-executeAllTests();
-
 skippedTests.push('testUpdateResourceGroupConfiguration');
+
+executeAllTests();
 
 rhq.logout();
 

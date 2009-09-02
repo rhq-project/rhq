@@ -67,15 +67,23 @@ public class WindowsSoftwareDelegate {
                 String version = getStringValue(packageKey, "DisplayVersion");
 
                 if (displayName != null && installDateString != null && version != null) {
-                    if (version.length() == 0)
+                    if (version.length() == 0) {
                         version = "1";
-
-                    ResourcePackageDetails details = new ResourcePackageDetails(new PackageDetailsKey(displayName,
-                        version, type.getName(), "noarch"));
-                    details.setFileCreatedDate(getDate(installDateString));
-                    details.setFileSize((long) packageKey.getIntValue("EstimatedSize", 0));
-                    details.setDeploymentTimeConfiguration(getConfigurations(packageKey));
-                    installedSoftware.add(details);
+                    }
+                    try {
+                        ResourcePackageDetails details = new ResourcePackageDetails(new PackageDetailsKey(displayName,
+                            version, type.getName(), "noarch"));
+                        details.setFileCreatedDate(getDate(installDateString));
+                        details.setInstallationTimestamp(getDate(installDateString));
+                        details.setFileSize((long) packageKey.getIntValue("EstimatedSize", 0));
+                        details.setDeploymentTimeConfiguration(getConfigurations(packageKey));
+                        installedSoftware.add(details);
+                    } catch (IllegalArgumentException e) {
+                        if (log.isDebugEnabled()) {
+                            log.debug("Skipping windows package discovery for illegal entry [name=" + displayName
+                                + ",version=" + version + ",installDate=" + installDateString + "]", e);
+                        }
+                    }
                 }
             }
         } catch (Win32Exception e) {

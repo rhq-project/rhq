@@ -683,7 +683,6 @@
             description="Maximum time it took to process a request."
             units="milliseconds"
             defaultOn="true"
-            defaultInterval="300000"
             category="performance" />
 
          <metric
@@ -691,7 +690,6 @@
             displayName="Request count"
             description="Total number of requests processed since last restart."
             defaultOn="true"
-            defaultInterval="300000"
             category="utilization"
             measurementType="trendsup" />
 
@@ -700,7 +698,6 @@
             displayName="Error count"
             description="Number of errors while processing since last restart."
             defaultOn="true"
-            defaultInterval="300000"
             category="utilization"
             measurementType="trendsup" />
 
@@ -709,7 +706,6 @@
             displayName="Threadpool Threads Active"
             description="Number of current busy threads."
             defaultOn="true"
-            defaultInterval="300000"
             category="utilization"
             displayType="summary" />
 
@@ -718,7 +714,6 @@
             displayName="Threadpool Threads Allocated"
             description="Number of current threads."
             defaultOn="true"
-            defaultInterval="300000"
             category="utilization"
             displayType="summary" />
 

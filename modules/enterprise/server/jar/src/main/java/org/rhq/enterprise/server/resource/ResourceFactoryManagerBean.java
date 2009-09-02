@@ -309,19 +309,10 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         Resource parentResource = entityManager.getReference(Resource.class, parentResourceId);
         ResourceType resourceType = entityManager.getReference(ResourceType.class, resourceTypeId);
 
-        // Create installed package to attach to the history entry
-        // This should probably be moved to the ContentManagerBean, but we'll do that when we add in generic user
-        // package creation
-
-        // TODO: jdobies, Feb 13, 2008: This needs to change, it should probably be a history entry
-
-        /*InstalledPackage installedPackage = new InstalledPackage();
-        installedPackage.setInstallationDate(new Date());
-        installedPackage.setPackageVersion(packageVersion);
-        installedPackage.setResource(parentResource);
-        installedPackage.setUser(user);*/
-
         // Persist and establish relationships
+        // TODO: Note, InstalledPackage is set to null because it doesn't really make sense. An InstalledPackage
+        // represents a backing package relationship between a Resource and a PackageVersion, not its parent.
+        // I think it should probably be removed from the history entity. -jshaughn 9/1/09.
         CreateResourceHistory history = new CreateResourceHistory(parentResource, resourceType, user.getName(),
             (InstalledPackage) null);
         history.setCreatedResourceName(createResourceName);

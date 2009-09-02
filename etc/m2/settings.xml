@@ -58,7 +58,7 @@
             <!--<surefire.useFile>false</surefire.useFile>-->
             <!-- Set the below prop to the absolute path of your RHQ trunk dir.
                 (the Jopr plugin poms use {rhq.rootDir}/{rhq.defaultDevContainerPath} as the dev container dir) -->
-            <rhq.rootDir>C:/Projects/rhq-trunk</rhq.rootDir>
+            <!--<rhq.rootDir>C:/Projects/rhq-trunk</rhq.rootDir>-->
             <!-- The location under rhq.rootDir where the server is found. This is used as part of
                  the default dev container location used by the build poms.
                  i.e. {rhq.rootDir}/{rhq.defaultDevContainerPath}-->
@@ -70,7 +70,7 @@
             <!-- The full path to a checkout of the JBoss Maven repo 
                  (svn co https://svn.jboss.org/repos/repository.jboss.org/maven2/ jboss-m2-repo) - 
                  this is where 'mvn release' will publish distribution artifacts to. --> 
-            <jboss.repository.root>C:/Projects/jboss-m2-repo</jboss.repository.root>
+            <!--<jboss.repository.root>C:/Projects/jboss-m2-repo</jboss.repository.root>-->
          </properties>
 
          <repositories>

@@ -21,14 +21,14 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-rhq.login('rhqadmin', 'rhqadmin');
 
 executeAllTests();
 
-rhq.logout();
 
 function testFindWithFiltering() {
-    var subject = SubjectManager.getSubjectByName('rhqadmin');
+   rhq.login('rhqadmin', 'rhqadmin');
+
+   var subject = SubjectManager.getSubjectByName('rhqadmin');
 
     var criteria = SubjectCriteria();
     criteria.addFilterId(subject.id);
@@ -44,9 +44,13 @@ function testFindWithFiltering() {
     var subjects = SubjectManager.findSubjectsByCriteria(criteria);
 
     Assert.assertNumberEqualsJS(subjects.size(), 1, 'Failed to find subjects when filtering');
+    
+    rhq.logout();    
 }
 
 function testFindWithFetchingAssociations() {
+    rhq.login('rhqadmin', 'rhqadmin');
+   
     var criteria = SubjectCriteria();
     criteria.addFilterName('rhqadmin');
     criteria.fetchConfiguration(true);
@@ -56,9 +60,13 @@ function testFindWithFetchingAssociations() {
     var subjects = SubjectManager.findSubjectsByCriteria(criteria);
 
     Assert.assertNumberEqualsJS(subjects.size(), 1, 'Failed to find subject when fetching associations');
+    
+    rhq.logout();    
 }
 
 function testFindWithSorting() {
+    rhq.login('rhqadmin', 'rhqadmin');
+   
     var criteria = SubjectCriteria();
     criteria.addSortFirstName(PageOrdering.ASC);
     criteria.addSortLastName(PageOrdering.DESC);
@@ -72,4 +80,33 @@ function testFindWithSorting() {
     Assert.assertTrue(subjects.size() > 0, 'Failed to find subjects when sorting');
 
     // TODO verify sort order
+    
+    rhq.logout();
+}
+
+function testLoginLogout() {
+   rhq.login('rhqadmin', 'rhqadmin');
+   
+   Assert.assertNotNull( subject, "Should have returned a subject" );
+   Assert.assertEquals( subject.getName(), "rhqadmin", "Unexpected Subject name");
+   var sessionId = subject.getSessionId();
+
+   // should return same sessionId
+   rhq.login('rhqadmin', 'rhqadmin');   
+   Assert.assertNotNull( subject, "Should have returned a subject" );
+   Assert.assertEquals( subject.getName(), "rhqadmin", "Unexpected Subject name");
+   Assert.assertEquals( subject.getSessionId(), sessionId, "Unexpected Subject session");   
+   
+   rhq.logout();
+   // Assert.assertNull( subject, "Should be no active subject" );
+   
+   // should return new sessionId   
+   rhq.login('rhqadmin', 'rhqadmin');   
+   Assert.assertNotNull( subject, "Should have returned a subject" );
+   Assert.assertEquals( subject.getName(), "rhqadmin", "Unexpected Subject name");
+   Assert.assertTrue( (subject.getSessionId() != sessionId), "Unexpected Subject session");
+
+   rhq.logout();
+
+   print( 'FOO!' )
 }

@@ -377,7 +377,8 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
     @NamedQuery(name = Resource.QUERY_FIND_FLY_WEIGHTS_BY_RESOURCE_IDS, query = "" //
         + "SELECT new org.rhq.core.domain.resource.composite.ResourceIdFlyWeight(res.id, res.uuid) " //
         + "  FROM Resource res " //
-        + " WHERE res.id IN ( :resourceIds ) "),
+        + " WHERE res.id IN ( :resourceIds ) " //
+        + "   AND res.inventoryStatus = 'COMMITTED' "),
     @NamedQuery(name = Resource.QUERY_FIND_BY_EXPLICIT_RESOURCE_GROUP, query = "" //
         + "SELECT DISTINCT res " //
         + "  FROM ResourceGroup rg JOIN rg.roles r JOIN r.subjects s JOIN rg.explicitResources res " //

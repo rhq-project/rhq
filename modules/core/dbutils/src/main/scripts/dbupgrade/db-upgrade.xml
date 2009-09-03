@@ -1511,9 +1511,11 @@ DB Upgrade:
    </schemaSpec>
 
    <schemaSpec version="2.58">
-      <statement desc="Create index on RHQ_CONFIG_PROPERTY(PARENT_LIST_ID)">
-         CREATE INDEX ON RHQ_CONFIG_PROP_idx_list_key RHQ_CONFIG_PROPERTY(PARENT_LIST_ID)
-      </statement>
+      <schema-directSQL>
+         <statement desc="Create index on RHQ_CONFIG_PROPERTY(PARENT_LIST_ID)">
+            CREATE INDEX ON RHQ_CONFIG_PROP_idx_list_key RHQ_CONFIG_PROPERTY(PARENT_LIST_ID)
+         </statement>
+      </schema-directSQL>
    </schemaSpec>
 
 </dbupgrade>

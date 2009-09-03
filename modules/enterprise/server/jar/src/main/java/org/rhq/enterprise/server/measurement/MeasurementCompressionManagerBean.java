@@ -339,7 +339,7 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
         if (min == 0) {
             // table is known to be empty, bypass purge until we have some data to actually purge
             // otherwise, it will attempt to purge in 1H chunks all the way back to the epoch
-            log.error("No data to purge data from table [" + tableName + "]");
+            log.info("No data to purge from table [" + tableName + "]");
         } else {
             while (start + interval >= min) {
 

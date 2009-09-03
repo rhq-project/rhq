@@ -24,7 +24,6 @@ import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
-import javax.jws.WebService;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
@@ -148,22 +147,31 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
     }
 
     @SuppressWarnings("unchecked")
-    public List<IntegerOptionItem> findAlertDefinitionOptionItems(Subject subject, int resourceId) {
+    public List<IntegerOptionItem> findAlertDefinitionOptionItemsForResource(Subject subject, int resourceId) {
         PageControl pageControl = PageControl.getUnlimitedInstance();
         pageControl.initDefaultOrderingField("ad.name", PageOrdering.ASC);
 
-        Query queryCount = PersistenceUtility.createCountQuery(entityManager,
-            AlertDefinition.QUERY_FIND_OPTION_ITEMS_BY_RESOURCE);
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
             AlertDefinition.QUERY_FIND_OPTION_ITEMS_BY_RESOURCE, pageControl);
 
-        queryCount.setParameter("resourceId", resourceId);
         query.setParameter("resourceId", resourceId);
+        List<IntegerOptionItem> results = query.getResultList();
 
-        long totalCount = (Long) queryCount.getSingleResult();
-        List<IntegerOptionItem> list = query.getResultList();
+        return results;
+    }
 
-        return new PageList<IntegerOptionItem>(list, (int) totalCount, pageControl);
+    @SuppressWarnings("unchecked")
+    public List<IntegerOptionItem> findAlertDefinitionOptionItemsForGroup(Subject subject, int groupId) {
+        PageControl pageControl = PageControl.getUnlimitedInstance();
+        pageControl.initDefaultOrderingField("ad.name", PageOrdering.ASC);
+
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+            AlertDefinition.QUERY_FIND_OPTION_ITEMS_BY_GROUP, pageControl);
+
+        query.setParameter("groupId", groupId);
+        List<IntegerOptionItem> results = query.getResultList();
+
+        return results;
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)

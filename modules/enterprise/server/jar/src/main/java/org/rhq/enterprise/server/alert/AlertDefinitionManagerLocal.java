@@ -40,7 +40,9 @@ public interface AlertDefinitionManagerLocal {
 
     AlertDefinition getAlertDefinitionById(Subject subject, int alertDefinitionId);
 
-    List<IntegerOptionItem> findAlertDefinitionOptionItems(Subject subject, int resourceId);
+    List<IntegerOptionItem> findAlertDefinitionOptionItemsForResource(Subject subject, int resourceId);
+
+    List<IntegerOptionItem> findAlertDefinitionOptionItemsForGroup(Subject subject, int groupId);
 
     int createAlertDefinition(Subject subject, AlertDefinition alertDefinition, Integer resourceId)
         throws InvalidAlertDefinitionException;

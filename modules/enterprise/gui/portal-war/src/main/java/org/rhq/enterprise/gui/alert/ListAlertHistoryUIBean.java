@@ -114,7 +114,7 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
 
     public SelectItem[] getAlertDefinitionSelectItems() {
         if (alertDefinitionSelectItems == null) {
-            List<IntegerOptionItem> optionItems = alertDefinitionManager.findAlertDefinitionOptionItems(getSubject(),
+            List<IntegerOptionItem> optionItems = alertDefinitionManager.findAlertDefinitionOptionItemsForResource(getSubject(),
                 getResource().getId());
             alertDefinitionSelectItems = SelectItemUtils.convertFromListOptionItem(optionItems, true);
         }

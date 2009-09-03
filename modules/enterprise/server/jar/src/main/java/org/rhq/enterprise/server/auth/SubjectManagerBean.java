@@ -57,7 +57,6 @@ import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.CustomJaasDeploymentServiceMBean;
 import org.rhq.enterprise.server.exception.LoginException;
-import org.rhq.enterprise.server.system.ServerVersion;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 
 /**
@@ -657,7 +656,4 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         return new PageList<Subject>(subjects, (int) count, criteria.getPageControl());
     }
 
-    public String getServerNamespaceVersion() {
-        return ServerVersion.getNamespace();
-    }
 }

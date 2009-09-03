@@ -151,13 +151,4 @@ public interface SubjectManagerRemote {
     PageList<Subject> findSubjectsByCriteria(//
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "criteria") SubjectCriteria criteria);
-
-    /**This method should return the NameSpace server version without authentication/verification/etc.
-     * Clients of all versions should always be able to make a call to this method to determine
-     * the version of the server apis that are being exposed by the wsdl(s).
-     * 
-     * @return String representation of the version of the server. Ex. 
-     */
-    @WebMethod
-    String getServerNamespaceVersion();
 }

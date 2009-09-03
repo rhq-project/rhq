@@ -773,10 +773,6 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return subjectManager.findSubjectsByCriteria(subject, criteria);
     }
 
-    public String getServerNamespaceVersion() {
-        return subjectManager.getServerNamespaceVersion();
-    }
-
     public Subject getSubjectByName(String username) {
         return subjectManager.getSubjectByName(username);
     }

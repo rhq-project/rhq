@@ -125,7 +125,7 @@
         </tgroup>
     </table>
     <note>
-        <para>The Internal Name is what must be used to reference Traits in Dynamic Group Definition expressions.</para>
+        <para>You must use the internal name to reference Traits in Dynamic Group Definition expressions.</para>
     </note>
 #end
 

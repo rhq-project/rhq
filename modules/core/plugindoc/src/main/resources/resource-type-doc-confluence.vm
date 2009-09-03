@@ -75,7 +75,7 @@ _none_
 #end
 
 {note}
-The Internal Name is what must be used to reference Traits in Dynamic Group Definition expressions.
+You must use the internal name to reference Traits in Dynamic Group Definition expressions.
 {note}
 
 

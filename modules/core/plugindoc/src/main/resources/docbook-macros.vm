@@ -30,7 +30,7 @@ ${resourceType.name.replace(" ", "_")}#if ( !${resourceType.name.endsWith("${res
     </tgroup>
 </table>
 <note>
-    <para>The Internal Name is what must be used to reference Configuration Properties in Dynamic Group Definition expressions.</para>
+    <para>You must use the internal name to reference Configuration Properties in Dynamic Group Definition expressions.</para>
 </note>
 #end
 #end

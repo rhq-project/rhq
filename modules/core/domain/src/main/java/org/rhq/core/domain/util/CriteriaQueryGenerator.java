@@ -225,20 +225,35 @@ public final class CriteriaQueryGenerator {
         }
 
         if (countQuery == false) {
+            boolean overridden = true;
+            PageControl pc = criteria.getPageControlOverrides();
+            if (pc == null) {
+                overridden = false;
+                pc = criteria.getPageControl();
+            }
+
             boolean first = true;
-            for (OrderingField orderingField : criteria.getPageControl().getOrderingFields()) {
+            for (OrderingField orderingField : pc.getOrderingFields()) {
                 if (first) {
                     results.append(NL).append("ORDER BY ");
                     first = false;
                 } else {
                     results.append(", ");
                 }
-                String fieldName = orderingField.getField();
-                String override = criteria.getJPQLSortOverride(fieldName);
-                String fragment = override != null ? override : fieldName;
 
-                results.append(alias).append('.').append(fragment);
-                results.append(' ').append(orderingField.getOrdering());
+                if (overridden) {
+                    String fieldName = orderingField.getField();
+                    PageOrdering ordering = orderingField.getOrdering();
+
+                    results.append(fieldName).append(' ').append(ordering);
+                } else {
+                    String fieldName = orderingField.getField();
+                    String override = criteria.getJPQLSortOverride(fieldName);
+                    String fragment = override != null ? override : fieldName;
+
+                    results.append(alias).append('.').append(fragment);
+                    results.append(' ').append(orderingField.getOrdering());
+                }
             }
         }
         results.append(NL);

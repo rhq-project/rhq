@@ -39,6 +39,7 @@ import org.rhq.core.domain.alert.AlertConditionLog;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.composite.AlertWithLatestConditionLog;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.composite.IntegerOptionItem;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.measurement.util.MeasurementConverter;
 import org.rhq.core.domain.resource.Resource;
@@ -53,6 +54,7 @@ import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.AlertDefUtil;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -70,13 +72,13 @@ public class ListGroupAlertHistoryUIBean extends PagedDataTableUIBean {
     private String dateErrors;
     private String alertDefinitionFilter;
     private String alertPriorityFilter;
-    //private SelectItem[] alertDefinitionSelectItems;
+    private SelectItem[] alertDefinitionSelectItems;
     private SelectItem[] alertPrioritySelectItems;
 
     private AlertManagerLocal alertManager = LookupUtil.getAlertManager();
     private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
 
-    //private AlertDefinitionManagerLocal alertDefinitionManager = LookupUtil.getAlertDefinitionManager();
+    private AlertDefinitionManagerLocal alertDefinitionManager = LookupUtil.getAlertDefinitionManager();
 
     public ListGroupAlertHistoryUIBean() {
     }
@@ -114,11 +116,10 @@ public class ListGroupAlertHistoryUIBean extends PagedDataTableUIBean {
         this.alertDefinitionFilter = alertDefinitionFilter;
     }
 
-    /*
     public SelectItem[] getAlertDefinitionSelectItems() {
         if (alertDefinitionSelectItems == null) {
-            List<IntegerOptionItem> optionItems = alertDefinitionManager.findAlertDefinitionOptionItems(getSubject(),
-                getResource().getId());
+            List<IntegerOptionItem> optionItems = alertDefinitionManager.findAlertDefinitionOptionItemsForGroup(
+                getSubject(), getResourceGroup().getId());
             alertDefinitionSelectItems = SelectItemUtils.convertFromListOptionItem(optionItems, true);
         }
 
@@ -128,7 +129,6 @@ public class ListGroupAlertHistoryUIBean extends PagedDataTableUIBean {
     public void setAlertDefinitionSelectItems(SelectItem[] alertDefinitionSelectItems) {
         this.alertDefinitionSelectItems = alertDefinitionSelectItems;
     }
-    */
 
     /*
      * priority filter stuff
@@ -236,13 +236,17 @@ public class ListGroupAlertHistoryUIBean extends PagedDataTableUIBean {
             }
 
             AlertCriteria searchCriteria = new AlertCriteria();
+            if (alertDefinitionId != null) {
+                searchCriteria.addFilterGroupAlertDefinitionIds(alertDefinitionId);
+            }
             searchCriteria.addFilterResourceGroupIds(getResourceGroup().getId());
             searchCriteria.addFilterPriority(alertPriority);
             searchCriteria.addFilterStartTime(beginTime);
             searchCriteria.addFilterEndTime(endTime);
-            searchCriteria.setPaging(pc.getPageNumber(), pc.getPageSize());
+            searchCriteria.setPageControl(pc);
             searchCriteria.fetchAlertDefinition(true);
-            searchCriteria.fetchConditionLogs(true);
+            // this is done by default at the object layer
+            // searchCriteria.fetchConditionLogs(true); 
 
             PageList<Alert> alerts = alertManager.findAlertsByCriteria(getSubject(), searchCriteria);
 

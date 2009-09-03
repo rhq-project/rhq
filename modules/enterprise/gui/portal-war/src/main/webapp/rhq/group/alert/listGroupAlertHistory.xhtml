@@ -29,10 +29,8 @@
             <f:facet name="header">
                <h:outputText value="Alerts"/>
             </f:facet>
-
             
             <h:panelGrid columns="4" cellspacing="3">
-<ui:remove>
                <h:outputLabel for="alertDefinitionFilter" value="Alert Definition Filter: " />
                <h:selectOneMenu id="alertDefinitionFilter" value="#{ListGroupAlertHistoryUIBean.alertDefinitionFilter}"
                                 style="width: 300px;">
@@ -45,7 +43,6 @@
                </h:selectOneMenu>
                <rich:spacer/>
                <rich:spacer/>
-</ui:remove>
 
                <h:outputLabel for="alertPriorityFilter" value="Alert Priority Filter: " />
                <h:selectOneMenu id="alertPriorityFilter" value="#{ListGroupAlertHistoryUIBean.alertPriorityFilter}"

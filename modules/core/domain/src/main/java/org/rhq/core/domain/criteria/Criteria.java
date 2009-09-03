@@ -66,6 +66,7 @@ public abstract class Criteria implements Serializable {
 
     protected Map<String, String> filterOverrides;
     protected Map<String, String> sortOverrides;
+    protected PageControl pageControlOverrides;
 
     private List<String> orderingFieldNames;
 
@@ -129,6 +130,10 @@ public abstract class Criteria implements Serializable {
         return sortOverrides.get(fieldName);
     }
 
+    public PageControl getPageControlOverrides() {
+        return pageControlOverrides;
+    }
+
     public List<String> getFetchFields() {
         List<String> results = new ArrayList<String>();
         for (Field fetchField : getFields(Type.FETCH)) {
@@ -161,10 +166,21 @@ public abstract class Criteria implements Serializable {
         this.pageSize = pageSize;
     }
 
+    /*
+     * If the pageControl is set, then this criteria object will completely ignore any
+     * calls made to setPaging(pageNumber, pageSize) as well as addSortField(fieldName), 
+     * which is useful from a server-side calling context where the PageControl object
+     * will already have been created for you by the extensions at the JSF layer.
+     */
+    public void setPageControl(PageControl pageControl) {
+        this.pageControlOverrides = pageControl;
+    }
+
     public void clearPaging() {
         PageControl unlimited = PageControl.getUnlimitedInstance();
         this.pageNumber = unlimited.getPageNumber();
         this.pageSize = unlimited.getPageSize();
+        this.pageControlOverrides = null;
     }
 
     /*

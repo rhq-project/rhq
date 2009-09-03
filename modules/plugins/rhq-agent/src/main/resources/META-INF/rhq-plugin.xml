@@ -50,7 +50,7 @@
                </c:map-property>
             </c:list-property>
          </c:group>
-         <c:group name="snapshotReport" displayName="Snapshot Report">
+         <c:group name="snapshotReport" displayName="Snapshot Report" hiddenByDefault="true">
             <c:simple-property name="snapshotConfigEnabled" type="boolean" default="true" description="If true, take a snapshot of the configuration"/>
             <c:simple-property name="snapshotLogEnabled" type="boolean" default="true" description="If true, take a snapshot of the log files"/>
             <c:simple-property name="snapshotDataEnabled" type="boolean" default="true" description="If true, take a snapshot of the data files"/>

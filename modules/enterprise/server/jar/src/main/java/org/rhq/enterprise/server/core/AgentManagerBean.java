@@ -240,10 +240,6 @@ public class AgentManagerBean implements AgentManagerLocal {
             // Note that in here we also make sure the agent client is shutdown. We do it here because, even if the agent
             // was already backfilled, we still want to do this in case somehow the client was started again.
             if ((timeSinceLastReport % 21600000L) < (maximumQuietTimeAllowed * 2L)) {
-                log.warn("Have not heard from agent [" + record.getAgentName() + "] since ["
-                    + new Date(record.getLastAvailabilityReport())
-                    + "]. Will be backfilled since we suspect it is down");
-
                 if (serverComm == null) {
                     serverComm = ServerCommunicationsServiceUtil.getService();
                 }
@@ -257,6 +253,10 @@ public class AgentManagerBean implements AgentManagerLocal {
             // If it turns out we do not want to be that noisy, just move that warn message down in here so we only ever log
             // about a downed agent once, at the time it is first backfilled.
             if (!record.isBackFilled()) {
+                log.info("Have not heard from agent [" + record.getAgentName() + "] since ["
+                    + new Date(record.getLastAvailabilityReport())
+                    + "]. Will be backfilled since we suspect it is down");
+
                 // make sure we lock out all processing of any availability reports that might come our way to avoid concurrency problems
                 AvailabilityReportSerializer.getSingleton().lock(record.getAgentName());
                 try {

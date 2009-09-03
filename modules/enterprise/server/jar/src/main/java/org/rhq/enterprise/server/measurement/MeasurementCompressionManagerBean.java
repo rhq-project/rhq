@@ -336,17 +336,22 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
         long start = purgeBefore - interval;
 
         // if end of chunk (i.e. start + interval) is greater or equal to min, keep going backwards
-        while (start + interval >= min) {
+        if (min == 0) {
+            // table is known to be empty, bypass purge until we have some data to actually purge
+            // otherwise, it will attempt to purge in 1H chunks all the way back to the epoch
+            log.error("No data to purge data from table [" + tableName + "]");
+        } else {
+            while (start + interval >= min) {
 
-            try {
-                rows = compressionManager.purgeMeasurementInterval(tableName, start, start + interval);
-                totalRows += rows;
-            } catch (Throwable t) {
-                log.error("Unable to purge data from table [" + tableName + "] between [" + new Date(start) + "] and ["
-                    + new Date(start + interval) + "], cause: " + ThrowableUtil.getAllMessages(t));
+                try {
+                    rows = compressionManager.purgeMeasurementInterval(tableName, start, start + interval);
+                    totalRows += rows;
+                } catch (Throwable t) {
+                    log.error("Unable to purge data from table [" + tableName + "] between [" + new Date(start)
+                        + "] and [" + new Date(start + interval) + "], cause: " + ThrowableUtil.getAllMessages(t));
+                }
+                start -= interval;
             }
-
-            start -= interval;
         }
 
         log.info("Finished purging data from table [" + tableName + "] before [" + new Date(purgeBefore) + "], ["

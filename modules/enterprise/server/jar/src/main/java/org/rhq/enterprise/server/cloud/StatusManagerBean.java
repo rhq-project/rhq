@@ -118,42 +118,44 @@ public class StatusManagerBean implements StatusManagerLocal {
          * this method is called, we only have the updated alert definition, thus it's not possible to intelligently
          * know which of the two caches to reload; so, we need to reload them both to be sure the system is consistent
          */
+        Query updateServerQuery = entityManager.createNamedQuery(Server.QUERY_UPDATE_STATUS_BY_NAME);
+        updateServerQuery.setParameter("identity", serverManager.getIdentity());
+        updateServerQuery.executeUpdate();
+
+        Query updateAgentQuery = entityManager.createNamedQuery(Agent.QUERY_UPDATE_STATUS_BY_ALERT_DEFINITION);
+        updateAgentQuery.setParameter("alertDefinitionId", alertDefinitionId);
+        updateAgentQuery.executeUpdate();
+
+        /*
+         * this is informational debugging only - do NOT change the status bits here
+         */
         if (log.isDebugEnabled()) {
             Server server = serverManager.getServer();
-            server.addStatus(Server.Status.ALERT_DEFINITION);
             log.debug("Marking status, server[id=" + server.getId() + ", status=" + server.getStatus()
                 + "] for alertDefinition[id=" + alertDefinitionId + "]");
 
             AlertDefinition definition = entityManager.find(AlertDefinition.class, alertDefinitionId);
             Agent agent = agentManager.getAgentByResourceId(definition.getResource().getId());
-            agent.addStatus(Agent.Status.ALERT_DEFINITION);
             log.debug("Marking status, agent[id=" + agent.getId() + ", status=" + agent.getStatus()
                 + "] for alertDefinition[id=" + alertDefinitionId + "]");
-        } else {
-            Query updateServerQuery = entityManager.createNamedQuery(Server.QUERY_UPDATE_STATUS_BY_NAME);
-            updateServerQuery.setParameter("identity", serverManager.getIdentity());
-            updateServerQuery.executeUpdate();
-
-            Query updateAgentQuery = entityManager.createNamedQuery(Agent.QUERY_UPDATE_STATUS_BY_ALERT_DEFINITION);
-            updateAgentQuery.setParameter("alertDefinitionId", alertDefinitionId);
-            updateAgentQuery.executeUpdate();
         }
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void updateByMeasurementBaseline(int baselineId) {
         // baselines refer to measurement-based alert conditions, thus only agent statuses need to be set
+        Query updateAgentQuery = entityManager.createNamedQuery(Agent.QUERY_UPDATE_STATUS_BY_MEASUREMENT_BASELINE);
+        updateAgentQuery.setParameter("baselineId", baselineId);
+        updateAgentQuery.executeUpdate();
+
+        /*
+         * this is informational debugging only - do NOT change the status bits here
+         */
         if (log.isDebugEnabled()) {
             MeasurementBaseline baseline = entityManager.find(MeasurementBaseline.class, baselineId);
             Agent agent = baseline.getSchedule().getResource().getAgent();
-
-            agent.addStatus(Agent.Status.BASELINES_CALCULATED);
             log.debug("Marking status, agent[id=" + agent.getId() + ", status=" + agent.getStatus()
                 + "] for measurementBaseline[id=" + baselineId + "]");
-        } else {
-            Query updateAgentQuery = entityManager.createNamedQuery(Agent.QUERY_UPDATE_STATUS_BY_MEASUREMENT_BASELINE);
-            updateAgentQuery.setParameter("baselineId", baselineId);
-            updateAgentQuery.executeUpdate();
         }
     }
 
@@ -170,32 +172,34 @@ public class StatusManagerBean implements StatusManagerLocal {
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void updateByAgent(int agentId) {
+        Query updateAgentQuery = entityManager.createNamedQuery(Agent.QUERY_UPDATE_STATUS_BY_AGENT);
+        updateAgentQuery.setParameter("agentId", agentId);
+        updateAgentQuery.executeUpdate();
+
+        /*
+         * this is informational debugging only - do NOT change the status bits here
+         */
         if (log.isDebugEnabled()) {
             Agent agent = entityManager.find(Agent.class, agentId);
-            agent.addStatus(Agent.Status.RESOURCE_HIERARCHY_UPDATED);
-
             log.debug("Marking status, agent[id=" + agent.getId() + ", status=" + agent.getStatus() + "]");
-        } else {
-            Query updateAgentQuery = entityManager.createNamedQuery(Agent.QUERY_UPDATE_STATUS_BY_AGENT);
-            updateAgentQuery.setParameter("agentId", agentId);
-            updateAgentQuery.executeUpdate();
         }
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void updateByAutoBaselineCalculationJob() {
         // baselines refer to measurement-based alert conditions, thus only agent statuses need to be set
+        Query updateAgentQuery = entityManager.createNamedQuery(Agent.QUERY_UPDATE_STATUS_FOR_ALL);
+        updateAgentQuery.executeUpdate();
+
+        /*
+         * this is informational debugging only - do NOT change the status bits here
+         */
         if (log.isDebugEnabled()) {
             List<Agent> agents = agentManager.getAllAgents();
             for (Agent agent : agents) {
-                agent.addStatus(Agent.Status.BASELINES_CALCULATED);
-
                 log.debug("Marking status, agent[id=" + agent.getId() + ", status=" + agent.getStatus()
                     + "] for AutoBaselineCalculationJob");
             }
-        } else {
-            Query updateAgentQuery = entityManager.createNamedQuery(Agent.QUERY_UPDATE_STATUS_FOR_ALL);
-            updateAgentQuery.executeUpdate();
         }
     }
 }

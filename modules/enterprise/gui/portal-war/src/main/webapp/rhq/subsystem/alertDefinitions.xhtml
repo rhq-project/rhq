@@ -149,7 +149,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputLink value="/alerts/Config.do" rendered="#{empty item.alertDefinition.resourceType}">
+                  <h:outputLink value="/alerts/Config.do" rendered="#{empty item.alertDefinition.resourceType and empty item.alertDefinition.resourceGroup}">
                      <f:param name="mode" value="viewRoles" />
                      <f:param name="id" value="#{item.alertDefinition.resource.id}"  />
                      <f:param name="ad" value="#{item.alertDefinition.id}" />
@@ -158,6 +158,12 @@
                   <h:outputLink value="/alerts/Config.do" rendered="#{not empty item.alertDefinition.resourceType}">
                      <f:param name="mode" value="viewRoles" />
                      <f:param name="type" value="#{item.alertDefinition.resourceType.id}" />
+                     <f:param name="ad" value="#{item.alertDefinition.id}" />
+                     <h:outputText value="#{item.alertDefinition.name}" />
+                  </h:outputLink>
+                  <h:outputLink value="/alerts/Config.do" rendered="#{not empty item.alertDefinition.resourceGroup}">
+                     <f:param name="mode" value="viewRoles" />
+                     <f:param name="groupId" value="#{item.alertDefinition.resourceGroup.id}" />
                      <f:param name="ad" value="#{item.alertDefinition.id}" />
                      <h:outputText value="#{item.alertDefinition.name}" />
                   </h:outputLink>

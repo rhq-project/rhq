@@ -226,6 +226,7 @@ public class ListGroupAlertHistoryUIBean extends PagedDataTableUIBean {
 
             Integer alertDefinitionId = getAlertDefinitionId();
             AlertPriority alertPriority = getAlertPriority();
+            Integer resourceGroupId = getResourceGroup().getId();
 
             long MILLIS_IN_DAY = 24 * 60 * 60 * 1000;
             Long beginTime = null;
@@ -239,7 +240,10 @@ public class ListGroupAlertHistoryUIBean extends PagedDataTableUIBean {
             if (alertDefinitionId != null) {
                 searchCriteria.addFilterGroupAlertDefinitionIds(alertDefinitionId);
             }
-            searchCriteria.addFilterResourceGroupIds(getResourceGroup().getId());
+
+            // show alerts for any resource in the group, not just those attached to the group alert definitions
+            List<Integer> resourceIds = resourceManager.findImplicitResourceIdsByResourceGroup(resourceGroupId);
+            searchCriteria.addFilterResourceIds(resourceIds.toArray(new Integer[resourceIds.size()]));
             searchCriteria.addFilterPriority(alertPriority);
             searchCriteria.addFilterStartTime(beginTime);
             searchCriteria.addFilterEndTime(endTime);

@@ -401,7 +401,8 @@
            when using IBM Java. -->      
       <mkdir dir="${project.build.outputDirectory}/etc/ibm" />
       <move file="${jboss.home}/lib/endorsed/xalan.jar" 
-            todir="${project.build.outputDirectory}/etc/ibm" />
+            todir="${project.build.outputDirectory}/etc/ibm"
+            failonerror="false" />
 
       <echo>Adding support for the embedded agent ...</echo>
       <move todir="${jboss.home}/lib/endorsed" verbose="true">

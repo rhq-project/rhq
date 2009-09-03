@@ -10,7 +10,6 @@ import org.testng.AssertJUnit;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import org.rhq.enterprise.server.webservices.WebservicesRemote;
 import org.rhq.enterprise.server.ws.utility.WsUtility;
 
 /**
@@ -54,14 +53,10 @@ public class WsSystemManagerTest extends AssertJUnit implements TestPropertiesIn
         WsSubjectTest.checkForWsTestUserAndRole();
     }
 
-    //	@Test(enabled = TESTS_ENABLED)
-    //	public void testServerNameSpaceVersion() throws java.lang.Exception {
-    //		// Check that servernames is not null
-    //		String ns = WEBSERVICE_REMOTE.getServerNamespaceVersion();
-    //		assertNotNull("The namespace passed back was null.", ns);
-    //		assertTrue("Namespace string is empty", (ns.trim().length() > 0));
-    //		// Check the server version
-    //		ServerVersion version = WEBSERVICE_REMOTE.getServerVersion(subject);
-    //		assertNotNull("ServerVersion was not located.", version);
-    //	}
+    @Test(enabled = TESTS_ENABLED)
+    public void testServerNameSpaceVersion() throws java.lang.Exception {
+        // Check the server version
+        ServerVersion version = WEBSERVICE_REMOTE.getServerVersion(subject);
+        assertNotNull("ServerVersion was not located.", version);
+    }
 }

@@ -30,6 +30,7 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageOrdering;
 
 /**
@@ -275,7 +276,7 @@ public class ResourceCriteria extends Criteria {
     private PageOrdering sortCurrentAvailability; // needs overrides
 
     public ResourceCriteria() {
-        super();
+        super(Resource.class);
 
         filterOverrides.put("resourceTypeId", "resourceType.id = ?");
         filterOverrides.put("resourceTypeName", "resourceType.name like ?");

@@ -29,15 +29,8 @@ rhq.login('rhqadmin', 'rhqadmin');
 
 skippedTests.push('testUninventoryResources');
 
-// The following two tests are failing at present due to a known issue in the generated query that results in this
-// exception,
-//
-//    org.hibernate.HibernateException: cannot simultaneously fetch multiple bags
-//
-skippedTests.push('testFindWithFilteringAndSortingAndFetchingAssociations');
-skippedTests.push('testFindWithFilteringAndFetchingAssociations');
-
 executeAllTests();
+
 
 function testFindUnfiltered() {
     var resources = ResourceManager.findResourcesByCriteria(ResourceCriteria());
@@ -66,6 +59,7 @@ function testFindWithOptionalFiltering() {
 
 function testFindWithFilteringAndFetchingAssociations() {
     var criteria = createCriteria();
+    criteria.strict = true;
     criteria.fetchAgent(true);
     criteria.fetchAlertDefinitions(true);
     criteria.fetchResourceType(true);
@@ -80,8 +74,11 @@ function testFindWithFilteringAndFetchingAssociations() {
 
     var resources = ResourceManager.findResourcesByCriteria(criteria);
 
-    Assert.assertNumberEqualsJS(resource.size(), 1, "Expected to get back a single resource");
-    Assert.assertNotNull(resource.agent, "resource.agent should have been loaded");
+    Assert.assertNumberEqualsJS(resources.size(), 1, "Expected to get back a single resource");
+
+    var resource = resources.get(0);
+
+    Assert.assertNotNull(resources.agent, "resource.agent should have been loaded");
     Assert.assertNotNull(resource.alertDefinitions, "resource.alertDefinitions should have been loaded");
     Assert.assertNotNull(resource.resourceType, "resource.resourceType should have been loaded");
     Assert.assertNotNull(resource.childResources, "resource.childResources should have been loaded");

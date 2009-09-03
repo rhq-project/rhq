@@ -23,6 +23,9 @@
 package org.rhq.core.domain.util;
 
 import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
+import java.lang.reflect.Field;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -60,6 +63,8 @@ public final class CriteriaQueryGenerator {
     private String alias;
     private String className;
     private static String NL = System.getProperty("line.separator");
+
+    private List<Field> persistentBagFields = new ArrayList<Field>();
 
     public CriteriaQueryGenerator(Criteria criteria) {
         this.criteria = criteria;
@@ -158,7 +163,12 @@ public final class CriteriaQueryGenerator {
              * but the owner of the fetched association was not present in the select list"
              */
             for (String fetchJoin : criteria.getFetchFields()) {
-                results.append("LEFT JOIN FETCH ").append(alias).append('.').append(fetchJoin).append(NL);
+                if (isPersistentBag(fetchJoin)) {
+                    addPersistentBag(fetchJoin);
+                }
+                else {
+                    results.append("LEFT JOIN FETCH ").append(alias).append('.').append(fetchJoin).append(NL);    
+                }
             }
         }
         if (authorizationJoinFragment != null) {
@@ -261,6 +271,54 @@ public final class CriteriaQueryGenerator {
         LOG.debug(results);
         System.out.println(results);
         return results.toString();
+    }
+
+    private boolean isPersistentBag(String fieldName) {
+        try {
+            Class<?> persistentClass = criteria.getPersistentClass();
+            Field field = persistentClass.getDeclaredField(fieldName);
+
+            return isAList(field);
+        }
+        catch (NoSuchFieldException e) {
+            return false;
+        }
+    }
+
+    private boolean isAList(Field field) {
+        Class<?> fieldType = field.getType();
+
+        if (List.class.isAssignableFrom(fieldType)) {
+            return true;
+        }
+
+        for (Class declaredInterface : fieldType.getInterfaces()) {
+            if (List.class.isAssignableFrom(declaredInterface)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void addPersistentBag(String fieldName) {
+        try {
+            Field field = criteria.getPersistentClass().getDeclaredField(fieldName);
+            persistentBagFields.add(field);
+        }
+        catch (NoSuchFieldException e) {
+            LOG.warn("Failed to add persistent bag collection.", e);
+        }
+    }
+
+    /**
+     * <strong>Note:</strong> This method should only be called after {@link #getQueryString(boolean)}} because it is
+     * that method where the persistentBagFields property is initialized.
+     *
+     * @return Returns a list of fields from the persistent class to which the criteria class corresponds. The fields in
+     * the list are themselves instances of List and have "bag" semantics.
+     */
+    public List<Field> getPersistentBagFields() {
+        return persistentBagFields;
     }
 
     public Query getQuery(EntityManager em) {

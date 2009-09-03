@@ -101,6 +101,7 @@ import org.rhq.core.domain.util.CriteriaQueryGenerator;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.domain.util.CriteriaQueryRunner;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
@@ -2048,13 +2049,9 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 subject.getId());
         }
 
-        Query query = generator.getQuery(entityManager);
-        Query countQuery = generator.getCountQuery(entityManager);
+        CriteriaQueryRunner<Resource> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
 
-        long count = (Long) countQuery.getSingleResult();
-        List<Resource> results = query.getResultList();
-
-        return new PageList<Resource>(results, (int) count, criteria.getPageControl());
+        return queryRunner.execute();
     }
 
     public Resource getParentResource(Subject subject, int resourceId) {

@@ -65,14 +65,9 @@ public class DatasourceConfigurationEditor {
         "new-connection-sql", "exception-sorter-class-name", "check-valid-connection-sql", "track-statements",
         "no-tx-separate-pools", "application-managed-security", "security-domain-and-application" };
 
-    private static final String DRIVER_CLASS_PROP = "driver-class";
-    private static final String XA_DATASOURCE_CLASS_PROP = "xa-datasource-class";
-    
-    public static final String[] NON_XA_PROPS = { DRIVER_CLASS_PROP };
-    
-    public static final Map<String, String> NON_XA_TO_XA_PROPS_MAP;
-    
-    public static final String[] XA_PROPS = { XA_DATASOURCE_CLASS_PROP, "track-connection-by-tx",
+    public static final String[] NON_XA_PROPS = { "driver-class" };
+
+    public static final String[] XA_PROPS = { "xa-datasource-class", "track-connection-by-tx",
         "isSameRM-override-value" };
     private static final String[][] XA_SPECIALS = { { "connection-url", "URL" } , { "user-name", "User" }, {"password", "Password"}};
 
@@ -86,15 +81,10 @@ public class DatasourceConfigurationEditor {
      */
 
     private static Log log = LogFactory.getLog(DatasourceConfigurationEditor.class);
+    private static final String XA_DATASOURCE_PROPERTIES = "xa-datasource-properties";
     private static final String CONNECTION_PROPERTY = "connection-property";
     private static final String XA_DATASOURCE_PROPERTY = "xa-datasource-property";
 
-    static {
-        NON_XA_TO_XA_PROPS_MAP = new HashMap<String, String>();
-        NON_XA_TO_XA_PROPS_MAP.put(DRIVER_CLASS_PROP, XA_DATASOURCE_CLASS_PROP);
-        NON_XA_TO_XA_PROPS_MAP.put(CONNECTION_PROPERTY, XA_DATASOURCE_PROPERTY);
-    }
-        
     public static Configuration loadDatasource(File file, String name) {
         /*
          *    <local-tx-datasource>       <jndi-name>RHQDS</jndi-name>
@@ -142,9 +132,8 @@ public class DatasourceConfigurationEditor {
             bindElements(datasourceElement, config, COMMON_PROPS);
 
             if (type.equals(XA_TX_TYPE)) {
-                defineSharedNonXaProperties(datasourceElement, config);
                 bindElements(datasourceElement, config, XA_PROPS);
-                bindMap(datasourceElement, config, XA_DATASOURCE_PROPERTY);
+                bindMap(datasourceElement, config, XA_DATASOURCE_PROPERTIES);
                 bindXASpecialElements(datasourceElement,config);
             } else {
                 bindElements(datasourceElement, config, NON_XA_PROPS);
@@ -169,13 +158,10 @@ public class DatasourceConfigurationEditor {
      * @param name
      * @param report
      */
-    public static boolean updateDatasource(File deploymentFile, String name, ConfigurationUpdateReport report) {
+    public static void updateDatasource(File deploymentFile, String name, ConfigurationUpdateReport report) {
         try {
-            if (validateForSelectedType(report)) {
-                updateDatasource(deploymentFile, name, report.getConfiguration());
-                report.setStatus(ConfigurationUpdateStatus.SUCCESS);
-                return true;
-            }
+            updateDatasource(deploymentFile, name, report.getConfiguration());
+            report.setStatus(ConfigurationUpdateStatus.SUCCESS);
         } catch (IOException e) {
             report.setErrorMessageFromThrowable(e);
             log.error("IO error occurred while updating datasource at file: " + deploymentFile, e);
@@ -183,7 +169,6 @@ public class DatasourceConfigurationEditor {
             report.setErrorMessageFromThrowable(e);
             log.error("Parsing error occurred while updating datasource at file: " + deploymentFile, e);
         }
-        return false;
     }
 
     /**
@@ -192,13 +177,10 @@ public class DatasourceConfigurationEditor {
      * @param name
      * @param report
      */
-    public static boolean updateDatasource(File deploymentFile, String name, CreateResourceReport report) {
+    public static void updateDatasource(File deploymentFile, String name, CreateResourceReport report) {
         try {
-            if (validateForSelectedType(report)) {
-                updateDatasource(deploymentFile, name, report.getResourceConfiguration());
-                report.setStatus(CreateResourceStatus.SUCCESS);
-                return true;
-            }
+            updateDatasource(deploymentFile, name, report.getResourceConfiguration());
+            report.setStatus(CreateResourceStatus.SUCCESS);
         } catch (IOException e) {
             report.setException(e);
             log.error("IO error occurred while updating datasource at file: " + deploymentFile, e);
@@ -206,7 +188,6 @@ public class DatasourceConfigurationEditor {
             report.setException(e);
             log.error("Parsing error occurred while updating datasource at file: " + deploymentFile, e);
         }
-        return false;
     }
 
     /**
@@ -251,9 +232,8 @@ public class DatasourceConfigurationEditor {
         updateElements(datasourceElement, config, COMMON_PROPS);
 
         if (type.equals(XA_TX_TYPE)) {
-            defineSharedXaProperties(config);
             updateElements(datasourceElement, config, XA_PROPS);
-            updateMap(datasourceElement, config, XA_DATASOURCE_PROPERTY);
+            updateMap(datasourceElement, config, XA_DATASOURCE_PROPERTIES);
             updateXAElements(datasourceElement, config);
         } else {
             updateElements(datasourceElement, config, NON_XA_PROPS);
@@ -477,91 +457,5 @@ public class DatasourceConfigurationEditor {
         outp.output(doc, fos);
         fos.flush();
         fos.close();
-    }
-    
-    /**
-     * Copies the properties that are defined for nonXa DSes to the corresponding XA specific
-     * properties.
-     * 
-     * @param config
-     */
-    private static void defineSharedXaProperties(Configuration config) {
-        for (Map.Entry<String, String> entry : NON_XA_TO_XA_PROPS_MAP.entrySet()) {
-            Property nonXaProp = config.get(entry.getKey());
-            Property xaProp = nonXaProp.deepCopy();
-            xaProp.setName(entry.getValue());
-            config.put(xaProp);
-        }
-    } 
-
-    /**
-     * Copies the properties that are defined for nonXa DSes to the corresponding XA specific
-     * properties.
-     * 
-     * @param config
-     */
-    private static void defineSharedNonXaProperties(Element datasourceElement, Configuration config) {
-        for (Map.Entry<String, String> entry : NON_XA_TO_XA_PROPS_MAP.entrySet()) {
-            String xaPropName = entry.getValue();
-            String nonXaPropName = entry.getKey();
-            
-            @SuppressWarnings("unchecked")
-            List<Element> xaProps = datasourceElement.getChildren(xaPropName);
-            
-            if (xaProps.size() > 0) {
-                if (xaProps.size() == 1) {
-                    Element child = xaProps.get(0);
-                    config.put(new PropertySimple(nonXaPropName, child.getText()));
-                } else {
-                    PropertyMap map = new PropertyMap(nonXaPropName);
-                    for (Element child : xaProps) {
-                        String name = child.getAttributeValue("name");
-                        map.put(new PropertySimple(name, child.getText()));
-                    }
-                    config.put(map);
-                }
-            }
-        }
-    } 
-
-    private static boolean validateForSelectedType(CreateResourceReport report) {
-        String errorMessage = null;
-        if ((errorMessage = validateForSelectedType(report.getResourceConfiguration())) != null) {
-            report.setStatus(CreateResourceStatus.FAILURE);
-            report.setErrorMessage(errorMessage);
-        }
-        return errorMessage == null;
-    }
-
-    private static boolean validateForSelectedType(ConfigurationUpdateReport report) {
-        String errorMessage = null;
-        if ((errorMessage = validateForSelectedType(report.getConfiguration())) != null) {
-            report.setStatus(ConfigurationUpdateStatus.FAILURE);
-            report.setErrorMessage(errorMessage);
-        }
-        return errorMessage == null;
-    }
-    
-    private static String validateForSelectedType(Configuration conf) {
-        String dsType = conf.getSimpleValue("type", null);
-        
-        if (dsType == null || !(NO_TX_TYPE.equals(dsType) || LOCAL_TX_TYPE.equals(dsType) || 
-            XA_TX_TYPE.equals(dsType))) {
-            
-            return "Invalid Datasource type specified.";
-        }
-
-        //there is only one condition for non-xa DSes.
-        //Those must have the connection-url specified, whereas
-        //xa DSes might not have to.
-        if (!XA_TX_TYPE.equals(dsType)) {
-            String connUrl = conf.getSimpleValue("connection-url", null);
-            
-            if (connUrl == null || connUrl.trim().length() == 0) {
-                return "Non XA datasources must have the Connection URL specified.";
-            }
-        }
-        
-        return null;
     }
 }

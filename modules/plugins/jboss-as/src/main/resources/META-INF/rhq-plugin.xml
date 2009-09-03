@@ -443,14 +443,10 @@
                <c:simple-property name="jndi-name" readOnly="true" displayName="JNDI Name"
                                   description="The JNDI name under which the DataSource wrapper will be bound."/>
                <c:simple-property name="driver-class"
-                                  description="The fully qualified name of the JDBC driver or an XA datasource class"/>
-               <c:simple-property name="connection-url" displayName="Connection Url" required="false" default="jdbc:connection-url">
-                    <c:description>
-                        The JDBC driver connection URL string. 
-                        For Oracle XA datasource, this is automatically mapped to the "URL" XA datasource property.
-                        For other XA datasource types this might not have any impact. 
-                    </c:description>
-               </c:simple-property>
+                                  description="The fully qualified name of the JDBC driver or datasource class"/>
+               <!-- xa-datasource-class -->
+               <c:simple-property name="connection-url" displayName="Connection Url"
+                                  description="The JDBC driver connection URL string"/>
 
                <c:simple-property name="user-name" required="false"/>
                <c:simple-property name="password" type="password" required="false"/>
@@ -495,26 +491,21 @@
                <c:simple-property name="track-statements" type="boolean" required="false"
                                   description="Whether to check for unclosed statements when a connection is returned to the pool and result sets are closed when a statement is closed/returned to the prepared statement cache. The default is Yes, but no warnings."/>
 
-               <c:map-property name="connection-property" required="false" description="Connection Properties of non-XA datasource or XA datasource properties of an XA datasource." />
+               <c:map-property name="connection-property" required="false"/>
+               <!-- xa-datasource-property -->
 
+               <c:simple-property name="no-tx-separate-pools" required="false"
+                                  description="Whether to use separate pools for connections retrieved in a transaction and those retrieved outside a transaction. The default is Yes."/>
                <c:simple-property name="application-managed-security" required="false"/>
                <c:simple-property name="security-domain-and-application" required="false"/>
                <c:simple-property name="track-connection-by-tx" required="false"
                                   description="Whether the connection should be &quot;locked&quot; to the transaction, returning it to the pool at the end of the transaction. The default is No."/>
-            </c:group>
-
-            <c:group name="xaSpecific" displayName="XA specific">
-               <!-- Based on http://www.jboss.org/community/wiki/ConfigDataSources 
-                    The other xa specific props are mapped onto existing non-xa as follows:
-                    driver-class = xa-datasource-class
-                    connection-propery = xa-datasource-property 
-               -->
+               <!-- XA only -->
                <c:simple-property name="isSameRM-override-value" required="false"
                                   description="Allows one to unconditionally set whether the javax.transaction.xa.XAResource.isSameRM(XAResource) returns true or false. The default is not to override the return value."/>
-               <c:simple-property name="no-tx-separate-pools" required="false"
-                                  description="Whether to use separate pools for connections retrieved in a transaction and those retrieved outside a transaction. The default is Yes."/>
+               <!-- XA only -->
             </c:group>
-            
+
             <c:template name="Oracle Local TX" description="Local Transaction Template for Oracle">
                <c:simple-property name="type" default="local-tx-datasource"/>
                <c:simple-property name="driver-class" default="oracle.jdbc.driver.OracleDriver"/>
@@ -527,8 +518,7 @@
                <c:simple-property name="type" default="xa-datasource"/>
                <c:simple-property name="track-connection-by-tx" default="true"/>
                <c:simple-property name="isSameRM-override-value" default="false"/>
-               <c:simple-property name="driver-class" default="oracle.jdbc.xa.client.OracleXADataSource"/>
-               <c:simple-property name="connection-url" default="jdbc:oracle:oci8:@tc" />
+               <c:simple-property name="xa-datasource-class" default="oracle.jdbc.xa.client.OracleXADataSource"/>
                <!--xa-datasource-property name="URL">jdbc:oracle:oci8:@tc</xa-datasource-property>-->
                <!--xa-datasource-property name="User">scott</xa-datasource-property>-->
                <!--<xa-datasource-property name="Password">tiger</xa-datasource-property>-->

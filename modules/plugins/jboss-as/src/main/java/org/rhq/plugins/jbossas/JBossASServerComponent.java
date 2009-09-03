@@ -582,16 +582,15 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
         }
         File deployDir = new File(getConfigurationPath(), "deploy");
         File dsFile = new File(deployDir, FileNameUtility.formatFileName(name) + "-ds.xml");
-        
-        if (DatasourceConfigurationEditor.updateDatasource(dsFile, name, report)) {
-            deployFile(dsFile);
-    
-            String objectName = String.format("jboss.jca:name=%s,service=DataSourceBinding", name);
-            // IMPORTANT: The object name must be canonicalized so it matches the resource key that
-            //            MBeanResourceDiscoveryComponent uses, which is the canonical object name.
-            report.setResourceKey(getCanonicalName(objectName));
-            setResourceName(report, name);
-        }
+        DatasourceConfigurationEditor.updateDatasource(dsFile, name, report);
+
+        deployFile(dsFile);
+
+        String objectName = String.format("jboss.jca:name=%s,service=DataSourceBinding", name);
+        // IMPORTANT: The object name must be canonicalized so it matches the resource key that
+        //            MBeanResourceDiscoveryComponent uses, which is the canonical object name.
+        report.setResourceKey(getCanonicalName(objectName));
+        setResourceName(report, name);
     }
 
     private void connectionFactoryCreate(CreateResourceReport report) throws MainDeployer.DeployerException {

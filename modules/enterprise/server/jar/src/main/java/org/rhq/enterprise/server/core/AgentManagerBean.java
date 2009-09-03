@@ -31,6 +31,8 @@ import java.util.jar.JarFile;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.interceptor.ExcludeDefaultInterceptors;
 import javax.management.MBeanServer;
 import javax.management.MBeanServerInvocationHandler;
@@ -93,6 +95,9 @@ public class AgentManagerBean implements AgentManagerLocal {
     @EJB
     @IgnoreDependency
     private AvailabilityManagerLocal availabilityManager;
+
+    @EJB
+    private AgentManagerLocal agentManager;
 
     @EJB
     private SystemManagerLocal systemManager;
@@ -255,7 +260,7 @@ public class AgentManagerBean implements AgentManagerLocal {
                 // make sure we lock out all processing of any availability reports that might come our way to avoid concurrency problems
                 AvailabilityReportSerializer.getSingleton().lock(record.getAgentName());
                 try {
-                    setAgentBackfilled(record.getAgentId(), true);
+                    agentManager.setAgentBackfilled(record.getAgentId(), true);
                     availabilityManager.setAllAgentResourceAvailabilities(record.getAgentId(), AvailabilityType.DOWN);
                 } finally {
                     AvailabilityReportSerializer.getSingleton().unlock(record.getAgentName());
@@ -524,6 +529,7 @@ public class AgentManagerBean implements AgentManagerLocal {
         return agentDownloadDir;
     }
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void setAgentBackfilled(int agentId, boolean backfilled) {
         Query query = entityManager.createNamedQuery(Agent.QUERY_SET_AGENT_BACKFILLED);
         query.setParameter("agentId", agentId);

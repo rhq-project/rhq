@@ -4,6 +4,7 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.domain.content.InstalledPackage;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings("unused")
@@ -24,7 +25,7 @@ public class InstalledPackageCriteria extends Criteria {
     private PageOrdering sortInstallationDate;
 
     public InstalledPackageCriteria() {
-        super();
+        super(InstalledPackage.class);
 
         filterOverrides.put("installationTimeMinimum", "installationDate >= ?");
         filterOverrides.put("installationTimeMaximum", "installationDate <= ?");

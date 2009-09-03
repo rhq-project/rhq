@@ -29,6 +29,7 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.domain.operation.OperationDefinition;
 
 /**
  * @author Joseph Marques
@@ -55,7 +56,7 @@ public class OperationDefinitionCriteria extends Criteria {
     private PageOrdering sortName;
 
     public OperationDefinitionCriteria() {
-        super();
+        super(OperationDefinition.class);
 
         filterOverrides.put("resourceTypeId", "resourceType.id = ?");
         filterOverrides.put("resourceTypeName", "resourceType.name like ?");

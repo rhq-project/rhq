@@ -22,10 +22,11 @@
  */
 package org.rhq.core.domain.criteria;
 
-import java.util.List;
+import org.rhq.core.domain.operation.GroupOperationHistory;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
+import java.util.List;
 
 /**
  * @author Joseph Marques
@@ -35,7 +36,7 @@ public class GroupOperationHistoryCriteria extends OperationHistoryCriteria {
     private List<Integer> filterResourceGroupIds; // requires override
 
     public GroupOperationHistoryCriteria() {
-        super();
+        super(GroupOperationHistory.class);
 
         filterOverrides.put("resourceGroupIds", "group.id IN ( ? )");
     }

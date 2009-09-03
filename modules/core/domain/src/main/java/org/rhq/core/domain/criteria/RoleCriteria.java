@@ -26,6 +26,7 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.util.PageOrdering;
 
 /**
@@ -46,6 +47,10 @@ public class RoleCriteria extends Criteria {
     private boolean fetchRoleNotifications;
 
     private PageOrdering sortName;
+
+    public RoleCriteria() {
+        super(Role.class);
+    }
 
     public void addFilterId(Integer filterId) {
         this.filterId = filterId;

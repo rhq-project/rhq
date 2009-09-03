@@ -30,6 +30,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.group.GroupCategory;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageOrdering;
 
 /**
@@ -62,7 +63,7 @@ public class ResourceGroupCriteria extends Criteria {
     private PageOrdering sortResourceTypeName; // requires overrides
 
     public ResourceGroupCriteria() {
-        super();
+        super(ResourceGroup.class);
 
         filterOverrides.put("resourceTypeId", "resourceType.id = ?");
         filterOverrides.put("resourceTypeName", "resourceType.name like ?");

@@ -26,6 +26,7 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
 import org.rhq.core.domain.event.EventSeverity;
+import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.util.PageOrdering;
 
 /**
@@ -53,7 +54,7 @@ public class EventCriteria extends Criteria {
     private PageOrdering sortSeverity;
 
     public EventCriteria() {
-        super();
+        super(Event.class);
 
         filterOverrides.put("sourceName", "source.eventDefinition.name like ?");
         filterOverrides.put("startTime", "timestamp >= ?");

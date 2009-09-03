@@ -29,6 +29,7 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.domain.content.Channel;
 
 /**
  * @author Joseph Marques
@@ -50,7 +51,7 @@ public class ChannelCriteria extends Criteria {
     private PageOrdering sortName;
 
     public ChannelCriteria() {
-        super();
+        super(Channel.class);
 
         filterOverrides.put("resourceIds", "resourceChannels.resource.id IN ( ? )");
     }

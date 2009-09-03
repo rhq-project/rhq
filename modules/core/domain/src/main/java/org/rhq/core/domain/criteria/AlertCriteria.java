@@ -30,6 +30,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
 import org.rhq.core.domain.alert.AlertPriority;
+import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.util.PageOrdering;
 
 /**
@@ -64,7 +65,7 @@ public class AlertCriteria extends Criteria {
     private PageOrdering sortPriority; // requires overrides
 
     public AlertCriteria() {
-        super();
+        super(Alert.class);
 
         filterOverrides.put("triggeredOperationName", "triggeredOperation like ?");
         filterOverrides.put("startTime", "ctime >= ?");

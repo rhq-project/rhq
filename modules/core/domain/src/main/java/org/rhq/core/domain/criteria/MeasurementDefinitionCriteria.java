@@ -30,6 +30,7 @@ import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementCategory;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.NumericType;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.util.PageOrdering;
 
 /**
@@ -66,7 +67,7 @@ public class MeasurementDefinitionCriteria extends Criteria {
     private PageOrdering sortDefaultInterval;
 
     public MeasurementDefinitionCriteria() {
-        super();
+        super(MeasurementDefinition.class);
 
         filterOverrides.put("resourceTypeName", "resourceType.name like ?");
         filterOverrides.put("resourceTypeId", "resourceType.id = ?");

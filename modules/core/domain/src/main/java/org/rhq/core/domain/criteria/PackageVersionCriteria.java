@@ -5,6 +5,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.domain.content.PackageVersion;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings("unused")
@@ -35,7 +36,7 @@ public class PackageVersionCriteria extends Criteria {
     private PageOrdering sortDisplayName;
 
     public PackageVersionCriteria() {
-        super();
+        super(PackageVersion.class);
 
         filterOverrides.put("channelId", "id IN " //
             + "( SELECT cpv.packageVersion.id" //

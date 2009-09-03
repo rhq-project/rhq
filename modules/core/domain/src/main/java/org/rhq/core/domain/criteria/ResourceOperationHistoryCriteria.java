@@ -22,6 +22,8 @@
  */
 package org.rhq.core.domain.criteria;
 
+import org.rhq.core.domain.operation.ResourceOperationHistory;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -43,7 +45,7 @@ public class ResourceOperationHistoryCriteria extends OperationHistoryCriteria {
     private boolean fetchResults;
 
     public ResourceOperationHistoryCriteria() {
-        super();
+        super(ResourceOperationHistory.class);
 
         filterOverrides.put("resourceIds", "resource.id IN ( ? )");
     }

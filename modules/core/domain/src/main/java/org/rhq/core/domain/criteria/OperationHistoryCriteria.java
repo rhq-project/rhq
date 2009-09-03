@@ -27,6 +27,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 
 import org.rhq.core.domain.operation.JobId;
 import org.rhq.core.domain.operation.OperationRequestStatus;
+import org.rhq.core.domain.operation.OperationHistory;
 import org.rhq.core.domain.util.PageOrdering;
 
 /**
@@ -56,8 +57,16 @@ public abstract class OperationHistoryCriteria extends Criteria {
     private PageOrdering sortOperationName; // requires override
 
     public OperationHistoryCriteria() {
-        super();
+        super(OperationHistory.class);
+        init();
+    }
 
+    protected OperationHistoryCriteria(Class<? extends OperationHistory> clazz) {
+        super(clazz);
+        init();
+    }
+
+    private void init() {
         filterOverrides.put("operationDefinitionId", "operationDefinition.id = ?");
         filterOverrides.put("operationName", "operationDefinition.name like ?");
         filterOverrides.put("startTime", "startedTime >= ?");

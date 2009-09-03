@@ -29,6 +29,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import org.rhq.core.domain.resource.CreateDeletePolicy;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceCreationDataType;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageOrdering;
 
 /**
@@ -67,7 +68,7 @@ public class ResourceTypeCriteria extends Criteria {
     private PageOrdering sortPluginName; // needs overrides
 
     public ResourceTypeCriteria() {
-        super();
+        super(ResourceType.class);
 
         filterOverrides.put("pluginName", "plugin like ?");
 

@@ -29,6 +29,7 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.domain.measurement.MeasurementSchedule;
 
 /**
  * @author Joseph Marques
@@ -52,7 +53,7 @@ public class MeasurementScheduleCriteria extends Criteria {
     private PageOrdering sortName; // requires overrides
 
     public MeasurementScheduleCriteria() {
-        super();
+        super(MeasurementSchedule.class);
 
         filterOverrides.put("definitionIds", "definition.id IN ( ? )");
         filterOverrides.put("resourceId", "resource.id IN ( ? )");

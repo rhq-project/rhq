@@ -72,7 +72,9 @@ public abstract class Criteria implements Serializable {
 
     private Class<?> persistentClass;
 
-    public Criteria() {
+    public Criteria(Class<?> persistentClass) {
+        this.persistentClass = persistentClass;
+
         filterOverrides = new HashMap<String, String>();
         sortOverrides = new HashMap<String, String>();
 
@@ -80,16 +82,11 @@ public abstract class Criteria implements Serializable {
 
         requiredPermissions = new HashSet<Permission>();
 
-        /* 
-         * reasonably large default, but prevent accidentally returning 100K objects 
+        /*
+         * reasonably large default, but prevent accidentally returning 100K objects
          * unless you use the setPaging method to explicit denote you want that many
          */
         setPaging(0, 200);
-    }
-
-    public Criteria(Class<?> persistentClass) {
-        this();
-        this.persistentClass = persistentClass;
     }
 
     public Class<?> getPersistentClass() {

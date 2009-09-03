@@ -26,6 +26,7 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.domain.auth.Subject;
 
 /**
  * @author Joseph Marques
@@ -56,6 +57,10 @@ public class SubjectCriteria extends Criteria {
     private PageOrdering sortSmsAddress;
     private PageOrdering sortPhoneNumber;
     private PageOrdering sortDepartment;
+
+    public SubjectCriteria() {
+        super(Subject.class);
+    }
 
     public void addFilterId(Integer filterId) {
         this.filterId = filterId;

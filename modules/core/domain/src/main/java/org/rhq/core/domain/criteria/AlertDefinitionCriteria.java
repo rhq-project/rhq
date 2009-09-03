@@ -30,6 +30,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
 import org.rhq.core.domain.alert.AlertPriority;
+import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.util.PageOrdering;
 
 /**
@@ -61,7 +62,7 @@ public class AlertDefinitionCriteria extends Criteria {
     private PageOrdering sortPriority;
 
     public AlertDefinitionCriteria() {
-        super();
+        super(AlertDefinition.class);
 
         filterOverrides.put("alertTemplateParentId", "parentId = ?");
         filterOverrides.put("alertTemplateResourceTypeId", "resourceType.id = ?");

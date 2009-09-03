@@ -107,6 +107,4 @@ function testLoginLogout() {
    Assert.assertTrue( (subject.getSessionId() != sessionId), "Unexpected Subject session");
 
    rhq.logout();
-
-   print( 'FOO!' )
 }

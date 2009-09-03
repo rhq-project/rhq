@@ -111,7 +111,7 @@
              </c:list-property>
          </c:group>
 
-         <c:group name="snapshotReport" displayName="Snapshot Report">
+         <c:group name="snapshotReport" displayName="Snapshot Report" hiddenByDefault="true">
              <c:simple-property name="snapshotConfigEnabled" type="boolean" default="true" description="If true, take a snapshot of the configuration"/>
              <c:simple-property name="snapshotConfigDirectory" type="string" default="conf" description="The directory containing the configuration files that will be captured in the snapshot. This is usually relative to the configurationPath but can be a full absolute path."/>
              <c:simple-property name="snapshotConfigRegex" type="string" required="false" description="If defined, this regular expression must match a configuration file name if that file is to be captured in the snapshot. If not defined, all configuration files will be captured."/>

@@ -18,6 +18,9 @@
  */
 package org.rhq.enterprise.server.alert;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
@@ -34,6 +37,7 @@ import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -69,6 +73,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.core.util.collection.ArrayUtils;
+import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.i18n.AlertI18NFactory;
 import org.rhq.enterprise.server.alert.i18n.AlertI18NResourceKeys;
@@ -88,6 +93,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Ian Springer
  */
 @Stateless
+@javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
 public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
@@ -113,6 +119,9 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
     private OperationManagerLocal operationManager;
     @EJB
     private EmailManagerLocal emailManager;
+
+    @javax.annotation.Resource(name = "RHQ_DS")
+    private DataSource rhqDs;
 
     private static Date bootTime = null;
 
@@ -254,6 +263,59 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
             + "alert audit records in [" + (totalTime) + "]ms");
 
         return deletedAlerts;
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    @TransactionTimeout(6 * 60 * 60)
+    public int purgeAlerts() {
+        long totalTime = 0;
+
+        Connection conn = null;
+        PreparedStatement truncateConditionLogsStatement = null;
+        PreparedStatement truncateNotificationLogsStatement = null;
+        PreparedStatement truncateAlertsStatement = null;
+        try {
+            conn = rhqDs.getConnection();
+
+            truncateConditionLogsStatement = conn.prepareStatement(AlertConditionLog.QUERY_NATIVE_TRUNCATE_SQL);
+            truncateNotificationLogsStatement = conn.prepareStatement(AlertNotificationLog.QUERY_NATIVE_TRUNCATE_SQL);
+            truncateAlertsStatement = conn.prepareStatement(Alert.QUERY_NATIVE_TRUNCATE_SQL);
+
+            long start = System.currentTimeMillis();
+            int purgedConditions = truncateConditionLogsStatement.executeUpdate();
+            long end = System.currentTimeMillis();
+            log.debug("Purged [" + purgedConditions + "] alert condition logs in [" + (end - start) + "]ms");
+            totalTime += (end - start);
+
+            start = System.currentTimeMillis();
+            int purgedNotifications = truncateNotificationLogsStatement.executeUpdate();
+            end = System.currentTimeMillis();
+            log.debug("Purged [" + purgedNotifications + "] alert notifications in [" + (end - start) + "]ms");
+            totalTime += (end - start);
+
+            start = System.currentTimeMillis();
+            int purgedAlerts = truncateAlertsStatement.executeUpdate();
+            end = System.currentTimeMillis();
+            log.debug("Purged [" + purgedAlerts + "] alerts in [" + (end - start) + "]ms");
+            totalTime += (end - start);
+
+            MeasurementMonitor.getMBean().incrementPurgeTime(totalTime);
+            MeasurementMonitor.getMBean().setPurgedAlerts(purgedAlerts);
+            MeasurementMonitor.getMBean().setPurgedAlertConditions(purgedConditions);
+            MeasurementMonitor.getMBean().setPurgedAlertNotifications(purgedNotifications);
+            log.debug("Deleted [" + (purgedAlerts + purgedConditions + purgedNotifications) + "] "
+                + "alert audit records in [" + (totalTime) + "]ms");
+
+            return purgedAlerts;
+        } catch (SQLException sqle) {
+            log.error("Error purging alerts", sqle);
+            throw new RuntimeException("Error purging alerts: " + sqle.getMessage());
+        } finally {
+            JDBCUtil.safeClose(truncateConditionLogsStatement);
+            JDBCUtil.safeClose(truncateNotificationLogsStatement);
+            JDBCUtil.safeClose(truncateAlertsStatement);
+            JDBCUtil.safeClose(conn);
+        }
     }
 
     /**

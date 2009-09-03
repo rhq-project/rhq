@@ -70,6 +70,8 @@ public class AlertNotificationLog implements Serializable {
     public static final String QUERY_DELETE_BY_ALERT_CTIME = "AlertNotificationLog.deleteByAlertCtime";
     public static final String QUERY_DELETE_BY_RESOURCES = "AlertNotificationLog.deleteByResources";
 
+    public static final String QUERY_NATIVE_TRUNCATE_SQL = "TRUNCATE TABLE RHQ_ALERT_NOTIF_LOG";
+
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_ALERT_NOTIF_LOG_ID_SEQ")
     @Id

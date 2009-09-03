@@ -204,6 +204,8 @@ public class Alert implements Serializable {
     public static final String QUERY_FIND_BY_MEAS_DEF_ID_AND_RESOURCE = "Alert.findByMeasDefIdAndResource";
     public static final String QUERY_GET_ALERT_COUNT_FOR_SCHEDULES = "Alert.QUERY_GET_ALERT_COUNT_FOR_SCHEDULES";
 
+    public static final String QUERY_NATIVE_TRUNCATE_SQL = "TRUNCATE TABLE RHQ_ALERT";
+
     // for subsystem view
     public static final String QUERY_FIND_ALL_COMPOSITES = "Alert.findAllComposites";
     public static final String QUERY_FIND_ALL_COMPOSITES_ADMIN = "Alert.findAllComposites_admin";

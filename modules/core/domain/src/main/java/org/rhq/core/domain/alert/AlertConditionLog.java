@@ -72,6 +72,8 @@ public class AlertConditionLog implements Serializable {
     public static final String QUERY_DELETE_BY_ALERT_CTIME = "AlertConditionLog.deleteByAlertCTime";
     public static final String QUERY_DELETE_UNMATCHED_BY_ALERT_DEFINITION_ID = "AlertConditionLog.deleteUnmatchedByAlertDefinitionId";
 
+    public static final String QUERY_NATIVE_TRUNCATE_SQL = "TRUNCATE TABLE RHQ_ALERT_CONDITION_LOG";
+
     public static final int MAX_LOG_LENGTH = 250;
 
     private static final long serialVersionUID = 1L;

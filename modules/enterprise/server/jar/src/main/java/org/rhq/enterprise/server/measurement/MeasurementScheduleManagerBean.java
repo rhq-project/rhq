@@ -224,27 +224,6 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         return schedule;
     }
 
-    /**
-     * Reattach a Schedule to a PersistenceContext after a successful check for a valid session
-     *
-     * @param  subject  A subject that must be valid
-     * @param  schedule A MeasurementSchedule to persist.
-     *
-     * @return The updated MeasurementSchedule
-     */
-    public MeasurementSchedule updateSchedule(Subject subject, MeasurementSchedule schedule) {
-        // attach it so we can navigate to its resource object for authz check
-        MeasurementSchedule attached = entityManager.find(MeasurementSchedule.class, schedule.getId());
-        if (authorizationManager.hasResourcePermission(subject, Permission.MANAGE_MEASUREMENTS, attached.getResource()
-            .getId()) == false) {
-            throw new PermissionException("User[" + subject.getName()
-                + "] does not have permission to view measurementSchedule[id=" + schedule.getId() + "]");
-        }
-
-        verifyMinimumCollectionInterval(schedule);
-        return entityManager.merge(schedule);
-    }
-
     private void verifyMinimumCollectionInterval(MeasurementSchedule schedule) {
         // reset the schedules minimum collection interval if necessary
         schedule.setInterval(verifyMinimumCollectionInterval(schedule.getInterval()));
@@ -536,18 +515,6 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         return;
     }
 
-    public void disableSchedules(Subject subject, int resourceId, int[] measurementDefinitionIds) {
-        if (!authorizationManager.hasResourcePermission(subject, Permission.MANAGE_MEASUREMENTS, resourceId)) {
-            throw new PermissionException("User[" + subject.getName()
-                + "] does not have permission to disable metric collection schedules for resource[id=" + resourceId
-                + "]");
-        }
-
-        disableSchedule(subject, resourceId, measurementDefinitionIds);
-
-        return;
-    }
-
     // callers to this method need to perform authorization
     private void disableSchedule(Subject subject, int resourceId, int[] measurementDefinitionIds) {
         Resource resource = resourceManager.getResourceById(subject, resourceId);
@@ -571,16 +538,6 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         entityManager.merge(resource);
 
         return;
-    }
-
-    public void enableSchedules(Subject subject, int resourceId, int[] measurementDefinitionIds) {
-        if (!authorizationManager.hasResourcePermission(subject, Permission.MANAGE_MEASUREMENTS, resourceId)) {
-            throw new PermissionException("User[" + subject.getName()
-                + "] does not have permission to enable metric collection schedules for resource[id=" + resourceId
-                + "]");
-        }
-
-        enableSchedule(subject, resourceId, measurementDefinitionIds);
     }
 
     // callers to this method need to perform authorization
@@ -655,6 +612,12 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
 
     private void modifyDefaultCollectionIntervalForMeasurementDefinitions(Subject subject,
         int[] measurementDefinitionIds, long collectionInterval, boolean updateExistingSchedules) {
+        modifyDefaultCollectionIntervalForMeasurementDefinitions(subject, measurementDefinitionIds,
+            collectionInterval > 0, collectionInterval, updateExistingSchedules);
+    }
+
+    private void modifyDefaultCollectionIntervalForMeasurementDefinitions(Subject subject,
+        int[] measurementDefinitionIds, boolean enableDisable, long collectionInterval, boolean updateExistingSchedules) {
 
         if (measurementDefinitionIds == null || measurementDefinitionIds.length == 0) {
             log.debug("update metric template: no definitions supplied (interval = " + collectionInterval);
@@ -663,11 +626,9 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
 
         List<MeasurementDefinition> measurementDefinitions = getDefinitionsByIds(measurementDefinitionIds);
         for (MeasurementDefinition measurementDefinition : measurementDefinitions) {
+            measurementDefinition.setDefaultOn(enableDisable);
             if (collectionInterval > 0) {
-                measurementDefinition.setDefaultOn(true);
                 measurementDefinition.setDefaultInterval(collectionInterval);
-            } else {
-                measurementDefinition.setDefaultOn(false);
             }
         }
 
@@ -678,11 +639,9 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
 
                 List<MeasurementSchedule> schedules = measurementDefinition.getSchedules();
                 for (MeasurementSchedule sched : schedules) {
+                    sched.setEnabled(enableDisable);
                     if (collectionInterval > 0) {
-                        sched.setEnabled(true);
                         sched.setInterval(collectionInterval);
-                    } else {
-                        sched.setEnabled(false);
                     }
 
                     // Create update requests to feed to the agents
@@ -803,66 +762,6 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     }
 
     /**
-     * Enables all collection schedules attached to the given compatible group whose schedules are based off the given
-     * definitions. This does not enable the "templates" (aka definitions). If the passed group is not compatible or
-     * does not exist an Exception is thrown.
-     *
-     * @param subject                  Subject of the caller
-     * @param measurementDefinitionIds the definitions on which the schedules to update are based
-     * @param groupId                  ID of the group
-     * @param collectionInterval       the new interval
-     *
-     * @see   org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal#updateSchedulesForCompatGroup(org.rhq.core.domain.auth.Subject,
-     *        int[], int, long)
-     */
-    public void updateSchedulesForCompatGroup(Subject subject, int groupId, int[] measurementDefinitionIds,
-        long collectionInterval) {
-        // don't verify minimum collection interval here, it will be caught by updateMeasurementSchedules callee
-        ResourceGroup group = resourceGroupManager.getResourceGroupById(subject, groupId, GroupCategory.COMPATIBLE);
-        Set<Resource> resources = group.getExplicitResources();
-
-        for (Resource resource : resources) {
-            updateSchedules(subject, resource.getId(), measurementDefinitionIds, collectionInterval);
-        }
-    }
-
-    /**
-     * Disable the measurement schedules for the passed definitions for the resources of the passed compatible group.
-     */
-    public void disableSchedulesForCompatibleGroup(Subject subject, int groupId, int[] measurementDefinitionIds) {
-        if (!authorizationManager.hasGroupPermission(subject, Permission.MANAGE_MEASUREMENTS, groupId)) {
-            throw new PermissionException("User[" + subject.getName()
-                + "] does not have permission to disable metric collection schedules for resourceGroup[id=" + groupId
-                + "]");
-        }
-
-        ResourceGroup group = resourceGroupManager.getResourceGroupById(subject, groupId, GroupCategory.COMPATIBLE);
-        Set<Resource> resources = group.getExplicitResources();
-
-        for (Resource resource : resources) {
-            disableSchedule(subject, resource.getId(), measurementDefinitionIds);
-        }
-    }
-
-    /**
-     * Enable the measurement schedules for the passed definitions for the resources of the passed compatible group.
-     */
-    public void enableSchedulesForCompatibleGroup(Subject subject, int groupId, int[] measurementDefinitionIds) {
-        if (!authorizationManager.hasGroupPermission(subject, Permission.MANAGE_MEASUREMENTS, groupId)) {
-            throw new PermissionException("User[" + subject.getName()
-                + "] does not have permission to enable metric collection schedules for resourceGroup[id=" + groupId
-                + "]");
-        }
-
-        ResourceGroup group = resourceGroupManager.getResourceGroupById(subject, groupId, GroupCategory.COMPATIBLE);
-        Set<Resource> resources = group.getExplicitResources();
-
-        for (Resource resource : resources) {
-            enableSchedule(subject, resource.getId(), measurementDefinitionIds);
-        }
-    }
-
-    /**
      * Disable the measurement schedules for the passed definitions of the rsource ot the passed auto group.
      *
      * @param subject
@@ -875,7 +774,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         List<Resource> resources = resourceGroupManager.findResourcesForAutoGroup(subject, parentResourceId,
             childResourceType);
         for (Resource resource : resources) {
-            disableSchedules(subject, resource.getId(), measurementDefinitionIds);
+            disableSchedulesForResource(subject, resource.getId(), measurementDefinitionIds);
         }
     }
 
@@ -892,7 +791,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         List<Resource> resources = resourceGroupManager.findResourcesForAutoGroup(subject, parentResourceId,
             childResourceType);
         for (Resource resource : resources) {
-            enableSchedules(subject, resource.getId(), measurementDefinitionIds);
+            enableSchedulesForResource(subject, resource.getId(), measurementDefinitionIds);
         }
     }
 
@@ -1258,6 +1157,117 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         }
     }
 
+    public void disableSchedulesForResource(Subject subject, int resourceId, int[] measurementDefinitionIds) {
+        if (!authorizationManager.hasResourcePermission(subject, Permission.MANAGE_MEASUREMENTS, resourceId)) {
+            throw new PermissionException("User[" + subject.getName()
+                + "] does not have permission to disable metric collection schedules for resource[id=" + resourceId
+                + "]");
+        }
+
+        disableSchedule(subject, resourceId, measurementDefinitionIds);
+
+        return;
+    }
+
+    /**
+     * Disable the measurement schedules for the passed definitions for the resources of the passed compatible group.
+     */
+    public void disableSchedulesForCompatibleGroup(Subject subject, int groupId, int[] measurementDefinitionIds) {
+        if (!authorizationManager.hasGroupPermission(subject, Permission.MANAGE_MEASUREMENTS, groupId)) {
+            throw new PermissionException("User[" + subject.getName()
+                + "] does not have permission to disable metric collection schedules for resourceGroup[id=" + groupId
+                + "]");
+        }
+
+        List<Integer> explicitIds = resourceManager.findExplicitResourceIdsByResourceGroup(groupId);
+        for (Integer resourceId : explicitIds) {
+            disableSchedule(subject, resourceId, measurementDefinitionIds);
+        }
+    }
+
+    public void disableMeasurementTemplates(Subject subject, int[] measurementDefinitionIds) {
+        disableDefaultCollectionForMeasurementDefinitions(subject, measurementDefinitionIds, true);
+    }
+
+    public void enableSchedulesForResource(Subject subject, int resourceId, int[] measurementDefinitionIds) {
+        if (!authorizationManager.hasResourcePermission(subject, Permission.MANAGE_MEASUREMENTS, resourceId)) {
+            throw new PermissionException("User[" + subject.getName()
+                + "] does not have permission to enable metric collection schedules for resource[id=" + resourceId
+                + "]");
+        }
+
+        enableSchedule(subject, resourceId, measurementDefinitionIds);
+    }
+
+    /**
+     * Enable the measurement schedules for the passed definitions for the resources of the passed compatible group.
+     */
+    public void enableSchedulesForCompatibleGroup(Subject subject, int groupId, int[] measurementDefinitionIds) {
+        if (!authorizationManager.hasGroupPermission(subject, Permission.MANAGE_MEASUREMENTS, groupId)) {
+            throw new PermissionException("User[" + subject.getName()
+                + "] does not have permission to enable metric collection schedules for resourceGroup[id=" + groupId
+                + "]");
+        }
+
+        List<Integer> explicitIds = resourceManager.findExplicitResourceIdsByResourceGroup(groupId);
+        for (Integer resourceId : explicitIds) {
+            enableSchedule(subject, resourceId, measurementDefinitionIds);
+        }
+    }
+
+    public void enableMeasurementTemplates(Subject subject, int[] measurementDefinitionIds) {
+        modifyDefaultCollectionIntervalForMeasurementDefinitions(subject, measurementDefinitionIds, true, -1, true);
+    }
+
+    /**
+     * @param  subject  A subject that must be valid
+     * @param  schedule A MeasurementSchedule to persist.
+     */
+    public void updateSchedule(Subject subject, MeasurementSchedule schedule) {
+        // attach it so we can navigate to its resource object for authz check
+        MeasurementSchedule attached = entityManager.find(MeasurementSchedule.class, schedule.getId());
+        if (authorizationManager.hasResourcePermission(subject, Permission.MANAGE_MEASUREMENTS, attached.getResource()
+            .getId()) == false) {
+            throw new PermissionException("User[" + subject.getName()
+                + "] does not have permission to view measurementSchedule[id=" + schedule.getId() + "]");
+        }
+
+        verifyMinimumCollectionInterval(schedule);
+        entityManager.merge(schedule);
+    }
+
+    public void updateSchedulesForResource(Subject subject, int resourceId, int[] measurementDefinitionIds,
+        long collectionInterval) {
+        updateSchedules(subject, resourceId, measurementDefinitionIds, collectionInterval);
+    }
+
+    /**
+     * Enables all collection schedules attached to the given compatible group whose schedules are based off the given
+     * definitions. This does not enable the "templates" (aka definitions). If the passed group is not compatible or
+     * does not exist an Exception is thrown.
+     *
+     * @param subject                  Subject of the caller
+     * @param measurementDefinitionIds the definitions on which the schedules to update are based
+     * @param groupId                  ID of the group
+     * @param collectionInterval       the new interval
+     *
+     * @see   org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal#updateSchedulesForCompatibleGroup(org.rhq.core.domain.auth.Subject,
+     *        int[], int, long)
+     */
+    public void updateSchedulesForCompatibleGroup(Subject subject, int groupId, int[] measurementDefinitionIds,
+        long collectionInterval) {
+        // don't verify minimum collection interval here, it will be caught by updateMeasurementSchedules callee
+        List<Integer> explicitIds = resourceManager.findExplicitResourceIdsByResourceGroup(groupId);
+        for (Integer resourceId : explicitIds) {
+            updateSchedules(subject, resourceId, measurementDefinitionIds, collectionInterval);
+        }
+    }
+
+    public void updateMeasurementTemplates(Subject subject, int[] measurementDefinitionIds, long collectionInterval) {
+        updateDefaultCollectionIntervalForMeasurementDefinitions(subject, measurementDefinitionIds, collectionInterval,
+            true);
+    }
+
     @SuppressWarnings("unchecked")
     public PageList<MeasurementSchedule> findSchedulesByCriteria(Subject subject, MeasurementScheduleCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
@@ -1274,4 +1284,5 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
 
         return new PageList<MeasurementSchedule>(results, (int) count, criteria.getPageControl());
     }
+
 }

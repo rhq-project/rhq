@@ -63,7 +63,7 @@ public class ListResourceGroupMeasurementScheduleUIBean extends PagedDataTableUI
         int groupId = FacesContextUtility.getRequiredRequestParameter("groupId", Integer.class);
         int[] measurementDefinitionIds = getSelectedResourceGroupScheduleList();
         try {
-            measurementScheduleManager.updateSchedulesForCompatGroup(getSubject(), groupId,
+            measurementScheduleManager.updateSchedulesForCompatibleGroup(getSubject(), groupId,
                 measurementDefinitionIds, collectionInterval);
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Enabled and set "
                 + measurementDefinitionIds.length + " schedules.");

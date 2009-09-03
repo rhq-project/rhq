@@ -90,16 +90,6 @@ public interface MeasurementScheduleManagerLocal {
     MeasurementSchedule getScheduleById(Subject subject, int scheduleId);
 
     /**
-     * Reattach a Schedule to a PersitenceContext after a successful check for a valid session
-     *
-     * @param  subject  A session id that must be valid
-     * @param  schedule A MeasurementSchedule to persist.
-     *
-     * @return The updated MeasurementSchedule
-     */
-    MeasurementSchedule updateSchedule(Subject subject, MeasurementSchedule schedule);
-
-    /**
      * Find MeasurementSchedules that are attached to a certain definition and a resource
      *
      * @param  subject
@@ -172,30 +162,6 @@ public interface MeasurementScheduleManagerLocal {
      */
     void updateDefaultCollectionIntervalForMeasurementDefinitions(Subject subject, int[] measurementDefinitionIds,
         long collectionInterval, boolean updateExistingSchedules);
-
-    /**
-     * Enables all collection schedules attached to the given resource whose schedules are based off the given
-     * definitions. This does not enable the "templates" (aka definitions).
-     *
-     * @param subject
-     * @param measurementDefinitionIds
-     * @param resourceId
-     * @param collectionInterval
-     */
-    void updateSchedules(Subject subject, int resourceId, int[] measurementDefinitionIds, long collectionInterval);
-
-    /**
-     * Enables all collection schedules attached to the given compatible group whose schedules are based off the given
-     * definitions. This does not enable the "templates" (aka definitions). If the passed group is not compatible or
-     * does not exist an Exception is thrown.
-     *
-     * @param subject                  Subject of the caller
-     * @param measurementDefinitionIds the definitions on which the schedules to update are based
-     * @param groupId                  ID of the group
-     * @param collectionInterval       the new interval
-     */
-    void updateSchedulesForCompatGroup(Subject subject, int groupId, int[] measurementDefinitionIds,
-        long collectionInterval);
 
     /**
      * Enables all collection schedules attached to the given auto group whose schedules are based off the given
@@ -272,40 +238,6 @@ public interface MeasurementScheduleManagerLocal {
      */
     void errorCorrectSchedules();
 
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    //
-    // The following are shared with the Remote Interface
-    //
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    /**
-     * Disables all collection schedules attached to the given resource whose schedules are based off the given
-     * definitions. This does not disable the "templates" (aka definitions).
-     *
-     * @param subject
-     * @param measurementDefinitionIds
-     * @param resourceId
-     */
-    void disableSchedules(Subject subject, int resourceId, int[] measurementDefinitionIds);
-
-    /**
-     * Disable the measurement schedules for the passed definitions for the resources of the passed compatible group.
-     */
-    void disableSchedulesForCompatibleGroup(Subject subject, int groupId, int[] measurementDefinitionIds);
-
-    /**
-     * Enable the schedules for the provided definitions and resource
-     * @param subject
-     * @param measurementDefinitionIds
-     * @param resourceId
-     */
-    void enableSchedules(Subject subject, int resourceId, int[] measurementDefinitionIds);
-
-    /**
-     * Enable the measurement schedules for the passed definitions for the resources of the passed compatible group.
-     */
-    void enableSchedulesForCompatibleGroup(Subject subject, int groupId, int[] measurementDefinitionIds);
-
     /**
      * Return a list of MeasurementSchedules for the given ids
      *
@@ -354,6 +286,80 @@ public interface MeasurementScheduleManagerLocal {
      */
     PageList<MeasurementScheduleComposite> findSchedulesForResource(Subject subject, int resourceId,
         PageControl pageControl);
+
+
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    //
+    // The following are shared with the Remote Interface
+    //
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    /**
+     * Disables all collection schedules attached to the given resource whose schedules are based off the given
+     * definitions. This does not disable the "templates" (aka definitions).
+     *
+     * @param subject
+     * @param measurementDefinitionIds
+     * @param resourceId
+     */
+    void disableSchedulesForResource(Subject subject, int resourceId, int[] measurementDefinitionIds);
+
+    /**
+     * Disable the measurement schedules for the passed definitions for the resources of the passed compatible group.
+     */
+    void disableSchedulesForCompatibleGroup(Subject subject, int groupId, int[] measurementDefinitionIds);
+
+    void disableMeasurementTemplates(Subject subject, int[] measurementDefinitionIds);
+
+    /**
+     * Enable the schedules for the provided definitions and resource
+     * @param subject
+     * @param measurementDefinitionIds
+     * @param resourceId
+     */
+    void enableSchedulesForResource(Subject subject, int resourceId, int[] measurementDefinitionIds);
+
+    /**
+     * Enable the measurement schedules for the passed definitions for the resources of the passed compatible group.
+     */
+    void enableSchedulesForCompatibleGroup(Subject subject, int groupId, int[] measurementDefinitionIds);
+
+    void enableMeasurementTemplates(Subject subject, int[] measurementDefinitionIds);
+
+    /**
+     * Reattach a Schedule to a PersitenceContext after a successful check for a valid session
+     *
+     * @param  subject  A session id that must be valid
+     * @param  schedule A MeasurementSchedule to persist.
+     */
+    void updateSchedule(Subject subject, MeasurementSchedule schedule);
+
+    /**
+     * Enables all collection schedules attached to the given resource whose schedules are based off the given
+     * definitions. This does not enable the "templates" (aka definitions).
+     *
+     * @param subject
+     * @param measurementDefinitionIds
+     * @param resourceId
+     * @param collectionInterval
+     */
+    void updateSchedulesForResource(Subject subject, int resourceId, int[] measurementDefinitionIds,
+        long collectionInterval);
+
+    /**
+     * Enables all collection schedules attached to the given compatible group whose schedules are based off the given
+     * definitions. This does not enable the "templates" (aka definitions). If the passed group is not compatible or
+     * does not exist an Exception is thrown.
+     *
+     * @param subject                  Subject of the caller
+     * @param measurementDefinitionIds the definitions on which the schedules to update are based
+     * @param groupId                  ID of the group
+     * @param collectionInterval       the new interval
+     */
+    void updateSchedulesForCompatibleGroup(Subject subject, int groupId, int[] measurementDefinitionIds,
+        long collectionInterval);
+
+    void updateMeasurementTemplates(Subject subject, int[] measurementDefinitionIds, long collectionInterval);
 
     PageList<MeasurementSchedule> findSchedulesByCriteria(Subject subject, MeasurementScheduleCriteria criteria);
 

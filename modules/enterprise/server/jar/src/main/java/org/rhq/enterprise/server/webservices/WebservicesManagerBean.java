@@ -473,20 +473,48 @@ public class WebservicesManagerBean implements WebservicesRemote {
     //MEASUREMENTPROBLEMMANAGER: END ----------------------------------
 
     //MEASUREMENTSCHEDULEMANAGER: BEGIN ----------------------------------
-    public void disableSchedules(Subject subject, int resourceId, int[] measurementDefinitionIds) {
-        measurementScheduleManager.disableSchedules(subject, resourceId, measurementDefinitionIds);
+    public void disableSchedulesForResource(Subject subject, int resourceId, int[] measurementDefinitionIds) {
+        measurementScheduleManager.disableSchedulesForResource(subject, resourceId, measurementDefinitionIds);
     }
 
     public void disableSchedulesForCompatibleGroup(Subject subject, int groupId, int[] measurementDefinitionIds) {
         measurementScheduleManager.disableSchedulesForCompatibleGroup(subject, groupId, measurementDefinitionIds);
     }
 
-    public void enableSchedules(Subject subject, int resourceId, int[] measurementDefinitionIds) {
-        measurementScheduleManager.enableSchedules(subject, resourceId, measurementDefinitionIds);
+    public void disableMeasurementTemplates(Subject subject, int[] measurementDefinitionIds) {
+        measurementScheduleManager.disableMeasurementTemplates(subject, measurementDefinitionIds);
+    }
+
+    public void enableSchedulesForResource(Subject subject, int resourceId, int[] measurementDefinitionIds) {
+        measurementScheduleManager.enableSchedulesForResource(subject, resourceId, measurementDefinitionIds);
     }
 
     public void enableSchedulesForCompatibleGroup(Subject subject, int groupId, int[] measurementDefinitionIds) {
         measurementScheduleManager.enableSchedulesForCompatibleGroup(subject, groupId, measurementDefinitionIds);
+    }
+
+    public void enableMeasurementTemplates(Subject subject, int[] measurementDefinitionIds) {
+        measurementScheduleManager.enableMeasurementTemplates(subject, measurementDefinitionIds);
+    }
+
+    public void updateSchedule(Subject subject, MeasurementSchedule schedule) {
+        measurementScheduleManager.updateSchedule(subject, schedule);
+    }
+
+    public void updateSchedulesForResource(Subject subject, int resourceId, int[] measurementDefinitionIds,
+        long collectionInterval) {
+        measurementScheduleManager.updateSchedulesForResource(subject, resourceId, measurementDefinitionIds,
+            collectionInterval);
+    }
+
+    public void updateSchedulesForCompatibleGroup(Subject subject, int groupId, int[] measurementDefinitionIds,
+        long collectionInterval) {
+        measurementScheduleManager.updateSchedulesForCompatibleGroup(subject, groupId, measurementDefinitionIds,
+            collectionInterval);
+    }
+
+    public void updateMeasurementTemplates(Subject subject, int[] measurementDefinitionIds, long collectionInterval) {
+        measurementScheduleManager.updateMeasurementTemplates(subject, measurementDefinitionIds, collectionInterval);
     }
 
     public PageList<MeasurementSchedule> findSchedulesByCriteria(Subject subject, MeasurementScheduleCriteria criteria) {

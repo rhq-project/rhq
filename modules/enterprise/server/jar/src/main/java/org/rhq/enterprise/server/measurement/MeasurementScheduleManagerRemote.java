@@ -36,7 +36,7 @@ import org.rhq.enterprise.server.system.ServerVersion;
 public interface MeasurementScheduleManagerRemote {
 
     @WebMethod
-    void disableSchedules(//
+    void disableSchedulesForResource(//
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceId") int resourceId, //
         @WebParam(name = "measurementDefinitionIds") int[] measurementDefinitionIds);
@@ -48,7 +48,12 @@ public interface MeasurementScheduleManagerRemote {
         @WebParam(name = "measurementDefinitionIds") int[] measurementDefinitionIds);
 
     @WebMethod
-    void enableSchedules(//
+    void disableMeasurementTemplates(//
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "measurementDefinitionIds") int[] measurementDefinitionIds);
+
+    @WebMethod
+    void enableSchedulesForResource(//
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceId") int resourceId, //
         @WebParam(name = "measurementDefinitionIds") int[] measurementDefinitionIds);
@@ -58,6 +63,36 @@ public interface MeasurementScheduleManagerRemote {
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "groupId") int groupId, //
         @WebParam(name = "measurementDefinitionIds") int[] measurementDefinitionIds);
+
+    @WebMethod
+    void enableMeasurementTemplates(//
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "measurementDefinitionIds") int[] measurementDefinitionIds);
+
+    @WebMethod
+    void updateSchedule( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "measurementSchedule") MeasurementSchedule measurementSchedule);
+
+    @WebMethod
+    void updateSchedulesForResource(//
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "resourceId") int resourceId, //
+        @WebParam(name = "measurementDefinitionIds") int[] measurementDefinitionIds, //
+        @WebParam(name = "collectionInterval") long collectionInterval);
+
+    @WebMethod
+    void updateSchedulesForCompatibleGroup(//
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "resourceId") int groupId, //
+        @WebParam(name = "measurementDefinitionIds") int[] measurementDefinitionIds, //
+        @WebParam(name = "collectionInterval") long collectionInterval);
+
+    @WebMethod
+    void updateMeasurementTemplates(//
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "measurementDefinitionIds") int[] measurementDefinitionIds, //
+        @WebParam(name = "collectionInterval") long collectionInterval);
 
     @WebMethod
     PageList<MeasurementSchedule> findSchedulesByCriteria(//

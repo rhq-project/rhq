@@ -34,7 +34,7 @@ public class ListResourceMeasurementScheduleUIBean extends PagedDataTableUIBean 
         int resourceId = FacesContextUtility.getRequiredRequestParameter("id", Integer.class);
         int[] measurementDefinitionIds = getSelectedResourceScheduleList();
         try {
-            measurementScheduleManager.disableSchedules(getSubject(), resourceId, measurementDefinitionIds);
+            measurementScheduleManager.disableSchedulesForResource(getSubject(), resourceId, measurementDefinitionIds);
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Disabled " + measurementDefinitionIds.length
                 + " schedules.");
         } catch (Exception e) {
@@ -47,7 +47,7 @@ public class ListResourceMeasurementScheduleUIBean extends PagedDataTableUIBean 
         int resourceId = FacesContextUtility.getRequiredRequestParameter("id", Integer.class);
         int[] measurementDefinitionIds = getSelectedResourceScheduleList();
         try {
-            measurementScheduleManager.enableSchedules(getSubject(), resourceId, measurementDefinitionIds);
+            measurementScheduleManager.enableSchedulesForResource(getSubject(), resourceId, measurementDefinitionIds);
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Enabled " + measurementDefinitionIds.length
                 + " schedules.");
         } catch (Exception e) {
@@ -61,7 +61,7 @@ public class ListResourceMeasurementScheduleUIBean extends PagedDataTableUIBean 
         int resourceId = FacesContextUtility.getRequiredRequestParameter("id", Integer.class);
         int[] measurementDefinitionIds = getSelectedResourceScheduleList();
         try {
-            measurementScheduleManager.updateSchedules(getSubject(), resourceId, measurementDefinitionIds,
+            measurementScheduleManager.updateSchedulesForResource(getSubject(), resourceId, measurementDefinitionIds,
                 collectionInterval);
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Enabled and set "
                 + measurementDefinitionIds.length + " schedules.");

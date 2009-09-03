@@ -126,7 +126,7 @@ public class ConfigMetricsAction extends BaseAction {
                 }
 
                 case RESOURCE: {
-                    scheduleManager.disableSchedules(subject, resourceId, measurementDefinitionIdsToUpdate);
+                    scheduleManager.disableSchedulesForResource(subject, resourceId, measurementDefinitionIdsToUpdate);
                     break;
                 }
 
@@ -161,14 +161,14 @@ public class ConfigMetricsAction extends BaseAction {
         }
 
         case RESOURCE: {
-            scheduleManager.updateSchedules(subject, resourceId, measurementDefinitionIdsToUpdate,
+            scheduleManager.updateSchedulesForResource(subject, resourceId, measurementDefinitionIdsToUpdate,
                 newCollectionInterval);
             break;
         }
 
         case COMPGROUP: {
-            scheduleManager.updateSchedulesForCompatGroup(subject, groupId,
-                measurementDefinitionIdsToUpdate, newCollectionInterval);
+            scheduleManager.updateSchedulesForCompatibleGroup(subject, groupId, measurementDefinitionIdsToUpdate,
+                newCollectionInterval);
             break;
         }
 

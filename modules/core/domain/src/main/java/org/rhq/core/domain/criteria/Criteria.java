@@ -72,6 +72,10 @@ public abstract class Criteria implements Serializable {
 
     private Class<?> persistentClass;
 
+    //added no args constructor for bean and JAXB requirement
+    private Criteria() {
+    }
+
     public Criteria(Class<?> persistentClass) {
         this.persistentClass = persistentClass;
 

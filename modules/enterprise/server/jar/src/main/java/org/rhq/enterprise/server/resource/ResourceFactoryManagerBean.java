@@ -202,7 +202,7 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         history.setErrorMessage(response.getErrorMessage());
         history.setStatus(response.getStatus());
 
-        // Mark resource and all children as deleted if the response was successful
+        // If successful mark resource as deleted and uninventory children
         if (response.getStatus() == DeleteResourceStatus.SUCCESS) {
             Resource resource = history.getResource();
 
@@ -214,7 +214,7 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
             resource.setItime(System.currentTimeMillis());
             entityManager.merge(resource);
 
-            // uninventory the children of the deleted resource
+            // uninventory the children of the deleted resource (see rhq-2378)
             uninventoryChildren(children);
         }
     }

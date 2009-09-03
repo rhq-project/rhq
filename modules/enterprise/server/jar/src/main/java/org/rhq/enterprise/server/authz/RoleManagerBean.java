@@ -43,6 +43,7 @@ import org.rhq.core.domain.util.CriteriaQueryGenerator;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.domain.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 
@@ -565,13 +566,8 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
 
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
 
-        Query query = generator.getQuery(entityManager);
-        Query countQuery = generator.getCountQuery(entityManager);
-
-        long count = (Long) countQuery.getSingleResult();
-        List<Role> roles = query.getResultList();
-
-        return new PageList<Role>(roles, (int) count, criteria.getPageControl());
+        CriteriaQueryRunner<Role> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
+        return queryRunner.execute();
     }
 
 }

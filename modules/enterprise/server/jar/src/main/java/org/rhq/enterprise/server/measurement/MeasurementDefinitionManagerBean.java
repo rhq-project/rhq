@@ -41,6 +41,7 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.util.CriteriaQueryGenerator;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 
@@ -139,12 +140,8 @@ public class MeasurementDefinitionManagerBean implements MeasurementDefinitionMa
         MeasurementDefinitionCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
 
-        Query query = generator.getQuery(entityManager);
-        Query countQuery = generator.getCountQuery(entityManager);
-
-        long count = (Long) countQuery.getSingleResult();
-        List<MeasurementDefinition> measurementDefinitions = query.getResultList();
-
-        return new PageList<MeasurementDefinition>(measurementDefinitions, (int) count, criteria.getPageControl());
+        CriteriaQueryRunner<MeasurementDefinition> queryRunner = new CriteriaQueryRunner(criteria, generator,
+            entityManager);
+        return queryRunner.execute();
     }
 }

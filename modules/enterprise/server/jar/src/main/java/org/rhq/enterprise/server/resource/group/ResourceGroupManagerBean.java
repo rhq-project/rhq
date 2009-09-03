@@ -77,6 +77,7 @@ import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.domain.util.CriteriaQueryRunner;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
@@ -1316,13 +1317,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
                 subject.getId());
         }
 
-        Query query = generator.getQuery(entityManager);
-        Query countQuery = generator.getCountQuery(entityManager);
-
-        long count = (Long) countQuery.getSingleResult();
-        List<ResourceGroup> results = query.getResultList();
-
-        return new PageList<ResourceGroup>(results, (int) count, criteria.getPageControl());
+        CriteriaQueryRunner<ResourceGroup> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
+        return queryRunner.execute();
     }
 
 }

@@ -76,6 +76,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.domain.util.CriteriaQueryRunner;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
@@ -1276,13 +1277,9 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                 .getId());
         }
 
-        Query query = generator.getQuery(entityManager);
-        Query countQuery = generator.getCountQuery(entityManager);
-
-        long count = (Long) countQuery.getSingleResult();
-        List<MeasurementSchedule> results = query.getResultList();
-
-        return new PageList<MeasurementSchedule>(results, (int) count, criteria.getPageControl());
+        CriteriaQueryRunner<MeasurementSchedule> queryRunner = new CriteriaQueryRunner(criteria, generator,
+            entityManager);
+        return queryRunner.execute();
     }
 
 }

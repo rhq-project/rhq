@@ -67,6 +67,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.domain.util.CriteriaQueryRunner;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
@@ -714,13 +715,8 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
                 "source.resource", subject.getId());
         }
 
-        Query query = generator.getQuery(entityManager);
-        Query countQuery = generator.getCountQuery(entityManager);
-
-        long count = (Long) countQuery.getSingleResult();
-        List<Event> results = query.getResultList();
-
-        return new PageList<Event>(results, (int) count, criteria.getPageControl());
+        CriteriaQueryRunner<Event> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
+        return queryRunner.execute();
     }
 
 }

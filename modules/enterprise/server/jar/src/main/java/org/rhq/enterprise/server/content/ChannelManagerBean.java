@@ -49,6 +49,7 @@ import org.rhq.core.domain.util.CriteriaQueryGenerator;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.domain.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
@@ -498,13 +499,8 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
     public PageList<Channel> findChannelsByCriteria(Subject subject, ChannelCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
 
-        Query query = generator.getQuery(entityManager);
-        Query countQuery = generator.getCountQuery(entityManager);
-
-        long count = (Long) countQuery.getSingleResult();
-        List<Channel> channels = query.getResultList();
-
-        return new PageList<Channel>(channels, (int) count, criteria.getPageControl());
+        CriteriaQueryRunner<Channel> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
+        return queryRunner.execute();
     }
 
     @SuppressWarnings("unchecked")

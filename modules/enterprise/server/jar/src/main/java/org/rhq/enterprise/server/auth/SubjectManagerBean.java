@@ -51,6 +51,7 @@ import org.rhq.core.domain.util.CriteriaQueryGenerator;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.domain.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
@@ -647,13 +648,8 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     public PageList<Subject> findSubjectsByCriteria(Subject subject, SubjectCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
 
-        Query query = generator.getQuery(entityManager);
-        Query countQuery = generator.getCountQuery(entityManager);
-
-        long count = (Long) countQuery.getSingleResult();
-        List<Subject> subjects = query.getResultList();
-
-        return new PageList<Subject>(subjects, (int) count, criteria.getPageControl());
+        CriteriaQueryRunner<Subject> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
+        return queryRunner.execute();
     }
 
 }

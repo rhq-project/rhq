@@ -76,6 +76,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.domain.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
@@ -1790,13 +1791,9 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         OperationDefinitionCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
 
-        Query query = generator.getQuery(entityManager);
-        Query countQuery = generator.getCountQuery(entityManager);
-
-        long count = (Long) countQuery.getSingleResult();
-        List<OperationDefinition> results = query.getResultList();
-
-        return new PageList<OperationDefinition>(results, (int) count, criteria.getPageControl());
+        CriteriaQueryRunner<OperationDefinition> queryRunner = new CriteriaQueryRunner(criteria, generator,
+            entityManager);
+        return queryRunner.execute();
     }
 
     @SuppressWarnings("unchecked")
@@ -1808,13 +1805,9 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
                 .getId());
         }
 
-        Query query = generator.getQuery(entityManager);
-        Query countQuery = generator.getCountQuery(entityManager);
-
-        long count = (Long) countQuery.getSingleResult();
-        List<ResourceOperationHistory> results = query.getResultList();
-
-        return new PageList<ResourceOperationHistory>(results, (int) count, criteria.getPageControl());
+        CriteriaQueryRunner<ResourceOperationHistory> queryRunner = new CriteriaQueryRunner(criteria, generator,
+            entityManager);
+        return queryRunner.execute();
     }
 
     @SuppressWarnings("unchecked")
@@ -1826,12 +1819,8 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
                 .getId());
         }
 
-        Query query = generator.getQuery(entityManager);
-        Query countQuery = generator.getCountQuery(entityManager);
-
-        long count = (Long) countQuery.getSingleResult();
-        List<GroupOperationHistory> results = query.getResultList();
-
-        return new PageList<GroupOperationHistory>(results, (int) count, criteria.getPageControl());
+        CriteriaQueryRunner<GroupOperationHistory> queryRunner = new CriteriaQueryRunner(criteria, generator,
+            entityManager);
+        return queryRunner.execute();
     }
 }

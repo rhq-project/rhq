@@ -50,6 +50,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.domain.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.engine.AlertDefinitionEvent;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
@@ -632,12 +633,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
                 .getId());
         }
 
-        Query query = generator.getQuery(entityManager);
-        Query countQuery = generator.getCountQuery(entityManager);
-
-        long count = (Long) countQuery.getSingleResult();
-        List<AlertDefinition> alertDefinitions = query.getResultList();
-
-        return new PageList<AlertDefinition>(alertDefinitions, (int) count, criteria.getPageControl());
+        CriteriaQueryRunner<AlertDefinition> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
+        return queryRunner.execute();        
     }
 }

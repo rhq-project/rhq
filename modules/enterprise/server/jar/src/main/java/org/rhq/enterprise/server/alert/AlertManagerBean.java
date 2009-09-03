@@ -72,6 +72,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.domain.util.CriteriaQueryRunner;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
@@ -903,14 +904,11 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                 "alertDefinition.resource", subject.getId());
         }
 
-        Query query = generator.getQuery(entityManager);
-        Query countQuery = generator.getCountQuery(entityManager);
-
-        long count = (Long) countQuery.getSingleResult();
-        List<Alert> alerts = query.getResultList();
+        CriteriaQueryRunner<Alert> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
+        PageList<Alert> alerts = queryRunner.execute();
 
         fetchCollectionFields(alerts);
 
-        return new PageList<Alert>(alerts, (int) count, criteria.getPageControl());
+        return alerts;
     }
 }

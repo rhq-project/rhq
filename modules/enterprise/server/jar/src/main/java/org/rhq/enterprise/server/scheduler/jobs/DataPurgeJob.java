@@ -102,7 +102,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
         LOG.info("Measurement data compression starting at " + new Date(timeStart));
 
         try {
-            compressionManager.compressData();
+            compressionManager.compressPurgeAndTruncate();
         } catch (Exception e) {
             LOG.error("Failed to compress measurement data. Cause: " + e, e);
         } finally {

@@ -99,6 +99,11 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "    FROM AlertDefinition ad " //
         + "   WHERE ad.resource.id = :resourceId " //
         + "     AND ad.deleted = false"), //
+    @NamedQuery(name = AlertDefinition.QUERY_FIND_OPTION_ITEMS_BY_GROUP, query = "" //
+        + "  SELECT new org.rhq.core.domain.common.composite.IntegerOptionItem(ad.id, ad.name) " //
+        + "    FROM AlertDefinition ad " //
+        + "   WHERE ad.resourceGroup.id = :groupId " //
+        + "     AND ad.deleted = false"), //
     @NamedQuery(name = AlertDefinition.QUERY_FIND_BY_RESOURCE, query = "" //
         + "SELECT a " //
         + "  FROM AlertDefinition a " //
@@ -230,6 +235,7 @@ public class AlertDefinition implements Serializable {
     public static final String QUERY_FIND_BY_GROUP_ALERT_DEFINITION_ID = "AlertDefinition.findByGroupAlertDefinitionId";
     public static final String QUERY_FIND_RESOURCE_IDS_NEEDING_TEMPLATE_APPLICATION = "AlertDefinition.findResourceIdsNeedingTemplateApplication";
     public static final String QUERY_FIND_OPTION_ITEMS_BY_RESOURCE = "AlertDefinition.findOptionItemsByResource";
+    public static final String QUERY_FIND_OPTION_ITEMS_BY_GROUP = "AlertDefinition.findOptionItemsByGroup";
     public static final String QUERY_FIND_BY_RESOURCE = "AlertDefinition.findByResource";
     public static final String QUERY_FIND_BY_RESOURCE_TYPE = "AlertDefinition.findByResourceType";
     public static final String QUERY_FIND_BY_RESOURCE_GROUP = "AlertDefinition.findByResourceGroup";

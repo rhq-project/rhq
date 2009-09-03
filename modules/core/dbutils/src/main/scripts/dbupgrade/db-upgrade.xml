@@ -1398,6 +1398,114 @@ DB Upgrade:
    </schemaSpec>
 
    <schemaSpec version="2.55">
+      <schema-directSQL>
+         <statement desc="Creating index on TIME_STAMP column of RHQ_MEASUREMENT_DATA_NUM_1H">
+            CREATE INDEX RHQ_MEAS_DATA_1H_TIME_IDX ON RHQ_MEASUREMENT_DATA_NUM_1H(TIME_STAMP)
+         </statement>
+         <statement desc="Creating index on TIME_STAMP column of RHQ_MEASUREMENT_DATA_NUM_6H">
+            CREATE INDEX RHQ_MEAS_DATA_6H_TIME_IDX ON RHQ_MEASUREMENT_DATA_NUM_6H(TIME_STAMP)
+         </statement>
+      </schema-directSQL>
+      <schema-directSQL>
+         <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R00 (TIME_STAMP)">
+            CREATE INDEX RHQ_MEAS_DATA_R00_TS_IDX ON RHQ_MEAS_DATA_NUM_R00 (TIME_STAMP)
+         </statement>
+         <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R01 (TIME_STAMP)">
+            CREATE INDEX RHQ_MEAS_DATA_R01_TS_IDX ON RHQ_MEAS_DATA_NUM_R01 (TIME_STAMP)
+         </statement>
+         <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R02 (TIME_STAMP)">
+            CREATE INDEX RHQ_MEAS_DATA_R02_TS_IDX ON RHQ_MEAS_DATA_NUM_R02 (TIME_STAMP)
+         </statement>
+         <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R03 (TIME_STAMP)">
+            CREATE INDEX RHQ_MEAS_DATA_R03_TS_IDX ON RHQ_MEAS_DATA_NUM_R03 (TIME_STAMP)
+         </statement>
+         <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R04 (TIME_STAMP)">
+            CREATE INDEX RHQ_MEAS_DATA_R04_TS_IDX ON RHQ_MEAS_DATA_NUM_R04 (TIME_STAMP)
+         </statement>
+         <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R05 (TIME_STAMP)">
+            CREATE INDEX RHQ_MEAS_DATA_R05_TS_IDX ON RHQ_MEAS_DATA_NUM_R05 (TIME_STAMP)
+         </statement>
+         <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R06 (TIME_STAMP)">
+            CREATE INDEX RHQ_MEAS_DATA_R06_TS_IDX ON RHQ_MEAS_DATA_NUM_R06 (TIME_STAMP)
+         </statement>
+         <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R07 (TIME_STAMP)">
+            CREATE INDEX RHQ_MEAS_DATA_R07_TS_IDX ON RHQ_MEAS_DATA_NUM_R07 (TIME_STAMP)
+         </statement>
+         <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R08 (TIME_STAMP)">
+            CREATE INDEX RHQ_MEAS_DATA_R08_TS_IDX ON RHQ_MEAS_DATA_NUM_R08 (TIME_STAMP)
+         </statement>
+         <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R09 (TIME_STAMP)">
+            CREATE INDEX RHQ_MEAS_DATA_R09_TS_IDX ON RHQ_MEAS_DATA_NUM_R09 (TIME_STAMP)
+         </statement>
+         <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R10 (TIME_STAMP)">
+            CREATE INDEX RHQ_MEAS_DATA_R10_TS_IDX ON RHQ_MEAS_DATA_NUM_R10 (TIME_STAMP)
+         </statement>
+         <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R11 (TIME_STAMP)">
+            CREATE INDEX RHQ_MEAS_DATA_R11_TS_IDX ON RHQ_MEAS_DATA_NUM_R11 (TIME_STAMP)
+         </statement>
+         <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R12 (TIME_STAMP)">
+            CREATE INDEX RHQ_MEAS_DATA_R12_TS_IDX ON RHQ_MEAS_DATA_NUM_R12 (TIME_STAMP)
+         </statement>
+         <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R13 (TIME_STAMP)">
+            CREATE INDEX RHQ_MEAS_DATA_R13_TS_IDX ON RHQ_MEAS_DATA_NUM_R13 (TIME_STAMP)
+         </statement>
+         <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R14 (TIME_STAMP)">
+            CREATE INDEX RHQ_MEAS_DATA_R14_TS_IDX ON RHQ_MEAS_DATA_NUM_R14 (TIME_STAMP)
+         </statement>
+      </schema-directSQL>
+   </schemaSpec>
+
+   <schemaSpec version="2.56">
+      <schema-directSQL>
+         <statement desc="Dropping index on RHQ_MEAS_DATA_R00_SID_IDX">
+            DROP INDEX RHQ_MEAS_DATA_R00_SID_IDX
+         </statement>
+         <statement desc="Dropping index on RHQ_MEAS_DATA_R01_SID_IDX">
+            DROP INDEX RHQ_MEAS_DATA_R01_SID_IDX
+         </statement>
+         <statement desc="Dropping index on RHQ_MEAS_DATA_R02_SID_IDX">
+            DROP INDEX RHQ_MEAS_DATA_R02_SID_IDX
+         </statement>
+         <statement desc="Dropping index on RHQ_MEAS_DATA_R03_SID_IDX">
+            DROP INDEX RHQ_MEAS_DATA_R03_SID_IDX
+         </statement>
+         <statement desc="Dropping index on RHQ_MEAS_DATA_R04_SID_IDX">
+            DROP INDEX RHQ_MEAS_DATA_R04_SID_IDX
+         </statement>
+         <statement desc="Dropping index on RHQ_MEAS_DATA_R05_SID_IDX">
+            DROP INDEX RHQ_MEAS_DATA_R05_SID_IDX
+         </statement>
+         <statement desc="Dropping index on RHQ_MEAS_DATA_R06_SID_IDX">
+            DROP INDEX RHQ_MEAS_DATA_R06_SID_IDX
+         </statement>
+         <statement desc="Dropping index on RHQ_MEAS_DATA_R07_SID_IDX">
+            DROP INDEX RHQ_MEAS_DATA_R07_SID_IDX
+         </statement>
+         <statement desc="Dropping index on RHQ_MEAS_DATA_R08_SID_IDX">
+            DROP INDEX RHQ_MEAS_DATA_R08_SID_IDX
+         </statement>
+         <statement desc="Dropping index on RHQ_MEAS_DATA_R09_SID_IDX">
+            DROP INDEX RHQ_MEAS_DATA_R09_SID_IDX
+         </statement>
+         <statement desc="Dropping index on RHQ_MEAS_DATA_R10_SID_IDX">
+            DROP INDEX RHQ_MEAS_DATA_R10_SID_IDX
+         </statement>
+         <statement desc="Dropping index on RHQ_MEAS_DATA_R11_SID_IDX">
+            DROP INDEX RHQ_MEAS_DATA_R11_SID_IDX
+         </statement>
+         <statement desc="Dropping index on RHQ_MEAS_DATA_R12_SID_IDX">
+            DROP INDEX RHQ_MEAS_DATA_R12_SID_IDX
+         </statement>
+         <statement desc="Dropping index on RHQ_MEAS_DATA_R13_SID_IDX">
+            DROP INDEX RHQ_MEAS_DATA_R13_SID_IDX
+         </statement>
+         <statement desc="Dropping index on RHQ_MEAS_DATA_R14_SID_IDX">
+            DROP INDEX RHQ_MEAS_DATA_R14_SID_IDX
+         </statement>
+      </schema-directSQL>
+   </schemaSpec>
+
+   <schemaSpec version="2.57">
       <schema-addColumn table="RHQ_ALERT_DEFINITION" column="RESOURCE_GROUP_ID" columnType="INTEGER" />
       <schema-addColumn table="RHQ_ALERT_DEFINITION" column="GROUP_ALERT_DEF_ID" columnType="INTEGER" />
    </schemaSpec>

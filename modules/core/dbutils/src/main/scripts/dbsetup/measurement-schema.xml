@@ -86,6 +86,10 @@
             <field ref="TIME_STAMP"/>
          </primaryKey>
       </constraint>
+      
+      <index name="RHQ_MEAS_DATA_1H_TIME_IDX">
+         <field ref="TIME_STAMP"/>
+      </index>
    </table>
 
 
@@ -104,6 +108,10 @@
             <field ref="TIME_STAMP"/>
          </primaryKey>
       </constraint>
+      
+      <index name="RHQ_MEAS_DATA_6H_TIME_IDX">
+         <field ref="TIME_STAMP"/>
+      </index>
    </table>
 
 
@@ -231,8 +239,8 @@
       <column name="TIME_STAMP" type="LONG"/>
       <column name="SCHEDULE_ID" type="INTEGER"/>
       <column name="VALUE" type="DOUBLE"/>
-      <index name="RHQ_MEAS_DATA_R00_SID_IDX">
-         <field ref="SCHEDULE_ID"/>
+      <index name="RHQ_MEAS_DATA_R00_TS_IDX">
+         <field ref="TIME_STAMP"/>
       </index>
       <constraint name="RHQ_MEAS_DATA_NUM_R00_ID_T_PK">
          <primaryKey>
@@ -245,8 +253,8 @@
       <column name="TIME_STAMP" type="LONG"/>
       <column name="SCHEDULE_ID" type="INTEGER"/>
       <column name="VALUE" type="DOUBLE"/>
-      <index name="RHQ_MEAS_DATA_R01_SID_IDX">
-         <field ref="SCHEDULE_ID"/>
+      <index name="RHQ_MEAS_DATA_R01_TS_IDX">
+         <field ref="TIME_STAMP"/>
       </index>
       <constraint name="RHQ_MEAS_DATA_NUM_R01_ID_T_PK">
          <primaryKey>
@@ -259,8 +267,8 @@
       <column name="TIME_STAMP" type="LONG"/>
       <column name="SCHEDULE_ID" type="INTEGER"/>
       <column name="VALUE" type="DOUBLE"/>
-      <index name="RHQ_MEAS_DATA_R02_SID_IDX">
-         <field ref="SCHEDULE_ID"/>
+      <index name="RHQ_MEAS_DATA_R02_TS_IDX">
+         <field ref="TIME_STAMP"/>
       </index>
       <constraint name="RHQ_MEAS_DATA_NUM_R02_ID_T_PK">
          <primaryKey>
@@ -273,8 +281,8 @@
       <column name="TIME_STAMP" type="LONG"/>
       <column name="SCHEDULE_ID" type="INTEGER"/>
       <column name="VALUE" type="DOUBLE"/>
-      <index name="RHQ_MEAS_DATA_R03_SID_IDX">
-         <field ref="SCHEDULE_ID"/>
+      <index name="RHQ_MEAS_DATA_R03_TS_IDX">
+         <field ref="TIME_STAMP"/>
       </index>
       <constraint name="RHQ_MEAS_DATA_NUM_R03_ID_T_PK">
          <primaryKey>
@@ -287,8 +295,8 @@
       <column name="TIME_STAMP" type="LONG"/>
       <column name="SCHEDULE_ID" type="INTEGER"/>
       <column name="VALUE" type="DOUBLE"/>
-      <index name="RHQ_MEAS_DATA_R04_SID_IDX">
-         <field ref="SCHEDULE_ID"/>
+      <index name="RHQ_MEAS_DATA_R04_TS_IDX">
+         <field ref="TIME_STAMP"/>
       </index>
       <constraint name="RHQ_MEAS_DATA_NUM_R04_ID_T_PK">
          <primaryKey>
@@ -301,8 +309,8 @@
       <column name="TIME_STAMP" type="LONG"/>
       <column name="SCHEDULE_ID" type="INTEGER"/>
       <column name="VALUE" type="DOUBLE"/>
-      <index name="RHQ_MEAS_DATA_R05_SID_IDX">
-         <field ref="SCHEDULE_ID"/>
+      <index name="RHQ_MEAS_DATA_R05_TS_IDX">
+         <field ref="TIME_STAMP"/>
       </index>
       <constraint name="RHQ_MEAS_DATA_NUM_R05_ID_T_PK">
          <primaryKey>
@@ -315,8 +323,8 @@
       <column name="TIME_STAMP" type="LONG"/>
       <column name="SCHEDULE_ID" type="INTEGER"/>
       <column name="VALUE" type="DOUBLE"/>
-      <index name="RHQ_MEAS_DATA_R06_SID_IDX">
-         <field ref="SCHEDULE_ID"/>
+      <index name="RHQ_MEAS_DATA_R06_TS_IDX">
+         <field ref="TIME_STAMP"/>
       </index>
       <constraint name="RHQ_MEAS_DATA_NUM_R06_ID_T_PK">
          <primaryKey>
@@ -329,8 +337,8 @@
       <column name="TIME_STAMP" type="LONG"/>
       <column name="SCHEDULE_ID" type="INTEGER"/>
       <column name="VALUE" type="DOUBLE"/>
-      <index name="RHQ_MEAS_DATA_R07_SID_IDX">
-         <field ref="SCHEDULE_ID"/>
+      <index name="RHQ_MEAS_DATA_R07_TS_IDX">
+         <field ref="TIME_STAMP"/>
       </index>
       <constraint name="RHQ_MEAS_DATA_NUM_R07_ID_T_PK">
          <primaryKey>
@@ -343,8 +351,8 @@
       <column name="TIME_STAMP" type="LONG"/>
       <column name="SCHEDULE_ID" type="INTEGER"/>
       <column name="VALUE" type="DOUBLE"/>
-      <index name="RHQ_MEAS_DATA_R08_SID_IDX">
-         <field ref="SCHEDULE_ID"/>
+      <index name="RHQ_MEAS_DATA_R08_TS_IDX">
+         <field ref="TIME_STAMP"/>
       </index>
       <constraint name="RHQ_MEAS_DATA_NUM_R08_ID_T_PK">
          <primaryKey>
@@ -357,8 +365,8 @@
       <column name="TIME_STAMP" type="LONG"/>
       <column name="SCHEDULE_ID" type="INTEGER"/>
       <column name="VALUE" type="DOUBLE"/>
-      <index name="RHQ_MEAS_DATA_R09_SID_IDX">
-         <field ref="SCHEDULE_ID"/>
+      <index name="RHQ_MEAS_DATA_R09_TS_IDX">
+         <field ref="TIME_STAMP"/>
       </index>
       <constraint name="RHQ_MEAS_DATA_NUM_R09_ID_T_PK">
          <primaryKey>
@@ -371,8 +379,8 @@
       <column name="TIME_STAMP" type="LONG"/>
       <column name="SCHEDULE_ID" type="INTEGER"/>
       <column name="VALUE" type="DOUBLE"/>
-      <index name="RHQ_MEAS_DATA_R10_SID_IDX">
-         <field ref="SCHEDULE_ID"/>
+      <index name="RHQ_MEAS_DATA_R10_TS_IDX">
+         <field ref="TIME_STAMP"/>
       </index>
       <constraint name="RHQ_MEAS_DATA_NUM_R10_ID_T_PK">
          <primaryKey>
@@ -385,8 +393,8 @@
       <column name="TIME_STAMP" type="LONG"/>
       <column name="SCHEDULE_ID" type="INTEGER"/>
       <column name="VALUE" type="DOUBLE"/>
-      <index name="RHQ_MEAS_DATA_R11_SID_IDX">
-         <field ref="SCHEDULE_ID"/>
+      <index name="RHQ_MEAS_DATA_R11_TS_IDX">
+         <field ref="TIME_STAMP"/>
       </index>
       <constraint name="RHQ_MEAS_DATA_NUM_R11_ID_T_PK">
          <primaryKey>
@@ -399,8 +407,8 @@
       <column name="TIME_STAMP" type="LONG"/>
       <column name="SCHEDULE_ID" type="INTEGER"/>
       <column name="VALUE" type="DOUBLE"/>
-      <index name="RHQ_MEAS_DATA_R12_SID_IDX">
-         <field ref="SCHEDULE_ID"/>
+      <index name="RHQ_MEAS_DATA_R12_TS_IDX">
+         <field ref="TIME_STAMP"/>
       </index>
       <constraint name="RHQ_MEAS_DATA_NUM_R12_ID_T_PK">
          <primaryKey>
@@ -413,8 +421,8 @@
       <column name="TIME_STAMP" type="LONG"/>
       <column name="SCHEDULE_ID" type="INTEGER"/>
       <column name="VALUE" type="DOUBLE"/>
-      <index name="RHQ_MEAS_DATA_R13_SID_IDX">
-         <field ref="SCHEDULE_ID"/>
+      <index name="RHQ_MEAS_DATA_R13_TS_IDX">
+         <field ref="TIME_STAMP"/>
       </index>
       <constraint name="RHQ_MEAS_DATA_NUM_R13_ID_T_PK">
          <primaryKey>
@@ -427,8 +435,8 @@
       <column name="TIME_STAMP" type="LONG"/>
       <column name="SCHEDULE_ID" type="INTEGER"/>
       <column name="VALUE" type="DOUBLE"/>
-      <index name="RHQ_MEAS_DATA_R14_SID_IDX">
-         <field ref="SCHEDULE_ID"/>
+      <index name="RHQ_MEAS_DATA_R14_TS_IDX">
+         <field ref="TIME_STAMP"/>
       </index>
       <constraint name="RHQ_MEAS_DATA_NUM_R14_ID_T_PK">
          <primaryKey>

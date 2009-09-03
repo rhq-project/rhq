@@ -94,6 +94,9 @@
             <field ref="PARENT_MAP_ID"/>
             <field ref="NAME"/>
         </index>
+        <index name="RHQ_CONFIG_PROP_idx_list_key" unique="false">
+            <field ref="PARENT_LIST_ID"/>
+        </index>
         <!-- List entries all have the same name -->
     </table>
 

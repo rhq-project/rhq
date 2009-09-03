@@ -22,6 +22,8 @@
  */
 package org.rhq.plugins.jbossas5.serviceBinding;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Arrays;
 
 import org.apache.commons.logging.Log;
@@ -39,6 +41,7 @@ import org.jboss.metatype.api.values.CompositeValue;
 import org.jboss.metatype.api.values.MapCompositeValueSupport;
 import org.jboss.metatype.api.values.MetaValue;
 import org.jboss.metatype.api.values.SimpleValue;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.Property;
@@ -189,6 +192,8 @@ public class ManagerComponent extends ManagedComponentComponent implements Creat
             if (BINDING_SET_SERVICE_NAME.equals(report.getResourceType().getName())) {
                 Configuration bindingConfiguration = report.getResourceConfiguration();
 
+                checkValidity(bindingConfiguration);
+                
                 CompositeValue newBindingSet = Util.getBindingSetFromConfiguration(getBindingSetValueMetaType(),
                     bindingConfiguration);
 
@@ -261,5 +266,31 @@ public class ManagerComponent extends ManagedComponentComponent implements Creat
     public String getBindingSetNameFromResourceKey(String resourceKey) {
         int separatorIdx = resourceKey.lastIndexOf(RESOURCE_KEY_SEPARATOR);
         return resourceKey.substring(separatorIdx + RESOURCE_KEY_SEPARATOR.length());
+    }
+
+    /**
+     * Checks the validity of the binding set configuration before it is submitted to the
+     * Profile Service.
+     * 
+     * This is to work around JOPR-372.
+     * 
+     * @param bindingSetConfiguration
+     * 
+     * @throws IllegalArgumentException if some of the required properties is null or empty
+     * @throws UnknownHostException if default host name is invalid 
+     */
+    public void checkValidity(Configuration bindingSetConfiguration) throws IllegalArgumentException, UnknownHostException {
+        String name = bindingSetConfiguration.getSimpleValue(Util.NAME_PROPERTY, null);
+        if (name == null || name.trim().length() == 0) {
+            throw new IllegalArgumentException("Name of the binding set must not be empty.");
+        }
+        
+        String defaultHostName = bindingSetConfiguration.getSimpleValue(Util.DEFAULT_HOST_NAME_PROPERTY, null);
+        if (defaultHostName == null || defaultHostName.trim().length() == 0) {
+            throw new IllegalArgumentException("The default host name of the binding set must not be empty.");            
+        }
+        
+        //check that the hostname is valid
+        InetAddress.getByName(defaultHostName);
     }
 }

@@ -105,14 +105,17 @@ public class SetComponent implements ResourceComponent<ManagerComponent>, Config
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
         try {
+            ManagerComponent managerResourceComponent = context.getParentResourceComponent();
+            
             Configuration updatedConfiguration = report.getConfiguration();
+
+            managerResourceComponent.checkValidity(updatedConfiguration);
+            
             MetaType bindingSetValueMetaType = context.getParentResourceComponent().getBindingSetValueMetaType();
 
             CompositeValue currentBindingSet = Util.getBindingSetFromConfiguration(bindingSetValueMetaType,
                 updatedConfiguration);
 
-            ManagerComponent managerResourceComponent = context.getParentResourceComponent();
-            
             //ok, now we can update the bindingSets property with the update set of binding sets
             ManagedComponent bindingManagerComponent = managerResourceComponent.getBindingManager();
             ManagedProperty bindingSetsProperty = bindingManagerComponent.getProperty(Util.BINDING_SETS_PROPERTY);
@@ -134,7 +137,6 @@ public class SetComponent implements ResourceComponent<ManagerComponent>, Config
             log.warn("Failed to update service binding set", e);
             report.setErrorMessageFromThrowable(e);
             report.setStatus(ConfigurationUpdateStatus.FAILURE);
-            return;
         }
     }
 

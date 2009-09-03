@@ -214,6 +214,8 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
         Resource(false), //
         ResourceParent(false), //
         ResourceGrandParent(false), //
+        ResourceGreatGrandParent(false), //
+        ResourceGreatGreatGrandParent(false), //
         ResourceChild(false), //
         ResourceType(false), //
         Availability(true), //
@@ -440,6 +442,12 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                 } else if (nextToken.equals("grandparent")) {
                     context = ParseContext.ResourceGrandParent;
                     deepestResourceContext = context;
+                } else if (nextToken.equals("greatgrandparent")) {
+                    context = ParseContext.ResourceGreatGrandParent;
+                    deepestResourceContext = context;
+                } else if (nextToken.equals("greatgreatgrandparent")) {
+                    context = ParseContext.ResourceGreatGreatGrandParent;
+                    deepestResourceContext = context;
                 } else if (nextToken.equals("child")) {
                     context = ParseContext.ResourceChild;
                     deepestResourceContext = context;
@@ -447,7 +455,8 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                     parseExpression_resourceContext(value, tokens, nextToken);
                 }
             } else if ((context == ParseContext.ResourceParent) || (context == ParseContext.ResourceGrandParent)
-                || (context == ParseContext.ResourceChild)) {
+                || (context == ParseContext.ResourceGreatGrandParent)
+                || (context == ParseContext.ResourceGreatGreatGrandParent) || (context == ParseContext.ResourceChild)) {
                 // since a parent or child *is* a resource, support the exact same processing
                 parseExpression_resourceContext(value, tokens, nextToken);
             } else if (context == ParseContext.ResourceType) {
@@ -571,6 +580,8 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
         Resource("res"), //
         ResourceParent("res.parentResource"), //
         ResourceGrandParent("res.parentResource.parentResource"), //
+        ResourceGreatGrandParent("res.parentResource.parentResource.parentResource"), //
+        ResourceGreatGreatGrandParent("res.parentResource.parentResource.parentResource.parentResource"), //
         ResourceChild("child");
 
         public String pathToken;
@@ -595,6 +606,10 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
             return ResourceRelativeContext.ResourceParent;
         } else if (deepestResourceContext == ParseContext.ResourceGrandParent) {
             return ResourceRelativeContext.ResourceGrandParent;
+        } else if (deepestResourceContext == ParseContext.ResourceGreatGrandParent) {
+            return ResourceRelativeContext.ResourceGreatGrandParent;
+        } else if (deepestResourceContext == ParseContext.ResourceGreatGreatGrandParent) {
+            return ResourceRelativeContext.ResourceGreatGreatGrandParent;
         } else if (deepestResourceContext == ParseContext.ResourceChild) {
             // populate child stuff
             joinConditions.put(JoinCondition.RESOURCE_CHILD, ResourceRelativeContext.Resource);

@@ -65,7 +65,8 @@ public class GroupDefinitionExpressionBuilderLibraryUIBean {
     }
 
     private enum ResourceLevel {
-        RESOURCE("Resource"), CHILD("Child"), PARENT("Parent"), GRANDPARENT("Grandparent");
+        RESOURCE("Resource"), CHILD("Child"), PARENT("Parent"), GRANDPARENT("Grandparent"), GREATGRANDPARENT(
+            "GreatGrandparent"), GREATGREATGRANDPARENT("GreatGreatGrandparent");
         private String displayName;
 
         private ResourceLevel(String displayName) {
@@ -476,6 +477,13 @@ public class GroupDefinitionExpressionBuilderLibraryUIBean {
             break;
         case GRANDPARENT:
             buf.append("grandParent.");
+            break;
+        case GREATGRANDPARENT:
+            buf.append("greatGrandParent.");
+            break;
+        case GREATGREATGRANDPARENT:
+            buf.append("greatGreatGrandParent.");
+            break;
         }
 
         switch (PropertyType.getFromDisplayName(this.selectedPropertyType)) {

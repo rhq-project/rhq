@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.server.scheduler.jobs;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 
@@ -26,9 +28,16 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 public class CloudManagerJob extends AbstractStatefulJob {
 
+    private final Log log = LogFactory.getLog(CloudManagerJob.class);
+
     @Override
     public void executeJobCode(JobExecutionContext arg0) throws JobExecutionException {
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
-        LookupUtil.getCloudManager().markStaleServersDown(overlord);
+        log.debug("Begin scanning for servers that missed their heartbeat");
+        try {
+            LookupUtil.getCloudManager().markStaleServersDown(overlord);
+        } finally {
+            log.debug("Finished scanning for servers that missed their heartbeat");
+        }
     }
 }

@@ -1149,7 +1149,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
 
     @SuppressWarnings("unchecked")
     public void checkForTimedOutOperations(Subject subject) {
-        LOG.debug("Scanning operation histories to see if any in-progress executions have timed out...");
+        LOG.debug("Begin scanning for timed out operation histories");
 
         if (!authorizationManager.isOverlord(subject)) {
             LOG.debug("Unauthorized user " + subject + " tried to execute checkForTimedOutOperations: "
@@ -1318,6 +1318,8 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         } catch (Throwable t) {
             LOG.warn("Failed to check for memberless group operations. Cause: " + t);
         }
+
+        LOG.debug("Finished scanning for timed out operation histories");
     }
 
     @SuppressWarnings("unchecked")

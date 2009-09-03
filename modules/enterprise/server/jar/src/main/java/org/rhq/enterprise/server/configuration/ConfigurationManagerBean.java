@@ -702,9 +702,10 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     public void checkForTimedOutConfigurationUpdateRequests() {
-        log.debug("Scanning configuration update requests to see if any in-progress requests have timed out...");
+        log.debug("Begin scanning for timed out configuration update requests");
         checkForTimedOutResourceConfigurationUpdateRequests();
         checkForTimedOutGroupResourceConfigurationUpdateRequests();
+        log.debug("Finished scanning for timed out configuration update requests");
     }
 
     @SuppressWarnings("unchecked")

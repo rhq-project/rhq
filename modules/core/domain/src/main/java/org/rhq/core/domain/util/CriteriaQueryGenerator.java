@@ -40,6 +40,7 @@ import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.resource.ResourceCategory;
+import org.hibernate.annotations.IndexColumn;
 
 /**
  * A query generator used to generate queries with specific filtering, prefetching, or sorting requirements.
@@ -278,7 +279,7 @@ public final class CriteriaQueryGenerator {
             Class<?> persistentClass = criteria.getPersistentClass();
             Field field = persistentClass.getDeclaredField(fieldName);
 
-            return isAList(field);
+            return isAList(field) && !field.isAnnotationPresent(IndexColumn.class);
         }
         catch (NoSuchFieldException e) {
             return false;

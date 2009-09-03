@@ -67,12 +67,6 @@
     </dependency>
 
     <dependency>
-      <groupId>org.jboss</groupId>
-      <artifactId>jboss-faces</artifactId>
-      <version>4.2.3.GA</version>
-    </dependency>
-
-    <dependency>
       <groupId>jgroups</groupId>
       <artifactId>jgroups-all</artifactId>
       <version>2.2.9.1</version>
@@ -182,8 +176,7 @@
                   <property name="h2.version" value="${h2.version}" />
                   <property name="jtds.version" value="${jtds.version}" />
                   <property name="jsf-api.version" value="${jsf-api.version}" />
-                  <property name="jsf-impl.version" value="${jsf-impl.version}" />
-                  <property name="jboss-faces.version" value="${jboss-faces.version}" />
+                  <property name="jsf-impl.version" value="${jsf-impl.version}" />                  
                   <property name="hibernate3.version" value="${hibernate3.version}" />
                   <property name="quartz.version" value="${quartz.version}" />
 

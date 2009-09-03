@@ -521,18 +521,20 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
     public void updateLastAvailabilityReport(int agentId) {
         // should we catch exceptions here, or allow them to bubble up and be caught?
 
+        /*
+         * since we already know we have to update the agent row with the last avail report time, might as well 
+         * set the backfilled to false here (as opposed to called agentManager.setBackfilled(agentId, false)
+         */
         String updateStatement = "" //
-            + "UPDATE RHQ_AGENT " //
-            + "   SET LAST_AVAILABILITY_REPORT = ? " //
-            + " WHERE ID = ? ";
+            + "UPDATE Agent " //
+            + "   SET lastAvailabilityReport = :reportTime, backFilled = FALSE " //
+            + " WHERE id = :agentId ";
 
-        Query query = entityManager.createNativeQuery(updateStatement);
-        query.setParameter(1, System.currentTimeMillis());
-        query.setParameter(2, agentId);
+        Query query = entityManager.createQuery(updateStatement);
+        query.setParameter("reportTime", System.currentTimeMillis());
+        query.setParameter("agentId", agentId);
 
         query.executeUpdate();
-
-        agentManager.setAgentBackfilled(agentId, false);
     }
 
     @SuppressWarnings("unchecked")

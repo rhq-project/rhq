@@ -609,6 +609,9 @@ public class WebUserPreferences extends SubjectPreferencesBase {
                         errorOccurred = true;
                     } else {
                         nameURL[0] = StringUtil.replace(nameURL[0], "&#124;", "|");
+                        nameURL[0] = StringUtil.replace(nameURL[0], "&#44;", ",");
+
+                        nameURL[1] = StringUtil.replace(nameURL[1], "&#124;", "|");
                         nameURL[1] = StringUtil.replace(nameURL[1], "&#44;", ",");
                         prefs.chartList.add(counter, new Tuple<String, String>(nameURL[0], nameURL[1]));
                     }
@@ -646,6 +649,9 @@ public class WebUserPreferences extends SubjectPreferencesBase {
         counter = 0;
         for (Tuple<String, String> nameURL : prefs.chartList) {
             nameURL.lefty = StringUtil.replace(nameURL.lefty, "|", "&#124;");
+            nameURL.lefty = StringUtil.replace(nameURL.lefty, ",", "&#44;");
+
+            nameURL.righty = StringUtil.replace(nameURL.righty, "|", "&#124;");
             nameURL.righty = StringUtil.replace(nameURL.righty, ",", "&#44;");
             setPreference(PREF_DASH_USER_SAVED_CHARTS + "." + counter, nameURL.lefty + "," + nameURL.righty);
             counter++;

@@ -144,17 +144,6 @@ public interface AvailabilityManagerLocal {
      */
     void setAllAgentResourceAvailabilities(int agentId, AvailabilityType availabilityType);
 
-    /**
-     * Returns <code>true</code> if the agent is "suspect" and has been backfilled. A "suspect agent" means one that the
-     * server suspects is down. When an agent is suspect, all of its resources, including the platform, will be
-     * backfilled with DOWN availabilities.
-     *
-     * @param  agentId the id of the agent
-     *
-     * @return <code>true</code> if the agent is a suspect agent and has been backfilled
-     */
-    boolean isAgentBackfilled(int agentId);
-
     List<Availability> findAvailabilityWithinInterval(int resourceId, Date startDate, Date endDate);
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

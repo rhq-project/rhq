@@ -263,4 +263,18 @@ public interface AgentManagerLocal {
      * @throws Exception if could not determine the location or it does not exist
      */
     File getAgentDownloadDir() throws Exception;
+
+    public void setAgentBackfilled(int agentId, boolean backfilled);
+
+    /**
+     * Returns <code>true</code> if the agent is "suspect" and has been backfilled. A "suspect agent" means one that the
+     * server suspects is down. When an agent is suspect, all of its resources, including the platform, will be
+     * backfilled with DOWN availabilities.
+     *
+     * @param  agentId the id of the agent
+     *
+     * @return <code>true</code> if the agent is a suspect agent and has been backfilled
+     */
+    boolean isAgentBackfilled(int agentId);
+
 }

@@ -89,6 +89,16 @@ import org.rhq.core.domain.cloud.Server;
         + "SELECT a " //
         + "  FROM Agent a " //
         + " WHERE a.affinityGroup IS NULL"), //
+    @NamedQuery(name = Agent.QUERY_SET_AGENT_BACKFILLED, query = "" //
+        + "UPDATE Agent a " //
+        + "   SET a.backFilled = :backfilled " //
+        + " WHERE a.id = :agentId " //
+        + "   AND a.backFilled <> :backfilled "), //
+    @NamedQuery(name = Agent.QUERY_IS_AGENT_BACKFILLED, query = "" //
+        + "SELECT COUNT(a.id) " //
+        + "  FROM Agent a " //
+        + " WHERE a.id = :agentId " //
+        + "   AND a.backFilled = true "), //
     @NamedQuery(name = Agent.QUERY_UPDATE_STATUS_BY_ALERT_DEFINITION, query = "" //
         + " UPDATE Agent a " //
         + "    SET a.status = -1 " // negative numbers so that bitmask strat does not conflict with this one
@@ -136,6 +146,8 @@ public class Agent implements Serializable {
     public static final String QUERY_FIND_ALL_SUSPECT_AGENTS = "Agent.findAllSuspectAgents";
     public static final String QUERY_FIND_BY_AFFINITY_GROUP = "Agent.findByAffinityGroup";
     public static final String QUERY_FIND_WITHOUT_AFFINITY_GROUP = "Agent.findWithoutAffinityGroup";
+    public static final String QUERY_SET_AGENT_BACKFILLED = "Agent.setAgentBackfilled";
+    public static final String QUERY_IS_AGENT_BACKFILLED = "Agent.isAgentBackfilled";
 
     // HA queries
     public static final String QUERY_FIND_ALL_WITH_STATUS_BY_SERVER = "Agent.findAllWithStatusByServer";
@@ -187,6 +199,9 @@ public class Agent implements Serializable {
 
     @Column(name = "STATUS", nullable = false)
     private int status;
+
+    @Column(name = "BACKFILLED", nullable = false)
+    private boolean backFilled;
 
     /**
      * Creates a new instance of Agent
@@ -432,6 +447,14 @@ public class Agent implements Serializable {
             return results;
         }
 
+    }
+
+    public boolean isBackFilled() {
+        return backFilled;
+    }
+
+    public void setBackFilled(boolean backFilled) {
+        this.backFilled = backFilled;
     }
 
     @PrePersist

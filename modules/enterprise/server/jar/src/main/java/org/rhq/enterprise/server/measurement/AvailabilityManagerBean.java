@@ -402,7 +402,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         // to skip this report so as not to waste our time and immediately request and process
         // a full report because, obviously, the agent is no longer down but the server thinks
         // it still is down - we need to know the availabilities for all the resources on that agent
-        if (report.isChangesOnlyReport() && isAgentBackfilled(agentToUpdate.intValue())) {
+        if (report.isChangesOnlyReport() && agentManager.isAgentBackfilled(agentToUpdate.intValue())) {
             askForFullReport = true;
         } else {
             Query q = entityManager.createNamedQuery(Availability.FIND_CURRENT_BY_RESOURCE);
@@ -531,6 +531,8 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         query.setParameter(2, agentId);
 
         query.executeUpdate();
+
+        agentManager.setAgentBackfilled(agentId, false);
     }
 
     @SuppressWarnings("unchecked")
@@ -579,14 +581,6 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         log.debug("Resources for agent #[" + agentId + "] have been fully backfilled with [" + typeString + "]");
 
         return;
-    }
-
-    public boolean isAgentBackfilled(int agentId) {
-        // query returns 0 if the agent's platform is DOWN (or does not exist), 1 if not
-        Query query = entityManager.createNamedQuery(ResourceAvailability.QUERY_IS_AGENT_BACKFILLED);
-        query.setParameter("agentId", agentId);
-        Long downOrSuspectCount = (Long) query.getSingleResult();
-        return downOrSuspectCount != 0L;
     }
 
     /**

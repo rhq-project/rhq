@@ -251,10 +251,11 @@ public class AgentManagerBean implements AgentManagerLocal {
             // because I think we still want to log that we think an agent is down periodically.
             // If it turns out we do not want to be that noisy, just move that warn message down in here so we only ever log
             // about a downed agent once, at the time it is first backfilled.
-            if (!availabilityManager.isAgentBackfilled(record.getAgentId())) {
+            if (!isAgentBackfilled(record.getAgentId())) {
                 // make sure we lock out all processing of any availability reports that might come our way to avoid concurrency problems
                 AvailabilityReportSerializer.getSingleton().lock(record.getAgentName());
                 try {
+                    setAgentBackfilled(record.getAgentId(), true);
                     availabilityManager.setAllAgentResourceAvailabilities(record.getAgentId(), AvailabilityType.DOWN);
                 } finally {
                     AvailabilityReportSerializer.getSingleton().unlock(record.getAgentName());
@@ -521,5 +522,20 @@ public class AgentManagerBean implements AgentManagerLocal {
             throw new FileNotFoundException("Missing agent downloads directory at [" + agentDownloadDir + "]");
         }
         return agentDownloadDir;
+    }
+
+    public void setAgentBackfilled(int agentId, boolean backfilled) {
+        Query query = entityManager.createNamedQuery(Agent.QUERY_SET_AGENT_BACKFILLED);
+        query.setParameter("agentId", agentId);
+        query.setParameter("backfilled", backfilled);
+        query.executeUpdate();
+    }
+
+    public boolean isAgentBackfilled(int agentId) {
+        // query returns 0 if the agent's platform is DOWN (or does not exist), 1 if not
+        Query query = entityManager.createNamedQuery(Agent.QUERY_IS_AGENT_BACKFILLED);
+        query.setParameter("agentId", agentId);
+        Long backfilledCount = (Long) query.getSingleResult();
+        return backfilledCount != 0L;
     }
 }

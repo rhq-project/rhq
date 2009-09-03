@@ -41,6 +41,7 @@ import org.jboss.annotation.ejb.TransactionTimeout;
 import org.rhq.core.clientapi.util.TimeUtil;
 import org.rhq.core.util.StopWatch;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
@@ -97,7 +98,7 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
     }
 
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
-    public void compressData() throws SQLException {
+    public void compressPurgeAndTruncate() throws SQLException {
         loadPurgeDefaults();
 
         // current time rounded down to the start of this hour.
@@ -117,7 +118,7 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
         // NOTE : compressionManager.compressData has an optimization to return quickly if there is no work.
         for (String rawTable : rawTables) {
             if (!rawTable.equals(deadTable)) {
-                compressionManager.compressData(rawTable, TAB_DATA_1H, HOUR, now);
+                compressData(rawTable, TAB_DATA_1H, HOUR, now);
             }
         }
 
@@ -128,19 +129,19 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
         long last;
 
         // Compress 6 hour data
-        last = compressionManager.compressData(TAB_DATA_1H, TAB_DATA_6H, SIX_HOUR, now);
+        last = compressData(TAB_DATA_1H, TAB_DATA_6H, SIX_HOUR, now);
 
         // Purge, ensuring we don't purge data not yet compressed.
-        compressionManager.purgeMeasurements(TAB_DATA_1H, Math.min(now - this.purge1h, last), this.purge1h);
+        purgeMeasurements(TAB_DATA_1H, Math.min(now - this.purge1h, last), HOUR);
 
         // Compress daily data
-        last = compressionManager.compressData(TAB_DATA_6H, TAB_DATA_1D, DAY, now);
+        last = compressData(TAB_DATA_6H, TAB_DATA_1D, DAY, now);
 
         // Purge, ensuring we don't purge data not yet compressed.
-        compressionManager.purgeMeasurements(TAB_DATA_6H, Math.min(now - this.purge6h, last), this.purge6h);
+        purgeMeasurements(TAB_DATA_6H, Math.min(now - this.purge6h, last), SIX_HOUR);
 
         // Purge, we never store more than 1 year of data.
-        compressionManager.purgeMeasurements(TAB_DATA_1D, now - this.purge1d, this.purge1d);
+        purgeMeasurements(TAB_DATA_1D, now - this.purge1d, DAY);
 
         return;
     }
@@ -150,9 +151,7 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
      *
      * @return The last timestamp that was compressed
      */
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    @TransactionTimeout(6 * 60 * 60)
-    public long compressData(String fromTable, String toTable, long interval, long now) throws SQLException {
+    private long compressData(String fromTable, String toTable, long interval, long now) throws SQLException {
 
         // First determine the window to operate on.  If no previous compression
         // information is found, the last value from the table to compress from
@@ -189,18 +188,52 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
             return begin;
         }
 
-        if (log.isDebugEnabled()) {
-            log.debug("Compressing from [" + fromTable + "] to [" + toTable + "]");
-        }
-
         // Compress all the way up to now.
-        return compactData(fromTable, toTable, begin, now, interval);
+        return compressData(fromTable, toTable, begin, now, interval);
     }
 
-    private long compactData(String fromTable, String toTable, long begin, long now, long interval) throws SQLException {
+    private long compressData(String fromTable, String toTable, long begin, long now, long interval) {
+
+        log.info("Begin compression from [" + fromTable + "] to [" + toTable + "]");
+
+        int totalRows = 0;
+        while (begin < now) {
+            long end = begin + interval;
+
+            try {
+                totalRows += compressionManager.compressDataInterval(fromTable, toTable, begin, end);
+            } catch (Throwable t) {
+                if (log.isDebugEnabled()) {
+                    log.error("Unable to compress data from [" + fromTable + "] to [" + toTable + "] at "
+                        + TimeUtil.toString(begin), t);
+                } else {
+                    log.error("Unable to compress data from [" + fromTable + "] to [" + toTable + "] at "
+                        + TimeUtil.toString(begin) + ": " + ThrowableUtil.getAllMessages(t));
+                }
+            }
+
+            begin = end;
+        }
+
+        log.info("Finished compression from [" + fromTable + "] to [" + toTable + "], [" + totalRows
+            + "] compressed rows");
+
+        // Return the last interval that was compressed.
+        return begin;
+    }
+
+    // 60 minute timeout
+    @TransactionTimeout(60 * 60)
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public int compressDataInterval(String fromTable, String toTable, long begin, long end) throws SQLException {
         Connection conn = null;
         PreparedStatement insStmt = null;
 
+        log.info("Begin compressing data from table [" + fromTable + "] to table [" + toTable + "] between ["
+            + TimeUtil.toString(begin) + "] and [" + TimeUtil.toString(end) + "]");
+
+        int rows = 0;
+        StopWatch watch = new StopWatch();
         try {
             conn = ((DataSource) ctx.lookup(DATASOURCE_NAME)).getConnection();
 
@@ -219,46 +252,24 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
                 + "  FROM " + fromTable + " ft " + "  WHERE ft.time_stamp >= ? AND ft.time_stamp < ? "
                 + "  GROUP BY ft.schedule_id)");
 
-            StopWatch watch = new StopWatch();
-            while (begin < now) {
-                watch.reset();
-                long end = begin + interval;
+            // Compress
+            insStmt.setLong(1, begin);
+            insStmt.setLong(2, begin);
+            insStmt.setLong(3, end);
 
-                if (log.isDebugEnabled()) {
-                    log.debug("Compression interval: " + TimeUtil.toString(begin) + " to " + TimeUtil.toString(end));
-                }
+            watch.reset();
+            rows = insStmt.executeUpdate();
 
-                // Compress.
-                int rows = 0;
-                try {
-                    insStmt.setLong(1, begin);
-                    insStmt.setLong(2, begin);
-                    insStmt.setLong(3, end);
-                    rows = insStmt.executeUpdate();
-                    log.info("Compressed from [" + fromTable + "] into [" + rows + "] rows in [" + toTable + "] in ["
-                        + (watch.getElapsed() / SECOND) + "] seconds");
-                } catch (SQLException e) {
-                    // Just log the error and continue
-                    if (log.isDebugEnabled()) {
-                        log.error("SQL exception when inserting data at " + TimeUtil.toString(begin), e);
-                    } else {
-                        log.error("SQL exception when inserting data at " + TimeUtil.toString(begin) + ": "
-                            + ThrowableUtil.getAllMessages(e));
-                    }
-                }
-
-                MeasurementMonitor.getMBean().incrementMeasurementCompressionTime(watch.getElapsed());
-
-                // Increment for next iteration.
-                begin = end;
-            }
+            MeasurementMonitor.getMBean().incrementMeasurementCompressionTime(watch.getElapsed());
         } finally {
-            close(insStmt);
-            close(conn);
+            JDBCUtil.safeClose(conn, insStmt, null);
         }
 
-        // Return the last interval that was compressed.
-        return begin;
+        log.info("Finished compressing data from table [" + fromTable + "] to table [" + toTable + "] between ["
+            + TimeUtil.toString(begin) + "] and [" + TimeUtil.toString(end) + "], [" + rows + "] compressed rows in ["
+            + (watch.getElapsed() / SECOND) + "] seconds");
+
+        return rows;
     }
 
     /**
@@ -284,9 +295,7 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
                 throw new SQLException("Unable to determine oldest measurement");
             }
         } finally {
-            close(rs);
-            close(stmt);
-            close(conn);
+            JDBCUtil.safeClose(conn, stmt, rs);
         }
     }
 
@@ -313,61 +322,57 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
                 return 0L;
             }
         } finally {
-            close(rs);
-            close(stmt);
-            close(conn);
+            JDBCUtil.safeClose(conn, stmt, rs);
         }
     }
 
-    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
-    public void purgeMeasurements(String tableName, long purgeBefore, long interval) {
+    private void purgeMeasurements(String tableName, long purgeBefore, long interval) throws SQLException {
+        log.info("Begin purging data from table [" + tableName + "] before [" + new Date(purgeBefore) + "]");
 
         int totalRows = 0;
         int rows = 1;
-        int iterations = 0;
+
+        long min = getMinTimestamp(tableName);
         long start = purgeBefore - interval;
-        while (rows > 0) {
+
+        // if end of chunk (i.e. start + interval) is greater or equal to min, keep going backwards
+        while (start + interval >= min) {
 
             try {
                 rows = compressionManager.purgeMeasurementInterval(tableName, start, start + interval);
                 totalRows += rows;
-            } catch (SQLException e) {
-                log.error("Unable to delete from [" + tableName + "] between [" + new Date(start) + "] and ["
-                    + new Date(start + interval) + "]. Cause: " + ThrowableUtil.getAllMessages(e));
+            } catch (Throwable t) {
+                log.error("Unable to purge data from table [" + tableName + "] between [" + new Date(start) + "] and ["
+                    + new Date(start + interval) + "], cause: " + ThrowableUtil.getAllMessages(t));
             }
 
             start -= interval;
-            iterations++;
-
-            // fail-safe - just make sure we don't go into an infinite loop
-            if (iterations > 30) {
-                break;
-            }
         }
 
-        log.info("Purged [" + totalRows + "] measurement rows from table: " + tableName);
+        log.info("Finished purging data from table [" + tableName + "] before [" + new Date(purgeBefore) + "], ["
+            + totalRows + "] rows removed");
         return;
     }
 
     /**
      * Purge data older than a given time.
      */
+    // 60 minute timeout
+    @TransactionTimeout(60 * 60)
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    @TransactionTimeout(6 * 60 * 60)
     public int purgeMeasurementInterval(String tableName, long purgeAfter, long purgeBefore) throws SQLException {
         Connection conn = null;
         PreparedStatement stmt = null;
 
-        if (log.isDebugEnabled()) {
-            log.debug("Purging data older than [" + TimeUtil.toString(purgeAfter) + "] from table: " + tableName);
-        }
+        log.info("Begin purging data from table [" + tableName + "] between [" + TimeUtil.toString(purgeAfter)
+            + "] and [" + TimeUtil.toString(purgeBefore) + "]");
 
         StopWatch watch = new StopWatch();
         int rows;
         try {
             conn = ((DataSource) ctx.lookup(DATASOURCE_NAME)).getConnection();
 
-            String sql = "DELETE FROM " + tableName + " WHERE time_stamp > ? AND time_stamp < ?";
+            String sql = "DELETE FROM " + tableName + " WHERE time_stamp >= ? AND time_stamp < ?";
 
             stmt = conn.prepareStatement(sql);
             stmt.setLong(1, purgeAfter);
@@ -375,16 +380,14 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
 
             rows = stmt.executeUpdate();
         } finally {
-            close(stmt);
-            close(conn);
+            JDBCUtil.safeClose(conn, stmt, null);
         }
 
         MeasurementMonitor.getMBean().incrementPurgeTime(watch.getElapsed());
 
-        if (log.isDebugEnabled()) {
-            log.debug("Done purging [" + rows + "] rows older than [" + TimeUtil.toString(purgeAfter) + "] from ["
-                + tableName + "] in [" + ((watch.getElapsed()) / SECOND) + "] seconds)");
-        }
+        log.info("Finished purging data from table [" + tableName + "] between [" + TimeUtil.toString(purgeAfter)
+            + "] and [" + TimeUtil.toString(purgeBefore) + "], [" + rows + "] rows removed in ["
+            + ((watch.getElapsed()) / SECOND) + "] seconds");
 
         return rows;
     }
@@ -406,46 +409,9 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
                 stmt.executeUpdate("TRUNCATE TABLE " + tableName);
                 MeasurementMonitor.getMBean().incrementPurgeTime(System.currentTimeMillis() - startTime);
             } finally {
-                close(stmt);
-                close(conn);
+                JDBCUtil.safeClose(conn, stmt, null);
                 log.info("Truncated table [" + tableName + "] in [" + (watch.getElapsed() / SECOND) + "] seconds");
             }
-        }
-    }
-
-    private void close(Statement c) {
-        if (c == null) {
-            return;
-        }
-
-        try {
-            c.close();
-        } catch (Exception e) {
-            log.warn(this.ctx + ": Error closing statement.", e);
-        }
-    }
-
-    private void close(ResultSet c) {
-        if (c == null) {
-            return;
-        }
-
-        try {
-            c.close();
-        } catch (Exception e) {
-            log.warn(this.ctx + ": Error closing result set.", e);
-        }
-    }
-
-    private void close(Connection c) {
-        if (c == null) {
-            return;
-        }
-
-        try {
-            c.close();
-        } catch (Exception e) {
-            log.warn(this.ctx + ": Error closing connection.", e);
         }
     }
 }

@@ -31,11 +31,9 @@ public interface MeasurementCompressionManagerLocal {
     static final String TAB_DATA_6H = "RHQ_MEASUREMENT_DATA_NUM_6H";
     static final String TAB_DATA_1D = "RHQ_MEASUREMENT_DATA_NUM_1D";
 
-    void compressData() throws SQLException;
+    void compressPurgeAndTruncate() throws SQLException;
 
-    long compressData(String fromTable, String toTable, long interval, long now) throws SQLException;
-
-    void purgeMeasurements(String tableName, long purgeAfter, long purgeBefore) throws SQLException;
+    int compressDataInterval(String fromTable, String toTable, long begin, long end) throws SQLException;
 
     int purgeMeasurementInterval(String tableName, long purgeAfter, long purgeBefore) throws SQLException;
 

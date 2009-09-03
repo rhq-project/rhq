@@ -65,7 +65,7 @@ import org.rhq.core.domain.cloud.Server;
     @NamedQuery(name = Agent.QUERY_FIND_RESOURCE_IDS_FOR_AGENT, query = "SELECT r.id FROM Resource r WHERE r.agent.id = :agentId"),
     @NamedQuery(name = Agent.QUERY_FIND_ALL_SUSPECT_AGENTS, query = "SELECT new org.rhq.core.domain.resource.composite.AgentLastAvailabilityReportComposite "
         + "       ( "
-        + "          a.id,a.name,a.remoteEndpoint,a.lastAvailabilityReport "
+        + "          a.id,a.name,a.remoteEndpoint,a.lastAvailabilityReport,a.backFilled "
         + "       ) "
         + "  FROM Agent a " + " WHERE a.lastAvailabilityReport < :dateThreshold "),
     @NamedQuery(name = Agent.QUERY_FIND_ALL_WITH_STATUS_BY_SERVER, query = "" //

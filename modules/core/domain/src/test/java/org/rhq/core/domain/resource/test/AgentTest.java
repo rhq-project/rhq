@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.domain.resource.test;
 
 import java.util.List;
@@ -67,20 +67,22 @@ public class AgentTest extends AbstractEJB3Test {
             reports = q.getResultList();
             assert reports.size() == 2 + baselineSize : reports;
 
-            i = reports.indexOf(new AgentLastAvailabilityReportComposite(agent3.getId(), null, null, null));
+            i = reports.indexOf(new AgentLastAvailabilityReportComposite(agent3.getId(), null, null, null, false));
             assert reports.get(i).getAgentId() == agent3.getId();
             assert reports.get(i).getAgentName().equals(agent3.getName());
             assert reports.get(i).getRemoteEndpoint().equals(agent3.getRemoteEndpoint());
             assert reports.get(i).getLastAvailabilityReport().equals(agent3.getLastAvailabilityReport());
 
-            i = reports.indexOf(new AgentLastAvailabilityReportComposite(agent4.getId(), null, null, null));
+            i = reports.indexOf(new AgentLastAvailabilityReportComposite(agent4.getId(), null, null, null, false));
             assert reports.get(i).getAgentId() == agent4.getId();
             assert reports.get(i).getAgentName().equals(agent4.getName());
             assert reports.get(i).getRemoteEndpoint().equals(agent4.getRemoteEndpoint());
             assert reports.get(i).getLastAvailabilityReport().equals(agent4.getLastAvailabilityReport());
 
-            assert -1 == reports.indexOf(new AgentLastAvailabilityReportComposite(agent2.getId(), null, null, null));
-            assert -1 == reports.indexOf(new AgentLastAvailabilityReportComposite(agent1.getId(), null, null, null));
+            assert -1 == reports.indexOf(new AgentLastAvailabilityReportComposite(agent2.getId(), null, null, null,
+                false));
+            assert -1 == reports.indexOf(new AgentLastAvailabilityReportComposite(agent1.getId(), null, null, null,
+                false));
 
             // add an agent with a null in the date column
             Agent agent0 = createAgent(em, 0, -1);
@@ -88,20 +90,22 @@ public class AgentTest extends AbstractEJB3Test {
             reports = q.getResultList();
             assert reports.size() == 2 + baselineSize : reports;
 
-            i = reports.indexOf(new AgentLastAvailabilityReportComposite(agent3.getId(), null, null, null));
+            i = reports.indexOf(new AgentLastAvailabilityReportComposite(agent3.getId(), null, null, null, false));
             assert reports.get(i).getAgentId() == agent3.getId();
             assert reports.get(i).getAgentName().equals(agent3.getName());
             assert reports.get(i).getRemoteEndpoint().equals(agent3.getRemoteEndpoint());
             assert reports.get(i).getLastAvailabilityReport().equals(agent3.getLastAvailabilityReport());
 
-            i = reports.indexOf(new AgentLastAvailabilityReportComposite(agent4.getId(), null, null, null));
+            i = reports.indexOf(new AgentLastAvailabilityReportComposite(agent4.getId(), null, null, null, false));
             assert reports.get(i).getAgentId() == agent4.getId();
             assert reports.get(i).getAgentName().equals(agent4.getName());
             assert reports.get(i).getRemoteEndpoint().equals(agent4.getRemoteEndpoint());
             assert reports.get(i).getLastAvailabilityReport().equals(agent4.getLastAvailabilityReport());
 
-            assert -1 == reports.indexOf(new AgentLastAvailabilityReportComposite(agent2.getId(), null, null, null));
-            assert -1 == reports.indexOf(new AgentLastAvailabilityReportComposite(agent1.getId(), null, null, null));
+            assert -1 == reports.indexOf(new AgentLastAvailabilityReportComposite(agent2.getId(), null, null, null,
+                false));
+            assert -1 == reports.indexOf(new AgentLastAvailabilityReportComposite(agent1.getId(), null, null, null,
+                false));
 
             // get all of them, except the one with the null
             q.setParameter("dateThreshold", now - 1);

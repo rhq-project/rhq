@@ -256,7 +256,7 @@ public class AgentManagerBean implements AgentManagerLocal {
             // because I think we still want to log that we think an agent is down periodically.
             // If it turns out we do not want to be that noisy, just move that warn message down in here so we only ever log
             // about a downed agent once, at the time it is first backfilled.
-            if (!isAgentBackfilled(record.getAgentId())) {
+            if (!record.isBackFilled()) {
                 // make sure we lock out all processing of any availability reports that might come our way to avoid concurrency problems
                 AvailabilityReportSerializer.getSingleton().lock(record.getAgentName());
                 try {

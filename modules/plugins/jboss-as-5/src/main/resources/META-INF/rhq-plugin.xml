@@ -987,13 +987,13 @@
                                             then it will be resolved relative to {jbossHomeDir};
                                             defaults to 'bin/run.sh' on UNIX or 'bin\run.bat' on Windows."/>
                <c:simple-property name="shutdownScript" displayName="Shutdown Script" type="file" required="false"
-                               description="The path to the script used by the 'Shutdown' operation
-                                            to shutdown this JBossAS server
+                               description="The path to the script used by the Shut Down operation
+                                            to shut down this JBossAS server
                                             (e.g. /opt/jboss-5.2.0.GA/bin/shutdown.sh); if the path is not absolute,
                                             then it will be resolved relative to {jbossHomeDir};
                                             defaults to 'bin/shutdown.sh' on UNIX or 'bin\shutdown.bat' on Windows."/>
                <c:simple-property name="shutdownMethod" displayName="Shutdown Method" type="string" required="false" default="JMX"
-                               description="The method used to execute the Shutdown operation;
+                               description="The method used to execute the Shut Down operation;
                                             defaults to 'JMX MBean'.">
                  <c:property-options>
                     <c:option value="JMX"    name="JMX MBean" default="true"/>
@@ -1056,17 +1056,17 @@
         <process-scan name="jbossas" query="process|basename|match=^java.*,arg|org.jboss.Main|match=.*"/>
 
         <operation name="start" displayName="Start"
-                   description="Start this application server. The script used is specified in the Operations group of connection properties.">
+                   description="Start this application server. The script used is specified in the Operations group of connection properties. This operation will fail if the server is already started.">
           <results><c:simple-property name="operationResult" description="Outcome of starting the server."/></results>
         </operation>
 
-        <operation name="shutdown" displayName="Shutdown"
-                   description="Shutdown this application server via script or JMX depending on the settings in the Operations and Advanced groups of connection properties.">
-          <results><c:simple-property name="operationResult" description="Outcome of stopping the server."/></results>
+        <operation name="shutdown" displayName="Shut Down"
+                   description="Shut down this application server via script or JMX, depending on the settings in the Operations and Advanced groups of connection properties. This operation will fail if the server is already shut down.">
+          <results><c:simple-property name="operationResult" description="Outcome of shutting down the server."/></results>
         </operation>
 
         <operation name="restart" displayName="Restart"
-                   description="Shutdown and then start this application server.">
+                   description="Shut down (if started) and then start this application server.">
           <results><c:simple-property name="operationResult" description="Outcome of restarting the server."/></results>
         </operation>
 

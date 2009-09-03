@@ -45,14 +45,13 @@ import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.system.SystemInfo;
 
 /**
- * Handles performing operations on a JBossAS instance.
+ * Handles performing operations (Start, Shut Down, and Restart) on a JBoss AS 5.x instance.
  * 
  * @author Ian Springer
  * @author Jason Dobies
  * @author Jay Shaughnessy
  */
 public class ApplicationServerOperationsDelegate {
-
 	/**
 	 * max amount of time to wait for server to show as unavailable after
 	 * executing stop - in milliseconds
@@ -63,7 +62,7 @@ public class ApplicationServerOperationsDelegate {
 	 * amount of time to wait between availability checks when performing a stop
 	 * - in milliseconds
 	 */
-	private static final long STOP_WAIT_INTERVAL = 1000L * 10; // 10 seconds
+	private static final long STOP_WAIT_INTERVAL = 1000L * 5; // 5 seconds
 
 	/**
 	 * amount of time to wait for stop to complete after the loop that checks
@@ -78,7 +77,7 @@ public class ApplicationServerOperationsDelegate {
 	 * amount of time to wait between availability checks when performing a
 	 * start - in milliseconds
 	 */
-	private static final long START_WAIT_INTERVAL = 1000L * 10; // 10 seconds
+	private static final long START_WAIT_INTERVAL = 1000L * 5; // 5 seconds
 
 	private final Log log = LogFactory
 			.getLog(ApplicationServerOperationsDelegate.class);
@@ -136,26 +135,23 @@ public class ApplicationServerOperationsDelegate {
 	public OperationResult invoke(
 			ApplicationServerSupportedOperations operation,
 			Configuration parameters) throws InterruptedException {
-		String message = null;
+		OperationResult result = null;
 
 		switch (operation) {
-		case RESTART: {
-			message = restart();
-			break;
+            case START: {
+                result = start();
+                break;
+            }
+            case SHUTDOWN: {
+                result = shutDown();
+                break;
+            }
+            case RESTART: {
+                result = restart();
+                break;
+            }
 		}
 
-		case SHUTDOWN: {
-			message = shutdown();
-			break;
-		}
-
-		case START: {
-			message = start();
-			break;
-		}
-		}
-
-		OperationResult result = new OperationResult(message);
 		return result;
 	}
 
@@ -169,9 +165,15 @@ public class ApplicationServerOperationsDelegate {
 	 *             if the plugin container stops this operation while its
 	 *             executing
 	 */
-	private String start() throws InterruptedException {
+	private OperationResult start() throws InterruptedException {
+        AvailabilityType avail = this.serverComponent.getAvailability();
+        if (avail == AvailabilityType.UP) {
+            OperationResult result = new OperationResult();
+            result.setErrorMessage("The server is already started.");
+            return result;
+        }
 
-		File startScriptFile = getStartScriptPath();
+        File startScriptFile = getStartScriptPath();
 		validateScriptFile(
 				startScriptFile,
 				ApplicationServerPluginConfigurationProperties.START_SCRIPT_CONFIG_PROP);
@@ -229,14 +231,12 @@ public class ApplicationServerOperationsDelegate {
 
 		long start = System.currentTimeMillis();
 		if (log.isDebugEnabled()) {
-			log.debug("About to execute the following process: ["
-					+ processExecution + "]");
+			log.debug("About to execute the following process: [" + processExecution + "]");
 		}
 		ProcessExecutionResults results = this.systemInfo
 				.executeProcess(processExecution);
 		logExecutionResults(results);
 
-		AvailabilityType avail;
 		if (results.getError() == null) {
 			avail = waitForServerToStart(start);
 		} else {
@@ -246,18 +246,18 @@ public class ApplicationServerOperationsDelegate {
 			avail = this.serverComponent.getAvailability();
 		}
 
-		// If, after the loop, the Server is still down, consider the start to
-		// be a failure.
-		if (avail == AvailabilityType.DOWN) {
-			throw new RuntimeException("Server failed to start: "
-					+ results.getCapturedOutput());
+		// If, after the loop, the Server is still down, consider the start to be a failure.
+		OperationResult result;
+        if (avail == AvailabilityType.DOWN) {
+			result = new OperationResult();
+            result.setErrorMessage("The server failed to start: " + results.getCapturedOutput());
 		} else {
-			return "Server has been started.";
+			result = new OperationResult("The server has been started.");
 		}
+        return result;
 	}
 
 	private String getConfigurationSet() {
-
 		configPath = resolvePathRelativeToHomeDir(getRequiredPropertyValue(
 				pluginConfig,
 				ApplicationServerPluginConfigurationProperties.SERVER_HOME_DIR));
@@ -293,8 +293,7 @@ public class ApplicationServerOperationsDelegate {
 
 		processExecution.setCaptureOutput(true);
 		processExecution.setWaitForCompletion(1000L); // 1 second // TODO:
-		// Should we wait longer
-		// than one second?
+		// Should we wait longer than one second?
 		processExecution.setKillOnTimeout(false);
 	}
 
@@ -304,7 +303,14 @@ public class ApplicationServerOperationsDelegate {
 	 * 
 	 * @return The result of the shutdown operation - is successful
 	 */
-	private String shutdown() {
+	private OperationResult shutDown() {
+        AvailabilityType avail = this.serverComponent.getAvailability();
+        if (avail == AvailabilityType.DOWN) {
+            OperationResult result = new OperationResult();
+            result.setErrorMessage("The server is already shut down.");
+            return result;
+        }
+
 		ApplicationServerShutdownMethod shutdownMethod = Enum
 				.valueOf(
 						ApplicationServerShutdownMethod.class,
@@ -312,15 +318,19 @@ public class ApplicationServerOperationsDelegate {
 								.getSimple(
 										ApplicationServerPluginConfigurationProperties.SHUTDOWN_METHOD_CONFIG_PROP)
 								.getStringValue());
-		String result = ApplicationServerShutdownMethod.JMX
+		String resultMessage = ApplicationServerShutdownMethod.JMX
 				.equals(shutdownMethod) ? shutdownViaJmx()
 				: shutdownViaScript();
-		AvailabilityType avail = waitForServerToShutdown();
-		if (avail == AvailabilityType.UP) {
-			throw new RuntimeException("Server failed to shutdown");
+
+        avail = waitForServerToShutdown();
+		OperationResult result;
+        if (avail == AvailabilityType.UP) {
+			result = new OperationResult();
+            result.setErrorMessage("The server failed to shut down.");
 		} else {
-			return result;
+			return new OperationResult(resultMessage);
 		}
+        return result;
 	}
 
 	/**
@@ -386,7 +396,7 @@ public class ApplicationServerOperationsDelegate {
 							+ results.getExitCode() + "]", results.getError());
 		}
 
-		return "Server has been shut down.";
+		return "The server has been shut down.";
 	}
 
 	private void logExecutionResults(ProcessExecutionResults results) {
@@ -438,7 +448,7 @@ public class ApplicationServerOperationsDelegate {
 			operation.invoke(new Object[] { 0 }); // return code of 0
 		}
 
-		return "Server has been shut down.";
+		return "The server has been shut down.";
 	}
 
 	private void validateScriptFile(File scriptFile, String scriptPropertyName) {
@@ -461,30 +471,27 @@ public class ApplicationServerOperationsDelegate {
 	 * 
 	 * @return A success message on success
 	 */
-	private String restart() {
-
+	private OperationResult restart() {
 		try {
-			shutdown();
+			shutDown();
 		} catch (Exception e) {
 			throw new RuntimeException("Shutdown may have failed: " + e);
 		}
 
 		try {
-			// Perform the restart.
 			start();
-
 		} catch (Exception e) {
-			throw new RuntimeException("Re-Startup may have failed: " + e);
+			throw new RuntimeException("Start following shutdown may have failed: " + e);
 		}
 
-		return "Server has been restarted.";
+		return new OperationResult("Server has been restarted.");
 
 	}
 
 	private AvailabilityType waitForServerToStart(long start)
 			throws InterruptedException {
 		AvailabilityType avail;
-		while (((avail = getAvailability()) == AvailabilityType.DOWN)
+		while (((avail = this.serverComponent.getAvailability()) == AvailabilityType.DOWN)
 				&& (System.currentTimeMillis() < (start + START_WAIT_MAX))) {
 			try {
 				Thread.sleep(START_WAIT_INTERVAL);
@@ -496,8 +503,10 @@ public class ApplicationServerOperationsDelegate {
 	}
 
 	private AvailabilityType waitForServerToShutdown() {
-		for (long wait = 0L; (wait < STOP_WAIT_MAX)
-				&& (AvailabilityType.UP == getAvailability()); wait += STOP_WAIT_INTERVAL) {
+		long start = System.currentTimeMillis();
+        AvailabilityType avail;
+        while (((avail = this.serverComponent.getAvailability()) == AvailabilityType.UP)
+				&& (System.currentTimeMillis() < (start + STOP_WAIT_MAX))) {
 			try {
 				Thread.sleep(STOP_WAIT_INTERVAL);
 			} catch (InterruptedException e) {
@@ -505,15 +514,14 @@ public class ApplicationServerOperationsDelegate {
 			}
 		}
 
-		// After the server shows unavailable, wait a little longer to hopefully
+		// After the server becomes unavailable, wait a little longer to hopefully
 		// ensure shutdown is complete.
 		try {
 			Thread.sleep(STOP_WAIT_FINAL);
 		} catch (InterruptedException e) {
 			// ignore
 		}
-
-		return getAvailability();
+		return avail;
 	}
 
 	/**
@@ -645,37 +653,6 @@ public class ApplicationServerOperationsDelegate {
 								+ javaHomeDir
 								+ "') is not a directory.");
 			}
-		}
-	}
-
-	public AvailabilityType getAvailability() {
-		try {
-			EmsConnection connection = serverComponent.getEmsConnection();
-			EmsBean bean = connection.getBean("jboss.system:type=ServerConfig");
-
-			File serverHomeViaJNP = (File) bean.getAttribute("ServerHomeDir")
-					.refresh();
-
-			if (configPath == null)
-				getConfigurationSet();
-
-			if (this.configPath.getCanonicalPath().equals(
-					serverHomeViaJNP.getCanonicalPath())) {
-				return AvailabilityType.UP;
-			} else {
-				// a different server must have been started on our jnp url
-				if (log.isDebugEnabled()) {
-					log
-							.debug("Availability check for JBAS resource with configPath ["
-									+ this.configPath
-									+ "] is trying to connect to a different running JBAS which is installed at ["
-									+ serverHomeViaJNP
-									+ "]. Returning AvailabilityType.DOWN for the former resource.");
-				}
-			}
-			return AvailabilityType.DOWN;
-		} catch (Exception e) {
-			return AvailabilityType.DOWN;
 		}
 	}
 }

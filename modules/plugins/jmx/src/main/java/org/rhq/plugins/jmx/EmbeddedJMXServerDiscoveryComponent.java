@@ -24,8 +24,11 @@ package org.rhq.plugins.jmx;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.lang.reflect.Method;
+import java.lang.reflect.InvocationTargetException;
 
 import org.mc4j.ems.connection.EmsConnection;
+import org.mc4j.ems.connection.bean.EmsBean;
 import org.mc4j.ems.connection.support.metadata.InternalVMTypeDescriptor;
 import org.mc4j.ems.connection.support.metadata.J2SE5ConnectionTypeDescriptor;
 
@@ -38,15 +41,14 @@ import org.rhq.core.system.ProcessInfo;
 
 /**
  * This discovery component can be used to include JVM information under a parent Process oriented server that supports
- * JMX. The parent resource type's component must implement JMXComponent.
+ * JMX (e.g. JBoss AS or Tomcat). The parent resource type's component must implement JMXComponent.
  *
  * @author Greg Hinkle
  */
-public class EmbeddedJMXServerDiscoveryComponent implements ResourceDiscoveryComponent<JMXComponent> {
-
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent> context) {
-
-        Set<DiscoveredResourceDetails> found = new HashSet<DiscoveredResourceDetails>();
+public class EmbeddedJMXServerDiscoveryComponent implements ResourceDiscoveryComponent<JMXComponent> {    
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent> context)
+        throws Exception {
+        Set<DiscoveredResourceDetails> discoveredServers = new HashSet<DiscoveredResourceDetails>();
 
         Configuration configuration = context.getDefaultPluginConfiguration();
         EmsConnection emsConnection = context.getParentResourceComponent().getEmsConnection();
@@ -74,7 +76,7 @@ public class EmbeddedJMXServerDiscoveryComponent implements ResourceDiscoveryCom
                 }
             }
 
-            // with an external parent, we still need to check, if jmxremote (for jconsole) is enabled or not
+            // With an external parent, we still need to check, if jmxremote (for jconsole) is enabled or not.
             if (isJmxRemote) {
                 configuration.put(new PropertySimple(JMXDiscoveryComponent.CONNECTION_TYPE,
                     J2SE5ConnectionTypeDescriptor.class.getName()));
@@ -89,15 +91,29 @@ public class EmbeddedJMXServerDiscoveryComponent implements ResourceDiscoveryCom
             }
         }
 
-        if (emsConnection.getBean("java.lang:type=OperatingSystem") != null) {
-            // Only inventory a VM that has the platform mbean's exposed and available
-            DiscoveredResourceDetails s = new DiscoveredResourceDetails(context.getResourceType(), "JVM", context
-                .getResourceType().getName(), System.getProperty("java.version"), context.getResourceType()
-                .getDescription(), configuration, null);
-
-            found.add(s);
+        EmsBean runtimeMBean = emsConnection.getBean("java.lang:type=Runtime");
+        // Only inventory a VM that has the platform MXBeans exposed.
+        if (runtimeMBean != null) {
+            String version = getSystemProperty(runtimeMBean, "java.version");
+            DiscoveredResourceDetails server = new DiscoveredResourceDetails(context.getResourceType(), "JVM",
+                    context.getResourceType().getName(), version, context.getResourceType().getDescription(),
+                    configuration, null);
+            discoveredServers.add(server);
         }
 
-        return found;
+        return discoveredServers;
+    }
+
+    private static String getSystemProperty(EmsBean runtimeMBean, String propertyName) throws Exception {
+        // We must use reflection for the Open MBean classes (TabularData and CompositeData) to avoid
+        // ClassCastExceptions due to EMS having used a different classloader than us to load them.
+        Object tabularDataObj = runtimeMBean.getAttribute("systemProperties").refresh();
+        Method getMethod = tabularDataObj.getClass().getMethod("get",
+                new Class[] { Class.forName("[Ljava.lang.Object;") });
+        // varargs don't work out when the arg itself is an array, so specify the parameters explicitly using arrays.
+        Object compositeDataObj = getMethod.invoke(tabularDataObj, new Object[] { new Object[] { propertyName }});
+        getMethod = compositeDataObj.getClass().getMethod("get", String.class);
+        String version = (String)getMethod.invoke(compositeDataObj, "value");
+        return version;
     }
 }

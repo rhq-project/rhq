@@ -158,11 +158,16 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent { //, C
         }
 
         for (Configuration c : (List<Configuration>) context.getPluginConfigurations()) {
+            // TODO: Connect to the remote JVM to verify the user-specified conn props are valid, and if connecting
+            // fails, throw an exception.
             String resourceKey = c.getSimpleValue(CONNECTOR_ADDRESS_CONFIG_PROPERTY, null);
             String connectionType = c.getSimpleValue(CONNECTION_TYPE, null);
 
+            // TODO (ips, 09/04/09): We should connect to the remote JVM in order to obtain its version.
+            String version = null;
+
             DiscoveredResourceDetails s = new DiscoveredResourceDetails(context.getResourceType(), resourceKey,
-                "Java VM", "?", connectionType + " [" + resourceKey + "]", null, null);
+                "Java VM", version, connectionType + " [" + resourceKey + "]", null, null);
 
             s.setPluginConfiguration(c);
 
@@ -240,7 +245,10 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent { //, C
                 + port + "/jmxrmi"));
             // config.put(new PropertySimple(INSTALL_URI, process.getCurrentWorkingDirectory()));
 
-            details = new DiscoveredResourceDetails(context.getResourceType(), port, name, null,
+            // TODO (ips, 09/04/09): I think we should connect to the remote JVM in order to obtain its version.
+            String version = null;
+
+            details = new DiscoveredResourceDetails(context.getResourceType(), port, name, version,
                 "Standalone JVM Process", config, null);
         }
 

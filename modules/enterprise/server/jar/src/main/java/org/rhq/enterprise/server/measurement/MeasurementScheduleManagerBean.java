@@ -71,12 +71,12 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.CriteriaQueryGenerator;
+import org.rhq.core.domain.util.CriteriaQueryRunner;
 import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
-import org.rhq.core.domain.util.CriteriaQueryRunner;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
@@ -695,7 +695,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         String updateSQL = "" //
             + "UPDATE Resource res " //
             + "   SET res.mtime = :now " //
-            + " WHERE res.agent.id = :agentId " //
+            + " WHERE res.agent.id = :agentId AND " //
             + "       res.resourceType.id IN ( SELECT md.resourceType.id " //
             + "                                  FROM MeasurementDefinition md " //
             + "                                 WHERE md.id IN ( :definitionIds ) )";

@@ -21,16 +21,15 @@ import org.rhq.enterprise.server.ws.utility.WsUtility;
  * require a running RHQ Server with our web services deployed.
  * 
  * This is still in development and has the current restrictions: - add
- * [dev_root]/modules/enterprise/remoting/webservices/target/rhq-remoting-webservices
- * -{version}.jar to TOP of eclipse classpath to run from your IDE(actually need to use 
- *  classpath setup from bin/jbossas/bin/wsrunclient.sh to take advantage of type
- *  substitution correctly) 
- * - Server running on localhost. 
- * - ws-test user defined in database with full permissions 
- * - Non RHQ Server JBossAS in inventory. 
- * - The -Ptest-ws profile specified when running mvn test from webservices dir 
- * - Perftest plugin installed and agent started as described in 
- *    modules/enterprise/remoting/scripts/README.txt
+ * [dev_root
+ * ]/modules/enterprise/remoting/webservices/target/rhq-remoting-webservices
+ * -{version}.jar to TOP of eclipse classpath to run from your IDE(actually need
+ * to use classpath setup from bin/jbossas/bin/wsrunclient.sh to take advantage
+ * of type substitution correctly) - Server running on localhost. - ws-test user
+ * defined in database with full permissions - Non RHQ Server JBossAS in
+ * inventory. - The -Ptest-ws profile specified when running mvn test from
+ * webservices dir - Perftest plugin installed and agent started as described in
+ * modules/enterprise/remoting/scripts/README.txt
  * 
  * @author Jay Shaughnessy, Simeon Pinder
  */
@@ -366,32 +365,34 @@ public class WsSubjectTest extends AssertJUnit implements
 
 		// TODO verify sort order
 	}
-	
+
 	@Test(enabled = TESTS_ENABLED)
 	void testLoginLogout() throws LoginException_Exception {
-		   
-		   assertNotNull("Should have returned a subject", subject );
-		   assertEquals("Unexpected Subject name", subject.getName(), credentials);
-		   Integer sessionId = subject.getSessionId();
 
-		   // should return same sessionId
-//		   rhq.login('rhqadmin', 'rhqadmin');   
-		   assertNotNull("Should have returned a subject", subject );
-		   assertEquals("Unexpected Subject name", subject.getName(), credentials);
-		   assertEquals("Unexpected Subject session", subject.getSessionId(), sessionId);   
-		   
-		   WEBSERVICE_REMOTE.logout(subject);
-		   subject = WEBSERVICE_REMOTE.login(credentials,credentials);
-		   // Assert.assertNull( subject, "Should be no active subject" );
-		   
-		   // should return new sessionId   
-//		   rhq.login('rhqadmin', 'rhqadmin');   
-		   assertNotNull("Should have returned a subject", subject  );
-		   assertEquals("Unexpected Subject name", subject.getName(), credentials);
-		   assertTrue("Unexpected Subject session", (subject.getSessionId() != sessionId));
+		assertNotNull("Should have returned a subject", subject);
+		assertEquals("Unexpected Subject name", subject.getName(), credentials);
+		Integer sessionId = subject.getSessionId();
 
-//		   rhq.logout();
+		// should return same sessionId
+		// rhq.login('rhqadmin', 'rhqadmin');
+		assertNotNull("Should have returned a subject", subject);
+		assertEquals("Unexpected Subject name", subject.getName(), credentials);
+		assertEquals("Unexpected Subject session", subject.getSessionId(),
+				sessionId);
 
-//		   print( 'FOO!' )
-		}
+		WEBSERVICE_REMOTE.logout(subject);
+		subject = WEBSERVICE_REMOTE.login(credentials, credentials);
+		// Assert.assertNull( subject, "Should be no active subject" );
+
+		// should return new sessionId
+		// rhq.login('rhqadmin', 'rhqadmin');
+		assertNotNull("Should have returned a subject", subject);
+		assertEquals("Unexpected Subject name", subject.getName(), credentials);
+		assertTrue("Unexpected Subject session",
+				(subject.getSessionId() != sessionId));
+
+		// rhq.logout();
+
+		// print( 'FOO!' )
+	}
 }

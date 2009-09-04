@@ -25,6 +25,7 @@ import javax.jws.WebMethod;
 import javax.jws.WebParam;
 import javax.jws.WebService;
 import javax.jws.soap.SOAPBinding;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceCriteria;
@@ -33,6 +34,7 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.jaxb.adapter.ResourceAdapter;
 import org.rhq.enterprise.server.system.ServerVersion;
 
 /**
@@ -74,6 +76,7 @@ public interface ResourceManagerRemote {
      * @throws FetchException on any issue. Wraps ResourceNotFoundException when necessary. 
      */
     @WebMethod
+    @XmlJavaTypeAdapter(value = ResourceAdapter.class)
     List<Resource> findResourceLineage( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceId") int resourceId);

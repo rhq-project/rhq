@@ -31,9 +31,10 @@ import org.rhq.enterprise.server.ws.utility.WsUtility;
  * @author Jay Shaughnessy, Simeon Pinder
  */
 @Test(groups = "ws")
-public class WsRoleManagerTest extends AssertJUnit implements
+public class WsDataAccessManagerTest extends AssertJUnit implements
 		TestPropertiesInterface {
 
+	// Test variables
 	private static ObjectFactory WS_OBJECT_FACTORY;
 	private static WebservicesRemote WEBSERVICE_REMOTE;
 	private static Subject subject = null;
@@ -58,44 +59,51 @@ public class WsRoleManagerTest extends AssertJUnit implements
 		subject = WEBSERVICE_REMOTE.login(credentials, credentials);
 	}
 
+	String query = "SELECT r "
+			+ "FROM Resource r "
+			+ "WHERE ( r.inventoryStatus = org.rhq.core.domain.resource.InventoryStatus.COMMITTED "
+			+ "AND LOWER( r.resourceType.name ) like 'service-alpha' "
+			+ "AND LOWER( r.parentResource.name ) like 'server-omega-0')";
+
 	@Test(enabled = TESTS_ENABLED)
-	void testFindWithFiltering() {
-		RoleCriteria criteria = new RoleCriteria();
-		criteria.setFilterName("Super User Role");
-		criteria
-				.setFilterDescription("System superuser role that provides full access to everything. This role cannot be modified.");
+	void testExecuteQuery() {
+		List<AnyTypeArray> resources = WEBSERVICE_REMOTE.executeQuery(subject,
+				query);
 
-		List<Role> roles = WEBSERVICE_REMOTE.findRolesByCriteria(subject,
-				criteria);
-
-		assertEquals("Failed to find role when filtering", roles.size(), 1);
+		assertEquals("Expected to get back 10 resources", resources.size(), 10);
 	}
 
 	@Test(enabled = TESTS_ENABLED)
-	void testFindWithFetchingAssociations() {
-		RoleCriteria criteria = new RoleCriteria();
-		criteria.setFilterName("Super User Role");
-		criteria.setFetchSubjects(true);
-		criteria.setFetchResourceGroups(true);
-		criteria.setFetchPermissions(true);
-		criteria.setFetchRoleNotifications(true);
+	void testExecuteQueryWithPaging() {
+		PageControl pageControl = new PageControl();
+		pageControl.pageNumber = 0;
+		pageControl.pageSize = 5;
+		// pageControl.setPrimarySort("name", PageOrdering.ASC);
+		pageControl.setPrimarySortOrder(PageOrdering.ASC);
 
-		List<Role> roles = WEBSERVICE_REMOTE.findRolesByCriteria(subject,
-				criteria);
+		List<AnyTypeArray> resources = WEBSERVICE_REMOTE
+				.executeQueryWithPageControl(subject, query, pageControl);
 
-		assertEquals("Failed to find role when fetching associations", roles
-				.size(), 1);
-	}
+		assertEquals("Failed to fetch first page of resources", resources
+				.size(), 5);
+		assertNotNull("Query result was null.", resources.get(0));
 
-	@Test(enabled = TESTS_ENABLED)
-	void testFindWithSorting() {
-		RoleCriteria criteria = new RoleCriteria();
-		criteria.setFilterName("Super User Role");
-		criteria.setSortName(PageOrdering.ASC);
-
-		List<Role> roles = WEBSERVICE_REMOTE.findRolesByCriteria(subject,
-				criteria);
-
-		assertTrue("Failed to find roles when sorting", roles.size() > 0);
+		// resources.get(0).getItem().get(0).;
+		//    
+		// assertEquals("Failed to sort first page in ascending order",resources.get(0).name,
+		// "service-alpha-0" );
+		// assertEquals(resources.get(4).name, "service-alpha-4",
+		// "Failed to sort first page in ascending order");
+		//
+		// pageControl.pageNumber = 1;
+		// resources = WEBSERVICE_REMOTE.executeQueryWithPageControl(subject,
+		// query, pageControl);
+		//
+		// Assert.assertNumberEqualsJS(resources.size(), 5,
+		// "Failed to fetch second page of resources");
+		// Assert.assertEquals(resources.get(0).name, "service-alpha-5",
+		// "Failed to sort second page in ascending order");
+		// Assert.assertEquals(resources.get(4).name, "service-alpha-9",
+		// "Failed to sort second page in ascending order");
 	}
 }

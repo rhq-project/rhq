@@ -39,6 +39,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -98,10 +99,10 @@ import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
 import org.rhq.core.domain.util.CriteriaQueryGenerator;
+import org.rhq.core.domain.util.CriteriaQueryRunner;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
-import org.rhq.core.domain.util.CriteriaQueryRunner;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
@@ -111,6 +112,7 @@ import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.exception.UnscheduleException;
+import org.rhq.enterprise.server.jaxb.adapter.ResourceAdapter;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.operation.ResourceOperationSchedule;
@@ -896,7 +898,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         String pluginNameFilter = (resourceType == null) ? null : resourceType.getPlugin();
 
         return findResourceComposites(user, category, typeNameFilter, pluginNameFilter, parentResource, null, false,
-                pageControl);
+            pageControl);
     }
 
     @SuppressWarnings("unchecked")
@@ -2003,7 +2005,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     // lineage is a getXXX (not findXXX) because it logically returns a single object, but modeled as a list here
-    public List<Resource> findResourceLineage(Subject subject, int resourceId) {
+    public @XmlJavaTypeAdapter(value = ResourceAdapter.class)
+    List<Resource> findResourceLineage(Subject subject, int resourceId) {
         List<Resource> result = null;
 
         result = getResourceLineage(resourceId);

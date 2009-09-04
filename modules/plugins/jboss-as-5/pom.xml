@@ -122,7 +122,7 @@
 
         <!-- NOTE: To shorten the list of required dependencies (as commented out below),
                    we now use the following method. -->
-<!-- 
+
         <dependency>
             <groupId>org.jboss.jbossas</groupId>
             <artifactId>jboss-as-client</artifactId>
@@ -142,7 +142,7 @@
           <artifactId>jboss-security-aspects</artifactId>
           <scope>test</scope>
         </dependency>
--->
+
 <!--
         <dependency>
             <groupId>org.jboss.microcontainer</groupId>

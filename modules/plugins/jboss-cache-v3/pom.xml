@@ -71,7 +71,7 @@
           <artifactId>jboss-profileservice-spi</artifactId>          
           <scope>provided</scope>
       </dependency>
-<!--
+
       <dependency>
           <groupId>org.jboss.remoting</groupId>
           <artifactId>jboss-remoting</artifactId>
@@ -290,7 +290,7 @@
             <artifactId>jboss-messaging-client</artifactId>
             <scope>test</scope>
         </dependency>        
--->
+
     </dependencies>
 
     <build>

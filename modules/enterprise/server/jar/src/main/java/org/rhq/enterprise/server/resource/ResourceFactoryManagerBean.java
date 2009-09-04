@@ -31,6 +31,7 @@ import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -68,6 +69,7 @@ import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.content.ContentManagerHelper;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
+import org.rhq.enterprise.server.jaxb.adapter.ConfigurationAdapter;
 
 /**
  * Bean to handle interaction with the resource factory subsystem of the plugin container. !! Warning, the factory
@@ -468,8 +470,11 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
     }
 
     public void createPackageBackedResource(Subject subject, int parentResourceId, int newResourceTypeId,
-        String newResourceName, Configuration pluginConfiguration, String packageName, String packageVersionNumber,
-        Integer architectureId, Configuration deploymentTimeConfiguration, byte[] packageBits) {
+        String newResourceName,//
+        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
+        Configuration pluginConfiguration, String packageName, String packageVersionNumber, Integer architectureId,//
+        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
+        Configuration deploymentTimeConfiguration, byte[] packageBits) {
 
         createResource(subject, parentResourceId, newResourceTypeId, newResourceName, pluginConfiguration, packageName,
             packageVersionNumber, architectureId, deploymentTimeConfiguration, new ByteArrayInputStream(packageBits));

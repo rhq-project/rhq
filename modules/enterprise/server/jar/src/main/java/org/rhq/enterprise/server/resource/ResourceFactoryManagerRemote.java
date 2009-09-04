@@ -23,11 +23,13 @@ import javax.jws.WebMethod;
 import javax.jws.WebParam;
 import javax.jws.WebService;
 import javax.jws.soap.SOAPBinding;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.CreateDeletePolicy;
 import org.rhq.core.domain.resource.ResourceCreationDataType;
+import org.rhq.enterprise.server.jaxb.adapter.ConfigurationAdapter;
 import org.rhq.enterprise.server.system.ServerVersion;
 
 /*
@@ -90,11 +92,15 @@ public interface ResourceFactoryManagerRemote {
         @WebParam(name = "parentResourceId") int parentResourceId, //
         @WebParam(name = "newResourceTypeId") int newResourceTypeId, //
         @WebParam(name = "newResourceName") String newResourceName, //
-        @WebParam(name = "pluginConfiguration") Configuration pluginConfiguration, //
+        @WebParam(name = "pluginConfiguration")//
+        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
+        Configuration pluginConfiguration, //
         @WebParam(name = "packageName") String packageName, //
         @WebParam(name = "packageVersion") String packageVersion, //
         @WebParam(name = "architectureId") Integer architectureId, //
-        @WebParam(name = "deploymentTimeConfiguration") Configuration deploymentTimeConfiguration, //
+        @WebParam(name = "deploymentTimeConfiguration")//
+        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
+        Configuration deploymentTimeConfiguration, //
         @WebParam(name = "packageBits") byte[] packageBits);
 
     /**

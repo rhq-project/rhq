@@ -595,8 +595,11 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
 
     public void createPackageBackedResource(Subject subject, int parentResourceId, int newResourceTypeId,
-        String newResourceName, Configuration pluginConfiguration, String packageName, String packageVersion,
-        Integer architectureId, Configuration deploymentTimeConfiguration, byte[] packageBits) {
+        String newResourceName,//
+        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
+        Configuration pluginConfiguration, String packageName, String packageVersion, Integer architectureId,//
+        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
+        Configuration deploymentTimeConfiguration, byte[] packageBits) {
         resourceFactoryManager.createPackageBackedResource(subject, parentResourceId, newResourceTypeId,
             newResourceName, pluginConfiguration, packageName, packageVersion, architectureId,
             deploymentTimeConfiguration, packageBits);

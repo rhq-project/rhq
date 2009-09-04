@@ -96,7 +96,7 @@
    </c:choose>
 
    <p align="center">
-      <h:graphicImage url="/images/logo.png" alt="RHQ logo"/>
+      <h:graphicImage url="/images/logo.png" alt="logo"/>
    </p>
    
    <h1 align="left"><h:outputText value="#{bundle.welcomeTitle}" /></h1>

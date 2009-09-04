@@ -263,7 +263,7 @@ public class WsOperationManagerTest extends AssertJUnit implements
 	}
 
 	ResourceOperationSchedule fireEvents(Resource resource, String severity,
-			int numberOfEvents) {
+			int numberOfEvents) throws MalformedURLException, SecurityException, IllegalArgumentException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException, LoginException_Exception {
 		SimpleDateFormat sdf = new SimpleDateFormat();
 		String details = sdf.format(new java.util.Date())
 				+ " >> events created for " + resource.name;
@@ -272,8 +272,11 @@ public class WsOperationManagerTest extends AssertJUnit implements
 		int repeatInterval = 0;
 		int repeatCount = 0;
 		int timeout = 0;
-		Configuration parameters = createParameters(resource, severity,
+//		Configuration parameters = createParameters(resource, severity,
+//				numberOfEvents, details);
+		WsConfiguration parameters = WsAlertManagerTest.createWsConfigurationParameters(resource, severity,
 				numberOfEvents, details);
+
 		String description = "Test script event for " + resource.name;
 
 		return WEBSERVICE_REMOTE.scheduleResourceOperation(subject,

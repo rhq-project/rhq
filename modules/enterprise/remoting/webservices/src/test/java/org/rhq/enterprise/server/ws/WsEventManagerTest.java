@@ -43,11 +43,6 @@ import org.rhq.enterprise.server.ws.utility.WsUtility;
 public class WsEventManagerTest extends AssertJUnit implements TestPropertiesInterface{
 
     //Test variables
-//    private static final boolean TESTS_ENABLED = true;
-//    protected static String credentials = "ws-test";
-//    protected static String host = "127.0.0.1";
-//    protected static int port = 7080;
-//    protected static boolean useSSL = false;
     private static ObjectFactory WS_OBJECT_FACTORY;
     private static WebservicesRemote WEBSERVICE_REMOTE;
     private static Subject subject = null;
@@ -82,39 +77,21 @@ public class WsEventManagerTest extends AssertJUnit implements TestPropertiesInt
         Resource parentServer = findServer("server-omega-0");
         alphaService0 = findService("service-alpha-0", parentServer);
         alphaService1 = findService("service-alpha-1", parentServer);
-        //TODO: figure out why service-beta-0 never appears.
-        //        betaService0 = findService("service-beta-0", parentServer);
+        betaService0 = findService("service-beta-0", parentServer);
 
-        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-        //            java.util.Date date = new java.util.Date();
-
-        alphaService0Details = dateFormat.format(new java.util.Date()) + " >> events created for " + alphaService0.name;
-        alphaService1Details = dateFormat.format(new java.util.Date()) + " >> events created for " + alphaService1.name;
-        //        betaService0Details = dateFormat.format(new java.util.Date()) + " >> events created for " + betaService0.name;
+        alphaService0Details = new java.util.Date() + " >> events created for " + alphaService0.name;
+        alphaService1Details = new java.util.Date() + " >> events created for " + alphaService1.name;
+        betaService0Details = new java.util.Date() + " >> events created for " + betaService0.name;
 
         operationSchedule = fireEvent(alphaService0, "WARN", 1, alphaService0Details);
         fireEvent(alphaService1, "ERROR", 1, alphaService1Details);
-        //        fireEvent(betaService0, "FATAL", 1, betaService0Details);
+        fireEvent(betaService0, "FATAL", 1, betaService0Details);
     }
 
     @Test(enabled = TESTS_ENABLED)
     void testFilterByResource() throws InterruptedException, JAXBException, MalformedURLException, SecurityException, IllegalArgumentException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException, LoginException_Exception {
-        PropertyDefinitionSimple propertyDef = WS_OBJECT_FACTORY.createPropertyDefinitionSimple();
-        propertyDef.setName("test property definition");
-        System.out.println("PropertyDefinition has been created.");
-        //    	ctxt JAXBContext.newInstance("");
-        JAXBContext jc = JAXBContext.newInstance(PropertyDefinitionSimple.class);
-        //    	com.sun.xml.bind.api.JAXBRIContext jri = jc;
-        //    	System.out.println("context created.");
 
-        //################
-        //    	WS_OBJECT_FACTORY.
-
-        //################
-        //    	JAXBElement<PropertyDefinition> pdef = WS_OBJECT_FACTORY.createPropertyDefinition(propertyDef);
-        System.out.println("Also created abstract  type.");
-
-        EventCriteria criteria = WS_OBJECT_FACTORY.createEventCriteria();
+    	EventCriteria criteria = WS_OBJECT_FACTORY.createEventCriteria();
         criteria.caseSensitive = true;
         //criteria.addFilterResourceId(alphaService0.id);
         //criteria.addFilterSeverity(EventSeverity.WARN);
@@ -131,7 +108,7 @@ public class WsEventManagerTest extends AssertJUnit implements TestPropertiesInt
         List<Event> events = WEBSERVICE_REMOTE.findEventsByCriteria(subject, criteria);
         //var events = findEventsByResource(alphaService0);
 
-        assertEquals("Expected to find one event but found " + events.size(), events.size(), 1);
+        assertEquals("Event count not correct.", 1, events.size());
 
         events = findEventsByResource(alphaService1);
         assertTrue("Expected to find events when filtering by resource id for " + alphaService1, events.size() > 0);
@@ -167,13 +144,17 @@ public class WsEventManagerTest extends AssertJUnit implements TestPropertiesInt
         return resources.get(0);
     }
 
-    static ResourceOperationSchedule fireEvent(Resource resource, String severity, int numberOfEvents, String details) {
+	static ResourceOperationSchedule fireEvent(Resource resource,
+			String severity, int numberOfEvents, String details)
+			throws MalformedURLException, SecurityException, IllegalArgumentException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException, LoginException_Exception {
         String operationName = "createEvents";
         int delay = 0;
         int repeatInterval = 0;
         int repeatCount = 0;
         int timeout = 0;
-        Configuration parameters = createParameters(resource, severity, numberOfEvents, details);
+//        Configuration parameters = createParameters(resource, severity, numberOfEvents, details);
+         WsConfiguration parameters = 
+        	 WsAlertManagerTest.createWsConfigurationParameters(resource, severity, numberOfEvents, details);
         String description = "Test script event for " + resource.name;
 
         return WEBSERVICE_REMOTE.scheduleResourceOperation(subject, resource.id, operationName, delay, repeatInterval,

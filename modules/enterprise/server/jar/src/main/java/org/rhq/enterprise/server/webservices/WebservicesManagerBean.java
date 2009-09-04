@@ -8,6 +8,7 @@ import java.util.Set;
 import javax.ejb.Stateless;
 import javax.jws.WebService;
 import javax.xml.bind.annotation.XmlSeeAlso;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertDefinition;
@@ -83,6 +84,7 @@ import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.exception.LoginException;
 import org.rhq.enterprise.server.exception.ScheduleException;
 import org.rhq.enterprise.server.exception.UnscheduleException;
+import org.rhq.enterprise.server.jaxb.adapter.ConfigurationAdapter;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementAggregate;
@@ -568,8 +570,9 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
 
     public ResourceOperationSchedule scheduleResourceOperation(Subject subject, int resourceId, String operationName,
-        long delay, long repeatInterval, int repeatCount, int timeout, Configuration parameters, String description)
-        throws ScheduleException {
+        long delay, long repeatInterval, int repeatCount, int timeout,// 
+        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
+        Configuration parameters, String description) throws ScheduleException {
         return operationManager.scheduleResourceOperation(subject, resourceId, operationName, delay, repeatInterval,
             repeatCount, timeout, parameters, description);
     }

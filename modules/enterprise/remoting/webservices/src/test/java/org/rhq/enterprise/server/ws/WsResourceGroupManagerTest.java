@@ -36,12 +36,6 @@ import org.rhq.enterprise.server.ws.utility.WsUtility;
 public class WsResourceGroupManagerTest extends AssertJUnit implements
 		TestPropertiesInterface {
 
-	// Test variables
-	// private static final boolean TESTS_ENABLED = true;
-	// protected static String credentials = "ws-test";
-	// protected static String host = "127.0.0.1";
-	// protected static int port = 7080;
-	// protected static boolean useSSL = false;
 	private static ObjectFactory WS_OBJECT_FACTORY;
 	private static WebservicesRemote WEBSERVICE_REMOTE;
 	private static Subject subject = null;
@@ -226,22 +220,4 @@ public class WsResourceGroupManagerTest extends AssertJUnit implements
 
 		return ids;
 	}
-
-	// public void testResourceGroup() throws java.lang.Exception {
-	//    	
-	// assertNotNull("Webservice Remote is null.",WEBSERVICE_REMOTE);
-	// assertNotNull("JAXB ObjectFactory is null.",WS_OBJECT_FACTORY);
-	// assertNotNull("You have not logged in successfully.",subject);
-	//    	
-	// //locate group
-	// ResourceGroupCriteria groupCriteria =
-	// WS_OBJECT_FACTORY.createResourceGroupCriteria();
-	// groupCriteria.setFilterName("All Perf Test Servers");
-	// List<ResourceGroup> groups =
-	// WEBSERVICE_REMOTE.findResourceGroupsByCriteria(subject, groupCriteria);
-	// assertNotNull("The ResourceGroup reference was null.",groups);
-	// assertTrue("Group was not located.",groups.size()>0);
-	// //
-	//    	
-	// }
 }

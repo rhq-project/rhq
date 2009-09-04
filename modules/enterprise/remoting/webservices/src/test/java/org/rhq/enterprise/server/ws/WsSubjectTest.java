@@ -366,4 +366,32 @@ public class WsSubjectTest extends AssertJUnit implements
 
 		// TODO verify sort order
 	}
+	
+	@Test(enabled = TESTS_ENABLED)
+	void testLoginLogout() throws LoginException_Exception {
+		   
+		   assertNotNull("Should have returned a subject", subject );
+		   assertEquals("Unexpected Subject name", subject.getName(), credentials);
+		   Integer sessionId = subject.getSessionId();
+
+		   // should return same sessionId
+//		   rhq.login('rhqadmin', 'rhqadmin');   
+		   assertNotNull("Should have returned a subject", subject );
+		   assertEquals("Unexpected Subject name", subject.getName(), credentials);
+		   assertEquals("Unexpected Subject session", subject.getSessionId(), sessionId);   
+		   
+		   WEBSERVICE_REMOTE.logout(subject);
+		   subject = WEBSERVICE_REMOTE.login(credentials,credentials);
+		   // Assert.assertNull( subject, "Should be no active subject" );
+		   
+		   // should return new sessionId   
+//		   rhq.login('rhqadmin', 'rhqadmin');   
+		   assertNotNull("Should have returned a subject", subject  );
+		   assertEquals("Unexpected Subject name", subject.getName(), credentials);
+		   assertTrue("Unexpected Subject session", (subject.getSessionId() != sessionId));
+
+//		   rhq.logout();
+
+//		   print( 'FOO!' )
+		}
 }

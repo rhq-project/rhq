@@ -30,6 +30,7 @@ import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.xml.bind.annotation.XmlSeeAlso;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -88,6 +89,7 @@ import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.exception.ScheduleException;
 import org.rhq.enterprise.server.exception.UnscheduleException;
+import org.rhq.enterprise.server.jaxb.adapter.ConfigurationAdapter;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
@@ -135,8 +137,9 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     }
 
     public ResourceOperationSchedule scheduleResourceOperation(Subject subject, int resourceId, String operationName,
-        long delay, long repeatInterval, int repeatCount, int timeout, Configuration parameters, String notes)
-        throws ScheduleException {
+        long delay, long repeatInterval, int repeatCount, int timeout,//
+        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
+        Configuration parameters, String notes) throws ScheduleException {
         try {
 
             SimpleTrigger trigger = new SimpleTrigger();

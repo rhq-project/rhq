@@ -93,7 +93,7 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement
 @XmlSeeAlso( { PropertySimple.class, PropertyList.class, PropertyMap.class })
-public abstract class Property implements Externalizable {
+public class Property implements Externalizable {
     private static final long serialVersionUID = 1L;
 
     public static final String QUERY_DELETE_BY_PROPERTY_IDS = "Property.deleteByPropertyIds";
@@ -284,7 +284,9 @@ public abstract class Property implements Externalizable {
         return ((this.name != null) ? this.name.hashCode() : 0);
     }
 
-    public abstract <P extends Property> P deepCopy();
+    public <P extends Property> P deepCopy() {
+        return null;
+    }
 
     // It's not clear to me why this class implements Externalizable.  It seems to write out every field
     // using standard serialization. Also, it's sub-classes seem to write out every field. To be safe I'm leaving

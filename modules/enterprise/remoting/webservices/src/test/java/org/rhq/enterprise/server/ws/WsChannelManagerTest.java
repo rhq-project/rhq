@@ -50,7 +50,7 @@ public class WsChannelManagerTest extends AssertJUnit implements
 	// In some cases testing is run outside of mvn project tree. following needs
 	// to be set to location of correct .war Ex.
 	// [jon_root]/modules/enterprise/remoting/scripts/src/test/resources
-	private static String HARDCODED_WAR_DIRECTORY = "/home/spinder/workspace/remoting/modules/enterprise/remoting/scripts/src/test/resources";
+	private static String HARDCODED_WAR_DIRECTORY = "(insert project root)/remoting/modules/enterprise/remoting/scripts/src/test/resources";
 
 	@BeforeClass
 	public void init() throws ClassNotFoundException, MalformedURLException,

@@ -20,13 +20,16 @@ import org.rhq.enterprise.server.ws.utility.WsUtility;
  * require a running RHQ Server with our web services deployed.
  * 
  * This is still in development and has the current restrictions: - add
- * [dev_root
- * ]/modules/enterprise/remoting/webservices/target/rhq-remoting-webservices
- * -{version}.jar to TOP of IDE classpath for development/testing. - Server
- * running on localhost. - ws-test user defined in database with full
- * permissions - Non RHQ Server JBossAS in inventory. - The ws.test.package-path
- * and ws.test.package-version environment variables must be defined to a test
- * .war file.
+ * [dev_root]/modules/enterprise/remoting/webservices/target/rhq-remoting-webservices
+ * -{version}.jar to TOP of eclipse classpath to run from your IDE(actually need to use 
+ *  classpath setup from bin/jbossas/bin/wsrunclient.sh to take advantage of type
+ *  substitution correctly) 
+ * - Server running on localhost. 
+ * - ws-test user defined in database with full permissions 
+ * - Non RHQ Server JBossAS in inventory. 
+ * - The -Ptest-ws profile specified when running mvn test from webservices dir 
+ * - Perftest plugin installed and agent started as described in 
+ *    modules/enterprise/remoting/scripts/README.txt
  * 
  * @author Jay Shaughnessy, Simeon Pinder
  */
@@ -40,7 +43,7 @@ public class WsAlertManagerTest extends AssertJUnit implements
 	private static Subject subject = null;
 
 	@BeforeClass
-	public void init() throws ClassNotFoundException, MalformedURLException,
+	public static void init() throws ClassNotFoundException, MalformedURLException,
 			SecurityException, NoSuchMethodException, IllegalArgumentException,
 			InstantiationException, IllegalAccessException,
 			InvocationTargetException, LoginException_Exception {
@@ -262,7 +265,7 @@ public class WsAlertManagerTest extends AssertJUnit implements
 	}
 
 	ResourceOperationSchedule fireEvents(Resource resource, String severity,
-			int numberOfEvents) {
+			int numberOfEvents) throws MalformedURLException, SecurityException, IllegalArgumentException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException, LoginException_Exception {
 		SimpleDateFormat sdf = new SimpleDateFormat();
 		String details = sdf.format(new java.util.Date())
 				+ " >> events created for " + resource.name;
@@ -271,8 +274,11 @@ public class WsAlertManagerTest extends AssertJUnit implements
 		int repeatInterval = 0;
 		int repeatCount = 0;
 		int timeout = 0;
-		Configuration parameters = createParameters(resource, severity,
+//		Configuration parameters = createParameters(resource, severity,
+//				numberOfEvents, details);
+		 WsConfiguration parameters = createWsConfigurationParameters(resource, severity,
 				numberOfEvents, details);
+
 		String description = "Test script event for " + resource.name;
 
 		return WEBSERVICE_REMOTE.scheduleResourceOperation(subject,
@@ -313,13 +319,15 @@ public class WsAlertManagerTest extends AssertJUnit implements
 	}
 
 	ResourceOperationSchedule fireEvents(Resource resource, String severity,
-			int numberOfEvents, String details) {
+			int numberOfEvents, String details) throws MalformedURLException, SecurityException, IllegalArgumentException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException, LoginException_Exception {
 		String operationName = "createEvents";
 		int delay = 0;
 		int repeatInterval = 0;
 		int repeatCount = 0;
 		int timeout = 0;
-		Configuration parameters = createParameters(resource, severity,
+//		Configuration parameters = createParameters(resource, severity,
+//				numberOfEvents, details);
+		WsConfiguration parameters = createWsConfigurationParameters(resource, severity,
 				numberOfEvents, details);
 		String description = "Test script event for " + resource.name;
 
@@ -345,5 +353,29 @@ public class WsAlertManagerTest extends AssertJUnit implements
 		}
 		return events;
 
+	}
+	
+	public static WsConfiguration createWsConfigurationParameters(Resource resource,
+			String severity, int numberOfEvents, String details) throws MalformedURLException, SecurityException, IllegalArgumentException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException, LoginException_Exception {
+		init();
+		WsConfiguration params = new WsConfiguration();
+//		System.out.println("OBJECTFACTORY_REF:"+WS_OBJECT_FACTORY);
+		PropertySimple prop1 = WS_OBJECT_FACTORY.createPropertySimple();
+		prop1.setName("source");
+		prop1.setStringValue(resource.getName());
+		PropertySimple prop2 = WS_OBJECT_FACTORY.createPropertySimple();
+		prop2.setName("details");
+		prop2.setStringValue(details);
+		PropertySimple prop3 = WS_OBJECT_FACTORY.createPropertySimple();
+		prop3.setName("severity");
+		prop3.setStringValue(severity);
+		PropertySimple prop4 = WS_OBJECT_FACTORY.createPropertySimple();
+		prop4.setName("count");
+		prop4.setStringValue(Integer.valueOf(numberOfEvents) + "");
+		JaxbUtilities.addProperty(params, prop1);
+		JaxbUtilities.addProperty(params, prop2);
+		JaxbUtilities.addProperty(params, prop3);
+		JaxbUtilities.addProperty(params, prop4);
+		return params;
 	}
 }

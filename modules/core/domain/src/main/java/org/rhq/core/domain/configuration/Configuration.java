@@ -657,4 +657,12 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
             p.setConfiguration(this);
         }
     }
+
+    /** Getter for the properties reference. 
+     * 
+     * @return Map<String, Property> 
+     */
+    public Map<String, Property> getAllProperties() {
+        return this.properties;
+    }
 }

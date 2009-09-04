@@ -149,39 +149,41 @@ public class WsResourceManagerTest extends AssertJUnit implements TestProperties
 
 
 
-    //    //    function testFindWithFilteringAndFetchingAssociations() {
-    //    public void testFindWithFilteringAndFetchingAssociations() {
-    ////        var criteria = createCriteria();
-    //        ResourceCriteria criteria = WS_OBJECT_FACTORY.createResourceCriteria();
-    //        criteria.setFetchAgent(true);
-    //        criteria.setFetchAlertDefinitions(true);
-    //        criteria.setFetchResourceType(true);
-    //        criteria.setFetchChildResources(true);
-    //        criteria.setFetchParentResource(true);
-    //        criteria.setFetchResourceConfiguration(true);
-    //        criteria.setFetchResourceErrors(true);
-    //        criteria.setFetchPluginConfigurationUpdates(true);
-    //        criteria.setFetchImplicitGroups(true);
-    //        criteria.setFetchExplicitGroups(true);
-    //        criteria.setFetchOperationHistories(true);
-    //
-    ////        var resources = ResourceManager.findResourcesByCriteria(criteria);
-    //        List<Resource> resource = WEBSERVICE_REMOTE.findResourcesByCriteria(subject, criteria);
-    //
-    //        assertEquals("Expected to get back a single resource",resource.size(), 1);
-    //        assertNotNull("resource.agent should have been loaded",resource.agent );
-    //        assertNotNull("resource.alertDefinitions should have been loaded",resource.alertDefinitions);
-    //        assertNotNull(resource.resourceType, "resource.resourceType should have been loaded");
-    //        assertNotNull(resource.childResources, "resource.childResources should have been loaded");
-    //        assertNotNull(resource.parentResource, "resource.parentResource should have been loaded");
-    //        assertNotNull(resource.resourceConfiguration, "resource.resourceConfiguration should have been loaded");
-    //        assertNotNull(resource.resourceErrors, "resource.resourceErrors should have been loaded");
-    //        assertNotNull(resource.pluginConfigurationUpdates,
-    //            "resource.pluginConfigurationUpdates should have been loaded");
-    //        assertNotNull(resource.implicitGroups, "resource.implicitGroups should have been loaded");
-    //        assertNotNull(resource.explicitGroups, "reosurce.explicitGroups should have been loaded");
-    //        assertNotNull(resource.opertionHistories, "resource.operationHistories should have been loaded");
-    //    }
+        //    function testFindWithFilteringAndFetchingAssociations() {
+        public void testFindWithFilteringAndFetchingAssociations() {
+    //        var criteria = createCriteria();
+            ResourceCriteria criteria = WS_OBJECT_FACTORY.createResourceCriteria();
+            criteria.strict = true;
+            criteria.setFetchAgent(true);
+            criteria.setFetchAlertDefinitions(true);
+            criteria.setFetchResourceType(true);
+            criteria.setFetchChildResources(true);
+            criteria.setFetchParentResource(true);
+            criteria.setFetchResourceConfiguration(true);
+            criteria.setFetchResourceErrors(true);
+            criteria.setFetchPluginConfigurationUpdates(true);
+            criteria.setFetchImplicitGroups(true);
+            criteria.setFetchExplicitGroups(true);
+            criteria.setFetchOperationHistories(true);
+    
+    //        var resources = ResourceManager.findResourcesByCriteria(criteria);
+            List<Resource> resources = WEBSERVICE_REMOTE.findResourcesByCriteria(subject, criteria);
+    
+            assertEquals("Expected to get back a single resource",resources.size(), 1);
+            Resource resource = resources.get(0);
+            assertNotNull("resource.agent should have been loaded", resource.agent );
+            assertNotNull("resource.alertDefinitions should have been loaded",resource.alertDefinitions);
+            assertNotNull("resource.resourceType should have been loaded",resource.resourceType );
+            assertNotNull("resource.childResources should have been loaded",resource.childResources );
+            //TODO:? what's up here?
+//            assertNotNull("resource.parentResource should have been loaded", resource.parentResource);
+            assertNotNull("resource.resourceConfiguration should have been loaded", resource.resourceConfiguration );
+            assertNotNull("resource.resourceErrors should have been loaded",resource.resourceErrors);
+            assertNotNull("resource.pluginConfigurationUpdates should have been loaded",resource.pluginConfigurationUpdates);
+            assertNotNull("resource.implicitGroups should have been loaded",resource.implicitGroups);
+            assertNotNull("reosurce.explicitGroups should have been loaded",resource.explicitGroups);
+            assertNotNull("resource.operationHistories should have been loaded",resource.operationHistories);
+        }
 
     //    function testSortBySingleProperty() {
     @Test(enabled = TESTS_ENABLED)
@@ -265,10 +267,13 @@ public class WsResourceManagerTest extends AssertJUnit implements TestProperties
                 System.out.println("ID:"+resources.get(2).getId()+":"+resources.get(2).getId());
 
         assertEquals("The wrong resource lineage returned for resource " + resource, resources.size(), 3);
-        //        assertEquals("The wrong root resource was returned", "localhost.localdomain", resources.get(0).name);
+        assertEquals("The wrong root resource was returned", "localhost.localdomain", resources.get(0).name);
+//        assertEquals("The wrong root resource was returned", "Vital-AGENT", resources.get(0).name);
         //TODO: figure out why resource.getName is NULL most of the time.
-        //        assertTrue("The root resource was null.", (resources.get(0).getName()!=null));
-        //        assertEquals("The wrong parent resource was returned", resources.get(1).name, "server-omega-0");
+		assertTrue("The root resource was null.",
+				(resources.get(0).getName() != null));
+		assertEquals("The wrong parent resource was returned",
+				resources.get(1).name, "server-omega-0");
         assertEquals("The last resource in the lineage is wrong", resources.get(2).name, "service-alpha-0");
 
     }

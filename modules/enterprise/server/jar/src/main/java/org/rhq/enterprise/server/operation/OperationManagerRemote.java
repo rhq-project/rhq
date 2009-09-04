@@ -26,6 +26,7 @@ import javax.jws.WebParam;
 import javax.jws.WebService;
 import javax.jws.soap.SOAPBinding;
 import javax.xml.bind.annotation.XmlSeeAlso;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
@@ -41,6 +42,7 @@ import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.exception.ScheduleException;
 import org.rhq.enterprise.server.exception.UnscheduleException;
+import org.rhq.enterprise.server.jaxb.adapter.ConfigurationAdapter;
 import org.rhq.enterprise.server.system.ServerVersion;
 
 @SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
@@ -140,6 +142,7 @@ public interface OperationManagerRemote {
         @WebParam(name = "repeatInterval") long repeatInterval, //
         @WebParam(name = "repeatCount") int repeatCount, //
         @WebParam(name = "timeout") int timeout, //
+        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
         @WebParam(name = "parameters") Configuration parameters, //
         @WebParam(name = "description") String description) //
         throws ScheduleException;

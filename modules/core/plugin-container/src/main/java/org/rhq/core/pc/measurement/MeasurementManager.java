@@ -520,11 +520,13 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         return perMinuteValue;
     }
 
-    public synchronized Set<Integer> getMeasurementScheduleIds() {
+    public synchronized Set<Integer> getMeasurementScheduleIdsForResource(int resourceId) {
         Set<Integer> ids = new HashSet<Integer>();
 
         for (ScheduledMeasurementInfo info : scheduledRequests) {
-            ids.add(info.getScheduleId());
+            if (info.getResourceId() == resourceId) {
+                ids.add(info.getScheduleId());
+            }
         }
 
         return ids;

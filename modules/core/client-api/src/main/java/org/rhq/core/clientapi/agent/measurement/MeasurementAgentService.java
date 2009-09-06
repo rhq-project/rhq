@@ -74,5 +74,5 @@ public interface MeasurementAgentService {
      */
     Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, DataType dataType, String... measurementNames);
 
-    Set<Integer> getMeasurementScheduleIds();
+    Set<Integer> getMeasurementScheduleIdsForResource(int resourceId);
 }

@@ -73,4 +73,6 @@ public interface MeasurementAgentService {
      * @return the set of collected measurements with their data values collected
      */
     Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, DataType dataType, String... measurementNames);
+
+    Set<Integer> getMeasurementScheduleIds();
 }

@@ -520,6 +520,16 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         return perMinuteValue;
     }
 
+    public synchronized Set<Integer> getMeasurementScheduleIds() {
+        Set<Integer> ids = new HashSet<Integer>();
+
+        for (ScheduledMeasurementInfo info : scheduledRequests) {
+            ids.add(info.getScheduleId());
+        }
+
+        return ids;
+    }
+
     // -- MBean monitoring methods
 
     public long getMeasurementsCollected() {

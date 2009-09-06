@@ -68,6 +68,28 @@ function testFindWithSorting() {
     Assert.assertTrue(measurementSchedules.size() > 0, 'Failed to find measurement schedules when sorting');
 }
 
+function testEnablingAndDisablingMeasurementSchedules() {
+    var service = findAlphaService();
+
+    var criteria = MeasurementScheduleCriteria();
+    criteria.addFilterResourceId(service.id);
+
+    var schedules = MeasurementScheduleManager.findSchedulesByCriteria(criteria);
+
+    Assert.assertNumberEqualsJS(schedules.size(), 6, 'Failed to retrieve measurement schedules for ' + service.name);
+
+    //enableSchedules(schedules, service);
+
+    disableSchedules(schedules, service);
+
+    var scheduleIds = getScheduleIds(schedules);
+
+    var schedulesFromAgent = MeasurementScheduleManager.getResourceMeasurementSchedulesFromAgent(service.id);
+
+    Assert.assertNumberEqualsJS(schedulesFromAgent.size(), schedules.size(), 'Expected the number of schedules coming from ' +
+            'the agent to be the same as the number on the server');       
+}
+
 function findMeasurementDefinition() {
     var criteria = MeasurementDefinitionCriteria();
     criteria.addFilterName('alpha-metric0');
@@ -84,4 +106,30 @@ function findAlphaService() {
     criteria.addFilterParentResourceName('server-omega-0');
 
     return ResourceManager.findResourcesByCriteria(criteria).get(0);
+}
+
+function getScheduleIds(schedules) {
+    var ids = [];
+    for (i = 0; i < schedules.size(); ++i) {
+        ids.push(schedules.get(i).id);
+    }
+    return ids;
+}
+
+function enableSchedules(schedules, resource) {
+    setSchedulesEnabled(schedules, true);
+    MeasurementScheduleManager.enableSchedulesForResource(resource.id, getScheduleIds(schedules));                                             
+}
+
+function disableSchedules(schedules, resource) {
+    setSchedulesEnabled(schedules, false);
+    MeasurementScheduleManager.disableSchedulesForResource(resource.id, getScheduleIds(schedules));
+}
+
+function setSchedulesEnabled(schedules, enabled) {
+    println('ENABLED = ' + enabled);
+    for (i = 0; i < schedules.size(); ++i) {
+        schedules.get(i).enabled = enabled;
+    }
+
 }

@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 import javax.ejb.Local;
+import javax.jws.WebParam;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -362,5 +363,7 @@ public interface MeasurementScheduleManagerLocal {
     void updateMeasurementTemplates(Subject subject, int[] measurementDefinitionIds, long collectionInterval);
 
     PageList<MeasurementSchedule> findSchedulesByCriteria(Subject subject, MeasurementScheduleCriteria criteria);
+
+    PageList<MeasurementSchedule> getResourceMeasurementSchedulesFromAgent(Subject subject, int resourceId);
 
 }

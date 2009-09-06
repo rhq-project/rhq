@@ -99,4 +99,9 @@ public interface MeasurementScheduleManagerRemote {
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "criteria") MeasurementScheduleCriteria criteria);
 
+    @WebMethod
+    PageList<MeasurementSchedule> getResourceMeasurementSchedulesFromAgent(
+        @WebParam(name = "subject") Subject subject,
+        @WebParam(name = "resourceId") int resourceId);
+
 }

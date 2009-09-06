@@ -39,6 +39,7 @@ import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.sql.DataSource;
+import javax.jws.WebParam;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -79,6 +80,7 @@ import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.core.util.jdbc.JDBCUtil;
+import org.rhq.core.clientapi.agent.measurement.MeasurementAgentService;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -1281,5 +1283,36 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
             entityManager);
         return queryRunner.execute();
     }
+
+    public PageList<MeasurementSchedule> getResourceMeasurementSchedulesFromAgent(Subject subject, int resourceId) {
+        //verifyViewPermissionForMeasurementSchedules(subject, measurementScheduleIds);
+
+        AgentClient agentClient = agentManager.getAgentClient(resourceId);
+        MeasurementAgentService measurementAgentSvc = agentClient.getMeasurementAgentService();
+
+        PageList<MeasurementSchedule> schedules = new PageList<MeasurementSchedule>();
+        for (int scheduleId : measurementAgentSvc.getMeasurementScheduleIdsForResource(resourceId)) {
+            MeasurementSchedule schedule = getScheduleById(scheduleId);
+            schedules.add(schedule);
+        }
+
+        return schedules;
+    }
+
+    private void verifyViewPermissionForMeasurementSchedules(Subject subject, int[] measurementScheduleIds) {
+        for (int id : measurementScheduleIds) {
+            verifyViewPermission(subject, id);
+        }
+    }
+
+    private void verifyViewPermission(Subject subject, int scheduleId) {
+        MeasurementSchedule schedule = entityManager.find(MeasurementSchedule.class, scheduleId);
+        if (authorizationManager.hasResourcePermission(subject, Permission.MANAGE_MEASUREMENTS, schedule.getResource()
+            .getId()) == false) {
+            throw new PermissionException("User[" + subject.getName()
+                + "] does not have permission to view measurementSchedule[id=" + schedule.getId() + "]");
+        }
+    }
+
 
 }

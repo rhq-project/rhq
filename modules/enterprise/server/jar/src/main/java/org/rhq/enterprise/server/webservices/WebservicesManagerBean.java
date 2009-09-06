@@ -7,6 +7,7 @@ import java.util.Set;
 
 import javax.ejb.Stateless;
 import javax.jws.WebService;
+import javax.jws.WebParam;
 import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
@@ -522,6 +523,10 @@ public class WebservicesManagerBean implements WebservicesRemote {
     public PageList<MeasurementSchedule> findSchedulesByCriteria(Subject subject, MeasurementScheduleCriteria criteria) {
         checkParametersPassedIn(subject, criteria);
         return measurementScheduleManager.findSchedulesByCriteria(subject, criteria);
+    }
+
+    public PageList<MeasurementSchedule> getResourceMeasurementSchedulesFromAgent(Subject subject, int resourceId) {
+        return measurementScheduleManager.getResourceMeasurementSchedulesFromAgent(subject, resourceId);
     }
 
     //MEASUREMENTSCHEDULEMANAGER: END ----------------------------------

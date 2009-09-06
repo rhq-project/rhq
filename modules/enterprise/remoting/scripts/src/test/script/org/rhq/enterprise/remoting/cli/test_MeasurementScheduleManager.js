@@ -78,16 +78,31 @@ function testEnablingAndDisablingMeasurementSchedules() {
 
     Assert.assertNumberEqualsJS(schedules.size(), 6, 'Failed to retrieve measurement schedules for ' + service.name);
 
-    //enableSchedules(schedules, service);
+    enableSchedules(schedules, service);
 
-    disableSchedules(schedules, service);
-
-    var scheduleIds = getScheduleIds(schedules);
+    var scheduleIds = getMeasurementDefinitionIds(schedules);
 
     var schedulesFromAgent = MeasurementScheduleManager.getResourceMeasurementSchedulesFromAgent(service.id);
 
     Assert.assertNumberEqualsJS(schedulesFromAgent.size(), schedules.size(), 'Expected the number of schedules coming from ' +
-            'the agent to be the same as the number on the server');       
+            'the agent to be the same as the number on the server');
+
+    disableSchedules(schedules, service);
+
+    var verifySchedulesDisabledInDB = function() {
+        var schedules = MeasurementScheduleManager.findSchedulesByCriteria(criteria);
+        for (i = 0; i < schedules.size(); ++i) {
+            Assert.assertFalse(schedules.get(i).enabled, 'Failed to persist the disabling of schedules');
+        }
+    }
+
+    var verifySchedulesDisabledOnAgent = function() {
+        var schedulesFromAgent = MeasurementScheduleManager.getResourceMeasurementSchedulesFromAgent(service.id);
+        Assert.assertNumberEqualsJS(schedulesFromAgent.size(), 0, 'Schedules have been disabled but failed to sync changes with agent');
+    }
+
+    verifySchedulesDisabledInDB();
+    verifySchedulesDisabledOnAgent();
 }
 
 function findMeasurementDefinition() {
@@ -108,22 +123,22 @@ function findAlphaService() {
     return ResourceManager.findResourcesByCriteria(criteria).get(0);
 }
 
-function getScheduleIds(schedules) {
+function getMeasurementDefinitionIds(schedules) {
     var ids = [];
     for (i = 0; i < schedules.size(); ++i) {
-        ids.push(schedules.get(i).id);
+        ids.push(schedules.get(i).definition.id);
     }
     return ids;
 }
 
 function enableSchedules(schedules, resource) {
     setSchedulesEnabled(schedules, true);
-    MeasurementScheduleManager.enableSchedulesForResource(resource.id, getScheduleIds(schedules));                                             
+    MeasurementScheduleManager.enableSchedulesForResource(resource.id, getMeasurementDefinitionIds(schedules));
 }
 
 function disableSchedules(schedules, resource) {
     setSchedulesEnabled(schedules, false);
-    MeasurementScheduleManager.disableSchedulesForResource(resource.id, getScheduleIds(schedules));
+    MeasurementScheduleManager.disableSchedulesForResource(resource.id, getMeasurementDefinitionIds(schedules));
 }
 
 function setSchedulesEnabled(schedules, enabled) {

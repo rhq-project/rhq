@@ -25,19 +25,22 @@ package org.rhq.plugins.jbossas5.helper;
 import java.util.jar.Attributes;
 
 /**
- * The product type of a JBoss installation - AS, EAP, or SOA.
+ * The product type of a JBoss application server installation - AS, EAP, or SOA.
  *
  * @author Jessica Sant
  * @author Ian Springer
  */
 public enum JBossProductType {
-    AS("JBossAS", "JBoss Application Server", "default"), // the public offering
-    EAP("JBossEAP", "JBoss Enterprise Application Platform", "default"), // the customer offering
-    SOA("JBossSOA", "JBoss Enterprise SOA Platform", "production"); // the customer SOA platform
+    AS("JBoss AS", "JBoss Application Server", "default"), // the public offering
+    EAP("JBoss EAP", "JBoss Enterprise Application Platform", "default"), // the customer offering
+    SOA("JBoss SOA-P", "JBoss Enterprise SOA Platform", "production"); // the customer SOA platform
 
     public final String NAME;
     public final String DESCRIPTION;
     public final String DEFAULT_CONFIG_NAME;
+
+    private static final String EAP_IMPLEMENTATION_TITLE = "JBoss [EAP]";
+    private static final String SOA_IMPLEMENTATION_TITLE = "JBoss [SOA]";
 
     JBossProductType(String name, String description, String defaultConfigName) {
         this.NAME = name;
@@ -56,9 +59,9 @@ public enum JBossProductType {
         String implementationTitle = (attributes != null) ? attributes.getValue(Attributes.Name.IMPLEMENTATION_TITLE)
             : null;
         if (implementationTitle != null) {
-            if (implementationTitle.equalsIgnoreCase("JBoss [EAP]")) {
+            if (implementationTitle.equalsIgnoreCase(EAP_IMPLEMENTATION_TITLE)) {
                 result = JBossProductType.EAP;
-            } else if (implementationTitle.equalsIgnoreCase("JBoss [SOA]")) {
+            } else if (implementationTitle.equalsIgnoreCase(SOA_IMPLEMENTATION_TITLE)) {
                 result = JBossProductType.SOA;
             }
         }

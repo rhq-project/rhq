@@ -34,6 +34,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -54,19 +56,17 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.system.ProcessInfo;
-import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.plugins.jbossas5.helper.JBossInstallationInfo;
 import org.rhq.plugins.jbossas5.helper.JBossInstanceInfo;
 import org.rhq.plugins.jbossas5.helper.JBossProperties;
 import org.rhq.plugins.jbossas5.helper.JBossProductType;
 import org.rhq.plugins.jbossas5.util.JnpConfig;
 
-import org.jboss.on.common.jbossas.JmxInvokerServiceConfiguration;
-import org.jboss.on.common.jbossas.SecurityDomainInfo;
 import org.jboss.on.common.jbossas.JBossASDiscoveryUtils;
 
 /**
- * A Resource discovery component for JBoss AS, 5.1.0.CR1 or later, and JBoss EAP, 5.0.0.Beta or later, Servers.
+ * A Resource discovery component for JBoss AS, 5.2.0.Beta1 or later, and JBoss EAP and SOA-P, 5.0.0.Beta or later,
+ * Servers.
  *
  * @author Ian Springer
  * @author Mark Spritzler
@@ -78,8 +78,13 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
     private static final String ANY_ADDRESS = "0.0.0.0";
     private static final String LOCALHOST = "127.0.0.1";
     private static final String JAVA_HOME_ENV_VAR = "JAVA_HOME";
-    private static final ComparableVersion AS_MINIMUM_VERSION = new ComparableVersion("5.1.0.CR1");
-    private static final ComparableVersion EAP_MINIMUM_VERSION = new ComparableVersion("5.0.0.Beta");
+
+    private static final Map<JBossProductType, ComparableVersion> MINIMUM_PRODUCT_VERSIONS = new HashMap(3);
+    static {
+        MINIMUM_PRODUCT_VERSIONS.put(JBossProductType.AS, new ComparableVersion("5.2.0.Beta1"));
+        MINIMUM_PRODUCT_VERSIONS.put(JBossProductType.EAP, new ComparableVersion("5.0.0.Beta"));
+        MINIMUM_PRODUCT_VERSIONS.put(JBossProductType.SOA, new ComparableVersion("5.0.0.Beta"));
+    }
 
     private static final String[] CLIENT_JARS = new String[] {
             "client/jbossall-client.jar",
@@ -92,7 +97,7 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
     private final Log log = LogFactory.getLog(this.getClass());
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext discoveryContext) {
-        log.trace("Discovering " + discoveryContext.getResourceType().getName() + " Resources...");
+        log.trace("Discovering JBoss AS 5.x and 6.x Resources...");
 
         Set<DiscoveredResourceDetails> resources = new HashSet<DiscoveredResourceDetails>();
         // NOTE: The PC will never actually pass in more than one plugin config...
@@ -112,15 +117,14 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
                 resources.addAll(discoverExternalJBossAsProcesses(discoveryContext));
             }
         }
-        log
-            .trace("Discovered " + resources.size() + " " + discoveryContext.getResourceType().getName()
-                + " resources.");
+        log.trace("Discovered " + resources.size() + " JBossAS 5.x and 6.x Resources.");
 
         return resources;
     }
 
     @SuppressWarnings("unchecked")
-    public List<URL> getAdditionalClasspathUrls(ResourceDiscoveryContext context, DiscoveredResourceDetails details) throws Exception {
+    public List<URL> getAdditionalClasspathUrls(ResourceDiscoveryContext context, DiscoveredResourceDetails details) 
+            throws Exception {
         Configuration pluginConfig = details.getPluginConfiguration();
         String homeDir = pluginConfig.getSimple(ApplicationServerPluginConfigurationProperties.HOME_DIR).getStringValue();
 
@@ -129,10 +133,10 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
         for (String jarFileName : CLIENT_JARS) {
             File clientJar = new File(homeDir, jarFileName);
             if (!clientJar.exists()) {
-                throw new FileNotFoundException("Cannot find [" + clientJar + "]; unable to manage server");
+                throw new FileNotFoundException("Cannot find [" + clientJar + "] - unable to manage server.");
             }
             if (!clientJar.canRead()) {
-                throw new IOException("Cannot read [" + clientJar + "]; unable to manage server");
+                throw new IOException("Cannot read [" + clientJar + "] - unable to manage server.");
             }
             clientJars.add(clientJar.toURI().toURL());
         }
@@ -147,36 +151,22 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
         for (ProcessScanResult autoDiscoveryResult : autoDiscoveryResults) {
             ProcessInfo processInfo = autoDiscoveryResult.getProcessInfo();
             if (log.isDebugEnabled())
-                log.debug("Discovered JBossAS process: " + processInfo);
+                log.debug("Discovered JBoss AS process: " + processInfo);
 
             JBossInstanceInfo cmdLine;
             try {
                 cmdLine = new JBossInstanceInfo(processInfo);
             } catch (Exception e) {
-                log.error("Failed to process JBossAS command line: " + Arrays.asList(processInfo.getCommandLine()), e);
+                log.error("Failed to process JBoss AS command line: " + Arrays.asList(processInfo.getCommandLine()), e);
                 continue;
             }
 
-            // See if this JBAS instance's version is less than 5.1.0.CR1 - if so, skip it.
+            // Skip it if it's an AS/EAP/SOA-P version we don't support.
             JBossInstallationInfo installInfo = cmdLine.getInstallInfo();
-            ComparableVersion version = new ComparableVersion(installInfo.getVersion());
-
-            JBossProductType productType = installInfo.getProductType();
-
-            // Check if this is a compatible JBoss AS instance.
-            if (productType == JBossProductType.AS && version.compareTo(AS_MINIMUM_VERSION) < 0) {
-                if (log.isDebugEnabled())
-                    log.debug("JBoss AS version " + version + " is not supported by this plugin (minimum version is "
-                        + AS_MINIMUM_VERSION + ") - skipping...");
+            if (!isSupportedProduct(installInfo)) {
                 continue;
             }
-            // Check if this is a compatible JBoss EAP instance.
-            if (productType == JBossProductType.EAP && version.compareTo(EAP_MINIMUM_VERSION) < 0) {
-                if (log.isDebugEnabled())
-                    log.debug("JBoss EAP version " + version + " is not supported by this plugin (minimum version is "
-                        + EAP_MINIMUM_VERSION + ") - skipping...");
-                continue;
-            }
+
             File installHome = new File(cmdLine.getSystemProperties().getProperty(JBossProperties.HOME_DIR));
             File configDir = new File(cmdLine.getSystemProperties().getProperty(JBossProperties.SERVER_HOME_DIR));
 
@@ -185,12 +175,12 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
             // a directory).
             try {
                 if (!configDir.getCanonicalFile().isDirectory()) {
-                    log.warn("Skipping discovery for process " + processInfo + ", because JBAS configuration dir '"
+                    log.warn("Skipping discovery for JBoss AS process " + processInfo + ", because configuration dir '"
                         + configDir + "' does not exist or is not a directory.");
                     continue;
                 }
             } catch (IOException e) {
-                log.error("Skipping discovery for process " + processInfo + ", because JBAS configuration dir '"
+                log.error("Skipping discovery for JBoss AS process " + processInfo + ", because configuration dir '"
                     + configDir + "' could not be canonicalized.", e);
                 continue;
             }
@@ -227,9 +217,9 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
 
             String javaHome = processInfo.getEnvironmentVariable(JAVA_HOME_ENV_VAR);
             if (javaHome == null && log.isDebugEnabled()) {
-                log.debug("JAVA_HOME environment variable not set in JBossAS process - defaulting "
+                log.debug("JAVA_HOME environment variable not set in JBoss AS process - defaulting "
                     + ApplicationServerPluginConfigurationProperties.JAVA_HOME
-                    + "connection property to the plugin container JRE dir.");
+                    + " connection property to the plugin container JRE dir.");
                 javaHome = System.getenv(JAVA_HOME_ENV_VAR);
             }
 
@@ -272,7 +262,7 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
         try {
             return new InProcessJBossASDiscovery().discoverInProcessJBossAS(discoveryContext);
         } catch (Throwable t) {
-            log.debug("In-process JBossAS discovery failed - we are probably not running embedded within JBossAS", t);
+            log.debug("In-process JBoss AS discovery failed - we are probably not running embedded within JBoss AS.", t);
             return null;
         }
     }
@@ -313,8 +303,8 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
         File rhqInstallerWarUndeployed = new File(deployDir, "rhq-installer.war.rej");
         boolean isRhqServer = rhqInstallerWar.exists() || rhqInstallerWarUndeployed.exists();
         if (isRhqServer) {
-            baseName += " Jopr Server, ";
-            description += " hosting the Jopr Server";
+            baseName += " RHQ Server, ";
+            description += " hosting the RHQ Server";
             // We know this is an RHQ Server. Let's add an event source for its server log file, but disable it by default.
             configureEventSourceForServerLogFile(pluginConfig);
         }
@@ -362,10 +352,10 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
     }
 
     private String getJnpURL(JBossInstanceInfo cmdLine, File installHome, File configDir) {
-        File urlStore = new File(configDir, "data/jnp-service.url");
-        if (urlStore.exists() && urlStore.canRead()) {
+        File jnpServiceUrlFile = new File(configDir, "data/jnp-service.url");
+        if (jnpServiceUrlFile.exists() && jnpServiceUrlFile.canRead()) {
             try {
-                BufferedReader br = new BufferedReader(new FileReader(urlStore));
+                BufferedReader br = new BufferedReader(new FileReader(jnpServiceUrlFile));
                 String jnpUrl = br.readLine();
                 if (jnpUrl != null) {
                     if (log.isDebugEnabled()) {
@@ -378,7 +368,7 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
             }
         }
 
-        log.warn("Failed to read jnp-service.url from " + configDir + "/data");
+        log.warn("Failed to read JNP URL from '" + jnpServiceUrlFile + "'.");
 
         // Above did not work, so fall back to our previous scheme
         JnpConfig jnpConfig = getJnpConfig(installHome, configDir, cmdLine.getSystemProperties());
@@ -415,6 +405,19 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
                 .getList(LogFileEventResourceComponentHelper.LOG_EVENT_SOURCES_CONFIG_PROP);
             logEventSources.add(serverLogEventSource);
         }
+    }
+
+    private boolean isSupportedProduct(JBossInstallationInfo installInfo) {
+        ComparableVersion version = new ComparableVersion(installInfo.getVersion());
+        JBossProductType productType = installInfo.getProductType();
+        ComparableVersion minimumVersion = MINIMUM_PRODUCT_VERSIONS.get(productType);
+        // The product is supported if the version is greater than or equal to the minimum version.
+        boolean supported = (version.compareTo(minimumVersion) >= 0);
+        if (!supported) {
+            log.debug(productType + " version " + version + " is not supported by this plugin (minimum " + productType
+                    + " version is " + minimumVersion + ") - skipping...");
+        }
+        return supported;
     }
 
     @NotNull

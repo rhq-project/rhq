@@ -25,7 +25,6 @@ package org.rhq.core.domain.criteria;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
-import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.util.PageOrdering;
 
@@ -52,51 +51,58 @@ public class RoleCriteria extends Criteria {
         super(Role.class);
     }
 
-    public void addFilterId(Integer filterId) {
+    public Integer getFilterId() {
+        return this.filterId;
+    }
+
+    public void setFilterId(Integer filterId) {
         this.filterId = filterId;
     }
 
-    public void addFilterName(String filterName) {
+    public void setFilterName(String filterName) {
         this.filterName = filterName;
     }
 
-    public void addFilterDescription(String filterDescription) {
+    public void setFilterDescription(String filterDescription) {
         this.filterDescription = filterDescription;
     }
 
+    public boolean getFetchSubjects() {
+        return this.fetchSubjects;
+    }
+
     /**
      * Requires MANAGE_SECURITY
      * @param fetchSubjects
      */
-    public void fetchSubjects(boolean fetchSubjects) {
+    public void setFetchSubjects(boolean fetchSubjects) {
         this.fetchSubjects = fetchSubjects;
-        if (fetchSubjects) {
-            this.addRequiredPermission(Permission.MANAGE_SECURITY);
-        }
     }
 
     /**
      * Requires MANAGE_SECURITY
      * @param fetchSubjects
      */
-    public void fetchResourceGroups(boolean fetchResourceGroups) {
+    public void setFetchResourceGroups(boolean fetchResourceGroups) {
         this.fetchResourceGroups = fetchResourceGroups;
-        if (fetchResourceGroups) {
-            this.addRequiredPermission(Permission.MANAGE_SECURITY);
-        }
     }
 
-    public void fetchPermissions(boolean fetchPermissions) {
+    public void setFetchPermissions(boolean fetchPermissions) {
         this.fetchPermissions = fetchPermissions;
     }
 
-    public void fetchRoleNotifications(boolean fetchRoleNotifications) {
+    public void setFetchRoleNotifications(boolean fetchRoleNotifications) {
         this.fetchRoleNotifications = fetchRoleNotifications;
     }
 
-    public void addSortName(PageOrdering sortName) {
+    public void setSortName(PageOrdering sortName) {
         addSortField("name");
         this.sortName = sortName;
+    }
+
+    /** subclasses should override as necessary */
+    public boolean isSecurityManagerRequired() {
+        return (this.fetchSubjects || this.fetchResourceGroups);
     }
 
 }

@@ -26,11 +26,10 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.InventoryStatus;
-import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.util.PageOrdering;
 
 /**
@@ -361,9 +360,6 @@ public class ResourceCriteria extends Criteria {
      */
     public void fetchChildResources(boolean fetchChildResources) {
         this.fetchChildResources = fetchChildResources;
-        if (fetchChildResources) {
-            this.addRequiredPermission(Permission.MANAGE_INVENTORY);
-        }
     }
 
     /**
@@ -372,9 +368,6 @@ public class ResourceCriteria extends Criteria {
      */
     public void fetchParentResource(boolean fetchParentResource) {
         this.fetchParentResource = fetchParentResource;
-        if (fetchParentResource) {
-            this.addRequiredPermission(Permission.MANAGE_INVENTORY);
-        }
     }
 
     public void fetchResourceConfiguration(boolean fetchResourceConfiguration) {
@@ -500,6 +493,11 @@ public class ResourceCriteria extends Criteria {
     public void addSortCurrentAvailability(PageOrdering sortCurrentAvailability) {
         addSortField("currentAvailability");
         this.sortCurrentAvailability = sortCurrentAvailability;
+    }
+
+    /** subclasses should override as necessary */
+    public boolean isInventoryManagerRequired() {
+        return (this.fetchChildResources || this.fetchParentResource);
     }
 
 }

@@ -3,9 +3,8 @@ package org.rhq.core.domain.criteria;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
-import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.util.PageOrdering;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings("unused")
@@ -130,9 +129,6 @@ public class PackageVersionCriteria extends Criteria {
      */
     public void fetchInstalledPackages(boolean fetchInstalledPackages) {
         this.fetchInstalledPackages = fetchInstalledPackages;
-        if (fetchInstalledPackages) {
-            this.addRequiredPermission(Permission.MANAGE_INVENTORY);
-        }
     }
 
     /**
@@ -141,9 +137,6 @@ public class PackageVersionCriteria extends Criteria {
      */
     public void fetchInstalledPackageHistory(boolean fetchInstalledPackageHistory) {
         this.fetchInstalledPackageHistory = fetchInstalledPackageHistory;
-        if (fetchInstalledPackageHistory) {
-            this.addRequiredPermission(Permission.MANAGE_INVENTORY);
-        }
     }
 
     public void fetchProductVersionPackageVersions(boolean fetchProductVersionPackageVersions) {
@@ -154,4 +147,10 @@ public class PackageVersionCriteria extends Criteria {
         addSortField("displayName");
         this.sortDisplayName = sortDisplayName;
     }
+
+    /** subclasses should override as necessary */
+    public boolean isInventoryManagerRequired() {
+        return (this.fetchInstalledPackages || this.fetchInstalledPackageHistory);
+    }
+
 }

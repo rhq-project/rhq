@@ -28,7 +28,6 @@ import java.util.List;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
-import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageOrdering;
@@ -148,9 +147,6 @@ public class ResourceGroupCriteria extends Criteria {
      */
     public void fetchRoles(boolean fetchRoles) {
         this.fetchRoles = fetchRoles;
-        if (fetchRoles) {
-            this.addRequiredPermission(Permission.MANAGE_SECURITY);
-        }
     }
 
     public void addSortName(PageOrdering sortName) {
@@ -161,6 +157,11 @@ public class ResourceGroupCriteria extends Criteria {
     public void addSortResourceTypeName(PageOrdering sortResourceTypeName) {
         addSortField("resourceTypeName");
         this.sortResourceTypeName = sortResourceTypeName;
+    }
+
+    /** subclasses should override as necessary */
+    public boolean isSecurityManagerRequired() {
+        return this.fetchRoles;
     }
 
 }

@@ -160,9 +160,11 @@
               <contextRoot>/</contextRoot>
             </webModule>
 
+            <!--  included unless exclude.webdav property is set to true. -->
             <webModule>
               <groupId>${project.groupId}</groupId>
               <artifactId>rhq-webdav</artifactId>
+              <excluded>${exclude-webdav}</excluded>
               <bundleFileName>rhq-webdav.war</bundleFileName>
               <contextRoot>/webdav</contextRoot>
             </webModule>

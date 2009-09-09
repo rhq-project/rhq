@@ -63,21 +63,9 @@
                   <onc:select name="selectedItems" value="#{item.id}" type="radio" />
                </rich:column>
 
-               <rich:column rendered="#{param.debug}">
-                  <f:facet name="header">
-                     <onc:sortableColumnHeader sort="od.id">
-                        <h:outputText styleClass="headerText" value="ID" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
-
-                  <h:outputText value="#{item.id}"/>
-               </rich:column>
-
                <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="od.displayName">
-                        <h:outputText styleClass="headerText" value="Name" />
-                     </onc:sortableColumnHeader>
+                     <h:outputText styleClass="headerText" value="Name" />
                   </f:facet>
 
                   <h:outputLink action="success" rendered="#{ResourceGroupUIBean.permissions.control}">
@@ -96,9 +84,7 @@
 
                <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="od.description">
-                        <h:outputText styleClass="headerText" value="Description" />
-                     </onc:sortableColumnHeader>
+                     <h:outputText styleClass="headerText" value="Description" />
                   </f:facet>
 
                   <h:outputText value="#{item.description}"/>

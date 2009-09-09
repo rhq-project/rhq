@@ -31,9 +31,9 @@ import java.util.jar.Attributes;
  * @author Ian Springer
  */
 public enum JBossProductType {
-    AS("JBossAS", "JBoss Application Server", "default"), // the public offering
-    EAP("JBossEAP", "JBoss Enterprise Application Platform", "production"), // the customer offering
-    SOA("JBossSOA", "JBoss Enterprise SOA Platform", "production"); // the customer SOA platform
+    AS("JBoss AS", "JBoss Application Server", "default"), // the public offering
+    EAP("JBoss EAP", "JBoss Enterprise Application Platform", "production"), // the customer offering
+    SOA("JBoss SOA-P", "JBoss Enterprise SOA Platform", "production"); // the customer SOA platform
 
     public final String NAME;
     public final String DESCRIPTION;

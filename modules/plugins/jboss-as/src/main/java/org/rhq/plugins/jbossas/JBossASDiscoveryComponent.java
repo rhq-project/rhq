@@ -77,7 +77,7 @@ public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent {
     private static final String CHANGE_ME = "***CHANGE_ME***";
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) {
-        log.debug("Discovering JBossAS 3.2.x and 4.x servers...");
+        log.debug("Discovering JBoss AS 3.2.x and 4.x servers...");
         Set<DiscoveredResourceDetails> resources = new HashSet<DiscoveredResourceDetails>();
         DiscoveredResourceDetails jbossPcIsEmbeddedIn = discoverJBossPcIsEmbeddedIn(context);
         if (jbossPcIsEmbeddedIn != null) {
@@ -94,21 +94,22 @@ public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent {
         for (ProcessScanResult autoDiscoveryResult : autoDiscoveryResults) {
             ProcessInfo processInfo = autoDiscoveryResult.getProcessInfo();
             if (log.isDebugEnabled())
-                log.debug("Discovered JBossAS process: " + processInfo);
+                log.debug("Discovered JBoss AS process: " + processInfo);
 
             JBossInstanceInfo cmdLine;
             try {
                 cmdLine = new JBossInstanceInfo(processInfo);
             } catch (Exception e) {
-                log.error("Failed to process JBossAS command line: " + Arrays.asList(processInfo.getCommandLine()), e);
+                log.error("Failed to process JBoss AS command line: " + Arrays.asList(processInfo.getCommandLine()), e);
                 continue;
             }
 
-            // See if we have an AS 5 - if so, skip it.
+            // See if we have an AS 5 or AS 6 - if so, skip it.
             JBossInstallationInfo installInfo = cmdLine.getInstallInfo();
-            if (installInfo.getVersion().startsWith("5")) {
+            String version = installInfo.getVersion();
+            if (version.startsWith("5") || version.startsWith("6")) {
                 if (log.isDebugEnabled())
-                    log.debug("Found an AS 5, which is not supported by this plugin - skipping...");
+                    log.debug("Found JBoss AS 5.0 or later, which is not supported by this plugin - skipping...");
                 continue;
             }
 
@@ -128,12 +129,12 @@ public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent {
             // a directory).
             try {
                 if (!configDir.getCanonicalFile().isDirectory()) {
-                    log.warn("Skipping discovery for process " + processInfo + ", because JBAS configuration dir '"
+                    log.warn("Skipping discovery for JBoss AS process " + processInfo + ", because configuration dir '"
                         + configDir + "' does not exist or is not a directory.");
                     continue;
                 }
             } catch (IOException e) {
-                log.error("Skipping discovery for process " + processInfo + ", because JBAS configuration dir '"
+                log.error("Skipping discovery for JBoss AS process " + processInfo + ", because configuration dir '"
                     + configDir + "' could not be canonicalized.", e);
                 continue;
             }
@@ -171,9 +172,9 @@ public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent {
 
             String javaHome = processInfo.getEnvironmentVariable(JAVA_HOME_ENV_VAR);
             if (javaHome == null && log.isDebugEnabled()) {
-                log.debug("JAVA_HOME environment variable not set in JBossAS process - defaulting "
+                log.debug("JAVA_HOME environment variable not set in JBoss AS process - defaulting "
                     + JBossASServerComponent.JAVA_HOME_PATH_CONFIG_PROP
-                    + "connection property to the plugin container JRE dir.");
+                    + " connection property to the plugin container JRE dir.");
             }
 
             pluginConfiguration.put(new PropertySimple(JBossASServerComponent.JAVA_HOME_PATH_CONFIG_PROP, javaHome));
@@ -295,8 +296,8 @@ public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent {
         String description = installInfo.getProductType().DESCRIPTION;
         boolean isInServer = isEmbeddedInServer(absoluteConfigPath);
         if (isInServer) {
-            baseName += " Jopr Server, ";
-            description += " hosting the Jopr Server";
+            baseName += " RHQ Server, ";
+            description += " hosting the RHQ Server";
 
             // RHQ-633 : We know this is an RHQ Server. Let's auto-configure for tracking its log file, which is not in
             //           the standard JBoss AS location.
@@ -404,14 +405,14 @@ public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent {
                     jnpPort, configName, installInfo);
                 DiscoveredResourceDetails resource = new DiscoveredResourceDetails(context.getResourceType(), configDir
                     .getAbsolutePath(), resourceName, version,
-                    "JBossAS server that the Plugin Container is running within", pluginConfiguration, null);
+                    "JBoss AS server that the RHQ Plugin Container is running within", pluginConfiguration, null);
 
                 return resource;
             }
         } catch (Exception e) {
             /* JBoss MBean doesn't exist - not a JBoss server. */
             if (log.isDebugEnabled())
-                log.debug("Not detected to be embedded in a JBossAS Server", e);
+                log.debug("Not detected to be embedded in a JBoss AS Server", e);
         }
 
         return null;

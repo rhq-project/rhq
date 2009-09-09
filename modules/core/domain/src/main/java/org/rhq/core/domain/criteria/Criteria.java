@@ -236,25 +236,30 @@ public abstract class Criteria implements Serializable {
 
     public PageControl getPageControl() {
         PageControl pc = null;
-        if (pageNumber == null || pageSize == null) {
-            pc = PageControl.getUnlimitedInstance();
+
+        if (pageControlOverrides != null) {
+            pc = pageControlOverrides;
         } else {
-            pc = new PageControl(pageNumber, pageSize);
-        }
-        for (String fieldName : orderingFieldNames) {
-            for (Field sortField : getFields(Type.SORT)) {
-                if (sortField.getName().equals(fieldName) == false) {
-                    continue;
-                }
-                Object sortFieldValue = null;
-                try {
-                    sortFieldValue = sortField.get(this);
-                } catch (IllegalAccessException iae) {
-                    throw new RuntimeException(iae);
-                }
-                if (sortFieldValue != null) {
-                    PageOrdering pageOrdering = (PageOrdering) sortFieldValue;
-                    pc.addDefaultOrderingField(getCleansedFieldName(sortField, 4), pageOrdering);
+            if (pageNumber == null || pageSize == null) {
+                pc = PageControl.getUnlimitedInstance();
+            } else {
+                pc = new PageControl(pageNumber, pageSize);
+            }
+            for (String fieldName : orderingFieldNames) {
+                for (Field sortField : getFields(Type.SORT)) {
+                    if (sortField.getName().equals(fieldName) == false) {
+                        continue;
+                    }
+                    Object sortFieldValue = null;
+                    try {
+                        sortFieldValue = sortField.get(this);
+                    } catch (IllegalAccessException iae) {
+                        throw new RuntimeException(iae);
+                    }
+                    if (sortFieldValue != null) {
+                        PageOrdering pageOrdering = (PageOrdering) sortFieldValue;
+                        pc.addDefaultOrderingField(getCleansedFieldName(sortField, 4), pageOrdering);
+                    }
                 }
             }
         }

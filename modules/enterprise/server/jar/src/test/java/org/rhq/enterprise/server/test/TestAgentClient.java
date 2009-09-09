@@ -130,6 +130,10 @@ public class TestAgentClient implements AgentClient, ContentAgentService, Resour
     public void updateCollection(Set<ResourceMeasurementScheduleRequest> resourceSchedules) {
     }
 
+    public Set<Integer> getMeasurementScheduleIdsForResource(int resourceId) {
+        return null;
+    }
+
     public ConfigurationUpdateResponse executeUpdateResourceConfigurationImmediately(ConfigurationUpdateRequest request)
         throws PluginContainerException {
         return null;

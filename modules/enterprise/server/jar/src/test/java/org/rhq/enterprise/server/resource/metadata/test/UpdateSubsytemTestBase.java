@@ -219,6 +219,10 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
 
         }
 
+        public Set<Integer> getMeasurementScheduleIdsForResource(int resourceId) {
+            return null;
+        }
+
     }
 
 }

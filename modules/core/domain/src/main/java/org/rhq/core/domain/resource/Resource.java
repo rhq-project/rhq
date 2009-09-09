@@ -1006,6 +1006,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
 
     // bulk delete @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY, cascade = { CascadeType.REMOVE })
     @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY)
+    @XmlTransient
     private List<ResourceError> resourceErrors = new ArrayList<ResourceError>();
 
     // bulk delete @OneToMany(mappedBy = "resource", cascade = { CascadeType.REMOVE }, fetch = FetchType.LAZY)

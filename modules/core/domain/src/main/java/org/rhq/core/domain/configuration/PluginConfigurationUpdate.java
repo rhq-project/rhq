@@ -30,6 +30,9 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlTransient;
 
 import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.resource.Resource;
@@ -110,6 +113,7 @@ import org.rhq.core.domain.resource.Resource;
 /**
  * @author Joseph Marques
  */
+@XmlAccessorType(XmlAccessType.FIELD)
 public class PluginConfigurationUpdate extends AbstractResourceConfigurationUpdate {
     private static final long serialVersionUID = 1L;
 
@@ -128,6 +132,7 @@ public class PluginConfigurationUpdate extends AbstractResourceConfigurationUpda
 
     @JoinColumn(name = "PLUGIN_CONFIG_RES_ID", referencedColumnName = "ID", nullable = true)
     @ManyToOne(cascade = CascadeType.MERGE, fetch = FetchType.LAZY)
+    @XmlTransient
     private Resource resource;
 
     @JoinColumn(name = "AGG_PLUGIN_UPDATE_ID", referencedColumnName = "ID", nullable = true)

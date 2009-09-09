@@ -43,6 +43,7 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.PersistenceException;
 import javax.persistence.Query;
 import javax.sql.DataSource;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -73,11 +74,11 @@ import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.CriteriaQueryGenerator;
+import org.rhq.core.domain.util.CriteriaQueryRunner;
 import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
-import org.rhq.core.domain.util.CriteriaQueryRunner;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
@@ -87,6 +88,7 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.exception.UnscheduleException;
+import org.rhq.enterprise.server.jaxb.adapter.ResourceGroupAdapter;
 import org.rhq.enterprise.server.operation.GroupOperationSchedule;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
@@ -144,7 +146,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public ResourceGroup createResourceGroup(Subject user, ResourceGroup group) {
+    public ResourceGroup createResourceGroup(Subject user, //
+        @XmlJavaTypeAdapter(ResourceGroupAdapter.class) ResourceGroup group) {
         /*
         GH: We are now allowing Groups where names collide... TODO, should this only be allowed for cluster auto backing groups?
         Query query = entityManager.createNamedQuery(ResourceGroup.QUERY_FIND_BY_NAME);

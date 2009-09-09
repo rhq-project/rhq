@@ -49,6 +49,9 @@ import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlTransient;
 
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.operation.OperationDefinition;
@@ -226,6 +229,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 })
 @SequenceGenerator(name = "RHQ_ALERT_DEFINITION_ID_SEQ", sequenceName = "RHQ_ALERT_DEFINITION_ID_SEQ", allocationSize = 10)
 @Table(name = "RHQ_ALERT_DEFINITION")
+@XmlAccessorType(XmlAccessType.FIELD)
 public class AlertDefinition implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -300,10 +304,12 @@ public class AlertDefinition implements Serializable {
 
     @JoinColumn(name = "RESOURCE_ID", nullable = true)
     @ManyToOne
+    @XmlTransient
     private Resource resource;
 
     @JoinColumn(name = "RESOURCE_GROUP_ID", nullable = true)
     @ManyToOne
+    @XmlTransient
     private ResourceGroup resourceGroup;
 
     @Column(name = "ENABLED", nullable = false)
@@ -372,6 +378,7 @@ public class AlertDefinition implements Serializable {
     @OneToMany(mappedBy = "alertDefinition", cascade = CascadeType.REMOVE)
     @OrderBy
     // primary key
+    @XmlTransient
     private Set<Alert> alerts = new LinkedHashSet<Alert>();
 
     private transient AlertDefinitionContext context;

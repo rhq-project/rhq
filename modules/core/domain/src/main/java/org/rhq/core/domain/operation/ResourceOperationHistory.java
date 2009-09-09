@@ -31,6 +31,9 @@ import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToOne;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlTransient;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.Resource;
@@ -91,6 +94,7 @@ import org.rhq.core.domain.resource.Resource;
         + "      AND (roh.startedTime > :startTime OR :startTime IS NULL) " //
         + "      AND (roh.modifiedTime < :endTime OR :endTime IS NULL) " //
         + "      AND (roh.status LIKE :status OR :status IS NULL) ") })
+@XmlAccessorType(XmlAccessType.FIELD)
 public class ResourceOperationHistory extends OperationHistory {
     public static final String QUERY_FIND_ALL_IN_STATUS = "ResourceOperationHistory.findAllInStatus";
     public static final String QUERY_FIND_BY_GROUP_OPERATION_HISTORY_ID = "ResourceOperationHistory.findByGroupOperationHistoryId";
@@ -108,6 +112,7 @@ public class ResourceOperationHistory extends OperationHistory {
 
     @JoinColumn(name = "RESOURCE_ID", referencedColumnName = "ID")
     @ManyToOne
+    @XmlTransient
     private Resource resource;
 
     @JoinColumn(name = "RESULTS_CONFIG_ID", referencedColumnName = "ID")

@@ -35,14 +35,19 @@ import javax.persistence.MappedSuperclass;
 import javax.persistence.OneToOne;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlTransient;
 
 @MappedSuperclass
 /**
  * Base class for resource configuration and plugin configuration updates (i.e. history items).
  */
+@XmlAccessorType(XmlAccessType.FIELD)
 public abstract class AbstractConfigurationUpdate {
     @JoinColumn(name = "CONFIGURATION_ID", referencedColumnName = "ID", nullable = false)
     @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
+    @XmlTransient
     protected Configuration configuration;
 
     @Column(name = "STATUS", nullable = false)

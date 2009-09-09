@@ -112,7 +112,7 @@ import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.exception.UnscheduleException;
-import org.rhq.enterprise.server.jaxb.adapter.ResourceAdapter;
+import org.rhq.enterprise.server.jaxb.adapter.ResourceListAdapter;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.operation.ResourceOperationSchedule;
@@ -2005,7 +2005,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     // lineage is a getXXX (not findXXX) because it logically returns a single object, but modeled as a list here
-    public @XmlJavaTypeAdapter(value = ResourceAdapter.class)
+    public @XmlJavaTypeAdapter(value = ResourceListAdapter.class)
     List<Resource> findResourceLineage(Subject subject, int resourceId) {
         List<Resource> result = null;
 

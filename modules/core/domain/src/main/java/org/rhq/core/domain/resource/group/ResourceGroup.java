@@ -46,6 +46,8 @@ import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -179,6 +181,7 @@ import org.rhq.core.domain.resource.ResourceType;
         + "                         WHERE rg.id = :groupId ) ") })
 @SequenceGenerator(name = "id", sequenceName = "RHQ_RESOURCE_GROUP_ID_SEQ")
 @Table(name = "RHQ_RESOURCE_GROUP")
+@XmlAccessorType(XmlAccessType.FIELD)
 public class ResourceGroup extends Group {
     private static final long serialVersionUID = 1L;
 

@@ -11,7 +11,7 @@
 
    <!-- load all the Stateless Session Bean for WS exposure as properties. Must add bean as separate 
    		property AND in the "ws-list" below for successful inclusion. ##TODO SP: collapse these to one list. -->
-   <property name="SimpleManager" value="org.rhq.enterprise.server.jaxb.SimpleManagerBean" />
+   <property name="PropertyBagManager" value="org.rhq.enterprise.server.jaxb.PropertyBagManagerBean" />
    <property name="AlertManager" value="org.rhq.enterprise.server.alert.AlertManagerBean" />
    <property name="AlertDefinitionManager" value="org.rhq.enterprise.server.alert.AlertDefinitionManagerBean" />
    <property name="AvailabilityManager" value="org.rhq.enterprise.server.measurement.AvailabilityManagerBean" />
@@ -37,7 +37,7 @@
 
    <!-- List of all the simple bean names(Alert for AlertManagerBean, etc.) in alphabetical order. List used by wsprovide/wsconsume -->
    <!-- <property name="ws-list" value="Subject,Role" /> -->
-   <property name="ws-list" value="Webservices" /> 
+   <property name="ws-list" value="Webservices" />
    <!-- <property name="ws-list" value="Alert,AlertDefinition,Availability,CallTimeData,Channel,Configuration,Content,DataAccess,Event,MeasurementBaseline,MeasurementData,MeasurementDefinition,MeasurementProblem,MeasurementSchedule,Operation,Resource,ResourceGroup,Role,Subject,Support,System" /> -->
 
    <target name="prepare-dist">
@@ -192,13 +192,13 @@
          <fileset dir="${project.build.outputDirectory}/wsconsume-output" includes="**/*.class">
          </fileset>
       </copy>
-      
+
    </target>
 
    <!-- Target for looping over wsconsume with each bean -->
    <target name="iterate-wsconsume">
       <echo>*** Consuming ${bean}ManagerRemote wsdl...</echo>
-      <wsconsume fork="true" package="org.rhq.enterprise.server.ws" destdir="${wsconsume.home}" wsdl="${wsdl.home}/${bean}ManagerBeanService.wsdl" />
+      <wsconsume fork="true" package="org.rhq.enterprise.server.ws" destdir="${wsconsume.home}" wsdl="${wsdl.home}/${bean}ManagerBeanService.wsdl" keep="true" target="2.1" />
    </target>
 
    <!-- Target for looping over wsconsume with each bean -->

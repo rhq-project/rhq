@@ -23,6 +23,7 @@ import javax.jws.WebMethod;
 import javax.jws.WebParam;
 import javax.jws.WebService;
 import javax.jws.soap.SOAPBinding;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
@@ -30,6 +31,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.jaxb.adapter.ResourceGroupAdapter;
 import org.rhq.enterprise.server.system.ServerVersion;
 
 /**
@@ -49,7 +51,8 @@ public interface ResourceGroupManagerRemote {
     @WebMethod
     ResourceGroup createResourceGroup( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceGroup") ResourceGroup resourceGroup);
+        @WebParam(name = "resourceGroup")//
+        @XmlJavaTypeAdapter(ResourceGroupAdapter.class) ResourceGroup resourceGroup);
 
     @WebMethod
     void deleteResourceGroup( //

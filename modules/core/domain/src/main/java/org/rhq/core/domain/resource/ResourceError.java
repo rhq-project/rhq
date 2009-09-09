@@ -40,6 +40,9 @@ import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlTransient;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,6 +60,7 @@ import org.jetbrains.annotations.Nullable;
     @NamedQuery(name = ResourceError.QUERY_FIND_BY_RESOURCE_ID_AND_ERROR_TYPE, query = "SELECT re FROM ResourceError re WHERE re.resource.id = :resourceId AND re.errorType = :errorType") })
 @SequenceGenerator(name = "RHQ_RESOURCE_ERROR_SEQ", sequenceName = "RHQ_RESOURCE_ERROR_ID_SEQ")
 @Table(name = "RHQ_RESOURCE_ERROR")
+@XmlAccessorType(XmlAccessType.PROPERTY)
 public class ResourceError implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -76,6 +80,7 @@ public class ResourceError implements Serializable {
 
     @JoinColumn(name = "RESOURCE_ID", nullable = false)
     @ManyToOne
+    @XmlTransient
     private Resource resource;
 
     @Column(name = "ERROR_TYPE", nullable = false)

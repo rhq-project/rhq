@@ -68,6 +68,7 @@ public abstract class Criteria implements Serializable {
     private Class<?> persistentClass;
 
     //added no args constructor for bean and JAXB requirement
+    @SuppressWarnings("unused")
     private Criteria() {
     }
 

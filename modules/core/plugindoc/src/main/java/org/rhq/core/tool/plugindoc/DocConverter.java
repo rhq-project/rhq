@@ -62,6 +62,12 @@ public class DocConverter {
             new String[] { "</a>", "</ulink>" }, //
             new String[] { "<div class=\"note\">", "<important><title>Important</title><para>" }, //
             new String[] { "</div>", "</para></important>" }, //
+            new String[] { "<ul>", "<itemizedlist>" }, //
+            new String[] { "</ul>", "</itemizedlist>" }, //
+            new String[] { "<ol>", "<orderedlist>" }, //
+            new String[] { "</ol>", "</orderedlist>" }, //
+            new String[] { "<li>", "<listitem><para>" }, //
+            new String[] { "</li>", "</para></listitem>" }, //                                
         };
 
         result = convert(result, tagConversions);
@@ -110,8 +116,18 @@ public class DocConverter {
             new String[] { "</pre>", "" }, //
             new String[] { "<div class=\"note\">", "{note}" }, //
             new String[] { "</div>", "{note}" }, //
+            new String[] { "<h1>", "h1. " }, //
+            new String[] { "</h1>", "" }, //
+            new String[] { "<h2>", "h2. " }, //
+            new String[] { "</h2>", "" }, //
             new String[] { "<h3>", "h3. " }, //
             new String[] { "</h3>", "" }, //
+            new String[] { "<h4>", "h4. " }, //
+            new String[] { "</h4>", "" }, //
+            new String[] { "<h5>", "h5. " }, //
+            new String[] { "</h5>", "" }, //
+            new String[] { "<h6>", "h6. " }, //
+            new String[] { "</h6>", "" }, //
         };
 
         result = convert(result, tagConversions);

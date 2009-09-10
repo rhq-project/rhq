@@ -21,7 +21,7 @@ package org.rhq.core.tool.plugindoc;
 import org.apache.velocity.app.event.implement.EscapeXmlReference;
 
 /**
- * A velocity {@link org.apache.velocity.app.event.ReferenceInsertionEventHandler} that escapes DocBook special
+ * A Velocity {@link org.apache.velocity.app.event.ReferenceInsertionEventHandler} that escapes DocBook special
  * characters.  It was reported by DocBook maintainers that escaping apostrophe characters to "&apos;" does not
  * render correct with the used DocBook version.  So, this class has same semantics as {@link EscapeXmlReference}
  * except that it does not escape or unescape apostrophe characters.  Configure this handler as follows:
@@ -40,7 +40,7 @@ public class EscapeDocBookReference extends EscapeXmlReference {
         }
         return text.toString();
         /*
-         * Now that we're using generating proper docbok format for the <help> tag for resource types,
+         * Now that we're using generating proper DocBook format for the <help> tag for resource types,
          * we don't want to escape values because they are already in the correct target format. 
          * 
          * String results = super.escape(text);

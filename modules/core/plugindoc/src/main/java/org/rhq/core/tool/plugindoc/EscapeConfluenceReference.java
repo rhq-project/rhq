@@ -21,7 +21,7 @@ package org.rhq.core.tool.plugindoc;
 import org.apache.velocity.app.event.implement.EscapeReference;
 
 /**
- * A velocity {@link org.apache.velocity.app.event.ReferenceInsertionEventHandler} that escapes Confluence special
+ * A Velocity {@link org.apache.velocity.app.event.ReferenceInsertionEventHandler} that escapes Confluence special
  * characters. Configure this handler as follows:
  * <code>
  * velocityConfig.setProperty("eventhandler.referenceinsertion.class", EscapeConfluenceReference.class.getName());

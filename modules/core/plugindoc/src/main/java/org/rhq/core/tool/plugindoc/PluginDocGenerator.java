@@ -35,9 +35,12 @@ import org.rhq.core.clientapi.agent.metadata.InvalidPluginDescriptorException;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.resource.ResourceType;
 
+/**
+ * @author Ian Springer
+ */
 public class PluginDocGenerator {
 
-    private final Log log = LogFactory.getLog(PluginDocGenerator.class);
+    private final Log log = LogFactory.getLog(this.getClass());
 
     private static final String PLUGIN_DESCRIPTOR_PATH = "src/main/resources/META-INF/rhq-plugin.xml";
     private static final String OUTPUT_DIR_PATH = "target/plugindoc";
@@ -64,7 +67,7 @@ public class PluginDocGenerator {
             throw new IllegalArgumentException("Argument to loadProperties must not be null");
         }
 
-        InputStream fileInputStream = null;
+        InputStream fileInputStream;
         try {
             File f = new File(propertiesFileName);
             fileInputStream = new FileInputStream(f);
@@ -269,11 +272,11 @@ public class PluginDocGenerator {
     }
 
     private static String escapeFileName(String fileName) {
-        // docbook doesn't like parentheses in filenames
-        fileName = fileName.replaceAll("\\(", "").replaceAll("\\)", "");
+        // DocBook doesn't like parentheses or dashes in filenames.
+        fileName = fileName.replaceAll("\\(", "").replaceAll("\\)", "").replace('-', '_');
 
-        // remove other characters
-        return fileName.replace('/', '-').replace('\\', '-').replace(' ', '_');
+        // Remove other characters that are generally undesirable in filenames.
+        return fileName.replace('/', '_').replace('\\', '_').replace(' ', '_');
     }
 
     private static String escapePageTitle(String fileName) {

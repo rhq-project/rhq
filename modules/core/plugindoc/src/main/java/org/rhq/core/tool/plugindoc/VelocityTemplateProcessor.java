@@ -57,11 +57,13 @@ public class VelocityTemplateProcessor {
         velocityConfig.setProperty("resource.loader", "class");
         velocityConfig.setProperty("class.resource.loader.class",
             "org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader");
-        if (referenceInsertionClass != null)
+        if (referenceInsertionClass != null) {
             velocityConfig.setProperty("eventhandler.referenceinsertion.class", referenceInsertionClass.getName());
+        }
         String macroLibraries = "common-macros.vm";
-        if (macroLibrary != null)
+        if (macroLibrary != null) {
            macroLibraries += ", " + macroLibrary;
+        }
         velocityConfig.setProperty("velocimacro.library", macroLibraries);
         return velocityConfig;
     }

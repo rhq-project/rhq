@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.report;
 
 import java.util.List;
 
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -31,6 +32,8 @@ import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.RequiredPermission;
+import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
+import org.rhq.enterprise.server.authz.PermissionException;
 
 /**
  * This service provides jpql querying access to the core. You can pass in arbitrary
@@ -46,9 +49,13 @@ public class DataAccessManagerBean implements DataAccessManagerLocal, DataAccess
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
+    @EJB
+    private AuthorizationManagerLocal authorizationManager;
+
     @SuppressWarnings("unchecked")
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
     public List<Object[]> executeQuery(Subject subject, String query) {
+        verifyUserIsSuperUser(subject);
+
         Query q = entityManager.createQuery(query);
 
         return q.getResultList();
@@ -58,8 +65,9 @@ public class DataAccessManagerBean implements DataAccessManagerLocal, DataAccess
      * 
      */
     @SuppressWarnings("unchecked")
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
     public List<Object[]> executeQueryWithPageControl(Subject subject, String query, PageControl pageControl) {
+        verifyUserIsSuperUser(subject);
+
         Query q = buildQuery(query, pageControl);
 
         return q.getResultList();
@@ -88,6 +96,12 @@ public class DataAccessManagerBean implements DataAccessManagerLocal, DataAccess
         }
 
         return query;
+    }
+
+    private void verifyUserIsSuperUser(Subject subject) {
+        if (!authorizationManager.isSystemSuperuser(subject)) {
+            throw new PermissionException("Access denied. You must be logged in as the system super user.");
+        }
     }
 
 }

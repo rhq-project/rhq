@@ -32,9 +32,11 @@ import org.rhq.core.domain.operation.GroupOperationHistory;
 /**
  * @author Joseph Marques
  */
-@SuppressWarnings("serial")
 @XmlAccessorType(XmlAccessType.FIELD)
+@SuppressWarnings("unused")
 public class GroupOperationHistoryCriteria extends OperationHistoryCriteria {
+    private static final long serialVersionUID = 1L;
+
     private List<Integer> filterResourceGroupIds; // requires override
 
     public GroupOperationHistoryCriteria() {

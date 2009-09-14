@@ -68,42 +68,42 @@ function testFindWithSorting() {
     Assert.assertTrue(measurementSchedules.size() > 0, 'Failed to find measurement schedules when sorting');
 }
 
-function testEnablingAndDisablingMeasurementSchedules() {
-    var service = findAlphaService();
-
-    var criteria = MeasurementScheduleCriteria();
-    criteria.addFilterResourceId(service.id);
-
-    var schedules = MeasurementScheduleManager.findSchedulesByCriteria(criteria);
-
-    Assert.assertNumberEqualsJS(schedules.size(), 6, 'Failed to retrieve measurement schedules for ' + service.name);
-
-    enableSchedules(schedules, service);
-
-    var scheduleIds = getMeasurementDefinitionIds(schedules);
-
-    var schedulesFromAgent = MeasurementScheduleManager.getResourceMeasurementSchedulesFromAgent(service.id);
-
-    Assert.assertNumberEqualsJS(schedulesFromAgent.size(), schedules.size(), 'Expected the number of schedules coming from ' +
-            'the agent to be the same as the number on the server');
-
-    disableSchedules(schedules, service);
-
-    var verifySchedulesDisabledInDB = function() {
-        var schedules = MeasurementScheduleManager.findSchedulesByCriteria(criteria);
-        for (i = 0; i < schedules.size(); ++i) {
-            Assert.assertFalse(schedules.get(i).enabled, 'Failed to persist the disabling of schedules');
-        }
-    }
-
-    var verifySchedulesDisabledOnAgent = function() {
-        var schedulesFromAgent = MeasurementScheduleManager.getResourceMeasurementSchedulesFromAgent(service.id);
-        Assert.assertNumberEqualsJS(schedulesFromAgent.size(), 0, 'Schedules have been disabled but failed to sync changes with agent');
-    }
-
-    verifySchedulesDisabledInDB();
-    verifySchedulesDisabledOnAgent();
-}
+//function testEnablingAndDisablingMeasurementSchedules() {
+//    var service = findAlphaService();
+//
+//    var criteria = MeasurementScheduleCriteria();
+//    criteria.addFilterResourceId(service.id);
+//
+//    var schedules = MeasurementScheduleManager.findSchedulesByCriteria(criteria);
+//
+//    Assert.assertNumberEqualsJS(schedules.size(), 6, 'Failed to retrieve measurement schedules for ' + service.name);
+//
+//    enableSchedules(schedules, service);
+//
+//    var scheduleIds = getMeasurementDefinitionIds(schedules);
+//
+//    var schedulesFromAgent = MeasurementScheduleManager.getResourceMeasurementSchedulesFromAgent(service.id);
+//
+//    Assert.assertNumberEqualsJS(schedulesFromAgent.size(), schedules.size(), 'Expected the number of schedules coming from ' +
+//            'the agent to be the same as the number on the server');
+//
+//    disableSchedules(schedules, service);
+//
+//    var verifySchedulesDisabledInDB = function() {
+//        var schedules = MeasurementScheduleManager.findSchedulesByCriteria(criteria);
+//        for (i = 0; i < schedules.size(); ++i) {
+//            Assert.assertFalse(schedules.get(i).enabled, 'Failed to persist the disabling of schedules');
+//        }
+//    }
+//
+//    var verifySchedulesDisabledOnAgent = function() {
+//        var schedulesFromAgent = MeasurementScheduleManager.getResourceMeasurementSchedulesFromAgent(service.id);
+//        Assert.assertNumberEqualsJS(schedulesFromAgent.size(), 0, 'Schedules have been disabled but failed to sync changes with agent');
+//    }
+//
+//    verifySchedulesDisabledInDB();
+//    verifySchedulesDisabledOnAgent();
+//}
 
 function findMeasurementDefinition() {
     var criteria = MeasurementDefinitionCriteria();

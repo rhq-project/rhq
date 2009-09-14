@@ -548,10 +548,6 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return measurementScheduleManager.findSchedulesByCriteria(subject, criteria);
     }
 
-    public PageList<MeasurementSchedule> getResourceMeasurementSchedulesFromAgent(Subject subject, int resourceId) {
-        return measurementScheduleManager.getResourceMeasurementSchedulesFromAgent(subject, resourceId);
-    }
-
     //MEASUREMENTSCHEDULEMANAGER: END ----------------------------------
 
     //OPERATIONMANAGER: BEGIN ----------------------------------

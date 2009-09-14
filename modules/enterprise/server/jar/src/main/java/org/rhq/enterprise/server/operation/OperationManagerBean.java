@@ -29,7 +29,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.apache.commons.logging.Log;
@@ -48,9 +47,6 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.composite.IntegerOptionItem;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.criteria.GroupOperationHistoryCriteria;
 import org.rhq.core.domain.criteria.OperationDefinitionCriteria;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
@@ -73,11 +69,11 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.CriteriaQueryGenerator;
+import org.rhq.core.domain.util.CriteriaQueryRunner;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
-import org.rhq.core.domain.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
@@ -97,7 +93,6 @@ import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 
 @Stateless
-@XmlSeeAlso( { PropertyDefinitionSimple.class, PropertyDefinitionList.class, PropertyDefinitionMap.class })
 public class OperationManagerBean implements OperationManagerLocal, OperationManagerRemote {
     private static final Log LOG = LogFactory.getLog(OperationManagerBean.class);
 

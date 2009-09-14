@@ -25,14 +25,10 @@ import javax.jws.WebMethod;
 import javax.jws.WebParam;
 import javax.jws.WebService;
 import javax.jws.soap.SOAPBinding;
-import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.criteria.GroupOperationHistoryCriteria;
 import org.rhq.core.domain.criteria.OperationDefinitionCriteria;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
@@ -48,7 +44,6 @@ import org.rhq.enterprise.server.system.ServerVersion;
 @SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
 @WebService(targetNamespace = ServerVersion.namespace)
 @Remote
-@XmlSeeAlso( { PropertyDefinitionSimple.class, PropertyDefinitionList.class, PropertyDefinitionMap.class })
 public interface OperationManagerRemote {
 
     /**

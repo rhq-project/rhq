@@ -46,17 +46,12 @@ import javax.persistence.QueryHint;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
-import javax.xml.bind.annotation.XmlSeeAlso;
 
 import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.alert.notification.SubjectNotification;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.Property;
-import org.rhq.core.domain.configuration.PropertyList;
-import org.rhq.core.domain.configuration.PropertyMap;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.util.EntitySerializer;
 import org.rhq.core.domain.util.serial.ExternalizableStrategy;
 
@@ -191,7 +186,6 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
 @SequenceGenerator(name = "RHQ_SUBJECT_ID_SEQ", sequenceName = "RHQ_SUBJECT_ID_SEQ")
 @Table(name = "RHQ_SUBJECT")
 /*@Cache(usage= CacheConcurrencyStrategy.TRANSACTIONAL)*/
-@XmlSeeAlso( { Property.class, PropertySimple.class, PropertyList.class, PropertyMap.class })
 public class Subject implements Externalizable {
     public static final String QUERY_FIND_ALL = "Subject.findAll";
     public static final String QUERY_FIND_BY_IDS = "Subject.findByIds";

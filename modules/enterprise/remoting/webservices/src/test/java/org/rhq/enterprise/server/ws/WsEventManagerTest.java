@@ -37,8 +37,6 @@ import org.rhq.enterprise.server.ws.utility.WsUtility;
  * @author Jay Shaughnessy, Simeon Pinder
  */
 @Test(groups = "ws")
-@XmlSeeAlso( { PropertyDefinitionSimple.class, PropertyDefinitionList.class,
-		PropertyDefinitionMap.class, ObjectFactory.class })
 public class WsEventManagerTest extends AssertJUnit implements
 		TestPropertiesInterface {
 

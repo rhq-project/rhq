@@ -39,6 +39,7 @@ import org.rhq.core.pc.util.ComponentUtil;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.plugins.jbossas5.ProfileServiceComponent;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Optional;
@@ -157,6 +158,19 @@ public class CacheComponentTest {
 			org.testng.Assert.fail("Metric test failed", e);
 		}
 	}
+	
+	@Test(dependsOnMethods = "testMetrics")
+	public void testMetricRefreshing(){
+		try {
+			log.info("Starting Refresh Test");
+			remoteClientTest.runTest();
+			Thread.sleep(3000);
+			testMetrics();
+		} catch (Exception e) {
+			log.error("Metric Refhreshing test failed", e);
+			org.testng.Assert.fail("Metric Refhreshing test failed", e);
+		}
+	}
 
 	private void testResouceTypeMetrics(ResourceType cacheResourceType)
 			throws Exception {
@@ -181,7 +195,7 @@ public class CacheComponentTest {
 				EmsAttribute atr = relatedBean.getAttribute(metricDefinition
 						.getName());
 				log.info("            Validating Metric "
-						+ metricDefinition.getName());
+						+ metricDefinition.getName() + ". (plugin value=" +compValue + ", bean value=" + atr.getValue() + ")");
 				String beanValue = String.valueOf(atr.getValue());
 
 				assert (TestHelper.compareValues(compValue, atr.getType(), atr

@@ -106,10 +106,12 @@ public class RemoteAPIValidator {
 
     public static void validateAll() {
         int classesInError = 0;
+        int totalErrors = 0;
         for (Class<?> managerBean : beans) {
             List<String> errors = validate(managerBean);
             if (errors.isEmpty() == false) {
                 classesInError++;
+                totalErrors += errors.size();
                 for (String error : errors) {
                     System.out.println(error);
                 }
@@ -117,6 +119,7 @@ public class RemoteAPIValidator {
             }
         }
         System.out.println(String.valueOf(beans.length) + " classes checked, " + classesInError + " in error");
+        System.out.println(String.valueOf(totalErrors) + " total errors");
     }
 
     public static List<String> validate(Class<?> managerBean) {

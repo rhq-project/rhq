@@ -174,7 +174,7 @@ public class ListPackagesUIBean extends PagedDataTableUIBean {
 
     public SelectItem[] getPackageVersions() {
         if (this.packageVersions == null) {
-            List<String> items = contentManager.getInstalledPackageVersions(EnterpriseFacesContextUtility.getSubject(),
+            List<String> items = contentManager.findInstalledPackageVersions(EnterpriseFacesContextUtility.getSubject(),
                 EnterpriseFacesContextUtility.getResource().getId());
             this.packageVersions = SelectItemUtils.convertFromListString(items, true);
         }

@@ -1421,7 +1421,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
     }
 
     @SuppressWarnings("unchecked")
-    public List<String> getInstalledPackageVersions(Subject user, int resourceId) {
+    public List<String> findInstalledPackageVersions(Subject user, int resourceId) {
         Query query = entityManager.createNamedQuery(InstalledPackage.QUERY_FIND_PACKAGE_LIST_VERSIONS);
         query.setParameter("resourceId", resourceId);
 

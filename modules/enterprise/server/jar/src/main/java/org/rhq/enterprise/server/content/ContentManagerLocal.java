@@ -281,7 +281,7 @@ public interface ContentManagerLocal {
      * @param resourceId
      * @return List of InstalledPackage versions
      */
-    List<String> getInstalledPackageVersions(Subject subject, int resourceId);
+    List<String> findInstalledPackageVersions(Subject subject, int resourceId);
 
     /**
      * Returns the package type that backs resources of the specified type.

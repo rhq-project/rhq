@@ -29,8 +29,8 @@ rhq.logout();
 
 function testFindWithFiltering() {
     var criteria = RoleCriteria();
-    criteria.addFilterName('Super User Role');
-    criteria.addFilterDescription('System superuser role that provides full access to everything. This role cannot be modified.');
+    criteria.setFilterName('Super User Role');
+    criteria.setFilterDescription('System superuser role that provides full access to everything. This role cannot be modified.');
 
     var roles = RoleManager.findRolesByCriteria(criteria);
 
@@ -39,11 +39,11 @@ function testFindWithFiltering() {
 
 function testFindWithFetchingAssociations() {
     var criteria = RoleCriteria();
-    criteria.addFilterName('Super User Role');
-    criteria.fetchSubjects(true);
-    criteria.fetchResourceGroups(true);
-    criteria.fetchPermissions(true);
-    criteria.fetchRoleNotifications(true);
+    criteria.setFilterName('Super User Role');
+    criteria.setFetchSubjects(true);
+    criteria.setFetchResourceGroups(true);
+    criteria.setFetchPermissions(true);
+    criteria.setFetchRoleNotifications(true);
 
     var roles = RoleManager.findRolesByCriteria(criteria);
 
@@ -52,10 +52,33 @@ function testFindWithFetchingAssociations() {
 
 function testFindWithSorting() {
     var criteria = RoleCriteria();
-    criteria.addFilterName('Super User Role');
-    criteria.addSortName(PageOrdering.ASC);
+    criteria.setFilterName('Super User Role');
+    criteria.setSortName(PageOrdering.ASC);
 
     var roles = RoleManager.findRolesByCriteria(criteria);
 
     Assert.assertTrue(roles.size() > 0, 'Failed to find roles when sorting');
+}
+
+function testCreateUpdateDelete() {
+    var role = Role('Test Role - ' + java.util.Date());
+    role.description = 'This role is for testing only';
+    role.addPermission(Permission.MANAGE_INVENTORY);
+    role.addPermission(Permission.MANAGE_ALERTS);
+
+    var savedRole = RoleManager.createRole(role);
+
+    Assert.assertTrue(savedRole.id > 0, 'Failed to save/create role');
+
+    savedRole.addPermission(Permission.MANAGE_MEASUREMENTS);
+
+    var updatedRole = RoleManager.updateRole(savedRole);
+
+    //Assert.assertEqualsNoOrder(updatedRole.permissions, savedRole.permissions, 'Failed to update role permissions');
+
+    RoleManager.deleteRoles([updatedRole.id]);
+
+    var deletedRole = RoleManager.getRole(updatedRole.id);
+
+    Assert.assertNull(deletedRole, 'Failed to delete role');
 }

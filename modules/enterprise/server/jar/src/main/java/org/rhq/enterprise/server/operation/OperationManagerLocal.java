@@ -133,10 +133,9 @@ public interface OperationManagerLocal {
      * @param  groupId
      *
      * @return group scheduled operations
-     *
-     * @throws SchedulerException
+     * @throws Exception TODO
      */
-    List<GroupOperationSchedule> findScheduledGroupOperations(Subject subject, int groupId) throws SchedulerException;
+    List<GroupOperationSchedule> findScheduledGroupOperations(Subject subject, int groupId) throws Exception;
 
     /**
      * Given a resource job's details, this returns the schedule for that resource job.
@@ -543,11 +542,10 @@ public interface OperationManagerLocal {
      * @param  resourceId
      *
      * @return resource scheduled operations
-     *
-     * @throws SchedulerException
+     * @throws Exception TODO
      */
     List<ResourceOperationSchedule> findScheduledResourceOperations(Subject subject, int resourceId)
-        throws SchedulerException;
+        throws Exception;
 
     /**
      * Returns the definitions of all the operations supported by the given resource.

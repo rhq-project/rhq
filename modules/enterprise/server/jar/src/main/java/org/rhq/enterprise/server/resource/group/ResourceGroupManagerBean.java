@@ -47,7 +47,6 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.quartz.SchedulerException;
 
 import org.jboss.annotation.IgnoreDependency;
 
@@ -272,9 +271,9 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
                             + "]", e);
                     }
                 }
-            } catch (SchedulerException e1) {
+            } catch (Exception e) {
                 log.warn("Failed to get jobs for a group being deleted [" + group
-                    + "]; will not attempt to unschedule anything", e1);
+                    + "]; will not attempt to unschedule anything", e);
             }
         }
 

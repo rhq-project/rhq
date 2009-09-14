@@ -370,7 +370,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     }
 
     public List<ResourceOperationSchedule> findScheduledResourceOperations(Subject subject, int resourceId)
-        throws SchedulerException {
+        throws Exception {
         Resource resource = getResourceIfAuthorized(subject, resourceId);
 
         List<ResourceOperationSchedule> operationSchedules = new ArrayList<ResourceOperationSchedule>();
@@ -394,7 +394,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     }
 
     public List<GroupOperationSchedule> findScheduledGroupOperations(Subject subject, int groupId)
-        throws SchedulerException {
+        throws Exception {
         ResourceGroup group = getCompatibleGroupIfAuthorized(subject, groupId);
 
         List<GroupOperationSchedule> operationSchedules = new ArrayList<GroupOperationSchedule>();

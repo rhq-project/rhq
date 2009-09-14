@@ -216,7 +216,7 @@ public interface OperationManagerRemote {
      * @param resourceId
      *
      * @return resource scheduled operations
-     *
+     * @throws Exception TODO
      * @throws Exception
      */
     @WebMethod

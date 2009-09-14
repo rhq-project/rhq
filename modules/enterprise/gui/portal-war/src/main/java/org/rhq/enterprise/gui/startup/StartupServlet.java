@@ -48,7 +48,7 @@ import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.core.CustomJaasDeploymentServiceMBean;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
-import org.rhq.enterprise.server.core.plugin.ProductPluginDeployerMBean;
+import org.rhq.enterprise.server.core.plugin.AgentPluginDeploymentScannerMBean;
 import org.rhq.enterprise.server.plugin.content.ContentSourcePluginServiceManagement;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
@@ -112,7 +112,7 @@ public class StartupServlet extends HttpServlet {
         // (that is, a scheduled job would more likely need to send a message; as opposed to an incoming message
         // causing a job to be scheduled), so that explains the ordering of the comm layer and the scheduler.
         startHibernateStatistics();
-        startPluginDeployer();
+        startAgentPluginDeployer();
         startServerPluginContainer(); // before comm in case an agent wants to talk to it
         installJaasModules();
         startServerCommunicationServices();
@@ -191,23 +191,23 @@ public class StartupServlet extends HttpServlet {
 
     /**
      * Starts the plugin deployer which will effectively ask the plugin deployer to persist information about all
-     * detected plugins.
+     * detected agent plugins.
      *
      * @throws ServletException
      */
-    private void startPluginDeployer() throws ServletException {
-        log("Starting the plugin deployer");
+    private void startAgentPluginDeployer() throws ServletException {
+        log("Starting the agent-plugin deployer");
 
         try {
-            ProductPluginDeployerMBean deployer_mbean;
+            AgentPluginDeploymentScannerMBean deployer_mbean;
             MBeanServer mbs = MBeanServerLocator.locateJBoss();
-            ObjectName name = ProductPluginDeployerMBean.OBJECT_NAME;
-            Class<?> iface = ProductPluginDeployerMBean.class;
-            deployer_mbean = (ProductPluginDeployerMBean) MBeanServerInvocationHandler.newProxyInstance(mbs, name,
-                iface, false);
-            deployer_mbean.startDeployer();
+            ObjectName name = AgentPluginDeploymentScannerMBean.OBJECT_NAME;
+            Class<?> iface = AgentPluginDeploymentScannerMBean.class;
+            deployer_mbean = (AgentPluginDeploymentScannerMBean) MBeanServerInvocationHandler.newProxyInstance(mbs,
+                name, iface, false);
+            deployer_mbean.startDeployment();
         } catch (Exception e) {
-            throw new ServletException("Cannot start the plugin deployer", e);
+            throw new ServletException("Cannot start the agent-plugin deployer", e);
         }
     }
 

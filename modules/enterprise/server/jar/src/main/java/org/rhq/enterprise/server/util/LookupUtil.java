@@ -28,7 +28,6 @@ import javax.transaction.TransactionManager;
 
 import org.jetbrains.annotations.NotNull;
 
-import org.jboss.deployment.scanner.URLDeploymentScannerMBean;
 import org.jboss.mx.util.MBeanProxyExt;
 import org.jboss.mx.util.MBeanServerLocator;
 
@@ -91,7 +90,7 @@ import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.core.CoreServerMBean;
 import org.rhq.enterprise.server.core.EmailManagerBean;
 import org.rhq.enterprise.server.core.EmailManagerLocal;
-import org.rhq.enterprise.server.core.plugin.AgentPluginURLDeploymentScanner;
+import org.rhq.enterprise.server.core.plugin.AgentPluginDeploymentScannerMBean;
 import org.rhq.enterprise.server.discovery.DiscoveryBossBean;
 import org.rhq.enterprise.server.discovery.DiscoveryBossLocal;
 import org.rhq.enterprise.server.event.EventManagerBean;
@@ -535,10 +534,10 @@ public final class LookupUtil {
         return jonServer;
     }
 
-    public static URLDeploymentScannerMBean getAgentPluginURLDeploymentScanner() {
+    public static AgentPluginDeploymentScannerMBean getAgentPluginDeploymentScanner() {
         MBeanServer jBossMBeanServer = MBeanServerLocator.locate();
-        URLDeploymentScannerMBean scanner = (URLDeploymentScannerMBean) MBeanProxyExt.create(
-            URLDeploymentScannerMBean.class, AgentPluginURLDeploymentScanner.OBJECT_NAME, jBossMBeanServer);
+        AgentPluginDeploymentScannerMBean scanner = (AgentPluginDeploymentScannerMBean) MBeanProxyExt.create(
+            AgentPluginDeploymentScannerMBean.class, AgentPluginDeploymentScannerMBean.OBJECT_NAME, jBossMBeanServer);
         return scanner;
     }
 

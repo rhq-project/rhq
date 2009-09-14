@@ -21,7 +21,6 @@ package org.rhq.enterprise.server.core.plugin;
 import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -31,28 +30,12 @@ import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-import javax.xml.XMLConstants;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
-import javax.xml.bind.ValidationEvent;
-import javax.xml.bind.util.ValidationEventCollector;
-import javax.xml.validation.Schema;
-import javax.xml.validation.SchemaFactory;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.maven.artifact.versioning.ComparableVersion;
-import org.xml.sax.SAXException;
-
-import org.jboss.deployment.DeploymentException;
-import org.jboss.deployment.DeploymentInfo;
-import org.jboss.deployment.DeploymentState;
-import org.jboss.deployment.SubDeployerSupport;
 
 import org.rhq.core.clientapi.agent.metadata.PluginDependencyGraph;
 import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
-import org.rhq.core.clientapi.descriptor.DescriptorPackages;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.plugin.Plugin;
@@ -70,18 +53,17 @@ import org.rhq.enterprise.server.util.LookupUtil;
 /**
  * ProductPlugin deployer responsible for detecting agent plugin jars on the filesystem.
  */
-public class ProductPluginDeployer extends SubDeployerSupport implements ProductPluginDeployerMBean {
+public class ProductPluginDeployer {
 
     public static final String AMPS_VERSION = "2.0";
 
-    private static final String DEFAULT_PLUGIN_DESCRIPTOR_PATH = "META-INF/rhq-plugin.xml";
-    private static final String PLUGIN_DESCRIPTOR_SCHEMA = "rhq-plugin.xsd";
-
     private Log log = LogFactory.getLog(ProductPluginDeployer.class.getName());
     private File pluginDir = null;
-    private String licenseFile = null;
+    private File licenseFile = null;
+    private boolean isStarted = false;
+    private boolean isReady = false;
 
-    /** Map of plugin names to the corresponding plugins' JBAS deployment infos */
+    /** Map of plugin names to the corresponding plugins' deployment infos */
     private Map<String, DeploymentInfo> deploymentInfos = new HashMap<String, DeploymentInfo>();
     /** Map of plugin names to the corresponding plugins' JAXB plugin descriptors */
     private Map<String, PluginDescriptor> pluginDescriptors = new HashMap<String, PluginDescriptor>();
@@ -90,15 +72,16 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
     /** Set of plugins that have been accepted but need to be registered (useful during hot-deployment) */
     private Set<String> namesOfPluginsToBeRegistered = new HashSet<String>();
 
-    private boolean isStarted = false;
-    private boolean isReady = false;
-
     public ProductPluginDeployer() {
         // intentionally left blank
     }
 
-    public void setPluginDir(String pluginDirString) {
-        this.pluginDir = new File(pluginDirString);
+    public File getPluginDir() {
+        return this.pluginDir;
+    }
+
+    public void setPluginDir(File pluginDir) {
+        this.pluginDir = pluginDir;
 
         // this directory should always exist, but just in case it doesn't, create it
         if (!this.pluginDir.exists()) {
@@ -106,38 +89,48 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
         }
     }
 
-    public String getPluginDir() {
-        return this.pluginDir.getAbsolutePath();
+    public File getLicenseFile() {
+        return this.licenseFile;
     }
 
-    public List<String> getRegisteredPluginNames() {
-        ResourceMetadataManagerLocal metadataManager = LookupUtil.getResourceMetadataManager();
-        Collection<Plugin> plugins = metadataManager.getPlugins();
-        List<String> pluginNames = new ArrayList<String>();
+    public void setLicenseFile(File file) {
+        this.licenseFile = file;
 
-        for (Plugin plugin : plugins) {
-            pluginNames.add(plugin.getName());
+        // sanity check - log an ugly message if we don't have a license file named as we expect
+        String expectedName = LicenseManager.getLicenseFileName();
+        if (!file.getPath().endsWith(expectedName)) {
+            log.error("License file [" + file + "] is not named what we expect: " + expectedName);
         }
+    }
 
-        return pluginNames;
+    /**
+     * This is called by the server's startup servlet which essentially informs us that
+     * the server's internal EJB/SLSBs are ready and can be called. This means we are
+     * allowed to begin registering types from deployed plugins.
+     */
+    public void startDeployment() {
+        // Do startup license checking. we should really pull out the licensing code into someplace else
+        LicenseManager licenseManager = LicenseManager.instance();
+        licenseManager.doStartupCheck(this.licenseFile.getAbsolutePath());
+
+        // we can now register our initial set of plugins
+        registerPlugins();
+
+        // indicate that we are now ready for hot-deployment of new plugins
+        this.isReady = true;
     }
 
     /**
      * This is called when this deployer service itself is starting up.
      */
-    @Override
-    public void startService() throws Exception {
+    public void start() throws Exception {
         if (!isStarted) {
             isStarted = true;
-            super.startService();
         }
     }
 
-    @Override
-    public void stopService() throws Exception {
+    public void stop() {
         if (isStarted) {
-            super.stopService();
-
             this.deploymentInfos.clear();
             this.pluginDescriptors.clear();
             this.pluginVersions.clear();
@@ -149,15 +142,17 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
     }
 
     /**
-     * This is called when a new or updated plugin is bring brought online.
-     * This is called as part of the JBossAS main deployer and may be called even before
-     * the server is fully initialized (i.e. the EJB3 SLSBs may not be ready yet, in which case
-     * {@link #isReady} will be <code>false</code>).
+     * This is called when a new or updated plugin is brought online.
+     * This just marks the plugin as being needed to be registered. Caller
+     * must ensure that {@link #registerPlugins()} is called afterwards
+     * to fully process the detected plugin.
+     * 
+     * @param deploymentInfo information on the newly detected plugin
      */
-    @Override
-    public void create(DeploymentInfo deploymentInfo) throws DeploymentException {
-        if (isLicenseFile(deploymentInfo))
+    public void pluginDetected(DeploymentInfo deploymentInfo) throws Exception {
+        if (!accepts(deploymentInfo)) {
             return;
+        }
 
         // don't cache deployment infos across starts, so if we've seen this deployment info before,
         // take the current one we were just given and use it to replace the old info
@@ -173,82 +168,33 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
         }
 
         String name = preprocessPlugin(deploymentInfo);
-        log.debug("CREATE: [" + deploymentInfo.localUrl + "]: plugin name=[" + name + "]");
-    }
-
-    /**
-     * This method is called after a plugin file has been accepted and can be registered.
-     * This is called as part of the JBossAS main deployer and may be called even before
-     * the server is fully initialized (i.e. the EJB3 SLSBs may not be ready yet, in which case
-     * {@link #isReady} will be <code>false</code>).
-     * 
-     * @param deploymentInfo information about the plugin file that has been accepted
-     * @throws DeploymentException
-     */
-    @Override
-    public void start(DeploymentInfo deploymentInfo) throws DeploymentException {
-        if (isLicenseFile(deploymentInfo))
-            return;
-
-        log.debug("START: [" + deploymentInfo.localUrl + "]");
 
         // isReady == true means startDeployer() has already been called, so this is a hot deploy.
-        if (this.isReady && areAllPluginsStarted(deploymentInfo)) {
-            log.debug("Hot deploying plugin [" + deploymentInfo.url + "]...");
-            try {
-                registerPlugins(); // we are ready to hot-deploy so we can register immediately
-            } catch (Exception e) {
-                throw new DeploymentException("Unable to deploy RHQ plugin [" + deploymentInfo.url + "]", e);
-            }
+        // (if the EJB3 SLSBs are not ready yet, isReady will be false.
+        if (this.isReady) {
+            log.debug("Will hot deploy plugin [" + name + "] from [" + deploymentInfo.url + "]");
+            /* // do NOT register plugins yet - the dependency graph might not be complete, let the caller call registerPlugins
+             *  try {
+             *      registerPlugins(); // we are ready to hot-deploy so we can register immediately
+             *  } catch (Exception e) {
+             *      throw new Exception("Unable to deploy plugin [" + deploymentInfo.url + "]", e);
+             *  }
+             */
         } else {
             // startDeployer() has not been called yet so we are holding off registering until then
-            log.debug("Not ready yet - will deploy plugin [" + deploymentInfo.url + "] later");
+            log.debug("Not ready yet - will deploy plugin [" + name + "] from [" + deploymentInfo.url + "] later");
         }
         return;
     }
 
-    @Override
-    public void stop(DeploymentInfo deploymentInfo) throws DeploymentException {
-        if (isLicenseFile(deploymentInfo))
-            return;
-
-        log.debug("STOP: [" + deploymentInfo.localUrl + "]");
-    }
-
-    @Override
-    public void destroy(DeploymentInfo deploymentInfo) throws DeploymentException {
-        if (isLicenseFile(deploymentInfo))
-            return;
-
-        // NOTE: do NOT remove the info from our deploymentInfos cache. We want to remember
-        // this plugin, even though its been destroyed. Our create method will cache the new info
-        // when we get it. Leaving it in cache lets us know how which plugins we can expect to
-        // be started in the future
-
-        log.debug("DESTROY: [" + deploymentInfo.localUrl + "]");
-    }
-
     /**
-     * When this is called, the JBossAS main deployer is telling us it detected a new or changed file
-     * that may be a new/updated plugin jar file (or license file). As part of this call, the main deployer
-     * will have just previously copied the jar file into a "localUrl" which is at server/default/tmp/deploy.
+     * Determines if this is a plugin we should process.
      * 
      * @param di the deployment information of the detected file (which is probably an agent plugin file)
      * @return <code>true</code> if the deployment info represents an agent plugin file
      */
-    @Override
-    public boolean accepts(DeploymentInfo di) {
-        if (di.isDirectory) {
-            return false;
-        }
-
-        String urlString = di.url.getFile(); // must use url, not localurl - we want the path that has the true filename
-
-        // yes, we also handle the license file too - we should move this in its own deployer someday
-        if (isLicenseFile(di)) {
-            licenseFile = urlString;
-            return true;
-        }
+    private boolean accepts(DeploymentInfo di) {
+        String urlString = di.url.getFile();
 
         if (!urlString.endsWith(".jar")) {
             return false;
@@ -265,142 +211,15 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
     }
 
     /**
-     * This is called by the server's startup servlet which essentially informs us that
-     * the server's internal EJB/SLSBs are ready and can be called. This means we are
-     * allowed to begin registering types from deployed plugins.
+     * Registers newly detected plugins and their types.
+     * 
+     * Only call this method when {@link #isReady} is true. This is a no-op if we are not ready.
      */
-    public void startDeployer() {
-        // Do startup license checking.
-        LicenseManager licenseManager = LicenseManager.instance();
-        licenseManager.doStartupCheck(this.licenseFile);
-
-        // we can now register our initial set of plugins
-        registerPlugins();
-
-        // indicate that we are now ready for hot-deployment of new plugins
-        this.isReady = true;
-    }
-
-    /**
-     * Returns true if all known plugins have been started by the jboss deployer.
-     * Because we cannot register any plugins until all plugin jars have been preprocessed
-     * by this plugin deployer object, plugins should only be registered if this returns true.
-     *
-     * @param deploymentInfo this is the deployment that is currently being started and will
-     *                       be ignored when examining the plugins that need to be started
-     * @return true if all plugins (except for the given one) have been started, false otherwise
-     */
-    private boolean areAllPluginsStarted(DeploymentInfo deploymentInfo) {
-
-        List<String> pluginsNotReady = new ArrayList<String>();
-        List<String> pluginsDeleted = new ArrayList<String>();
-
-        // find out which plugins haven't been started by the deployer
-        for (Map.Entry<String, DeploymentInfo> entry : this.deploymentInfos.entrySet()) {
-            DeploymentInfo entryDI = entry.getValue();
-            if (!entryDI.equals(deploymentInfo)) {
-                if (entryDI.state != DeploymentState.STARTED) {
-                    pluginsNotReady.add(entry.getKey());
-                }
-            }
+    public void registerPlugins() {
+        if (!this.isReady) {
+            return;
         }
 
-        // of the plugins that haven't been started, see if any were actually deleted from the file system
-        for (String pluginName : pluginsNotReady) {
-            DeploymentInfo notReadyDI = this.deploymentInfos.get(pluginName);
-            File notReadyFile = new File(notReadyDI.url.getFile());
-            if (!notReadyFile.exists()) {
-                log.info("Agent plugin named [" + pluginName + "] has been deleted, it will be removed from cache");
-                this.deploymentInfos.remove(pluginName);
-                this.pluginDescriptors.remove(pluginName);
-                this.pluginVersions.remove(pluginName);
-                this.namesOfPluginsToBeRegistered.remove(pluginName);
-                pluginsDeleted.add(pluginName);
-            }
-        }
-
-        pluginsNotReady.removeAll(pluginsDeleted); // don't wait for the deleted ones, remove them from the not-ready list
-        return (pluginsNotReady.size() == 0);
-    }
-
-    /**
-     * Process the specified plugin jar to figure out the plugin name and version. If it is the only plugin with this
-     * name, or if it has the newest version among other plugins with the same name, then add it to our master set of
-     * plugins to be registered. Once all EJBs are started, {@link #startDeployer()} will be called and will take care
-     * of registering the plugins.
-     */
-    private String preprocessPlugin(DeploymentInfo deploymentInfo) throws DeploymentException {
-        File pluginFile = new File(deploymentInfo.localUrl.getFile());
-        ensureDeploymentIsValid(pluginFile);
-        PluginDescriptor descriptor = getPluginDescriptor(deploymentInfo);
-        String pluginName = descriptor.getName();
-        boolean initialDeploy = !this.deploymentInfos.containsKey(pluginName);
-        ComparableVersion version;
-        try {
-            version = AgentPluginDescriptorUtil.getPluginVersion(pluginFile, descriptor);
-        } catch (Exception e) {
-            throw new DeploymentException(e);
-        }
-
-        if (initialDeploy) {
-            log.info("Discovered agent plugin [" + pluginName + "]");
-        } else {
-            log.info("Rediscovered agent plugin [" + pluginName + "]");
-        }
-
-        if (initialDeploy || isNewestVersion(pluginName, version)) {
-            this.deploymentInfos.put(pluginName, deploymentInfo);
-            this.pluginDescriptors.put(pluginName, descriptor);
-            this.pluginVersions.put(pluginName, version);
-            this.namesOfPluginsToBeRegistered.add(pluginName);
-        }
-        return pluginName;
-    }
-
-    private PluginDescriptor getPluginDescriptor(DeploymentInfo di) throws DeploymentException {
-        URL descriptorURL = di.localCl.findResource(DEFAULT_PLUGIN_DESCRIPTOR_PATH);
-        if (descriptorURL == null) {
-            throw new DeploymentException("Could not load " + DEFAULT_PLUGIN_DESCRIPTOR_PATH
-                + " from plugin jar file [" + di.localUrl + "]");
-        }
-
-        PluginDescriptor pluginDescriptor;
-        ValidationEventCollector vec;
-        try {
-            JAXBContext jaxbContext = JAXBContext.newInstance(DescriptorPackages.PC_PLUGIN);
-            Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-
-            // Enable schema validation. (see http://jira.jboss.com/jira/browse/JBNADM-1539)
-            URL pluginSchemaURL = getClass().getClassLoader().getResource(PLUGIN_DESCRIPTOR_SCHEMA);
-            Schema pluginSchema;
-            try {
-                pluginSchema = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(pluginSchemaURL);
-            } catch (SAXException e) {
-                throw new DeploymentException("Schema is invalid: " + e.getMessage());
-            }
-
-            unmarshaller.setSchema(pluginSchema);
-
-            vec = new ValidationEventCollector();
-            unmarshaller.setEventHandler(vec);
-
-            pluginDescriptor = (PluginDescriptor) unmarshaller.unmarshal(descriptorURL);
-        } catch (JAXBException e) {
-            throw new DeploymentException("Failed to parse descriptor found in plugin [" + di.localUrl + "]", e);
-        }
-
-        for (ValidationEvent event : vec.getEvents()) {
-            log.warn(event.getSeverity() + ":" + event.getMessage() + "    " + event.getLinkedException());
-        }
-
-        return pluginDescriptor;
-    }
-
-    /**
-     * Registers plugins and their types.
-     * Only call this method when {@link #isReady} is true.
-     */
-    private void registerPlugins() {
         for (Iterator<String> it = this.namesOfPluginsToBeRegistered.iterator(); it.hasNext();) {
             String pluginName = it.next();
             if (!isNewOrUpdated(pluginName)) {
@@ -410,7 +229,7 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
         }
 
         if (this.namesOfPluginsToBeRegistered.isEmpty()) {
-            log.info("All agent plugins were already up to date in the database.");
+            log.debug("All agent plugins were already up to date in the database.");
             return;
         }
 
@@ -450,6 +269,45 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
         return;
     }
 
+    /**
+     * Process the specified plugin jar to figure out the plugin name and version. If it is the only plugin with this
+     * name, or if it has the newest version among other plugins with the same name, then add it to our master set of
+     * plugins to be registered. Once all EJBs are started, {@link #startDeployer()} will be called and will take care
+     * of registering the plugins.
+     */
+    private String preprocessPlugin(DeploymentInfo deploymentInfo) throws Exception {
+        File pluginFile = new File(deploymentInfo.url.getFile());
+        ensureDeploymentIsValid(pluginFile);
+        PluginDescriptor descriptor = getPluginDescriptor(deploymentInfo);
+        String pluginName = descriptor.getName();
+        boolean initialDeploy = !this.deploymentInfos.containsKey(pluginName);
+        ComparableVersion version;
+        version = AgentPluginDescriptorUtil.getPluginVersion(pluginFile, descriptor);
+
+        if (initialDeploy) {
+            log.info("Discovered agent plugin [" + pluginName + "]");
+        } else {
+            log.info("Rediscovered agent plugin [" + pluginName + "]");
+        }
+
+        if (initialDeploy || isNewestVersion(pluginName, version)) {
+            this.deploymentInfos.put(pluginName, deploymentInfo);
+            this.pluginDescriptors.put(pluginName, descriptor);
+            this.pluginVersions.put(pluginName, version);
+            this.namesOfPluginsToBeRegistered.add(pluginName);
+        }
+        return pluginName;
+    }
+
+    private PluginDescriptor getPluginDescriptor(DeploymentInfo di) throws Exception {
+        try {
+            PluginDescriptor pluginDescriptor = AgentPluginDescriptorUtil.loadPluginDescriptorFromUrl(di.url);
+            return pluginDescriptor;
+        } catch (Exception e) {
+            throw new Exception("Failed to parse descriptor found in plugin [" + di.url + "]", e);
+        }
+    }
+
     private boolean isNewestVersion(String pluginName, ComparableVersion version) {
         boolean newestVersion;
         ComparableVersion existingVersion = this.pluginVersions.get(pluginName);
@@ -482,7 +340,7 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
 
         String md5 = null;
         try {
-            md5 = MD5Generator.getDigestString(new File(deploymentInfo.localUrl.toURI()));
+            md5 = MD5Generator.getDigestString(new File(deploymentInfo.url.toURI()));
         } catch (Exception e) {
             log.error("Error generating MD5 for plugin [" + pluginName + "]. Cause: " + e);
         }
@@ -562,6 +420,21 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
             + (endDeployTime - startDeployTime) + "]ms");
     }
 
+    // Who needs this???
+    /*
+    private List<String> getRegisteredPluginNames() {
+        ResourceMetadataManagerLocal metadataManager = LookupUtil.getResourceMetadataManager();
+        Collection<Plugin> plugins = metadataManager.getPlugins();
+        List<String> pluginNames = new ArrayList<String>();
+
+        for (Plugin plugin : plugins) {
+            pluginNames.add(plugin.getName());
+        }
+
+        return pluginNames;
+    }
+    */
+
     private LatchedPluginDeploymentService getServiceIfExists(String pluginName,
         Map<String, LatchedPluginDeploymentService> latchedServiceMap) {
 
@@ -583,12 +456,12 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
      */
     private void registerPluginJar(PluginDescriptor pluginDescriptor, DeploymentInfo deploymentInfo, boolean forceUpdate) {
         if (pluginDescriptor == null) {
-            log.error("Missing plugin descriptor; is [" + deploymentInfo.localUrl + "] a valid plugin?");
+            log.error("Missing plugin descriptor; is [" + deploymentInfo.url + "] a valid plugin?");
             return;
         }
 
         try {
-            File localPluginFile = new File(deploymentInfo.localUrl.toURI());
+            File localPluginFile = new File(deploymentInfo.url.toURI());
 
             String pluginName = pluginDescriptor.getName();
             String displayName = pluginDescriptor.getDisplayName();
@@ -624,8 +497,7 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
             metadataManager.registerPlugin(subjectManager.getOverlord(), plugin, pluginDescriptor, localPluginFile,
                 forceUpdate);
         } catch (Exception e) {
-            log.error("Failed to register RHQ plugin file [" + deploymentInfo.shortName + "] at ["
-                + deploymentInfo.localUrl + "]", e);
+            log.error("Failed to register RHQ plugin file [" + deploymentInfo.url + "]", e);
         }
     }
 
@@ -635,14 +507,14 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
          * version " + AMPS_VERSION);}*/
     }
 
-    private void ensureDeploymentIsValid(File pluginFile) throws DeploymentException {
+    private void ensureDeploymentIsValid(File pluginFile) throws Exception {
 
         // try a few times (sleeping between retries)
         // if the zip file still isn't valid, its probably corrupted and not simply due to the file still being written out
         int retries = 4;
         while (!isDeploymentValidZipFile(pluginFile)) {
             if (--retries <= 0) {
-                throw new DeploymentException("File [" + pluginFile + "] is not a valid jarfile - "
+                throw new Exception("File [" + pluginFile + "] is not a valid jarfile - "
                     + " it is either corrupted or file has not been fully written yet.");
             }
             try {
@@ -693,19 +565,7 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
      * @return the name of the plugin file
      */
     private String getPluginJarFilename(DeploymentInfo di) {
-        return new File(di.url.getPath()).getName(); // use url, not localurl, because we want the 'real' name
-    }
-
-    private boolean isLicenseFile(DeploymentInfo deploymentInfo) {
-        String name = LicenseManager.getLicenseFileName();
-        return deploymentInfo.url.getFile().endsWith(name); // use url (not localurl), want to use the actual license file
-    }
-
-    @Override
-    protected void processNestedDeployments(DeploymentInfo di) throws DeploymentException {
-        if (di.isDirectory) {
-            super.processNestedDeployments(di);
-        }
+        return new File(di.url.getPath()).getName();
     }
 
     class LatchedPluginDeploymentService extends LatchedServiceController.LatchedService {
@@ -732,6 +592,33 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
             } catch (Throwable t) {
                 throw new LatchedServiceException(t);
             }
+        }
+    }
+
+    static class DeploymentInfo {
+        public final URL url;
+
+        public DeploymentInfo(URL url) {
+            if (url == null) {
+                throw new IllegalArgumentException("url == null");
+            }
+            this.url = url;
+        }
+
+        @Override
+        public int hashCode() {
+            return url.hashCode();
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null || (!(obj instanceof DeploymentInfo))) {
+                return false;
+            }
+            return url.equals(((DeploymentInfo) obj).url);
         }
     }
 }

@@ -34,16 +34,15 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
-import javax.management.ObjectName;
 import javax.sql.DataSource;
 import javax.transaction.TransactionManager;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import org.jboss.deployment.scanner.URLDeploymentScanner;
-import org.jboss.mx.util.ObjectNameFactory;
 
 import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
@@ -55,13 +54,15 @@ import org.rhq.core.db.PostgresqlDatabaseType;
 import org.rhq.core.db.SQLServerDatabaseType;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.util.MD5Generator;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.core.util.stream.StreamUtil;
+import org.rhq.enterprise.server.core.plugin.ProductPluginDeployer.DeploymentInfo;
+import org.rhq.enterprise.server.util.LoggingThreadFactory;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
- * This is an extended URL deployment scanner so this can look at both the
- * file system and the database for new agent plugins.
+ * This looks at both the file system and the database for new agent plugins.
  *
  * If an agent plugin is different in the database than on the filesystem,
  * this scanner will stream the plugin's content to the filesystem. This
@@ -73,75 +74,181 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * So the job of this scanner is merely to look at the database and
  * reconcile the file system so the file system has the most up-to-date
  * plugins. Any old plugins will be deleted from the file system.
+ * 
+ * This will delegate to {@link ProductPluginDeployer} to do the actual
+ * deployment of agent plugins.
  *
  * @author John Mazzitelli
  */
-public class AgentPluginURLDeploymentScanner extends URLDeploymentScanner {
+public class AgentPluginDeploymentScanner implements AgentPluginDeploymentScannerMBean {
 
-    /**
-     * The name of this MBean when deployed.
-     */
-    public static ObjectName OBJECT_NAME = ObjectNameFactory
-        .create("rhq:service=AgentPluginURLDeploymentScanner,type=DeploymentScanner,flavor=URL");
-
-    private Log log = LogFactory.getLog(AgentPluginURLDeploymentScanner.class);
+    private Log log = LogFactory.getLog(AgentPluginDeploymentScanner.class);
 
     private DatabaseType dbType = null;
-
-    /** The location where the user stores agent plugin files */
-    private File pluginDirectory;
 
     /** Maintains a cache of what we had on the filesystem during the last scan */
     private Map<File, Plugin> pluginsOnFilesystem = new HashMap<File, Plugin>();
 
-    /**
-     * This will scan the database for new/updated plugins and if it finds
-     * any, will write the content as plugin files in the file system. This
-     * will also delete old, obsolete plugins.
-     */
-    @Override
+    /** time, in millis, between each scans */
+    private long scanPeriod = 300000L;
+
+    /** the object that we delegate to in order to do the heavy lifting of agent plugin deployment */
+    private ProductPluginDeployer pluginDeployer = new ProductPluginDeployer();
+
+    /** handles the scheduled scanning */
+    private ScheduledExecutorService poller;
+
+    /** a list of plugins found on previous scans that have not yet been added to the plugin deployer yet */
+    private List<DeploymentInfo> scanned = new ArrayList<DeploymentInfo>();
+
+    public Long getScanPeriod() {
+        return Long.valueOf(this.scanPeriod);
+    }
+
+    public void setScanPeriod(Long ms) {
+        if (ms != null) {
+            this.scanPeriod = ms.longValue();
+        } else {
+            this.scanPeriod = 300000L;
+        }
+    }
+
+    public File getPluginDir() {
+        return this.pluginDeployer.getPluginDir();
+    }
+
+    public void setPluginDir(File pluginDirectory) {
+        this.pluginDeployer.setPluginDir(pluginDirectory);
+    }
+
+    public File getLicenseFile() {
+        return this.pluginDeployer.getLicenseFile();
+    }
+
+    public void setLicenseFile(File file) {
+        this.pluginDeployer.setLicenseFile(file);
+    }
+
     public synchronized void scan() throws Exception {
-        scanFilesystem();
-        scanDatabase();
-        super.scan();
+        // this method just scans the filesystem and database for changes but makes
+        // no attempt to register them or do anything with the plugin deployer.
+        // this is for two reasons: a) allow a caller just to make sure the filesystem
+        // is up-to-date with the latest plugins and b) to assign unit tests that only
+        // want to make sure the scanning works, but not worry about deploying to the DB
+
+        log.debug("Scanning for agent plugins");
+
+        // ensure that the filesystem and database are in a consistent state
+        List<File> updatedFiles1 = scanFilesystem();
+        List<File> updatedFiles2 = scanDatabase();
+
+        // process any newly detected plugins
+        List<File> allUpdatedFiles = new ArrayList<File>();
+        allUpdatedFiles.addAll(updatedFiles1);
+        allUpdatedFiles.addAll(updatedFiles2);
+
+        for (File updatedFile : allUpdatedFiles) {
+            DeploymentInfo di = new DeploymentInfo(updatedFile.toURI().toURL());
+            log.debug("Scan detected plugin [" + di.url + "]...");
+            this.scanned.add(di);
+        }
+
         return;
     }
 
-    /**
-     * This will check to see if there are any plugin records in the database
-     * that do not have content associated with them and if so, will stream
-     * the content from the file system to the database. This is needed only
-     * in the case when this server has recently been upgraded from an old
-     * version of the software that did not originally have content stored in the DB.
-     */
-    @Override
-    public void startService() throws Exception {
-        // the first URL in the scanner's list must be the agent plugin directory
-        setPluginDirectory(new File(((URL) getURLList().get(0)).toURI()));
+    public synchronized void scanAndRegister() throws Exception {
+        // do the scan first to find any new/updated plugins
+        // this will place new deployment info on updated plugins in this.scanned
+        scan();
 
-        fixMissingPluginContent();
+        for (DeploymentInfo di : this.scanned) {
+            log.debug("Hot deploying plugin [" + di.url + "]...");
+            this.pluginDeployer.pluginDetected(di);
+        }
+        this.scanned.clear();
 
-        super.startService();
+        // Register all the new plugins.
+        // Call this even if we don't have any update files this time, in case an error occurred last time
+        // and we need to finish what we started before.
+        this.pluginDeployer.registerPlugins();
+
+        return;
     }
 
-    protected void setPluginDirectory(File pluginDirectory) {
-        this.pluginDirectory = pluginDirectory;
+    public void start() throws Exception {
+        // This will check to see if there are any plugin records in the database
+        // that do not have content associated with them and if so, will stream
+        // the content from the file system to the database. This is needed only
+        // in the case when this server has recently been upgraded from an old
+        // version of the software that did not originally have content stored in the DB.
+        fixMissingPluginContent();
+
+        this.pluginDeployer.start();
+
+        shutdownPoller(); // paranoia - just in case somehow one is still running
+        this.poller = Executors.newSingleThreadScheduledExecutor(new LoggingThreadFactory("AgentPluginScanner", true));
+        return;
+    }
+
+    public void stop() {
+        this.pluginDeployer.stop();
+        shutdownPoller();
+        return;
+    }
+
+    private void shutdownPoller() {
+        if (this.poller != null) {
+            this.poller.shutdownNow();
+            this.poller = null;
+        }
+        return;
+    }
+
+    public void startDeployment() {
+        // We are being called by the server's startup servlet which essentially informs us that
+        // the server's internal EJB/SLSBs are ready and can be called. This means we are
+        // allowed to begin registering types from deployed plugins.
+        this.pluginDeployer.startDeployment();
+
+        Runnable runnable = new Runnable() {
+            public void run() {
+                try {
+                    scanAndRegister();
+                } catch (Throwable t) {
+                    log.error("Scan failed. Cause: " + ThrowableUtil.getAllMessages(t));
+                    if (log.isDebugEnabled()) {
+                        log.debug("Scan failure stack trace follows:", t);
+                    }
+                }
+            }
+        };
+
+        // do the initial scan now
+        runnable.run();
+
+        // schedule it to run periodically from here on out
+        this.poller.scheduleWithFixedDelay(runnable, this.scanPeriod, this.scanPeriod, TimeUnit.MILLISECONDS);
+        return;
     }
 
     /**
      * Scans the plugin directory and updates our cache of known plugin files.
      * This will purge any old plugins that are deemed obsolete.
+     * 
+     * @return a list of files that appear to be new or updated and should be deployed
      */
-    private void scanFilesystem() {
+    private List<File> scanFilesystem() {
+        List<File> updated = new ArrayList<File>();
+
         // get the current list of plugins deployed on the filesystem
-        File[] pluginJars = this.pluginDirectory.listFiles(new FilenameFilter() {
+        File[] pluginJars = this.pluginDeployer.getPluginDir().listFiles(new FilenameFilter() {
             public boolean accept(File dir, String name) {
                 return name.endsWith(".jar");
             }
         });
 
         // refresh our cache so it reflects what is currently on the filesystem
-        // first we remove any jar files in our cache that we longer have on the filesystem
+        // first we remove any jar files in our cache that we no longer have on the filesystem
         ArrayList<File> doomedPluginFiles = new ArrayList<File>();
         for (File cachedPluginFile : this.pluginsOnFilesystem.keySet()) {
             boolean existsOnFileSystem = false;
@@ -179,10 +286,12 @@ public class AgentPluginURLDeploymentScanner extends URLDeploymentScanner {
 
                 if (plugin == null) {
                     cacheFilesystemPluginJar(pluginJar, md5);
+                    updated.add(pluginJar);
                 }
             } catch (Exception e) {
                 log.warn("Failed to scan plugin [" + pluginJar + "] found on filesystem. Skipping it. Cause: " + e);
                 this.pluginsOnFilesystem.remove(pluginJar); // act like we never saw it
+                updated.remove(pluginJar);
             }
         }
 
@@ -201,7 +310,7 @@ public class AgentPluginURLDeploymentScanner extends URLDeploymentScanner {
                 if (obsolete == null) {
                     obsolete = currentPlugin; // both were identical, but we only want one file so pick one to get rid of
                 }
-                doomedPluginFiles.add(new File(this.pluginDirectory, obsolete.getPath()));
+                doomedPluginFiles.add(new File(this.pluginDeployer.getPluginDir(), obsolete.getPath()));
                 if (obsolete == existingPlugin) { // yes use == for reference equality!
                     pluginsByName.put(currentPlugin.getName(), currentPlugin); // override the original one we saw with this latest one
                 }
@@ -213,12 +322,13 @@ public class AgentPluginURLDeploymentScanner extends URLDeploymentScanner {
             if (doomedPluginFile.delete()) {
                 log.info("Deleted an obsolete plugin file: " + doomedPluginFile);
                 this.pluginsOnFilesystem.remove(doomedPluginFile);
+                updated.remove(doomedPluginFile);
             } else {
                 log.warn("Failed to delete what was deemed an obsolete plugin file: " + doomedPluginFile);
             }
         }
 
-        return;
+        return updated;
     }
 
     /**
@@ -247,14 +357,19 @@ public class AgentPluginURLDeploymentScanner extends URLDeploymentScanner {
     /**
      * This method scans the database for any new or updated agent plugins and make sure this server
      * has a plugin file on the filesystem for each of those new/updated agent plugins.
+     *
+     * @return a list of files that appear to be new or updated and should be deployed
      */
-    private void scanDatabase() throws Exception {
+    private List<File> scanDatabase() throws Exception {
         Connection conn = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
 
         // these are plugins (name/path/md5/mtime) that have changed in the DB but are missing from the file system
         List<Plugin> updatedPlugins = new ArrayList<Plugin>();
+
+        // the same list as above, only they are the files that are written to the filesystem and no longer missing
+        List<File> updatedFiles = new ArrayList<File>();
 
         try {
             DataSource ds = LookupUtil.getDataSource();
@@ -273,7 +388,7 @@ public class AgentPluginURLDeploymentScanner extends URLDeploymentScanner {
                 String version = rs.getString(5);
 
                 // let's see if we have this logical plugin on the filesystem (it may or may not be under the same filename)
-                File expectedFile = new File(this.pluginDirectory, path);
+                File expectedFile = new File(this.pluginDeployer.getPluginDir(), path);
                 File currentFile = null; // will be non-null if we find that we have this plugin on the filesystem already
                 Plugin cachedPluginOnFilesystem = this.pluginsOnFilesystem.get(expectedFile);
 
@@ -357,7 +472,7 @@ public class AgentPluginURLDeploymentScanner extends URLDeploymentScanner {
             // write all our updated plugins to the file system
             ps = conn.prepareStatement("SELECT CONTENT FROM " + Plugin.TABLE_NAME + " WHERE NAME = ? AND ENABLED = ?");
             for (Plugin plugin : updatedPlugins) {
-                File file = new File(this.pluginDirectory, plugin.getPath());
+                File file = new File(this.pluginDeployer.getPluginDir(), plugin.getPath());
 
                 ps.setString(1, plugin.getName());
                 setEnabledFlag(conn, ps, 2, true);
@@ -367,12 +482,13 @@ public class AgentPluginURLDeploymentScanner extends URLDeploymentScanner {
                 StreamUtil.copy(content, new FileOutputStream(file));
                 rs.close();
                 file.setLastModified(plugin.getMtime()); // so our file matches the database mtime
+                updatedFiles.add(file);
             }
         } finally {
             JDBCUtil.safeClose(conn, ps, rs);
         }
 
-        return;
+        return updatedFiles;
     }
 
     /**
@@ -422,7 +538,7 @@ public class AgentPluginURLDeploymentScanner extends URLDeploymentScanner {
             // will have the same plugin names, we'll be able to key off of plugin name
             PluginDescriptor descriptor;
             Map<String, File> existingPluginFiles = new HashMap<String, File>(); // keyed on plugin name
-            for (File file : this.pluginDirectory.listFiles()) {
+            for (File file : this.pluginDeployer.getPluginDir().listFiles()) {
                 if (file.getName().endsWith(".jar")) {
                     try {
                         descriptor = AgentPluginDescriptorUtil.loadPluginDescriptorFromUrl(file.toURI().toURL());
@@ -449,7 +565,7 @@ public class AgentPluginURLDeploymentScanner extends URLDeploymentScanner {
                     pluginsToDelete.add(name);
                     log.warn("The database knows of a plugin named [" + name + "] with path [" + path
                         + "] but the content is missing. This server does not have this plugin in ["
-                        + this.pluginDirectory + "] so the database cannot be updated with the content."
+                        + this.pluginDeployer.getPluginDir() + "] so the database cannot be updated with the content."
                         + " This plugin must be installed to manage existing inventory for its resource types.");
                 }
             }

@@ -3,26 +3,10 @@
 <!DOCTYPE server>
 
 <server>
-  <mbean code="org.rhq.enterprise.server.core.plugin.ProductPluginDeployer"
-	      name="rhq:service=AgentPluginDeployer">
-
-    <attribute name="PluginDir">${jboss.server.home.dir}/deploy/${rhq.earName}/rhq-downloads/rhq-plugins</attribute>
-
-  </mbean>
-
-  <mbean code="org.rhq.enterprise.server.core.plugin.AgentPluginURLDeploymentScanner"
-	      name="rhq:service=AgentPluginURLDeploymentScanner,type=DeploymentScanner,flavor=URL">
-
-    <depends optional-attribute-name="Deployer">jboss.system:service=MainDeployer</depends>
-    <depends>rhq:service=AgentPluginDeployer</depends>
-
-    <attribute name="URLComparator">org.jboss.deployment.scanner.PrefixDeploymentSorter</attribute>
-    <attribute name="Filter">org.jboss.deployment.scanner.DeploymentFilter</attribute>
+  <mbean code="org.rhq.enterprise.server.core.plugin.AgentPluginDeploymentScanner"
+	      name="rhq:service=AgentPluginDeploymentScanner">
     <attribute name="ScanPeriod">${rhq.server.agent-plugin-scan-period-ms:300000}</attribute>
-    <!-- the first one MUST be the location of the agent plugins -->
-    <attribute name="URLs">
-       ./deploy/${rhq.earName}/rhq-downloads/rhq-plugins/,
-       ./deploy/${rhq.earName}/license/
-    </attribute>
+    <attribute name="PluginDir">${jboss.server.home.dir}/deploy/${rhq.earName}/rhq-downloads/rhq-plugins</attribute>
+    <attribute name="LicenseFile">${jboss.server.home.dir}/deploy/${rhq.earName}/license/license.xml</attribute>
   </mbean>
 </server>

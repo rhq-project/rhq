@@ -30,8 +30,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.richfaces.event.UploadEvent;
 
-import org.jboss.deployment.scanner.URLDeploymentScannerMBean;
-
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.plugin.Plugin;
@@ -41,6 +39,7 @@ import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceMBean;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
+import org.rhq.enterprise.server.core.plugin.AgentPluginDeploymentScannerMBean;
 import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -66,8 +65,8 @@ public class InstalledPluginsUIBean {
         hasPermission();
 
         try {
-            URLDeploymentScannerMBean scanner = LookupUtil.getAgentPluginURLDeploymentScanner();
-            scanner.scan();
+            AgentPluginDeploymentScannerMBean scanner = LookupUtil.getAgentPluginDeploymentScanner();
+            scanner.scanAndRegister();
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Done scanning for updated agent plugins.");
         } catch (Exception e) {
             String err = "Failed to scan for updated agent plugins";

@@ -130,7 +130,7 @@ public class DatabaseAndFilePluginDeploymentTest extends AbstractEJB3Test {
     public void test2() throws Exception {
         Plugin plugin10feb = deployPluginJarToDatabase(TESTPLUGIN_1_0_FEB);
 
-        AgentPluginURLDeploymentScanner scanner = createScanner();
+        AgentPluginDeploymentScanner scanner = createScanner();
         scan(scanner, null);
         assertPluginInDb(plugin10feb);
         assertPluginOnFilesystem(plugin10feb);
@@ -467,16 +467,16 @@ public class DatabaseAndFilePluginDeploymentTest extends AbstractEJB3Test {
         return !file.exists();
     }
 
-    private AgentPluginURLDeploymentScanner createScannerAndScan(String pluginId) throws Exception {
-        AgentPluginURLDeploymentScanner scanner = createScanner();
+    private AgentPluginDeploymentScanner createScannerAndScan(String pluginId) throws Exception {
+        AgentPluginDeploymentScanner scanner = createScanner();
         scan(scanner, pluginId); // see comments in scan() for what pluginId is
         return scanner;
     }
 
-    private AgentPluginURLDeploymentScanner createScanner() throws Exception {
-        AgentPluginURLDeploymentScanner scanner = new AgentPluginURLDeploymentScanner();
+    private AgentPluginDeploymentScanner createScanner() throws Exception {
+        AgentPluginDeploymentScanner scanner = new AgentPluginDeploymentScanner();
         File pluginDirectoryFile = new File(DEPLOY_LOCATION);
-        scanner.setPluginDirectory(pluginDirectoryFile);
+        scanner.setPluginDir(pluginDirectoryFile);
         return scanner;
     }
 
@@ -489,7 +489,7 @@ public class DatabaseAndFilePluginDeploymentTest extends AbstractEJB3Test {
      * @param pluginId if not-null, this is registered (i.e. a file scan registering this plugin)
      * @throws Exception
      */
-    private void scan(AgentPluginURLDeploymentScanner scanner, String pluginId) throws Exception {
+    private void scan(AgentPluginDeploymentScanner scanner, String pluginId) throws Exception {
         if (scanner != null) {
             scanner.scan();
         }

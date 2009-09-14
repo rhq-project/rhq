@@ -72,7 +72,7 @@ public class ListCreateResourceHistoryUIBean extends PagedDataTableUIBean {
             Resource parentresource = EnterpriseFacesContextUtility.getResourceIfExists();
             ResourceFactoryManagerLocal resourceFactoryManager = LookupUtil.getResourceFactoryManager();
 
-            PageList<CreateResourceHistory> pageList = resourceFactoryManager.getCreateChildResourceHistory(
+            PageList<CreateResourceHistory> pageList = resourceFactoryManager.findCreateChildResourceHistory(
                 parentresource.getId(), null, null, pageControl);
 
             return pageList;

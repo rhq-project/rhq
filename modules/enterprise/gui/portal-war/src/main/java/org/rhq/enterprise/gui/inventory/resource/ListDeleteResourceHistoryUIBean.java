@@ -77,7 +77,7 @@ public class ListDeleteResourceHistoryUIBean extends PagedDataTableUIBean {
             ResourceFactoryManagerLocal resourceFactoryManager = LookupUtil.getResourceFactoryManager();
 
             pageControl.initDefaultOrderingField("drh.id", PageOrdering.DESC);
-            PageList<DeleteResourceHistory> pageList = resourceFactoryManager.getDeleteChildResourceHistory(
+            PageList<DeleteResourceHistory> pageList = resourceFactoryManager.findDeleteChildResourceHistory(
                 parentresource.getId(), null, null, pageControl);
 
             return pageList;

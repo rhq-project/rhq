@@ -132,7 +132,7 @@ public interface ResourceFactoryManagerLocal {
      *
      * @return list of requests
      */
-    PageList<CreateResourceHistory> getCreateChildResourceHistory(int parentResourceId, Long beginDate, Long endDate,
+    PageList<CreateResourceHistory> findCreateChildResourceHistory(int parentResourceId, Long beginDate, Long endDate,
         PageControl pageControl);
 
     /**
@@ -147,7 +147,7 @@ public interface ResourceFactoryManagerLocal {
      *
      * @return list of requests
      */
-    PageList<DeleteResourceHistory> getDeleteChildResourceHistory(int parentResourceId, Long beginDate, Long endDate,
+    PageList<DeleteResourceHistory> findDeleteChildResourceHistory(int parentResourceId, Long beginDate, Long endDate,
         PageControl pageControl);
 
     /**

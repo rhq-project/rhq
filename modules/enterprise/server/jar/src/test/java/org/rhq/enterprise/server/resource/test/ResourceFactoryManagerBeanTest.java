@@ -344,7 +344,7 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
 
         PageControl pageControl = new PageControl(0, 10000);
         pageControl.initDefaultOrderingField("createdResourceName");
-        PageList<CreateResourceHistory> historyList = resourceFactoryManager.getCreateChildResourceHistory(
+        PageList<CreateResourceHistory> historyList = resourceFactoryManager.findCreateChildResourceHistory(
             parentResource.getId(), null, null, pageControl);
 
         assert historyList.getTotalSize() == 3 : "Incorrect number of entries in page list. Expected: 3, Found: "
@@ -377,7 +377,7 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
 
         PageControl pageControl = new PageControl(0, 10000);
         pageControl.initDefaultOrderingField("drh.id");
-        PageList<DeleteResourceHistory> historyList = resourceFactoryManager.getDeleteChildResourceHistory(
+        PageList<DeleteResourceHistory> historyList = resourceFactoryManager.findDeleteChildResourceHistory(
             parentResource.getId(), null, null, pageControl);
 
         assert historyList.getTotalSize() == 3 : "Incorrect number of entries in page list. Expected: 3, Found: "
@@ -397,7 +397,7 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
         resourceConfiguration.getMap();
         resourceFactoryManager.createResource(overlord, parentResource.getId(), childResourceType.getId(),
             "NewResource", null, resourceConfiguration);
-        PageList<CreateResourceHistory> historyList = resourceFactoryManager.getCreateChildResourceHistory(
+        PageList<CreateResourceHistory> historyList = resourceFactoryManager.findCreateChildResourceHistory(
             parentResource.getId(), null, null, new PageControl(0, 1000));
         int historyItemId = historyList.get(0).getId();
 

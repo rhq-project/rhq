@@ -147,7 +147,7 @@ public class DetermineChildResourceCreationTypeUIBean {
 
         ResourceFactoryManagerLocal resourceFactoryManager = LookupUtil.getResourceFactoryManager();
         PageControl pageControl = new PageControl(0, 1000);
-        PageList<CreateResourceHistory> pageList = resourceFactoryManager.getCreateChildResourceHistory(parentResource
+        PageList<CreateResourceHistory> pageList = resourceFactoryManager.findCreateChildResourceHistory(parentResource
             .getId(), null, null, pageControl);
 
         List<SelectItem> selectItemsList = new ArrayList<SelectItem>();

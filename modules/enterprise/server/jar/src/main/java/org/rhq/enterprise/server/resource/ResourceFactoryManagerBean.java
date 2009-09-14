@@ -371,7 +371,7 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<CreateResourceHistory> getCreateChildResourceHistory(int parentResourceId, Long beginDate,
+    public PageList<CreateResourceHistory> findCreateChildResourceHistory(int parentResourceId, Long beginDate,
         Long endDate, PageControl pageControl) {
         pageControl.initDefaultOrderingField("crh.id", PageOrdering.DESC);
 
@@ -404,7 +404,7 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<DeleteResourceHistory> getDeleteChildResourceHistory(int parentResourceId, Long beginDate,
+    public PageList<DeleteResourceHistory> findDeleteChildResourceHistory(int parentResourceId, Long beginDate,
         Long endDate, PageControl pageControl) {
         pageControl.initDefaultOrderingField("drh.id", PageOrdering.DESC);
 

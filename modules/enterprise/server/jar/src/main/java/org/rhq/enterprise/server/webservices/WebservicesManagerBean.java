@@ -764,6 +764,18 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return roleManager.getRole(subject, roleId);
     }
 
+    public Role createRole(Subject subject, Role newRole) {
+        return roleManager.createRole(subject, newRole);
+    }
+
+    public void deleteRoles(Subject subject, Integer[] roleIds) {
+        roleManager.deleteRoles(subject, roleIds);
+    }
+
+    public Role updateRole(Subject subject, Role role) {
+        return roleManager.updateRole(subject, role);
+    }
+
     public void removeResourceGroupsFromRole(Subject subject, int roleId, int[] groupIds) {
         roleManager.removeResourceGroupsFromRole(subject, roleId, groupIds);
     }

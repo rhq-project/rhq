@@ -55,6 +55,44 @@ public interface RoleManagerRemote {
         @WebParam(name = "roleId") int roleId);
 
     /**
+     * Persists the new role to the database. The subjects assigned to the role are ignored - this only creates the
+     * role entity with 0 subjects initially assigned to it.
+     *
+     * @param subject The user attempting to create the role
+     * @param newRole The new role being created
+     * @return The persisted role with the primary key populated
+     */
+    @WebMethod
+    Role createRole(
+        @WebParam(name = "subject") Subject subject,
+        @WebParam(name = "newRole") Role newRole);
+
+    /**
+     * Removes a set of roles from the database. The subjects assigned to the roles are no longer authorized with the
+     * deleted roles. Groups attached to the deleted roles are left alone.
+     *
+     * @param subject The user attempting to delete the role
+     * @param roleIds The IDs of the roles to delete
+     */
+    @WebMethod
+    void deleteRoles(
+        @WebParam(name = "subject") Subject subject,
+        @WebParam(name = "roleIds") Integer[] roleIds);
+
+    /**
+     * Updates the given role, excluding the subjects and groups. This updates permissions, name, description, etc.
+     *
+     * @param subject The user updating the role
+     * @param role The role being updated
+     * @return The updated role
+     */
+    @WebMethod
+    Role updateRole(
+        @WebParam(name = "subject") Subject subject,
+        @WebParam(name = "role") Role role
+    );
+
+    /**
      * Get all roles assigned for a certain subject
      * 
      * @param subject The logged in user's subject

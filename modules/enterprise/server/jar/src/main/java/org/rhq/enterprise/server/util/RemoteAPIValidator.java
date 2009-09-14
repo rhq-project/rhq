@@ -21,7 +21,9 @@ package org.rhq.enterprise.server.util;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.ejb.Local;
 import javax.jws.WebMethod;
@@ -30,6 +32,7 @@ import javax.jws.WebService;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerBean;
 import org.rhq.enterprise.server.alert.AlertManagerBean;
 import org.rhq.enterprise.server.auth.SubjectManagerBean;
@@ -37,6 +40,7 @@ import org.rhq.enterprise.server.authz.RoleManagerBean;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerBean;
 import org.rhq.enterprise.server.content.ChannelManagerBean;
 import org.rhq.enterprise.server.content.ContentManagerBean;
+import org.rhq.enterprise.server.content.ContentSourceManagerBean;
 import org.rhq.enterprise.server.event.EventManagerBean;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerBean;
 import org.rhq.enterprise.server.measurement.CallTimeDataManagerBean;
@@ -46,8 +50,13 @@ import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerBean;
 import org.rhq.enterprise.server.measurement.MeasurementProblemManagerBean;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerBean;
 import org.rhq.enterprise.server.operation.OperationManagerBean;
+import org.rhq.enterprise.server.report.DataAccessManagerBean;
+import org.rhq.enterprise.server.resource.ResourceFactoryManagerBean;
 import org.rhq.enterprise.server.resource.ResourceManagerBean;
+import org.rhq.enterprise.server.resource.ResourceTypeManagerBean;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerBean;
+import org.rhq.enterprise.server.support.SupportManagerBean;
+import org.rhq.enterprise.server.system.SystemManagerBean;
 
 /**
  * @author Joseph Marques
@@ -62,6 +71,8 @@ public class RemoteAPIValidator {
         ChannelManagerBean.class,//
         ConfigurationManagerBean.class, //
         ContentManagerBean.class, //
+        ContentSourceManagerBean.class, //
+        DataAccessManagerBean.class, //
         EventManagerBean.class, //
         MeasurementBaselineManagerBean.class,//
         MeasurementDataManagerBean.class,//
@@ -69,10 +80,29 @@ public class RemoteAPIValidator {
         MeasurementProblemManagerBean.class,//
         MeasurementScheduleManagerBean.class, //
         OperationManagerBean.class, //
+        //PerspectiveManagerBean.class, //
+        ResourceFactoryManagerBean.class, //
         ResourceGroupManagerBean.class, //
-        ResourceManagerBean.class,//
+        ResourceManagerBean.class, //
+        ResourceTypeManagerBean.class, //
         RoleManagerBean.class, //
-        SubjectManagerBean.class };
+        SubjectManagerBean.class, //
+        SupportManagerBean.class, //
+        SystemManagerBean.class };
+
+    private static Set<String> finderMethodExceptions = new HashSet<String>();
+    static {
+        /* 
+         * unless otherwise noted, all of the below methods return data considered to 
+         * be single, logical objects even though they are implemented as list structures
+         */
+        finderMethodExceptions.add("translateInstallationSteps");
+        finderMethodExceptions.add("getResourceNameOptionItems");
+        finderMethodExceptions.add("getResourceLineage");
+        finderMethodExceptions.add("getResourceIdLineage");
+        finderMethodExceptions.add("deleteResources"); // action method, just happens to returned deleted resourceIds
+        finderMethodExceptions.add("deleteResource"); // action method, just happens to returned deleted resourceIds
+    }
 
     public static void validateAll() {
         int classesInError = 0;
@@ -123,13 +153,57 @@ public class RemoteAPIValidator {
             String methodName = remoteMethod.getName();
             Class<?>[] parameterTypes = remoteMethod.getParameterTypes();
             try {
-                localInterface.getMethod(methodName, parameterTypes);
+                Method localMethod = localInterface.getMethod(methodName, parameterTypes);
+                Method managerBeanMethod = managerBean.getMethod(methodName, parameterTypes);
+
+                Class<?>[] localExceptions = localMethod.getExceptionTypes();
+                Class<?>[] managerBeanExceptions = managerBeanMethod.getExceptionTypes();
+                Class<?>[] remoteExceptions = remoteMethod.getExceptionTypes();
+
+                for (Class<?> remoteException : remoteExceptions) {
+                    // make sure local mirrors remote throws signature
+                    boolean found = false;
+                    for (Class<?> localException : localExceptions) {
+                        if (remoteException.equals(localException)) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (found == false) {
+                        errors.add(format(remoteMethod) + ", local method does not throw "
+                            + remoteException.getSimpleName());
+                    }
+
+                    // make sure managerBean mirrors remote throws signature
+                    for (Class<?> managerBeanException : managerBeanExceptions) {
+                        if (remoteException.equals(managerBeanException)) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (found == false) {
+                        errors.add(format(remoteMethod) + ", manager bean method does not throw "
+                            + remoteException.getSimpleName());
+                    }
+                }
             } catch (NoSuchMethodException nsme) {
                 errors.add(format(remoteMethod) + ", method not found in the local interface");
             }
 
             validateTypeParameter(remoteMethod, 0, Subject.class, "subject", errors);
             validateTypeParameter(remoteMethod, parameterTypes.length - 1, PageControl.class, "pageControl", errors);
+        }
+
+        Method[] managerBeanMethods = managerBean.getMethods();
+
+        for (Method managerBeanMethod : managerBeanMethods) {
+            String methodName = managerBeanMethod.getName();
+            Class<?> returnType = managerBeanMethod.getReturnType();
+            if (returnType.isAssignableFrom(List.class) || returnType.isAssignableFrom(PageList.class)) {
+                if (methodName.startsWith("find") == false && finderMethodExceptions.contains(methodName) == false) {
+                    errors.add(format(managerBeanMethod) + ", bean method returning a List must begin with 'find'");
+                }
+            }
         }
 
         return errors;

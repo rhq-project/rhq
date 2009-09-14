@@ -40,7 +40,6 @@ import org.rhq.enterprise.server.authz.RoleManagerBean;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerBean;
 import org.rhq.enterprise.server.content.ChannelManagerBean;
 import org.rhq.enterprise.server.content.ContentManagerBean;
-import org.rhq.enterprise.server.content.ContentSourceManagerBean;
 import org.rhq.enterprise.server.event.EventManagerBean;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerBean;
 import org.rhq.enterprise.server.measurement.CallTimeDataManagerBean;
@@ -71,7 +70,7 @@ public class RemoteAPIValidator {
         ChannelManagerBean.class,//
         ConfigurationManagerBean.class, //
         ContentManagerBean.class, //
-        ContentSourceManagerBean.class, //
+        //ContentSourceManagerBean.class, //
         DataAccessManagerBean.class, //
         EventManagerBean.class, //
         MeasurementBaselineManagerBean.class,//
@@ -102,6 +101,8 @@ public class RemoteAPIValidator {
         finderMethodExceptions.add("getResourceIdLineage");
         finderMethodExceptions.add("deleteResources"); // action method, just happens to returned deleted resourceIds
         finderMethodExceptions.add("deleteResource"); // action method, just happens to returned deleted resourceIds
+        finderMethodExceptions.add("executeQuery");
+        finderMethodExceptions.add("executeQueryWithPageControl");
     }
 
     public static void validateAll() {

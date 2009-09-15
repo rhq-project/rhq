@@ -335,12 +335,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                     throw new IllegalArgumentException("PackageVersion: [" + packageVersionId + "] not found!");
                 }
 
-                PackageDetailsKey key = new PackageDetailsKey( //
-                    packageVersion.getGeneralPackage().getName(), //
-                    packageVersion.getVersion(), //
-                    packageVersion.getGeneralPackage().getPackageType().getName(), //
-                    packageVersion.getArchitecture().getName());
-                ResourcePackageDetails details = new ResourcePackageDetails(key);
+                ResourcePackageDetails details = ContentManagerHelper.packageVersionToDetails(packageVersion);                
                 details.setInstallationTimestamp(System.currentTimeMillis());
                 packages.add(details);
             }

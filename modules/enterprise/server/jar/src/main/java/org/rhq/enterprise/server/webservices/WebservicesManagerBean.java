@@ -29,7 +29,6 @@ import java.util.Set;
 
 import javax.ejb.Stateless;
 import javax.jws.WebService;
-import javax.jws.WebParam;
 import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
@@ -299,7 +298,8 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return configurationManager.getLiveResourceConfiguration(subject, resourceId, pingAgentFirst);
     }
 
-    public Configuration getPluginConfiguration(Subject subject, int resourceId) {
+    public @XmlJavaTypeAdapter(ConfigurationAdapter.class)
+    Configuration getPluginConfiguration(Subject subject, int resourceId) {
         return configurationManager.getPluginConfiguration(subject, resourceId);
     }
 
@@ -307,7 +307,8 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return configurationManager.getPluginConfigurationDefinitionForResourceType(subject, resourceTypeId);
     }
 
-    public Configuration getResourceConfiguration(Subject subject, int resourceId) {
+    public @XmlJavaTypeAdapter(ConfigurationAdapter.class)
+    Configuration getResourceConfiguration(Subject subject, int resourceId) {
         return configurationManager.getResourceConfiguration(subject, resourceId);
     }
 
@@ -336,12 +337,14 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
 
     public PluginConfigurationUpdate updatePluginConfiguration(Subject subject, int resourceId,
-        Configuration newConfiguration) throws ResourceNotFoundException {
+        @XmlJavaTypeAdapter(ConfigurationAdapter.class) Configuration newConfiguration)
+        throws ResourceNotFoundException {
         return configurationManager.updatePluginConfiguration(subject, resourceId, newConfiguration);
     }
 
     public ResourceConfigurationUpdate updateResourceConfiguration(Subject subject, int resourceId,
-        Configuration newConfiguration) throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException {
+        @XmlJavaTypeAdapter(ConfigurationAdapter.class) Configuration newConfiguration)
+        throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException {
         return configurationManager.updateResourceConfiguration(subject, resourceId, newConfiguration);
     }
 

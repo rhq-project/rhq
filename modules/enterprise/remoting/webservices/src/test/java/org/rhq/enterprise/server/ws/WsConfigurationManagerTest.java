@@ -3,6 +3,8 @@ package org.rhq.enterprise.server.ws;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import javax.xml.namespace.QName;
@@ -67,7 +69,8 @@ public class WsConfigurationManagerTest extends AssertJUnit implements TestPrope
         assertTrue("Unable to find instances of JBoss AS.", resources.size() > 0);
 
         Resource resource = resources.get(0);
-        Configuration configuration = WEBSERVICE_REMOTE
+        //        Configuration configuration = WEBSERVICE_REMOTE
+        WsConfiguration configuration = WEBSERVICE_REMOTE
         // JaxbConfiguration configuration = WEBSERVICE_REMOTE
             .getResourceConfiguration(subject, resource.getId());
         assertNotNull("Configuration was not located.", configuration);
@@ -87,371 +90,15 @@ public class WsConfigurationManagerTest extends AssertJUnit implements TestPrope
         assertFalse("Config should not be in process of modification.", isUpdating);
 
         // Get plugin configuration information
-        Configuration pluginConfig = WEBSERVICE_REMOTE.getPluginConfiguration(
+        //        Configuration pluginConfig = WEBSERVICE_REMOTE.getPluginConfiguration(
+        WsConfiguration pluginConfig = WEBSERVICE_REMOTE.getPluginConfiguration(
         // JaxbConfiguration pluginConfig =
             // WEBSERVICE_REMOTE.getPluginConfiguration(
             subject, resource.getId());
         assertNotNull("Configuration was not located.", configRetrieved);
-        assertNotNull("The property definition map should not be null.",
-        // pluginConfig.getProperties());
-            pluginConfig.getPropertyListOrPropertySimpleOrPropertyMap());
+        assertNotNull("The property definition map should not be null.", pluginConfig.getProperties());
+        //            pluginConfig.getPropertyListOrPropertySimpleOrPropertyMap());
     }
-
-    // @Test(enabled = TESTS_ENABLED)
-    // void testUpdateResourceConfiguration() {
-    // Resource resource = findService("service-beta-1", "server-omega-1");
-    // Configuration config =
-    // WEBSERVICE_REMOTE.getResourceConfiguration(subject, resource.id);
-    //
-    // String propertyName = "beta-config0";
-    // String propertyValue = "updated property value -- " + new
-    // java.util.Date();
-    //
-    // // property = config.getSimple(propertyName);
-    // Property property =
-    // locateProperty(config.getPropertyListOrPropertySimpleOrPropertyMap(),
-    // propertyName);
-    //
-    // property = (PropertySimple)property;
-    // property.setStringValue(propertyValue);
-    // config.put(property);
-    //
-    // var configUpdate =
-    // ConfigurationManager.updateResourceConfiguration(resource.id, config);
-    //
-    // while
-    // (ConfigurationManager.isResourceConfigurationUpdateInProgress(resource.id))
-    // {
-    // java.lang.Thread.sleep(1000);
-    // }
-    //
-    // config = ConfigurationManager.getResourceConfiguration(resource.id);
-    // var updatedProperty = config.getSimple(propertyName);
-    //
-    // Assert.assertEquals(updatedProperty.stringValue, propertyValue,
-    // "Failed to update resource configuration");
-    // }
-    //
-    // @Test(enabled = TESTS_ENABLED)
-    // void testUpdatePluginConfiguration() {
-    // var resource = findService('service-beta-0', 'server-omega-0');
-    // var pluginConfig =
-    // ConfigurationManager.getPluginConfiguration(resource.id);
-    //
-    // var propertyName = 'beta-property0';
-    // var propertyValue = 'updated property value -- ' + java.util.Date();
-    //
-    // var property = pluginConfig.getSimple(propertyName);
-    //
-    // property.setStringValue(propertyValue);
-    //
-    // var configUpdate =
-    // ConfigurationManager.updatePluginConfiguration(resource.id,
-    // pluginConfig);
-    //
-    // pluginConfig = ConfigurationManager.getPluginConfiguration(resource.id);
-    // var updatedProperty = pluginConfig.getSimple(propertyName);
-    //
-    // Assert.assertEquals(updatedProperty.stringValue, propertyValue, 'Failed
-    // to update plugin configuration');
-    // }
-    //
-    // // This test is failing I think due to the asynchronous nature of the
-    // operations involved. I have verified through the
-    // // web UI that the configuration updates are actually happening. I just
-    // need to figure out how to make the test wait
-    // // so that it can (consistently) get the udpated values.
-    // // - jsanda
-    // @Test(enabled = TESTS_ENABLED)
-    // void testUpdateResourceGroupConfiguration() {
-    // var groupName = 'service-beta-group -- ' + java.util.Date();
-    // var group = createResourceGroup(groupName);
-    //
-    // var services = findBetaServices('server-omega-0');
-    //
-    // Assert.assertNumberEqualsJS(services.size(), 10, 'Failed to find beta
-    // services');
-    //
-    // addServicesToGroup(services, group);
-    //
-    // var configs = loadConfigs(services);
-    //
-    // Assert.assertNumberEqualsJS(configs.length, 10, 'Failed to load all
-    // resource configurations');
-    //
-    // var propertyName = 'beta-config0';
-    // var propertyValue = 'updated property value -- ' + java.util.Date();
-    //
-    // updateResourceConfigs(configs, propertyValue);
-    //
-    // var configMap = toMap(services, configs);
-    //
-    // var updateId =
-    // ConfigurationManager.scheduleGroupResourceConfigurationUpdate(group.id,
-    // configMap);
-    //
-    // while
-    // (ConfigurationManager.isGroupResourceConfigurationUpdateInProgress(updateId))
-    // {
-    // java.lang.Thread.sleep(1000);
-    // }
-    //
-    // var updatedConfigs = loadConfigs(services);
-    //
-    // for (i in updatedConfigs) {
-    // var updatedProperty = updatedConfigs[i].getSimple(propertyName);
-    //
-    // Assert.assertEquals(updatedProperty.stringValue, propertyValue,
-    // "Failed to update resource group configuration");
-    // }
-    // }
-    //
-    // findService(name, parentName) {
-    // var criteria = ResourceCriteria();
-    // criteria.addFilterName(name);
-    // criteria.addFilterParentResourceName(parentName);
-    //
-    // return ResourceManager.findResourcesByCriteria(criteria).get(0);
-    // }
-    //
-    // findBetaServices(parentName) {
-    // var criteria = ResourceCriteria();
-    // criteria.addFilterParentResourceName(parentName);
-    // criteria.addFilterResourceTypeName('service-beta');
-    // criteria.caseSensitive = true;
-    // criteria.strict = true;
-    //
-    // return ResourceManager.findResourcesByCriteria(criteria);
-    // }
-    //
-    // createResourceGroup(name) {
-    // var resourceType = getResourceType('service-beta');
-    // Assert.assertNotNull(resourceType, 'Failed to find resource type for new
-    // resource group.');
-    //
-    // return ResourceGroupManager.createResourceGroup(ResourceGroup(name,
-    // resourceType));
-    // }
-    //
-    // addServicesToGroup(services, group) {
-    // var serviceIds = [];
-    //
-    // for (i = 0; i < services.size(); ++i) {
-    // serviceIds.push(services.get(i).id);
-    // }
-    //
-    // ResourceGroupManager.addResourcesToGroup(group.id, serviceIds);
-    // }
-    //
-    // getResourceType(resourceTypeName) {
-    // var pluginName = 'PerfTest';
-    //
-    // return
-    // ResourceTypeManager.getResourceTypeByNameAndPlugin(resourceTypeName,
-    // pluginName);
-    // }
-    //
-    // loadConfigs(resources) {
-    // var configs = [];
-    //
-    // for (i = 0; i < resources.size(); ++i) {
-    // configs.push(ConfigurationManager.getResourceConfiguration(resources.get(i).id));
-    // }
-    //
-    // return configs;
-    // }
-    //
-    // // updateResourceConfigs(configs, propertyValue) {
-    // // var propertyName = "beta-config0";
-    // // var property = null;
-    // //
-    // // for (int i = 0; in configs) {
-    // // property = configs[i].getSimple(propertyName);
-    // // property.stringValue = propertyValue;
-    // // configs[i].put(property);
-    // // }
-    // // }
-    //
-    // toMap(services, configs) {
-    // var map = java.util.HashMap();
-    //
-    // for (i = 0; i < services.size(); ++i) {
-    // map.put(java.lang.Integer(services.get(i).id), configs[i]);
-    // }
-    //
-    // return map;
-    // }
-
-    // //#################################################
-
-    // @Test(enabled = TESTS_ENABLED)
-    // void testUpdateResourceConfiguration() {
-    // Resource resource = findResource("service-beta-0", "server-omega-0");
-    // Configuration config =
-    // WEBSERVICE_REMOTE.getResourceConfiguration(subject, resource.id);
-    //
-    // String propertyName = "beta-config0";
-    // String propertyValue = "updated property value -- " + new
-    // java.util.Date();
-    //
-    // List<Property> bag =
-    // config.getPropertyListOrPropertySimpleOrPropertyMap();
-    //        	
-    // property = config.getSimple(propertyName);
-    //
-    // property.setStringValue(propertyValue);
-    //
-    // ResourceConfigurationUpdate configUpdate =
-    // WEBSERVICE_REMOTE.updateResourceConfiguration(subject, resource.id,
-    // config);
-    //
-    // while (WEBSERVICE_REMOTE.isResourceConfigurationUpdateInProgress(subject,
-    // resource.id)) {
-    // java.lang.Thread.sleep(1000);
-    // }
-    //
-    // config = WEBSERVICE_REMOTE.getResourceConfiguration(subject,
-    // resource.id);
-    // var updatedProperty = config.getSimple(propertyName);
-    //
-    // assertEquals("Failed to update resource configuration",updatedProperty.stringValue,
-    // propertyValue);
-    // }
-
-    // @Test(enabled = TESTS_ENABLED)
-    // Resource findResource(String name, String parentName) {
-    // ResourceCriteria criteria = new ResourceCriteria();
-    // criteria.setFilterName(name);
-    // criteria.setFilterParentResourceName(parentName);
-    //
-    // return WEBSERVICE_REMOTE.findResourcesByCriteria(subject, criteria)
-    // .get(0);
-    // }
-
-    // @Test(enabled = TESTS_ENABLED)
-    // void testUpdateResourceConfiguration() {
-    // Resource resource = findService("service-beta-1", "server-omega-1");
-    // Configuration config = WEBSERVICE_REMOTE.getResourceConfiguration(
-    // subject, resource.id);
-    //
-    // // var interfaces = config.getClass().interfaces;
-    // // for (i = 0; i < interfaces.length; ++i) {
-    // // println(interfaces[i].getName());
-    // // }
-    // //
-    // // if (true) return;
-    //
-    // String propertyName = "beta-config0";
-    // String propertyValue = "updated property value -- "
-    // + new java.util.Date();
-    //
-    // // property = config.getSimple(propertyName);
-    // List<Property> properties = config
-    // .getPropertyListOrPropertySimpleOrPropertyMap();
-    // assertNotNull("PropertyDefinitions have not been populated.",
-    // properties);
-    // PropertySimple property = (PropertySimple) locateProperty(properties,
-    // propertyName);
-    // // property = getSimple(properties, propertyName);
-    //
-    // property.setStringValue(propertyValue);
-    // // config.put(property);
-    // List<Property> propertyContainer =
-    // config.getPropertyListOrPropertySimpleOrPropertyMap();
-    // assertNotNull("PropertyContainer was null.",propertyContainer);
-    // propertyContainer.add(property);
-    //
-    // ResourceConfigurationUpdate configUpdate =
-    // WEBSERVICE_REMOTE.updateResourceConfiguration(
-    // subject, resource.id, config);
-    //
-    // while (WEBSERVICE_REMOTE
-    // .isResourceConfigurationUpdateInProgress(subject, resource.id)) {
-    // java.lang.Thread.sleep(1000);
-    // }
-    //
-    // config = WEBSERVICE_REMOTE.getResourceConfiguration(subject,
-    // resource.id);
-    // // updatedProperty = config.getSimple(propertyName);
-    // updatedProperty = config.getSimple(propertyName);
-    //
-    // Assert.assertEquals(updatedProperty.stringValue, propertyValue,
-    // "Failed to update resource configuration");
-    // }
-    //
-    // @Test(enabled = TESTS_ENABLED)
-    // function testUpdatePluginConfiguration() {
-    // var resource = findService('service-beta-0', 'server-omega-0');
-    // var pluginConfig =
-    // ConfigurationManager.getPluginConfiguration(resource.id);
-    //
-    // var propertyName = 'beta-property0';
-    // var propertyValue = 'updated property value -- ' + java.util.Date();
-    //
-    // var property = pluginConfig.getSimple(propertyName);
-    //
-    // property.setStringValue(propertyValue);
-    //
-    // var configUpdate =
-    // ConfigurationManager.updatePluginConfiguration(resource.id,
-    // pluginConfig);
-    //
-    // pluginConfig = ConfigurationManager.getPluginConfiguration(resource.id);
-    // var updatedProperty = pluginConfig.getSimple(propertyName);
-    //
-    // Assert.assertEquals(updatedProperty.stringValue, propertyValue, 'Failed
-    // to update plugin configuration');
-    // }
-    //
-    // @Test(enabled = TESTS_ENABLED)
-    // function testUpdateResourceGroupConfiguration() {
-    // var groupName = 'service-beta-group -- ' + java.util.Date();
-    // var group = createResourceGroup(groupName);
-    //
-    // var services = findBetaServices('server-omega-0');
-    //
-    // Assert.assertNumberEqualsJS(services.size(), 10, 'Failed to find beta
-    // services');
-    //
-    // var configs = loadConfigs(services);
-    //
-    // Assert.assertNumberEqualsJS(configs.length, 10, 'Failed to load all
-    // resource configurations');
-    // }
-
-    // @Test(enabled = TESTS_ENABLED)
-    // void testUpdateResourceConfiguration() {
-    // Resource resource = findResource("service-beta-0", "server-omega-0");
-    // Configuration config =
-    // WEBSERVICE_REMOTE.getResourceConfiguration(subject, resource.id);
-    //
-    // String propertyName = "beta-config0";
-    // String propertyValue = "updated property value -- " + new
-    // java.util.Date();
-    //
-    // List<Property> bag =
-    // config.getPropertyListOrPropertySimpleOrPropertyMap();
-    //        	
-    // property = config.getSimple(propertyName);
-    //
-    // property.setStringValue(propertyValue);
-    //
-    // ResourceConfigurationUpdate configUpdate =
-    // WEBSERVICE_REMOTE.updateResourceConfiguration(subject, resource.id,
-    // config);
-    //
-    // while (WEBSERVICE_REMOTE.isResourceConfigurationUpdateInProgress(subject,
-    // resource.id)) {
-    // java.lang.Thread.sleep(1000);
-    // }
-    //
-    // config = WEBSERVICE_REMOTE.getResourceConfiguration(subject,
-    // resource.id);
-    // var updatedProperty = config.getSimple(propertyName);
-    //
-    // assertEquals("Failed to update resource configuration",updatedProperty.stringValue,
-    // propertyValue);
-    // }
 
     Resource findResource(String name, String parentName) {
         ResourceCriteria criteria = new ResourceCriteria();
@@ -494,5 +141,247 @@ public class WsConfigurationManagerTest extends AssertJUnit implements TestPrope
 
         }
         return located;
+    }
+
+    private PropertySimple locateProperty(List<PropertySimple> properties, String name) {
+        PropertySimple located = null;
+        if ((properties != null) && (name != null) && (name.trim().length() > 0)) {
+            // List<Entry> list = properties.getEntry();
+            for (int i = 0; (located == null) && i < properties.size(); i++) {
+                PropertySimple entry = properties.get(i);
+                if (entry.getName().equals(name)) {
+                    located = entry;
+                }
+            }
+
+        }
+        return located;
+    }
+
+    private PropertySimple getSimple(List<PropertySimple> list, String name) {
+        Property property = locateProperty(list, name);
+        return (PropertySimple) property;
+    }
+
+    private PropertySimple getSimpleConfig(List<Property> list, String name) {
+        Property property = locateProperty(list, name);
+        return (PropertySimple) property;
+    }
+
+    @Test(enabled = TESTS_ENABLED)
+    void testUpdateResourceConfiguration() throws InterruptedException {
+
+        Resource resource = findService("service-beta-1", "server-omega-1");
+        //        Configuration config = WEBSERVICE_REMOTE.getResourceConfiguration(subject, resource.id);
+        WsConfiguration config = WEBSERVICE_REMOTE.getResourceConfiguration(subject, resource.id);
+
+        String propertyName = "beta-config0";
+        String propertyValue = "updated property value -- " + new java.util.Date();
+
+        //        property = config.getSimple(propertyName);
+        //        PropertySimple property = getSimple(config.getPropertyListOrPropertySimpleOrPropertyMap(), propertyName);
+        PropertySimple property = getSimple(config.getPropertySimpleContainer(), propertyName);
+
+        property.setStringValue(propertyValue);
+        //        config.put(property);
+        //        config.getPropertyListOrPropertySimpleOrPropertyMap().add(property);
+        config.getProperties().add(property);
+        config.getPropertySimpleContainer().add(property);
+
+        ResourceConfigurationUpdate configUpdate = WEBSERVICE_REMOTE.updateResourceConfiguration(subject, resource.id,
+            config);
+
+        while (WEBSERVICE_REMOTE.isResourceConfigurationUpdateInProgress(subject, resource.id)) {
+            java.lang.Thread.sleep(1000);
+        }
+
+        config = WEBSERVICE_REMOTE.getResourceConfiguration(subject, resource.id);
+        //        updatedProperty = config.getSimple(propertyName);
+        //        PropertySimple updatedProperty = getSimple(config.getPropertyListOrPropertySimpleOrPropertyMap(), propertyName);
+        PropertySimple updatedProperty = getSimple(config.getPropertySimpleContainer(), propertyName);
+
+        assertEquals("Failed to update resource configuration", updatedProperty.stringValue, propertyValue);
+    }
+
+    private Configuration convert(WsConfiguration config) {
+        Configuration cfg = new Configuration();
+        if (config != null) {
+            cfg.ctime = config.ctime;
+            cfg.id = config.id;
+            cfg.mtime = config.mtime;
+            cfg.notes = config.notes;
+            cfg.version = config.version;
+            cfg.propertyListOrPropertySimpleOrPropertyMap = new ArrayList<Property>();
+            //            for (Property p : config.properties) {
+            //                cfg.propertyListOrPropertySimpleOrPropertyMap.add(p);
+            //            }
+            if (config.propertySimpleContainer != null) {
+                for (PropertySimple p : config.propertySimpleContainer) {
+                    cfg.propertyListOrPropertySimpleOrPropertyMap.add(p);
+                }
+            }
+            if (config.propertyListContainer != null) {
+                for (PropertyList p : config.propertyListContainer) {
+                    cfg.propertyListOrPropertySimpleOrPropertyMap.add(p);
+                }
+            }
+            if (config.propertyMapContainer != null) {
+                for (PropertyMap p : config.propertyMapContainer) {
+                    cfg.propertyListOrPropertySimpleOrPropertyMap.add(p);
+                }
+            }
+
+        } else {
+            throw new IllegalArgumentException("WsConfiguration can not be null.");
+        }
+        return cfg;
+    }
+
+    @Test(enabled = TESTS_ENABLED)
+    void testUpdatePluginConfiguration() {
+
+        Resource resource = findService("service-beta-0", "server-omega-0");
+        WsConfiguration pluginConfig = WEBSERVICE_REMOTE.getPluginConfiguration(subject, resource.id);
+        //        Configuration pluginConfig = WEBSERVICE_REMOTE.getPluginConfiguration(subject, resource.id);
+
+        String propertyName = "beta-property0";
+        String propertyValue = "updated property value -- " + new java.util.Date();
+
+        //        property = pluginConfig.getSimple(propertyName);
+        //        PropertySimple property = getSimple(pluginConfig.getPropertyListOrPropertySimpleOrPropertyMap(), propertyName);
+        //        PropertySimple property = getSimple(pluginConfig.getProperties(), propertyName);
+        PropertySimple property = getSimple(pluginConfig.getPropertySimpleContainer(), propertyName);
+
+        property.setStringValue(propertyValue);
+        pluginConfig.propertySimpleContainer.add(property);
+        pluginConfig.properties.add(property);
+
+        PluginConfigurationUpdate configUpdate = WEBSERVICE_REMOTE.updatePluginConfiguration(subject, resource.id,
+            pluginConfig);
+
+        pluginConfig = WEBSERVICE_REMOTE.getPluginConfiguration(subject, resource.id);
+        //        updatedProperty = pluginConfig.getSimple(propertyName);
+        //        PropertySimple updatedProperty = getSimple(pluginConfig.getPropertyListOrPropertySimpleOrPropertyMap(),
+        PropertySimple updatedProperty = getSimple(pluginConfig.getPropertySimpleContainer(), propertyName);
+
+        assertEquals("Failed to update plugin configuration", updatedProperty.stringValue, propertyValue);
+
+    }
+
+    // This test is failing I think due to the asynchronous nature of the operations involved. I have verified through the
+    // web UI that the configuration updates are actually happening. I just need to figure out how to make the test wait
+    // so that it can (consistently) get the udpated values.
+    // - jsanda
+    @Test(enabled = TESTS_ENABLED)
+    void testUpdateResourceGroupConfiguration() {
+        String groupName = "service-beta-group -- " + new java.util.Date();
+        ResourceGroup group = createResourceGroup(groupName);
+
+        List<Resource> services = findBetaServices("server-omega-0");
+
+        assertEquals("Failed to find beta services", services.size(), 10);
+
+        addServicesToGroup(services, group);
+
+        List<Configuration> configs = loadConfigs(services);
+
+        assertEquals("Failed to load all resource configurations", configs.size(), 10);
+
+        String propertyName = "beta-config0";
+        String propertyValue = "updated property value -- " + new java.util.Date();
+
+        updateResourceConfigs(configs, propertyValue);
+
+        HashMap<Integer, Configuration> configMap = toMap(services, configs);
+
+        //     updateId = WEBSERVICE_REMOTE.scheduleGroupResourceConfigurationUpdate(group.id, configMap);
+        //
+        //     while (WEBSERVICE_REMOTE.isGroupResourceConfigurationUpdateInProgress(updateId)) {
+        //         java.lang.Thread.sleep(1000);
+        //     }
+        //
+        //     var updatedConfigs = loadConfigs(services);
+        //
+        //     for (i in updatedConfigs) {
+        //         var updatedProperty = updatedConfigs[i].getSimple(propertyName);
+        //
+        //         Assert.assertEquals(updatedProperty.stringValue, propertyValue, "Failed to update resource group configuration");
+        //     }
+    }
+
+    ResourceGroup createResourceGroup(String name) {
+        ResourceType resourceType = getResourceType("service-beta");
+        assertNotNull("Failed to find resource type for new resource group.", resourceType);
+
+        //        return WEBSERVICE_REMOTE.createResourceGroup(ResourceGroup(name, resourceType));
+        ResourceGroup rg = new ResourceGroup();
+        rg.setName(name);
+        rg.setResourceType(resourceType);
+        WsResourceGroupWrapper wsRg = WS_OBJECT_FACTORY.createWsResourceGroupWrapper();
+        wsRg.setName(name);
+        wsRg.setResourceType(resourceType);
+        ResourceGroup resGroup = WEBSERVICE_REMOTE.createResourceGroup(subject, wsRg);
+        return resGroup;
+    }
+
+    void addServicesToGroup(List<Resource> services, ResourceGroup group) {
+        //        var serviceIds = [];
+        List<Integer> serviceIds = new ArrayList<Integer>();
+
+        for (Resource resource : services) {
+            serviceIds.add(resource.getId());
+        }
+
+        WEBSERVICE_REMOTE.addResourcesToGroup(subject, group.id, serviceIds);
+    }
+
+    ResourceType getResourceType(String resourceTypeName) {
+        String pluginName = "PerfTest";
+
+        return WEBSERVICE_REMOTE.getResourceTypeByNameAndPlugin(subject, resourceTypeName, pluginName);
+    }
+
+    List<Configuration> loadConfigs(List<Resource> resources) {
+        List<Configuration> configs = new ArrayList<Configuration>();
+
+        for (Resource resource : resources) {
+            //            configs.add(WEBSERVICE_REMOTE.getResourceConfiguration(subject, resource.id));
+            WsConfiguration wsCfg = WEBSERVICE_REMOTE.getResourceConfiguration(subject, resource.id);
+            Configuration cfg = convert(wsCfg);
+            configs.add(cfg);
+        }
+
+        return configs;
+    }
+
+    void updateResourceConfigs(List<Configuration> configs, String propertyValue) {
+        String propertyName = "beta-config0";
+        PropertySimple property = null;
+
+        for (Configuration config : configs) {
+            //            property = configs[i].getSimple(propertyName);
+            //            property = locateProperty(config.getPropertyListOrPropertySimpleOrPropertyMap(), propertyName);
+            //            config.propertyListOrPropertySimpleOrP
+            //            property = getSimple(config.getPropertyListOrPropertySimpleOrPropertyMap(), propertyName);
+            property = getSimpleConfig(config.propertyListOrPropertySimpleOrPropertyMap, propertyName);
+            //            property.stringValue = propertyValue;
+            assertNotNull("Retrieved property should not be null.", property);
+            property.stringValue = propertyValue;
+            //            configs[i].put(property);
+            config.getPropertyListOrPropertySimpleOrPropertyMap().add(property);
+        }
+    }
+
+    HashMap<Integer, Configuration> toMap(List<Resource> services, List<Configuration> configs) {
+        HashMap<Integer, Configuration> map = new java.util.HashMap<Integer, Configuration>();
+
+        //        for (i = 0; i < services.size(); ++i) {
+        //            map.put(java.lang.Integer(services.get(i).id), configs[i]);
+        //        }
+        for (int i = 0; i < services.size(); ++i) {
+            map.put(services.get(i).id, configs.get(i));
+        }
+
+        return map;
     }
 }

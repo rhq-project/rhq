@@ -91,6 +91,7 @@ import org.rhq.enterprise.server.configuration.job.GroupPluginConfigurationUpdat
 import org.rhq.enterprise.server.configuration.job.GroupResourceConfigurationUpdateJob;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.jaxb.WebServiceTypeAdapter;
+import org.rhq.enterprise.server.jaxb.adapter.ConfigurationAdapter;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
@@ -132,7 +133,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     private SubjectManagerLocal subjectManager;
 
     @Nullable
-    public Configuration getPluginConfiguration(Subject subject, int resourceId) {
+    public @XmlJavaTypeAdapter(ConfigurationAdapter.class)
+    Configuration getPluginConfiguration(Subject subject, int resourceId) {
         log.debug("Getting current plugin configuration for resource [" + resourceId + "]");
 
         Resource resource = entityManager.find(Resource.class, resourceId);
@@ -229,7 +231,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     public PluginConfigurationUpdate updatePluginConfiguration(Subject subject, int resourceId,
-        Configuration configuration) throws ResourceNotFoundException {
+        @XmlJavaTypeAdapter(ConfigurationAdapter.class) Configuration configuration) throws ResourceNotFoundException {
         Subject overlord = subjectManager.getOverlord();
         Resource resource = resourceManager.getResourceById(overlord, resourceId);
 
@@ -255,7 +257,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return update;
     }
 
-    public Configuration getResourceConfiguration(Subject subject, int resourceId) {
+    public @XmlJavaTypeAdapter(ConfigurationAdapter.class)
+    Configuration getResourceConfiguration(Subject subject, int resourceId) {
         Resource resource = entityManager.find(Resource.class, resourceId);
 
         if (resource == null) {
@@ -963,7 +966,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
     @Nullable
     public ResourceConfigurationUpdate updateResourceConfiguration(Subject subject, int resourceId,
-        Configuration newConfiguration) throws ResourceNotFoundException {
+        @XmlJavaTypeAdapter(ConfigurationAdapter.class) Configuration newConfiguration)
+        throws ResourceNotFoundException {
         // must do this in a separate transaction so it is committed prior to sending the agent request
         // (consider synchronizing to avoid the condition where someone calls this method twice quickly
         // in two different txs which would put two updates in INPROGRESS and cause havoc)

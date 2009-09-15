@@ -28,6 +28,9 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlTransient;
 
 import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
 import org.rhq.core.domain.resource.Resource;
@@ -153,6 +156,7 @@ import org.rhq.core.domain.resource.Resource;
         + " WHERE rcu.groupConfigurationUpdate IN ( SELECT arcu " //
         + "                                           FROM GroupResourceConfigurationUpdate arcu " //
         + "                                          WHERE arcu.group.id = :groupId )") })
+@XmlAccessorType(XmlAccessType.FIELD)
 public class ResourceConfigurationUpdate extends AbstractResourceConfigurationUpdate {
     private static final long serialVersionUID = 1L;
 
@@ -178,6 +182,7 @@ public class ResourceConfigurationUpdate extends AbstractResourceConfigurationUp
 
     @JoinColumn(name = "CONFIG_RES_ID", referencedColumnName = "ID", nullable = true)
     @ManyToOne
+    @XmlTransient
     private Resource resource;
 
     @JoinColumn(name = "AGG_RES_UPDATE_ID", referencedColumnName = "ID", nullable = true)

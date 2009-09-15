@@ -39,6 +39,7 @@ import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.server.jaxb.WebServiceTypeAdapter;
+import org.rhq.enterprise.server.jaxb.adapter.ConfigurationAdapter;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 import org.rhq.enterprise.server.system.ServerVersion;
 
@@ -82,6 +83,7 @@ public interface ConfigurationManagerRemote {
      */
     @Nullable
     @WebMethod
+    @XmlJavaTypeAdapter(ConfigurationAdapter.class)
     Configuration getPluginConfiguration( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceId") int resourceId);
@@ -95,6 +97,7 @@ public interface ConfigurationManagerRemote {
      * @throws FetchException In case where there was a problem fetching the resource configuration
      */
     @WebMethod
+    @XmlJavaTypeAdapter(ConfigurationAdapter.class)
     Configuration getResourceConfiguration(//
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceId") int resourceId);
@@ -151,7 +154,9 @@ public interface ConfigurationManagerRemote {
     PluginConfigurationUpdate updatePluginConfiguration( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceId") int resourceId, //
-        @WebParam(name = "newConfiguration") Configuration newConfiguration) throws ResourceNotFoundException;
+        @WebParam(name = "newConfiguration")//
+        @XmlJavaTypeAdapter(ConfigurationAdapter.class) Configuration newConfiguration)
+        throws ResourceNotFoundException;
 
     /**
      * This method is called when a user has requested to change the resource configuration for an existing resource. If
@@ -171,8 +176,9 @@ public interface ConfigurationManagerRemote {
     ResourceConfigurationUpdate updateResourceConfiguration( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceId") int resourceId, //
-        @WebParam(name = "newConfiguration") Configuration newConfiguration) throws ResourceNotFoundException,
-        ConfigurationUpdateStillInProgressException;
+        @WebParam(name = "newConfiguration")//
+        @XmlJavaTypeAdapter(ConfigurationAdapter.class) Configuration newConfiguration)
+        throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException;
 
     /**
      * Get the currently live resource configuration for the {@link Resource} with the given id. This actually asks for

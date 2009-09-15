@@ -31,79 +31,67 @@ import org.rhq.enterprise.server.ws.utility.WsUtility;
  * @author Jay Shaughnessy, Simeon Pinder
  */
 @Test(groups = "ws")
-public class WsDataAccessManagerTest extends AssertJUnit implements
-		TestPropertiesInterface {
+public class WsDataAccessManagerTest extends AssertJUnit implements TestPropertiesInterface {
 
-	// Test variables
-	private static ObjectFactory WS_OBJECT_FACTORY;
-	private static WebservicesRemote WEBSERVICE_REMOTE;
-	private static Subject subject = null;
+    // Test variables
+    private static ObjectFactory WS_OBJECT_FACTORY;
+    private static WebservicesRemote WEBSERVICE_REMOTE;
+    private static Subject subject = null;
 
-	@BeforeClass
-	public void init() throws ClassNotFoundException, MalformedURLException,
-			SecurityException, NoSuchMethodException, IllegalArgumentException,
-			InstantiationException, IllegalAccessException,
-			InvocationTargetException, LoginException_Exception {
+    @BeforeClass
+    public void init() throws ClassNotFoundException, MalformedURLException, SecurityException, NoSuchMethodException,
+        IllegalArgumentException, InstantiationException, IllegalAccessException, InvocationTargetException,
+        LoginException_Exception {
 
-		// build reference variable bits
-		URL gUrl = WsUtility.generateRemoteWebserviceURL(
-				WebservicesManagerBeanService.class, host, port, useSSL);
-		QName gQName = WsUtility
-				.generateRemoteWebserviceQName(WebservicesManagerBeanService.class);
-		WebservicesManagerBeanService jws = new WebservicesManagerBeanService(
-				gUrl, gQName);
+        // build reference variable bits
+        URL gUrl = WsUtility.generateRemoteWebserviceURL(WebservicesManagerBeanService.class, host, port, useSSL);
+        QName gQName = WsUtility.generateRemoteWebserviceQName(WebservicesManagerBeanService.class);
+        WebservicesManagerBeanService jws = new WebservicesManagerBeanService(gUrl, gQName);
 
-		WEBSERVICE_REMOTE = jws.getWebservicesManagerBeanPort();
-		WS_OBJECT_FACTORY = new ObjectFactory();
-		WsSubjectTest.checkForWsTestUserAndRole();
-		subject = WEBSERVICE_REMOTE.login(credentials, credentials);
-	}
+        WEBSERVICE_REMOTE = jws.getWebservicesManagerBeanPort();
+        WS_OBJECT_FACTORY = new ObjectFactory();
+        WsSubjectTest.checkForWsTestUserAndRole();
+        subject = WEBSERVICE_REMOTE.login(credentials, credentials);
+    }
 
-	String query = "SELECT r "
-			+ "FROM Resource r "
-			+ "WHERE ( r.inventoryStatus = org.rhq.core.domain.resource.InventoryStatus.COMMITTED "
-			+ "AND LOWER( r.resourceType.name ) like 'service-alpha' "
-			+ "AND LOWER( r.parentResource.name ) like 'server-omega-0')";
+    String query = "SELECT r " + "FROM Resource r "
+        + "WHERE ( r.inventoryStatus = org.rhq.core.domain.resource.InventoryStatus.COMMITTED "
+        + "AND LOWER( r.resourceType.name ) like 'service-alpha' "
+        + "AND LOWER( r.parentResource.name ) like 'server-omega-0')";
 
-	@Test(enabled = TESTS_ENABLED)
-	void testExecuteQuery() {
-		List<AnyTypeArray> resources = WEBSERVICE_REMOTE.executeQuery(subject,
-				query);
+    @Test(enabled = TESTS_ENABLED)
+    void testExecuteQuery() throws LoginException_Exception {
+        Subject admin = WEBSERVICE_REMOTE.login("rhqadmin", "rhqadmin");
+        List<AnyTypeArray> resources = WEBSERVICE_REMOTE.executeQuery(admin, query);
 
-		assertEquals("Expected to get back 10 resources", resources.size(), 10);
-	}
+        assertEquals("Expected to get back 10 resources", resources.size(), 10);
+    }
 
-	@Test(enabled = TESTS_ENABLED)
-	void testExecuteQueryWithPaging() {
-		PageControl pageControl = new PageControl();
-		pageControl.pageNumber = 0;
-		pageControl.pageSize = 5;
-		// pageControl.setPrimarySort("name", PageOrdering.ASC);
-		pageControl.setPrimarySortOrder(PageOrdering.ASC);
+    @Test(enabled = TESTS_ENABLED)
+    void testExecuteQueryWithPaging() throws LoginException_Exception {
+        PageControl pageControl = new PageControl();
+        pageControl.pageNumber = 0;
+        pageControl.pageSize = 5;
+        // pageControl.setPrimarySort("name", PageOrdering.ASC);
+        pageControl.setPrimarySortOrder(PageOrdering.ASC);
 
-		List<AnyTypeArray> resources = WEBSERVICE_REMOTE
-				.executeQueryWithPageControl(subject, query, pageControl);
+        Subject admin = WEBSERVICE_REMOTE.login("rhqadmin", "rhqadmin");
+        List<AnyTypeArray> resources = WEBSERVICE_REMOTE.executeQueryWithPageControl(admin, query, pageControl);
 
-		assertEquals("Failed to fetch first page of resources", resources
-				.size(), 5);
-		assertNotNull("Query result was null.", resources.get(0));
+        assertEquals("Failed to fetch first page of resources", resources.size(), 5);
+        assertNotNull("Query result was null.", resources.get(0));
 
-		// resources.get(0).getItem().get(0).;
-		//    
-		// assertEquals("Failed to sort first page in ascending order",resources.get(0).name,
-		// "service-alpha-0" );
-		// assertEquals(resources.get(4).name, "service-alpha-4",
-		// "Failed to sort first page in ascending order");
-		//
-		// pageControl.pageNumber = 1;
-		// resources = WEBSERVICE_REMOTE.executeQueryWithPageControl(subject,
-		// query, pageControl);
-		//
-		// Assert.assertNumberEqualsJS(resources.size(), 5,
-		// "Failed to fetch second page of resources");
-		// Assert.assertEquals(resources.get(0).name, "service-alpha-5",
-		// "Failed to sort second page in ascending order");
-		// Assert.assertEquals(resources.get(4).name, "service-alpha-9",
-		// "Failed to sort second page in ascending order");
-	}
+        assertEquals("Failed to fetch first page of resources", resources.size(), 5);
+
+        //        assertEquals("service-alpha-0", "Failed to sort first page in ascending order", resources.get(0).name);
+        //        assertEquals("Failed to sort first page in ascending order", resources.get(4).name, "service-alpha-4");
+        //
+        //        pageControl.pageNumber = 1;
+        //        resources = WEBSERVICE_REMOTE.executeQueryWithPageControl(subject, query, pageControl);
+        //
+        //        assertEquals("Failed to fetch second page of resources", resources.size(), 5);
+        //        assertEquals(resources.get(0).name, "service-alpha-5", "Failed to sort second page in ascending order");
+        //        assertEquals(resources.get(4).name, "service-alpha-9", "Failed to sort second page in ascending order");
+
+    }
 }

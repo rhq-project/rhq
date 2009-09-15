@@ -143,9 +143,26 @@ class WsConfiguration {
         this.ctime = opaque.getCreatedTime();
         this.mtime = opaque.getModifiedTime();
 
+        this.properties = new ArrayList<Property>();
         this.propertyListContainer = new ArrayList<PropertyList>();
         this.propertyMapContainer = new ArrayList<PropertyMap>();
         this.propertySimpleContainer = new ArrayList<PropertySimple>();
+
+        if ((opaque.getAllProperties() != null) && (opaque.getAllProperties().size() > 0)) {
+            for (String key : opaque.getAllProperties().keySet()) {
+                Property property = opaque.getAllProperties().get(key);
+                this.properties.add(property);
+                if (property instanceof PropertySimple) {
+                    this.propertySimpleContainer.add((PropertySimple) property);
+                }
+                if (property instanceof PropertyList) {
+                    this.propertyListContainer.add((PropertyList) property);
+                }
+                if (property instanceof PropertyMap) {
+                    this.propertyMapContainer.add((PropertyMap) property);
+                }
+            }
+        }
 
         //Now copy values over.
         populatePropertyMaps();

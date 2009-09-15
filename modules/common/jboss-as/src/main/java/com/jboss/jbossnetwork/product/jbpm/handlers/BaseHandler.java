@@ -31,6 +31,7 @@ import org.jbpm.jpdl.el.impl.JbpmExpressionEvaluator;
 import org.rhq.core.clientapi.util.StringUtil;
 import org.rhq.core.domain.content.transfer.ContentResponseResult;
 import org.rhq.core.domain.content.transfer.DeployPackageStep;
+import org.rhq.core.util.exception.ExceptionPackage;
 
 /**
  * Base class for all of our JBPM handlers, providing some basic functionality for transitioning between steps.
@@ -255,7 +256,7 @@ public abstract class BaseHandler implements ActionHandler {
         step.setStepResult(result);
 
         if (throwable != null) {
-            String errorMessage = StringUtil.getStackTrace(throwable);
+            String errorMessage = new ExceptionPackage(throwable).getStackTraceString();             
             step.setStepErrorMessage(errorMessage);
         }
 

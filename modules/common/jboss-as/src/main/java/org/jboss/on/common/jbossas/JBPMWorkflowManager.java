@@ -91,8 +91,7 @@ public class JBPMWorkflowManager {
         // Grab the JBPM process
         byte[] metadataBytes = packageDetails.getMetadata();
         if (metadataBytes == null) {
-            log.debug("metadataBytes were NULL");
-            return null;
+            throw new IllegalArgumentException("The 'metadata' field of the 'packageDetails' parameter is null.");
         }
         String process = new String(metadataBytes);
 

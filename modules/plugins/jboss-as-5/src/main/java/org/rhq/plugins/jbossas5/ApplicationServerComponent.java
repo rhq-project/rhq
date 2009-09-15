@@ -49,7 +49,6 @@ import org.jboss.metatype.api.values.SimpleValue;
 import org.jboss.on.common.jbossas.JBPMWorkflowManager;
 import org.jboss.on.common.jbossas.JBossASPaths;
 import org.jboss.profileservice.spi.NoSuchDeploymentException;
-import org.jboss.remoting.CannotConnectException;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -101,6 +100,7 @@ import org.rhq.plugins.jbossas5.deploy.LocalDeployer;
 import org.rhq.plugins.jbossas5.deploy.RemoteDeployer;
 import org.rhq.plugins.jbossas5.helper.JBossAS5ConnectionTypeDescriptor;
 import org.rhq.plugins.jbossas5.helper.JmxConnectionHelper;
+import org.rhq.plugins.jbossas5.helper.InPluginControlActionFacade;
 import org.rhq.plugins.jbossas5.util.ConversionUtils;
 import org.rhq.plugins.jbossas5.util.DebugUtils;
 import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
@@ -566,12 +566,10 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
     }
 
     private ControlActionFacade initControlActionFacade() {
-        // TODO define the control action facade once we support operations on the app server.
-        // OperationContext operationContext = resourceContext.getOperationContext();
-        //
-        // ControlActionFacade controlActionFacade = new PluginContainerControlActionFacade(operationContext, this);
-        ControlActionFacade controlActionFacade = null;
-        return controlActionFacade;
+        // Until the bugs get worked out of the calls back into the PC's operation framework, use the implementation
+        // that will simply make calls directly in the plugin.
+        // return new PluginContainerControlActionFacade(operationContext, this);
+        return new InPluginControlActionFacade(this);
     }
 
     private File getConfigurationPath() {

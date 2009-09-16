@@ -107,7 +107,7 @@ import org.rhq.enterprise.server.resource.ProductVersionManagerLocal;
 // TODO: all authz checks need to be more fine grained... entitlements need to plug into here somehow?
 @Stateless
 //@WebService(endpointInterface = "org.rhq.enterprise.server.content.ContentSourceManagerRemote")
-public class ContentSourceManagerBean implements ContentSourceManagerLocal, ContentSourceManagerRemote {
+public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     private final Log log = LogFactory.getLog(ContentSourceManagerBean.class);
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)

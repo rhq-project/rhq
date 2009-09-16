@@ -21,7 +21,6 @@
       <developerConnection>scm:svn:https://svn.jboss.org/repos/jopr/trunk/modules/plugins/jboss-cache-v3/</developerConnection>
    </scm>
 
-
     <properties>
         <scm.module.path>modules/plugins/jboss-cache-v3/</scm.module.path>
         <jbossas.version>5.1.0-SNAPSHOT</jbossas.version>
@@ -47,42 +46,38 @@
     </dependencyManagement>    
        
     <dependencies>
+
      <dependency>
          <groupId>${rhq.groupId}</groupId>
          <artifactId>rhq-jmx-plugin</artifactId>
          <version>${rhq.version}</version>
          <scope>provided</scope>
      </dependency>
-   
+
      <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>jopr-jboss-as-5-plugin</artifactId>
          <version>${project.version}</version>
-         <scope>compile</scope>
-      </dependency>
- 	 
- 	 <dependency>
-          <groupId>gnu-getopt</groupId>
-          <artifactId>getopt</artifactId>
+         <scope>provided</scope>
      </dependency>
-     
+
      <dependency>
           <groupId>org.jboss.integration</groupId>
           <artifactId>jboss-profileservice-spi</artifactId>          
           <scope>provided</scope>
-      </dependency>
+     </dependency>
 
       <dependency>
           <groupId>org.jboss.remoting</groupId>
           <artifactId>jboss-remoting</artifactId>
           <scope>provided</scope>
-        </dependency>
+      </dependency>
         
        <dependency>
           <groupId>org.jboss.naming</groupId>
           <artifactId>jnp-client</artifactId>
           <scope>test</scope>
-        </dependency>
+       </dependency>
         
         <dependency>
             <groupId>jboss.messaging</groupId>
@@ -579,20 +574,17 @@
                 <updatePolicy>always</updatePolicy>
             </snapshots>
         </repository>
-
      
     </repositories>  
 
     <reporting>
-
-         <plugins>
+       <plugins>
           <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>findbugs-maven-plugin</artifactId>
             <version>2.0.1</version>
           </plugin>
-         </plugins>
+       </plugins>
     </reporting>
  
-
 </project>

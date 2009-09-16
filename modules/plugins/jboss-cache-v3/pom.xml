@@ -72,7 +72,7 @@
           <artifactId>jboss-remoting</artifactId>
           <scope>provided</scope>
       </dependency>
-<!--        
+       
        <dependency>
           <groupId>org.jboss.naming</groupId>
           <artifactId>jnp-client</artifactId>
@@ -285,7 +285,7 @@
             <artifactId>jboss-messaging-client</artifactId>
             <scope>test</scope>
         </dependency>        
--->
+
     </dependencies>
 
     <build>

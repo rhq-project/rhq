@@ -28,7 +28,6 @@ import org.jbpm.graph.def.ActionHandler;
 import org.jbpm.graph.exe.ExecutionContext;
 import org.jbpm.jpdl.el.impl.JbpmExpressionEvaluator;
 
-import org.rhq.core.clientapi.util.StringUtil;
 import org.rhq.core.domain.content.transfer.ContentResponseResult;
 import org.rhq.core.domain.content.transfer.DeployPackageStep;
 import org.rhq.core.util.exception.ExceptionPackage;

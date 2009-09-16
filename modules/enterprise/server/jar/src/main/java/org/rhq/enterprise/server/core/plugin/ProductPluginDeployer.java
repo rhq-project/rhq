@@ -233,18 +233,26 @@ public class ProductPluginDeployer {
             return;
         }
 
-        log.info("Deploying [" + this.namesOfPluginsToBeRegistered.size() + "] new or updated agent plugins: "
-            + this.namesOfPluginsToBeRegistered);
+        Set<String> pluginsToBeRegistered = new HashSet<String>(this.namesOfPluginsToBeRegistered);
+        log.info("Deploying [" + pluginsToBeRegistered.size() + "] new or updated agent plugins: "
+            + pluginsToBeRegistered);
         PluginDependencyGraph dependencyGraph = buildDependencyGraph();
         StringBuilder errorBuffer = new StringBuilder();
         if (!dependencyGraph.isComplete(errorBuffer)) {
             log.error(errorBuffer.toString());
-            log.error(dependencyGraph.toString());
-            return; // should we throw an exception here?
+            if (log.isDebugEnabled()) {
+                log.debug(dependencyGraph.toString());
+            }
+            // reduce the graph down to only those plugins and their deps that exist and only register those
+            dependencyGraph = dependencyGraph.reduceGraph();
+            pluginsToBeRegistered.retainAll(dependencyGraph.getPlugins());
         }
-        registerPlugins(dependencyGraph);
-        log.info("Plugin metadata updates are complete: " + this.namesOfPluginsToBeRegistered);
-        this.namesOfPluginsToBeRegistered.clear();
+        if (pluginsToBeRegistered.size() > 0) {
+            registerPlugins(dependencyGraph, pluginsToBeRegistered);
+        }
+        log.info("Plugin metadata updates are complete for [" + pluginsToBeRegistered.size() + "] plugins: "
+            + pluginsToBeRegistered);
+        this.namesOfPluginsToBeRegistered.removeAll(pluginsToBeRegistered);
 
         // load resource facets cache
         try {
@@ -358,13 +366,13 @@ public class ProductPluginDeployer {
             PluginDescriptor descriptor = this.pluginDescriptors.get(pluginName);
             AgentPluginDescriptorUtil.addPluginToDependencyGraph(dependencyGraph, descriptor);
         }
-        log.debug("Dependency graph deployment order: " + dependencyGraph.getDeploymentOrder());
         return dependencyGraph;
     }
 
-    private void registerPlugins(PluginDependencyGraph dependencyGraph) {
+    private void registerPlugins(PluginDependencyGraph dependencyGraph, Set<String> pluginsToBeRegistered) {
+        log.debug("Dependency graph deployment order: " + dependencyGraph.getDeploymentOrder());
         Map<String, LatchedPluginDeploymentService> latchedDependencyMap = new HashMap<String, LatchedPluginDeploymentService>();
-        for (String pluginName : this.namesOfPluginsToBeRegistered) {
+        for (String pluginName : pluginsToBeRegistered) {
             LatchedPluginDeploymentService service = getServiceIfExists(pluginName, latchedDependencyMap);
             // We need to register dependencies also even if they aren't new or updated. This is because
             // PluginMetadataManager requires dependency plugins to be loaded in its pluginsByParser map.
@@ -416,8 +424,8 @@ public class ProductPluginDeployer {
         }
         long endDeployTime = System.currentTimeMillis();
 
-        log.debug("Registered [" + dependencyGraph.getPlugins().size() + "] plugins in ["
-            + (endDeployTime - startDeployTime) + "]ms");
+        log.debug("Registered [" + pluginsToBeRegistered.size() + "] plugins in [" + (endDeployTime - startDeployTime)
+            + "]ms");
     }
 
     // Who needs this???

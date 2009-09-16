@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-parent</artifactId>
-      <version>1.3.0-SNAPSHOT</version>
+      <version>1.3.0.GA</version>
    </parent>
 
    <artifactId>rhq-remoting-cli</artifactId>
@@ -14,8 +14,8 @@
    <description>RHQ Enterprise Remote Command Line Interface</description>
 
    <scm>
-      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/client/</connection>
-      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/client/</developerConnection>
+      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_3_0_GA/modules/enterprise/client</connection>
+      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_3_0_GA/modules/enterprise/client</developerConnection>
    </scm>
 
    <properties>

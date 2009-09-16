@@ -219,6 +219,31 @@ public class PluginDependencyGraph {
         return retList;
     }
 
+    /**
+     * If the current dependency graph is not yet {@link #isComplete(StringBuilder) complete}, you can call
+     * this method to reduce the graph such that plugins with missing required dependencies are removed and
+     * only those plugins whose dependencies exist are in the returned graph. In other words, this method will
+     * return a dependency graph that is guaranteed to be complete and return a
+     * {@link #getDeploymentOrder()} - albeit with only those plugins that currently have all dependencies.
+     * 
+     * @return a reduced graph that contains only those plugins that have all their dependencies
+     */
+    public PluginDependencyGraph reduceGraph() {
+        PluginDependencyGraph reducedGraph = new PluginDependencyGraph();
+
+        // Compute the deep dependencies so we know all the plugins that must be deployed before each plugin.
+        for (String pluginName : new TreeSet<String>(dependencyMap.keySet())) {
+            try {
+                getDeepDependencies(pluginName, new ArrayList<String>(), true); // throws exception if not complete
+                reducedGraph.addPlugin(pluginName, this.dependencyMap.get(pluginName));
+            } catch (Exception e) {
+                log.info("Reducing dependency graph by not including plugin [" + pluginName + "]. Cause: " + e);
+            }
+        }
+
+        return reducedGraph;
+    }
+
     public String toString() {
         StringBuffer str = new StringBuffer("Plugin dependency graph:");
 

@@ -360,6 +360,53 @@ public class PluginDependencyGraphTest {
         assert order.get(2).equals("A") : order;
     }
 
+    public void testReduceGraph() {
+        PluginDependencyGraph graph = new PluginDependencyGraph();
+        StringBuilder error = new StringBuilder();
+
+        // plugin 1 is standalone
+        // plugin 2 depends on plugin 1 (which exists)
+        // plugin 3 depends on plugins 1 and 2 (they both exist)
+        // plugin A depends on plugins 1 and B (they both exist, but B's dep is missing)
+        // plugin B depends on plugins C (which is missing)
+        // plugin Z depends on several non-existent but optional plugins
+        addPlugin(graph, "1");
+        addPlugin(graph, "2", "1");
+        addPlugin(graph, "3", "1", "2");
+        addPlugin(graph, "A", "1", "B");
+        addPlugin(graph, "B", "C");
+        addPluginWithOptionalDeps(graph, "Z", "X", "Y");
+
+        // sanity check - make sure our graph isn't complete - we are missing C
+        assert graph.getPlugins().size() == 6;
+        assert graph.getPlugins().contains("1");
+        assert graph.getPlugins().contains("2");
+        assert graph.getPlugins().contains("3");
+        assert graph.getPlugins().contains("A");
+        assert graph.getPlugins().contains("B");
+        assert graph.getPlugins().contains("Z");
+        assert !graph.isComplete(error);
+        assert error.indexOf("[C]") > -1;
+
+        // reduce the graph - only 1,2,3,Z should be left since all of their required dependencies are satified
+        graph = graph.reduceGraph();
+
+        assert graph.getPlugins().size() == 4 : graph;
+        assert graph.getPlugins().contains("1") : graph;
+        assert graph.getPlugins().contains("2") : graph;
+        assert graph.getPlugins().contains("3") : graph;
+        assert graph.getPlugins().contains("Z") : graph;
+        error.setLength(0);
+        assert graph.isComplete(error);
+        assert error.length() == 0;
+
+        List<String> order = graph.getDeploymentOrder();
+        assert order.get(0).equals("Z") : order;
+        assert order.get(1).equals("1") : order;
+        assert order.get(2).equals("2") : order;
+        assert order.get(3).equals("3") : order;
+    }
+
     public void testCatchCircularDependency() {
         PluginDependencyGraph graph;
 

@@ -21,7 +21,6 @@ import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerRemote;
 import org.rhq.enterprise.server.measurement.MeasurementProblemManagerRemote;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerRemote;
 import org.rhq.enterprise.server.operation.OperationManagerRemote;
-import org.rhq.enterprise.server.report.DataAccessManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceFactoryManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerRemote;
@@ -41,7 +40,8 @@ public interface WebservicesRemote extends //
     ChannelManagerRemote,//
     ConfigurationManagerRemote,//
     ContentManagerRemote,//
-    DataAccessManagerRemote,//
+    //Removed as it was problematic for WS clients. Not sure if this well be re-enabled.
+    //    DataAccessManagerRemote,//
     DiscoveryBossRemote,//
     EventManagerRemote,//
     MeasurementBaselineManagerRemote,//

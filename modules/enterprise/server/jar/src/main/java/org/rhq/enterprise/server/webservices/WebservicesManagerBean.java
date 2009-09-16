@@ -119,7 +119,6 @@ import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.operation.GroupOperationSchedule;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.operation.ResourceOperationSchedule;
-import org.rhq.enterprise.server.report.DataAccessManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceFactoryManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
@@ -154,7 +153,8 @@ public class WebservicesManagerBean implements WebservicesRemote {
     private ChannelManagerLocal channelManager = LookupUtil.getChannelManagerLocal();
     private ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
     private ContentManagerLocal contentManager = LookupUtil.getContentManager();
-    private DataAccessManagerLocal dataAccessManager = LookupUtil.getDataAccessManager();
+    //removed as it is problematic for WS clients having XMLAny for Object.
+    //    private DataAccessManagerLocal dataAccessManager = LookupUtil.getDataAccessManager();
     private DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
     private EventManagerLocal eventManager = LookupUtil.getEventManager();
     private MeasurementBaselineManagerLocal measurementBaselineManager = LookupUtil.getMeasurementBaselineManager();
@@ -393,14 +393,14 @@ public class WebservicesManagerBean implements WebservicesRemote {
 
     //CONTENTMANAGER: END ----------------------------------
 
-    //DATAACCESSMANAGER: BEGIN ----------------------------------
-    public List<Object[]> executeQuery(Subject subject, String query) {
-        return dataAccessManager.executeQuery(subject, query);
-    }
-
-    public List<Object[]> executeQueryWithPageControl(Subject subject, String query, PageControl pageControl) {
-        return dataAccessManager.executeQueryWithPageControl(subject, query, pageControl);
-    }
+    //    //DATAACCESSMANAGER: BEGIN ----------------------------------
+    //    public List<Object[]> executeQuery(Subject subject, String query) {
+    //        return dataAccessManager.executeQuery(subject, query);
+    //    }
+    //
+    //    public List<Object[]> executeQueryWithPageControl(Subject subject, String query, PageControl pageControl) {
+    //        return dataAccessManager.executeQueryWithPageControl(subject, query, pageControl);
+    //    }
 
     //DATAACCESSMANAGER: END ----------------------------------
 

@@ -96,6 +96,12 @@
           <groupId>org.jboss.man</groupId>
           <artifactId>jboss-managed</artifactId>          
           <scope>provided</scope>
+          <exclusions>
+            <exclusion>  
+              <groupId>sun-jaxb</groupId>
+              <artifactId>jaxb-api</artifactId>
+            </exclusion>
+          </exclusions>           
         </dependency>
 
         <dependency>

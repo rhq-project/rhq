@@ -315,7 +315,6 @@ public class PluginDependencyGraphTest {
         assert order.get(7).equals("A") : order;
     }
 
-    /* we allow bad graphs now
     public void testBadGraph() {
         PluginDependencyGraph graph = new PluginDependencyGraph();
         StringBuilder error = new StringBuilder();
@@ -360,7 +359,6 @@ public class PluginDependencyGraphTest {
         assert order.get(1).equals("B") : order;
         assert order.get(2).equals("A") : order;
     }
-    */
 
     public void testCatchCircularDependency() {
         PluginDependencyGraph graph;

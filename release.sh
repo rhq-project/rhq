@@ -189,9 +189,9 @@ if [ -f "$RELEASE_BRANCH_CHECKOUT_DIR" ]; then
    rm -rf "$RELEASE_BRANCH_CHECKOUT_DIR"
 fi
 
-echo "Checking out branch source from $PROJECT_SVN_URL to $RELEASE_BRANCH_CHECKOUT_DIR (this will take about 5-10 minutes)..."
-svn co -N $PROJECT_SVN_URL "$RELEASE_BRANCH_CHECKOUT_DIR"
-svn co $PROJECT_SVN_URL/modules "$RELEASE_BRANCH_CHECKOUT_DIR/modules"
+echo "Checking out branch source from $RELEASE_BRANCH_SVN_URL to $RELEASE_BRANCH_CHECKOUT_DIR (this will take about 5-10 minutes)..."
+svn co -N $RELEASE_BRANCH_SVN_URL "$RELEASE_BRANCH_CHECKOUT_DIR"
+svn co $RELEASE_BRANCH_SVN_URL/modules "$RELEASE_BRANCH_CHECKOUT_DIR/modules"
 
 cd "$RELEASE_BRANCH_CHECKOUT_DIR"
 

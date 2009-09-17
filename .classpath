@@ -31,10 +31,9 @@
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/url/src/test/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/yum/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/remoting/cli/src/test/java"/>
-    <classpathentry kind="src" path="modules/enterprise/remoting/cli/src/main/java"/>
-    <classpathentry kind="src" path="modules/enterprise/remoting/webservices/src/main/java"/>
-    <classpathentry kind="src" path="modules/enterprise/remoting/webservices/src/test/java"/>
-    <classpathentry kind="lib" path="modules/enterprise/remoting/webservices/target/rhq-remoting-webservices-1.3.0-SNAPSHOT/wsconsume-output"/>
+	<classpathentry kind="src" path="modules/enterprise/remoting/cli/src/main/java"/>
+	<classpathentry kind="src" path="modules/enterprise/remoting/webservices/src/main/java"/>
+	<classpathentry kind="src" path="modules/enterprise/remoting/webservices/src/test/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/sars/agent-sar/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/safe-invoker/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/container-lib/src/main/java"/>
@@ -160,5 +159,6 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/ettrema/milton-api/1.4.1/milton-api-1.4.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/jboss/javassist/3.8.0.GA/javassist-3.8.0.GA.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/net/sf/opencsv/opencsv/1.8/opencsv-1.8.jar"/>
+	<classpathentry exported="true" kind="lib" path="modules/enterprise/remoting/webservices/target/rhq-remoting-webservices-1.4.0-SNAPSHOT/wsconsume-output"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

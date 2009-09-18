@@ -1,5 +1,14 @@
 #!/bin/sh
 
+#Constants
+
+PROJECT_NAME="rhq"
+PROJECT_SVN_URL="http://svn.rhq-project.org/repos/rhq"
+MINIMUM_MAVEN_VERSION="2.0.10"
+
+
+# Functions
+
 usage() 
 {
    EXE=`basename $0`
@@ -17,7 +26,9 @@ abort()
    exit 1
 }
 
+
 # Process command line args.
+
 if [ "$#" -ne 2 ]; then
    usage
 fi  
@@ -31,50 +42,74 @@ TAG_VERSION=`echo $RELEASE_VERSION | sed 's/\./_/g'`
 RELEASE_TAG="${TAG_PREFIX}_${TAG_VERSION}"
 
 
-# Make sure JAVA_HOME points to a valid JDK 1.5 install.
+# Make sure JAVA_HOME points to a valid JDK 1.6+ install.
 if [ -z "$JAVA_HOME" ]; then
-   abort "JAVA_HOME environment variable is not set."
+   abort "JAVA_HOME environment variable is not set - JAVA_HOME must point to a JDK (not JRE) 6 install dir."
 fi
 
 if [ ! -d "$JAVA_HOME" ]; then
-   abort "JAVA_HOME ($JAVA_HOME) does not exist or is not a directory."
+   abort "JAVA_HOME ($JAVA_HOME) does not exist or is not a directory - JAVA_HOME must point to a JDK (not JRE) 6 install dir."
 fi
 
 echo "Prepending $JAVA_HOME/bin to PATH..."
 PATH="$JAVA_HOME/bin:$PATH"
 
 if ! which java >/dev/null 2>&1; then
-   abort "java not found in PATH ($PATH)."
+   abort "java not found in PATH ($PATH) - JAVA_HOME must point to a JDK (not JRE) 6 install dir."
 fi
 
 if ! which javac >/dev/null 2>&1; then
-   abort "javac not found in PATH ($PATH) - JAVA_HOME must point to a JDK5 install dir, not a JRE install dir."
+   abort "javac not found in PATH ($PATH) - JAVA_HOME must point to a JDK (not JRE) 6 install dir."
 fi
 
-#if ! javap java.lang.Enum >/dev/null 2>&1; then
-#   abort "java.lang.Enum not found - Java version appears to be less than 1.5 - Jave version must be 1.5.x."
-#fi
+if ! javap java.util.Deque >/dev/null 2>&1; then
+   abort "java.util.Deque not found - Java version appears to be less than 1.6 - Jave version must be 1.6 or later."
+fi
 
-if javap java.util.Deque >/dev/null 2>&1; then
-   abort "java.util.Deque found - Java version appears to be greater than or equal to 1.6 - Jave version must be 1.5.x."
+
+# Make sure JAVA5_HOME points to a valid JDK 1.5 install. 
+# We need this to validate only Java 5 or earlier APIs are used in all modules, except the CLI, which requires Java 6.
+
+if [ -z "$JAVA5_HOME" ]; then
+   abort "JAVA5_HOME environment variable is not set - JAVA5_HOME must point to a JDK (not JRE) 1.5 install dir."
+fi
+
+if [ ! -d "$JAVA5_HOME" ]; then
+   abort "JAVA5_HOME ($JAVA5_HOME) does not exist or is not a directory - JAVA5_HOME must point to a JDK (not JRE) 1.5 install dir."
+fi
+
+if [ ! -x "$JAVA5_HOME/bin/java" ]; then
+   abort "$JAVA5_HOME/bin/java does not exist or is not executable - JAVA5_HOME must point to a JDK (not JRE) 1.5 install dir."
+fi
+
+if [ ! -x "$JAVA5_HOME/bin/javac" ]; then
+   abort "$JAVA5_HOME/bin/javac does not exist or is not executable - JAVA5_HOME must point to a JDK (not JRE) 1.5 install dir."
+fi
+
+if ! "$JAVA5_HOME/bin/javap" java.lang.Enum >/dev/null 2>&1; then
+   abort "java.lang.Enum not found - JAVA5_HOME ($JAVA5_HOME) version appears to be less than 1.5 - version must be 1.5.x."
+fi
+
+if "$JAVA5_HOME/bin/javap" java.util.Deque >/dev/null 2>&1; then
+   abort "java.util.Deque found - JAVA5_HOME ($JAVA5_HOME) version appears to be greater than or equal to 1.6 - version must be 1.5.x."
 fi
 
 
 # Make sure M2_HOME points to a valid Maven 2 install.
 
 if [ -z "$M2_HOME" ]; then
-   abort "M2_HOME environment variable is not set."
+   abort "M2_HOME environment variable is not set - M2_HOME must point to a Maven, $MINIMUM_MAVEN_VERSION or later, install dir."
 fi
 
 if [ ! -d "$M2_HOME" ]; then
-   abort "M2_HOME ($M2_HOME) does not exist or is not a directory."
+   abort "M2_HOME ($M2_HOME) does not exist or is not a directory - M2_HOME must point to a Maven, $MINIMUM_MAVEN_VERSION or later, install dir."
 fi
 
 echo "Prepending $M2_HOME/bin to PATH..."
 PATH="$M2_HOME/bin:$PATH"
 
 if ! which mvn >/dev/null 2>&1; then
-   abort "mvn not found in PATH ($PATH) - M2_HOME must point to a Maven 2 install dir."
+   abort "mvn not found in PATH ($PATH) - M2_HOME must point to a Maven, $MINIMUM_MAVEN_VERSION or later, install dir."
 fi
 
 
@@ -108,8 +143,6 @@ export LANG
 
 # Set various local variables.
 
-PROJECT_NAME="rhq"
-PROJECT_SVN_URL="http://svn.rhq-project.org/repos/rhq"
 if [ -z "$WORK_DIR" ]; then
    WORK_DIR="/tmp/${PROJECT_NAME}-${RELEASE_TYPE}-${RELEASE_VERSION}"   
 fi
@@ -240,10 +273,18 @@ cd "$RELEASE_BRANCH_CHECKOUT_DIR"
 svn co $RELEASE_BRANCH_SVN_URL/modules
 
 echo "Building project to ensure tests pass and to boostrap local Maven repo (this will take about 10-15 minutes)..."
+# This will build everything except the CLI, enforcing Java 5 APIs.
+mvn install $MAVEN_OPTS -Djava5.home=$JAVA5_HOME
+if [ "$?" -ne 0 ]; then
+   abort "Build failed. Please see above Maven output for details, fix any issues, then try again."
+fi
+# Now build the CLI, enforcing Java 6 APIs.
+cd modules/enterprise/remoting/cli
 mvn install $MAVEN_OPTS
 if [ "$?" -ne 0 ]; then
    abort "Build failed. Please see above Maven output for details, fix any issues, then try again."
 fi
+
 echo
 echo "Test build succeeded!"
 
@@ -251,6 +292,7 @@ echo "Test build succeeded!"
 # Tag the release.
 
 echo "Tagging the release..."
+cd "$RELEASE_BRANCH_CHECKOUT_DIR"
 mvn release:prepare $MAVEN_OPTS -Dresume=false -Dtag=$RELEASE_TAG
 if [ "$?" -ne 0 ]; then
    abort "Tagging failed. Please see above Maven output for details, fix any issues, then try again."
@@ -285,4 +327,3 @@ echo "Version: $RELEASE_VERSION"
 echo "Branch SVN URL: $RELEASE_BRANCH_SVN_URL"
 echo "Tag SVN URL: $RELEASE_TAG_SVN_URL"
 echo "========================================================================"
-

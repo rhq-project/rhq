@@ -24,6 +24,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 import org.rhq.enterprise.communications.ServiceContainer;
 import org.rhq.enterprise.communications.ServiceContainerConfigurationConstants;
+import org.rhq.enterprise.communications.CommTestConstants;
 import org.rhq.enterprise.communications.command.Command;
 import org.rhq.enterprise.communications.command.CommandResponse;
 import org.rhq.enterprise.communications.command.impl.echo.EchoCommand;
@@ -57,7 +58,7 @@ public class MaxRetriesTest {
         Preferences prefs = getPrefs();
         prefs.put(ServiceContainerConfigurationConstants.CONNECTOR_TRANSPORT, "socket");
         prefs.put(ServiceContainerConfigurationConstants.CONNECTOR_BIND_ADDRESS, "127.0.0.1");
-        prefs.put(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, "11111");
+        prefs.put(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, CommTestConstants.CONNECTOR_BIND_PORT);
         prefs.put(ServiceContainerConfigurationConstants.CONFIG_SCHEMA_VERSION, ""
             + ServiceContainerConfigurationConstants.CURRENT_CONFIG_SCHEMA_VERSION);
         prefs.put(ServiceContainerConfigurationConstants.DATA_DIRECTORY, "target");
@@ -70,7 +71,7 @@ public class MaxRetriesTest {
         try {
             // numberOfRetries tells jboss remoting effectively the number of seconds before declaring "cannot connect"
             RemoteCommunicator comm = new JBossRemotingRemoteCommunicator(
-                "socket://127.0.0.1:11111/?force_remote=true&numberOfRetries=2");
+                "socket://127.0.0.1:" + CommTestConstants.CONNECTOR_BIND_PORT + "/?force_remote=true&numberOfRetries=2");
             ClientCommandSenderConfiguration config = new ClientCommandSenderConfiguration();
             config.maxRetries = 5;
             config.retryInterval = 500L;

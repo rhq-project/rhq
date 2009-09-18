@@ -30,6 +30,7 @@ import org.jboss.remoting.transport.Connector;
 import org.rhq.enterprise.communications.command.CommandResponse;
 import org.rhq.enterprise.communications.command.impl.generic.GenericCommandResponse;
 import org.rhq.enterprise.communications.command.impl.identify.IdentifyCommand;
+import org.rhq.enterprise.communications.CommTestConstants;
 
 /**
  * Tests low level remoting stuff.
@@ -44,7 +45,7 @@ public class RemotingTest implements ServerInvocationHandler {
             return;
         }
 
-        String locatorString1 = "socket://127.0.0.1:11111/?force_remote=true";
+        String locatorString1 = "socket://127.0.0.1:" + CommTestConstants.CONNECTOR_BIND_PORT + "/?force_remote=true";
 
         Connector c1 = new Connector(locatorString1);
         c1.create();

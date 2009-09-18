@@ -37,6 +37,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.rhq.enterprise.communications.ServiceContainer;
 import org.rhq.enterprise.communications.ServiceContainerConfigurationConstants;
+import org.rhq.enterprise.communications.CommTestConstants;
 import org.rhq.enterprise.communications.command.client.ClientCommandSender;
 import org.rhq.enterprise.communications.command.client.ClientCommandSenderConfiguration;
 import org.rhq.enterprise.communications.command.client.JBossRemotingRemoteCommunicator;
@@ -83,7 +84,7 @@ public class CommStreamTest {
         Preferences prefs1 = getPrefs1();
         prefs1.put(ServiceContainerConfigurationConstants.CONNECTOR_TRANSPORT, "socket");
         prefs1.put(ServiceContainerConfigurationConstants.CONNECTOR_BIND_ADDRESS, "127.0.0.1");
-        prefs1.put(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, "11111");
+        prefs1.put(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, CommTestConstants.CONNECTOR_BIND_PORT);
         prefs1.put(ServiceContainerConfigurationConstants.CONFIG_SCHEMA_VERSION, ""
             + ServiceContainerConfigurationConstants.CURRENT_CONFIG_SCHEMA_VERSION);
         prefs1.put(ServiceContainerConfigurationConstants.DATA_DIRECTORY, "target/data1");

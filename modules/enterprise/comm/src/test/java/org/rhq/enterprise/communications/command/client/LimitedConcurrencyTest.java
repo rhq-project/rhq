@@ -27,6 +27,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 import org.rhq.enterprise.communications.ServiceContainer;
 import org.rhq.enterprise.communications.ServiceContainerConfigurationConstants;
+import org.rhq.enterprise.communications.CommTestConstants;
 import org.rhq.enterprise.communications.util.ConcurrencyManager;
 
 /**
@@ -56,7 +57,7 @@ public class LimitedConcurrencyTest {
         Preferences prefs = getPrefs();
         prefs.put(ServiceContainerConfigurationConstants.CONNECTOR_TRANSPORT, "socket");
         prefs.put(ServiceContainerConfigurationConstants.CONNECTOR_BIND_ADDRESS, "127.0.0.1");
-        prefs.put(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, "11111");
+        prefs.put(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, CommTestConstants.CONNECTOR_BIND_PORT);
         prefs.put(ServiceContainerConfigurationConstants.CONFIG_SCHEMA_VERSION, ""
             + ServiceContainerConfigurationConstants.CURRENT_CONFIG_SCHEMA_VERSION);
         prefs.put(ServiceContainerConfigurationConstants.DATA_DIRECTORY, "target");
@@ -78,7 +79,7 @@ public class LimitedConcurrencyTest {
         try {
             // default for clientMaxPoolSize is 50, but we don't want remoting to be the limit for this test
             RemoteCommunicator comm = new JBossRemotingRemoteCommunicator(
-                "socket://127.0.0.1:11111/?clientMaxPoolSize=100");
+                "socket://127.0.0.1:" + CommTestConstants.CONNECTOR_BIND_PORT + "/?clientMaxPoolSize=100");
             ClientCommandSenderConfiguration config = new ClientCommandSenderConfiguration();
             config.maxConcurrent = Integer.MAX_VALUE; // let the sender send as fast as it can
             config.defaultTimeoutMillis = 60000L;
@@ -149,7 +150,8 @@ public class LimitedConcurrencyTest {
         Preferences prefs = getPrefs();
         prefs.put(ServiceContainerConfigurationConstants.CONNECTOR_TRANSPORT, "socket");
         prefs.put(ServiceContainerConfigurationConstants.CONNECTOR_BIND_ADDRESS, "127.0.0.1");
-        prefs.put(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, "11111");
+        prefs.put(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT,
+                CommTestConstants.CONNECTOR_BIND_PORT);
         prefs.put(ServiceContainerConfigurationConstants.CONFIG_SCHEMA_VERSION, ""
             + ServiceContainerConfigurationConstants.CURRENT_CONFIG_SCHEMA_VERSION);
         prefs.put(ServiceContainerConfigurationConstants.DATA_DIRECTORY, "target");
@@ -170,7 +172,7 @@ public class LimitedConcurrencyTest {
         try {
             // default for clientMaxPoolSize is 50, but we don't want remoting to be the limit for this test
             RemoteCommunicator comm = new JBossRemotingRemoteCommunicator(
-                "socket://127.0.0.1:11111/?clientMaxPoolSize=100");
+                "socket://127.0.0.1:" + CommTestConstants.CONNECTOR_BIND_PORT + "/?clientMaxPoolSize=100");
             ClientCommandSenderConfiguration config = new ClientCommandSenderConfiguration();
             config.maxConcurrent = Integer.MAX_VALUE; // let the sender send as fast as it can
             config.defaultTimeoutMillis = 60000L; // @Timeout will override this
@@ -241,7 +243,7 @@ public class LimitedConcurrencyTest {
         Preferences prefs = getPrefs();
         prefs.put(ServiceContainerConfigurationConstants.CONNECTOR_TRANSPORT, "socket");
         prefs.put(ServiceContainerConfigurationConstants.CONNECTOR_BIND_ADDRESS, "127.0.0.1");
-        prefs.put(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, "11111");
+        prefs.put(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, CommTestConstants.CONNECTOR_BIND_PORT);
         prefs.put(ServiceContainerConfigurationConstants.CONFIG_SCHEMA_VERSION, ""
             + ServiceContainerConfigurationConstants.CURRENT_CONFIG_SCHEMA_VERSION);
         prefs.put(ServiceContainerConfigurationConstants.DATA_DIRECTORY, "target");
@@ -259,7 +261,7 @@ public class LimitedConcurrencyTest {
         try {
             // default for clientMaxPoolSize is 50, but we don't want remoting to be the limit for this test
             RemoteCommunicator comm = new JBossRemotingRemoteCommunicator(
-                "socket://127.0.0.1:11111/?clientMaxPoolSize=100");
+                "socket://127.0.0.1:" + CommTestConstants.CONNECTOR_BIND_PORT + "/?clientMaxPoolSize=100");
             ClientCommandSenderConfiguration config = new ClientCommandSenderConfiguration();
             config.maxConcurrent = Integer.MAX_VALUE; // let the sender send as fast as it can
             config.defaultTimeoutMillis = 60000L;
@@ -318,7 +320,7 @@ public class LimitedConcurrencyTest {
         Preferences prefs = getPrefs();
         prefs.put(ServiceContainerConfigurationConstants.CONNECTOR_TRANSPORT, "socket");
         prefs.put(ServiceContainerConfigurationConstants.CONNECTOR_BIND_ADDRESS, "127.0.0.1");
-        prefs.put(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, "11111");
+        prefs.put(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, CommTestConstants.CONNECTOR_BIND_PORT);
         prefs.put(ServiceContainerConfigurationConstants.CONFIG_SCHEMA_VERSION, ""
             + ServiceContainerConfigurationConstants.CURRENT_CONFIG_SCHEMA_VERSION);
         prefs.put(ServiceContainerConfigurationConstants.DATA_DIRECTORY, "target");
@@ -336,7 +338,7 @@ public class LimitedConcurrencyTest {
         try {
             // default for clientMaxPoolSize is 50, but we don't want remoting to be the limit for this test
             RemoteCommunicator comm = new JBossRemotingRemoteCommunicator(
-                "socket://127.0.0.1:11111/?clientMaxPoolSize=100");
+                "socket://127.0.0.1:" + CommTestConstants.CONNECTOR_BIND_PORT + "/?clientMaxPoolSize=100");
             ClientCommandSenderConfiguration config = new ClientCommandSenderConfiguration();
             config.maxConcurrent = Integer.MAX_VALUE; // let the sender send as fast as it can
             config.defaultTimeoutMillis = 6000000L;

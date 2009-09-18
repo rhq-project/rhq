@@ -3,6 +3,7 @@
 # Constants
 
 PROJECT_NAME="jopr"
+PROJECT_DISPLAY_NAME="Jopr"
 PROJECT_SVN_URL="https://svn.jboss.org/repos/jopr"
 TAG_PREFIX="Jopr"
 MINIMUM_MAVEN_VERSION="2.0.10"
@@ -246,7 +247,7 @@ cat <<EOF >${SETTINGS}
 EOF
 
 
-# Run a test build before tagging.
+# Check out the branch, then run a test build before tagging.
 
 if [ -f "$RELEASE_BRANCH_CHECKOUT_DIR" ]; then
    echo "Purging contents of RELEASE_BRANCH_CHECKOUT_DIR ($RELEASE_BRANCH_CHECKOUT_DIR)..."
@@ -272,7 +273,7 @@ echo "After you have made these edits and saved the files, hit Enter to continue
 read
 echo
 echo "Committing pom updates to SVN..."
-svn commit -m "Jopr Build $RELEASE_VERSION (in progress)"
+svn commit -m "$PROJECT_DISPLAY_NAME Build $RELEASE_VERSION (in progress)"
 
 echo
 echo "Building project to ensure tests pass and to boostrap local Maven repo (this will take about 10-15 minutes)..."
@@ -309,7 +310,7 @@ echo "After you have made these edits and saved the files, hit Enter to continue
 read
 echo
 echo "Committing pom updates to SVN..."
-svn commit -m "Jopr Build $RELEASE_VERSION (done)"
+svn commit -m "$PROJECT_DISPLAY_NAME Build $RELEASE_VERSION (done)"
 
 
 # Checkout the tag and build it.

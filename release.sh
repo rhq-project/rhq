@@ -157,7 +157,7 @@ else
 fi
 RELEASE_TAG_SVN_URL="$PROJECT_SVN_URL/tags/$RELEASE_TAG"
 
-MAVEN_LOCAL_REPO_DIR="$WORK_DIR/m2-repo"
+MAVEN_LOCAL_REPO_DIR="$BASE_DIR/release-m2-repo"
 MAVEN_SETTINGS_FILE="$WORK_DIR/settings.xml"
 MAVEN_OPTS="--settings "$MAVEN_SETTINGS_FILE" --debug --errors -Penterprise -Pdist -Prelease -Ddbsetup"
 if [ "$RELEASE_TYPE" = "enterprise" ]; then

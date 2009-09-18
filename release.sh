@@ -4,6 +4,7 @@
 
 PROJECT_NAME="rhq"
 PROJECT_SVN_URL="http://svn.rhq-project.org/repos/rhq"
+TAG_PREFIX="RHQ"
 MINIMUM_MAVEN_VERSION="2.0.10"
 
 
@@ -29,7 +30,7 @@ abort()
 
 # Process command line args.
 
-if [ "$#" -ne 2 ]; then
+if [ "$#" -ne 3 ]; then
    usage
 fi  
 RELEASE_TYPE="$1"
@@ -37,12 +38,13 @@ if [ "$RELEASE_TYPE" != "community" ] && [ "$RELEASE_TYPE" != "enterprise" ]; th
    usage
 fi
 RELEASE_VERSION="$2"
-TAG_PREFIX="RHQ"
 TAG_VERSION=`echo $RELEASE_VERSION | sed 's/\./_/g'`
 RELEASE_TAG="${TAG_PREFIX}_${TAG_VERSION}"
+DEVELOPMENT_VERSION="$3"
 
 
 # Make sure JAVA_HOME points to a valid JDK 1.6+ install.
+
 if [ -z "$JAVA_HOME" ]; then
    abort "JAVA_HOME environment variable is not set - JAVA_HOME must point to a JDK (not JRE) 6 install dir."
 fi
@@ -181,6 +183,7 @@ echo "WORK_DIR=$WORK_DIR"
 echo "PROJECT_NAME=$PROJECT_NAME"
 echo "RELEASE_TYPE=$RELEASE_TYPE"
 echo "RELEASE_VERSION=$RELEASE_VERSION"
+echo "DEVELOPMENT_VERSION=$DEVELOPMENT_VERSION"
 echo "RELEASE_BRANCH=$RELEASE_BRANCH"
 echo "RELEASE_BRANCH_SVN_URL=$RELEASE_BRANCH_SVN_URL"
 echo "RELEASE_BRANCH_CHECKOUT_DIR=$RELEASE_BRANCH_CHECKOUT_DIR"
@@ -274,7 +277,7 @@ svn co $RELEASE_BRANCH_SVN_URL/modules
 
 echo "Building project to ensure tests pass and to boostrap local Maven repo (this will take about 10-15 minutes)..."
 # This will build everything except the CLI, enforcing Java 5 APIs.
-mvn install $MAVEN_OPTS -Djava5.home=$JAVA5_HOME
+mvn install $MAVEN_OPTS -Djava5.home=$JAVA5_HOME/jre
 if [ "$?" -ne 0 ]; then
    abort "Build failed. Please see above Maven output for details, fix any issues, then try again."
 fi
@@ -293,7 +296,7 @@ echo "Test build succeeded!"
 
 echo "Tagging the release..."
 cd "$RELEASE_BRANCH_CHECKOUT_DIR"
-mvn release:prepare $MAVEN_OPTS -Dresume=false -Dtag=$RELEASE_TAG
+mvn release:prepare $MAVEN_OPTS -DreleaseVersion=$RELEASE_VERSION -DdevelopmentVersion=$DEVELOPMENT_VERSION -Dresume=false -Dtag=$RELEASE_TAG
 if [ "$?" -ne 0 ]; then
    abort "Tagging failed. Please see above Maven output for details, fix any issues, then try again."
 fi

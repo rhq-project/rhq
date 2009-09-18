@@ -80,8 +80,8 @@ public class XmlIndexParserTest {
         assert "Mazzsha256".equals(cspd.getSHA256()) : cspd.getSHA256();
         assert "Mazzshort-description".equals(cspd.getShortDescription()) : cspd.getShortDescription();
         assert "Mazzversion".equals(cspd.getVersion()) : cspd.getVersion();
-        assert "Mazzresource-version1".equals(cspd.getResourceVersions().toArray()[0]) : cspd.getResourceVersions();
-        assert "Mazzresource-version2".equals(cspd.getResourceVersions().toArray()[1]) : cspd.getResourceVersions();
+        assert cspd.getResourceVersions().contains("Mazzresource-version1") : cspd.getResourceVersions();
+        assert cspd.getResourceVersions().contains("Mazzresource-version2") : cspd.getResourceVersions();
 
         Configuration extra = cspd.getExtraProperties();
         PropertySimple firstsimple = extra.getSimple("firstsimple");

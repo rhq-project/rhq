@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#Constants
+# Constants
 
 PROJECT_NAME="rhq"
 PROJECT_SVN_URL="http://svn.rhq-project.org/repos/rhq"
@@ -10,14 +10,6 @@ MINIMUM_MAVEN_VERSION="2.0.10"
 
 # Functions
 
-usage() 
-{
-   EXE=`basename $0`
-   echo "Usage: $EXE community|enterprise VERSION" >&2
-   echo "e.g.: $EXE community 1.3.1" >&2
-   exit 1
-}
-
 abort()
 {
    echo >&2
@@ -25,6 +17,12 @@ abort()
       echo "$ARG" >&2
    done
    exit 1
+}
+
+usage() 
+{
+   EXE=`basename $0`
+   abort "Usage:   $EXE community|enterprise RELEASE_VERSION DEVELOPMENT_VERSION" "Example: $EXE community 1.3.1 1.3.2-SNAPSHOT"   
 }
 
 

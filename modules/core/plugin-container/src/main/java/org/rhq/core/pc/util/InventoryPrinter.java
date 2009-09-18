@@ -24,6 +24,7 @@ package org.rhq.core.pc.util;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -222,6 +223,8 @@ public class InventoryPrinter {
             exportWriter.printf("%s   <name>%s</name>\n", indent, resource.getName());
             exportWriter.printf("%s   <version>%s</version>\n", indent, resource.getVersion());
             exportWriter.printf("%s   <uuid>%s</uuid>\n", indent, resource.getUuid());
+            exportWriter.printf("%s   <mtime>%s</mtime>\n", indent, resource.getMtime());
+            exportWriter.printf("%s   <mtime-date>%s</mtime-date>\n", indent, new Date(resource.getMtime()));
             exportWriter.printf("%s   <description>%s</description>\n", indent, resource.getDescription());
             exportWriter
                 .printf("%s   <inventory-status>%s</inventory-status>\n", indent, resource.getInventoryStatus());

@@ -143,9 +143,11 @@ export LANG
 
 # Set various local variables.
 
-if [ -z "$WORK_DIR" ]; then
-   WORK_DIR="/tmp/${PROJECT_NAME}-${RELEASE_TYPE}-${RELEASE_VERSION}"   
+if [ -z "$BASE_DIR" ]; then
+   BASE_DIR="$HOME"
 fi
+WORK_DIR="$BASE_DIR/${PROJECT_NAME}-${RELEASE_TYPE}-${RELEASE_VERSION}"   
+
 RELEASE_BRANCH_CHECKOUT_DIR="$WORK_DIR/branch"
 RELEASE_TAG_CHECKOUT_DIR="$WORK_DIR/tag"
 if [ -n "$RELEASE_BRANCH" ]; then
@@ -294,7 +296,7 @@ echo "Test build succeeded!"
 
 echo "Tagging the release..."
 cd "$RELEASE_BRANCH_CHECKOUT_DIR"
-mvn release:prepare $MAVEN_OPTS -DreleaseVersion=$RELEASE_VERSION -DdevelopmentVersion=$DEVELOPMENT_VERSION -Dresume=false -Dtag=$RELEASE_TAG
+mvn release:prepare $MAVEN_OPTS -DreleaseVersion=$RELEASE_VERSION -DdevelopmentVersion=$DEVELOPMENT_VERSION -Dresume=false -Dtag=$RELEASE_TAG -DdryRun=true
 if [ "$?" -ne 0 ]; then
    abort "Tagging failed. Please see above Maven output for details, fix any issues, then try again."
 fi

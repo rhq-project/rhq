@@ -8,6 +8,15 @@ usage()
    exit 1
 }
 
+abort()
+{
+   echo >&2
+   for ARG in "$@"; do
+      echo "$ARG" >&2
+   done
+   exit 1
+}
+
 # Process command line args.
 if [ "$#" -ne 2 ]; then
    usage
@@ -24,78 +33,66 @@ RELEASE_TAG="${TAG_PREFIX}_${TAG_VERSION}"
 
 # Make sure JAVA_HOME points to a valid JDK 1.5 install.
 if [ -z "$JAVA_HOME" ]; then
-   echo "JAVA_HOME environment variable is not set." >&2
-   exit 1
+   abort "JAVA_HOME environment variable is not set."
 fi
 
 if [ ! -d "$JAVA_HOME" ]; then
-   echo "JAVA_HOME ($JAVA_HOME) does not exist or is not a directory." >&2
-   exit 1
+   abort "JAVA_HOME ($JAVA_HOME) does not exist or is not a directory."
 fi
 
 echo "Prepending $JAVA_HOME/bin to PATH..."
 PATH="$JAVA_HOME/bin:$PATH"
 
 if ! which java >/dev/null 2>&1; then
-   echo "java not found in PATH ($PATH)." >&2
-   exit 1
+   abort "java not found in PATH ($PATH)."
 fi
 
 if ! which javac >/dev/null 2>&1; then
-   echo "javac not found in PATH ($PATH) - JAVA_HOME must point to a JDK5 install dir, not a JRE install dir." >&2
-   exit 1   
+   abort "javac not found in PATH ($PATH) - JAVA_HOME must point to a JDK5 install dir, not a JRE install dir."
 fi
 
-if ! javap java.lang.Enum >/dev/null 2>&1; then
-   echo "java.lang.Enum not found - Java version appears to be less than 1.5 - Jave version must be 1.5.x." >&2
-   exit 1
-fi
+#if ! javap java.lang.Enum >/dev/null 2>&1; then
+#   abort "java.lang.Enum not found - Java version appears to be less than 1.5 - Jave version must be 1.5.x."
+#fi
 
 if javap java.util.Deque >/dev/null 2>&1; then
-   echo "java.util.Deque found - Java version appears to be greater than or equal to 1.6 - Jave version must be 1.5.x." >&2
-   exit 1
+   abort "java.util.Deque found - Java version appears to be greater than or equal to 1.6 - Jave version must be 1.5.x."
 fi
 
 
 # Make sure M2_HOME points to a valid Maven 2 install.
 
 if [ -z "$M2_HOME" ]; then
-   echo "M2_HOME environment variable is not set." >&2
-   exit 1
+   abort "M2_HOME environment variable is not set."
 fi
 
 if [ ! -d "$M2_HOME" ]; then
-   echo "M2_HOME ($M2_HOME) does not exist or is not a directory." >&2
-   exit 1
+   abort "M2_HOME ($M2_HOME) does not exist or is not a directory."
 fi
 
 echo "Prepending $M2_HOME/bin to PATH..."
 PATH="$M2_HOME/bin:$PATH"
 
 if ! which mvn >/dev/null 2>&1; then
-   echo "mvn not found in PATH ($PATH) - M2_HOME must point to a Maven 2 install dir." >&2
-   exit 1
+   abort "mvn not found in PATH ($PATH) - M2_HOME must point to a Maven 2 install dir."
 fi
 
 
 # Make sure SUBVERSION_HOME points to a valid Subversion install.
 
 if [ -z "$SUBVERSION_HOME" ]; then
-   echo "SUBVERSION_HOME environment variable is not set." >&2
-   exit 1
+   abort "SUBVERSION_HOME environment variable is not set." >&2
 fi
 
 if [ ! -d "$SUBVERSION_HOME" ]; then
-   echo "SUBVERSION_HOME ($SUBVERSION_HOME) does not exist or is not a directory." >&2
-   exit 1
+   abort "SUBVERSION_HOME ($SUBVERSION_HOME) does not exist or is not a directory."
 fi
 
 echo "Prepending $SUBVERSION_HOME/bin to PATH..."
 PATH="$SUBVERSION_HOME/bin:$PATH"
 
 if ! which svn >/dev/null 2>&1; then
-   echo "svn not found in PATH ($PATH) - SUBVERSION_HOME must point to an SVN install dir." >&2
-   exit 1
+   abort "svn not found in PATH ($PATH) - SUBVERSION_HOME must point to an SVN install dir."
 fi
 
 echo "Prepending $SUBVERSION_HOME/lib to LD_LIBRARY_PATH..."
@@ -114,7 +111,7 @@ export LANG
 PROJECT_NAME="rhq"
 PROJECT_SVN_URL="http://svn.rhq-project.org/repos/rhq"
 if [ -z "$WORK_DIR" ]; then
-   WORK_DIR="/tmp/${PROJECT_NAME}-${RELEASE_VERSION}"   
+   WORK_DIR="/tmp/${PROJECT_NAME}-${RELEASE_TYPE}-${RELEASE_VERSION}"   
 fi
 RELEASE_BRANCH_CHECKOUT_DIR="$WORK_DIR/branch"
 RELEASE_TAG_CHECKOUT_DIR="$WORK_DIR/tag"
@@ -126,9 +123,13 @@ fi
 RELEASE_TAG_SVN_URL="$PROJECT_SVN_URL/tags/$RELEASE_TAG"
 
 MAVEN_LOCAL_REPO_DIR="$WORK_DIR/m2-repo"
-MAVEN_OPTS="-X -e -Penterprise -Pdist -Ddbsetup-do-not-check-schema=true"
+MAVEN_SETTINGS_FILE="$WORK_DIR/settings.xml"
+MAVEN_OPTS="--settings "$MAVEN_SETTINGS_FILE" --debug --errors -Penterprise -Pdist -Prelease -Ddbsetup"
 if [ "$RELEASE_TYPE" = "enterprise" ]; then
    MAVEN_OPTS="$MAVEN_OPTS -Pojdbc-driver -Dpackage-connectors -Dexclude-webdav"
+fi
+if [ -z "$MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS" ]; then
+   MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS="24"
 fi
 
 
@@ -154,6 +155,8 @@ echo "RELEASE_TAG=$RELEASE_TAG"
 echo "RELEASE_TAG_SVN_URL=$RELEASE_TAG_SVN_URL"
 echo "RELEASE_TAG_CHECKOUT_DIR=$RELEASE_TAG_CHECKOUT_DIR"
 echo "MAVEN_LOCAL_REPO_DIR=$MAVEN_LOCAL_REPO_DIR"
+echo "MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS=$MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS"
+echo "MAVEN_SETTINGS_FILE=$MAVEN_SETTINGS_FILE"
 echo "MAVEN_OPTS=$MAVEN_OPTS"
 echo "============================ Program Versions ================================"
 mvn --version
@@ -162,11 +165,16 @@ svn --version | head -2
 echo "=============================================================================="
 echo
 
+
 # Clean the Maven local repo.
 
 if [ -f "$MAVEN_LOCAL_REPO_DIR" ]; then
-   echo "Purging contents of MAVEN_LOCAL_REPO_DIR ($MAVEN_LOCAL_REPO_DIR)..."
-   rm -rf "$MAVEN_LOCAL_REPO_DIR"
+   OUTPUT=`find "$MAVEN_LOCAL_REPO_DIR" -maxdepth 0 -mtime $MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS`
+   if [ -n "$OUTPUT" ]; then 
+      
+      echo "MAVEN_LOCAL_REPO_DIR ($MAVEN_LOCAL_REPO_DIR) has existed for more than 24 hours - purging it for a clean-clean build..."
+      rm -rf "$MAVEN_LOCAL_REPO_DIR"
+   fi
 fi
 mkdir -p "$MAVEN_LOCAL_REPO_DIR"
 
@@ -177,7 +185,42 @@ cat <<EOF >${SETTINGS}
 <settings>
    <localRepository>$MAVEN_LOCAL_REPO_DIR</localRepository>
    
-   <!-- TODO: Add other settings. -->
+   <profiles>
+      <profile>
+         <id>release</id>
+         <properties>
+            <rhq.test.ds.connection-url>jdbc:postgresql://jon03.qa.atl2.redhat.com:5432/rhq_release</rhq.test.ds.connection-url>
+            <rhq.test.ds.user-name>rhqadmin</rhq.test.ds.user-name>
+            <rhq.test.ds.password>rhqadmin</rhq.test.ds.password>
+            <rhq.test.ds.type-mapping>PostgreSQL</rhq.test.ds.type-mapping>
+            <rhq.test.ds.driver-class>org.postgresql.Driver</rhq.test.ds.driver-class>
+            <rhq.test.ds.xa-datasource-class>org.postgresql.xa.PGXADataSource</rhq.test.ds.xa-datasource-class>
+            <rhq.test.ds.server-name>jon03.qa.atl2.redhat.com</rhq.test.ds.server-name>
+            <rhq.test.ds.port>5432</rhq.test.ds.port>
+            <rhq.test.ds.db-name>rhq_release</rhq.test.ds.db-name>
+            <rhq.test.ds.hibernate-dialect>org.hibernate.dialect.PostgreSQLDialect</rhq.test.ds.hibernate-dialect>
+            <!-- quartz properties -->
+            <rhq.test.quartz.driverDelegateClass>org.quartz.impl.jdbcjobstore.PostgreSQLDelegate</rhq.test.quartz.driverDelegateClass>
+            <rhq.test.quartz.selectWithLockSQL>SELECT * FROM {0}LOCKS ROWLOCK WHERE LOCK_NAME = ? FOR UPDATE</rhq.test.quartz.selectWithLockSQL>
+            <rhq.test.quartz.lockHandlerClass>org.quartz.impl.jdbcjobstore.StdRowLockSemaphore</rhq.test.quartz.lockHandlerClass>
+
+            <DatabaseTest.nofail>true</DatabaseTest.nofail>
+
+            <rhq.testng.excludedGroups>agent-comm,comm-client,postgres-plugin,native-system</rhq.testng.excludedGroups>
+         </properties>
+      </profile>
+ 
+      <profile>
+         <id>ojdbc-driver</id>
+         <repositories>
+            <repository>
+               <id>internal</id>
+               <name>Internal Repository</name>
+               <url>http://jon01.qa.atl2.redhat.com:8042/m2-repo/</url>
+            </repository>
+         </repositories>              
+      </profile>
+   </profiles>
 </settings>
 EOF
 
@@ -189,21 +232,19 @@ if [ -f "$RELEASE_BRANCH_CHECKOUT_DIR" ]; then
    rm -rf "$RELEASE_BRANCH_CHECKOUT_DIR"
 fi
 mkdir -p "$RELEASE_BRANCH_CHECKOUT_DIR"
-cd "$RELEASE_BRANCH_CHECKOUT_DIR"
 
 echo "Checking out branch source from $RELEASE_BRANCH_SVN_URL to $RELEASE_BRANCH_CHECKOUT_DIR (this will take about 5-10 minutes)..."
 # We only need pom.xml and modules/**. Save some time by not checking out etc/**.
-svn co $RELEASE_BRANCH_SVN_URL/pom.xml
-svn co $RELEASE_BRANCH_SVN_URL/modules
-
+svn co -N $RELEASE_BRANCH_SVN_URL "$RELEASE_BRANCH_CHECKOUT_DIR"
 cd "$RELEASE_BRANCH_CHECKOUT_DIR"
+svn co $RELEASE_BRANCH_SVN_URL/modules
 
 echo "Building project to ensure tests pass and to boostrap local Maven repo (this will take about 10-15 minutes)..."
 mvn install $MAVEN_OPTS
 if [ "$?" -ne 0 ]; then
-   echo "Build failed. Please see above Maven output for details, fix any issues, then try again." >&2
-   exit 1
+   abort "Build failed. Please see above Maven output for details, fix any issues, then try again."
 fi
+echo
 echo "Test build succeeded!"
 
 
@@ -212,9 +253,9 @@ echo "Test build succeeded!"
 echo "Tagging the release..."
 mvn release:prepare $MAVEN_OPTS -Dresume=false -Dtag=$RELEASE_TAG
 if [ "$?" -ne 0 ]; then
-   echo "Tagging failed. Please see above Maven output for details, fix any issues, then try again." >&2
-   exit 1
+   abort "Tagging failed. Please see above Maven output for details, fix any issues, then try again."
 fi
+echo
 echo "Tagging succeeded!"
 
 
@@ -225,18 +266,23 @@ if [ -f "$RELEASE_TAG_CHECKOUT_DIR" ]; then
    rm -rf "$RELEASE_TAG_CHECKOUT_DIR"
 fi
 mkdir -p "$RELEASE_TAG_CHECKOUT_DIR"
-cd "$RELEASE_TAG_CHECKOUT_DIR"
 
 echo "Checking out tag source from $RELEASE_TAG_SVN_URL to $RELEASE_TAG_CHECKOUT_DIR (this will take about 5-10 minutes)..."
-svn co $RELEASE_TAG_SVN_URL/pom.xml
-svn co $RELEASE_TAG_SVN_URL/modules
-
+svn co -N $RELEASE_TAG_SVN_URL "$RELEASE_TAG_CHECKOUT_DIR"
 cd "$RELEASE_TAG_CHECKOUT_DIR"
+svn co $RELEASE_TAG_SVN_URL/modules
 
 echo "Building release from tag (this will take about 10-15 minutes)..."
 mvn install $MAVEN_OPTS -Dmaven.test.skip=true
 if [ "$?" -ne 0 ]; then
-   echo "Build failed. Please see above Maven output for details, fix any issues, then try again." >&2
-   exit 1
+   abort "Build failed. Please see above Maven output for details, fix any issues, then try again."
 fi
+echo
 echo "Release build succeeded!"
+
+echo "=========================== Release Info ==============================="
+echo "Version: $RELEASE_VERSION"
+echo "Branch SVN URL: $RELEASE_BRANCH_SVN_URL"
+echo "Tag SVN URL: $RELEASE_TAG_SVN_URL"
+echo "========================================================================"
+

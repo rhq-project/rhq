@@ -188,10 +188,13 @@ if [ -f "$RELEASE_BRANCH_CHECKOUT_DIR" ]; then
    echo "Purging contents of RELEASE_BRANCH_CHECKOUT_DIR ($RELEASE_BRANCH_CHECKOUT_DIR)..."
    rm -rf "$RELEASE_BRANCH_CHECKOUT_DIR"
 fi
+mkdir -p "$RELEASE_BRANCH_CHECKOUT_DIR"
+cd "$RELEASE_BRANCH_CHECKOUT_DIR"
 
 echo "Checking out branch source from $RELEASE_BRANCH_SVN_URL to $RELEASE_BRANCH_CHECKOUT_DIR (this will take about 5-10 minutes)..."
-svn co -N $RELEASE_BRANCH_SVN_URL "$RELEASE_BRANCH_CHECKOUT_DIR"
-svn co $RELEASE_BRANCH_SVN_URL/modules "$RELEASE_BRANCH_CHECKOUT_DIR/modules"
+# We only need pom.xml and modules/**. Save some time by not checking out etc/**.
+svn co $RELEASE_BRANCH_SVN_URL/pom.xml
+svn co $RELEASE_BRANCH_SVN_URL/modules
 
 cd "$RELEASE_BRANCH_CHECKOUT_DIR"
 
@@ -221,10 +224,12 @@ if [ -f "$RELEASE_TAG_CHECKOUT_DIR" ]; then
    echo "Purging contents of RELEASE_TAG_CHECKOUT_DIR ($RELEASE_TAG_CHECKOUT_DIR)..."
    rm -rf "$RELEASE_TAG_CHECKOUT_DIR"
 fi
+mkdir -p "$RELEASE_TAG_CHECKOUT_DIR"
+cd "$RELEASE_TAG_CHECKOUT_DIR"
 
 echo "Checking out tag source from $RELEASE_TAG_SVN_URL to $RELEASE_TAG_CHECKOUT_DIR (this will take about 5-10 minutes)..."
-svn co -N $RELEASE_TAG_SVN_URL "$RELEASE_TAG_CHECKOUT_DIR"
-svn co $RELEASE_TAG_SVN_URL/modules "$RELEASE_TAG_CHECKOUT_DIR/modules"
+svn co $RELEASE_TAG_SVN_URL/pom.xml
+svn co $RELEASE_TAG_SVN_URL/modules
 
 cd "$RELEASE_TAG_CHECKOUT_DIR"
 

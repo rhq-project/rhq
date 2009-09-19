@@ -3,6 +3,7 @@
 # Constants
 
 PROJECT_NAME="rhq"
+PROJECT_DISPLAY_NAME="RHQ"
 PROJECT_SVN_URL="http://svn.rhq-project.org/repos/rhq"
 TAG_PREFIX="RHQ"
 MINIMUM_MAVEN_VERSION="2.0.10"
@@ -159,7 +160,7 @@ RELEASE_TAG_SVN_URL="$PROJECT_SVN_URL/tags/$RELEASE_TAG"
 
 MAVEN_LOCAL_REPO_DIR="$BASE_DIR/release-m2-repo"
 MAVEN_SETTINGS_FILE="$WORK_DIR/settings.xml"
-MAVEN_OPTS="--settings "$MAVEN_SETTINGS_FILE" --debug --errors -Penterprise -Pdist -Prelease -Ddbsetup"
+MAVEN_OPTS="--settings "$MAVEN_SETTINGS_FILE" --debug --errors -Penterprise -Pdist -Prelease"
 if [ "$RELEASE_TYPE" = "enterprise" ]; then
    MAVEN_OPTS="$MAVEN_OPTS -Pojdbc-driver -Dpackage-connectors -Dexclude-webdav"
 fi
@@ -277,7 +278,7 @@ svn co $RELEASE_BRANCH_SVN_URL/modules
 
 echo "Building project to ensure tests pass and to boostrap local Maven repo (this will take about 10-15 minutes)..."
 # This will build everything except the CLI, enforcing Java 5 APIs.
-mvn install $MAVEN_OPTS -Djava5.home=$JAVA5_HOME/jre
+mvn install $MAVEN_OPTS -Ddbsetup -Djava5.home=$JAVA5_HOME/jre
 if [ "$?" -ne 0 ]; then
    abort "Build failed. Please see above Maven output for details, fix any issues, then try again."
 fi
@@ -296,7 +297,7 @@ echo "Test build succeeded!"
 
 echo "Tagging the release..."
 cd "$RELEASE_BRANCH_CHECKOUT_DIR"
-mvn release:prepare $MAVEN_OPTS -DreleaseVersion=$RELEASE_VERSION -DdevelopmentVersion=$DEVELOPMENT_VERSION -Dresume=false -Dtag=$RELEASE_TAG -DdryRun=true
+mvn release:prepare $MAVEN_OPTS -DreleaseVersion=$RELEASE_VERSION -DdevelopmentVersion=$DEVELOPMENT_VERSION -Dresume=false -Dtag=$RELEASE_TAG "-DpreparationGoals=clean verify $MAVEN_OPTS -Dmaven.test.skip=true -Ddbsetup-do-not-check-schema=true" -DdryRun=true
 if [ "$?" -ne 0 ]; then
    abort "Tagging failed. Please see above Maven output for details, fix any issues, then try again."
 fi
@@ -318,7 +319,7 @@ cd "$RELEASE_TAG_CHECKOUT_DIR"
 svn co $RELEASE_TAG_SVN_URL/modules
 
 echo "Building release from tag (this will take about 10-15 minutes)..."
-mvn install $MAVEN_OPTS -Dmaven.test.skip=true
+mvn install $MAVEN_OPTS -Dmaven.test.skip=true -Ddbsetup-do-not-check-schema=true
 if [ "$?" -ne 0 ]; then
    abort "Build failed. Please see above Maven output for details, fix any issues, then try again."
 fi

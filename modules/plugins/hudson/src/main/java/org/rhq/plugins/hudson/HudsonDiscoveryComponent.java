@@ -19,45 +19,55 @@
 package org.rhq.plugins.hudson;
 
 import java.net.URL;
-import java.util.HashSet;
-import java.util.List;
+import java.net.MalformedURLException;
 import java.util.Set;
+import java.util.Collections;
 
 import org.json.JSONObject;
+import org.json.JSONException;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 
 /**
  * Maven archetypes cannot create empty directories, so this class simply functions to get the
  * requested package structure created.
  */
-public class HudsonDiscoveryComponent implements ResourceDiscoveryComponent {
+public class HudsonDiscoveryComponent implements ResourceDiscoveryComponent, ManualAddFacet {
 
     public Set discoverResources(ResourceDiscoveryContext resourceDiscoveryContext)
         throws InvalidPluginConfigurationException, Exception {
+        return Collections.emptySet();
+    }
 
-        Set<DiscoveredResourceDetails> found = new HashSet<DiscoveredResourceDetails>();
-
-        for (Configuration config : (List<Configuration>) resourceDiscoveryContext.getPluginConfigurations()) {
-
-            String path = config.getSimple("urlBase").getStringValue();
-            URL url = new URL(path);
-
-            JSONObject server = HudsonJSONUtility.getData(path, 0);
-
-            server.getString("description");
-
-            DiscoveredResourceDetails hudson = new DiscoveredResourceDetails(
-                resourceDiscoveryContext.getResourceType(), url.toString(), url.getHost() + url.getPath(),
-                HudsonJSONUtility.getVersion(path), "hudson server", config, null);
-
-            found.add(hudson);
+    public DiscoveredResourceDetails discoverResource(Configuration pluginConfig,
+                                                      ResourceDiscoveryContext resourceDiscoveryContext)
+            throws InvalidPluginConfigurationException {
+        String path = pluginConfig.getSimple("urlBase").getStringValue();
+        URL url;
+        try {
+            url = new URL(path);
+        }
+        catch (MalformedURLException e) {
+            throw new InvalidPluginConfigurationException("Value of 'urlBase' property is not a valid URL.");
         }
 
-        return found;
+        JSONObject server = HudsonJSONUtility.getData(path, 0);
+
+        try {
+            server.getString("description");
+        }
+        catch (JSONException e) {
+            throw new RuntimeException("Failed to obtain description for Hudson server.", e);
+        }
+
+        DiscoveredResourceDetails hudson = new DiscoveredResourceDetails(
+            resourceDiscoveryContext.getResourceType(), url.toString(), url.getHost() + url.getPath(),
+            HudsonJSONUtility.getVersion(path), "hudson server", pluginConfig, null);
+        return hudson;
     }
 }

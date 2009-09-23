@@ -39,15 +39,17 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.pluginapi.inventory.ManualAddFacet;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.system.ProcessInfo;
 
 /**
- * This product will discover JDK 5 agents running locally that have active JSR-160 connectors defined via system
- * properties
+ * This component will discover JDK 5 agents running locally that have active JSR-160 connectors defined via system
+ * properties.
  *
  * @author Greg Hinkle
  */
-public class JMXDiscoveryComponent implements ResourceDiscoveryComponent { //, ClassLoaderFacet {
+public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, ManualAddFacet { //, ClassLoaderFacet {
     private static final Log log = LogFactory.getLog(JMXDiscoveryComponent.class);
 
     public static final String VMID_CONFIG_PROPERTY = "vmid";
@@ -157,24 +159,23 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent { //, C
                 log.warn("Unable to complete base jmx server discovery (enable DEBUG for stack): " + e);
         }
 
-        for (Configuration c : (List<Configuration>) context.getPluginConfigurations()) {
-            // TODO: Connect to the remote JVM to verify the user-specified conn props are valid, and if connecting
-            // fails, throw an exception.
-            String resourceKey = c.getSimpleValue(CONNECTOR_ADDRESS_CONFIG_PROPERTY, null);
-            String connectionType = c.getSimpleValue(CONNECTION_TYPE, null);
-
-            // TODO (ips, 09/04/09): We should connect to the remote JVM in order to obtain its version.
-            String version = null;
-
-            DiscoveredResourceDetails s = new DiscoveredResourceDetails(context.getResourceType(), resourceKey,
-                "Java VM", version, connectionType + " [" + resourceKey + "]", null, null);
-
-            s.setPluginConfiguration(c);
-
-            found.add(s);
-        }
-
         return found;
+    }
+
+    public DiscoveredResourceDetails discoverResource(Configuration pluginConfig,
+                                                      ResourceDiscoveryContext discoveryContext)
+            throws InvalidPluginConfigurationException {
+        // TODO: Connect to the remote JVM to verify the user-specified conn props are valid, and if connecting
+        // fails, throw an exception.
+        String resourceKey = pluginConfig.getSimpleValue(CONNECTOR_ADDRESS_CONFIG_PROPERTY, null);
+        String connectionType = pluginConfig.getSimpleValue(CONNECTION_TYPE, null);
+
+        // TODO (ips, 09/04/09): We should connect to the remote JVM in order to obtain its version.
+        String version = null;
+
+        DiscoveredResourceDetails resourceDetails = new DiscoveredResourceDetails(discoveryContext.getResourceType(),
+                resourceKey, "Java VM", version, connectionType + " [" + resourceKey + "]", pluginConfig, null);
+        return resourceDetails;
     }
 
     // For now, this method is not used. This method is the ClassLoaderFacet method, but I commented

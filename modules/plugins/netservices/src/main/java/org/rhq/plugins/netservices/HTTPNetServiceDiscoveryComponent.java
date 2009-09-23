@@ -23,36 +23,44 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
+import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 import org.rhq.core.domain.configuration.Configuration;
 
 import java.util.Set;
 import java.util.Collections;
 import java.net.URL;
+import java.net.MalformedURLException;
 
 /**
  * @author Greg Hinkle
  */
-public class HTTPNetServiceDiscoveryComponent implements ResourceDiscoveryComponent {
+public class HTTPNetServiceDiscoveryComponent implements ResourceDiscoveryComponent, ManualAddFacet {
     public Set discoverResources(ResourceDiscoveryContext resourceDiscoveryContext) throws InvalidPluginConfigurationException, Exception {
+        // We don't support auto-discovery.
+        return Collections.emptySet();
+    }
 
-        if (resourceDiscoveryContext.getPluginConfigurations().size() > 0) {
-            Configuration config = (Configuration) resourceDiscoveryContext.getPluginConfigurations().get(0);
-            String url = config.getSimple(HTTPNetServiceComponent.CONFIG_URL).getStringValue();
-
-            URL urls = new URL(url);
-            DiscoveredResourceDetails details =
-                    new DiscoveredResourceDetails(
-                            resourceDiscoveryContext.getResourceType(),
-                            url,
-                            url,
-                            null,
-                            null,
-                            config,
-                            null);
-
-
-            return Collections.singleton(details);
+    public DiscoveredResourceDetails discoverResource(Configuration config,
+                                                      ResourceDiscoveryContext resourceDiscoveryContext)
+            throws InvalidPluginConfigurationException {
+        String configURL = config.getSimple(HTTPNetServiceComponent.CONFIG_URL).getStringValue();
+        URL url;
+        try {
+            url = new URL(configURL);
         }
-        return null;
+        catch (MalformedURLException e) {
+            throw new InvalidPluginConfigurationException("Property '" + HTTPNetServiceComponent.CONFIG_URL
+                    + "' is not a valid URL.");
+        }
+        DiscoveredResourceDetails details =
+                new DiscoveredResourceDetails(
+                        resourceDiscoveryContext.getResourceType(),
+                        url.toExternalForm(),
+                        url.toExternalForm(),
+                        null,
+                        null,
+                        config,
+                        null);
+        return details;
     }
 }

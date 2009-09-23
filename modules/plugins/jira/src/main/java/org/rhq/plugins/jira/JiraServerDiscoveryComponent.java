@@ -22,6 +22,7 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
+import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.plugins.jira.soapclient.jira.RemoteServerInfo;
@@ -32,23 +33,28 @@ import java.util.Collections;
 /**
  * @author Greg Hinkle
  */
-public class JiraServerDiscoveryComponent implements ResourceDiscoveryComponent {
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext resourceDiscoveryContext) throws InvalidPluginConfigurationException, Exception {
-        for (Configuration config : (Iterable<? extends Configuration>) resourceDiscoveryContext.getPluginConfigurations()) {
-            JiraClient jc = new JiraClient(config);
-            RemoteServerInfo info = jc.getServerInfo();
-            String url = config.getSimple("url").getStringValue();
-            DiscoveredResourceDetails detail =
-                    new DiscoveredResourceDetails(
-                            resourceDiscoveryContext.getResourceType(),
-                            url,
-                            "Jira " + url,
-                            info.getVersion(),
-                            info.getEdition(),
-                            config,
-                            null);
-            return  Collections.singleton(detail);
-        }
-        return null;
+public class JiraServerDiscoveryComponent implements ResourceDiscoveryComponent, ManualAddFacet {
+    public Set discoverResources(ResourceDiscoveryContext resourceDiscoveryContext)
+            throws InvalidPluginConfigurationException, Exception {
+        // We don't support auto-discovery.
+        return Collections.emptySet();
+    }
+
+    public DiscoveredResourceDetails discoverResource(Configuration config,
+                                                      ResourceDiscoveryContext resourceDiscoveryContext)
+            throws InvalidPluginConfigurationException {
+        JiraClient jc = new JiraClient(config);
+        RemoteServerInfo info = jc.getServerInfo();
+        String url = config.getSimple("url").getStringValue();
+        DiscoveredResourceDetails detail =
+                new DiscoveredResourceDetails(
+                        resourceDiscoveryContext.getResourceType(),
+                        url,
+                        "Jira " + url,
+                        info.getVersion(),
+                        info.getEdition(),
+                        config,
+                        null);
+        return detail;
     }
 }

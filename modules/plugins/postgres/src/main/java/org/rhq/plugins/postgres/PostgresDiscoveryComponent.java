@@ -42,7 +42,7 @@ import java.util.Set;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent {
+public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, ManualAddFacet {
     private static final Log log = LogFactory.getLog(PostgresDiscoveryComponent.class);
 
     public static final String PGDATA_DIR_CONFIGURATION_PROPERTY = "pgdataDir";
@@ -117,14 +117,6 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent {
             servers.add(resourceDetails);
         }
 
-        // Process any manually-added resources.
-        List<Configuration> contextPluginConfigurations = context.getPluginConfigurations();
-        for (Configuration pluginConfiguration : contextPluginConfigurations) {
-            ProcessInfo processInfo = null;
-            DiscoveredResourceDetails resourceDetails = createResourceDetails(context, pluginConfiguration, processInfo);
-            servers.add(resourceDetails);
-        }
-
         return servers;
 
         /* TODO GH: Deal with the different error types and inventory except in case of connection refused
@@ -133,6 +125,15 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent {
          * that the postmaster is accepting TCP/IP connections. Wrong db org.postgresql.util.PSQLException: FATAL:
          * database "jon2" does not exist
          */
+    }
+
+    public DiscoveredResourceDetails discoverResource(Configuration pluginConfig,
+                                                      ResourceDiscoveryContext discoveryContext)
+            throws InvalidPluginConfigurationException {
+        ProcessInfo processInfo = null;
+        DiscoveredResourceDetails resourceDetails = createResourceDetails(discoveryContext, pluginConfig,
+                processInfo);
+        return resourceDetails;
     }
 
     protected static DiscoveredResourceDetails createResourceDetails(ResourceDiscoveryContext discoveryContext,

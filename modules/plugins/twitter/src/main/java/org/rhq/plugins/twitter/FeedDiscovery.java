@@ -18,9 +18,8 @@
  */
 package org.rhq.plugins.twitter;
 
-import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
+import java.util.Collections;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -29,49 +28,42 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.pluginapi.inventory.ManualAddFacet;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 
 /**
  * Discovery class - allows to manually add a new twitter feed/search
  *
  * @author Heiko W. Rupp
  */
-public class FeedDiscovery implements ResourceDiscoveryComponent<TwitterComponent> {
-
-
+public class FeedDiscovery implements ResourceDiscoveryComponent<TwitterComponent>, ManualAddFacet {
     private final Log log = LogFactory.getLog(this.getClass());
-
 
     /**
      * Run the discovery
      */
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<TwitterComponent> discoveryContext) throws Exception {
+        // We don't support auto-discovery.
+        return Collections.emptySet();
+    }
 
-        Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
+    public DiscoveredResourceDetails discoverResource(Configuration pluginConfig,
+                                                      ResourceDiscoveryContext discoveryContext)
+            throws InvalidPluginConfigurationException {
+        String kind = pluginConfig.getSimpleValue("kind","user");
+        String keyword = pluginConfig.getSimpleValue("keyword",null);
 
-        // Pull out the configuration from the passed context
-        List<Configuration> childConfigs = discoveryContext.getPluginConfigurations();
-        for (Configuration config : childConfigs) {
-            String kind = config.getSimpleValue("kind","user");
-            String keyword = config.getSimpleValue("keyword",null);
-
-            // Create a new resource detail from the passed values
-            DiscoveredResourceDetails detail =  new DiscoveredResourceDetails(
-                    discoveryContext.getResourceType(), // ResourceType
-                    "tw:" + kind + ":" + keyword, // resource key
-                    "Feed: " + kind + " : " + keyword, // resource name
-                    null, // version
-                    kind.equals("user") ? "Timeline " : "Search " + "for " + keyword, // description
-                    config, // configuration
-                    null // ProcessInfo
-            );
-
-
-            // Add to return values
-            discoveredResources.add(detail);
-            log.info("Added new " + detail );
-        }
-
-        return discoveredResources;
-
+        // Create a new resource detail from the passed values
+        DiscoveredResourceDetails detail =  new DiscoveredResourceDetails(
+                discoveryContext.getResourceType(), // ResourceType
+                "tw:" + kind + ":" + keyword, // resource key
+                "Feed: " + kind + " : " + keyword, // resource name
+                null, // version
+                kind.equals("user") ? "Timeline " : "Search " + "for " + keyword, // description
+                pluginConfig, // configuration
+                null // ProcessInfo
+        );
+        log.info("Manually added " + detail);
+        return detail;
     }
 }

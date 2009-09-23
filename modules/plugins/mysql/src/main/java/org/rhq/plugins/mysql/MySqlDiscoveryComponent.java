@@ -26,6 +26,7 @@ import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 import org.rhq.core.system.ProcessInfo;
 
 import java.sql.Connection;
@@ -39,7 +40,7 @@ import java.util.Set;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class MySqlDiscoveryComponent implements ResourceDiscoveryComponent {
+public class MySqlDiscoveryComponent implements ResourceDiscoveryComponent, ManualAddFacet {
     private static final Log log = LogFactory.getLog(MySqlDiscoveryComponent.class);
 
     public static final String DRIVER_CONFIGURATION_PROPERTY = "driverClass";
@@ -62,15 +63,16 @@ public class MySqlDiscoveryComponent implements ResourceDiscoveryComponent {
             ProcessInfo procInfo = result.getProcessInfo();
         }
 
-        // Process any manually-added resources.
-        List<Configuration> contextPluginConfigurations = context.getPluginConfigurations();
-        for (Configuration pluginConfiguration : contextPluginConfigurations) {
-            ProcessInfo processInfo = null;
-            DiscoveredResourceDetails resourceDetails = createResourceDetails(context, pluginConfiguration, processInfo);
-            servers.add(resourceDetails);
-        }
-
         return servers;
+    }
+
+    public DiscoveredResourceDetails discoverResource(Configuration pluginConfiguration,
+                                                      ResourceDiscoveryContext resourceDiscoveryContext)
+            throws InvalidPluginConfigurationException {
+        ProcessInfo processInfo = null;
+        DiscoveredResourceDetails resourceDetails = createResourceDetails(resourceDiscoveryContext, pluginConfiguration,
+                processInfo);
+        return resourceDetails;
     }
 
     protected static DiscoveredResourceDetails createResourceDetails(ResourceDiscoveryContext discoveryContext,

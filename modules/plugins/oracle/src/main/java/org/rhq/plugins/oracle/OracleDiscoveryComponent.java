@@ -33,13 +33,14 @@ import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 import org.rhq.core.system.ProcessInfo;
 
 
 /**
  * @author Greg Hinkle
  */
-public class OracleDiscoveryComponent implements ResourceDiscoveryComponent {
+public class OracleDiscoveryComponent implements ResourceDiscoveryComponent, ManualAddFacet {
     private static Log log = LogFactory.getLog(OracleDiscoveryComponent.class);
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext resourceDiscoveryContext)
@@ -68,24 +69,23 @@ public class OracleDiscoveryComponent implements ResourceDiscoveryComponent {
             found.add(details);
         }
 
-        if (resourceDiscoveryContext.getPluginConfigurations() != null) {
-            List<Configuration> pluginConfigurations = resourceDiscoveryContext.getPluginConfigurations();
-            for (Configuration pluginConfig : pluginConfigurations) {
-                try {
-                    Connection connection = OracleServerComponent.buildConnection(pluginConfig);
-                    DatabaseMetaData dbmd = connection.getMetaData();
-                    String version = dbmd.getDatabaseMajorVersion() + "." + dbmd.getDatabaseMinorVersion();
-                    DiscoveredResourceDetails details = createResourceDetails(resourceDiscoveryContext, pluginConfig,
-                        version, null);
-                    found.add(details);
-                } catch (Exception e) {
-                    log.warn("Could not connect to oracle with supplied configuration", e);
-                    throw new InvalidPluginConfigurationException("Unable to connect to Oracle",e);
-                }
-            }
-        }
-
         return found;
+    }
+
+    public DiscoveredResourceDetails discoverResource(Configuration pluginConfig,
+                                                      ResourceDiscoveryContext resourceDiscoveryContext)
+            throws InvalidPluginConfigurationException {
+        try {
+            Connection connection = OracleServerComponent.buildConnection(pluginConfig);
+            DatabaseMetaData dbmd = connection.getMetaData();
+            String version = dbmd.getDatabaseMajorVersion() + "." + dbmd.getDatabaseMinorVersion();
+            DiscoveredResourceDetails details = createResourceDetails(resourceDiscoveryContext, pluginConfig,
+                version, null);
+            return details;
+        } catch (Exception e) {
+            log.warn("Could not connect to oracle with supplied configuration", e);
+            throw new InvalidPluginConfigurationException("Unable to connect to Oracle",e);
+        }
     }
 
     private static DiscoveredResourceDetails createResourceDetails(ResourceDiscoveryContext discoveryContext,

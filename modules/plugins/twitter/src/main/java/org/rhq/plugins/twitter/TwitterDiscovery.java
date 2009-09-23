@@ -26,30 +26,30 @@ import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 
 /**
  * Discovery class - just set up a fixed twitter subsystem.
  *
  * @author Heiko W. Rupp
  */
-public class TwitterDiscovery implements ResourceDiscoveryComponent {
-
-
-    /**
-     * Run the discovery - actually we only react on manual add
-     */
+public class TwitterDiscovery implements ResourceDiscoveryComponent, ManualAddFacet {
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext discoveryContext) throws Exception {
+        // We don't support auto-discovery.
+        return Collections.emptySet();
+    }
 
-
-       for (Configuration config : (Iterable<? extends Configuration>) discoveryContext.getPluginConfigurations()) {
+    public DiscoveredResourceDetails discoverResource(Configuration pluginConfig,
+                                                      ResourceDiscoveryContext discoveryContext) 
+            throws InvalidPluginConfigurationException {
           /**
            * A discovered resource must have a unique key, that must
            * stay the same when the resource is discovered the next
            * time
            */
-         String user = config.getSimpleValue("user",null);
-         String password = config.getSimpleValue("password",null);
-         String url = config.getSimpleValue("baseurl","http://twitter.com/");
+         String user = pluginConfig.getSimpleValue("user",null);
+         String password = pluginConfig.getSimpleValue("password",null);
+         String url = pluginConfig.getSimpleValue("baseurl","http://twitter.com/");
          if (user==null || password==null)
             throw new InvalidPluginConfigurationException("User or password were not set");
 
@@ -59,12 +59,8 @@ public class TwitterDiscovery implements ResourceDiscoveryComponent {
                 url + " feed for " +user,
                 null,
                 "One " + url + " user",
-                config,
+                pluginConfig,
                 null  );
-
-          return Collections.singleton(detail);
-       }
-       return null;
-
+        return detail;
     }
 }

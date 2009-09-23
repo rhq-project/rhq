@@ -23,35 +23,36 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
+import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 import org.rhq.core.domain.configuration.Configuration;
 
 import java.util.Set;
 import java.util.Collections;
-import java.net.URL;
 
 /**
  * @author Greg Hinkle
  */
-public class PingNetServiceDiscoveryComponent implements ResourceDiscoveryComponent {
-    public Set discoverResources(ResourceDiscoveryContext resourceDiscoveryContext) throws InvalidPluginConfigurationException, Exception {
+public class PingNetServiceDiscoveryComponent implements ResourceDiscoveryComponent, ManualAddFacet {
+    public Set discoverResources(ResourceDiscoveryContext resourceDiscoveryContext)
+            throws InvalidPluginConfigurationException, Exception {
+        // We don't support auto-discovery.
+        return Collections.emptySet();
+    }
 
-        if (resourceDiscoveryContext.getPluginConfigurations().size() > 0) {
-            Configuration config = (Configuration) resourceDiscoveryContext.getPluginConfigurations().get(0);
-            String address = config.getSimple(PingNetServiceComponent.CONFIG_ADDRESS).getStringValue();
-
-            DiscoveredResourceDetails details =
-                    new DiscoveredResourceDetails(
-                            resourceDiscoveryContext.getResourceType(),
-                            address,
-                            "Ping " + address,
-                            null,
-                            null,
-                            config,
-                            null);
-
-
-            return Collections.singleton(details);
-        }
-        return null;
+    public DiscoveredResourceDetails discoverResource(Configuration config,
+                                                      ResourceDiscoveryContext resourceDiscoveryContext)
+            throws InvalidPluginConfigurationException {
+        String address = config.getSimple(PingNetServiceComponent.CONFIG_ADDRESS).getStringValue();
+        // TODO: Validate the address is a valid host name or IP address.
+        DiscoveredResourceDetails details =
+                new DiscoveredResourceDetails(
+                        resourceDiscoveryContext.getResourceType(),
+                        address,
+                        "Ping " + address,
+                        null,
+                        null,
+                        config,
+                        null);
+        return details;
     }
 }

@@ -36,6 +36,7 @@ import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.plugins.apache.util.ApacheBinaryInfo;
@@ -50,7 +51,7 @@ import org.rhq.plugins.www.snmp.SNMPValue;
  *
  * @author Ian Springer
  */
-public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponent {
+public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponent, ManualAddFacet {
     private static final String PRODUCT_DESCRIPTION = "Apache Web Server";
 
     private final Log log = LogFactory.getLog(this.getClass());
@@ -114,44 +115,49 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
             }
         }
 
-        // Process any manually added resources (NOTE: the PC will never actually pass in more than one)...
-        List<Configuration> pluginConfigs = discoveryContext.getPluginConfigurations();
-        for (Configuration pluginConfig : pluginConfigs) {
-            String serverRoot = ApacheServerComponent.getRequiredPropertyValue(pluginConfig,
-                ApacheServerComponent.PLUGIN_CONFIG_PROP_SERVER_ROOT);
-            if (!new File(serverRoot).isDirectory()) {
-                throw new InvalidPluginConfigurationException("'" + serverRoot
-                    + "' is not a directory. Please make sure the '"
-                    + ApacheServerComponent.PLUGIN_CONFIG_PROP_SERVER_ROOT + "' connection property is set correctly.");
-            }
+        return discoveredResources;
+    }
 
-            String executablePath = pluginConfig
-                .getSimpleValue(ApacheServerComponent.PLUGIN_CONFIG_PROP_EXECUTABLE_PATH,
-                    ApacheServerComponent.DEFAULT_EXECUTABLE_PATH);
-            String absoluteExecutablePath = ApacheServerComponent.resolvePathRelativeToServerRoot(pluginConfig,
-                executablePath).getPath();
-            ApacheBinaryInfo binaryInfo;
-            try {
-                binaryInfo = ApacheBinaryInfo.getInfo(absoluteExecutablePath, discoveryContext.getSystemInformation());
-            } catch (Exception e) {
-                throw new InvalidPluginConfigurationException("'" + absoluteExecutablePath
-                    + "' is not a valid Apache executable (" + e + "). Please make sure the '"
-                    + ApacheServerComponent.PLUGIN_CONFIG_PROP_EXECUTABLE_PATH
-                    + "' connection property is set correctly.");
-            }
-
-            if (!isSupportedVersion(binaryInfo.getVersion())) {
-                throw new InvalidPluginConfigurationException("Version of Apache executable ("
-                    + binaryInfo.getVersion() + ") is not a supported version; supported versions are 1.3.x and 2.x.");
-            }
-
-            ProcessInfo processInfo = null;
-            DiscoveredResourceDetails resourceDetails = createResourceDetails(discoveryContext, pluginConfig,
-                processInfo, binaryInfo);
-            discoveredResources.add(resourceDetails);
+    public DiscoveredResourceDetails discoverResource(Configuration pluginConfig,
+                                                      ResourceDiscoveryContext discoveryContext)
+            throws InvalidPluginConfigurationException {
+        String serverRoot = ApacheServerComponent.getRequiredPropertyValue(pluginConfig,
+            ApacheServerComponent.PLUGIN_CONFIG_PROP_SERVER_ROOT);
+        if (!new File(serverRoot).isDirectory()) {
+            throw new InvalidPluginConfigurationException("'" + serverRoot
+                + "' is not a directory. Please make sure the '"
+                + ApacheServerComponent.PLUGIN_CONFIG_PROP_SERVER_ROOT + "' connection property is set correctly.");
         }
 
-        return discoveredResources;
+        String executablePath = pluginConfig
+            .getSimpleValue(ApacheServerComponent.PLUGIN_CONFIG_PROP_EXECUTABLE_PATH,
+                ApacheServerComponent.DEFAULT_EXECUTABLE_PATH);
+        String absoluteExecutablePath = ApacheServerComponent.resolvePathRelativeToServerRoot(pluginConfig,
+            executablePath).getPath();
+        ApacheBinaryInfo binaryInfo;
+        try {
+            binaryInfo = ApacheBinaryInfo.getInfo(absoluteExecutablePath, discoveryContext.getSystemInformation());
+        } catch (Exception e) {
+            throw new InvalidPluginConfigurationException("'" + absoluteExecutablePath
+                + "' is not a valid Apache executable (" + e + "). Please make sure the '"
+                + ApacheServerComponent.PLUGIN_CONFIG_PROP_EXECUTABLE_PATH
+                + "' connection property is set correctly.");
+        }
+
+        if (!isSupportedVersion(binaryInfo.getVersion())) {
+            throw new InvalidPluginConfigurationException("Version of Apache executable ("
+                + binaryInfo.getVersion() + ") is not a supported version; supported versions are 1.3.x and 2.x.");
+        }
+
+        ProcessInfo processInfo = null;
+        try {
+            DiscoveredResourceDetails resourceDetails = createResourceDetails(discoveryContext, pluginConfig,
+                processInfo, binaryInfo);
+            return resourceDetails;
+        }
+        catch (Exception e) {
+            throw new RuntimeException("Failed to create resource details during manual add.");
+        }
     }
 
     private boolean isSupportedVersion(String version) {

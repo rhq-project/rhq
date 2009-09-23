@@ -34,6 +34,8 @@ import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.pluginapi.inventory.ManualAddFacet;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.util.exception.ThrowableUtil;
 
@@ -46,7 +48,7 @@ import org.rhq.core.util.exception.ThrowableUtil;
  *
  * @author John Mazzitelli
  */
-public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent {
+public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent, ManualAddFacet {
     private final Log log = LogFactory.getLog(ScriptDiscoveryComponent.class);
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) {
@@ -64,40 +66,19 @@ public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent {
             }
         }
 
-        // pluginConfigs contain information on resources that were manually discovered/entered by the user;
-        // take them and build details objects that represent that resources
-        List<Configuration> pluginConfigs = context.getPluginConfigurations();
-        for (Configuration pluginConfig : pluginConfigs) {
-            DiscoveredResourceDetails manuallyAdded = processManuallyAddedResource(context, pluginConfig);
-            if (manuallyAdded != null) {
-                details.add(manuallyAdded);
-            }
-        }
-
         // We are done - this discovery component does not auto-discovery any resources on its own.
         // It will only deal with manually added resources or resources that were discovered via process scans.
 
         return details;
     }
 
-    /**
-     * Subclasses can override this method to process manually added resources.
-     * This method is called for each resource that was manually added.
-     * Implementors must return a details object that represents the new resource.
-     * If this returns <code>null</code>, no resource will be discovered.
-     *  
-     * @param context the discovery context
-     * @param pluginConfig information on the manually added resource
-     * 
-     * @return the details object that represents the new resource
-     */
-    protected DiscoveredResourceDetails processManuallyAddedResource(ResourceDiscoveryContext context,
-        Configuration pluginConfig) {
-
+    public DiscoveredResourceDetails discoverResource(Configuration pluginConfig,
+                                                      ResourceDiscoveryContext discoveryContext)
+            throws InvalidPluginConfigurationException {
         String executable = pluginConfig.getSimple(ScriptServerComponent.PLUGINCONFIG_EXECUTABLE).getStringValue();
-        String version = determineVersion(context, pluginConfig);
-        String description = determineDescription(context, pluginConfig);
-        DiscoveredResourceDetails details = new DiscoveredResourceDetails(context.getResourceType(), executable,
+        String version = determineVersion(discoveryContext, pluginConfig);
+        String description = determineDescription(discoveryContext, pluginConfig);
+        DiscoveredResourceDetails details = new DiscoveredResourceDetails(discoveryContext.getResourceType(), executable,
             new File(executable).getName(), version, description, pluginConfig, null);
         return details;
     }
@@ -107,10 +88,10 @@ public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent {
      * This method is called for each process that was discovered that matched a process scan.
      * Implementors must return a details object that represents the discovered resource.
      * If this returns <code>null</code>, this process will be ignored and no resource will be discovered.
-     * 
+     *
      * @param context the discovery context
      * @param autoDiscoveryResult information on the discovered process
-     * 
+     *
      * @return the details object that represents the discovered resource
      */
     protected DiscoveredResourceDetails processAutoDiscoveredResource(ResourceDiscoveryContext context,

@@ -42,6 +42,8 @@ import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.pluginapi.inventory.ManualAddFacet;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.pluginapi.util.ProcessExecutionUtility;
 import org.rhq.core.system.ProcessExecution;
@@ -56,7 +58,7 @@ import org.rhq.plugins.jmx.JMXDiscoveryComponent;
  * @author Jay Shaughnessy
  */
 @SuppressWarnings("unchecked")
-public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent {
+public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent, ManualAddFacet {
     private final Log log = LogFactory.getLog(this.getClass());
 
     /**
@@ -80,7 +82,7 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent {
 
     /**
      * Patterns used to parse out the Tomcat server version from the version script output. For details on which of these
-     * patterns will be used, check {@link #determineVersion(String, org.rhq.core.system.SystemInfo)}.
+     * patterns will be used, check {@link #determineVersion(String, String, SystemInfo)}.
      */
     private static final Pattern TOMCAT_5_5_AND_LATER_VERSION_PATTERN = Pattern.compile(".*Server number:.*");
     private static final Pattern TOMCAT_5_0_AND_EARLIER_VERSION_PATTERN = Pattern.compile(".*Version:.*");
@@ -131,19 +133,79 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent {
             }
         }
 
-        // Process any manually-added resources.
-        List<Configuration> contextPluginConfigurations = context.getPluginConfigurations();
-        for (Configuration pluginConfiguration : contextPluginConfigurations) {
-            DiscoveredResourceDetails resource = parsePluginConfig(context, pluginConfiguration);
-            if (resource != null)
-                if (log.isDebugEnabled()) {
-                    log.debug("Verified Tomcat configuration: " + pluginConfiguration);
-                }
+        return resources;
+    }
 
-            resources.add(resource);
+    public DiscoveredResourceDetails discoverResource(Configuration pluginConfig,
+                                                      ResourceDiscoveryContext discoveryContext)
+            throws InvalidPluginConfigurationException {
+        String catalinaHome = pluginConfig.getSimple(
+            TomcatServerComponent.PLUGIN_CONFIG_CATALINA_HOME_PATH).getStringValue();
+        try {
+            catalinaHome = FileUtils.getCanonicalPath(catalinaHome);
+        } catch (Exception e) {
+            log.warn("Failed to canonicalize catalina.home path [" + catalinaHome + "] - cause: " + e);
+            // leave as is
+        }
+        File catalinaHomeDir = new File(catalinaHome);
+
+        String catalinaBase = pluginConfig.getSimple(
+            TomcatServerComponent.PLUGIN_CONFIG_CATALINA_BASE_PATH).getStringValue();
+        try {
+            catalinaBase = FileUtils.getCanonicalPath(catalinaBase);
+        } catch (Exception e) {
+            log.warn("Failed to canonicalize catalina.base path [" + catalinaBase + "] - cause: " + e);
+            // leave as is
         }
 
-        return resources;
+        SystemInfo systemInfo = discoveryContext.getSystemInformation();
+        String hostname = systemInfo.getHostname();
+        String version = UNKNOWN_VERSION;
+        String port = UNKNOWN_PORT;
+        String address = null;
+
+        // TODO : Should we even allow this remote server stuff? I think we risk a resourceKey collision with a local
+        // server.
+
+        // if the specified home dir does not exist locally assume this is a remote Tomcat server
+        // We can't determine version. Try to get the hostname from the connect url
+        if (!catalinaHomeDir.isDirectory()) {
+            log.info("Manually added Tomcat Server directory does not exist locally. Assuming remote Tomcat Server: "
+                + catalinaHome);
+
+            Matcher matcher = TOMCAT_MANAGER_URL_PATTERN.matcher(pluginConfig.getSimpleValue(
+                JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY, null));
+            if (matcher.find()) {
+                hostname = matcher.group(1);
+                address = hostname;
+                port = matcher.group(2);
+            }
+        } else {
+            //TODO if some of the tomcat configuration is parametrized using environment variables
+            //in the configuration files, we have no chance of guessing the (future) values those here.
+            //We can therefore end up with the resource like like Tomcat(${address}:${port}).
+            //Don't know how to tackle that problem in a manual add.
+            TomcatConfig tomcatConfig = parseTomcatConfig(catalinaBase);
+            version = determineVersion(catalinaHome, catalinaBase, systemInfo);
+            if (tomcatConfig.getAddress() != null) {
+               address = tomcatConfig.getAddress();
+            }
+            if (tomcatConfig.getPort() != null) {
+               port = tomcatConfig.getPort();
+            }
+        }
+
+        String productName = PRODUCT_NAME;
+        String productDescription = PRODUCT_DESCRIPTION + ((hostname == null) ? "" : (" (" + hostname + ")"));
+        String resourceName = productName + " (" + ((address == null) ? "" : (address + ":")) + port + ")";
+        String resourceKey = catalinaBase;
+        populatePluginConfiguration(pluginConfig, catalinaHome, catalinaBase, null);
+
+        DiscoveredResourceDetails resource = new DiscoveredResourceDetails(discoveryContext.getResourceType(), resourceKey,
+            resourceName, version, productDescription, pluginConfig, null);
+        log.debug("Verified manually-added Tomcat Resource with plugin config: " + pluginConfig);
+
+        return resource;
     }
 
     /**
@@ -206,87 +268,6 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent {
 
         DiscoveredResourceDetails resource = new DiscoveredResourceDetails(context.getResourceType(), resourceKey,
             resourceName, resourceVersion, productDescription, pluginConfiguration, processInfo);
-
-        return resource;
-    }
-
-    /**
-     * Processes a manually specified plugin configuration. If a standalone Apache or EWS Tomcat instance
-     * return a resource ready to be returned as part of the discovery report.
-     *
-     * @param  context             discovery context making this call
-     * @param  pluginConfiguration The manually specified plugin config
-     *
-     * @return resource object describing the Tomcat server running in the specified process
-     */
-    private DiscoveredResourceDetails parsePluginConfig(ResourceDiscoveryContext context,
-        Configuration pluginConfiguration) {
-
-        String catalinaHome = pluginConfiguration.getSimple(
-            TomcatServerComponent.PLUGIN_CONFIG_CATALINA_HOME_PATH).getStringValue();
-        try {
-            catalinaHome = FileUtils.getCanonicalPath(catalinaHome);
-        } catch (Exception e) {
-            log.warn("Failed to canonicalize catalina.home path [" + catalinaHome + "] - cause: " + e);
-            // leave as is
-        }
-        File catalinaHomeDir = new File(catalinaHome);
-
-        String catalinaBase = pluginConfiguration.getSimple(
-            TomcatServerComponent.PLUGIN_CONFIG_CATALINA_BASE_PATH).getStringValue();
-        try {
-            catalinaBase = FileUtils.getCanonicalPath(catalinaBase);
-        } catch (Exception e) {
-            log.warn("Failed to canonicalize catalina.base path [" + catalinaBase + "] - cause: " + e);
-            // leave as is
-        }
-
-        SystemInfo systemInfo = context.getSystemInformation();
-        String hostname = systemInfo.getHostname();
-        String version = UNKNOWN_VERSION;
-        String port = UNKNOWN_PORT;
-        String address = null;
-
-        // TODO : Should we even allow this remote server stuff? I think we risk a resourceKey collision with a local
-        // server.
-
-        // if the specified home dir does not exist locally assume this is a remote Tomcat server
-        // We can't determine version. Try to get the hostname from the connect url
-        if (!catalinaHomeDir.isDirectory()) {
-            log.info("Manually added Tomcat Server directory does not exist locally. Assuming remote Tomcat Server: "
-                + catalinaHome);
-
-            Matcher matcher = TOMCAT_MANAGER_URL_PATTERN.matcher(pluginConfiguration.getSimpleValue(
-                JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY, null));
-            if (matcher.find()) {
-                hostname = matcher.group(1);
-                address = hostname;
-                port = matcher.group(2);
-            }
-        } else {
-            //TODO if some of the tomcat configuration is parametrized using environment variables
-            //in the configuration files, we have no chance of guessing the (future) values those here.
-            //We can therefore end up with the resource like like Tomcat(${address}:${port}).
-            //Don't know how to tackle that problem in a manual add.
-            TomcatConfig tomcatConfig = parseTomcatConfig(catalinaBase);
-            version = determineVersion(catalinaHome, catalinaBase, systemInfo);
-            if (tomcatConfig.getAddress() != null) {
-               address = tomcatConfig.getAddress();
-            }
-            if (tomcatConfig.getPort() != null) {
-               port = tomcatConfig.getPort();
-            }
-        }
-
-        String productName = PRODUCT_NAME;
-        String productDescription = PRODUCT_DESCRIPTION + ((hostname == null) ? "" : (" (" + hostname + ")"));
-        String resourceName = productName + " (" + ((address == null) ? "" : (address + ":")) + port + ")";
-        String resourceKey = catalinaBase;
-
-        populatePluginConfiguration(pluginConfiguration, catalinaHome, catalinaBase, null);
-
-        DiscoveredResourceDetails resource = new DiscoveredResourceDetails(context.getResourceType(), resourceKey,
-            resourceName, version, productDescription, pluginConfiguration, null);
 
         return resource;
     }

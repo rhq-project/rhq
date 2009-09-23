@@ -54,6 +54,7 @@ import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.plugins.jbossas5.helper.JBossInstallationInfo;
@@ -71,7 +72,8 @@ import org.jboss.on.common.jbossas.JBossASDiscoveryUtils;
  * @author Ian Springer
  * @author Mark Spritzler
  */
-public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryComponent, ClassLoaderFacet {
+public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryComponent, ClassLoaderFacet,
+        ManualAddFacet {
     private static final String CHANGE_ME = "***CHANGE_ME***";
     private static final String JBOSS_SERVICE_XML = "conf" + File.separator + "jboss-service.xml";
     private static final String JBOSS_NAMING_SERVICE_XML = "deploy" + File.separator + "naming-service.xml";
@@ -98,28 +100,37 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext discoveryContext) {
         log.trace("Discovering JBoss AS 5.x and 6.x Resources...");
-
         Set<DiscoveredResourceDetails> resources = new HashSet<DiscoveredResourceDetails>();
-        // NOTE: The PC will never actually pass in more than one plugin config...
-        List<Configuration> manuallyAddedJBossAsPluginConfigs = discoveryContext.getPluginConfigurations();
-        if (!manuallyAddedJBossAsPluginConfigs.isEmpty()) {
-            Configuration pluginConfig = manuallyAddedJBossAsPluginConfigs.get(0);
-            DiscoveredResourceDetails manuallyAddedJBossAS = createDetailsForManuallyAddedJBossAS(discoveryContext,
-                pluginConfig);
-            resources.add(manuallyAddedJBossAS);
+        DiscoveredResourceDetails inProcessJBossAS = discoverInProcessJBossAS(discoveryContext);
+        if (inProcessJBossAS != null) {
+            // If we're running inside a JBoss AS JVM, that's the only AS instance we want to discover.
+            resources.add(inProcessJBossAS);
         } else {
-            DiscoveredResourceDetails inProcessJBossAS = discoverInProcessJBossAS(discoveryContext);
-            if (inProcessJBossAS != null) {
-                // If we're running inside a JBoss AS JVM, that's the only AS instance we want to discover.
-                resources.add(inProcessJBossAS);
-            } else {
-                // Otherwise, scan the process table for external AS instances.
-                resources.addAll(discoverExternalJBossAsProcesses(discoveryContext));
-            }
+            // Otherwise, scan the process table for external AS instances.
+            resources.addAll(discoverExternalJBossAsProcesses(discoveryContext));
         }
         log.trace("Discovered " + resources.size() + " JBossAS 5.x and 6.x Resources.");
-
         return resources;
+    }
+
+    public DiscoveredResourceDetails discoverResource(Configuration pluginConfig,
+                                                      ResourceDiscoveryContext discoveryContext)
+            throws InvalidPluginConfigurationException {
+        // Set default values on any props that are not set.
+        //setPluginConfigurationDefaults(pluginConfiguration);
+
+        ProcessInfo processInfo = null;
+        String jbossHomeDir = pluginConfig.getSimple(ApplicationServerPluginConfigurationProperties.HOME_DIR)
+            .getStringValue();
+        JBossInstallationInfo installInfo;
+        try {
+            installInfo = new JBossInstallationInfo(new File(jbossHomeDir));
+        } catch (IOException e) {
+            throw new InvalidPluginConfigurationException(e);
+        }
+        DiscoveredResourceDetails resourceDetails = createResourceDetails(discoveryContext, pluginConfig, processInfo,
+            installInfo);
+        return resourceDetails;
     }
 
     @SuppressWarnings("unchecked")
@@ -236,25 +247,6 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
             resources.add(resourceDetails);
         }
         return resources;
-    }
-
-    private DiscoveredResourceDetails createDetailsForManuallyAddedJBossAS(ResourceDiscoveryContext discoveryContext,
-        Configuration pluginConfig) {
-        // Set default values on any props that are not set.
-        //setPluginConfigurationDefaults(pluginConfiguration);
-
-        ProcessInfo processInfo = null;
-        String jbossHomeDir = pluginConfig.getSimple(ApplicationServerPluginConfigurationProperties.HOME_DIR)
-            .getStringValue();
-        JBossInstallationInfo installInfo;
-        try {
-            installInfo = new JBossInstallationInfo(new File(jbossHomeDir));
-        } catch (IOException e) {
-            throw new InvalidPluginConfigurationException(e);
-        }
-        DiscoveredResourceDetails resourceDetails = createResourceDetails(discoveryContext, pluginConfig, processInfo,
-            installInfo);
-        return resourceDetails;
     }
 
     @Nullable

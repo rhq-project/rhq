@@ -160,7 +160,6 @@
                   
          <service name="JGroupsChannel"
             description="The underlying JGroups channel for this cache instance"
-            supportsManualAdd="true"
             class="JGroupsChannelComponent"
             discovery="JGroupsChannelDiscovery">
          </service>

@@ -49,6 +49,7 @@ import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.plugins.jbossas.helper.JBossInstallationInfo;
@@ -66,7 +67,7 @@ import org.jboss.on.common.jbossas.JBossASDiscoveryUtils;
  * @author John Mazzitelli
  * @author Ian Springer
  */
-public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent {
+public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent, ManualAddFacet {
     private final Log log = LogFactory.getLog(JBossASDiscoveryComponent.class);
 
     private static final String JBOSS_SERVICE_XML = "conf" + File.separator + "jboss-service.xml";
@@ -84,8 +85,36 @@ public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent {
             resources.add(jbossPcIsEmbeddedIn);
         }
         processAutoDiscoveredProcesses(context, resources, jbossPcIsEmbeddedIn);
-        processManuallyAddedResources(context, resources);
         return resources;
+    }
+
+    public DiscoveredResourceDetails discoverResource(Configuration pluginConfiguration,
+                                                      ResourceDiscoveryContext discoveryContext)
+            throws InvalidPluginConfigurationException {
+        // Set the connection type (used by JMX plugin to connect to the MBean server).
+        pluginConfiguration.put(new PropertySimple(JMXDiscoveryComponent.CONNECTION_TYPE,
+            JBossConnectionTypeDescriptor.class.getName()));
+
+        // Set default values on any props that are not set.
+        setPluginConfigurationDefaults(pluginConfiguration);
+
+        ProcessInfo processInfo = null;
+        String jbossHomeDir = pluginConfiguration.getSimpleValue(JBossASServerComponent.JBOSS_HOME_DIR_CONFIG_PROP,
+            null);// this will never be null
+        JBossInstallationInfo installInfo;
+        try {
+            installInfo = new JBossInstallationInfo(new File(jbossHomeDir));
+        } catch (IOException e) {
+            throw new InvalidPluginConfigurationException(e);
+        }
+        String version = installInfo.getVersion();
+        if (version.startsWith("5") || version.startsWith("6")) {
+            throw new InvalidPluginConfigurationException(
+                    "The specified server is JBoss AS 5.0 or later - only AS 3.2 or 4.x are valid for this Resource type.");
+        }
+        DiscoveredResourceDetails resourceDetails = createResourceDetails(discoveryContext, pluginConfiguration,
+            processInfo, installInfo);
+        return resourceDetails;
     }
 
     private void processAutoDiscoveredProcesses(ResourceDiscoveryContext context,
@@ -184,33 +213,6 @@ public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent {
             // Init props that have static defaults.
             setPluginConfigurationDefaults(pluginConfiguration);
 
-            DiscoveredResourceDetails resourceDetails = createResourceDetails(context, pluginConfiguration,
-                processInfo, installInfo);
-            resources.add(resourceDetails);
-        }
-    }
-
-    private void processManuallyAddedResources(ResourceDiscoveryContext context,
-        Set<DiscoveredResourceDetails> resources) {
-        // NOTE: The PC will never actually pass in more than one plugin config...
-        List<Configuration> pluginConfigurations = context.getPluginConfigurations();
-        for (Configuration pluginConfiguration : pluginConfigurations) {
-            // Set the connection type (used by JMX plugin to connect to the MBean server).
-            pluginConfiguration.put(new PropertySimple(JMXDiscoveryComponent.CONNECTION_TYPE,
-                JBossConnectionTypeDescriptor.class.getName()));
-
-            // Set default values on any props that are not set.
-            setPluginConfigurationDefaults(pluginConfiguration);
-
-            ProcessInfo processInfo = null;
-            String jbossHomeDir = pluginConfiguration.getSimpleValue(JBossASServerComponent.JBOSS_HOME_DIR_CONFIG_PROP,
-                null);// this will never be null
-            JBossInstallationInfo installInfo;
-            try {
-                installInfo = new JBossInstallationInfo(new File(jbossHomeDir));
-            } catch (IOException e) {
-                throw new InvalidPluginConfigurationException(e);
-            }
             DiscoveredResourceDetails resourceDetails = createResourceDetails(context, pluginConfiguration,
                 processInfo, installInfo);
             resources.add(resourceDetails);

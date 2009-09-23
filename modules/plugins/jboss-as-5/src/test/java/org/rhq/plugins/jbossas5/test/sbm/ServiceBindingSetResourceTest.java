@@ -105,7 +105,7 @@ public class ServiceBindingSetResourceTest extends AbstractServiceBindingTest {
     }
 
     @Test(dependsOnMethods = "testCreateServiceBindingSet")
-    public void testOperations() throws Exception {
+    public void testSBMOperations() throws Exception {
         super.testOperations();
     }
 
@@ -165,7 +165,7 @@ public class ServiceBindingSetResourceTest extends AbstractServiceBindingTest {
         assertNull(getBindingSet(NEW_BINDING_SET_NAME), "Failed to delete the binding set - it reappeared afer restart.");
     }
     
-    @Test(dependsOnMethods = "testOperations") //so that we can fiddle with the binding set after the display bindings op has been checked
+    @Test(dependsOnMethods = "testSBMOperations") //so that we can fiddle with the binding set after the display bindings op has been checked
     public void testPortOffsetChange() throws Exception {
         Resource bindingSet = getBindingSet(NEW_BINDING_SET_NAME);
         

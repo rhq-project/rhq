@@ -101,6 +101,7 @@ import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 import org.rhq.core.pluginapi.operation.OperationContext;
 import org.rhq.core.pluginapi.operation.OperationServices;
 import org.rhq.core.system.SystemInfo;
@@ -125,7 +126,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
     private static final String AVAIL_THREAD_POOL_NAME = "InventoryManager.availability";
     private static final int AVAIL_THREAD_POOL_CORE_POOL_SIZE = 1;
 
-    private static final int COMPONENT_START_TIMEOUT = 20 * 1000; // 20 seconds
+    private static final int COMPONENT_START_TIMEOUT = 60 * 1000; // 60 seconds
     private static final int COMPONENT_STOP_TIMEOUT = 5 * 1000; // 5 seconds
 
     private final Log log = LogFactory.getLog(InventoryManager.class);
@@ -283,6 +284,34 @@ public class InventoryManager extends AgentService implements ContainerService, 
             return null;
         }
 
+    }
+
+    /**
+     * Invokes the given discovery component in order to manually add a Resource with the specified plugin config. This
+     * will return the discovered resource's detail as returned by the discovery component, or it may return
+     * an empty set if nothing is discovered. This may return <code>null</code> if for some reason
+     * we could not invoke the discovery component.
+     *
+     * @param component the discovery component that will actually go out and discover resources
+     * @param pluginConfig the plugin configuration to be used to connect to the resource to be discovered
+     * @param context the context for use by the discovery component
+     * @return the details of all discovered resources, may be empty or <code>null</code>
+     *
+     * @throws Exception if the discovery component threw an exception
+     */
+    private DiscoveredResourceDetails discoverResource(ResourceDiscoveryComponent component,
+        Configuration pluginConfig, ResourceDiscoveryContext context) throws Exception {
+        long timeout = getDiscoveryComponentTimeout(context.getResourceType());
+
+        try {
+            ManualAddFacet proxy = this.discoveryComponentProxyFactory.getDiscoveryComponentProxy(context
+                .getResourceType(), component, timeout, ManualAddFacet.class);
+            DiscoveredResourceDetails result = proxy.discoverResource(pluginConfig, context);
+            return result;
+        } catch (BlacklistedException be) {
+            log.debug(ThrowableUtil.getAllMessages(be));
+            return null;
+        }
     }
 
     /**
@@ -521,7 +550,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         // resource, but never says this is required. It then proceeds to auto-import the first resource returned. For
         // discoveries that are process based it works because this passes in a null process scan... also a bad idea.
 
-        // Lookup the full Resource type (the one provided by the Server is just the keys).
+        // Look up the full Resource type (the one provided by the Server is just the keys).
         String resourceTypeString = resourceType.toString();
         resourceType = this.pluginManager.getMetadataManager().getType(resourceType);
         if (resourceType == null) {
@@ -540,27 +569,59 @@ public class InventoryManager extends AgentService implements ContainerService, 
             ResourceDiscoveryComponent discoveryComponent = pluginComponentFactory.getDiscoveryComponent(resourceType,
                 parentResourceContainer);
 
-            List<Configuration> pluginConfigurations = new ArrayList<Configuration>(1);
-            pluginConfigurations.add(pluginConfiguration);
-            ResourceDiscoveryContext<ResourceComponent> resourceDiscoveryContext = new ResourceDiscoveryContext<ResourceComponent>(
+            DiscoveredResourceDetails discoveredResourceDetails;
+            if (discoveryComponent instanceof ManualAddFacet) {
+                // The plugin is using the new manual add API.
+                ResourceDiscoveryContext<ResourceComponent> discoveryContext = new ResourceDiscoveryContext<ResourceComponent>(
                 resourceType, parentResourceComponent, parentResourceContainer.getResourceContext(), SystemInfoFactory
-                    .createSystemInfo(), new ArrayList<ProcessScanResult>(0), pluginConfigurations, configuration
+                    .createSystemInfo(), new ArrayList<ProcessScanResult>(0), new ArrayList<Configuration>(0), this.configuration
                     .getContainerName(), this.configuration.getPluginContainerDeployment());
 
-            // Ask the plugin's discovery component to find the new resource, throwing exceptions if it cannot be found at all.
-            Set<DiscoveredResourceDetails> discoveredResources = invokeDiscoveryComponent(discoveryComponent,
-                resourceDiscoveryContext);
-            if ((discoveredResources == null) || discoveredResources.isEmpty()) {
-                log.info("Plugin Warning: discovery component [" + discoveryComponent.getClass().getName()
-                    + "] returned no resources when passed a single plugin configuration "
-                    + "(either the resource type was blacklisted or the plugin developer "
-                    + "did not implement support for manually discovered resources correctly).");
-                throw new PluginContainerException("The [" + resourceType.getPlugin()
-                    + "] plugin does not support manual addition of [" + resourceType.getName() + "] resources.");
+                // Ask the plugin's discovery component to find the new resource, throwing exceptions if it cannot be
+                // found at all.
+                discoveredResourceDetails = discoverResource(discoveryComponent,
+                    pluginConfiguration, discoveryContext);
+                if (discoveredResourceDetails == null) {
+                    log.info("Plugin Error: During manual add, discovery component method ["
+                        + discoveryComponent.getClass().getName()
+                        + ".discoverResource()] returned null "
+                        + "(either the Resource type was blacklisted or the plugin developer "
+                        + "did not implement support for manually discovered Resources correctly).");
+                    throw new PluginContainerException("The [" + resourceType.getPlugin()
+                        + "] plugin does not properly support manual addition of [" + resourceType.getName()
+                            + "] Resources.");
+                }
+            } else {
+                // The plugin is using the old manual add API, which we must continue to support to maintain
+                // backward compatibility.
+                log.info("Plugin Warning: Resource type '" + resourceType.getName() + "' from '"
+                        + resourceType.getPlugin() + "' is still using the deprecated manual Resource add API, "
+                        + "rather than the new ManualAddFacet interface.");
+                List<Configuration> pluginConfigurations = new ArrayList<Configuration>(1);
+                pluginConfigurations.add(pluginConfiguration);
+                ResourceDiscoveryContext<ResourceComponent> discoveryContext = new ResourceDiscoveryContext<ResourceComponent>(
+                resourceType, parentResourceComponent, parentResourceContainer.getResourceContext(), SystemInfoFactory
+                    .createSystemInfo(), new ArrayList<ProcessScanResult>(0), pluginConfigurations, this.configuration
+                    .getContainerName(), this.configuration.getPluginContainerDeployment());
+
+                // Ask the plugin's discovery component to find the new resource, throwing exceptions if it cannot be
+                // found at all.
+                Set<DiscoveredResourceDetails> discoveredResources = invokeDiscoveryComponent(discoveryComponent,
+                    discoveryContext);
+                if ((discoveredResources == null) || discoveredResources.isEmpty()) {
+                    log.info("Plugin Error: During manual add, discovery component method ["
+                        + discoveryComponent.getClass().getName()
+                        + ".discoverResources()] returned " + discoveredResources
+                        + " when passed a single plugin configuration "
+                        + "(either the resource type was blacklisted or the plugin developer "
+                        + "did not implement support for manually discovered resources correctly).");
+                    throw new PluginContainerException("The [" + resourceType.getPlugin()
+                        + "] plugin does not properly support manual addition of [" + resourceType.getName() + "] resources.");
+                }
+                discoveredResourceDetails = discoveredResources.iterator().next();
             }
 
-            // Create the new resource and add it to inventory if it isn't already there.
-            DiscoveredResourceDetails discoveredResourceDetails = discoveredResources.iterator().next();
+            // Create the new Resource and add it to inventory if it isn't already there.
             resource = createNewResource(discoveredResourceDetails);
             Resource parentResource = getResourceContainer(parentResourceId).getResource();
             Resource existingResource = findMatchingChildResource(resource, parentResource);

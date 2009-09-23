@@ -82,6 +82,33 @@ public class ResourceDiscoveryContext<T extends ResourceComponent> {
      * @param systemInfo           information about the system on which the plugin and its plugin container are running
      * @param processScanResults   processes that were auto-discovered by the plugin container on behalf of the plugin
      *                             via process scans (may be <code>null</code> or empty if nothing was auto-discovered)
+     * @param pluginContainerName  the name of the plugin container in which the discovery component is running. Components
+     *                             can be assured this name is unique across <b>all</b> plugin containers/agents running
+     * @param pluginContainerDeployment  indicates where the plugin container is running
+     */
+    @SuppressWarnings("unchecked")
+    public ResourceDiscoveryContext(ResourceType resourceType, T parentComponent,
+        ResourceContext parentResourceContext, SystemInfo systemInfo, List<ProcessScanResult> processScanResults,
+        String pluginContainerName, PluginContainerDeployment pluginContainerDeployment) {
+        this(resourceType, parentComponent, parentResourceContext, systemInfo, processScanResults, null,
+                pluginContainerName, pluginContainerDeployment);
+    }
+
+    /**
+     * Creates a new {@link ResourceDiscoveryContext} object. The plugin container is responsible for instantiating
+     * these objects; plugin writers should never have to actually create context objects.
+     *
+     * <p>This creates a context object that contains information on both auto-discovered resources (i.e. those found
+     * via process scans) and manually discovered resources (i.e. resources whose plugin configurations were directly
+     * supplied by a user).</p>
+     *
+     * @param resourceType         the resource type of resources to be discovered which includes the default plugin
+     *                             configuration
+     * @param parentComponent      the parent component of the components that this discovery component will discover
+     * @param parentResourceContext the parent component's resource context
+     * @param systemInfo           information about the system on which the plugin and its plugin container are running
+     * @param processScanResults   processes that were auto-discovered by the plugin container on behalf of the plugin
+     *                             via process scans (may be <code>null</code> or empty if nothing was auto-discovered)
      * @param pluginConfigurations for resources that are already known to exist (more specifically, resources that a
      *                             user told us exists), this contains plugin configurations that provide connection
      *                             information to those existing managed resources. (may be <code>null</code> or empty
@@ -172,8 +199,12 @@ public class ResourceDiscoveryContext<T extends ResourceComponent> {
      * This may be empty if there are no resources that were "manually discovered".
      *
      * @return list of plugin configurations, may be empty
+     *
+     * @deprecated discovery components should implement the {@link ManualAddFacet} interface, instead of calling
+     *             this method                  
      */
     @NotNull
+    @Deprecated
     public List<Configuration> getPluginConfigurations() {
         return new ArrayList<Configuration>(pluginConfigurations);
     }

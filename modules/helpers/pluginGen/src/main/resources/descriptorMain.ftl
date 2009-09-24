@@ -30,7 +30,7 @@
             <#if props.singleton>
             singleton="true"
             </#if>
-            <#if props.manualAddOfChildren>
+            <#if props.manualAddOfResourceType>
             supportsManualAdd="true"
             </#if>
             <#if props.createChildren && props.deleteChildren>

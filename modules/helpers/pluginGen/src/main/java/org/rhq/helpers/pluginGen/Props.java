@@ -65,18 +65,18 @@ public class Props {
     /** Use externals chars in the plugin jar ? */
     private boolean usesExternalJarsInPlugin;
     /** Does it support manuall add of children ? */
-    private boolean manualAddOfChildren;
+    private boolean manualAddOfResourceType;
     /** Does it use the PluginLifecycleListener api ? */
     private boolean usePluginLifecycleListenerApi;
     /** Depends on JMX plugin ? */
     private boolean dependsOnJmxPlugin;
     /** What version of RHQ should this plugin's pom use ? */
-    private String rhqVersion = "1.2.0.GA";
+    private String rhqVersion = "1.4.0-SNAPSHOT";
 
     /** Embedded children */
     private Set<Props> children = new HashSet<Props>();
 
-    public ResourceCategory getCategory() {
+   public ResourceCategory getCategory() {
         return category;
     }
 
@@ -220,12 +220,12 @@ public class Props {
         this.deleteChildren = deleteChildren;
     }
 
-    public boolean isManualAddOfChildren() {
-        return manualAddOfChildren;
+    public boolean isManualAddOfResourceType() {
+        return manualAddOfResourceType;
     }
 
-    public void setManualAddOfChildren(boolean manualAddOfChildren) {
-        this.manualAddOfChildren = manualAddOfChildren;
+    public void setManualAddOfResourceType(boolean manualAddOfResourceType) {
+        this.manualAddOfResourceType = manualAddOfResourceType;
     }
 
     public void setPkg(String pkg) {
@@ -282,7 +282,7 @@ public class Props {
         sb.append(", createChildren=").append(createChildren);
         sb.append(", deleteChildren=").append(deleteChildren);
         sb.append(", usesExternalJarsInPlugin=").append(usesExternalJarsInPlugin);
-        sb.append(", manualAddOfChildren=").append(manualAddOfChildren);
+        sb.append(", manualAddOfResourceType=").append(manualAddOfResourceType);
         sb.append(", usePluginLifecycleListenerApi=").append(usePluginLifecycleListenerApi);
         sb.append(", dependsOnJmxPlugin=").append(dependsOnJmxPlugin);
         sb.append(", rhqVersion='").append(rhqVersion).append('\'');

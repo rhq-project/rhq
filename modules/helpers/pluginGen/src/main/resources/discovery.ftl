@@ -21,6 +21,9 @@
 <#-- @ftlvariable name="props" type="org.rhq.helpers.pluginGen.Props" -->
 package ${props.pkg};
 
+<#if  props.manualAddOfResourceType>
+import java.util.Collections;
+</#if>
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -31,6 +34,9 @@ import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+<#if props.manualAddOfResourceType>
+import org.rhq.core.pluginapi.inventory.ManualAddFacet;
+</#if>
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
@@ -39,17 +45,25 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 /**
  * Discovery class
  */
-public class ${props.discoveryClass} implements ResourceDiscoveryComponent<#if props.parentType??><${props.parentType}></#if> {
-
+public class ${props.discoveryClass} implements ResourceDiscoveryComponent<#if props.parentType??><${props.parentType}></#if>
+<#if props.manualAddOfResourceType>,ManualAddFacet</#if>
+{
 
     private final Log log = LogFactory.getLog(this.getClass());
 
-
+<#if props.manualAddOfResourceType>
     /**
-     * Run the discovery
+     * This method is an empty dummy, as we do not support auto discovery
      */
+<#else>
+    /**
+     * Run the auto-discovery
+     */
+</#if>
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<#if props.parentType??><${props.parentType}></#if> discoveryContext) throws Exception {
-
+<#if  props.manualAddOfResourceType>
+        return Collections.emptySet();
+<#else>
         Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
 
         /**
@@ -58,7 +72,9 @@ public class ${props.discoveryClass} implements ResourceDiscoveryComponent<#if p
          * stay the same when the resource is discovered the next
          * time
          */
-        DiscoveredResourceDetails detail = null; // new DiscoveredResourceDetails(  );
+        DiscoveredResourceDetails detail = null; // new DiscoveredResourceDetails(
+//            discoveryContext.getResourceType(), // ResourceType
+//        );
 
 
         // Add to return values
@@ -67,5 +83,21 @@ public class ${props.discoveryClass} implements ResourceDiscoveryComponent<#if p
 
         return discoveredResources;
 
-    }
+</#if>
+        }
+
+<#if props.manualAddOfResourceType>
+      /**
+       * Do the manual add of this one resource
+       */
+      public DiscoveredResourceDetails discoverResource(Configuration pluginConfiguration, ResourceDiscoveryContext<#if props.parentType??><${props.parentType}></#if> context) throws InvalidPluginConfigurationException {
+
+            // TODO implement this
+            DiscoveredResourceDetails detail = null; // new DiscoveredResourceDetails(
+//                context.getResourceType(), // ResourceType
+//            );
+
+            return detail;
+      }
+</#if>
 }

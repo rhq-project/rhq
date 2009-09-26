@@ -19,9 +19,14 @@
 package org.rhq.plugins.hosts;
 
 import java.io.File;
-import java.util.List;
+import java.io.IOException;
 import java.util.Date;
-import net.augeas.Augeas;
+import java.util.HashSet;
+import java.util.Set;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
@@ -32,107 +37,94 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
+import org.rhq.plugins.hosts.helper.Hosts;
+import org.rhq.plugins.hosts.helper.HostsComponentHelper;
+import org.rhq.plugins.hosts.helper.HostsEntry;
 
 /**
- * @author Jason Dobies
+ * @author Ian Springer
  */
 public class HostsComponent implements ResourceComponent, ConfigurationFacet {
+    public static final String PATH_PROP = "path";
+
+    private final Log log = LogFactory.getLog(this.getClass());
 
     private ResourceContext resourceContext;
     private File hostsFile;
 
     public void start(ResourceContext resourceContext) throws InvalidPluginConfigurationException, Exception {
         this.resourceContext = resourceContext;
+        this.hostsFile = HostsComponentHelper.getHostsFile(this.resourceContext.getPluginConfiguration());
+        HostsComponentHelper.validateHostFileExists(this.hostsFile);
 
-        Configuration pluginConfiguration = resourceContext.getPluginConfiguration();
-
-        PropertySimple hostsPathProperty = pluginConfiguration.getSimple("hosts-path");
-
-        if (hostsPathProperty == null) {
-            throw new InvalidPluginConfigurationException("Hosts path not found in the plugin configuration, cannot start resource component");
-        }
-
-        String hostsPath = hostsPathProperty.getStringValue();
-
-        hostsFile = new File(hostsPath);
-
-        if (!hostsFile.exists()) {
-            throw new InvalidPluginConfigurationException("Hosts file not found at specified location: " + hostsPath);
-        }
+        return;
     }
 
     public void stop() {
+        return;
     }
 
     public AvailabilityType getAvailability() {
-        if (hostsFile == null) {
+        try {
+            HostsComponentHelper.validateHostFileExists(this.hostsFile);
+            return AvailabilityType.UP;
+        }
+        catch (InvalidPluginConfigurationException e) {
+            log.debug("Hosts file Resource is down: " + e.getLocalizedMessage());
             return AvailabilityType.DOWN;
         }
-
-        return hostsFile.exists() ? AvailabilityType.UP : AvailabilityType.DOWN;
     }
 
     public Configuration loadResourceConfiguration() throws Exception {
-        Configuration pluginConfiguration = resourceContext.getPluginConfiguration();
+        Configuration resourceConfig = new Configuration();
+        Hosts hosts = Hosts.load(this.hostsFile);
+        resourceConfig.setNotes("Loaded at " + new Date());
 
-        return loadResourceConfiguration(pluginConfiguration);
-    }
+        PropertyList entriesProp = new PropertyList("entries");
+        resourceConfig.put(entriesProp);
 
-    public Configuration loadResourceConfiguration(Configuration pluginConfiguration) throws Exception {
-        // Gather data necessary to create the Augeas hook
-        PropertySimple lensesPathProperty = pluginConfiguration.getSimple("lenses-path");
+        for (HostsEntry entry : hosts.getEntries().values()) {
+            PropertyMap entryProp = new PropertyMap("entry");
+            entriesProp.add(entryProp);
 
-        if (lensesPathProperty == null) {
-            throw new Exception("Lenses path not found in plugin configuration, cannot retrieve configuration");
+            entryProp.put(new PropertySimple("ipAddress", entry.getIpAddress()));
+            entryProp.put(new PropertySimple("canonicalName", entry.getCanonicalName()));
+            StringBuilder aliasesPropValue = new StringBuilder();
+            for (String alias : entry.getAliases()) {
+                aliasesPropValue.append(alias).append("\n");
+            }
+            entryProp.put(new PropertySimple("aliases", aliasesPropValue));
         }
 
-        PropertySimple rootPathProperty = pluginConfiguration.getSimple("root-path");
-
-        if (rootPathProperty == null) {
-            throw new Exception("Root path not found in plugin configuration, cannot retrieve configuration");
-        }
-
-        String lensesPath = lensesPathProperty.getStringValue();
-        String rootPath = rootPathProperty.getStringValue();
-
-        Augeas augeas = new Augeas(rootPath, lensesPath);
-
-        // Find out where to look for the hosts tree
-        PropertySimple augeasTreeNodeProperty = pluginConfiguration.getSimple("augeas-hosts-path");
-
-        if (augeasTreeNodeProperty == null) {
-            throw new Exception("Augeas tree node not specified for hosts, cannot retrive configuration");
-        }
-
-        String hostsTreeNode = augeasTreeNodeProperty.getStringValue();
-
-        // Request data from augeas
-        List<String> matches = augeas.match(hostsTreeNode);
-        if (matches.size() == 0) {
-            throw new Exception("Unable to load hosts data from augeas");
-        }
-
-        // Parse out the properties
-        Configuration configuration = new Configuration();
-        configuration.setNotes("Loaded from Augeas at " + new Date());
-
-        PropertyList entriesList = new PropertyList("hostEntries");
-        configuration.put(entriesList);
-
-        for (String entryNode : matches) {
-            String ip = augeas.get(entryNode + "/ipaddr");
-            String canonical = augeas.get(entryNode + "/canonical");
-
-            PropertyMap entry = new PropertyMap("hostEntry");
-            entry.put(new PropertySimple("ip", ip));
-            entry.put(new PropertySimple("canonical", canonical));
-
-            entriesList.add(entry);
-        }
-
-        return configuration;
+        return  resourceConfig;
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
+        Configuration resourceConfig = report.getConfiguration();
+        Hosts newHosts = new Hosts();
+
+        PropertyList entriesProp = resourceConfig.getList("entries");
+        for (Property entryProp: entriesProp.getList()) {
+            PropertyMap entryPropMap = (PropertyMap) entryProp;
+            String ipAddress = entryPropMap.getSimple("ipAddress").getStringValue();
+            String canonicalName = entryPropMap.getSimple("canonicalName").getStringValue();
+            String aliases = entryPropMap.getSimpleValue("aliases", "");
+            String[] aliasArray = aliases.split("\\s+");
+            Set<String> aliasSet = new HashSet<String>(aliasArray.length);
+            for (String alias : aliasArray) {
+                aliasSet.add(alias);
+            }
+            HostsEntry entry = new HostsEntry(ipAddress, canonicalName, aliasSet);
+            newHosts.addEntry(entry);
+        }
+
+        try {
+            Hosts.store(newHosts, this.hostsFile);
+        }
+        catch (IOException e) {
+            throw new RuntimeException("Failed to write hosts file [" + this.hostsFile + "].", e);
+        }
+
+        return;
     }
 }

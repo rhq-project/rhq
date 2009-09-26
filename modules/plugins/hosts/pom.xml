@@ -12,8 +12,8 @@
    <artifactId>rhq-hosts-plugin</artifactId>
    <packaging>jar</packaging>
 
-   <name>RHQ Hosts Plugin</name>
-   <description>A plugin for managing the *nix hosts service</description>
+   <name>RHQ Hosts File Plugin</name>
+   <description>A plugin for managing the system hosts file</description>
 
    <scm>
       <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_2_0_EmbJopr_1_2_0-1/modules/plugins/hosts</connection>
@@ -25,18 +25,6 @@
    </properties>
 
    <dependencies>
-
-      <dependency>
-         <groupId>net.augeas</groupId>
-         <artifactId>java-augeas</artifactId>
-         <version>1.0</version>
-      </dependency>
-
-      <dependency>
-         <groupId>com.sun.jna</groupId>
-         <artifactId>jna</artifactId>
-         <version>3.0.1</version>
-      </dependency>
 
    </dependencies>
 

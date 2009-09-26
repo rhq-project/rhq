@@ -40,6 +40,7 @@ public class ApplicationServerPluginConfigurationProperties {
     static final String SHUTDOWN_MBEAN_OPERATION_CONFIG_PROP = "shutdownMBeanOperation";
     static final String SHUTDOWN_METHOD_CONFIG_PROP = "shutdownMethod";
     static final String SCRIPT_PREFIX_CONFIG_PROP = "scriptPrefix";
+    static final String AVAIL_CHECK_PERIOD_CONFIG_PROP = "availabilityCheckPeriod";
 
     private ApplicationServerPluginConfigurationProperties() {
     }

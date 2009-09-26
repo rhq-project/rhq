@@ -75,6 +75,8 @@ import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.domain.resource.ResourceCreationDataType;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.pluginapi.availability.AvailabilityCollectorRunnable;
+import org.rhq.core.pluginapi.availability.AvailabilityFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.content.ContentContext;
@@ -132,7 +134,17 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
     private ApplicationServerOperationsDelegate operationDelegate;
     private LogFileEventResourceComponentHelper logFileEventDelegate;
 
+    private AvailabilityCollectorRunnable availCollector;
+
     public AvailabilityType getAvailability() {
+        if (this.availCollector != null) {
+            return this.availCollector.getLastKnownAvailability();
+        } else {
+            return getAvailabilityNow();
+        }
+    }
+
+    private AvailabilityType getAvailabilityNow() {
         connectToProfileService();
         AvailabilityType availability;
         if (this.connection != null) {
@@ -183,9 +195,34 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
 
         this.contentFacetDelegate = new ApplicationServerContentFacetDelegate(workflowManager, configPath,
             resourceContext.getContentContext());
+
+        // prepare to perform async avail checking
+        Configuration pc = resourceContext.getPluginConfiguration();
+        String availCheckPeriodProp = pc.getSimpleValue(ApplicationServerPluginConfigurationProperties.AVAIL_CHECK_PERIOD_CONFIG_PROP, null);
+        if (availCheckPeriodProp != null) {
+            try {
+                long availCheckMillis = Integer.parseInt(availCheckPeriodProp) * 1000L;
+                this.availCollector = resourceContext.createAvailabilityCollectorRunnable(new AvailabilityFacet() {
+                    public AvailabilityType getAvailability() {
+                        return getAvailabilityNow();
+                    }
+                }, availCheckMillis);
+                this.availCollector.start();
+            } catch (NumberFormatException nfe) {
+                log.error("avail check period config prop was not a valid number. Cause: " + nfe);
+                this.availCollector = null;
+            }
+        }
+
+        return;
     }
 
     public void stop() {
+        if (this.availCollector != null) {
+            this.availCollector.stop();
+            this.availCollector = null;
+        }
+
         this.logFileEventDelegate.stopLogFileEventPollers();
         disconnectFromProfileService();
         this.jmxConnectionHelper.closeConnection();

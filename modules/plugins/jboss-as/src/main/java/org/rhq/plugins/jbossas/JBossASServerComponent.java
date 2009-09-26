@@ -73,6 +73,8 @@ import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.CreateResourceStatus;
+import org.rhq.core.pluginapi.availability.AvailabilityCollectorRunnable;
+import org.rhq.core.pluginapi.availability.AvailabilityFacet;
 import org.rhq.core.pluginapi.content.ContentContext;
 import org.rhq.core.pluginapi.content.ContentFacet;
 import org.rhq.core.pluginapi.content.ContentServices;
@@ -131,6 +133,7 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
     public static final String SHUTDOWN_MBEAN_OPERATION_CONFIG_PROP = "shutdownMbeanOperation";
     public static final String SHUTDOWN_METHOD_CONFIG_PROP = "shutdownMethod";
     public static final String JAVA_HOME_PATH_CONFIG_PROP = "javaHomePath";
+    public static final String AVAIL_CHECK_PERIOD_CONFIG_PROP = "availabilityCheckPeriod";
 
     public static final String BINDING_ADDRESS_CONFIG_PROP = "bindingAddress";
 
@@ -197,6 +200,8 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
 
     private MainDeployer mainDeployer;
 
+    private AvailabilityCollectorRunnable availCollector;
+
     // ResourceComponent Implementation  --------------------------------------------
 
     public void start(ResourceContext context) throws Exception {
@@ -251,9 +256,33 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
 
         this.logFileEventDelegate = new LogFileEventResourceComponentHelper(this.resourceContext);
         this.logFileEventDelegate.startLogFileEventPollers();
+        
+        // prepare to perform async avail checking
+        String availCheckPeriodProp = pluginConfig.getSimpleValue(AVAIL_CHECK_PERIOD_CONFIG_PROP, null);
+        if (availCheckPeriodProp != null) {
+            try {
+                long availCheckMillis = Integer.parseInt(availCheckPeriodProp) * 1000L;
+                this.availCollector = resourceContext.createAvailabilityCollectorRunnable(new AvailabilityFacet() {
+                    public AvailabilityType getAvailability() {
+                        return getAvailabilityNow();
+                    }
+                }, availCheckMillis);
+                this.availCollector.start();
+            } catch (NumberFormatException nfe) {
+                log.error("avail check period config prop was not a valid number. Cause: " + nfe);
+                this.availCollector = null;
+            }
+        }
+
+        return;        
     }
 
     public void stop() {
+        if (this.availCollector != null) {
+            this.availCollector.stop();
+            this.availCollector = null;
+        }
+
         this.logFileEventDelegate.stopLogFileEventPollers();
         if (this.connection != null) {
             try {
@@ -266,6 +295,14 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
     }
 
     public AvailabilityType getAvailability() {
+        if (this.availCollector != null) {
+            return this.availCollector.getLastKnownAvailability();
+        } else {
+            return getAvailabilityNow();
+        }
+    }
+
+    private AvailabilityType getAvailabilityNow() {
         try {
             EmsConnection connection = loadConnection();
             EmsBean bean = connection.getBean("jboss.system:type=ServerConfig");

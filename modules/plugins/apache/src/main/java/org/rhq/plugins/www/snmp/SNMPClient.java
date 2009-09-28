@@ -18,7 +18,6 @@
  */
 package org.rhq.plugins.www.snmp;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -63,7 +62,8 @@ public class SNMPClient {
     private static final int SESSION_TIMEOUT = 500;
     private static final int SESSION_RETRIES = 1;
 
-    private static final String OIDS_PROPERTIES_RESOURCE_PATH = "/org/rhq/plugins/apache/oids.properties";
+    // NOTE: We do *not* use a leading slash, since ClassLoader.getResourceAsStream() does not work if there is a one.
+    private static final String OIDS_PROPERTIES_RESOURCE_PATH = "org/rhq/plugins/apache/oids.properties";
 
     public SNMPClient() {
         if (OIDS.isEmpty()) {
@@ -86,12 +86,19 @@ public class SNMPClient {
     }
 
     private void initOids() {
-        InputStream stream = this.getClass().getResourceAsStream(OIDS_PROPERTIES_RESOURCE_PATH);
+        ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
+        ClassLoader classLoader = (contextClassLoader != null) ? contextClassLoader : this.getClass().getClassLoader();
+        InputStream stream = classLoader.getResourceAsStream(OIDS_PROPERTIES_RESOURCE_PATH);
+        if (stream == null) {
+            throw new IllegalStateException("Resource '" + OIDS_PROPERTIES_RESOURCE_PATH
+                    + "' not found by " + classLoader);
+        }
         Properties props = new Properties();
         try {
             props.load(stream);
-        } catch (IOException e) {
-            throw new IllegalStateException("Failed to load oids.properties file from classpath.", e);
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to parse oids.properties file from plugin classloader.", e);
+
         }
 
         Enumeration<?> propNames = props.propertyNames();

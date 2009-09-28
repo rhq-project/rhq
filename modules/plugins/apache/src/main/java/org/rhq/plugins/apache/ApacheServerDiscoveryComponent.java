@@ -19,6 +19,7 @@
 package org.rhq.plugins.apache;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -92,6 +93,12 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
                     continue;
                 }
 
+                File serverConfigFile = getServerConfigFile(binaryInfo, process.getProcessInfo(), serverRoot);
+                if (serverConfigFile == null) {
+                    log.error("Unable to determine server config file for Apache process: " + process.getProcessInfo());
+                    continue;
+                }
+
                 Configuration pluginConfig = discoveryContext.getDefaultPluginConfiguration();
 
                 PropertySimple executablePathProp = new PropertySimple(
@@ -107,7 +114,7 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
                 pluginConfig.put(urlProp);
 
                 PropertySimple configFile = new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_HTTPD_CONF,
-                        binaryInfo.getCtl());
+                        serverConfigFile);
                 pluginConfig.put(configFile);
 
                 discoveredResources.add(createResourceDetails(discoveryContext, pluginConfig, process.getProcessInfo(),
@@ -118,16 +125,12 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         return discoveredResources;
     }
 
+
+
     public DiscoveredResourceDetails discoverResource(Configuration pluginConfig,
                                                       ResourceDiscoveryContext discoveryContext)
             throws InvalidPluginConfigurationException {
-        String serverRoot = ApacheServerComponent.getRequiredPropertyValue(pluginConfig,
-            ApacheServerComponent.PLUGIN_CONFIG_PROP_SERVER_ROOT);
-        if (!new File(serverRoot).isDirectory()) {
-            throw new InvalidPluginConfigurationException("'" + serverRoot
-                + "' is not a directory. Please make sure the '"
-                + ApacheServerComponent.PLUGIN_CONFIG_PROP_SERVER_ROOT + "' connection property is set correctly.");
-        }
+        validateServerRootAndServerConfigFile(pluginConfig);
 
         String executablePath = pluginConfig
             .getSimpleValue(ApacheServerComponent.PLUGIN_CONFIG_PROP_EXECUTABLE_PATH,
@@ -167,18 +170,14 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
 
     private DiscoveredResourceDetails createResourceDetails(ResourceDiscoveryContext discoveryContext,
         Configuration pluginConfig, ProcessInfo processInfo, ApacheBinaryInfo binaryInfo) throws Exception {
-        String serverRoot = pluginConfig.getSimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_SERVER_ROOT)
-            .getStringValue();
-        String key = FileUtils.getCanonicalPath(serverRoot);
+        String httpdConf = pluginConfig.getSimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_HTTPD_CONF).getStringValue();
         String version = binaryInfo.getVersion();
         String hostname = discoveryContext.getSystemInformation().getHostname();
-        String name = hostname + " Apache " + version + " (" + serverRoot + File.separator + ")";
+        String name = hostname + " Apache " + version + " (" + httpdConf + ")";
 
         DiscoveredResourceDetails resourceDetails = new DiscoveredResourceDetails(discoveryContext.getResourceType(),
-            key, name, version, PRODUCT_DESCRIPTION, pluginConfig, processInfo);
-
+            httpdConf, name, version, PRODUCT_DESCRIPTION, pluginConfig, processInfo);
         log.debug("Apache Server resource details created: " + resourceDetails);
-
         return resourceDetails;
     }
 
@@ -234,19 +233,8 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
 
     @Nullable
     private String getServerRoot(@NotNull ApacheBinaryInfo binaryInfo, @NotNull ProcessInfo processInfo) {
-        String root = null;
         String[] cmdLine = processInfo.getCommandLine();
-        for (int i = 1; i < cmdLine.length; i++) {
-            String arg = cmdLine[i];
-            if (arg.startsWith("-d")) {
-                root = arg.substring(2, arg.length());
-                if (root.length() == 0) {
-                    root = cmdLine[i + 1];
-                }
-
-                break;
-            }
-        }
+        String root = getCommandLineOption(cmdLine, "-d");
 
         if (root == null) {
             root = binaryInfo.getRoot();
@@ -256,6 +244,50 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
             root = FileUtils.getCanonicalPath(root);
         }
 
+        return root;
+    }
+
+    @Nullable
+    private File getServerConfigFile(ApacheBinaryInfo binaryInfo, ProcessInfo processInfo, String serverRoot) {
+        String[] cmdLine = processInfo.getCommandLine();
+        // First see if -f was specified on the httpd command line.
+        String serverConfigFile = getCommandLineOption(cmdLine, "-f");
+
+        // If not, extract the path from the httpd binary.
+        if (serverConfigFile == null) {
+            serverConfigFile = binaryInfo.getCtl();
+        }
+
+        if (serverConfigFile == null) {
+            // We have failed to determine the config file path  :(
+            return null;
+        }
+
+        // If the path is relative, convert it to an absolute path, resolving it relative to the server root dir.
+        File file = new File(serverConfigFile);
+        if (!file.isAbsolute()) {
+            file = new File(serverRoot, serverConfigFile);
+            serverConfigFile = file.getPath();
+        }
+
+        // And now canonicalize the path, but using our own getCanonicalPath() method, which preserves symlinks.
+        serverConfigFile = FileUtils.getCanonicalPath(serverConfigFile);
+
+        return new File(serverConfigFile);
+    }
+
+    private String getCommandLineOption(String[] cmdLine, String option) {
+        String root = null;
+        for (int i = 1; i < cmdLine.length; i++) {
+            String arg = cmdLine[i];
+            if (arg.startsWith(option)) {
+                root = arg.substring(2, arg.length());
+                if (root.length() == 0) {
+                    root = cmdLine[i + 1];
+                }
+                break;
+            }
+        }
         return root;
     }
 
@@ -274,5 +306,34 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
             executableName = null;
         }
         return executableName;
+    }
+
+    private static void validateServerRootAndServerConfigFile(Configuration pluginConfig) {
+        String serverRoot = pluginConfig.getSimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_SERVER_ROOT).getStringValue();
+        File serverRootFile;
+        try {
+            serverRootFile = new File(serverRoot).getCanonicalFile(); // this will resolve symlinks
+        }
+        catch (IOException e) {
+            serverRootFile = null;
+        }
+        if (serverRootFile == null || !serverRootFile.isDirectory()) {
+            throw new InvalidPluginConfigurationException("'" + serverRoot
+                + "' does not exist or is not a directory. Please make sure the '"
+                + ApacheServerComponent.PLUGIN_CONFIG_PROP_SERVER_ROOT + "' connection property is set correctly.");
+        }
+        String httpdConf = pluginConfig.getSimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_HTTPD_CONF).getStringValue();
+        File httpdConfFile;
+        try {
+            httpdConfFile = new File(httpdConf).getCanonicalFile(); // this will resolve symlinks
+        }
+        catch (IOException e) {
+            httpdConfFile = null;
+        }
+        if (httpdConfFile == null || !httpdConfFile.isFile()) {
+            throw new InvalidPluginConfigurationException("'" + httpdConf
+                + "' does not exist or is not a regular file. Please make sure the '"
+                + ApacheServerComponent.PLUGIN_CONFIG_PROP_HTTPD_CONF + "' connection property is set correctly.");
+        }
     }
 }

@@ -18,17 +18,17 @@
          <!-- Defaults:
                type: string
                required: true
-               readOnly: true
+               readOnly: false
                activationPolicy: immediate
          -->
-         <c:simple-property name="serverRoot"
+         <c:simple-property name="serverRoot" required="true"
                             description="the absolute path of the Apache server root directory"/>
          <c:simple-property name="executablePath" required="false"
                             description="the path to the Apache executable - if the path is not absolute, it will be resolved relative to the server root directory; if unset, default value is 'bin/httpd' on UNIX or 'bin\Apache.exe' on Windows"/>
          <c:simple-property name="controlScriptPath" required="false"
                             description="the path to the Apache control script - if the path is not absolute, it will be resolved relative to the server root directory; if unset, default will be 'bin/apachectl' on UNIX or the Apache executable on Windows"/>
          <!-- TODO need to add a comment about the file location on Win* -->
-         <c:simple-property name="configFile" required="false"
+         <c:simple-property name="configFile" required="true" readOnly="true"
                              description="the path to the httpd.conf file - if the path is not absolute, it will be resolved relative to the server root directory; if unset, default will be 'conf/httpd.conf' on UNIX"/>
          <c:simple-property name="url" displayName="URL" required="false"
                             description="the http or https URL that will be used to check availability for this Apache server; if not set, availablity will be determined based on whether plugin can connect to the Apache server's SNMP agent"/>

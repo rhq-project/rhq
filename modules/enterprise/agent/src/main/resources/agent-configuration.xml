@@ -112,10 +112,16 @@ commands named "config", "setconfig" and "setup" and the command line options
                Note that because this is an XML file, you must specify
                "&amp;" in the transport-params value when needing an ampersand
                to separate the transport parameters.
+
+               Note that the server address is left undefined - the agent
+               will default to the DNS alias of "rhqserver" and if that is not
+               defined, it will default to the localhost or 127.0.0.1.
                -->
                <entry key="rhq.agent.server.transport"        value="servlet" />
                <entry key="rhq.agent.server.bind-port"        value="7080" />
+               <!--
                <entry key="rhq.agent.server.bind-address"     value="127.0.0.1" />
+               -->
                <entry key="rhq.agent.server.transport-params" value="/jboss-remoting-servlet-invoker/ServerInvokerServlet" />
 
                <!--

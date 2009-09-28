@@ -188,6 +188,9 @@ public class AgentConfiguration {
 
     /**
      * Returns the RHQ Server's bind address on which it is listening for incoming commands.
+     * If the preference value isn't set, this will look up a default hostname for the
+     * default server address to use. If that isn't available or defined, the local host
+     * address will be used.
      *
      * @return the RHQ Server bind address
      */
@@ -195,9 +198,13 @@ public class AgentConfiguration {
         String address;
 
         try {
-            address = InetAddress.getLocalHost().getHostAddress();
-        } catch (UnknownHostException e) {
-            address = "127.0.0.1";
+            address = InetAddress.getByName("rhqserver").getCanonicalHostName();
+        } catch (Exception e1) {
+            try {
+                address = InetAddress.getLocalHost().getHostAddress();
+            } catch (UnknownHostException e2) {
+                address = "127.0.0.1";
+            }
         }
 
         String value = m_preferences.get(AgentConfigurationConstants.SERVER_BIND_ADDRESS, address);

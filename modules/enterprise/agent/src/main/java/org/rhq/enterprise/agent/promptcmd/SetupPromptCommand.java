@@ -193,7 +193,7 @@ public class SetupPromptCommand implements AgentPromptCommand {
             SETUPMSG.getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_CONNECTORPORT_PROMPT), SETUPMSG
                 .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_CONNECTORPORT_HELP)));
 
-        instr.add(new DefaultSetupInstruction(AgentSetupInstructions.SETUP_INSTRUCTION_SERVERBINDADDR_PREF,
+        instr.add(new ServerAddressSetupInstruction(AgentSetupInstructions.SETUP_INSTRUCTION_SERVERBINDADDR_PREF,
             AgentSetupInstructions.SETUP_INSTRUCTION_SERVERBINDADDR_DEFAULT, new InetAddressSetupValidityChecker(),
             SETUPMSG.getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_SERVERBINDADDR_PROMPT), SETUPMSG
                 .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_SERVERBINDADDR_HELP)));
@@ -979,6 +979,23 @@ public class SetupPromptCommand implements AgentPromptCommand {
             super.preProcess();
 
             return;
+        }
+    }
+
+    private class ServerAddressSetupInstruction extends DefaultSetupInstruction {
+        public ServerAddressSetupInstruction(String pref_name, String default_value,
+            InetAddressSetupValidityChecker validity_checker, String prompt_msg, String help) {
+            super(pref_name, default_value, validity_checker, prompt_msg, help, false);
+        }
+
+        @Override
+        public void preProcess() {
+            String address = new AgentConfiguration(getPreferences()).getServerBindAddress();
+            if (address != null) {
+                setDefaultValue(address);
+            } else {
+                super.preProcess();
+            }
         }
     }
 }

@@ -23,14 +23,7 @@
          <id>cli</id>
 
          <activation>
-            <!--
-               Maven currently applies OR logic to activation conditions. Until AND syntax is provided we'll have to
-               omit the 1.6 requirement and go with java5.home being unset.
-            -->
-            <!--  <jdk>1.6</jdk> -->
-            <property>
-               <name>!java5.home</name>
-            </property>
+            <jdk>1.6</jdk>
          </activation>
 
          <modules>

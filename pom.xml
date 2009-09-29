@@ -784,7 +784,25 @@
          </activation>
 
          <build>
-           <plugins>
+           <plugins>           
+               <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                  <execution>
+                    <phase>validate</phase>
+                    <inherited>false</inherited>
+                    <configuration>
+                      <tasks>
+                        <echo>java5.home=${java5.home}</echo>
+                      </tasks>
+                    </configuration>
+                    <goals>
+                      <goal>run</goal>
+                    </goals>
+                  </execution>
+                </executions>
+               </plugin>
+       
               <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
@@ -792,7 +810,7 @@
                     <bootclasspath>${java5.home}/lib/rt.jar${path.separator}${java5.home}/lib/jsse.jar${path.separator}${java5.home}/lib/jce.jar</bootclasspath>
                   </compilerArguments>
                 </configuration>
-              </plugin>
+              </plugin>              
             </plugins>
           </build>
       </profile>

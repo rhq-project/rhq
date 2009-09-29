@@ -22,10 +22,13 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
@@ -42,6 +45,8 @@ import org.rhq.plugins.hosts.helper.HostsComponentHelper;
 import org.rhq.plugins.hosts.helper.HostsEntry;
 
 /**
+ * The ResourceComponent for the "Hosts File" ResourceType.
+ *
  * @author Ian Springer
  */
 public class HostsComponent implements ResourceComponent, ConfigurationFacet {
@@ -83,17 +88,47 @@ public class HostsComponent implements ResourceComponent, ConfigurationFacet {
         PropertyList entriesProp = new PropertyList("entries");
         resourceConfig.put(entriesProp);
 
-        for (HostsEntry entry : hosts.getEntries().values()) {
+        Set<String> ipAddressesWithDuplicateEntries = hosts.getIpAddressesWithDuplicateEntries();
+        if (!ipAddressesWithDuplicateEntries.isEmpty()) {
+            log.debug("Hosts file [" + this.hostsFile + "] contains duplicate entries for the following IP addresses: "
+                    + ipAddressesWithDuplicateEntries);
+        }        
+        Set<String> namesWithDuplicateEntries = hosts.getNamesWithDuplicateEntries();
+        if (!namesWithDuplicateEntries.isEmpty()) {
+            log.error("Hosts file [" + this.hostsFile + "] contains duplicate entries for the following names: "
+                    + namesWithDuplicateEntries);
+        }
+
+        for (HostsEntry entry : hosts.getEntries()) {
             PropertyMap entryProp = new PropertyMap("entry");
             entriesProp.add(entryProp);
 
-            entryProp.put(new PropertySimple("ipAddress", entry.getIpAddress()));
-            entryProp.put(new PropertySimple("canonicalName", entry.getCanonicalName()));
+            PropertySimple ipAddressProp = new PropertySimple("ipAddress", entry.getIpAddress());
+            entryProp.put(ipAddressProp);
+
+            PropertySimple canonicalNameProp = new PropertySimple("canonicalName", entry.getCanonicalName());
+            if (namesWithDuplicateEntries.contains(entry.getCanonicalName())) {
+                canonicalNameProp.setErrorMessage("At the time of loading, there was more than one entry containing this name - please remove or fix duplicate entries before saving.");
+            }
+            entryProp.put(canonicalNameProp);
+
             StringBuilder aliasesPropValue = new StringBuilder();
+            boolean foundDuplicateName = false;
             for (String alias : entry.getAliases()) {
+                if (namesWithDuplicateEntries.contains(alias)) {
+                    foundDuplicateName = true;
+                }
                 aliasesPropValue.append(alias).append("\n");
             }
-            entryProp.put(new PropertySimple("aliases", aliasesPropValue));
+            if (!entry.getAliases().isEmpty()) {
+                // Chop the final newline char.
+                aliasesPropValue.deleteCharAt(aliasesPropValue.length() - 1);
+            }
+            PropertySimple aliasesProp = new PropertySimple("aliases", aliasesPropValue);
+            if (foundDuplicateName) {
+                aliasesProp.setErrorMessage("At the time of loading, there was more than one entry containing this name - please remove or fix duplicate entries before saving.");
+            }
+            entryProp.put(aliasesProp);
         }
 
         return  resourceConfig;
@@ -108,14 +143,26 @@ public class HostsComponent implements ResourceComponent, ConfigurationFacet {
             PropertyMap entryPropMap = (PropertyMap) entryProp;
             String ipAddress = entryPropMap.getSimple("ipAddress").getStringValue();
             String canonicalName = entryPropMap.getSimple("canonicalName").getStringValue();
-            String aliases = entryPropMap.getSimpleValue("aliases", "");
-            String[] aliasArray = aliases.split("\\s+");
-            Set<String> aliasSet = new HashSet<String>(aliasArray.length);
-            for (String alias : aliasArray) {
-                aliasSet.add(alias);
+            String aliases = entryPropMap.getSimpleValue("aliases", null);
+            Set<String> aliasSet;
+            if (aliases == null) {
+                aliasSet = null;
+            } else {
+                String[] aliasArray = aliases.trim().split("\\s+");
+                aliasSet = new LinkedHashSet<String>(aliasArray.length);
+                for (String alias : aliasArray) {
+                    aliasSet.add(alias);
+                }
             }
             HostsEntry entry = new HostsEntry(ipAddress, canonicalName, aliasSet);
             newHosts.addEntry(entry);
+        }
+
+        Set<String> namesWithDuplicateEntries = newHosts.getNamesWithDuplicateEntries();
+        if (!namesWithDuplicateEntries.isEmpty()) {
+            report.setErrorMessage("There are duplicate entries for the following names: "
+                    + namesWithDuplicateEntries);
+            return;
         }
 
         try {
@@ -125,6 +172,7 @@ public class HostsComponent implements ResourceComponent, ConfigurationFacet {
             throw new RuntimeException("Failed to write hosts file [" + this.hostsFile + "].", e);
         }
 
+        report.setStatus(ConfigurationUpdateStatus.SUCCESS);
         return;
     }
 }

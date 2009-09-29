@@ -34,6 +34,8 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.plugins.hosts.helper.HostsComponentHelper;
 
 /**
+ * The ResourceDiscoveryComponent for the "Hosts File" ResourceType.
+ *
  * @author Ian Springer
  */
 public class HostsDiscoveryComponent implements ResourceDiscoveryComponent, ManualAddFacet {
@@ -58,6 +60,8 @@ public class HostsDiscoveryComponent implements ResourceDiscoveryComponent, Manu
             pluginConfig.put(new PropertySimple(HostsComponent.PATH_PROP, hostsFile.getPath()));
             DiscoveredResourceDetails resource = createResourceDetails(discoveryContext, pluginConfig);
             discoveredResources.add(resource);
+            log.debug("Discovered " + discoveryContext.getResourceType().getName() + " Resource with key ["
+                    + resource.getResourceKey() + "].");
         } else {
             log.warn("Hosts file not found at [" + hostsFile + "].");
         }

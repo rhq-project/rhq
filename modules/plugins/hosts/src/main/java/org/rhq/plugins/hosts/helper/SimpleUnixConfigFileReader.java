@@ -2,7 +2,6 @@
  * JBoss, a division of Red Hat.
  * Copyright 2006, Red Hat Middleware, LLC. All rights reserved.
  */
-
 package org.rhq.plugins.hosts.helper;
 
 import org.jetbrains.annotations.Nullable;

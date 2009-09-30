@@ -30,7 +30,7 @@
     <properties>
         <scm.module.path>modules/plugins/jboss-as-5/</scm.module.path>
 
-        <jbossas.version>5.1.0-SNAPSHOT</jbossas.version>
+        <jbossas.version>5.2.0-SNAPSHOT</jbossas.version>
         <rhq.testng.excludedGroups>as5-plugin</rhq.testng.excludedGroups>
     </properties>
     

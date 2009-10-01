@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2009 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 import java.util.Properties;
 
 /**
@@ -216,7 +217,7 @@ public class Version {
      * When a version property represents a date, this method will take that date string and convert it to a <code>
      * java.util.Date</code> object.
      *
-     * <p>Assumes the date string is in the form of <code>dd.MMM.yyyy HH.mm.ss z</code></p>
+     * <p>Assumes the date string is in the en.US locale based form of <code>dd.MMM.yyyy HH.mm.ss z</code></p>
      *
      * @param  date_string the version property date string to convert
      *
@@ -227,7 +228,7 @@ public class Version {
         Date ret_date = null;
 
         if (date_string != null) {
-            SimpleDateFormat format = new SimpleDateFormat("dd.MMM.yyyy HH.mm.ss z");
+            SimpleDateFormat format = new SimpleDateFormat("dd.MMM.yyyy HH.mm.ss z", Locale.US);
             ret_date = format.parse(date_string, new ParsePosition(0));
         }
 

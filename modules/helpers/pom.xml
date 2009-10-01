@@ -36,6 +36,7 @@
     <module>rtfilter</module>
     <!-- plugin generator -->
     <module>pluginGen</module>
+    <module>pluginAnnotations</module>
 
   </modules>
 

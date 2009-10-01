@@ -28,14 +28,14 @@
 
       <dependency>
          <groupId>net.augeas</groupId>
-         <artifactId>java-augeas</artifactId>
-         <version>1.0</version>
+         <artifactId>augeas</artifactId>
+         <version>0.0.1</version>
       </dependency>
 
       <dependency>
          <groupId>com.sun.jna</groupId>
          <artifactId>jna</artifactId>
-         <version>3.0.1</version>
+         <version>3.0.9</version>
       </dependency>
 
    </dependencies>
@@ -158,7 +158,7 @@
 
                      <execution>
                         <id>deploy</id>
-                        <!--<phase>compile</phase>-->
+                        <phase>compile</phase>
                         <configuration>
                            <tasks>
                               <mkdir dir="${rhq.deploymentDir}" />
@@ -174,7 +174,7 @@
 
                      <execution>
                         <id>deploy-jar-meta-inf</id>
-                        <!--<phase>package</phase>-->
+                        <phase>package</phase>
                         <configuration>
                           <tasks>                             
                              <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />                             
@@ -193,7 +193,7 @@
                      
                      <execution>
                         <id>undeploy</id>
-                        <!--<phase>clean</phase>-->
+                        <phase>clean</phase>
                         <configuration>
                            <tasks>
                               <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />

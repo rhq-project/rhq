@@ -95,7 +95,7 @@ public class HostsComponent implements ResourceComponent, ConfigurationFacet {
         String lensesPath = lensesPathProperty.getStringValue();
         String rootPath = rootPathProperty.getStringValue();
 
-        Augeas augeas = new Augeas(rootPath, lensesPath);
+        Augeas augeas = new Augeas(rootPath, lensesPath, Augeas.NONE);
 
         // Find out where to look for the hosts tree
         PropertySimple augeasTreeNodeProperty = pluginConfiguration.getSimple("augeas-hosts-path");

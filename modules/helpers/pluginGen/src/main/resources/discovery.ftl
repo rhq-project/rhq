@@ -53,7 +53,10 @@ public class ${props.discoveryClass} implements ResourceDiscoveryComponent<#if p
 
 <#if props.manualAddOfResourceType>
     /**
-     * This method is an empty dummy, as we do not support auto discovery
+     * This method is an empty dummy, as you have selected manual addition
+     * in the plugin generator.
+     * If you want to have auto discovery too, remove the "return emptySet"
+     * and implement the auto discovery logic.
      */
 <#else>
     /**

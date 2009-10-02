@@ -36,6 +36,7 @@ import javax.faces.component.UIInput;
 import javax.faces.component.UIOutput;
 import javax.faces.component.UIParameter;
 import javax.faces.component.UIForm;
+import javax.faces.component.UIViewRoot;
 import javax.faces.component.html.HtmlColumn;
 import javax.faces.component.html.HtmlCommandButton;
 import javax.faces.component.html.HtmlCommandLink;
@@ -53,7 +54,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.richfaces.component.html.HtmlSeparator;
 import org.richfaces.component.html.HtmlSimpleTogglePanel;
-import org.richfaces.component.html.HtmlRichMessage;
 
  /**
  * A set of utility methods for working with JSF {@link UIComponent}s.
@@ -149,8 +149,7 @@ public abstract class FacesComponentUtility {
     @NotNull
     public static HtmlOutputText addVerbatimText(@NotNull
     UIComponent parent, CharSequence html) {
-        // NOTE: Do NOT set the id on the HtmlOutputText, otherwise it will be rendered as a span tag!
-        HtmlOutputText outputText = new HtmlOutputText();
+        HtmlOutputText outputText = createComponent(HtmlOutputText.class, null);
         outputText.setEscape(false);
         outputText.setValue(html);
         parent.getChildren().add(outputText);
@@ -381,8 +380,9 @@ public abstract class FacesComponentUtility {
         Application application = FacesContext.getCurrentInstance().getApplication();
         String componentType = getComponentType(componentClass);
         T component = (T) application.createComponent(componentType);
-        if (idFactory == null)
+        if (idFactory == null) {
             idFactory = new DefaultFacesComponentIdFactory();
+        }
         component.setId(idFactory.createUniqueId());
         return component;
     }
@@ -534,7 +534,10 @@ public abstract class FacesComponentUtility {
      private static class DefaultFacesComponentIdFactory implements FacesComponentIdFactory {
         public String createUniqueId()
         {
-            return "rhq_" + UUID.randomUUID();
+            // NOTE: Our id's *must* begin with UIViewRoot.UNIQUE_ID_PREFIX ("j_id") to prevent HtmlOutputText
+            //       components from being rendered as SPAN elements
+            //       (see com.sun.faces.renderkit.html_basic.TextRenderer#getEndTextToRender()).
+            return UIViewRoot.UNIQUE_ID_PREFIX + "_RHQ_" + UUID.randomUUID();
         }
     }
 }

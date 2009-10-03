@@ -509,13 +509,18 @@ public class ScriptServerComponent implements ResourceComponent, MeasurementFace
         }
 
         if (envvarsProp != null) {
-            envvars = new HashMap<String, String>();
             try {
+                // we want envvars to be null if there are no envvars defined, so the agent env is passed
+                // but if there are 1 or more envvars in our config, then we define our envvars list
                 List<Property> listOfMaps = envvarsProp.getList();
-                for (Property envvarMap : listOfMaps) {
-                    PropertySimple name = (PropertySimple) ((PropertyMap) envvarMap).get(PLUGINCONFIG_ENVVAR_NAME);
-                    PropertySimple value = (PropertySimple) ((PropertyMap) envvarMap).get(PLUGINCONFIG_ENVVAR_VALUE);
-                    envvars.put(name.getStringValue(), value.getStringValue());
+                if (listOfMaps != null && listOfMaps.size() > 0) {
+                    envvars = new HashMap<String, String>();
+                    for (Property envvarMap : listOfMaps) {
+                        PropertySimple name = (PropertySimple) ((PropertyMap) envvarMap).get(PLUGINCONFIG_ENVVAR_NAME);
+                        PropertySimple value = (PropertySimple) ((PropertyMap) envvarMap)
+                            .get(PLUGINCONFIG_ENVVAR_VALUE);
+                        envvars.put(name.getStringValue(), value.getStringValue());
+                    }
                 }
             } catch (Exception e) {
                 throw new InvalidPluginConfigurationException("Bad plugin config: " + PLUGINCONFIG_ENVVARS

@@ -41,12 +41,14 @@
       </plugin-configuration>
 
       <resource-configuration>
-         <c:list-property name="hostEntries">
-            <c:map-property name="hostEntry">
-               <c:simple-property name="ipAddress" displayName="IP Address" type="string" required="true" activationPolicy="immediate"
-                                  description="IP address of the host entry."/>
-               <c:simple-property name="canonicalName" displayName="Canonical Name" type="string" required="true" activationPolicy="immediate"
-                                  description="Canonical name to refer to the IP."/>
+         <c:list-property name="entries">
+            <c:map-property name="entry">
+              <c:simple-property name="ipAddress" displayName="IP Address" type="string" required="true" activationPolicy="immediate"
+                                  description="The IP address of the host entry. The address may be an IPv4 address (e.g., 192.168.1.10) or an IPv6 address (e.g., fec0:0:0:bebe::2)."/>
+               <c:simple-property name="canonicalName" displayName="Canonical Host Name" type="string" required="true" activationPolicy="immediate"
+                                  description="The canonical host name to refer to the IP address. Host names may contain only alphanumeric characters, minus signs ('-'), and periods ('.'). They must begin with an alphabetic character and end with an alphanumeric character. (e.g., foo.mydomain.org)"/>
+               <c:simple-property name="aliases" displayName="Aliases" type="longString" required="false" activationPolicy="immediate"
+                                  description="Optional aliases provide for name changes, alternate spellings, shorter host names, or generic host names (e.g., localhost); aliases should be newline or space separated)."/>
             </c:map-property>
          </c:list-property>
       </resource-configuration>

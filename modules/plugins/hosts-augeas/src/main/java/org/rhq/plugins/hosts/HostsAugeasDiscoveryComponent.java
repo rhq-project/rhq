@@ -29,18 +29,18 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 /**
  * @author Jason Dobies
  */
-public class HostsDiscoveryComponent implements ResourceDiscoveryComponent {
+public class HostsAugeasDiscoveryComponent implements ResourceDiscoveryComponent {
 
-    public Set discoverResources(ResourceDiscoveryContext resourceDiscoveryContext) throws InvalidPluginConfigurationException, Exception {
+    public Set discoverResources(ResourceDiscoveryContext discoveryContext)
+            throws InvalidPluginConfigurationException, Exception {
 
         Set<DiscoveredResourceDetails> details = new HashSet<DiscoveredResourceDetails>();
 
         File hostsFile = new File("/etc/hosts");
-
         if (hostsFile.exists()) {
             DiscoveredResourceDetails resource =
-                new DiscoveredResourceDetails(resourceDiscoveryContext.getResourceType(), "hosts", "Hosts Service",
-                    "1.0", "Hosts service running on the machine.", null, null);
+                new DiscoveredResourceDetails(discoveryContext.getResourceType(), hostsFile.getPath(),
+                        "Hosts File", null, "Hosts File", discoveryContext.getDefaultPluginConfiguration(), null);
 
             details.add(resource);
         }

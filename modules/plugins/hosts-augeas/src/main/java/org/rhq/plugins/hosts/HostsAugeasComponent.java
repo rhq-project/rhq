@@ -44,7 +44,7 @@ import org.rhq.plugins.hosts.util.AugeasUtility;
 /**
  * @author Jason Dobies, Ian Springer 
  */
-public class HostsComponent implements ResourceComponent, ConfigurationFacet {
+public class HostsAugeasComponent implements ResourceComponent, ConfigurationFacet {
 
     private ResourceContext resourceContext;
     private File hostsFile;

@@ -34,9 +34,9 @@ import org.rhq.core.domain.configuration.PropertySimple;
 /**
  * @author Jason Dobies
  */
-public class HostsComponentTest {
+public class HostsAugeasComponentTest {
 
-    private HostsComponent component = new HostsComponent();
+    private HostsAugeasComponent component = new HostsAugeasComponent();
 
     private Configuration pluginConfiguration = new Configuration();
 

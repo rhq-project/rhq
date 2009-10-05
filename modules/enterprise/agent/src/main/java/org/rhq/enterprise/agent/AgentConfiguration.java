@@ -195,20 +195,19 @@ public class AgentConfiguration {
      * @return the RHQ Server bind address
      */
     public String getServerBindAddress() {
-        String address;
-
-        try {
-            address = InetAddress.getByName("rhqserver").getCanonicalHostName();
-        } catch (Exception e1) {
+        String address = m_preferences.get(AgentConfigurationConstants.SERVER_BIND_ADDRESS, null);
+        if (address == null) {
             try {
-                address = InetAddress.getLocalHost().getHostAddress();
-            } catch (UnknownHostException e2) {
-                address = "127.0.0.1";
+                address = InetAddress.getByName("rhqserver").getCanonicalHostName();
+            } catch (Exception e1) {
+                try {
+                    address = InetAddress.getLocalHost().getHostAddress();
+                } catch (UnknownHostException e2) {
+                    address = "127.0.0.1";
+                }
             }
         }
-
-        String value = m_preferences.get(AgentConfigurationConstants.SERVER_BIND_ADDRESS, address);
-        return value;
+        return address;
     }
 
     /**

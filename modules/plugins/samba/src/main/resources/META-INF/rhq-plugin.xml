@@ -1,0 +1,103 @@
+<plugin name="Samba"
+        displayName="Samba"
+        description="Support for *nix samba service"
+        package="org.rhq.plugins.samba"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <server name="Samba Server"
+            description="The static table lookup for host names"
+            discovery="SambaServerDiscoveryComponent"
+            class="SambaServerComponent">
+
+      <plugin-configuration>
+         <c:group name="augeas" displayName="Augeas Settings">
+            <c:simple-property name="lenses-path" displayName="Augeas Lenses Path"
+                               default="/usr/local/share/augeas/lenses" required="true"
+                               description="Full path to the augeas lenses directory. Example: /usr/local/share/augeas/lenses"/>
+            <c:simple-property name="root-path" displayName="Augeas Root Path" default="/" required="true"
+                               description="Path from which augeas should begin to search for configuration files. Example: /"/>
+         </c:group>
+         <c:group name="hosts" displayName="Hosts Settings">
+            <c:simple-property name="smb-path" displayName="Samba Config File Path" required="true"
+                               default="/etc/samba/smb.conf" description="Location of the samba file."/>
+            <c:simple-property name="augeas-smb-path" displayName="Augeas Samba Tree Path" required="true"
+                               default="/files/etc/samba/smb.conf/*" description="Augeas tree location of the samba configuration values."/>
+         </c:group>
+      </plugin-configuration>
+
+
+       <metric property="NetworkStat.tcpInboundTotal" displayName="TCP Inbound Connections" displayType="summary"/>
+       <metric property="NetworkStat.tcpOutboundTotal" displayName="TCP Outbound Connections" displayType="summary"/>
+       <metric property="NetworkStat.allInboundTotal" displayName="All Inbound Connections" displayType="summary"/>
+       <metric property="NetworkStat.allOutboundTotal" displayName="All Outbound Connections" displayType="summary"/>
+       <metric property="NetworkStat.tcpEstablished" displayName="State ESTABLISHED"/>
+       <metric property="NetworkStat.tcpSynSent" displayName="State SYN_SENT"/>
+       <metric property="NetworkStat.tcpSynRecv" displayName="State SYN_RECV"/>
+       <metric property="NetworkStat.tcpFinWait1" displayName="State FIN_WAIT1"/>
+       <metric property="NetworkStat.tcpFinWait2" displayName="State FIN_WAIT2"/>
+       <metric property="NetworkStat.tcpTimeWait" displayName="State TIME_WAIT"/>
+       <metric property="NetworkStat.tcpClose" displayName="State CLOSE"/>
+       <metric property="NetworkStat.tcpCloseWait" displayName="State CLOSE_WAIT"/>
+       <metric property="NetworkStat.tcpLastAck" displayName="State LAST_ACK"/>
+       <metric property="NetworkStat.tcpListen" displayName="State LISTEN"/>
+       <metric property="NetworkStat.tcpClosing" displayName="State CLOSING"/>
+       <metric property="NetworkStat.tcpIdle" displayName="State IDLE"/>
+       <metric property="NetworkStat.tcpBound" displayName="State BOUND"/>
+
+
+
+      <resource-configuration>
+        <c:group name="Basic Configurations">
+            
+            <c:simple-property name="workgroup" description="The workgroup of this computer" required="false"/>
+            <c:simple-property name="server string" description="A description of this computer" required="false"/>
+
+        </c:group>
+
+          <c:group name="Security">
+              <c:simple-property name="security" displayName="Authentication Mode" required="false" description="The type of authentication used by Samba">
+                  <c:property-options>
+                      <c:option value="domain"/>
+                      <c:option value="server"/>
+                      <c:option value="share"/>
+                      <c:option value="user"/>
+                  </c:property-options>
+              </c:simple-property>
+              
+              <c:simple-property name="encrypt passwords" type="boolean" required="false" description="This option must be enabled if the clients are connecting from a Windows 98, Windows NT 4.0 with Service Pack 3, or other more recent versions of Microsoft Windows. The passwords are transfered between the server and the client in an encrypted format instead of in as a plain-text word that can be intercepted."/>
+
+              
+          </c:group>
+          
+          <c:group name="Printing">
+              <c:simple-property name="load printers" displayName="Printing Enabled" type="boolean"/>
+              <c:simple-property name="cups options" required="false"/>
+              
+          </c:group>
+      </resource-configuration>
+
+       <service name="SambaShare" description="Shares on Samba"
+               discovery="SambaShareDiscoveryComponent" class="SambaShareComponent">
+           
+           <metric property="connections" description="The count of active connections to this share"/>
+           
+           <resource-configuration>
+               <c:simple-property name="path" required="true"/>
+               <c:simple-property name="comment" required="false"/>
+               <c:simple-property name="public" type="boolean"  required="false"/>
+               <c:simple-property name="browseable" type="boolean"  required="false"/>
+               <c:simple-property name="writable" type="boolean"  required="false"/>
+               <c:simple-property name="printable" type="boolean"  required="false"/>
+               <c:simple-property name="write list" required="false"/>
+               <c:simple-property name="guest ok" type="boolean"  required="false"/>
+               <c:simple-property name="share modes" />
+               <c:simple-property name="valid users" required="false"/>
+                                  
+           </resource-configuration>
+       </service>
+
+   </server>
+
+</plugin>

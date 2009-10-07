@@ -4,9 +4,6 @@ logs
 *cache.html
 *cache.xml
 *.swp
-.classpath
-.settings
-.project
 .wtpmodules
 .wtpmodules
 .*.jsfdia

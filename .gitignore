@@ -1,5 +1,7 @@
 target
 target/*
+eclipse-classes
+eclipse-classes/*
 logs
 *cache.html
 *cache.xml

@@ -109,4 +109,20 @@
         <column name="IS_DEFAULT" type="BOOLEAN" required="false"/>
     </table>
 
+    <table name="RHQ_RAW_CONFIG">
+        <column name="ID" type="INTEGER" required="true" default="sequence-only" initial="10001" primarykey="true"/>
+        <column name="CONFIG_ID" type="INTEGER" required="true" references="RHQ_CONFIG"/>
+        <column name="PATH" type="VARCHAR2" required="true" size="512"/>
+        <column name="CONTENT" type="BLOB" required="true"/>
+        <column name="SHA256" type="VARCHAR2" size="64" required="false"/>
+        <column name="VERSION" type="VARCHAR2" required="false" size="50"/>
+        <column name="CTIME" type="LONG" required="true"/>
+        <column name="MTIME" type="LONG" required="true"/>
+
+        <index name="RHQ_RAW_idx_config_key" unique="false">
+            <field ref="CONFIG_ID"/>
+        </index>
+    </table>
+
 </dbsetup>
+

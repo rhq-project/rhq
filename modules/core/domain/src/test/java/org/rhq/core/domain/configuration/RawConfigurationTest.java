@@ -42,8 +42,13 @@ public class RawConfigurationTest extends AbstractEJB3Test {
             rawConfig.setConfiguration(config);
             rawConfig.setContents(new byte[] {});
             rawConfig.setPath("/tmp/foo");
+            rawConfig.setSha256("12242432nde");
 
             entityMgr.persist(rawConfig);
+
+            RawConfiguration savedRawConfig = entityMgr.find(RawConfiguration.class, rawConfig.getId());
+
+            assertNotNull("Failed to find " + RawConfiguration.class.getSimpleName() + " by id.", savedRawConfig);
         }
         finally {
             getTransactionManager().rollback();    

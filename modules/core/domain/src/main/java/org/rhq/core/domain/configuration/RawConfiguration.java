@@ -47,22 +47,19 @@ public class RawConfiguration implements Serializable {
     @Id
     private int id;
 
-    @Column(name = "PATH")
+    @Column(name = "PATH", nullable = false)
     private String path;
 
-    @Column(name = "CONTENTS")
+    @Column(name = "CONTENTS", nullable = false)
     private byte[] contents;
 
-    @Column(name = "VERSION")
-    private long version;
-
-    @Column(name = "SHA256")
+    @Column(name = "SHA256", nullable = false)
     private String sha256;
 
-    @Column(name = "CTIME")
+    @Column(name = "CTIME", nullable = false)
     private long ctime = System.currentTimeMillis();
 
-    @Column(name = "MTIME")
+    @Column(name = "MTIME", nullable = false)
     private long mtime = System.currentTimeMillis();
     
     @ManyToOne(optional = false)
@@ -91,14 +88,6 @@ public class RawConfiguration implements Serializable {
 
     public void setContents(byte[] contents) {
         this.contents = contents;
-    }
-
-    public long getVersion() {
-        return version;
-    }
-
-    public void setVersion(long version) {
-        this.version = version;
     }
 
     public String getSha256() {
@@ -144,4 +133,48 @@ public class RawConfiguration implements Serializable {
         mtime = System.currentTimeMillis();
     }
 
+    /**
+     * Two RawConfiguration objects are considered equal if they have the same SHA-256 sum.
+     *
+     * @param obj The object to compare for equality
+     * @return true if obj is a RawConfiguration and has the same SHA-256 sum, false otherwise. Note that false is
+     * returned if {@link #getSha256()} returns null.
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+
+        if (obj == this) {
+            return true;
+        }
+
+        if (obj instanceof RawConfiguration && sha256 != null) {
+            RawConfiguration that = (RawConfiguration) obj;
+            return this.sha256.equals(that.sha256);
+        }
+
+        return false;
+    }
+
+    /**@return A hash which is generated off of {@link #getSha256()} */
+    @Override
+    public int hashCode() {
+        if (sha256 == null) {
+            return 0;
+        }
+        return sha256.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return new StringBuilder()
+            .append(getClass().getSimpleName())
+            .append("[id=").append(id)
+            .append(", path=").append(path)
+            .append(", sha256=").append(sha256)
+            .append(", configuration=").append(configuration)
+            .toString();
+    }
 }

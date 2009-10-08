@@ -1,0 +1,192 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:s="http://jboss.com/products/seam/taglib"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+<ui:composition template="/rhq/subsystem/layout/main.xhtml">
+
+   <ui:param name="pageTitle" value="Subsystem View - Configuration Updates"/>
+   <ui:param name="selectedTabName" value="Configuration Updates"/>
+   <ui:define name="content">
+
+      <h:form id="configurationUpdateSubsystemHistoryForm">
+            <rich:simpleTogglePanel switchType="client" label="Search Results">
+
+            <h:panelGrid columns="3" cellspacing="3">
+               <h:outputLabel for="resourceFilter" value="Resource Name Filter: " />
+               <h:inputText id="resourceFilter" value="#{SubsystemConfigurationUpdateUIBean.resourceFilter}"
+                            onkeypress="return ignoreEnterKey(event);"
+                            style="width: 300px;" />
+               <rich:spacer/>
+
+               <h:outputLabel for="parentFilter" value="Parent Name Filter: " />
+               <h:inputText id="parentFilter" value="#{SubsystemConfigurationUpdateUIBean.parentFilter}"
+                            onkeypress="return ignoreEnterKey(event);"
+                            style="width: 300px;" />
+               <rich:spacer/>
+
+               <h:outputLabel for="dateSubmittedFilter" value="Submitted After Filter: " />
+               <rich:calendar id="dateSubmittedFilter" value="#{SubsystemConfigurationUpdateUIBean.dateSubmittedFilter}"
+                              datePattern="#{onf:getWebUserPreferences().dateTimeDisplayPreferences.dateTimeFormatTrigger}"
+                              showApplyButton="true"
+                              showWeeksBar="false"
+                              style="width: 300px;" />
+               <rich:spacer/>
+
+               <h:outputLabel for="dateCompletedFilter" value="Completed Before Filter: " />
+               <rich:calendar id="dateCompletedFilter" value="#{SubsystemConfigurationUpdateUIBean.dateCompletedFilter}"
+                              datePattern="#{onf:getWebUserPreferences().dateTimeDisplayPreferences.dateTimeFormatTrigger}"
+                              showApplyButton="true"
+                              showWeeksBar="false"
+                              style="width: 300px;" />
+               <rich:spacer/>
+
+               <h:outputLabel for="statusFilter" value="Status Filter: " />
+               <h:selectOneMenu id="statusFilter" value="#{SubsystemConfigurationUpdateUIBean.statusFilter}"
+                                style="width: 300px;">
+                   <f:selectItems value="#{SubsystemConfigurationUpdateUIBean.statusFilterItems}"/>
+               </h:selectOneMenu>
+               <a4j:commandButton value="GO" reRender="configurationUpdateDataTable, configurationUpdateDataTableScroller"
+                                  styleClass="buttonmed">
+                   <s:defaultAction/>
+               </a4j:commandButton>
+            </h:panelGrid>
+
+            </rich:simpleTogglePanel>
+
+            <h:panelGrid columns="1" width="100%">
+
+            <ui:param name="configurationUpdateDataModel" value="#{SubsystemConfigurationUpdateUIBean.dataModel}"/>
+            <rich:dataTable id="configurationUpdateDataTable"
+                            rows="#{PageControl.SubsystemConfigurationHistory.pageSize}"
+                            value="#{configurationUpdateDataModel}"
+                            var="item"
+                            width="100%"
+                            columnsWidth="23%, 22%, 15%, 15%, 15%,20%"
+                            headerClass="tableRowHeader"
+                            footerClass="on-pager-footer"
+                            onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                            onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+
+               <f:facet name="PageControlView">
+                  <onc:paginationControl id="SubsystemConfigurationHistory" />
+               </f:facet>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="res.name">
+                        <h:outputText styleClass="headerText" value="Resource" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputLink value="#{onf:getDefaultResourceTabURL()}">
+                     <f:param name="id" value="#{item.resourceId}" />
+                     <h:outputText value="#{item.resourceName}" />
+                  </h:outputLink>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="parent.name">
+                        <h:outputText styleClass="headerText" value="Parent" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputLink value="#{onf:getDefaultResourceTabURL()}"
+                                rendered="#{not empty item.parentResourceId}">
+                     <f:param name="id" value="#{item.parentResourceId}" />
+                     <h:outputText value="#{item.parentResourceName}" />
+                  </h:outputLink>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="cu.createdTime">
+                        <h:outputText styleClass="headerText" value="Date Submitted" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputLink value="/rhq/resource/configuration/history.xhtml">
+                     <f:param name="id" value="#{item.resourceId}" />
+                     <f:param name="configId" value="#{item.id}" />
+                     <h:outputText value="#{item.createdTime}">
+                        <f:converter converterId="UserDateTimeConverter" />
+                     </h:outputText>
+                  </h:outputLink>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="cu.modifiedTime">
+                        <h:outputText styleClass="headerText" value="Date Completed" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.modifiedTime}" rendered="#{item.status ne 'INPROGRESS'}" >
+                     <f:converter converterId="UserDateTimeConverter" />
+                  </h:outputText>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="cu.status">
+                        <h:outputText styleClass="headerText" value="Status" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputLink rendered="#{item.status eq 'FAILURE'}"
+                                value="javascript:displayMessageModal('Stack Trace','#{item.errorMessage}')">
+                      <h:graphicImage value="/images/icons/Configure_failed_16.png"/>
+                      <h:outputText value="#{item.status}"/>
+                  </h:outputLink>
+
+                   <h:graphicImage value="/images/icons/Configure_ok_16.png" rendered="#{item.status eq 'SUCCESS'}"/>
+
+                  <h:outputText rendered="#{item.status ne 'FAILURE'}" value="#{item.status}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="cu.subjectName">
+                        <h:outputText styleClass="headerText" value="User" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.subjectName}" rendered="#{not empty item.subjectName}" />
+                  <h:outputText value="External Change Detected" rendered="#{empty item.subjectName}" />
+               </rich:column>
+
+               <f:facet name="footer">
+                  <rich:columnGroup>
+                     <rich:column colspan="6" width="100%">
+
+                        <ui:param name="paginationDataTableName" value="configurationUpdateDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{configurationUpdateDataModel}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.SubsystemConfigurationHistory}"/>
+                        <ui:include src="/rhq/resource/include/pagination.xhtml"/>
+                     </rich:column>
+                  </rich:columnGroup>
+               </f:facet>
+
+            </rich:dataTable>
+
+            </h:panelGrid>
+      </h:form>
+
+   </ui:define>
+
+</ui:composition>
+
+</html>

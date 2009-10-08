@@ -1,0 +1,21 @@
+<plugin name="SelfReferencingPluginTest"
+        displayName="Self Referencing Plugin Test Display Name"
+        package="org.rhq.plugins.selfreferencing.test"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <platform name="topPlatform1">
+   </platform>
+
+   <platform name="topPlatform2">
+   </platform>
+
+   <service name="topService">
+      <runs-inside>
+         <parent-resource-type name="topPlatform1" plugin="SelfReferencingPluginTest"/>
+         <parent-resource-type name="topPlatform2" plugin="SelfReferencingPluginTest"/>
+      </runs-inside>
+   </service>
+
+</plugin>

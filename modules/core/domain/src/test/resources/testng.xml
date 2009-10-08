@@ -1,0 +1,12 @@
+<!DOCTYPE suite SYSTEM "http://beust.com/testng/testng-1.0.dtd" >
+  
+<suite name="EJB3 Testsuite" >
+	<test name="EJB3 tests" >
+		<groups>
+			<run>
+				<include name="integration.ejb3"/>
+			</run>
+		</groups>
+				
+	</test>
+</suite>

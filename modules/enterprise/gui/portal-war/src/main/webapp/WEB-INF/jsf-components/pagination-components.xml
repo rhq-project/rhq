@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+
+<faces-config version="1.2" xmlns="http://java.sun.com/xml/ns/javaee"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd">
+
+   <component>
+      <component-type>org.jboss.on.PaginationControl</component-type>
+      <component-class>org.rhq.enterprise.gui.common.paging.PaginationControl</component-class>
+
+      <component-extension>
+         <component-family>org.jboss.on.PaginationControl</component-family>
+         <renderer-type>org.jboss.on.PaginationControl</renderer-type>
+      </component-extension>
+   </component>
+   
+   <render-kit>
+
+      <renderer>
+         <description>render a simple span for the PaginationControl component</description>
+         <component-family>org.jboss.on.PaginationControl</component-family>
+         <renderer-type>org.jboss.on.PaginationControl</renderer-type>
+         <renderer-class>org.rhq.enterprise.gui.common.paging.PaginationControlRenderer</renderer-class>
+      </renderer>
+
+   </render-kit>
+
+</faces-config>

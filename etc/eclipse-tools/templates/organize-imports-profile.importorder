@@ -1,0 +1,8 @@
+#Organize Import Order
+#Mon Jan 28 16:18:51 EST 2008
+5=org.rhq
+4=org.jboss
+3=org
+2=com
+1=javax
+0=java

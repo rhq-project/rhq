@@ -1,0 +1,125 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:a4j="http://richfaces.org/a4j"
+      xmlns:rich="http://richfaces.org/rich"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function">
+
+THIS TEXT WILL BE REMOVED.
+
+The template for all Resource Group pages (i.e. the Monitor/Inventory/etc. tabbed pages).
+
+TEMPLATE PARAMETERS:
+   content - the page content
+
+CONTEXT PARAMETERS:
+   pageTitle - the page title
+   pageHelpURL - a context-sensitive help URL for the page (optional)
+   selectedTabName - the name of the tab/subTab to select in the following format: tabName[.subtabName]
+   (e.g. "Inventory" or "Monitor.Graphs")
+
+REQUEST PARAMETERS:
+   groupId - the id of the ResourceGroup being accessed
+
+<ui:composition template="${(ResourceGroupUIBean.compatible) ? '/rhq/entity/layout/main.xhtml' : '/rhq/entity/layout/main-wide.xhtml'}">
+
+THIS TEXT WILL BE REMOVED AS WELL.
+
+<ui:param name="defaultPageTitle" value="#{ResourceGroupUIBean.typeName} '#{ResourceGroupUIBean.name}'"/>
+
+<ui:define name="summary">
+
+   <ui:remove>
+      <!-- NOTE: Besides being included here, summary.xhtml is also leveraged by JSP-based pages. Specifically, it is
+                 included (via an AJAX request) in /common/components/PageTitle.jsp. -->
+   </ui:remove>
+   <ui:include src="/rhq/group/layout/summary.xhtml"/>
+
+</ui:define>
+
+<ui:define name="tabBar">
+
+   <onc:tabBar selectedTabName="#{selectedTabName}">
+
+      <f:param name="groupId" value="#{param.groupId}"/>
+      <f:param name="parentGroupId" value="#{param.parentGroupId}"/>
+      <f:param name="category" value="#{param.category}"/>
+
+      <onc:tab name="Monitor" image="/images/icons/Monitor_grey_16.png" rendered="#{ResourceGroupUIBean.compatible}">
+         <onc:subtab name="Graphs" url="/rhq/group/monitor/graphs.xhtml"/>
+         <onc:subtab name="Tables" url="/rhq/group/monitor/tables.xhtml"/>
+         <onc:subtab name="Schedules" url="/rhq/group/monitor/schedules.xhtml"/>
+      </onc:tab>
+      
+      <onc:tab name="Inventory" image="/images/icons/Inventory_grey_16.png">
+         <onc:subtab name="Overview" url="/rhq/group/inventory/view.xhtml" />
+         <c:if test="#{ResourceGroupUIBean.compatible and ResourceGroupUIBean.facets.pluginConfiguration}">
+            <onc:subtab name="Connection" url="/rhq/group/inventory/view-connection.xhtml" />
+         </c:if>
+      </onc:tab>
+      
+      <onc:tab name="Alert" image="/images/icons/Alert_grey_16.png" 
+               rendered="#{monitorEnabled and ResourceGroupUIBean.compatible}">
+         <onc:subtab name="Definitions" url="/rhq/group/alert/listGroupAlertDefinitions.xhtml" />
+         <onc:subtab name="History"     url="/rhq/group/alert/listGroupAlertHistory.xhtml" />
+      </onc:tab>
+
+      <onc:tab name="Configuration" displayName="Configure" image="/images/icons/Configure_grey_16.png"
+               rendered="#{ResourceGroupUIBean.compatible and ResourceGroupUIBean.facets.configuration}">
+         <onc:subtab name="Current" url="/rhq/group/configuration/viewCurrent.xhtml" />
+         <onc:subtab name="History" url="/rhq/group/configuration/history.xhtml" />
+      </onc:tab>
+
+      <onc:tab name="Operations" image="/images/icons/Operation_grey_16.png" rendered="#{ResourceGroupUIBean.compatible and ResourceGroupUIBean.facets.operation}">
+         <onc:subtab name="New" url="/rhq/group/operation/groupOperationScheduleNew.xhtml"/>
+         <onc:subtab name="Schedules" url="/rhq/group/operation/groupOperationSchedules.xhtml"/>
+         <onc:subtab name="History" url="/rhq/group/operation/groupOperationHistory.xhtml"/>
+      </onc:tab>
+
+      <onc:tab name="Events" image="/images/icons/Events_grey_16.png" rendered="#{ResourceGroupUIBean.compatible and ResourceGroupUIBean.facets.event}">
+         <onc:subtab name="History" url="/rhq/group/events/history.xhtml"/>
+      </onc:tab>
+      
+   </onc:tabBar>
+   
+   <!-- Shows the results of the last action executed. -->
+   <h:messages showSummary="true"
+               showDetail="true"
+               infoClass="InfoBlock"
+               warnClass="WarnBlock"
+               errorClass="ErrorBlock"
+               fatalClass="FatalBlock"
+               globalOnly="true"
+               layout="table"
+               width="100%"/>
+
+</ui:define>
+
+	<ui:define name="nav">
+
+        <ui:include src="/rhq/group/navigation/GroupTree.xhtml"/>
+
+    </ui:define>
+
+<ui:define name="content">
+   <p/>
+
+   <h1>Default Resource Group Content</h1>
+
+   <p/>
+</ui:define>
+
+</ui:composition>
+
+THIS TEXT WILL BE REMOVED AS WELL.
+
+</html>

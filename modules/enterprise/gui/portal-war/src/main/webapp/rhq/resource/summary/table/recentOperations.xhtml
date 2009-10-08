@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+   <h2><h:graphicImage value="/images/icons/Operation_24.png" style="vertical-align: bottom;"/>
+       Recent Operations</h2>
+   <ui:repeat var="item"
+              value="#{ResourceOverviewUIBean.recentOperations}">
+      <div style="text-indent: 20px;">
+         <h:graphicImage value="#{onf:getOperationStatusURL(item.operationStatus)}" title="#{item.operationStatus}"/>
+         <h:outputText value=" " />
+         <h:outputLink value="/rhq/resource/operation/resourceOperationHistoryDetails.xhtml">
+            <f:param name="id" value="#{item.resourceId}" />
+            <f:param name="opId" value="#{item.operationHistoryId}" />
+            <h:outputText value="#{item.operationName}" />
+         </h:outputLink>
+         <h:outputText value=": " />
+         <h:outputText value="#{item.operationStartTime}">
+            <f:converter converterId="RelativeDurationConverter" />
+         </h:outputText>
+         <br />
+      </div>
+   </ui:repeat>
+
+   <div style="text-indent: 20px;">
+      <h:outputText value="No recent operation history"
+                    rendered="#{onf:sizeOf(ResourceOverviewUIBean.recentOperations) eq 0}"/>
+   </div>
+
+</ui:composition>

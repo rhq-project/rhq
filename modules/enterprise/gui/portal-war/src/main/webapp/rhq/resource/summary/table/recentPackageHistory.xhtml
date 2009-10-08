@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+   <h2><h:graphicImage value="/images/icons/Content_24.png" style="vertical-align: bottom;"/>
+       Recent Package History</h2>
+   <ui:repeat var="item" 
+              value="#{ResourceOverviewUIBean.recentPackageHistory}">
+      <div style="text-indent: 20px;">
+         <h:graphicImage value="/images/icons/Content_16.png" />
+         <h:outputText value=" " />
+         <h:outputLink value="/rhq/resource/content/audit-trail-item.xhtml">
+            <f:param name="id" value="#{item.resource.id}" />
+            <f:param name="selectedHistoryId" value="#{item.id}" />
+            <h:outputText value="#{item.packageVersion.displayName}" 
+                          rendered="#{!empty item.packageVersion.displayName}"/>
+            <h:outputText value="#{item.packageVersion.generalPackage.name}" 
+                          rendered="#{empty item.packageVersion.displayName}"/>
+         </h:outputLink>
+         <h:outputText value=": " />
+         <h:outputText value="#{item.timestamp}">
+            <f:converter converterId="RelativeDurationConverter" />
+         </h:outputText>
+         <br />
+      </div>
+   </ui:repeat>
+
+   <div style="text-indent: 20px;">
+      <h:outputText value="No recent package history" 
+                    rendered="#{onf:sizeOf(ResourceOverviewUIBean.recentPackageHistory) eq 0}"/>
+   </div>
+
+</ui:composition>

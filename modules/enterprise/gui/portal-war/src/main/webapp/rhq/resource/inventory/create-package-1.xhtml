@@ -1,0 +1,101 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:s="http://jboss.com/products/seam/taglib"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+<ui:composition template="/rhq/resource/layout/main.xhtml">
+
+<ui:param name="pageTitle" value="#{ResourceUIBean.resourceType.name} '#{ResourceUIBean.name}' - Create New Child of Type #{CreateNewPackageChildResourceUIBean.resourceType.name}"/>
+<ui:param name="selectedTabName" value="Inventory.Overview"/>
+<ui:define name="content">
+
+   <h:form id="uploadForm">
+
+      <input type="hidden" name="id" value="${ResourceUIBean.id}"/>
+      <input type="hidden" name="type" value="#{CreateNewPackageChildResourceUIBean.resourceType.id}"/>
+      <h:inputHidden value="#{CreateNewPackageChildResourceUIBean.packageType}" converter="PackageTypeConverter"/>
+
+      <rich:panel>
+
+         <f:facet name="header"><h:outputText value="Create New Resource"/></f:facet>
+
+         <p><h:outputText value="In order to create a new #{CreateNewPackageChildResourceUIBean.resourceType.name}, a new
+         package must be deployed as the basis for the resource. The following information is required to
+         create the package."/></p>
+
+         <table>
+            <c:if test="#{CreateNewPackageChildResourceUIBean.packageType.supportsArchitecture}">
+               <tr>
+                  <td align="right"><b><h:outputText value="Package Architecture #{CreateNewPackageChildResourceUIBean.packageType.supportsArchitecture}"/> </b></td>
+                  <td align="left">
+                     <h:selectOneMenu value="#{CreateNewPackageChildResourceUIBean.selectedArchitectureId}">
+                        <f:selectItems value="#{CreateNewPackageChildResourceUIBean.architectures}" />
+                     </h:selectOneMenu>
+                  </td>
+               </tr>
+            </c:if>
+         </table>
+
+         <h:panelGrid columns="1" width="100%">
+            <rich:panel>
+               <input type="button"
+                      class="buttonmed"
+                      value="UPLOAD FILE..."
+                      onclick="javascript:open('/rhq/resource/inventory/create-file-upload.xhtml', 'uploadwin', 'titlebar=0,toolbar=0,location=0,menubar=0,directories=0,resizable=0,height=160,width=450')"/>
+               <rich:spacer width="5" />
+               <h:outputText rendered="#{UploadNewChildPackageUIBean.fileUploaded}"
+                             value="File Uploaded: #{UploadNewChildPackageUIBean.fileItem.fileName}"/>
+            </rich:panel>
+         </h:panelGrid>
+
+         <h:outputText rendered="#{!ResourceUIBean.permissions.content}"
+                       value="You do not have permissions to upload content"/>
+
+         <onc:config configurationDefinition="#{CreateNewPackageChildResourceUIBean.configurationDefinition}"
+                     configuration="#{CreateNewPackageChildResourceUIBean.configuration}"
+                     nullConfigurationDefinitionMessage="#{CreateNewPackageChildResourceUIBean.nullConfigurationDefinitionMessage}"
+                     nullConfigurationMessage="#{CreateNewPackageChildResourceUIBean.nullConfigurationMessage}"/>
+
+         <h:panelGrid id="buttonGrid" columns="2" styleClass="buttons-table" columnClasses="button-cell">
+
+            <h:commandButton style="margin-top: 10px;" value="CREATE"
+                             action="#{CreateNewPackageChildResourceUIBean.createResource}"
+                             rendered="#{UploadNewChildPackageUIBean.fileUploaded}"
+                             styleClass="buttonmed">
+               <s:defaultAction />
+            </h:commandButton>
+            <h:commandButton style="margin-top: 10px;" value="CREATE"
+                             action="#{CreateNewPackageChildResourceUIBean.createResource}"
+                             disabled="true"
+                             rendered="#{!UploadNewChildPackageUIBean.fileUploaded}"
+                             styleClass="buttonmed-disabled">
+               <s:defaultAction />
+            </h:commandButton>
+
+            <h:commandButton style="margin-top: 10px;" value="CANCEL"
+                             immediate="true"
+                             action="#{CreateNewPackageChildResourceUIBean.cancel}" styleClass="buttonmed"/>
+
+         </h:panelGrid>
+
+      </rich:panel>
+
+   </h:form>
+
+</ui:define>
+
+</ui:composition>
+
+</html>

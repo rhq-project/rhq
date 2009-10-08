@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:config="urn:xmlns:rhq-configuration"
+           xmlns:rhq="urn:xmlns:rhq-serverplugin.content"
+           targetNamespace="urn:xmlns:rhq-serverplugin.content"
+           elementFormDefault="qualified"
+           jaxb:version="2.0"
+           xmlns:jaxb="http://java.sun.com/xml/ns/jaxb" blockDefault="">
+
+   <xs:import namespace="urn:xmlns:rhq-configuration" schemaLocation="rhq-configuration.xsd"/>
+
+   <xs:annotation>
+      <xs:documentation>
+         Schema for server-side content source plugins. These plugins will provide
+         implementations that allow remote repositories to feed content into
+         the server's content subsystem.
+      </xs:documentation>
+      <xs:appinfo>
+         <jaxb:schemaBindings>
+            <jaxb:package name="org.rhq.core.clientapi.descriptor.serverplugin.content"/>
+         </jaxb:schemaBindings>
+      </xs:appinfo>
+   </xs:annotation>
+
+   <xs:element name="plugin">
+      <xs:annotation>
+         <xs:documentation>
+            Root of a plugin representing a set of defined server content source implementations.
+         </xs:documentation>
+         <xs:appinfo>
+            <jaxb:class name="ContentSourcePluginDescriptor"/>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element ref="rhq:contentSourceType" minOccurs="1" maxOccurs="unbounded">
+               <xs:annotation>
+                  <xs:documentation>
+                     Defines a supported content source type that is able to feed content into the server.
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:element>
+         </xs:sequence>
+         <xs:attribute name="name" use="required">
+            <xs:simpleType>
+               <xs:restriction base="xs:string">
+                  <xs:minLength value="1"/>
+                  <xs:maxLength value="200"/>
+               </xs:restriction>
+            </xs:simpleType>
+         </xs:attribute>
+      </xs:complexType>
+   </xs:element>
+
+   <xs:element name="contentSourceType">
+      <xs:annotation>
+         <xs:appinfo>
+            <jaxb:class name="ContentSourceTypeDefinition" />
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="configuration" type="config:configuration" minOccurs="0" maxOccurs="1">
+               <xs:annotation>
+                  <xs:documentation>
+                     Defines the configuration properties that must be set when creating a
+                     content source of this type. Typically, this will define the properties
+                     necessary for specifying how to connect to the underlying source.
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:element>
+         </xs:sequence>
+         <xs:attribute name="name" use="required">
+            <xs:simpleType>
+               <xs:restriction base="xs:string">
+                  <xs:minLength value="1"/>
+                  <xs:maxLength value="200"/>
+               </xs:restriction>
+            </xs:simpleType>
+         </xs:attribute>
+         <xs:attribute name="displayName" use="optional">
+            <xs:simpleType>
+               <xs:restriction base="xs:string">
+                  <xs:minLength value="1"/>
+                  <xs:maxLength value="200"/>
+               </xs:restriction>
+            </xs:simpleType>
+         </xs:attribute>      
+         <xs:attribute name="description" use="optional">
+            <xs:annotation>
+               <xs:documentation>
+                  Describes this type of content source. This usually
+                  provides information such as what type of remote endpoint
+                  the content source uses (http or some kind of file
+                  transport protocol) and the types of packages the content
+                  source can serve up, if known.
+               </xs:documentation>
+            </xs:annotation>
+            <xs:simpleType>
+               <xs:restriction base="xs:string">
+                  <xs:minLength value="1"/>
+                  <xs:maxLength value="500"/>
+               </xs:restriction>
+            </xs:simpleType>
+         </xs:attribute>
+         <xs:attribute name="lazyLoad" use="required" type="xs:boolean">
+            <xs:annotation>
+               <xs:documentation>
+                  If set to true, the content bits for all packages coming from
+                  content sources of this type will, by default, only be loaded on demand.
+                  This means the package contents will only be loaded when they are
+                  asked for the very first time.  If false, the default for all content
+                  sources of this type will be that they  should attempt to download all
+                  packages as soon as possible. Note that this is only the default,
+                  suggested value.  When creating a content source, the user will be
+                  given the chance to override this default.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:attribute>      
+         <xs:attribute name="downloadMode" use="optional" default="database">
+            <xs:annotation>
+               <xs:documentation>
+                  Indicates where (and even if) package bits are
+                  downloaded, when they are downloaded. If 'never', then
+                  package bits are never downloaded from the content
+                  source, effectively creating a pass-through directly
+                  to the remote repository for every request for package
+                  bits. If 'database', when package bits are downloaded,
+                  they are stored in the database. If 'filesystem',
+                  package bits will be stored somewhere on the
+                  filesystem.
+               </xs:documentation>
+            </xs:annotation>
+            <xs:simpleType>
+               <xs:restriction base="xs:string">
+                  <xs:enumeration value="never"></xs:enumeration>
+                  <xs:enumeration value="database"></xs:enumeration>
+                  <xs:enumeration value="filesystem"></xs:enumeration>
+               </xs:restriction>
+            </xs:simpleType>
+         </xs:attribute>
+         <xs:attribute name="syncSchedule" use="optional" type="xs:string" default="0 0 3 * * ?">
+            <xs:annotation>
+               <xs:documentation>
+                  Periodically, the content source plugin adapter will be asked to
+                  synchronize with the remote content source repository.  This gives
+                  the adapter a chance to see if any content has been added, updated
+                  or removed from the remote repository.
+                  This attribute defines the schedule, as a cron string. The default
+                  will be set for everyday at 3:00am local time.  If you never want
+                  the content source to be automatically synced, set this value to
+                  an empty string.
+                  For documentation on the syntax of this cron string, please see:
+                  http://www.opensymphony.com/quartz/wikidocs/CronTriggers%20Tutorial.html
+               </xs:documentation>
+            </xs:annotation>
+         </xs:attribute>      
+         <xs:attribute name="apiClass" type="rhq:classNameType" use="required">
+            <xs:annotation>
+               <xs:documentation>
+                  This specifies the fully qualified class name of the
+                  implementation class that provides a way for the server
+                  to interface with the remote content store. This API
+                  class must implement the ContentSourceAdapter interface.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:attribute>
+      </xs:complexType>
+   </xs:element>
+
+   <xs:simpleType name="classNameType">
+      <xs:restriction base="xs:string">
+         <xs:whiteSpace value="collapse" />
+         <xs:minLength value="1" />
+         <xs:maxLength value="100" />
+         <xs:pattern value="[a-zA-Z_][a-zA-Z_0-9]*(.[a-zA-Z_][a-zA-Z_0-9]*)*" />
+      </xs:restriction>
+   </xs:simpleType>
+</xs:schema>

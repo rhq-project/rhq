@@ -1,0 +1,8 @@
+<project>
+  <name>RHQ Plugin Archetype</name>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.rhq</groupId>
+  <artifactId>rhq-plugin-archetype</artifactId>
+  <version>1.0.0.GA</version>
+  <packaging>jar</packaging>
+</project>

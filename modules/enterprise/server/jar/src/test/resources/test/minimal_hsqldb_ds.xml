@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- The Hypersonic embedded database JCA connection factory config
+$Id: minimal_hsqldb_ds.xml 680 2005-09-14 01:52:58Z ccrouch $ -->
+
+
+<datasources>
+   <local-tx-datasource>
+
+      <!-- The jndi name of the DataSource, it is prefixed with java:/ -->
+      <!-- Datasources are not available outside the virtual machine -->
+ <jndi-name>DefaultDS</jndi-name>
+
+      <connection-url attrib="a" >jdbc:hsqldb:${jboss.server.data.dir}${/}hypersonic${/}localDB</connection-url>
+      <connection-property name="111">aaa</connection-property>
+      <connection-property name="222">bbb</connection-property>
+      <connection-property name="444">ddd</connection-property>
+      <user-name>jones</user-name>
+   </local-tx-datasource>
+
+ <mbean name="test">
+  <arg>addd</arg>
+ </mbean>
+</datasources>

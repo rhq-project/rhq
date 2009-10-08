@@ -1,0 +1,70 @@
+<plugin name="OptionalPluginTest"
+        displayName="Optional Plugin Test Display Name"
+        package="org.rhq.plugins.optional.test"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <platform name="topPlatform">
+      <runs-inside>
+         <parent-resource-type name="hello" plugin="UnknownPluginP1"/>
+         <parent-resource-type name="world" plugin="UnknownPluginP2"/>
+      </runs-inside>
+
+      <server name="topPlatform.server1">
+         <runs-inside>
+            <parent-resource-type name="hello" plugin="UnknownPluginP3"/>
+            <parent-resource-type name="world" plugin="UnknownPluginP4"/>
+         </runs-inside>
+      </server>
+      <server name="topPlatform.server2" sourceType="hello" sourcePlugin="UnknownPluginP5" />
+
+      <service name="topPlatform.service1">
+         <runs-inside>
+            <parent-resource-type name="hello" plugin="UnknownPluginP6"/>
+            <parent-resource-type name="world" plugin="UnknownPluginP7"/>
+         </runs-inside>
+      </service>
+      <service name="topPlatform.service2" sourceType="hello" sourcePlugin="UnknownPluginP8" />
+   </platform>
+
+   <server name="topServer">
+      <runs-inside>
+         <parent-resource-type name="hello" plugin="UnknownPluginS1"/>
+         <parent-resource-type name="world" plugin="UnknownPluginS2"/>
+      </runs-inside>
+      <server name="topServer.server1">
+         <runs-inside>
+            <parent-resource-type name="hello" plugin="UnknownPluginS3"/>
+            <parent-resource-type name="world" plugin="UnknownPluginS4"/>
+         </runs-inside>
+      </server>
+      <server name="topServer.server2" sourceType="hello" sourcePlugin="UnknownPluginS5" />
+
+      <service name="topServer.service1">
+         <runs-inside>
+            <parent-resource-type name="hello" plugin="UnknownPluginS6"/>
+            <parent-resource-type name="world" plugin="UnknownPluginS7"/>
+         </runs-inside>
+      </service>
+      <service name="topServer.service2" sourceType="hello" sourcePlugin="UnknownPluginS8" />
+   </server>
+   <server name="topServer2" sourceType="hello" sourcePlugin="UnknownPluginS9"/>
+
+   <service name="topService">
+      <runs-inside>
+         <parent-resource-type name="hello" plugin="UnknownPluginC1"/>
+         <parent-resource-type name="world" plugin="UnknownPluginC2"/>
+      </runs-inside>
+
+      <service name="topService.service1">
+         <runs-inside>
+            <parent-resource-type name="hello" plugin="UnknownPluginC3"/>
+            <parent-resource-type name="world" plugin="UnknownPluginC4"/>
+         </runs-inside>
+      </service>
+      <service name="topService.service2" sourceType="hello" sourcePlugin="UnknownPluginC5" />
+   </service>
+   <service name="topService2" sourceType="hello" sourcePlugin="UnknownPluginC9"/>
+
+</plugin>

@@ -1,0 +1,331 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+<ui:composition template="/rhq/layout/main.xhtml">
+
+   <ui:param name="pageTitle" value="Affinity Group Agents"/>
+   <ui:param name="affinityGroupDetails" value="#{ViewAffinityGroupDetailsUIBean.affinityGroup}" />
+   <ui:param name="mode" value="#{param.mode}" />
+
+   <ui:define name="breadcrumbs">
+      <h:outputLink value="listAffinityGroups.xhtml">
+         ${msg["ha.affinity.group.list.breadcrumb"]}
+      </h:outputLink>
+      &gt;
+      <h:outputLink value="viewAffinityGroup.xhtml">
+         ${msg["ha.affinity.group.view.breadcrumb"]}
+         <f:param name="affinityGroupId" value="#{param.affinityGroupId}"/>
+         <f:param name="mode" value="#{param.mode}"/>
+      </h:outputLink>
+      &gt;
+      <h:outputLink value="affinityGroupAgents.xhtml">
+         ${msg["ha.affinity.group.agents"]}
+         <f:param name="affinityGroupId" value="#{param.affinityGroupId}"/>
+         <f:param name="mode" value="#{param.mode}"/>
+      </h:outputLink>
+   </ui:define>
+
+   <ui:define name="body">
+
+   <h:messages showSummary="true"
+               showDetail="true"
+               infoClass="InfoBlock"
+               warnClass="WarnBlock"
+               errorClass="ErrorBlock"
+               fatalClass="FatalBlock"
+               globalOnly="false"
+               layout="table"
+               width="100%"/>
+
+      <h:form id="subscribedAgentsForm">
+         <input type="hidden" name="affinityGroupId" value="#{param.affinityGroupId}"/>
+         <input type="hidden" name="mode" value="#{param.mode}"/>
+
+         <rich:panel>
+            <f:facet name="header">
+               <h:outputText value="Agents in this group"/>
+            </f:facet>
+
+            <h:panelGrid columns="1" width="100%">
+
+            <ui:param name="subscribedAgentsDataModel" value="#{AffinityGroupSubscribedAgentsUIBean.dataModel}"/>
+            <rich:dataTable id="subscribedAgentsDataTable"
+                            rows="#{PageControl.AffinityGroupSubscribedAgents.pageSize}"
+                            value="#{subscribedAgentsDataModel}"
+                            var="agentItem"
+                            width="100%"
+                            columnsWidth="1%, 15%, 10%, 10%, 10%"
+                            headerClass="tableRowHeader"
+                            footerClass="on-pager-footer"
+                            onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                            onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+
+               <f:facet name="PageControlView">
+                  <onc:paginationControl id="AffinityGroupSubscribedAgents" />
+               </f:facet>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:allSelect target="selectedAgentsToUnsubscribe" />
+                  </f:facet>
+
+                  <onc:select name="selectedAgentsToUnsubscribe" value="#{agentItem.id}" />
+               </rich:column>
+
+               <rich:column rendered="#{param.debug}">
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="a.id">
+                        <h:outputText styleClass="headerText" value="ID" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{agentItem.id}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="a.name">
+                        <h:outputText styleClass="headerText" value="Agent Name" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputLink value="viewAgent.xhtml">
+                     <f:param name="mode" value="view"/>
+                     <f:param name="agentId" value="#{agentItem.id}"/>
+                     <h:outputText value="#{agentItem.name}" />
+                  </h:outputLink>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="a.address">
+                        <h:outputText styleClass="headerText" value="Bind Address" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{agentItem.address}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="a.port">
+                        <h:outputText styleClass="headerText" value="Bind Port" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{agentItem.port}"/>
+               </rich:column>
+
+               <rich:column rendered="#{param.debug}">
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="a.agentToken">
+                        <h:outputText styleClass="headerText" value="Token" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{agentItem.agentToken}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="a.lastAvailabilityReport">
+                        <h:outputText styleClass="headerText" value="Last Availability Report" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{agentItem.lastAvailabilityReport}">
+                     <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
+                  </h:outputText>
+               </rich:column>
+
+               <rich:column rendered="#{param.debug}">
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="a.status">
+                        <h:outputText styleClass="headerText" value="Status" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{agentItem.status}"/>
+               </rich:column>
+
+               <f:facet name="footer">
+                  <rich:columnGroup>
+                     <!-- colspan 8:5 for the debug 'id' column -->
+                     <rich:column colspan="#{param.debug ? 8 : 5}" width="100%">
+
+                        <onc:selectCommandButton action="#{AffinityGroupSubscribedAgentsUIBean.unsubscribeAgents}"
+                                         value="REMOVE FROM GROUP" styleClass="on-pager-button buttonsmall"
+                                         target="selectedAgentsToUnsubscribe"/>
+
+                        <ui:param name="paginationDataTableName" value="subscribedAgentsDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{subscribedAgentsDataModel}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.AffinityGroupSubscribedAgents}"/>
+                        <ui:include src="../resource/include/pagination.xhtml"/>
+                     </rich:column>
+                  </rich:columnGroup>
+               </f:facet>
+
+            </rich:dataTable>
+
+            </h:panelGrid>
+
+         </rich:panel>
+      </h:form>
+
+      <h:form id="unsubscribedAgentsForm">
+         <input type="hidden" name="affinityGroupId" value="#{param.affinityGroupId}"/>
+         <input type="hidden" name="mode" value="#{param.mode}"/>
+
+         <rich:panel>
+            <f:facet name="header">
+               <h:outputText value="Agents not part of an affinity group"/>
+            </f:facet>
+
+            <h:panelGrid columns="1" width="100%">
+
+            <ui:param name="unsubscribedAgentsDataModel" value="#{AffinityGroupUnsubscribedAgentsUIBean.dataModel}"/>
+            <rich:dataTable id="unsubscribedAgentsDataTable"
+                            rows="#{PageControl.AffinityGroupUnsubscribedAgents.pageSize}"
+                            value="#{unsubscribedAgentsDataModel}"
+                            var="agentItem"
+                            width="100%"
+                            columnsWidth="1%, 15%, 10%, 10%, 10%"
+                            headerClass="tableRowHeader"
+                            footerClass="on-pager-footer"
+                            onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                            onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+
+               <f:facet name="PageControlView">
+                  <onc:paginationControl id="AffinityGroupUnsubscribedAgents" />
+               </f:facet>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:allSelect target="selectedAgentsToSubscribe" />
+                  </f:facet>
+
+                  <onc:select name="selectedAgentsToSubscribe" value="#{agentItem.id}" />
+               </rich:column>
+
+               <rich:column rendered="#{param.debug}">
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="a.id">
+                        <h:outputText styleClass="headerText" value="ID" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{agentItem.id}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="a.name">
+                        <h:outputText styleClass="headerText" value="Agent Name" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputLink value="viewAgent.xhtml">
+                     <f:param name="mode" value="view"/>
+                     <f:param name="agentId" value="#{agentItem.id}"/>
+                     <h:outputText value="#{agentItem.name}" />
+                  </h:outputLink>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="a.address">
+                        <h:outputText styleClass="headerText" value="Bind Address" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{agentItem.address}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="a.port">
+                        <h:outputText styleClass="headerText" value="Bind Port" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{agentItem.port}"/>
+               </rich:column>
+
+               <rich:column rendered="#{param.debug}">
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="a.agentToken">
+                        <h:outputText styleClass="headerText" value="Token" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{agentItem.agentToken}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="a.lastAvailabilityReport">
+                        <h:outputText styleClass="headerText" value="Last Availability Report" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{agentItem.lastAvailabilityReport}">
+                     <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
+                  </h:outputText>
+               </rich:column>
+
+               <rich:column rendered="#{param.debug}">
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="a.status">
+                        <h:outputText styleClass="headerText" value="Status" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{agentItem.status}"/>
+               </rich:column>
+
+               <f:facet name="footer">
+                  <rich:columnGroup>
+                     <!-- colspan 8:5 for the debug 'id' column -->
+                     <rich:column colspan="#{param.debug ? 8 : 5}" width="100%">
+
+                        <onc:selectCommandButton action="#{AffinityGroupUnsubscribedAgentsUIBean.subscribeAgents}"
+                                         value="ADD TO GROUP" styleClass="on-pager-button buttonsmall"
+                                         target="selectedAgentsToSubscribe"/>
+
+                        <ui:param name="paginationDataTableName" value="unsubscribedAgentsDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{unsubscribedAgentsDataModel}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.AffinityGroupUnsubscribedAgents}"/>
+                        <ui:include src="../resource/include/pagination.xhtml"/>
+                     </rich:column>
+                  </rich:columnGroup>
+               </f:facet>
+
+            </rich:dataTable>
+
+            </h:panelGrid>
+
+         </rich:panel>
+      </h:form>
+
+      <h:outputLink value="viewAffinityGroup.xhtml">
+         <h:outputText value="Return to Affinity Group"/>
+         <f:param name="affinityGroupId" value="#{param.affinityGroupId}"/>
+         <f:param name="mode" value="#{param.mode}"/>
+      </h:outputLink>
+
+   </ui:define>
+
+</ui:composition>
+
+</html>

@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+
+<assembly>
+  <id></id>
+  <formats>
+    <format>zip</format>
+  </formats> 
+  <includeBaseDirectory>true</includeBaseDirectory>
+  <!--<baseDirectory>${basedir}/target/${artifactId}-${version}</baseDirectory>-->
+  <baseDirectory>${artifactId}-${version}</baseDirectory>
+  <fileSets>
+    <fileSet>      
+      <directory>${basedir}/target/${artifactId}-${version}</directory>
+      <outputDirectory>/</outputDirectory>
+      <includes>	
+        <include>**/*</include>
+      </includes>            
+      <excludes>
+        <exclude>**/*.sh</exclude>
+      </excludes>
+    </fileSet>
+    <fileSet>      
+      <directory>${basedir}/target/${artifactId}-${version}</directory>
+      <outputDirectory>/</outputDirectory>
+      <includes>
+        <include>**/*.sh</include>
+      </includes>            
+      <fileMode>0755</fileMode>
+    </fileSet>
+  </fileSets>
+</assembly>

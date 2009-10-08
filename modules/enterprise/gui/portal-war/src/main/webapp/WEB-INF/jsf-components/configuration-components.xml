@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+
+<faces-config version="1.2" xmlns="http://java.sun.com/xml/ns/javaee"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd">
+
+   <component>
+      <component-type>org.jboss.on.Config</component-type>
+      <component-class>org.rhq.core.gui.configuration.ConfigUIComponent</component-class>
+   </component>
+
+    <component>
+       <component-type>org.rhq.ConfigurationSet</component-type>
+       <component-class>org.rhq.core.gui.configuration.propset.ConfigurationSetComponent</component-class>
+    </component>
+
+   <render-kit>
+      <renderer>
+         <description>renderer for Config and ConfigurationSet components</description>
+         <component-family>rhq</component-family>
+         <renderer-type>org.jboss.on.Config</renderer-type>
+         <renderer-class>org.rhq.core.gui.configuration.ConfigRenderer</renderer-class>
+      </renderer>
+   </render-kit>
+
+    <component>
+       <component-type>org.rhq.PropertySet</component-type>
+       <component-class>org.rhq.core.gui.configuration.propset.PropertySetComponent</component-class>
+    </component>
+
+    <render-kit>
+       <renderer>
+          <description>renderer for a PropertySet component</description>
+          <component-family>rhq</component-family>
+          <renderer-type>org.rhq.PropertySet</renderer-type>
+          <renderer-class>org.rhq.core.gui.configuration.propset.PropertySetRenderer</renderer-class>
+       </renderer>
+    </render-kit>
+
+</faces-config>

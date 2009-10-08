@@ -1,0 +1,120 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:a4j="http://richfaces.org/a4j"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich"
+      xmlns:onc="http://jboss.org/on/component">
+
+<body>
+
+<f:subview id="navigationTreeView">
+<ui:composition>
+
+    <h:form id="leftNavTreeForm"> <!-- tree needs a form to be present -->
+        <h:panelGroup id="leftTreeHolder">
+
+        <input type="hidden" name="id" value="#{param.id}"/>
+        <input type="hidden" name="parent" value="#{param.parent}"/>
+        <input type="hidden" name="type" value="#{param.type}"/>
+
+
+        <a4j:region renderRegionOnly="false">
+            <a4j:outputPanel id="messagePanel" layout="block" ajaxRendered="true" style="width: 100%; " >
+                <h:message for="leftNavTree" showSummary="true" showDetail="false" style="background-color: yellow; display:block; width:100%;"/>
+            </a4j:outputPanel>
+
+                <a4j:keepAlive beanName="ResourceTreeModelUIBean" />
+
+                <rich:tree style="width: 100%; height: 100%; min-width: 100%; min-height: 100%" switchType="ajax"
+                           stateAdvisor="#{ResourceTreeStateAdvisor}"
+                           status="commonStatus"
+                           var="treeNode"
+                           icon="/images/icn_tree_Platform.gif"
+                           id="leftNavTree"
+                           preserveDataInRequest="false"
+                           adviseNodeSelected="#{ResourceTreeStateAdvisor.adviseNodeSelected}"
+                           changeExpandListener="#{ResourceTreeStateAdvisor.changeExpandListener}"
+                           nodeSelectListener="#{ResourceTreeStateAdvisor.nodeSelectListener}"
+                           ajaxSubmitSelection="true"
+                           nodeFace="#{treeNode.data.class.simpleName}">
+                    <rich:recursiveTreeNodesAdaptor roots="#{ResourceTreeModelUIBean.roots}"
+                                                    var="resourceTreeItem"
+                                                    nodes="#{resourceTreeItem.children}" />
+
+                    <rich:treeNode type="AutoGroupComposite"
+                                   iconLeaf="/images/icons/#{resourceTreeItem.data.resourceType == null? 'Subcategory' : 'Auto_group'}_16.png"
+                                   icon="/images/icons/#{resourceTreeItem.data.resourceType == null? 'Subcategory' : 'Auto_group'}_16.png">
+
+                        <a4j:support event="oncontextmenu" reRender="autoGroupMenu" timeout="5000"
+                                     disableDefault="true" status="commonStatus" limitToList="true"
+                                     ajaxSingle="true" rendered="#{resourceTreeItem.data.resourceType != null}">
+                                     
+                            <f:param name="contextParentResourceId" value="#{resourceTreeItem.data.parentResource.id}"/>
+                            <f:param name="contextAutoGroupResourceTypeId" value="#{resourceTreeItem.data.resourceType.id}"/>                           
+                            <rich:componentControl disableDefault="true" event="oncomplete" for="autoGroupMenu"
+                                                   operation="show">
+                                <f:param value="#{resourceTreeItem.data.parentResource.id}" name="id"/>
+                                <f:param value="#{resourceTreeItem.data.resourceType.name}" name="type"/>
+                            </rich:componentControl>
+                        </a4j:support>
+                                     
+                        <h:outputText value="#{resourceTreeItem} "
+                                      styleClass="availLink#{resourceTreeItem.data.availability == 0 ? 'Down' : (resourceTreeItem.data.availability == 1 ? 'Up' : 'Mixed')}"/>
+                        <h:outputText value="(#{resourceTreeItem.children.size})"
+                                      rendered="#{resourceTreeItem.data.subcategory == null}"
+                                      styleClass="availLink#{resourceTreeItem.data.availability == 0 ? 'Down' : (resourceTreeItem.data.availability == 1 ? 'Up' : 'Mixed')}"/>
+                    </rich:treeNode>
+
+                    <rich:treeNode type="LockedResource"
+                                   icon="/images/icn_tree_Lock.png"
+                                   iconLeaf="/images/icn_tree_Lock.png">
+                        <h:outputText value="#{resourceTreeItem}"
+                                      styleClass="availLink#{resourceTreeItem.data.currentAvailability.availabilityType == 'DOWN' ? 'Down' : 'Up'}"/>
+                    </rich:treeNode>
+<!-- Tree Node supporting context menu -->
+                    <rich:treeNode type="Resource"
+                                   icon="/images/icons/#{resourceTreeItem.data.resourceType.category}_#{resourceTreeItem.data.currentAvailability.availabilityType == 'DOWN' ? 'down' : 'up'}_16.png"
+                                   iconLeaf="/images/icons/#{resourceTreeItem.data.resourceType.category}_#{resourceTreeItem.data.currentAvailability.availabilityType == 'DOWN' ? 'down' : 'up'}_16.png">
+                        <a4j:support event="oncontextmenu" reRender="resourceMenu" timeout="5000"
+                                     disableDefault="true" status="commonStatus" limitToList="true"
+                                     ajaxSingle="true">
+                            <f:param name="contextResourceId" value="#{resourceTreeItem.data.id}"/>
+                            <rich:componentControl disableDefault="true" event="oncomplete" for="resourceMenu"
+                                                   operation="show">
+                                <f:param value="#{resourceTreeItem.data.name}" name="name"/>
+                                <f:param value="#{resourceTreeItem.data.id}" name="id"/>
+                                <f:param value="#{resourceTreeItem.data.resourceType.name}" name="type"/>
+                                <f:param value="'#{resourceTreeItem.data.resourceType.operationDefinitions}'"
+                                         name="ops"/>
+                            </rich:componentControl>
+                        </a4j:support>
+                        <h:outputText value="#{resourceTreeItem}"
+                                      styleClass="availLink#{resourceTreeItem.data.currentAvailability.availabilityType == 'DOWN' ? 'Down' : 'Up'}"/>
+                    </rich:treeNode>
+                </rich:tree>
+
+        </a4j:region>
+        </h:panelGroup>
+    </h:form>
+
+    <f:verbatim>
+        <script type="text/javascript">
+
+            Event.observe("#{rich:clientId('leftTreeHolder')}", "contextmenu", Event.stop);
+        </script>
+    </f:verbatim>
+
+</ui:composition>
+
+</f:subview>
+
+</body>
+
+</html>

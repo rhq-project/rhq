@@ -1,0 +1,22 @@
+<plugin name="Tomcat"
+        displayName="Tomcat"
+        package="org.rhq.plugins.test2"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin">
+
+   <depends plugin="JMX" />
+   
+   <server name="TomcatServer"
+           description="Tomcat Web Application Container Description"
+           discovery="TomcatDiscoveryComponent"
+           class="TomcatServerComponent">
+           
+      <service name="WebappService"
+               description="Webapp Service Description"
+               discovery="WebappDiscoveryComponent"
+               class="WebappServiceComponent">
+      </service>
+      
+   </server>
+     
+</plugin>

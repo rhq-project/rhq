@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-helpers</artifactId>
+      <version>1.4.0-SNAPSHOT</version>
+    </parent>
+
+
+    <groupId>org.rhq</groupId>
+    <artifactId>rhq-pluginAnnotations</artifactId>
+    <packaging>jar</packaging>
+
+    <name>RHQ plugin annotations</name>
+    <description>Annotations to help generate plugin descriptors</description>
+    <version>1.4.0-SNAPSHOT</version>
+
+    <scm>
+      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_2_0_EmbJopr_1_2_0-1/modules/helpers/pluginGen</connection>
+      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_2_0_EmbJopr_1_2_0-1/modules/helpers/pluginGen</developerConnection>
+   </scm>
+
+   <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <source>1.5</source>
+          <target>1.5</target>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>2.2</version>
+        <configuration>
+          <archive>
+            <manifest>
+              <packageName>org.rhq.helpers.pluginAnnotations</packageName>
+            </manifest>
+          </archive>
+        </configuration>
+      </plugin>
+
+    </plugins>
+
+    </build>
+
+</project>

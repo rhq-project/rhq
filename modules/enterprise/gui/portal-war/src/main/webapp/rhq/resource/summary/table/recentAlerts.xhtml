@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+   <h2><h:graphicImage value="/images/icons/Flag_blue_24.png" style="vertical-align: bottom;"/>
+       Recent Alerts</h2>
+   <ui:repeat var="item"
+              value="#{ResourceOverviewUIBean.recentAlerts}">
+      <div style="text-indent: 20px;">
+         <h:graphicImage value="#{onf:getAlertPriorityURL(item.alertDefinition.priority)}" title="${item.alertDefinition.priority}"/>
+         <h:outputText value=" " />
+         <h:outputLink value="/alerts/Alerts.do">
+            <f:param name="mode" value="viewAlert" />
+            <f:param name="id" value="#{item.alertDefinition.resource.id}" />
+            <f:param name="a" value="#{item.id}" />
+            <h:outputText value="#{item.alertDefinition.name}" />
+         </h:outputLink>
+         <h:outputText value=": " />
+         <h:outputText value="#{item.ctime}">
+            <f:converter converterId="RelativeDurationConverter" />
+         </h:outputText>
+         <br />
+      </div>
+   </ui:repeat>
+
+   <div style="text-indent: 20px;">
+      <h:outputText value="No recent alerts"
+                    rendered="#{onf:sizeOf(ResourceOverviewUIBean.recentAlerts) eq 0}"/>
+   </div>
+
+</ui:composition>

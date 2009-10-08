@@ -1,0 +1,141 @@
+<?xml version="1.0"?>
+
+<ui:composition template="/rhq/layout/main-layout.xhtml"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:a4j="http://richfaces.org/a4j"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich"
+      xmlns:ui="http://java.sun.com/jsf/facelets">
+
+THIS TEXT WILL BE REMOVED.
+
+The template for all Resource/Group pages (i.e. the Monitor/Inventory/etc. tabbed pages).
+
+TEMPLATE PARAMETERS:
+breadcrumbs - the page breadcrumbs (optional)
+summary - the summary of the resource or group
+nav - the rich component for navigating autogroups (resource) or cluster (group)
+tabBar - the tab bar
+content - the page content
+
+CONTEXT PARAMETERS:
+pageTitle - the page title
+pageHelpURL - a context-sensitive help URL for the page (optional)
+selectedTabName - the name of the tab/subTab to select in the following format: tabName[.subtabName]
+(e.g. "Inventory" or "Monitor.Visibility")
+
+REQUEST PARAMETERS:
+id - the id of the Resource being accessed
+
+
+    THIS TEXT WILL BE REMOVED AS WELL.
+
+    <ui:define name="body-area">
+
+        <script type="text/javascript" src="/js/splitpane.js"/>
+
+        <!-- work around for IE and its broken box model. Without the concrete height value, the nav pane will shrink on hover. -->
+        <!--[if IE]>
+        <div id="contentParent" style="height: 100%">
+        <![endif]-->
+        <!--[if !IE]><!-->
+        <div id="contentParent">
+        <!--<![endif]-->
+            <div id="leftContent" class="column" style="width: #{UserPreferencesUIBean.leftResourceNavState}%">
+                <div id="leftContentWrapper" class="content-left">
+                    <ui:insert name="nav"><p>Default Entity Navigation</p></ui:insert>
+
+                </div>
+            </div>
+            <div id="centerContent" class="column" style="width: #{100 - UserPreferencesUIBean.leftResourceNavState}%;">
+
+                <div id="centerContentWrapper" class="content-right">
+
+                    <div style="left: 0; right: 0;">
+                        <ui:insert name="summary"><p>Default Entity Summary</p></ui:insert>
+                        <ui:insert name="tabBar"><p>Default Entity TabBar</p></ui:insert>
+                        <ui:insert name="content"><p>Default Entity Content</p></ui:insert>
+                    </div>
+                </div>
+            </div>
+            
+    <!-- Define context menu outside of the tree form so rerendering this doesn't cause tree rerendering/reloading --> 
+    <h:form>
+       <rich:contextMenu attached="false" id="resourceMenu" 
+                         binding="#{ResourceTreeContextMenuUIBean.menu}"
+                         disableDefaultMenu="false" style="z-index: 50;" 
+                         submitMode="ajax" rendered="#{not empty param.id or not empty param.parent}" />
+       <rich:contextMenu attached="false" id="autoGroupMenu" 
+                         binding="#{AutoGroupTreeContextMenuUIBean.menu}"
+                         disableDefaultMenu="false" style="z-index: 50;" 
+                         submitMode="ajax" rendered="#{not empty param.id or not empty param.parent}" />
+       <rich:contextMenu attached="false" id="groupMenu" 
+                         binding="#{ResourceGroupTreeContextMenuUIBean.menu}"
+                         disableDefaultMenu="false" style="z-index: 50;" 
+                         submitMode="ajax" rendered="#{not empty param.groupId}" />
+    </h:form>
+    
+        </div>
+
+        <a4j:region renderRegionOnly="true" selfRendered="true">
+
+            <a4j:form>
+                <a4j:jsFunction name="saveSplitPaneState" reRender="showname" status="commonStatus">
+                    <a4j:actionparam name="param1" assignTo="#{UserPreferencesUIBean.leftResourceNavState}"/>
+                </a4j:jsFunction>
+            </a4j:form>
+        </a4j:region>
+
+        <script language="JavaScript" type="text/JavaScript">
+            <!--
+            
+               function recalcContentSizes() {
+                   var parent = $('contentParent');
+                   var body = $('PageBody');
+                   var left = $('leftContent');
+                   var right = $('centerContent');
+                   var rightWrapper = $('centerContentWrapper');
+
+                   parent.style.height = body.style.height;
+                   parent.style.width = body.style.width;
+                   left.style.height = body.style.height;
+                   right.style.height = body.style.height;
+                   //this has to be computed AFTER we change the parent's width above to accomodate
+                   //for the change of the left width caused by it.
+                   var rightWidth = body.getDimensions().width - left.getDimensions().width;
+                   rightWrapper.style.width = (rightWidth - 6) + 'px'; //6 - the margin defined by the content-right css class 
+               }
+
+               
+               function handleSplitPaneResize(splitPane, event) {
+                   //#{rich:element('leftResourceNavStateField')}.value = navSplitPane.getWidthPercent(navSplitPane.div1);
+                   //#{rich:element('leftResourceNavStateField')}.focus();
+                   //#{rich:element('leftResourceNavStateField')}.blur();
+                   // #{rich:element('leftResourceNavStateField')}.form.submit();
+
+                   //alert(#{rich:element('leftResourceNavStateField')});
+                   saveSplitPaneState(navSplitPane.getWidthPercent(navSplitPane.div1));
+                   //alert("Saved: " + navSplitPane.getWidthPercent(navSplitPane.div1));
+               }
+               var navSplitPane = new SplitPane("leftContent", "#{UserPreferencesUIBean.leftResourceNavState}", "centerContent", 
+                   { onEnd: handleSplitPaneResize, 
+                     active: true,
+                     onDrag: function() {
+                        overlay.refresh();
+                        recalcContentSizes();
+                     } });
+               
+               //resize the contents and the split pane on window resize
+               WindowResizeTracker.addListener(function() {
+                   if (navSplitPane.divider) {
+                       navSplitPane.move(0);
+                   }
+                   recalcContentSizes();
+               });
+           // -->
+        </script> 
+
+    </ui:define>
+
+</ui:composition>

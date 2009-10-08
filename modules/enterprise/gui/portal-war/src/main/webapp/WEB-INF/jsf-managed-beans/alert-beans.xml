@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+
+<faces-config version="1.2" xmlns="http://java.sun.com/xml/ns/javaee"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd">
+
+     <!-- /rhq/resource/alert/listAlertDefinitions.xhtml -->
+   <managed-bean>
+      <managed-bean-name>ListAlertDefinitionsUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.alert.ListAlertDefinitionsUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   
+     <!-- /rhq/resource/alert/listAlertHistory.xhtml -->
+   <managed-bean>
+      <managed-bean-name>ListAlertHistoryUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.alert.ListAlertHistoryUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   
+     <!-- /rhq/admin/listAlertTemplates.xhtml -->
+   <managed-bean>
+      <managed-bean-name>ListAlertTemplatesUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.admin.ListAlertTemplatesUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+</faces-config>

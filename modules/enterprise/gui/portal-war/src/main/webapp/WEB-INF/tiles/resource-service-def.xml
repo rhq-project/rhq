@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+
+<!-- -*- Mode: XML; indent-tabs-mode: nil; -*- -->
+<!DOCTYPE tiles-definitions PUBLIC
+     "-//Apache Software Foundation//DTD Tiles Configuration 1.1//EN"
+     "http://jakarta.apache.org/struts/dtds/tiles-config_1_1.dtd">
+
+
+<tiles-definitions>
+  
+  <definition name=".page.title.resource.service"
+              extends=".page.title">
+    <put name="titleBgStyle" value="PageTitleServiceBg"/>
+    <put name="titleImg" value="title_service.gif"/>
+  </definition>
+  
+  <definition name=".page.title.resource.service.full"
+              extends=".page.title.resource.service">
+    <put name="linkUrl"
+         value="/resource/service/inventory/ServiceLinks.jsp"/>
+  </definition>
+  
+  <definition name=".page.title.resource.service.new"
+              extends=".page.title">
+              
+    <put name="titleKey" value="resource.service.inventory.NewServicePageTitle"/>
+    <put name="titleBgStyle" value="PageTitleServiceBg"/>
+    <put name="titleImg" value="title_service.gif"/>    			  
+  </definition>
+  <definition name=".resource.service.inventory.generalProperties"
+              extends=".resource.common.inventory.generalProperties">
+    <put name="showLocation" value="true"/>
+  </definition>
+  
+    <definition name=".resource.service.inventory.EditConfigProperties"
+            controllerUrl="/resource/service/inventory/EditConfigFormPrepare.do"
+            path="/resource/common/inventory/EditConfigPropertiesForm.jsp"/>
+
+  <!-- service tabs -->
+
+  <definition name=".tabs.resource.service" extends=".tabs.resource">
+    <put name="resourceType" value="3" />
+    <putList name="tabList">
+       <item value="Monitor" mode="currentHealth" link="/Resource.do"
+            height="21" width="102"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+      <item value="Inventory" link="/resource/service/Inventory.do"
+            height="21" width="102"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+      <item value="Control" link="/resource/service/Control.do"
+            height="21" width="102"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+      <item value="Alert" mode="list"
+            link="/alerts/Config.do"
+            height="21" width="102"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+   </putList>     
+  </definition>
+
+  <definition name=".tabs.resource.service.nocontrol" extends=".tabs.resource">
+   <putList name="tabList">
+       <item value="Monitor" mode="currentHealth" link="/Resource.do"
+            height="21" width="102"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+      <item value="Inventory" link="/resource/service/Inventory.do"
+            height="21" width="102"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+      <item value="Alert" mode="list"
+            link="/alerts/Config.do"
+            height="21" width="102"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+   </putList>     
+  </definition>    
+
+  <definition name=".tabs.resource.service.monitor.configVisibility.defaults"
+              path="/resource/common/ControlTab.jsp">
+     <put name="selectedIndex"  value="0" />
+     <putList name="tabList">
+       <item value="Monitor" link="XXX"
+             height="21" width="102"
+             classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+     </putList>
+  </definition>
+
+
+  <definition name=".tabs.resource.service.inventory" extends=".tabs.resource.service"> 
+    <put name="selectedIndex"  value="1" />
+    <putList name="subTabList">
+    </putList>
+  </definition>
+
+  <definition name=".tabs.resource.service.inventory.nocontrol"
+      extends=".tabs.resource.service.nocontrol">  
+    <put name="selectedIndex"  value="1" />
+    <putList name="subTabList">
+    </putList>
+  </definition>  
+  
+  <!-- monitor subtabs --> 
+  
+  <definition name=".tabs.resource.service.monitor"
+              extends=".tabs.resource.service">
+    <put name="selectedIndex"  value="0" />
+    <put name="subSectionName" value="Monitor"/>
+    <putList name="subTabList">
+      <item value="Visibility" mode="currentHealth" link="/Resource.do"
+            height="25" width="104"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+      <item value="Configure" mode="configure"
+            link="/resource/service/monitor/Config.do"
+            height="25" width="104"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+    </putList>
+  </definition>
+
+  <definition name=".tabs.resource.service.monitor.nocontrol"
+              extends=".tabs.resource.service.nocontrol">
+    <put name="selectedIndex"  value="0" />
+    <put name="subSectionName" value="Monitor"/>
+    <putList name="subTabList">
+      <item value="Visibility" mode="currentHealth" link="/Resource.do"
+            height="25" width="104"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+      <item value="Configure" mode="configure"
+            link="/resource/service/monitor/Config.do"
+            height="25" width="104"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+    </putList>
+  </definition>  
+
+  <definition name=".tabs.resource.service.monitor.visibility"
+              extends=".tabs.resource.service.monitor">
+    <put name="subSelectedIndex" value="0"/>
+  </definition>
+
+  <definition name=".tabs.resource.service.monitor.configVisibility"
+              extends=".tabs.resource.service.monitor">
+    <put name="subSelectedIndex" value="1"/>
+  </definition>
+
+  <definition name=".tabs.resource.service.monitor.visibility.nocontrol"
+              extends=".tabs.resource.service.monitor.nocontrol">
+    <put name="subSelectedIndex" value="0"/>
+  </definition>
+
+  <definition name=".tabs.resource.service.monitor.configVisibility.nocontrol"
+              extends=".tabs.resource.service.monitor.nocontrol">
+    <put name="subSelectedIndex" value="1"/>
+  </definition>
+
+  <!-- alert subtabs --> 
+  
+  <definition name=".tabs.resource.service.alert"
+              extends=".tabs.resource.service">
+    <put name="selectedIndex"  value="3" />
+    <put name="subSectionName" value="Monitor"/>
+    <putList name="subTabList">
+      <item value="Alerts" mode="list"
+            link="/alerts/Alerts.do"
+            height="25" width="104"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+      <item value="Configure" mode="list"
+            link="/alerts/Config.do"
+            height="25" width="104"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+    </putList>
+  </definition>
+
+  <definition name=".tabs.resource.service.alert.nocontrol"
+              extends=".tabs.resource.service.nocontrol">
+    <put name="selectedIndex"  value="2" />
+    <put name="subSectionName" value="Monitor"/>
+    <putList name="subTabList">
+      <item value="Alerts" mode="list"
+            link="/alerts/Alerts.do"
+            height="25" width="104"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+      <item value="Configure" mode="list"
+            link="/alerts/Config.do"
+            height="25" width="104"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+    </putList>
+  </definition>  
+
+  <definition name=".tabs.resource.service.alert.alerts"
+              extends=".tabs.resource.service.alert">
+    <put name="subSelectedIndex" value="0"/>
+  </definition>
+
+  <definition name=".tabs.resource.service.alert.configAlerts"
+              extends=".tabs.resource.service.alert">
+    <put name="subSelectedIndex" value="1"/>
+  </definition>
+
+  <definition name=".tabs.resource.service.alert.alerts.nocontrol"
+              extends=".tabs.resource.service.alert.nocontrol">
+    <put name="subSelectedIndex" value="0"/>
+  </definition>
+
+  <definition name=".tabs.resource.service.alert.configAlerts.nocontrol"
+              extends=".tabs.resource.service.alert.nocontrol">
+    <put name="subSelectedIndex" value="1"/>
+  </definition>
+    
+
+  <!-- resource service portlets -->
+  <definition name=".resource.service.inventory.generalProperties"
+              extends=".resource.common.inventory.generalProperties">
+    <put name="showLocation" value="false"/>
+  </definition>
+  
+  <!-- resource service portlets -->
+  <definition name=".resource.service.inventory.NewService"
+              controllerUrl="/resource/service/inventory/NewServiceFormPrepare.do"
+              path="/resource/service/inventory/NewService.jsp"/>
+  
+  <definition name=".resource.service.inventory.ViewService"
+              controllerUrl="/resource/service/inventory/ViewService.do"
+              path="/resource/service/inventory/ViewService.jsp"/> 
+
+  <definition name=".resource.service.inventory.EditGeneralProperties"
+              controllerUrl="/resource/service/inventory/EditGeneralFormPrepare.do"
+              path="/resource/service/inventory/EditGeneralProperties.jsp"/>
+  
+  <definition name=".resource.service.inventory.changeOwner"
+              controllerUrl="/resource/common/inventory/ChangeResourceOwnerFormPrepare.do"
+              path="/resource/service/inventory/ChangeOwner.jsp"/>
+
+  <definition name=".resource.service.inventory.AddToGroups"
+              controllerUrl="/resource/common/inventory/AddResourceGroupsFormPrepare.do"
+              path="/resource/service/inventory/EditAddToGroups.jsp"/>
+			  
+  <definition name=".resource.service.inventory.applications"
+              path="/resource/service/inventory/ListApplications.jsp"/>
+              
+
+  <definition name=".resource.service.manage.collect.arguments"
+                  extends=".resource.common.manage.collect.arguments">
+                  <put name="section" value="service"/>
+  </definition>  
+ 
+  <!-- resource service control -->
+  <definition name=".resource.service.control.list.detail"
+              extends=".resource.common.control.list.detail">
+              <put name="section" value="service"/>
+  </definition>
+
+  <definition name=".resource.service.control.list.history"
+              extends=".resource.common.control.list.history">
+              <put name="section" value="service"/>
+  </definition>
+
+  <definition name=".resource.service.control.list.scheduled"
+              extends=".resource.common.control.list.scheduled">
+              <put name="section" value="service"/>
+  </definition>
+    
+  <definition name=".resource.service.control.edit" 
+              controllerUrl="/resource/service/control/EditFormPrepare.do"
+              path="/resource/common/control/Edit.jsp">
+              <put name="section" value="service"/>
+  </definition>
+
+  <definition name=".resource.service.control.new"
+              controllerUrl="/resource/service/control/NewFormPrepare.do"
+              path="/resource/common/control/New.jsp">
+              <put name="section" value="service"/>
+  </definition>
+
+
+  <definition name=".resource.service.control.quickControl" 
+              extends=".resource.common.control.quickControl" >    
+              <put name="action" value="/resource/service/control/QuickControl"/>               
+  </definition>                                            
+
+  <definition name=".resource.service.inventory.generalProperties"
+              extends=".resource.common.inventory.generalProperties">
+    <put name="showLocation" value="true"/>
+  </definition>
+
+  <definition name=".tabs.resource.service.control"
+              extends=".tabs.resource.service">                                     
+   <put name="selectedIndex"  value="2" />
+   <putList name="subTabList">
+      <item value="Current" link="/resource/service/Control.do"
+            height="25" width="104" mode="view"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+      <item value="History" link="/resource/service/Control.do"
+            height="25" width="104" mode="history"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+   </putList>
+   <put name="subSectionName" value="Control"/>
+   <put name="subSelectedIndex" value="1"/>
+  </definition>
+
+  <definition name=".tabs.resource.service.control.list.detail"
+              extends=".tabs.resource.service.control">                            
+   <put name="subSelectedIndex" value="0"/>
+  </definition>
+  
+  <definition name=".tabs.resource.service.control.list.history"
+              extends=".tabs.resource.service.control">                            
+   <put name="subSelectedIndex" value="1"/>
+  </definition>
+  
+  <!-- monitor config portals -->
+  <definition name=".resource.service.monitor.config.ConfigMetrics"
+              controllerUrl="/resource/service/monitor/config/ConfigMetricsFormPrepare.do"
+              path="/resource/common/monitor/config/ConfigMetrics.jsp">
+     <put name="section" value="common"/>
+  </definition>
+              
+  <!-- monitor minitabs -->
+  <definition name=".resource.service.monitor.visibility.minitabs"
+              extends=".resource.common.monitor.visibility.minitabs">
+    <put name="tabUrl" value="/Resource.do"/>
+  </definition>
+
+  <!-- monitor portals -->
+  <definition name=".resource.service.monitor.visibility.CurrentHealth"
+              controllerUrl="/resource/service/monitor/visibility/ServiceCurrentHealth.do"
+              path="/resource/service/monitor/visibility/MainLayout.jsp"/>
+
+  <definition name=".resource.service.monitor.visibility.ServiceMetrics"
+              controllerUrl="/resource/common/monitor/visibility/ResourceMetricsFormPrepare.do"
+              path="/resource/service/monitor/visibility/MainLayout.jsp"/>
+
+  <definition name=".resource.service.monitor.visibility.Performance"
+              controllerUrl="/resource/service/monitor/visibility/ServicePerformanceFormPrepare.do"
+              path="/resource/service/monitor/visibility/MainLayout.jsp"/>
+
+  <!-- monitor portlets -->
+  <definition name=".resource.service.monitor.visibility.serverHealth"
+              path="/resource/service/monitor/visibility/ServerHealth.jsp"/>
+</tiles-definitions>

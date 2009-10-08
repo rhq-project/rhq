@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
+
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/" debug="false">
+
+   <!-- ============================== -->
+   <!-- Append messages to the console -->
+   <!-- ============================== -->
+
+   <appender name="CONSOLE" class="org.apache.log4j.ConsoleAppender">
+      <param name="Threshold" value="DEBUG"/>
+      <param name="Target" value="System.out"/>
+
+      <layout class="org.apache.log4j.PatternLayout">
+         <!-- The default pattern: Date Priority [Category] Message\n -->
+         <param name="ConversionPattern" value="%d{ISO8601} %-5p [%t] (%c{5}) - %m%n"/>
+      </layout>
+   </appender>
+
+   <!-- ================================= -->
+   <!-- Append messages to a rolling file -->
+   <!-- ================================= -->
+   <appender name="FILE" class="org.apache.log4j.RollingFileAppender">
+
+      <param name="Threshold"      value="DEBUG"/>
+      <param name="File"           value="logs/rhq-client.log"/>
+      <param name="MaxBackupIndex" value="2"/>
+      <param name="MaxFileSize"    value="5000KB"/>
+      <param name="Append"         value="true"/>
+
+      <layout class="org.apache.log4j.PatternLayout">
+         <param name="ConversionPattern" value="%d{ISO8601} %-5p [%t] (%c{5})- %m%n"/>
+      </layout>
+
+   </appender>
+
+   <!-- ====================================== -->
+   <!-- Append command trace to a rolling file -->
+   <!-- ====================================== -->
+   <appender name="COMMANDTRACE" class="org.apache.log4j.RollingFileAppender">
+
+      <param name="Threshold"      value="TRACE"/>
+      <param name="File"           value="logs/command-trace.log"/>
+      <param name="MaxBackupIndex" value="9"/>
+      <param name="MaxFileSize"    value="10MB"/>
+      <param name="Append"         value="true"/>
+
+      <layout class="org.apache.log4j.PatternLayout">
+         <param name="ConversionPattern" value="%d{ISO8601} %-5p %m%n"/>
+      </layout>
+
+   </appender>
+
+   <!-- ================ -->
+   <!-- Limit categories -->
+   <!-- ================ -->
+
+   <!-- RHQ -->
+   <category name="org.rhq">
+      <priority value="INFO"/>
+   </category>
+
+   <!-- ======================= -->
+   <!-- Setup the Root category -->
+   <!-- ======================= -->
+
+   <root>
+      <priority value="INFO"/>
+      <appender-ref ref="FILE"/>
+      <!-- <appender-ref ref="CONSOLE"/> -->
+   </root>
+
+</log4j:configuration>

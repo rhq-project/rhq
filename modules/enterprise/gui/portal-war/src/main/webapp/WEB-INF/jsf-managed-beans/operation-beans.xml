@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+
+<faces-config version="1.2" xmlns="http://java.sun.com/xml/ns/javaee"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd">
+
+   <!-- shared UIBean (resource and resource group) for displaying operation parameters -->
+   <managed-bean>
+      <managed-bean-name>OperationDefinitionParametersUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.operation.definition.OperationDefinitionParametersUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+
+   <!-- /rhq/resource/operation/resourceOperationScheduleNew.xhtml -->
+   <managed-bean>
+      <managed-bean-name>ResourceOperationDefinitionUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.operation.definition.resource.ResourceOperationDefinitionUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   <managed-bean>
+      <managed-bean-name>ResourceOperationScheduleUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.operation.schedule.resource.ResourceOperationScheduleUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   
+   <!-- /rhq/resource/operation/resourceOperationScheduleDetails.xhtml -->
+   <managed-bean>
+      <managed-bean-name>ResourceOperationScheduleDetailsUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.operation.schedule.resource.ResourceOperationScheduleDetailsUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <!-- /rhq/resource/operation/resourceOperationHistory.xhtml -->
+   <managed-bean>
+      <managed-bean-name>ResourceOperationCompletedHistoryUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.operation.history.resource.ResourceOperationCompletedHistoryUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   <managed-bean>
+      <managed-bean-name>ResourceOperationPendingHistoryUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.operation.history.resource.ResourceOperationPendingHistoryUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   
+   <!-- /rhq/resource/operation/resourceOperationHistoryDetails.xhtml -->
+   <managed-bean>
+      <managed-bean-name>ResourceOperationHistoryDetailsUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.operation.history.resource.ResourceOperationHistoryDetailsUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+     
+</faces-config>

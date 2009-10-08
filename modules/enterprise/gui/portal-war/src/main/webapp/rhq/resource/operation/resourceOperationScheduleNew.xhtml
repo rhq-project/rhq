@@ -1,0 +1,172 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+<ui:composition template="/rhq/resource/layout/main.xhtml">
+
+   <ui:param name="pageTitle" value="Create New Operation Schedule for Resource '#{ResourceUIBean.name}'"/>
+   <ui:param name="selectedTabName" value="Operations.New"/>
+   <ui:define name="content">
+
+      <!--
+        Resource Operation Definitions
+        -->
+
+      <h:form id="newScheduleForm">
+         <input type="hidden" name="id" value="#{param.id}" />
+
+         <c:if test="${not empty param.opId}">
+            <input type="hidden" name="opId" value="#{param.opId}" />
+         </c:if>
+
+          <h:outputText value="You do not have permission to execute or schedule operations against this resource"
+                        rendered="#{!ResourceUIBean.permissions.control}"/>
+
+
+
+        <rich:panel styleClass="BlockContent">
+            <f:facet name="header">Supported Operations</f:facet>
+
+            <h:panelGrid columns="1" styleClass="data-table">
+
+            <rich:dataTable id="resourceOperationDefinitionDataTable"
+                            rows="0"
+                            value="#{ResourceOperationDefinitionUIBean.dataModel}"
+                            var="item"
+                            width="100%"
+                            columnsWidth="35%, 65%"
+                            styleClass="resources-table"
+                            headerClass="tableRowHeader"
+                            onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                            onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+
+               <f:facet name="PageControlView">
+                  <onc:paginationControl id="NONE" />
+               </f:facet>
+
+               <rich:column rendered="false">
+                  <f:facet name="header">
+                     <rich:spacer />
+                  </f:facet>
+
+                  <onc:select name="selectedItems" value="#{item.id}" type="radio" />
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="Name" />
+                  </f:facet>
+
+                  <h:outputLink action="success" rendered="#{ResourceUIBean.permissions.control}">
+                     <f:param name="opId" value="#{item.id}" />
+                     <f:param name="id" value="#{param.id}"/>
+
+                     <h:outputText value="#{item.displayName} *" rendered="#{(not empty param.opId) and (param.opId == item.id)}"/>
+                     <h:outputText value="#{item.displayName}" rendered="#{(empty param.opId) or (param.opId != item.id)}"/>
+                  </h:outputLink>
+
+                   <h:outputText rendered="#{!ResourceUIBean.permissions.control}" value="#{item.displayName}"/>
+
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="Description" />
+                  </f:facet>
+
+                  <h:outputText value="#{item.description}"/>
+               </rich:column>
+
+            </rich:dataTable>
+
+            </h:panelGrid>
+         </rich:panel>
+
+         <rich:panel rendered="#{not empty param.opId}"  styleClass="BlockContent">
+            <f:facet name="header">
+               <h:outputText value="Operation Parameters"/>
+            </f:facet>
+            <!-- even when things aren't rendered, they will still be executed? -->
+            <onc:config configurationDefinition="#{OperationDefinitionParametersUIBean.configurationDefinition}"
+                        configuration="#{OperationDefinitionParametersUIBean.configuration}"
+                        nullConfigurationDefinitionMessage="#{OperationDefinitionParametersUIBean.nullConfigurationDefinitionMessage}"
+                        nullConfigurationMessage="#{OperationDefinitionParametersUIBean.nullConfigurationMessage}"
+                        nullConfigurationStyle="InfoBlock"/>
+         </rich:panel>
+
+         <rich:panel rendered="#{not empty param.opId}"  styleClass="BlockContent">
+            <f:facet name="header">
+               <h:outputText value="Operation Schedule Details"/>
+            </f:facet>
+            <!-- bug in rich:panel renders children even if the panel isn't rendered -->
+
+            <onc:operationScheduler scheduleDetails="#{ResourceOperationScheduleUIBean.operationDetails}"/>
+         </rich:panel>
+
+         <rich:panel rendered="#{not empty param.opId}"  styleClass="BlockContent">
+            <f:facet name="header">
+               <h:outputText value="Other Options"/>
+            </f:facet>
+
+            <!--  Notes are for user use only, displayed back in the History view -->
+            <!--  The value must fit into the Quartz job_details.description field. Quartz does not protect against SQL errors -->
+            <h:panelGrid columns="3">
+               <h:outputLabel for="timeout" value="Timeout:" />
+               <h:inputText id="timeout" value="#{ResourceOperationDefinitionUIBean.timeout}" />
+               <h:outputText value="The maximum time this operation is given to finish, in seconds" />
+
+               <h:outputLabel for="notes" value="Notes:" />
+               <h:inputText id="notes" maxlength="120" size="40" value="#{ResourceOperationDefinitionUIBean.description}" />
+               <h:outputText value="Optional notes, if the operation is scheduled for execution later" />
+            </h:panelGrid>
+            <hr  />
+            <h:panelGrid rendered="#{not empty param.opId}"
+                         columns="2" cellspacing="3"
+                         styleClass="buttons-table" columnClasses="button-cell">
+               <h:commandButton action="#{ResourceOperationScheduleUIBean.schedule}"
+                                value="SCHEDULE" styleClass="buttonmed"
+                                rendered="#{ResourceUIBean.permissions.control}"
+                                onclick="return preventDoubleClick();"/>
+
+               <h:outputText value="Sorry, you do not have permission to execute or schedule operations against this resource"
+                             styleClass="InfoBlock"
+                             rendered="#{!ResourceUIBean.permissions.control}"/>
+            </h:panelGrid>
+         </rich:panel>
+         <br /><br /><br /><br />
+         <br /><br /><br /><br />
+      </h:form>
+
+      <script type="text/javascript">
+         clickAlreadySelectedElements();
+      </script>
+
+      <script type="text/javascript">
+         var submitted = false;
+         function preventDoubleClick() {
+            if (submitted) {
+               return false;
+            } else {
+               submitted = true;
+               return true;
+            }
+         }
+      </script>
+
+   </ui:define>
+
+</ui:composition>
+
+</html>

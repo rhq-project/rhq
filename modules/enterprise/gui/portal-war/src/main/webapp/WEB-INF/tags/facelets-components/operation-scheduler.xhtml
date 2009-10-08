@@ -1,0 +1,113 @@
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:s="http://jboss.com/products/seam/taglib"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:a="http://richfaces.org/a4j"
+                xmlns:rich="http://richfaces.org/rich">
+
+    <div>
+        <rich:panel>
+            <f:facet name="header">
+                <h:outputText value="Scheduler Component"/>
+            </f:facet>
+            <table>
+                <tr>
+                    <td style="width: 100px;">
+                        <table>
+                            <tbody>
+                                <tr><td>Start:</td></tr>
+                                <tr><td>&#160;</td></tr>
+                            </tbody>
+                        </table>
+                    </td>
+                    <td>
+                        <h:selectOneRadio id="start" value="#{scheduleDetails.start}" layout="pageDirection"  onclick="javascript:manageStartDivs(this);" disabled="#{readOnly}">
+                            <f:selectItem itemLabel="" itemValue="immediate" />
+                            <f:selectItem itemLabel="" itemValue="startDate" />
+                        </h:selectOneRadio>
+                    </td>
+                    <td>
+                        <table>
+                            <tr><td>Immediately</td></tr>
+                            <tr><td><rich:calendar id="startDate" value="#{scheduleDetails.startDate}" datePattern="M/d/yyy HH:mm" showApplyButton="true" isDayEnabled="true" disabled="#{readOnly}"/></td></tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+            <div id="recur">
+            <table>
+                <tr>
+                    <td style="width: 100px;" >
+                        <table>
+                            <tbody>
+                                <tr><td>Recur:</td></tr>
+                                <tr><td>&#160;</td></tr>
+                            </tbody>
+                        </table>
+                    </td>
+                    <td>
+                        <h:selectOneRadio id="recur" value="#{scheduleDetails.recur}" layout="pageDirection" onclick="javascript:manageRecurDivs(this);" disabled="#{readOnly}">
+                            <f:selectItem itemLabel="" itemValue="never" />
+                            <f:selectItem itemLabel="" itemValue="recur" />
+                        </h:selectOneRadio>
+                    </td>
+                    <td>
+                        <table>
+                            <tr>
+                                <td colspan="2">Never</td>
+
+                            </tr>
+                            <tr>
+                                <td><rich:inputNumberSpinner id="repeatInterval" minValue="1" maxValue="100" inputSize="2" value="#{scheduleDetails.repeatInterval}" enableManualInput="true" disabled="#{readOnly}"/></td>
+                                <td valign="bottom">
+                                    <h:selectOneMenu value="#{scheduleDetails.unit}" disabled="#{readOnly}">
+                                        <f:selectItem itemLabel="Seconds" itemValue="Seconds"/>
+                                        <f:selectItem itemLabel="Minutes" itemValue="Minutes"/>
+                                        <f:selectItem itemLabel="Hours" itemValue="Hours"/>
+                                        <f:selectItem itemLabel="Days" itemValue="Days"/>
+                                    </h:selectOneMenu>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+
+                </tr>
+            </table>
+            </div>
+
+            <div id="end">
+            <table>
+                <tr>
+                    <td style="width: 100px;">
+                        <table>
+                            <tbody>
+                                <tr><td>End:</td></tr>
+                                <tr><td>&#160;</td></tr>
+                            </tbody>
+                        </table>
+                    </td>
+                    <td>
+                        <h:selectOneRadio id="end" value="#{scheduleDetails.end}" layout="pageDirection" disabled="#{readOnly}">
+                            <f:selectItem itemLabel="" itemValue="none"/>
+                            <f:selectItem itemLabel="" itemValue="endDate" />
+                        </h:selectOneRadio>
+                    </td>
+                    <td>
+                        <table>
+                            <tr><td>None</td></tr>
+                            <tr><td><rich:calendar id="endDate" value="#{scheduleDetails.endDate}" datePattern="M/d/yyy HH:mm" showApplyButton="true" isDayEnabled="true" disabled="#{readOnly}"/></td></tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+            </div>
+        </rich:panel>
+    </div>
+    <script>
+        hideInitialDivs();
+    </script>
+
+</ui:composition>

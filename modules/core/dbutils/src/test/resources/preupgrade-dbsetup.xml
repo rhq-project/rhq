@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dbsetup name="small-schema.xml">
+
+  <table name="TEST_UPGRADE">
+    <column name="PROPKEY" type="VARCHAR2" size="80"/>
+    <column name="PROPVALUE" type="VARCHAR2" size="300"/>
+    <data PROPKEY="test-schema-version" PROPVALUE="1.0.0" />
+  </table>
+ 
+</dbsetup>

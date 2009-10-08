@@ -1,0 +1,64 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+package org.rhq.enterprise.gui.legacy.util;
+
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.enterprise.gui.legacy.HubConstants;
+import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
+import org.rhq.enterprise.gui.legacy.action.resource.hub.HubForm;
+import org.rhq.enterprise.gui.legacy.action.resource.hub.HubView;
+import org.rhq.enterprise.gui.legacy.taglib.display.StringUtil;
+
+public class HubUtils {
+    public static void initView(HubForm hubForm, WebUser user) throws Exception {
+        WebUserPreferences preferences = user.getWebPreferences();
+
+        HubView prefView = HubView.valueOf(preferences.getResourceBrowserViewMode());
+
+        String viewStr = hubForm.getView();
+        if (viewStr == null) {
+            hubForm.setView(prefView.name());
+        }
+
+        HubView view = HubView.valueOf(hubForm.getView().toUpperCase());
+        if (view != prefView) {
+            preferences.setResourceBrowserViewMode(view.name()); // Save new preference.
+        }
+    }
+
+    public static String buildNavHierarchy(String categoryString, String resourceTypeName) {
+        String navHierarchy; // Start the navHierarchy with the group category.
+        navHierarchy = StringUtil.toUpperCaseAt(categoryString, 0) + "s" + HubConstants.HIERARCHY_SEPARATOR;
+        if (resourceTypeName != null) {
+            navHierarchy += resourceTypeName + " " + StringUtil.toUpperCaseAt(categoryString, 0) + "s";
+        } else {
+            navHierarchy += "All " + StringUtil.toUpperCaseAt(categoryString, 0) + "s";
+        }
+
+        return navHierarchy;
+    }
+
+    private static String getResourceTypeDisplayName(ResourceType resourceType) {
+        // TODO: Type display name should probably also include ancestor server/service type names.
+        //       (e.g. "JBoss Datasource" rather than simply "Datasource" to distinguish a JBoss datasource from a
+        //       WebLogic datasource)
+        return resourceType.getName();
+    }
+}

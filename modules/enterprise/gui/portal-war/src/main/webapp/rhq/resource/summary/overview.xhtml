@@ -1,0 +1,75 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+<ui:composition template="/rhq/resource/layout/main.xhtml">
+
+<ui:param name="pageTitle" value="#{ResourceUIBean.resourceType.name} '#{ResourceUIBean.name}' - Summary"/>
+<ui:param name="selectedTabName" value="Summary.Overview"/>
+
+<ui:define name="content">
+
+   <table width="100%">
+      <tr>
+         <td width="50%" valign="top" nowrap="nowrap">
+            <ui:include src="/rhq/resource/summary/table/recentMetrics.xhtml"/>
+            <br />
+            <rich:separator lineType="beveled"
+                            width="50%" height="3px"
+                            style="align: center;" />
+
+            <ui:include src="/rhq/resource/summary/table/recentAlerts.xhtml" />
+            <br />
+            <rich:separator lineType="beveled"
+                            width="50%" height="3px"
+                            style="align: center;" />
+
+            <ui:include src="/rhq/resource/summary/table/recentOOBs.xhtml"
+                        rendered="#{ResourceUIBean.facets.measurement}" />
+         </td>
+
+         <td width="50%" valign="top" nowrap="nowrap">
+            <ui:include src="/rhq/resource/summary/table/recentConfigUpdates.xhtml"
+                        rendered="#{ResourceUIBean.facets.configuration}" />
+            <br />
+            <rich:separator lineType="beveled"
+                            width="50%" height="3px"
+                            style="align: center;" />
+
+            <ui:include src="/rhq/resource/summary/table/recentOperations.xhtml"
+                        rendered="#{ResourceUIBean.facets.operation}" />
+            <br />
+            <rich:separator lineType="beveled"
+                            width="50%" height="3px"
+                            style="align: center;" />
+
+            <ui:include src="/rhq/resource/summary/table/recentEventCounts.xhtml"
+                        rendered="#{ResourceUIBean.facets.event}" />
+            <br />
+            <rich:separator lineType="beveled"
+                            width="50%" height="3px"
+                            style="align: center;" />
+
+            <ui:include src="/rhq/resource/summary/table/recentPackageHistory.xhtml"
+                        rendered="#{ResourceUIBean.facets.content}" />
+         </td>
+      </tr>
+   </table>
+
+</ui:define>
+
+</ui:composition>
+
+</html>

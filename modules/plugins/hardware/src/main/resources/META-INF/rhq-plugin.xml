@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<plugin name="Hardware"
+        displayName="Hardware"
+        package="org.rhq.plugins.hardware"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+    <server name="Hardware Monitor"
+            discovery="HardwareDiscoveryComponent"
+            class="HardwareComponent">
+
+
+        <metric property="cpuAverageTemperature" units="celsius" displayName="Average CPU Temperature" displayType="summary"/>
+        <metric property="hddAverageTemperature" units="celsius" displayName="Average Hard Drive Temperature" displayType="summary"/>
+        <metric property="batteriesAverageTemperature" units="celsius" displayName="Average Battery Temperature" displayType="summary"/>
+        <metric property="gpusAverageTemperature" units="celsius" displayName="Average GPU Temperature" displayType="summary"/>
+        <metric property="fanAverageSpeed" displayName="Average Fan Speed" displayType="summary"/>
+
+        <metric property="smolt.System Memory" dataType="trait" displayType="summary" displayName="System Memory" defaultInterval="86400"/>
+        <metric property="smolt.System Swap" dataType="trait" displayType="summary" displayName="System Swap" defaultInterval="86400"/>
+        <metric property="smolt.Vendor" dataType="trait" displayType="summary" displayName="Vendor" defaultInterval="86400"/>
+        <metric property="smolt.System" dataType="trait" displayType="summary" displayName="System Model" defaultInterval="86400"/>
+        <metric property="smolt.Form factor" dataType="trait" displayType="summary" displayName="Form Factor" defaultInterval="86400"/>
+        <metric property="smolt.CPU Vendor" dataType="trait" displayType="summary" displayName="CPU Vendor" defaultInterval="86400"/>
+        <metric property="smolt.CPU Model" dataType="trait" displayType="summary" displayName="CPU Model" defaultInterval="86400"/>
+        <metric property="smolt.BogoMIPS" dataType="trait" displayType="summary" displayName="BogoMIPS" defaultInterval="86400"/>
+
+    </server>
+
+    <server name="Smart Disk"
+            discovery="SmartDiskDiscoveryComponent"
+            class="SmartDiskComponent">
+        
+        <plugin-configuration>
+            <c:simple-property name="prefix" required="false"/>
+            <c:simple-property name="command" default="/usr/sbin/smartctl"/>
+        </plugin-configuration>
+
+        <metric property="Temperature_Celsius" units="celsius" displayType="summary"/>
+        <metric property="Raw_Read_Error_Rate" displayType="summary"/>
+        <metric property="Reallocated_Sector_Ct" displayType="summary"/>
+        <metric property="Power_On_Hours" units="hours" displayType="summary"/>
+        <metric property="Start_Stop_Count" defaultOn="true"/>
+        <metric property="Power_Cycle_Count" defaultOn="true"/>
+        <metric property="High_Fly_Writes" defaultOn="true"/>
+        <metric property="Load_Cycle_Count" defaultOn="true"/>
+        <metric property="Hardware_ECC_Recovered" defaultOn="true"/>
+        <metric property="Power-Off_Retract_Count" defaultOn="true"/>
+
+
+    </server>
+
+</plugin>

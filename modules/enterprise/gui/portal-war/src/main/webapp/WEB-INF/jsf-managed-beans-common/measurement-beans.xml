@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+
+<faces-config version="1.2" xmlns="http://java.sun.com/xml/ns/javaee"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd">
+
+   <!-- /rhq/common/monitor/graphs/measurement/** -->
+   <managed-bean>
+      <managed-bean-name>IndicatorChartsUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.measurement.graphs.IndicatorChartsUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   
+   <!-- /rhq/common/monitor/tables/** -->
+   <managed-bean>
+      <managed-bean-name>MetricsTableUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.measurement.tables.MetricsTableUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   <managed-bean>
+      <managed-bean-name>MetricsTableChartUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.measurement.tables.MetricsTableChartUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+    <managed-bean>
+        <managed-bean-name>ResourceMetricSparklineUIBean</managed-bean-name>
+        <managed-bean-class>org.rhq.enterprise.gui.common.graph.SparklineUIBean</managed-bean-class>
+        <managed-bean-scope>request</managed-bean-scope>
+    </managed-bean>
+   
+   <!-- /rhq/common/monitor/response/** -->
+   <managed-bean>
+      <managed-bean-name>CallTimeUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.measurement.calltime.CallTimeUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   
+   <!-- for various pages onc:metric is dropped onto -->
+    <managed-bean>
+        <managed-bean-name>AdvancedMetricSettingsUIBean</managed-bean-name>
+        <managed-bean-class>org.rhq.enterprise.gui.common.metric.AdvancedMetricSettingsUIBean</managed-bean-class>
+        <managed-bean-scope>request</managed-bean-scope>
+    </managed-bean>
+    <managed-bean>
+        <managed-bean-name>MetricComponentUtilityUIBean</managed-bean-name>
+        <managed-bean-class>org.rhq.enterprise.gui.common.metric.MetricComponentUtilityUIBean</managed-bean-class>
+        <managed-bean-scope>request</managed-bean-scope>
+    </managed-bean>
+
+
+</faces-config>
+      

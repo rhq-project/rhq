@@ -1,0 +1,114 @@
+RHQ-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+        MODULE-IDENTITY, OBJECT-TYPE, snmpModules, enterprises
+        FROM SNMPv2-SMI
+    OBJECT-GROUP, MODULE-COMPLIANCE
+        FROM SNMPv2-CONF
+    DisplayString
+        FROM SNMPv2-TC;
+        
+rhqMIB MODULE-IDENTITY
+    LAST-UPDATED    "200807110000Z"
+    ORGANIZATION    "RHQ-Project"
+    CONTACT-INFO    "http://www.rhq-project.org/"
+    DESCRIPTION     
+        "The MIB module for RHQ alerts.
+        
+        This file is part of the RHQ management platform
+        Copyright (C) 2005-2008 Red Hat, Inc.
+        All rights reserved.
+    "
+    
+    REVISION        "200807110000Z"
+    DESCRIPTION     "Initial version"
+    ::= { snmpModules 1 }        
+
+jboss       OBJECT IDENTIFIER ::= {enterprises 18016 }
+
+rhq         OBJECT IDENTIFIER ::= {jboss 2 }
+
+alert       OBJECT IDENTIFIER ::= {rhq 1 }
+
+
+alertName OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The name of the alert definition for this alert"
+    ::= { alert 1 }
+    
+alertResourceName   OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The name of the resource that triggered the alert"
+    ::= { alert 2 }
+
+
+alertPlatformName      OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The name of the platform hosting the resource"
+    ::= { alert 3 }
+
+
+alertCondition      OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..4096))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The conditions leading to the alert"
+    ::= { alert 4 }
+    
+alertSeverity       OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "Severity of the alert." 
+    ::= { alert 5 }
+    
+alertUrl        OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..1024))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION 
+        "The url of the individual alert"
+    ::= { alert 6 }
+        
+        
+-- conformance information
+
+snmpMIBConformance
+               OBJECT IDENTIFIER ::= { rhqMIB 2 }
+
+snmpMIBCompliances
+               OBJECT IDENTIFIER ::= { snmpMIBConformance 1 }
+snmpMIBGroups  OBJECT IDENTIFIER ::= { snmpMIBConformance 2 }
+
+-- compliance statements
+
+snmpBasicCompliance MODULE-COMPLIANCE
+    STATUS  current
+    DESCRIPTION "TODO"
+    MODULE
+        MANDATORY-GROUPS { alertGroup }
+        
+    ::= { snmpMIBCompliances 2 }
+
+alertGroup OBJECT-GROUP
+    OBJECTS {   alertName,
+                alertResourceName,
+                alertPlatformName,
+                alertCondition,
+                alertSeverity,
+                alertUrl }
+    STATUS  current
+    DESCRIPTION "A collection of objects providing information about an alert"
+    ::= { snmpMIBGroups 1 }
+END

@@ -1,0 +1,264 @@
+<?xml version="1.0"?>
+
+<!--===== a sample Maven 2 user settings file for the RHQ build =====-->
+
+<!-- See: http://maven.apache.org/settings.html -->
+
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
+                              http://maven.apache.org/xsd/settings-1.0.0.xsd">
+
+   <!-- The below line can be uncommented if you want your local repo to be in
+        a more convenient location under Windows. -->
+   <!--<localRepository>C:\.m2-repo</localRepository>-->
+
+   <!--**************************** PROFILES ****************************-->
+
+   <!-- See: http://maven.apache.org/guides/introduction/introduction-to-profiles.html
+        and: http://docs.codehaus.org/display/MAVENUSER/Profiles -->
+
+   <activeProfiles>
+      <!-- Always enable the 'overrides' profile, where we override various build properties. -->
+      <activeProfile>overrides</activeProfile>
+
+      <!-- The 'dev' profile enables automatic copying of artifacts to a dev RHQ container. -->
+      <!--<activeProfile>dev</activeProfile>-->
+
+      <!-- The 'jdk6' profile can be used to build RHQ using JDK6. See the 'jdk6' profile block below. -->
+      <!--<activeProfile>jdk6</activeProfile>-->
+
+      <!-- The 'dist' profile is for binary distribution builds and enables things such as JSP precompilation. -->
+      <!--<activeProfile>dist</activeProfile>-->
+
+      <!--<activeProfile>oracle</activeProfile>-->
+   </activeProfiles>
+
+   <profiles>
+
+      <profile>
+         <id>overrides</id>
+         <properties>
+            <!-- NOTE: Add properties here that you always want set, to avoid    -->
+            <!--       having to explicitly pass them on the command line. Note, -->
+            <!--       you can still override them via the command line.         -->
+
+            <!-- Set the below property to your SVN username - used by the deploy plugin. -->
+            <maven.username>your_svn_user_name_here</maven.username>
+            <!-- Set the below property to your SVN username - used by the release plugin. -->
+            <username>your_svn_user_name_here</username>
+            <!-- tells the dbutils tests not to fail -->
+            <DatabaseTest.nofail>true</DatabaseTest.nofail>
+            <!-- Tests that should be skipped (e.g. because they're long running), comma-separated (with no whitespace!) -
+                 some possible values: agent-comm,comm-client,native-system,postgres-plugin -->
+            <rhq.testng.excludedGroups>agent-comm,comm-client,postgres-plugin,native-system</rhq.testng.excludedGroups>
+            <!--<maven.test.skip>true</maven.test.skip>-->
+            <!--<maven.test.failure.ignore>true</maven.test.failure.ignore>-->
+            <!--<maven.test.error.ignore>true</maven.test.error.ignore>-->
+            <!--<surefire.useFile>false</surefire.useFile>-->
+            <!-- Set the below prop to the absolute path of your RHQ trunk dir.
+                (the Jopr plugin poms use {rhq.rootDir}/{rhq.defaultDevContainerPath} as the dev container dir) -->
+            <!--<rhq.rootDir>C:/Projects/rhq-trunk</rhq.rootDir>-->
+            <!-- The location under rhq.rootDir where the server is found. This is used as part of
+                 the default dev container location used by the build poms.
+                 i.e. {rhq.rootDir}/{rhq.defaultDevContainerPath}-->
+            <!-- <rhq.defaultDevContainerPath>dev-container</rhq.defaultDevContainerPath> -->
+            <!-- Alternatively, if you don't want to use the default location of {rhq.rootDir}/{rhq.defaultDevContainerPath}/
+                 for your dev server container, then set the below prop to the desired location. -->
+            <!--<rhq.containerDir>C:/opt/rhq-server</rhq.containerDir>-->
+            
+            <!-- The full path to a checkout of the JBoss Maven repo 
+                 (svn co https://svn.jboss.org/repos/repository.jboss.org/maven2/ jboss-m2-repo) - 
+                 this is where 'mvn release' will publish distribution artifacts to. --> 
+            <!--<jboss.repository.root>C:/Projects/jboss-m2-repo</jboss.repository.root>-->
+         </properties>
+
+         <repositories>
+
+            <repository>
+               <id>jboss</id>
+               <name>JBoss Repository</name>
+               <url>http://repository.jboss.org/maven2/</url>
+               <snapshots>
+                  <enabled>false</enabled>
+               </snapshots>
+            </repository>
+
+            <repository>
+               <id>jboss-snapshots</id>
+               <name>JBoss Snapshot Repository</name>
+               <url>http://snapshots.jboss.org/maven2/</url>
+               <snapshots>
+                  <enabled>true</enabled>
+               </snapshots>
+            </repository>
+
+            <!-- Uncomment this and point it at a local repo that contains the Oracle JDBC jar. -->
+            <!--
+            <repository>
+               <id>internal</id>
+               <name>Internal Repository</name>
+               <url>http://foo.example.com/m2-repo/</url>
+            </repository>
+            -->
+
+         </repositories>
+
+         <pluginRepositories>
+
+            <pluginRepository>
+               <id>jboss</id>
+               <name>JBoss Repository</name>
+               <url>http://repository.jboss.org/maven2/</url>
+               <snapshots>
+                  <enabled>false</enabled>
+               </snapshots>
+            </pluginRepository>
+
+            <pluginRepository>
+               <id>jboss-snapshots</id>
+               <name>JBoss Snapshot Repository</name>
+               <url>http://snapshots.jboss.org/maven2/</url>
+               <snapshots>
+                  <enabled>true</enabled>
+               </snapshots>
+            </pluginRepository>
+
+         </pluginRepositories>
+
+      </profile>
+
+      <profile>
+         <id>postgres</id>
+         <properties>
+            <rhq.test.ds.connection-url>jdbc:postgresql://127.0.0.1:5432/rhq</rhq.test.ds.connection-url>
+            <rhq.test.ds.user-name>rhqadmin</rhq.test.ds.user-name>
+            <rhq.test.ds.password>rhqadmin</rhq.test.ds.password>
+            <rhq.test.ds.type-mapping>PostgreSQL</rhq.test.ds.type-mapping>
+            <rhq.test.ds.driver-class>org.postgresql.Driver</rhq.test.ds.driver-class>
+            <rhq.test.ds.xa-datasource-class>org.postgresql.xa.PGXADataSource</rhq.test.ds.xa-datasource-class>
+            <rhq.test.ds.server-name>127.0.0.1</rhq.test.ds.server-name>
+            <rhq.test.ds.port>5432</rhq.test.ds.port>
+            <rhq.test.ds.db-name>rhq</rhq.test.ds.db-name>
+            <rhq.test.ds.hibernate-dialect>org.hibernate.dialect.PostgreSQLDialect</rhq.test.ds.hibernate-dialect>
+            <!-- quartz properties -->
+            <rhq.test.quartz.driverDelegateClass>org.quartz.impl.jdbcjobstore.PostgreSQLDelegate</rhq.test.quartz.driverDelegateClass>
+            <rhq.test.quartz.selectWithLockSQL>SELECT * FROM {0}LOCKS ROWLOCK WHERE LOCK_NAME = ? FOR UPDATE</rhq.test.quartz.selectWithLockSQL>
+            <rhq.test.quartz.lockHandlerClass>org.quartz.impl.jdbcjobstore.StdRowLockSemaphore</rhq.test.quartz.lockHandlerClass>
+         </properties>
+      </profile>
+      
+      <profile>
+         <id>h2</id>
+         <properties>
+            <rhq.test.ds.driver-class>org.h2.Driver</rhq.test.ds.driver-class>
+            <rhq.test.ds.connection-url>jdbc:h2:~/rhq;MVCC=TRUE;DB_CLOSE_ON_EXIT=FALSE;LOG=2</rhq.test.ds.connection-url>
+            <rhq.test.ds.user-name>rhqadmin</rhq.test.ds.user-name>
+            <rhq.test.ds.password>rhqadmin</rhq.test.ds.password>
+            <rhq.test.ds.type-mapping>h2</rhq.test.ds.type-mapping>
+            <rhq.test.ds.xa-datasource-class>org.h2.jdbcx.JdbcDataSource</rhq.test.ds.xa-datasource-class>
+            <rhq.test.ds.server-name>127.0.0.1</rhq.test.ds.server-name>
+            <rhq.test.ds.port>9092</rhq.test.ds.port>
+            <rhq.test.ds.db-name>rhq</rhq.test.ds.db-name>
+            <!-- This custom dialect is required for proper operation using H2, see class JavaDoc for more info -->
+            <rhq.test.ds.hibernate-dialect>org.rhq.core.domain.dialect.H2CustomDialect</rhq.test.ds.hibernate-dialect>
+            <!-- quartz properties -->
+            <rhq.test.quartz.driverDelegateClass>org.quartz.impl.jdbcjobstore.StdJDBCDelegate</rhq.test.quartz.driverDelegateClass>
+            <rhq.test.quartz.selectWithLockSQL>SELECT * FROM {0}LOCKS ROWLOCK WHERE LOCK_NAME = ? FOR UPDATE</rhq.test.quartz.selectWithLockSQL>
+            <rhq.test.quartz.lockHandlerClass>org.quartz.impl.jdbcjobstore.StdRowLockSemaphore</rhq.test.quartz.lockHandlerClass>
+         </properties>
+      </profile>
+      
+      <profile>
+         <id>sqlserver</id>
+         <properties>
+            <rhq.test.ds.driver-class>net.sourceforge.jtds.jdbc.Driver</rhq.test.ds.driver-class>
+            <rhq.test.ds.connection-url>jdbc:jtds:sqlserver://localhost:1433;databaseName=rhq</rhq.test.ds.connection-url>
+            <rhq.test.ds.user-name>rhqadmin</rhq.test.ds.user-name>
+            <rhq.test.ds.password>rhqadmin</rhq.test.ds.password>
+            <rhq.test.ds.type-mapping>sqlserver</rhq.test.ds.type-mapping>
+            <rhq.test.ds.xa-datasource-class>net.sourceforge.jtds.jdbcx.JtdsDataSource</rhq.test.ds.xa-datasource-class>
+            <rhq.test.ds.server-name>localhost</rhq.test.ds.server-name>
+            <rhq.test.ds.port>1433</rhq.test.ds.port>
+            <rhq.test.ds.db-name>rhq</rhq.test.ds.db-name>
+            <rhq.test.ds.hibernate-dialect>org.hibernate.dialect.SQLServerDialect</rhq.test.ds.hibernate-dialect>
+            <!-- quartz properties -->
+            <rhq.test.quartz.driverDelegateClass>org.quartz.impl.jdbcjobstore.MSSQLDelegate</rhq.test.quartz.driverDelegateClass>
+            <rhq.test.quartz.selectWithLockSQL>UPDATE {0}LOCKS SET LOCK_NAME = LOCK_NAME WHERE LOCK_NAME = ?</rhq.test.quartz.selectWithLockSQL>
+            <rhq.test.quartz.lockHandlerClass>org.quartz.impl.jdbcjobstore.UpdateLockRowSemaphore</rhq.test.quartz.lockHandlerClass>
+         </properties>
+      </profile>
+
+      <profile>
+         <id>oracle</id>
+         <properties>
+            <rhq.test.ds.connection-url>jdbc:oracle:thin:@127.0.0.1:1521:xe</rhq.test.ds.connection-url>
+            <rhq.test.ds.user-name>rhqadmin</rhq.test.ds.user-name>
+            <rhq.test.ds.password>rhqadmin</rhq.test.ds.password>
+            <rhq.test.ds.type-mapping>Oracle10g</rhq.test.ds.type-mapping>
+            <rhq.test.ds.driver-class>oracle.jdbc.driver.OracleDriver</rhq.test.ds.driver-class>
+            <rhq.test.ds.xa-datasource-class>oracle.jdbc.xa.client.OracleXADataSource</rhq.test.ds.xa-datasource-class>
+            <rhq.test.ds.server-name></rhq.test.ds.server-name> <!-- can be left blank, oracle does not use this -->
+            <rhq.test.ds.port></rhq.test.ds.port> <!-- can be left blank, oracle does not use this -->
+            <rhq.test.ds.db-name></rhq.test.ds.db-name> <!-- can be left blank, oracle does not use this -->
+            <rhq.test.ds.hibernate-dialect>org.hibernate.dialect.Oracle10gDialect</rhq.test.ds.hibernate-dialect>
+            <!-- quartz properties -->
+            <rhq.test.quartz.driverDelegateClass>org.quartz.impl.jdbcjobstore.oracle.OracleDelegate</rhq.test.quartz.driverDelegateClass>
+            <rhq.test.quartz.selectWithLockSQL>SELECT * FROM {0}LOCKS ROWLOCK WHERE LOCK_NAME = ? FOR UPDATE</rhq.test.quartz.selectWithLockSQL>
+            <rhq.test.quartz.lockHandlerClass>org.quartz.impl.jdbcjobstore.StdRowLockSemaphore</rhq.test.quartz.lockHandlerClass>
+         </properties>
+      </profile>
+
+      <profile>
+         <!-- Enable this profile if you want to compile RHQ using JDK6 javac. -->
+         <id>jdk6</id>
+         <properties>
+            <!-- Set this to your a JRE5 installation dir (e.g. C:/opt/jdk-1.5.0_15/jre). -->
+            <java5.home>C:/opt/jdk-1.5.0_15/jre</java5.home>
+         </properties>
+      </profile>
+
+      <profile>
+         <id>dev</id>
+         <properties>
+            <!-- Set the below prop to the location to your dev JBAS 4.2/4.3 deploy location for the admin console WAR.
+                 e.g.: C:/opt/jboss-eap-4.3.0.GA_CP02/jboss-as/server/production -->
+            <jbas4.configDir>SET_ME</jbas4.configDir>
+            <!-- Set the below prop to the location to your dev JBAS 5.0 deploy location for the embedded console WAR.
+                 e.g.: C:/opt/jboss-5.0.0.CR1/server/default -->
+            <jbas5.configDir>SET_ME</jbas5.configDir>
+         </properties>
+      </profile>
+      
+      <profile>
+         <id>publish</id>
+         <properties>           
+            <confluenceUrl>http://docs.example.com/confluence/</confluenceUrl>
+            <confluenceSpace>DOCS</confluenceSpace>
+            <confluenceUserName>SET_ME</confluenceUserName>
+            <confluencePassword>SET_ME</confluencePassword>            
+         </properties>                 
+      </profile>      
+
+   </profiles>
+
+   <!--**************************** PLUGIN GROUPS ****************************-->
+
+   <!-- See: http://maven.apache.org/guides/introduction/introduction-to-plugin-prefix-mapping.html -->
+   <pluginGroups>
+      <!--  This will allow you to invoke "org.rhq" Maven goals using the "rhq" prefix -->
+      <pluginGroup>org.rhq</pluginGroup>
+   </pluginGroups>
+
+   <!-- See: http://maven.apache.org/settings.html#Servers -->
+   <servers>
+      <server>
+         <id>jboss-snapshots</id>
+         <!-- Set the below properties to your jboss.org (i.e. external JIRA/SVN) username and password -
+              used by the release plugin to publish via WebDAV to the JBoss Snapshots repo. -->
+         <username>YOUR_USERNAME</username>
+         <password>YOUR_PASSWORD</password>
+      </server>
+   </servers>
+
+</settings>

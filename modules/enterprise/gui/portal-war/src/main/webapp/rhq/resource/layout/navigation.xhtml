@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function">
+
+THIS TEXT WILL BE REMOVED.
+
+The template for the summary section of all Resource pages (i.e. the Monitor/Inventory/etc. tabbed pages).
+NOTE: This template is leveraged by both Facelets pages and JSP/Tiles pages.
+
+REQUEST PARAMETERS:
+id - the id of the Resource being accessed
+
+<ui:composition>
+
+<rich:panel rendered="#{!empty ResourceUIBean.invalidPluginConfigurationError}" styleClass="WarnBlock"
+            style="width: 800px; margin: 4px; padding: 4px">
+
+   <ui:remove><!-- TODO: i18n the below text --></ui:remove>
+   The agent reported the following error on its last attempt
+   (<h:outputText value="#{ResourceUIBean.invalidPluginConfigurationError.timeOccurred}">
+   <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
+</h:outputText>)
+   to connect to this resource:
+   <h:panelGroup layout="block" style="margin: 7px">
+      <strong><em>#{ResourceUIBean.invalidPluginConfigurationError.summary}</em></strong>
+   </h:panelGroup>
+   For more details, see the
+   <a href="javascript:displayStackTrace()">stack trace</a>.
+   <p/>
+   Please make sure that the managed resource is running and that its
+   <span> </span>
+   <h:outputLink value="/rhq/resource/inventory/edit-connection.xhtml"><f:param name="id" value="#{param.id}"/>connection
+      properties</h:outputLink>
+   are set correctly.
+</rich:panel>
+
+
+
+</ui:composition>
+
+THIS TEXT WILL BE REMOVED AS WELL.
+
+</html>

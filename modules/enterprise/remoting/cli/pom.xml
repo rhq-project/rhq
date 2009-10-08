@@ -1,0 +1,392 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+   <modelVersion>4.0.0</modelVersion>
+
+   <parent>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-parent</artifactId>
+      <version>1.4.0-SNAPSHOT</version>
+   </parent>
+
+   <artifactId>rhq-remoting-cli</artifactId>
+
+   <name>RHQ Enterprise Remote CLI</name>
+   <description>RHQ Enterprise Remote Command Line Interface</description>
+
+   <scm>
+      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/client/</connection>
+      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/client/</developerConnection>
+   </scm>
+
+   <properties>
+      <scm.module.path>modules/enterprise/remoting/</scm.module.path>
+
+      <jline.version>0.9.94</jline.version>
+      <i18nlog.version>1.0.9</i18nlog.version>
+      <log4j.version>1.2.14</log4j.version>
+      <persistence-api.version>1.0</persistence-api.version>
+      <hibernate-all.version>1.0.0.Alpha9</hibernate-all.version>
+      <opencsv.version>1.8</opencsv.version>
+      <testng.version>5.9</testng.version>
+   </properties>
+
+   <dependencies>
+      <dependency>
+         <groupId>jboss</groupId>
+         <artifactId>jboss-remoting</artifactId>
+      </dependency>
+
+       <dependency>
+          <groupId>jboss</groupId>
+          <artifactId>javassist</artifactId>
+       </dependency>
+
+      <dependency>
+         <groupId>${groupId}</groupId>
+         <artifactId>rhq-enterprise-comm</artifactId>
+         <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>${groupId}</groupId>
+         <artifactId>rhq-enterprise-server</artifactId>
+         <version>${project.version}</version>
+         <type>ejb</type>
+      </dependency>
+
+      <dependency>
+         <groupId>${groupId}</groupId>
+         <artifactId>rhq-core-domain</artifactId>
+         <version>${project.version}</version>
+         <type>ejb</type>
+      </dependency>
+
+      <dependency>
+         <groupId>${groupId}</groupId>
+         <artifactId>rhq-core-util</artifactId>
+         <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>javax.persistence</groupId>
+         <artifactId>persistence-api</artifactId>
+         <version>${persistence-api.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>commons-logging</groupId>
+         <artifactId>commons-logging</artifactId>
+         <scope>provided</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>commons-lang</groupId>
+         <artifactId>commons-lang</artifactId>
+         <version>2.4</version>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>net.sf.opencsv</groupId>
+         <artifactId>opencsv</artifactId>
+         <version>${opencsv.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>gnu-getopt</groupId>
+         <artifactId>getopt</artifactId>
+         <scope>provided</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>jboss</groupId>
+         <artifactId>jboss-j2ee</artifactId>
+         <scope>provided</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>jboss</groupId>
+         <artifactId>jboss-remoting</artifactId>
+         <scope>provided</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>jline</groupId>
+         <artifactId>jline</artifactId>
+         <version>${jline.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>log4j</groupId>
+         <artifactId>log4j</artifactId>
+         <version>${log4j.version}</version>
+         <scope>provided</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>hibernate-annotations</groupId>
+         <artifactId>hibernate-annotations</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>org.testng</groupId>
+         <artifactId>testng</artifactId>
+         <version>${testng.version}</version>
+         <classifier>jdk15</classifier>
+      </dependency>
+
+   </dependencies>
+
+   <build>
+      <plugins>
+      
+         <plugin>
+           <artifactId>maven-enforcer-plugin</artifactId>
+           <executions>
+             <execution>
+               <id>enforce-versions</id>
+               <goals>
+                 <!-- IMPORTANT: Use enforce goal, rather than enforce-once goal, otherwise reactor
+                                 builds will fail due to http://jira.codehaus.org/browse/MENFORCER-11 -->
+                 <goal>enforce</goal>
+               </goals>
+               <configuration>
+                 <rules>
+                   <requireJavaVersion>
+                     <version>[1.6,1.8)</version> <!-- 1.6.x, 1.7.x -->
+                   </requireJavaVersion>
+                 </rules>
+               </configuration>
+             </execution>
+           </executions>
+         </plugin>
+          
+         <plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
+
+               <execution>
+                  <id>client-distribution</id>
+                  <phase>package</phase>
+                  <configuration>
+                     <tasks>
+                        <ant antfile="${basedir}/src/main/scripts/rhq-client.build.xml" dir="${basedir}" target="prepare-dist" inheritAll="false" inheritRefs="false">
+
+                           <property name="buildNumber" value="${buildNumber}" />
+                           <property name="java.jre.home" value="${java.home}" />
+                           <property name="maven.compile.classpath" refid="maven.compile.classpath" />
+                           <property name="maven.runtime.classpath" refid="maven.runtime.classpath" />
+                           <property name="project.build.outputDirectory" value="${project.build.outputDirectory}" />
+                           <property name="project.name" value="${project.name}" />
+                           <property name="project.artifactId" value="${project.artifactId}" />
+                           <property name="project.groupId" value="${project.groupId}" />
+                           <property name="project.version" value="${project.version}" />
+                           <property name="settings.localRepository" value="${settings.localRepository}" />
+                           <property name="rhq-remoting-ws.version" value="${version}" />
+                           <property name="commons-logging.version" value="${commons-logging.version}" />
+                           <property name="opencsv.version" value="${opencsv.version}" />
+                           <property name="concurrent.version" value="${concurrent.version}" />
+                           <property name="getopt.version" value="${getopt.version}" />
+                           <property name="i18nlog.version" value="${i18nlog.version}" />
+                           <property name="jboss-common.version" value="${jboss-common.version}" />
+                           <property name="jboss.version" value="${jboss.version}" />
+                           <property name="jboss-remoting.version" value="${jboss-remoting.version}" />
+                           <property name="jboss-javassist.version" value="${jboss-javassist.version}" />
+                           <property name="jline.version" value="${jline.version}" />
+                           <property name="log4j.version" value="${log4j.version}" />
+                           <property name="testng.version" value="${testng.version}" />
+                           <property name="persistence-api.version" value="${persistence-api.version}" />
+                           <property name="rhq.client.build.exclude.cli.jar" value="${rhq.client.build.exclude.cli.jar}" />
+                           <property name="rhq.client.build.include.client.jar" value="${rhq.client.build.include.client.jar}" />
+                        </ant>
+                     </tasks>
+                  </configuration>
+                  <goals>
+                     <goal>run</goal>
+                  </goals>
+               </execution>
+
+               <execution>
+                  <phase>process-classes</phase>
+                  <configuration>
+                  <tasks>
+                     <!-- generate the I18N resource bundles -->
+                     <taskdef name="i18n" classpathref="maven.runtime.classpath" classname="mazz.i18n.ant.I18NAntTask" />
+
+                     <i18n outputdir="${project.build.outputDirectory}" defaultlocale="en" verbose="false" append="false" verify="true">
+                        <classpath refid="maven.runtime.classpath" />
+                        <classfileset dir="${project.build.outputDirectory}">
+                           <include name="**/ClientI18NResourceKeys.class" />
+                        </classfileset>
+                     </i18n>
+                  </tasks>
+               </configuration>
+               <goals>
+                  <goal>run</goal>
+               </goals>
+               </execution>
+
+            </executions>
+         </plugin>
+
+         <plugin>            
+            <artifactId>maven-jar-plugin</artifactId>
+            <configuration>
+               <includes>
+                  <include>org/rhq/**</include>
+                  <include>client-messages*</include>
+               </includes>
+               <archive>
+                  <index>true</index>
+                  <manifestEntries>
+                     <Implementation-Title>${rhq.product.name} - ${project.name}</Implementation-Title>
+                     <Implementation-Version>${project.version}</Implementation-Version>
+                     <Specification-Vendor>org.jboss</Specification-Vendor>                     
+                     <Specification-Title>JBossWS</Specification-Title>
+                     <Specification-Version>${jbossws-native-dist.version}</Specification-Version>
+                     <Build-Number>${buildNumber}</Build-Number>
+                  </manifestEntries>
+               </archive>
+            </configuration>
+         </plugin>
+
+         <plugin>
+            <artifactId>maven-assembly-plugin</artifactId>
+            <configuration>
+               <descriptors>
+                  <descriptor>src/main/scripts/rhq-client.assembly.xml</descriptor>
+               </descriptors>
+               <finalName>${project.build.finalName}</finalName>
+            </configuration>
+            <executions>
+               <execution>
+                  <id>assemble-rhq-client-zip</id>
+                  <phase>package</phase>
+                  <goals>
+                     <goal>attached</goal>
+                  </goals>
+               </execution>
+            </executions>
+         </plugin>
+
+<!--
+         <plugin>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>test-non-ws</id>
+                  <phase>test</phase>
+
+                  <configuration>
+                     <excludedGroups>${rhq.testng.excludedGroups},ws</excludedGroups>
+                     <forkMode>pertest</forkMode>
+                     <argLine>-Xmx512m -Xms128m</argLine>
+                     <additionalClasspathElements>
+-->
+                        <!-- The below is required for WS Java Client support -->
+<!--
+                        <additionalClasspathElement>
+                           ${project.build.outputDirectory}/lib/rhq-cli-${project.version}.jar
+                        </additionalClasspathElement>
+                        <additionalClasspathElement>
+                           ${project.build.outputDirectory}/lib/${project.build.finalName}.jar
+                        </additionalClasspathElement>
+                     </additionalClasspathElements>
+
+                  </configuration>
+
+                  <goals>
+                     <goal>test</goal>
+                  </goals>
+               </execution>
+            </executions>
+         </plugin>
+-->
+      </plugins>
+   </build>
+
+
+   <profiles>
+
+      <!-- Unlike most of RHQ, this module requires JDK6, so replace the Java 5 bootclasspath that was added to the compiler args by the root POM with a bootclasspath based on the java.home sysprop (which should be Java 6 or later if the enforcer plugin did its job). -->
+      <profile>
+         <id>check-java-api</id>
+
+         <activation>
+            <property>
+               <name>java5.home</name>
+            </property>
+         </activation>
+         
+         <build>
+           <plugins>
+              <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                  <compilerArguments>
+                    <bootclasspath>${java.home}/lib/rt.jar${path.separator}${java.home}/lib/jsse.jar${path.separator}${java.home}/lib/jce.jar</bootclasspath>
+                  </compilerArguments>
+                </configuration>
+              </plugin>
+            </plugins>
+          </build>
+      </profile>
+      
+      <profile>
+         <id>dev</id>
+         <properties>
+            <rhq.client.build.include.client.jar>true</rhq.client.build.include.client.jar>        
+            <rhq.rootDir>../../..</rhq.rootDir>
+            <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
+            <rhq.projectJar>${project.build.finalName}.zip</rhq.projectJar>
+            <rhq.deploymentZip>rhq-remoting-cli-${project.version}.zip</rhq.deploymentZip>
+            <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/rhq-downloads/rhq-client</rhq.deploymentDir>
+         </properties>
+
+         <build>
+            <plugins>
+               <plugin>
+                  <artifactId>maven-antrun-plugin</artifactId>
+                  <version>1.1</version>
+                  <executions>
+                     <execution>
+                        <id>deploy</id>
+                        <phase>install</phase>
+                        <configuration>
+                           <tasks>
+                              <echo>*** Cleaning old ${rhq.deploymentDir}...</echo>
+                              <mkdir dir="${rhq.deploymentDir}" />
+                              <delete failonerror="false">
+                                 <fileset dir="${rhq.deploymentDir}" includes="*.properties" />
+                              </delete>
+                              <property name="deployment.file" location="${rhq.deploymentDir}/${rhq.deploymentZip}" />
+                              <echo>*** Updating ${deployment.file}...</echo>
+                              <copy file="${basedir}/target/${rhq.projectJar}" toFile="${deployment.file}" />
+                           </tasks>
+                        </configuration>
+                        <goals>
+                           <goal>run</goal>
+                        </goals>
+                     </execution>
+                     <execution>
+                        <id>undeploy</id>
+                        <phase>clean</phase>
+                        <configuration>
+                           <tasks>
+                              <echo>*** Deleting ${rhq.deploymentDir}...</echo>
+                              <delete failonerror="false">
+                                 <fileset dir="${rhq.deploymentDir}" includes="*" />
+                              </delete>
+                           </tasks>
+                        </configuration>
+                        <goals>
+                           <goal>run</goal>
+                        </goals>
+                     </execution>
+                  </executions>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+   </profiles>
+</project>

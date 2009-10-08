@@ -1,0 +1,62 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:a4j="http://richfaces.org/a4j"
+      xmlns:rich="http://richfaces.org/rich"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function">
+
+<ui:composition template="/rhq/group/layout/main.xhtml">
+
+   <ui:param name="pageTitle" value="View Current Configuration for Compatible Group '#{ViewGroupResourceConfigurationUIBean.group.name}'"/>
+   <ui:param name="selectedTabName" value="Configuration.Current"/>
+   <ui:define name="content">
+
+       <h:form id="configSetForm" rendered="#{ViewGroupResourceConfigurationUIBean.configurationSet ne null}">
+
+           <input type="hidden" name="groupId" value="#{ViewGroupResourceConfigurationUIBean.group.id}" />
+
+           <h:outputText rendered="#{not ResourceGroupUIBean.permissions.configure}" value="You do not have permissions to change the configuration of this group"/>
+
+           <h:panelGrid columns="1" styleClass="buttons-table" columnClasses="button-cell">
+               <h:commandButton value="EDIT" action="#{ViewGroupResourceConfigurationUIBean.edit}"
+                                title="Edit this Compatible Group Configuration"
+                                rendered="${ResourceGroupUIBean.permissions.configure}"
+                                styleClass="buttonmed"/>
+           </h:panelGrid>
+           
+           <a4j:region selfRendered="false">
+               <a4j:outputPanel layout="block" ajaxRendered="true" keepTransient="true">
+
+                   <onc:configSet id="rhq_configSet"
+                                  configurationSet="#{ViewGroupResourceConfigurationUIBean.configurationSet}"
+                                  readOnly="true"/>
+
+               </a4j:outputPanel>
+           </a4j:region>
+
+
+           <h:panelGrid columns="1" styleClass="buttons-table" columnClasses="button-cell">
+               <h:commandButton value="EDIT" action="#{ViewGroupResourceConfigurationUIBean.edit}"
+                                title="Edit this Compatible Group Configuration"
+                                rendered="${ResourceGroupUIBean.permissions.configure}"
+                                styleClass="buttonmed"/>
+           </h:panelGrid>
+
+       </h:form>
+
+       <ui:remove><!--<a4j:log popup="false" level="ALL" style="width: 800px; height: 300px;"/>--></ui:remove>
+
+   </ui:define>
+
+</ui:composition>
+
+</html>

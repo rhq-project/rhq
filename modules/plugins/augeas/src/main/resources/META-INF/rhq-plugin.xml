@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<plugin name="Augeas"
+        displayName="Abstract Augeas"
+        description="Abstract plugin supporting concrete plugins that are based on Augeas, the open-source configuration library for Linux"
+        package="org.rhq.plugins.augeas"
+        pluginLifecycleListener="AugeasPluginLifecycleListener"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin">
+</plugin>

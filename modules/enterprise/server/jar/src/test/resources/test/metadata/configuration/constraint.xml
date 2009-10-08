@@ -1,0 +1,24 @@
+<plugin name="ResourceMetaDataManagerBeanTest" displayName="Mock JBoss AS" package="org.rhq.plugins.mock.jboss"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+  
+   <platform name="constraintPlatform">
+      <resource-configuration>
+         <c:simple-property name="secureJnpPort" 
+               type="integer"
+               defaultValue="1234" 
+               displayName="Port to access JMX over ssl" >
+            <c:constraint>
+               <c:integer-constraint minimum="0"/>
+            </c:constraint>
+             <c:constraint>
+               <c:integer-constraint maximum="5"/>
+               <c:float-constraint minimum="3.0"/>
+               <c:regex-constraint expression="foo"/>
+            </c:constraint>
+         </c:simple-property>
+      </resource-configuration>
+   </platform>
+</plugin>
+   

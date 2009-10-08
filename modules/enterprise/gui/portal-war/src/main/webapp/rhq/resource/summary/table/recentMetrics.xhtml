@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+   <h2><h:graphicImage value="/images/icons/Monitor_24.png" style="vertical-align: bottom;"/>
+       Recent Measurements</h2>
+   <ui:repeat var="metric"
+              value="#{MetricsTableUIBean.metricSummaries}">
+     <h:panelGroup rendered="#{metric.valuesPresent}">
+          <div style="text-indent: 20px;">
+              <rich:paint2D id="painter" width="60" height="18" style="margin: 2px"
+                 data="#{param.id}:#{metric.definitionId}" format="png" paint="#{ResourceMetricSparklineUIBean.paint}" />
+
+             <h:outputText value=" " />
+             <h:outputLink value="/resource/common/monitor/Visibility.do">
+                 <f:param name="mode" value="chartSingleMetricSingleResource"/>
+                 <f:param name="id" value="#{param.id}"/>
+                 <f:param name="m" value="#{metric.definitionId}"/>
+                 <h:outputText value="#{metric.label}" />
+             </h:outputLink>
+             <h:outputText value=": " />
+             <h:outputText value="#{metric.lastMetric.valueFmt}"/>
+
+
+             <br />
+          </div>
+       </h:panelGroup>
+   </ui:repeat>
+
+
+   <div style="text-indent: 20px;">
+      <h:outputText value="This resource has no recent metrics"
+                    rendered="#{MetricsTableUIBean.metricSummaries.size > 0 and (MetricsTableUIBean.valuesPresent eq false)}"/>
+   </div>
+   <div style="text-indent: 20px;">
+      <h:outputText value="This resource has no metrics"
+                    rendered="#{MetricsTableUIBean.metricSummaries.size eq 0}"/>
+   </div>
+
+</ui:composition>

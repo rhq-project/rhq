@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<plugin name="YumContentSourcePlugin" 
+        xmlns="urn:xmlns:rhq-serverplugin.content"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <contentSourceType name="YumSource"
+                      displayName="Yum Repository Content Source"
+                      description="This content source retrieves packages from a local or remote Yum repository."
+                      lazyLoad="true"
+                      downloadMode="filesystem"
+                      apiClass="org.rhq.enterprise.server.plugins.yum.RepoSource">
+
+      <configuration>
+         <c:simple-property 
+             name="location" 
+             type="string" 
+             required="true"
+             description="The URL or path to the Yum repository" />
+     </configuration>
+   </contentSourceType>
+
+</plugin>

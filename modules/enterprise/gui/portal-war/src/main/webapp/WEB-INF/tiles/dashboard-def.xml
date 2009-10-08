@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!-- -*- Mode: XML; indent-tabs-mode: nil; -*- -->
+
+<!DOCTYPE tiles-definitions PUBLIC
+     "-//Apache Software Foundation//DTD Tiles Configuration 1.1//EN"
+     "http://jakarta.apache.org/struts/dtds/tiles-config_1_1.dtd">
+
+<tiles-definitions>
+  
+  <definition name=".dashContent.admin.generalSettings"  
+              path="/portlet/admin/GeneralProperties.jsp"/>
+
+  <definition name=".dashContent.admin.display"  
+              path="/portlet/searchResources/View.jsp"/>
+  
+  <definition name=".dashContent.seeAll"
+              path="/portlet/SeeAll.jsp"/>              
+  
+  <definition name=".dashContent.searchResources"    
+              controllerUrl="/dashboard/SearchHubPrepare.do"              
+              path="/portlet/searchResources/View.jsp">              
+              <put name="portletName"      value=".dashContent.searchResources" />
+  </definition>
+     
+  <definition name=".dashContent.savedCharts"
+              controllerUrl="/dashboard/ViewSavedQueries.do"
+              path="/portlet/savedQueries/View.jsp">              
+              <put name="adminUrl"        value="/dashboard/Admin.do?mode=savedQueries" />
+              <put name="portletName"      value=".dashContent.savedCharts" />
+              <put name="showRefresh"      value="true" />
+  </definition>
+  
+  <definition name=".dashContent.admin.savedQueries"
+              controllerUrl="/dashboard/EditSavedQueries.do"                             
+              path="/portlet/savedQueries/Properties.jsp">
+              <put name="portletName"      value=".dashContent.savedCharts" />
+  </definition>
+  
+  <definition name=".dashContent.autoDiscovery"
+              controllerUrl="/dashboard/ViewAutoDiscovery.do"
+              path="/portlet/autoDiscovery/View.jsp">
+              <put name="adminUrl"        value="/dashboard/Admin.do?mode=autoDiscovery" />
+              <put name="portletName"      value=".dashContent.autoDiscovery" />
+              <put name="showRefresh"      value="true" />
+  </definition>  
+  <definition name=".dashContent.admin.autoDiscovery"  
+              controllerUrl="/dashboard/EditAutoDiscovery.do"
+              path="/portlet/autoDiscovery/Properties.jsp">
+              <put name="portletName"      value=".dashContent.autoDiscovery" />
+  </definition>
+  
+  <definition name=".dashContent.resourceHealth"
+              controllerUrl="/dashboard/ViewResourceHealth.do"                             
+              path="/portlet/resourceHealth/View.jsp">              
+              <put name="adminUrl"        value="/dashboard/Admin.do?mode=resourceHealth" />    
+              <put name="portletName"      value=".dashContent.resourceHealth" />
+              <put name="showRefresh"      value="true" />
+  </definition>
+  <definition name=".dashContent.admin.resourceHealth"  
+              controllerUrl="/dashboard/EditResourceHealth.do"
+              path="/portlet/resourceHealth/Properties.jsp">
+              <put name="portletName"      value=".dashContent.resourceHealth" />
+  </definition>
+
+  <definition name=".dashContent.recentlyApproved"
+              controllerUrl="/dashboard/ViewRecentlyApproved.do"
+              path="/portlet/recentlyApproved/View.jsp">
+              <put name="adminUrl"        value="/dashboard/Admin.do?mode=recentlyApproved" />
+              <put name="portletName"      value=".dashContent.recentlyApproved" />
+              <put name="showRefresh"      value="true" />
+  </definition>
+  <definition name=".dashContent.admin.recentlyApproved"
+              controllerUrl="/dashboard/EditRecentlyApproved.do"
+              path="/portlet/recentlyApproved/Properties.jsp">
+              <put name="portletName"      value=".dashContent.recentlyApproved" />
+  </definition>
+ 
+  <definition name=".dashContent.criticalAlerts"
+              controllerUrl="/dashboard/ViewCriticalAlerts.do"
+              path="/portlet/criticalAlerts/View.jsp">                            
+              <put name="adminUrl"        value="/dashboard/Admin.do?mode=criticalAlerts" />    
+              <put name="portletName"      value=".dashContent.criticalAlerts" />
+              <put name="showRefresh"      value="true" />
+  </definition>
+  <definition name=".dashContent.admin.criticalAlerts" 
+              controllerUrl="/dashboard/EditCriticalAlerts.do"
+              path="/portlet/criticalAlerts/Properties.jsp">
+              <put name="portletName"   value=".dashContent.criticalAlerts" />
+  </definition>
+    
+  <definition name=".dashContent.summaryCounts"
+              controllerUrl="/dashboard/ViewSummaryCounts.do"
+              path="/portlet/summaryCounts/View.jsp">                            
+              <put name="adminUrl"        value="/dashboard/Admin.do?mode=summaryCounts" />
+              <put name="portletName"      value=".dashContent.summaryCounts" />              
+              <put name="showRefresh"      value="true" />
+  </definition>
+  <definition name=".dashContent.admin.summaryCounts"  
+              controllerUrl="/dashboard/EditSummaryCounts.do"
+              path="/portlet/summaryCounts/Properties.jsp">
+              <put name="portletName"      value=".dashContent.summaryCounts" />
+  </definition>       
+  
+  <definition name=".dashContent.problemResources"
+              controllerUrl="/dashboard/ViewProblemResources.do"
+              path="/portlet/problemResources/View.jsp">
+              <put name="adminUrl"        value="/dashboard/Admin.do?mode=problemResources" />    
+              <put name="portletName"      value=".dashContent.problemResources" />
+              <put name="showRefresh"      value="true" />
+  </definition>
+  <definition name=".dashContent.admin.problemResources"  
+              controllerUrl="/dashboard/EditProblemResources.do"
+              path="/portlet/problemResources/Properties.jsp">
+              <put name="portletName"      value=".dashContent.problemResources" />
+  </definition>
+
+  <definition name=".dashContent.controlActions"
+              controllerUrl="/dashboard/ViewControlActions.do"
+              path="/portlet/controlactions/View.jsp">
+              <put name="adminUrl"        value="/dashboard/Admin.do?mode=controlActions" />
+              <put name="portletName"      value=".dashContent.controlActions" />
+              <put name="showRefresh"      value="true" />
+  </definition>
+
+  <definition name=".dashContent.admin.controlActions"
+              controllerUrl="/dashboard/EditControlActions.do"
+              path="/portlet/controlactions/Properties.jsp">
+              <put name="portletName"      value=".dashContent.controlActions" />
+  </definition> 
+  
+  <definition name=".dashContent.admin.criticalAlerts.addResources"
+              controllerUrl="/dashboard/AddResourcesPrepareAction.do"
+              path="/portlet/criticalAlerts/AddResources.jsp"/>  
+              
+  <definition name=".dashContent.admin.resourcehealth.addResources"
+              controllerUrl="/dashboard/AddResourcesPrepareAction.do"
+              path="/portlet/resourceHealth/AddResources.jsp"/>
+
+
+  <definition name=".dashContent.addContent.narrow"
+              controllerUrl="/dashboard/AddContent.do"
+              path="/portlet/AddContentControl.jsp">
+              <put name="wide"      value="false" />
+              <putList name="portlets">
+                <add value=".dashContent.searchResources"/>
+                <add value=".dashContent.savedCharts"/>
+                <add value=".dashContent.summaryCounts"/>
+              </putList>           
+  </definition>  
+
+  <definition name=".dashContent.addContent.wide"
+              controllerUrl="/dashboard/AddContent.do"
+              path="/portlet/AddContentControl.jsp">  
+              <put name="wide"      value="true" />
+              <putList name="portlets">
+                <add value=".dashContent.resourceHealth"/>
+                <add value=".dashContent.criticalAlerts"/>
+                <add value=".dashContent.autoDiscovery"/>
+                <add value=".dashContent.controlActions"/>
+                <add value=".dashContent.problemResources"/>
+                <add value=".dashContent.recentlyApproved"/>
+              </putList> 
+  </definition>  
+    
+</tiles-definitions>

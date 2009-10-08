@@ -1,0 +1,195 @@
+<?xml version="1.0"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN" "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+]>
+
+<section id="#displayResourceTypeLink( ${resourceType} )">
+    <title>#displayResourceTypeName( ${resourceType} )</title>
+
+    <bridgehead>Overview</bridgehead>
+    <table>
+        <title>Overview</title>
+        <tgroup cols="2" align="left" colsep="1" rowsep="1">
+            <tbody>
+                <row>
+                    <entry>Description:</entry>
+                    <entry>$!{resourceType.description}</entry>
+                </row>
+                <row>
+                    <entry>Singleton:</entry>
+                    <entry>#if ( ${resourceType.singleton} ) yes #else no #end</entry>
+                </row>
+                <row>
+                    <entry>Plugin:</entry>
+                    <entry>${resourceType.plugin}</entry>
+                </row>
+            </tbody>
+        </tgroup>
+    </table>
+
+
+#if ( ${resourceType.helpText} )
+<note><para>${resourceType.helpText}</para></note>
+#end
+
+
+    <bridgehead>Parent Resource Types</bridgehead>
+#if ( !${resourceType.parentResourceTypes.isEmpty()} )
+    <itemizedlist>
+#foreach ( ${parentResourceType} in ${resourceType.parentResourceTypes} )
+        <listitem><simpara><xref linkend="#displayResourceTypeLink( ${parentResourceType} )"/></simpara></listitem>
+#end
+    </itemizedlist>
+#elseif ( ${resourceType.category.name} != "PLATFORM" )
+    <itemizedlist>
+        <listitem><simpara><xref linkend="Managed_Platforms"/></simpara></listitem>
+    </itemizedlist>
+#else
+    <para>none</para>
+#end
+
+
+    <bridgehead>Child Resource Types</bridgehead>
+#if ( !${resourceType.childResourceTypes.isEmpty()} )
+    <itemizedlist>
+#foreach( ${childResourceType} in ${resourceType.childResourceTypes} )
+        <listitem><simpara><xref linkend="#displayResourceTypeLink( ${childResourceType} )"/></simpara></listitem>
+#end
+    </itemizedlist>
+#elseif ( ${resourceType.category.name} == "PLATFORM" )
+    <itemizedlist>
+        <listitem><simpara><xref linkend="Managed_Servers"/></simpara></listitem>
+        <listitem><simpara><xref linkend="Managed_Platform_Services"/></simpara></listitem>
+    </itemizedlist>
+#else
+    <para>none</para>
+#end
+
+
+#if ( ${resourceType.category.name} == "SERVER" )
+    <bridgehead>Autodiscovery Process Scans</bridgehead>
+#if ( ${resourceType.processScans.isEmpty()} )
+    <para>none</para>
+#else
+    <table>
+        <title>Metrics</title>
+        <tgroup cols="2" align="left" colsep="1" rowsep="1">
+            <thead>
+                <row>
+                    <entry>Name</entry>
+                    <entry>Query</entry>
+                </row>
+            </thead>
+            <tbody>
+#foreach( ${processScan} in ${resourceType.processScans} )
+                <row>
+                    <entry>${processScan.name}</entry>
+                    <entry>${processScan.query}</entry>
+                </row>
+#end
+            </tbody>
+        </tgroup>
+    </table>
+#end
+#end
+
+
+    <bridgehead>Connection Properties</bridgehead>
+#displayConfig( ${resourceType.pluginConfigurationDefinition} )
+
+    <bridgehead>Metrics</bridgehead>
+
+#if ( ${resourceType.metricDefinitions.isEmpty()} )
+    <para>none</para>
+#else
+    <table>
+        <title>Metrics</title>
+        <tgroup cols="4" align="left" colsep="1" rowsep="1">
+            <thead>
+                <row>
+                    <entry>Name</entry>
+                    <entry>Type</entry>
+                    <entry>Description</entry>
+                    <entry>Internal Name</entry>
+                </row>
+            </thead>
+            <tbody>
+#foreach( ${metricDefinition} in ${resourceType.metricDefinitions} )
+                <row>
+                    <entry>${metricDefinition.displayName}</entry>
+                    <entry>${metricDefinition.dataType.toString().toLowerCase()}</entry>
+                    <entry>$!{metricDefinition.description}</entry>
+                    <entry>${metricDefinition.name}</entry>
+                </row>
+#end
+            </tbody>
+        </tgroup>
+    </table>
+    <note>
+        <para>You must use the internal name to reference Traits in Dynamic Group Definition expressions.</para>
+    </note>
+#end
+
+
+    <bridgehead>Configuration Properties</bridgehead>
+#displayConfig( ${resourceType.resourceConfigurationDefinition} )
+
+
+    <bridgehead>Operations</bridgehead>
+#if ( ${resourceType.operationDefinitions.isEmpty()} )
+    <para>none</para>
+#else
+    <table>
+        <title>Metrics</title>
+        <tgroup cols="2" align="left" colsep="1" rowsep="1">
+            <thead>
+                <row>
+                    <entry>Name</entry>
+                    <entry>Description</entry>
+                </row>
+            </thead>
+            <tbody>
+#foreach( ${operationDefinition} in ${resourceType.operationDefinitions} )
+                <row>
+                    <entry>${operationDefinition.displayName}</entry>
+                    <entry>$!{operationDefinition.description}</entry>
+                </row>
+#end
+            </tbody>
+        </tgroup>
+    </table>
+#end
+
+
+    <bridgehead>Package Types</bridgehead>
+#if ( ${resourceType.packageTypes.isEmpty()} )
+    <para>none</para>
+#else
+    <table>
+        <title>Package Types</title>
+        <tgroup cols="3" align="left" colsep="1" rowsep="1">
+            <thead>
+                <row>
+                    <entry>Name</entry>
+                    <entry>Category</entry>
+                    <entry>Description</entry>
+                </row>
+            </thead>
+            <tbody>
+#foreach( ${packageType} in ${resourceType.packageTypes} )
+                <row>
+                    <entry>${packageType.displayName}</entry>
+                    <entry>$!{packageType.category}</entry>
+                    <entry>$!{packageType.description}</entry>
+                </row>
+#end
+            </tbody>
+        </tgroup>
+    </table>
+#end
+
+
+#foreach( ${childResourceType} in ${resourceType.childResourceTypes} )
+    <xi:include href="#displayResourceTypeLink( ${childResourceType} ).xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+#end
+    
+</section>

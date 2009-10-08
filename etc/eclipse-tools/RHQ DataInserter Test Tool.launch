@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<launchConfiguration type="org.eclipse.jdt.launching.localJavaApplication">
+<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
+<listEntry value="/rhq/modules/enterprise/server/jar/src/main/java/org/rhq/enterprise/server/measurement/util/DataInserter.java"/>
+</listAttribute>
+<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
+<listEntry value="1"/>
+</listAttribute>
+<booleanAttribute key="org.eclipse.debug.core.appendEnvironmentVariables" value="true"/>
+<stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="org.rhq.enterprise.server.measurement.util.DataInserter"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="rhq"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Ddriver=org.postgresql.Driver -Durl=jdbc:postgresql://127.0.0.1:5432/rhq -Dusername=rhqadmin -Dpassword=rhqadmin -DnumSchedules=2"/>
+</launchConfiguration>

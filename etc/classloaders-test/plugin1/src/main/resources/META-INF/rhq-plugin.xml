@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<plugin name="Plugin1"
+        displayName="Plugin1"
+        package="org.rhq.plugin1"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <server name="Plugin1Ashared"
+           classLoader="shared"
+           discovery="SamplePlugin1ADiscoveryComponent"
+           class="SamplePlugin1AServerComponent">
+   </server>
+
+   <server name="Plugin1Binstance"
+           classLoader="instance"
+           discovery="SamplePlugin1BDiscoveryComponent"
+           class="SamplePlugin1BServerComponent">
+   </server>
+</plugin>

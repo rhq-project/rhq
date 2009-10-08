@@ -1,0 +1,19 @@
+<plugin name="Test2" displayName="Test Two" package="org.rhq.plugins.test2"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin">
+
+   <depends plugin="Test1" />
+   <server name="Extension Server B" discovery="ServerBComponent" class="ServerBServerComponent"
+           description="Extension Server B Test Server"
+           sourcePlugin="Test1" sourceType="Server A">
+      <service name="Service D" discovery="ServiceDComponent" class="ServiceDServerComponent"
+               description="Extension Service D Test Service"
+               sourcePlugin="Test1" sourceType="Service D"/>
+           
+   </server>
+
+   <service name="Extension Service C" discovery="ServiceCComponent" class="ServiceCServerComponent"
+           description="Extension Service C Test Service"
+           sourcePlugin="Test1" sourceType="Service C"/>
+
+</plugin>

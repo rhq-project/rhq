@@ -1,0 +1,251 @@
+
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:s="http://jboss.com/products/seam/taglib"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax" 
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+      
+    <h:form id="eventHistoryForm" >
+
+        <a4j:keepAlive beanName="EventHistoryUIBean"/>
+
+        <c:if test="#{EventHistoryUIBean.context.resourceId != -1}">
+            <input type="hidden" name="id" value="#{EventHistoryUIBean.context.resourceId}" />
+        </c:if>
+        <c:if test="#{EventHistoryUIBean.context.groupId != -1}">
+            <input type="hidden" name="groupId" value="#{EventHistoryUIBean.context.groupId}" />
+        </c:if>
+        <c:if test="#{EventHistoryUIBean.context.parentResourceId != -1}">
+            <input type="hidden" name="parent" value="#{EventHistoryUIBean.context.parentResourceId}" />
+        </c:if>
+        <c:if test="#{EventHistoryUIBean.context.resourceTypeId != -1}">
+            <input type="hidden" name="type" value="#{EventHistoryUIBean.context.resourceTypeId}" />
+        </c:if>
+        <c:if test="#{not empty param.category}">
+            <input type="hidden" name="category" value="#{param.category}" />
+        </c:if>
+
+        <rich:panel styleClass="BlockContent">
+            <f:facet name="header">
+                <h:outputText value="Events" />
+            </f:facet>
+
+            <h:panelGrid columns="3" cellspacing="3">
+               <h:outputLabel for="sourceFilter" value="Source Filter: " />
+               <h:inputText id="sourceFilter" value="#{EventHistoryUIBean.sourceFilter}"
+                            style="width: 300px;">
+                   <a4j:support event="onchange"
+                                status="commonStatus" 
+                                reRender="eventHistoryDataTable, eventHistoryDataTableScroller" 
+                                actionListener="#{EventHistoryUIBean.clearDataModel}" />
+               </h:inputText>
+               <rich:spacer/>
+
+               <h:outputLabel for="searchFilter" value="Details Filter: " />
+               <h:inputText id="searchFilter" value="#{EventHistoryUIBean.searchFilter}"
+                            onkeypress="return ignoreEnterKey(event);"
+                            style="width: 300px;" />
+                   <a4j:support event="onchange"
+                                status="commonStatus"
+                                reRender="eventHistoryDataTable, eventHistoryDataTableScroller" 
+                                actionListener="#{EventHistoryUIBean.clearDataModel}" />
+               <rich:spacer/>
+               
+               <h:outputLabel for="severityFilter" value="Severity Filter: " />
+               <h:selectManyCheckbox id="severityFilter" value="#{EventHistoryUIBean.severityFilter}"
+                                    style="width: 300px;">
+                   <a4j:support event="onchange"
+                                status="commonStatus"
+                                reRender="eventHistoryDataTable,eventHistoryDataTableScroller"
+                                actionListener="#{EventHistoryUIBean.clearDataModel}" />
+
+                   <f:selectItems value="#{EventHistoryUIBean.severityFilterSelectItems}"/>
+               </h:selectManyCheckbox>
+               
+               <a4j:commandButton value="GO"
+                                  status="commonStatus"
+                                  reRender="eventHistoryDataTable,eventHistoryDataTableScroller"
+                                  actionListener="#{EventHistoryUIBean.clearDataModel}"
+                                  styleClass="buttonmed">
+                  <s:defaultAction />
+               </a4j:commandButton>
+            </h:panelGrid>
+
+            <br />
+
+            <ui:param name="eventHistoryDataModel" value="#{EventHistoryUIBean.dataModel}" />
+
+            <rich:dataTable id="eventHistoryDataTable"
+                         value="#{eventHistoryDataModel}" 
+                          rows="#{PageControl.EventsHistoryList.pageSize}" 
+                           var="item"
+                         width="100%"
+                    styleClass="resources-table"
+                   headerClass="tableRowHeader" 
+                   footerClass="on-pager-footer"
+                onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                 onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+
+                <f:facet name="PageControlView">
+                    <onc:paginationControl id="EventsHistoryList" />
+                </f:facet>
+                
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:allSelect target="selectedEvents" />
+                  </f:facet>
+                  
+                  <onc:select name="selectedEvents" value="#{item.eventId}" />
+               </rich:column>
+
+                <rich:column style="white-space: nowrap;">
+                    <f:facet name="header">
+                        <onc:sortableColumnHeader sort="ev.severity">
+                            <h:outputText styleClass="headerText" value="Severity" />
+                        </onc:sortableColumnHeader>
+                    </f:facet>
+
+                    <h:graphicImage value="/images/icons/Events_fatal_16.png" rendered="#{item.severity == 'FATAL'}"/>
+                    <h:graphicImage value="/images/icons/Events_error_16.png" rendered="#{item.severity == 'ERROR'}"/>
+                    <h:graphicImage value="/images/icons/Events_warning_16.png" rendered="#{item.severity == 'WARN'}"/>
+                    <h:graphicImage value="/images/icons/Events_info_16.png" rendered="#{item.severity == 'INFO'}"/>
+                    <h:graphicImage value="/images/icons/Events_debug_16.png" rendered="#{item.severity == 'DEBUG'}"/>
+
+                    <h:outputText value=" #{item.severity}" />
+                </rich:column>
+
+                <rich:column rendered="#{EventHistoryUIBean.context.resourceId == -1}">
+                    <f:facet name="header">
+                        <onc:sortableColumnHeader sort="res.name">
+                            <h:outputText styleClass="headerText" value="Resource" />
+                        </onc:sortableColumnHeader>
+                    </f:facet>
+                    <h:outputText value="#{item.resourceName}" />
+                </rich:column>
+
+                <rich:column>
+                    <f:facet name="header">
+                        <onc:sortableColumnHeader sort="evs.location">
+                            <h:outputText styleClass="headerText" value="Source" />
+                        </onc:sortableColumnHeader>
+                    </f:facet>
+                    <h:outputText value="#{onf:elideString(item.sourceLocation, 50, 'left')}" title="#{item.sourceLocation}"/>
+                </rich:column>
+
+                <rich:column>
+                    <f:facet name="header">
+                        <h:outputText styleClass="headerText" value="Detail" />
+                    </f:facet>
+                    
+                    <a4j:commandLink action="#{EventHistoryUIBean.populateEventId(item.eventId)}"
+                                     reRender="eventDetailsModalPanel" ajaxSingle="true"
+                                     limitToList="true"
+                                     oncomplete="Richfaces.showModalPanel('modalPanelForm:eventDetailsModalPanel')">
+                       <h:outputText value="#{onf:elideString(item.eventDetail, 160, 'right')}" />
+                    </a4j:commandLink>
+                </rich:column>
+
+                <rich:column>
+                    <f:facet name="header">
+                        <onc:sortableColumnHeader sort="ev.timestamp">
+                            <h:outputText styleClass="headerText" value="Time occurred" />
+                        </onc:sortableColumnHeader>
+                    </f:facet>
+                    
+                    <h:outputText value="#{item.timestamp}" >
+                        <f:converter converterId="RelativeDurationConverter" />
+                    </h:outputText>
+                </rich:column>
+
+                <f:facet name="footer">
+                    <rich:columnGroup>
+                        <rich:column colspan="#{EventHistoryUIBean.context.resourceId == -1 ? 6 : 5}" width="100%">
+                            <onc:selectCommandButton action="#{EventHistoryUIBean.deleteSelectedEvents}"
+                                                     value="DELETE SELECTED" target="selectedEvents" styleClass="on-pager-button buttonsmall" />
+                            <h:commandButton action="#{EventHistoryUIBean.purgeAllEvents}"
+                                             value="PURGE ALL" styleClass="on-pager-button buttonsmall" />
+                        
+                            <ui:param name="paginationDataTableName" value="eventHistoryDataTable" />
+                            <ui:param name="paginationDataModel" value="#{eventHistoryDataModel}" />
+                            <ui:param name="paginationPageControl" value="#{PageControl.EventsHistoryList}" />
+                            <ui:include src="/rhq/resource/include/pagination.xhtml" />
+                        </rich:column>
+                    </rich:columnGroup>
+                </f:facet>
+            </rich:dataTable>
+            
+            <table>
+                <tr>
+                    <td>
+                        <table>
+                            <tr>
+                                <td><onc:metric optionList="m,h,d" /></td>
+                                <td>
+                                    <h:commandLink rendered="#{not MetricComponentUtilityUIBean.readOnly}"
+                                                  action="#{MetricComponentUtilityUIBean.update}" >
+                                        <img src="/images/dash-button_go-arrow.gif" alt="Apply Metric Settings "/>
+                                    </h:commandLink>
+                                    <h:commandLink rendered="#{MetricComponentUtilityUIBean.readOnly}" 
+                                                   action="#{MetricComponentUtilityUIBean.switchToSimpleMode}">
+                                        <h:outputText value="Switch to Simple Mode" />
+                                    </h:commandLink>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </rich:panel>
+        <br />
+    </h:form>
+    
+    <h:form id="modalPanelForm">
+       <rich:modalPanel id="eventDetailsModalPanel" width="600" height="450" onmaskclick="#{rich:component('eventDetailsModalPanel')}.hide()">
+          <f:facet name="header">
+             <h:outputText value="Event Details"/>
+          </f:facet>
+          <f:facet name="controls">
+             <a href="javascript:Richfaces.hideModalPanel('modalPanelForm:eventDetailsModalPanel')">Close</a>
+          </f:facet>
+          <ui:param name="event" value="#{EventHistoryUIBean.selectedEvent}" />
+          <h:panelGroup rendered="#{not empty event}">
+              <table width="100%">
+                  <tr style="width: 200px">
+                      <td style="font-weight: bold;">Resource: </td>
+                      <td><h:outputText value="#{onf:getResource(event.resourceId).name}" /></td>
+                  </tr>
+                  <tr>
+                      <td style="font-weight: bold;">Source: </td>
+                      <td><h:outputText value="#{event.sourceLocation}" /></td>
+                  </tr>
+                  <tr>
+                      <td style="font-weight: bold;">Severity: </td>
+                      <td style="white-space: nowrap;">
+                          <h:graphicImage value="/images/icons/Events_fatal_16.png" rendered="#{event.severity == 'FATAL'}"/>
+                          <h:graphicImage value="/images/icons/Events_error_16.png" rendered="#{event.severity == 'ERROR'}"/>
+                          <h:graphicImage value="/images/icons/Events_warning_16.png" rendered="#{event.severity == 'WARN'}"/>
+                          <h:graphicImage value="/images/icons/Events_info_16.png" rendered="#{event.severity == 'INFO'}"/>
+                          <h:graphicImage value="/images/icons/Events_debug_16.png" rendered="#{event.severity == 'DEBUG'}"/>
+
+                          <h:outputText value="#{event.severity}" /></td>
+                  </tr>
+                  <tr>
+                      <td style="font-weight: bold; vertical-align: top;">Details: </td>
+                      <td>
+                          <div style="height: 300px; border-style: inset; border-width: 1px; overflow: auto">
+                              <h:outputText value="#{event.eventDetail}" />
+                          </div>
+                      </td>
+                  </tr>
+              </table>
+          </h:panelGroup>
+       </rich:modalPanel>
+    </h:form>
+
+</ui:composition>
+

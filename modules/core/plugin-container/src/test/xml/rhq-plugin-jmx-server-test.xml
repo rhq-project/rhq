@@ -1,0 +1,95 @@
+<plugin name="JMX" displayName="Generic JMX" package="org.rhq.plugins.jmx"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <server name="JMX Server" discovery="JMXDiscoveryComponent" class="JMXServerComponent">
+
+      <!-- Properties are connection/lookup configurations. They are values that the
+         plugin components need to connect and interact with the resource. -->
+      <plugin-configuration>
+         <c:simple-property name="type" type="string" description="The EMS connection type for this JMX Server">
+            <c:property-options>
+               <c:option value="JDK5ConnectionType" default="true"/>
+               <c:option value="JBossConnectionType"/>
+            </c:property-options>
+         </c:simple-property>
+         <c:simple-property name="url" required="true" type="string" description="The connection url in the form of a JMXServiceURL"/>
+         <c:simple-property name="principal" description="The login principal/username"/>
+         <c:simple-property name="credentials" description="The login credentials/password"/>
+         <c:simple-property name="foo" description="bar"/>
+         <c:simple-property name="port">
+
+         </c:simple-property>
+      </plugin-configuration>
+
+
+      <!-- Constituted services -->
+      <service name="Virtual Machine" type="virtual">
+         <metric property="Operating System" displayName="Free Memory"/>
+      </service>
+
+      <!-- JVM level services (One service per mbean) -->
+      <service name="Operating System" class="JMXServiceComponent">
+         <plugin-configuration>
+            <c:simple-property name="objectName" default="java.lang:type=OperatingSystem"/>
+         </plugin-configuration>
+
+         <!--<components>
+            <component type="measurement" class="JMXMeasurementComponent"/>
+            <component type="control" class="JMXControlComponent"/>
+         </components>-->
+
+         <metric displayName="Free Memory"
+                     defaultOn="true"
+                     category="performance"
+                     property="FreePhysicalMemorySize"
+                     description="The amount of free physical memory"
+                     units="bytes">
+            <version target="parent" match="5.0"/>
+          </metric>
+
+      </service>
+
+
+
+      <service name="Threading" class="JMXServiceComponent">
+         <version target="parent" match="5.0"/>
+         <plugin-configuration>
+            <c:simple-property name="objectName" readOnly="true" default="java.lang:type=Threading"/>
+         </plugin-configuration>
+
+         <operation
+            displayName="Reset Peak Thread Metrics"
+            name="resetPeakThreadCount"
+            description="Reset the peak number of threads"/>
+
+         <metric displayName="Free Memory"
+                     defaultOn="true"
+                     category="performance"
+                     property="FreePhysicalMemorySize"
+                     description="The amount of free physical memory"
+                     units="bytes"/>
+         <metric displayName="Thread Data"
+               defaultOn="false"
+               property="ThreadData"
+               category="performance"
+               description="Detailed thread information"/>
+
+
+      </service>
+
+
+      <service name="Memory Pool" class="JMXServiceComponent">
+         <plugin-configuration>
+            <c:simple-property name="objectName" readOnly="true" default="java.lang:type=MemoryPool,name=%name%"/>
+            <c:simple-property name="name" type="string" description="The memory pool's name"/>
+         </plugin-configuration>
+      </service>
+
+
+
+   </server>
+
+
+</plugin>

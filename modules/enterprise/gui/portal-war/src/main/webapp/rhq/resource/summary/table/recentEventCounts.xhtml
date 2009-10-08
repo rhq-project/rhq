@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+   <h2><h:graphicImage value="/images/icons/Events_24.png" style="vertical-align: bottom;"/>
+       Recent Event Counts</h2>
+   <ui:repeat var="item"
+              value="#{ResourceOverviewUIBean.recentEventCounts}">
+      <div style="text-indent: 20px;">
+         <h:graphicImage value="#{onf:getEventSeverityURL(item.lefty, false)}" title="#{item.lefty}" />
+         <h:outputText value=" " />
+         <h:outputText value="#{item.righty}" />
+         <br />
+      </div>
+   </ui:repeat>
+
+   <div style="text-indent: 20px;">
+      <h:outputText value="No events in the last 24 hours"
+                    rendered="#{onf:sizeOf(ResourceOverviewUIBean.recentEventCounts) eq 0}"/>
+   </div>
+
+</ui:composition>

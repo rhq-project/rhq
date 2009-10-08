@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- ===================================================================== -->
+<!--                                                                       -->
+<!--  JBoss Server Configuration                                           -->
+<!--                                                                       -->
+<!-- ===================================================================== -->
+
+<!-- $Id: msaccess_ds.xml 695 2005-09-17 00:43:05Z ccrouch $ -->
+<!-- ==================================================================== -->
+<!-- This uses the sun jdbc-odbc driver, so don't expect miracles          -->
+<!-- Thanks to Alan Moor, who warns...                                     -->
+<!-- Remember, though, never trust critical data, or data that you can't   -->
+<!-- afford to lose, or data that you need quick access to, or data that   -->
+<!-- needs to be secure, to Microsoft Access.                              -->
+<!-- ===================================================================== -->
+
+
+<datasources>
+  <no-tx-datasource>
+    <jndi-name>MSAccessDS</jndi-name>
+    <use-java-context>false</use-java-context>
+    <!-- format of URL is "jdbc:odbc:DSNNAME" -->
+    <connection-url>jdbc:odbc:INsightDSN</connection-url>
+    <driver-class>sun.jdbc.odbc.JdbcOdbcDriver</driver-class>
+    <user-name>x</user-name>
+    <password>y</password>
+    <security-domain-and-application>DbRealm</security-domain-and-application>
+    <prepared-statement-cache-size>10</prepared-statement-cache-size>
+  </no-tx-datasource>
+
+</datasources>

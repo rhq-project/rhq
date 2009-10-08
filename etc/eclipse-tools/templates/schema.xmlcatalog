@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog">
+<uri name="urn:xmlns:rhq-configuration" uri="platform:/resource/rhq/modules/core/client-api/src/main/resources/rhq-configuration.xsd"/>
+<uri name="urn:xmlns:rhq-plugin" uri="platform:/resource/rhq/modules/core/client-api/src/main/resources/rhq-plugin.xsd"/>
+<uri name="urn:xmlns:rhq-serverplugin.content" uri="platform:/resource/rhq/modules/core/client-api/src/main/resources/rhq-serverplugin-content.xsd"/>
+<uri name="urn:xmlns:rhq-perspective" uri="platform:/resource/rhq/modules/core/client-api/src/main/resources/rhq-perspective.xsd"/>
+</catalog>

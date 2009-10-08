@@ -1,0 +1,52 @@
+
+<ui:composition template="/rhq/resource/layout/main.xhtml"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+<ui:param name="pageTitle" value="#{ResourceUIBean.resourceType.name} '#{ResourceUIBean.name}' - Connection Properties"/>
+<ui:param name="selectedTabName" value="Inventory.Connection"/>
+
+<ui:define name="content">
+
+<!-- =================== CONNECTION PROPERTIES =================== -->
+<rich:panel
+      rendered="#{!empty ConnectionPropertiesViewUIBean.configurationDefinition.propertyDefinitions and !empty ConnectionPropertiesViewUIBean.configuration.map}"
+      styleClass="BlockContent">
+
+   <f:facet name="header" styleClass="BlockTitle">
+      Connection Properties
+   </f:facet>
+
+   <h:form id="viewConnectionPropertiesForm">
+       <input type="hidden" name="id" value="#{param.id}"/>
+
+      <onc:config configurationDefinition="#{ConnectionPropertiesViewUIBean.configurationDefinition}"
+                  configuration="#{ConnectionPropertiesViewUIBean.configuration}"
+                  readOnly="true"
+                  nullConfigurationDefinitionMessage="#{ConnectionPropertiesViewUIBean.nullConfigurationDefinitionMessage}"
+                  nullConfigurationMessage="#{ConnectionPropertiesViewUIBean.nullConfigurationMessage}"
+                  prevalidate="true"/>
+
+      <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell" >
+         <h:commandButton value="EDIT..." action="#{ConnectionPropertiesViewUIBean.edit}"
+                          title="Edit Connection Properties" styleClass="buttonmed"
+                          rendered="#{ResourceUIBean.permissions.inventory}" />
+         <h:commandButton value="HISTORY..." action="#{ConnectionPropertiesViewUIBean.history}"
+                          title="View Connection Properties History" styleClass="buttonmed"/>
+      </h:panelGrid>
+
+   </h:form>
+
+</rich:panel>
+
+</ui:define>
+
+</ui:composition>
+

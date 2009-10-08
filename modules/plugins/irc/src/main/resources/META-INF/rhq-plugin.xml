@@ -1,0 +1,62 @@
+<?xml version="1.0"?>
+<plugin name="IRC Server"
+        displayName="IRC ServerPlugin"
+        package="org.rhq.plugins.irc"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+
+    <server
+            name="IRC Server"
+            discovery="IRCServerDiscoveryComponent"
+            class="IRCServerComponent"
+            supportsManualAdd="true">
+
+        <plugin-configuration>
+            <c:simple-property name="host"/>
+            <c:simple-property name="port" type="integer" default="6667"/>
+            <c:simple-property name="botNick" default="JoprBot"/>
+        </plugin-configuration>
+
+
+        <operation name="listChannels" description="List out all channels">
+            <results>
+                <c:list-property name="channelList">
+                    <c:map-property name="channelMap">
+                        <c:simple-property name="channel"/>
+                        <c:simple-property name="userCount"/>
+                        <c:simple-property name="topic"/>
+                    </c:map-property>
+                </c:list-property>
+            </results>
+        </operation>
+
+        <service
+                name="IRC Channel"
+                discovery="IRCChannelDiscoveryComponent"
+                class="IRCChannelComponent"
+                supportsManualAdd="true">
+
+            <plugin-configuration>
+                <c:simple-property name="channelName"/>
+            </plugin-configuration>
+
+
+            <operation name="sendMessage" description="Send a message to the channel">
+                <parameters>
+                    <c:simple-property name="message" description="The message to send to the channel" required="true"/>
+                </parameters>
+            </operation>
+
+            <metric property="users" displayType="summary"/>
+            <metric property="messages" measurementType="trendsup" displayType="summary"/>
+
+            <event name="message"/>
+
+        </service>
+
+    </server>
+
+
+</plugin>

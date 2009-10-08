@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+   <h2><h:graphicImage value="/images/icons/Monitor_failed_24.png" style="vertical-align: bottom;"/>
+       Recent Out of Bound metrics</h2>
+   <ui:repeat var="item"
+              value="#{ResourceOverviewUIBean.recentOOBs}">
+      <div style="text-indent: 20px;">
+
+          <h:outputLink value="/resource/common/monitor/Visibility.do">
+                      <f:param name="m" value="#{item.definitionId}"/>
+                      <f:param name="id" value="#{item.resourceId}"/>
+                      <f:param name="mode" value="chartSingleMetricSingleResource" />
+
+
+                      <h:outputText value="#{item.scheduleName}"/>
+          </h:outputLink>
+          <h:outputText value=": "/>
+              <h:outputText value="#{item.timestamp}">
+                <f:converter converterId="RelativeDurationConverter" />
+            </h:outputText>
+          <br/>
+          <div style="text-indent: 30px;">
+              <h:outputText value="value= ${item.formattedOutlier}"/>
+              <h:outputText value="; band= ( ${item.formattedBaseband} )"/>
+          </div>
+         <br />
+      </div>
+   </ui:repeat>
+
+   <div style="text-indent: 20px;">
+      <h:outputText value="No OOB conditions found"
+                    rendered="#{onf:sizeOf(ResourceOverviewUIBean.recentOOBs) eq 0}"/>
+   </div>
+
+</ui:composition>

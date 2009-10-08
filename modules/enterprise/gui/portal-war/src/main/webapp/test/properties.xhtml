@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+
+<ui:composition>
+
+   <ui:remove>
+   <!-- Recursive compositions are not yet supported by Facelets:
+          http://www.jboss.com/index.html?module=bb&op=viewtopic&p=4001056#4001056
+          https://facelets.dev.java.net/issues/show_bug.cgi?id=202 -->
+   </ui:remove>
+
+   <table border="1">
+      <tr>
+         <th>Name</th>
+         <th>Value</th>
+      </tr>
+      <ui:repeat var="property"
+                 value="#{properties}">
+         <ui:fragment rendered="#{property.class.simpleName eq 'PropertySimple'}">
+            <tr>
+               <td><h:outputText value="#{property.name}" /></td>
+               <td><h:outputText value="#{property.stringValue}" /></td>
+            </tr>
+         </ui:fragment>
+         <ui:fragment rendered="#{property.class.simpleName eq 'PropertyMap'}">
+            <ui:include src="/test/properties1.xhtml">
+               <ui:param name="properties" value="#{onf:getListFromMap(property.map)}"/>
+            </ui:include>
+         </ui:fragment>
+         <ui:fragment rendered="#{property.class.simpleName eq 'PropertyList'}">
+            <ui:include src="/test/properties1.xhtml">
+               <ui:param name="properties" value="#{property.list}"/>
+            </ui:include>
+         </ui:fragment>
+      </ui:repeat>
+   </table>
+   
+</ui:composition>
+
+</html>

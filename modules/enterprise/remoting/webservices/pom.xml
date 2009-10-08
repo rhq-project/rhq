@@ -1,0 +1,244 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+   <modelVersion>4.0.0</modelVersion>
+
+   <parent>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-parent</artifactId>
+      <version>1.4.0-SNAPSHOT</version>
+   </parent>
+
+   <artifactId>rhq-remoting-webservices</artifactId>
+   <name>RHQ Remoting Web Services Client</name>
+
+   <scm>
+      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/client/</connection>
+      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/client/</developerConnection>
+   </scm>
+
+   <properties>
+      <scm.module.path>modules/enterprise/remoting/</scm.module.path>
+      <persistence-api.version>1.0</persistence-api.version>
+      <ant.contrib.version>1.0b3</ant.contrib.version>
+      <testng.version>5.9</testng.version>
+   </properties>
+
+   <dependencies>
+      <dependency>
+         <groupId>org.jboss.jbossas</groupId>
+         <artifactId>jboss-as-dist</artifactId>
+         <type>zip</type>
+      </dependency>
+
+      <dependency>
+         <groupId>org.jboss.jbossws</groupId>
+         <artifactId>jbossws-native-dist</artifactId>
+         <type>zip</type>
+      </dependency>
+
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-enterprise-server</artifactId>
+         <version>${project.version}</version>
+         <type>ejb</type>
+         <scope>compile</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-core-domain</artifactId>
+         <version>${project.version}</version>
+         <type>ejb</type>
+         <scope>compile</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>ant-contrib</groupId>
+         <artifactId>ant-contrib</artifactId>
+         <version>${ant.contrib.version}</version>
+         <scope>provided</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>javax.persistence</groupId>
+         <artifactId>persistence-api</artifactId>
+         <version>1.0</version>
+         <scope>compile</scope>
+      </dependency>
+
+      <!-- TODO This can probably go away after we stop using EJB Exception classes in the remote API -->
+      <dependency>
+         <groupId>jboss</groupId>
+         <artifactId>jboss-j2ee</artifactId>
+         <scope>provided</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>org.testng</groupId>
+         <artifactId>testng</artifactId>
+         <version>${testng.version}</version>
+         <classifier>jdk15</classifier>
+      </dependency>
+
+   </dependencies>
+
+   <build>
+      <outputDirectory>target/${project.build.finalName}</outputDirectory>
+
+      <plugins>
+
+         <plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
+
+               <execution>
+                  <id>client-distribution</id>
+                  <phase>compile</phase>
+                  <configuration>
+                     <tasks>
+                        <ant antfile="${basedir}/src/main/scripts/rhq-client.build.xml" dir="${basedir}" target="prepare-dist" inheritAll="false" inheritRefs="false">
+
+                           <property name="buildNumber" value="${buildNumber}" />
+                           <property name="java.jre.home" value="${java.home}" />
+                           <property name="maven.compile.classpath" refid="maven.compile.classpath" />
+                           <property name="maven.runtime.classpath" refid="maven.runtime.classpath" />
+                           <property name="project.build.outputDirectory" value="${project.build.outputDirectory}" />
+                           <property name="project.name" value="${project.name}" />
+                           <property name="project.groupId" value="${project.groupId}" />
+                           <property name="project.version" value="${project.version}" />
+                           <property name="settings.localRepository" value="${settings.localRepository}" />
+                           <property name="persistence-api.version" value="${persistence-api.version}" />
+                           <property name="jboss.version" value="${jboss.version}" />
+                           <property name="jbossws-native-dist.version" value="${jbossws-native-dist.version}" />
+                           <property name="rhq.client.build.exclude.cli.jar" value="${rhq.client.build.exclude.cli.jar}" />
+                           <property name="rhq.client.build.include.client.jar" value="${rhq.client.build.include.client.jar}" />
+                           <property name="quartz.version" value="${quartz.version}" />
+                           <property name="ant.contrib.version" value="${ant.contrib.version}" />
+                           <property name="webservice.version" value="${version}" />
+                        </ant>
+                     </tasks>
+                  </configuration>
+                  <goals>
+                     <goal>run</goal>
+                  </goals>
+               </execution>
+
+            </executions>
+         </plugin>
+
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-jar-plugin</artifactId>
+            <configuration>
+               <classesDirectory>${project.build.directory}/rhq-remoting-webservices-${version}
+               </classesDirectory>
+
+               <includes>
+                  <include>org/rhq/**</include>
+               </includes>
+               <archive>
+                  <index>true</index>
+                  <manifestEntries>
+                     <Implementation-Title>${rhq.product.name} - ${project.name}</Implementation-Title>
+                     <Implementation-Version>${project.version}</Implementation-Version>
+                     <Specification-Vendor>org.jboss</Specification-Vendor>
+                     <Specification-Title>JBossWS</Specification-Title>
+                     <Specification-Version>${jbossws-native-dist.version}</Specification-Version>
+                     <Build-Number>${buildNumber}</Build-Number>
+                  </manifestEntries>
+               </archive>
+            </configuration>
+         </plugin>
+
+         <!--
+            run the standard tests by default (if any) but exclude ws tests requiring a running server.
+         -->
+         <plugin>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <!-- Everything but the web service tests, this is the standard test execution -->
+            <configuration>
+               <excludes>
+                  <exclude>com/**/*.java</exclude>
+               </excludes>
+               <excludedGroups>${rhq.testng.excludedGroups},ws</excludedGroups>
+               <systemProperties>
+                  <property>
+                     <name>deploymentDirectory</name>
+                     <value>target/classes</value>
+                  </property>
+               </systemProperties>
+            </configuration>
+         </plugin>
+
+      </plugins>
+   </build>
+
+   <profiles>
+      <profile>
+         <id>test-ws</id>
+         <activation>
+            <property>
+               <name>test-ws</name>
+            </property>
+         </activation>
+
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-surefire-plugin</artifactId>
+                  <executions>
+                     <execution>
+                        <id>web-service-tests</id>
+                        <phase>test</phase>
+                        <configuration>
+                           <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
+                           <groups>ws</groups>
+                           <forkMode>pertest</forkMode>
+                           <argLine>-Xmx512m -Xms128m</argLine>
+                           <systemProperties>
+                              <property>
+                                 <name>deploymentDirectory</name>
+                                 <value>target/classes</value>
+                              </property>
+                           </systemProperties>
+                           <additionalClasspathElements>
+                              <additionalClasspathElement>
+                                 ${project.build.directory}/rhq-remoting-webservices-${version}.jar
+                              </additionalClasspathElement>
+                           </additionalClasspathElements>
+                        </configuration>
+                        <goals>
+                           <goal>test</goal>
+                        </goals>
+                     </execution>
+                  </executions>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+
+      <!--  Add dependencies need for jdk5 builds. Remove when we stop supporting jdk5 -->
+      <profile>
+         <id>java-5-dependencies</id>
+         <activation>
+            <jdk>1.5</jdk>
+            <property>
+               <name>java5.home</name>
+            </property>
+         </activation>
+
+         <dependencies>
+            <dependency>
+               <groupId>jboss.jbossws</groupId>
+               <artifactId>jboss-jaxws</artifactId>
+               <!-- NOTE: This version is old but is good enough to resolve the build dependency. -->
+               <version>3.0.1-native-2.0.4.GA</version>
+               <scope>provided</scope>
+            </dependency>
+         </dependencies>
+      </profile>
+
+   </profiles>
+
+</project>

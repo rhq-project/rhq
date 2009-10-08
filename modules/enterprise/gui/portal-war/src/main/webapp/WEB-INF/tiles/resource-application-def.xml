@@ -1,0 +1,292 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+
+<!-- -*- Mode: XML; indent-tabs-mode: nil; -*- -->
+<!DOCTYPE tiles-definitions PUBLIC
+     "-//Apache Software Foundation//DTD Tiles Configuration 1.1//EN"
+     "http://jakarta.apache.org/struts/dtds/tiles-config_1_1.dtd">
+
+
+<tiles-definitions>
+  
+  <!-- page titles -->
+  <definition name=".page.title.resource.application"
+              extends=".page.title">
+    <put name="titleBgStyle" value="PageTitleApplicationBg"/>
+    <put name="titleImg" value="title_application.gif"/>
+  </definition>
+  <!-- / -->
+  
+  <definition name=".page.title.resource.application.full"
+              extends=".page.title.resource.application">
+    <put name="linkUrl"
+         value="/resource/application/inventory/ApplicationLinks.jsp"/>
+  </definition>
+  
+  <definition name=".page.title.resource.application.new"
+              extends=".page.title">
+              
+    <put name="titleKey" value="resource.application.inventory.NewApplicationPageTitle"/>
+    <put name="titleBgStyle" value="PageTitleApplicationBg"/>
+    <put name="titleImg" value="title_application.gif"/>    			  
+  </definition>
+  <definition name=".resource.application.inventory.generalProperties"
+              extends=".resource.common.inventory.generalProperties">
+    <put name="showLocation" value="true"/>
+  </definition>
+
+  <!-- application tabs -->
+
+  <definition name=".tabs.resource.application"
+              extends=".tabs.resource.nocontrol"> 
+   <putList name="tabList">
+       <item value="Monitor" mode="currentHealth"
+           link="/Resource.do"
+            height="21" width="102"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+      <item value="Inventory" link="/resource/application/Inventory.do"
+            height="21" width="102"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+   </putList>     
+  </definition>
+
+  <definition name=".tabs.resource.application.inventory"
+      extends=".tabs.resource.application">                            
+   <put name="selectedIndex"  value="1" />
+   <putList name="subTabList">
+   </putList>
+  </definition>
+
+  
+  <!-- monitor subtabs --> 
+  
+  <definition name=".tabs.resource.application.monitor"
+              extends=".tabs.resource.application">
+    <put name="selectedIndex"  value="0" />
+    <put name="subSectionName" value="Monitor"/>
+    <putList name="subTabList">
+      <item value="Visibility" mode="currentHealth"
+            link="/Resource.do"
+            height="25" width="104"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+      <item value="Configure" mode="configure"
+            link="/resource/application/monitor/Config.do"
+            height="25" width="104"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+      <item value="Alerts" mode="list"
+            link="/alerts/Alerts.do"
+            height="25" width="104"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+      <item value="Configure" mode="list"
+            link="/alerts/Config.do"
+            height="25" width="104"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+    </putList>
+  </definition>
+
+  <definition name=".tabs.resource.application.monitor.visibility"
+              extends=".tabs.resource.application.monitor">
+    <put name="subSelectedIndex" value="0"/>
+  </definition>
+
+  <definition name=".tabs.resource.application.monitor.configVisibility"
+              extends=".tabs.resource.application.monitor">
+    <put name="subSelectedIndex" value="1"/>
+  </definition>
+
+  <definition name=".tabs.resource.application.monitor.alerts"
+              extends=".tabs.resource.application.monitor">
+    <put name="subSelectedIndex" value="2"/>
+  </definition>
+
+  <definition name=".tabs.resource.application.monitor.configAlerts"
+              extends=".tabs.resource.application.monitor">
+    <put name="subSelectedIndex" value="3"/>
+  </definition>
+
+  <definition name=".resource.application.inventory.serviceList"
+            extends=".table">
+    <put name="tableComp"
+         value="/resource/application/inventory/ListServicesTable.jsp"/>
+  </definition>
+
+  <!-- portlets -->
+
+  <definition name=".resource.application.inventory.NewApplication"
+              controllerUrl="/resource/application/inventory/NewApplicationFormPrepare.do"
+              path="/resource/application/inventory/NewApplication.jsp"/>
+  
+  <definition name=".resource.application.inventory.ViewApplication"
+              controllerUrl="/resource/application/inventory/ViewApplication.do"
+              path="/resource/application/inventory/ViewApplication.jsp"/> 
+
+  <definition name=".resource.application.inventory.EditGeneralProperties"
+              controllerUrl="/resource/application/inventory/EditGeneralFormPrepare.do"
+              path="/resource/application/inventory/EditGeneralProperties.jsp"/>
+
+  <definition name=".resource.application.inventory.EditApplicationProperties"
+              controllerUrl="/resource/application/inventory/EditApplicationFormPrepare.do"
+              path="/resource/application/inventory/EditApplicationProperties.jsp"/>
+
+  <definition name=".resource.application.inventory.changeOwner"
+              controllerUrl="/resource/common/inventory/ChangeResourceOwnerFormPrepare.do"
+              path="/resource/application/inventory/ChangeOwner.jsp"/>
+  <definition name=".resource.application.inventory.addApplicationGroups"
+              controllerUrl="/resource/common/inventory/AddResourceGroupsFormPrepare.do"
+              path="/resource/application/inventory/AddApplicationGroups.jsp"/>
+
+  <definition name=".resource.application.inventory.addApplicationServices"
+              controllerUrl="/resource/application/inventory/AddApplicationServiceFormPrepare.do"
+              path="/resource/application/inventory/AddApplicationServices.jsp"/>
+
+  <definition name=".resource.application.inventory.addApplicationServicesForm"
+              path="/resource/application/inventory/AddApplicationServicesForm.jsp"/>
+
+
+  <definition name=".resource.application.inventory.listServiceDependencies"
+              controllerUrl="/resource/application/inventory/ListServiceDependencies.do"
+              path="/resource/application/inventory/ListServiceDependencies.jsp"/>
+
+  <definition name=".resource.application.inventory.addServiceDependencies"
+              controllerUrl="/resource/application/inventory/AddServiceDependenciesFormPrepare.do"
+              path="/resource/application/inventory/AddServiceDependencies.jsp"/>
+  <definition name=".resource.application.inventory.addServiceDependenciesForm"
+              path="/resource/application/inventory/AddServiceDependenciesForm.jsp"/>
+ 
+  <definition name=".resource.application.addToList.Dependencies"  
+              path="/resource/application/inventory/AddToListDependencies.jsp"/>
+              
+  <definition name=".resource.application.addToList.Groups"
+              path="/resource/application/inventory/AddToListGroups.jsp"/>
+
+  <definition name=".resource.application.addToList.Services"
+              path="/resource/application/inventory/AddToListServices.jsp"/>
+
+  <definition name=".resource.application.ApplicationProperties.form"
+              path="/resource/application/inventory/ApplicationPropertiesForm.jsp"/>
+  <definition name=".resource.application.inventory.applicationProperties.view"
+              path="/resource/application/inventory/ViewApplicationProperties.jsp"/>
+  <definition name=".resource.application.inventory.applicationProperties.edit"
+              path="/resource/application/inventory/ApplicationPropertiesForm.jsp"/>
+
+  <definition name=".resource.application.list.DependsOn"
+              path="/resource/application/inventory/ListDependsOn.jsp"/>
+
+  <definition name=".resource.application.inventory.services"
+              path="/resource/application/inventory/ListServices.jsp"/>
+
+  <!-- kruft, kill it -->
+  <definition name=".resource.application.list.ServicesDepend"
+              path="/resource/application/inventory/ListServicesDepend.jsp"/>
+
+  <definition name=".resource.application.view.ApplicationProperties"
+              path="/resource/application/inventory/ViewApplicationProperties.jsp"/>
+
+  <definition name=".resource.application.inventory.serviceCounts"
+              path="/resource/application/inventory/ViewServiceCounts.jsp"/>
+
+
+  <!-- monitoring display stuff -->
+
+  <definition name=".tabs.resource.application"
+              extends=".tabs.resource">
+    <putList name="tabList">
+      <item value="Monitor" mode="currentHealth"
+            link="/Resource.do"
+            height="21" width="102"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+      <item value="Inventory" mode="view"
+            link="/resource/application/Inventory.do"
+            height="21" width="102"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+    </putList> 
+  </definition>
+
+  <definition name=".tabs.resource.application.monitor"
+              extends=".tabs.resource.application">
+    <put name="selectedIndex"  value="0" />
+    <put name="subSectionName" value="Monitor"/>
+    <putList name="subTabList">
+      <item value="Visibility" mode="currentHealth"
+            link="/Resource.do"
+            height="25" width="104"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"
+            visible="false"
+            />
+      <item value="Configure" mode="configure"
+            link="/resource/application/monitor/Config.do"
+            height="25" width="104"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"
+            visible="false"
+            />
+      <item value="Alerts" mode="list"
+            link="/alerts/Alerts.do"
+            height="25" width="104"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"
+            visible="false"
+            />
+      <item value="Configure" mode="list"
+            link="/alerts/Config.do"
+            height="25" width="104"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"
+            visible="false"
+            />
+    </putList>
+  </definition>
+
+  <!-- the subtabs at the top of the monitoring screens -->
+
+  <definition name=".tabs.resource.application.monitor.visibility"
+              extends=".tabs.resource.application.monitor">
+    <put name="subSelectedIndex" value="0"/>
+  </definition>
+
+  <definition name=".tabs.resource.application.monitor.configVisibility"
+              extends=".tabs.resource.application.monitor">
+    <put name="subSelectedIndex" value="1"/>
+  </definition>
+
+  <definition name=".tabs.resource.application.monitor.alerts"
+              extends=".tabs.resource.application.monitor">
+    <put name="subSelectedIndex" value="2"/>
+  </definition>
+
+  <definition name=".tabs.resource.application.monitor.configAlerts"
+              extends=".tabs.resource.application.monitor">
+    <put name="subSelectedIndex" value="3"/>
+  </definition>
+
+    <!-- monitor minitabs -->
+  <definition name=".resource.application.monitor.visibility.minitabs"
+              extends=".resource.common.monitor.visibility.minitabs">
+    <put name="tabUrl" value="/Resource.do"/>
+  </definition>
+
+  <!-- monitor portals -->
+  <definition name=".resource.application.monitor.visibility.CurrentHealth"
+              controllerUrl="/resource/application/monitor/visibility/ApplicationCurrentHealth.do"
+              path="/resource/application/monitor/visibility/MainLayout.jsp"/>
+
+  <definition name=".resource.application.monitor.visibility.Performance"
+              controllerUrl="/resource/application/monitor/visibility/ApplicationPerformanceFormPrepare.do"
+              path="/resource/application/monitor/visibility/MainLayout.jsp"/>
+  
+  <definition name=".resource.application.monitor.visibility.UrlDetail"
+              controllerUrl="/resource/application/monitor/visibility/ApplicationUrlPerformanceFormPrepare.do"
+              path="/resource/application/monitor/visibility/ApplicationUrlPerformance.jsp"/>
+  
+  <!-- monitor config portals -->
+  <definition name=".resource.application.monitor.config.ConfigMetrics"
+              controllerUrl="/resource/application/monitor/config/ConfigMetricsFormPrepare.do"
+              path="/resource/common/monitor/config/ConfigMetrics.jsp">
+     <put name="section" value="common"/>
+  </definition>
+              
+  <!-- monitor portlets -->
+  <definition name=".resource.application.monitor.visibility.serversList"
+              path="/resource/application/monitor/visibility/ApplicationServersList.jsp"/>
+
+  <definition name=".resource.application.monitor.visibility.listchildresources"
+              extends=".resource.common.monitor.visibility.listchildresources"
+              controllerUrl="/resource/application/monitor/visibility/ListChildrenResources.do"/>
+
+ </tiles-definitions>

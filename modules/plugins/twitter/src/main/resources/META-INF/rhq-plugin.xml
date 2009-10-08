@@ -1,0 +1,90 @@
+<?xml version="1.0"?>
+<plugin name="Twitter"
+        displayName="Twitter Plugin"
+        package="org.rhq.plugins.twitter"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        description="Monitor various timelines on Twitter"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+
+    <server
+            name="Twitter"
+            discovery="TwitterDiscovery"
+            class="TwitterComponent"
+            description="Twitter monitoring subsystem"
+            supportsManualAdd="true"
+        >
+
+        <plugin-configuration>
+            <c:simple-property name="baseurl" required="true" default="http://twitter.com/"
+                               description="Base url of the service to use."/>
+            <c:simple-property name="searchBaseUrl" required="true" default="http://search.twitter.com/"
+                               description="Base url for the search service."/>
+            <c:simple-property name="user" required="true" description="Twitter user to post statuses"/>
+            <c:simple-property name="password" required="true" description="Password of the user" type="password"/>
+
+            <c:template name="Twitter" description="Use Twitter.com">
+                <c:simple-property name="baseurl" default="http://twitter.com/"/>
+                <c:simple-property name="searchBaseUrl" default="http://search.twitter.com/" />
+            </c:template>
+            <c:template name="Identi.ca" description="Use identi.ca">
+                <c:simple-property name="baseurl" default="http://identi.ca/api/"/>
+                <c:simple-property name="searchBaseUrl" default="http://identi.ca/api/" />
+            </c:template>
+        </plugin-configuration>
+
+        <operation name="postStatus"
+                   description="Post a status message to the users timeline. Requires user and password to be set on the connection properties">
+            <parameters>
+                <c:simple-property name="message" required="true"/>
+            </parameters>
+            <results>
+                <c:simple-property name="status" type="string"/>
+            </results>
+        </operation>
+
+        <metric property="tweetCount" displayName="Tweet count" category="utilization" dataType="measurement"
+                defaultOn="true" displayType="summary" measurementType="dynamic"
+                description="Number of new tweets since last poll"/>
+
+        <metric property="followerCount" displayName="Follower count" dataType="measurement"
+                defaultOn="true" displayType="summary" measurementType="dynamic" defaultInterval="14400000"
+                description="Number of followers" />
+
+
+        <event name="TwitterEvent"/>
+
+
+        <service
+            name="TwitterFeed"
+            discovery="FeedDiscovery"
+            class="FeedComponent"
+            supportsManualAdd="true"
+            description="One timeline or search"
+            createDeletePolicy="delete-only"
+        >
+
+            <plugin-configuration>
+                <c:simple-property name="kind" default="user">
+                    <c:property-options allowCustomValue="false">
+                        <c:option value="user" name="User timeline" default="true"/>
+                        <c:option value="search" name="Keyword search"/>
+                    </c:property-options>
+                </c:simple-property>
+                <c:simple-property name="keyword" type="string" description="The user / keyword to search for"
+                                   required="true"/>
+            </plugin-configuration>
+
+            <metric property="tweetCount" displayName="Tweet count" category="utilization" dataType="measurement"
+                    defaultOn="true" displayType="summary" measurementType="dynamic"
+                    description="Number of new tweets since last poll"/>
+
+            <event name="FeedEvent"/>
+
+        </service>
+
+    </server>
+
+
+</plugin>

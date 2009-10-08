@@ -1,0 +1,32 @@
+body { 
+    font-family: Verdana, Tahoma, Geneva, Helvetica, Arial, sans-serif;
+    color: #444444;
+    font-size: 12px;
+}
+table {
+    font-size: 12px;
+}
+a:link, a:visited {
+	 color: #781F1C;
+	 text-decoration: underline;
+}
+a:hover, a:active {
+    color: #222222;
+    text-decoration: none;
+}
+.oddRow, .evenRow {
+    font-family: Verdana, Helvetica, Arial, sans-serif; 
+}
+.oddRow {
+    color: #444444; background: #DDDDDD;
+}
+.evenRow { 
+    color: #444444; background: #FFFFFF;
+}
+.javascriptWarning { 
+    font-family: Verdana, Helvetica, Arial, sans-serif; 
+    color: red; background: yellow;
+}
+.warningColor {
+    color: red; background: yellow;
+}

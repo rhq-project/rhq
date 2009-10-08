@@ -99,14 +99,27 @@
         </index>
         <!-- List entries all have the same name -->
     </table>
-
+e
     <table name="RHQ_CONFIG_TEMPLATE">
         <column name="ID" type="INTEGER" required="true" default="sequence-only" initial="10001" primarykey="true"/>
         <column name="NAME" type="VARCHAR2" required="false" size="100"/>
         <column name="DESCRIPTION" type="VARCHAR2" required="false" size="500"/>
-        <column name="CONFIG_ID" type="INTEGER" required="false" references="RHQ_CONFIG"/>
         <column name="CONFIG_DEF_ID" type="INTEGER" required="false" references="RHQ_CONFIG_DEF"/>
         <column name="IS_DEFAULT" type="BOOLEAN" required="false"/>
+    </table>
+
+    <table name="RHQ_RAW_CONFIG">
+        <column name="ID" type="INTEGER" required="true" default="sequence-only" initial="10001" primarykey="true"/>
+        <column name="CONFIG_ID" type="INTEGER" required="true" references="RHQ_CONFIG"/>
+        <column name="PATH" type="VARCHAR2" required="true" size="512"/>
+        <column name="CONTENT" type="BLOB" required="true"/>
+        <column name="SHA256" type="VARCHAR2" size="64" required="false"/>
+        <column name="CTIME" type="LONG" required="true"/>
+        <column name="MTIME" type="LONG" required="true"/>
+
+        <index name="RHQ_RAW_idx_config_key" unique="false">
+            <field ref="CONFIG_ID"/>
+        </index>
     </table>
 
 </dbsetup>

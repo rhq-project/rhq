@@ -59,6 +59,7 @@ public class RawConfiguration implements Serializable {
 
     @GeneratedValue(generator = "SEQ", strategy = GenerationType.AUTO)
     @Id
+    @Column(name = "ID")
     private int id;
 
     @Column(name = "PATH", nullable = true)

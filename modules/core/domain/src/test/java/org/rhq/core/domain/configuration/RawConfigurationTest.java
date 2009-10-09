@@ -32,8 +32,8 @@ public class RawConfigurationTest extends AbstractEJB3Test {
 
     @Test(groups = "integration.ejb3")
     public void veryPersistAndFindById() throws Exception {
-        EntityManager entityMgr = getEntityManager();
         getTransactionManager().begin();
+        EntityManager entityMgr = getEntityManager();
 
         try {
             Configuration config = createAndSaveConfiguration();

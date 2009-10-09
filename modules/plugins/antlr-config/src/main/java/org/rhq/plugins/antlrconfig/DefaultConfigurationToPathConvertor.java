@@ -23,14 +23,17 @@
 
 package org.rhq.plugins.antlrconfig;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-
-import org.antlr.runtime.RecognitionException;
+import java.util.Map;
 
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 
 /**
  * This default implementation can create a tree path out of the names of the properties/property definitions.
@@ -50,6 +53,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 public class DefaultConfigurationToPathConvertor implements ConfigurationToPathConvertor {
 
     public static final String NAME_PREFIX = "config://";
+    public static final int NAME_PREFIX_LENGTH = NAME_PREFIX.length();
     
     private ConfigurationDefinition configurationDefinition;
     
@@ -64,7 +68,7 @@ public class DefaultConfigurationToPathConvertor implements ConfigurationToPathC
         String name = property.getName();
         String ret = null;
         if (name.startsWith(NAME_PREFIX)) {
-            name = name.substring(NAME_PREFIX.length());
+            name = name.substring(NAME_PREFIX_LENGTH);
             
             if (name.startsWith("/")) {
                 //absolute path
@@ -101,11 +105,80 @@ public class DefaultConfigurationToPathConvertor implements ConfigurationToPathC
 
     
     public PropertyDefinition getPropertyDefinition(List<PathElement> treePath) {
-        PropertyDefinition ret = null;
+        if (treePath == null || treePath.isEmpty()) return null;
         
-        //TODO implement this
+        HashMap<PropertyDefinition, Integer> partialMatches = new HashMap<PropertyDefinition, Integer>();
         
-        return ret;
+        PathElement rootElement = new PathElement(treePath.get(0));
+        rootElement.setTokenTypeName("/" + rootElement.getTokenTypeName());
+        
+        for(PropertyDefinition pd : configurationDefinition.getPropertyDefinitions().values()) {
+            int followUp = getPartialMatchNextFollowupIndex(rootElement, 0, pd.getName());
+            if (followUp >= 0) {
+                partialMatches.put(pd, followUp);
+            }
+        }
+        
+        if (partialMatches.isEmpty()) return null;
+        
+        ArrayList<PathElement> treePathCopy = new ArrayList<PathElement>(treePath);
+        //we've already processed that one.
+        treePathCopy.remove(0);
+        
+        for(PathElement el : treePathCopy) {
+            HashMap<PropertyDefinition, Integer> newPartialMatches = new HashMap<PropertyDefinition, Integer>();
+            
+            for(Map.Entry<PropertyDefinition, Integer> entry : partialMatches.entrySet()) {
+                PropertyDefinition partialMatch = entry.getKey();
+                String name = partialMatch.getName();
+                int followupIdx = entry.getValue();
+                
+                if (followupIdx < name.length() - NAME_PREFIX_LENGTH) {
+                    //this definition's still "follows" the path 
+                    followupIdx = getPartialMatchNextFollowupIndex(el, followupIdx, name);
+                    if (followupIdx >= 0) {
+                        newPartialMatches.put(partialMatch, followupIdx);
+                    }
+                } else {
+                    //this means that this property definition matched the path so far
+                    //but contains no more path elements. It still might have children with
+                    //relative paths that might match the rest of the path though.
+                    if (partialMatch instanceof PropertyDefinitionList) {
+                        PropertyDefinition child = ((PropertyDefinitionList)partialMatch).getMemberDefinition();
+                        followupIdx = getPartialMatchNextFollowupIndex(el, 0, child.getName());
+                        if (followupIdx >= 0) {
+                            newPartialMatches.put(child, followupIdx);
+                        }
+                    } else if (partialMatch instanceof PropertyDefinitionMap) {
+                        PropertyDefinitionMap map = (PropertyDefinitionMap)partialMatch;
+                        
+                        for(PropertyDefinition child : map.getPropertyDefinitions().values()) {
+                            AbsoluteIndexAndFollowupIndex indexes = getAbsoluteIndexFromName(child.getName());
+                            if (indexes.absoluteIndex > 0 && indexes.absoluteIndex == el.getAbsoluteTokenPosition()) {
+                                newPartialMatches.put(child, indexes.followupIndex);
+                            } else {
+                                //k, this is not an absolute index, let's try matching by name
+                                followupIdx = getPartialMatchNextFollowupIndex(el, 0, child.getName());
+                                if (followupIdx >= 0) {
+                                    newPartialMatches.put(child, followupIdx);
+                                }                                
+                            }
+                        }
+                    }
+                }
+            }
+            
+            partialMatches = newPartialMatches;
+        }
+        
+        for (Map.Entry<PropertyDefinition, Integer> entry : partialMatches.entrySet()) {
+            PropertyDefinition pd = entry.getKey();
+            int followupIdx = entry.getValue();
+            if (pd.getName().length() == followupIdx + NAME_PREFIX_LENGTH) {
+                return pd;
+            }
+        }
+        return null;
     }
 
     public String getGenericPath(PropertyDefinition propertyDefinition) {
@@ -113,7 +186,7 @@ public class DefaultConfigurationToPathConvertor implements ConfigurationToPathC
         String ret = null;
         
         if (name.startsWith(NAME_PREFIX)) {
-            name = name.substring(NAME_PREFIX.length());
+            name = name.substring(NAME_PREFIX_LENGTH);
             
             if (name.startsWith("/")) {
                 ret = name;
@@ -132,4 +205,55 @@ public class DefaultConfigurationToPathConvertor implements ConfigurationToPathC
         return ret;
     }
 
+    private int getPartialMatchNextFollowupIndex(PathElement element, int followupIndex, String name) {
+        if (!name.startsWith(NAME_PREFIX)) return -1;
+        if (NAME_PREFIX_LENGTH + followupIndex > name.length()) return -1;
+        
+        name = name.substring(NAME_PREFIX_LENGTH + followupIndex);
+        
+        if (name.startsWith(element.getTokenTypeName())) {
+            int ret = element.getTokenTypeName().length();
+            if (name.length() > ret && name.charAt(ret) == '/') ret += 1;
+            
+            return ret;
+        }
+        
+        return -1;
+    }
+    
+    private AbsoluteIndexAndFollowupIndex getAbsoluteIndexFromName(String name) {
+        if (name.length() < NAME_PREFIX_LENGTH + 2) return new AbsoluteIndexAndFollowupIndex(); // config://$n
+        if (!name.startsWith(NAME_PREFIX)) return new AbsoluteIndexAndFollowupIndex();
+        if (name.charAt(NAME_PREFIX_LENGTH) != '$') return new AbsoluteIndexAndFollowupIndex();
+        
+        String idxString = name.substring(NAME_PREFIX_LENGTH + 1);
+        
+        try {
+            int toIdx = idxString.indexOf('/');
+            int followupIdx = toIdx + 1;
+            
+            if (toIdx == -1) {
+                toIdx = idxString.length();
+                followupIdx = name.length() - NAME_PREFIX_LENGTH;
+            }
+            return new AbsoluteIndexAndFollowupIndex(Integer.parseInt(idxString), followupIdx);
+        } catch (NumberFormatException e) {
+            return new AbsoluteIndexAndFollowupIndex();
+        }
+    }
+    
+    private static class AbsoluteIndexAndFollowupIndex {
+        public int absoluteIndex;
+        public int followupIndex;
+        
+        public AbsoluteIndexAndFollowupIndex() {
+            absoluteIndex = -1;
+            followupIndex = -1;
+        }
+        
+        public AbsoluteIndexAndFollowupIndex(int absoluteIndex, int followupIndex) {
+            this.absoluteIndex = absoluteIndex;
+            this.followupIndex = followupIndex;
+        }
+    }
 }

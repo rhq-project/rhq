@@ -58,6 +58,23 @@ public class PathElement {
     private int typeRelativeTokenPosition = -1;
     private String tokenText;
     
+    public PathElement() {
+        
+    }
+    
+    /**
+     * Copy constructor.
+     * 
+     * @param other
+     */
+    public PathElement(PathElement other) {
+        this.type = other.type;
+        this.tokenTypeName = other.tokenTypeName;
+        this.absoluteTokenPosition = other.absoluteTokenPosition;
+        this.typeRelativeTokenPosition = other.typeRelativeTokenPosition;
+        this.tokenText = other.tokenText;
+    }
+    
     public Type getType() {
         return type;
     }

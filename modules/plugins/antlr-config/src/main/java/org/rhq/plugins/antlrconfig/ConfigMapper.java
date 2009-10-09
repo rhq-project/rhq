@@ -260,11 +260,11 @@ public class ConfigMapper {
         Property prop = instantiate(propDef);
 
         if (parentList != null) {
-            prop.setParentList(parentList);
+            parentList.add(prop);
         } else if (parentMap != null) {
-            prop.setParentMap(parentMap);
+            parentMap.put(prop);
         } else {
-            prop.setConfiguration(configuration);
+            configuration.put(prop);
         }
 
         if (prop instanceof PropertySimple) {

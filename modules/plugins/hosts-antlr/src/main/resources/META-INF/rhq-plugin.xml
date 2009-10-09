@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin name="Hosts"
+        displayName="Hosts"
+        description="Support for hosts file"
+        package="org.rhq.plugins.hosts"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <service name="Hosts File"
+            description="the local file used for mapping host names to IP addresses"
+            discovery="HostsDiscoveryComponent"
+            class="HostsComponent"
+            supportsManualAdd="true">
+
+      <runs-inside>
+         <parent-resource-type name="Linux"    plugin="Platforms"/>
+         <parent-resource-type name="Windows"  plugin="Platforms"/>
+         <parent-resource-type name="Solaris"  plugin="Platforms"/>
+         <parent-resource-type name="HP-UX"    plugin="Platforms"/>
+         <parent-resource-type name="AIX"      plugin="Platforms"/>
+         <parent-resource-type name="FreeBSD"  plugin="Platforms"/>
+         <parent-resource-type name="Mac OS X" plugin="Platforms"/>
+         <parent-resource-type name="Java"     plugin="Platforms"/>
+      </runs-inside>
+
+      <plugin-configuration>
+          <c:simple-property name="path" displayName="Hosts File Path" type="file" required="true"
+                             description="the absolute path of the hosts file (e.g. /etc/hosts on Unix systems or C:\windows\system32\drivers\etc\hosts)"/>
+      </plugin-configuration>
+
+      <resource-configuration>
+         <c:list-property name="config:///file">
+            <c:map-property name="config://host_def">
+               <c:simple-property name="config://$1" displayName="IP Address" type="string" required="true" activationPolicy="immediate"
+                                  description="The IP address of the host entry. The address may be an IPv4 address (e.g., 192.168.1.10) or an IPv6 address (e.g., fec0:0:0:bebe::2)."/>
+               <c:simple-property name="config://$2" displayName="Canonical Host Name" type="string" required="true" activationPolicy="immediate"
+                                  description="The canonical host name to refer to the IP address. Host names may contain only alphanumeric characters, minus signs ('-'), and periods ('.'). They must begin with an alphabetic character and end with an alphanumeric character. (e.g., foo.mydomain.org)"/>
+               <c:simple-property name="config://$3" displayName="Aliases" type="longString" required="false" activationPolicy="immediate"
+                                  description="Optional aliases provide for name changes, alternate spellings, shorter host names, or generic host names (e.g., localhost); aliases should be newline or space separated)."/>
+            </c:map-property>
+         </c:list-property>
+      </resource-configuration>
+
+   </service>
+
+</plugin>
+        

@@ -38,7 +38,7 @@ import java.io.Serializable;
 
 @Entity
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_RAW_CONFIG_ID_SEQ")
-@Table(name = "RAW_CONFIG")
+@Table(name = "RHQ_RAW_CONFIG")
 public class RawConfiguration implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -50,7 +50,7 @@ public class RawConfiguration implements Serializable {
     @Column(name = "PATH", nullable = false)
     private String path;
 
-    @Column(name = "CONTENTS", nullable = false)
+    @Column(name = "CONTENT", nullable = false)
     private byte[] contents;
 
     @Column(name = "SHA256", nullable = false)

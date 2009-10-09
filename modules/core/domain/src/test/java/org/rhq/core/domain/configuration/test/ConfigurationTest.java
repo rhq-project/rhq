@@ -41,6 +41,7 @@ import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
+import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
@@ -200,6 +201,65 @@ public class ConfigurationTest extends AbstractEJB3Test {
         }
 
         transactionManager.commit();
+    }
+
+    @Test(groups = "integration.ejb3")
+    public void verifyPersistSavesRawConfiguration() throws Exception {
+        EntityManager entityMgr = getEntityManager();
+        getTransactionManager().begin();
+
+        try {
+            RawConfiguration rawConfig = createRawConfiguration();
+
+            Configuration config = new Configuration();
+            config.addRawConfiguration(rawConfig);
+
+            entityMgr.persist(config);
+
+            assertTrue("Failed to cascade save to " + RawConfiguration.class.getSimpleName(), rawConfig.getId() != 0);
+        }
+        finally {
+            getTransactionManager().rollback();
+        }
+    }
+
+    @Test(groups = "integration.ejb3")
+    public void verifyOrphanedRawConfigurationDeletedFromDatabase() throws Exception {
+        getTransactionManager().begin();
+        EntityManager entityMgr = getEntityManager();
+
+        try {
+            RawConfiguration rawConfiguration = createRawConfiguration();
+
+            Configuration config = new Configuration();
+            config.addRawConfiguration(rawConfiguration);
+
+            entityMgr.persist(config);
+
+            config.removeRawConfiguration(rawConfiguration);
+
+            config = entityMgr.merge(config);
+
+            entityMgr.flush();
+            entityMgr.clear();
+
+            assertNull(
+                "Failed to remove the orphaned " + RawConfiguration.class.getSimpleName() + " from the persistence context.",
+                entityMgr.find(RawConfiguration.class, rawConfiguration.getId())
+            );
+        }
+        finally {
+            getTransactionManager().rollback();
+        }
+    }
+
+    RawConfiguration createRawConfiguration() {
+        RawConfiguration rawConfig = new RawConfiguration();
+        rawConfig.setContents(new byte[] {});
+        rawConfig.setPath("/tmp/foo");
+        rawConfig.setSha256("38hr3f");
+
+        return rawConfig;
     }
 
     public static void prettyPrintConfiguration(Configuration configuration) {

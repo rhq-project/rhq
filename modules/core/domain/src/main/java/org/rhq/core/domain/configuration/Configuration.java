@@ -34,6 +34,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -153,6 +155,10 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
     @OneToMany(mappedBy = "configuration", fetch = FetchType.EAGER)
     @XmlTransient
     private Map<String, Property> properties;
+
+    @OneToMany(mappedBy = "configuration")
+    @Cascade({CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DELETE_ORPHAN})
+    private Set<RawConfiguration> rawConfigurations = new HashSet<RawConfiguration>();
 
     @Column(name = "NOTES")
     private String notes;
@@ -393,6 +399,23 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
         }
 
         return map;
+    }
+
+    public Set<RawConfiguration> getRawConfigurations() {
+        return rawConfigurations;
+    }
+
+    public void addRawConfiguration(RawConfiguration rawConfiguration) {
+        rawConfiguration.setConfiguration(this);
+        rawConfigurations.add(rawConfiguration);
+    }
+
+    public boolean removeRawConfiguration(RawConfiguration rawConfiguration) {
+        boolean removed = rawConfigurations.remove(rawConfiguration);
+        if (removed) {
+            rawConfiguration.setConfiguration(null);
+        }
+        return removed;
     }
 
     public String getNotes() {

@@ -24,23 +24,23 @@ package org.rhq.core.domain.content.composite;
 
 import java.io.Serializable;
 
-import org.rhq.core.domain.content.Channel;
+import org.rhq.core.domain.content.Repo;
 
 public class ChannelComposite implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private Channel channel;
+    private Repo repo;
     private long packageVersionCount;
 
-    public ChannelComposite(Channel channel, long packageVersionCount) {
+    public ChannelComposite(Repo repo, long packageVersionCount) {
         super();
-        this.channel = channel;
+        this.repo = repo;
         this.packageVersionCount = packageVersionCount;
     }
 
-    public Channel getChannel() {
-        return channel;
+    public Repo getChannel() {
+        return repo;
     }
 
     public long getPackageVersionCount() {

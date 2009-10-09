@@ -92,8 +92,8 @@ public class NavigationResourceMapping {
         navNodesToResources.put("resource.navigation.jboss.JMSQueues", JMSQueueTypeNames);
 
         ArrayList jgroupsChannelTypeNames = new ArrayList();
-        jgroupsChannelTypeNames.add("JBoss 4.0 JGroups Channel");
-        jgroupsChannelTypeNames.add("JBoss 3.2 JGroups Channel");
+        jgroupsChannelTypeNames.add("JBoss 4.0 JGroups Repo");
+        jgroupsChannelTypeNames.add("JBoss 3.2 JGroups Repo");
         navNodesToResources.put("resource.navigation.jboss.JGroupsChannels", jgroupsChannelTypeNames);
 
         // Tomcat related servers and services

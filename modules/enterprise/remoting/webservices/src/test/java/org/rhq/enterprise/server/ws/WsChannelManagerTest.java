@@ -95,7 +95,7 @@ public class WsChannelManagerTest extends AssertJUnit implements TestPropertiesI
         assertTrue("test channel should not exist.", channels.size() == 0);
 
         // create a test channel
-        // newChannel = new Channel("test-channel-0");
+        // newChannel = new Repo("test-channel-0");
         Channel newChannel = WS_OBJECT_FACTORY.createChannel();
         newChannel.setName("test-channel-0");
         newChannel.setDescription("description-0");
@@ -425,7 +425,7 @@ public class WsChannelManagerTest extends AssertJUnit implements TestPropertiesI
         }
 
         // create a test channel
-        // newChannel = new Channel("test-channel-0");
+        // newChannel = new Repo("test-channel-0");
         Channel newChannel = new Channel();
         newChannel.setName("test-channel-0");
         newChannel.setDescription("description-0");

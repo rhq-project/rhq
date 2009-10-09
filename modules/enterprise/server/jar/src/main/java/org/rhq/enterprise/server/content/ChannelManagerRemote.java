@@ -25,7 +25,7 @@ import javax.jws.WebService;
 import javax.jws.soap.SOAPBinding;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.content.Channel;
+import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.criteria.ChannelCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
@@ -53,18 +53,18 @@ public interface ChannelManagerRemote {
         @WebParam(name = "packageVersionIds") int[] packageVersionIds);
 
     /**
-     * Creates a new {@link Channel}. Note that the created channel will not have any content sources assigned and no
+     * Creates a new {@link Repo}. Note that the created channel will not have any content sources assigned and no
      * resources will be subscribed. It is a virgin channel.
      *
      * @param subject The logged in user's subject.
-     * @param channel a new channel object.
+     * @param repo a new channel object.
      *
      * @return the newly created channel
      */
     @WebMethod
-    Channel createChannel( //
+    Repo createChannel( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "channel") Channel channel) //
+        @WebParam(name = "channel") Repo repo) //
         throws ChannelException;
 
     /**
@@ -80,12 +80,12 @@ public interface ChannelManagerRemote {
         @WebParam(name = "channelId") int channelId);
 
     @WebMethod
-    Channel getChannel( //
+    Repo getChannel( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "channelId") int channelId);
 
     @WebMethod
-    PageList<Channel> findChannelsByCriteria( //
+    PageList<Repo> findChannelsByCriteria( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "criteria") ChannelCriteria criteria);
 
@@ -102,20 +102,20 @@ public interface ChannelManagerRemote {
 
     // change exception
     /**
-     * Update an existing {@link Channel} object's basic fields, like name, description, etc. Note that the given <code>
+     * Update an existing {@link Repo} object's basic fields, like name, description, etc. Note that the given <code>
      * channel</code>'s relationships will be ignored and not merged with the existing channel (e.g. is subscribed
      * resources will not be changed, regardless of what the given channel's subscribed resources set it). See methods
      * like {@link #addContentSourcesToChannel(Subject, int, int[])} to alter its relationships.
      *
      * @param subject The logged in user's subject.
-     * @param channel to be updated
+     * @param repo to be updated
      *
-     * @return Channel that was updated
+     * @return Repo that was updated
      */
     @WebMethod
-    Channel updateChannel( //
+    Repo updateChannel( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "channel") Channel channel) //
+        @WebParam(name = "channel") Repo repo) //
         throws ChannelException;
 
     /**
@@ -136,7 +136,7 @@ public interface ChannelManagerRemote {
         @WebParam(name = "pageControl") PageControl pc);
 
     @WebMethod
-    PageList<Channel> findChannels( //
+    PageList<Repo> findChannels( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "pageControl") PageControl pc);
 

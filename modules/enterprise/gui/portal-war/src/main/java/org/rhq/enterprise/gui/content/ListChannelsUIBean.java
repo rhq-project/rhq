@@ -22,7 +22,7 @@ import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.content.Channel;
+import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
@@ -74,18 +74,18 @@ public class ListChannelsUIBean extends PagedDataTableUIBean {
         return dataModel;
     }
 
-    private class ListChannelsDataModel extends PagedListDataModel<Channel> {
+    private class ListChannelsDataModel extends PagedListDataModel<Repo> {
         public ListChannelsDataModel(PageControlView view, String beanName) {
             super(view, beanName);
         }
 
         @Override
         @SuppressWarnings("unchecked")
-        public PageList<Channel> fetchPage(PageControl pc) {
+        public PageList<Repo> fetchPage(PageControl pc) {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
             ChannelManagerLocal manager = LookupUtil.getChannelManagerLocal();
 
-            PageList<Channel> results = manager.findChannels(subject, pc);
+            PageList<Repo> results = manager.findChannels(subject, pc);
             return results;
         }
     }

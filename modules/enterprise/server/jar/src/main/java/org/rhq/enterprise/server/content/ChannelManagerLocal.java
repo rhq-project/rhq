@@ -23,7 +23,7 @@ import java.util.List;
 import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.content.Channel;
+import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.composite.ChannelComposite;
@@ -39,7 +39,7 @@ public interface ChannelManagerLocal {
     /**
      * @see ChannelManagerRemote#findChannels(Subject, PageControl)
      */
-    PageList<Channel> findChannels(Subject subject, PageControl pc);
+    PageList<Repo> findChannels(Subject subject, PageControl pc);
 
     /**
      * @see ChannelManagerRemote#findAssociatedContentSources(Subject, int, PageControl)
@@ -130,9 +130,9 @@ public interface ChannelManagerLocal {
     void addPackageVersionsToChannel(Subject subject, int channelId, int[] packageVersionIds);
 
     /**
-     * @see ChannelManagerRemote#createChannel(Subject, Channel)
+     * @see ChannelManagerRemote#createChannel(Subject, Repo)
      */
-    Channel createChannel(Subject subject, Channel channel) throws ChannelException;
+    Repo createChannel(Subject subject, Repo repo) throws ChannelException;
 
     /**
      * @see ChannelManagerRemote#deleteChannel(Subject, int)
@@ -142,12 +142,12 @@ public interface ChannelManagerLocal {
     /**
      * @see ChannelManagerRemote#getChannel(Subject, int)
      */
-    Channel getChannel(Subject subject, int channelId);
+    Repo getChannel(Subject subject, int channelId);
 
     /**
-     * @see ChannelManagerRemote#findChannels(Subject, Channel, PageControl)
+     * @see ChannelManagerRemote#findChannels(Subject, Repo, PageControl)
      */
-    PageList<Channel> findChannelsByCriteria(Subject subject, ChannelCriteria criteria);
+    PageList<Repo> findChannelsByCriteria(Subject subject, ChannelCriteria criteria);
 
     /**
      * @see ChannelManagerRemote#findPackageVersionsInChannel(Subject, int, PackageVersion, PageControl)
@@ -170,8 +170,8 @@ public interface ChannelManagerLocal {
     PageList<Resource> findSubscribedResources(Subject subject, int channelId, PageControl pc);
 
     /**
-     * @see ChannelManagerRemote#updateChannel(Subject, Channel)
+     * @see ChannelManagerRemote#updateChannel(Subject, Repo)
      */
-    Channel updateChannel(Subject subject, Channel channel) throws ChannelException;
+    Repo updateChannel(Subject subject, Repo repo) throws ChannelException;
 
 }

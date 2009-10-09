@@ -33,7 +33,7 @@ import javax.transaction.TransactionManager;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
-import org.rhq.core.domain.content.Channel;
+import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceType;
 import org.rhq.core.domain.content.InstalledPackageHistory;
@@ -77,7 +77,7 @@ public class QueriesTest extends AbstractEJB3Test {
         add(PackageVersion.QUERY_FIND_BY_CHANNEL_ID_WITH_PACKAGE, new Object[] { "channelId", 1 });
         add(MeasurementOOB.COUNT_FOR_DATE, new Object[] { "timestamp", 1L });
 
-        add(Channel.QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID, new Object[] { "resourceId", 1 });
+        add(Repo.QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID, new Object[] { "resourceId", 1 });
 
         add(PackageBits.QUERY_PACKAGE_BITS_LOADED_STATUS_PACKAGE_VERSION_ID, new Object[] { "id", 1 });
         add(CreateResourceHistory.QUERY_FIND_BY_PARENT_RESOURCE_ID, new Object[] { "id", 1, "startTime", null,

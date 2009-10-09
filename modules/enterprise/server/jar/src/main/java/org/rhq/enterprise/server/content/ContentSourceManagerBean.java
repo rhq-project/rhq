@@ -61,8 +61,8 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.content.Architecture;
-import org.rhq.core.domain.content.Channel;
-import org.rhq.core.domain.content.ChannelContentSource;
+import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.content.RepoContentSource;
 import org.rhq.core.domain.content.ChannelPackageVersion;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceSyncResults;
@@ -190,7 +190,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         entityManager.flush();
         entityManager.clear();
 
-        entityManager.createNamedQuery(ChannelContentSource.DELETE_BY_CONTENT_SOURCE_ID).setParameter(
+        entityManager.createNamedQuery(RepoContentSource.DELETE_BY_CONTENT_SOURCE_ID).setParameter(
             "contentSourceId", contentSourceId).executeUpdate();
 
         entityManager.createNamedQuery(PackageVersionContentSource.DELETE_BY_CONTENT_SOURCE_ID).setParameter(
@@ -304,20 +304,20 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public PageList<Channel> getAssociatedChannels(Subject subject, int contentSourceId, PageControl pc) {
+    public PageList<Repo> getAssociatedChannels(Subject subject, int contentSourceId, PageControl pc) {
         pc.initDefaultOrderingField("c.id");
 
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, Channel.QUERY_FIND_BY_CONTENT_SOURCE_ID,
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, Repo.QUERY_FIND_BY_CONTENT_SOURCE_ID,
             pc);
-        Query countQuery = PersistenceUtility.createCountQuery(entityManager, Channel.QUERY_FIND_BY_CONTENT_SOURCE_ID);
+        Query countQuery = PersistenceUtility.createCountQuery(entityManager, Repo.QUERY_FIND_BY_CONTENT_SOURCE_ID);
 
         query.setParameter("id", contentSourceId);
         countQuery.setParameter("id", contentSourceId);
 
-        List<Channel> results = query.getResultList();
+        List<Repo> results = query.getResultList();
         long count = (Long) countQuery.getSingleResult();
 
-        return new PageList<Channel>(results, (int) count, pc);
+        return new PageList<Repo>(results, (int) count, pc);
     }
 
     @SuppressWarnings("unchecked")
@@ -859,8 +859,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         // the last modified time for all channels that get content from the changed content source
         long now = System.currentTimeMillis();
         ContentSource contentSource = entityManager.find(ContentSource.class, contentSourceId);
-        Set<ChannelContentSource> ccss = contentSource.getChannelContentSources();
-        for (ChannelContentSource ccs : ccss) {
+        Set<RepoContentSource> ccss = contentSource.getChannelContentSources();
+        for (RepoContentSource ccs : ccss) {
             ccs.getChannelContentSourcePK().getChannel().setLastModifiedDate(now);
         }
 
@@ -935,7 +935,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         Map<ResourceType, ResourceType> knownResourceTypes = new HashMap<ResourceType, ResourceType>();
         Map<PackageType, PackageType> knownPackageTypes = new HashMap<PackageType, PackageType>();
         Map<Architecture, Architecture> knownArchitectures = new HashMap<Architecture, Architecture>();
-        List<Channel> associatedChannels = null;
+        List<Repo> associatedChannels = null;
 
         Map<ResourceType, Map<String, ProductVersion>> knownProductVersions = new HashMap<ResourceType, Map<String, ProductVersion>>();
 
@@ -1109,12 +1109,12 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
             // for all channels that are associated with this content source, add this package version directly to them
             if (associatedChannels == null) {
-                q = entityManager.createNamedQuery(Channel.QUERY_FIND_BY_CONTENT_SOURCE_ID_FETCH_CCS);
+                q = entityManager.createNamedQuery(Repo.QUERY_FIND_BY_CONTENT_SOURCE_ID_FETCH_CCS);
                 q.setParameter("id", contentSource.getId());
                 associatedChannels = q.getResultList();
             }
 
-            for (Channel associatedChannel : associatedChannels) {
+            for (Repo associatedChannel : associatedChannels) {
                 ChannelPackageVersion mapping = new ChannelPackageVersion(associatedChannel, pv);
                 entityManager.merge(mapping); // use merge just in case this mapping somehow already exists
             }
@@ -1239,12 +1239,12 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     public String getResourceSubscriptionMD5(int resourceId) {
         MD5Generator md5Generator = new MD5Generator();
 
-        Query q = entityManager.createNamedQuery(Channel.QUERY_FIND_CHANNELS_BY_RESOURCE_ID);
+        Query q = entityManager.createNamedQuery(Repo.QUERY_FIND_CHANNELS_BY_RESOURCE_ID);
         q.setParameter("resourceId", resourceId);
-        List<Channel> channels = q.getResultList();
+        List<Repo> repos = q.getResultList();
 
-        for (Channel channel : channels) {
-            long modifiedTimestamp = channel.getLastModifiedDate();
+        for (Repo repo : repos) {
+            long modifiedTimestamp = repo.getLastModifiedDate();
             Date modifiedDate = new Date(modifiedTimestamp);
             md5Generator.add(Integer.toString(modifiedDate.hashCode()).getBytes());
         }

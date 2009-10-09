@@ -34,25 +34,21 @@ import javax.persistence.NamedQuery;
 import javax.persistence.PrePersist;
 import javax.persistence.Table;
 
-import org.rhq.core.domain.resource.Resource;
-
 /**
- * This is the many-to-many entity that correlates a repo with one of its subscribers. It is an explicit relationship
- * mapping entity between {@link Repo} and {@link Resource}.
+ * This is the many-to-many entity that correlates a repo with a content source that will fill the repo with
+ * package versions. It is an explicit relationship mapping entity between {@link Repo} and {@link ContentSource}.
  *
  * @author John Mazzitelli
  */
 @Entity
-@IdClass(ResourceChannelPK.class)
+@IdClass(ChannelContentSourcePK.class)
 @NamedQueries( {
-    @NamedQuery(name = ResourceChannel.DELETE_BY_RESOURCES, query = "DELETE ResourceChannel rc WHERE rc.resource.id IN ( :resourceIds )"),
-    @NamedQuery(name = ResourceChannel.DELETE_BY_RESOURCE_ID, query = "DELETE ResourceChannel rc WHERE rc.resource.id = :resourceId"),
-    @NamedQuery(name = ResourceChannel.DELETE_BY_CHANNEL_ID, query = "DELETE ResourceChannel rc WHERE rc.channel.id = :channelId") })
-@Table(name = "RHQ_CHANNEL_RESOURCE_MAP")
-public class ResourceChannel implements Serializable {
-    public static final String DELETE_BY_RESOURCES = "ResourceChannel.deleteByResources";
-    public static final String DELETE_BY_RESOURCE_ID = "ResourceChannel.deleteByResourceId";
-    public static final String DELETE_BY_CHANNEL_ID = "ResourceChannel.deleteByChannelId";
+    @NamedQuery(name = RepoContentSource.DELETE_BY_CONTENT_SOURCE_ID, query = "DELETE RepoContentSource ccs WHERE ccs.contentSource.id = :contentSourceId"),
+    @NamedQuery(name = RepoContentSource.DELETE_BY_CHANNEL_ID, query = "DELETE RepoContentSource ccs WHERE ccs.channel.id = :channelId") })
+@Table(name = "RHQ_CHANNEL_CONTENT_SRC_MAP")
+public class RepoContentSource implements Serializable {
+    public static final String DELETE_BY_CONTENT_SOURCE_ID = "RepoContentSource.deleteByContentSourceId";
+    public static final String DELETE_BY_CHANNEL_ID = "RepoContentSource.deleteByChannelId";
 
     private static final long serialVersionUID = 1L;
 
@@ -61,42 +57,39 @@ public class ResourceChannel implements Serializable {
      * @IdClass and ignore these here, even though the mappings should be here and no mappings should be needed in the
      * @IdClass.
      */
-
-    @Id
-    //   @ManyToOne
-    //   @JoinColumn(name = "RESOURCE_ID", referencedColumnName = "ID", nullable = false, insertable = false, updatable = false)
-    private Resource resource;
-
     @Id
     //   @ManyToOne
     //   @JoinColumn(name = "CHANNEL_ID", referencedColumnName = "ID", nullable = false, insertable = false, updatable = false)
     private Repo repo;
 
+    @Id
+    //   @ManyToOne
+    //   @JoinColumn(name = "CONTENT_SRC_ID", referencedColumnName = "ID", nullable = false, insertable = false, updatable = false)
+    private ContentSource contentSource;
+
     @Column(name = "CTIME", nullable = false)
     private long createdTime;
 
-    protected ResourceChannel() {
+    protected RepoContentSource() {
     }
 
-    public ResourceChannel(Resource resource, Repo repo) {
-        this.resource = resource;
+    public RepoContentSource(Repo repo, ContentSource contentSource) {
         this.repo = repo;
+        this.contentSource = contentSource;
     }
 
-    public ResourceChannelPK getResourceChannelPK() {
-        return new ResourceChannelPK(resource, repo);
+    public ChannelContentSourcePK getChannelContentSourcePK() {
+        return new ChannelContentSourcePK(repo, contentSource);
     }
 
-    public void setResourceChannelPK(ResourceChannelPK pk) {
-        this.resource = pk.getResource();
+    public void setChannelContentSourcePK(ChannelContentSourcePK pk) {
         this.repo = pk.getChannel();
+        this.contentSource = pk.getContentSource();
     }
 
     /**
-     * This is the epoch time when this mapping was first created; in other words, when the resource was subscribed to
-     * the repo.
-     *
-     * @return the time the resource was subscribed to the repo
+     * This is the epoch time when this mapping was first created; in other words, when the repo was first associated
+     * with the content source.
      */
     public long getCreatedTime() {
         return createdTime;
@@ -109,18 +102,18 @@ public class ResourceChannel implements Serializable {
 
     @Override
     public String toString() {
-        StringBuilder str = new StringBuilder("ResourceChannel: ");
+        StringBuilder str = new StringBuilder("RepoContentSource: ");
         str.append("ctime=[").append(new Date(this.createdTime)).append("]");
-        str.append(", re=[").append(this.resource).append("]");
         str.append(", ch=[").append(this.repo).append("]");
+        str.append(", cs=[").append(this.contentSource).append("]");
         return str.toString();
     }
 
     @Override
     public int hashCode() {
         int result = 1;
-        result = (31 * result) + ((resource == null) ? 0 : resource.hashCode());
         result = (31 * result) + ((repo == null) ? 0 : repo.hashCode());
+        result = (31 * result) + ((contentSource == null) ? 0 : contentSource.hashCode());
         return result;
     }
 
@@ -130,25 +123,25 @@ public class ResourceChannel implements Serializable {
             return true;
         }
 
-        if ((obj == null) || (!(obj instanceof ResourceChannel))) {
+        if ((obj == null) || (!(obj instanceof RepoContentSource))) {
             return false;
         }
 
-        final ResourceChannel other = (ResourceChannel) obj;
-
-        if (resource == null) {
-            if (resource != null) {
-                return false;
-            }
-        } else if (!resource.equals(other.resource)) {
-            return false;
-        }
+        final RepoContentSource other = (RepoContentSource) obj;
 
         if (repo == null) {
             if (repo != null) {
                 return false;
             }
         } else if (!repo.equals(other.repo)) {
+            return false;
+        }
+
+        if (contentSource == null) {
+            if (contentSource != null) {
+                return false;
+            }
+        } else if (!contentSource.equals(other.contentSource)) {
             return false;
         }
 

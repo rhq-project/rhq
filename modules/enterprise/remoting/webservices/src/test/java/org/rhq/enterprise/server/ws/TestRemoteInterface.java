@@ -515,22 +515,22 @@ public class TestRemoteInterface extends AssertJUnit {
     //
     //        reportHeap("channelManager");
     //
-    //        PageList<Channel> channels = channelManager.findChannels(user, PageControl.getUnlimitedInstance());
+    //        PageList<Repo> channels = channelManager.findChannels(user, PageControl.getUnlimitedInstance());
     //
-    //        for (Channel channel : channels) {
+    //        for (Repo channel : channels) {
     //            if ("ws-test-channel".equals(channel.getName())) {
     //                channelManager.deleteChannel(user, channel.getId());
     //            }
     //        }
     //
-    //        Channel testChannel = channelManager.createChannel(user, new Channel("ws-test-channel"));
+    //        Repo testChannel = channelManager.createChannel(user, new Repo("ws-test-channel"));
     //        assertNotNull(testChannel);
     //        assertEquals("ws-test-channel", testChannel.getName());
     //
     //        channels = channelManager.findChannels(user, PageControl.getUnlimitedInstance());
     //
     //        testChannel = null;
-    //        for (Channel channel : channels) {
+    //        for (Repo channel : channels) {
     //            if ("ws-test-channel".equals(channel.getName())) {
     //                testChannel = channel;
     //                break;

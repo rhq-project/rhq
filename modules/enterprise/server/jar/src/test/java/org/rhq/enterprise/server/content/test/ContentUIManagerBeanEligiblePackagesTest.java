@@ -33,7 +33,7 @@ import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.PackageCategory;
 import org.rhq.core.domain.content.InstalledPackage;
-import org.rhq.core.domain.content.Channel;
+import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.ResourceChannel;
 import org.rhq.core.domain.content.ChannelPackageVersion;
 import org.rhq.core.domain.content.ProductVersionPackageVersion;
@@ -84,8 +84,8 @@ public class ContentUIManagerBeanEligiblePackagesTest extends AbstractEJB3Test {
     private Resource resource;
     private ResourceType resourceType;
 
-    private Channel channel1;
-    private Channel channel2;
+    private Repo channel1;
+    private Repo channel2;
 
     private ResourceChannel resourceChannel1;
     private ResourceChannel resourceChannel2;
@@ -216,7 +216,7 @@ public class ContentUIManagerBeanEligiblePackagesTest extends AbstractEJB3Test {
                 em.persist(package4);
 
                 // Wire up the channel to the resource and add all of these packages to it
-                channel1 = new Channel("testChannel1");
+                channel1 = new Repo("testChannel1");
                 em.persist(channel1);
 
                 channelPackageVersion1 = channel1.addPackageVersion(packageVersion1);
@@ -233,7 +233,7 @@ public class ContentUIManagerBeanEligiblePackagesTest extends AbstractEJB3Test {
                 em.persist(resourceChannel1);
 
                 // Subscribe the resource to a second channel to make sure the joins won't duplicate stuff
-                channel2 = new Channel("testChannel2");
+                channel2 = new Repo("testChannel2");
                 em.persist(channel2);
 
                 resourceChannel2 = channel2.addResource(resource);
@@ -306,10 +306,10 @@ public class ContentUIManagerBeanEligiblePackagesTest extends AbstractEJB3Test {
 
                 em.remove(resource);
 
-                channel1 = em.find(Channel.class, channel1.getId());
+                channel1 = em.find(Repo.class, channel1.getId());
                 em.remove(channel1);
 
-                channel2 = em.find(Channel.class, channel2.getId());
+                channel2 = em.find(Repo.class, channel2.getId());
                 em.remove(channel2);
 
                 productVersion1 = em.find(ProductVersion.class, productVersion1.getId());

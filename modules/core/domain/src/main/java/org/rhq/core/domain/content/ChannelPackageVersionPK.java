@@ -43,7 +43,7 @@ public class ChannelPackageVersionPK implements Serializable {
 
     @JoinColumn(name = "CHANNEL_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne
-    private Channel channel;
+    private Repo repo;
 
     @JoinColumn(name = "PACKAGE_VERSION_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne
@@ -52,17 +52,17 @@ public class ChannelPackageVersionPK implements Serializable {
     public ChannelPackageVersionPK() {
     }
 
-    public ChannelPackageVersionPK(Channel channel, PackageVersion pv) {
-        this.channel = channel;
+    public ChannelPackageVersionPK(Repo repo, PackageVersion pv) {
+        this.repo = repo;
         this.packageVersion = pv;
     }
 
-    public Channel getChannel() {
-        return channel;
+    public Repo getChannel() {
+        return repo;
     }
 
-    public void setChannel(Channel channel) {
-        this.channel = channel;
+    public void setChannel(Repo repo) {
+        this.repo = repo;
     }
 
     public PackageVersion getPackageVersion() {
@@ -75,13 +75,13 @@ public class ChannelPackageVersionPK implements Serializable {
 
     @Override
     public String toString() {
-        return "ChannelPackageVersionPK: channel=[" + channel + "]; packageVersion=[" + packageVersion + "]";
+        return "ChannelPackageVersionPK: repo=[" + repo + "]; packageVersion=[" + packageVersion + "]";
     }
 
     @Override
     public int hashCode() {
         int result = 1;
-        result = (31 * result) + ((channel == null) ? 0 : channel.hashCode());
+        result = (31 * result) + ((repo == null) ? 0 : repo.hashCode());
         result = (31 * result) + ((packageVersion == null) ? 0 : packageVersion.hashCode());
         return result;
     }
@@ -98,11 +98,11 @@ public class ChannelPackageVersionPK implements Serializable {
 
         final ChannelPackageVersionPK other = (ChannelPackageVersionPK) obj;
 
-        if (channel == null) {
-            if (other.channel != null) {
+        if (repo == null) {
+            if (other.repo != null) {
                 return false;
             }
-        } else if (!channel.equals(other.channel)) {
+        } else if (!repo.equals(other.repo)) {
             return false;
         }
 

@@ -21,7 +21,7 @@ package org.rhq.enterprise.gui.content;
 import javax.faces.application.FacesMessage;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.content.Channel;
+import org.rhq.core.domain.content.Repo;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.content.ChannelManagerLocal;
@@ -29,11 +29,11 @@ import org.rhq.enterprise.server.content.ContentException;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class ChannelDetailsUIBean {
-    private Channel channel;
+    private Repo repo;
 
-    public Channel getChannel() {
+    public Repo getChannel() {
         loadChannel();
-        return this.channel;
+        return this.repo;
     }
 
     public String edit() {
@@ -45,8 +45,8 @@ public class ChannelDetailsUIBean {
         ChannelManagerLocal manager = LookupUtil.getChannelManagerLocal();
 
         try {
-            manager.updateChannel(subject, channel);
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "The channel has been updated.");
+            manager.updateChannel(subject, repo);
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "The repo has been updated.");
         } catch (ContentException ce) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Error: " + ce.getMessage());
             return "edit"; // stay in edit mode on failure
@@ -60,11 +60,11 @@ public class ChannelDetailsUIBean {
     }
 
     private void loadChannel() {
-        if (this.channel == null) {
+        if (this.repo == null) {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
             Integer id = FacesContextUtility.getRequiredRequestParameter("id", Integer.class);
             ChannelManagerLocal manager = LookupUtil.getChannelManagerLocal();
-            this.channel = manager.getChannel(subject, id);
+            this.repo = manager.getChannel(subject, id);
         }
     }
 }

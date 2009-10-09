@@ -24,7 +24,7 @@ package org.rhq.core.pluginapi.content;
 
 import java.io.OutputStream;
 
-import org.rhq.core.domain.content.Channel;
+import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.composite.PackageVersionMetadataComposite;
@@ -103,7 +103,7 @@ public interface ContentServices {
 
     /**
      * Requests all {@link PackageVersion#getMetadata() metadata} for all package versions that the calling resource
-     * component is {@link Channel#getResources() subscribed to see}. The returned object has the metadata bytes that
+     * component is {@link Repo#getResources() subscribed to see}. The returned object has the metadata bytes that
      * are meaningful to the calling plugin component.
      *
      * <p>Because the result set is potentially large, callers should consider caching the returned data. You can use

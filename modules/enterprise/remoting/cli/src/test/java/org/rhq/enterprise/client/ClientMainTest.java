@@ -17,7 +17,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.content.Architecture;
-import org.rhq.core.domain.content.Channel;
+import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -658,24 +658,24 @@ public class ClientMainTest extends AssertJUnit {
 
         reportHeap("channelManager");
 
-        List<Channel> channels = channelManager.getAllChannels(user, pagecontrol_unlimited);
+        List<Repo> channels = channelManager.getAllChannels(user, pagecontrol_unlimited);
 
-        for (Channel channel : channels) {
+        for (Repo channel : channels) {
             if ("ws-test-channel".equals(channel.getName())) {
                 channelManager.deleteChannel(user, channel.getId());
             }
         }
 
-        Channel ch = new Channel();
+        Repo ch = new Repo();
         ch.setName("ws-test-channel");
-        Channel testChannel = channelManager.createChannel(user, ch);
+        Repo testChannel = channelManager.createChannel(user, ch);
         assertNotNull(testChannel);
         assertEquals("ws-test-channel", testChannel.getName());
 
         channels = channelManager.getAllChannels(user, pagecontrol_unlimited);
 
         testChannel = null;
-        for (Channel channel : channels) {
+        for (Repo channel : channels) {
             if ("ws-test-channel".equals(channel.getName())) {
                 testChannel = channel;
                 break;

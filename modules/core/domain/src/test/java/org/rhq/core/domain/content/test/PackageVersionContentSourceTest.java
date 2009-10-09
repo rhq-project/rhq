@@ -29,8 +29,8 @@ import org.testng.annotations.Test;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.Architecture;
-import org.rhq.core.domain.content.Channel;
-import org.rhq.core.domain.content.ChannelContentSource;
+import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.content.RepoContentSource;
 import org.rhq.core.domain.content.ChannelPackageVersion;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceType;
@@ -132,19 +132,19 @@ public class PackageVersionContentSourceTest extends AbstractEJB3Test {
 
             // add channel and subscribe resource to it; test metadata query
             em = getEntityManager();
-            Channel channel = new Channel("testPVCSChannel");
-            em.persist(channel);
-            ChannelContentSource ccsmapping = channel.addContentSource(cs);
+            Repo repo = new Repo("testPVCSChannel");
+            em.persist(repo);
+            RepoContentSource ccsmapping = repo.addContentSource(cs);
             em.persist(ccsmapping);
-            ResourceChannel subscription = channel.addResource(resource);
+            ResourceChannel subscription = repo.addResource(resource);
             em.persist(subscription);
-            ChannelPackageVersion mapping = channel.addPackageVersion(pv);
+            ChannelPackageVersion mapping = repo.addPackageVersion(pv);
             em.persist(mapping);
             em.flush();
 
-            channel = em.find(Channel.class, channel.getId());
-            assert channel.getResources().contains(resource);
-            assert channel.getContentSources().contains(cs);
+            repo = em.find(Repo.class, repo.getId());
+            assert repo.getResources().contains(resource);
+            assert repo.getContentSources().contains(cs);
 
             q = em.createNamedQuery(PackageVersion.QUERY_FIND_METADATA_BY_RESOURCE_ID);
             q.setParameter("resourceId", resource.getId());

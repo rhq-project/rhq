@@ -29,7 +29,7 @@ import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetails;
 import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetailsKey;
 import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.content.Channel;
+import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceSyncResults;
 import org.rhq.core.domain.content.ContentSourceType;
@@ -136,7 +136,7 @@ public interface ContentSourceManagerLocal {
      *
      * @return list of associated channels
      */
-    PageList<Channel> getAssociatedChannels(Subject subject, int contentSourceId, PageControl pc);
+    PageList<Repo> getAssociatedChannels(Subject subject, int contentSourceId, PageControl pc);
 
     /**
      * Allows the caller to page through a list of historical sync results for a content source.
@@ -372,7 +372,7 @@ public interface ContentSourceManagerLocal {
 
     /**
      * Requests all {@link PackageVersion#getMetadata() metadata} for all package versions that the given resource
-     * component is subscribed to (see {@link Channel#getResources()}. The returned object has the metadata bytes that
+     * component is subscribed to (see {@link Repo#getResources()}. The returned object has the metadata bytes that
      * are meaningful to the calling plugin component.
      *
      * <p>Note that the returned object has the package version IDs that can be used to retrieve the actual content bits

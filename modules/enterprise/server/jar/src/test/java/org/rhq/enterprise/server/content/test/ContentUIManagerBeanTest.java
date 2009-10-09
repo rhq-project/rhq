@@ -33,7 +33,7 @@ import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.PackageCategory;
 import org.rhq.core.domain.content.InstalledPackage;
-import org.rhq.core.domain.content.Channel;
+import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.ResourceChannel;
 import org.rhq.core.domain.content.ChannelPackageVersion;
 import org.rhq.core.domain.content.ProductVersionPackageVersion;

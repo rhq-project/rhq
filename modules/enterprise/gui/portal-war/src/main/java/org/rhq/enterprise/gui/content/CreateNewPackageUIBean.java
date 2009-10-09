@@ -34,7 +34,7 @@ import org.richfaces.model.UploadItem;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.Architecture;
-import org.rhq.core.domain.content.Channel;
+import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageType;
@@ -315,8 +315,8 @@ public class CreateNewPackageUIBean {
         SelectItem[] items = new SelectItem[channels.size()];
         int itemCounter = 0;
         for (ChannelComposite channelComposite : channels) {
-            Channel channel = channelComposite.getChannel();
-            SelectItem item = new SelectItem(channel.getId(), channel.getName());
+            Repo repo = channelComposite.getChannel();
+            SelectItem item = new SelectItem(repo.getId(), repo.getName());
             items[itemCounter++] = item;
         }
 
@@ -332,8 +332,8 @@ public class CreateNewPackageUIBean {
         SelectItem[] items = new SelectItem[channels.size()];
         int itemCounter = 0;
         for (ChannelComposite channelComposite : channels) {
-            Channel channel = channelComposite.getChannel();
-            SelectItem item = new SelectItem(channel.getId(), channel.getName());
+            Repo repo = channelComposite.getChannel();
+            SelectItem item = new SelectItem(repo.getId(), repo.getName());
             items[itemCounter++] = item;
         }
 
@@ -468,7 +468,7 @@ public class CreateNewPackageUIBean {
         } else if (channelOption.equals(CHANNEL_OPTION_NEW)) {
             ChannelManagerLocal channelManager = LookupUtil.getChannelManagerLocal();
 
-            Channel newChannel = new Channel(newChannelName);
+            Repo newChannel = new Repo(newChannelName);
             newChannel = channelManager.createChannel(subject, newChannel);
 
             channelId = Integer.toString(newChannel.getId());

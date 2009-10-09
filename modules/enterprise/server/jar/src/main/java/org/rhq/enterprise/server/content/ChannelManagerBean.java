@@ -34,8 +34,8 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.content.Channel;
-import org.rhq.core.domain.content.ChannelContentSource;
+import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.content.RepoContentSource;
 import org.rhq.core.domain.content.ChannelPackageVersion;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.PackageVersion;
@@ -80,18 +80,18 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
         entityManager.createNamedQuery(ResourceChannel.DELETE_BY_CHANNEL_ID).setParameter("channelId", channelId)
             .executeUpdate();
 
-        entityManager.createNamedQuery(ChannelContentSource.DELETE_BY_CHANNEL_ID).setParameter("channelId", channelId)
+        entityManager.createNamedQuery(RepoContentSource.DELETE_BY_CHANNEL_ID).setParameter("channelId", channelId)
             .executeUpdate();
 
         entityManager.createNamedQuery(ChannelPackageVersion.DELETE_BY_CHANNEL_ID).setParameter("channelId", channelId)
             .executeUpdate();
 
-        Channel channel = entityManager.find(Channel.class, channelId);
-        if (channel != null) {
-            entityManager.remove(channel);
-            log.debug("User [" + subject + "] deleted channel [" + channel + "]");
+        Repo repo = entityManager.find(Repo.class, channelId);
+        if (repo != null) {
+            entityManager.remove(repo);
+            log.debug("User [" + subject + "] deleted channel [" + repo + "]");
         } else {
-            log.debug("Channel ID [" + channelId + "] doesn't exist - nothing to delete");
+            log.debug("Repo ID [" + channelId + "] doesn't exist - nothing to delete");
         }
 
         // remove any unused, orphaned package versions
@@ -102,29 +102,29 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
 
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public PageList<Channel> findChannels(Subject subject, PageControl pc) {
+    public PageList<Repo> findChannels(Subject subject, PageControl pc) {
         pc.initDefaultOrderingField("c.name");
 
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, Channel.QUERY_FIND_ALL, pc);
-        Query countQuery = PersistenceUtility.createCountQuery(entityManager, Channel.QUERY_FIND_ALL);
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, Repo.QUERY_FIND_ALL, pc);
+        Query countQuery = PersistenceUtility.createCountQuery(entityManager, Repo.QUERY_FIND_ALL);
 
-        List<Channel> results = query.getResultList();
+        List<Repo> results = query.getResultList();
         long count = (Long) countQuery.getSingleResult();
 
-        return new PageList<Channel>(results, (int) count, pc);
+        return new PageList<Repo>(results, (int) count, pc);
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public Channel getChannel(Subject subject, int channelId) {
-        Channel channel = entityManager.find(Channel.class, channelId);
+    public Repo getChannel(Subject subject, int channelId) {
+        Repo repo = entityManager.find(Repo.class, channelId);
 
-        if ((channel != null) && (channel.getChannelContentSources() != null)) {
+        if ((repo != null) && (repo.getChannelContentSources() != null)) {
             // load content sources separately. we can't do this all at once via fetch join because
             // on Oracle we use a LOB column on a content source field and you can't DISTINCT on LOBs
-            channel.getChannelContentSources().size();
+            repo.getChannelContentSources().size();
         }
 
-        return channel;
+        return repo;
     }
 
     @SuppressWarnings("unchecked")
@@ -150,9 +150,9 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
     public PageList<Resource> findSubscribedResources(Subject subject, int channelId, PageControl pc) {
         pc.initDefaultOrderingField("rc.resource.id");
 
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, Channel.QUERY_FIND_SUBSCRIBER_RESOURCES,
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, Repo.QUERY_FIND_SUBSCRIBER_RESOURCES,
             pc);
-        Query countQuery = PersistenceUtility.createCountQuery(entityManager, Channel.QUERY_FIND_SUBSCRIBER_RESOURCES);
+        Query countQuery = PersistenceUtility.createCountQuery(entityManager, Repo.QUERY_FIND_SUBSCRIBER_RESOURCES);
 
         query.setParameter("id", channelId);
         countQuery.setParameter("id", channelId);
@@ -169,8 +169,8 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
         pc.initDefaultOrderingField("c.id");
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-            Channel.QUERY_FIND_CHANNEL_COMPOSITES_BY_RESOURCE_ID, pc);
-        Query countQuery = entityManager.createNamedQuery(Channel.QUERY_FIND_CHANNEL_COMPOSITES_BY_RESOURCE_ID_COUNT);
+            Repo.QUERY_FIND_CHANNEL_COMPOSITES_BY_RESOURCE_ID, pc);
+        Query countQuery = entityManager.createNamedQuery(Repo.QUERY_FIND_CHANNEL_COMPOSITES_BY_RESOURCE_ID_COUNT);
 
         query.setParameter("resourceId", resourceId);
         countQuery.setParameter("resourceId", resourceId);
@@ -187,9 +187,9 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
         pc.initDefaultOrderingField("c.id");
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-            Channel.QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID, pc);
+            Repo.QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID, pc);
         Query countQuery = entityManager
-            .createNamedQuery(Channel.QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID_COUNT);
+            .createNamedQuery(Repo.QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID_COUNT);
 
         query.setParameter("resourceId", resourceId);
         countQuery.setParameter("resourceId", resourceId);
@@ -202,7 +202,7 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
 
     @SuppressWarnings("unchecked")
     public List<ChannelComposite> findResourceSubscriptions(int resourceId) {
-        Query query = entityManager.createNamedQuery(Channel.QUERY_FIND_CHANNEL_COMPOSITES_BY_RESOURCE_ID);
+        Query query = entityManager.createNamedQuery(Repo.QUERY_FIND_CHANNEL_COMPOSITES_BY_RESOURCE_ID);
 
         query.setParameter("resourceId", resourceId);
 
@@ -212,7 +212,7 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
 
     @SuppressWarnings("unchecked")
     public List<ChannelComposite> findAvailableResourceSubscriptions(int resourceId) {
-        Query query = entityManager.createNamedQuery(Channel.QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID);
+        Query query = entityManager.createNamedQuery(Repo.QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID);
 
         query.setParameter("resourceId", resourceId);
 
@@ -255,47 +255,47 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public Channel updateChannel(Subject subject, Channel channel) throws ChannelException {
-        if (channel.getName() == null || channel.getName().trim().equals("")) {
-            throw new ChannelException("Channel name is required");
+    public Repo updateChannel(Subject subject, Repo repo) throws ChannelException {
+        if (repo.getName() == null || repo.getName().trim().equals("")) {
+            throw new ChannelException("Repo name is required");
         }
 
         // should we check non-null channel relationships and warn that we aren't changing them?
-        log.debug("User [" + subject + "] is updating channel [" + channel + "]");
-        channel = entityManager.merge(channel);
-        log.debug("User [" + subject + "] updated channel [" + channel + "]");
+        log.debug("User [" + subject + "] is updating channel [" + repo + "]");
+        repo = entityManager.merge(repo);
+        log.debug("User [" + subject + "] updated channel [" + repo + "]");
 
-        return channel;
+        return repo;
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public Channel createChannel(Subject subject, Channel channel) throws ChannelException {
-        validateChannel(channel);
+    public Repo createChannel(Subject subject, Repo repo) throws ChannelException {
+        validateChannel(repo);
 
-        log.debug("User [" + subject + "] is creating channel [" + channel + "]");
-        entityManager.persist(channel);
-        log.debug("User [" + subject + "] created channel [" + channel + "]");
+        log.debug("User [" + subject + "] is creating channel [" + repo + "]");
+        entityManager.persist(repo);
+        log.debug("User [" + subject + "] created channel [" + repo + "]");
 
-        return channel; // now has the ID set
+        return repo; // now has the ID set
     }
 
-    private void validateChannel(Channel c) throws ChannelException {
+    private void validateChannel(Repo c) throws ChannelException {
         if (c.getName() == null || c.getName().trim().equals("")) {
-            throw new ChannelException("Channel name is required");
+            throw new ChannelException("Repo name is required");
         }
 
-        List<Channel> channels = getChannelByName(c.getName());
-        if (channels.size() != 0) {
+        List<Repo> repos = getChannelByName(c.getName());
+        if (repos.size() != 0) {
             throw new ChannelException("There is already a channel with the name of [" + c.getName() + "]");
         }
     }
 
     @SuppressWarnings("unchecked")
-    private List<Channel> getChannelByName(String name) {
-        Query query = entityManager.createNamedQuery(Channel.QUERY_FIND_BY_NAME);
+    private List<Repo> getChannelByName(String name) {
+        Query query = entityManager.createNamedQuery(Repo.QUERY_FIND_BY_NAME);
 
         query.setParameter("name", name);
-        List<Channel> results = query.getResultList();
+        List<Repo> results = query.getResultList();
 
         return results;
     }
@@ -303,14 +303,14 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public void addContentSourcesToChannel(Subject subject, int channelId, int[] contentSourceIds) throws Exception {
-        Channel channel = entityManager.find(Channel.class, channelId);
-        if (channel == null) {
+        Repo repo = entityManager.find(Repo.class, channelId);
+        if (repo == null) {
             throw new Exception("There is no channel with an ID [" + channelId + "]");
         }
 
-        channel.setLastModifiedDate(System.currentTimeMillis());
+        repo.setLastModifiedDate(System.currentTimeMillis());
 
-        log.debug("User [" + subject + "] is adding content sources to channel [" + channel + "]");
+        log.debug("User [" + subject + "] is adding content sources to channel [" + repo + "]");
 
         ContentSourcePluginContainer pc = ContentManagerHelper.getPluginContainer();
         Query q = entityManager.createNamedQuery(PackageVersionContentSource.QUERY_FIND_BY_CONTENT_SOURCE_ID_NO_FETCH);
@@ -321,10 +321,10 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
                 throw new Exception("There is no content source with id [" + id + "]");
             }
 
-            ChannelContentSource ccsmapping = channel.addContentSource(cs);
+            RepoContentSource ccsmapping = repo.addContentSource(cs);
             entityManager.persist(ccsmapping);
 
-            Set<PackageVersion> alreadyAssociatedPVs = new HashSet<PackageVersion>(channel.getPackageVersions());
+            Set<PackageVersion> alreadyAssociatedPVs = new HashSet<PackageVersion>(repo.getPackageVersions());
 
             // automatically associate all of the content source's package versions with this channel
             // but, *skip* over the ones that are already linked to this channel from a previous association
@@ -335,7 +335,7 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
                 if (alreadyAssociatedPVs.contains(pv)) {
                     continue; // skip if already associated with this channel
                 }
-                ChannelPackageVersion mapping = new ChannelPackageVersion(channel, pv);
+                ChannelPackageVersion mapping = new ChannelPackageVersion(repo, pv);
                 entityManager.persist(mapping);
             }
 
@@ -351,12 +351,12 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public void addPackageVersionsToChannel(Subject subject, int channelId, int[] packageVersionIds) {
-        Channel channel = entityManager.find(Channel.class, channelId);
+        Repo repo = entityManager.find(Repo.class, channelId);
 
         for (int packageVersionId : packageVersionIds) {
             PackageVersion packageVersion = entityManager.find(PackageVersion.class, packageVersionId);
 
-            ChannelPackageVersion mapping = new ChannelPackageVersion(channel, packageVersion);
+            ChannelPackageVersion mapping = new ChannelPackageVersion(repo, packageVersion);
             entityManager.persist(mapping);
         }
     }
@@ -364,15 +364,15 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public void removeContentSourcesFromChannel(Subject subject, int channelId, int[] contentSourceIds)
         throws ChannelException {
-        Channel channel = getChannel(subject, channelId);
+        Repo repo = getChannel(subject, channelId);
 
-        log.debug("User [" + subject + "] is removing content sources from channel [" + channel + "]");
+        log.debug("User [" + subject + "] is removing content sources from channel [" + repo + "]");
 
-        Set<ChannelContentSource> currentSet = channel.getChannelContentSources();
+        Set<RepoContentSource> currentSet = repo.getChannelContentSources();
 
         if ((currentSet != null) && (currentSet.size() > 0)) {
-            Set<ChannelContentSource> toBeRemoved = new HashSet<ChannelContentSource>();
-            for (ChannelContentSource current : currentSet) {
+            Set<RepoContentSource> toBeRemoved = new HashSet<RepoContentSource>();
+            for (RepoContentSource current : currentSet) {
                 for (int id : contentSourceIds) {
                     if (id == current.getChannelContentSourcePK().getContentSource().getId()) {
                         toBeRemoved.add(current);
@@ -381,7 +381,7 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
                 }
             }
 
-            for (ChannelContentSource doomed : toBeRemoved) {
+            for (RepoContentSource doomed : toBeRemoved) {
                 entityManager.remove(doomed);
             }
 
@@ -415,21 +415,21 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
         // find all the channels and subscribe the resource to each of them
         // note that if the length of the ID array doesn't match, then one of the channels doesn't exist
         // and we abort altogether - we do not subscribe to anything unless all channel IDs are valid
-        Query q = entityManager.createNamedQuery(Channel.QUERY_FIND_BY_IDS);
+        Query q = entityManager.createNamedQuery(Repo.QUERY_FIND_BY_IDS);
         List<Integer> idList = new ArrayList<Integer>(channelIds.length);
         for (Integer id : channelIds) {
             idList.add(id);
         }
 
         q.setParameter("ids", idList);
-        List<Channel> channels = q.getResultList();
+        List<Repo> repos = q.getResultList();
 
-        if (channels.size() != channelIds.length) {
-            throw new RuntimeException("One or more of the channels do not exist [" + idList + "]->[" + channels + "]");
+        if (repos.size() != channelIds.length) {
+            throw new RuntimeException("One or more of the channels do not exist [" + idList + "]->[" + repos + "]");
         }
 
-        for (Channel channel : channels) {
-            ResourceChannel mapping = channel.addResource(resource);
+        for (Repo repo : repos) {
+            ResourceChannel mapping = repo.addResource(resource);
             entityManager.persist(mapping);
         }
 
@@ -457,21 +457,21 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
         // find all the channels and unsubscribe the resource from each of them
         // note that if the length of the ID array doesn't match, then one of the channels doesn't exist
         // and we abort altogether - we do not unsubscribe from anything unless all channel IDs are valid
-        Query q = entityManager.createNamedQuery(Channel.QUERY_FIND_BY_IDS);
+        Query q = entityManager.createNamedQuery(Repo.QUERY_FIND_BY_IDS);
         List<Integer> idList = new ArrayList<Integer>(channelIds.length);
         for (Integer id : channelIds) {
             idList.add(id);
         }
 
         q.setParameter("ids", idList);
-        List<Channel> channels = q.getResultList();
+        List<Repo> repos = q.getResultList();
 
-        if (channels.size() != channelIds.length) {
-            throw new RuntimeException("One or more of the channels do not exist [" + idList + "]->[" + channels + "]");
+        if (repos.size() != channelIds.length) {
+            throw new RuntimeException("One or more of the channels do not exist [" + idList + "]->[" + repos + "]");
         }
 
-        for (Channel channel : channels) {
-            ResourceChannel mapping = channel.removeResource(resource);
+        for (Repo repo : repos) {
+            ResourceChannel mapping = repo.removeResource(resource);
             entityManager.remove(mapping);
         }
 
@@ -496,10 +496,10 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
 
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public PageList<Channel> findChannelsByCriteria(Subject subject, ChannelCriteria criteria) {
+    public PageList<Repo> findChannelsByCriteria(Subject subject, ChannelCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
 
-        CriteriaQueryRunner<Channel> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
+        CriteriaQueryRunner<Repo> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
         return queryRunner.execute();
     }
 

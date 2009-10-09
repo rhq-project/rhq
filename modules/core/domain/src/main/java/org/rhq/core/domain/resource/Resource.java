@@ -69,7 +69,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
-import org.rhq.core.domain.content.Channel;
+import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.ContentServiceRequest;
 import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.InstalledPackageHistory;
@@ -1481,35 +1481,35 @@ public class Resource implements Comparable<Resource>, Externalizable {
      * The channels this resource is subscribed to.
      *
      * <p>The returned set is not backed by this entity - if you want to alter the set of associated channels, use
-     * {@link #getResourceChannels()} or {@link #addChannel(Channel)}, {@link #removeChannel(Channel)}.</p>
+     * {@link #getResourceChannels()} or {@link #addChannel(Repo)}, {@link #removeChannel(Repo)}.</p>
      */
-    public Set<Channel> getChannels() {
-        HashSet<Channel> channels = new HashSet<Channel>();
+    public Set<Repo> getChannels() {
+        HashSet<Repo> repos = new HashSet<Repo>();
 
         if (resourceChannels != null) {
             for (ResourceChannel rc : resourceChannels) {
-                channels.add(rc.getResourceChannelPK().getChannel());
+                repos.add(rc.getResourceChannelPK().getChannel());
             }
         }
 
-        return channels;
+        return repos;
     }
 
     /**
      * Directly subscribe the resource to a channel.
      *
-     * @param  channel
+     * @param  repo
      *
      * @return the mapping that was added
      */
-    public ResourceChannel addChannel(Channel channel) {
+    public ResourceChannel addChannel(Repo repo) {
         if (this.resourceChannels == null) {
             this.resourceChannels = new HashSet<ResourceChannel>();
         }
 
-        ResourceChannel mapping = new ResourceChannel(this, channel);
+        ResourceChannel mapping = new ResourceChannel(this, repo);
         this.resourceChannels.add(mapping);
-        channel.addResource(this);
+        repo.addResource(this);
         return mapping;
     }
 
@@ -1517,21 +1517,21 @@ public class Resource implements Comparable<Resource>, Externalizable {
      * Unsubscribes the resource from a channel, if it exists. If it was already subscribed, the mapping that was
      * removed is returned; if not, <code>null</code> is returned.
      *
-     * @param  channel the channel to unsubscribe from
+     * @param  repo the channel to unsubscribe from
      *
      * @return the mapping that was removed or <code>null</code> if the resource was not subscribed to the channel
      */
-    public ResourceChannel removeChannel(Channel channel) {
-        if ((this.resourceChannels == null) || (channel == null)) {
+    public ResourceChannel removeChannel(Repo repo) {
+        if ((this.resourceChannels == null) || (repo == null)) {
             return null;
         }
 
         ResourceChannel doomed = null;
 
         for (ResourceChannel rc : this.resourceChannels) {
-            if (channel.equals(rc.getResourceChannelPK().getChannel())) {
+            if (repo.equals(rc.getResourceChannelPK().getChannel())) {
                 doomed = rc;
-                channel.removeResource(this);
+                repo.removeResource(this);
                 break;
             }
         }

@@ -74,7 +74,7 @@ import org.rhq.core.domain.configuration.Configuration;
         + "    FROM ContentSource AS cs " // 
         + "   WHERE cs.id NOT IN " //
         + "       ( SELECT ccs.contentSource.id " // 
-        + "           FROM ChannelContentSource ccs " //
+        + "           FROM RepoContentSource ccs " //
         + "          WHERE ccs.channel.id = :channelId ) ") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CONTENT_SOURCE_ID_SEQ")
 @Table(name = "RHQ_CONTENT_SOURCE")
@@ -136,7 +136,7 @@ public class ContentSource implements Serializable {
     private List<ContentSourceSyncResults> syncResults;
 
     @OneToMany(mappedBy = "contentSource", fetch = FetchType.LAZY)
-    private Set<ChannelContentSource> channelContentSources;
+    private Set<RepoContentSource> repoContentSources;
 
     // Constructor
 
@@ -318,43 +318,43 @@ public class ContentSource implements Serializable {
      *
      * @see    #getContentSources()
      */
-    public Set<ChannelContentSource> getChannelContentSources() {
-        return channelContentSources;
+    public Set<RepoContentSource> getChannelContentSources() {
+        return repoContentSources;
     }
 
     /**
      * The channels that this content source provides content to.
      *
      * <p>The returned set is not backed by this entity - if you want to alter the set of associated channels, use
-     * {@link #getChannelContentSources()} or {@link #addChannel(Channel)}, {@link #removeChannel(Channel)}.</p>
+     * {@link #getChannelContentSources()} or {@link #addChannel(Repo)}, {@link #removeChannel(Repo)}.</p>
      */
-    public Set<Channel> getChannels() {
-        HashSet<Channel> channels = new HashSet<Channel>();
+    public Set<Repo> getChannels() {
+        HashSet<Repo> repos = new HashSet<Repo>();
 
-        if (channelContentSources != null) {
-            for (ChannelContentSource ccs : channelContentSources) {
-                channels.add(ccs.getChannelContentSourcePK().getChannel());
+        if (repoContentSources != null) {
+            for (RepoContentSource ccs : repoContentSources) {
+                repos.add(ccs.getChannelContentSourcePK().getChannel());
             }
         }
 
-        return channels;
+        return repos;
     }
 
     /**
      * Directly assign a channel to this content source.
      *
-     * @param  channel
+     * @param  repo
      *
      * @return the mapping that was added
      */
-    public ChannelContentSource addChannel(Channel channel) {
-        if (this.channelContentSources == null) {
-            this.channelContentSources = new HashSet<ChannelContentSource>();
+    public RepoContentSource addChannel(Repo repo) {
+        if (this.repoContentSources == null) {
+            this.repoContentSources = new HashSet<RepoContentSource>();
         }
 
-        ChannelContentSource mapping = new ChannelContentSource(channel, this);
-        this.channelContentSources.add(mapping);
-        channel.addContentSource(this);
+        RepoContentSource mapping = new RepoContentSource(repo, this);
+        this.repoContentSources.add(mapping);
+        repo.addContentSource(this);
         return mapping;
     }
 
@@ -363,27 +363,27 @@ public class ContentSource implements Serializable {
      * returned; if the given channel did not exist as one that this content source is a member of, <code>null</code> is
      * returned.
      *
-     * @param  channel the channel to remove from this content source
+     * @param  repo the channel to remove from this content source
      *
      * @return the mapping that was removed or <code>null</code> if the channel was not mapped to this content source
      */
-    public ChannelContentSource removeChannel(Channel channel) {
-        if ((this.channelContentSources == null) || (channel == null)) {
+    public RepoContentSource removeChannel(Repo repo) {
+        if ((this.repoContentSources == null) || (repo == null)) {
             return null;
         }
 
-        ChannelContentSource doomed = null;
+        RepoContentSource doomed = null;
 
-        for (ChannelContentSource ccs : this.channelContentSources) {
-            if (channel.equals(ccs.getChannelContentSourcePK().getChannel())) {
+        for (RepoContentSource ccs : this.repoContentSources) {
+            if (repo.equals(ccs.getChannelContentSourcePK().getChannel())) {
                 doomed = ccs;
-                channel.removeContentSource(this);
+                repo.removeContentSource(this);
                 break;
             }
         }
 
         if (doomed != null) {
-            this.channelContentSources.remove(doomed);
+            this.repoContentSources.remove(doomed);
         }
 
         return doomed;

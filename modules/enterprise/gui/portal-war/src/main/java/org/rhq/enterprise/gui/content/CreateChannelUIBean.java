@@ -21,7 +21,7 @@ package org.rhq.enterprise.gui.content;
 import javax.faces.application.FacesMessage;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.content.Channel;
+import org.rhq.core.domain.content.Repo;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.content.ChannelException;
@@ -29,13 +29,13 @@ import org.rhq.enterprise.server.content.ChannelManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class CreateChannelUIBean {
-    private Channel newChannel = new Channel();
+    private Repo newChannel = new Repo();
 
-    public Channel getChannel() {
+    public Repo getChannel() {
         return newChannel;
     }
 
-    public void setChannel(Channel newChannel) {
+    public void setChannel(Repo newChannel) {
         this.newChannel = newChannel;
     }
 
@@ -44,7 +44,7 @@ public class CreateChannelUIBean {
         ChannelManagerLocal manager = LookupUtil.getChannelManagerLocal();
 
         try {
-            Channel created = manager.createChannel(subject, newChannel);
+            Repo created = manager.createChannel(subject, newChannel);
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Saved [" + created.getName()
                 + "] with the ID of [" + created.getId() + "]");
         } catch (ChannelException ce) {
@@ -52,12 +52,12 @@ public class CreateChannelUIBean {
             return "failed";
         }
 
-        newChannel = new Channel();
+        newChannel = new Repo();
         return "save";
     }
 
     public String cancel() {
-        newChannel = new Channel();
+        newChannel = new Repo();
         return "cancel";
     }
 }

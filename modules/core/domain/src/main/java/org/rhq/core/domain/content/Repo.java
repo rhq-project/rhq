@@ -52,51 +52,51 @@ import org.rhq.core.domain.resource.Resource;
  */
 @Entity
 @NamedQueries( {
-    @NamedQuery(name = Channel.QUERY_FIND_ALL, query = "SELECT c FROM Channel c"),
-    @NamedQuery(name = Channel.QUERY_FIND_BY_IDS, query = "SELECT c FROM Channel c WHERE c.id IN ( :ids )"),
-    @NamedQuery(name = Channel.QUERY_FIND_BY_NAME, query = "SELECT c FROM Channel c WHERE c.name = :name"),
-    @NamedQuery(name = Channel.QUERY_FIND_BY_CONTENT_SOURCE_ID_FETCH_CCS, query = "SELECT c FROM Channel c LEFT JOIN FETCH c.channelContentSources ccs WHERE ccs.contentSource.id = :id"),
-    @NamedQuery(name = Channel.QUERY_FIND_BY_CONTENT_SOURCE_ID, query = "SELECT c FROM Channel c LEFT JOIN c.channelContentSources ccs WHERE ccs.contentSource.id = :id"),
-    @NamedQuery(name = Channel.QUERY_FIND_SUBSCRIBER_RESOURCES, query = "SELECT rc.resource FROM ResourceChannel rc WHERE rc.channel.id = :id"),
-    @NamedQuery(name = Channel.QUERY_FIND_CHANNELS_BY_RESOURCE_ID, query = "SELECT c "
+    @NamedQuery(name = Repo.QUERY_FIND_ALL, query = "SELECT c FROM Repo c"),
+    @NamedQuery(name = Repo.QUERY_FIND_BY_IDS, query = "SELECT c FROM Repo c WHERE c.id IN ( :ids )"),
+    @NamedQuery(name = Repo.QUERY_FIND_BY_NAME, query = "SELECT c FROM Repo c WHERE c.name = :name"),
+    @NamedQuery(name = Repo.QUERY_FIND_BY_CONTENT_SOURCE_ID_FETCH_CCS, query = "SELECT c FROM Repo c LEFT JOIN FETCH c.channelContentSources ccs WHERE ccs.contentSource.id = :id"),
+    @NamedQuery(name = Repo.QUERY_FIND_BY_CONTENT_SOURCE_ID, query = "SELECT c FROM Repo c LEFT JOIN c.channelContentSources ccs WHERE ccs.contentSource.id = :id"),
+    @NamedQuery(name = Repo.QUERY_FIND_SUBSCRIBER_RESOURCES, query = "SELECT rc.resource FROM ResourceChannel rc WHERE rc.channel.id = :id"),
+    @NamedQuery(name = Repo.QUERY_FIND_CHANNELS_BY_RESOURCE_ID, query = "SELECT c "
         + "FROM ResourceChannel rc JOIN rc.channel c WHERE rc.resource.id = :resourceId "),
 
-    @NamedQuery(name = Channel.QUERY_FIND_CHANNEL_COMPOSITES_BY_RESOURCE_ID, query = "SELECT new org.rhq.core.domain.content.composite.ChannelComposite( "
+    @NamedQuery(name = Repo.QUERY_FIND_CHANNEL_COMPOSITES_BY_RESOURCE_ID, query = "SELECT new org.rhq.core.domain.content.composite.ChannelComposite( "
         + "c, "
         + "(SELECT COUNT(cpv.packageVersion) FROM ChannelPackageVersion cpv WHERE cpv.channel.id = c.id) "
         + ") "
         + "FROM ResourceChannel rc JOIN rc.channel c LEFT JOIN c.channelPackageVersions pv "
         + "WHERE rc.resource.id = :resourceId "
         + "GROUP BY c, c.name, c.description, c.creationDate, c.lastModifiedDate"),
-    @NamedQuery(name = Channel.QUERY_FIND_CHANNEL_COMPOSITES_BY_RESOURCE_ID_COUNT, query = "SELECT COUNT( rc.channel ) "
+    @NamedQuery(name = Repo.QUERY_FIND_CHANNEL_COMPOSITES_BY_RESOURCE_ID_COUNT, query = "SELECT COUNT( rc.channel ) "
         + "FROM ResourceChannel rc WHERE rc.resource.id = :resourceId "),
 
-    @NamedQuery(name = Channel.QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID, query = "SELECT new org.rhq.core.domain.content.composite.ChannelComposite( "
+    @NamedQuery(name = Repo.QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID, query = "SELECT new org.rhq.core.domain.content.composite.ChannelComposite( "
         + "c, "
         + "(SELECT COUNT(cpv.packageVersion) FROM ChannelPackageVersion cpv WHERE cpv.channel.id = c.id) "
         + ") "
-        + "FROM Channel AS c "
+        + "FROM Repo AS c "
         + "WHERE c.id NOT IN ( SELECT rc.channel.id FROM ResourceChannel rc WHERE rc.resource.id = :resourceId ) "
         + "GROUP BY c, c.name, c.description, c.creationDate, c.lastModifiedDate"),
-    @NamedQuery(name = Channel.QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID_COUNT, query = "SELECT COUNT( c ) "
-        + "FROM Channel AS c "
+    @NamedQuery(name = Repo.QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID_COUNT, query = "SELECT COUNT( c ) "
+        + "FROM Repo AS c "
         + "WHERE c.id NOT IN ( SELECT rc.channel.id FROM ResourceChannel rc WHERE rc.resource.id = :resourceId ) ") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CHANNEL_ID_SEQ")
 @Table(name = "RHQ_CHANNEL")
-public class Channel implements Serializable {
+public class Repo implements Serializable {
     // Constants  --------------------------------------------
 
-    public static final String QUERY_FIND_ALL = "Channel.findAll";
-    public static final String QUERY_FIND_BY_IDS = "Channel.findByIds";
-    public static final String QUERY_FIND_BY_NAME = "Channel.findByName";
-    public static final String QUERY_FIND_BY_CONTENT_SOURCE_ID_FETCH_CCS = "Channel.findByContentSourceIdFetchCCS";
-    public static final String QUERY_FIND_BY_CONTENT_SOURCE_ID = "Channel.findByContentSourceId";
-    public static final String QUERY_FIND_SUBSCRIBER_RESOURCES = "Channel.findSubscriberResources";
-    public static final String QUERY_FIND_CHANNELS_BY_RESOURCE_ID = "Channel.findChannelsByResourceId";
-    public static final String QUERY_FIND_CHANNEL_COMPOSITES_BY_RESOURCE_ID = "Channel.findChannelCompositesByResourceId";
-    public static final String QUERY_FIND_CHANNEL_COMPOSITES_BY_RESOURCE_ID_COUNT = "Channel.findChannelCompositesByResourceId_count";
-    public static final String QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID = "Channel.findAvailableChannelCompositesByResourceId";
-    public static final String QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID_COUNT = "Channel.findAvailableChannelCompositesByResourceId_count";
+    public static final String QUERY_FIND_ALL = "Repo.findAll";
+    public static final String QUERY_FIND_BY_IDS = "Repo.findByIds";
+    public static final String QUERY_FIND_BY_NAME = "Repo.findByName";
+    public static final String QUERY_FIND_BY_CONTENT_SOURCE_ID_FETCH_CCS = "Repo.findByContentSourceIdFetchCCS";
+    public static final String QUERY_FIND_BY_CONTENT_SOURCE_ID = "Repo.findByContentSourceId";
+    public static final String QUERY_FIND_SUBSCRIBER_RESOURCES = "Repo.findSubscriberResources";
+    public static final String QUERY_FIND_CHANNELS_BY_RESOURCE_ID = "Repo.findChannelsByResourceId";
+    public static final String QUERY_FIND_CHANNEL_COMPOSITES_BY_RESOURCE_ID = "Repo.findChannelCompositesByResourceId";
+    public static final String QUERY_FIND_CHANNEL_COMPOSITES_BY_RESOURCE_ID_COUNT = "Repo.findChannelCompositesByResourceId_count";
+    public static final String QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID = "Repo.findAvailableChannelCompositesByResourceId";
+    public static final String QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID_COUNT = "Repo.findAvailableChannelCompositesByResourceId_count";
 
     private static final long serialVersionUID = 1L;
 
@@ -123,18 +123,18 @@ public class Channel implements Serializable {
     private Set<ResourceChannel> resourceChannels;
 
     @OneToMany(mappedBy = "channel", fetch = FetchType.LAZY)
-    private Set<ChannelContentSource> channelContentSources;
+    private Set<RepoContentSource> repoContentSources;
 
     @OneToMany(mappedBy = "channel", fetch = FetchType.LAZY)
     private Set<ChannelPackageVersion> channelPackageVersions;
 
     // Constructor ----------------------------------------
 
-    public Channel() {
+    public Repo() {
         // for JPA use
     }
 
-    public Channel(String name) {
+    public Repo(String name) {
         this.name = name;
     }
 
@@ -276,8 +276,8 @@ public class Channel implements Serializable {
      *
      * @see    #getContentSources()
      */
-    public Set<ChannelContentSource> getChannelContentSources() {
-        return channelContentSources;
+    public Set<RepoContentSource> getChannelContentSources() {
+        return repoContentSources;
     }
 
     /**
@@ -292,8 +292,8 @@ public class Channel implements Serializable {
     public Set<ContentSource> getContentSources() {
         HashSet<ContentSource> contentSources = new HashSet<ContentSource>();
 
-        if (channelContentSources != null) {
-            for (ChannelContentSource ccs : channelContentSources) {
+        if (repoContentSources != null) {
+            for (RepoContentSource ccs : repoContentSources) {
                 contentSources.add(ccs.getChannelContentSourcePK().getContentSource());
             }
         }
@@ -308,13 +308,13 @@ public class Channel implements Serializable {
      *
      * @return the mapping that was added
      */
-    public ChannelContentSource addContentSource(ContentSource contentSource) {
-        if (this.channelContentSources == null) {
-            this.channelContentSources = new HashSet<ChannelContentSource>();
+    public RepoContentSource addContentSource(ContentSource contentSource) {
+        if (this.repoContentSources == null) {
+            this.repoContentSources = new HashSet<RepoContentSource>();
         }
 
-        ChannelContentSource mapping = new ChannelContentSource(this, contentSource);
-        this.channelContentSources.add(mapping);
+        RepoContentSource mapping = new RepoContentSource(this, contentSource);
+        this.repoContentSources.add(mapping);
         return mapping;
     }
 
@@ -327,14 +327,14 @@ public class Channel implements Serializable {
      *
      * @return the mapping that was removed or <code>null</code> if the content source was not mapped to this channel
      */
-    public ChannelContentSource removeContentSource(ContentSource contentSource) {
-        if ((this.channelContentSources == null) || (contentSource == null)) {
+    public RepoContentSource removeContentSource(ContentSource contentSource) {
+        if ((this.repoContentSources == null) || (contentSource == null)) {
             return null;
         }
 
-        ChannelContentSource doomed = null;
+        RepoContentSource doomed = null;
 
-        for (ChannelContentSource ccs : this.channelContentSources) {
+        for (RepoContentSource ccs : this.repoContentSources) {
             if (contentSource.equals(ccs.getChannelContentSourcePK().getContentSource())) {
                 doomed = ccs;
                 break;
@@ -342,7 +342,7 @@ public class Channel implements Serializable {
         }
 
         if (doomed != null) {
-            this.channelContentSources.remove(doomed);
+            this.repoContentSources.remove(doomed);
         }
 
         return doomed;
@@ -432,7 +432,7 @@ public class Channel implements Serializable {
 
     @Override
     public String toString() {
-        return "Channel: id=[" + this.id + "], name=[" + this.name + "]";
+        return "Repo: id=[" + this.id + "], name=[" + this.name + "]";
     }
 
     @Override
@@ -448,11 +448,11 @@ public class Channel implements Serializable {
             return true;
         }
 
-        if ((obj == null) || (!(obj instanceof Channel))) {
+        if ((obj == null) || (!(obj instanceof Repo))) {
             return false;
         }
 
-        final Channel other = (Channel) obj;
+        final Repo other = (Repo) obj;
 
         if (name == null) {
             if (other.name != null) {

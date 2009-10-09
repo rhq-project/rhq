@@ -47,7 +47,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
 import org.rhq.core.domain.content.Architecture;
-import org.rhq.core.domain.content.Channel;
+import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
@@ -217,19 +217,19 @@ public class WebservicesManagerBean implements WebservicesRemote {
         channelManager.addPackageVersionsToChannel(subject, channelId, packageVersionIds);
     }
 
-    public Channel createChannel(Subject subject, Channel channel) throws ChannelException {
-        return channelManager.createChannel(subject, channel);
+    public Repo createChannel(Subject subject, Repo repo) throws ChannelException {
+        return channelManager.createChannel(subject, repo);
     }
 
     public void deleteChannel(Subject subject, int channelId) {
         channelManager.deleteChannel(subject, channelId);
     }
 
-    public PageList<Channel> findChannels(Subject subject, PageControl pc) {
+    public PageList<Repo> findChannels(Subject subject, PageControl pc) {
         return channelManager.findChannels(subject, pc);
     }
 
-    public PageList<Channel> findChannelsByCriteria(Subject subject, ChannelCriteria criteria) {
+    public PageList<Repo> findChannelsByCriteria(Subject subject, ChannelCriteria criteria) {
         checkParametersPassedIn(subject, criteria);
         return channelManager.findChannelsByCriteria(subject, criteria);
     }
@@ -248,7 +248,7 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return channelManager.findSubscribedResources(subject, channelId, pc);
     }
 
-    public Channel getChannel(Subject subject, int channelId) {
+    public Repo getChannel(Subject subject, int channelId) {
         return channelManager.getChannel(subject, channelId);
     }
 
@@ -260,8 +260,8 @@ public class WebservicesManagerBean implements WebservicesRemote {
         channelManager.unsubscribeResourceFromChannels(subject, resourceId, channelIds);
     }
 
-    public Channel updateChannel(Subject subject, Channel channel) throws ChannelException {
-        return channelManager.updateChannel(subject, channel);
+    public Repo updateChannel(Subject subject, Repo repo) throws ChannelException {
+        return channelManager.updateChannel(subject, repo);
     }
 
     public PageList<PackageVersion> findPackageVersionsByCriteria(Subject subject, PackageVersionCriteria criteria) {

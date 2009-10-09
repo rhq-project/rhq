@@ -34,8 +34,8 @@ import javax.persistence.PrePersist;
 import javax.persistence.Table;
 
 /**
- * This is the many-to-many entity that correlates a channel with one of the package versions it contains. It is an
- * explicit relationship mapping entity between {@link Channel} and {@link PackageVersion}.
+ * This is the many-to-many entity that correlates a repo with one of the package versions it contains. It is an
+ * explicit relationship mapping entity between {@link Repo} and {@link PackageVersion}.
  *
  * @author John Mazzitelli
  */
@@ -56,7 +56,7 @@ public class ChannelPackageVersion implements Serializable {
     @Id
     //   @ManyToOne
     //   @JoinColumn(name = "CHANNEL_ID", referencedColumnName = "ID", nullable = false, insertable = false, updatable = false)
-    private Channel channel;
+    private Repo repo;
 
     @Id
     //   @ManyToOne
@@ -69,22 +69,22 @@ public class ChannelPackageVersion implements Serializable {
     protected ChannelPackageVersion() {
     }
 
-    public ChannelPackageVersion(Channel channel, PackageVersion packageVersion) {
-        this.channel = channel;
+    public ChannelPackageVersion(Repo repo, PackageVersion packageVersion) {
+        this.repo = repo;
         this.packageVersion = packageVersion;
     }
 
     public ChannelPackageVersionPK getChannelPackageVersionPK() {
-        return new ChannelPackageVersionPK(channel, packageVersion);
+        return new ChannelPackageVersionPK(repo, packageVersion);
     }
 
     public void setChannelPackageVersionPK(ChannelPackageVersionPK pk) {
-        this.channel = pk.getChannel();
+        this.repo = pk.getChannel();
         this.packageVersion = pk.getPackageVersion();
     }
 
     /**
-     * This is the epoch time when this mapping was first created; in other words, when the channel was first associated
+     * This is the epoch time when this mapping was first created; in other words, when the repo was first associated
      * with the package version.
      */
     public long getCreatedTime() {
@@ -100,7 +100,7 @@ public class ChannelPackageVersion implements Serializable {
     public String toString() {
         StringBuilder str = new StringBuilder("ChannelPV: ");
         str.append("ctime=[").append(new Date(this.createdTime)).append("]");
-        str.append(", ch=[").append(this.channel).append("]");
+        str.append(", ch=[").append(this.repo).append("]");
         str.append(", pv=[").append(this.packageVersion).append("]");
         return str.toString();
     }
@@ -108,7 +108,7 @@ public class ChannelPackageVersion implements Serializable {
     @Override
     public int hashCode() {
         int result = 1;
-        result = (31 * result) + ((channel == null) ? 0 : channel.hashCode());
+        result = (31 * result) + ((repo == null) ? 0 : repo.hashCode());
         result = (31 * result) + ((packageVersion == null) ? 0 : packageVersion.hashCode());
         return result;
     }
@@ -125,11 +125,11 @@ public class ChannelPackageVersion implements Serializable {
 
         final ChannelPackageVersion other = (ChannelPackageVersion) obj;
 
-        if (channel == null) {
-            if (channel != null) {
+        if (repo == null) {
+            if (repo != null) {
                 return false;
             }
-        } else if (!channel.equals(other.channel)) {
+        } else if (!repo.equals(other.repo)) {
             return false;
         }
 

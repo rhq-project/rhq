@@ -550,18 +550,18 @@ public class PackageVersion implements Serializable {
      * The set of channels that can serve up this package version.
      *
      * <p>The returned set is not backed by this entity - if you want to alter the set of associated channels, use
-     * {@link #getChannelPackageVersions()} or {@link #addChannel(Channel)}, {@link #removeChannel(Channel)}.</p>
+     * {@link #getChannelPackageVersions()} or {@link #addChannel(Repo)}, {@link #removeChannel(Repo)}.</p>
      */
-    public Set<Channel> getChannels() {
-        HashSet<Channel> channels = new HashSet<Channel>();
+    public Set<Repo> getChannels() {
+        HashSet<Repo> repos = new HashSet<Repo>();
 
         if (channelPackageVersions != null) {
             for (ChannelPackageVersion cpv : channelPackageVersions) {
-                channels.add(cpv.getChannelPackageVersionPK().getChannel());
+                repos.add(cpv.getChannelPackageVersionPK().getChannel());
             }
         }
 
-        return channels;
+        return repos;
     }
 
     /**
@@ -571,14 +571,14 @@ public class PackageVersion implements Serializable {
      *
      * @return the mapping that was added
      */
-    public ChannelPackageVersion addChannel(Channel channel) {
+    public ChannelPackageVersion addChannel(Repo repo) {
         if (this.channelPackageVersions == null) {
             this.channelPackageVersions = new HashSet<ChannelPackageVersion>();
         }
 
-        ChannelPackageVersion mapping = new ChannelPackageVersion(channel, this);
+        ChannelPackageVersion mapping = new ChannelPackageVersion(repo, this);
         this.channelPackageVersions.add(mapping);
-        channel.addPackageVersion(this);
+        repo.addPackageVersion(this);
         return mapping;
     }
 
@@ -594,22 +594,22 @@ public class PackageVersion implements Serializable {
      * Removes the channel as one that this package version is related to. The mapping that was removed is returned; if
      * the given package version was not a member of the channel, <code>null</code> is returned.
      *
-     * @param  channel
+     * @param  repo
      *
      * @return the mapping that was removed or <code>null</code> if this package version was not mapped to the given
      *         channel
      */
-    public ChannelPackageVersion removeChannel(Channel channel) {
-        if ((this.channelPackageVersions == null) || (channel == null)) {
+    public ChannelPackageVersion removeChannel(Repo repo) {
+        if ((this.channelPackageVersions == null) || (repo == null)) {
             return null;
         }
 
         ChannelPackageVersion doomed = null;
 
         for (ChannelPackageVersion cpv : this.channelPackageVersions) {
-            if (channel.equals(cpv.getChannelPackageVersionPK().getChannel())) {
+            if (repo.equals(cpv.getChannelPackageVersionPK().getChannel())) {
                 doomed = cpv;
-                channel.removePackageVersion(this);
+                repo.removePackageVersion(this);
                 break;
             }
         }

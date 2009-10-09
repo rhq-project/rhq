@@ -29,7 +29,7 @@ import java.util.Set;
 import org.rhq.core.communications.command.annotation.Asynchronous;
 import org.rhq.core.communications.command.annotation.LimitedConcurrency;
 import org.rhq.core.communications.command.annotation.Timeout;
-import org.rhq.core.domain.content.Channel;
+import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.composite.PackageVersionMetadataComposite;
@@ -166,7 +166,7 @@ public interface ContentServerService {
 
     /**
      * Requests all {@link PackageVersion#getMetadata() metadata} for all package versions that the given resource
-     * component is subscribed to (see {@link Channel#getResources()}. The returned object has the metadata bytes that
+     * component is subscribed to (see {@link Repo#getResources()}. The returned object has the metadata bytes that
      * are meaningful to the calling plugin component.
      *
      * <p>Callers should consider caching the returned metadata. Use {@link #getResourceSubscriptionMD5(int)} to get the

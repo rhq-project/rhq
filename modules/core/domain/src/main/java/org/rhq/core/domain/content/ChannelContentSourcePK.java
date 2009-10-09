@@ -27,7 +27,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 
 /**
- * This is the composite primary key for the {@link ChannelContentSource} entity. That entity is an explicit
+ * This is the composite primary key for the {@link RepoContentSource} entity. That entity is an explicit
  * many-to-many mapping table, so this composite key is simply the foreign keys to both ends of that relationship.
  *
  * @author John Mazzitelli
@@ -43,7 +43,7 @@ public class ChannelContentSourcePK implements Serializable {
 
     @JoinColumn(name = "CHANNEL_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne
-    private Channel channel;
+    private Repo repo;
 
     @JoinColumn(name = "CONTENT_SRC_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne
@@ -52,17 +52,17 @@ public class ChannelContentSourcePK implements Serializable {
     public ChannelContentSourcePK() {
     }
 
-    public ChannelContentSourcePK(Channel channel, ContentSource contentSource) {
-        this.channel = channel;
+    public ChannelContentSourcePK(Repo repo, ContentSource contentSource) {
+        this.repo = repo;
         this.contentSource = contentSource;
     }
 
-    public Channel getChannel() {
-        return channel;
+    public Repo getChannel() {
+        return repo;
     }
 
-    public void setChannel(Channel channel) {
-        this.channel = channel;
+    public void setChannel(Repo repo) {
+        this.repo = repo;
     }
 
     public ContentSource getContentSource() {
@@ -75,13 +75,13 @@ public class ChannelContentSourcePK implements Serializable {
 
     @Override
     public String toString() {
-        return "ChannelContentSourcePK: channel=[" + channel + "]; contentSource=[" + contentSource + "]";
+        return "ChannelContentSourcePK: repo=[" + repo + "]; contentSource=[" + contentSource + "]";
     }
 
     @Override
     public int hashCode() {
         int result = 1;
-        result = (31 * result) + ((channel == null) ? 0 : channel.hashCode());
+        result = (31 * result) + ((repo == null) ? 0 : repo.hashCode());
         result = (31 * result) + ((contentSource == null) ? 0 : contentSource.hashCode());
         return result;
     }
@@ -98,11 +98,11 @@ public class ChannelContentSourcePK implements Serializable {
 
         final ChannelContentSourcePK other = (ChannelContentSourcePK) obj;
 
-        if (channel == null) {
-            if (other.channel != null) {
+        if (repo == null) {
+            if (other.repo != null) {
                 return false;
             }
-        } else if (!channel.equals(other.channel)) {
+        } else if (!repo.equals(other.repo)) {
             return false;
         }
 

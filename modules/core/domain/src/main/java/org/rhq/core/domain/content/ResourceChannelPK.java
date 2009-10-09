@@ -47,14 +47,14 @@ public class ResourceChannelPK implements Serializable {
 
     @JoinColumn(name = "CHANNEL_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne
-    private Channel channel;
+    private Repo repo;
 
     public ResourceChannelPK() {
     }
 
-    public ResourceChannelPK(Resource resource, Channel channel) {
+    public ResourceChannelPK(Resource resource, Repo repo) {
         this.resource = resource;
-        this.channel = channel;
+        this.repo = repo;
     }
 
     public Resource getResource() {
@@ -65,24 +65,24 @@ public class ResourceChannelPK implements Serializable {
         this.resource = resource;
     }
 
-    public Channel getChannel() {
-        return channel;
+    public Repo getChannel() {
+        return repo;
     }
 
-    public void setChannel(Channel channel) {
-        this.channel = channel;
+    public void setChannel(Repo repo) {
+        this.repo = repo;
     }
 
     @Override
     public String toString() {
-        return "ResourceChannelPK: resource=[" + resource + "]; channel=[" + channel + "]";
+        return "ResourceChannelPK: resource=[" + resource + "]; repo=[" + repo + "]";
     }
 
     @Override
     public int hashCode() {
         int result = 1;
         result = (31 * result) + ((resource == null) ? 0 : resource.hashCode());
-        result = (31 * result) + ((channel == null) ? 0 : channel.hashCode());
+        result = (31 * result) + ((repo == null) ? 0 : repo.hashCode());
         return result;
     }
 
@@ -106,11 +106,11 @@ public class ResourceChannelPK implements Serializable {
             return false;
         }
 
-        if (channel == null) {
-            if (other.channel != null) {
+        if (repo == null) {
+            if (other.repo != null) {
                 return false;
             }
-        } else if (!channel.equals(other.channel)) {
+        } else if (!repo.equals(other.repo)) {
             return false;
         }
 

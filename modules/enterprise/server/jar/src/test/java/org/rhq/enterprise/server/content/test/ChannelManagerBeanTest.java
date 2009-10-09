@@ -23,7 +23,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.content.Channel;
+import org.rhq.core.domain.content.Repo;
 import org.rhq.enterprise.server.content.ChannelManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -51,9 +51,9 @@ public class ChannelManagerBeanTest extends AbstractEJB3Test {
 
     @Test
     public void testCreateDeleteChannel() throws Exception {
-        Channel channel = new Channel("testCreateContentSourceChannel");
-        int id = channelManager.createChannel(overlord, channel).getId();
-        Channel lookedUp = channelManager.getChannel(overlord, id);
+        Repo repo = new Repo("testCreateContentSourceChannel");
+        int id = channelManager.createChannel(overlord, repo).getId();
+        Repo lookedUp = channelManager.getChannel(overlord, id);
         assert lookedUp != null;
         assert id == lookedUp.getId();
 

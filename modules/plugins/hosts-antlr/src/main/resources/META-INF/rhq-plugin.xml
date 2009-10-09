@@ -8,6 +8,8 @@
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
 
+   <depends plugin="AntlrConfig" useClasses="true"/>
+   
    <service name="Hosts File"
             description="the local file used for mapping host names to IP addresses"
             discovery="HostsDiscoveryComponent"

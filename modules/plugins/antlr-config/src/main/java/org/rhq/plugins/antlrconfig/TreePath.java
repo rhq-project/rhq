@@ -32,8 +32,8 @@ import org.antlr.runtime.RecognitionException;
 import org.antlr.runtime.tree.CommonTree;
 import org.antlr.runtime.tree.Tree;
 
-import org.rhq.core.antlr.TreePathLexer;
-import org.rhq.core.antlr.TreePathParser;
+import org.rhq.plugins.antlrconfig.util.TreePathLexer;
+import org.rhq.plugins.antlrconfig.util.TreePathParser;
 
 /**
  * A query for a token in the Antlr AST.
@@ -74,15 +74,27 @@ public class TreePath {
             PathElement el = new PathElement();
             
             int type = tree.getType();
-            el.setTokenName(typeNames[type]);
+            el.setTokenTypeName(typeNames[type].toLowerCase());
 
-            el.setTokenPosition(tree.getChildIndex() + 1);
+            el.setAbsoluteTokenPosition(tree.getChildIndex() + 1);
+
+            //get type relative index
+            Tree parent = tree.getParent();
+            if (parent != null) {
+                int idx = 1;
+                for (int i = tree.getChildIndex() - 1; i > 0; --i) {
+                    if (parent.getChild(i).getType() == type) {
+                        idx++;
+                    }
+                }
+                el.setTypeRelativeTokenPosition(idx);
+            }
             
             el.setTokenText(tree.getText());
             
             elements.add(el);
 
-            tree = tree.getParent();
+            tree = parent;
         }
         
         Collections.reverse(elements);
@@ -134,7 +146,7 @@ public class TreePath {
     private List<Tree> matchingChildren(Tree parent, PathElement spec) {
         List<Tree> children = new ArrayList<Tree>();
         
-        int tokenType = getTokenType(spec.getTokenName());
+        int tokenType = getTokenType(spec.getTokenTypeName());
 
         switch (spec.getType()) {
         case NAME_REFERENCE:
@@ -146,8 +158,8 @@ public class TreePath {
             }
             break;
         case INDEX_REFERENCE:
-            if (spec.getTokenPosition() > 0 && parent.getChildCount() >= spec.getTokenPosition()) {
-                children.add(parent.getChild(spec.getTokenPosition() - 1));
+            if (spec.getAbsoluteTokenPosition() > 0 && parent.getChildCount() >= spec.getAbsoluteTokenPosition()) {
+                children.add(parent.getChild(spec.getAbsoluteTokenPosition() - 1));
             }
             break;
         case POSITION_REFERENCE:
@@ -156,7 +168,7 @@ public class TreePath {
                 Tree child = parent.getChild(i);
                 if (child.getType() == tokenType) {
                     position++; //we're 1 based, so increase before checking...
-                    if (position == spec.getTokenPosition()) {
+                    if (position == spec.getTypeRelativeTokenPosition()) {
                         children.add(child);
                         break;
                     }

@@ -14,13 +14,14 @@ tokens {
 }
 
 @header {
-  package org.rhq.core.antlr;
+  package org.rhq.plugins.antlrconfig.util;
   
   import java.util.ArrayList;
+  import org.rhq.plugins.antlrconfig.PathElement;
 }
 
 @lexer::header {
-  package org.rhq.core.antlr;
+  package org.rhq.plugins.antlrconfig.util;
 }
 
 fragment
@@ -69,7 +70,7 @@ pathElement returns [PathElement pathElement] throws NumberFormatException
   $pathElement = new PathElement();
 }
   : el=PATH_ELEMENT {
-      $pathElement.setTokenName($el.text);
+      $pathElement.setTokenTypeName($el.text);
       $pathElement.setType(PathElement.Type.NAME_REFERENCE);
     } (OPEN_BRACKET discriminator {
       if ($discriminator.value != null) {
@@ -78,13 +79,13 @@ pathElement returns [PathElement pathElement] throws NumberFormatException
         $pathElement.setTokenText($discriminator.value);
       } else {
         $pathElement.setType(PathElement.Type.POSITION_REFERENCE);
-        $pathElement.setTokenPosition($discriminator.position);
+        $pathElement.setTypeRelativeTokenPosition($discriminator.position);
       }  
     } CLOSE_BRACKET)?
     -> ^(ELEMENT PATH_ELEMENT discriminator?)
   | ref=CHILD_REFERENCE { 
       $pathElement.setType(PathElement.Type.INDEX_REFERENCE);
-      $pathElement.setTokenPosition(Integer.parseInt($ref.text.substring(1)));
+      $pathElement.setAbsoluteTokenPosition(Integer.parseInt($ref.text.substring(1)));
     }
     -> ^(CHILD_POSITIONAL_REFERENCE CHILD_REFERENCE)
   ;

@@ -31,15 +31,31 @@ package org.rhq.plugins.antlrconfig;
 public class PathElement {
 
     public enum Type {
+        /**
+         * The path element represents a (set of) token(s) addressed by their type name.
+         */
         NAME_REFERENCE,
+        
+        /**
+         * The path element represents a token addressed by its type name and type relative position.
+         */
         POSITION_REFERENCE,
+        
+        /**
+         * The path element represents a (set of) token(s) addressed by their type name and value.
+         */
         VALUE_REFERENCE,
+        
+        /**
+         * The path element represents a token addressed by an absolute index among its siblings in a tree.
+         */
         INDEX_REFERENCE
     }
     
     private Type type;
-    private String tokenName;
-    private int tokenPosition = -1;
+    private String tokenTypeName;
+    private int absoluteTokenPosition = -1;
+    private int typeRelativeTokenPosition = -1;
     private String tokenText;
     
     public Type getType() {
@@ -50,22 +66,30 @@ public class PathElement {
         this.type = type;
     }
     
-    public String getTokenName() {
-        return tokenName;
+    public String getTokenTypeName() {
+        return tokenTypeName;
     }
     
-    public void setTokenName(String tokenName) {
-        this.tokenName = tokenName;
+    public void setTokenTypeName(String tokenName) {
+        this.tokenTypeName = tokenName;
     }
     
-    public int getTokenPosition() {
-        return tokenPosition;
+    public int getAbsoluteTokenPosition() {
+        return absoluteTokenPosition;
     }
     
-    public void setTokenPosition(int tokenPosition) {
-        this.tokenPosition = tokenPosition;
+    public void setAbsoluteTokenPosition(int tokenPosition) {
+        this.absoluteTokenPosition = tokenPosition;
     }
     
+    public int getTypeRelativeTokenPosition() {
+        return typeRelativeTokenPosition;
+    }
+
+    public void setTypeRelativeTokenPosition(int typeRelativeTokenPosition) {
+        this.typeRelativeTokenPosition = typeRelativeTokenPosition;
+    }
+
     public String getTokenText() {
         return tokenText;
     }
@@ -79,16 +103,16 @@ public class PathElement {
         
         switch(type) {
         case INDEX_REFERENCE:
-            bld.append("$").append(tokenPosition);
+            bld.append("$").append(absoluteTokenPosition);
             break;
         case NAME_REFERENCE:
-            bld.append(tokenName);
+            bld.append(tokenTypeName);
             break;
         case POSITION_REFERENCE:
-            bld.append(tokenName).append("[").append(tokenPosition).append("]");
+            bld.append(tokenTypeName).append("[").append(typeRelativeTokenPosition).append("]");
             break;
         case VALUE_REFERENCE:
-            bld.append(tokenName).append("[=\"").append(escape(tokenText)).append("\"]");
+            bld.append(tokenTypeName).append("[=\"").append(escape(tokenText)).append("\"]");
             break;
         }        
         
@@ -96,12 +120,18 @@ public class PathElement {
     }
 
     private String unescape(String string) {
-        return string.replace("\\\"", "\"").replace("\\\n", "\n").replace("\\\t", "\t")
-            .replace("\\\\", "\\");
+        if (string != null) {
+            return string.replace("\\\"", "\"").replace("\\\n", "\n").replace("\\\t", "\t")
+                .replace("\\\\", "\\");
+        }
+        return null;
     }
 
     private String escape(String string) {
-        return string.replace("\"", "\\\"").replace("\n", "\\\n").replace("\t", "\\\t")
-        .replace("\\", "\\\\");
+        if (string != null) {
+            return string.replace("\"", "\\\"").replace("\n", "\\\n").replace("\t", "\\\t")
+            .replace("\\", "\\\\");
+        }
+        return null;
     }
 }

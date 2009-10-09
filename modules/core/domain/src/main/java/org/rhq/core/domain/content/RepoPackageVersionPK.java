@@ -58,11 +58,11 @@ public class RepoPackageVersionPK implements Serializable {
         this.packageVersion = pv;
     }
 
-    public Repo getChannel() {
+    public Repo getRepo() {
         return repo;
     }
 
-    public void setChannel(Repo repo) {
+    public void setRepo(Repo repo) {
         this.repo = repo;
     }
 

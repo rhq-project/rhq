@@ -80,7 +80,7 @@ public class RepoPackageVersion implements Serializable {
     }
 
     public void setChannelPackageVersionPK(RepoPackageVersionPK pk) {
-        this.repo = pk.getChannel();
+        this.repo = pk.getRepo();
         this.packageVersion = pk.getPackageVersion();
     }
 

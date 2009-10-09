@@ -557,7 +557,7 @@ public class PackageVersion implements Serializable {
 
         if (repoPackageVersions != null) {
             for (RepoPackageVersion cpv : repoPackageVersions) {
-                repos.add(cpv.getChannelPackageVersionPK().getChannel());
+                repos.add(cpv.getChannelPackageVersionPK().getRepo());
             }
         }
 
@@ -607,7 +607,7 @@ public class PackageVersion implements Serializable {
         RepoPackageVersion doomed = null;
 
         for (RepoPackageVersion cpv : this.repoPackageVersions) {
-            if (repo.equals(cpv.getChannelPackageVersionPK().getChannel())) {
+            if (repo.equals(cpv.getChannelPackageVersionPK().getRepo())) {
                 doomed = cpv;
                 repo.removePackageVersion(this);
                 break;

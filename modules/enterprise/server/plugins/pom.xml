@@ -28,6 +28,7 @@
     <module>disk</module>
     <module>yum</module>
     <module>url</module>
+    <module>rhnhosted</module>
   </modules>
 
 </project>

@@ -36,6 +36,20 @@ import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 import java.io.Serializable;
 
+/**
+ * Resources support structured configuration as well as raw configuration which is represented by this class. A raw
+ * configuration is typically in the form of a file on the file system. This could be httpd.conf in the case of apache.
+ * Note however that while a raw configuration generally refers to some configuration file, this class does not limit
+ * the actual configuration source to files.
+ * <p/>
+ * A raw configuration is stored as an array of bytes and has a SHA-256 hash with which it can be uniquely identified.
+ * <p/>
+ * A RawConfiguration is always associated with its parent {@link org.rhq.core.domain.configuration.Configuration} which
+ * can be structured, raw, or both. A Configuration can have multiple RawConfigurations associated with it. Suppose for
+ * apache that each virtual host configuration is stored in a separate file. We might have a single Configuration object
+ * that represents all of the apache configuration, and that object may contain multiple RawConfigurations for each of
+ * the virtual host config files.
+ */
 @Entity
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_RAW_CONFIG_ID_SEQ")
 @Table(name = "RHQ_RAW_CONFIG")
@@ -47,10 +61,10 @@ public class RawConfiguration implements Serializable {
     @Id
     private int id;
 
-    @Column(name = "PATH", nullable = false)
+    @Column(name = "PATH", nullable = true)
     private String path;
 
-    @Column(name = "CONTENT", nullable = false)
+    @Column(name = "CONTENTS", nullable = false)
     private byte[] contents;
 
     @Column(name = "SHA256", nullable = false)

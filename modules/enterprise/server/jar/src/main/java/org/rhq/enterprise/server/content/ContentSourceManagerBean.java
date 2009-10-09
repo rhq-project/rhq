@@ -63,7 +63,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.RepoContentSource;
-import org.rhq.core.domain.content.ChannelPackageVersion;
+import org.rhq.core.domain.content.RepoPackageVersion;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceSyncResults;
 import org.rhq.core.domain.content.ContentSourceSyncStatus;
@@ -1115,7 +1115,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             }
 
             for (Repo associatedChannel : associatedChannels) {
-                ChannelPackageVersion mapping = new ChannelPackageVersion(associatedChannel, pv);
+                RepoPackageVersion mapping = new RepoPackageVersion(associatedChannel, pv);
                 entityManager.merge(mapping); // use merge just in case this mapping somehow already exists
             }
 

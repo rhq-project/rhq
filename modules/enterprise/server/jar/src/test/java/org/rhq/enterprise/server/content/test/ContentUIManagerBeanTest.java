@@ -35,7 +35,7 @@ import org.rhq.core.domain.content.PackageCategory;
 import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.ResourceChannel;
-import org.rhq.core.domain.content.ChannelPackageVersion;
+import org.rhq.core.domain.content.RepoPackageVersion;
 import org.rhq.core.domain.content.ProductVersionPackageVersion;
 import org.rhq.core.domain.content.composite.LoadedPackageBitsComposite;
 import org.rhq.core.domain.content.composite.PackageVersionComposite;

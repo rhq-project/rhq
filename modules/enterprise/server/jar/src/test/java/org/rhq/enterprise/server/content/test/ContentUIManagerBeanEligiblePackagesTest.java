@@ -35,7 +35,7 @@ import org.rhq.core.domain.content.PackageCategory;
 import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.ResourceChannel;
-import org.rhq.core.domain.content.ChannelPackageVersion;
+import org.rhq.core.domain.content.RepoPackageVersion;
 import org.rhq.core.domain.content.ProductVersionPackageVersion;
 import org.rhq.core.domain.content.composite.LoadedPackageBitsComposite;
 import org.rhq.core.domain.content.composite.PackageVersionComposite;
@@ -74,10 +74,10 @@ public class ContentUIManagerBeanEligiblePackagesTest extends AbstractEJB3Test {
     private Package package3;
     private Package package4;
 
-    private ChannelPackageVersion channelPackageVersion1;
-    private ChannelPackageVersion channelPackageVersion2;
-    private ChannelPackageVersion channelPackageVersion3;
-    private ChannelPackageVersion channelPackageVersion4;
+    private RepoPackageVersion channelPackageVersion1;
+    private RepoPackageVersion channelPackageVersion2;
+    private RepoPackageVersion channelPackageVersion3;
+    private RepoPackageVersion channelPackageVersion4;
 
     private InstalledPackage installedPackage1;
 
@@ -261,7 +261,7 @@ public class ContentUIManagerBeanEligiblePackagesTest extends AbstractEJB3Test {
 
         try {
             try {
-                Query q = em.createNamedQuery(ChannelPackageVersion.DELETE_BY_CHANNEL_ID);
+                Query q = em.createNamedQuery(RepoPackageVersion.DELETE_BY_CHANNEL_ID);
                 q.setParameter("channelId", channel1.getId());
                 q.executeUpdate();
 

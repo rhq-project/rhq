@@ -308,7 +308,7 @@ public class PackageVersion implements Serializable {
     private Configuration extraProperties;
 
     @OneToMany(mappedBy = "packageVersion", fetch = FetchType.LAZY)
-    private Set<ChannelPackageVersion> channelPackageVersions;
+    private Set<RepoPackageVersion> repoPackageVersions;
 
     // this mapping is here mainly to support our JPA queries
     @OneToMany(mappedBy = "packageVersion", fetch = FetchType.LAZY)
@@ -542,8 +542,8 @@ public class PackageVersion implements Serializable {
      *
      * @see    #getChannels()
      */
-    public Set<ChannelPackageVersion> getChannelPackageVersions() {
-        return channelPackageVersions;
+    public Set<RepoPackageVersion> getChannelPackageVersions() {
+        return repoPackageVersions;
     }
 
     /**
@@ -555,8 +555,8 @@ public class PackageVersion implements Serializable {
     public Set<Repo> getChannels() {
         HashSet<Repo> repos = new HashSet<Repo>();
 
-        if (channelPackageVersions != null) {
-            for (ChannelPackageVersion cpv : channelPackageVersions) {
+        if (repoPackageVersions != null) {
+            for (RepoPackageVersion cpv : repoPackageVersions) {
                 repos.add(cpv.getChannelPackageVersionPK().getChannel());
             }
         }
@@ -571,13 +571,13 @@ public class PackageVersion implements Serializable {
      *
      * @return the mapping that was added
      */
-    public ChannelPackageVersion addChannel(Repo repo) {
-        if (this.channelPackageVersions == null) {
-            this.channelPackageVersions = new HashSet<ChannelPackageVersion>();
+    public RepoPackageVersion addChannel(Repo repo) {
+        if (this.repoPackageVersions == null) {
+            this.repoPackageVersions = new HashSet<RepoPackageVersion>();
         }
 
-        ChannelPackageVersion mapping = new ChannelPackageVersion(repo, this);
-        this.channelPackageVersions.add(mapping);
+        RepoPackageVersion mapping = new RepoPackageVersion(repo, this);
+        this.repoPackageVersions.add(mapping);
         repo.addPackageVersion(this);
         return mapping;
     }
@@ -599,14 +599,14 @@ public class PackageVersion implements Serializable {
      * @return the mapping that was removed or <code>null</code> if this package version was not mapped to the given
      *         channel
      */
-    public ChannelPackageVersion removeChannel(Repo repo) {
-        if ((this.channelPackageVersions == null) || (repo == null)) {
+    public RepoPackageVersion removeChannel(Repo repo) {
+        if ((this.repoPackageVersions == null) || (repo == null)) {
             return null;
         }
 
-        ChannelPackageVersion doomed = null;
+        RepoPackageVersion doomed = null;
 
-        for (ChannelPackageVersion cpv : this.channelPackageVersions) {
+        for (RepoPackageVersion cpv : this.repoPackageVersions) {
             if (repo.equals(cpv.getChannelPackageVersionPK().getChannel())) {
                 doomed = cpv;
                 repo.removePackageVersion(this);
@@ -615,7 +615,7 @@ public class PackageVersion implements Serializable {
         }
 
         if (doomed != null) {
-            this.channelPackageVersions.remove(doomed);
+            this.repoPackageVersions.remove(doomed);
         }
 
         return doomed;

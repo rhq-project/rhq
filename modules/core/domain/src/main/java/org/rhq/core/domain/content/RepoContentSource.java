@@ -41,7 +41,7 @@ import javax.persistence.Table;
  * @author John Mazzitelli
  */
 @Entity
-@IdClass(ChannelContentSourcePK.class)
+@IdClass(RepoContentSourcePK.class)
 @NamedQueries( {
     @NamedQuery(name = RepoContentSource.DELETE_BY_CONTENT_SOURCE_ID, query = "DELETE RepoContentSource ccs WHERE ccs.contentSource.id = :contentSourceId"),
     @NamedQuery(name = RepoContentSource.DELETE_BY_CHANNEL_ID, query = "DELETE RepoContentSource ccs WHERE ccs.channel.id = :channelId") })
@@ -78,11 +78,11 @@ public class RepoContentSource implements Serializable {
         this.contentSource = contentSource;
     }
 
-    public ChannelContentSourcePK getChannelContentSourcePK() {
-        return new ChannelContentSourcePK(repo, contentSource);
+    public RepoContentSourcePK getChannelContentSourcePK() {
+        return new RepoContentSourcePK(repo, contentSource);
     }
 
-    public void setChannelContentSourcePK(ChannelContentSourcePK pk) {
+    public void setChannelContentSourcePK(RepoContentSourcePK pk) {
         this.repo = pk.getChannel();
         this.contentSource = pk.getContentSource();
     }

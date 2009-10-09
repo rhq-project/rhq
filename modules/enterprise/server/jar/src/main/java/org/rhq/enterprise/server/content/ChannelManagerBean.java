@@ -36,7 +36,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.RepoContentSource;
-import org.rhq.core.domain.content.ChannelPackageVersion;
+import org.rhq.core.domain.content.RepoPackageVersion;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.PackageVersionContentSource;
@@ -83,7 +83,7 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
         entityManager.createNamedQuery(RepoContentSource.DELETE_BY_CHANNEL_ID).setParameter("channelId", channelId)
             .executeUpdate();
 
-        entityManager.createNamedQuery(ChannelPackageVersion.DELETE_BY_CHANNEL_ID).setParameter("channelId", channelId)
+        entityManager.createNamedQuery(RepoPackageVersion.DELETE_BY_CHANNEL_ID).setParameter("channelId", channelId)
             .executeUpdate();
 
         Repo repo = entityManager.find(Repo.class, channelId);
@@ -335,7 +335,7 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
                 if (alreadyAssociatedPVs.contains(pv)) {
                     continue; // skip if already associated with this channel
                 }
-                ChannelPackageVersion mapping = new ChannelPackageVersion(repo, pv);
+                RepoPackageVersion mapping = new RepoPackageVersion(repo, pv);
                 entityManager.persist(mapping);
             }
 
@@ -356,7 +356,7 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
         for (int packageVersionId : packageVersionIds) {
             PackageVersion packageVersion = entityManager.find(PackageVersion.class, packageVersionId);
 
-            ChannelPackageVersion mapping = new ChannelPackageVersion(repo, packageVersion);
+            RepoPackageVersion mapping = new RepoPackageVersion(repo, packageVersion);
             entityManager.persist(mapping);
         }
     }

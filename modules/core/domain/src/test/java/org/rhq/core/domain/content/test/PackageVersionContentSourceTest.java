@@ -31,7 +31,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.RepoContentSource;
-import org.rhq.core.domain.content.ChannelPackageVersion;
+import org.rhq.core.domain.content.RepoPackageVersion;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceType;
 import org.rhq.core.domain.content.Package;
@@ -138,7 +138,7 @@ public class PackageVersionContentSourceTest extends AbstractEJB3Test {
             em.persist(ccsmapping);
             ResourceChannel subscription = repo.addResource(resource);
             em.persist(subscription);
-            ChannelPackageVersion mapping = repo.addPackageVersion(pv);
+            RepoPackageVersion mapping = repo.addPackageVersion(pv);
             em.persist(mapping);
             em.flush();
 

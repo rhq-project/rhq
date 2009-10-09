@@ -63,7 +63,7 @@ import org.rhq.core.domain.resource.Resource;
 
     @NamedQuery(name = Repo.QUERY_FIND_CHANNEL_COMPOSITES_BY_RESOURCE_ID, query = "SELECT new org.rhq.core.domain.content.composite.ChannelComposite( "
         + "c, "
-        + "(SELECT COUNT(cpv.packageVersion) FROM ChannelPackageVersion cpv WHERE cpv.channel.id = c.id) "
+        + "(SELECT COUNT(cpv.packageVersion) FROM RepoPackageVersion cpv WHERE cpv.channel.id = c.id) "
         + ") "
         + "FROM ResourceChannel rc JOIN rc.channel c LEFT JOIN c.channelPackageVersions pv "
         + "WHERE rc.resource.id = :resourceId "
@@ -73,7 +73,7 @@ import org.rhq.core.domain.resource.Resource;
 
     @NamedQuery(name = Repo.QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID, query = "SELECT new org.rhq.core.domain.content.composite.ChannelComposite( "
         + "c, "
-        + "(SELECT COUNT(cpv.packageVersion) FROM ChannelPackageVersion cpv WHERE cpv.channel.id = c.id) "
+        + "(SELECT COUNT(cpv.packageVersion) FROM RepoPackageVersion cpv WHERE cpv.channel.id = c.id) "
         + ") "
         + "FROM Repo AS c "
         + "WHERE c.id NOT IN ( SELECT rc.channel.id FROM ResourceChannel rc WHERE rc.resource.id = :resourceId ) "
@@ -126,7 +126,7 @@ public class Repo implements Serializable {
     private Set<RepoContentSource> repoContentSources;
 
     @OneToMany(mappedBy = "channel", fetch = FetchType.LAZY)
-    private Set<ChannelPackageVersion> channelPackageVersions;
+    private Set<RepoPackageVersion> repoPackageVersions;
 
     // Constructor ----------------------------------------
 
@@ -355,8 +355,8 @@ public class Repo implements Serializable {
      *
      * @see    #getPackageVersions()
      */
-    public Set<ChannelPackageVersion> getChannelPackageVersions() {
-        return channelPackageVersions;
+    public Set<RepoPackageVersion> getChannelPackageVersions() {
+        return repoPackageVersions;
     }
 
     /**
@@ -374,8 +374,8 @@ public class Repo implements Serializable {
     public Set<PackageVersion> getPackageVersions() {
         HashSet<PackageVersion> packageVersions = new HashSet<PackageVersion>();
 
-        if (channelPackageVersions != null) {
-            for (ChannelPackageVersion cpv : channelPackageVersions) {
+        if (repoPackageVersions != null) {
+            for (RepoPackageVersion cpv : repoPackageVersions) {
                 packageVersions.add(cpv.getChannelPackageVersionPK().getPackageVersion());
             }
         }
@@ -390,13 +390,13 @@ public class Repo implements Serializable {
      *
      * @return the mapping that was added
      */
-    public ChannelPackageVersion addPackageVersion(PackageVersion packageVersion) {
-        if (this.channelPackageVersions == null) {
-            this.channelPackageVersions = new HashSet<ChannelPackageVersion>();
+    public RepoPackageVersion addPackageVersion(PackageVersion packageVersion) {
+        if (this.repoPackageVersions == null) {
+            this.repoPackageVersions = new HashSet<RepoPackageVersion>();
         }
 
-        ChannelPackageVersion mapping = new ChannelPackageVersion(this, packageVersion);
-        this.channelPackageVersions.add(mapping);
+        RepoPackageVersion mapping = new RepoPackageVersion(this, packageVersion);
+        this.repoPackageVersions.add(mapping);
         return mapping;
     }
 
@@ -409,14 +409,14 @@ public class Repo implements Serializable {
      *
      * @return the mapping that was removed or <code>null</code> if the package version was not mapped to this channel
      */
-    public ChannelPackageVersion removePackageVersion(PackageVersion packageVersion) {
-        if ((this.channelPackageVersions == null) || (packageVersion == null)) {
+    public RepoPackageVersion removePackageVersion(PackageVersion packageVersion) {
+        if ((this.repoPackageVersions == null) || (packageVersion == null)) {
             return null;
         }
 
-        ChannelPackageVersion doomed = null;
+        RepoPackageVersion doomed = null;
 
-        for (ChannelPackageVersion cpv : this.channelPackageVersions) {
+        for (RepoPackageVersion cpv : this.repoPackageVersions) {
             if (packageVersion.equals(cpv.getChannelPackageVersionPK().getPackageVersion())) {
                 doomed = cpv;
                 break;
@@ -424,7 +424,7 @@ public class Repo implements Serializable {
         }
 
         if (doomed != null) {
-            this.channelPackageVersions.remove(doomed);
+            this.repoPackageVersions.remove(doomed);
         }
 
         return doomed;

@@ -1520,17 +1520,23 @@ DB Upgrade:
 
    <schemaSpec version="2.59">
       <schema-directSQL>
-         <statement desc="Creating table RHQ_MEASUREMENT_OOB_tmp">
-            CREATE TABLE RHQ_RAW_CONFIG (ID INTEGER )
+         <statement desc="Creating table RHQ_RAW_CONFIG">
+            CREATE TABLE RHQ_RAW_CONFIG (ID INTEGER)
          </statement>
       </schema-directSQL>
-      <schema-alterColumn table="RHQ_RAW_CONFIG" column="ID" nullable="FALSE" />
+      <schema-alterColumn table="RHQ_RAW_CONFIG" column="ID" columnType="INTEGER"  nullable="FALSE" />
       <schema-createSequence name="RHQ_RAW_CONFIG_ID_SEQ" initial="10001"/>
       <schema-directSQL>
          <statement desc="Creating primary key for RHQ_PARTITION_EVENT">
-            ALTER TABLE RHQ_RAW_CONFIG ADD PRIMARY KEY ( ID )
+            ALTER TABLE RHQ_RAW_CONFIG ADD PRIMARY KEY (ID)
          </statement>
       </schema-directSQL>
+
+      <schema-addColumn table="RHQ_RAW_CONFIG" column="CONFIG_ID" columnType="INTEGER"/>
+      <schema-alterColumn table="RHQ_RAW_CONFIG" 
+                          column="CONFIG_ID" 
+                          columnType="INTEGER"
+                          nullable="false"/>
 
       <schema-addColumn table="RHQ_RAW_CONFIG" column="PATH" columnType="VARCHAR2"/>
       <schema-alterColumn table="RHQ_RAW_CONFIG" 
@@ -1562,6 +1568,12 @@ DB Upgrade:
                           column="MTIME" 
                           columnType="LONG"
                           nullable="false"/>
+
+      <schema-directSQL>
+         <statement desc="Creating index on CONFIG_ID (INTEGER)">
+            CREATE INDEX RHQ_RAW_idx_config_key ON RHQ_CONFIG (ID)
+         </statement>
+      </schema-directSQL>
    </schemaSpec>
 
 </dbupgrade>

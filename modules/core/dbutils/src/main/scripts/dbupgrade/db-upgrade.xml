@@ -1570,10 +1570,14 @@ DB Upgrade:
                           nullable="false"/>
 
       <schema-directSQL>
-         <statement desc="Creating index on CONFIG_ID (INTEGER)">
-            CREATE INDEX RHQ_RAW_idx_config_key ON RHQ_CONFIG (ID)
+         <statement desc="Creating RHQ_RAW_CONFIG foreign key relation to RHQ_CONFIG">
+            ALTER TABLE RHQ_RAW_CONFIG
+            ADD CONSTRAINT RHQ_RAW_CONFIG_CONFIG_ID_FK
+            FOREIGN KEY (CONFIG_ID)
+            REFERENCES RHQ_CONFIG (ID)
          </statement>
       </schema-directSQL>
+
    </schemaSpec>
 
 </dbupgrade>

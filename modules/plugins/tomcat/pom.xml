@@ -17,8 +17,8 @@
    <description>A plugin for managing standalone JBoss EWS and Apache Tomcat Servers</description>
 
    <scm>
-      <connection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/plugins/tomcat/</connection>
-      <developerConnection>scm:svn:https://svn.jboss.org/repos/jopr/trunk/modules/plugins/tomcat/</developerConnection>
+      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/tomcat/</connection>
+      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/tomcat/</developerConnection>
    </scm>
 
    <properties>

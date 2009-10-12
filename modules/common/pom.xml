@@ -14,8 +14,8 @@
     <description>parent POM for all Jopr common libraries</description>
 
     <scm>
-        <connection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/common</connection>
-        <developerConnection>scm:svn:https://svn.jboss.org/repos/jopr/trunk/modules/common</developerConnection>
+        <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/common</connection>
+        <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/common</developerConnection>
     </scm>
 
     <properties>

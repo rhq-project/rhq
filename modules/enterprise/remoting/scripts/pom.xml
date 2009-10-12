@@ -17,8 +17,8 @@
    <description>RHQ Enterprise Remote Command Line Interface</description>
 
    <scm>
-      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/client/</connection>
-      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/client/</developerConnection>
+      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/client/</connection>
+      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/client/</developerConnection>
    </scm>
 
    <dependencies>

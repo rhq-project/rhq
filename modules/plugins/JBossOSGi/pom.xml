@@ -20,8 +20,8 @@
     <description>Plugin to Manage JBossOSGi services</description>
 
       <scm>
-      <connection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/plugins/JBoss-OSGi/</connection>
-      <developerConnection>scm:svn:https://svn.jboss.org/repos/jopr/trunk/modules/plugins/JBoss-OSGi/</developerConnection>
+      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/JBoss-OSGi/</connection>
+      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/JBoss-OSGi/</developerConnection>
    </scm>
 
     <build>

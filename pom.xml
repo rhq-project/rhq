@@ -18,8 +18,9 @@
   </organization>
 
   <scm>
-    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk</connection>
-    <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk</developerConnection>
+    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git</connection>
+    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git</developerConnection>
+    <url>http://git.fedorahosted.org/git/?p=rhq/rhq.git;a=tree</url>
   </scm>
 
   <issueManagement>

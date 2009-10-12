@@ -22,9 +22,9 @@
     <description>Test suite for JBoss Application Server 5.x plugin</description>
 
     <scm>
-        <connection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/plugins/jboss-as-5/testsuite</connection>
+        <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/jboss-as-5/testsuite</connection>
         <developerConnection>
-            scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/plugins/jboss-as-5/testsuite
+            scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/jboss-as-5/testsuite
         </developerConnection>
     </scm>
 

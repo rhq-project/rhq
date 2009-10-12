@@ -17,8 +17,8 @@
   <description>The Jopr Server</description>
 
   <scm>
-    <connection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/dist/server/</connection>
-    <developerConnection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/dist/server/</developerConnection>
+    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/dist/server/</connection>
+    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/dist/server/</developerConnection>
   </scm>
 
   <properties>

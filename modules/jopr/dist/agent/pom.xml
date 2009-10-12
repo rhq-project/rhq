@@ -28,8 +28,8 @@
   <description>The Jopr Agent</description>
 
   <scm>
-    <connection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/dist/agent/</connection>
-    <developerConnection>scm:svn:https://svn.jboss.org/repos/jopr/trunk/modules/dist/agent/</developerConnection>
+    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/dist/agent/</connection>
+    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/dist/agent/</developerConnection>
   </scm>
 
   <properties>

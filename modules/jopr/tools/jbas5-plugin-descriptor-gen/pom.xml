@@ -21,9 +21,9 @@
     <description>A tool that connects to a JBoss Application Server 5.x instance's Profile Service and generates an RHQ plugin descriptor with a ResourceType for each ManagedComponent type that is deployed.</description>
 
     <scm>
-        <connection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/plugins/jboss-as-5</connection>
+        <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/jboss-as-5</connection>
         <developerConnection>
-            scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/plugins/jboss-as-5
+            scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/jboss-as-5
         </developerConnection>
     </scm>
 

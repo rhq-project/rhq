@@ -17,8 +17,8 @@
    <description>A plugin for managing JBossCache 3.x services</description>
 
    <scm>
-      <connection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/plugins/jboss-cache-v3/</connection>
-      <developerConnection>scm:svn:https://svn.jboss.org/repos/jopr/trunk/modules/plugins/jboss-cache-v3/</developerConnection>
+      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/jboss-cache-v3/</connection>
+      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/jboss-cache-v3/</developerConnection>
    </scm>
 
     <properties>

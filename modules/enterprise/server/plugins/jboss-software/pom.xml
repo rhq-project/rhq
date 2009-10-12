@@ -16,8 +16,8 @@
   <description>JBoss Operations Network Enterprise Server JBoss Software RSS Feed Plugin</description>
 
   <scm>
-    <connection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/serverplugins/jboss-software/</connection>
-    <developerConnection>scm:svn:https://svn.jboss.org/repos/jopr/trunk/modules/serverplugins/jboss-software/</developerConnection>
+    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/serverplugins/jboss-software/</connection>
+    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/serverplugins/jboss-software/</developerConnection>
   </scm>
 
   <properties>

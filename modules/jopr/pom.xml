@@ -26,8 +26,8 @@
   </organization>
 
   <scm>
-    <connection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/</connection>
-    <developerConnection>scm:svn:https://svn.jboss.org/repos/jopr/trunk/</developerConnection>
+    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/</connection>
+    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/</developerConnection>
   </scm>
 
   <issueManagement>

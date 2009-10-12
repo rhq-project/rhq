@@ -17,8 +17,8 @@
    <description>A library with the code common to the JBoss AS 4 and 5 plugins</description>
 
    <scm>
-      <connection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/common/jboss-as/</connection>
-      <developerConnection>scm:svn:https://svn.jboss.org/repos/jopr/trunk/modules/common/jboss-as/</developerConnection>
+      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/common/jboss-as/</connection>
+      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/common/jboss-as/</developerConnection>
    </scm>
 
    <properties>

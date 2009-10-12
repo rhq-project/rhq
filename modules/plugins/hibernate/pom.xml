@@ -17,8 +17,8 @@
    <description>A plugin for managing Hibernate services</description>
 
    <scm>
-      <connection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/plugins/hibernate/</connection>
-      <developerConnection>scm:svn:https://svn.jboss.org/repos/jopr/trunk/modules/plugins/plugins/hibernate/</developerConnection>
+      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/hibernate/</connection>
+      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/plugins/hibernate/</developerConnection>
    </scm>
 
    <properties>

@@ -37,21 +37,21 @@ import org.rhq.enterprise.server.util.LookupUtil;
  *
  * @author John Mazzitelli
  */
-public class ContentSourcePluginContainer {
+public class ContentProviderPluginContainer {
     private static final String SYNC_JOB_GROUP_NAME = "syncContentSource";
 
-    private static final Log log = LogFactory.getLog(ContentSourcePluginContainer.class);
+    private static final Log log = LogFactory.getLog(ContentProviderPluginContainer.class);
 
-    private ContentSourcePluginContainerConfiguration configuration;
-    private ContentSourcePluginManager pluginManager;
-    private ContentSourceAdapterManager adapterManager;
+    private ContentProviderPluginContainerConfiguration configuration;
+    private ContentProviderPluginManager pluginManager;
+    private ContentProviderManager adapterManager;
 
     /**
      * Starts the plugin container, which will load all plugins and begin managing them.
      *
      * @param config
      */
-    public void initialize(ContentSourcePluginContainerConfiguration config) {
+    public void initialize(ContentProviderPluginContainerConfiguration config) {
         log.debug("Content server plugin container has been initialized with config: " + config);
 
         this.configuration = config;
@@ -74,12 +74,12 @@ public class ContentSourcePluginContainer {
 
     /**
      * Returns the configuration that this object was initialized with. If this plugin container was not
-     * {@link #initialize(ContentSourcePluginContainerConfiguration)} or has been {@link #shutdown()}, this will return
+     * {@link #initialize(ContentProviderPluginContainerConfiguration)} or has been {@link #shutdown()}, this will return
      * <code>null</code>.
      *
      * @return the configuration
      */
-    public ContentSourcePluginContainerConfiguration getConfiguration() {
+    public ContentProviderPluginContainerConfiguration getConfiguration() {
         return configuration;
     }
 
@@ -89,7 +89,7 @@ public class ContentSourcePluginContainer {
      *
      * @return adapter manager
      */
-    public ContentSourceAdapterManager getAdapterManager() {
+    public ContentProviderManager getAdapterManager() {
         return adapterManager;
     }
 
@@ -101,7 +101,7 @@ public class ContentSourcePluginContainer {
      *
      * @return plugin manager
      */
-    protected ContentSourcePluginManager getPluginManager() {
+    protected ContentProviderPluginManager getPluginManager() {
         return pluginManager;
     }
 
@@ -205,8 +205,8 @@ public class ContentSourcePluginContainer {
      *
      * @return the new plugin manager
      */
-    protected ContentSourcePluginManager createPluginManager() {
-        ContentSourcePluginManager pm = new ContentSourcePluginManager();
+    protected ContentProviderPluginManager createPluginManager() {
+        ContentProviderPluginManager pm = new ContentProviderPluginManager();
         pm.setConfiguration(getConfiguration());
         pm.initialize();
         return pm;
@@ -223,8 +223,8 @@ public class ContentSourcePluginContainer {
      *
      * @return the new adapter manager
      */
-    protected ContentSourceAdapterManager createAdapterManager(ContentSourcePluginManager pluginManager) {
-        ContentSourceAdapterManager am = new ContentSourceAdapterManager();
+    protected ContentProviderManager createAdapterManager(ContentProviderPluginManager pluginManager) {
+        ContentProviderManager am = new ContentProviderManager();
         am.setConfiguration(getConfiguration());
         am.initialize(pluginManager);
         return am;

@@ -37,20 +37,20 @@ import org.rhq.core.domain.content.ContentSourceType;
 /**
  * This loads in all content source server plugins that can be found and will maintain the complete set of
  * {@link #getMetadataManager() metadata} found in all plugin descriptors from all loaded plugins. You can obtain a
- * loaded plugin's {@link ContentSourcePluginEnvironment environment}, including its classloader, from this object as
+ * loaded plugin's {@link ContentProviderPluginEnvironment environment}, including its classloader, from this object as
  * well - see {@link #getPlugin(String)}.
  *
  * @author John Mazzitelli
  */
-public class ContentSourcePluginManager {
-    private static final Log log = LogFactory.getLog(ContentSourcePluginManager.class);
+public class ContentProviderPluginManager {
+    private static final Log log = LogFactory.getLog(ContentProviderPluginManager.class);
 
     /**
      * The map of all plugins keyed on plugin name.
      */
-    private Map<String, ContentSourcePluginEnvironment> loadedPlugins = new HashMap<String, ContentSourcePluginEnvironment>();
+    private Map<String, ContentProviderPluginEnvironment> loadedPlugins = new HashMap<String, ContentProviderPluginEnvironment>();
     private ContentSourcePluginMetadataManager metadataManager = new ContentSourcePluginMetadataManager();
-    private ContentSourcePluginContainerConfiguration configuration;
+    private ContentProviderPluginContainerConfiguration configuration;
 
     /**
      * Finds all plugins and {@link #loadPlugin(URL, ClassLoader) loads} each plugin found.
@@ -61,7 +61,7 @@ public class ContentSourcePluginManager {
     public void initialize() {
         if (this.configuration == null) {
             // we didn't get a config, just create a default one (we are probably in a unit test)
-            this.configuration = new ContentSourcePluginContainerConfiguration();
+            this.configuration = new ContentProviderPluginContainerConfiguration();
             log.warn("Didn't get a configuration yet - creating a default one");
         }
 
@@ -93,7 +93,7 @@ public class ContentSourcePluginManager {
      * Ensures that all the plugin classloaders clean up.
      */
     public void shutdown() {
-        for (ContentSourcePluginEnvironment pluginEnvironment : loadedPlugins.values()) {
+        for (ContentProviderPluginEnvironment pluginEnvironment : loadedPlugins.values()) {
             log.debug("Cleaning up plugin environment for [" + pluginEnvironment.getPluginName() + "]");
             pluginEnvironment.destroy();
         }
@@ -105,16 +105,16 @@ public class ContentSourcePluginManager {
     }
 
     /**
-     * Returns the {@link ContentSourcePluginEnvironment}s for every plugin this manager found and loaded.
+     * Returns the {@link ContentProviderPluginEnvironment}s for every plugin this manager found and loaded.
      *
      * @return environments for all the plugins
      */
-    public Collection<ContentSourcePluginEnvironment> getPlugins() {
+    public Collection<ContentProviderPluginEnvironment> getPlugins() {
         return this.loadedPlugins.values();
     }
 
     /**
-     * Returns the {@link ContentSourcePluginEnvironment} for the specific plugin with the given name.
+     * Returns the {@link ContentProviderPluginEnvironment} for the specific plugin with the given name.
      *
      * <p>The plugin's name is defined in its plugin descriptor - specifically the XML root node's "name" attribute
      * (e.g. &ltplugin name="thePluginName").</p>
@@ -125,7 +125,7 @@ public class ContentSourcePluginManager {
      *         with the given name)
      */
     @Nullable
-    public ContentSourcePluginEnvironment getPlugin(String pluginName) {
+    public ContentProviderPluginEnvironment getPlugin(String pluginName) {
         return this.loadedPlugins.get(pluginName);
     }
 
@@ -136,7 +136,7 @@ public class ContentSourcePluginManager {
      *
      * @return plugin environment
      */
-    public ContentSourcePluginEnvironment getPlugin(ContentSourceType type) {
+    public ContentProviderPluginEnvironment getPlugin(ContentSourceType type) {
         String pluginName = this.metadataManager.getPluginNameFromContentSourceType(type);
         return this.loadedPlugins.get(pluginName);
     }
@@ -158,12 +158,12 @@ public class ContentSourcePluginManager {
      *
      * @param config
      */
-    protected void setConfiguration(ContentSourcePluginContainerConfiguration configuration) {
+    protected void setConfiguration(ContentProviderPluginContainerConfiguration configuration) {
         this.configuration = configuration;
     }
 
     /**
-     * This will create a {@link ContentSourcePluginEnvironment} for the plugin at the given URL. What this means is a
+     * This will create a {@link ContentProviderPluginEnvironment} for the plugin at the given URL. What this means is a
      * classloader is created for the plugin (if <code>classLoader</code> is <code>null</code>) and the plugin's
      * descriptor is parsed. Once this method returns, the plugin's components are ready to be created and used.
      *
@@ -175,9 +175,9 @@ public class ContentSourcePluginManager {
     private void loadPlugin(URL pluginUrl, ClassLoader classLoader) throws Exception {
         log.info("Loading content server plugin from: " + pluginUrl);
 
-        ContentSourcePluginEnvironment pluginEnvironment;
+        ContentProviderPluginEnvironment pluginEnvironment;
 
-        pluginEnvironment = new ContentSourcePluginEnvironment(pluginUrl, classLoader, null, configuration
+        pluginEnvironment = new ContentProviderPluginEnvironment(pluginUrl, classLoader, null, configuration
             .getTemporaryDirectory());
 
         loadedPlugins.put(pluginEnvironment.getPluginName(), pluginEnvironment);

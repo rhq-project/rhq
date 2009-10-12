@@ -49,7 +49,7 @@ import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.core.CustomJaasDeploymentServiceMBean;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
 import org.rhq.enterprise.server.core.plugin.AgentPluginDeploymentScannerMBean;
-import org.rhq.enterprise.server.plugin.content.ContentSourcePluginServiceManagement;
+import org.rhq.enterprise.server.plugin.content.ContentProviderPluginServiceManagement;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.scheduler.jobs.AsyncResourceDeleteJob;
@@ -372,11 +372,11 @@ public class StartupServlet extends HttpServlet {
 
         // Content Source Sync Jobs
         try {
-            ContentSourcePluginServiceManagement mbean;
+            ContentProviderPluginServiceManagement mbean;
             MBeanServer mbs = MBeanServerLocator.locateJBoss();
-            ObjectName name = ObjectNameFactory.create(ContentSourcePluginServiceManagement.OBJECT_NAME_STR);
-            Class<?> iface = ContentSourcePluginServiceManagement.class;
-            mbean = (ContentSourcePluginServiceManagement) MBeanServerInvocationHandler.newProxyInstance(mbs, name,
+            ObjectName name = ObjectNameFactory.create(ContentProviderPluginServiceManagement.OBJECT_NAME_STR);
+            Class<?> iface = ContentProviderPluginServiceManagement.class;
+            mbean = (ContentProviderPluginServiceManagement) MBeanServerInvocationHandler.newProxyInstance(mbs, name,
                 iface, false);
             mbean.getPluginContainer().scheduleSyncJobs();
         } catch (Exception e) {
@@ -523,11 +523,11 @@ public class StartupServlet extends HttpServlet {
         log("Starting the server plugin container...");
 
         try {
-            ContentSourcePluginServiceManagement mbean;
+            ContentProviderPluginServiceManagement mbean;
             MBeanServer mbs = MBeanServerLocator.locateJBoss();
-            ObjectName name = ObjectNameFactory.create(ContentSourcePluginServiceManagement.OBJECT_NAME_STR);
-            Class<?> iface = ContentSourcePluginServiceManagement.class;
-            mbean = (ContentSourcePluginServiceManagement) MBeanServerInvocationHandler.newProxyInstance(mbs, name,
+            ObjectName name = ObjectNameFactory.create(ContentProviderPluginServiceManagement.OBJECT_NAME_STR);
+            Class<?> iface = ContentProviderPluginServiceManagement.class;
+            mbean = (ContentProviderPluginServiceManagement) MBeanServerInvocationHandler.newProxyInstance(mbs, name,
                 iface, false);
             mbean.startPluginContainer();
         } catch (Exception e) {

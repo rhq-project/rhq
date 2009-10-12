@@ -37,10 +37,10 @@ import java.util.zip.ZipInputStream;
  * deepjar: direct style classloader instead of the temporary file system.
  */
 // Note that this is almost a direct copy of the agent-side plugin container's PluginClassLoader
-public class ContentSourcePluginClassLoader extends URLClassLoader {
+public class ContentProviderPluginClassLoader extends URLClassLoader {
     private File embeddedJarsDirectory = null;
 
-    public ContentSourcePluginClassLoader(URL[] urls, ClassLoader parent) {
+    public ContentProviderPluginClassLoader(URL[] urls, ClassLoader parent) {
         super(urls, parent);
     }
 
@@ -48,12 +48,12 @@ public class ContentSourcePluginClassLoader extends URLClassLoader {
         purge(embeddedJarsDirectory, true);
     }
 
-    public static ContentSourcePluginClassLoader create(String pluginJarName, URL pluginUrl, boolean unpackNestedJars,
+    public static ContentProviderPluginClassLoader create(String pluginJarName, URL pluginUrl, boolean unpackNestedJars,
         ClassLoader parent, File tmpDirectory) throws Exception {
         return create(pluginJarName, new URL[] { pluginUrl }, unpackNestedJars, parent, tmpDirectory);
     }
 
-    public static ContentSourcePluginClassLoader create(String pluginJarName, URL[] pluginUrls,
+    public static ContentProviderPluginClassLoader create(String pluginJarName, URL[] pluginUrls,
         boolean unpackNestedJars, ClassLoader parent, File tmpDirectory) throws Exception {
         List<URL> classpathUrlList = new ArrayList<URL>();
         File unpackedDirectory = null;
@@ -71,7 +71,7 @@ public class ContentSourcePluginClassLoader extends URLClassLoader {
         }
 
         URL[] classpath = classpathUrlList.toArray(new URL[classpathUrlList.size()]);
-        ContentSourcePluginClassLoader newLoader = new ContentSourcePluginClassLoader(classpath, parent);
+        ContentProviderPluginClassLoader newLoader = new ContentProviderPluginClassLoader(classpath, parent);
         newLoader.embeddedJarsDirectory = unpackedDirectory;
 
         return newLoader;

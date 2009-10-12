@@ -25,7 +25,7 @@ import java.io.File;
  *
  * @author John Mazzitelli
  */
-public class ContentSourcePluginContainerConfiguration {
+public class ContentProviderPluginContainerConfiguration {
     private File pluginDirectory;
     private File tmpDirectory;
 

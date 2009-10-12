@@ -47,8 +47,8 @@ import org.rhq.core.util.exception.WrappedRemotingException;
  * @author John Mazzitelli
  */
 // this is almost a direct copy of the agent plugin container's PluginEnvironment
-public class ContentSourcePluginEnvironment {
-    private static final Log log = LogFactory.getLog(ContentSourcePluginEnvironment.class);
+public class ContentProviderPluginEnvironment {
+    private static final Log log = LogFactory.getLog(ContentProviderPluginEnvironment.class);
 
     private static final String DEFAULT_PLUGIN_DESCRIPTOR_PATH = "META-INF/rhq-serverplugin-content.xml";
 
@@ -62,7 +62,7 @@ public class ContentSourcePluginEnvironment {
     /**
      * Creates a new plugin environment. If <code>classLoader</code> is specified, it will be used as the environment's
      * classloader and <code>parentClassLoader</code> will be ignored. If <code>classLoader</code> is <code>null</code>,
-     * then a {@link ContentSourcePluginClassLoader} will be created with the given parent classloader and it will
+     * then a {@link ContentProviderPluginClassLoader} will be created with the given parent classloader and it will
      * unpack all embedded jars found in the given plugin URL's <code>/lib</code> directory.
      *
      * @param  pluginUrl         where the plugin jar is located (may be <code>null</code>, mainly to support tests)
@@ -73,13 +73,13 @@ public class ContentSourcePluginEnvironment {
      *
      * @throws Exception
      */
-    public ContentSourcePluginEnvironment(URL pluginUrl, ClassLoader classLoader, ClassLoader parentClassLoader,
+    public ContentProviderPluginEnvironment(URL pluginUrl, ClassLoader classLoader, ClassLoader parentClassLoader,
         File tmpdir) throws Exception {
         initialize(pluginUrl, DEFAULT_PLUGIN_DESCRIPTOR_PATH, classLoader, parentClassLoader, true, tmpdir);
     }
 
     /**
-     * This creates a {@link ContentSourcePluginEnvironment} that will allow you to specify the plugin's new class
+     * This creates a {@link ContentProviderPluginEnvironment} that will allow you to specify the plugin's new class
      * loader to not unpack its embedded jars, if they exist. You normally only pass in <code>false</code> for <code>
      * unpackJars</code> if you only want to process/parse the plugin descriptor but do not plan on using this
      * environment instance for actual runtime of the plugin (because it won't work since you haven't unpacked the
@@ -100,15 +100,15 @@ public class ContentSourcePluginEnvironment {
      *
      * @throws Exception
      */
-    public ContentSourcePluginEnvironment(URL pluginUrl, ClassLoader classLoader, ClassLoader parentClassLoader,
+    public ContentProviderPluginEnvironment(URL pluginUrl, ClassLoader classLoader, ClassLoader parentClassLoader,
         boolean unpackJars, File tmpdir) throws Exception {
         initialize(pluginUrl, DEFAULT_PLUGIN_DESCRIPTOR_PATH, classLoader, parentClassLoader, unpackJars, tmpdir);
     }
 
     public void destroy() {
         // if its our own plugin classloader, let's tell it to clean up its directory where the jars were unpacked
-        if (pluginClassLoader instanceof ContentSourcePluginClassLoader) {
-            ((ContentSourcePluginClassLoader) pluginClassLoader).destroy();
+        if (pluginClassLoader instanceof ContentProviderPluginClassLoader) {
+            ((ContentProviderPluginClassLoader) pluginClassLoader).destroy();
         }
     }
 
@@ -136,7 +136,7 @@ public class ContentSourcePluginEnvironment {
             }
 
             if (pluginJarUrl != null) {
-                classLoader = ContentSourcePluginClassLoader.create(new File(pluginJarUrl.getPath()).getName(),
+                classLoader = ContentProviderPluginClassLoader.create(new File(pluginJarUrl.getPath()).getName(),
                     pluginJarUrl, unpackJars, parentClassLoader, tmpDirectory);
             } else {
                 // this is mainly to support tests

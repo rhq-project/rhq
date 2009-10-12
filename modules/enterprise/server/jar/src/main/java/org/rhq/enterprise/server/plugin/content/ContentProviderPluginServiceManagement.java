@@ -19,12 +19,12 @@
 package org.rhq.enterprise.server.plugin.content;
 
 /**
- * The MBean management interface that defines the lifecycle methods for the {@link ContentSourcePluginService} service.
+ * The MBean management interface that defines the lifecycle methods for the {@link ContentProviderPluginService} service.
  *
  * @author John Mazzitelli
  */
-public interface ContentSourcePluginServiceManagement {
-    String OBJECT_NAME_STR = "rhq.serverplugin:service=ContentSourcePluginService";
+public interface ContentProviderPluginServiceManagement {
+    String OBJECT_NAME_STR = "rhq.serverplugin:service=ContentProviderPluginService";
 
     /**
      * Starts the service but will <b>not</b> start the {@link #getPluginContainer() plugin container}. After the server
@@ -61,7 +61,7 @@ public interface ContentSourcePluginServiceManagement {
      *
      * @return the plugin container, if started. Will be <code>null</code> if not started
      */
-    ContentSourcePluginContainer getPluginContainer();
+    ContentProviderPluginContainer getPluginContainer();
 
     /**
      * Returns <code>true</code> if this service has been started. This does not necessarily mean the

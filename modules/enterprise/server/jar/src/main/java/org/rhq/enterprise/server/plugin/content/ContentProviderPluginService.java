@@ -28,18 +28,18 @@ import org.rhq.enterprise.server.RHQConstants;
 
 /**
  * This is the singleton management service responsible for managing the lifecycle of the
- * {@link ContentSourcePluginContainer}. It will be started when the entire server starts and shutdown when the entire
+ * {@link ContentProviderPluginContainer}. It will be started when the entire server starts and shutdown when the entire
  * server shuts down. It has a management interface to allow it to be recycled on demand when desired.
  *
  * @author John Mazzitelli
  */
-@Management(ContentSourcePluginServiceManagement.class)
-@Service(objectName = ContentSourcePluginServiceManagement.OBJECT_NAME_STR)
-public class ContentSourcePluginService implements ContentSourcePluginServiceManagement {
-    private static final Log log = LogFactory.getLog(ContentSourcePluginService.class);
+@Management(ContentProviderPluginServiceManagement.class)
+@Service(objectName = ContentProviderPluginServiceManagement.OBJECT_NAME_STR)
+public class ContentProviderPluginService implements ContentProviderPluginServiceManagement {
+    private static final Log log = LogFactory.getLog(ContentProviderPluginService.class);
 
     private boolean started;
-    private ContentSourcePluginContainer pluginContainer;
+    private ContentProviderPluginContainer pluginContainer;
 
     public synchronized void start() {
         log.debug("The content source plugin service has been deployed (but plugin container will not be started yet)");
@@ -88,7 +88,7 @@ public class ContentSourcePluginService implements ContentSourcePluginServiceMan
         startPluginContainer();
     }
 
-    public ContentSourcePluginContainer getPluginContainer() {
+    public ContentProviderPluginContainer getPluginContainer() {
         return this.pluginContainer;
     }
 
@@ -108,10 +108,10 @@ public class ContentSourcePluginService implements ContentSourcePluginServiceMan
      *
      * @return the PC that this service will use
      */
-    protected ContentSourcePluginContainer createPluginContainer() {
-        ContentSourcePluginContainer pc = new ContentSourcePluginContainer();
+    protected ContentProviderPluginContainer createPluginContainer() {
+        ContentProviderPluginContainer pc = new ContentProviderPluginContainer();
 
-        ContentSourcePluginContainerConfiguration config = new ContentSourcePluginContainerConfiguration();
+        ContentProviderPluginContainerConfiguration config = new ContentProviderPluginContainerConfiguration();
 
         String pluginDirStr = System.getProperty(ServerConfig.SERVER_HOME_DIR);
         config

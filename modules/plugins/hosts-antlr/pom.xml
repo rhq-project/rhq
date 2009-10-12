@@ -99,6 +99,7 @@
                               <copy toDir="target/itest/plugins" flatten="true">
                                  <fileset dir="${settings.localRepository}/">
                                     <include name="org/rhq/rhq-platform-plugin/${project.version}/rhq-platform-plugin-${project.version}.jar" />
+                                    <include name="org/rhq/rhq-antlr-config-plugin/${project.version}/rhq-antlr-config-plugin-${project.version}.jar" />
                                  </fileset>
                                  <fileset dir="${project.build.directory}">
                                     <include name="${project.artifactId}-${project.version}.jar" />
@@ -157,6 +158,10 @@
                               <property>
                                  <name>project.version</name>
                                  <value>${project.version}</value>
+                              </property>
+                              <property>
+                                <name>hostsFilePath</name>
+                                <value>${project.build.testSourceDirectory}/../resources/hosts</value>
                               </property>
                            </systemProperties>
                         </configuration>

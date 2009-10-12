@@ -55,7 +55,7 @@ path returns [List<PathElement> elements]
 @init {
   $elements = new ArrayList<PathElement>();
 } 
-  : PATH_SEPARATOR p1=pathElement {
+  : PATH_SEPARATOR? p1=pathElement {
       $elements.add($p1.pathElement);
     }(PATH_SEPARATOR p2=pathElement{
       $elements.add($p2.pathElement);

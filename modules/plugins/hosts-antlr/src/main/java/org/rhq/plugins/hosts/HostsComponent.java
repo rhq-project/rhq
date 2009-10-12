@@ -107,7 +107,7 @@ public class HostsComponent implements ResourceComponent, ConfigurationFacet {
         
         convertToPluginFormat(config);
         
-        return config;
+        return convertToPluginFormat(config);
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
@@ -116,7 +116,7 @@ public class HostsComponent implements ResourceComponent, ConfigurationFacet {
             
             Configuration config = report.getConfiguration();
 
-            convertToASTFormat(config);
+            config = convertToASTFormat(config);
             
             configMapper.update(loadFile(stream), stream, config);
             FileWriter wrt = new FileWriter(this.hostsFile);
@@ -160,8 +160,9 @@ public class HostsComponent implements ResourceComponent, ConfigurationFacet {
         return new TokenRewriteStream(new HostsLexer(new ANTLRFileStream(this.hostsFile.getAbsolutePath())));
     }
     
-    private void convertToASTFormat(Configuration config) {
-        PropertyList file = config.getList(FILE_PROPERTY_NAME);
+    private Configuration convertToASTFormat(Configuration config) {
+        Configuration copy = config.deepCopy();
+        PropertyList file = copy.getList(FILE_PROPERTY_NAME);
         
         for(Property p : file.getList()) {
             PropertyMap hostDef = (PropertyMap) p;
@@ -176,10 +177,14 @@ public class HostsComponent implements ResourceComponent, ConfigurationFacet {
                 }
             }
         }
+        
+        return copy;
     }
     
-    private void convertToPluginFormat(Configuration config) {
-        PropertyList file = config.getList(FILE_PROPERTY_NAME);
+    private Configuration convertToPluginFormat(Configuration config) {
+        Configuration copy = config.deepCopy();
+        
+        PropertyList file = copy.getList(FILE_PROPERTY_NAME);
         
         for(Property p : file.getList()) {
             PropertyMap hostDef = (PropertyMap) p;
@@ -202,5 +207,7 @@ public class HostsComponent implements ResourceComponent, ConfigurationFacet {
                 hostDef.put(newAliases);
             }
         }
+        
+        return copy;
     }
 }

@@ -1,0 +1,7 @@
+# this is a testing hosts file
+
+# first line
+127.0.0.1   localhost   alias1 alias2 # comment
+
+# second line
+::1 localhost6  alias3 alias4

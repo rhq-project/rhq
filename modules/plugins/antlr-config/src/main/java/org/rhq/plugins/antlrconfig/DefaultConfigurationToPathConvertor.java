@@ -61,6 +61,22 @@ public class DefaultConfigurationToPathConvertor implements ConfigurationToPathC
         this.configurationDefinition = configurationDefinition;
     }
     
+    public String getPathRelativeToParent(PropertyDefinition propertyDefinition) {
+        if (propertyDefinition.getName().startsWith(NAME_PREFIX)) {
+            if (propertyDefinition.getConfigurationDefinition() != null) {
+                return propertyDefinition.getName().substring(NAME_PREFIX_LENGTH);
+            } else {
+                PropertyDefinition parentDef = getConfiguredParent(propertyDefinition);
+                if (parentDef != null) {
+                    return parentDef.getName().substring(NAME_PREFIX_LENGTH) + "/" + propertyDefinition.getName().substring(NAME_PREFIX_LENGTH);
+                }
+            }
+        }
+        
+        return null;
+    }
+    
+    
     /* (non-Javadoc)
      * @see org.rhq.core.antlr.ConfigurationToPathConvertor#getConcretePath(org.rhq.core.domain.configuration.Property)
      */
@@ -181,30 +197,6 @@ public class DefaultConfigurationToPathConvertor implements ConfigurationToPathC
         return null;
     }
 
-    public String getGenericPath(PropertyDefinition propertyDefinition) {
-        String name = propertyDefinition.getName();
-        String ret = null;
-        
-        if (name.startsWith(NAME_PREFIX)) {
-            name = name.substring(NAME_PREFIX_LENGTH);
-            
-            if (name.startsWith("/")) {
-                ret = name;
-            } else {
-                PropertyDefinition parent = propertyDefinition.getParentPropertyListDefinition();
-                if (parent == null) parent = propertyDefinition.getParentPropertyMapDefinition();
-                if (parent == null) {
-                    ret = name;
-                } else {
-                    String parentPath = getGenericPath(parent);
-                    ret = parentPath + "/" + name;
-                }
-            }
-        }
-        
-        return ret;
-    }
-
     private int getPartialMatchNextFollowupIndex(PathElement element, int followupIndex, String name) {
         if (!name.startsWith(NAME_PREFIX)) return -1;
         if (NAME_PREFIX_LENGTH + followupIndex > name.length()) return -1;
@@ -240,6 +232,21 @@ public class DefaultConfigurationToPathConvertor implements ConfigurationToPathC
         } catch (NumberFormatException e) {
             return new AbsoluteIndexAndFollowupIndex();
         }
+    }
+ 
+    private PropertyDefinition getConfiguredParent(PropertyDefinition def) {
+        PropertyDefinition parent = def.getParentPropertyListDefinition();
+        if (parent == null) parent = def.getParentPropertyMapDefinition();
+        
+        while (parent != null) {
+            if (parent.getName().startsWith(NAME_PREFIX)) {
+                return parent;
+            }
+            parent = parent.getParentPropertyListDefinition();
+            if (parent == null) parent = def.getParentPropertyMapDefinition();
+        }
+        
+        return null;
     }
     
     private static class AbsoluteIndexAndFollowupIndex {

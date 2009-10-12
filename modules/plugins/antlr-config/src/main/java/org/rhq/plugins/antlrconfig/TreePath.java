@@ -24,6 +24,7 @@ package org.rhq.plugins.antlrconfig;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 import org.antlr.runtime.ANTLRStringStream;
@@ -68,9 +69,9 @@ public class TreePath {
         return result.elements;
     }
     
-    public static List<PathElement> getPath(Tree tree, String[] typeNames) {
+    public static List<PathElement> getPath(Tree tree, Tree root, String[] typeNames) {
         List<PathElement> elements = new ArrayList<PathElement>();
-        while(tree != null) {
+        while(tree != null && (root == null || !root.equals(tree))) {
             PathElement el = new PathElement();
             
             int type = tree.getType();
@@ -101,6 +102,10 @@ public class TreePath {
         return elements;
     }
     
+    public static List<PathElement> getPath(Tree tree, String[] typeNames) {
+        return getPath(tree, null, typeNames);
+    }
+    
     public List<PathElement> getPath() {
         return path;
     }
@@ -116,20 +121,25 @@ public class TreePath {
     
     public List<Tree> matches() {
         List<Tree> currentParents = new ArrayList<Tree>();
-        CommonTree virtualParent = new CommonTree();
-        virtualParent.addChild(tree);
-        currentParents.add(virtualParent);
-        
-        for(PathElement pathElement : path) {
-            List<Tree> matchingChildren = new ArrayList<Tree>();
 
-            for(Tree parent : currentParents) {
-                matchingChildren.addAll(matchingChildren(parent, pathElement));
-            }
+        if (path.size() > 0 && rootMatches(tree, path.get(0))) {
+            currentParents.add(tree);
             
-            currentParents = matchingChildren;
+            Iterator<PathElement> it = path.iterator();
+            
+            it.next();//skip the first element, we've checked the root already
+            
+            while(it.hasNext()) {
+                PathElement pathElement = it.next();
+                List<Tree> matchingChildren = new ArrayList<Tree>();
+    
+                for(Tree parent : currentParents) {
+                    matchingChildren.addAll(matchingChildren(parent, pathElement));
+                }
+                
+                currentParents = matchingChildren;
+            }
         }
-        
         return currentParents;
     }
     
@@ -185,6 +195,36 @@ public class TreePath {
         }
         
         return children;
+    }
+    
+    private boolean rootMatches(Tree root, PathElement spec) {
+        int tokenType = getTokenType(spec.getTokenTypeName());
+
+        switch (spec.getType()) {
+        case NAME_REFERENCE:
+            return root.getType() == tokenType;
+        case INDEX_REFERENCE:
+            return root.getChildIndex() == spec.getAbsoluteTokenPosition() - 1;
+        case POSITION_REFERENCE:
+            int position = 0;
+            Tree parent = root.getParent();
+            if (parent != null) {
+                for(int i = 0; i < parent.getChildCount(); ++i) {
+                    Tree child = parent.getChild(i);
+                    if (child.getType() == tokenType) {
+                        position++; //we're 1 based, so increase before checking...
+                        if (position == spec.getTypeRelativeTokenPosition() && child == root) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            break;
+        case VALUE_REFERENCE:
+            return root.getType() == tokenType && spec.getTokenText().equals(root.getText());
+        }
+        
+        return false;
     }
     
     public String toString() {

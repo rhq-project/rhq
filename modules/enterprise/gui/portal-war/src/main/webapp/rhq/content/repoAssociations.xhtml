@@ -64,7 +64,7 @@
             <rich:dataTable id="repoAssociationsDataTable"
                             rows="#{PageControl.RepoAssociationsList.pageSize}"
                             value="#{repoAssociationsDataModel}"
-                            var="contentsourceitem"
+                            var="contentprovideritem"
                             width="100%"
                             columnsWidth="1%, 20%, 15%, 15%, 9%"
                             headerClass="tableRowHeader"
@@ -81,8 +81,7 @@
                   <f:facet name="header">
                      <onc:allSelect target="selectedRepoAssociations" />
                   </f:facet>
-
-                  <onc:select name="selectedRepoAssociations" value="#{contentsourceitem.id}" />
+                  <onc:select name="selectedRepoAssociations" value="#{contentprovideritem.id}" />
                </rich:column>
 
                <rich:column rendered="#{param.debug}">
@@ -91,8 +90,7 @@
                         <h:outputText styleClass="headerText" value="ID" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-
-                  <h:outputText value="#{contentsourceitem.id}"/>
+                  <h:outputText value="#{contentprovideritem.id}"/>
                </rich:column>
 
                <rich:column>
@@ -101,11 +99,10 @@
                         <h:outputText styleClass="headerText" value="Name" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-
-                  <h:outputLink value="contentSource.xhtml">
+                  <h:outputLink value="contentProvider.xhtml">
                      <f:param name="mode" value="view"/>
-                     <f:param name="id" value="#{contentsourceitem.id}"/>
-                     <h:outputText value="#{contentsourceitem.name}" />
+                     <f:param name="id" value="#{contentprovideritem.id}"/>
+                     <h:outputText value="#{contentprovideritem.name}" />
                   </h:outputLink>
                </rich:column>
 
@@ -115,8 +112,7 @@
                         <h:outputText styleClass="headerText" value="Date Created" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-
-                  <h:outputText value="#{contentsourceitem.creationDate}">
+                  <h:outputText value="#{contentprovideritem.creationDate}">
                      <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
                   </h:outputText>
                </rich:column>
@@ -127,8 +123,7 @@
                         <h:outputText styleClass="headerText" value="Date Modified" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-
-                  <h:outputText value="#{contentsourceitem.lastModifiedDate}">
+                  <h:outputText value="#{contentprovideritem.lastModifiedDate}">
                      <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
                   </h:outputText>
                </rich:column>
@@ -139,8 +134,7 @@
                         <h:outputText styleClass="headerText" value="Lazy Load?" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-
-                  <h:outputText value="#{contentsourceitem.lazyLoad}"/>
+                  <h:outputText value="#{contentprovideritem.lazyLoad}"/>
                </rich:column>
 
                <rich:column>
@@ -149,8 +143,7 @@
                         <h:outputText styleClass="headerText" value="Description" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-
-                  <h:outputText value="#{contentsourceitem.description}"/>
+                  <h:outputText value="#{contentprovideritem.description}"/>
                </rich:column>
 
                <f:facet name="footer">
@@ -193,7 +186,7 @@
             <rich:dataTable id="repoDisassociationsDataTable"
                             rows="#{PageControl.RepoDisassociationsList.pageSize}"
                             value="#{repoDisassociationsDataModel}"
-                            var="contentsourceitem"
+                            var="contentprovideritem"
                             width="100%"
                             columnsWidth="1%, 20%, 15%, 15%, 9%"
                             headerClass="tableRowHeader"
@@ -212,7 +205,7 @@
                   </f:facet>
 
                   <onc:select rendered="#{RepoAssociationsUIBean.associatedList[contentsourceitem.id] eq null}"
-                              name="selectedRepoDisassociations" value="#{contentsourceitem.id}" />
+                              name="selectedRepoDisassociations" value="#{contentprovideritem.id}" />
                </rich:column>
 
                <rich:column rendered="#{param.debug}">
@@ -221,8 +214,7 @@
                         <h:outputText styleClass="headerText" value="ID" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-
-                  <h:outputText value="#{contentsourceitem.id}"/>
+                  <h:outputText value="#{contentprovideritem.id}"/>
                </rich:column>
 
                <rich:column>
@@ -231,11 +223,10 @@
                         <h:outputText styleClass="headerText" value="Name" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-
-                  <h:outputLink value="contentSource.xhtml">
+                  <h:outputLink value="contentProvider.xhtml">
                      <f:param name="mode" value="view"/>
-                     <f:param name="id" value="#{contentsourceitem.id}"/>
-                     <h:outputText value="#{contentsourceitem.name}" />
+                     <f:param name="id" value="#{contentprovideritem.id}"/>
+                     <h:outputText value="#{contentprovideritem.name}" />
                   </h:outputLink>
                </rich:column>
 
@@ -245,8 +236,7 @@
                         <h:outputText styleClass="headerText" value="Date Created" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-
-                  <h:outputText value="#{contentsourceitem.creationDate}">
+                  <h:outputText value="#{contentprovideritem.creationDate}">
                      <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
                   </h:outputText>
                </rich:column>
@@ -257,8 +247,7 @@
                         <h:outputText styleClass="headerText" value="Date Modified" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-
-                  <h:outputText value="#{contentsourceitem.lastModifiedDate}">
+                  <h:outputText value="#{contentprovideritem.lastModifiedDate}">
                      <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
                   </h:outputText>
                </rich:column>
@@ -269,8 +258,7 @@
                         <h:outputText styleClass="headerText" value="Lazy Load?" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-
-                  <h:outputText value="#{contentsourceitem.lazyLoad}"/>
+                  <h:outputText value="#{contentprovideritem.lazyLoad}"/>
                </rich:column>
 
                <rich:column>
@@ -279,8 +267,7 @@
                         <h:outputText styleClass="headerText" value="Description" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-
-                  <h:outputText value="#{contentsourceitem.description}"/>
+                  <h:outputText value="#{contentprovideritem.description}"/>
                </rich:column>
 
                <f:facet name="footer">

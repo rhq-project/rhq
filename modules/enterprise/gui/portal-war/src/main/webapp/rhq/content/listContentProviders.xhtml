@@ -17,8 +17,8 @@
    <ui:param name="pageTitle" value="Content Sources"/>
 
    <ui:define name="breadcrumbs">
-      <h:outputLink value="listContentSources.xhtml">
-         ${msg["contentsource.list.breadcrumb"]}
+      <h:outputLink value="listContentProviders.xhtml">
+         ${msg["contentprovider.list.breadcrumb"]}
       </h:outputLink>
    </ui:define>
 
@@ -35,7 +35,7 @@
                width="100%"/>
 
 
-      <h:form id="contentSourcesListForm">
+      <h:form id="contentProvidersListForm">
          
          <rich:panel>
             <f:facet name="header">
@@ -44,10 +44,10 @@
 
             <h:panelGrid columns="1" width="100%">
 
-            <ui:param name="contentSourcesDataModel" value="#{ListContentSourcesUIBean.dataModel}"/>
-            <rich:dataTable id="contentSourcesDataTable"
+            <ui:param name="contentProvidersDataModel" value="#{ListContentSourcesUIBean.dataModel}"/>
+            <rich:dataTable id="contentProvidersDataTable"
                             rows="#{PageControl.ContentSourcesList.pageSize}"
-                            value="#{contentSourcesDataModel}"
+                            value="#{contentProvidersDataModel}"
                             var="item"
                             width="100%"
                             columnsWidth="1%, 20%, 15%, 15%, 9%, 9%"
@@ -63,10 +63,10 @@
       
                <rich:column>
                   <f:facet name="header">
-                     <onc:allSelect target="selectedContentSources" />
+                     <onc:allSelect target="selectedContentProviders" />
                   </f:facet>
                   
-                  <onc:select name="selectedContentSources" value="#{item.id}" />
+                  <onc:select name="selectedContentProviders" value="#{item.id}" />
                </rich:column>
       
                <rich:column rendered="#{param.debug}">
@@ -86,7 +86,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
                
-                  <h:outputLink value="contentSource.xhtml">
+                  <h:outputLink value="contentProvider.xhtml">
                      <f:param name="mode" value="view"/>
                      <f:param name="id" value="#{item.id}"/>
                      <h:outputText value="#{item.name}" />
@@ -161,8 +161,8 @@
                         <onc:selectCommandButton action="#{ListContentSourcesUIBean.syncSelectedContentSources}"
                                                  value="SYNC SELECTED" target="selectedContentSources" styleClass="on-pager-button buttonsmall"/>
 
-                        <ui:param name="paginationDataTableName" value="contentSourcesDataTable"/>
-                        <ui:param name="paginationDataModel" value="#{contentSourcesDataModel}"/>
+                        <ui:param name="paginationDataTableName" value="contentProvidersDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{contentProvidersDataModel}"/>
                         <ui:param name="paginationPageControl" value="#{PageControl.ContentSourcesList}"/>
                         <ui:include src="../resource/include/pagination.xhtml"/>
                      </rich:column>

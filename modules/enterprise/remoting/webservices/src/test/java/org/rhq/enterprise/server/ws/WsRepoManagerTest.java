@@ -24,7 +24,7 @@ import org.rhq.enterprise.server.ws.utility.WsUtility;
 /**
  * These tests can not be executed in our standard unit test fashion as they
  * require a running RHQ Server with our web services deployed.
- * 
+ *
  * This is still in development and has the current restrictions: - add
  * [dev_root
  * ]/modules/enterprise/remoting/webservices/target/rhq-remoting-webservices
@@ -35,7 +35,7 @@ import org.rhq.enterprise.server.ws.utility.WsUtility;
  * inventory. - The -Ptest-ws profile specified when running mvn test from
  * webservices dir - Perftest plugin installed and agent started as described in
  * modules/enterprise/remoting/scripts/README.txt
- * 
+ *
  * @author Jay Shaughnessy, Simeon Pinder
  */
 @Test(groups = "ws")

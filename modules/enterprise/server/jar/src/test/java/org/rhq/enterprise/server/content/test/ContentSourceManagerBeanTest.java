@@ -61,7 +61,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.MD5Generator;
-import org.rhq.enterprise.server.content.ChannelManagerLocal;
+import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
 import org.rhq.enterprise.server.content.metadata.ContentSourceMetadataManagerLocal;
@@ -76,7 +76,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
     private ContentManagerLocal contentManager;
     private ContentSourceManagerLocal contentSourceManager;
     private ContentSourceMetadataManagerLocal contentSourceMetadataManager;
-    private ChannelManagerLocal channelManager;
+    private RepoManagerLocal repoManager;
     private Subject overlord;
     private PackageType packageType1;
     private PackageType packageType2;
@@ -130,7 +130,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
         contentManager = LookupUtil.getContentManager();
         contentSourceManager = LookupUtil.getContentSourceManager();
         contentSourceMetadataManager = LookupUtil.getContentSourceMetadataManager();
-        channelManager = LookupUtil.getChannelManagerLocal();
+        repoManager = LookupUtil.getRepoManagerLocal();
 
         // This delete is temporary. There are content sources left over from previous runs of this test
         // that need to be deleted and this is the simplest way of clearing everyone's environment without
@@ -238,7 +238,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
     @Test(enabled = TESTS_ENABLED)
     public void testMergeSyncReport() throws Exception {
         PageControl pc;
-        int channelId = 0;
+        int repoId = 0;
         int contentSourceId = 0;
 
         try {
@@ -305,13 +305,13 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
                 em.close();
             }
 
-            // create a channel
+            // create a repo
             pc = PageControl.getUnlimitedInstance();
-            int origChannelCount = channelManager.findChannels(overlord, pc).size();
-            Repo repo = new Repo("testMergeSyncReportChannel");
-            repo = channelManager.createChannel(overlord, repo);
-            assert (origChannelCount + 1) == channelManager.findChannels(overlord, pc).size();
-            channelId = repo.getId();
+            int origRepoCount = repoManager.findRepos(overlord, pc).size();
+            Repo repo = new Repo("testMergeSyncReportRepo");
+            repo = repoManager.createRepo(overlord, repo);
+            assert (origRepoCount + 1) == repoManager.findRepos(overlord, pc).size();
+            repoId = repo.getId();
 
             // see that the resource sees no metadata yet - not subscribed yet
             pc = PageControl.getUnlimitedInstance();
@@ -330,24 +330,24 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             assert metadataMd5.length() == 32 : "-->" + metadataMd5;
             assert metadataMd5.equals("d41d8cd98f00b204e9800998ecf8427e") : "-->" + metadataMd5;
 
-            // add the content source's packages to the channel
-            channelManager.addContentSourcesToChannel(overlord, channelId, new int[] { contentSourceId });
+            // add the content source's packages to the repo
+            repoManager.addContentSourcesToRepo(overlord, repoId, new int[] { contentSourceId });
 
-            // see the package versions have been assigned to the channel and content source
-            List<PackageVersion> inChannel;
+            // see the package versions have been assigned to the repo and content source
+            List<PackageVersion> inRepo;
             List<PackageVersionContentSource> inContentSources;
             List<PackageVersionContentSource> inContentSource;
 
             pc = PageControl.getUnlimitedInstance();
-            inChannel = channelManager.findPackageVersionsInChannel(overlord, channelId, pc);
+            inRepo = repoManager.findPackageVersionsInRepo(overlord, repoId, pc);
             pc = PageControl.getUnlimitedInstance();
             inContentSources = contentSourceManager.getPackageVersionsFromContentSources(overlord,
                 new int[] { contentSourceId }, pc);
             inContentSource = contentSourceManager.getPackageVersionsFromContentSource(overlord, contentSourceId, pc);
-            assert inChannel != null;
+            assert inRepo != null;
             assert inContentSources != null;
             assert inContentSource != null;
-            assert inChannel.size() == 1 : inChannel;
+            assert inRepo.size() == 1 : inRepo;
             assert inContentSources.size() == 1 : inContentSources;
             assert inContentSource.size() == 1 : inContentSource;
 
@@ -359,13 +359,13 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             assert unloaded.size() == 1;
 
             // check the counts
-            long pvccount = channelManager.getPackageVersionCountFromChannel(overlord, repo.getId());
+            long pvccount = repoManager.getPackageVersionCountFromRepo(overlord, repo.getId());
             assert (pvccount == 1) : "-->" + pvccount;
             long pvcscount = contentSourceManager.getPackageVersionCountFromContentSource(overlord, contentSourceId);
             assert (pvcscount == 1) : "-->" + pvcscount;
 
             // subscribe the resource
-            channelManager.subscribeResourceToChannels(overlord, resource1.getId(), new int[] { channelId });
+            repoManager.subscribeResourceToRepos(overlord, resource1.getId(), new int[] { repoId });
 
             // confirm the resource is subscribed
             pc = PageControl.getUnlimitedInstance();
@@ -377,13 +377,13 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             assert metadataMd5.length() == 32 : "-->" + metadataMd5;
 
             // MD5 is based on the hash code of last modified time
-            repo = channelManager.getChannel(overlord, channelId);
+            repo = repoManager.getRepo(overlord, repoId);
             long modifiedTimestamp = repo.getLastModifiedDate();
             Date modifiedDate = new Date(modifiedTimestamp);
             String datehash = Integer.toString(modifiedDate.hashCode());
             assert metadataMd5.equals(MD5Generator.getDigestString(datehash)) : "-->" + metadataMd5;
 
-            channelManager.unsubscribeResourceFromChannels(overlord, resource1.getId(), new int[] { channelId });
+            repoManager.unsubscribeResourceFromRepos(overlord, resource1.getId(), new int[] { repoId });
 
             // confirm the resource is unsubscribed
             pc = PageControl.getUnlimitedInstance();
@@ -396,8 +396,8 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
         } finally {
             try {
                 // clean up - delete all created entities
-                if (channelId != 0) {
-                    channelManager.deleteChannel(overlord, channelId);
+                if (repoId != 0) {
+                    repoManager.deleteRepo(overlord, repoId);
                 }
 
                 if (contentSourceId != 0) {
@@ -532,13 +532,13 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
     }
 
     @Test(enabled = TESTS_ENABLED)
-    public void testMergeSyncReportAddRemoveUpdateWithChannel() throws Exception {
+    public void testMergeSyncReportAddRemoveUpdateWithRepo() throws Exception {
         PageControl pc = PageControl.getUnlimitedInstance();
         int contentSourceId = 0;
-        int channelId = 0;
+        int repoId = 0;
 
         try {
-            // create content source type and content source and channel
+            // create content source type and content source and repo
             ContentSourceType type = new ContentSourceType("testMergeSyncReportAMU2CST");
             Set<ContentSourceType> types = new HashSet<ContentSourceType>();
             types.add(type);
@@ -550,14 +550,14 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             contentSourceId = contentSource.getId();
             assert contentSourceId > 0;
             Repo repo = new Repo("testMergeSyncReportAMU2Ch");
-            channelManager.createChannel(overlord, repo);
-            channelId = repo.getId();
-            assert channelId > 0;
-            channelManager.addContentSourcesToChannel(overlord, channelId, new int[] { contentSourceId });
+            repoManager.createRepo(overlord, repo);
+            repoId = repo.getId();
+            assert repoId > 0;
+            repoManager.addContentSourcesToRepo(overlord, repoId, new int[] { contentSourceId });
 
             // just make sure there are no package versions yet
             assert 0 == contentSourceManager.getPackageVersionCountFromContentSource(overlord, contentSourceId);
-            assert 0 == channelManager.getPackageVersionCountFromChannel(overlord, channelId);
+            assert 0 == repoManager.getPackageVersionCountFromRepo(overlord, repoId);
 
             // need this to pass to merge
             ContentSourceSyncResults results = new ContentSourceSyncResults(contentSource);
@@ -583,9 +583,9 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             assert unloaded != null;
             assert unloaded.size() == 1;
 
-            // check the count - since content source was in a channel, the channel gets the PV too
+            // check the count - since content source was in a repo, the repo gets the PV too
             assert 1 == contentSourceManager.getPackageVersionCountFromContentSource(overlord, contentSourceId);
-            assert 1 == channelManager.getPackageVersionCountFromChannel(overlord, channelId);
+            assert 1 == repoManager.getPackageVersionCountFromRepo(overlord, repoId);
 
             // this is the new one we just added - we'll pass this to our next merge as the previous state
             PackageVersionContentSource addedPVCS = unloaded.get(0);
@@ -599,16 +599,16 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             results = contentSourceManager.mergeContentSourceSyncReport(contentSource, report, previous, results);
             assert results != null;
 
-            // check the count - note the channel's PV remains intact!!
+            // check the count - note the repo's PV remains intact!!
             assert 0 == contentSourceManager.getPackageVersionCountFromContentSource(overlord, contentSourceId);
-            assert 1 == channelManager.getPackageVersionCountFromChannel(overlord, channelId);
+            assert 1 == repoManager.getPackageVersionCountFromRepo(overlord, repoId);
         } catch (Exception e) {
             e.printStackTrace();
             throw e;
         } finally {
             try {
-                if (channelId != 0) {
-                    channelManager.deleteChannel(overlord, channelId);
+                if (repoId != 0) {
+                    repoManager.deleteRepo(overlord, repoId);
                 }
 
                 if (contentSourceId != 0) {
@@ -654,10 +654,10 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             // test the getAll API
             assert (csCount + 1) == contentSourceManager.getAllContentSources(overlord, pc).size();
 
-            // create a channel and associate the new content source with it
-            Repo repo = new Repo("testDeleteContentSourceChannel");
-            channelManager.createChannel(overlord, repo);
-            channelManager.addContentSourcesToChannel(overlord, repo.getId(), new int[] { contentSourceId });
+            // create a repo and associate the new content source with it
+            Repo repo = new Repo("testDeleteContentSourceRepo");
+            repoManager.createRepo(overlord, repo);
+            repoManager.addContentSourcesToRepo(overlord, repo.getId(), new int[] { contentSourceId });
 
             // try to delete the content source
             assert null != contentSourceManager.getContentSource(overlord, contentSourceId) : "should exist";
@@ -665,7 +665,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             assert null == contentSourceManager.getContentSource(overlord, contentSourceId) : "should have been deleted";
 
             // I need to clean these up now
-            channelManager.deleteChannel(overlord, repo.getId());
+            repoManager.deleteRepo(overlord, repo.getId());
         } catch (Exception e) {
             e.printStackTrace();
             throw e;
@@ -822,20 +822,20 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
     }
 
     /**
-     * This tests that when you merge a sync report and a channel is associated with a content source, the channel gets
-     * the package versions assigned to it. It also tests that deleting channel and content source will purge orphaned
+     * This tests that when you merge a sync report and a repo is associated with a content source, the repo gets
+     * the package versions assigned to it. It also tests that deleting repo and content source will purge orphaned
      * PVs.
      *
      * @throws Exception
      */
     @Test(enabled = TESTS_ENABLED)
-    public void testMergeWithChannel() throws Exception {
+    public void testMergeWithRepo() throws Exception {
         try {
             ContentSourceType type = null;
             ContentSource contentSource = null;
 
             // create the content source type
-            type = new ContentSourceType("testMergeWithChannelCST");
+            type = new ContentSourceType("testMergeWithRepoCST");
             Set<ContentSourceType> types = new HashSet<ContentSourceType>();
             types.add(type);
             contentSourceMetadataManager.registerTypes(types); // this blows away any previous existing types
@@ -844,23 +844,23 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             assert type.getId() > 0;
 
             // create the content source
-            contentSource = new ContentSource("testMergeWithChannelCS", type);
+            contentSource = new ContentSource("testMergeWithRepoCS", type);
             contentSource = contentSourceManager.createContentSource(overlord, contentSource);
             assert contentSource != null;
             int contentSourceId = contentSource.getId();
             assert contentSourceId > 0;
 
-            // create a channel and associate the new content source with it
-            Repo repo = new Repo("testMergeWithChannel");
-            channelManager.createChannel(overlord, repo);
-            channelManager.addContentSourcesToChannel(overlord, repo.getId(), new int[] { contentSourceId });
+            // create a repo and associate the new content source with it
+            Repo repo = new Repo("testMergeWithRepo");
+            repoManager.createRepo(overlord, repo);
+            repoManager.addContentSourcesToRepo(overlord, repo.getId(), new int[] { contentSourceId });
 
             // this report will add a mapping to PV->CS
             // we didn't set up any mappings like that yet - this will be the first one
-            // since a channel has this CS - the channel->PV will also get mapped
+            // since a repo has this CS - the repo->PV will also get mapped
             PackageSyncReport report = new PackageSyncReport();
-            ContentSourcePackageDetailsKey key = new ContentSourcePackageDetailsKey("testMergeWithChannelfoo",
-                "testMergeWithChannel-Version", packageType1.getName(), architecture1.getName(), resourceType1
+            ContentSourcePackageDetailsKey key = new ContentSourcePackageDetailsKey("testMergeWithRepofoo",
+                "testMergeWithRepo-Version", packageType1.getName(), architecture1.getName(), resourceType1
                     .getName(), resourceType1.getPlugin());
             ContentSourcePackageDetails details = new ContentSourcePackageDetails(key);
             details.setExtraProperties(new Configuration());
@@ -877,17 +877,17 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
 
             contentSourceManager.mergeContentSourceSyncReport(contentSource, report, previous, results);
 
-            List<PackageVersion> inChannel;
-            inChannel = channelManager.findPackageVersionsInChannel(overlord, repo.getId(), PageControl
+            List<PackageVersion> inRepo;
+            inRepo = repoManager.findPackageVersionsInRepo(overlord, repo.getId(), PageControl
                 .getUnlimitedInstance());
-            assert inChannel != null;
-            assert inChannel.size() == 1;
-            assert "testMergeWithChannel-Version".equals(inChannel.get(0).getVersion());
+            assert inRepo != null;
+            assert inRepo.size() == 1;
+            assert "testMergeWithRepo-Version".equals(inRepo.get(0).getVersion());
 
             // sanity check - make sure our own entity manager can find the PV entity
             getTransactionManager().begin();
             try {
-                PackageVersion foundPv = getEntityManager().find(PackageVersion.class, inChannel.get(0).getId());
+                PackageVersion foundPv = getEntityManager().find(PackageVersion.class, inRepo.get(0).getId());
                 assert foundPv != null;
                 assert foundPv.getExtraProperties() != null;
                 assert foundPv.getExtraProperties().getSimple("hello").getStringValue().equals("world");
@@ -898,21 +898,21 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             // delete the content source first
             contentSourceManager.deleteContentSource(overlord, contentSourceId);
 
-            // make sure our PV isn't orphaned yet! It is directly related to the channel still
+            // make sure our PV isn't orphaned yet! It is directly related to the repo still
             getTransactionManager().begin();
             try {
-                assert null != getEntityManager().find(PackageVersion.class, inChannel.get(0).getId());
+                assert null != getEntityManager().find(PackageVersion.class, inRepo.get(0).getId());
             } finally {
                 getTransactionManager().rollback();
             }
 
-            // delete the channel - this finally orphans the PV, so the PV should get deleted automatically
-            channelManager.deleteChannel(overlord, repo.getId());
+            // delete the repo - this finally orphans the PV, so the PV should get deleted automatically
+            repoManager.deleteRepo(overlord, repo.getId());
 
-            // test to make sure we purged the orphaned package version (since both content source and channel are gone now)
+            // test to make sure we purged the orphaned package version (since both content source and repo are gone now)
             getTransactionManager().begin();
             try {
-                assert null == getEntityManager().find(PackageVersion.class, inChannel.get(0).getId());
+                assert null == getEntityManager().find(PackageVersion.class, inRepo.get(0).getId());
             } finally {
                 getTransactionManager().rollback();
             }

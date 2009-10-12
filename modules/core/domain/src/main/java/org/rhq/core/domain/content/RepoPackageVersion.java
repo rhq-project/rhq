@@ -42,10 +42,10 @@ import javax.persistence.Table;
  */
 @Entity
 @IdClass(RepoPackageVersionPK.class)
-@NamedQueries( { @NamedQuery(name = RepoPackageVersion.DELETE_BY_CHANNEL_ID, query = "DELETE RepoPackageVersion cpv WHERE cpv.channel.id = :channelId") })
+@NamedQueries( { @NamedQuery(name = RepoPackageVersion.DELETE_BY_CHANNEL_ID, query = "DELETE RepoPackageVersion cpv WHERE cpv.repo.id = :repoId") })
 @Table(name = "RHQ_CHANNEL_PKG_VERSION_MAP")
 public class RepoPackageVersion implements Serializable {
-    public static final String DELETE_BY_CHANNEL_ID = "RepoPackageVersion.deleteByChannelId";
+    public static final String DELETE_BY_CHANNEL_ID = "RepoPackageVersion.deleteByRepoId";
 
     private static final long serialVersionUID = 1L;
 
@@ -75,11 +75,11 @@ public class RepoPackageVersion implements Serializable {
         this.packageVersion = packageVersion;
     }
 
-    public RepoPackageVersionPK getChannelPackageVersionPK() {
+    public RepoPackageVersionPK getRepoPackageVersionPK() {
         return new RepoPackageVersionPK(repo, packageVersion);
     }
 
-    public void setChannelPackageVersionPK(RepoPackageVersionPK pk) {
+    public void setRepoPackageVersionPK(RepoPackageVersionPK pk) {
         this.repo = pk.getRepo();
         this.packageVersion = pk.getPackageVersion();
     }
@@ -99,7 +99,7 @@ public class RepoPackageVersion implements Serializable {
 
     @Override
     public String toString() {
-        StringBuilder str = new StringBuilder("ChannelPV: ");
+        StringBuilder str = new StringBuilder("RepoPV: ");
         str.append("ctime=[").append(new Date(this.createdTime)).append("]");
         str.append(", ch=[").append(this.repo).append("]");
         str.append(", pv=[").append(this.packageVersion).append("]");

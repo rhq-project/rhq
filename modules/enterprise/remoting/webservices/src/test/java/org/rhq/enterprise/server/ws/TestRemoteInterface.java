@@ -508,45 +508,45 @@ public class TestRemoteInterface extends AssertJUnit {
     //
     //        assertNotNull("Test requires a Non-RHQ AS Server, please start and import a JBoss AS", testWar);
     //
-    //        wsdlURL = new URL(WSDL_URL_PREFIX + "ChannelManagerBean?wsdl");
-    //        serviceName = new QName(TARGET_NS_CHANNEL_MANAGER, "ChannelManagerBeanService");
+    //        wsdlURL = new URL(WSDL_URL_PREFIX + "RepoManagerBean?wsdl");
+    //        serviceName = new QName(TARGET_NS_CHANNEL_MANAGER, "RepoManagerBeanService");
     //        service = Service.create(wsdlURL, serviceName);
-    //        ChannelManagerRemote channelManager = service.getPort(ChannelManagerRemote.class);
+    //        RepoManagerRemote repoManager = service.getPort(RepoManagerRemote.class);
     //
-    //        reportHeap("channelManager");
+    //        reportHeap("repoManager");
     //
-    //        PageList<Repo> channels = channelManager.findChannels(user, PageControl.getUnlimitedInstance());
+    //        PageList<Repo> repos = repoManager.findRepos(user, PageControl.getUnlimitedInstance());
     //
-    //        for (Repo channel : channels) {
-    //            if ("ws-test-channel".equals(channel.getName())) {
-    //                channelManager.deleteChannel(user, channel.getId());
+    //        for (Repo repo : repos) {
+    //            if ("ws-test-repo".equals(repo.getName())) {
+    //                repoManager.deleteRepo(user, repo.getId());
     //            }
     //        }
     //
-    //        Repo testChannel = channelManager.createChannel(user, new Repo("ws-test-channel"));
-    //        assertNotNull(testChannel);
-    //        assertEquals("ws-test-channel", testChannel.getName());
+    //        Repo testRepo = repoManager.createRepo(user, new Repo("ws-test-repo"));
+    //        assertNotNull(testRepo);
+    //        assertEquals("ws-test-repo", testRepo.getName());
     //
-    //        channels = channelManager.findChannels(user, PageControl.getUnlimitedInstance());
+    //        repos = repoManager.findRepos(user, PageControl.getUnlimitedInstance());
     //
-    //        testChannel = null;
-    //        for (Repo channel : channels) {
-    //            if ("ws-test-channel".equals(channel.getName())) {
-    //                testChannel = channel;
+    //        testRepo = null;
+    //        for (Repo repo : repos) {
+    //            if ("ws-test-repo".equals(repo.getName())) {
+    //                testRepo = repo;
     //                break;
     //            }
     //        }
-    //        assertNotNull(testChannel);
+    //        assertNotNull(testRepo);
     //
-    //        channelManager.subscribeResourceToChannels(user, testWar.getResource().getId(),
-    //            new int[] { testChannel.getId() });
+    //        repoManager.subscribeResourceToRepos(user, testWar.getResource().getId(),
+    //            new int[] { testRepo.getId() });
     //
-    //        PageList<Resource> channelResources = channelManager.findSubscribedResources(user, testChannel.getId(),
+    //        PageList<Resource> repoResources = repoManager.findSubscribedResources(user, testRepo.getId(),
     //            PageControl.getUnlimitedInstance());
     //
-    //        assertNotNull(channelResources);
-    //        assertEquals(1, channelResources.size());
-    //        assertTrue(channelResources.get(0).equals(testWar.getResource()));
+    //        assertNotNull(repoResources);
+    //        assertEquals(1, repoResources.size());
+    //        assertTrue(repoResources.get(0).equals(testWar.getResource()));
     //
     //        wsdlURL = new URL(WSDL_URL_PREFIX + "ContentManagerBean?wsdl");
     //        serviceName = new QName(TARGET_NS_CONTENT_MANAGER, "ContentManagerBeanService");
@@ -596,24 +596,24 @@ public class TestRemoteInterface extends AssertJUnit {
     //        assertNotNull(testPackageVersion);
     //        assertTrue(testPackageVersion.getId() > 0);
     //
-    //        channelManager.addPackageVersionsToChannel(user, testChannel.getId(), new int[] { testPackageVersion.getId() });
+    //        repoManager.addPackageVersionsToRepo(user, testRepo.getId(), new int[] { testPackageVersion.getId() });
     //
     //        int[] resourceIds = new int[] { testWar.getResource().getId() };
     //        int[] packageVersionIds = new int[] { testPackageVersion.getId() };
     //
     //        contentManager.deployPackages(user, resourceIds, packageVersionIds);
     //
-    //        channelManager.unsubscribeResourceFromChannels(user, testWar.getResource().getId(), new int[] { testChannel
+    //        repoManager.unsubscribeResourceFromRepos(user, testWar.getResource().getId(), new int[] { testRepo
     //            .getId() });
     //
-    //        channelResources = channelManager.findSubscribedResources(user, testChannel.getId(), PageControl
+    //        repoResources = repoManager.findSubscribedResources(user, testRepo.getId(), PageControl
     //            .getUnlimitedInstance());
     //
-    //        assertNotNull(channelResources);
-    //        assertEquals(0, channelResources.size());
+    //        assertNotNull(repoResources);
+    //        assertEquals(0, repoResources.size());
     //
     //        // this will force a purge of testPackageVersion
-    //        channelManager.deleteChannel(user, testChannel.getId());
+    //        repoManager.deleteRepo(user, testRepo.getId());
     //    }
     //
     //    private void reportHeap(String description) {

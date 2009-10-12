@@ -13,7 +13,7 @@ public class PackageVersionCriteria extends Criteria {
 
     private Integer filterId;
     private Integer filterPackageId; // requires override    
-    private Integer filterChannelId; // requires overrides
+    private Integer filterRepoId; // requires overrides
     private Integer filterResourceId; // requires overrides
     private Integer filterPackageTypeId; // requires overrides
     private String filterDisplayName;
@@ -27,7 +27,7 @@ public class PackageVersionCriteria extends Criteria {
     private boolean fetchGeneralPackage;
     private boolean fetchArchitecture;
     private boolean fetchExtraProperties;
-    private boolean fetchChannelPackageVersions;
+    private boolean fetchRepoPackageVersions;
     private boolean fetchInstalledPackages;
     private boolean fetchInstalledPackageHistory;
     private boolean fetchProductVersionPackageVersions;
@@ -37,10 +37,10 @@ public class PackageVersionCriteria extends Criteria {
     public PackageVersionCriteria() {
         super(PackageVersion.class);
 
-        filterOverrides.put("channelId", "id IN " //
+        filterOverrides.put("repoId", "id IN " //
             + "( SELECT cpv.packageVersion.id" //
-            + "    FROM pv.channelPackageVersions cpv " //
-            + "   WHERE cpv.channel.id = ? )");
+            + "    FROM pv.repoPackageVersions cpv " //
+            + "   WHERE cpv.repo.id = ? )");
         filterOverrides.put("fileSizeMinimum", "fileSize >= ?");
         filterOverrides.put("fileSizeMaximum", "fileSize <= ?");
         filterOverrides.put("packageId", "generalPackage.id = ? ");
@@ -55,12 +55,12 @@ public class PackageVersionCriteria extends Criteria {
         this.filterId = filterId;
     }
 
-    public void addFilterChannelId(Integer filterChannelId) {
-        this.filterChannelId = filterChannelId;
+    public void addFilterRepoId(Integer filterRepoId) {
+        this.filterRepoId = filterRepoId;
     }
 
-    public Integer getFilterChannelId() {
-        return filterChannelId;
+    public Integer getFilterRepoId() {
+        return filterRepoId;
     }
 
     public void addFilterResourceId(Integer filterResourceId) {
@@ -119,8 +119,8 @@ public class PackageVersionCriteria extends Criteria {
         this.fetchExtraProperties = fetchExtraProperties;
     }
 
-    public void fetchChannelPackageVersions(boolean fetchChannelPackageVersions) {
-        this.fetchChannelPackageVersions = fetchChannelPackageVersions;
+    public void fetchRepoPackageVersions(boolean fetchRepoPackageVersions) {
+        this.fetchRepoPackageVersions = fetchRepoPackageVersions;
     }
 
     /**

@@ -48,7 +48,7 @@ import org.hibernate.annotations.NamedQuery;
  * doesn't know if it was pulled down from a content source or pushed in from an agent discovery).
  *
  * <p>Regardless of how a package was created, it can be placed in one or more {@link Repo}s so resources can later
- * subscribe to those channels and install different versions of the package.
+ * subscribe to those repos and install different versions of the package.
  *
  * <p>
  * <p>A package can have one or more {@link PackageVersion}s associated with it. Package versions allow for things like

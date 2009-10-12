@@ -16,11 +16,11 @@ import java.util.List;
  * Discovery class
  * @author Greg Hinkle
  */
-public class IRCChannelDiscoveryComponent implements ResourceDiscoveryComponent<IRCServerComponent> {
+public class IRCRepoDiscoveryComponent implements ResourceDiscoveryComponent<IRCServerComponent> {
 
    private final Log log = LogFactory.getLog(this.getClass());
 
-    public static final String CONFIG_CHANNEL = "channelName";
+    public static final String CONFIG_CHANNEL = "repoName";
 
     /**
      * Run the discovery
@@ -32,13 +32,13 @@ public class IRCChannelDiscoveryComponent implements ResourceDiscoveryComponent<
         List<Configuration> contextPluginConfigurations = discoveryContext.getPluginConfigurations();
         for (Configuration config : contextPluginConfigurations) {
 
-            String channel = config.getSimple(CONFIG_CHANNEL).getStringValue();
+            String repo = config.getSimple(CONFIG_CHANNEL).getStringValue();
 
             DiscoveredResourceDetails details =
                     new DiscoveredResourceDetails(
                             discoveryContext.getResourceType(),
-                            channel,
-                            "Channel " + channel,
+                            repo,
+                            "Repo " + repo,
                             null, null,
                             config,
                             null

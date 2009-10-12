@@ -246,7 +246,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public PageList<ContentSource> getAvailableContentSourcesForChannel(Subject subject, Integer channelId,
+    public PageList<ContentSource> getAvailableContentSourcesForRepo(Subject subject, Integer repoId,
         PageControl pc) {
         pc.initDefaultOrderingField("cs.name");
 
@@ -255,8 +255,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         Query countQuery = PersistenceUtility.createCountQuery(entityManager,
             ContentSource.QUERY_FIND_AVAILABLE_BY_CHANNEL_ID);
 
-        query.setParameter("channelId", channelId);
-        countQuery.setParameter("channelId", channelId);
+        query.setParameter("repoId", repoId);
+        countQuery.setParameter("repoId", repoId);
 
         List<ContentSource> results = query.getResultList();
         long count = (Long) countQuery.getSingleResult();
@@ -304,7 +304,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public PageList<Repo> getAssociatedChannels(Subject subject, int contentSourceId, PageControl pc) {
+    public PageList<Repo> getAssociatedRepos(Subject subject, int contentSourceId, PageControl pc) {
         pc.initDefaultOrderingField("c.id");
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, Repo.QUERY_FIND_BY_CONTENT_SOURCE_ID,
@@ -829,11 +829,11 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             syncResults = contentSourceManager._mergeContentSourceSyncReportUPDATE(contentSource, report, previous,
                 syncResults, progress);
 
-            // if we added/updated/deleted anything, change the last modified time of all channels
+            // if we added/updated/deleted anything, change the last modified time of all repos
             // that get content from this content source
             if ((report.getNewPackages().size() > 0) || (report.getUpdatedPackages().size() > 0)
                 || (report.getDeletedPackages().size() > 0)) {
-                contentSourceManager._mergeContentSourceSyncReportUpdateChannel(contentSource.getId());
+                contentSourceManager._mergeContentSourceSyncReportUpdateRepo(contentSource.getId());
             }
 
             // let our sync results object know that we completed the merge
@@ -853,15 +853,15 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void _mergeContentSourceSyncReportUpdateChannel(int contentSourceId) {
+    public void _mergeContentSourceSyncReportUpdateRepo(int contentSourceId) {
         // this method should be called only after a merge of a content source
         // added/updated/removed one or more packages.  When this happens, we need to change
-        // the last modified time for all channels that get content from the changed content source
+        // the last modified time for all repos that get content from the changed content source
         long now = System.currentTimeMillis();
         ContentSource contentSource = entityManager.find(ContentSource.class, contentSourceId);
-        Set<RepoContentSource> ccss = contentSource.getChannelContentSources();
+        Set<RepoContentSource> ccss = contentSource.getRepoContentSources();
         for (RepoContentSource ccs : ccss) {
-            ccs.getChannelContentSourcePK().getChannel().setLastModifiedDate(now);
+            ccs.getRepoContentSourcePK().getRepo().setLastModifiedDate(now);
         }
 
         return;
@@ -894,7 +894,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
             // this is the package version itself that we want to remove
             // but only delete if there are no other content sources that also serve that PackageVersion
-            // or channels that are directly associated with this package version
+            // or repos that are directly associated with this package version
             PackageVersion doomedPv = doomedPvcs.getPackageVersionContentSourcePK().getPackageVersion();
             q = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_ID_IF_NO_CONTENT_SOURCES_OR_CHANNELS);
             q.setParameter("id", doomedPv.getId());
@@ -935,7 +935,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         Map<ResourceType, ResourceType> knownResourceTypes = new HashMap<ResourceType, ResourceType>();
         Map<PackageType, PackageType> knownPackageTypes = new HashMap<PackageType, PackageType>();
         Map<Architecture, Architecture> knownArchitectures = new HashMap<Architecture, Architecture>();
-        List<Repo> associatedChannels = null;
+        List<Repo> associatedRepos = null;
 
         Map<ResourceType, Map<String, ProductVersion>> knownProductVersions = new HashMap<ResourceType, Map<String, ProductVersion>>();
 
@@ -944,7 +944,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         // (both of which must exist, or we abort that package and move on to the next);
         // then find the package and architecture, creating them if they do not exist;
         // then create the new PV as well as the new PVCS mapping.
-        // if a channel is associated with the content source, the PV is directly associated with the channel.
+        // if a repo is associated with the content source, the PV is directly associated with the repo.
 
         for (ContentSourcePackageDetails newDetails : newPackages) {
             ContentSourcePackageDetailsKey key = newDetails.getContentSourcePackageDetailsKey();
@@ -1107,15 +1107,15 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                 .getLocation());
             newPvcs = entityManager.merge(newPvcs);
 
-            // for all channels that are associated with this content source, add this package version directly to them
-            if (associatedChannels == null) {
+            // for all repos that are associated with this content source, add this package version directly to them
+            if (associatedRepos == null) {
                 q = entityManager.createNamedQuery(Repo.QUERY_FIND_BY_CONTENT_SOURCE_ID_FETCH_CCS);
                 q.setParameter("id", contentSource.getId());
-                associatedChannels = q.getResultList();
+                associatedRepos = q.getResultList();
             }
 
-            for (Repo associatedChannel : associatedChannels) {
-                RepoPackageVersion mapping = new RepoPackageVersion(associatedChannel, pv);
+            for (Repo associatedRepo : associatedRepos) {
+                RepoPackageVersion mapping = new RepoPackageVersion(associatedRepo, pv);
                 entityManager.merge(mapping); // use merge just in case this mapping somehow already exists
             }
 
@@ -1123,7 +1123,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                 knownResourceTypes.clear();
                 knownPackageTypes.clear();
                 knownArchitectures.clear();
-                associatedChannels = null;
+                associatedRepos = null;
                 knownProductVersions.clear();
                 entityManager.flush();
                 entityManager.clear();
@@ -1316,7 +1316,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
         // TODO: Should we make sure the resource is subscribed/allowed to receive the the package version?
         //       Or should we not bother to perform this check?  if the caller knows the PV ID, it
-        //       probably already got it through its channels
+        //       probably already got it through its repos
 
         Query query = entityManager.createNamedQuery(PackageBits.QUERY_PACKAGE_BITS_LOADED_STATUS_PACKAGE_VERSION_ID);
         query.setParameter("id", packageVersionId);
@@ -1351,7 +1351,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             }
             // if we got here, the package bits have not been downloaded yet.  This eliminates the
             // possibility that the package version were directly uploaded by a user
-            // or auto-discovered by a resource and attached to a channel. So, that leaves
+            // or auto-discovered by a resource and attached to a repo. So, that leaves
             // the only possibility - the package version comes from a content source and therefore has
             // a PackageVersionContentSource mapping.  Let's find that mapping.
             Query q2 = entityManager.createNamedQuery(PackageVersionContentSource.QUERY_FIND_BY_PKG_VER_ID_AND_RES_ID);
@@ -1360,7 +1360,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             List<PackageVersionContentSource> pvcss = q2.getResultList();
 
             // Note that its possible more than one content source can deliver a PV - if a resource is subscribed
-            // to channel(s) that contain multiple content sources that can deliver a PV, we just take
+            // to repo(s) that contain multiple content sources that can deliver a PV, we just take
             // the first one we find.
 
             if (pvcss.size() == 0) {

@@ -68,14 +68,14 @@ import org.rhq.core.domain.configuration.Configuration;
     @NamedQuery(name = ContentSource.QUERY_FIND_BY_ID_WITH_CONFIG, query = "SELECT cs " + "  FROM ContentSource cs "
         + "       LEFT JOIN FETCH cs.configuration" + " WHERE cs.id = :id "),
     @NamedQuery(name = ContentSource.QUERY_FIND_BY_CHANNEL_ID, // do not do a fetch join here
-    query = "SELECT cs FROM ContentSource cs LEFT JOIN cs.channelContentSources ccs WHERE ccs.channel.id = :id"),
+    query = "SELECT cs FROM ContentSource cs LEFT JOIN cs.repoContentSources ccs WHERE ccs.repo.id = :id"),
     @NamedQuery(name = ContentSource.QUERY_FIND_AVAILABLE_BY_CHANNEL_ID, //
     query = "SELECT cs " //  
         + "    FROM ContentSource AS cs " // 
         + "   WHERE cs.id NOT IN " //
         + "       ( SELECT ccs.contentSource.id " // 
         + "           FROM RepoContentSource ccs " //
-        + "          WHERE ccs.channel.id = :channelId ) ") })
+        + "          WHERE ccs.repo.id = :repoId ) ") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CONTENT_SOURCE_ID_SEQ")
 @Table(name = "RHQ_CONTENT_SOURCE")
 public class ContentSource implements Serializable {
@@ -83,8 +83,8 @@ public class ContentSource implements Serializable {
     public static final String QUERY_FIND_ALL_WITH_CONFIG = "ContentSource.findAllWithConfig";
     public static final String QUERY_FIND_BY_NAME_AND_TYPENAME = "ContentSource.findByNameAndTypeName";
     public static final String QUERY_FIND_BY_ID_WITH_CONFIG = "ContentSource.findByIdWithConfig";
-    public static final String QUERY_FIND_BY_CHANNEL_ID = "ContentSource.findByChannelId";
-    public static final String QUERY_FIND_AVAILABLE_BY_CHANNEL_ID = "ContentSource.findAvailableByChannelId";
+    public static final String QUERY_FIND_BY_CHANNEL_ID = "ContentSource.findByRepoId";
+    public static final String QUERY_FIND_AVAILABLE_BY_CHANNEL_ID = "ContentSource.findAvailableByRepoId";
 
     // Constants  --------------------------------------------
 
@@ -171,7 +171,7 @@ public class ContentSource implements Serializable {
     }
 
     /**
-     * User defined programmatic name of this channel source. This name should not contain spaces or special characters.
+     * User defined programmatic name of this repo source. This name should not contain spaces or special characters.
      */
     public String getName() {
         return name;
@@ -318,22 +318,22 @@ public class ContentSource implements Serializable {
      *
      * @see    #getContentSources()
      */
-    public Set<RepoContentSource> getChannelContentSources() {
+    public Set<RepoContentSource> getRepoContentSources() {
         return repoContentSources;
     }
 
     /**
-     * The channels that this content source provides content to.
+     * The repos that this content source provides content to.
      *
-     * <p>The returned set is not backed by this entity - if you want to alter the set of associated channels, use
-     * {@link #getChannelContentSources()} or {@link #addChannel(Repo)}, {@link #removeChannel(Repo)}.</p>
+     * <p>The returned set is not backed by this entity - if you want to alter the set of associated repos, use
+     * {@link #getRepoContentSources()} or {@link #addRepo(Repo)}, {@link #removeRepo(Repo)}.</p>
      */
-    public Set<Repo> getChannels() {
+    public Set<Repo> getRepos() {
         HashSet<Repo> repos = new HashSet<Repo>();
 
         if (repoContentSources != null) {
             for (RepoContentSource ccs : repoContentSources) {
-                repos.add(ccs.getChannelContentSourcePK().getChannel());
+                repos.add(ccs.getRepoContentSourcePK().getRepo());
             }
         }
 
@@ -341,13 +341,13 @@ public class ContentSource implements Serializable {
     }
 
     /**
-     * Directly assign a channel to this content source.
+     * Directly assign a repo to this content source.
      *
      * @param  repo
      *
      * @return the mapping that was added
      */
-    public RepoContentSource addChannel(Repo repo) {
+    public RepoContentSource addRepo(Repo repo) {
         if (this.repoContentSources == null) {
             this.repoContentSources = new HashSet<RepoContentSource>();
         }
@@ -359,15 +359,15 @@ public class ContentSource implements Serializable {
     }
 
     /**
-     * Removes the channel from this content source, if it exists. If it does exist, the mapping that was removed is
-     * returned; if the given channel did not exist as one that this content source is a member of, <code>null</code> is
+     * Removes the repo from this content source, if it exists. If it does exist, the mapping that was removed is
+     * returned; if the given repo did not exist as one that this content source is a member of, <code>null</code> is
      * returned.
      *
-     * @param  repo the channel to remove from this content source
+     * @param  repo the repo to remove from this content source
      *
-     * @return the mapping that was removed or <code>null</code> if the channel was not mapped to this content source
+     * @return the mapping that was removed or <code>null</code> if the repo was not mapped to this content source
      */
-    public RepoContentSource removeChannel(Repo repo) {
+    public RepoContentSource removeRepo(Repo repo) {
         if ((this.repoContentSources == null) || (repo == null)) {
             return null;
         }
@@ -375,7 +375,7 @@ public class ContentSource implements Serializable {
         RepoContentSource doomed = null;
 
         for (RepoContentSource ccs : this.repoContentSources) {
-            if (repo.equals(ccs.getChannelContentSourcePK().getChannel())) {
+            if (repo.equals(ccs.getRepoContentSourcePK().getRepo())) {
                 doomed = ccs;
                 repo.removeContentSource(this);
                 break;

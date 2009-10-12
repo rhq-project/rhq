@@ -101,7 +101,7 @@
    </tr>
    <tr>
       <td width="20%" class="BlockLabel"></td>
-      <td width="30%" class="BlockContent"><html:link page="/rhq/content/listChannels.xhtml"><fmt:message key="admin.home.Content.ListChannels"/></html:link></td>
+      <td width="30%" class="BlockContent"><html:link page="/rhq/content/listRepos.xhtml"><fmt:message key="admin.home.Content.ListRepos"/></html:link></td>
    </tr>
 </table>
 <!--  /  -->

@@ -16,7 +16,7 @@
    <property name="AlertDefinitionManager" value="org.rhq.enterprise.server.alert.AlertDefinitionManagerBean" />
    <property name="AvailabilityManager" value="org.rhq.enterprise.server.measurement.AvailabilityManagerBean" />
    <property name="CallTimeDataManager" value="org.rhq.enterprise.server.measurement.CallTimeDataManagerBean" />
-   <property name="ChannelManager" value="org.rhq.enterprise.server.content.ChannelManagerBean" />
+   <property name="RepoManager" value="org.rhq.enterprise.server.content.RepoManagerBean" />
    <property name="ConfigurationManager" value="org.rhq.enterprise.server.configuration.ConfigurationManagerBean" />
    <property name="ContentManager" value="org.rhq.enterprise.server.content.ContentManagerBean" />
    <property name="DataAccessManager" value="org.rhq.enterprise.server.report.DataAccessManagerBean" />
@@ -38,7 +38,7 @@
    <!-- List of all the simple bean names(Alert for AlertManagerBean, etc.) in alphabetical order. List used by wsprovide/wsconsume -->
    <!-- <property name="ws-list" value="Subject,Role" /> -->
    <property name="ws-list" value="Webservices" />
-   <!-- <property name="ws-list" value="Alert,AlertDefinition,Availability,CallTimeData,Channel,Configuration,Content,DataAccess,Event,MeasurementBaseline,MeasurementData,MeasurementDefinition,MeasurementProblem,MeasurementSchedule,Operation,Resource,ResourceGroup,Role,Subject,Support,System" /> -->
+   <!-- <property name="ws-list" value="Alert,AlertDefinition,Availability,CallTimeData,Repo,Configuration,Content,DataAccess,Event,MeasurementBaseline,MeasurementData,MeasurementDefinition,MeasurementProblem,MeasurementSchedule,Operation,Resource,ResourceGroup,Role,Subject,Support,System" /> -->
 
    <target name="prepare-dist">
       <condition property="exclude.cli.jar" value="true">

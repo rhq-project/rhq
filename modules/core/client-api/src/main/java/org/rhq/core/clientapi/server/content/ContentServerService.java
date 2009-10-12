@@ -173,7 +173,7 @@ public interface ContentServerService {
      * MD5 hashcode of the metadata for the resource to aid in determining when a cache of metadata is stale.</p>
      *
      * @param  resourceId identifies the resource requesting the data; all package versions in all the resource's
-     *                    subscribed channels will be represented in the returned map
+     *                    subscribed repos will be represented in the returned map
      * @param  pc         this method can potentially return a large set; this page control object allows the caller to
      *                    page through that large set, as opposed to requesting the entire set in one large chunk
      *
@@ -183,11 +183,11 @@ public interface ContentServerService {
     PageList<PackageVersionMetadataComposite> getPackageVersionMetadata(int resourceId, PageControl pc);
 
     /**
-     * Gets the MD5 hash of the resource's "content subscription". If any changes were made to the channels this
+     * Gets the MD5 hash of the resource's "content subscription". If any changes were made to the repos this
      * resource is subscribed to, a changed MD5 will be returned.
      *
      * @param  resourceId identifies the resource requesting the MD5; if any change to any package version in any
-     *                    resource's subscribed channels will be used when generating the MD5
+     *                    resource's subscribed repos will be used when generating the MD5
      *
      * @return the MD5 of all package versions' metadata
      *

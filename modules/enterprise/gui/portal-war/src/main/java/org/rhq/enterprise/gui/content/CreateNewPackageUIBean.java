@@ -39,14 +39,14 @@ import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
-import org.rhq.core.domain.content.composite.ChannelComposite;
+import org.rhq.core.domain.content.composite.RepoComposite;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCreationDataType;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.server.content.ChannelManagerLocal;
+import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.content.ContentException;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.ContentUIManagerLocal;
@@ -60,19 +60,19 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class CreateNewPackageUIBean {
 
     /**
-     * Option value for deploying the package to a channel the resource is already subscribed to.
+     * Option value for deploying the package to a repo the resource is already subscribed to.
      */
     private static final String CHANNEL_OPTION_SUBSCRIBED = "subscribed";
 
     /**
-     * Option value for deploying the package to a channel the resource is not subscribed to, as well as automatically
-     * subscribing the resource to that channel.
+     * Option value for deploying the package to a repo the resource is not subscribed to, as well as automatically
+     * subscribing the resource to that repo.
      */
     private static final String CHANNEL_OPTION_UNSUBSCRIBED = "unsubscribed";
 
     /**
-     * Option value for creating a new channel, subscribing the resource to it, and deploying the package to that
-     * channel.
+     * Option value for creating a new repo, subscribing the resource to it, and deploying the package to that
+     * repo.
      */
     private static final String CHANNEL_OPTION_NEW = "new";
 
@@ -82,21 +82,21 @@ public class CreateNewPackageUIBean {
     private int selectedPackageTypeId;
 
     /**
-     * If the user selects to add the package to an existing channel that the resource is already subscribed to,
-     * this will be populated with that channel ID.
+     * If the user selects to add the package to an existing repo that the resource is already subscribed to,
+     * this will be populated with that repo ID.
      */
-    private String subscribedChannelId;
+    private String subscribedRepoId;
 
     /**
-     * If the user selects to add the package to an existing channel taht the resource is not already subscribed to,
-     * this will be populated with that channel ID.
+     * If the user selects to add the package to an existing repo taht the resource is not already subscribed to,
+     * this will be populated with that repo ID.
      */
-    private String unsubscribedChannelId;
+    private String unsubscribedRepoId;
 
     /**
-     * If the user selects to add the package to a new channel, this will be populated with the new channel's name.
+     * If the user selects to add the package to a new repo, this will be populated with the new repo's name.
      */
-    private String newChannelName;
+    private String newRepoName;
 
     /**
      * Type of resource against which the package is being created. This is loaded from information in the request
@@ -147,7 +147,7 @@ public class CreateNewPackageUIBean {
         HttpServletRequest request = FacesContextUtility.getRequest();
         UploadNewPackageUIBean uploadUIBean = FacesContextUtility.getManagedBean(UploadNewPackageUIBean.class);
 
-        String channelOption = request.getParameter("channelOption");
+        String repoOption = request.getParameter("repoOption");
         UploadItem fileItem = uploadUIBean.getFileItem();
 
         // Validate
@@ -161,15 +161,15 @@ public class CreateNewPackageUIBean {
             return null;
         }
 
-        if (channelOption == null) {
+        if (repoOption == null) {
             FacesContextUtility
-                .addMessage(FacesMessage.SEVERITY_ERROR, "A channel deployment option must be specified");
+                .addMessage(FacesMessage.SEVERITY_ERROR, "A repo deployment option must be specified");
             return null;
         }
 
-        if (channelOption.equals(CHANNEL_OPTION_NEW) && (newChannelName == null || newChannelName.trim().equals(""))) {
+        if (repoOption.equals(CHANNEL_OPTION_NEW) && (newRepoName == null || newRepoName.trim().equals(""))) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
-                "When creating a new channel, the name of the channel to be created must be specified");
+                "When creating a new repo, the name of the repo to be created must be specified");
             return null;
         }
 
@@ -178,13 +178,13 @@ public class CreateNewPackageUIBean {
             return null;
         }
 
-        // Determine which channel the package will go into
-        String channelId = null;
+        // Determine which repo the package will go into
+        String repoId = null;
         try {
-            channelId = determineChannel(channelOption, subject, resource.getId());
+            repoId = determineRepo(repoOption, subject, resource.getId());
         } catch (ContentException ce) {
             String errorMessages = ThrowableUtil.getAllMessages(ce);
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to determine channel. Cause: "
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to determine repo. Cause: "
                 + errorMessages);
             return "failure";
         }
@@ -206,7 +206,7 @@ public class CreateNewPackageUIBean {
             // Ask the bean to create the package
 
             /* Currently, this is just used in the workflow for deploying a new package. This will probably get
-               refactored in the future for a general way of adding packages to the channel as its own operation. For
+               refactored in the future for a general way of adding packages to the repo as its own operation. For
                now, don't worry about that. The rest of this will be written assuming it's part of the deploy
                workflow and we'll deal with the refactoring later.
                jdobies, Feb 27, 2008
@@ -219,22 +219,22 @@ public class CreateNewPackageUIBean {
             } catch (Exception e) {
                 String errorMessages = ThrowableUtil.getAllMessages(e);
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to create package [" + packageName
-                    + "] in channel. Cause: " + errorMessages);
+                    + "] in repo. Cause: " + errorMessages);
                 return "failure";
             }
 
             int[] packageVersionList = new int[] { packageVersion.getId() };
 
-            // Add the package to the channel
+            // Add the package to the repo
             try {
-                int iChannelId = Integer.parseInt(channelId);
+                int iRepoId = Integer.parseInt(repoId);
 
-                ChannelManagerLocal channelManager = LookupUtil.getChannelManagerLocal();
-                channelManager.addPackageVersionsToChannel(subject, iChannelId, packageVersionList);
+                RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
+                repoManager.addPackageVersionsToRepo(subject, iRepoId, packageVersionList);
             } catch (Exception e) {
                 String errorMessages = ThrowableUtil.getAllMessages(e);
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to associate package ["
-                    + packageName + "] with channel ID [" + channelId + "]. Cause: " + errorMessages);
+                    + packageName + "] with repo ID [" + repoId + "]. Cause: " + errorMessages);
                 return "failure";
             }
 
@@ -306,16 +306,16 @@ public class CreateNewPackageUIBean {
         return items;
     }
 
-    public SelectItem[] getSubscribedChannels() {
+    public SelectItem[] getSubscribedRepos() {
         Resource resource = EnterpriseFacesContextUtility.getResource();
 
-        ChannelManagerLocal channelManager = LookupUtil.getChannelManagerLocal();
-        List<ChannelComposite> channels = channelManager.findResourceSubscriptions(resource.getId());
+        RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
+        List<RepoComposite> repos = repoManager.findResourceSubscriptions(resource.getId());
 
-        SelectItem[] items = new SelectItem[channels.size()];
+        SelectItem[] items = new SelectItem[repos.size()];
         int itemCounter = 0;
-        for (ChannelComposite channelComposite : channels) {
-            Repo repo = channelComposite.getChannel();
+        for (RepoComposite repoComposite : repos) {
+            Repo repo = repoComposite.getRepo();
             SelectItem item = new SelectItem(repo.getId(), repo.getName());
             items[itemCounter++] = item;
         }
@@ -323,16 +323,16 @@ public class CreateNewPackageUIBean {
         return items;
     }
 
-    public SelectItem[] getUnsubscribedChannels() {
+    public SelectItem[] getUnsubscribedRepos() {
         Resource resource = EnterpriseFacesContextUtility.getResource();
 
-        ChannelManagerLocal channelManager = LookupUtil.getChannelManagerLocal();
-        List<ChannelComposite> channels = channelManager.findAvailableResourceSubscriptions(resource.getId());
+        RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
+        List<RepoComposite> repos = repoManager.findAvailableResourceSubscriptions(resource.getId());
 
-        SelectItem[] items = new SelectItem[channels.size()];
+        SelectItem[] items = new SelectItem[repos.size()];
         int itemCounter = 0;
-        for (ChannelComposite channelComposite : channels) {
-            Repo repo = channelComposite.getChannel();
+        for (RepoComposite repoComposite : repos) {
+            Repo repo = repoComposite.getRepo();
             SelectItem item = new SelectItem(repo.getId(), repo.getName());
             items[itemCounter++] = item;
         }
@@ -425,62 +425,62 @@ public class CreateNewPackageUIBean {
         this.selectedPackageTypeId = selectedPackageTypeId;
     }
 
-    public String getSubscribedChannelId() {
-        return subscribedChannelId;
+    public String getSubscribedRepoId() {
+        return subscribedRepoId;
     }
 
-    public void setSubscribedChannelId(String subscribedChannelId) {
-        this.subscribedChannelId = subscribedChannelId;
+    public void setSubscribedRepoId(String subscribedRepoId) {
+        this.subscribedRepoId = subscribedRepoId;
     }
 
-    public String getUnsubscribedChannelId() {
-        return unsubscribedChannelId;
+    public String getUnsubscribedRepoId() {
+        return unsubscribedRepoId;
     }
 
-    public void setUnsubscribedChannelId(String unsubscribedChannelId) {
-        this.unsubscribedChannelId = unsubscribedChannelId;
+    public void setUnsubscribedRepoId(String unsubscribedRepoId) {
+        this.unsubscribedRepoId = unsubscribedRepoId;
     }
 
-    public String getNewChannelName() {
-        return newChannelName;
+    public String getNewRepoName() {
+        return newRepoName;
     }
 
-    public void setNewChannelName(String newChannelName) {
-        this.newChannelName = newChannelName;
+    public void setNewRepoName(String newRepoName) {
+        this.newRepoName = newRepoName;
     }
 
-    private String determineChannel(String channelOption, Subject subject, int resourceId) throws ContentException {
-        String channelId = null;
+    private String determineRepo(String repoOption, Subject subject, int resourceId) throws ContentException {
+        String repoId = null;
 
-        if (channelOption.equals(CHANNEL_OPTION_SUBSCRIBED)) {
-            channelId = subscribedChannelId;
-        } else if (channelOption.equals(CHANNEL_OPTION_UNSUBSCRIBED)) {
-            channelId = unsubscribedChannelId;
-            int iChannelId = Integer.parseInt(channelId);
+        if (repoOption.equals(CHANNEL_OPTION_SUBSCRIBED)) {
+            repoId = subscribedRepoId;
+        } else if (repoOption.equals(CHANNEL_OPTION_UNSUBSCRIBED)) {
+            repoId = unsubscribedRepoId;
+            int iRepoId = Integer.parseInt(repoId);
 
-            ChannelManagerLocal channelManager = LookupUtil.getChannelManagerLocal();
-            channelManager.subscribeResourceToChannels(subject, resourceId, new int[] { iChannelId });
+            RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
+            repoManager.subscribeResourceToRepos(subject, resourceId, new int[] { iRepoId });
 
-            // Change the subscribedChannelId so if we fall back to the page with a different error,
-            // the drop down for selecting an existing subscribed channel will be populated with this
-            // new channel
-            subscribedChannelId = channelId;
-        } else if (channelOption.equals(CHANNEL_OPTION_NEW)) {
-            ChannelManagerLocal channelManager = LookupUtil.getChannelManagerLocal();
+            // Change the subscribedRepoId so if we fall back to the page with a different error,
+            // the drop down for selecting an existing subscribed repo will be populated with this
+            // new repo
+            subscribedRepoId = repoId;
+        } else if (repoOption.equals(CHANNEL_OPTION_NEW)) {
+            RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
 
-            Repo newChannel = new Repo(newChannelName);
-            newChannel = channelManager.createChannel(subject, newChannel);
+            Repo newRepo = new Repo(newRepoName);
+            newRepo = repoManager.createRepo(subject, newRepo);
 
-            channelId = Integer.toString(newChannel.getId());
+            repoId = Integer.toString(newRepo.getId());
 
-            channelManager.subscribeResourceToChannels(subject, resourceId, new int[] { newChannel.getId() });
+            repoManager.subscribeResourceToRepos(subject, resourceId, new int[] { newRepo.getId() });
 
-            // Change the subscribedChannelId so if we fall back to the page with a different error,
-            // the drop down for selecting an existing subscribed channel will be populated with this
-            // new channel
-            subscribedChannelId = channelId;
+            // Change the subscribedRepoId so if we fall back to the page with a different error,
+            // the drop down for selecting an existing subscribed repo will be populated with this
+            // new repo
+            subscribedRepoId = repoId;
         }
 
-        return channelId;
+        return repoId;
     }
 }

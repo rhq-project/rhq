@@ -118,7 +118,7 @@ public interface ContentServices {
     PageList<PackageVersionMetadataComposite> getPackageVersionMetadata(ContentContext context, PageControl pc);
 
     /**
-     * Gets the MD5 hash which identifies a resource "content subscription". This MD5 hash will change when any channel
+     * Gets the MD5 hash which identifies a resource "content subscription". This MD5 hash will change when any repo
      * the resource is subscribed to has changed its contents (that is, if a package version was added/updated/removed
      * from it).
      *

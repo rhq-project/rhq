@@ -91,10 +91,10 @@ public class NavigationResourceMapping {
         JMSQueueTypeNames.add("JBoss 3.2 JMS Queue");
         navNodesToResources.put("resource.navigation.jboss.JMSQueues", JMSQueueTypeNames);
 
-        ArrayList jgroupsChannelTypeNames = new ArrayList();
-        jgroupsChannelTypeNames.add("JBoss 4.0 JGroups Repo");
-        jgroupsChannelTypeNames.add("JBoss 3.2 JGroups Repo");
-        navNodesToResources.put("resource.navigation.jboss.JGroupsChannels", jgroupsChannelTypeNames);
+        ArrayList jgroupsRepoTypeNames = new ArrayList();
+        jgroupsRepoTypeNames.add("JBoss 4.0 JGroups Repo");
+        jgroupsRepoTypeNames.add("JBoss 3.2 JGroups Repo");
+        navNodesToResources.put("resource.navigation.jboss.JGroupsRepos", jgroupsRepoTypeNames);
 
         // Tomcat related servers and services
         ArrayList tomcatServerTypeNames = new ArrayList();

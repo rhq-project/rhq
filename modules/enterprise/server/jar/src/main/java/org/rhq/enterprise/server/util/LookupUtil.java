@@ -75,8 +75,8 @@ import org.rhq.enterprise.server.configuration.ConfigurationManagerBean;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.configuration.metadata.ConfigurationMetadataManagerBean;
 import org.rhq.enterprise.server.configuration.metadata.ConfigurationMetadataManagerLocal;
-import org.rhq.enterprise.server.content.ChannelManagerBean;
-import org.rhq.enterprise.server.content.ChannelManagerLocal;
+import org.rhq.enterprise.server.content.RepoManagerBean;
+import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.content.ContentManagerBean;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.ContentSourceManagerBean;
@@ -407,8 +407,8 @@ public final class LookupUtil {
         return lookupLocal(ContentSourceManagerBean.class);
     }
 
-    public static ChannelManagerLocal getChannelManagerLocal() {
-        return lookupLocal(ChannelManagerBean.class);
+    public static RepoManagerLocal getRepoManagerLocal() {
+        return lookupLocal(RepoManagerBean.class);
     }
 
     public static AffinityGroupManagerLocal getAffinityGroupManager() {

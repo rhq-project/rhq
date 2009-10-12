@@ -58,11 +58,11 @@ public class RepoContentSourcePK implements Serializable {
         this.contentSource = contentSource;
     }
 
-    public Repo getChannel() {
+    public Repo getRepo() {
         return repo;
     }
 
-    public void setChannel(Repo repo) {
+    public void setRepo(Repo repo) {
         this.repo = repo;
     }
 

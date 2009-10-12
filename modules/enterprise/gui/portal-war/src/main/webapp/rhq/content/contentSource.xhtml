@@ -179,22 +179,22 @@
 
       <!-- CHANNELS LIST -->
 
-      <h:form id="contentSourceChannelsListForm">
+      <h:form id="contentSourceReposListForm">
          <input type="hidden" name="id" value="${param.id}"/>
          <input type="hidden" name="mode" value="${param.mode}"/>
       
          <rich:panel>
             <f:facet name="header">
-               <h:outputText value="Channels Associated With This Content Source"/>
+               <h:outputText value="Repos Associated With This Content Source"/>
             </f:facet>
 
             <h:panelGrid columns="1" width="100%">
 
-            <ui:param name="contentSourceChannelsDataModel" value="#{ContentSourceChannelsUIBean.dataModel}"/>
-            <rich:dataTable id="contentSourceChannelsDataTable"
-                            rows="#{PageControl.ContentSourceChannelsList.pageSize}"
-                            value="#{contentSourceChannelsDataModel}"
-                            var="channelitem"
+            <ui:param name="contentSourceReposDataModel" value="#{ContentSourceReposUIBean.dataModel}"/>
+            <rich:dataTable id="contentSourceReposDataTable"
+                            rows="#{PageControl.ContentSourceReposList.pageSize}"
+                            value="#{contentSourceReposDataModel}"
+                            var="repoitem"
                             width="100%"
                             columnsWidth="1%, 20%, 20%, 20%"
                             headerClass="tableRowHeader"
@@ -204,15 +204,15 @@
 
 
                <f:facet name="PageControlView">
-                  <onc:paginationControl id="ContentSourceChannelsList" />
+                  <onc:paginationControl id="ContentSourceReposList" />
                </f:facet>
       
                <rich:column>
                   <f:facet name="header">
-                     <onc:allSelect target="selectedContentSourceChannels" />
+                     <onc:allSelect target="selectedContentSourceRepos" />
                   </f:facet>
                   
-                  <onc:select name="selectedContentSourceChannels" value="#{channelitem.id}" />
+                  <onc:select name="selectedContentSourceRepos" value="#{repoitem.id}" />
                </rich:column>
 
                <rich:column rendered="#{param.debug}">
@@ -222,7 +222,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
                   
-                  <h:outputText value="#{channelitem.id}"/>
+                  <h:outputText value="#{repoitem.id}"/>
                </rich:column>
 
                <rich:column>
@@ -232,10 +232,10 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
                
-                  <h:outputLink value="channel.xhtml">
+                  <h:outputLink value="repo.xhtml">
                      <f:param name="mode" value="view"/>
-                     <f:param name="id" value="#{channelitem.id}"/>
-                     <h:outputText value="#{channelitem.name}" />
+                     <f:param name="id" value="#{repoitem.id}"/>
+                     <h:outputText value="#{repoitem.name}" />
                   </h:outputLink>
                </rich:column>
                
@@ -246,7 +246,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
                
-                  <h:outputText value="#{channelitem.creationDate}">
+                  <h:outputText value="#{repoitem.creationDate}">
                      <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
                   </h:outputText>
                </rich:column>
@@ -258,7 +258,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
                
-                  <h:outputText value="#{channelitem.lastModifiedDate}">
+                  <h:outputText value="#{repoitem.lastModifiedDate}">
                      <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
                   </h:outputText>
                </rich:column>
@@ -270,19 +270,19 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
                
-                  <h:outputText value="#{channelitem.description}"/>
+                  <h:outputText value="#{repoitem.description}"/>
                </rich:column>
 
                <f:facet name="footer">
                   <rich:columnGroup>
                      <!-- colspan 6:5 for the debug 'id' column -->
                      <rich:column colspan="#{param.debug ? 6 : 5}" width="100%">
-                        <onc:selectCommandButton action="#{ContentSourceChannelsUIBean.deleteSelectedContentSourceChannels}"
-                                                 value="DISASSOCIATE SELECTED" target="selectedContentSourceChannels" styleClass="on-pager-button buttonsmall"/>
+                        <onc:selectCommandButton action="#{ContentSourceReposUIBean.deleteSelectedContentSourceRepos}"
+                                                 value="DISASSOCIATE SELECTED" target="selectedContentSourceRepos" styleClass="on-pager-button buttonsmall"/>
 
-                        <ui:param name="paginationDataTableName" value="contentSourceChannelsDataTable"/>
-                        <ui:param name="paginationDataModel" value="#{contentSourceChannelsDataModel}"/>
-                        <ui:param name="paginationPageControl" value="#{PageControl.ContentSourceChannelsList}"/>
+                        <ui:param name="paginationDataTableName" value="contentSourceReposDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{contentSourceReposDataModel}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.ContentSourceReposList}"/>
                         <ui:include src="../resource/include/pagination.xhtml"/>
                      </rich:column>
                   </rich:columnGroup>

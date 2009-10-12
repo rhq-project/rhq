@@ -27,11 +27,11 @@ import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 
 /**
- * Resource component that deals with JGroups channels
+ * Resource component that deals with JGroups repos
  *
  * @author Heiko W. Rupp
  */
-public class JGroupsChannelComponent implements ResourceComponent<JBossCacheComponent> {
+public class JGroupsRepoComponent implements ResourceComponent<JBossCacheComponent> {
 
     ResourceContext<JBossCacheComponent> context;
 

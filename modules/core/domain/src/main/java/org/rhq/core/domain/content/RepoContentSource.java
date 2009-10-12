@@ -44,11 +44,11 @@ import javax.persistence.Table;
 @IdClass(RepoContentSourcePK.class)
 @NamedQueries( {
     @NamedQuery(name = RepoContentSource.DELETE_BY_CONTENT_SOURCE_ID, query = "DELETE RepoContentSource ccs WHERE ccs.contentSource.id = :contentSourceId"),
-    @NamedQuery(name = RepoContentSource.DELETE_BY_CHANNEL_ID, query = "DELETE RepoContentSource ccs WHERE ccs.channel.id = :channelId") })
+    @NamedQuery(name = RepoContentSource.DELETE_BY_CHANNEL_ID, query = "DELETE RepoContentSource ccs WHERE ccs.repo.id = :repoId") })
 @Table(name = "RHQ_CHANNEL_CONTENT_SRC_MAP")
 public class RepoContentSource implements Serializable {
     public static final String DELETE_BY_CONTENT_SOURCE_ID = "RepoContentSource.deleteByContentSourceId";
-    public static final String DELETE_BY_CHANNEL_ID = "RepoContentSource.deleteByChannelId";
+    public static final String DELETE_BY_CHANNEL_ID = "RepoContentSource.deleteByRepoId";
 
     private static final long serialVersionUID = 1L;
 
@@ -78,12 +78,12 @@ public class RepoContentSource implements Serializable {
         this.contentSource = contentSource;
     }
 
-    public RepoContentSourcePK getChannelContentSourcePK() {
+    public RepoContentSourcePK getRepoContentSourcePK() {
         return new RepoContentSourcePK(repo, contentSource);
     }
 
-    public void setChannelContentSourcePK(RepoContentSourcePK pk) {
-        this.repo = pk.getChannel();
+    public void setRepoContentSourcePK(RepoContentSourcePK pk) {
+        this.repo = pk.getRepo();
         this.contentSource = pk.getContentSource();
     }
 

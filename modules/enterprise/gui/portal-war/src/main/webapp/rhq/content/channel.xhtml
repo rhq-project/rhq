@@ -19,15 +19,15 @@
 
    <ui:param name="id" value="${param.id}" />
    <ui:param name="mode" value="${param.mode}" />
-   <ui:param name="pageTitle" value="Channel '#{ChannelDetailsUIBean.channel.name}'"/>
-   <ui:param name="item" value="#{ChannelDetailsUIBean.channel}" />
+   <ui:param name="pageTitle" value="Repo '#{RepoDetailsUIBean.repo.name}'"/>
+   <ui:param name="item" value="#{RepoDetailsUIBean.repo}" />
    
    <ui:define name="breadcrumbs">
-      <h:outputLink value="listChannels.xhtml">
-         ${msg["channel.list.breadcrumb"]}
+      <h:outputLink value="listRepos.xhtml">
+         ${msg["repo.list.breadcrumb"]}
       </h:outputLink>
       &gt;
-      <h:outputLink value="channel.xhtml">
+      <h:outputLink value="repo.xhtml">
          #{item.name}
          <f:param name="mode" value="view" />
          <f:param name="id" value="#{item.id}" />
@@ -46,7 +46,7 @@
                layout="table"
                width="100%"/>
 
-      <h:form id="channelDetailsForm">
+      <h:form id="repoDetailsForm">
          <input type="hidden" name="id" value="${param.id}"/>
          <input type="hidden" name="mode" value="${param.mode}"/>
             
@@ -56,21 +56,21 @@
                <tr>
                   <td align="right"><b>Name:</b></td>
                   <td align="left">
-                     <h:inputText  rendered="${mode eq 'edit'}" value="#{ChannelDetailsUIBean.channel.name}" />
-                     <h:outputText rendered="${mode ne 'edit'}" value="#{ChannelDetailsUIBean.channel.name}" />
+                     <h:inputText  rendered="${mode eq 'edit'}" value="#{RepoDetailsUIBean.repo.name}" />
+                     <h:outputText rendered="${mode ne 'edit'}" value="#{RepoDetailsUIBean.repo.name}" />
                   </td>
                </tr>
                <tr>
                   <td align="right"><b>Description:</b></td>
                   <td align="left">
-                     <h:inputTextarea rendered="${mode eq 'edit'}" rows="3" cols="20" value="#{ChannelDetailsUIBean.channel.description}"/>
-                     <h:outputText    rendered="${mode ne 'edit'}" value="#{ChannelDetailsUIBean.channel.description}"/>
+                     <h:inputTextarea rendered="${mode eq 'edit'}" rows="3" cols="20" value="#{RepoDetailsUIBean.repo.description}"/>
+                     <h:outputText    rendered="${mode ne 'edit'}" value="#{RepoDetailsUIBean.repo.description}"/>
                   </td>
                </tr>
                <tr>
                   <td align="right"><b>Creation Date:</b></td>
                   <td align="left">
-                     <h:outputText value="#{ChannelDetailsUIBean.channel.creationDate}">
+                     <h:outputText value="#{RepoDetailsUIBean.repo.creationDate}">
                         <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
                      </h:outputText>
                   </td>
@@ -78,7 +78,7 @@
                <tr>
                   <td align="right"><b>Last Modified Date:</b></td>
                   <td align="left">
-                     <h:outputText value="#{ChannelDetailsUIBean.channel.lastModifiedDate}">
+                     <h:outputText value="#{RepoDetailsUIBean.repo.lastModifiedDate}">
                         <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
                      </h:outputText>
                   </td>
@@ -88,13 +88,13 @@
 
          <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell">
             <h:commandButton rendered="${mode ne 'edit'}"
-                             value="EDIT" action="#{ChannelDetailsUIBean.edit}"
+                             value="EDIT" action="#{RepoDetailsUIBean.edit}"
                              alt="Edit" styleClass="buttonmed" id="editButton"/>
             <h:commandButton rendered="${mode eq 'edit'}"
-                             value="SAVE" action="#{ChannelDetailsUIBean.save}"
+                             value="SAVE" action="#{RepoDetailsUIBean.save}"
                              alt="Save" styleClass="buttonmed" id="saveButton"/>
             <h:commandButton rendered="${mode eq 'edit'}"
-                             value="CANCEL" action="#{ChannelDetailsUIBean.cancel}"
+                             value="CANCEL" action="#{RepoDetailsUIBean.cancel}"
                              alt="Cancel" styleClass="buttonmed" id="cancelButton"/>
          </h:panelGrid>
 
@@ -102,21 +102,21 @@
 
       <!-- CONTENT SOURCE LIST -->
 
-      <h:form id="channelContentSourcesListForm">
+      <h:form id="repoContentSourcesListForm">
          <input type="hidden" name="id" value="${param.id}"/>
          <input type="hidden" name="mode" value="${param.mode}"/>
       
          <rich:panel>
             <f:facet name="header">
-               <h:outputText value="Content Sources Associated With This Channel"/>
+               <h:outputText value="Content Sources Associated With This Repo"/>
             </f:facet>
 
             <h:panelGrid columns="1" width="100%">
 
-            <ui:param name="channelContentSourcesDataModel" value="#{ChannelContentSourcesUIBean.dataModel}"/>
-            <rich:dataTable id="channelContentSourcesDataTable"
-                            rows="#{PageControl.ChannelContentSourcesList.pageSize}"
-                            value="#{channelContentSourcesDataModel}"
+            <ui:param name="repoContentSourcesDataModel" value="#{RepoContentSourcesUIBean.dataModel}"/>
+            <rich:dataTable id="repoContentSourcesDataTable"
+                            rows="#{PageControl.RepoContentSourcesList.pageSize}"
+                            value="#{repoContentSourcesDataModel}"
                             var="contentsourceitem"
                             width="100%"
                             columnsWidth="1%, 20%, 15%, 15%, 9%, 9%"
@@ -127,15 +127,15 @@
 
 
                <f:facet name="PageControlView">
-                  <onc:paginationControl id="ChannelContentSourcesList" />
+                  <onc:paginationControl id="RepoContentSourcesList" />
                </f:facet>
       
                <rich:column>
                   <f:facet name="header">
-                     <onc:allSelect target="selectedChannelContentSources" />
+                     <onc:allSelect target="selectedRepoContentSources" />
                   </f:facet>
                   
-                  <onc:select name="selectedChannelContentSources" value="#{contentsourceitem.id}" />
+                  <onc:select name="selectedRepoContentSources" value="#{contentsourceitem.id}" />
                </rich:column>
 
                <rich:column rendered="#{param.debug}">
@@ -220,14 +220,14 @@
                   <rich:columnGroup>
                      <!-- colspan 8:7 for the debug 'id' column -->
                      <rich:column colspan="#{param.debug ? 8 : 7}" width="100%">
-                        <h:commandButton action="#{ChannelContentSourcesUIBean.associateWithContentSources}"
+                        <h:commandButton action="#{RepoContentSourcesUIBean.associateWithContentSources}"
                                          value="ASSOCIATE..." styleClass="on-pager-button buttonsmall"/>
-                        <onc:selectCommandButton action="#{ChannelContentSourcesUIBean.deleteSelectedChannelContentSources}"
-                                                 value="DISASSOCIATE SELECTED" target="selectedChannelContentSources" styleClass="on-pager-button buttonsmall"/>
+                        <onc:selectCommandButton action="#{RepoContentSourcesUIBean.deleteSelectedRepoContentSources}"
+                                                 value="DISASSOCIATE SELECTED" target="selectedRepoContentSources" styleClass="on-pager-button buttonsmall"/>
 
-                        <ui:param name="paginationDataTableName" value="channelContentSourcesDataTable"/>
-                        <ui:param name="paginationDataModel" value="#{channelContentSourcesDataModel}"/>
-                        <ui:param name="paginationPageControl" value="#{PageControl.ChannelContentSourcesList}"/>
+                        <ui:param name="paginationDataTableName" value="repoContentSourcesDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{repoContentSourcesDataModel}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.RepoContentSourcesList}"/>
                         <ui:include src="../resource/include/pagination.xhtml"/>
                      </rich:column>
                   </rich:columnGroup>
@@ -242,21 +242,21 @@
       
       <!-- SUBSCRIBER RESOURCE LIST -->
 
-      <h:form id="channelResourcesListForm">
+      <h:form id="repoResourcesListForm">
          <input type="hidden" name="id" value="${param.id}"/>
          <input type="hidden" name="mode" value="${param.mode}"/>
       
          <rich:panel>
             <f:facet name="header">
-               <h:outputText value="Resources Subscribed To This Channel"/>
+               <h:outputText value="Resources Subscribed To This Repo"/>
             </f:facet>
 
             <h:panelGrid columns="1" width="100%">
 
-            <ui:param name="channelResourcesDataModel" value="#{ChannelResourcesUIBean.dataModel}"/>
-            <rich:dataTable id="channelResourcesDataTable"
-                            rows="#{PageControl.ChannelResourcesList.pageSize}"
-                            value="#{channelResourcesDataModel}"
+            <ui:param name="repoResourcesDataModel" value="#{RepoResourcesUIBean.dataModel}"/>
+            <rich:dataTable id="repoResourcesDataTable"
+                            rows="#{PageControl.RepoResourcesList.pageSize}"
+                            value="#{repoResourcesDataModel}"
                             var="resourceitem"
                             width="100%"
                             columnsWidth="1%, 20%, 15%, 15%"
@@ -267,15 +267,15 @@
 
 
                <f:facet name="PageControlView">
-                  <onc:paginationControl id="ChannelResourcesList" />
+                  <onc:paginationControl id="RepoResourcesList" />
                </f:facet>
       
                <rich:column>
                   <f:facet name="header">
-                     <onc:allSelect target="selectedChannelResources" />
+                     <onc:allSelect target="selectedRepoResources" />
                   </f:facet>
                   
-                  <onc:select name="selectedChannelResources" value="#{resourceitem.id}" />
+                  <onc:select name="selectedRepoResources" value="#{resourceitem.id}" />
                </rich:column>
 
                <rich:column rendered="#{param.debug}">
@@ -335,14 +335,14 @@
                   <rich:columnGroup>
                      <!-- colspan 6:5 for the debug 'id' column -->
                      <rich:column colspan="#{param.debug ? 6 : 5}" width="100%">
-                        <h:commandButton action="#{ChannelResourcesUIBean.subscribeResources}"
+                        <h:commandButton action="#{RepoResourcesUIBean.subscribeResources}"
                                          value="SUBSCRIBE..." styleClass="on-pager-button buttonsmall"/>
-                        <onc:selectCommandButton action="#{ChannelResourcesUIBean.deleteSelectedChannelResources}"
-                                                 value="UNSUBSCRIBE SELECTED" target="selectedChannelResources" styleClass="on-pager-button buttonsmall"/>
+                        <onc:selectCommandButton action="#{RepoResourcesUIBean.deleteSelectedRepoResources}"
+                                                 value="UNSUBSCRIBE SELECTED" target="selectedRepoResources" styleClass="on-pager-button buttonsmall"/>
 
-                        <ui:param name="paginationDataTableName" value="channelResourcesDataTable"/>
-                        <ui:param name="paginationDataModel" value="#{channelResourcesDataModel}"/>
-                        <ui:param name="paginationPageControl" value="#{PageControl.ChannelResourcesList}"/>
+                        <ui:param name="paginationDataTableName" value="repoResourcesDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{repoResourcesDataModel}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.RepoResourcesList}"/>
                         <ui:include src="../resource/include/pagination.xhtml"/>
                      </rich:column>
                   </rich:columnGroup>
@@ -357,14 +357,14 @@
 
       <!-- PACKAGE VERSION LIST -->
 
-      <h:form id="channelPackageVersionsListForm">
+      <h:form id="repoPackageVersionsListForm">
       <a4j:region id="packageList">
          <input type="hidden" name="id" value="${param.id}"/>
          <input type="hidden" name="mode" value="${param.mode}"/>
       
          <rich:panel>
             <f:facet name="header">
-               <h:outputText value="Package Versions Accessible To This Channel"/>
+               <h:outputText value="Package Versions Accessible To This Repo"/>
             </f:facet>
 
             <h:panelGrid columns="1" width="100%">
@@ -372,10 +372,10 @@
                <h:panelGroup layout="block" style="margin-bottom: 6px;">
 
                   <b>Filter By: </b>
-                  <h:inputText id="packageFilter" value="#{ChannelPackageVersionsUIBean.packageFilter}">
-                     <a4j:support event="onchange" reRender="channelPackageVersionsDataTable, channelPackageVersionsDataTableScroller"/>
+                  <h:inputText id="packageFilter" value="#{RepoPackageVersionsUIBean.packageFilter}">
+                     <a4j:support event="onchange" reRender="repoPackageVersionsDataTable, repoPackageVersionsDataTableScroller"/>
                   </h:inputText>
-                  <a4j:commandButton value="GO" reRender="channelPackageVersionsDataTable, channelPackageVersionsDataTableScroller"
+                  <a4j:commandButton value="GO" reRender="repoPackageVersionsDataTable, repoPackageVersionsDataTableScroller"
                                      styleClass="buttonmed">
                      <s:defaultAction />
                   </a4j:commandButton>
@@ -389,10 +389,10 @@
                </h:panelGroup>
 
 
-            <ui:param name="channelPackageVersionsDataModel" value="#{ChannelPackageVersionsUIBean.dataModel}"/>
-            <rich:dataTable id="channelPackageVersionsDataTable"
-                            rows="#{PageControl.ChannelPackageVersionsList.pageSize}"
-                            value="#{channelPackageVersionsDataModel}"
+            <ui:param name="repoPackageVersionsDataModel" value="#{RepoPackageVersionsUIBean.dataModel}"/>
+            <rich:dataTable id="repoPackageVersionsDataTable"
+                            rows="#{PageControl.RepoPackageVersionsList.pageSize}"
+                            value="#{repoPackageVersionsDataModel}"
                             var="pvitem"
                             width="100%"
                             columnsWidth="5%,20%, 10%, 5%, 60%"
@@ -403,7 +403,7 @@
 
 
                <f:facet name="PageControlView">
-                  <onc:paginationControl id="ChannelPackageVersionsList" />
+                  <onc:paginationControl id="RepoPackageVersionsList" />
                </f:facet>
 
                <rich:column>
@@ -473,20 +473,20 @@
                      <!-- colspan 5:4 for the debug 'id' column -->
                      <rich:column colspan="#{param.debug ? 6 : 5}" width="100%">
 
-                         <ui:param name="confirmInstallMessage" value="#{msg['channel.view.deployPackageConfirm']}"/>
+                         <ui:param name="confirmInstallMessage" value="#{msg['repo.view.deployPackageConfirm']}"/>
                          <ui:remove>
                          <!-- NOTE: The onclick JavaScript block below should not return true under any circumstance. It is does so,
                                     the JSF-RI-generated JavaScript will never get executed, and the browser will proceed to
                                     redirect to "#", which will do nothing but refresh the current page. -->
                          </ui:remove>
-                         <onc:selectCommandButton action="#{ChannelPackageVersionsUIBean.installSelectedPackages}"
+                         <onc:selectCommandButton action="#{RepoPackageVersionsUIBean.installSelectedPackages}"
                                                   value="INSTALL PACKAGES" target="selectedPackages"
                                                   onclick="if (!confirm('#{confirmInstallMessage}')) return false"
                                                   styleClass="on-pager-button buttonsmall"/>
 
-                        <ui:param name="paginationDataTableName" value="channelPackageVersionsDataTable"/>
-                        <ui:param name="paginationDataModel" value="#{channelPackageVersionsDataModel}"/>
-                        <ui:param name="paginationPageControl" value="#{PageControl.ChannelPackageVersionsList}"/>
+                        <ui:param name="paginationDataTableName" value="repoPackageVersionsDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{repoPackageVersionsDataModel}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.RepoPackageVersionsList}"/>
                         <ui:include src="../resource/include/pagination.xhtml"/>
                      </rich:column>
                   </rich:columnGroup>

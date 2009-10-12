@@ -40,7 +40,7 @@ import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.PackageVersionContentSource;
 import org.rhq.core.domain.content.PackageVersionContentSourcePK;
-import org.rhq.core.domain.content.ResourceChannel;
+import org.rhq.core.domain.content.ResourceRepo;
 import org.rhq.core.domain.content.composite.PackageVersionMetadataComposite;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -130,13 +130,13 @@ public class PackageVersionContentSourceTest extends AbstractEJB3Test {
             assert pvcs.getPackageVersionContentSourcePK().getPackageVersion().getGeneralPackage().getPackageType()
                 .getResourceType().equals(rt);
 
-            // add channel and subscribe resource to it; test metadata query
+            // add repo and subscribe resource to it; test metadata query
             em = getEntityManager();
-            Repo repo = new Repo("testPVCSChannel");
+            Repo repo = new Repo("testPVCSRepo");
             em.persist(repo);
             RepoContentSource ccsmapping = repo.addContentSource(cs);
             em.persist(ccsmapping);
-            ResourceChannel subscription = repo.addResource(resource);
+            ResourceRepo subscription = repo.addResource(resource);
             em.persist(subscription);
             RepoPackageVersion mapping = repo.addPackageVersion(pv);
             em.persist(mapping);

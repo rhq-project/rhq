@@ -43,9 +43,9 @@ import javax.persistence.Table;
 import org.rhq.core.domain.resource.Resource;
 
 /**
- * A channel represents a set of related {@link PackageVersion}s. The packages in this channel are populated by its
+ * A repo represents a set of related {@link PackageVersion}s. The packages in this repo are populated by its
  * {@link ContentSource}s. The relationship with content sources is weak; that is, content sources can come and go, even
- * as the packages contained in the channel remain.
+ * as the packages contained in the repo remain.
  *
  * @author Jason Dobies
  * @author John Mazzitelli
@@ -55,32 +55,32 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = Repo.QUERY_FIND_ALL, query = "SELECT c FROM Repo c"),
     @NamedQuery(name = Repo.QUERY_FIND_BY_IDS, query = "SELECT c FROM Repo c WHERE c.id IN ( :ids )"),
     @NamedQuery(name = Repo.QUERY_FIND_BY_NAME, query = "SELECT c FROM Repo c WHERE c.name = :name"),
-    @NamedQuery(name = Repo.QUERY_FIND_BY_CONTENT_SOURCE_ID_FETCH_CCS, query = "SELECT c FROM Repo c LEFT JOIN FETCH c.channelContentSources ccs WHERE ccs.contentSource.id = :id"),
-    @NamedQuery(name = Repo.QUERY_FIND_BY_CONTENT_SOURCE_ID, query = "SELECT c FROM Repo c LEFT JOIN c.channelContentSources ccs WHERE ccs.contentSource.id = :id"),
-    @NamedQuery(name = Repo.QUERY_FIND_SUBSCRIBER_RESOURCES, query = "SELECT rc.resource FROM ResourceChannel rc WHERE rc.channel.id = :id"),
+    @NamedQuery(name = Repo.QUERY_FIND_BY_CONTENT_SOURCE_ID_FETCH_CCS, query = "SELECT c FROM Repo c LEFT JOIN FETCH c.repoContentSources ccs WHERE ccs.contentSource.id = :id"),
+    @NamedQuery(name = Repo.QUERY_FIND_BY_CONTENT_SOURCE_ID, query = "SELECT c FROM Repo c LEFT JOIN c.repoContentSources ccs WHERE ccs.contentSource.id = :id"),
+    @NamedQuery(name = Repo.QUERY_FIND_SUBSCRIBER_RESOURCES, query = "SELECT rc.resource FROM ResourceRepo rc WHERE rc.repo.id = :id"),
     @NamedQuery(name = Repo.QUERY_FIND_CHANNELS_BY_RESOURCE_ID, query = "SELECT c "
-        + "FROM ResourceChannel rc JOIN rc.channel c WHERE rc.resource.id = :resourceId "),
+        + "FROM ResourceRepo rc JOIN rc.repo c WHERE rc.resource.id = :resourceId "),
 
-    @NamedQuery(name = Repo.QUERY_FIND_CHANNEL_COMPOSITES_BY_RESOURCE_ID, query = "SELECT new org.rhq.core.domain.content.composite.ChannelComposite( "
+    @NamedQuery(name = Repo.QUERY_FIND_CHANNEL_COMPOSITES_BY_RESOURCE_ID, query = "SELECT new org.rhq.core.domain.content.composite.RepoComposite( "
         + "c, "
-        + "(SELECT COUNT(cpv.packageVersion) FROM RepoPackageVersion cpv WHERE cpv.channel.id = c.id) "
+        + "(SELECT COUNT(cpv.packageVersion) FROM RepoPackageVersion cpv WHERE cpv.repo.id = c.id) "
         + ") "
-        + "FROM ResourceChannel rc JOIN rc.channel c LEFT JOIN c.channelPackageVersions pv "
+        + "FROM ResourceRepo rc JOIN rc.repo c LEFT JOIN c.repoPackageVersions pv "
         + "WHERE rc.resource.id = :resourceId "
         + "GROUP BY c, c.name, c.description, c.creationDate, c.lastModifiedDate"),
-    @NamedQuery(name = Repo.QUERY_FIND_CHANNEL_COMPOSITES_BY_RESOURCE_ID_COUNT, query = "SELECT COUNT( rc.channel ) "
-        + "FROM ResourceChannel rc WHERE rc.resource.id = :resourceId "),
+    @NamedQuery(name = Repo.QUERY_FIND_CHANNEL_COMPOSITES_BY_RESOURCE_ID_COUNT, query = "SELECT COUNT( rc.repo ) "
+        + "FROM ResourceRepo rc WHERE rc.resource.id = :resourceId "),
 
-    @NamedQuery(name = Repo.QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID, query = "SELECT new org.rhq.core.domain.content.composite.ChannelComposite( "
+    @NamedQuery(name = Repo.QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID, query = "SELECT new org.rhq.core.domain.content.composite.RepoComposite( "
         + "c, "
-        + "(SELECT COUNT(cpv.packageVersion) FROM RepoPackageVersion cpv WHERE cpv.channel.id = c.id) "
+        + "(SELECT COUNT(cpv.packageVersion) FROM RepoPackageVersion cpv WHERE cpv.repo.id = c.id) "
         + ") "
         + "FROM Repo AS c "
-        + "WHERE c.id NOT IN ( SELECT rc.channel.id FROM ResourceChannel rc WHERE rc.resource.id = :resourceId ) "
+        + "WHERE c.id NOT IN ( SELECT rc.repo.id FROM ResourceRepo rc WHERE rc.resource.id = :resourceId ) "
         + "GROUP BY c, c.name, c.description, c.creationDate, c.lastModifiedDate"),
     @NamedQuery(name = Repo.QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID_COUNT, query = "SELECT COUNT( c ) "
         + "FROM Repo AS c "
-        + "WHERE c.id NOT IN ( SELECT rc.channel.id FROM ResourceChannel rc WHERE rc.resource.id = :resourceId ) ") })
+        + "WHERE c.id NOT IN ( SELECT rc.repo.id FROM ResourceRepo rc WHERE rc.resource.id = :resourceId ) ") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CHANNEL_ID_SEQ")
 @Table(name = "RHQ_CHANNEL")
 public class Repo implements Serializable {
@@ -92,11 +92,11 @@ public class Repo implements Serializable {
     public static final String QUERY_FIND_BY_CONTENT_SOURCE_ID_FETCH_CCS = "Repo.findByContentSourceIdFetchCCS";
     public static final String QUERY_FIND_BY_CONTENT_SOURCE_ID = "Repo.findByContentSourceId";
     public static final String QUERY_FIND_SUBSCRIBER_RESOURCES = "Repo.findSubscriberResources";
-    public static final String QUERY_FIND_CHANNELS_BY_RESOURCE_ID = "Repo.findChannelsByResourceId";
-    public static final String QUERY_FIND_CHANNEL_COMPOSITES_BY_RESOURCE_ID = "Repo.findChannelCompositesByResourceId";
-    public static final String QUERY_FIND_CHANNEL_COMPOSITES_BY_RESOURCE_ID_COUNT = "Repo.findChannelCompositesByResourceId_count";
-    public static final String QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID = "Repo.findAvailableChannelCompositesByResourceId";
-    public static final String QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID_COUNT = "Repo.findAvailableChannelCompositesByResourceId_count";
+    public static final String QUERY_FIND_CHANNELS_BY_RESOURCE_ID = "Repo.findReposByResourceId";
+    public static final String QUERY_FIND_CHANNEL_COMPOSITES_BY_RESOURCE_ID = "Repo.findRepoCompositesByResourceId";
+    public static final String QUERY_FIND_CHANNEL_COMPOSITES_BY_RESOURCE_ID_COUNT = "Repo.findRepoCompositesByResourceId_count";
+    public static final String QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID = "Repo.findAvailableRepoCompositesByResourceId";
+    public static final String QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID_COUNT = "Repo.findAvailableRepoCompositesByResourceId_count";
 
     private static final long serialVersionUID = 1L;
 
@@ -119,13 +119,13 @@ public class Repo implements Serializable {
     @Column(name = "LAST_MODIFIED_TIME", nullable = false)
     private long lastModifiedDate;
 
-    @OneToMany(mappedBy = "channel", fetch = FetchType.LAZY)
-    private Set<ResourceChannel> resourceChannels;
+    @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY)
+    private Set<ResourceRepo> resourceRepos;
 
-    @OneToMany(mappedBy = "channel", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY)
     private Set<RepoContentSource> repoContentSources;
 
-    @OneToMany(mappedBy = "channel", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY)
     private Set<RepoPackageVersion> repoPackageVersions;
 
     // Constructor ----------------------------------------
@@ -149,7 +149,7 @@ public class Repo implements Serializable {
     }
 
     /**
-     * Programmatic name of the channel.
+     * Programmatic name of the repo.
      */
     public String getName() {
         return name;
@@ -160,7 +160,7 @@ public class Repo implements Serializable {
     }
 
     /**
-     * User specified description of the channel.
+     * User specified description of the repo.
      */
     public String getDescription() {
         return description;
@@ -171,7 +171,7 @@ public class Repo implements Serializable {
     }
 
     /**
-     * Timestamp of when this channel was created.
+     * Timestamp of when this repo was created.
      */
     public long getCreationDate() {
         return creationDate;
@@ -182,8 +182,8 @@ public class Repo implements Serializable {
     }
 
     /**
-     * Timestamp of the last time the {@link #getContentSources() sources} of this channel was changed. It is not
-     * necessarily the last time any other part of this channel object was changed (for example, this last modified date
+     * Timestamp of the last time the {@link #getContentSources() sources} of this repo was changed. It is not
+     * necessarily the last time any other part of this repo object was changed (for example, this last modified date
      * does not necessarily correspond to the time when the description was modified).
      */
     public long getLastModifiedDate() {
@@ -201,22 +201,22 @@ public class Repo implements Serializable {
      *
      * @see    #getResources()
      */
-    public Set<ResourceChannel> getResourceChannels() {
-        return resourceChannels;
+    public Set<ResourceRepo> getResourceRepos() {
+        return resourceRepos;
     }
 
     /**
-     * The resources subscribed to this channel.
+     * The resources subscribed to this repo.
      *
      * <p>The returned set is not backed by this entity - if you want to alter the set of associated resources, use
-     * {@link #getResourceChannels()} or {@link #addResource(Resource)}, {@link #removeResource(Resource)}.</p>
+     * {@link #getResourceRepos()} or {@link #addResource(Resource)}, {@link #removeResource(Resource)}.</p>
      */
     public Set<Resource> getResources() {
         HashSet<Resource> resources = new HashSet<Resource>();
 
-        if (resourceChannels != null) {
-            for (ResourceChannel rc : resourceChannels) {
-                resources.add(rc.getResourceChannelPK().getResource());
+        if (resourceRepos != null) {
+            for (ResourceRepo rc : resourceRepos) {
+                resources.add(rc.getResourceRepoPK().getResource());
             }
         }
 
@@ -224,46 +224,46 @@ public class Repo implements Serializable {
     }
 
     /**
-     * Directly subscribe a resource to this channel.
+     * Directly subscribe a resource to this repo.
      *
      * @param  resource
      *
      * @return the mapping that was added
      */
-    public ResourceChannel addResource(Resource resource) {
-        if (this.resourceChannels == null) {
-            this.resourceChannels = new HashSet<ResourceChannel>();
+    public ResourceRepo addResource(Resource resource) {
+        if (this.resourceRepos == null) {
+            this.resourceRepos = new HashSet<ResourceRepo>();
         }
 
-        ResourceChannel mapping = new ResourceChannel(resource, this);
-        this.resourceChannels.add(mapping);
+        ResourceRepo mapping = new ResourceRepo(resource, this);
+        this.resourceRepos.add(mapping);
         return mapping;
     }
 
     /**
-     * Unsubscribes the resource from this channel, if it exists. If it was already subscribed, the mapping that was
+     * Unsubscribes the resource from this repo, if it exists. If it was already subscribed, the mapping that was
      * removed is returned; if not, <code>null</code> is returned.
      *
-     * @param  resource the resource to unsubscribe from this channel
+     * @param  resource the resource to unsubscribe from this repo
      *
-     * @return the mapping that was removed or <code>null</code> if the resource was not subscribed to this channel
+     * @return the mapping that was removed or <code>null</code> if the resource was not subscribed to this repo
      */
-    public ResourceChannel removeResource(Resource resource) {
-        if ((this.resourceChannels == null) || (resource == null)) {
+    public ResourceRepo removeResource(Resource resource) {
+        if ((this.resourceRepos == null) || (resource == null)) {
             return null;
         }
 
-        ResourceChannel doomed = null;
+        ResourceRepo doomed = null;
 
-        for (ResourceChannel rc : this.resourceChannels) {
-            if (resource.equals(rc.getResourceChannelPK().getResource())) {
+        for (ResourceRepo rc : this.resourceRepos) {
+            if (resource.equals(rc.getResourceRepoPK().getResource())) {
                 doomed = rc;
                 break;
             }
         }
 
         if (doomed != null) {
-            this.resourceChannels.remove(doomed);
+            this.resourceRepos.remove(doomed);
         }
 
         return doomed;
@@ -276,17 +276,17 @@ public class Repo implements Serializable {
      *
      * @see    #getContentSources()
      */
-    public Set<RepoContentSource> getChannelContentSources() {
+    public Set<RepoContentSource> getRepoContentSources() {
         return repoContentSources;
     }
 
     /**
-     * The content sources that this channel serves up. These are the content sources that provide or provided packages
-     * for this channel. This relationship is weak; a content source may not be in this set but the packages it loaded
-     * into this channel may still exist.
+     * The content sources that this repo serves up. These are the content sources that provide or provided packages
+     * for this repo. This relationship is weak; a content source may not be in this set but the packages it loaded
+     * into this repo may still exist.
      *
      * <p>The returned set is not backed by this entity - if you want to alter the set of associated content sources,
-     * use {@link #getChannelContentSources()} or {@link #addContentSource(ContentSource)},
+     * use {@link #getRepoContentSources()} or {@link #addContentSource(ContentSource)},
      * {@link #removeContentSource(ContentSource)}.</p>
      */
     public Set<ContentSource> getContentSources() {
@@ -294,7 +294,7 @@ public class Repo implements Serializable {
 
         if (repoContentSources != null) {
             for (RepoContentSource ccs : repoContentSources) {
-                contentSources.add(ccs.getChannelContentSourcePK().getContentSource());
+                contentSources.add(ccs.getRepoContentSourcePK().getContentSource());
             }
         }
 
@@ -302,7 +302,7 @@ public class Repo implements Serializable {
     }
 
     /**
-     * Directly assign a content source to this channel.
+     * Directly assign a content source to this repo.
      *
      * @param  contentSource
      *
@@ -319,13 +319,13 @@ public class Repo implements Serializable {
     }
 
     /**
-     * Removes the content source from this channel, if it exists. If it does exist, the mapping that was removed is
-     * returned; if the given content source did not exist as one that is a member of this channel, <code>null</code> is
+     * Removes the content source from this repo, if it exists. If it does exist, the mapping that was removed is
+     * returned; if the given content source did not exist as one that is a member of this repo, <code>null</code> is
      * returned.
      *
-     * @param  contentSource the content source to remove from this channel
+     * @param  contentSource the content source to remove from this repo
      *
-     * @return the mapping that was removed or <code>null</code> if the content source was not mapped to this channel
+     * @return the mapping that was removed or <code>null</code> if the content source was not mapped to this repo
      */
     public RepoContentSource removeContentSource(ContentSource contentSource) {
         if ((this.repoContentSources == null) || (contentSource == null)) {
@@ -335,7 +335,7 @@ public class Repo implements Serializable {
         RepoContentSource doomed = null;
 
         for (RepoContentSource ccs : this.repoContentSources) {
-            if (contentSource.equals(ccs.getChannelContentSourcePK().getContentSource())) {
+            if (contentSource.equals(ccs.getRepoContentSourcePK().getContentSource())) {
                 doomed = ccs;
                 break;
             }
@@ -355,20 +355,20 @@ public class Repo implements Serializable {
      *
      * @see    #getPackageVersions()
      */
-    public Set<RepoPackageVersion> getChannelPackageVersions() {
+    public Set<RepoPackageVersion> getRepoPackageVersions() {
         return repoPackageVersions;
     }
 
     /**
-     * The package versions that this channel serves up. Subscribers to this channel will have access to the returned
-     * set of package versions. These are package versions that were directly assigned to the channel and those that
+     * The package versions that this repo serves up. Subscribers to this repo will have access to the returned
+     * set of package versions. These are package versions that were directly assigned to the repo and those that
      * were assigned via its relationship with its content sources. This is the relationship that should be consulted
-     * when determining what package versions this channel exposes - do not look at the indirect relationship from
-     * content sources to package versions. When content sources are assigned to this channel, this package version
+     * when determining what package versions this repo exposes - do not look at the indirect relationship from
+     * content sources to package versions. When content sources are assigned to this repo, this package version
      * relationship will be automatically managed.
      *
      * <p>The returned set is not backed by this entity - if you want to alter the set of associated package versions,
-     * use {@link #getChannelPackageVersions()} or {@link #addPackageVersion(PackageVersion)},
+     * use {@link #getRepoPackageVersions()} or {@link #addPackageVersion(PackageVersion)},
      * {@link #removePackageVersion(PackageVersion)}.</p>
      */
     public Set<PackageVersion> getPackageVersions() {
@@ -376,7 +376,7 @@ public class Repo implements Serializable {
 
         if (repoPackageVersions != null) {
             for (RepoPackageVersion cpv : repoPackageVersions) {
-                packageVersions.add(cpv.getChannelPackageVersionPK().getPackageVersion());
+                packageVersions.add(cpv.getRepoPackageVersionPK().getPackageVersion());
             }
         }
 
@@ -384,7 +384,7 @@ public class Repo implements Serializable {
     }
 
     /**
-     * Directly assign a package version to this channel.
+     * Directly assign a package version to this repo.
      *
      * @param  packageVersion
      *
@@ -401,13 +401,13 @@ public class Repo implements Serializable {
     }
 
     /**
-     * Removes the package version from this channel, if it exists. If it does exist, the mapping that was removed is
-     * returned; if the given package version did not exist as one that is a member of this channel, <code>null</code>
+     * Removes the package version from this repo, if it exists. If it does exist, the mapping that was removed is
+     * returned; if the given package version did not exist as one that is a member of this repo, <code>null</code>
      * is returned.
      *
-     * @param  packageVersion the package version to remove from this channel
+     * @param  packageVersion the package version to remove from this repo
      *
-     * @return the mapping that was removed or <code>null</code> if the package version was not mapped to this channel
+     * @return the mapping that was removed or <code>null</code> if the package version was not mapped to this repo
      */
     public RepoPackageVersion removePackageVersion(PackageVersion packageVersion) {
         if ((this.repoPackageVersions == null) || (packageVersion == null)) {
@@ -417,7 +417,7 @@ public class Repo implements Serializable {
         RepoPackageVersion doomed = null;
 
         for (RepoPackageVersion cpv : this.repoPackageVersions) {
-            if (packageVersion.equals(cpv.getChannelPackageVersionPK().getPackageVersion())) {
+            if (packageVersion.equals(cpv.getRepoPackageVersionPK().getPackageVersion())) {
                 doomed = cpv;
                 break;
             }

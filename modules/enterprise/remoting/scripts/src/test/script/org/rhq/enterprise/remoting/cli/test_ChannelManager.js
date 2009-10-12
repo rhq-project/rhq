@@ -45,56 +45,56 @@ function testCRUD() {
       return;
    }
    
-   // delete any existing test channels in the db
-   var channels = ChannelManager.findChannels(PageControl.getUnlimitedInstance());
-   for (i = 0; (i < channels.size()); ++i) {
-      var channel = channels.get(i);
-      if (channel.getName().startsWith("test-channel-")) {
-         ChannelManager.deleteChannel(channel.getId());
+   // delete any existing test repos in the db
+   var repos = RepoManager.findRepos(PageControl.getUnlimitedInstance());
+   for (i = 0; (i < repos.size()); ++i) {
+      var repo = repos.get(i);
+      if (repo.getName().startsWith("test-repo-")) {
+         RepoManager.deleteRepo(repo.getId());
       }
    }
 
-   // ensure test channel does not exist
-   var criteria = new ChannelCriteria();
+   // ensure test repo does not exist
+   var criteria = new RepoCriteria();
    criteria.caseSensitive = true;
-   criteria.addFilterName('test-channel-0');
+   criteria.addFilterName('test-repo-0');
 
-   channels = ChannelManager.findChannelsByCriteria(criteria);
-   Assert.assertTrue(channels.size() == 0, "test channel should not exist.");
+   repos = RepoManager.findReposByCriteria(criteria);
+   Assert.assertTrue(repos.size() == 0, "test repo should not exist.");
 
-   // create a test channel
-   var newChannel = new Channel("test-channel-0");
-   newChannel.setDescription("description-0");
-   var testChannel = ChannelManager.createChannel(newChannel);
-   Assert.assertNotNull(testChannel, "test channel should exist");
-   Assert.assertEquals("test-channel-0", testChannel.getName());
+   // create a test repo
+   var newRepo = new Repo("test-repo-0");
+   newRepo.setDescription("description-0");
+   var testRepo = RepoManager.createRepo(newRepo);
+   Assert.assertNotNull(testRepo, "test repo should exist");
+   Assert.assertEquals("test-repo-0", testRepo.getName());
 
-   channels = ChannelManager.findChannelsByCriteria(criteria);
-   Assert.assertTrue(channels.size() == 1, "test channel should exist.");
+   repos = RepoManager.findReposByCriteria(criteria);
+   Assert.assertTrue(repos.size() == 1, "test repo should exist.");
 
    // test getter
-   testChannel = ChannelManager.getChannel(8888888);
-   Assert.assertNull(testChannel, "bogus channel should not exist.");
-   testChannel = ChannelManager.getChannel(channels.get(0).getId());
-   Assert.assertNotNull(testChannel, "test channel should exist.");
-   Assert.assertEquals("test-channel-0", testChannel.getName());
-   Assert.assertEquals("description-0", testChannel.getDescription());
+   testRepo = RepoManager.getRepo(8888888);
+   Assert.assertNull(testRepo, "bogus repo should not exist.");
+   testRepo = RepoManager.getRepo(repos.get(0).getId());
+   Assert.assertNotNull(testRepo, "test repo should exist.");
+   Assert.assertEquals("test-repo-0", testRepo.getName());
+   Assert.assertEquals("description-0", testRepo.getDescription());
 
    // test update
-   testChannel.setDescription("description-1");
-   testChannel = ChannelManager.updateChannel(testChannel);
-   Assert.assertEquals("description-1", testChannel.getDescription());
-   testChannel = ChannelManager.getChannel(testChannel.getId());
-   Assert.assertNotNull(testChannel, "test channel should exist.")
-   Assert.assertEquals("test-channel-0", testChannel.getName());
-   Assert.assertEquals("description-1", testChannel.getDescription());
+   testRepo.setDescription("description-1");
+   testRepo = RepoManager.updateRepo(testRepo);
+   Assert.assertEquals("description-1", testRepo.getDescription());
+   testRepo = RepoManager.getRepo(testRepo.getId());
+   Assert.assertNotNull(testRepo, "test repo should exist.")
+   Assert.assertEquals("test-repo-0", testRepo.getName());
+   Assert.assertEquals("description-1", testRepo.getDescription());
 
    // test delete
-   ChannelManager.deleteChannel(testChannel.getId());
-   testChannel = ChannelManager.getChannel(testChannel.getId());
-   Assert.assertNull(testChannel, "channel should not exist.");
-   channels = ChannelManager.findChannelsByCriteria(criteria);
-   Assert.assertTrue(channels.size() == 0, "test channel should not exist.");
+   RepoManager.deleteRepo(testRepo.getId());
+   testRepo = RepoManager.getRepo(testRepo.getId());
+   Assert.assertNull(testRepo, "repo should not exist.");
+   repos = RepoManager.findReposByCriteria(criteria);
+   Assert.assertTrue(repos.size() == 0, "test repo should not exist.");
 }
 
 function testFindByCriteria() {
@@ -102,86 +102,86 @@ function testFindByCriteria() {
       return;
    }
 
-   // delete any existing test channels in the db
-   var channels = ChannelManager.findChannels(PageControl.getUnlimitedInstance());
-   var numRealChannels = channels.size();
-   for (i = 0; (i < channels.size()); ++i) {
-      var channel = channels.get(i);
-      if (channel.getName().startsWith("test-channel-")) {
-         ChannelManager.deleteChannel(channel.getId());
-         --numRealChannels;
+   // delete any existing test repos in the db
+   var repos = RepoManager.findRepos(PageControl.getUnlimitedInstance());
+   var numRealRepos = repos.size();
+   for (i = 0; (i < repos.size()); ++i) {
+      var repo = repos.get(i);
+      if (repo.getName().startsWith("test-repo-")) {
+         RepoManager.deleteRepo(repo.getId());
+         --numRealRepos;
       }
    }
 
-   var newChannel = new Channel("test-channel-xxx");
-   newChannel.setDescription("description-0");
-   var testChannel = ChannelManager.createChannel(newChannel);
+   var newRepo = new Repo("test-repo-xxx");
+   newRepo.setDescription("description-0");
+   var testRepo = RepoManager.createRepo(newRepo);
 
-   var newChannel = new Channel("test-channel-yyy");
-   newChannel.setDescription("description-1");
-   var testChannel = ChannelManager.createChannel(newChannel);
+   var newRepo = new Repo("test-repo-yyy");
+   newRepo.setDescription("description-1");
+   var testRepo = RepoManager.createRepo(newRepo);
 
-   var newChannel = new Channel("test-channel-xyz");
-   newChannel.setDescription("description-2");
-   var testChannel = ChannelManager.createChannel(newChannel);
+   var newRepo = new Repo("test-repo-xyz");
+   newRepo.setDescription("description-2");
+   var testRepo = RepoManager.createRepo(newRepo);
 
-   var criteria = new ChannelCriteria();
-   criteria.fetchResourceChannels( true );   
-   criteria.fetchChannelContentSources( true );   
-   criteria.fetchChannelPackageVersions( true );
-   channels = ChannelManager.findChannelsByCriteria(criteria);
-   Assert.assertNumberEqualsJS(channels.size(), numRealChannels + 3, "empty criteria failed.");
+   var criteria = new RepoCriteria();
+   criteria.fetchResourceRepos( true );
+   criteria.fetchRepoContentSources( true );
+   criteria.fetchRepoPackageVersions( true );
+   repos = RepoManager.findReposByCriteria(criteria);
+   Assert.assertNumberEqualsJS(repos.size(), numRealRepos + 3, "empty criteria failed.");
 
    criteria.caseSensitive = true;
    criteria.strict = true;
 
-   criteria.addFilterName('test-channel-xyz');
-   channels = ChannelManager.findChannelsByCriteria(criteria);
-   Assert.assertNumberEqualsJS(channels.size(), 1, "CS/Strict name criteria failed.");
+   criteria.addFilterName('test-repo-xyz');
+   repos = RepoManager.findReposByCriteria(criteria);
+   Assert.assertNumberEqualsJS(repos.size(), 1, "CS/Strict name criteria failed.");
 
-   criteria.addFilterName('TEST-channel-xyz');
-   channels = ChannelManager.findChannelsByCriteria(criteria);
-   Assert.assertNumberEqualsJS(channels.size(), 0, "CS/Strict name criteria failed.");
+   criteria.addFilterName('TEST-repo-xyz');
+   repos = RepoManager.findReposByCriteria(criteria);
+   Assert.assertNumberEqualsJS(repos.size(), 0, "CS/Strict name criteria failed.");
 
    criteria.caseSensitive = false;
    criteria.strict = true;
 
-   criteria.addFilterName('TEST-channel-xyz');
-   channels = ChannelManager.findChannelsByCriteria(criteria);
-   Assert.assertNumberEqualsJS(channels.size(), 1, "CS/Strict name criteria failed.");
+   criteria.addFilterName('TEST-repo-xyz');
+   repos = RepoManager.findReposByCriteria(criteria);
+   Assert.assertNumberEqualsJS(repos.size(), 1, "CS/Strict name criteria failed.");
 
    criteria.caseSensitive = true;
    criteria.strict = false;
 
    criteria.addFilterName('XXX');
-   channels = ChannelManager.findChannelsByCriteria(criteria);
-   Assert.assertNumberEqualsJS(channels.size(), 0, "CS/Strict name criteria failed.");
+   repos = RepoManager.findReposByCriteria(criteria);
+   Assert.assertNumberEqualsJS(repos.size(), 0, "CS/Strict name criteria failed.");
 
    criteria.caseSensitive = false;
    criteria.strict = false;
 
    criteria.addFilterName('XXX');
-   channels = ChannelManager.findChannelsByCriteria(criteria);
-   Assert.assertNumberEqualsJS(channels.size(), 1, "CS/Strict name criteria failed.");
+   repos = RepoManager.findReposByCriteria(criteria);
+   Assert.assertNumberEqualsJS(repos.size(), 1, "CS/Strict name criteria failed.");
 
-   criteria.addFilterName('test-channel-');
-   channels = ChannelManager.findChannelsByCriteria(criteria);
-   Assert.assertNumberEqualsJS(channels.size(), 3, "CS/Strict name criteria failed.");
+   criteria.addFilterName('test-repo-');
+   repos = RepoManager.findReposByCriteria(criteria);
+   Assert.assertNumberEqualsJS(repos.size(), 3, "CS/Strict name criteria failed.");
 
    criteria.addFilterName('-x');
-   channels = ChannelManager.findChannelsByCriteria(criteria);
-   Assert.assertNumberEqualsJS(channels.size(), 2, "CS/Strict name criteria failed.");
+   repos = RepoManager.findReposByCriteria(criteria);
+   Assert.assertNumberEqualsJS(repos.size(), 2, "CS/Strict name criteria failed.");
 
    criteria.addFilterDescription('-2');
-   channels = ChannelManager.findChannelsByCriteria(criteria);
-   Assert.assertNumberEqualsJS(channels.size(), 1, "CS/Strict name/descrip criteria failed.");
+   repos = RepoManager.findReposByCriteria(criteria);
+   Assert.assertNumberEqualsJS(repos.size(), 1, "CS/Strict name/descrip criteria failed.");
 
-   // delete any existing test channels in the db
-   var channels = ChannelManager.findChannels(PageControl.getUnlimitedInstance());
-   for (i = 0; (i < channels.size()); ++i) {
-      var channel = channels.get(i);
-      if (channel.getName().startsWith("test-channel-")) {
-         ChannelManager.deleteChannel(channel.getId());
+   // delete any existing test repos in the db
+   var repos = RepoManager.findRepos(PageControl.getUnlimitedInstance());
+   for (i = 0; (i < repos.size()); ++i) {
+      var repo = repos.get(i);
+      if (repo.getName().startsWith("test-repo-")) {
+         RepoManager.deleteRepo(repo.getId());
       }
    }
 }
@@ -204,17 +204,17 @@ function testDeploy() {
    Assert.assertTrue( (tomcatServers.size() > 0),  "Test requires and available Tomcat Server in inventory.");
    var tomcatServer = tomcatServers.get(0);
       
-   // delete test-channel-war if in inventory
+   // delete test-repo-war if in inventory
    criteria = new ResourceCriteria();
    criteria.strict = false;
-   criteria.addFilterName( "test-channel-war" );
+   criteria.addFilterName( "test-repo-war" );
    criteria.addFilterResourceTypeName( "Tomcat Web Application (WAR)");
    var wars = ResourceManager.findResourcesByCriteria( criteria );
    var war = null;
    
    if (( null != wars ) && !wars.isEmpty() ) {
-      print( "\n Deleting existing test-channel-war in order to test create...")
-      Assert.assertNumberEqualsJS( wars.size(), 1, "Found more than 1 test-channel-war");
+      print( "\n Deleting existing test-repo-war in order to test create...")
+      Assert.assertNumberEqualsJS( wars.size(), 1, "Found more than 1 test-repo-war");
       war = wars.get(0);
       ResourceFactoryManager.deleteResource(war.getId());
       
@@ -229,8 +229,8 @@ function testDeploy() {
       }
       
       wars = ResourceManager.findResourcesByCriteria( criteria );
-      Assert.assertTrue(( ( null == wars ) || wars.isEmpty() ), "test-channel-war should not exist" );
-      print( "\n Done deleting existing test-channel-war in order to test create...")
+      Assert.assertTrue(( ( null == wars ) || wars.isEmpty() ), "test-repo-war should not exist" );
+      print( "\n Done deleting existing test-repo-war in order to test create...")
       
       // Give Tomcat a few additional seconds to perform its cleanup of the app, just in case the resource is
       // gone but TC is still mopping up, before we try and deploy the same exact app
@@ -254,7 +254,7 @@ function testDeploy() {
    Assert.assertNotNull( warType, "Test requires Tomcat WAR resource type.");
    
    // read in the file
-   var file = new java.io.File("./src/test/resources/test-channel-war.war");   
+   var file = new java.io.File("./src/test/resources/test-repo-war.war");
    var inputStream = new java.io.FileInputStream( file );
    var fileLength = file.length();
    var fileBytes = java.lang.reflect.Array.newInstance(java.lang.Byte.TYPE, fileLength);
@@ -290,7 +290,7 @@ function testDeploy() {
 
    criteria = new ResourceCriteria();
    criteria.strict = false;
-   criteria.addFilterName( "test-channel-war" );   
+   criteria.addFilterName( "test-repo-war" );
    criteria.addFilterResourceTypeName( "Tomcat Web Application (WAR)");
    criteria.addFilterCurrentAvailability( AvailabilityType.UP );
    
@@ -307,7 +307,7 @@ function testDeploy() {
    wars = ResourceManager.findResourcesByCriteria( criteria );
    war = null;
    if (( null != wars ) && !wars.isEmpty() ) {
-      Assert.assertNumberEqualsJS( wars.size(), 1, "Found more than 1 test-channel-war" );
+      Assert.assertNumberEqualsJS( wars.size(), 1, "Found more than 1 test-repo-war" );
       war = wars.get(0);
    }
    Assert.assertNotNull( war, "War should have been created" );
@@ -360,54 +360,54 @@ function testDeploy() {
    // negative test
    criteria.addFilterPackageVersionId( -81 );
    installedPackages = ContentManager.findInstalledPackagesByCriteria(criteria);
-   Assert.assertTrue( (( null == pvsInChannel ) || pvsInChannel.isEmpty() ), "pv should not be returned" );   
+   Assert.assertTrue( (( null == pvsInRepo ) || pvsInRepo.isEmpty() ), "pv should not be returned" );
    
-   // delete existing test channel in the db, this will unsubscribe resources and remove orphaned pvs
-   var criteria = new ChannelCriteria();
+   // delete existing test repo in the db, this will unsubscribe resources and remove orphaned pvs
+   var criteria = new RepoCriteria();
    criteria.caseSensitive = true;
    criteria.strict = true;
-   criteria.addFilterName('test-channel-0');
+   criteria.addFilterName('test-repo-0');
 
-   var channels = channels = ChannelManager.findChannelsByCriteria(criteria);
-   if ( !channels.isEmpty() ) {
-      channel = channels.get(0);
-      ChannelManager.deleteChannel(channel.getId());
+   var repos = repos = RepoManager.findReposByCriteria(criteria);
+   if ( !repos.isEmpty() ) {
+      repo = repos.get(0);
+      RepoManager.deleteRepo(repo.getId());
    }
 
-   // create a test channel
-   var newChannel = new Channel("test-channel-0");
-   newChannel.setDescription("description-0");
-   channel = ChannelManager.createChannel(newChannel);
+   // create a test repo
+   var newRepo = new Repo("test-repo-0");
+   newRepo.setDescription("description-0");
+   repo = RepoManager.createRepo(newRepo);
 
-   Assert.assertNotNull( channel, "channel should have existed or been created")
-   Assert.assertTrue( (channel.getId() > 0), "channel should have existed or been created")   
+   Assert.assertNotNull( repo, "repo should have existed or been created")
+   Assert.assertTrue( (repo.getId() > 0), "repo should have existed or been created")
 
-   // test channel subscription
+   // test repo subscription
    var subscribedResources;
-   subscribedResources = ChannelManager.findSubscribedResources( channel.getId(), PageControl.getUnlimitedInstance() );
-   Assert.assertTrue(( ( null == subscribedResources ) || subscribedResources.isEmpty()), "test channel should not have resources" );
+   subscribedResources = RepoManager.findSubscribedResources( repo.getId(), PageControl.getUnlimitedInstance() );
+   Assert.assertTrue(( ( null == subscribedResources ) || subscribedResources.isEmpty()), "test repo should not have resources" );
 
-   ChannelManager.subscribeResourceToChannels( war.getId(), [channel.getId()] );
+   RepoManager.subscribeResourceToRepos( war.getId(), [repo.getId()] );
    
-   subscribedResources = ChannelManager.findSubscribedResources( channel.getId(), PageControl.getUnlimitedInstance() );
-   Assert.assertNumberEqualsJS( subscribedResources.size(), 1, "channel should have the test war" );
+   subscribedResources = RepoManager.findSubscribedResources( repo.getId(), PageControl.getUnlimitedInstance() );
+   Assert.assertNumberEqualsJS( subscribedResources.size(), 1, "repo should have the test war" );
    
-   ChannelManager.unsubscribeResourceFromChannels( war.getId(), [channel.getId()] );
+   RepoManager.unsubscribeResourceFromRepos( war.getId(), [repo.getId()] );
 
-   subscribedResources = ChannelManager.findSubscribedResources( channel.getId(), PageControl.getUnlimitedInstance() );
-   Assert.assertTrue(( ( null == subscribedResources ) || subscribedResources.isEmpty()), "test channel should not have resources" );
+   subscribedResources = RepoManager.findSubscribedResources( repo.getId(), PageControl.getUnlimitedInstance() );
+   Assert.assertTrue(( ( null == subscribedResources ) || subscribedResources.isEmpty()), "test repo should not have resources" );
    
    // Create packageVersion in an attempt to upgrade the web-app
 
-   var pvsInChannel = ChannelManager.findPackageVersionsInChannel( channel.getId(), null, PageControl.getUnlimitedInstance() );
-   Assert.assertTrue(( ( null == pvsInChannel ) || pvsInChannel.isEmpty()), "test channel should not have pvs" );
+   var pvsInRepo = RepoManager.findPackageVersionsInRepo( repo.getId(), null, PageControl.getUnlimitedInstance() );
+   Assert.assertTrue(( ( null == pvsInRepo ) || pvsInRepo.isEmpty()), "test repo should not have pvs" );
 
    var architectures = ContentManager.findArchitectures();
    Assert.assertNotNull( architectures, "missing architectures" );
    Assert.assertTrue( !architectures.isEmpty(), "missing architectures" );
    
    // read in the package file
-   file = new java.io.File("./src/test/resources/test-channel-war-2.0.war");
+   file = new java.io.File("./src/test/resources/test-repo-war-2.0.war");
    inputStream = new java.io.FileInputStream( file );
    fileLength = file.length();
    fileBytes = java.lang.reflect.Array.newInstance(java.lang.Byte.TYPE, fileLength);
@@ -417,11 +417,11 @@ function testDeploy() {
    inputStream.close();
    Assert.assertTrue( (offset == fileBytes.length), "Could not completely read file " + file.getName() );
    
-   var pv = ContentManager.createPackageVersion( "test-channel-war", packageType.getId(), "2.0", null, fileBytes);
+   var pv = ContentManager.createPackageVersion( "test-repo-war", packageType.getId(), "2.0", null, fileBytes);
    Assert.assertNotNull( pv, "failed to create packageVersion" );
    Assert.assertTrue( (pv.getId() > 0), " Bad PV Id from createPV");
 
-   ChannelManager.addPackageVersionsToChannel( channel.getId(), [pv.getId()] );
+   RepoManager.addPackageVersionsToRepo( repo.getId(), [pv.getId()] );
    
    // throw in some criteria search tests while we have a pv in play...
    criteria = new PackageVersionCriteria();
@@ -429,37 +429,37 @@ function testDeploy() {
    criteria.fetchGeneralPackage( true );
    criteria.fetchArchitecture( true );
    criteria.fetchExtraProperties( true );
-   criteria.fetchChannelPackageVersions( true );
+   criteria.fetchRepoPackageVersions( true );
    criteria.fetchInstalledPackages( true );
    criteria.fetchInstalledPackageHistory( true );
    criteria.fetchProductVersionPackageVersions( true );
    criteria.addSortDisplayName(PageOrdering.ASC);
-   var pvsInChannel = ContentManager.findPackageVersionsByCriteria( criteria );
-   Assert.assertNotNull( pvsInChannel, "pvs should exist" );
-   Assert.assertTrue( (pvsInChannel.size() >= 2), "unexpected number of pvs" );
+   var pvsInRepo = ContentManager.findPackageVersionsByCriteria( criteria );
+   Assert.assertNotNull( pvsInRepo, "pvs should exist" );
+   Assert.assertTrue( (pvsInRepo.size() >= 2), "unexpected number of pvs" );
    
    // Now let's try with other restriction that should reduce to only the 2.0 version
-   // 1.0 package is not associated with the channel.
+   // 1.0 package is not associated with the repo.
    criteria.addFilterId( pv.getId());
-   criteria.addFilterChannelId( channel.getId() );
-   criteria.addFilterDisplayName( "test-channel-war" );
+   criteria.addFilterRepoId( repo.getId() );
+   criteria.addFilterDisplayName( "test-repo-war" );
    criteria.addFilterVersion( "2.0" );         
-   pvsInChannel = ChannelManager.findPackageVersionsInChannelByCriteria( criteria );
-   Assert.assertNotNull( pvsInChannel, "pv should exist" );
-   Assert.assertNumberEqualsJS( pvsInChannel.size(), 1, "unexpected number of pvs" );
-   Assert.assertNumberEqualsJS( pvsInChannel.get(0).getId(), pv.getId(), "unexpected pv returned" );
-   Assert.assertEquals( pvsInChannel.get(0).getVersion(), pv.getVersion(), "unexpected pv returned" );
+   pvsInRepo = RepoManager.findPackageVersionsInRepoByCriteria( criteria );
+   Assert.assertNotNull( pvsInRepo, "pv should exist" );
+   Assert.assertNumberEqualsJS( pvsInRepo.size(), 1, "unexpected number of pvs" );
+   Assert.assertNumberEqualsJS( pvsInRepo.get(0).getId(), pv.getId(), "unexpected pv returned" );
+   Assert.assertEquals( pvsInRepo.get(0).getVersion(), pv.getVersion(), "unexpected pv returned" );
       
    // negative test
    criteria.addFilterVersion( "1.0" );
-   pvsInChannel = ChannelManager.findPackageVersionsInChannelByCriteria( criteria );
-   Assert.assertTrue( (( null == pvsInChannel ) || pvsInChannel.isEmpty() ), "pv should not be returned" );
+   pvsInRepo = RepoManager.findPackageVersionsInRepoByCriteria( criteria );
+   Assert.assertTrue( (( null == pvsInRepo ) || pvsInRepo.isEmpty() ), "pv should not be returned" );
 
    // do a non-criteria find and continue from there...
-   pvsInChannel = ChannelManager.findPackageVersionsInChannel( channel.getId(), null, PageControl.getUnlimitedInstance() );
-   Assert.assertNotNull( pvsInChannel, "pv should be in channel" );
-   Assert.assertNumberEqualsJS( pvsInChannel.size(), 1, "unexpected pvs" );   
-   Assert.assertNumberEqualsJS( pvsInChannel.get(0).getId(), pv.getId(), "unexpected pv returned" );
+   pvsInRepo = RepoManager.findPackageVersionsInRepo( repo.getId(), null, PageControl.getUnlimitedInstance() );
+   Assert.assertNotNull( pvsInRepo, "pv should be in repo" );
+   Assert.assertNumberEqualsJS( pvsInRepo.size(), 1, "unexpected pvs" );
+   Assert.assertNumberEqualsJS( pvsInRepo.get(0).getId(), pv.getId(), "unexpected pv returned" );
 
    // do the update
    ContentManager.deployPackages( [war.getId()], [pv.getId()] );
@@ -468,7 +468,7 @@ function testDeploy() {
    
    criteria = new ResourceCriteria();
    criteria.strict = false;
-   criteria.addFilterName( "test-channel-war" );   
+   criteria.addFilterName( "test-repo-war" );
    criteria.addFilterResourceTypeName( "Tomcat Web Application (WAR)");
    criteria.addFilterCurrentAvailability( AvailabilityType.UP );
    
@@ -485,7 +485,7 @@ function testDeploy() {
    wars = ResourceManager.findResourcesByCriteria( criteria );
    war = null;
    if (( null != wars ) && !wars.isEmpty() ) {
-      Assert.assertNumberEqualsJS( wars.size(), 1, "Found more than 1 test-channel-war" );
+      Assert.assertNumberEqualsJS( wars.size(), 1, "Found more than 1 test-repo-war" );
       war = wars.get(0);
    }
    Assert.assertNotNull( war, "War should have been updated" );
@@ -497,12 +497,12 @@ function testDeploy() {
    // TODO: This test may fail due to RHQ-2387, uncomment when fixed 
    // Assert.assertTrue( ( backingPackage,getId() != newBackingPackage.getId() ), "Backing ackage should differ after update" );
    
-   // delete any existing test channels in the db
-   channels = ChannelManager.findChannels(PageControl.getUnlimitedInstance());
-   for (i = 0; (i < channels.size()); ++i) {
-      var channel = channels.get(i);
-      if (channel.getName().startsWith("test-channel-")) {
-         ChannelManager.deleteChannel(channel.getId());
+   // delete any existing test repos in the db
+   repos = RepoManager.findRepos(PageControl.getUnlimitedInstance());
+   for (i = 0; (i < repos.size()); ++i) {
+      var repo = repos.get(i);
+      if (repo.getName().startsWith("test-repo-")) {
+         RepoManager.deleteRepo(repo.getId());
       }
    }   
 }

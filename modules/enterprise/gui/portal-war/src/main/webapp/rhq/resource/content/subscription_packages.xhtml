@@ -15,7 +15,7 @@
 
 <ui:composition template="/rhq/resource/layout/main.xhtml">
 
-   <ui:param name="pageTitle" value="View Channel Subscriptions for Resource '#{ResourceUIBean.name}'"/>
+   <ui:param name="pageTitle" value="View Repo Subscriptions for Resource '#{ResourceUIBean.name}'"/>
    <ui:param name="selectedTabName" value="Content.Subscriptions"/>
 
    <ui:define name="content">
@@ -104,7 +104,7 @@
       <p align="center">
          <h:outputLink value="/rhq/resource/content/subscription.xhtml">
             <f:param name="id" value="${param.id}"/>
-            <h:outputText value="Switch To Channel Mode" />
+            <h:outputText value="Switch To Repo Mode" />
          </h:outputLink>
       </p>
 

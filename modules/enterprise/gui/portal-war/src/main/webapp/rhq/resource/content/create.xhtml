@@ -82,24 +82,24 @@
 
          <rich:panel>
 
-            <f:facet name="header">Channel</f:facet>
+            <f:facet name="header">Repo</f:facet>
 
-            <p>Select one of the following options describing in which channel the new package should be created.</p>
+            <p>Select one of the following options describing in which repo the new package should be created.</p>
 
-            <input type="radio" name="channelOption" value="subscribed">Currently Subscribed Channel</input>
+            <input type="radio" name="repoOption" value="subscribed">Currently Subscribed Repo</input>
                <rich:spacer width="5"/>
-               <h:selectOneMenu value="#{CreateNewPackageUIBean.subscribedChannelId}">
-                  <f:selectItems value="#{CreateNewPackageUIBean.subscribedChannels}" />
+               <h:selectOneMenu value="#{CreateNewPackageUIBean.subscribedRepoId}">
+                  <f:selectItems value="#{CreateNewPackageUIBean.subscribedRepos}" />
                </h:selectOneMenu>
             <br/>
-            <input type="radio" name="channelOption" value="unsubscribed">Existing Channel</input>
+            <input type="radio" name="repoOption" value="unsubscribed">Existing Repo</input>
                <rich:spacer width="5"/>
-               <h:selectOneMenu value="#{CreateNewPackageUIBean.unsubscribedChannelId}">
-                  <f:selectItems value="#{CreateNewPackageUIBean.unsubscribedChannels}" />
+               <h:selectOneMenu value="#{CreateNewPackageUIBean.unsubscribedRepoId}">
+                  <f:selectItems value="#{CreateNewPackageUIBean.unsubscribedRepos}" />
                </h:selectOneMenu>
             <br/>
-            <input type="radio" name="channelOption" value="new">New Channel</input>
-            <rich:spacer width="5"/><h:inputText value="#{CreateNewPackageUIBean.newChannelName}"/>
+            <input type="radio" name="repoOption" value="new">New Repo</input>
+            <rich:spacer width="5"/><h:inputText value="#{CreateNewPackageUIBean.newRepoName}"/>
 
          </rich:panel>
 

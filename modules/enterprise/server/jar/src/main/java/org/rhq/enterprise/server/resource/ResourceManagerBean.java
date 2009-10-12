@@ -63,7 +63,7 @@ import org.rhq.core.domain.content.ContentServiceRequest;
 import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.InstalledPackageHistory;
 import org.rhq.core.domain.content.PackageInstallationStep;
-import org.rhq.core.domain.content.ResourceChannel;
+import org.rhq.core.domain.content.ResourceRepo;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSource;
@@ -333,7 +333,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         };
 
         String[] namedQueriesToExecute = new String[] { //
-            ResourceChannel.DELETE_BY_RESOURCES, //
+            ResourceRepo.DELETE_BY_RESOURCES, //
             MeasurementBaseline.QUERY_DELETE_BY_RESOURCES, // baseline BEFORE schedules
             MeasurementDataTrait.QUERY_DELETE_BY_RESOURCES, // traits BEFORE schedules
             CallTimeDataValue.QUERY_DELETE_BY_RESOURCES, // call time data values BEFORE schedules & call time data keys
@@ -1473,7 +1473,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<Resource> findAvailableResourcesForChannel(Subject user, int channelId, String search,
+    public PageList<Resource> findAvailableResourcesForRepo(Subject user, int repoId, String search,
         ResourceCategory category, PageControl pageControl) {
         pageControl.initDefaultOrderingField("res.name");
 
@@ -1482,8 +1482,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
             Resource.QUERY_GET_AVAILABLE_RESOURCES_FOR_CHANNEL, pageControl);
 
-        queryCount.setParameter("channelId", channelId);
-        query.setParameter("channelId", channelId);
+        queryCount.setParameter("repoId", repoId);
+        query.setParameter("repoId", repoId);
 
         search = PersistenceUtility.formatSearchParameter(search);
         queryCount.setParameter("search", search);

@@ -50,7 +50,7 @@ import org.rhq.core.domain.util.PageList;
 public interface ContentSourceManagerLocal {
     /**
      * This will look for any {@link PackageVersion}s that are "orphaned" (that is, is not related to any existing
-     * content source or channel and is not installed anywhere) and will remove any orphans that it finds. This means it
+     * content source or repo and is not installed anywhere) and will remove any orphans that it finds. This means it
      * will delete orphaned {@link PackageVersion} definitions and (if loaded) their {@link PackageBits}.
      *
      * @param subject user requesting the purge
@@ -59,7 +59,7 @@ public interface ContentSourceManagerLocal {
 
     /**
      * Deletes the identified content source. Any package versions that originated from this content source but are
-     * still related to one or more channels will remain.
+     * still related to one or more repos will remain.
      *
      * @param subject An authenticated user making the request.
      * @param contentSourceId The id of the content source to be deleted.
@@ -75,15 +75,15 @@ public interface ContentSourceManagerLocal {
 
     /**
      * Returns all {@link ContentSource} objects that are configured in the system but not presently
-     * associated with the channel identified by channelId
+     * associated with the repo identified by repoId
      *
      * @param  subject   user asking to perform this
-     * @param  channelId the identifier for the channel 
+     * @param  repoId the identifier for the repo
      * @param  pc        pagination controls
      *
-     * @return all content sources that are not presently associated with the channel identified by channelId
+     * @return all content sources that are not presently associated with the repo identified by repoId
      */
-    PageList<ContentSource> getAvailableContentSourcesForChannel(Subject subject, Integer channelId, PageControl pc);
+    PageList<ContentSource> getAvailableContentSourcesForRepo(Subject subject, Integer repoId, PageControl pc);
 
     /**
      * Returns all {@link ContentSource} objects that are configured in the system.
@@ -128,15 +128,15 @@ public interface ContentSourceManagerLocal {
     ContentSource getContentSourceByNameAndType(Subject subject, String name, String typeName);
 
     /**
-     * Gets the list of channels that are associated with a given content source.
+     * Gets the list of repos that are associated with a given content source.
      *
      * @param  subject user asking to perform this
      * @param  contentSourceId The id of a content source.
      * @param  pc pagination controls
      *
-     * @return list of associated channels
+     * @return list of associated repos
      */
-    PageList<Repo> getAssociatedChannels(Subject subject, int contentSourceId, PageControl pc);
+    PageList<Repo> getAssociatedRepos(Subject subject, int contentSourceId, PageControl pc);
 
     /**
      * Allows the caller to page through a list of historical sync results for a content source.
@@ -172,7 +172,7 @@ public interface ContentSourceManagerLocal {
      * Update an existing {@link ContentSource} object and restarts its underlying adapter. This also forces the adapter
      * to immediately sync with the remote repository. Note that this will only update the content source's basic fields
      * like name, description, etc. as well as its configuration. Specifically, it will not update the other
-     * relationships like its channels. Use {@link #addContentSourcesToChannel(Subject, int, int[])} for things like
+     * relationships like its repos. Use {@link #addContentSourcesToRepo(Subject, int, int[])} for things like
      * that.
      *
      * @param  subject       wanting to update the ContentSource
@@ -230,7 +230,7 @@ public interface ContentSourceManagerLocal {
 
     /**
      * Returns the length of the package version identified by its {@link PackageDetailsKey}. This method ensures that
-     * the given resource is subscribed to a channel that contains the package version.
+     * the given resource is subscribed to a repo that contains the package version.
      *
      * @param  resourceId
      * @param  packageDetailsKey
@@ -355,7 +355,7 @@ public interface ContentSourceManagerLocal {
     ContentSourceSyncResults mergeContentSourceSyncReport(ContentSource contentSource, PackageSyncReport report,
         Map<ContentSourcePackageDetailsKey, PackageVersionContentSource> previous, ContentSourceSyncResults syncResults);
 
-    void _mergeContentSourceSyncReportUpdateChannel(int contentSourceId);
+    void _mergeContentSourceSyncReportUpdateRepo(int contentSourceId);
 
     ContentSourceSyncResults _mergeContentSourceSyncReportREMOVE(ContentSource contentSource, PackageSyncReport report,
         Map<ContentSourcePackageDetailsKey, PackageVersionContentSource> previous,
@@ -382,7 +382,7 @@ public interface ContentSourceManagerLocal {
      * MD5 hashcode of the metadata for the resource to aid in determining when a cache of metadata is stale.</p>
      *
      * @param  resourceId identifies the resource requesting the data; all package versions in all the resource's
-     *                    subscribed channels will be represented in the returned map
+     *                    subscribed repos will be represented in the returned map
      * @param  pc         this method can potentially return a large set; this page control object allows the caller to
      *                    page through that large set, as opposed to requesting the entire set in one large chunk
      *
@@ -393,12 +393,12 @@ public interface ContentSourceManagerLocal {
     PageList<PackageVersionMetadataComposite> getPackageVersionMetadata(int resourceId, PageControl pc);
 
     /**
-     * Gets the MD5 hash which identifies a resource "content subscription". This MD5 hash will change when any channel
+     * Gets the MD5 hash which identifies a resource "content subscription". This MD5 hash will change when any repo
      * the resource is subscribed to has changed its contents (that is, if a package version was added/updated/removed
      * from it).
      *
      * @param  resourceId identifies the resource requesting the MD5; any change to any package version in any of the
-     *                    resource's subscribed channels will determine the MD5
+     *                    resource's subscribed repos will determine the MD5
      *
      * @return the MD5
      *
@@ -419,7 +419,7 @@ public interface ContentSourceManagerLocal {
      * of 0 and -1 respectively.</p>
      *
      * @param  resourceId        identifies the resource making the request; if this resource is not allowed to see the
-     *                           package version (due to the fact that it is not subscribed to a channel that is serving
+     *                           package version (due to the fact that it is not subscribed to a repo that is serving
      *                           that package version), an exception is thrown
      * @param  packageDetailsKey identifies the {@link PackageVersion} whose {@link PackageBits} are to be streamed
      * @param  outputStream      a stream that the caller prepared where this method will write the actual content
@@ -438,7 +438,7 @@ public interface ContentSourceManagerLocal {
      * remote repository.
      *
      * @param  resourceId        identifies the resource making the request; if this resource is not allowed to see the
-     *                           package version (due to the fact that it is not subscribed to a channel that is serving
+     *                           package version (due to the fact that it is not subscribed to a repo that is serving
      *                           that package version), an exception is thrown
      * @param  packageDetailsKey identifies the {@link PackageVersion} whose {@link PackageBits} are to be streamed
      * @param  outputStream      a stream that the caller prepared where this method will write the actual content

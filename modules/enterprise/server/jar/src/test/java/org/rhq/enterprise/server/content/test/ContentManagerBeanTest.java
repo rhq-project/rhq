@@ -652,8 +652,8 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
             assertEquals(1, pvs.size());
             assertEquals(pv0.getId(), pvs.get(0).getId());
 
-            // there is no channel assignment, any valid ID should eliminate all PVs
-            criteria.addFilterChannelId(38465);
+            // there is no repo assignment, any valid ID should eliminate all PVs
+            criteria.addFilterRepoId(38465);
             pageList = contentManager.findPackageVersionsByCriteria(overlord, criteria);
             assertNotNull(pageList);
             pvs = pageList.getValues();

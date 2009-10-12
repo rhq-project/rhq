@@ -16,21 +16,21 @@
 <ui:composition template="/rhq/layout/main.xhtml">
 
    <ui:param name="id" value="${param.id}" />
-   <ui:param name="pageTitle" value="Associate Content Sources to Channel '#{ChannelDetailsUIBean.channel.name}'"/>
-   <ui:param name="item" value="#{ChannelDetailsUIBean.channel}" />
+   <ui:param name="pageTitle" value="Associate Content Sources to Repo '#{RepoDetailsUIBean.repo.name}'"/>
+   <ui:param name="item" value="#{RepoDetailsUIBean.repo}" />
    
    <ui:define name="breadcrumbs">
-      <h:outputLink value="listChannels.xhtml">
-         ${msg["channel.list.breadcrumb"]}
+      <h:outputLink value="listRepos.xhtml">
+         ${msg["repo.list.breadcrumb"]}
       </h:outputLink>
       &gt;
-      <h:outputLink value="channel.xhtml">
+      <h:outputLink value="repo.xhtml">
          #{item.name}
          <f:param name="mode" value="view" />
          <f:param name="id" value="#{item.id}" />
       </h:outputLink>
       &gt;
-      <h:outputLink value="channelAssociations.xhtml">
+      <h:outputLink value="repoAssociations.xhtml">
          Associate With Content Sources
          <f:param name="id" value="#{item.id}" />
       </h:outputLink>
@@ -50,20 +50,20 @@
 
       <!-- ASSOCIATED CONTENT SOURCE LIST -->
 
-      <h:form id="channelAssociationsListForm">
+      <h:form id="repoAssociationsListForm">
          <input type="hidden" name="id" value="${param.id}"/>
       
          <rich:panel>
             <f:facet name="header">
-               <h:outputText value="Content Sources Associated With This Channel"/>
+               <h:outputText value="Content Sources Associated With This Repo"/>
             </f:facet>
 
             <h:panelGrid columns="1" width="100%">
 
-            <ui:param name="channelAssociationsDataModel" value="#{ChannelAssociationsUIBean.dataModel}"/>
-            <rich:dataTable id="channelAssociationsDataTable"
-                            rows="#{PageControl.ChannelAssociationsList.pageSize}"
-                            value="#{channelAssociationsDataModel}"
+            <ui:param name="repoAssociationsDataModel" value="#{RepoAssociationsUIBean.dataModel}"/>
+            <rich:dataTable id="repoAssociationsDataTable"
+                            rows="#{PageControl.RepoAssociationsList.pageSize}"
+                            value="#{repoAssociationsDataModel}"
                             var="contentsourceitem"
                             width="100%"
                             columnsWidth="1%, 20%, 15%, 15%, 9%"
@@ -74,15 +74,15 @@
 
 
                <f:facet name="PageControlView">
-                  <onc:paginationControl id="ChannelAssociationsList" />
+                  <onc:paginationControl id="RepoAssociationsList" />
                </f:facet>
       
                <rich:column>
                   <f:facet name="header">
-                     <onc:allSelect target="selectedChannelAssociations" />
+                     <onc:allSelect target="selectedRepoAssociations" />
                   </f:facet>
                   
-                  <onc:select name="selectedChannelAssociations" value="#{contentsourceitem.id}" />
+                  <onc:select name="selectedRepoAssociations" value="#{contentsourceitem.id}" />
                </rich:column>
 
                <rich:column rendered="#{param.debug}">
@@ -157,12 +157,12 @@
                   <rich:columnGroup>
                      <!-- colspan 7:6 for the debug 'id' column -->
                      <rich:column colspan="#{param.debug ? 7 : 6}" width="100%">
-                        <onc:selectCommandButton action="#{ChannelAssociationsUIBean.deleteSelectedChannelAssociations}"
-                                                 value="DISASSOCIATE SELECTED" target="selectedChannelAssociations" styleClass="on-pager-button buttonsmall"/>
+                        <onc:selectCommandButton action="#{RepoAssociationsUIBean.deleteSelectedRepoAssociations}"
+                                                 value="DISASSOCIATE SELECTED" target="selectedRepoAssociations" styleClass="on-pager-button buttonsmall"/>
 
-                        <ui:param name="paginationDataTableName" value="channelAssociationsDataTable"/>
-                        <ui:param name="paginationDataModel" value="#{channelAssociationsDataModel}"/>
-                        <ui:param name="paginationPageControl" value="#{PageControl.ChannelAssociationsList}"/>
+                        <ui:param name="paginationDataTableName" value="repoAssociationsDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{repoAssociationsDataModel}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.RepoAssociationsList}"/>
                         <ui:include src="../resource/include/pagination.xhtml"/>
                      </rich:column>
                   </rich:columnGroup>
@@ -179,7 +179,7 @@
            (this actually lists all content sources,
            but only those disassocated can you select) -->
 
-      <h:form id="channelDisassociationsListForm">
+      <h:form id="repoDisassociationsListForm">
          <input type="hidden" name="id" value="${param.id}"/>
       
          <rich:panel>
@@ -189,10 +189,10 @@
 
             <h:panelGrid columns="1" width="100%">
 
-            <ui:param name="channelDisassociationsDataModel" value="#{ChannelDisassociationsUIBean.dataModel}"/>
-            <rich:dataTable id="channelDisassociationsDataTable"
-                            rows="#{PageControl.ChannelDisassociationsList.pageSize}"
-                            value="#{channelDisassociationsDataModel}"
+            <ui:param name="repoDisassociationsDataModel" value="#{RepoDisassociationsUIBean.dataModel}"/>
+            <rich:dataTable id="repoDisassociationsDataTable"
+                            rows="#{PageControl.RepoDisassociationsList.pageSize}"
+                            value="#{repoDisassociationsDataModel}"
                             var="contentsourceitem"
                             width="100%"
                             columnsWidth="1%, 20%, 15%, 15%, 9%"
@@ -203,16 +203,16 @@
 
 
                <f:facet name="PageControlView">
-                  <onc:paginationControl id="ChannelDisassociationsList" />
+                  <onc:paginationControl id="RepoDisassociationsList" />
                </f:facet>
       
                <rich:column>
                   <f:facet name="header">
-                     <onc:allSelect target="selectedChannelDisassociations" />
+                     <onc:allSelect target="selectedRepoDisassociations" />
                   </f:facet>
                   
-                  <onc:select rendered="#{ChannelAssociationsUIBean.associatedList[contentsourceitem.id] eq null}"
-                              name="selectedChannelDisassociations" value="#{contentsourceitem.id}" />
+                  <onc:select rendered="#{RepoAssociationsUIBean.associatedList[contentsourceitem.id] eq null}"
+                              name="selectedRepoDisassociations" value="#{contentsourceitem.id}" />
                </rich:column>
 
                <rich:column rendered="#{param.debug}">
@@ -287,12 +287,12 @@
                   <rich:columnGroup>
                      <!-- colspan 7:6 for the debug 'id' column -->
                      <rich:column colspan="#{param.debug ? 7 : 6}" width="100%">
-                        <onc:selectCommandButton action="#{ChannelDisassociationsUIBean.associateSelectedContentSourcesWithChannel}"
-                                                 value="ASSOCIATE SELECTED" target="selectedChannelDisassociations" styleClass="on-pager-button buttonsmall"/>
+                        <onc:selectCommandButton action="#{RepoDisassociationsUIBean.associateSelectedContentSourcesWithRepo}"
+                                                 value="ASSOCIATE SELECTED" target="selectedRepoDisassociations" styleClass="on-pager-button buttonsmall"/>
 
-                        <ui:param name="paginationDataTableName" value="channelDisassociationsDataTable"/>
-                        <ui:param name="paginationDataModel" value="#{channelDisassociationsDataModel}"/>
-                        <ui:param name="paginationPageControl" value="#{PageControl.ChannelDisassociationsList}"/>
+                        <ui:param name="paginationDataTableName" value="repoDisassociationsDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{repoDisassociationsDataModel}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.RepoDisassociationsList}"/>
                         <ui:include src="../resource/include/pagination.xhtml"/>
                      </rich:column>
                   </rich:columnGroup>

@@ -31,7 +31,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.auth.SubjectManagerRemote;
 import org.rhq.enterprise.server.authz.RoleManagerRemote;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerRemote;
-import org.rhq.enterprise.server.content.ChannelManagerRemote;
+import org.rhq.enterprise.server.content.RepoManagerRemote;
 import org.rhq.enterprise.server.content.ContentManagerRemote;
 import org.rhq.enterprise.server.operation.OperationManagerRemote;
 import org.rhq.enterprise.server.operation.ResourceOperationSchedule;
@@ -654,44 +654,44 @@ public class ClientMainTest extends AssertJUnit {
 
         assertNotNull("Test requires a Non-RHQ AS Server, please start and import a JBoss AS", testWar);
 
-        ChannelManagerRemote channelManager = remoteClientRef.getChannelManagerRemote();
+        RepoManagerRemote repoManager = remoteClientRef.getRepoManagerRemote();
 
-        reportHeap("channelManager");
+        reportHeap("repoManager");
 
-        List<Repo> channels = channelManager.getAllChannels(user, pagecontrol_unlimited);
+        List<Repo> repos = repoManager.getAllRepos(user, pagecontrol_unlimited);
 
-        for (Repo channel : channels) {
-            if ("ws-test-channel".equals(channel.getName())) {
-                channelManager.deleteChannel(user, channel.getId());
+        for (Repo repo : repos) {
+            if ("ws-test-repo".equals(repo.getName())) {
+                repoManager.deleteRepo(user, repo.getId());
             }
         }
 
         Repo ch = new Repo();
-        ch.setName("ws-test-channel");
-        Repo testChannel = channelManager.createChannel(user, ch);
-        assertNotNull(testChannel);
-        assertEquals("ws-test-channel", testChannel.getName());
+        ch.setName("ws-test-repo");
+        Repo testRepo = repoManager.createRepo(user, ch);
+        assertNotNull(testRepo);
+        assertEquals("ws-test-repo", testRepo.getName());
 
-        channels = channelManager.getAllChannels(user, pagecontrol_unlimited);
+        repos = repoManager.getAllRepos(user, pagecontrol_unlimited);
 
-        testChannel = null;
-        for (Repo channel : channels) {
-            if ("ws-test-channel".equals(channel.getName())) {
-                testChannel = channel;
+        testRepo = null;
+        for (Repo repo : repos) {
+            if ("ws-test-repo".equals(repo.getName())) {
+                testRepo = repo;
                 break;
             }
         }
-        assertNotNull(testChannel);
+        assertNotNull(testRepo);
 
-        int[] bag = new int[] { testChannel.getId() };
-        channelManager.subscribeResourceToChannels(user, testWar.getResource().getId(), bag);
+        int[] bag = new int[] { testRepo.getId() };
+        repoManager.subscribeResourceToRepos(user, testWar.getResource().getId(), bag);
 
-        List<Resource> channelResources = channelManager.getSubscribedResources(user, testChannel.getId(),
+        List<Resource> repoResources = repoManager.getSubscribedResources(user, testRepo.getId(),
             pagecontrol_unlimited);
 
-        assertNotNull(channelResources);
-        assertEquals(1, channelResources.size());
-        assertTrue(channelResources.get(0).equals(testWar.getResource()));
+        assertNotNull(repoResources);
+        assertEquals(1, repoResources.size());
+        assertTrue(repoResources.get(0).equals(testWar.getResource()));
 
         ContentManagerRemote contentManager = remoteClientRef.getContentManagerRemote();
 
@@ -737,7 +737,7 @@ public class ClientMainTest extends AssertJUnit {
         assertTrue(testPackageVersion.getId() > 0);
 
         int[] bag2 = new int[] { testPackageVersion.getId() };
-        channelManager.addPackageVersionsToChannel(user, testChannel.getId(), bag2);
+        repoManager.addPackageVersionsToRepo(user, testRepo.getId(), bag2);
 
         Set<Integer> resourceSet = new HashSet<Integer>(1);
         Set<Integer> packageVersionSet = new HashSet<Integer>(1);
@@ -747,16 +747,16 @@ public class ClientMainTest extends AssertJUnit {
 
         contentManager.deployPackages(user, resourceSet, packageVersionSet);
 
-        int[] chBag = new int[] { testChannel.getId() };
-        channelManager.unsubscribeResourceFromChannels(user, testWar.getResource().getId(), chBag);
+        int[] chBag = new int[] { testRepo.getId() };
+        repoManager.unsubscribeResourceFromRepos(user, testWar.getResource().getId(), chBag);
 
-        channelResources = channelManager.getSubscribedResources(user, testChannel.getId(), pagecontrol_unlimited);
+        repoResources = repoManager.getSubscribedResources(user, testRepo.getId(), pagecontrol_unlimited);
 
-        assertNotNull(channelResources);
-        assertEquals(0, channelResources.size());
+        assertNotNull(repoResources);
+        assertEquals(0, repoResources.size());
 
         // this will force a purge of testPackageVersion
-        channelManager.deleteChannel(user, testChannel.getId());
+        repoManager.deleteRepo(user, testRepo.getId());
     }
 
     private void reportHeap(String description) {

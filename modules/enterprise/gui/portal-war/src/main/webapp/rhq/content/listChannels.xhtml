@@ -14,11 +14,11 @@
 
 <ui:composition template="/rhq/layout/main.xhtml">
 
-   <ui:param name="pageTitle" value="Channels"/>
+   <ui:param name="pageTitle" value="Repos"/>
 
    <ui:define name="breadcrumbs">
-      <h:outputLink value="listChannels.xhtml">
-         ${msg["channel.list.breadcrumb"]}
+      <h:outputLink value="listRepos.xhtml">
+         ${msg["repo.list.breadcrumb"]}
       </h:outputLink>
    </ui:define>
 
@@ -35,19 +35,19 @@
                width="100%"/>
 
 
-      <h:form id="channelsListForm">
+      <h:form id="reposListForm">
          
          <rich:panel>
             <f:facet name="header">
-               <h:outputText value="Channels"/>
+               <h:outputText value="Repos"/>
             </f:facet>
 
             <h:panelGrid columns="1" width="100%">
 
-            <ui:param name="channelsDataModel" value="#{ListChannelsUIBean.dataModel}"/>
-            <rich:dataTable id="channelsDataTable"
-                            rows="#{PageControl.ChannelsList.pageSize}"
-                            value="#{channelsDataModel}"
+            <ui:param name="reposDataModel" value="#{ListReposUIBean.dataModel}"/>
+            <rich:dataTable id="reposDataTable"
+                            rows="#{PageControl.ReposList.pageSize}"
+                            value="#{reposDataModel}"
                             var="item"
                             width="100%"
                             columnsWidth="1%, 20%, 15%, 15%"
@@ -58,15 +58,15 @@
 
 
                <f:facet name="PageControlView">
-                  <onc:paginationControl id="ChannelsList" />
+                  <onc:paginationControl id="ReposList" />
                </f:facet>
       
                <rich:column>
                   <f:facet name="header">
-                     <onc:allSelect target="selectedChannels" />
+                     <onc:allSelect target="selectedRepos" />
                   </f:facet>
                   
-                  <onc:select name="selectedChannels" value="#{item.id}" />
+                  <onc:select name="selectedRepos" value="#{item.id}" />
                </rich:column>
       
                <rich:column rendered="#{param.debug}">
@@ -86,7 +86,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
                
-                  <h:outputLink value="channel.xhtml">
+                  <h:outputLink value="repo.xhtml">
                      <f:param name="mode" value="view"/>
                      <f:param name="id" value="#{item.id}"/>
                      <h:outputText value="#{item.name}" />
@@ -131,17 +131,17 @@
                   <rich:columnGroup>
                      <!-- colspan 6:5 for the debug 'id' column -->
                      <rich:column colspan="#{param.debug ? 6 : 5}" width="100%">
-                        <h:commandButton action="#{ListChannelsUIBean.createNewChannel}"
+                        <h:commandButton action="#{ListReposUIBean.createNewRepo}"
                                          value="CREATE NEW" styleClass="on-pager-button buttonsmall">
                            <f:param name="mode" value="new"/>
                         </h:commandButton>
 
-                        <onc:selectCommandButton action="#{ListChannelsUIBean.deleteSelectedChannels}"
-                                                 value="DELETE SELECTED" target="selectedChannels" styleClass="on-pager-button buttonsmall"/>
+                        <onc:selectCommandButton action="#{ListReposUIBean.deleteSelectedRepos}"
+                                                 value="DELETE SELECTED" target="selectedRepos" styleClass="on-pager-button buttonsmall"/>
 
-                        <ui:param name="paginationDataTableName" value="channelsDataTable"/>
-                        <ui:param name="paginationDataModel" value="#{channelsDataModel}"/>
-                        <ui:param name="paginationPageControl" value="#{PageControl.ChannelsList}"/>
+                        <ui:param name="paginationDataTableName" value="reposDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{reposDataModel}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.ReposList}"/>
                         <ui:include src="../resource/include/pagination.xhtml"/>
                      </rich:column>
                   </rich:columnGroup>

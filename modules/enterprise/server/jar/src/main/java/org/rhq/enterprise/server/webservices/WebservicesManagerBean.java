@@ -53,7 +53,7 @@ import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
-import org.rhq.core.domain.criteria.ChannelCriteria;
+import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.criteria.EventCriteria;
 import org.rhq.core.domain.criteria.GroupOperationHistoryCriteria;
@@ -98,8 +98,8 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.configuration.ConfigurationUpdateStillInProgressException;
-import org.rhq.enterprise.server.content.ChannelException;
-import org.rhq.enterprise.server.content.ChannelManagerLocal;
+import org.rhq.enterprise.server.content.RepoException;
+import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.discovery.DiscoveryBossLocal;
 import org.rhq.enterprise.server.event.EventManagerLocal;
@@ -150,7 +150,7 @@ public class WebservicesManagerBean implements WebservicesRemote {
     private AlertDefinitionManagerLocal alertDefinitionManager = LookupUtil.getAlertDefinitionManager();
     private AvailabilityManagerLocal availabilityManager = LookupUtil.getAvailabilityManager();
     private CallTimeDataManagerLocal callTimeDataManager = LookupUtil.getCallTimeDataManager();
-    private ChannelManagerLocal channelManager = LookupUtil.getChannelManagerLocal();
+    private RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
     private ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
     private ContentManagerLocal contentManager = LookupUtil.getContentManager();
     //removed as it is problematic for WS clients having XMLAny for Object.
@@ -213,60 +213,60 @@ public class WebservicesManagerBean implements WebservicesRemote {
     //CALLTIMEDATAMANAGER: END ----------------------------------
 
     //CHANNELMANAGER: BEGIN ----------------------------------
-    public void addPackageVersionsToChannel(Subject subject, int channelId, int[] packageVersionIds) {
-        channelManager.addPackageVersionsToChannel(subject, channelId, packageVersionIds);
+    public void addPackageVersionsToRepo(Subject subject, int repoId, int[] packageVersionIds) {
+        repoManager.addPackageVersionsToRepo(subject, repoId, packageVersionIds);
     }
 
-    public Repo createChannel(Subject subject, Repo repo) throws ChannelException {
-        return channelManager.createChannel(subject, repo);
+    public Repo createRepo(Subject subject, Repo repo) throws RepoException {
+        return repoManager.createRepo(subject, repo);
     }
 
-    public void deleteChannel(Subject subject, int channelId) {
-        channelManager.deleteChannel(subject, channelId);
+    public void deleteRepo(Subject subject, int repoId) {
+        repoManager.deleteRepo(subject, repoId);
     }
 
-    public PageList<Repo> findChannels(Subject subject, PageControl pc) {
-        return channelManager.findChannels(subject, pc);
+    public PageList<Repo> findRepos(Subject subject, PageControl pc) {
+        return repoManager.findRepos(subject, pc);
     }
 
-    public PageList<Repo> findChannelsByCriteria(Subject subject, ChannelCriteria criteria) {
+    public PageList<Repo> findReposByCriteria(Subject subject, RepoCriteria criteria) {
         checkParametersPassedIn(subject, criteria);
-        return channelManager.findChannelsByCriteria(subject, criteria);
+        return repoManager.findReposByCriteria(subject, criteria);
     }
 
-    public PageList<PackageVersion> findPackageVersionsInChannel(Subject subject, int channelId, String filter,
+    public PageList<PackageVersion> findPackageVersionsInRepo(Subject subject, int repoId, String filter,
         PageControl pc) {
-        return channelManager.findPackageVersionsInChannel(subject, channelId, filter, pc);
+        return repoManager.findPackageVersionsInRepo(subject, repoId, filter, pc);
     }
 
-    public PageList<PackageVersion> findPackageVersionsInChannelByCriteria(Subject subject,
+    public PageList<PackageVersion> findPackageVersionsInRepoByCriteria(Subject subject,
         PackageVersionCriteria criteria) {
-        return channelManager.findPackageVersionsInChannelByCriteria(subject, criteria);
+        return repoManager.findPackageVersionsInRepoByCriteria(subject, criteria);
     }
 
-    public PageList<Resource> findSubscribedResources(Subject subject, int channelId, PageControl pc) {
-        return channelManager.findSubscribedResources(subject, channelId, pc);
+    public PageList<Resource> findSubscribedResources(Subject subject, int repoId, PageControl pc) {
+        return repoManager.findSubscribedResources(subject, repoId, pc);
     }
 
-    public Repo getChannel(Subject subject, int channelId) {
-        return channelManager.getChannel(subject, channelId);
+    public Repo getRepo(Subject subject, int repoId) {
+        return repoManager.getRepo(subject, repoId);
     }
 
-    public void subscribeResourceToChannels(Subject subject, int resourceId, int[] channelIds) {
-        channelManager.subscribeResourceToChannels(subject, resourceId, channelIds);
+    public void subscribeResourceToRepos(Subject subject, int resourceId, int[] repoIds) {
+        repoManager.subscribeResourceToRepos(subject, resourceId, repoIds);
     }
 
-    public void unsubscribeResourceFromChannels(Subject subject, int resourceId, int[] channelIds) {
-        channelManager.unsubscribeResourceFromChannels(subject, resourceId, channelIds);
+    public void unsubscribeResourceFromRepos(Subject subject, int resourceId, int[] repoIds) {
+        repoManager.unsubscribeResourceFromRepos(subject, resourceId, repoIds);
     }
 
-    public Repo updateChannel(Subject subject, Repo repo) throws ChannelException {
-        return channelManager.updateChannel(subject, repo);
+    public Repo updateRepo(Subject subject, Repo repo) throws RepoException {
+        return repoManager.updateRepo(subject, repo);
     }
 
     public PageList<PackageVersion> findPackageVersionsByCriteria(Subject subject, PackageVersionCriteria criteria) {
         checkParametersPassedIn(subject, criteria);
-        return channelManager.findPackageVersionsInChannelByCriteria(subject, criteria);
+        return repoManager.findPackageVersionsInRepoByCriteria(subject, criteria);
     }
 
     //CHANNELMANAGER: END ----------------------------------

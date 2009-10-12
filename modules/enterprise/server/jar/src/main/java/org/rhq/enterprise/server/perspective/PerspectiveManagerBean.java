@@ -86,7 +86,7 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
                 newTask.setDescription(t.getDescription());
                 newTask.setName(t.getName());
 
-                // path="/pulp/channels/clone?cid={0}"
+                // path="/pulp/repos/clone?cid={0}"
                 String newPath = MessageFormat.format(t.getPath(), args);
 
                 // String newPath = t.getPath().replaceAll(t.getId(), contextId);

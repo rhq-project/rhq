@@ -17,7 +17,7 @@ import org.rhq.enterprise.client.utility.ScriptUtil;
 import org.rhq.enterprise.server.alert.AlertManagerRemote;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerRemote;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerRemote;
-import org.rhq.enterprise.server.content.ChannelManagerRemote;
+import org.rhq.enterprise.server.content.RepoManagerRemote;
 import org.rhq.enterprise.server.content.ContentManagerRemote;
 import org.rhq.enterprise.server.operation.OperationManagerRemote;
 import org.rhq.enterprise.server.authz.RoleManagerRemote;
@@ -136,7 +136,7 @@ public class ScriptCommandTest {
         }
 
         @Override
-        public ChannelManagerRemote getChannelManagerRemote() {
+        public RepoManagerRemote getRepoManagerRemote() {
             return null;
         }
 

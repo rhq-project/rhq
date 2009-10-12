@@ -31,6 +31,7 @@ import org.rhq.core.clientapi.server.plugin.content.ContentProvider;
 import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetails;
 import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetailsKey;
 import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
+import org.rhq.core.clientapi.server.plugin.content.PackageSource;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyMap;
@@ -46,7 +47,7 @@ import org.rhq.core.util.file.ContentFileInfoFactory;
  * @author jortel
  * @author John Mazzitelli
  */
-public class DiskSource implements ContentProvider {
+public class DiskSource implements ContentProvider, PackageSource {
 
     /**
      * The root path (directory) from which to synchronize content.

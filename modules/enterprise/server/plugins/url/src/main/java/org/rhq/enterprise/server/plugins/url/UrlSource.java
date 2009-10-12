@@ -33,6 +33,7 @@ import org.rhq.core.clientapi.server.plugin.content.ContentProvider;
 import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetails;
 import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetailsKey;
 import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
+import org.rhq.core.clientapi.server.plugin.content.PackageSource;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
@@ -75,7 +76,7 @@ import org.rhq.enterprise.server.plugins.url.RemotePackageInfo.SupportedPackageT
  *
  * @author John Mazzitelli
  */
-public class UrlSource implements ContentProvider {
+public class UrlSource implements ContentProvider, PackageSource {
 
     /**
      * The default index file is located at the root URL under this filename.

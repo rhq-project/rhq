@@ -27,6 +27,7 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.clientapi.server.plugin.content.ContentProvider;
 import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetails;
 import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
+import org.rhq.core.clientapi.server.plugin.content.PackageSource;
 import org.rhq.core.domain.configuration.Configuration;
 
 /**
@@ -34,7 +35,7 @@ import org.rhq.core.domain.configuration.Configuration;
  *
  * @author jortel
  */
-public class RepoSource implements ContentProvider {
+public class RepoSource implements ContentProvider, PackageSource {
     /**
      * The reader used to access a yum repo's metadata and packages.
      */

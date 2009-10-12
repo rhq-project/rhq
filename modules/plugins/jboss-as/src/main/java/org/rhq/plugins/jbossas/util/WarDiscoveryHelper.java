@@ -63,8 +63,7 @@ import org.rhq.plugins.jmx.ObjectNameQueryUtility;
  */
 public class WarDiscoveryHelper {
     private static final Log LOG = LogFactory.getLog(WarDiscoveryHelper.class);
-
-    public static final String JBOSS_WEB_MBEAN_NAME_TEMPLATE = "jboss.web:J2EEApplication=none,J2EEServer=none,j2eeType=WebModule,name=%name%";
+    
     private static final String ROOT_WEBAPP_RT_LOG_FILE_NAME_BASE = "ROOT";
     private static final String RT_LOG_FILE_NAME_SUFFIX = "_rt.log";
 
@@ -98,13 +97,13 @@ public class WarDiscoveryHelper {
             objectNames.add(objectNameProperty.getStringValue());
         }
 
-        // Get the list of deployed modules
+        // Get the list of deployed modules.
         Map<String, List<WarDeploymentInformation>> deploymentInformations = DeploymentUtility
             .getWarDeploymentInformation(jmxConnection, objectNames);
 
         Set<DiscoveredResourceDetails> resultingResources = new HashSet<DiscoveredResourceDetails>();
 
-        // Loop over the discovered war files and try to fill in missing information
+        // Loop over the discovered war files and try to fill in missing information.
         for (Iterator<DiscoveredResourceDetails> warResourcesIterator = warResources.iterator(); warResourcesIterator
             .hasNext();) {
             DiscoveredResourceDetails discoResDetail = warResourcesIterator.next();
@@ -122,7 +121,15 @@ public class WarDiscoveryHelper {
                  * that are not localhost. This is needed so that the majority of installed
                  * webapps will just be found with their existing key in case of an update.
                  */
+                String baseResourceName = discoResDetail.getResourceName();
+                String baseResourceDescription = discoResDetail.getResourceDescription();
+
                 for (WarDeploymentInformation info : deploymentInfoList) {
+                    String contextPath = WarDiscoveryHelper.getContextPath(info.getContextRoot());
+                    String webModuleName = "//" + info.getVHost() + contextPath;
+                    discoResDetail.setResourceName(baseResourceName + " (" + webModuleName + ")");
+                    discoResDetail.setResourceDescription(baseResourceDescription + " (" + webModuleName + ")");
+
                     String vhost = info.getVHost();
                     if ("localhost".equals(vhost)) {
                         initPluginConfiguration(info, rtLogDir, warResourcesIterator, discoResDetail);
@@ -132,19 +139,19 @@ public class WarDiscoveryHelper {
                         String key = discoResDetail.getResourceKey();
                         key += ",vhost=" + vhost;
 
-                        Configuration configClone;
+                        Configuration pluginConfigClone;
                         try {
-                            configClone = discoResDetail.getPluginConfiguration().clone();
+                            pluginConfigClone = discoResDetail.getPluginConfiguration().clone();
                         } catch (CloneNotSupportedException e) {
-                            // TODO Auto-generated catch block
-                            e.printStackTrace();
-                            configClone = new Configuration();
+                            LOG.error("Failed to clone plugin config for WAR " + discoResDetail + ".", e);
+                            continue;
                         }
 
-                        myDetail = new DiscoveredResourceDetails(discoResDetail.getResourceType(), key, discoResDetail
-                            .getResourceName(), discoResDetail.getResourceVersion(), discoResDetail
-                            .getResourceDescription()
-                            + " on (" + vhost + ")", configClone, discoResDetail.getProcessInfo());
+                        String resourceName = baseResourceName + " (" + webModuleName + ")";
+                        String resourceDescription = baseResourceDescription + " (" + webModuleName + ")";
+                        myDetail = new DiscoveredResourceDetails(discoResDetail.getResourceType(), key, resourceName,
+                                discoResDetail.getResourceVersion(), resourceDescription, pluginConfigClone,
+                                discoResDetail.getProcessInfo());
 
                         initPluginConfiguration(info, rtLogDir, warResourcesIterator, myDetail);
                         resultingResources.add(myDetail); // the cloned one

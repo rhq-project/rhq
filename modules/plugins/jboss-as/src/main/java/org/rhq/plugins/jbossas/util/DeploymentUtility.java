@@ -23,7 +23,9 @@
 package org.rhq.plugins.jbossas.util;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -31,6 +33,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.management.ObjectName;
 
@@ -41,7 +45,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
-import org.mc4j.ems.connection.bean.EmsBeanName;
 import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 import org.mc4j.ems.connection.bean.operation.EmsOperation;
 
@@ -72,6 +75,9 @@ public class DeploymentUtility {
      * the Main Deployer operation name for JBossAS 3.x.
      */
     private static final String LIST_DEPLOYED_OP_NAME = "listDeployed";
+
+    private static final String JBOSS_WEB_MBEAN_NAME_TEMPLATE =
+            "jboss.web:J2EEApplication=none,J2EEServer=none,j2eeType=WebModule,name=%s";
 
     protected static EmsOperation getListDeployedOperation(EmsConnection connection) {
         EmsOperation retOperation;
@@ -169,18 +175,19 @@ public class DeploymentUtility {
      * some performance if it did this for each and every war resource one at a time.
      *
      * @param connection EmsConnection to get the mbean information
-     * @param objectNames Name of the main jboss.management mbeans for a collection of wars.
+     * @param jbossManMBeanNames Name of the main jboss.management mbeans for a collection of wars.
      * @return map holds all the war deployment information for the objects passed in the objectNames collection
      */
     public static Map<String, List<WarDeploymentInformation>> getWarDeploymentInformation(EmsConnection connection,
-        List<String> objectNames) {
+        List<String> jbossManMBeanNames) {
         // We need a list of informations, as one jsr77 deployment can end up in multiple web apps in different vhosts
         HashMap<String, List<WarDeploymentInformation>> retDeploymentInformationMap = new HashMap<String, List<WarDeploymentInformation>>();
 
         // will contain information on all deployments
-        Collection deployed;
+        Collection deploymentInfos;
         try {
-            deployed = getDeploymentInformations(connection);
+            // NOTE: This is an expensive operation, since it returns a bunch of large objects.
+            deploymentInfos = getDeploymentInformations(connection);
         }
         catch (Exception e) {
             return null;
@@ -189,114 +196,119 @@ public class DeploymentUtility {
         String separator = System.getProperty("file.separator");
         boolean isOnWin = separator.equals("\\");
 
-        // Loop through the deployments, get the name information and compare it to the collection
-        // of strings passed into this method
-        //        Interpreter i = new Interpreter();
-        for (Object sdi : deployed) {
+        // Loop through the deployment infos, and find the deployment infos corresponding to each of the
+        // jboss.management/JSR77 MBean names that were passed into this method. From the deployment infos,
+        // we can figure out the vhost(s) and context root for each WAR.
+        for (Object deploymentInfo : deploymentInfos) {
             try {
-                ObjectName jbossWebObjectName = getFieldValue(sdi, "deployedObject", javax.management.ObjectName.class);
+                // NOTE: There may be more than one jboss.web MBean,
+                //       e.g. "jboss.web:J2EEApplication=none,J2EEServer=none,j2eeType=WebModule,name=//localhost/jmx-console",
+                //       associated with a given WAR deployment, in which case, the "deployedObject" field will be
+                //       arbitrarily set to the name of one of the jboss.web MBeans.
+                ObjectName jbossWebObjectName = getFieldValue(deploymentInfo, "deployedObject", ObjectName.class);
                 if (jbossWebObjectName != null) {
-                    String shortName = getFieldValue(sdi, "shortName", String.class);
+                    // e.g. "jmx-console.war"
+                    String shortName = getFieldValue(deploymentInfo, "shortName", String.class);
 
-                    for (String objectNameString : objectNames) {
-                        String nameFromObject = getMBeanNameAttribute(objectNameString);
+                    for (String jbossManMBeanName : jbossManMBeanNames) {
+                        ObjectName jbossManObjectName = new ObjectName(jbossManMBeanName);
+                        String jbossManWarName = jbossManObjectName.getKeyProperty("name");
 
-                        if (shortName.equals(nameFromObject)) {
-
-                            String jbossWebmBeanName = jbossWebObjectName.getCanonicalName();
-                            String contextRoot = getMBeanNameAttribute(jbossWebmBeanName);
-                            /*
-                            * Lets find out the real context root. The one passed is //<vhost>/<context>
-                            * If it ends in a slash, it's the root context (context root -> "/"). Otherwise, the
-                            * context root will be everything after the last slash (e.g. "jmx-console").
-                            * BUT: We need to be careful with slashes inside the context root, as jmx/console
-                            * is a valid context root as well.
-                            */
-                            if (contextRoot.startsWith("//")) {
-                                contextRoot = contextRoot.substring(2);
-                                int pos = contextRoot.indexOf("/");
-                                if (pos > -1)
-                                    contextRoot = contextRoot.substring(pos); // Skip vhost
-                                if (contextRoot.length()>1)
-                                    contextRoot = contextRoot.substring(1); // Skip leading / if cR is othern than "/"
+                        if (shortName.equals(jbossManWarName)) {
+                            log.debug("Found DeploymentInfo for WAR " + shortName + ".");
+                            // The only reliable way to determine the vhosts associated with the WAR is to use
+                            // the "mbeans" field, whose value is a list of all the Servlet MBeans,
+                            // .e.g. "jboss.web:J2EEApplication=none,J2EEServer=none,WebModule=//localhost/jmx-console,j2eeType=Servlet,name=default",
+                            // corresponding to the WAR (one per servlet per vhost).
+                            List servletObjectNames = getFieldValue(deploymentInfo, "mbeans", List.class);
+                            Set<String> webModuleNames = new HashSet();
+                            for (Object servletObjectName : servletObjectNames) {
+                                // e.g. Figure out the web module name, e.g. "//localhost/jmx-console".
+                                // NOTE: We must use reflection when working with the returned ObjectNames, since EMS
+                                //       loaded them using a different classloader. Attempting to access them directly
+                                //       would cause ClassCastExceptions.
+                                Class<? extends Object> objectNameClass = servletObjectName.getClass();
+                                Method getKeyPropertyMethod = objectNameClass.getMethod("getKeyProperty", String.class);
+                                String webModuleName = (String)getKeyPropertyMethod.invoke(servletObjectName, "WebModule");
+                                webModuleNames.add(webModuleName);
                             }
-                            else { // Fallback just in case
-                                int lastSlashIndex = contextRoot.lastIndexOf("/");
-                                if (lastSlashIndex > 0) {
-                                    int lastIndex = contextRoot.length() - 1;
-                                    contextRoot = (lastSlashIndex == lastIndex) ? "/" : contextRoot.substring(lastSlashIndex + 1);
-                                }
-                            }
-
-                            String file = getFieldValue(sdi, "url", URL.class).toString();
-                            if (file.startsWith("file:/")) {
-                               if (isOnWin) {
-                                  file = file.substring(6);
-                                  // listDeployed() always delivers / as path separator, so we need to correct this.
-                                  File tmp = new File(file);
-                                  file = tmp.getCanonicalPath();
-                               }
-                               else
-                                  file = file.substring(5);
-                            }
-
-                            /*
-                             * We now have a valid deployment. Go back to the MBeanServer and get *all*
-                             * applicable virtual hosts for this web app. Return deployment info for all
-                             * of them.
-                             * Most of the time this will only be one virtual host called 'localhost', as
-                             * this is the default if no vhost is set.
-                             * It may happen (in the case of war files with distributable tag and in some configurations
-                             * that we do not get any vhosts. Here we assume 'localhost'
-                             *
-                             * We stuff the list of beans into a list to re-use the code that is mostly the same for both
-                             * cases
-                             */
-                            List<List<EmsBean>> beansList = new ArrayList<List<EmsBean>>(2);
-                            List<EmsBean> vhostsFromLocal = getVHostsFromLocalManager(contextRoot, connection);
-                            List<EmsBean> vhostsFromCluster = getVHostsFromClusterManager(contextRoot,connection);
-                            beansList.add(vhostsFromLocal);
-                            beansList.add(vhostsFromCluster);
-
+                            log.debug("Found " + webModuleNames.size() + " Web modules for WAR " + shortName + ": "
+                                    + webModuleNames);
+                            String path = getPath(isOnWin, deploymentInfo);
                             List<WarDeploymentInformation> infos = new ArrayList<WarDeploymentInformation>();
-
-                            for (List<EmsBean> vhosts : beansList) {
-                                for (EmsBean vhost : vhosts) {
-                                    WarDeploymentInformation deploymentInformation = new WarDeploymentInformation();
-                                    EmsBeanName emsBeanName = vhost.getBeanName();
-                                    String vhostname;
-                                    if (emsBeanName.getKeyProperty("type") != null)
-                                        vhostname = emsBeanName.getKeyProperty("host");
-                                    else {
-                                        vhostname = emsBeanName.getKeyProperty("WebModule");
-                                        if (!vhostname.endsWith(contextRoot))
-                                            continue;
-
-                                        vhostname = vhostname.substring(2);
-                                        vhostname = vhostname.substring(0,vhostname.indexOf("/"));
-                                    }
-                                    deploymentInformation.setVHost(vhostname);
-                                    deploymentInformation.setFileName(file);
-                                    deploymentInformation.setContextRoot(contextRoot);
-                                    // jboss.web:J2EEApplication=none,J2EEServer=none,j2eeType=WebModule,name=//bsd.de/test
-                                    // TODO to we have a better tool to exchange a value of a key-value pair in an ObjectName ?
-                                    int index = jbossWebmBeanName.indexOf("name=");
-                                    jbossWebmBeanName = jbossWebmBeanName.substring(0, index + 5);
-                                    jbossWebmBeanName += "//" + vhostname + WarDiscoveryHelper.getContextPath(contextRoot);
-
-                                    deploymentInformation.setJbossWebModuleMBeanObjectName(jbossWebmBeanName);
-                                    infos.add(deploymentInformation);
-                                }
+                            for (String webModuleName : webModuleNames) {
+                                WebModule webModule = parseWebModuleName(webModuleName);
+                                WarDeploymentInformation deploymentInformation = new WarDeploymentInformation();
+                                deploymentInformation.setVHost(webModule.vhost);
+                                deploymentInformation.setFileName(path);
+                                deploymentInformation.setContextRoot(webModule.contextRoot);
+                                String jbossWebMBeanName = String.format(JBOSS_WEB_MBEAN_NAME_TEMPLATE, webModuleName);
+                                jbossWebObjectName = ObjectName.getInstance(jbossWebMBeanName);
+                                jbossWebMBeanName = jbossWebObjectName.getCanonicalName();
+                                deploymentInformation.setJbossWebModuleMBeanObjectName(jbossWebMBeanName);
+                                infos.add(deploymentInformation);
                             }
-                            retDeploymentInformationMap.put(objectNameString, infos);
+
+                            retDeploymentInformationMap.put(jbossManMBeanName, infos);
                         }
                     }
                 }
             } catch (Exception evalError) {
-                log.warn("Failed to determine if a deployment contains our mbean", evalError);
+                log.warn("Failed to determine if a deployment contains our MBean", evalError);
             }
         }
         return retDeploymentInformationMap;
+    }
+
+    private static String getPath(boolean onWin, Object deploymentInfo) throws IOException {
+        String path;
+        String url = getFieldValue(deploymentInfo, "url", URL.class).toString();
+        if (url.startsWith("file:/")) {
+           if (onWin) {
+              path = url.substring(6);
+              // listDeployed() always delivers / as path separator, so we need to correct this.
+              File file = new File(path);
+              path = file.getCanonicalPath();
+           }
+           else
+              path = url.substring(5);
+        } else {
+            path = url;
+        }
+        return path;
+    }
+
+    private static WebModule parseWebModuleName(String name) {
+        WebModule webModule = new WebModule();
+       /*
+        * Lets find out the real context root. The one passed is //<vhost>/<context>
+        * If it ends in a slash, it's the root context (context root -> "/"). Otherwise, the
+        * context root will be everything after the last slash (e.g. "jmx-console").
+        * BUT: We need to be careful with slashes inside the context root, as jmx/console
+        * is a valid context root as well.
+        */
+        if (name.startsWith("//")) {
+            // e.g. "//localhost/jmx-console"
+            name = name.substring(2);
+            int firstSlashIndex = name.indexOf("/");
+            if (firstSlashIndex > -1) {
+                webModule.vhost = name.substring(0, firstSlashIndex);
+                webModule.contextRoot = name.substring(firstSlashIndex);
+            }
+            // Chop off the leading slash for context roots other than "/".
+            if (webModule.contextRoot.length() > 1) {
+                webModule.contextRoot = webModule.contextRoot.substring(1);
+            }
+        }
+        else { // Fallback just in case
+            int lastSlashIndex = name.lastIndexOf("/");
+            if (lastSlashIndex > 0) {
+                int lastIndex = name.length() - 1;
+                name = (lastSlashIndex == lastIndex) ? "/" : name.substring(lastSlashIndex + 1);
+            }
+        }
+                 
+        return webModule;
     }
 
     /**
@@ -409,21 +421,6 @@ public class DeploymentUtility {
         return deploymentInfos;
     }
 
-    private static String getMBeanNameAttribute(String objectBeanName) {
-        Object[] splitName = objectBeanName.split("name=");
-        String retNameAttribute = "";
-        if (splitName.length > 1) {
-            String afterName = (String) splitName[1];
-            String[] removeAnythingAfter = afterName.split(",");
-            if (removeAnythingAfter.length > 0) {
-                retNameAttribute = removeAnythingAfter[0];
-            } else {
-                retNameAttribute = afterName;
-            }
-        }
-        return retNameAttribute;
-    }
-
     private static <T> T getFieldValue(Object target, String name, Class<T> T) {
 
         if (target == null)
@@ -451,15 +448,15 @@ public class DeploymentUtility {
      * VHost MBeans have the pattern "jboss.web:host=*,path=/<ctx_root>,type=Manager".
      *
      * @param contextRoot the context root
-     * @param emsConnection valid connection to the remote
+     * @param emsConnection valid connection to the remote MBeanServer
      * @return the list of VHost MBeans for this webapp
      */
     public static List<EmsBean> getVHostsFromLocalManager(String contextRoot, EmsConnection emsConnection) {
-        String pattern = "jboss.web:host=%host%,path=" + WarDiscoveryHelper.getContextPath(contextRoot)
-                + ",type=Manager";
+        String contextPath = WarDiscoveryHelper.getContextPath(contextRoot);
+        String pattern = "jboss.web:host=%host%,path=" + contextPath + ",type=Manager";
         ObjectNameQueryUtility queryUtil = new ObjectNameQueryUtility(pattern);
-        List<EmsBean> mBeans = emsConnection.queryBeans(queryUtil.getTranslatedQuery());
-        return mBeans;
+        List<EmsBean> managerMBeans = emsConnection.queryBeans(queryUtil.getTranslatedQuery());
+        return managerMBeans;
     }
 
     /**
@@ -467,14 +464,20 @@ public class DeploymentUtility {
      * VHost MBeans have the pattern "jboss.web:WebModule=//snert.home.pilhuhn.de/dist-vhost,service=ClusterManager".
      *
      * @param contextRoot the context root
-     * @param emsConnection valid connection to the remote
+     * @param emsConnection valid connection to the remote MBeanServer
      * @return the list of VHost MBeans for this webapp
      */
     public static List<EmsBean> getVHostsFromClusterManager(String contextRoot, EmsConnection emsConnection) {
-        String pattern = "jboss.web:service=ClusterManager,WebModule=%module%";
+        String contextPath = WarDiscoveryHelper.getContextPath(contextRoot);
+        //String webModule = "//" + contextInfo.vhost + contextPath;
+        String pattern = "jboss.web:service=ClusterManager,WebModule=%webModule%";
         ObjectNameQueryUtility queryUtil = new ObjectNameQueryUtility(pattern);
-        List<EmsBean> mBeans = emsConnection.queryBeans(queryUtil.getTranslatedQuery());
-        return mBeans;
+        List<EmsBean> clusterManagerMBeans = emsConnection.queryBeans(queryUtil.getTranslatedQuery());
+        return clusterManagerMBeans;
     }
 
+    static class WebModule {
+        String vhost;
+        String contextRoot;
+    }
 }

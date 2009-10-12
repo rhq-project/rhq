@@ -30,7 +30,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.Nullable;
 
-import org.rhq.core.clientapi.server.plugin.content.ContentSourceAdapter;
+import org.rhq.core.clientapi.server.plugin.content.ContentProvider;
 import org.rhq.core.clientapi.server.plugin.content.metadata.ContentSourcePluginMetadataManager;
 import org.rhq.core.domain.content.ContentSourceType;
 
@@ -190,9 +190,9 @@ public class ContentSourcePluginManager {
                 String className = newType.getContentSourceApiClass();
                 Class<?> apiClass = Class.forName(className, false, pluginEnvironment.getClassLoader());
 
-                if (!ContentSourceAdapter.class.isAssignableFrom(apiClass)) {
+                if (!ContentProvider.class.isAssignableFrom(apiClass)) {
                     throw new Exception("The API class [" + className + "] should implement ["
-                        + ContentSourceAdapter.class.getName() + "] but does not");
+                        + ContentProvider.class.getName() + "] but does not");
                 }
             } catch (Exception e) {
                 // do not deploy this plugin - its stinky

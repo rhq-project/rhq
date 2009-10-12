@@ -27,7 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.rhq.core.clientapi.server.plugin.content.ContentSourceAdapter;
+import org.rhq.core.clientapi.server.plugin.content.ContentProvider;
 import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetails;
 import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetailsKey;
 import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
@@ -46,7 +46,7 @@ import org.rhq.core.util.file.ContentFileInfoFactory;
  * @author jortel
  * @author John Mazzitelli
  */
-public class DiskSource implements ContentSourceAdapter {
+public class DiskSource implements ContentProvider {
 
     /**
      * The root path (directory) from which to synchronize content.

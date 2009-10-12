@@ -34,10 +34,11 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.clientapi.server.plugin.content.ContentSourceAdapter;
+import org.rhq.core.clientapi.server.plugin.content.ContentProvider;
 import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetails;
 import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetailsKey;
 import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
+import org.rhq.core.clientapi.server.plugin.content.PackageSource;
 import org.rhq.core.clientapi.server.plugin.content.metadata.ContentSourcePluginMetadataManager;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.ContentSource;
@@ -55,7 +56,7 @@ import org.rhq.enterprise.server.content.metadata.ContentSourceMetadataManagerLo
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
- * Responsible for managing {@link ContentSourceAdapter adapters}.
+ * Responsible for managing {@link org.rhq.core.clientapi.server.plugin.content.ContentProvider adapters}.
  *
  * @author John Mazzitelli
  */
@@ -64,7 +65,7 @@ public class ContentSourceAdapterManager {
 
     private ContentSourcePluginContainerConfiguration configuration;
     private ContentSourcePluginManager pluginManager;
-    private Map<ContentSource, ContentSourceAdapter> adapters;
+    private Map<ContentSource, ContentProvider> adapters;
 
     // This is used as a monitor lock to the synchronizeContentSource method;
     // it helps us avoid two content sources getting synchronized at the same time.
@@ -82,8 +83,10 @@ public class ContentSourceAdapterManager {
      * @throws Exception if the adapter failed to load the bits
      */
     public InputStream loadPackageBits(int contentSourceId, String location) throws Exception {
-        ContentSourceAdapter adapter = getIsolatedContentSourceAdapter(contentSourceId);
-        InputStream inputStream = adapter.getInputStream(location);
+        ContentProvider adapter = getIsolatedContentSourceAdapter(contentSourceId);
+
+        PackageSource packageSource = (PackageSource) adapter;
+        InputStream inputStream = packageSource.getInputStream(location);
 
         if (inputStream == null) {
             throw new Exception("Adapter for content source [" + contentSourceId
@@ -109,7 +112,7 @@ public class ContentSourceAdapterManager {
      */
     public boolean synchronizeContentSource(int contentSourceId) throws Exception {
         ContentSourceManagerLocal manager = LookupUtil.getContentSourceManager();
-        ContentSourceAdapter adapter = getIsolatedContentSourceAdapter(contentSourceId);
+        ContentProvider adapter = getIsolatedContentSourceAdapter(contentSourceId);
         ContentSourceSyncResults results = null;
         SubjectManagerLocal subjMgr = LookupUtil.getSubjectManager();
         StringBuilder progress = new StringBuilder(); // append to this as we go along, building a status report
@@ -203,7 +206,8 @@ public class ContentSourceAdapterManager {
             results = manager.mergeContentSourceSyncResults(results);
             start = System.currentTimeMillis();
 
-            adapter.synchronizePackages(report, allDetails);
+            PackageSource packageSource = (PackageSource) adapter;
+            packageSource.synchronizePackages(report, allDetails);
 
             log.info("synchronizeContentSource: [" + contentSource.getName() + "]: got sync report from adapter=["
                 + report + "] (" + (System.currentTimeMillis() - start) + ")ms");
@@ -280,7 +284,7 @@ public class ContentSourceAdapterManager {
      * @throws Exception if failed to get an adapter to attempt the connection
      */
     public boolean testConnection(int contentSourceId) throws Exception {
-        ContentSourceAdapter adapter = getIsolatedContentSourceAdapter(contentSourceId);
+        ContentProvider adapter = getIsolatedContentSourceAdapter(contentSourceId);
 
         try {
             adapter.testConnection();
@@ -323,7 +327,7 @@ public class ContentSourceAdapterManager {
             log.info("Initializing content source adapter for [" + contentSource + "] of type ["
                 + contentSource.getContentSourceType() + "]");
 
-            ContentSourceAdapter adapter = getIsolatedContentSourceAdapter(contentSource);
+            ContentProvider adapter = getIsolatedContentSourceAdapter(contentSource);
             adapter.initialize(contentSource.getConfiguration());
         } catch (Throwable t) {
             log.warn("Failed to initialize adapter for content source [" + contentSource.getName() + "]", t);
@@ -349,7 +353,7 @@ public class ContentSourceAdapterManager {
             log.info("Shutting down content source adapter for [" + contentSource + "] of type ["
                 + contentSource.getContentSourceType() + "]");
 
-            ContentSourceAdapter adapter = getIsolatedContentSourceAdapter(contentSource);
+            ContentProvider adapter = getIsolatedContentSourceAdapter(contentSource);
             adapter.shutdown();
         } catch (Throwable t) {
             log.warn("Failed to shutdown adapter for content source [" + contentSource.getName() + "]", t);
@@ -423,11 +427,11 @@ public class ContentSourceAdapterManager {
      * <p>This is protected so only the plugin container and subclasses can use it.</p>
      */
     protected void shutdown() {
-        HashMap<ContentSource, ContentSourceAdapter> adaptersCopy;
+        HashMap<ContentSource, ContentProvider> adaptersCopy;
 
         // shutdown all adapters to give them a chance to clean up after themselves
         synchronized (this.adapters) {
-            adaptersCopy = new HashMap<ContentSource, ContentSourceAdapter>(this.adapters);
+            adaptersCopy = new HashMap<ContentSource, ContentProvider>(this.adapters);
         }
 
         for (ContentSource contentSource : adaptersCopy.keySet()) {
@@ -445,7 +449,7 @@ public class ContentSourceAdapterManager {
      * <p>This is protected so only the plugin container and subclasses can use it.</p>
      */
     protected void createInitialAdaptersMap() {
-        this.adapters = new HashMap<ContentSource, ContentSourceAdapter>();
+        this.adapters = new HashMap<ContentSource, ContentProvider>();
     }
 
     /**
@@ -455,8 +459,8 @@ public class ContentSourceAdapterManager {
      *
      * @return an adapter instance; will be <code>null</code> if failed to create adapter
      */
-    private ContentSourceAdapter instantiateAdapter(ContentSource contentSource) {
-        ContentSourceAdapter adapter = null;
+    private ContentProvider instantiateAdapter(ContentSource contentSource) {
+        ContentProvider adapter = null;
         String apiClassName = "?";
         String pluginName = "?";
 
@@ -474,11 +478,11 @@ public class ContentSourceAdapterManager {
 
                 Class<?> apiClass = Class.forName(apiClassName, true, pluginClassloader);
 
-                if (ContentSourceAdapter.class.isAssignableFrom(apiClass)) {
-                    adapter = (ContentSourceAdapter) apiClass.newInstance();
+                if (ContentProvider.class.isAssignableFrom(apiClass)) {
+                    adapter = (ContentProvider) apiClass.newInstance();
                 } else {
                     log.warn("The API class [" + apiClassName + "] does not implement ["
-                        + ContentSourceAdapter.class.getName() + "] in plugin [" + pluginName + "]");
+                        + ContentProvider.class.getName() + "] in plugin [" + pluginName + "]");
                 }
             } finally {
                 Thread.currentThread().setContextClassLoader(startingClassLoader);
@@ -506,7 +510,7 @@ public class ContentSourceAdapterManager {
      *
      * @throws RuntimeException if there is no content source with the given ID
      */
-    private ContentSourceAdapter getIsolatedContentSourceAdapter(int contentSourceId) throws RuntimeException {
+    private ContentProvider getIsolatedContentSourceAdapter(int contentSourceId) throws RuntimeException {
         synchronized (this.adapters) {
             for (ContentSource contentSource : this.adapters.keySet()) {
                 if (contentSource.getId() == contentSourceId) {
@@ -528,8 +532,8 @@ public class ContentSourceAdapterManager {
      *
      * @throws RuntimeException if there is no content source adapter available
      */
-    private ContentSourceAdapter getIsolatedContentSourceAdapter(ContentSource contentSource) throws RuntimeException {
-        ContentSourceAdapter adapter;
+    private ContentProvider getIsolatedContentSourceAdapter(ContentSource contentSource) throws RuntimeException {
+        ContentProvider adapter;
 
         synchronized (this.adapters) {
             adapter = this.adapters.get(contentSource);
@@ -546,9 +550,9 @@ public class ContentSourceAdapterManager {
 
         ClassLoader classLoader = env.getClassLoader();
         IsolatedInvocationHandler handler = new IsolatedInvocationHandler(adapter, classLoader);
-        Class<?>[] ifaces = new Class<?>[] { ContentSourceAdapter.class };
+        Class<?>[] ifaces = new Class<?>[] { ContentProvider.class };
 
-        return (ContentSourceAdapter) Proxy.newProxyInstance(classLoader, ifaces, handler);
+        return (ContentProvider) Proxy.newProxyInstance(classLoader, ifaces, handler);
     }
 
     /**

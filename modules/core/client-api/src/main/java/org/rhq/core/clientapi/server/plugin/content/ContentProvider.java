@@ -28,16 +28,19 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.content.ContentSource;
 
 /**
- * Interface used by the server to communicate with a content source. Content source types implement this interface,
- * with the implementing class name defined in the content source type definition.
- *
- * <p>The class name of this interface's implementation is the API class name specified in the server plugin
- * descriptor.</p>
+ * Interface used by the server to communicate with a content provider. Content providers implement this interface as
+ * well as any other source interfaces to further describe what functionality is provided by the provider.
+ * <p/>
+ * The class name of this interface's implementation is the class name specified in the server plugin descriptor.
  *
  * @author Jason Dobies
  * @author John Mazzitelli
+ *
+ * @see RepoSource
+ * @see PackageSource
  */
-public interface ContentSourceAdapter {
+public interface ContentProvider {
+
     /**
      * Initializes the adapter with the configuration values indicating how to connect to the external source system.
      *
@@ -62,29 +65,4 @@ public interface ContentSourceAdapter {
      */
     void testConnection() throws Exception;
 
-    /**
-     * Requests that the content source perform a synchronization with its external package source.
-     *
-     * @param  report           used to populate the packages diff information necessary to bring the server up to date
-     *                          with the current state of the external package source.
-     * @param  existingPackages collection of packages the server currently has in its inventory for this content
-     *                          source; used when determining package diff information for the report.
-     *
-     * @throws Exception if the content source is unable to perform the synchronization, for instance if the external
-     *                   source cannot be connected to.
-     */
-    void synchronizePackages(PackageSyncReport report, Collection<ContentSourcePackageDetails> existingPackages)
-        throws Exception;
-
-    /**
-     * Get an input stream for the specified package.
-     *
-     * @param  location The location of the package. This is an adapter specific location that was originally set in the
-     *                  PackageDetails object as part of the synch report.
-     *
-     * @return An initialized input stream. <b>The caller is responsible for closing the stream.</b>
-     *
-     * @throws Exception if failed to obtain the stream to the remote package data
-     */
-    InputStream getInputStream(String location) throws Exception;
 }

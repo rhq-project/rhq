@@ -24,7 +24,7 @@ import java.util.Collection;
 import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.rhq.core.clientapi.server.plugin.content.ContentSourceAdapter;
+import org.rhq.core.clientapi.server.plugin.content.ContentProvider;
 import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetails;
 import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
 import org.rhq.core.domain.configuration.Configuration;
@@ -34,7 +34,7 @@ import org.rhq.core.domain.configuration.Configuration;
  *
  * @author jortel
  */
-public class RepoSource implements ContentSourceAdapter {
+public class RepoSource implements ContentProvider {
     /**
      * The reader used to access a yum repo's metadata and packages.
      */

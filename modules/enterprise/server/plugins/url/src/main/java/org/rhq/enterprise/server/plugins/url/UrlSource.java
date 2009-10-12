@@ -29,7 +29,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.rhq.core.clientapi.server.plugin.content.ContentSourceAdapter;
+import org.rhq.core.clientapi.server.plugin.content.ContentProvider;
 import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetails;
 import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetailsKey;
 import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
@@ -75,7 +75,7 @@ import org.rhq.enterprise.server.plugins.url.RemotePackageInfo.SupportedPackageT
  *
  * @author John Mazzitelli
  */
-public class UrlSource implements ContentSourceAdapter {
+public class UrlSource implements ContentProvider {
 
     /**
      * The default index file is located at the root URL under this filename.

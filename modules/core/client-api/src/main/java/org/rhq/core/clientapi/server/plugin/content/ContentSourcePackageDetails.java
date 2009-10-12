@@ -27,7 +27,7 @@ import java.util.Set;
 import org.rhq.core.domain.content.PackageDetails;
 
 /**
- * These are the package details that a {@link ContentSourceAdapter} will use when refering to package versions it finds
+ * These are the package details that a {@link ContentProvider} will use when refering to package versions it finds
  * in the remote repository. It is the same as {@link PackageDetails} with the addition of a resource type name, since
  * that is needed to make package types unique (along with the package type name itself, which is specified in the
  * {@link PackageDetails} superclass).

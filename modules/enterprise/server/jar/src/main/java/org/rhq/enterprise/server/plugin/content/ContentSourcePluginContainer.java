@@ -26,7 +26,6 @@ import org.quartz.JobDetail;
 import org.quartz.SchedulerException;
 import org.quartz.SimpleTrigger;
 
-import org.rhq.core.clientapi.server.plugin.content.ContentSourceAdapter;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
@@ -85,7 +84,7 @@ public class ContentSourcePluginContainer {
     }
 
     /**
-     * Returns the object that is responsible for managing all {@link ContentSourceAdapter adapters} which are the
+     * Returns the object that is responsible for managing all {@link org.rhq.core.clientapi.server.plugin.content.ContentProvider adapters} which are the
      * things that know how to download content from a specific {@link ContentSource}.
      *
      * @return adapter manager

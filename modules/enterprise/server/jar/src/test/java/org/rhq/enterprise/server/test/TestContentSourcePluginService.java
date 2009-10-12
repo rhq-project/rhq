@@ -25,7 +25,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.rhq.core.clientapi.server.plugin.content.ContentSourceAdapter;
+import org.rhq.core.clientapi.server.plugin.content.ContentProvider;
 import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetails;
 import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
 import org.rhq.core.domain.content.ContentSource;
@@ -41,7 +41,7 @@ import org.rhq.enterprise.server.plugin.content.ContentSourcePluginService;
 public class TestContentSourcePluginService extends ContentSourcePluginService implements
     TestContentSourcePluginServiceMBean {
     // public so tests can directly set these
-    public Map<ContentSource, ContentSourceAdapter> testAdapters;
+    public Map<ContentSource, ContentProvider> testAdapters;
     public PackageSyncReport testLastSyncReport;
     public Map<ContentSource, Collection<ContentSourcePackageDetails>> testExistingPackages;
 

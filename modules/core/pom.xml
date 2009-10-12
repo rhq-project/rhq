@@ -16,8 +16,8 @@
   <description>parent POM for modules comprising the RHQ core (i.e. modules required by both the enterprise and embedded editions of RHQ)</description>
 
   <scm>
-    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_2_0_EmbJopr_1_2_0-1/modules/core</connection>
-    <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_2_0_EmbJopr_1_2_0-1/modules/core</developerConnection>
+    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/core</connection>
+    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/core</developerConnection>
   </scm>
 
    <properties>

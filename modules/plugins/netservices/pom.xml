@@ -18,8 +18,8 @@
    </description>
 
    <scm>
-      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_2_0_EmbJopr_1_2_0-1/modules/plugins/platform</connection>
-      <developerConnection>scm:svn:http://ispringer@svn.rhq-project.org/repos/rhq/tags/RHQ_1_2_0_EmbJopr_1_2_0-1/modules/plugins/platform</developerConnection>
+      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/platform</connection>
+      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/platform</developerConnection>
    </scm>
 
    <properties>

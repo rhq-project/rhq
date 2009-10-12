@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+
+<assembly>
+  <id></id>
+  <formats>
+    <format>zip</format>
+  </formats> 
+  <includeBaseDirectory>true</includeBaseDirectory>
+  <baseDirectory>${project.build.finalName}</baseDirectory>
+  <fileSets>
+    <fileSet>      
+      <directory>target/${project.build.finalName}</directory>    
+      <outputDirectory>/</outputDirectory>
+      <includes>	
+        <include>**/*</include>
+      </includes>            
+      <excludes>
+        <exclude>**/*.sh</exclude>
+        <exclude>**/*.so</exclude>
+        <exclude>**/*.sl</exclude>
+        <exclude>**/*.dylib</exclude>                
+      </excludes>
+    </fileSet>
+    <fileSet>      
+      <directory>target/${project.build.finalName}</directory>    
+      <outputDirectory>/</outputDirectory>
+      <includes>
+        <include>**/*.sh</include>
+        <include>**/*.so</include>
+        <include>**/*.sl</include>
+        <include>**/*.dylib</include>        
+      </includes>            
+      <fileMode>0755</fileMode>
+    </fileSet>
+  </fileSets>
+</assembly>

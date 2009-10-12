@@ -16,8 +16,8 @@
   <description>The SAR that allows the server to embed the agent</description>
 
   <scm>
-    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/sars/agent-sar/</connection>
-    <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/sars/agent-sar/</developerConnection>
+    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/sars/agent-sar/</connection>
+    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/sars/agent-sar/</developerConnection>
   </scm>
 
   <properties>

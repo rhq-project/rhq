@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<plugin name="Hibernate"
+        displayName="Hibernate Services"
+        package="org.rhq.plugins.hibernate"
+        description="Provides monitoring of Hibernate session manager statistics, EJB3 entities and queries"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <depends plugin="JMX" />
+
+   <service name="Hibernate Statistics"
+      discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+      class="StatisticsComponent"
+      description="Statistics for Hibernate">
+
+      <runs-inside>
+         <parent-resource-type name="JMX Server" plugin="JMX"/>
+         <parent-resource-type name="JBossAS Server" plugin="JBossAS"/>
+         <parent-resource-type name="JBossAS Server" plugin="JBossAS5"/>
+      </runs-inside>
+
+      <plugin-configuration>
+         <c:simple-property name="objectName" readOnly="true" default="Hibernate:application=%application%,type=statistics"/>
+         <c:simple-property name="nameTemplate" default="{application} Hibernate statistics"/>
+         <c:simple-property name="descriptionTemplate" default="Hibernate statistics for the {application} application."/>
+         <c:simple-property name="application" type="string" description="the Hibernate application name"/>
+      </plugin-configuration>
+
+      <operation name="clear" displayName="Clear Statistics" description="Clear the collected statistics and begin collecting again"/>
+
+      <operation name="viewQueries" description="View statistical information about queries executed by Hibernate">
+         <results>
+            <c:list-property name="queries">
+               <c:map-property name="query">
+                  <c:simple-property name="query" summary="true"/>
+                  <c:simple-property name="executionCount" summary="true" type="integer"/>
+                  <c:simple-property name="executionRowCount" summary="true" type="integer"/>
+                  <c:simple-property name="executionMinTime" summary="true" type="integer"/>
+                  <c:simple-property name="executionMaxTime" summary="true" type="integer"/>
+                  <c:simple-property name="executionAvgTime" summary="true" type="integer"/>
+               </c:map-property>
+            </c:list-property>
+         </results>
+      </operation>
+
+      <metric displayName="Entity Insert Count" property="EntityInsertCount"
+              description="The global number of entity inserts since the statistics were reset"
+              category="throughput" displayType="summary" measurementType="trendsup"/>
+
+      <metric displayName="Query Execution Max Time" property="QueryExecutionMaxTime"
+              description="The amount of time taken by the slowest recorded query since the statistics were reset"
+              category="performance" displayType="summary"/>
+
+      <metric displayName="Entity Update Count" property="EntityUpdateCount"
+              description="The global number of entity updates since the statistics were reset"
+              category="throughput" measurementType="trendsup"/>
+
+      <metric displayName="Collection Update Count" property="CollectionUpdateCount"
+              description="The global number of collections updated since the statistics were reset"
+              category="throughput" measurementType="trendsup"/>
+
+      <metric displayName="Entity Load Count" property="EntityLoadCount"
+              description="The global number of entity loads since the statistics were reset"
+              category="throughput" measurementType="trendsup"/>
+
+      <metric displayName="Entity Fetch Count" property="EntityFetchCount" category="throughput"
+              description="The global number of entity fetches since the statistics were reset"
+              displayType="summary" measurementType="trendsup"/>
+
+      <metric displayName="Entity Delete Count" property="EntityDeleteCount"
+              description="The global number of entity deletes since the statistics were reset"
+              category="throughput" measurementType="trendsup"/>
+
+      <metric displayName="Collection Recreate Count" property="CollectionRecreateCount"
+              description="The global number of collections recreated since the statistics were reset"
+              category="throughput" measurementType="trendsup"/>
+
+      <metric displayName="Query Execution Count" property="QueryExecutionCount"
+              description="The global number of queries executed since the statistics were reset"
+              category="throughput" displayType="summary" measurementType="trendsup"/>
+
+      <metric displayName="Flush Count" property="FlushCount"
+              description="The global number of flushes executed by sessions (either implicit or explicit) since the statistics were reset"
+              category="throughput" measurementType="trendsup"/>
+
+      <metric displayName="Collection Load Count" property="CollectionLoadCount"
+              description="The global number of collections loaded since the statistics were reset"
+              category="throughput" measurementType="trendsup"/>
+
+      <metric displayName="Successful Transaction Count" property="SuccessfulTransactionCount"
+              description="The global number of transactions known to have been successful since the statistics were reset"
+              category="throughput" defaultOn="true" measurementType="trendsup"/>
+
+      <metric displayName="Query Cache Hit Count" property="QueryCacheHitCount"
+              description="The global number of cached queries successfully retrieved from cache since the statistics were reset"
+              category="throughput" measurementType="trendsup"/>
+
+      <metric displayName="Collection Remove Count" property="CollectionRemoveCount"
+              description="The global number of collections removed since the statistics were reset"
+              category="throughput" measurementType="trendsup"/>
+
+      <metric displayName="Connect Count" property="ConnectCount"
+              description="The global number of connections asked by the sessions (the actual number of connections used may be much smaller depending whether you use a connection pool or not) since the statistics were reset"
+              category="throughput" defaultOn="true" measurementType="trendsup"/>
+
+      <metric displayName="Start Time" property="StartTime" dataType="trait"
+              description="The time when the statistics collection started or were last reset"
+              category="availability" defaultOn="true" units="epoch_milliseconds" measurementType="dynamic"/>
+
+      <metric displayName="Second Level Cache Put Count" property="SecondLevelCachePutCount"
+              description="The global number of cacheable entities/collections put in the cache since the statistics were reset"
+              category="throughput" measurementType="trendsup"/>
+
+      <metric displayName="Query Cache Put Count" property="QueryCachePutCount"
+              description="The global number of cacheable queries put in cache since the statistics were reset"
+              category="throughput" measurementType="trendsup"/>
+
+      <metric displayName="Session Open Count" property="SessionOpenCount"
+              description="The global number of sessions closed since the statistics were reset"
+              category="throughput" defaultOn="true" measurementType="trendsup"/>
+
+      <metric displayName="Transaction Count" property="TransactionCount"
+              description="The global number of transactions known to have completed since the statistics were reset"
+              category="throughput" defaultOn="true" measurementType="trendsup"/>
+
+      <metric displayName="Collection Fetch Count" property="CollectionFetchCount"
+              description="The global number of collections fetched since the statistics were reset"
+              category="throughput" measurementType="trendsup"/>
+
+      <metric displayName="Session Close Count" property="SessionCloseCount"
+              description="The global number of sessions closed since the statistics were reset"
+              category="throughput" defaultOn="true" measurementType="trendsup"/>
+
+      <metric displayName="Query Cache Miss Count" property="QueryCacheMissCount"
+              description="The global number of cached queries *not* found in cache since the statistics were reset"
+              category="throughput" defaultOn="true" measurementType="trendsup"/>
+
+      <metric displayName="Second Level Cache Miss Count" property="SecondLevelCacheMissCount"
+              description="The global number of cacheable entities/collections not found in the cache and loaded from the database since the statistics were reset"
+              category="throughput" measurementType="trendsup"/>
+
+      <help>
+         <![CDATA[
+          <p>In order to monitor Hibernate statistics via JON, the Hibernate Session Manager MBean
+          must be deployed to an object name of the format 
+          <tt>_"Hibernate:application=%application%,type=statistics"_</tt>, and statistics must be enabled.</p>
+
+          <p>Some example code is provided below to register the Hibernate Session MBean within an EJB3 application.</p>
+          
+          <code><pre>
+ public static void enableHibernateStatistics(EntityManager entityManager)
+ {
+    try
+    {
+       StatisticsService mBean = new StatisticsService();
+       SessionFactory sessionFactory = getHibernateSession(entityManager).getSessionFactory();
+       mBean.setSessionFactory(sessionFactory);
+       ObjectName objectName = new ObjectName(HIBERNATE_STATISTICS_MBEAN_OBJECTNAME);
+       MBeanServer jbossMBeanServer = getJBossMBeanServer();
+       jbossMBeanServer.registerMBean(mBean, objectName);
+       sessionFactory.getStatistics().setStatisticsEnabled(true);
+    }
+    catch (InstanceAlreadyExistsException iaee)
+    {
+       LOG.info("Duplicate MBean registration ignored: " + HIBERNATE_STATISTICS_MBEAN_OBJECTNAME);
+    }
+    catch (Exception e)
+    {
+       LOG.warn("Couldn't register Hibernate statistics MBean.", e);
+    }
+ }
+
+ private static Session getHibernateSession(EntityManager entityManager) {
+    Session session;
+    if (entityManager.getDelegate() instanceof EntityManagerImpl) {
+        EntityManagerImpl entityManagerImpl = (EntityManagerImpl) entityManager.getDelegate();
+        session = entityManagerImpl.getSession();
+    } else {
+        session = (Session) entityManager.getDelegate();
+    }
+    return session;
+ }
+
+ private static MBeanServer getJBossMBeanServer() {
+    List&lt;MBeanServer&gt; servers = MBeanServerFactory.findMBeanServer(null);
+    MBeanServer jbossServer = null;
+    for (MBeanServer server : servers) {
+        if ("jboss".equals(server.getDefaultDomain())) {
+            jbossServer = server;
+        }
+    }
+    if (jbossServer == null) {
+        jbossServer = ManagementFactory.getPlatformMBeanServer();
+    }
+    return jbossServer;
+ }
+          </pre></code>
+          
+          <p>See also <a href="http://hibernate.org/216.html">Publishing statistics through JMX</a> and
+          <a href="http://www.redhat.com/docs/manuals/jboss/jboss-eap-4.3/doc/hibernate/Hibernate_Reference_Guide/Optional_configuration_properties-Hibernate_statistics.html">Enabling Hibernate statistics</a></p>
+         ]]>
+      </help>
+
+      <service name="Hibernate Entity"
+         discovery="EntityDiscoveryComponent"
+         class="EntityComponent"
+         description="A Hibernate persistent entity">
+
+         <metric displayName="Load Count" property="loadCount" displayType="summary"
+                 description="The number of times this entity was loaded since the statistics were reset" />
+         <metric displayName="Update Count" property="updateCount" displayType="summary"
+                 description="The number of times this entity was updated since the statistics were reset" />
+         <metric displayName="Insert Count" property="insertCount" displayType="summary"
+                 description="The number of times this entity was inserted since the statistics were reset" />
+         <metric displayName="Delete Count" property="deleteCount" displayType="summary"
+                 description="The number of times this entity was deleted since the statistics were reset" />
+         <metric displayName="Fetch Count" property="fetchCount"
+                 description="The number of times this entity was fetched since the statistics were reset" />
+         <metric displayName="Optimistic Lock Failure Count" property="optimisticFailureCount"
+                 description="The number of StaleObjectStateExceptions for this entity that occurred since the statistics were reset"/>
+
+      </service>
+
+   </service>
+
+</plugin>

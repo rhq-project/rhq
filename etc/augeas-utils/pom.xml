@@ -1,0 +1,40 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.augeas</groupId>
+  <artifactId>augtree</artifactId>
+  <packaging>jar</packaging>
+  <version>1.0</version>
+  <name>augtree</name>
+  <url>http://maven.apache.org</url>
+  <dependencies>
+      <dependency>
+         <groupId>net.augeas</groupId>
+         <artifactId>augeas</artifactId>
+         <version>0.0.1</version>
+      </dependency>
+
+      <dependency>
+         <groupId>com.sun.jna</groupId>
+         <artifactId>jna</artifactId>
+         <version>3.0.9</version>
+      </dependency>
+
+  </dependencies>
+
+<build>
+ <sourceDirectory>src</sourceDirectory>
+  <plugins>
+    <plugin>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-compiler-plugin</artifactId>
+      <version>2.0.2</version>
+      <configuration>
+        <source>1.5</source>
+        <target>1.5</target>
+      </configuration>
+    </plugin>
+  </plugins>
+</build>
+
+</project>

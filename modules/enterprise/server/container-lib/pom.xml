@@ -16,8 +16,8 @@
    <description>A library of classes that will be deployed in the server container itself, above the main EAR</description>
 
    <scm>
-      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/container-lib/</connection>
-      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/container-lib/</developerConnection>
+      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/container-lib/</connection>
+      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/container-lib/</developerConnection>
    </scm>
 
    <properties>

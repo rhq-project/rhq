@@ -1,0 +1,83 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>org.jboss.on</groupId>
+		<artifactId>jopr-modules-parent</artifactId>
+		<version>2.4.0-SNAPSHOT</version>
+	</parent>
+
+	<!--  Plugin poms should not set their parent pom to this artifact. Instead, set to "jopr-modules-parent".  This is due to
+		the fact that this pom runs integration tests *on* the plugins.  This pom must process in the reactor after the
+		plugins themselves, as such, it can't be their parent. -->
+	<groupId>org.jboss.on</groupId>
+	<artifactId>jopr-plugins-parent</artifactId>
+  <version>2.3.0.EmbJopr.1.3.0-1</version>
+	<packaging>pom</packaging>
+	<name>Jopr Plugins</name>
+	<description>parent POM for all Jopr plugins</description>
+
+    <scm>
+		<connection>scm:svn:http://svn.jboss.org/repos/jopr/tags/Jopr_2_3_0_EmbJopr_1_3_0-1/modules/plugins</connection>
+		<developerConnection>scm:svn:https://svn.jboss.org/repos/jopr/tags/Jopr_2_3_0_EmbJopr_1_3_0-1/modules/plugins</developerConnection>
+	</scm>
+
+    <properties>
+		<scm.module.path>modules/plugins/</scm.module.path>
+	</properties>
+
+    <dependencies>
+        <dependency>
+          <groupId>${rhq.groupId}</groupId>
+          <artifactId>rhq-jmx-plugin</artifactId>
+          <version>${rhq.version}</version>
+          <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <!-- plugins - order is important -->
+	<modules>
+      <module>tomcat</module>
+      <module>jboss-as</module>
+      <module>hibernate</module>
+      <module>rhq-server</module>
+      <module>jboss-cache</module>
+      <module>jboss-as-5</module>
+      <module>jboss-cache-v3</module>
+	</modules>
+
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<executions>
+					<execution>
+						<phase>integration-test</phase>
+						<configuration>
+							<tasks>
+								<property name="test.classpath" refid="maven.test.classpath" />
+								<echo>Validating plugins...</echo>
+								<java classname="org.rhq.core.pc.plugin.PluginValidator" failonerror="true" fork="true">
+									<classpath>
+										<pathelement path="${test.classpath}" />
+										<pathelement location="hibernate/target/jopr-hibernate-plugin-${project.version}.jar" />
+										<pathelement location="tomcat/target/jopr-tomcat-plugin-${project.version}.jar" />
+										<pathelement location="jboss-as/target/jopr-jboss-as-plugin-${project.version}.jar" />
+										<!-- TODO: Figure out why this is causing NoClassDefFoundErrors and fix it. -->
+										<!--<pathelement location="jboss-as-5/target/jopr-jboss-as-5-plugin-${project.version}.jar" />-->
+										<pathelement location="rhq-server/target/jopr-rhq-server-plugin-${project.version}.jar" />
+									</classpath>
+									<sysproperty key="org.apache.commons.logging.Log" value="org.apache.commons.logging.impl.SimpleLog" />
+								</java>
+							</tasks>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>

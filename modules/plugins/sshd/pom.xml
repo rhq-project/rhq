@@ -16,8 +16,8 @@
    <description>A plugin for managing the OpenSSH daemon</description>
 
    <scm>
-      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_2_0_EmbJopr_1_2_0-1/modules/plugins/sshd</connection>
-      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_2_0_EmbJopr_1_2_0-1/modules/plugins/sshd</developerConnection>
+      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/sshd</connection>
+      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/sshd</developerConnection>
    </scm>
 
    <properties>

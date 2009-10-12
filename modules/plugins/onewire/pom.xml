@@ -14,8 +14,8 @@
   <description>RHQ OneWire Plugin</description>
   
      <scm>
-      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/plugins/snmpget/</connection>
-      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/plugins/snmpget/</developerConnection>
+      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/snmpget/</connection>
+      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/snmpget/</developerConnection>
    </scm>
 
    <properties>

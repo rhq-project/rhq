@@ -121,9 +121,6 @@ public class ConfigMapper {
     }
 
     public Configuration read(ConfigurationDefinition configurationDefinition, Tree configurationFileAST) throws RecognitionException {
-        DfsWalker<PropertyDefinition> walker = new DfsWalker<PropertyDefinition>(
-            configurationDefinitionStructure, configurationDefinition.getPropertyDefinitions().values());
-        
         Configuration config = new Configuration();
         
         createProperty(configurationFileAST, config, null, null);

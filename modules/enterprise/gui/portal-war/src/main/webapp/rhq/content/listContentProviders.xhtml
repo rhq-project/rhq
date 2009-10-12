@@ -157,9 +157,9 @@
                         </h:commandButton>
 
                         <onc:selectCommandButton action="#{ListContentSourcesUIBean.deleteSelectedContentSources}"
-                                                 value="DELETE SELECTED" target="selectedContentSources" styleClass="on-pager-button buttonsmall"/>
+                                                 value="DELETE SELECTED" target="selectedContentProviders" styleClass="on-pager-button buttonsmall"/>
                         <onc:selectCommandButton action="#{ListContentSourcesUIBean.syncSelectedContentSources}"
-                                                 value="SYNC SELECTED" target="selectedContentSources" styleClass="on-pager-button buttonsmall"/>
+                                                 value="SYNC SELECTED" target="selectedContentProviders" styleClass="on-pager-button buttonsmall"/>
 
                         <ui:param name="paginationDataTableName" value="contentProvidersDataTable"/>
                         <ui:param name="paginationDataModel" value="#{contentProvidersDataModel}"/>

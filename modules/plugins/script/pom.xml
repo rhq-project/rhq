@@ -18,8 +18,8 @@
    </description>
 
    <scm>
-      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/plugins/script</connection>
-      <developerConnection>scm:svn:http://ispringer@svn.rhq-project.org/repos/rhq/trunk/modules/plugins/script</developerConnection>
+      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/script</connection>
+      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/script</developerConnection>
    </scm>
 
    <properties>

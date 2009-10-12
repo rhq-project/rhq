@@ -16,8 +16,8 @@
    <description>Plugin used to manage virtualization</description>
 
    <scm>
-      <connection>scm:svn:http://svn.corp.jboss.com/repos/rhq/trunk/modules/plugins/virt/</connection>
-      <developerConnection>scm:svn:http://svn.corp.jboss.com/repos/rhq/trunk/modules/plugins/virt/</developerConnection>
+      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/virt/</connection>
+      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/virt/</developerConnection>
    </scm>
 
    <properties>
@@ -25,6 +25,7 @@
    </properties>
 
    <dependencies>
+       
       <dependency>
          <groupId>com.sun.jna</groupId>
          <artifactId>jna</artifactId>

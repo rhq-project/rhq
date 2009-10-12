@@ -259,7 +259,7 @@
       </navigation-case>
 
       <navigation-case>
-         <from-outcome>createNewContentProvider</from-outcome>
+         <from-outcome>createNewContentSource</from-outcome>
          <to-view-id>/rhq/content/createContentProvider.xhtml</to-view-id>
          <redirect/>
       </navigation-case>

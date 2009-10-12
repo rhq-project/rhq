@@ -285,7 +285,7 @@ public class PackageVersionContentSourceTest extends AbstractEJB3Test {
             assert new String(bits.getBits()).equals(new String(findBits.getBits()));
 
             em = getEntityManager();
-            q = em.createNamedQuery(PackageVersion.DELETE_IF_NO_CONTENT_SOURCES_OR_CHANNELS);
+            q = em.createNamedQuery(PackageVersion.DELETE_IF_NO_CONTENT_SOURCES_OR_REPOS);
             assert 1 == q.executeUpdate();
             em.close();
 

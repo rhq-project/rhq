@@ -25,7 +25,7 @@ public class TestRemoteInterface extends AssertJUnit {
     //    static private final boolean TESTS_ENABLED = false;
     //
     //    static private final String WSDL_URL_PREFIX = "http://127.0.0.1:7080/rhq-rhq-enterprise-server-ejb3/";
-    //    static private final String TARGET_NS_CHANNEL_MANAGER = "http://content.server.enterprise.rhq.org/";
+    //    static private final String TARGET_NS_REPO_MANAGER = "http://content.server.enterprise.rhq.org/";
     //    static private final String TARGET_NS_CONFIGURATION_MANAGER = "http://configuration.server.enterprise.rhq.org/";
     //    static private final String TARGET_NS_CONTENT_MANAGER = "http://content.server.enterprise.rhq.org/";
     //    static private final String TARGET_NS_OPERATION_MANAGER = "http://operation.server.enterprise.rhq.org/";
@@ -509,7 +509,7 @@ public class TestRemoteInterface extends AssertJUnit {
     //        assertNotNull("Test requires a Non-RHQ AS Server, please start and import a JBoss AS", testWar);
     //
     //        wsdlURL = new URL(WSDL_URL_PREFIX + "RepoManagerBean?wsdl");
-    //        serviceName = new QName(TARGET_NS_CHANNEL_MANAGER, "RepoManagerBeanService");
+    //        serviceName = new QName(TARGET_NS_REPO_MANAGER, "RepoManagerBeanService");
     //        service = Service.create(wsdlURL, serviceName);
     //        RepoManagerRemote repoManager = service.getPort(RepoManagerRemote.class);
     //

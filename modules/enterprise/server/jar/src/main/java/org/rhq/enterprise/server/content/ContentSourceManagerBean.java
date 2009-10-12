@@ -132,7 +132,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         // separately. We do this using em.remove so we can get hibernate to perform the cascading for us.
         // Package versions normally do not have extra props, so we gain the advantage of using hibernate
         // to do the cascade deletes without incurring too much overhead in performing multiple removes.
-        Query q = entityManager.createNamedQuery(PackageVersion.FIND_EXTRA_PROPS_IF_NO_CONTENT_SOURCES_OR_CHANNELS);
+        Query q = entityManager.createNamedQuery(PackageVersion.FIND_EXTRA_PROPS_IF_NO_CONTENT_SOURCES_OR_REPOS);
         List<PackageVersion> pvs = q.getResultList();
         for (PackageVersion pv : pvs) {
             entityManager.remove(pv.getExtraProperties());
@@ -143,7 +143,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         // Query the package bits table and get the package bits where bits column is null - for those get the
         // related package versions and given the package version/filename you can get the files to delete.
         // Do not delete the files yet - just get the (package version ID, filename) composite list.
-        q = entityManager.createNamedQuery(PackageVersion.FIND_FILES_IF_NO_CONTENT_SOURCES_OR_CHANNELS);
+        q = entityManager.createNamedQuery(PackageVersion.FIND_FILES_IF_NO_CONTENT_SOURCES_OR_REPOS);
         List<PackageVersionFile> pvFiles = q.getResultList();
 
         // get ready for bulk delete by clearing entity manager
@@ -151,10 +151,10 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         entityManager.clear();
 
         // remove the productVersion->packageVersion mappings for all orphaned package versions
-        entityManager.createNamedQuery(PackageVersion.DELETE_PVPV_IF_NO_CONTENT_SOURCES_OR_CHANNELS).executeUpdate();
+        entityManager.createNamedQuery(PackageVersion.DELETE_PVPV_IF_NO_CONTENT_SOURCES_OR_REPOS).executeUpdate();
 
         // remove the orphaned package versions
-        int count = entityManager.createNamedQuery(PackageVersion.DELETE_IF_NO_CONTENT_SOURCES_OR_CHANNELS)
+        int count = entityManager.createNamedQuery(PackageVersion.DELETE_IF_NO_CONTENT_SOURCES_OR_REPOS)
             .executeUpdate();
 
         // remove the package bits corresponding to the orphaned package versions we just deleted
@@ -251,9 +251,9 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         pc.initDefaultOrderingField("cs.name");
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-            ContentSource.QUERY_FIND_AVAILABLE_BY_CHANNEL_ID, pc);
+            ContentSource.QUERY_FIND_AVAILABLE_BY_REPO_ID, pc);
         Query countQuery = PersistenceUtility.createCountQuery(entityManager,
-            ContentSource.QUERY_FIND_AVAILABLE_BY_CHANNEL_ID);
+            ContentSource.QUERY_FIND_AVAILABLE_BY_REPO_ID);
 
         query.setParameter("repoId", repoId);
         countQuery.setParameter("repoId", repoId);
@@ -896,7 +896,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             // but only delete if there are no other content sources that also serve that PackageVersion
             // or repos that are directly associated with this package version
             PackageVersion doomedPv = doomedPvcs.getPackageVersionContentSourcePK().getPackageVersion();
-            q = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_ID_IF_NO_CONTENT_SOURCES_OR_CHANNELS);
+            q = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_ID_IF_NO_CONTENT_SOURCES_OR_REPOS);
             q.setParameter("id", doomedPv.getId());
             try {
                 doomedPv = (PackageVersion) q.getSingleResult();
@@ -1239,7 +1239,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     public String getResourceSubscriptionMD5(int resourceId) {
         MD5Generator md5Generator = new MD5Generator();
 
-        Query q = entityManager.createNamedQuery(Repo.QUERY_FIND_CHANNELS_BY_RESOURCE_ID);
+        Query q = entityManager.createNamedQuery(Repo.QUERY_FIND_REPOS_BY_RESOURCE_ID);
         q.setParameter("resourceId", resourceId);
         List<Repo> repos = q.getResultList();
 

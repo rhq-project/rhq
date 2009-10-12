@@ -62,7 +62,7 @@ public class IRCRepoComponent implements ResourceComponent<IRCServerComponent>, 
         this.context = context;
         Configuration conf = context.getPluginConfiguration();
         // TODO add code to start the resource / connection to it
-        repo = conf.getSimple(IRCRepoDiscoveryComponent.CONFIG_CHANNEL).getStringValue();
+        repo = conf.getSimple(IRCRepoDiscoveryComponent.CONFIG_REPO).getStringValue();
 
         eventContext = context.getEventContext();
 

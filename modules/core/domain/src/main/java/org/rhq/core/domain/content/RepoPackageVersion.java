@@ -42,10 +42,10 @@ import javax.persistence.Table;
  */
 @Entity
 @IdClass(RepoPackageVersionPK.class)
-@NamedQueries( { @NamedQuery(name = RepoPackageVersion.DELETE_BY_CHANNEL_ID, query = "DELETE RepoPackageVersion cpv WHERE cpv.repo.id = :repoId") })
-@Table(name = "RHQ_CHANNEL_PKG_VERSION_MAP")
+@NamedQueries( { @NamedQuery(name = RepoPackageVersion.DELETE_BY_REPO_ID, query = "DELETE RepoPackageVersion cpv WHERE cpv.repo.id = :repoId") })
+@Table(name = "RHQ_REPO_PKG_VERSION_MAP")
 public class RepoPackageVersion implements Serializable {
-    public static final String DELETE_BY_CHANNEL_ID = "RepoPackageVersion.deleteByRepoId";
+    public static final String DELETE_BY_REPO_ID = "RepoPackageVersion.deleteByRepoId";
 
     private static final long serialVersionUID = 1L;
 
@@ -56,7 +56,7 @@ public class RepoPackageVersion implements Serializable {
      */
     @Id
     //   @ManyToOne
-    //   @JoinColumn(name = "CHANNEL_ID", referencedColumnName = "ID", nullable = false, insertable = false, updatable = false)
+    //   @JoinColumn(name = "REPO_ID", referencedColumnName = "ID", nullable = false, insertable = false, updatable = false)
     private Repo repo;
 
     @Id

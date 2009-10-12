@@ -212,7 +212,7 @@ public class WebservicesManagerBean implements WebservicesRemote {
 
     //CALLTIMEDATAMANAGER: END ----------------------------------
 
-    //CHANNELMANAGER: BEGIN ----------------------------------
+    //REPOMANAGER: BEGIN ----------------------------------
     public void addPackageVersionsToRepo(Subject subject, int repoId, int[] packageVersionIds) {
         repoManager.addPackageVersionsToRepo(subject, repoId, packageVersionIds);
     }
@@ -269,7 +269,7 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return repoManager.findPackageVersionsInRepoByCriteria(subject, criteria);
     }
 
-    //CHANNELMANAGER: END ----------------------------------
+    //REPOMANAGER: END ----------------------------------
 
     //CONFIGURATIONMANAGER: BEGIN ----------------------------------
     public Configuration getConfiguration(Subject subject, int configurationId) {

@@ -47,12 +47,12 @@ import org.rhq.core.domain.resource.Resource;
 @NamedQueries( {
     @NamedQuery(name = ResourceRepo.DELETE_BY_RESOURCES, query = "DELETE ResourceRepo rc WHERE rc.resource.id IN ( :resourceIds )"),
     @NamedQuery(name = ResourceRepo.DELETE_BY_RESOURCE_ID, query = "DELETE ResourceRepo rc WHERE rc.resource.id = :resourceId"),
-    @NamedQuery(name = ResourceRepo.DELETE_BY_CHANNEL_ID, query = "DELETE ResourceRepo rc WHERE rc.repo.id = :repoId") })
-@Table(name = "RHQ_CHANNEL_RESOURCE_MAP")
+    @NamedQuery(name = ResourceRepo.DELETE_BY_REPO_ID, query = "DELETE ResourceRepo rc WHERE rc.repo.id = :repoId") })
+@Table(name = "RHQ_REPO_RESOURCE_MAP")
 public class ResourceRepo implements Serializable {
     public static final String DELETE_BY_RESOURCES = "ResourceRepo.deleteByResources";
     public static final String DELETE_BY_RESOURCE_ID = "ResourceRepo.deleteByResourceId";
-    public static final String DELETE_BY_CHANNEL_ID = "ResourceRepo.deleteByRepoId";
+    public static final String DELETE_BY_REPO_ID = "ResourceRepo.deleteByRepoId";
 
     private static final long serialVersionUID = 1L;
 
@@ -69,7 +69,7 @@ public class ResourceRepo implements Serializable {
 
     @Id
     //   @ManyToOne
-    //   @JoinColumn(name = "CHANNEL_ID", referencedColumnName = "ID", nullable = false, insertable = false, updatable = false)
+    //   @JoinColumn(name = "REPO_ID", referencedColumnName = "ID", nullable = false, insertable = false, updatable = false)
     private Repo repo;
 
     @Column(name = "CTIME", nullable = false)

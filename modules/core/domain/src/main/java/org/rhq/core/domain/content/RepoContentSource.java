@@ -44,11 +44,11 @@ import javax.persistence.Table;
 @IdClass(RepoContentSourcePK.class)
 @NamedQueries( {
     @NamedQuery(name = RepoContentSource.DELETE_BY_CONTENT_SOURCE_ID, query = "DELETE RepoContentSource ccs WHERE ccs.contentSource.id = :contentSourceId"),
-    @NamedQuery(name = RepoContentSource.DELETE_BY_CHANNEL_ID, query = "DELETE RepoContentSource ccs WHERE ccs.repo.id = :repoId") })
-@Table(name = "RHQ_CHANNEL_CONTENT_SRC_MAP")
+    @NamedQuery(name = RepoContentSource.DELETE_BY_REPO_ID, query = "DELETE RepoContentSource ccs WHERE ccs.repo.id = :repoId") })
+@Table(name = "RHQ_REPO_CONTENT_SRC_MAP")
 public class RepoContentSource implements Serializable {
     public static final String DELETE_BY_CONTENT_SOURCE_ID = "RepoContentSource.deleteByContentSourceId";
-    public static final String DELETE_BY_CHANNEL_ID = "RepoContentSource.deleteByRepoId";
+    public static final String DELETE_BY_REPO_ID = "RepoContentSource.deleteByRepoId";
 
     private static final long serialVersionUID = 1L;
 
@@ -59,7 +59,7 @@ public class RepoContentSource implements Serializable {
      */
     @Id
     //   @ManyToOne
-    //   @JoinColumn(name = "CHANNEL_ID", referencedColumnName = "ID", nullable = false, insertable = false, updatable = false)
+    //   @JoinColumn(name = "REPO_ID", referencedColumnName = "ID", nullable = false, insertable = false, updatable = false)
     private Repo repo;
 
     @Id

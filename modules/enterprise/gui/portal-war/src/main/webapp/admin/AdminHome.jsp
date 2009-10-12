@@ -93,7 +93,7 @@
   <tiles:put name="tabKey" value="admin.home.Content"/>
 </tiles:insert>
 
-<!--  CONTENT SOURCES AND CHANNELS -->
+<!--  CONTENT SOURCES AND REPOS -->
 <table width="100%" cellpadding="0" cellspacing="0" border="0">
    <tr>
       <td width="20%" class="BlockLabel"></td>

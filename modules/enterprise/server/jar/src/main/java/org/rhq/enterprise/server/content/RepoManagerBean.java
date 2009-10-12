@@ -77,13 +77,13 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         entityManager.flush();
         entityManager.clear();
 
-        entityManager.createNamedQuery(ResourceRepo.DELETE_BY_CHANNEL_ID).setParameter("repoId", repoId)
+        entityManager.createNamedQuery(ResourceRepo.DELETE_BY_REPO_ID).setParameter("repoId", repoId)
             .executeUpdate();
 
-        entityManager.createNamedQuery(RepoContentSource.DELETE_BY_CHANNEL_ID).setParameter("repoId", repoId)
+        entityManager.createNamedQuery(RepoContentSource.DELETE_BY_REPO_ID).setParameter("repoId", repoId)
             .executeUpdate();
 
-        entityManager.createNamedQuery(RepoPackageVersion.DELETE_BY_CHANNEL_ID).setParameter("repoId", repoId)
+        entityManager.createNamedQuery(RepoPackageVersion.DELETE_BY_REPO_ID).setParameter("repoId", repoId)
             .executeUpdate();
 
         Repo repo = entityManager.find(Repo.class, repoId);
@@ -132,9 +132,9 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     public PageList<ContentSource> findAssociatedContentSources(Subject subject, int repoId, PageControl pc) {
         pc.initDefaultOrderingField("cs.id");
 
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, ContentSource.QUERY_FIND_BY_CHANNEL_ID,
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, ContentSource.QUERY_FIND_BY_REPO_ID,
             pc);
-        Query countQuery = PersistenceUtility.createCountQuery(entityManager, ContentSource.QUERY_FIND_BY_CHANNEL_ID);
+        Query countQuery = PersistenceUtility.createCountQuery(entityManager, ContentSource.QUERY_FIND_BY_REPO_ID);
 
         query.setParameter("id", repoId);
         countQuery.setParameter("id", repoId);
@@ -169,8 +169,8 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         pc.initDefaultOrderingField("c.id");
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-            Repo.QUERY_FIND_CHANNEL_COMPOSITES_BY_RESOURCE_ID, pc);
-        Query countQuery = entityManager.createNamedQuery(Repo.QUERY_FIND_CHANNEL_COMPOSITES_BY_RESOURCE_ID_COUNT);
+            Repo.QUERY_FIND_REPO_COMPOSITES_BY_RESOURCE_ID, pc);
+        Query countQuery = entityManager.createNamedQuery(Repo.QUERY_FIND_REPO_COMPOSITES_BY_RESOURCE_ID_COUNT);
 
         query.setParameter("resourceId", resourceId);
         countQuery.setParameter("resourceId", resourceId);
@@ -187,9 +187,9 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         pc.initDefaultOrderingField("c.id");
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-            Repo.QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID, pc);
+            Repo.QUERY_FIND_AVAILABLE_REPO_COMPOSITES_BY_RESOURCE_ID, pc);
         Query countQuery = entityManager
-            .createNamedQuery(Repo.QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID_COUNT);
+            .createNamedQuery(Repo.QUERY_FIND_AVAILABLE_REPO_COMPOSITES_BY_RESOURCE_ID_COUNT);
 
         query.setParameter("resourceId", resourceId);
         countQuery.setParameter("resourceId", resourceId);
@@ -202,7 +202,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
 
     @SuppressWarnings("unchecked")
     public List<RepoComposite> findResourceSubscriptions(int resourceId) {
-        Query query = entityManager.createNamedQuery(Repo.QUERY_FIND_CHANNEL_COMPOSITES_BY_RESOURCE_ID);
+        Query query = entityManager.createNamedQuery(Repo.QUERY_FIND_REPO_COMPOSITES_BY_RESOURCE_ID);
 
         query.setParameter("resourceId", resourceId);
 
@@ -212,7 +212,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
 
     @SuppressWarnings("unchecked")
     public List<RepoComposite> findAvailableResourceSubscriptions(int resourceId) {
-        Query query = entityManager.createNamedQuery(Repo.QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID);
+        Query query = entityManager.createNamedQuery(Repo.QUERY_FIND_AVAILABLE_REPO_COMPOSITES_BY_RESOURCE_ID);
 
         query.setParameter("resourceId", resourceId);
 
@@ -226,7 +226,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         pc.initDefaultOrderingField("pv.generalPackage.name, pv.version");
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-            PackageVersion.QUERY_FIND_BY_CHANNEL_ID_WITH_PACKAGE, pc);
+            PackageVersion.QUERY_FIND_BY_REPO_ID_WITH_PACKAGE, pc);
 
         query.setParameter("repoId", repoId);
 
@@ -243,7 +243,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         pc.initDefaultOrderingField("pv.generalPackage.name, pv.version");
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-            PackageVersion.QUERY_FIND_BY_CHANNEL_ID_WITH_PACKAGE_FILTERED, pc);
+            PackageVersion.QUERY_FIND_BY_REPO_ID_WITH_PACKAGE_FILTERED, pc);
 
         query.setParameter("repoId", repoId);
         query.setParameter("filter", PersistenceUtility.formatSearchParameter(filter));
@@ -481,7 +481,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public long getPackageVersionCountFromRepo(Subject subject, String filter, int repoId) {
         Query countQuery = PersistenceUtility.createCountQuery(entityManager,
-            PackageVersion.QUERY_FIND_BY_CHANNEL_ID_FILTERED);
+            PackageVersion.QUERY_FIND_BY_REPO_ID_FILTERED);
 
         countQuery.setParameter("repoId", repoId);
         countQuery.setParameter("filter", (filter == null) ? null : ("%" + filter.toUpperCase() + "%"));

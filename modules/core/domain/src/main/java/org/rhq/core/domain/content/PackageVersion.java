@@ -70,13 +70,13 @@ import org.rhq.core.domain.resource.ProductVersion;
         + "   AND pv.architecture.name = :architectureName " + "   AND pv.version = :version "),
 
     // DO NOT SELECT DISTINCT IN OUTER SELECT - Oracle bombs on PackageVersion.metadata BLOB column
-    @NamedQuery(name = PackageVersion.QUERY_FIND_BY_CHANNEL_ID, query = "SELECT pv " + "  FROM PackageVersion pv "
+    @NamedQuery(name = PackageVersion.QUERY_FIND_BY_REPO_ID, query = "SELECT pv " + "  FROM PackageVersion pv "
         + " WHERE pv.id IN (SELECT DISTINCT pv1.id " + "                   FROM PackageVersion pv1 "
         + "                        LEFT JOIN pv1.repoPackageVersions cpv "
         + "                  WHERE cpv.repo.id = :repoId) "),
 
     // DO NOT SELECT DISTINCT IN OUTER SELECT - Oracle bombs on PackageVersion.metadata BLOB column
-    @NamedQuery(name = PackageVersion.QUERY_FIND_BY_CHANNEL_ID_FILTERED, query = "SELECT pv "
+    @NamedQuery(name = PackageVersion.QUERY_FIND_BY_REPO_ID_FILTERED, query = "SELECT pv "
         + "  FROM PackageVersion pv " + " WHERE pv.id IN (SELECT DISTINCT pv1.id "
         + "                   FROM PackageVersion pv1 "
         + "                        LEFT JOIN pv1.repoPackageVersions cpv "
@@ -85,12 +85,12 @@ import org.rhq.core.domain.resource.ProductVersion;
         + "                             OR :filter IS NULL)) "),
     @NamedQuery(name = PackageVersion.QUERY_FIND_BY_PACKAGE_ID, query = "SELECT pv " + "  FROM PackageVersion pv "
         + " WHERE pv.generalPackage.id = :packageId "),
-    @NamedQuery(name = PackageVersion.QUERY_FIND_BY_CHANNEL_ID_WITH_PACKAGE, query = "SELECT pv "
+    @NamedQuery(name = PackageVersion.QUERY_FIND_BY_REPO_ID_WITH_PACKAGE, query = "SELECT pv "
         + "  FROM PackageVersion pv " + "       LEFT JOIN FETCH pv.generalPackage "
         + " WHERE pv.id IN (SELECT DISTINCT pv1.id " + "                   FROM PackageVersion pv1 "
         + "                        LEFT JOIN pv1.repoPackageVersions cpv "
         + "                  WHERE cpv.repo.id = :repoId) "),
-    @NamedQuery(name = PackageVersion.QUERY_FIND_BY_CHANNEL_ID_WITH_PACKAGE_FILTERED, query = "SELECT pv "
+    @NamedQuery(name = PackageVersion.QUERY_FIND_BY_REPO_ID_WITH_PACKAGE_FILTERED, query = "SELECT pv "
         + "  FROM PackageVersion pv " + "       LEFT JOIN FETCH pv.generalPackage "
         + " WHERE pv.id IN (SELECT DISTINCT pv1.id " + "                   FROM PackageVersion pv1 "
         + "                        LEFT JOIN pv1.repoPackageVersions cpv "
@@ -115,7 +115,7 @@ import org.rhq.core.domain.resource.ProductVersion;
 
     // returns the identified package version, but only if it is orphaned and has no associated content sources or repos
     // and is not installed anywhere
-    @NamedQuery(name = PackageVersion.QUERY_FIND_BY_ID_IF_NO_CONTENT_SOURCES_OR_CHANNELS, query = "SELECT pv "
+    @NamedQuery(name = PackageVersion.QUERY_FIND_BY_ID_IF_NO_CONTENT_SOURCES_OR_REPOS, query = "SELECT pv "
         + "  FROM PackageVersion pv " + " WHERE pv.id = :id " + "   AND pv.id NOT IN (SELECT pvcs.packageVersion.id "
         + "                       FROM PackageVersionContentSource pvcs "
         + "                      WHERE pvcs.packageVersion.id = :id) " + "   AND pv.repoPackageVersions IS EMPTY "
@@ -129,14 +129,14 @@ import org.rhq.core.domain.resource.ProductVersion;
         + "   AND pv.architecture.name = :architectureName " + "   AND pv.version = :version "),
 
     // deletes orphaned package versions - that is, if they have no associated content sources or repos and is not installed anywhere
-    @NamedQuery(name = PackageVersion.DELETE_IF_NO_CONTENT_SOURCES_OR_CHANNELS, query = "DELETE PackageVersion pv "
+    @NamedQuery(name = PackageVersion.DELETE_IF_NO_CONTENT_SOURCES_OR_REPOS, query = "DELETE PackageVersion pv "
         + " WHERE pv.id NOT IN (SELECT pvcs.packageVersion.id "
         + "                       FROM PackageVersionContentSource pvcs) "
         + "   AND pv.repoPackageVersions IS EMPTY " + "   AND pv.installedPackages IS EMPTY "
         + "   AND pv.installedPackageHistory IS EMPTY "),
 
     // the bulk delete that removes the PVPV mapping from orphaned package versions
-    @NamedQuery(name = PackageVersion.DELETE_PVPV_IF_NO_CONTENT_SOURCES_OR_CHANNELS, query = "DELETE ProductVersionPackageVersion pvpv "
+    @NamedQuery(name = PackageVersion.DELETE_PVPV_IF_NO_CONTENT_SOURCES_OR_REPOS, query = "DELETE ProductVersionPackageVersion pvpv "
         + " WHERE pvpv.packageVersion.id NOT IN (SELECT pvcs.packageVersion.id "
         + "                                        FROM PackageVersionContentSource pvcs) "
         + "   AND pvpv.packageVersion.repoPackageVersions IS EMPTY "
@@ -144,7 +144,7 @@ import org.rhq.core.domain.resource.ProductVersion;
         + "   AND pvpv.packageVersion.installedPackageHistory IS EMPTY "),
 
     // finds all orphaned PVs that have extra props configurations (so the configs can be deleted)
-    @NamedQuery(name = PackageVersion.FIND_EXTRA_PROPS_IF_NO_CONTENT_SOURCES_OR_CHANNELS, query = "SELECT pv "
+    @NamedQuery(name = PackageVersion.FIND_EXTRA_PROPS_IF_NO_CONTENT_SOURCES_OR_REPOS, query = "SELECT pv "
         + "  FROM PackageVersion pv LEFT JOIN FETCH pv.extraProperties "
         + " WHERE pv.id NOT IN (SELECT pvcs.packageVersion.id "
         + "                       FROM PackageVersionContentSource pvcs) "
@@ -152,7 +152,7 @@ import org.rhq.core.domain.resource.ProductVersion;
         + "   AND pv.installedPackageHistory IS EMPTY " + "   AND pv.extraProperties IS NOT NULL "),
 
     // finds all orphaned PVs that have its bits loaded on the filesystem
-    @NamedQuery(name = PackageVersion.FIND_FILES_IF_NO_CONTENT_SOURCES_OR_CHANNELS, query = "SELECT new org.rhq.core.domain.content.composite.PackageVersionFile( "
+    @NamedQuery(name = PackageVersion.FIND_FILES_IF_NO_CONTENT_SOURCES_OR_REPOS, query = "SELECT new org.rhq.core.domain.content.composite.PackageVersionFile( "
         + "          pv.id, "
         + "          pv.fileName "
         + "       ) "
@@ -231,18 +231,18 @@ public class PackageVersion implements Serializable {
     public static final String QUERY_FIND_BY_PACKAGE_VER_ARCH = "PackageVersion.findByPackageVerArch";
     public static final String QUERY_FIND_BY_PACKAGE_DETAILS_KEY = "PackageVersion.findByPackageDetailsKey";
     public static final String QUERY_FIND_ID_BY_PACKAGE_DETAILS_KEY_AND_RES_ID = "PackageVersion.findIdByPackageDetailsKeyAndResId";
-    public static final String QUERY_FIND_BY_CHANNEL_ID = "PackageVersion.findByRepoId";
-    public static final String QUERY_FIND_BY_CHANNEL_ID_FILTERED = "PackageVersion.findByRepoIdFiltered";
+    public static final String QUERY_FIND_BY_REPO_ID = "PackageVersion.findByRepoId";
+    public static final String QUERY_FIND_BY_REPO_ID_FILTERED = "PackageVersion.findByRepoIdFiltered";
     public static final String QUERY_FIND_BY_PACKAGE_ID = "PackageVersion.findByPackageId";
-    public static final String QUERY_FIND_BY_CHANNEL_ID_WITH_PACKAGE = "PackageVersion.findByRepoIdWithPackage";
-    public static final String QUERY_FIND_BY_CHANNEL_ID_WITH_PACKAGE_FILTERED = "PackageVersion.findByRepoIdWithPackageFiltered";
+    public static final String QUERY_FIND_BY_REPO_ID_WITH_PACKAGE = "PackageVersion.findByRepoIdWithPackage";
+    public static final String QUERY_FIND_BY_REPO_ID_WITH_PACKAGE_FILTERED = "PackageVersion.findByRepoIdWithPackageFiltered";
     public static final String QUERY_FIND_METADATA_BY_RESOURCE_ID = "PackageVersion.findMetadataByResourceId";
-    public static final String QUERY_FIND_BY_ID_IF_NO_CONTENT_SOURCES_OR_CHANNELS = "PackageVersion.findByIdIfNoContentSourcesOrRepos";
+    public static final String QUERY_FIND_BY_ID_IF_NO_CONTENT_SOURCES_OR_REPOS = "PackageVersion.findByIdIfNoContentSourcesOrRepos";
     public static final String QUERY_GET_PKG_BITS_LENGTH_BY_PKG_DETAILS_AND_RES_ID = "PackageVersion.getPkgBitsLengthByPkgDetailsAndResId";
-    public static final String DELETE_IF_NO_CONTENT_SOURCES_OR_CHANNELS = "PackageVersion.deleteIfNoContentSourcesOrRepos";
-    public static final String DELETE_PVPV_IF_NO_CONTENT_SOURCES_OR_CHANNELS = "PackageVersion.deletePVPVIfNoContentSourcesOrRepos";
-    public static final String FIND_EXTRA_PROPS_IF_NO_CONTENT_SOURCES_OR_CHANNELS = "PackageVersion.findOrphanedExtraProps";
-    public static final String FIND_FILES_IF_NO_CONTENT_SOURCES_OR_CHANNELS = "PackageVersion.findOrphanedFiles";
+    public static final String DELETE_IF_NO_CONTENT_SOURCES_OR_REPOS = "PackageVersion.deleteIfNoContentSourcesOrRepos";
+    public static final String DELETE_PVPV_IF_NO_CONTENT_SOURCES_OR_REPOS = "PackageVersion.deletePVPVIfNoContentSourcesOrRepos";
+    public static final String FIND_EXTRA_PROPS_IF_NO_CONTENT_SOURCES_OR_REPOS = "PackageVersion.findOrphanedExtraProps";
+    public static final String FIND_FILES_IF_NO_CONTENT_SOURCES_OR_REPOS = "PackageVersion.findOrphanedFiles";
     public static final String QUERY_FIND_COMPOSITE_BY_ID = "PackageVersion.findCompositeById";
     public static final String QUERY_FIND_COMPOSITE_BY_ID_WITH_PROPS = "PackageVersion.findCompositeByIdWithProps";
     public static final String QUERY_FIND_COMPOSITES_BY_IDS = "PackageVersion.findCompositesByIds";

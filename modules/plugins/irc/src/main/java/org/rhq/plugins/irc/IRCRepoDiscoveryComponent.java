@@ -20,7 +20,7 @@ public class IRCRepoDiscoveryComponent implements ResourceDiscoveryComponent<IRC
 
    private final Log log = LogFactory.getLog(this.getClass());
 
-    public static final String CONFIG_CHANNEL = "repoName";
+    public static final String CONFIG_REPO = "repoName";
 
     /**
      * Run the discovery
@@ -32,7 +32,7 @@ public class IRCRepoDiscoveryComponent implements ResourceDiscoveryComponent<IRC
         List<Configuration> contextPluginConfigurations = discoveryContext.getPluginConfigurations();
         for (Configuration config : contextPluginConfigurations) {
 
-            String repo = config.getSimple(CONFIG_CHANNEL).getStringValue();
+            String repo = config.getSimple(CONFIG_REPO).getStringValue();
 
             DiscoveredResourceDetails details =
                     new DiscoveredResourceDetails(

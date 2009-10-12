@@ -62,19 +62,19 @@ public class CreateNewPackageUIBean {
     /**
      * Option value for deploying the package to a repo the resource is already subscribed to.
      */
-    private static final String CHANNEL_OPTION_SUBSCRIBED = "subscribed";
+    private static final String REPO_OPTION_SUBSCRIBED = "subscribed";
 
     /**
      * Option value for deploying the package to a repo the resource is not subscribed to, as well as automatically
      * subscribing the resource to that repo.
      */
-    private static final String CHANNEL_OPTION_UNSUBSCRIBED = "unsubscribed";
+    private static final String REPO_OPTION_UNSUBSCRIBED = "unsubscribed";
 
     /**
      * Option value for creating a new repo, subscribing the resource to it, and deploying the package to that
      * repo.
      */
-    private static final String CHANNEL_OPTION_NEW = "new";
+    private static final String REPO_OPTION_NEW = "new";
 
     private String packageName;
     private String version;
@@ -167,7 +167,7 @@ public class CreateNewPackageUIBean {
             return null;
         }
 
-        if (repoOption.equals(CHANNEL_OPTION_NEW) && (newRepoName == null || newRepoName.trim().equals(""))) {
+        if (repoOption.equals(REPO_OPTION_NEW) && (newRepoName == null || newRepoName.trim().equals(""))) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
                 "When creating a new repo, the name of the repo to be created must be specified");
             return null;
@@ -452,9 +452,9 @@ public class CreateNewPackageUIBean {
     private String determineRepo(String repoOption, Subject subject, int resourceId) throws ContentException {
         String repoId = null;
 
-        if (repoOption.equals(CHANNEL_OPTION_SUBSCRIBED)) {
+        if (repoOption.equals(REPO_OPTION_SUBSCRIBED)) {
             repoId = subscribedRepoId;
-        } else if (repoOption.equals(CHANNEL_OPTION_UNSUBSCRIBED)) {
+        } else if (repoOption.equals(REPO_OPTION_UNSUBSCRIBED)) {
             repoId = unsubscribedRepoId;
             int iRepoId = Integer.parseInt(repoId);
 
@@ -465,7 +465,7 @@ public class CreateNewPackageUIBean {
             // the drop down for selecting an existing subscribed repo will be populated with this
             // new repo
             subscribedRepoId = repoId;
-        } else if (repoOption.equals(CHANNEL_OPTION_NEW)) {
+        } else if (repoOption.equals(REPO_OPTION_NEW)) {
             RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
 
             Repo newRepo = new Repo(newRepoName);

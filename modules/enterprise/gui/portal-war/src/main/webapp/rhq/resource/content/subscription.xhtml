@@ -21,7 +21,7 @@
 
    <ui:define name="content">
       
-      <!-- CURRENT CHANNELS -->
+      <!-- CURRENT REPOS -->
       <h:form id="currentRepoForm">
          <input type="hidden" name="id" value="${param.id}"/>
          
@@ -133,7 +133,7 @@
       </h:form>
       
       
-      <!--  AVAILABLE CHANNELS -->
+      <!--  AVAILABLE REPOS -->
       <h:form id="availableRepoForm"
               rendered="${GlobalPermissionsUIBean.inventory}">
          <input type="hidden" name="id" value="${param.id}"/>

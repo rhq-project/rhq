@@ -67,9 +67,9 @@ import org.rhq.core.domain.configuration.Configuration;
         + "   AND cs.contentSourceType.name = :typeName "),
     @NamedQuery(name = ContentSource.QUERY_FIND_BY_ID_WITH_CONFIG, query = "SELECT cs " + "  FROM ContentSource cs "
         + "       LEFT JOIN FETCH cs.configuration" + " WHERE cs.id = :id "),
-    @NamedQuery(name = ContentSource.QUERY_FIND_BY_CHANNEL_ID, // do not do a fetch join here
+    @NamedQuery(name = ContentSource.QUERY_FIND_BY_REPO_ID, // do not do a fetch join here
     query = "SELECT cs FROM ContentSource cs LEFT JOIN cs.repoContentSources ccs WHERE ccs.repo.id = :id"),
-    @NamedQuery(name = ContentSource.QUERY_FIND_AVAILABLE_BY_CHANNEL_ID, //
+    @NamedQuery(name = ContentSource.QUERY_FIND_AVAILABLE_BY_REPO_ID, //
     query = "SELECT cs " //  
         + "    FROM ContentSource AS cs " // 
         + "   WHERE cs.id NOT IN " //
@@ -83,8 +83,8 @@ public class ContentSource implements Serializable {
     public static final String QUERY_FIND_ALL_WITH_CONFIG = "ContentSource.findAllWithConfig";
     public static final String QUERY_FIND_BY_NAME_AND_TYPENAME = "ContentSource.findByNameAndTypeName";
     public static final String QUERY_FIND_BY_ID_WITH_CONFIG = "ContentSource.findByIdWithConfig";
-    public static final String QUERY_FIND_BY_CHANNEL_ID = "ContentSource.findByRepoId";
-    public static final String QUERY_FIND_AVAILABLE_BY_CHANNEL_ID = "ContentSource.findAvailableByRepoId";
+    public static final String QUERY_FIND_BY_REPO_ID = "ContentSource.findByRepoId";
+    public static final String QUERY_FIND_AVAILABLE_BY_REPO_ID = "ContentSource.findAvailableByRepoId";
 
     // Constants  --------------------------------------------
 

@@ -456,7 +456,7 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "  FROM ResourceGroup rg JOIN rg.explicitResources res " //
         + " WHERE rg.id = :groupId " //
         + "   AND res.inventoryStatus = 'COMMITTED' "),
-    @NamedQuery(name = Resource.QUERY_GET_AVAILABLE_RESOURCES_FOR_CHANNEL, query = "" //
+    @NamedQuery(name = Resource.QUERY_GET_AVAILABLE_RESOURCES_FOR_REPO, query = "" //
         + "  SELECT res " //  
         + "    FROM Resource AS res " //
         + "   WHERE res.id NOT IN " //
@@ -808,7 +808,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
     public static final String QUERY_FIND_EXPLICIT_RESOURCES_FOR_RESOURCE_GROUP_COUNT = "ResourceWithAvailability.findExplicitByResourceGroup_count";
     public static final String QUERY_FIND_EXPLICIT_RESOURCES_FOR_RESOURCE_GROUP_COUNT_ADMIN = "ResourceWithAvailability.findExplicitByResourceGroup_count_admin";
 
-    public static final String QUERY_GET_AVAILABLE_RESOURCES_FOR_CHANNEL = "Resource.getAvailableResourcesForRepo";
+    public static final String QUERY_GET_AVAILABLE_RESOURCES_FOR_REPO = "Resource.getAvailableResourcesForRepo";
 
     public static final String QUERY_GET_AVAILABLE_RESOURCES_FOR_RESOURCE_GROUP = "Resource.getAvailableResourcesForResourceGroup";
     public static final String QUERY_GET_AVAILABLE_RESOURCES_FOR_RESOURCE_GROUP_WITH_EXCLUDES = "Resource.getAvailableResourcesForResourceGroupWithExcludes";

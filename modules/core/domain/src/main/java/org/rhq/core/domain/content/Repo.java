@@ -58,31 +58,31 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = Repo.QUERY_FIND_BY_CONTENT_SOURCE_ID_FETCH_CCS, query = "SELECT c FROM Repo c LEFT JOIN FETCH c.repoContentSources ccs WHERE ccs.contentSource.id = :id"),
     @NamedQuery(name = Repo.QUERY_FIND_BY_CONTENT_SOURCE_ID, query = "SELECT c FROM Repo c LEFT JOIN c.repoContentSources ccs WHERE ccs.contentSource.id = :id"),
     @NamedQuery(name = Repo.QUERY_FIND_SUBSCRIBER_RESOURCES, query = "SELECT rc.resource FROM ResourceRepo rc WHERE rc.repo.id = :id"),
-    @NamedQuery(name = Repo.QUERY_FIND_CHANNELS_BY_RESOURCE_ID, query = "SELECT c "
+    @NamedQuery(name = Repo.QUERY_FIND_REPOS_BY_RESOURCE_ID, query = "SELECT c "
         + "FROM ResourceRepo rc JOIN rc.repo c WHERE rc.resource.id = :resourceId "),
 
-    @NamedQuery(name = Repo.QUERY_FIND_CHANNEL_COMPOSITES_BY_RESOURCE_ID, query = "SELECT new org.rhq.core.domain.content.composite.RepoComposite( "
+    @NamedQuery(name = Repo.QUERY_FIND_REPO_COMPOSITES_BY_RESOURCE_ID, query = "SELECT new org.rhq.core.domain.content.composite.RepoComposite( "
         + "c, "
         + "(SELECT COUNT(cpv.packageVersion) FROM RepoPackageVersion cpv WHERE cpv.repo.id = c.id) "
         + ") "
         + "FROM ResourceRepo rc JOIN rc.repo c LEFT JOIN c.repoPackageVersions pv "
         + "WHERE rc.resource.id = :resourceId "
         + "GROUP BY c, c.name, c.description, c.creationDate, c.lastModifiedDate"),
-    @NamedQuery(name = Repo.QUERY_FIND_CHANNEL_COMPOSITES_BY_RESOURCE_ID_COUNT, query = "SELECT COUNT( rc.repo ) "
+    @NamedQuery(name = Repo.QUERY_FIND_REPO_COMPOSITES_BY_RESOURCE_ID_COUNT, query = "SELECT COUNT( rc.repo ) "
         + "FROM ResourceRepo rc WHERE rc.resource.id = :resourceId "),
 
-    @NamedQuery(name = Repo.QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID, query = "SELECT new org.rhq.core.domain.content.composite.RepoComposite( "
+    @NamedQuery(name = Repo.QUERY_FIND_AVAILABLE_REPO_COMPOSITES_BY_RESOURCE_ID, query = "SELECT new org.rhq.core.domain.content.composite.RepoComposite( "
         + "c, "
         + "(SELECT COUNT(cpv.packageVersion) FROM RepoPackageVersion cpv WHERE cpv.repo.id = c.id) "
         + ") "
         + "FROM Repo AS c "
         + "WHERE c.id NOT IN ( SELECT rc.repo.id FROM ResourceRepo rc WHERE rc.resource.id = :resourceId ) "
         + "GROUP BY c, c.name, c.description, c.creationDate, c.lastModifiedDate"),
-    @NamedQuery(name = Repo.QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID_COUNT, query = "SELECT COUNT( c ) "
+    @NamedQuery(name = Repo.QUERY_FIND_AVAILABLE_REPO_COMPOSITES_BY_RESOURCE_ID_COUNT, query = "SELECT COUNT( c ) "
         + "FROM Repo AS c "
         + "WHERE c.id NOT IN ( SELECT rc.repo.id FROM ResourceRepo rc WHERE rc.resource.id = :resourceId ) ") })
-@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CHANNEL_ID_SEQ")
-@Table(name = "RHQ_CHANNEL")
+@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_REPO_ID_SEQ")
+@Table(name = "RHQ_REPO")
 public class Repo implements Serializable {
     // Constants  --------------------------------------------
 
@@ -92,11 +92,11 @@ public class Repo implements Serializable {
     public static final String QUERY_FIND_BY_CONTENT_SOURCE_ID_FETCH_CCS = "Repo.findByContentSourceIdFetchCCS";
     public static final String QUERY_FIND_BY_CONTENT_SOURCE_ID = "Repo.findByContentSourceId";
     public static final String QUERY_FIND_SUBSCRIBER_RESOURCES = "Repo.findSubscriberResources";
-    public static final String QUERY_FIND_CHANNELS_BY_RESOURCE_ID = "Repo.findReposByResourceId";
-    public static final String QUERY_FIND_CHANNEL_COMPOSITES_BY_RESOURCE_ID = "Repo.findRepoCompositesByResourceId";
-    public static final String QUERY_FIND_CHANNEL_COMPOSITES_BY_RESOURCE_ID_COUNT = "Repo.findRepoCompositesByResourceId_count";
-    public static final String QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID = "Repo.findAvailableRepoCompositesByResourceId";
-    public static final String QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID_COUNT = "Repo.findAvailableRepoCompositesByResourceId_count";
+    public static final String QUERY_FIND_REPOS_BY_RESOURCE_ID = "Repo.findReposByResourceId";
+    public static final String QUERY_FIND_REPO_COMPOSITES_BY_RESOURCE_ID = "Repo.findRepoCompositesByResourceId";
+    public static final String QUERY_FIND_REPO_COMPOSITES_BY_RESOURCE_ID_COUNT = "Repo.findRepoCompositesByResourceId_count";
+    public static final String QUERY_FIND_AVAILABLE_REPO_COMPOSITES_BY_RESOURCE_ID = "Repo.findAvailableRepoCompositesByResourceId";
+    public static final String QUERY_FIND_AVAILABLE_REPO_COMPOSITES_BY_RESOURCE_ID_COUNT = "Repo.findAvailableRepoCompositesByResourceId_count";
 
     private static final long serialVersionUID = 1L;
 

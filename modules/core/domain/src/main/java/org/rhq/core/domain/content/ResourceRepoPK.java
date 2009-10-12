@@ -47,7 +47,7 @@ public class ResourceRepoPK implements Serializable {
     @ManyToOne
     private Resource resource;
 
-    @JoinColumn(name = "CHANNEL_ID", referencedColumnName = "ID", nullable = false)
+    @JoinColumn(name = "REPO_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne
     private Repo repo;
 

@@ -261,7 +261,7 @@ public class ContentUIManagerBeanEligiblePackagesTest extends AbstractEJB3Test {
 
         try {
             try {
-                Query q = em.createNamedQuery(RepoPackageVersion.DELETE_BY_CHANNEL_ID);
+                Query q = em.createNamedQuery(RepoPackageVersion.DELETE_BY_REPO_ID);
                 q.setParameter("repoId", repo1.getId());
                 q.executeUpdate();
 

@@ -1478,9 +1478,9 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         pageControl.initDefaultOrderingField("res.name");
 
         Query queryCount = PersistenceUtility.createCountQuery(entityManager,
-            Resource.QUERY_GET_AVAILABLE_RESOURCES_FOR_CHANNEL);
+            Resource.QUERY_GET_AVAILABLE_RESOURCES_FOR_REPO);
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-            Resource.QUERY_GET_AVAILABLE_RESOURCES_FOR_CHANNEL, pageControl);
+            Resource.QUERY_GET_AVAILABLE_RESOURCES_FOR_REPO, pageControl);
 
         queryCount.setParameter("repoId", repoId);
         query.setParameter("repoId", repoId);

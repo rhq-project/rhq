@@ -25,7 +25,7 @@ package org.rhq.plugins.jbossas.util;
 /**
  * Simple class to hold the pieces of War Deployment information needed to be set in the
  * plugin configuration for a war resource. Instead of getting each piece of information individually
- * and calling the MBean Server multiple times, getting it all at once will increate performance.
+ * and calling the MBean Server multiple times, get it all at once to improve performance.
  */
 public class WarDeploymentInformation {
     private String fileName;

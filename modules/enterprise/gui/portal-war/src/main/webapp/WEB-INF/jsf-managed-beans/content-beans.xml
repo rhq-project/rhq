@@ -76,7 +76,7 @@
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
 
-   <!-- /rhq/content/listContentSources.xhtml -->
+   <!-- /rhq/content/listContentProviders.xhtml -->
    <managed-bean>
       <managed-bean-name>ListContentSourcesUIBean</managed-bean-name>
       <managed-bean-class>org.rhq.enterprise.gui.content.ListContentSourcesUIBean</managed-bean-class>
@@ -90,14 +90,14 @@
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
 
-   <!-- /rhq/content/createContentSource.xhtml -->
+   <!-- /rhq/content/createContentProvider.xhtml -->
    <managed-bean>
       <managed-bean-name>CreateContentSourceUIBean</managed-bean-name>
       <managed-bean-class>org.rhq.enterprise.gui.content.CreateContentSourceUIBean</managed-bean-class>
       <managed-bean-scope>session</managed-bean-scope>
    </managed-bean>
 
-   <!-- /rhq/content/contentSource.xhtml -->
+   <!-- /rhq/content/contentProvider.xhtml -->
    <managed-bean>
       <managed-bean-name>ContentSourceDetailsUIBean</managed-bean-name>
       <managed-bean-class>org.rhq.enterprise.gui.content.ContentSourceDetailsUIBean</managed-bean-class>

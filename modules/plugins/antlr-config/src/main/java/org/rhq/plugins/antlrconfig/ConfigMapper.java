@@ -319,6 +319,8 @@ public class ConfigMapper {
     private void createProperty(Tree root, Tree tree, Collection<PropertyDefinition> childDefinitions, Configuration configuration, PropertyList parentList, PropertyMap parentMap) throws RecognitionException {
         for(PropertyDefinition pd : childDefinitions) {
             String subPath = pathConvertor.getPathRelativeToParent(pd);
+            if (subPath == null) continue;
+            
             TreePath subTreePath = new TreePath(tree, subPath, treeTypeNames);
             
             List<Tree> matches = subTreePath.matches();

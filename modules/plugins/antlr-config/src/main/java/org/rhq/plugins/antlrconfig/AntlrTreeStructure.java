@@ -27,19 +27,19 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.antlr.runtime.tree.Tree;
+import org.antlr.runtime.tree.CommonTree;
 
 /**
- * A tree structure provider for the generic Antlr {@link Tree} objects. 
+ * A tree structure provider for the generic Antlr {@link CommonTree} objects. 
  * 
  * @author Lukas Krejci
  */
-public class AntlrTreeStructure implements TreeStructure<Tree> {
-    public Collection<Tree> getChildren(Tree parent) {
-        List<Tree> children = new ArrayList<Tree>();
+public class AntlrTreeStructure implements TreeStructure<CommonTree> {
+    public Collection<CommonTree> getChildren(CommonTree parent) {
+        List<CommonTree> children = new ArrayList<CommonTree>();
         
         for(int i = 0; i < parent.getChildCount(); ++i) {
-            children.add(parent.getChild(i));
+            children.add((CommonTree)parent.getChild(i));
         }
         return children;
     }

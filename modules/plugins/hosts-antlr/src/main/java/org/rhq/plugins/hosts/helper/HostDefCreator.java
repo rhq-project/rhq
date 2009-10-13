@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.antlr.runtime.RecognitionException;
+import org.antlr.runtime.tree.CommonTree;
 import org.antlr.runtime.tree.Tree;
 
 import org.rhq.core.domain.configuration.Property;
@@ -82,7 +83,7 @@ public class HostDefCreator implements NewEntryCreator {
     }
 
 
-    public List<OpDef> getInstructions(Tree fullTree, Property property) {
+    public List<OpDef> getInstructions(CommonTree fullTree, Property property) {
         if (HOST_DEF_NAME.equals(property.getName())) {
             try {
                 OpDef def = new OpDef();
@@ -104,9 +105,9 @@ public class HostDefCreator implements NewEntryCreator {
         }
     }
 
-    private int getIndexToInsert(Tree fullTree) throws RecognitionException {
+    private int getIndexToInsert(CommonTree fullTree) throws RecognitionException {
         TreePath path = new TreePath(fullTree, hostDefQuery, treeTypeNames);
-        List<Tree> host_defs = path.matches();
+        List<CommonTree> host_defs = path.matches();
         if (host_defs.size() > 0) {
             Tree lastHostDef = host_defs.get(host_defs.size() - 1);
             return lastHostDef.getTokenStopIndex();

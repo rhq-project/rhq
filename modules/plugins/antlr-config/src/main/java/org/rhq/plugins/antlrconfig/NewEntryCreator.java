@@ -25,7 +25,7 @@ package org.rhq.plugins.antlrconfig;
 
 import java.util.List;
 
-import org.antlr.runtime.tree.Tree;
+import org.antlr.runtime.tree.CommonTree;
 
 import org.rhq.core.domain.configuration.Property;
 
@@ -37,7 +37,7 @@ import org.rhq.core.domain.configuration.Property;
  * For each property it first calls the {@link #prepareFor(Property)} method so that
  * the creator can initialize itself for given property.
  * After the whole subtree of that property (if it's a list or a map) has been processed,
- * the {@link #getInstructions(Tree, Property)} method is called to actually get the instructions for
+ * the {@link #getInstructions(CommonTree, Property)} method is called to actually get the instructions for
  * creating the property.
  * 
  * @author Lukas Krejci
@@ -59,7 +59,7 @@ public interface NewEntryCreator {
     
     /**
      * Prepares the creator for creating the property. If the property has children, this method
-     * and the {@link #getInstructions(Tree, Property)} method is called for each of the children
+     * and the {@link #getInstructions(CommonTree, Property)} method is called for each of the children
      * before the getInstructions method is called for this property again.
      * In case of simple property, the getInstructions method is called immediately after the this method.
      * 
@@ -73,5 +73,5 @@ public interface NewEntryCreator {
      * @return the list of instructions to execute on the tree to insert the property into it
      * or null if there is nothing to create at this point.
      */
-    List<OpDef> getInstructions(Tree fullTree, Property property);
+    List<OpDef> getInstructions(CommonTree fullTree, Property property);
 }

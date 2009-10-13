@@ -25,6 +25,7 @@ import java.io.IOException;
 import org.antlr.runtime.ANTLRFileStream;
 import org.antlr.runtime.RecognitionException;
 import org.antlr.runtime.TokenRewriteStream;
+import org.antlr.runtime.tree.CommonTree;
 import org.antlr.runtime.tree.Tree;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -150,10 +151,10 @@ public class HostsComponent implements ResourceComponent, ConfigurationFacet {
         return def;
     }
 
-    private Tree loadFile(TokenRewriteStream stream) throws IOException, RecognitionException {
+    private CommonTree loadFile(TokenRewriteStream stream) throws IOException, RecognitionException {
         HostsParser parser = new HostsParser(stream);
         HostsParser.file_return result = parser.file();
-        return (Tree) result.getTree();
+        return (CommonTree) result.getTree();
     }
     
     private TokenRewriteStream getStream() throws IOException {

@@ -3,6 +3,7 @@ grammar Hosts;
 options {
   language = Java;
   output = AST;
+  ASTLabelType = CommonTree;
 }
 
 //Each subtree in the generated AST must have a token type assigned to it

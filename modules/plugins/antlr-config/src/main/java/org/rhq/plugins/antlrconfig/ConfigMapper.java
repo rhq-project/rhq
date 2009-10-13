@@ -121,7 +121,7 @@ public class ConfigMapper {
         this.treeTypeNames = treeTypeNames;
     }
 
-    public Configuration read(ConfigurationDefinition configurationDefinition, Tree configurationFileAST) throws RecognitionException {
+    public Configuration read(ConfigurationDefinition configurationDefinition, CommonTree configurationFileAST) throws RecognitionException {
         Configuration config = new Configuration();
         
         createProperty(configurationFileAST, configurationFileAST, configurationDefinition.getPropertyDefinitions().values(), config, null, null);
@@ -129,10 +129,10 @@ public class ConfigMapper {
         return config;
     }
  
-    private void mapPropertyToTree(Tree configurationFileAST, Property property, PropertyList parentList, PropertyMap parentMap, Map<Property, MergeRecord> mapping, MergeRecord rootMergeRecord) throws RecognitionException {
+    private void mapPropertyToTree(CommonTree configurationFileAST, Property property, PropertyList parentList, PropertyMap parentMap, Map<Property, MergeRecord> mapping, MergeRecord rootMergeRecord) throws RecognitionException {
         String propertyTreePath = pathConvertor.getTreePath(property);
         TreePath treePath = new TreePath(configurationFileAST, propertyTreePath, treeTypeNames);
-        Tree propertyTree = treePath.match();
+        CommonTree propertyTree = treePath.match();
         
         if (propertyTree == null) {
             MergeRecord parentRecord;
@@ -165,12 +165,12 @@ public class ConfigMapper {
         }
     }
    
-    private void detectDeletions(Property root, Map<Property, MergeRecord> mapping, Tree astRoot) {
+    private void detectDeletions(Property root, Map<Property, MergeRecord> mapping, CommonTree astRoot) {
         // TODO Auto-generated method stub
         MergeRecord rec = mapping.get(root);
         if (rec.tree != null) {
             for (int i  = 0; i < rec.tree.getChildCount(); ++i) {
-                Tree child = rec.tree.getChild(i);
+                CommonTree child = (CommonTree) rec.tree.getChild(i);
                 
                 //check if the child is "creatable"
                 List<PathElement> path = TreePath.getPath(child, astRoot, treeTypeNames);
@@ -181,7 +181,7 @@ public class ConfigMapper {
         }
     }
     
-    public void update(Tree configurationFileAST, TokenRewriteStream fileStream, Configuration configuration) throws RecognitionException {
+    public void update(CommonTree configurationFileAST, TokenRewriteStream fileStream, Configuration configuration) throws RecognitionException {
         Map<Property, MergeRecord> mapping = new HashMap<Property, MergeRecord>();
         MergeRecord rootMergeRecord = new MergeRecord();
         rootMergeRecord.tree = configurationFileAST;
@@ -316,15 +316,15 @@ public class ConfigMapper {
 //        }
     }
     
-    private void createProperty(Tree root, Tree tree, Collection<PropertyDefinition> childDefinitions, Configuration configuration, PropertyList parentList, PropertyMap parentMap) throws RecognitionException {
+    private void createProperty(CommonTree root, CommonTree tree, Collection<PropertyDefinition> childDefinitions, Configuration configuration, PropertyList parentList, PropertyMap parentMap) throws RecognitionException {
         for(PropertyDefinition pd : childDefinitions) {
             String subPath = pathConvertor.getPathRelativeToParent(pd);
             if (subPath == null) continue;
             
             TreePath subTreePath = new TreePath(tree, subPath, treeTypeNames);
             
-            List<Tree> matches = subTreePath.matches();
-            for(Tree match : matches) {
+            List<CommonTree> matches = subTreePath.matches();
+            for(CommonTree match : matches) {
                 PropertyDefinition propDef = pathConvertor.getPropertyDefinition(TreePath.getPath(match, treeTypeNames));
                 Property prop = instantiate(propDef);
                 
@@ -378,25 +378,25 @@ public class ConfigMapper {
         }
     }
     
-    private void setVisited(Tree tree, Map<Tree, Boolean> visitedMap) {
+    private void setVisited(CommonTree tree, Map<CommonTree, Boolean> visitedMap) {
         //if a tree is visited, all its children are visited as well
-        DfsWalker<Tree> walker = new DfsWalker<Tree>(astStructure, tree);
+        DfsWalker<CommonTree> walker = new DfsWalker<CommonTree>(astStructure, tree);
         while(walker.hasNext()) {
-            Tree child = walker.next();
+            CommonTree child = walker.next();
             visitedMap.put(child, true);
         }
     }
     
-    private void removeChildren(Tree tree, Map<Tree, Boolean> visitedMap) {
-        Collection<Tree> children = astStructure.getChildren(tree);
-        DfsWalker<Tree> walker = new DfsWalker<Tree>(astStructure, children);
+    private void removeChildren(CommonTree tree, Map<CommonTree, Boolean> visitedMap) {
+        Collection<CommonTree> children = astStructure.getChildren(tree);
+        DfsWalker<CommonTree> walker = new DfsWalker<CommonTree>(astStructure, children);
         while(walker.hasNext()) {
-            Tree child = walker.next();
+            CommonTree child = walker.next();
             visitedMap.remove(child);
         }
     }
     
-    private void createProperty(Tree tree, TokenRewriteStream fileStream, Property prop) {
+    private void createProperty(CommonTree tree, TokenRewriteStream fileStream, Property prop) {
         List<NewEntryCreator.OpDef> instructions = newEntryCreator.getInstructions(tree, prop);
         if (instructions != null) {
             applyInstructions(instructions, fileStream);
@@ -405,8 +405,8 @@ public class ConfigMapper {
     
     private static class MergeRecord {
         public Property property;
-        public Tree tree;
+        public CommonTree tree;
         public List<Property> additions = new ArrayList<Property>();
-        public Set<Tree> deletions = new HashSet<Tree>();
+        public Set<CommonTree> deletions = new HashSet<CommonTree>();
     }
 }

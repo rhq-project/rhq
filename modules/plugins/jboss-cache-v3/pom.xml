@@ -13,7 +13,7 @@
     <artifactId>jopr-jboss-cache-v3-plugin</artifactId>
    <packaging>jar</packaging>
 
-   <name>Jopr JBossCache 3.x Plugin</name>
+   <name>RHQ JBossCache 3.x Plugin</name>
    <description>A plugin for managing JBossCache 3.x services</description>
 
    <scm>

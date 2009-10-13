@@ -33,17 +33,17 @@ import java.io.File;
  */
 public class HostsComponentHelper {
     public static File getHostsFile(Configuration pluginConfig) {
-        String hostsFilePath = pluginConfig.getSimple(HostsComponent.PATH_PROP).getStringValue();
+        String hostsFilePath = pluginConfig.getSimple(HostsComponent.CONFIGURATION_FILE_PROP).getStringValue();
         return new File(hostsFilePath);
     }
 
     public static void validateHostFileExists(File hostsFile) throws InvalidPluginConfigurationException {
         if (!hostsFile.exists()) {
-            throw new InvalidPluginConfigurationException("Location specified by '" + HostsComponent.PATH_PROP
+            throw new InvalidPluginConfigurationException("Location specified by '" + HostsComponent.CONFIGURATION_FILE_PROP
                     + "' connection property does not exist.");
         }
         if (hostsFile.isDirectory()) {
-            throw new InvalidPluginConfigurationException("Location specified by '" + HostsComponent.PATH_PROP
+            throw new InvalidPluginConfigurationException("Location specified by '" + HostsComponent.CONFIGURATION_FILE_PROP
                     + "' connection property is a directory, not a regular file.");
         }
     }

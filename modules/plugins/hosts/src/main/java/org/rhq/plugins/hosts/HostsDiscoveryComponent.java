@@ -19,34 +19,43 @@
 package org.rhq.plugins.hosts;
 
 import java.io.File;
-import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
-import org.rhq.core.pluginapi.inventory.ManualAddFacet;
-import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.plugins.hosts.helper.HostsComponentHelper;
+import org.rhq.plugins.augeas.AugeasConfigurationDiscoveryComponent;
 
 /**
  * The ResourceDiscoveryComponent for the "Hosts File" ResourceType.
  *
  * @author Ian Springer
  */
-public class HostsDiscoveryComponent implements ResourceDiscoveryComponent, ManualAddFacet {
-    private final Log log = LogFactory.getLog(this.getClass());
-
+public class HostsDiscoveryComponent extends AugeasConfigurationDiscoveryComponent {
     private static final boolean IS_WINDOWS = (File.separatorChar == '\\');
 
-    public Set discoverResources(ResourceDiscoveryContext discoveryContext)
-            throws InvalidPluginConfigurationException, Exception {
-        Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>(1);
+    private final Log log = LogFactory.getLog(this.getClass());
 
+    @Override
+    public Set discoverResources(ResourceDiscoveryContext discoveryContext) throws InvalidPluginConfigurationException,
+            Exception
+    {
+        return super.discoverResources(discoveryContext);
+    }
+
+    @Override
+    public DiscoveredResourceDetails discoverResource(Configuration pluginConfig,
+                                                      ResourceDiscoveryContext discoveryContext) throws InvalidPluginConfigurationException
+    {
+        return super.discoverResource(pluginConfig, discoveryContext);
+    }
+
+    @Override
+    protected File getConfigurationFile(ResourceDiscoveryContext discoveryContext)
+    {
         File hostsFile;
         if (IS_WINDOWS) {
             File windowsDir = getWindowsDir();
@@ -54,37 +63,7 @@ public class HostsDiscoveryComponent implements ResourceDiscoveryComponent, Manu
         } else {
             hostsFile = new File("/etc/hosts");
         }
-
-        if (hostsFile.exists() && !hostsFile.isDirectory()) {
-            Configuration pluginConfig = discoveryContext.getDefaultPluginConfiguration();
-            pluginConfig.put(new PropertySimple(HostsComponent.PATH_PROP, hostsFile.getPath()));
-            DiscoveredResourceDetails resource = createResourceDetails(discoveryContext, pluginConfig);
-            discoveredResources.add(resource);
-            log.debug("Discovered " + discoveryContext.getResourceType().getName() + " Resource with key ["
-                    + resource.getResourceKey() + "].");
-        } else {
-            log.warn("Hosts file not found at [" + hostsFile + "].");
-        }
-
-        return discoveredResources;
-    }
-
-    private DiscoveredResourceDetails createResourceDetails(ResourceDiscoveryContext discoveryContext,
-                                                            Configuration pluginConfig) {
-        File hostsFile = HostsComponentHelper.getHostsFile(pluginConfig);
-        DiscoveredResourceDetails resource =
-            new DiscoveredResourceDetails(discoveryContext.getResourceType(), hostsFile.getPath(),
-                    "Hosts File", null, "Hosts File", pluginConfig, null);
-        return resource;
-    }
-
-    public DiscoveredResourceDetails discoverResource(Configuration pluginConfig,
-                                                      ResourceDiscoveryContext discoveryContext)
-            throws InvalidPluginConfigurationException {
-        File hostsFile = HostsComponentHelper.getHostsFile(pluginConfig);
-        HostsComponentHelper.validateHostFileExists(hostsFile);
-        DiscoveredResourceDetails resource = createResourceDetails(discoveryContext, pluginConfig);
-        return resource;
+        return hostsFile;
     }
 
     private File getWindowsDir() {
@@ -111,6 +90,7 @@ public class HostsDiscoveryComponent implements ResourceDiscoveryComponent, Manu
         if (windowsDir == null) {
             throw new IllegalStateException("Failed to determine Windows directory.");
         }
+        log.debug("Windows directory: " + windowsDir);
         return windowsDir;
     }
 }

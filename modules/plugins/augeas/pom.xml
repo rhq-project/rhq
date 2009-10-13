@@ -16,17 +16,26 @@
    <description>An abstract plugin for configuring resources via Augeas</description>
 
    <dependencies>
+
+      <dependency>
+         <groupId>${rhq.groupId}</groupId>
+         <artifactId>rhq-platform-plugin</artifactId>
+         <version>${project.version}</version>
+         <scope>provided</scope>
+      </dependency>
+       
       <dependency>
          <groupId>net.augeas</groupId>
-         <artifactId>java-augeas</artifactId>
-         <version>1.0</version>
+         <artifactId>augeas</artifactId>
+         <version>0.0.1</version>
       </dependency>
 
       <dependency>
-         <groupId>com.sun.jna</groupId>
+         <groupId>net.java.dev.jna</groupId>
          <artifactId>jna</artifactId>
-         <version>3.0.1</version>
+         <version>3.2.2</version>
       </dependency>
+
    </dependencies>
 
    <build>
@@ -43,16 +52,19 @@
                   </goals>
                   <configuration>
                      <artifactItems>
+
                         <artifactItem>
-                           <groupId>com.sun.jna</groupId>
+                           <groupId>net.java.dev.jna</groupId>
                            <artifactId>jna</artifactId>
-                           <version>3.0.1</version>
+                           <version>3.2.2</version>
                         </artifactItem>
+
                         <artifactItem>
                             <groupId>net.augeas</groupId>
-                            <artifactId>java-augeas</artifactId>
-                            <version>1.0</version>
+                            <artifactId>augeas</artifactId>
+                            <version>0.0.1</version>
                         </artifactItem>
+
                      </artifactItems>
                      <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
                   </configuration>

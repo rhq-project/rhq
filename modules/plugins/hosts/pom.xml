@@ -26,6 +26,12 @@
 
    <dependencies>
 
+       <dependency>
+          <groupId>org.rhq</groupId>
+          <artifactId>rhq-augeas-plugin</artifactId>
+          <version>${project.version}</version>
+       </dependency>
+       
    </dependencies>
 
    <profiles>

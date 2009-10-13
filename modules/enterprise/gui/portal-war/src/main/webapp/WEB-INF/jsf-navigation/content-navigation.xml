@@ -335,7 +335,7 @@
 
       <navigation-case>
          <from-outcome>cancel</from-outcome>
-         <to-view-id>/rhq/content/listContenProvider.xhtml</to-view-id>
+         <to-view-id>/rhq/content/listContentProvider.xhtml</to-view-id>
       </navigation-case>
    </navigation-rule>
 

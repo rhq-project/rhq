@@ -24,7 +24,6 @@
 package org.rhq.plugins.antlrconfig;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import org.antlr.runtime.tree.CommonTree;
@@ -48,8 +47,8 @@ public class AntlrTreeStructure implements TreeStructure<CommonTree> {
         honorOverrides = true;
     }
     
-    public AntlrTreeStructure(boolean honorSkip) {
-        this.honorOverrides = honorSkip;
+    public AntlrTreeStructure(boolean honorOverrides) {
+        this.honorOverrides = honorOverrides;
     }
     
     public List<CommonTree> getChildren(CommonTree parent) {

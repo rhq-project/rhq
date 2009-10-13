@@ -68,6 +68,7 @@ public class HostsComponentTest {
     private static final int BIG_TIMEOUT = Integer.MAX_VALUE;
     
     private File hostsCopy;
+    private String testingCopy;
     
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -145,6 +146,8 @@ public class HostsComponentTest {
         
         rdr.close();
         wrt.close();
+        
+        testingCopy = hostsFilePath;
     }
     
     @AfterSuite
@@ -208,6 +211,29 @@ public class HostsComponentTest {
         Configuration updatedConfiguration = updateResourceConfiguration(getHostFileResource(), configuration, BIG_TIMEOUT);
         
         assertEquals(configuration, updatedConfiguration);
+        assert equals(new File(testingCopy), hostsCopy);
+    }
+    
+    private static boolean equals(File orig, File copy) throws IOException {
+        
+        if (orig.exists() && copy.exists() && orig.length() == copy.length()) {
+            FileReader origReader = new FileReader(orig);
+            FileReader copyReader = new FileReader(copy);
+            int origByte;
+            int copyByte;
+            boolean ret = true;
+            while((origByte = origReader.read()) != -1) {
+                copyByte = copyReader.read();
+                if (origByte != copyByte) {
+                    ret = false;
+                    break;
+                }
+            }
+            origReader.close();
+            copyReader.close();
+            return ret;
+        }
+        return false;
     }
     
     private Resource getHostFileResource() {

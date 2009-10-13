@@ -82,7 +82,7 @@ public class HostsComponent implements ResourceComponent, ConfigurationFacet {
         this.hostsFile = HostsComponentHelper.getHostsFile(this.resourceContext.getPluginConfiguration());
         HostsComponentHelper.validateHostFileExists(this.hostsFile);
 
-        configMapper = new ConfigMapper(new DefaultConfigurationToPathConvertor(getResourceConfigurationDefinition()), 
+        configMapper = new ConfigMapper(getResourceConfigurationDefinition(), new DefaultConfigurationToPathConvertor(getResourceConfigurationDefinition()), 
             new HostDefCreator("file/host_def", HostsParser.tokenNames), HostsParser.tokenNames);
         
         return;
@@ -104,7 +104,7 @@ public class HostsComponent implements ResourceComponent, ConfigurationFacet {
     }
 
     public Configuration loadResourceConfiguration() throws Exception {
-        Configuration config = configMapper.read(getResourceConfigurationDefinition(), loadFile(getStream()));
+        Configuration config = configMapper.read(loadFile(getStream()));
         
         convertToPluginFormat(config);
         

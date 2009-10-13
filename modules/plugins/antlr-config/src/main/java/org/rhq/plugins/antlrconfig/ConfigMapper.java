@@ -50,6 +50,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.plugins.antlrconfig.NewEntryCreator.OpDef;
 
 /**
  * Maps RHQ {@link Configuration} objects to Antlr trees and back.
@@ -61,42 +62,26 @@ public class ConfigMapper {
     private ConfigurationToPathConvertor pathConvertor;
     private NewEntryCreator newEntryCreator;
     private String[] treeTypeNames;
-    
-//    private static class ConfigurationDefinitionStructure implements TreeStructure<PropertyDefinition> {
-//        public Collection<PropertyDefinition> getChildren(PropertyDefinition parent) {
-//            if (parent instanceof PropertyDefinitionList) {
-//                return Collections.singletonList(((PropertyDefinitionList)parent).getMemberDefinition());
-//            } else if (parent instanceof PropertyDefinitionMap) {
-//                return ((PropertyDefinitionMap)parent).getPropertyDefinitions().values();
-//            }
-//            return null;
-//        }    
-//    }
-//    private static final ConfigurationDefinitionStructure configurationDefinitionStructure = new ConfigurationDefinitionStructure();
-//    
-//    private static class ConfigurationStructure implements TreeStructure<Property> {
-//        public Collection<Property> getChildren(Property parent) {
-//            if (parent instanceof PropertyList) {
-//                return ((PropertyList)parent).getList();
-//            } else if (parent instanceof PropertyMap) {
-//                return ((PropertyMap)parent).getMap().values();
-//            }
-//            return null;
-//        }
-//    }
-//    private static final ConfigurationStructure configurationStructure = new ConfigurationStructure();
-    
-    private static final AntlrTreeStructure astStructure = new AntlrTreeStructure();
+    private ConfigurationDefinition configurationDefinition;
     
     public ConfigMapper() {
     }
     
-    public ConfigMapper(ConfigurationToPathConvertor pathConvertor, NewEntryCreator newEntryCreator, String[] treeTypeNames) {
+    public ConfigMapper(ConfigurationDefinition configurationDefinition, ConfigurationToPathConvertor pathConvertor, NewEntryCreator newEntryCreator, String[] treeTypeNames) {
+        this.configurationDefinition = configurationDefinition;
         this.pathConvertor = pathConvertor;
         this.newEntryCreator = newEntryCreator;
         this.treeTypeNames = treeTypeNames;
     }
     
+    public ConfigurationDefinition getConfigurationDefinition() {
+        return configurationDefinition;
+    }
+
+    public void setConfigurationDefinition(ConfigurationDefinition configurationDefinition) {
+        this.configurationDefinition = configurationDefinition;
+    }
+
     public ConfigurationToPathConvertor getPathConvertor() {
         return pathConvertor;
     }
@@ -121,7 +106,7 @@ public class ConfigMapper {
         this.treeTypeNames = treeTypeNames;
     }
 
-    public Configuration read(ConfigurationDefinition configurationDefinition, CommonTree configurationFileAST) throws RecognitionException {
+    public Configuration read(CommonTree configurationFileAST) throws RecognitionException {
         Configuration config = new Configuration();
         
         createProperty(configurationFileAST, configurationFileAST, configurationDefinition.getPropertyDefinitions().values(), config, null, null);
@@ -129,189 +114,24 @@ public class ConfigMapper {
         return config;
     }
  
-    private void mapPropertyToTree(CommonTree configurationFileAST, Property property, PropertyList parentList, PropertyMap parentMap, Map<Property, MergeRecord> mapping, MergeRecord rootMergeRecord) throws RecognitionException {
-        String propertyTreePath = pathConvertor.getTreePath(property);
-        TreePath treePath = new TreePath(configurationFileAST, propertyTreePath, treeTypeNames);
-        CommonTree propertyTree = treePath.match();
-        
-        if (propertyTree == null) {
-            MergeRecord parentRecord;
-            if (parentList != null) {
-                parentRecord = mapping.get(parentList);
-            } else if (parentMap != null) {
-                parentRecord = mapping.get(parentMap);
-            } else {
-                parentRecord = rootMergeRecord;
-            }
-            
-            parentRecord.additions.add(property);
-        }
-        
-        MergeRecord rec = new MergeRecord();
-        rec.property = property;
-        rec.tree = propertyTree;
-        mapping.put(property, rec);
-        
-        if (property instanceof PropertyList) {
-            PropertyList propertyList = (PropertyList) property;
-            for(Property child : propertyList.getList()) {
-                mapPropertyToTree(configurationFileAST, child, propertyList, null, mapping, rootMergeRecord);
-            }
-        } else if (property instanceof PropertyMap) {
-            PropertyMap propertyMap = (PropertyMap) property;
-            for(Property child : propertyMap.getMap().values()) {
-                mapPropertyToTree(configurationFileAST, child, null, parentMap, mapping, rootMergeRecord);
-            }
-        }
-    }
-   
-    private void detectDeletions(Property root, Map<Property, MergeRecord> mapping, CommonTree astRoot) {
-        // TODO Auto-generated method stub
-        MergeRecord rec = mapping.get(root);
-        if (rec.tree != null) {
-            for (CommonTree child : astStructure.getChildren(rec.tree)) {
-                //check if the child is "creatable"
-                List<PathElement> path = TreePath.getPath(child, astRoot, treeTypeNames);
-                if (pathConvertor.getPropertyDefinition(path) != null) {
-                    
-                }
-            }
-        }
-    }
-    
     public void update(CommonTree configurationFileAST, TokenRewriteStream fileStream, Configuration configuration) throws RecognitionException {
-        Map<Property, MergeRecord> mapping = new HashMap<Property, MergeRecord>();
-        MergeRecord rootMergeRecord = new MergeRecord();
-        rootMergeRecord.tree = configurationFileAST;
+        List<MergeRecord> mergeRecords = new ArrayList<MergeRecord>();
+        mapTreeForMerge(configurationDefinition.getPropertyDefinitions().values(), configuration.getProperties(), configurationFileAST, mergeRecords);
         
-        for(Property prop : configuration.getProperties()) {
-            mapPropertyToTree(configurationFileAST, prop, null, null, mapping, rootMergeRecord);
+        for(MergeRecord rec : mergeRecords) {
+            boolean isAdd = rec.property != null && rec.tree == null;
+            boolean isDelete = rec.property == null && rec.tree != null;
+            
+            if (isAdd) {
+                List<OpDef> instructions = newEntryCreator.getInstructions(configurationFileAST, rec.property);
+                applyInstructions(instructions, fileStream);
+            } else if (isDelete) {
+                fileStream.delete(rec.tree.getTokenStartIndex(), rec.tree.getTokenStopIndex());
+            } else if (rec.property instanceof PropertySimple) {
+                String value = ((PropertySimple)rec.property).getStringValue();
+                fileStream.replace(rec.tree.getTokenStartIndex(), rec.tree.getTokenStopIndex(), value);
+            }
         }
-        
-        for(Property prop : configuration.getProperties()) {
-            detectDeletions(prop, mapping, configurationFileAST);            
-        }
-        
-//        //TODO implement <Unordered>
-//        DfsWalker<Tree> treeWalker = new DfsWalker<Tree>(astStructure, configurationFileAST);
-//        HashMap<Tree, Boolean> visitedMap = new HashMap<Tree, Boolean>();
-//        while(treeWalker.hasNext()) {
-//            Tree node = treeWalker.next();
-//            visitedMap.put(node, false);
-//        }
-//        
-//        DfsWalker<Property> walker = new DfsWalker<Property>(configurationStructure, configuration.getProperties());
-//        
-//        //this was a stab at <Unordered>
-//        //Deque<Map.Entry<List<PathElement>,Tree>> lastKnownParents = new ArrayDeque<Map.Entry<List<PathElement>,Tree>>();
-//        //int lastDepth = 0;
-//        
-//        Deque<Property> newPropertiesInCreation = new ArrayDeque<Property>();
-//        
-//        while(walker.hasNext()) {
-//            Property property = walker.next();
-//            
-//            while (walker.getCurrentDepth() < newPropertiesInCreation.size()) {
-//                createProperty(configurationFileAST, fileStream, newPropertiesInCreation.pop());
-//            }
-////this was a stab at implementing <Unordered>
-////            if ((propertyPath.size() - 1) > lastDepth) {
-////                //we stepped a level deeper...
-////                //there's a complication with the unordered properties.
-////                //their location in the config file does not necessarily correspond
-////                //to the order in the configuration structures and therefore we need
-////                //to do a little bit of voodoo here.
-////                //we keep a track of last known parents - stuff that has been found before
-////                //and try to match the new property to that hierarchy (using DFS helps here).
-////
-////                //get the concrete path of the property (this includes all the positional and indexed
-////                //path elements).
-////                String treePath = pathConvertor.getConcretePath(propertyPath);
-////                List<PathElement> path = TreePath.parsePath(treePath);
-////                
-////                //now get the parent. The path stored is what we actually found in the parse tree.
-////                Map.Entry<List<PathElement>, Tree> parentEntry = lastKnownParents.peek();
-////                if (parentEntry == null) {
-////                    //TODO throw a better exception type?
-////                    throw new RuntimeException("Could not find a place to put " + last.getName() + " property in its configuration file.");
-////                }
-////                
-////                //now we have the immediate parent and can append the concrete path ending to it.
-////                Tree immediateParentTree = parentEntry.getValue();
-////                PathElement lastElement = path.get(path.size() - 1);
-////
-////                ArrayList<PathElement> actualPath = new ArrayList<PathElement>(parentEntry.getKey());
-////                
-////                if (lastElement.getType() == PathElement.Type.INDEX_REFERENCE) {
-////                    //this is simple... the indexed references are by definition anonymous.
-////                    //we don't know anything else about them but their index in the parent.
-////                    //so there's not much we can do here even if the parent is <Unordered>.
-////                    actualPath.add(lastElement);
-////                } else if (lastElement.getType() == PathElement.Type.POSITION_REFERENCE) {
-////                    //ok... we have the name and the position... this means that we might have a problem
-////                    //if the parent is unordered.
-////                    if (immediateParentTree instanceof Unordered) {
-////                        //TODO .... this is where I gave up...
-////                    } else {
-////                        //well.. parent is ordered, so we have to find the child on the position
-////                        actualPath.add(lastElement);
-////                    }
-////                } else {
-////                    throw new RuntimeException("Concrete path contains non-concrete path elements: " + path.toString());
-////                }
-////            }
-//            
-//            
-//            String propertyTreePath = pathConvertor.getTreePath(property);
-//            TreePath treePath = new TreePath(configurationFileAST, propertyTreePath, treeTypeNames);
-//            Tree propertyTree = treePath.match();
-//            
-//            if (propertyTree == null) {
-//                //scenarios possible here:
-//                //1) this is a new property added to the configuration
-//                //2) the property has moved within the AST - we need to find it if its parent is <Unordered>
-//                if (newPropertiesInCreation.size() == walker.getCurrentDepth()) {
-//                    createProperty(configurationFileAST, fileStream, newPropertiesInCreation.pop());
-//                }
-//                newEntryCreator.prepareFor(property);
-//                newPropertiesInCreation.push(property);
-//            } else {
-//                if (property instanceof PropertySimple) {
-//                    String value = ((PropertySimple)property).getStringValue();
-//                    fileStream.replace(propertyTree.getTokenStartIndex(), propertyTree.getTokenStopIndex(), value);
-//                }
-//                setVisited(propertyTree, visitedMap);
-//            }
-//        }
-//        
-//        while (newPropertiesInCreation.size() > 0) {
-//            createProperty(configurationFileAST, fileStream, newPropertiesInCreation.pop());
-//        }
-//        
-//        //ok, now we've gone through the configuration object and applied it to the tree.
-//        //all there's left is to clear out what should be deleted from the tree.
-//        List<Tree> toBeDeleted = new ArrayList<Tree>();
-//        treeWalker = new DfsWalker<Tree>(astStructure, configurationFileAST);
-//        while(treeWalker.hasNext()) {
-//            Tree node = treeWalker.next();
-//            Boolean isVisited = visitedMap.get(node);
-//            if (!isVisited) toBeDeleted.add(node);
-//        }
-//        //now remove children of all things we found to be deleted from the visited map
-//        //this will leave us only with the topmost tree nodes marked as to be deleted
-//        for(Tree node : toBeDeleted) {
-//            removeChildren(node, visitedMap);
-//        }
-//        
-//        //and now move on to the deletion itself
-//        for(Tree node : toBeDeleted) {
-//            if (visitedMap.containsKey(node)) {
-//                Token nodeToken = fileStream.get(node.getTokenStartIndex());
-//                if (!(nodeToken instanceof RhqConfigToken) || !((RhqConfigToken)nodeToken).isTransparent()) {
-//                    fileStream.delete(nodeToken);
-//                }
-//            }
-//        }
     }
     
     private void createProperty(CommonTree root, CommonTree tree, Collection<PropertyDefinition> childDefinitions, Configuration configuration, PropertyList parentList, PropertyMap parentMap) throws RecognitionException {
@@ -345,6 +165,70 @@ public class ConfigMapper {
         }
     }
         
+    private void mapTreeForMerge(Collection<PropertyDefinition> definitions, Collection<Property> properties, CommonTree tree, List<MergeRecord> mergeRecords) throws RecognitionException {
+        for(PropertyDefinition def : definitions) {
+            //find the properties corresponding to this property definition
+            List<Property> matchedProperties = new ArrayList<Property>();
+            for (Property p : properties) {
+                if (p.getName().equals(def.getName())) {
+                    matchedProperties.add(p);
+                }
+            }
+            
+            Collection<PropertyDefinition> subDefs = null;
+            if (def instanceof PropertyDefinitionList) {
+                subDefs = Collections.singleton(((PropertyDefinitionList)def).getMemberDefinition());
+            } else if (def instanceof PropertyDefinitionMap) {
+                subDefs = ((PropertyDefinitionMap)def).getPropertyDefinitions().values();
+            }
+            
+            //find all the trees in the AST corresponding to this property definition
+            TreePath path = new TreePath(tree, pathConvertor.getPathRelativeToParent(def), treeTypeNames);
+            List<CommonTree> treeMatches = path.matches();
+            
+            //now figure out what to delete and what to add
+            for (Property prop : matchedProperties) {
+                String propTreePath = pathConvertor.getPathRelativeToParent(prop);
+                TreePath treePath = new TreePath(tree, propTreePath, treeTypeNames);
+                CommonTree match = treePath.match();
+                
+                MergeRecord rec = new MergeRecord();
+                rec.property = prop;
+                rec.tree = match;
+              
+                mergeRecords.add(rec);
+                
+                if (match != null) {
+                    int treeIdx = treeMatches.indexOf(match);
+                    if (treeIdx >= 0) {
+                        treeMatches.remove(treeIdx);
+                    }
+                    
+                    //if we have a matching sub tree, let's go down a level if we can
+                    Collection<Property> subProps = null;
+                    if (subDefs != null && prop instanceof PropertyList) {
+                        subProps = ((PropertyList)prop).getList();
+                    } else if (subDefs != null && prop instanceof PropertyMap) {
+                        subProps = ((PropertyMap)prop).getMap().values();
+                    }
+                    
+                    if (subDefs != null && subProps != null) {
+                        mapTreeForMerge(subDefs, subProps, match, mergeRecords);
+                    }
+                } 
+            }
+            
+            //after the previous loop, we're left with the sub trees that
+            //correspond to a definition (i.e. are mapped) but aren't present
+            //in the supplied configuration - i.e. are to be deleted.
+            for(CommonTree toDelete : treeMatches) {
+                MergeRecord rec = new MergeRecord();
+                rec.tree = toDelete;
+                mergeRecords.add(rec);
+            }
+        }
+    }
+    
     private Property instantiate(PropertyDefinition definition) {
         if (definition instanceof PropertyDefinitionSimple) {
             return new PropertySimple(definition.getName(), null);
@@ -376,35 +260,8 @@ public class ConfigMapper {
         }
     }
     
-    private void setVisited(CommonTree tree, Map<CommonTree, Boolean> visitedMap) {
-        //if a tree is visited, all its children are visited as well
-        DfsWalker<CommonTree> walker = new DfsWalker<CommonTree>(astStructure, tree);
-        while(walker.hasNext()) {
-            CommonTree child = walker.next();
-            visitedMap.put(child, true);
-        }
-    }
-    
-    private void removeChildren(CommonTree tree, Map<CommonTree, Boolean> visitedMap) {
-        Collection<CommonTree> children = astStructure.getChildren(tree);
-        DfsWalker<CommonTree> walker = new DfsWalker<CommonTree>(astStructure, children);
-        while(walker.hasNext()) {
-            CommonTree child = walker.next();
-            visitedMap.remove(child);
-        }
-    }
-    
-    private void createProperty(CommonTree tree, TokenRewriteStream fileStream, Property prop) {
-        List<NewEntryCreator.OpDef> instructions = newEntryCreator.getInstructions(tree, prop);
-        if (instructions != null) {
-            applyInstructions(instructions, fileStream);
-        }
-    }
-    
     private static class MergeRecord {
         public Property property;
         public CommonTree tree;
-        public List<Property> additions = new ArrayList<Property>();
-        public Set<CommonTree> deletions = new HashSet<CommonTree>();
     }
 }

@@ -80,43 +80,32 @@ public class DefaultConfigurationToPathConvertor implements ConfigurationToPathC
     /* (non-Javadoc)
      * @see org.rhq.core.antlr.ConfigurationToPathConvertor#getConcretePath(org.rhq.core.domain.configuration.Property)
      */
-    public String getTreePath(Property property) {
-        String name = property.getName();
-        String ret = null;
-        if (name.startsWith(NAME_PREFIX)) {
-            name = name.substring(NAME_PREFIX_LENGTH);
-            
-            if (name.startsWith("/")) {
-                //absolute path
-                ret = name;
+    public String getPathRelativeToParent(Property property) {
+        if (property.getName().startsWith(NAME_PREFIX)) {
+            if (property.getConfiguration() != null) {
+                return property.getName().substring(NAME_PREFIX_LENGTH);
             } else {
-                //relative path.. we have to climb up the parents to get the full path
-                Property parent = property.getParentList();
-                if (parent != null && !name.startsWith("$")) {
-                    //we're inside a list constructing a concrete path and the current name
-                    //is a name reference.
-                    //need to figure out the position of this property inside the parent list
-                    int pos = 0;
-                    for(Property p : ((PropertyList)parent).getList()) {
-                        if (p.equals(property)) {
-                            break;
+                Property parent = getConfiguredParent(property);
+                if (parent != null) {
+                    String name = null;
+                    if (parent instanceof PropertyList) {
+                        int pos = 0;
+                        for (Property p : ((PropertyList) parent).getList()) {
+                           if (p.equals(property)) {
+                               break;
+                           }
+                           pos++;
                         }
-                        pos++;
+                        //position is 1 based
+                        name = property.getName().substring(NAME_PREFIX_LENGTH) + "[" + (pos + 1) + "]";
+                    } else {
+                        name = property.getName().substring(NAME_PREFIX_LENGTH);
                     }
-                    name += "[" + (pos + 1) + "]"; //position is 1 based.
-                }
-                if (parent == null) parent = property.getParentMap();
-                if (parent == null) {
-                    //well... this is a property with a relative path but is a top level property
-                    //we have no option but to return the relative path here.
-                    ret = name;
-                } else {
-                    String parentPath = getTreePath(parent);
-                    ret = parentPath + "/" + name;
-                }
+                    return parent.getName().substring(NAME_PREFIX_LENGTH) + "/" + name;
+                } 
             }
         }
-        return ret;
+        return null;
     }
 
     
@@ -242,13 +231,30 @@ public class DefaultConfigurationToPathConvertor implements ConfigurationToPathC
             if (parent.getName().startsWith(NAME_PREFIX)) {
                 return parent;
             }
-            parent = parent.getParentPropertyListDefinition();
-            if (parent == null) parent = def.getParentPropertyMapDefinition();
+            PropertyDefinition p = parent.getParentPropertyListDefinition();
+            if (p == null) p = parent.getParentPropertyMapDefinition();
+            
+            parent = p;
         }
         
         return null;
     }
     
+    private Property getConfiguredParent(Property prop) {
+        Property parent = prop.getParentList();
+        if (parent == null) parent = prop.getParentMap();
+        
+        while (parent != null) {
+            if (parent.getName().startsWith(NAME_PREFIX)) {
+                return parent;
+            }
+            Property p = parent.getParentList();
+            if (p == null) p = parent.getParentMap();
+            parent = p;
+        }
+        
+        return null;
+    }
     private static class AbsoluteIndexAndFollowupIndex {
         public int absoluteIndex;
         public int followupIndex;

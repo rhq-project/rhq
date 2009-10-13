@@ -38,7 +38,7 @@ public interface ConfigurationToPathConvertor {
 
     String getPathRelativeToParent(PropertyDefinition propertyDefinition);
     
-    String getTreePath(Property property);
+    String getPathRelativeToParent(Property property);
     
     /**
      * 

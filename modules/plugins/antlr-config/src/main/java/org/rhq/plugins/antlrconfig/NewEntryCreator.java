@@ -58,16 +58,6 @@ public interface NewEntryCreator {
     }
     
     /**
-     * Prepares the creator for creating the property. If the property has children, this method
-     * and the {@link #getInstructions(CommonTree, Property)} method is called for each of the children
-     * before the getInstructions method is called for this property again.
-     * In case of simple property, the getInstructions method is called immediately after the this method.
-     * 
-     * @param property the property to prepare the creation for.
-     */
-    void prepareFor(Property property);
-    
-    /**
      * @param fullTree the full tree representing the whole configuration
      * @param property the property that is being added
      * @return the list of instructions to execute on the tree to insert the property into it

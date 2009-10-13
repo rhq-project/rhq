@@ -26,8 +26,7 @@ package org.rhq.plugins.antlrconfig;
 import java.util.List;
 
 /**
- * Provides a means for the {@link DfsWalker} to traverse an arbitrary tree structure
- * without actually knowing anything about its internals.
+ * Implementations abstract away the internals of arbitrary tree structure.
  * 
  * @author Lukas Krejci
  */

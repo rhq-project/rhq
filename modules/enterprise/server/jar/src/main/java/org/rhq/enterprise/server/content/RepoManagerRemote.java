@@ -60,6 +60,7 @@ public interface RepoManagerRemote {
      * @param repo a new repo object.
      *
      * @return the newly created repo
+     * @throws RepoException if a repo already exists with the same name 
      */
     @WebMethod
     Repo createRepo( //

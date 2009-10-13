@@ -168,7 +168,7 @@
             </executions>
             <configuration>
                 <packageName>org.rhq.enterprise.server.plugins.rhnhosted.xml</packageName> 
-                <outputDirectory>${basedir}/src/main/generated-source</outputDirectory>
+                <outputDirectory>${project.build.outputDirectory}/generated-source</outputDirectory>
             </configuration>
         </plugin>
 

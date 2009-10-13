@@ -190,11 +190,11 @@
 
             <h:panelGrid columns="1" width="100%">
 
-            <ui:param name="contentProviderReposDataModel" value="#{ContentSourceChannelsUIBean.dataModel}"/>
+            <ui:param name="contentProviderReposDataModel" value="#{ContentSourceReposUIBean.dataModel}"/>
             <rich:dataTable id="contentProviderReposDataTable"
                             rows="#{PageControl.ContentSourceReposList.pageSize}"
                             value="contentProviderReposDataModel"
-                            var="channelitem"
+                            var="repolitem"
                             width="100%"
                             columnsWidth="1%, 20%, 20%, 20%"
                             headerClass="tableRowHeader"

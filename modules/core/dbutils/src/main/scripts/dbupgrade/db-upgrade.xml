@@ -1518,6 +1518,68 @@ DB Upgrade:
       <schema-addColumn table="RHQ_ALERT_DEFINITION" column="GROUP_ALERT_DEF_ID" columnType="INTEGER" />
    </schemaSpec>
 
+   <schemaSpec version="2.59">
+      <schema-directSQL>
+         <statement desc="Creating table RHQ_RAW_CONFIG">
+            CREATE TABLE RHQ_RAW_CONFIG (ID INTEGER)
+         </statement>
+      </schema-directSQL>
+      <schema-alterColumn table="RHQ_RAW_CONFIG" column="ID" columnType="INTEGER"  nullable="FALSE" />
+      <schema-createSequence name="RHQ_RAW_CONFIG_ID_SEQ" initial="10001"/>
+      <schema-directSQL>
+         <statement desc="Creating primary key for RHQ_PARTITION_EVENT">
+            ALTER TABLE RHQ_RAW_CONFIG ADD PRIMARY KEY (ID)
+         </statement>
+      </schema-directSQL>
+
+      <schema-addColumn table="RHQ_RAW_CONFIG" column="CONFIG_ID" columnType="INTEGER"/>
+      <schema-alterColumn table="RHQ_RAW_CONFIG" 
+                          column="CONFIG_ID" 
+                          columnType="INTEGER"
+                          nullable="false"/>
+
+      <schema-addColumn table="RHQ_RAW_CONFIG" column="PATH" columnType="VARCHAR2"/>
+      <schema-alterColumn table="RHQ_RAW_CONFIG" 
+                          column="PATH" 
+                          columnType="VARCHAR2"
+                          precision="512"/>
+
+      <schema-addColumn table="RHQ_RAW_CONFIG" column="CONTENTS" columnType="BLOB"/>
+      <schema-alterColumn table="RHQ_RAW_CONFIG" 
+                          column="CONTENTS" 
+                          columnType="BLOB"
+                          nullable="false"/>
+
+      <schema-addColumn table="RHQ_RAW_CONFIG" column="SHA256" columnType="VARCHAR2"/>
+      <schema-alterColumn table="RHQ_RAW_CONFIG" 
+                          column="SHA256" 
+                          columnType="VARCHAR2"
+                          precision="64" 
+                          nullable="false"/>
+
+      <schema-addColumn table="RHQ_RAW_CONFIG" column="CTIME" columnType="LONG"/>
+      <schema-alterColumn table="RHQ_RAW_CONFIG" 
+                          column="CTIME"  
+                          columnType="LONG"
+                          nullable="false"/>
+
+      <schema-addColumn table="RHQ_RAW_CONFIG" column="MTIME" columnType="LONG"/>
+      <schema-alterColumn table="RHQ_RAW_CONFIG" 
+                          column="MTIME" 
+                          columnType="LONG"
+                          nullable="false"/>
+
+      <schema-directSQL>
+         <statement desc="Creating RHQ_RAW_CONFIG foreign key relation to RHQ_CONFIG">
+            ALTER TABLE RHQ_RAW_CONFIG
+            ADD CONSTRAINT RHQ_RAW_CONFIG_CONFIG_ID_FK
+            FOREIGN KEY (CONFIG_ID)
+            REFERENCES RHQ_CONFIG (ID)
+         </statement>
+      </schema-directSQL>
+
+   </schemaSpec>
+
 </dbupgrade>
 
 </target>

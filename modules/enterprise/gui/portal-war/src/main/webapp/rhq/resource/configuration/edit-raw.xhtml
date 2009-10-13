@@ -1,0 +1,63 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component">
+
+THIS TEXT WILL BE REMOVED.
+
+<ui:composition template="/rhq/resource/layout/main.xhtml">
+
+   THIS TEXT WILL BE REMOVED AS WELL.
+
+   <ui:param name="pageTitle" value="#{ResourceUIBean.resourceType.name} '#{ResourceUIBean.name}' - Edit Configuration"/>
+
+   <ui:param name="selectedTabName" value="Configuration.Current"/>
+
+   <ui:define name="content">
+  You are viewing this in advanced mode. Switch to 
+           <h:outputLink value="edit.xhtml">
+             <f:param name="conversationId" value="#{conversation.id}"/>
+             <f:param name="id" value="#{ResourceUIBean.id}"/>
+             <h:outputText value=" standard mode"/>
+           </h:outputLink>
+      <h:form id="editResourceConfigurationForm" onsubmit="prepareInputsForSubmission(this)" rendered="#{!ViewResourceConfigurationUIBean.updateInProgress}">
+
+         <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
+
+         <table class="summary-props-table" style="" >
+         <tr>
+         <td bgcolor="lightblue" width="25%" valign="top">
+         Files
+         <div>.../etc/httpd/conf/httpd.conf</div>
+         <div>.../etc/httpd/conf/magic</div>
+         <div>*../etc/httpd/conf.d/cobbler.conf</div>
+         <div>*../etc/httpd/conf.d/cobbler_svc.conf</div>
+         <div>______________________________________</div>
+         </td>
+         <td>/etc/httpd/conf/httpd.conf     [Icon]View Full Screen [^] Upload Now [v] Download
+         <textarea disabled="true"  rows="40" cols="60">Lorem Ipsum</textarea>
+         <div>Upload A New Version</div>
+         <input type="file" /> <input type="submit" value="Upload"/>
+         </td></tr>
+         </table>
+      </h:form>
+
+      <h:panelGroup layout="block" styleClass="InfoBlock" rendered="#{ExistingResourceConfigurationUIBean.updateInProgress}">
+         <b>${msg['note']}</b> ${msg['resource.config.Current.updateInProgress']}
+      </h:panelGroup>
+
+   </ui:define>
+
+</ui:composition>
+
+THIS TEXT WILL BE REMOVED AS WELL.
+
+</html>

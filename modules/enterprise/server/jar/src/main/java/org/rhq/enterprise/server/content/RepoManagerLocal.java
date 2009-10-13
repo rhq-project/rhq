@@ -141,6 +141,14 @@ public interface RepoManagerLocal {
     Repo getRepo(Subject subject, int repoId);
 
     /**
+     * Returns all repos that match the given name. The returned list should only be of size 0 or 1.
+     *
+     * @param name name of the repo to match
+     * @return list of matching repos; presumably of size 0 or 1
+     */
+    List<Repo> getRepoByName(String name);
+
+    /**
      * @see RepoManagerRemote#findPackageVersionsInRepoByCriteria(Subject, PackageVersionCriteria)
      */
     PageList<Repo> findReposByCriteria(Subject subject, RepoCriteria criteria);

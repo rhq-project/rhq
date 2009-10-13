@@ -291,7 +291,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     }
 
     @SuppressWarnings("unchecked")
-    private List<Repo> getRepoByName(String name) {
+    public List<Repo> getRepoByName(String name) {
         Query query = entityManager.createNamedQuery(Repo.QUERY_FIND_BY_NAME);
 
         query.setParameter("name", name);

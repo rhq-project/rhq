@@ -27,18 +27,18 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.Property;
-import org.rhq.core.pluginapi.inventory.ResourceComponent;
-import org.rhq.core.pluginapi.inventory.ResourceContext;
-import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
-import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
-import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
-import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
+import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+import org.rhq.core.pluginapi.inventory.ResourceComponent;
+import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.plugins.hosts.helper.Hosts;
 import org.rhq.plugins.hosts.helper.HostsComponentHelper;
 import org.rhq.plugins.hosts.helper.HostsEntry;
@@ -72,8 +72,7 @@ public class HostsComponent implements ResourceComponent, ConfigurationFacet {
         try {
             HostsComponentHelper.validateHostFileExists(this.hostsFile);
             return AvailabilityType.UP;
-        }
-        catch (InvalidPluginConfigurationException e) {
+        } catch (InvalidPluginConfigurationException e) {
             log.debug("Hosts file Resource is down: " + e.getLocalizedMessage());
             return AvailabilityType.DOWN;
         }
@@ -90,13 +89,13 @@ public class HostsComponent implements ResourceComponent, ConfigurationFacet {
         Set<String> ipAddressesWithDuplicateEntries = hosts.getIpAddressesWithDuplicateEntries();
         if (!ipAddressesWithDuplicateEntries.isEmpty()) {
             log.debug("Hosts file [" + this.hostsFile + "] contains duplicate entries for the following IP addresses: "
-                    + ipAddressesWithDuplicateEntries);
-        }        
-        Set<String> namesWithDuplicateEntries = hosts.getNamesWithDuplicateEntries();
-        if (!namesWithDuplicateEntries.isEmpty()) {
-            log.error("Hosts file [" + this.hostsFile + "] contains duplicate entries for the following names: "
-                    + namesWithDuplicateEntries);
+                + ipAddressesWithDuplicateEntries);
         }
+        Set<String> namesWithDuplicateEntries = hosts.getNamesWithDuplicateEntries();
+        //        if (!namesWithDuplicateEntries.isEmpty()) {
+        //            log.error("Hosts file [" + this.hostsFile + "] contains duplicate entries for the following names: "
+        //                    + namesWithDuplicateEntries);
+        //        }
 
         for (HostsEntry entry : hosts.getEntries()) {
             PropertyMap entryProp = new PropertyMap("entry");
@@ -106,9 +105,9 @@ public class HostsComponent implements ResourceComponent, ConfigurationFacet {
             entryProp.put(ipAddressProp);
 
             PropertySimple canonicalNameProp = new PropertySimple("canonicalName", entry.getCanonicalName());
-            if (namesWithDuplicateEntries.contains(entry.getCanonicalName())) {
-                canonicalNameProp.setErrorMessage("At the time of loading, there was more than one entry containing this name - please remove or fix duplicate entries before saving.");
-            }
+            //            if (namesWithDuplicateEntries.contains(entry.getCanonicalName())) {
+            //                canonicalNameProp.setErrorMessage("At the time of loading, there was more than one entry containing this name - please remove or fix duplicate entries before saving.");
+            //            }
             entryProp.put(canonicalNameProp);
 
             StringBuilder aliasesPropValue = new StringBuilder();
@@ -124,13 +123,14 @@ public class HostsComponent implements ResourceComponent, ConfigurationFacet {
                 aliasesPropValue.deleteCharAt(aliasesPropValue.length() - 1);
             }
             PropertySimple aliasesProp = new PropertySimple("aliases", aliasesPropValue);
-            if (foundDuplicateName) {
-                aliasesProp.setErrorMessage("At the time of loading, there was more than one entry containing this name - please remove or fix duplicate entries before saving.");
-            }
+            //            if (foundDuplicateName) {
+            //                aliasesProp
+            //                    .setErrorMessage("At the time of loading, there was more than one entry containing this name - please remove or fix duplicate entries before saving.");
+            //            }
             entryProp.put(aliasesProp);
         }
 
-        return  resourceConfig;
+        return resourceConfig;
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
@@ -138,7 +138,7 @@ public class HostsComponent implements ResourceComponent, ConfigurationFacet {
         Hosts newHosts = new Hosts();
 
         PropertyList entriesProp = resourceConfig.getList("entries");
-        for (Property entryProp: entriesProp.getList()) {
+        for (Property entryProp : entriesProp.getList()) {
             PropertyMap entryPropMap = (PropertyMap) entryProp;
             String ipAddress = entryPropMap.getSimple("ipAddress").getStringValue();
             String canonicalName = entryPropMap.getSimple("canonicalName").getStringValue();
@@ -157,17 +157,15 @@ public class HostsComponent implements ResourceComponent, ConfigurationFacet {
             newHosts.addEntry(entry);
         }
 
-        Set<String> namesWithDuplicateEntries = newHosts.getNamesWithDuplicateEntries();
-        if (!namesWithDuplicateEntries.isEmpty()) {
-            report.setErrorMessage("There are duplicate entries for the following names: "
-                    + namesWithDuplicateEntries);
-            return;
-        }
+        //        Set<String> namesWithDuplicateEntries = newHosts.getNamesWithDuplicateEntries();
+        //        if (!namesWithDuplicateEntries.isEmpty()) {
+        //            report.setErrorMessage("There are duplicate entries for the following names: " + namesWithDuplicateEntries);
+        //            return;
+        //        }
 
         try {
             Hosts.store(newHosts, this.hostsFile);
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new RuntimeException("Failed to write hosts file [" + this.hostsFile + "].", e);
         }
 

@@ -22,10 +22,7 @@
   */
 package org.rhq.core.clientapi.server.plugin.content;
 
-import java.io.InputStream;
-import java.util.Collection;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.content.ContentSource;
 
 /**
  * Interface used by the server to communicate with a content provider. Content providers implement this interface as
@@ -44,11 +41,9 @@ public interface ContentProvider {
     /**
      * Initializes the adapter with the configuration values indicating how to connect to the external source system.
      *
-     * @param  configuration user entered values describing how the content source should function.
+     * @param  configuration user entered values describing how the content provider should function.
      *
-     * @throws Exception if the content source has an issue being configured.
-     *
-     * @see    ContentSource#getConfiguration()
+     * @throws Exception if the content provider has an issue being configured.
      */
     void initialize(Configuration configuration) throws Exception;
 
@@ -58,7 +53,7 @@ public interface ContentProvider {
     void shutdown();
 
     /**
-     * Tests if the content source adapter can communicate with the external package source. This will be called after
+     * Tests if the content provider can communicate with the external package source. This will be called after
      * {@link #initialize(Configuration)} to ensure the adapter is in a configured state to run the test.
      *
      * @throws Exception if the connection cannot be made to the external system.

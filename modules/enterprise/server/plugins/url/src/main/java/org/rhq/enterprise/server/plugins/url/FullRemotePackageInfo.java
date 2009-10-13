@@ -40,8 +40,8 @@ public class FullRemotePackageInfo extends RemotePackageInfo {
         SupportedPackageType type = new SupportedPackageType();
         type.packageTypeName = details.getPackageTypeName();
         type.architectureName = details.getArchitectureName();
-        type.resourceTypeName = details.getContentSourcePackageDetailsKey().getResourceTypeName();
-        type.resourceTypePluginName = details.getContentSourcePackageDetailsKey().getResourceTypePluginName();
+        type.resourceTypeName = details.getContentProviderPackageDetailsKey().getResourceTypeName();
+        type.resourceTypePluginName = details.getContentProviderPackageDetailsKey().getResourceTypePluginName();
         setSupportedPackageType(type);
     }
 

@@ -26,7 +26,7 @@ import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.resource.ResourceType;
 
 /**
- * The key to a content source package details that a {@link ContentProvider} will use when referring to package
+ * The key to a content provider package details that a {@link ContentProvider} will use when referring to package
  * versions it finds in the remote repository. It is the same as {@link PackageDetailsKey} with the addition of a
  * resource type natural key (which is name and agent plugin name), since that is needed to make package types unique
  * (along with the package type name itself, which is specified in the {@link PackageDetailsKey} superclass).
@@ -77,7 +77,7 @@ public class ContentProviderPackageDetailsKey extends PackageDetailsKey {
 
     @Override
     public String toString() {
-        return "ContentSourcePackageDetailsKey[" + super.toString() + ", ResourceTypeName=" + resourceTypeName
+        return "ContentProviderPackageDetailsKey[" + super.toString() + ", ResourceTypeName=" + resourceTypeName
             + ", PluginName=" + resourceTypePluginName + "]";
     }
 

@@ -26,13 +26,12 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Indicates the results of performing a syncronize with a content source. This object carries the diff information
+ * Indicates the results of performing a syncronize with a package source. This object carries the diff information
  * necessary to update the server's current knowledge of the source's packages.
  *
  * @author Jason Dobies
  */
 public class PackageSyncReport {
-    // Attributes  --------------------------------------------
 
     /**
      * Set of packages that have been added to the external package source that are not yet known to the server. A new
@@ -58,8 +57,6 @@ public class PackageSyncReport {
      */
     private String summary;
 
-    // Public  --------------------------------------------
-
     public Set<ContentProviderPackageDetails> getNewPackages() {
         return newPackages;
     }
@@ -67,6 +64,8 @@ public class PackageSyncReport {
     /**
      * Add to the set of packages that have been added to the external package source that are not yet known to the
      * server. A new version of a package constitutes an entry in this list.
+     *
+     * @param newPackage contains the details of the new package to be added; should not be <code>null</code>
      */
     public void addNewPackage(ContentProviderPackageDetails newPackage) {
         this.newPackages.add(newPackage);
@@ -82,6 +81,9 @@ public class PackageSyncReport {
      * Packages should only be added to this updated list if the name and version are the same as a package in the
      * server; new versions of a package belong in the
      * {@link #addNewPackage(ContentProviderPackageDetails) new packages list}.
+     *
+     * @param updatedPackage contains the new information of a package that was updated; should not be
+     *                       <code>null</code>
      */
     public void addUpdatedPackage(ContentProviderPackageDetails updatedPackage) {
         this.updatedPackages.add(updatedPackage);
@@ -93,6 +95,8 @@ public class PackageSyncReport {
 
     /**
      * Add to the set of packages that are known to the server but no longer in the external source.
+     *
+     * @param deletedPackage details object identifying the package that was removed; should not be <code>null</code>
      */
     public void addDeletePackage(ContentProviderPackageDetails deletedPackage) {
         this.deletedPackages.add(deletedPackage);
@@ -104,6 +108,8 @@ public class PackageSyncReport {
 
     /**
      * The synchronization summary. Free form textual report that will be stored with the content source sync report.
+     *
+     * @param summary should not be <code>null</code>
      */
     public void setSummary(String summary) {
         this.summary = summary;

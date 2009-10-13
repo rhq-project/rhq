@@ -53,7 +53,7 @@ public class ContentProviderPackageDetails extends PackageDetails {
      *
      * @return the key cast to the appropriate sub-type
      */
-    public ContentProviderPackageDetailsKey getContentSourcePackageDetailsKey() {
+    public ContentProviderPackageDetailsKey getContentProviderPackageDetailsKey() {
         return (ContentProviderPackageDetailsKey) super.getKey();
     }
 

@@ -35,15 +35,14 @@ import java.util.Collection;
 public interface PackageSource {
 
     /**
-     * Requests that the content source perform a synchronization with its external
-     * package source.
+     * Requests that this package source perform a synchronization with its external package source.
      *
      * @param report           used to populate the packages diff information necessary to
      *                         bring the server up to date
      *                         with the current state of the external package source.
-     * @param existingPackages collection of packages the server currently has in its inventory for this content
+     * @param existingPackages collection of packages the server currently has in its inventory for this package
      *                         source; used when determining package diff information for the report.
-     * @throws Exception if the content source is unable to perform the synchronization, for instance if the external
+     * @throws Exception if the package source is unable to perform the synchronization, for instance if the external
      *                   source cannot be connected to.
      */
     void synchronizePackages(PackageSyncReport report, Collection<ContentProviderPackageDetails> existingPackages)

@@ -915,7 +915,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
         for (ContentProviderPackageDetails doomedDetails : report.getDeletedPackages()) {
             // this is the mapping between the content source and the package version that needs to be deleted
-            ContentProviderPackageDetailsKey doomedDetailsKey = doomedDetails.getContentSourcePackageDetailsKey();
+            ContentProviderPackageDetailsKey doomedDetailsKey = doomedDetails.getContentProviderPackageDetailsKey();
             PackageVersionContentSource doomedPvcs = previous.get(doomedDetailsKey);
             doomedPvcs = entityManager.find(PackageVersionContentSource.class, doomedPvcs
                 .getPackageVersionContentSourcePK());
@@ -978,7 +978,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         // if a repo is associated with the content source, the PV is directly associated with the repo.
 
         for (ContentProviderPackageDetails newDetails : newPackages) {
-            ContentProviderPackageDetailsKey key = newDetails.getContentSourcePackageDetailsKey();
+            ContentProviderPackageDetailsKey key = newDetails.getContentProviderPackageDetailsKey();
 
             // find the new package's associated resource type (should already exist)
             ResourceType rt = new ResourceType();
@@ -1188,7 +1188,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         // then we have to get the current PVCS and merge its updates
 
         for (ContentProviderPackageDetails updatedDetails : report.getUpdatedPackages()) {
-            ContentProviderPackageDetailsKey key = updatedDetails.getContentSourcePackageDetailsKey();
+            ContentProviderPackageDetailsKey key = updatedDetails.getContentProviderPackageDetailsKey();
 
             PackageVersionContentSource previousPvcs = previous.get(key);
             PackageVersionContentSource attachedPvcs; // what we will find in the DB, in jpa session

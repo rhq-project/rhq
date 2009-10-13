@@ -71,7 +71,7 @@ public class AntlrTreeStructure implements TreeStructure<CommonTree> {
     
     public CommonTree getParent(CommonTree child) {
         CommonTree parent = (CommonTree) child.getParent();
-        while (honorOverrides && parent.getToken() instanceof Skip) {
+        while (parent != null && honorOverrides && parent.getToken() instanceof Skip) {
             parent = (CommonTree) parent.getParent();
         }
         return parent;

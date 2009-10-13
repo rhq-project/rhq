@@ -46,7 +46,7 @@ public interface PackageSource {
      * @throws Exception if the content source is unable to perform the synchronization, for instance if the external
      *                   source cannot be connected to.
      */
-    void synchronizePackages(PackageSyncReport report, Collection<ContentSourcePackageDetails> existingPackages)
+    void synchronizePackages(PackageSyncReport report, Collection<ContentProviderPackageDetails> existingPackages)
         throws Exception;
 
     /**

@@ -26,7 +26,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.rhq.core.clientapi.server.plugin.content.ContentProvider;
-import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetails;
+import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetails;
 import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
 import org.rhq.core.clientapi.server.plugin.content.PackageSource;
 import org.rhq.core.domain.content.ContentSource;
@@ -44,7 +44,7 @@ public class TestContentSourcePluginService extends ContentProviderPluginService
     // public so tests can directly set these
     public Map<ContentSource, ContentProvider> testAdapters;
     public PackageSyncReport testLastSyncReport;
-    public Map<ContentSource, Collection<ContentSourcePackageDetails>> testExistingPackages;
+    public Map<ContentSource, Collection<ContentProviderPackageDetails>> testExistingPackages;
 
     @Override
     protected ContentProviderPluginContainer createPluginContainer() {

@@ -38,7 +38,7 @@ public class PackageSyncReport {
      * Set of packages that have been added to the external package source that are not yet known to the server. A new
      * version of a package constitutes an entry in this list.
      */
-    private final Set<ContentSourcePackageDetails> newPackages = new HashSet<ContentSourcePackageDetails>();
+    private final Set<ContentProviderPackageDetails> newPackages = new HashSet<ContentProviderPackageDetails>();
 
     /**
      * Set of packages that are already known to the server and whose metadata has changed in the external package
@@ -46,12 +46,12 @@ public class PackageSyncReport {
      * Packages should only be included in this list if the name and version are the same as a package in the server;
      * new versions of a package belong in the <code>newPackages</code> list.
      */
-    private final Set<ContentSourcePackageDetails> updatedPackages = new HashSet<ContentSourcePackageDetails>();
+    private final Set<ContentProviderPackageDetails> updatedPackages = new HashSet<ContentProviderPackageDetails>();
 
     /**
      * Set of packages that are known to the server but no longer in the external source.
      */
-    private final Set<ContentSourcePackageDetails> deletedPackages = new HashSet<ContentSourcePackageDetails>();
+    private final Set<ContentProviderPackageDetails> deletedPackages = new HashSet<ContentProviderPackageDetails>();
 
     /**
      * The synchronization summary. Free form textual report.
@@ -60,7 +60,7 @@ public class PackageSyncReport {
 
     // Public  --------------------------------------------
 
-    public Set<ContentSourcePackageDetails> getNewPackages() {
+    public Set<ContentProviderPackageDetails> getNewPackages() {
         return newPackages;
     }
 
@@ -68,11 +68,11 @@ public class PackageSyncReport {
      * Add to the set of packages that have been added to the external package source that are not yet known to the
      * server. A new version of a package constitutes an entry in this list.
      */
-    public void addNewPackage(ContentSourcePackageDetails newPackage) {
+    public void addNewPackage(ContentProviderPackageDetails newPackage) {
         this.newPackages.add(newPackage);
     }
 
-    public Set<ContentSourcePackageDetails> getUpdatedPackages() {
+    public Set<ContentProviderPackageDetails> getUpdatedPackages() {
         return updatedPackages;
     }
 
@@ -81,20 +81,20 @@ public class PackageSyncReport {
      * package source. The data in this package will be merged with the server's existing knowledge of the package.
      * Packages should only be added to this updated list if the name and version are the same as a package in the
      * server; new versions of a package belong in the
-     * {@link #addNewPackage(ContentSourcePackageDetails) new packages list}.
+     * {@link #addNewPackage(ContentProviderPackageDetails) new packages list}.
      */
-    public void addUpdatedPackage(ContentSourcePackageDetails updatedPackage) {
+    public void addUpdatedPackage(ContentProviderPackageDetails updatedPackage) {
         this.updatedPackages.add(updatedPackage);
     }
 
-    public Set<ContentSourcePackageDetails> getDeletedPackages() {
+    public Set<ContentProviderPackageDetails> getDeletedPackages() {
         return deletedPackages;
     }
 
     /**
      * Add to the set of packages that are known to the server but no longer in the external source.
      */
-    public void addDeletePackage(ContentSourcePackageDetails deletedPackage) {
+    public void addDeletePackage(ContentProviderPackageDetails deletedPackage) {
         this.deletedPackages.add(deletedPackage);
     }
 

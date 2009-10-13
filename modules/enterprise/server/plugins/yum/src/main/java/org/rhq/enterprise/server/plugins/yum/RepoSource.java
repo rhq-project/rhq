@@ -25,7 +25,7 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.rhq.core.clientapi.server.plugin.content.ContentProvider;
-import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetails;
+import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetails;
 import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
 import org.rhq.core.clientapi.server.plugin.content.PackageSource;
 import org.rhq.core.domain.configuration.Configuration;
@@ -127,7 +127,7 @@ public class RepoSource implements ContentProvider, PackageSource {
      *
      * @throws Exception On all errors.
      */
-    public void synchronizePackages(PackageSyncReport report, Collection<ContentSourcePackageDetails> existingPackages)
+    public void synchronizePackages(PackageSyncReport report, Collection<ContentProviderPackageDetails> existingPackages)
         throws Exception {
         Summary summary = new Summary(reader);
         log.info("synchronizing with repo: " + reader + " started");
@@ -135,9 +135,9 @@ public class RepoSource implements ContentProvider, PackageSource {
             summary.markStarted();
             repo = new Repo(reader);
             repo.connect();
-            List<ContentSourcePackageDetails> deletedPackages = new ArrayList<ContentSourcePackageDetails>();
+            List<ContentProviderPackageDetails> deletedPackages = new ArrayList<ContentProviderPackageDetails>();
             deletedPackages.addAll(existingPackages);
-            for (ContentSourcePackageDetails p : repo.getPackageDetails()) {
+            for (ContentProviderPackageDetails p : repo.getPackageDetails()) {
                 log.debug("Processing package at (" + p.getLocation());
                 deletedPackages.remove(p);
                 if (!existingPackages.contains(p)) {
@@ -147,7 +147,7 @@ public class RepoSource implements ContentProvider, PackageSource {
                 }
             }
 
-            for (ContentSourcePackageDetails p : deletedPackages) {
+            for (ContentProviderPackageDetails p : deletedPackages) {
                 log.debug("Package at (" + p.getDisplayName() + ") marked as deleted");
                 report.addDeletePackage(p);
                 summary.deleted++;

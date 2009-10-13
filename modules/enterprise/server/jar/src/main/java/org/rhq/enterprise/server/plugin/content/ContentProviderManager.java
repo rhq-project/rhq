@@ -35,8 +35,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.clientapi.server.plugin.content.ContentProvider;
-import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetails;
-import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetailsKey;
+import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetails;
+import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetailsKey;
 import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
 import org.rhq.core.clientapi.server.plugin.content.PackageSource;
 import org.rhq.core.clientapi.server.plugin.content.RepoSource;
@@ -176,8 +176,8 @@ public class ContentProviderManager {
                 PackageSyncReport report; // the plugin will fill this in for us
                 List<PackageVersionContentSource> existingPVCS; // what we already know about this content source
 
-                Set<ContentSourcePackageDetails> allDetails; // what we tell the plugin about what we know
-                Map<ContentSourcePackageDetailsKey, PackageVersionContentSource> keyPVCSMap;
+                Set<ContentProviderPackageDetails> allDetails; // what we tell the plugin about what we know
+                Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> keyPVCSMap;
 
                 start = System.currentTimeMillis();
                 report = new PackageSyncReport();
@@ -185,19 +185,19 @@ public class ContentProviderManager {
                 existingPVCS = manager
                     .getPackageVersionsFromContentSource(subjMgr.getOverlord(), contentSource.getId(), pc);
                 int existingCount = existingPVCS.size();
-                keyPVCSMap = new HashMap<ContentSourcePackageDetailsKey, PackageVersionContentSource>(existingCount);
-                allDetails = new HashSet<ContentSourcePackageDetails>(existingCount);
+                keyPVCSMap = new HashMap<ContentProviderPackageDetailsKey, PackageVersionContentSource>(existingCount);
+                allDetails = new HashSet<ContentProviderPackageDetails>(existingCount);
 
                 for (PackageVersionContentSource pvcs : existingPVCS) {
                     PackageVersion pv = pvcs.getPackageVersionContentSourcePK().getPackageVersion();
                     Package p = pv.getGeneralPackage();
                     ResourceType rt = p.getPackageType().getResourceType();
 
-                    ContentSourcePackageDetailsKey key;
-                    key = new ContentSourcePackageDetailsKey(p.getName(), pv.getVersion(), p.getPackageType().getName(), pv
+                    ContentProviderPackageDetailsKey key;
+                    key = new ContentProviderPackageDetailsKey(p.getName(), pv.getVersion(), p.getPackageType().getName(), pv
                         .getArchitecture().getName(), rt.getName(), rt.getPlugin());
 
-                    ContentSourcePackageDetails details = new ContentSourcePackageDetails(key);
+                    ContentProviderPackageDetails details = new ContentProviderPackageDetails(key);
                     details.setClassification(pv.getGeneralPackage().getClassification());
                     details.setDisplayName(pv.getDisplayName());
                     details.setDisplayVersion(pv.getDisplayVersion());

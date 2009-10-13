@@ -30,8 +30,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.rhq.core.clientapi.server.plugin.content.ContentProvider;
-import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetails;
-import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetailsKey;
+import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetails;
+import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetailsKey;
 import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
 import org.rhq.core.clientapi.server.plugin.content.PackageSource;
 import org.rhq.core.domain.configuration.Configuration;
@@ -174,13 +174,13 @@ public class UrlSource implements ContentProvider, PackageSource {
         this.supportedPackageTypes = null;
     }
 
-    public void synchronizePackages(PackageSyncReport report, Collection<ContentSourcePackageDetails> existingPackages)
+    public void synchronizePackages(PackageSyncReport report, Collection<ContentProviderPackageDetails> existingPackages)
         throws Exception {
 
         // put all existing packages in a "to be deleted" list. As we sync, we will remove
         // packages from this list that still exist on the remote system. Any leftover in the list
         // are packages that no longer exist on the remote system and should be removed from the server inventory.
-        List<ContentSourcePackageDetails> deletedPackages = new ArrayList<ContentSourcePackageDetails>();
+        List<ContentProviderPackageDetails> deletedPackages = new ArrayList<ContentProviderPackageDetails>();
         deletedPackages.addAll(existingPackages);
 
         // sync now
@@ -194,7 +194,7 @@ public class UrlSource implements ContentProvider, PackageSource {
         long elapsed = System.currentTimeMillis() - before;
 
         // if there are packages that weren't found on the remote system, tell server to remove them from inventory
-        for (ContentSourcePackageDetails p : deletedPackages) {
+        for (ContentProviderPackageDetails p : deletedPackages) {
             report.addDeletePackage(p);
         }
 
@@ -266,12 +266,12 @@ public class UrlSource implements ContentProvider, PackageSource {
      * 
      * @throws Exception if the sync fails
      */
-    protected void syncPackage(PackageSyncReport report, List<ContentSourcePackageDetails> packages,
+    protected void syncPackage(PackageSyncReport report, List<ContentProviderPackageDetails> packages,
         RemotePackageInfo rpi) throws Exception {
 
-        ContentSourcePackageDetails details = createPackage(rpi);
+        ContentProviderPackageDetails details = createPackage(rpi);
         if (details != null) {
-            ContentSourcePackageDetails existing = findPackage(packages, details);
+            ContentProviderPackageDetails existing = findPackage(packages, details);
             if (existing == null) {
                 report.addNewPackage(details);
             } else {
@@ -295,14 +295,14 @@ public class UrlSource implements ContentProvider, PackageSource {
      *
      * @throws Exception
      */
-    protected ContentSourcePackageDetails createPackage(RemotePackageInfo rpi) throws Exception {
+    protected ContentProviderPackageDetails createPackage(RemotePackageInfo rpi) throws Exception {
 
         SupportedPackageType supportedPackageType = determinePackageType(rpi);
         if (supportedPackageType == null) {
             return null; // we can't handle this file - it is an unknown/unsupported package type
         }
 
-        ContentSourcePackageDetails pkg = null;
+        ContentProviderPackageDetails pkg = null;
 
         if (rpi instanceof FullRemotePackageInfo) {
             pkg = ((FullRemotePackageInfo) rpi).getContentSourcePackageDetails();
@@ -317,9 +317,9 @@ public class UrlSource implements ContentProvider, PackageSource {
             String resourceTypeName = supportedPackageType.resourceTypeName;
             String resourceTypePluginName = supportedPackageType.resourceTypePluginName;
 
-            ContentSourcePackageDetailsKey key = new ContentSourcePackageDetailsKey(name, version, packageTypeName,
+            ContentProviderPackageDetailsKey key = new ContentProviderPackageDetailsKey(name, version, packageTypeName,
                 architectureName, resourceTypeName, resourceTypePluginName);
-            pkg = new ContentSourcePackageDetails(key);
+            pkg = new ContentProviderPackageDetails(key);
 
             URLConnection urlConn = rpi.getUrl().openConnection();
             pkg.setFileCreatedDate(urlConn.getLastModified());
@@ -334,9 +334,9 @@ public class UrlSource implements ContentProvider, PackageSource {
         return pkg;
     }
 
-    protected ContentSourcePackageDetails findPackage(List<ContentSourcePackageDetails> packages,
-        ContentSourcePackageDetails pkg) {
-        for (ContentSourcePackageDetails p : packages) {
+    protected ContentProviderPackageDetails findPackage(List<ContentProviderPackageDetails> packages,
+        ContentProviderPackageDetails pkg) {
+        for (ContentProviderPackageDetails p : packages) {
             if (p.equals(pkg)) {
                 return p;
             }

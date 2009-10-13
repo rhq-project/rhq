@@ -31,13 +31,13 @@ import org.rhq.core.domain.resource.ResourceType;
  * resource type natural key (which is name and agent plugin name), since that is needed to make package types unique
  * (along with the package type name itself, which is specified in the {@link PackageDetailsKey} superclass).
  */
-public class ContentSourcePackageDetailsKey extends PackageDetailsKey {
+public class ContentProviderPackageDetailsKey extends PackageDetailsKey {
     private static final long serialVersionUID = 1L;
 
     private final String resourceTypeName;
     private final String resourceTypePluginName;
 
-    public ContentSourcePackageDetailsKey(String name, String version, String packageTypeName, String architectureName,
+    public ContentProviderPackageDetailsKey(String name, String version, String packageTypeName, String architectureName,
         String resourceTypeName, String resourceTypePluginName) {
         super(name, version, packageTypeName, architectureName);
 
@@ -100,11 +100,11 @@ public class ContentSourcePackageDetailsKey extends PackageDetailsKey {
             return false;
         }
 
-        if (!(obj instanceof ContentSourcePackageDetailsKey)) {
+        if (!(obj instanceof ContentProviderPackageDetailsKey)) {
             return false;
         }
 
-        final ContentSourcePackageDetailsKey other = (ContentSourcePackageDetailsKey) obj;
+        final ContentProviderPackageDetailsKey other = (ContentProviderPackageDetailsKey) obj;
 
         if (!resourceTypeName.equals(other.resourceTypeName)) {
             return false;

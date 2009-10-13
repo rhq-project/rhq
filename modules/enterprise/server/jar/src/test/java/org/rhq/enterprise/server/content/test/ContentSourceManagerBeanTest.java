@@ -34,8 +34,8 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetails;
-import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetailsKey;
+import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetails;
+import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetailsKey;
 import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
@@ -261,17 +261,17 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             // this report will add a mapping to PV->CS
             // we didn't set up any mappings like that yet - this will be the first one
             PackageSyncReport report = new PackageSyncReport();
-            ContentSourcePackageDetailsKey key = new ContentSourcePackageDetailsKey("testCreateContentSourceFoo",
+            ContentProviderPackageDetailsKey key = new ContentProviderPackageDetailsKey("testCreateContentSourceFoo",
                 "testCreateContentSourceVer", packageType1.getName(), architecture1.getName(), resourceType1.getName(),
                 resourceType1.getPlugin());
-            ContentSourcePackageDetails details = new ContentSourcePackageDetails(key);
+            ContentProviderPackageDetails details = new ContentProviderPackageDetails(key);
             details.setLocation("dummy-location");
             details.setMetadata("dummy-metadata".getBytes());
             details.addResourceVersion("1.0.0");
             details.addResourceVersion("2.0.0");
             report.addNewPackage(details);
-            Map<ContentSourcePackageDetailsKey, PackageVersionContentSource> previous;
-            previous = new HashMap<ContentSourcePackageDetailsKey, PackageVersionContentSource>();
+            Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous;
+            previous = new HashMap<ContentProviderPackageDetailsKey, PackageVersionContentSource>();
 
             // merge the report!
             ContentSourceSyncResults results = new ContentSourceSyncResults(contentSource);
@@ -441,14 +441,14 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
 
             // this report will add a mapping to PV->CS
             PackageSyncReport report = new PackageSyncReport();
-            ContentSourcePackageDetailsKey key = new ContentSourcePackageDetailsKey("testARUFoo", "testARUVer",
+            ContentProviderPackageDetailsKey key = new ContentProviderPackageDetailsKey("testARUFoo", "testARUVer",
                 packageType1.getName(), architecture1.getName(), resourceType1.getName(), resourceType1.getPlugin());
-            ContentSourcePackageDetails details = new ContentSourcePackageDetails(key);
+            ContentProviderPackageDetails details = new ContentProviderPackageDetails(key);
             details.setLocation("dummy-location-aru");
             details.setFileSize(1234L); // lazy load is on, this should not matter
             report.addNewPackage(details);
-            Map<ContentSourcePackageDetailsKey, PackageVersionContentSource> previous;
-            previous = new HashMap<ContentSourcePackageDetailsKey, PackageVersionContentSource>();
+            Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous;
+            previous = new HashMap<ContentProviderPackageDetailsKey, PackageVersionContentSource>();
 
             // ADD: merge the report!
             results = contentSourceManager.mergeContentSourceSyncReport(contentSource, report, previous, results);
@@ -566,13 +566,13 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
 
             // this report will add a mapping to PV->CS
             PackageSyncReport report = new PackageSyncReport();
-            ContentSourcePackageDetailsKey key = new ContentSourcePackageDetailsKey("testARU2Foo", "testARU2Ver",
+            ContentProviderPackageDetailsKey key = new ContentProviderPackageDetailsKey("testARU2Foo", "testARU2Ver",
                 packageType1.getName(), architecture1.getName(), resourceType1.getName(), resourceType1.getPlugin());
-            ContentSourcePackageDetails details = new ContentSourcePackageDetails(key);
+            ContentProviderPackageDetails details = new ContentProviderPackageDetails(key);
             details.setLocation("dummy-location-aru");
             report.addNewPackage(details);
-            Map<ContentSourcePackageDetailsKey, PackageVersionContentSource> previous;
-            previous = new HashMap<ContentSourcePackageDetailsKey, PackageVersionContentSource>();
+            Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous;
+            previous = new HashMap<ContentProviderPackageDetailsKey, PackageVersionContentSource>();
 
             // ADD: merge the report!
             results = contentSourceManager.mergeContentSourceSyncReport(contentSource, report, previous, results);
@@ -859,17 +859,17 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             // we didn't set up any mappings like that yet - this will be the first one
             // since a repo has this CS - the repo->PV will also get mapped
             PackageSyncReport report = new PackageSyncReport();
-            ContentSourcePackageDetailsKey key = new ContentSourcePackageDetailsKey("testMergeWithRepofoo",
+            ContentProviderPackageDetailsKey key = new ContentProviderPackageDetailsKey("testMergeWithRepofoo",
                 "testMergeWithRepo-Version", packageType1.getName(), architecture1.getName(), resourceType1
                     .getName(), resourceType1.getPlugin());
-            ContentSourcePackageDetails details = new ContentSourcePackageDetails(key);
+            ContentProviderPackageDetails details = new ContentProviderPackageDetails(key);
             details.setExtraProperties(new Configuration());
             details.getExtraProperties().put(new PropertySimple("hello", "world"));
             details.setLocation("dummy-location");
             details.setFileSize(0L); // under the covers this ends up allowing us to create a package bits of size 0
             report.addNewPackage(details);
-            Map<ContentSourcePackageDetailsKey, PackageVersionContentSource> previous;
-            previous = new HashMap<ContentSourcePackageDetailsKey, PackageVersionContentSource>();
+            Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous;
+            previous = new HashMap<ContentProviderPackageDetailsKey, PackageVersionContentSource>();
 
             ContentSourceSyncResults results = new ContentSourceSyncResults(contentSource);
             results = contentSourceManager.persistContentSourceSyncResults(results);

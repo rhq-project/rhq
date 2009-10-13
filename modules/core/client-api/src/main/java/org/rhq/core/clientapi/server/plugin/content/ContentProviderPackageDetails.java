@@ -34,17 +34,17 @@ import org.rhq.core.domain.content.PackageDetails;
  *
  * @author John Mazzitelli
  */
-public class ContentSourcePackageDetails extends PackageDetails {
+public class ContentProviderPackageDetails extends PackageDetails {
     private static final long serialVersionUID = 1L;
 
     /**
      * Contains a set of specific versions of resources that this package can be applied to. The resource type to which
-     * these apply is found in the {@link ContentSourcePackageDetailsKey}. If there are no entries in this list, the
+     * these apply is found in the {@link ContentProviderPackageDetailsKey}. If there are no entries in this list, the
      * package can be applied to any resource of the given type.
      */
     private Set<String> resourceVersions = new HashSet<String>();
 
-    public ContentSourcePackageDetails(ContentSourcePackageDetailsKey key) {
+    public ContentProviderPackageDetails(ContentProviderPackageDetailsKey key) {
         super(key);
     }
 
@@ -53,8 +53,8 @@ public class ContentSourcePackageDetails extends PackageDetails {
      *
      * @return the key cast to the appropriate sub-type
      */
-    public ContentSourcePackageDetailsKey getContentSourcePackageDetailsKey() {
-        return (ContentSourcePackageDetailsKey) super.getKey();
+    public ContentProviderPackageDetailsKey getContentSourcePackageDetailsKey() {
+        return (ContentProviderPackageDetailsKey) super.getKey();
     }
 
     public Set<String> getResourceVersions() {

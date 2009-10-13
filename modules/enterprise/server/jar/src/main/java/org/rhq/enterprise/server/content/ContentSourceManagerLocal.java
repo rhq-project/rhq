@@ -26,8 +26,8 @@ import java.util.List;
 
 import javax.ejb.Local;
 
-import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetails;
-import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetailsKey;
+import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetails;
+import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetailsKey;
 import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
 import org.rhq.core.clientapi.server.plugin.content.RepoDetails;
 import org.rhq.core.domain.auth.Subject;
@@ -362,21 +362,21 @@ public interface ContentSourceManagerLocal {
      *         was done
      */
     ContentSourceSyncResults mergeContentSourceSyncReport(ContentSource contentSource, PackageSyncReport report,
-        Map<ContentSourcePackageDetailsKey, PackageVersionContentSource> previous, ContentSourceSyncResults syncResults);
+        Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous, ContentSourceSyncResults syncResults);
 
     void _mergeContentSourceSyncReportUpdateRepo(int contentSourceId);
 
     ContentSourceSyncResults _mergeContentSourceSyncReportREMOVE(ContentSource contentSource, PackageSyncReport report,
-        Map<ContentSourcePackageDetailsKey, PackageVersionContentSource> previous,
+        Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
         ContentSourceSyncResults syncResults, StringBuilder progress);
 
     ContentSourceSyncResults _mergeContentSourceSyncReportADD(ContentSource contentSource,
-        Collection<ContentSourcePackageDetails> newPackages,
-        Map<ContentSourcePackageDetailsKey, PackageVersionContentSource> previous,
+        Collection<ContentProviderPackageDetails> newPackages,
+        Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
         ContentSourceSyncResults syncResults, StringBuilder progress, int addCount);
 
     ContentSourceSyncResults _mergeContentSourceSyncReportUPDATE(ContentSource contentSource, PackageSyncReport report,
-        Map<ContentSourcePackageDetailsKey, PackageVersionContentSource> previous,
+        Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
         ContentSourceSyncResults syncResults, StringBuilder progress);
 
     /**

@@ -54,8 +54,8 @@ import org.apache.commons.logging.LogFactory;
 import org.jboss.annotation.ejb.TransactionTimeout;
 import org.jboss.util.StringPropertyReplacer;
 
-import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetails;
-import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetailsKey;
+import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetails;
+import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetailsKey;
 import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
 import org.rhq.core.clientapi.server.plugin.content.RepoDetails;
 import org.rhq.core.domain.auth.Subject;
@@ -125,6 +125,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     private SubjectManagerLocal subjectManager;
     @EJB
     private ProductVersionManagerLocal productVersionManager;
+    @EJB
+    private RepoManagerLocal repoManager;
 
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
@@ -343,7 +345,30 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public void mergeRepoImportResults(List<RepoDetails> repos) {
-        
+
+        Subject overlord = subjectManager.getOverlord();
+
+        for (RepoDetails createMe : repos) {
+
+            String repoName = createMe.getName();
+
+            // Make sure the repo doesn't already exist. If we add twice, currently we'll get an exception 
+            List<Repo> existingRepo = repoManager.getRepoByName(repoName);
+            if (existingRepo != null) {
+                continue;
+            }
+
+            Repo repo = new Repo(repoName);
+            repo.setDescription(createMe.getDescription());
+
+            try {
+                repoManager.createRepo(overlord, repo);
+            }
+            catch (RepoException e) {
+                log.error("Error creating repo [" + repo + "]", e);
+            }
+        }
+
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
@@ -778,7 +803,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     // we really want NEVER, but support tests that might be in a tx
     public ContentSourceSyncResults mergeContentSourceSyncReport(ContentSource contentSource, PackageSyncReport report,
-        Map<ContentSourcePackageDetailsKey, PackageVersionContentSource> previous, ContentSourceSyncResults syncResults) {
+        Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous, ContentSourceSyncResults syncResults) {
         try {
             StringBuilder progress = new StringBuilder();
             if (syncResults.getResults() != null) {
@@ -800,8 +825,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
             //////////////////
             // ADD
-            List<ContentSourcePackageDetails> newPackages;
-            newPackages = new ArrayList<ContentSourcePackageDetails>(report.getNewPackages());
+            List<ContentProviderPackageDetails> newPackages;
+            newPackages = new ArrayList<ContentProviderPackageDetails>(report.getNewPackages());
 
             int chunkSize = 200;
             int fromIndex = 0;
@@ -818,7 +843,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                     toIndex = newPackageCount;
                 }
 
-                List<ContentSourcePackageDetails> pkgs = newPackages.subList(fromIndex, toIndex);
+                List<ContentProviderPackageDetails> pkgs = newPackages.subList(fromIndex, toIndex);
                 syncResults = contentSourceManager._mergeContentSourceSyncReportADD(contentSource, pkgs, previous,
                     syncResults, progress, fromIndex);
                 addedCount += pkgs.size();
@@ -875,7 +900,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public ContentSourceSyncResults _mergeContentSourceSyncReportREMOVE(ContentSource contentSource,
-        PackageSyncReport report, Map<ContentSourcePackageDetailsKey, PackageVersionContentSource> previous,
+        PackageSyncReport report, Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
         ContentSourceSyncResults syncResults, StringBuilder progress) {
         progress.append(new Date()).append(": ").append("Removing");
         syncResults.setResults(progress.toString());
@@ -888,9 +913,9 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         // remove all packages that are no longer available on the remote repository
         // for each removed package, we need to purge the PVCS mapping and the PV itself
 
-        for (ContentSourcePackageDetails doomedDetails : report.getDeletedPackages()) {
+        for (ContentProviderPackageDetails doomedDetails : report.getDeletedPackages()) {
             // this is the mapping between the content source and the package version that needs to be deleted
-            ContentSourcePackageDetailsKey doomedDetailsKey = doomedDetails.getContentSourcePackageDetailsKey();
+            ContentProviderPackageDetailsKey doomedDetailsKey = doomedDetails.getContentSourcePackageDetailsKey();
             PackageVersionContentSource doomedPvcs = previous.get(doomedDetailsKey);
             doomedPvcs = entityManager.find(PackageVersionContentSource.class, doomedPvcs
                 .getPackageVersionContentSourcePK());
@@ -932,8 +957,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     @SuppressWarnings("unchecked")
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public ContentSourceSyncResults _mergeContentSourceSyncReportADD(ContentSource contentSource,
-        Collection<ContentSourcePackageDetails> newPackages,
-        Map<ContentSourcePackageDetailsKey, PackageVersionContentSource> previous,
+        Collection<ContentProviderPackageDetails> newPackages,
+        Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
         ContentSourceSyncResults syncResults, StringBuilder progress, int addCount) {
         Query q;
         int flushCount = 0; // used to know when we should flush the entity manager - for performance purposes
@@ -952,8 +977,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         // then create the new PV as well as the new PVCS mapping.
         // if a repo is associated with the content source, the PV is directly associated with the repo.
 
-        for (ContentSourcePackageDetails newDetails : newPackages) {
-            ContentSourcePackageDetailsKey key = newDetails.getContentSourcePackageDetailsKey();
+        for (ContentProviderPackageDetails newDetails : newPackages) {
+            ContentProviderPackageDetailsKey key = newDetails.getContentSourcePackageDetailsKey();
 
             // find the new package's associated resource type (should already exist)
             ResourceType rt = new ResourceType();
@@ -1147,7 +1172,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public ContentSourceSyncResults _mergeContentSourceSyncReportUPDATE(ContentSource contentSource,
-        PackageSyncReport report, Map<ContentSourcePackageDetailsKey, PackageVersionContentSource> previous,
+        PackageSyncReport report, Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
         ContentSourceSyncResults syncResults, StringBuilder progress) {
         progress.append(new Date()).append(": ").append("Updating");
         syncResults.setResults(progress.toString());
@@ -1162,8 +1187,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         // (which must exist, or we abort that package and move on to the next);
         // then we have to get the current PVCS and merge its updates
 
-        for (ContentSourcePackageDetails updatedDetails : report.getUpdatedPackages()) {
-            ContentSourcePackageDetailsKey key = updatedDetails.getContentSourcePackageDetailsKey();
+        for (ContentProviderPackageDetails updatedDetails : report.getUpdatedPackages()) {
+            ContentProviderPackageDetailsKey key = updatedDetails.getContentSourcePackageDetailsKey();
 
             PackageVersionContentSource previousPvcs = previous.get(key);
             PackageVersionContentSource attachedPvcs; // what we will find in the DB, in jpa session

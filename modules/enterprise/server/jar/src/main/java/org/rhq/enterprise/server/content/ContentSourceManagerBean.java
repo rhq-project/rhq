@@ -57,6 +57,7 @@ import org.jboss.util.StringPropertyReplacer;
 import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetails;
 import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetailsKey;
 import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
+import org.rhq.core.clientapi.server.plugin.content.RepoDetails;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.Configuration;
@@ -338,6 +339,11 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         long count = (Long) countQuery.getSingleResult();
 
         return new PageList<ContentSourceSyncResults>(results, (int) count, pc);
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public void mergeRepoImportResults(List<RepoDetails> repos) {
+        
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)

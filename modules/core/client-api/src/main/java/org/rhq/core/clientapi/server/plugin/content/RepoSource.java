@@ -35,13 +35,13 @@ public interface RepoSource {
 
     /**
      * Requests the content provider return a list of all repos it wants to ensure exist in the server. This call
-     * should return the current state of the repos as known to the content provider; the server will take care
-     * of determining what has changed from the existing server inventory.
+     * should return the current state of the repos as known to the content provider, not a diff of what has
+     * changed from the previous call to it.
      *
      * @return list of details on all repos and their parent-child relationships known to this content provider;
      *         if no repos are being introduced by the provider <code>null</code> or an empty list may be returned 
      * @throws Exception if there is an error retrieving the repos that should be reported to the user
      */
-    List<RepoDetails> synchronizeRepos() throws Exception;
+    List<RepoDetails> importRepos() throws Exception;
 
 }

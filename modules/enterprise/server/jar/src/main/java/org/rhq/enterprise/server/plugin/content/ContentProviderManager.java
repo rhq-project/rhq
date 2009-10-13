@@ -40,6 +40,7 @@ import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetailsK
 import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
 import org.rhq.core.clientapi.server.plugin.content.PackageSource;
 import org.rhq.core.clientapi.server.plugin.content.RepoSource;
+import org.rhq.core.clientapi.server.plugin.content.RepoDetails;
 import org.rhq.core.clientapi.server.plugin.content.metadata.ContentSourcePluginMetadataManager;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.ContentSource;
@@ -113,7 +114,7 @@ public class ContentProviderManager {
      */
     public boolean synchronizeContentSource(int contentSourceId) throws Exception {
         ContentSourceManagerLocal manager = LookupUtil.getContentSourceManager();
-        ContentProvider adapter = getIsolatedContentProvider(contentSourceId);
+        ContentProvider provider = getIsolatedContentProvider(contentSourceId);
         ContentSourceSyncResults results = null;
         SubjectManagerLocal subjMgr = LookupUtil.getSubjectManager();
         StringBuilder progress = new StringBuilder(); // append to this as we go along, building a status report
@@ -152,14 +153,25 @@ public class ContentProviderManager {
                 return false;
             }
 
-            if (adapter instanceof RepoSource) {
-                
+            // If the provider is capable of syncing repos, do that call first
+            if (provider instanceof RepoSource) {
+                RepoSource repoSource = (RepoSource) provider;
+
+                start = System.currentTimeMillis();
+
+                List<RepoDetails> repos = repoSource.importRepos();
+
+                if (repos != null && repos.size() > 0) {
+//                manager.
+                }
+
+                log.info("importRepos: [" + contentSource.getName() + "]: report has been merged ("
+                    + (System.currentTimeMillis() - start) + ")ms");
             }
 
-            // If the provider is capable of handling packages, perform the package synchronization portion of
-            // the sync
-            if (adapter instanceof PackageSource) {
-                PackageSource packageSource = (PackageSource) adapter;
+            // If the provider is capable of handling packages, perform the package synchronization portion of the sync
+            if (provider instanceof PackageSource) {
+                PackageSource packageSource = (PackageSource) provider;
 
                 PackageSyncReport report; // the plugin will fill this in for us
                 List<PackageVersionContentSource> existingPVCS; // what we already know about this content source
@@ -206,7 +218,7 @@ public class ContentProviderManager {
                     keyPVCSMap.put(key, pvcs);
                 }
 
-                log.info("synchronizeContentSource: [" + contentSource.getName() + "]: loaded existing list of size=["
+                log.info("synchronizePackages: [" + contentSource.getName() + "]: loaded existing list of size=["
                     + existingCount + "] (" + (System.currentTimeMillis() - start) + ")ms");
 
                 progress.append(existingCount).append('\n');
@@ -218,7 +230,7 @@ public class ContentProviderManager {
 
                 packageSource.synchronizePackages(report, allDetails);
 
-                log.info("synchronizeContentSource: [" + contentSource.getName() + "]: got sync report from adapter=["
+                log.info("synchronizePackages: [" + contentSource.getName() + "]: got sync report from adapter=["
                     + report + "] (" + (System.currentTimeMillis() - start) + ")ms");
 
                 progress.append("new=").append(report.getNewPackages().size());
@@ -243,7 +255,7 @@ public class ContentProviderManager {
                 progress.setLength(0);
                 progress.append(results.getResults());
 
-                log.info("synchronizeContentSource: [" + contentSource.getName() + "]: report has been merged ("
+                log.info("synchronizePackages: [" + contentSource.getName() + "]: report has been merged ("
                     + (System.currentTimeMillis() - start) + ")ms");
 
                 progress.append(new Date()).append(": ").append("DONE.");

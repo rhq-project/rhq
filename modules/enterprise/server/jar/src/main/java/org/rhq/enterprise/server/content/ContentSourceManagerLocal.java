@@ -22,12 +22,14 @@ import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.List;
 
 import javax.ejb.Local;
 
 import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetails;
 import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetailsKey;
 import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
+import org.rhq.core.clientapi.server.plugin.content.RepoDetails;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.ContentSource;
@@ -340,6 +342,13 @@ public interface ContentSourceManagerLocal {
      * @return the full sync results
      */
     ContentSourceSyncResults getContentSourceSyncResults(int resultsId);
+
+    /**
+     * Updates the server with the results of a repo import from a content provider.
+     *
+     * @param repos list of repo data received from the content provider; should not be <code>null</code>
+     */
+    void mergeRepoImportResults(List<RepoDetails> repos);
 
     /**
      * After a sync has happened, this is responsible for persisting the results.

@@ -92,7 +92,7 @@ public class HostDefCreator implements NewEntryCreator {
         
         for(Property prop : aliases.getList()) {
             PropertySimple alias = (PropertySimple)prop;
-            bld.append('\t').append(alias.getStringValue());
+            bld.append(' ').append(alias.getStringValue());
         }
     }
     

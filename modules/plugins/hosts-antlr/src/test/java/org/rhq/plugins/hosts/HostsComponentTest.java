@@ -205,13 +205,31 @@ public class HostsComponentTest {
     }
     
     @Test
-    public void updateResourceConfiguration() throws Exception {
+    public void basicUpdateResourceConfiguration() throws Exception {
         Configuration configuration = loadResourceConfiguration(getHostFileResource());
         
         Configuration updatedConfiguration = updateResourceConfiguration(getHostFileResource(), configuration, BIG_TIMEOUT);
         
         assertEquals(configuration, updatedConfiguration);
         assert equals(new File(testingCopy), hostsCopy);
+    }
+    
+    @Test(dependsOnMethods = "basicUpdateResourceConfiguration")
+    public void updateModifiedResourceConfiguration() throws Exception {
+        Configuration configuration = loadResourceConfiguration(getHostFileResource());
+        
+        PropertyMap newHostDef = new PropertyMap("config://host_def");
+        newHostDef.put(new PropertySimple("config://$1", "1.1.1.1"));
+        newHostDef.put(new PropertySimple("config://$2", "test-hostname"));
+        newHostDef.put(new PropertySimple("config://$3", "test-alias1 test-alias2"));
+        configuration.getList("config:///file").add(newHostDef);
+        
+        PropertyMap localhost = (PropertyMap) configuration.getList("config:///file").getList().get(0);
+        localhost.getSimple("config://$2").setValue("updated-localhost");
+        
+        Configuration updatedConfiguration = updateResourceConfiguration(getHostFileResource(), configuration, BIG_TIMEOUT);
+        
+        assertEquals(configuration, updatedConfiguration);
     }
     
     private static boolean equals(File orig, File copy) throws IOException {

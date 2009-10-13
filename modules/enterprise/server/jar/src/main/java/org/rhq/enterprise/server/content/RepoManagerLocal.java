@@ -42,7 +42,6 @@ public interface RepoManagerLocal {
     PageList<Repo> findRepos(Subject subject, PageControl pc);
 
     /**
-     * @see RepoManagerRemote#findAssociatedContentSources(Subject, int, PageControl)
      */
     PageList<ContentSource> findAssociatedContentSources(Subject subject, int repoId, PageControl pc);
 
@@ -98,23 +97,20 @@ public interface RepoManagerLocal {
     PageList<PackageVersion> findPackageVersionsInRepo(Subject subject, int repoId, PageControl pc);
 
     /**
-     * @see RepoManagerRemote#getPackageVersionsInRepo(Subject, int, String, PageControl)
+     * @see RepoManagerRemote#findPackageVersionsInRepo(Subject, int, String, PageControl)
      */
     PageList<PackageVersion> findPackageVersionsInRepo(Subject subject, int repoId, String filter, PageControl pc);
 
     /**
-     * @see RepoManagerRemote#addContentSourcesToRepo(Subject, int, int[])
      */
     void addContentSourcesToRepo(Subject subject, int repoId, int[] contentSourceIds) throws Exception;
 
     /**
-     * @see RepoManagerRemote#removeContentSourcesFromRepo(Subject, int, int[])
      */
     void removeContentSourcesFromRepo(Subject subject, int repoId, int[] contentSourceIds)
         throws RepoException;
 
     /**
-     * @see RepoManagerRemote#getPackageVersionCountFromRepo(Subject, String, int)
      */
     long getPackageVersionCountFromRepo(Subject subject, int repoId);
 
@@ -145,12 +141,12 @@ public interface RepoManagerLocal {
     Repo getRepo(Subject subject, int repoId);
 
     /**
-     * @see RepoManagerRemote#findRepos(Subject, Repo, PageControl)
+     * @see RepoManagerRemote#findPackageVersionsInRepoByCriteria(Subject, PackageVersionCriteria)
      */
     PageList<Repo> findReposByCriteria(Subject subject, RepoCriteria criteria);
 
     /**
-     * @see RepoManagerRemote#findPackageVersionsInRepo(Subject, int, PackageVersion, PageControl)
+     * @see RepoManagerRemote#findPackageVersionsInRepo(Subject, int, String, PageControl) 
      */
     PageList<PackageVersion> findPackageVersionsInRepoByCriteria(Subject subject, PackageVersionCriteria criteria);
 

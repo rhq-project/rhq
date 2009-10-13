@@ -46,12 +46,21 @@ public class TreePath {
     private CommonTree tree;
     private String[] typeNames;
     private List<PathElement> path;
+    private AntlrTreeStructure structure;
     
     public TreePath(CommonTree tree, String path, String[] typeNames) throws RecognitionException {
         this(tree, parsePath(path), typeNames);
     }
 
+    public TreePath(CommonTree tree, String path, boolean honorOverrides, String[] typeNames) throws RecognitionException {
+        this(tree, parsePath(path), honorOverrides, typeNames);
+    }
+    
     public TreePath(CommonTree tree, List<PathElement> path, String[] typeNames) {
+        this(tree, path, true, typeNames);
+    }
+    
+    public TreePath(CommonTree tree, List<PathElement> path, boolean honorOverrides, String[] typeNames) {
         this.tree = tree;
         this.typeNames = new String[typeNames.length];
         System.arraycopy(typeNames, 0, this.typeNames, 0, typeNames.length);
@@ -60,7 +69,9 @@ public class TreePath {
             this.typeNames[i] = this.typeNames[i].toLowerCase();
         }
         
-        this.path = path;        
+        this.path = path;
+        
+        structure = new AntlrTreeStructure(honorOverrides);
     }
     
     public static List<PathElement> parsePath(String path) throws RecognitionException {
@@ -69,22 +80,28 @@ public class TreePath {
         return result.elements;
     }
     
-    public static List<PathElement> getPath(CommonTree tree, CommonTree root, String[] typeNames) {
+    public static List<PathElement> getPath(CommonTree tree, CommonTree root, boolean honorOverrides, String[] typeNames) {
         List<PathElement> elements = new ArrayList<PathElement>();
+        AntlrTreeStructure structure = new AntlrTreeStructure(honorOverrides);
+        
         while(tree != null && (root == null || !root.equals(tree))) {
             PathElement el = new PathElement();
             
             int type = tree.getType();
             el.setTokenTypeName(typeNames[type].toLowerCase());
 
-            el.setAbsoluteTokenPosition(tree.getChildIndex() + 1);
-
+            CommonTree parent = structure.getParent(tree);
+            
             //get type relative index
-            CommonTree parent = (CommonTree) tree.getParent();
             if (parent != null) {
+                List<CommonTree> siblings = structure.getChildren(parent);
+                
+                int treeIndex = siblings.indexOf(tree);
+                el.setAbsoluteTokenPosition(treeIndex + 1);
+
                 int idx = 1;
-                for (int i = tree.getChildIndex() - 1; i > 0; --i) {
-                    if (parent.getChild(i).getType() == type) {
+                for (int i = treeIndex - 1; i > 0; --i) {
+                    if (siblings.get(i).getType() == type) {
                         idx++;
                     }
                 }
@@ -100,6 +117,10 @@ public class TreePath {
         
         Collections.reverse(elements);
         return elements;
+    }
+    
+    public static List<PathElement> getPath(CommonTree tree, CommonTree root, String[] typeNames) {
+        return getPath(tree, root, true, typeNames);
     }
     
     public static List<PathElement> getPath(CommonTree tree, String[] typeNames) {
@@ -157,25 +178,24 @@ public class TreePath {
         List<CommonTree> children = new ArrayList<CommonTree>();
         
         int tokenType = getTokenType(spec.getTokenTypeName());
-
+        List<CommonTree> siblings = structure.getChildren(parent);
+        
         switch (spec.getType()) {
         case NAME_REFERENCE:
-            for(int i = 0; i < parent.getChildCount(); ++i) {
-                CommonTree child = (CommonTree) parent.getChild(i);
+            for(CommonTree child : siblings) {
                 if (child.getType() == tokenType) {
                     children.add(child);
                 }
             }
             break;
         case INDEX_REFERENCE:
-            if (spec.getAbsoluteTokenPosition() > 0 && parent.getChildCount() >= spec.getAbsoluteTokenPosition()) {
-                children.add((CommonTree)parent.getChild(spec.getAbsoluteTokenPosition() - 1));
+            if (spec.getAbsoluteTokenPosition() > 0 && siblings.size() >= spec.getAbsoluteTokenPosition()) {
+                children.add((CommonTree)siblings.get(spec.getAbsoluteTokenPosition() - 1));
             }
             break;
         case POSITION_REFERENCE:
             int position = 0;
-            for(int i = 0; i < parent.getChildCount(); ++i) {
-                CommonTree child = (CommonTree) parent.getChild(i);
+            for(CommonTree child : siblings) {
                 if (child.getType() == tokenType) {
                     position++; //we're 1 based, so increase before checking...
                     if (position == spec.getTypeRelativeTokenPosition()) {
@@ -186,8 +206,7 @@ public class TreePath {
             }
             break;
         case VALUE_REFERENCE:
-            for(int i = 0; i < parent.getChildCount(); ++i) {
-                CommonTree child = (CommonTree) parent.getChild(i);
+            for(CommonTree child : siblings) {
                 if (child.getType() == tokenType && spec.getTokenText().equals(child.getText())) {
                     children.add(child);
                 }
@@ -200,22 +219,26 @@ public class TreePath {
     private boolean rootMatches(CommonTree root, PathElement spec) {
         int tokenType = getTokenType(spec.getTokenTypeName());
 
+        List<CommonTree> siblings;
+        
+        CommonTree parent = structure.getParent(root);
+        if (parent != null) {
+            siblings = structure.getChildren(parent);
+        } else {
+            siblings = Collections.singletonList(root);
+        }
         switch (spec.getType()) {
         case NAME_REFERENCE:
             return root.getType() == tokenType;
         case INDEX_REFERENCE:
-            return root.getChildIndex() == spec.getAbsoluteTokenPosition() - 1;
+            return siblings.indexOf(root) == spec.getAbsoluteTokenPosition() - 1;
         case POSITION_REFERENCE:
             int position = 0;
-            CommonTree parent = (CommonTree) root.getParent();
-            if (parent != null) {
-                for(int i = 0; i < parent.getChildCount(); ++i) {
-                    CommonTree child = (CommonTree) parent.getChild(i);
-                    if (child.getType() == tokenType) {
-                        position++; //we're 1 based, so increase before checking...
-                        if (position == spec.getTypeRelativeTokenPosition() && child == root) {
-                            return true;
-                        }
+            for(CommonTree child : siblings) {
+                if (child.getType() == tokenType) {
+                    position++; //we're 1 based, so increase before checking...
+                    if (position == spec.getTypeRelativeTokenPosition() && child == root) {
+                        return true;
                     }
                 }
             }

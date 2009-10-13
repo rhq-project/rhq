@@ -29,18 +29,51 @@ import java.util.List;
 
 import org.antlr.runtime.tree.CommonTree;
 
+import org.rhq.plugins.antlrconfig.tokens.Skip;
+import org.rhq.plugins.antlrconfig.tokens.Transparent;
+
 /**
  * A tree structure provider for the generic Antlr {@link CommonTree} objects. 
+ * 
+ * The tree structure can be configured to honor the behaviour intended by the {@link Skip} 
+ * and {@link Transparent} token types (which is the default).
  * 
  * @author Lukas Krejci
  */
 public class AntlrTreeStructure implements TreeStructure<CommonTree> {
-    public Collection<CommonTree> getChildren(CommonTree parent) {
+    
+    private boolean honorOverrides;
+    
+    public AntlrTreeStructure() {
+        honorOverrides = true;
+    }
+    
+    public AntlrTreeStructure(boolean honorSkip) {
+        this.honorOverrides = honorSkip;
+    }
+    
+    public List<CommonTree> getChildren(CommonTree parent) {
         List<CommonTree> children = new ArrayList<CommonTree>();
         
         for(int i = 0; i < parent.getChildCount(); ++i) {
-            children.add((CommonTree)parent.getChild(i));
+            CommonTree child = (CommonTree) parent.getChild(i);
+            
+            if (honorOverrides && child.getToken() instanceof Skip) {
+                children.addAll(getChildren(child));
+            } else {
+                if (!honorOverrides || !(child.getToken() instanceof Transparent)) {
+                    children.add(child);
+                }
+            }
         }
         return children;
+    }
+    
+    public CommonTree getParent(CommonTree child) {
+        CommonTree parent = (CommonTree) child.getParent();
+        while (honorOverrides && parent.getToken() instanceof Skip) {
+            parent = (CommonTree) parent.getParent();
+        }
+        return parent;
     }
 }

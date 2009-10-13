@@ -62,29 +62,29 @@ public class ConfigMapper {
     private NewEntryCreator newEntryCreator;
     private String[] treeTypeNames;
     
-    private static class ConfigurationDefinitionStructure implements TreeStructure<PropertyDefinition> {
-        public Collection<PropertyDefinition> getChildren(PropertyDefinition parent) {
-            if (parent instanceof PropertyDefinitionList) {
-                return Collections.singletonList(((PropertyDefinitionList)parent).getMemberDefinition());
-            } else if (parent instanceof PropertyDefinitionMap) {
-                return ((PropertyDefinitionMap)parent).getPropertyDefinitions().values();
-            }
-            return null;
-        }    
-    }
-    private static final ConfigurationDefinitionStructure configurationDefinitionStructure = new ConfigurationDefinitionStructure();
-    
-    private static class ConfigurationStructure implements TreeStructure<Property> {
-        public Collection<Property> getChildren(Property parent) {
-            if (parent instanceof PropertyList) {
-                return ((PropertyList)parent).getList();
-            } else if (parent instanceof PropertyMap) {
-                return ((PropertyMap)parent).getMap().values();
-            }
-            return null;
-        }
-    }
-    private static final ConfigurationStructure configurationStructure = new ConfigurationStructure();
+//    private static class ConfigurationDefinitionStructure implements TreeStructure<PropertyDefinition> {
+//        public Collection<PropertyDefinition> getChildren(PropertyDefinition parent) {
+//            if (parent instanceof PropertyDefinitionList) {
+//                return Collections.singletonList(((PropertyDefinitionList)parent).getMemberDefinition());
+//            } else if (parent instanceof PropertyDefinitionMap) {
+//                return ((PropertyDefinitionMap)parent).getPropertyDefinitions().values();
+//            }
+//            return null;
+//        }    
+//    }
+//    private static final ConfigurationDefinitionStructure configurationDefinitionStructure = new ConfigurationDefinitionStructure();
+//    
+//    private static class ConfigurationStructure implements TreeStructure<Property> {
+//        public Collection<Property> getChildren(Property parent) {
+//            if (parent instanceof PropertyList) {
+//                return ((PropertyList)parent).getList();
+//            } else if (parent instanceof PropertyMap) {
+//                return ((PropertyMap)parent).getMap().values();
+//            }
+//            return null;
+//        }
+//    }
+//    private static final ConfigurationStructure configurationStructure = new ConfigurationStructure();
     
     private static final AntlrTreeStructure astStructure = new AntlrTreeStructure();
     
@@ -169,9 +169,7 @@ public class ConfigMapper {
         // TODO Auto-generated method stub
         MergeRecord rec = mapping.get(root);
         if (rec.tree != null) {
-            for (int i  = 0; i < rec.tree.getChildCount(); ++i) {
-                CommonTree child = (CommonTree) rec.tree.getChild(i);
-                
+            for (CommonTree child : astStructure.getChildren(rec.tree)) {
                 //check if the child is "creatable"
                 List<PathElement> path = TreePath.getPath(child, astRoot, treeTypeNames);
                 if (pathConvertor.getPropertyDefinition(path) != null) {

@@ -23,7 +23,7 @@
 
 package org.rhq.plugins.antlrconfig;
 
-import java.util.Collection;
+import java.util.List;
 
 /**
  * Provides a means for the {@link DfsWalker} to traverse an arbitrary tree structure
@@ -33,5 +33,7 @@ import java.util.Collection;
  */
 public interface TreeStructure<NodeType> {
 
-    Collection<NodeType> getChildren(NodeType parent);
+    List<NodeType> getChildren(NodeType parent);
+    
+    NodeType getParent(NodeType child);
 }

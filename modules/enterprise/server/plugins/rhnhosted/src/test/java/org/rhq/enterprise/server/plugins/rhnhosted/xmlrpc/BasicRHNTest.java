@@ -1,15 +1,13 @@
 package org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
+import java.io.*;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 
 import junit.framework.Test;
@@ -21,8 +19,6 @@ import org.apache.commons.lang.StringUtils;
 
 import org.apache.xmlrpc.client.XmlRpcClient;
 import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
-import org.apache.xmlrpc.common.TypeFactory;
-import org.apache.xmlrpc.jaxb.JaxbTypeFactory;
 
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelFamilyType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelType;
@@ -199,7 +195,7 @@ public class BasicRHNTest extends TestCase
         assertTrue(success);
     }
 
-    public void testDumpChannels() throws Exception 
+    public void testDumpChannels() throws Exception
     {
         boolean success = true;
 
@@ -461,10 +457,20 @@ public class BasicRHNTest extends TestCase
         assertTrue(success);
     }
 
-    public void BROKENtestDumpGetRPM() throws Exception
-    {
+    /**
+    Sample info
+        handler =  /SAT/$RHN/rhel-x86_64-server-5/getPackage/ipsec-tools-0.6.5-6.x86_64.rpm
+        header:  X-RHN-Auth-Server-Time = 1255722893.21
+        header:  X-Client-Version = 1
+        header:  X-RHN-Transport-Capability = ['follow-redirects=2']
+        header:  X-RHN-Server-Id = XXXXXXXXXX
+        header:  X-RHN-Auth = zVS7ood7Vg4I+xb2yZ6PJA==
+        header:  X-RHN-Auth-User-Id =
+        header:  X-RHN-Auth-Expire-Offset = 7200.0
+        header:  X-Info = ['RPC Processor (C) Red Hat, Inc (version 135431)']
+    */
+    public void REQUIRES_AUTHtestGetPackageHTTPClient() throws Exception {
         boolean success = true;
-
         try {
             String systemid = getSystemId();
             if (StringUtils.isBlank(systemid)) {
@@ -472,33 +478,40 @@ public class BasicRHNTest extends TestCase
                 return;
             }
 
-            XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
-            config.setServerURL(new URL("http://satellite.rhn.redhat.com/SAT"));
-            XmlRpcClient client = new XmlRpcClient();
-            client.setConfig(config);
-            RhnJaxbTransportFactory transportFactory = new RhnJaxbTransportFactory(client);
-            transportFactory.setRequestProperties(getRequestProperties());
-            transportFactory.setJaxbDomain("org.rhq.enterprise.server.plugins.rhnhosted.xml");
-            transportFactory.setDumpMessageToFile(debugDumpFile);
-            transportFactory.setDumpFilePath("/tmp/sample-rhnhosted-package.get.xml");
-            client.setTransportFactory(transportFactory);
+            String baseUrl = "http://satellite.rhn.redhat.com";
+            String extra = "/SAT/$RHN/rhel-x86_64-server-5/getPackage/openhpi-2.4.1-6.el5.1.x86_64.rpm";
+            URL url = new URL(baseUrl + extra);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestProperty("X-Client-Version", "1");
+            conn.setRequestProperty("X-RHN-Server-Id", "XXXXXXXXXX");
+            conn.setRequestProperty("X-RHN-Auth",  "zVS7ood7Vg4I+xb2yZ6PJA==");
+            conn.setRequestProperty("X-RHN-Auth-User-Id", "");
+            conn.setRequestProperty("X-RHN-Auth-Expire-Offset", "7200.0");
+            conn.setRequestProperty("X-RHN-Auth-Server-Time", "1255722893.21");
 
-            List<String> nvrea = new ArrayList<String>();
-            nvrea.add("vim");
-            nvrea.add("7.0.109");
-            nvrea.add("6.el5");
-            nvrea.add("");
-            nvrea.add("i386");
-            // Call expects: systemID, channel label, (name, version, release, epoch, arch)
-            Object[] params = new Object[]{systemid, "rhel-i386-server-5", nvrea};
-            JAXBElement<RhnSatelliteType> result = (JAXBElement) client.execute("package.get", params);
-            RhnSatelliteType sat = result.getValue();
+            conn.setRequestMethod("GET");
+            conn.connect();
+            InputStream in = conn.getInputStream();
+
+
+            String rpmFileName = "/tmp/getPackage-rpmFile.rpm";
+            OutputStream out = new FileOutputStream(rpmFileName);
+
+            // Transfer bytes from in to out
+            byte[] buf = new byte[1024];
+            int len;
+            while ((len = in.read(buf)) > 0) {
+                out.write(buf, 0, len);
+            }
+            in.close();
+            out.close();
+            conn.disconnect();
         }
         catch (Exception e) {
             e.printStackTrace();
             success = false;
         }
         assertTrue(success);
-    }
 
+    }
 }

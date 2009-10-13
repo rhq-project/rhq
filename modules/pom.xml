@@ -33,6 +33,7 @@
       </activation>
       <modules>
         <module>core</module>
+        <module>common</module>
         <module>plugins</module>
         <module>helpers</module>
         <module>enterprise</module>

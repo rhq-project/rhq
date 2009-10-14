@@ -26,6 +26,18 @@ import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+
 /**
  * A RepoGroup represents a set of related {@link Repo}s. Repos can be tied together
  *  by different (@link RepoGroupType)s.
@@ -33,6 +45,9 @@ import java.util.Set;
  * @author Sayli Karmarkar
  */
 
+@Entity
+@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_REPO_GROUP_ID_SEQ")
+@Table(name = "RHQ_REPO_GROUP")
 public class RepoGroup implements Serializable {
     // Constants  --------------------------------------------
 
@@ -40,22 +55,22 @@ public class RepoGroup implements Serializable {
 
     // Attributes  --------------------------------------------
 
-    //@Column(name = "ID", nullable = false)
-    //@GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
-    //@Id
+    @Column(name = "ID", nullable = false)
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
+    @Id
     private int id;
 
-    //@Column(name = "NAME", nullable = false)
+    @Column(name = "NAME", nullable = false)
     private String name;
 
-    //@Column(name = "DESCRIPTION", nullable = true)
+    @Column(name = "DESCRIPTION", nullable = true)
     private String description;
 
-    //@JoinColumn(name = "REPO_GROUP_TYPE_ID", referencedColumnName = "ID", nullable = false)
-    //@ManyToOne
+    @JoinColumn(name = "REPO_GROUP_TYPE_ID", referencedColumnName = "ID", nullable = false)
+    @ManyToOne
     private RepoGroupType repoGroupType;
 
-    //@OneToMany(mappedBy = "contentSource", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "repoGroup", fetch = FetchType.LAZY)
     private Set<RepoRepoGroup> repoRepoGroups;
 
     // Constructor ----------------------------------------

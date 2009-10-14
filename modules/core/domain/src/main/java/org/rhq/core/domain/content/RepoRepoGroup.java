@@ -25,7 +25,14 @@ package org.rhq.core.domain.content;
 import java.io.Serializable;
 import java.util.Date;
 
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.IdClass;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.PrePersist;
+import javax.persistence.Table;
 
 /**
  * This is the many-to-many entity that correlates a repo with a repo group. 
@@ -35,6 +42,9 @@ import javax.persistence.PrePersist;
  * @author Sayli Karmarkar
  */
 
+@Entity
+@IdClass(RepoRepoGroupPK.class)
+@Table(name = "RHQ_REPO_REPO_GRP_MAP")
 public class RepoRepoGroup implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -44,17 +54,17 @@ public class RepoRepoGroup implements Serializable {
      * @IdClass and ignore these here, even though the mappings should be here and no mappings should be needed in the
      * @IdClass.
      */
-    //@Id
-    //   @ManyToOne
-    //   @JoinColumn(name = "REPO_ID", referencedColumnName = "ID", nullable = false, insertable = false, updatable = false)
+    @Id
+    @ManyToOne
+    @JoinColumn(name = "REPO_ID", referencedColumnName = "ID", nullable = false, insertable = false, updatable = false)
     private Repo repo;
 
-    //@Id
-    //   @ManyToOne
-    //   @JoinColumn(name = "REPO_GRP_ID", referencedColumnName = "ID", nullable = false, insertable = false, updatable = false)
+    @Id
+    @ManyToOne
+    @JoinColumn(name = "REPO_GRP_ID", referencedColumnName = "ID", nullable = false, insertable = false, updatable = false)
     private RepoGroup repoGroup;
 
-    //@Column(name = "CTIME", nullable = false)
+    @Column(name = "CTIME", nullable = false)
     private long createdTime;
 
     protected RepoRepoGroup() {

@@ -1518,6 +1518,7 @@ DB Upgrade:
       <schema-addColumn table="RHQ_ALERT_DEFINITION" column="GROUP_ALERT_DEF_ID" columnType="INTEGER" />
    </schemaSpec>
 
+
 </dbupgrade>
 
 </target>

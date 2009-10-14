@@ -24,6 +24,9 @@ package org.rhq.core.domain.content;
 
 import java.io.Serializable;
 
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+
 /**
  * This is the composite primary key for the {@link RepoContentSource} entity. That entity is an explicit
  * many-to-many mapping table, so this composite key is simply the foreign keys to both ends of that relationship.
@@ -39,12 +42,12 @@ public class RepoRepoGroupPK implements Serializable {
      * entity itself.
      */
 
-    //@JoinColumn(name = "REPO_ID", referencedColumnName = "ID", nullable = false)
-    //@ManyToOne
+    @JoinColumn(name = "REPO_ID", referencedColumnName = "ID", nullable = false)
+    @ManyToOne
     private Repo repo;
 
-    //@JoinColumn(name = "REPO_GRP_ID", referencedColumnName = "ID", nullable = false)
-    //@ManyToOne
+    @JoinColumn(name = "REPO_GRP_ID", referencedColumnName = "ID", nullable = false)
+    @ManyToOne
     private RepoGroup repoGroup;
 
     public RepoRepoGroupPK() {

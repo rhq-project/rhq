@@ -26,30 +26,43 @@ import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+
 /**
  * Defines a type of (@link RepoGroup) e.g. Channel families in RHN map to a type of 
  * (@link RepoGroup). 
  * @author Sayli Karmarkar
  */
 
+@Entity
+@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_REPO_GROUP_TYPE_ID_SEQ")
+@Table(name = "RHQ_REPO_GROUP_TYPE")
 public class RepoGroupType implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     // Attributes  --------------------------------------------
 
-    //@Column(name = "ID", nullable = false)
-    //@GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
-    //@Id
+    @Column(name = "ID", nullable = false)
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
+    @Id
     private int id;
 
-    //@Column(name = "NAME", nullable = false)
+    @Column(name = "NAME", nullable = false)
     private String name;
 
-    //@Column(name = "DESCRIPTION", nullable = true)
+    @Column(name = "DESCRIPTION", nullable = true)
     private String description;
 
-    //@OneToMany(mappedBy = "repoGroupType", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "repoGroupType", fetch = FetchType.LAZY)
     private Set<RepoGroup> repoGroups;
 
     // Constructor ----------------------------------------

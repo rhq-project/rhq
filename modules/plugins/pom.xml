@@ -114,6 +114,7 @@
       <!-- non-public dependency        <module>onewire</module> -->
       <module>oracle</module>
       <module>perftest</module>
+      <module>samba</module>
       <module>snmptrapd</module>
       <module>sshd</module>
       <module>twitter</module>

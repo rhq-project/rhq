@@ -1,6 +1,6 @@
 <plugin name="Samba"
         displayName="Samba"
-        description="Support for *nix samba service"
+        description="Support for RHEL Samba service"
         package="org.rhq.plugins.samba"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
@@ -14,12 +14,12 @@
       <plugin-configuration>
          <c:group name="augeas" displayName="Augeas Settings">
             <c:simple-property name="lenses-path" displayName="Augeas Lenses Path"
-                               default="/usr/local/share/augeas/lenses" required="true"
-                               description="Full path to the augeas lenses directory. Example: /usr/local/share/augeas/lenses"/>
+                               default="/usr/share/augeas/lenses" required="true"
+                               description="Full path to the augeas lenses directory"/>
             <c:simple-property name="root-path" displayName="Augeas Root Path" default="/" required="true"
                                description="Path from which augeas should begin to search for configuration files. Example: /"/>
          </c:group>
-         <c:group name="hosts" displayName="Hosts Settings">
+         <c:group name="samba" displayName="Samba Settings">
             <c:simple-property name="smb-path" displayName="Samba Config File Path" required="true"
                                default="/etc/samba/smb.conf" description="Location of the samba file."/>
             <c:simple-property name="augeas-smb-path" displayName="Augeas Samba Tree Path" required="true"
@@ -27,7 +27,7 @@
          </c:group>
       </plugin-configuration>
 
-
+<!--
        <metric property="NetworkStat.tcpInboundTotal" displayName="TCP Inbound Connections" displayType="summary"/>
        <metric property="NetworkStat.tcpOutboundTotal" displayName="TCP Outbound Connections" displayType="summary"/>
        <metric property="NetworkStat.allInboundTotal" displayName="All Inbound Connections" displayType="summary"/>
@@ -45,9 +45,7 @@
        <metric property="NetworkStat.tcpClosing" displayName="State CLOSING"/>
        <metric property="NetworkStat.tcpIdle" displayName="State IDLE"/>
        <metric property="NetworkStat.tcpBound" displayName="State BOUND"/>
-
-
-
+-->
       <resource-configuration>
         <c:group name="Basic Configurations">
             
@@ -67,7 +65,6 @@
               </c:simple-property>
               
               <c:simple-property name="encrypt passwords" type="boolean" required="false" description="This option must be enabled if the clients are connecting from a Windows 98, Windows NT 4.0 with Service Pack 3, or other more recent versions of Microsoft Windows. The passwords are transfered between the server and the client in an encrypted format instead of in as a plain-text word that can be intercepted."/>
-
               
           </c:group>
           
@@ -77,7 +74,7 @@
               
           </c:group>
       </resource-configuration>
-
+<!--
        <service name="SambaShare" description="Shares on Samba"
                discovery="SambaShareDiscoveryComponent" class="SambaShareComponent">
            
@@ -94,10 +91,9 @@
                <c:simple-property name="guest ok" type="boolean"  required="false"/>
                <c:simple-property name="share modes" />
                <c:simple-property name="valid users" required="false"/>
-                                  
            </resource-configuration>
        </service>
-
+-->
    </server>
 
 </plugin>

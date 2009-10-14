@@ -34,7 +34,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
 /**
  * @author Jason Dobies
  */
-public class HostsComponentTest {
+public class SambaComponentTest {
 
     private SambaServerComponent component = new SambaServerComponent();
 
@@ -44,7 +44,7 @@ public class HostsComponentTest {
 
     @BeforeSuite
     public void initPluginConfiguration() throws Exception {
-        pluginConfiguration.put(new PropertySimple("lenses-path", "/usr/local/share/augeas/lenses"));
+        pluginConfiguration.put(new PropertySimple("lenses-path", "/usr/share/augeas/lenses"));
         pluginConfiguration.put(new PropertySimple("root-path", "/"));
         pluginConfiguration.put(new PropertySimple("hosts-path", "/etc/hosts"));
         pluginConfiguration.put(new PropertySimple("augeas-hosts-path", "/files/etc/hosts/*"));

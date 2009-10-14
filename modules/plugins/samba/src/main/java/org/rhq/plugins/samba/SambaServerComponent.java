@@ -21,35 +21,27 @@ package org.rhq.plugins.samba;
 import java.io.File;
 import java.util.Date;
 import java.util.List;
-import java.util.Set;
 
 import net.augeas.Augeas;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.domain.measurement.MeasurementDataNumeric;
-import org.rhq.core.domain.measurement.MeasurementReport;
-import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
-import org.rhq.core.pluginapi.measurement.MeasurementFacet;
-import org.rhq.core.pluginapi.util.ObjectUtil;
-import org.rhq.core.system.NetworkStats;
-import org.rhq.core.system.ProcessInfo;
 
 /**
  * @author Greg Hinkle
  */
-public class SambaServerComponent implements ResourceComponent, ConfigurationFacet, MeasurementFacet {
+public class SambaServerComponent implements ResourceComponent, ConfigurationFacet {
 
     private ResourceContext resourceContext;
     private File smbConfFile;
-    private ProcessInfo processInfo;
-    private static final int PORT = 445;
+    //private ProcessInfo processInfo;
+    //private static final int PORT = 445;
 
     private static final String[] GLOBAL_PROPS = { "workgroup", "server string", "security", "encrypt passwords",
         "load printers", "cups options" };
@@ -71,10 +63,11 @@ public class SambaServerComponent implements ResourceComponent, ConfigurationFac
         smbConfFile = new File(smbConfPath);
 
         if (!smbConfFile.exists()) {
-            throw new InvalidPluginConfigurationException("Hosts file not found at specified location: " + smbConfPath);
+            throw new InvalidPluginConfigurationException("smb.conf file not found at specified location: "
+                + smbConfPath);
         }
 
-        getProcess();
+        // getProcess();
     }
 
     public void stop() {
@@ -158,7 +151,7 @@ public class SambaServerComponent implements ResourceComponent, ConfigurationFac
         String lensesPath = lensesPathProperty.getStringValue();
         String rootPath = rootPathProperty.getStringValue();
 
-        Augeas augeas = new Augeas(rootPath, lensesPath, Augeas.NONE);
+        Augeas augeas = new Augeas(rootPath, lensesPath, Augeas.NO_MODL_AUTOLOAD);
         return augeas;
     }
 
@@ -193,6 +186,7 @@ public class SambaServerComponent implements ResourceComponent, ConfigurationFac
         }
     }
 
+    /*
     private void getProcess() {
 
         List<ProcessInfo> procs = resourceContext.getSystemInformation().getProcesses(
@@ -202,19 +196,21 @@ public class SambaServerComponent implements ResourceComponent, ConfigurationFac
             this.processInfo = procs.get(0).getAggregateProcessTree();
         }
     }
-
-    public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
-        NetworkStats stats = resourceContext.getSystemInformation().getNetworkStats("localhost", PORT);
-        processInfo.refresh();
-        for (MeasurementScheduleRequest request : metrics) {
-            if (request.getName().startsWith("NetworkStat.")) {
-                int val = stats.getByName(request.getName().substring("NetworkStat.".length()));
-                report.addData(new MeasurementDataNumeric(request, (double) val));
-            } else if (request.getName().startsWith("Process.")) {
-                Double value = ObjectUtil.lookupDeepNumericAttributeProperty(processInfo, request.getName().substring(
-                    "Process.".length()));
-                report.addData(new MeasurementDataNumeric(request, value));
+    */
+    /*
+        public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
+            NetworkStats stats = resourceContext.getSystemInformation().getNetworkStats("localhost", PORT);
+            processInfo.refresh();
+            for (MeasurementScheduleRequest request : metrics) {
+                if (request.getName().startsWith("NetworkStat.")) {
+                    int val = stats.getByName(request.getName().substring("NetworkStat.".length()));
+                    report.addData(new MeasurementDataNumeric(request, (double) val));
+                } else if (request.getName().startsWith("Process.")) {
+                    Double value = ObjectUtil.lookupDeepNumericAttributeProperty(processInfo, request.getName().substring(
+                        "Process.".length()));
+                    report.addData(new MeasurementDataNumeric(request, value));
+                }
             }
         }
-    }
+        */
 }

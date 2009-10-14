@@ -1,6 +1,6 @@
 /*
 * RHQ Management Platform
-* Copyright (C) 2005-2008 Red Hat, Inc.
+* Copyright (C) 2009 Red Hat, Inc.
 * All rights reserved.
 *
 * This program is free software; you can redistribute it and/or modify
@@ -22,23 +22,44 @@
 */
 package org.rhq.core.clientapi.server.plugin.content;
 
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Collection;
+
 /**
- * Indicates a content provider has the capability to provide repos into the server. Repo synchronization will be
- * done through calls defined in this interface. This interface should use the configuration settings
- * passed into the plugin through {@link ContentProvider#initialize(org.rhq.core.domain.configuration.Configuration)}
+ * Holds on to the repos and repo groups to be imported into the server through a {@link RepoSource}.
  *
  * @author Jason Dobies
  */
-public interface RepoSource {
+public class RepoImportReport {
 
-    /**
-     * Requests the content provider return a list of all repos it wants to ensure exist in the server. This call
-     * should return the current state of the repos as known to the content provider, not a diff of what has
-     * changed from the previous call to it. The server will resolve the differences.
-     *
-     * @return contains a list of all groups and repos to be imported into the system
-     * @throws Exception if there is an error retrieving the repos that should be reported to the user
-     */
-    RepoImportReport importRepos() throws Exception;
+    private List<RepoDetails> repos = new ArrayList<RepoDetails>();
+    private List<RepoGroupDetails> repoGroups = new ArrayList<RepoGroupDetails>();
 
+    public RepoImportReport() {
+    }
+
+    public List<RepoDetails> getRepos() {
+        return repos;
+    }
+
+    public void addRepo(RepoDetails repo) {
+        repos.add(repo);
+    }
+
+    public void addRepos(Collection<RepoDetails> repos) {
+        repos.addAll(repos);
+    }
+
+    public List<RepoGroupDetails> getRepoGroups() {
+        return repoGroups;
+    }
+
+    public void addRepoGroup(RepoGroupDetails repoGroup) {
+        repoGroups.add(repoGroup);
+    }
+
+    public void addRepoGroups(Collection<RepoGroupDetails> repoGroups) {
+        repoGroups.addAll(repoGroups);
+    }
 }

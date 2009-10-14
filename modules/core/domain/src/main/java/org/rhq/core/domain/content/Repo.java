@@ -129,7 +129,7 @@ public class Repo implements Serializable {
     private Set<RepoPackageVersion> repoPackageVersions;
 
     //@OneToMany(mappedBy = "repo", fetch = FetchType.LAZY)
-    private Set<RepoRepoGroup> repoRepoGroups;
+    //private Set<RepoRepoGroup> repoRepoGroups;
 
     // Constructor ----------------------------------------
 
@@ -433,83 +433,83 @@ public class Repo implements Serializable {
         return doomed;
     }
 
-    /**
-     * Returns the explicit mapping entities.
-     *
-     * @return the mapping entities
-     *
-     * @see    #getRepoGroups()
-     */
-    public Set<RepoRepoGroup> getRepoRepoGroups() {
-        return repoRepoGroups;
-    }
-
-    /**
-     * The repogroups that this repo belongs to. 
-     * 
-     * <p>The returned set is not backed by this entity - if you want to alter 
-     * the set of associated repogroups,
-     * use {@link #getRepoRepoGroups()} or {@link #addRepoGroup(RepoGroup)},
-     * {@link #removeRepoGroup(RepoGroup)}.</p>
-     */
-    public Set<RepoGroup> getRepoGroups() {
-        HashSet<RepoGroup> repoGroups = new HashSet<RepoGroup>();
-
-        if (repoRepoGroups != null) {
-            for (RepoRepoGroup rrg : repoRepoGroups) {
-                repoGroups.add(rrg.getRepoRepoGroupPK().getRepoGroup());
-            }
-        }
-
-        return repoGroups;
-    }
-
-    /**
-     * Directly assign a repogroup to this repo.
-     *
-     * @param  repoGroup
-     *
-     * @return the mapping that was added
-     */
-    public RepoRepoGroup addRepoGroup(RepoGroup repoGroup) {
-        if (this.repoRepoGroups == null) {
-            this.repoRepoGroups = new HashSet<RepoRepoGroup>();
-        }
-
-        RepoRepoGroup mapping = new RepoRepoGroup(this, repoGroup);
-        this.repoRepoGroups.add(mapping);
-        return mapping;
-    }
-
-    /**
-     * Removes association with a repo group, if it exists. If it does exist, the mapping that was removed is
-     * returned; if the given repo group did not exist as one that is a associated to this repo, <code>null</code> is
-     * returned.
-     *
-     * @param  repoGroup the repo group to disassociate from this repo
-     *
-     * @return the mapping that was removed or <code>null</code> if the repo group was not associated with this repo
-     */
-    public RepoRepoGroup removeRepoGroup(RepoGroup repoGroup) {
-        if ((this.repoRepoGroups == null) || (repoGroup == null)) {
-            return null;
-        }
-
-        RepoRepoGroup doomed = null;
-
-        for (RepoRepoGroup rrg : this.repoRepoGroups) {
-            if (repoGroup.equals(rrg.getRepoRepoGroupPK().getRepoGroup())) {
-                doomed = rrg;
-                break;
-            }
-        }
-
-        if (doomed != null) {
-            this.repoRepoGroups.remove(doomed);
-        }
-
-        return doomed;
-    }
+    //    /**
+    //     * Returns the explicit mapping entities.
+    //     *
+    //     * @return the mapping entities
+    //     *
+    //     * @see    #getRepoGroups()
+    //     */
+    //    public Set<RepoRepoGroup> getRepoRepoGroups() {
+    //        return repoRepoGroups;
+    //    }
+    //
+    //    /**
+    //     * The repogroups that this repo belongs to. 
+    //     * 
+    //     * <p>The returned set is not backed by this entity - if you want to alter 
+    //     * the set of associated repogroups,
+    //     * use {@link #getRepoRepoGroups()} or {@link #addRepoGroup(RepoGroup)},
+    //     * {@link #removeRepoGroup(RepoGroup)}.</p>
+    //     */
+    //    public Set<RepoGroup> getRepoGroups() {
+    //        HashSet<RepoGroup> repoGroups = new HashSet<RepoGroup>();
+    //
+    //        if (repoRepoGroups != null) {
+    //            for (RepoRepoGroup rrg : repoRepoGroups) {
+    //                repoGroups.add(rrg.getRepoRepoGroupPK().getRepoGroup());
+    //            }
+    //        }
+    //
+    //        return repoGroups;
+    //    }
+    //
+    //    /**
+    //     * Directly assign a repogroup to this repo.
+    //     *
+    //     * @param  repoGroup
+    //     *
+    //     * @return the mapping that was added
+    //     */
+    //    public RepoRepoGroup addRepoGroup(RepoGroup repoGroup) {
+    //        if (this.repoRepoGroups == null) {
+    //            this.repoRepoGroups = new HashSet<RepoRepoGroup>();
+    //        }
+    //
+    //        RepoRepoGroup mapping = new RepoRepoGroup(this, repoGroup);
+    //        this.repoRepoGroups.add(mapping);
+    //        return mapping;
+    //    }
+    //
+    //    /**
+    //     * Removes association with a repo group, if it exists. If it does exist, the mapping that was removed is
+    //     * returned; if the given repo group did not exist as one that is a associated to this repo, <code>null</code> is
+    //     * returned.
+    //     *
+    //     * @param  repoGroup the repo group to disassociate from this repo
+    //     *
+    //     * @return the mapping that was removed or <code>null</code> if the repo group was not associated with this repo
+    //     */
+    //    public RepoRepoGroup removeRepoGroup(RepoGroup repoGroup) {
+    //        if ((this.repoRepoGroups == null) || (repoGroup == null)) {
+    //            return null;
+    //        }
+    //
+    //        RepoRepoGroup doomed = null;
+    //
+    //        for (RepoRepoGroup rrg : this.repoRepoGroups) {
+    //            if (repoGroup.equals(rrg.getRepoRepoGroupPK().getRepoGroup())) {
+    //                doomed = rrg;
+    //                break;
+    //            }
+    //        }
+    //
+    //        if (doomed != null) {
+    //            this.repoRepoGroups.remove(doomed);
+    //        }
+    //
+    //        return doomed;
+    //    }
 
     @Override
     public String toString() {

@@ -154,7 +154,7 @@ public class RepoGroup implements Serializable {
 
         RepoRepoGroup mapping = new RepoRepoGroup(repo, this);
         this.repoRepoGroups.add(mapping);
-        repo.addRepoGroup(this);
+        //repo.addRepoGroup(this);
         return mapping;
     }
 
@@ -177,7 +177,7 @@ public class RepoGroup implements Serializable {
         for (RepoRepoGroup rrg : this.repoRepoGroups) {
             if (repo.equals(rrg.getRepoRepoGroupPK().getRepo())) {
                 doomed = rrg;
-                repo.removeRepoGroup(this);
+                //repo.removeRepoGroup(this);
                 break;
             }
         }

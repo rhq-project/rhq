@@ -84,6 +84,8 @@
     <classpathentry kind="src" path="modules/plugins/grub/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/samba/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/samba/src/main/java"/>    
+	<classpathentry kind="src" path="modules/plugins/sudoers/src/test/java"/>
+	<classpathentry kind="src" path="modules/plugins/sudoers/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/hudson/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/platform/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/apt/src/main/java"/>

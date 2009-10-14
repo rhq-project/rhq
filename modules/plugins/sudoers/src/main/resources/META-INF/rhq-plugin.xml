@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin name="Sudoers"
+        displayName="Sudo Access"
+        description="Support for *nix hosts service"
+        package="org.rhq.plugins.sudoers"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <depends plugin="Augeas"/>
+
+   <service name="Sudoers"
+            description="The static table lookup for host names"
+            discovery="SudoersDiscoveryComponent"
+            class="SudoersComponent">
+
+       <runs-inside>
+         <parent-resource-type name="Linux"    plugin="Platforms"/>
+         <parent-resource-type name="Windows"  plugin="Platforms"/>
+         <parent-resource-type name="Solaris"  plugin="Platforms"/>
+         <parent-resource-type name="HP-UX"    plugin="Platforms"/>
+         <parent-resource-type name="AIX"      plugin="Platforms"/>
+         <parent-resource-type name="FreeBSD"  plugin="Platforms"/>
+         <parent-resource-type name="Mac OS X" plugin="Platforms"/>
+         <parent-resource-type name="Java"     plugin="Platforms"/>
+       </runs-inside>
+
+      <plugin-configuration>
+         <c:group name="augeas" displayName="Augeas Settings">
+            <c:simple-property name="lenses-path" displayName="Augeas Lenses Path"
+                               default="/usr/share/augeas/lenses" required="true"
+                               description="Full path to the augeas lenses directory. Example: /usr/local/share/augeas/lenses"/>
+            <c:simple-property name="root-path" displayName="Augeas Root Path" default="/tmp" required="true"
+                               description="Path from which augeas should begin to search for configuration files. Example: /"/>
+         </c:group>
+         <c:group name="sudoers" displayName="Sudoers Settings">
+            <c:simple-property name="sudoers-path" displayName="Sudoers File Path" required="true"
+                               default="/etc/sudoers" description="Location of the sudoers file."/>
+            <c:simple-property name="augeas-sudoers-path" displayName="Augeas Sudoers Tree Path" required="true"
+                               default="/files/etc/sudoers/spec[*]" description="Augeas tree location of the sudoers configuration values."/>
+         </c:group>
+      </plugin-configuration>
+
+      <resource-configuration>
+         <c:list-property name="entries">
+            <c:map-property name="entry">
+              <c:simple-property name="user" displayName="User/Group" type="string" required="true" activationPolicy="immediate"
+                                  description="The User/User Alias/Group/Group Alias who needs to be given access to run a command. Alternatively you can specify aliases defined using User_Alias. Eg:  if you had  this defined previously User_Alias  OPERATORS = joe, mike, jude - You could enter OPERATORS for the user"/>
+               <c:simple-property name="host" displayName="Host Alias" type="string" required="true" activationPolicy="immediate"
+                                  description="The Host alias of the terminal from which the above user can run the given command. Set it to ALL if the user is allowed to execute from any host.   Alternatively if you have a Host_Alias defined  you can use that here. Eg: if you defined Host_Alias OFNET = 10.1.2.0/255.255.255.0 - you could use &quot;OFNET'&quot; here"/>
+               <c:simple-property name="command" displayName="Command" type="string" required="false" activationPolicy="immediate"
+                                  description="The Command/Command Alias that the specified user is allowed to execute from the specified hosts. Set it to ALL if the user is allowed to execute any command.  Alternatively if you have a Cmnd_Alias defined you can use that here. Eg:if you defined  Cmnd_Alias NETWORKING = /sbin/route, /sbin/ifconfig, /bin/ping, /sbin/dhclient, /usr/bin/net, /sbin/iptables - in /etc/sudoers you can specify NETWORKING here."/>
+               <c:simple-property name="runAsUser" displayName="Run as User" type="string" required="false" activationPolicy="immediate"
+                                  description="The User name/Run Alias of the user the specified command will be run as. For example if you wanted the command to be run as user 'foo' you would specify foo here. Set it to ALL if the user is allowed to execute the command as any user. Alternatively if you have a Run_Alias defined you can use that here. Eg:if you defined  Runas_Alias    OP = root, operator - in /etc/sudoers you can specify OP here."/>
+               <c:simple-property name="password" displayName="Require Password" type="boolean" required="false" activationPolicy="immediate"
+                                  description="True if password is required to execute the command. False otherwise."/>
+            </c:map-property>
+         </c:list-property>
+      </resource-configuration>
+
+   </service>
+
+</plugin>

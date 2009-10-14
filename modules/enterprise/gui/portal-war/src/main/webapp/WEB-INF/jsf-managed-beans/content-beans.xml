@@ -99,8 +99,8 @@
 
    <!-- /rhq/content/contentProvider.xhtml -->
    <managed-bean>
-      <managed-bean-name>ContentSourceDetailsUIBean</managed-bean-name>
-      <managed-bean-class>org.rhq.enterprise.gui.content.ContentSourceDetailsUIBean</managed-bean-class>
+      <managed-bean-name>ContentProviderDetailsUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.content.ContentProviderDetailsUIBean</managed-bean-class>
       <managed-bean-scope>session</managed-bean-scope>
    </managed-bean>
    <managed-bean>

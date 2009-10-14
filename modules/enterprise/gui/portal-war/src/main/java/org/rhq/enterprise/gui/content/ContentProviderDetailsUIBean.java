@@ -31,7 +31,7 @@ import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
-public class ContentSourceDetailsUIBean {
+public class ContentProviderDetailsUIBean {
     private ContentSource contentSource;
 
     public ContentSource getContentSource() {

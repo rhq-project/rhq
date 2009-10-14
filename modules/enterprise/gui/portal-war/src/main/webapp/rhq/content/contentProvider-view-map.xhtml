@@ -44,10 +44,10 @@ THIS TEXT WILL BE REMOVED.
       <h:form id="editContentProviderConfigurationForm" onsubmit="prepareInputsForSubmission(this)">
 
          <input type="hidden" name="mode" value="edit"/>
-         <input type="hidden" name="id" value="#{ContentSourceDetailsUIBean.contentSource.id}"/>
+         <input type="hidden" name="id" value="#{ContentProviderDetailsUIBean.contentSource.id}"/>
 
-         <onc:config configurationDefinition="#{ContentSourceDetailsUIBean.contentSourceTypeConfigurationDefinition}"
-                     configuration="#{ContentSourceDetailsUIBean.contentSource.configuration}"
+         <onc:config configurationDefinition="#{ContentProviderDetailsUIBean.contentSourceTypeConfigurationDefinition}"
+                     configuration="#{ContentProviderDetailsUIBean.contentSource.configuration}"
                      listName="#{param.listName}"/>
 
          <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell">

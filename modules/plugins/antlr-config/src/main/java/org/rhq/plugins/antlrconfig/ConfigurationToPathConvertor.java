@@ -23,6 +23,7 @@
 
 package org.rhq.plugins.antlrconfig;
 
+import java.util.Collection;
 import java.util.List;
 
 import org.rhq.core.domain.configuration.Property;
@@ -44,8 +45,19 @@ public interface ConfigurationToPathConvertor {
      * 
      * @param treePath the individual path elements won't have their type set, 
      * but all other info will be available (i.e. name, text and position). The position
-     * is absolute (nth child of the parent, instead of nth child of given type)
-     * @return
+     * is absolute (n-th child of the parent, instead of nth child of given type)
+     * @return the property definition corresponding to given path in the tree. The property definition
+     * is required to have all the parents properly set.
      */
     PropertyDefinition getPropertyDefinition(List<PathElement> treePath);
+    
+    /**
+     * Finds properties with corresponding property definition starting at given property
+     * and continuing with all its sub-properties.
+     * 
+     * @param start the property to start searching with
+     * @param definition the definition to look for
+     * @return the corresponding properties or an empty collection if none such found
+     */
+    Collection<Property> findCorrespondingProperties(Property start, PropertyDefinition definition);
 }

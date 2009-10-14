@@ -43,6 +43,8 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.plugins.antlrconfig.NewEntryCreator.OpDef;
+import org.rhq.plugins.antlrconfig.tokens.Id;
+import org.rhq.plugins.antlrconfig.tokens.Unordered;
 
 /**
  * Maps RHQ {@link Configuration} objects to Antlr trees and back.
@@ -55,6 +57,8 @@ public class ConfigMapper {
     private NewEntryCreator newEntryCreator;
     private String[] treeTypeNames;
     private ConfigurationDefinition configurationDefinition;
+    
+    AntlrTreeStructure astStructure = new AntlrTreeStructure();
     
     public ConfigMapper() {
     }
@@ -178,17 +182,26 @@ public class ConfigMapper {
             TreePath path = new TreePath(tree, pathConvertor.getPathRelativeToParent(def), treeTypeNames);
             List<CommonTree> treeMatches = path.matches();
             
+            boolean lookingForChildren = path.getPath().size() > 1;
+            
             //now figure out what to delete and what to add
             for (Property prop : matchedProperties) {
-                String propTreePath = pathConvertor.getPathRelativeToParent(prop);
-                TreePath treePath = new TreePath(tree, propTreePath, treeTypeNames);
-                CommonTree match = treePath.match();
+                CommonTree match = getMatch(prop, tree, treeMatches, lookingForChildren);
                 
                 MergeRecord rec = new MergeRecord();
                 rec.property = prop;
                 rec.tree = match;
               
-                mergeRecords.add(rec);
+                if (match == null) {
+                    mergeRecords.add(rec);
+                } else if (prop instanceof PropertySimple) {
+                    //only add in updates
+                    String propValue = ((PropertySimple)prop).getStringValue();
+                    String matchValue = match.getText();
+                    if (!propValue.equals(matchValue)) {
+                        mergeRecords.add(rec);
+                    }
+                }
                 
                 if (match != null) {
                     int treeIdx = treeMatches.indexOf(match);
@@ -250,6 +263,80 @@ public class ConfigMapper {
                 break;
             }
         }
+    }
+    
+    private CommonTree getMatch(Property prop, CommonTree tree, List<CommonTree> possibleMatches, boolean lookingForChildren) throws RecognitionException, MatchException {
+        if (lookingForChildren && tree.getToken() instanceof Unordered) {
+            List<CommonTree> idTokensInTree = new ArrayList<CommonTree>();
+            for(CommonTree child : astStructure.getChildren(tree)) {
+                getIdTokensInTree(child, idTokensInTree);
+            }
+            
+            if (idTokensInTree.size() == 0) return null;
+            
+            //generally we cannot assume that all the Id tokens will be in the same
+            //position in the tree. We need to recompute the position for each such id.
+            for(CommonTree idToken : idTokensInTree) {
+                PropertyDefinition idPropDef = pathConvertor.getPropertyDefinition(TreePath.getPath(idToken, treeTypeNames));
+                String idValue = idToken.getText();
+                
+                //now find out the corresponding property for the id
+                Collection<Property> idProps = pathConvertor.findCorrespondingProperties(prop, idPropDef);
+                if (idProps.size() != 1) {
+                    if (idProps.size() == 0) {
+                        throw new MatchException("Found 0 Id properties in the subtree of property " + prop + " but was expecting 1.");
+                    } else {
+                        throw new MatchException("Found more than 1 Id properties in the subtree of property " + prop);
+                    }
+                }
+                
+                Property idProp = idProps.iterator().next();
+                if (!(idProp instanceof PropertySimple)) {
+                    throw new MatchException("Id property must be a simple property but is instead " + idProp);
+                }
+                
+                String value = ((PropertySimple)idProp).getStringValue();
+                if (value.equals(idValue)) {
+                    //right off to finding the right tree
+                    return getParentOutOf(idToken, possibleMatches);
+                }
+            }
+            
+            return null;
+        } else {
+            String propTreePath = pathConvertor.getPathRelativeToParent(prop);
+            TreePath treePath = new TreePath(tree, propTreePath, treeTypeNames);
+            return treePath.match();
+        }
+    }
+    
+    private void getIdTokensInTree(CommonTree tree, List<CommonTree> list) {
+        if (tree.getToken() instanceof Id) {
+            list.add(tree);
+            return;
+        }
+        
+        //do not traverse into another Unordered dictionary
+        if (tree.getToken() instanceof Unordered) {
+            return;
+        }
+        
+        for(CommonTree child : astStructure.getChildren(tree)) {
+            getIdTokensInTree(child, list);
+        }
+    }
+    
+    private CommonTree getParentOutOf(CommonTree child, List<CommonTree> possibleParents) {
+        CommonTree parent = child;
+        while (parent != null) {
+            if (possibleParents.contains(parent)) {
+                break;
+            }
+            
+            parent = astStructure.getParent(parent);
+        }
+        
+        return parent;
     }
     
     private static class MergeRecord {

@@ -24,12 +24,16 @@
 package org.rhq.plugins.antlrconfig;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
+import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
@@ -186,6 +190,43 @@ public class DefaultConfigurationToPathConvertor implements ConfigurationToPathC
         return null;
     }
 
+    public Collection<Property> findCorrespondingProperties(Property start, PropertyDefinition definition) {
+        int startDepth = getDepth(start);
+        int defDepth = getDepth(definition);
+        
+        if (defDepth < startDepth) return Collections.emptyList();
+        
+        ArrayList<Property> depthLevel = new ArrayList<Property>();
+        depthLevel.add(start);
+        
+        while (startDepth < defDepth) {
+            ArrayList<Property> nextDepthLevel = new ArrayList<Property>();
+            while (depthLevel.size() > 0) {
+                Property prop = depthLevel.remove(0);
+                
+                if (prop instanceof PropertyList) {
+                    nextDepthLevel.addAll(((PropertyList) prop).getList());
+                } else if (prop instanceof PropertyMap) {
+                    nextDepthLevel.addAll(((PropertyMap)prop).getMap().values());
+                }
+            }
+            startDepth++;
+            depthLevel = nextDepthLevel;
+            
+            if (depthLevel.size() == 0) {
+                return Collections.emptyList();
+            }
+        }
+        
+        Iterator<Property> it = depthLevel.iterator();
+        while(it.hasNext()) {
+            if (!it.next().getName().equals(definition.getName())) {
+                it.remove();
+            }
+        }
+        return depthLevel;
+    }
+
     private int getPartialMatchNextFollowupIndex(PathElement element, int followupIndex, String name) {
         if (!name.startsWith(NAME_PREFIX)) return -1;
         if (NAME_PREFIX_LENGTH + followupIndex > name.length()) return -1;
@@ -255,6 +296,42 @@ public class DefaultConfigurationToPathConvertor implements ConfigurationToPathC
         
         return null;
     }
+    
+    private int getDepth(Property prop) {
+        int depth = 0;
+        Property parent = prop.getParentList();
+        if (parent == null) parent = prop.getParentMap();
+        
+        while (parent != null) {
+            depth++;
+         
+            Property p = parent.getParentList();
+            if (p == null) p = parent.getParentMap();
+            
+            parent = p;
+        }
+        
+        return depth;
+    }
+    
+    private int getDepth(PropertyDefinition def) {
+        int depth = 0;
+        
+        PropertyDefinition parent = def.getParentPropertyListDefinition();
+        if (parent == null) parent = def.getParentPropertyMapDefinition();
+        
+        while (parent != null) {
+            depth++;
+            
+            PropertyDefinition p = parent.getParentPropertyListDefinition();
+            if (p == null) p = parent.getParentPropertyMapDefinition();
+            
+            parent = p;
+        }
+        
+        return depth;
+    }
+    
     private static class AbsoluteIndexAndFollowupIndex {
         public int absoluteIndex;
         public int followupIndex;

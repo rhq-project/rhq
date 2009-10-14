@@ -55,6 +55,7 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.plugin.content.ContentProviderPluginContainer;
+import org.jboss.annotation.IgnoreDependency;
 
 @Stateless
 public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
@@ -65,6 +66,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
 
     @EJB
     private AuthorizationManagerLocal authzManager;
+    @IgnoreDependency
     @EJB
     private ContentSourceManagerLocal contentSourceManager;
 

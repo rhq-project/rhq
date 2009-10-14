@@ -104,6 +104,7 @@ e
         <column name="ID" type="INTEGER" required="true" default="sequence-only" initial="10001" primarykey="true"/>
         <column name="NAME" type="VARCHAR2" required="false" size="100"/>
         <column name="DESCRIPTION" type="VARCHAR2" required="false" size="500"/>
+        <column name="CONFIG_ID" type="VARCHAR2" required="false" references="RHQ_CONFIG"/>
         <column name="CONFIG_DEF_ID" type="INTEGER" required="false" references="RHQ_CONFIG_DEF"/>
         <column name="IS_DEFAULT" type="BOOLEAN" required="false"/>
     </table>

@@ -25,11 +25,10 @@
    </properties>
 
    <dependencies>
-
       <dependency>
          <groupId>net.augeas</groupId>
-         <artifactId>java-augeas</artifactId>
-         <version>1.0</version>
+         <artifactId>augeas</artifactId>
+         <version>0.0.1</version>
       </dependency>
 
       <dependency>

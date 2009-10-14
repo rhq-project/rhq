@@ -32,19 +32,21 @@ package org.rhq.core.clientapi.server.plugin.content;
 public class RepoDetails {
 
     private String name;
-    private String parentRepoName;
     private String description;
+
+    private String parentRepoName;
+
+    private String repoGroup;
 
     public RepoDetails(String name) {
         setName(name);
     }
 
-    public RepoDetails(String name, String parentRepoName, String description) {
+    public RepoDetails(String name, String parentRepoName) {
         setName(name);
         setParentRepoName(parentRepoName);
-        setDescription(description);
     }
-
+    
     /**
      * Returns the identifying name of the repo.
      *
@@ -104,5 +106,25 @@ public class RepoDetails {
      */
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    /**
+     * Returns the name (used to identify the group in the server) of the group the repo should be belong to
+     * when it is imported.
+     *
+     * @return may be <code>null</code>
+     */
+    public String getRepoGroup() {
+        return repoGroup;
+    }
+
+    /**
+     * Sets the name of the group to assign this repo to. If the group doesn't exist in the system or elsewhere in
+     * the import repos report, the repo will be created with no group membership.
+     *
+     * @param repoGroup may be <code>null</code> to indicate the repo does not belong to a group
+     */
+    public void setRepoGroup(String repoGroup) {
+        this.repoGroup = repoGroup;
     }
 }

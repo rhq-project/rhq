@@ -41,6 +41,7 @@ import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
 import org.rhq.core.clientapi.server.plugin.content.PackageSource;
 import org.rhq.core.clientapi.server.plugin.content.RepoSource;
 import org.rhq.core.clientapi.server.plugin.content.RepoDetails;
+import org.rhq.core.clientapi.server.plugin.content.RepoImportReport;
 import org.rhq.core.clientapi.server.plugin.content.metadata.ContentSourcePluginMetadataManager;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.ContentSource;
@@ -133,7 +134,7 @@ public class ContentProviderManager {
             // We can come back and revisit if we need more fine-grained locking.
             synchronized (synchronizeContentSourceLock) {
                 progress.append(new Date()).append(": ");
-                progress.append("Start synchronization of content source [" + contentSource.getName() + "]");
+                progress.append("Start synchronization of content source [").append(contentSource.getName()).append("]");
                 progress.append('\n');
                 progress.append(new Date()).append(": ");
                 progress.append("Getting currently known list of content source packages...");
@@ -159,10 +160,11 @@ public class ContentProviderManager {
 
                 start = System.currentTimeMillis();
 
-                List<RepoDetails> repos = repoSource.importRepos();
+                RepoImportReport report = repoSource.importRepos();
+                List<RepoDetails> repos = report.getRepos();
 
                 if (repos != null && repos.size() > 0) {
-//                manager.
+
                 }
 
                 log.info("importRepos: [" + contentSource.getName() + "]: report has been merged ("

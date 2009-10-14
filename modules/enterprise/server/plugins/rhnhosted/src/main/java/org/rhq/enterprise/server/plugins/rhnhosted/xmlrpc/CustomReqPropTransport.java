@@ -1,10 +1,17 @@
 package org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -14,16 +21,6 @@ import javax.xml.bind.UnmarshalException;
 import org.apache.xmlrpc.client.XmlRpcClient;
 import org.apache.xmlrpc.client.XmlRpcClientException;
 import org.apache.xmlrpc.client.XmlRpcSun15HttpTransport;
-
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.InputStreamReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
-
 import org.apache.xmlrpc.XmlRpcException;
 import org.apache.xmlrpc.XmlRpcRequest;
 import org.apache.xmlrpc.common.XmlRpcStreamConfig;
@@ -31,12 +28,6 @@ import org.apache.xmlrpc.common.XmlRpcStreamRequestConfig;
 import org.apache.xmlrpc.parser.XmlRpcResponseParser;
 import org.apache.xmlrpc.serializer.XmlRpcWriter;
 import org.apache.xmlrpc.util.SAXParsers;
-import org.xml.sax.ContentHandler;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.XMLReader;
-
-import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnSatellite;
 
 public class CustomReqPropTransport extends XmlRpcSun15HttpTransport {
 
@@ -76,6 +67,7 @@ public class CustomReqPropTransport extends XmlRpcSun15HttpTransport {
     }
 
     protected Object readResponse(XmlRpcStreamRequestConfig pConfig, InputStream pStream) throws XmlRpcException {
+        /*
         String data = "";
         try {
             System.err.println("inside CustomReqPropTransport " + pStream.available() 
@@ -87,12 +79,14 @@ public class CustomReqPropTransport extends XmlRpcSun15HttpTransport {
                 sb.append(line + "\n");
             }
             data = sb.toString();
-            //System.err.println("Contents = " + data);
+            System.err.println("Contents = " + data);
         }
         catch (Exception e) {
             e.printStackTrace();
         }
         ByteArrayInputStream str = new ByteArrayInputStream(data.getBytes());
         return super.readResponse(pConfig, str);
+        */
+        return super.readResponse(pConfig, pStream);
     }
 }

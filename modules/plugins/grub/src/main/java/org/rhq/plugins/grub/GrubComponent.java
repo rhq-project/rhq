@@ -19,19 +19,21 @@
 package org.rhq.plugins.grub;
 
 import java.io.File;
-import java.util.List;
 import java.util.Date;
+import java.util.List;
+
 import net.augeas.Augeas;
-import org.rhq.core.pluginapi.inventory.ResourceComponent;
-import org.rhq.core.pluginapi.inventory.ResourceContext;
-import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
-import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
-import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
-import org.rhq.core.domain.measurement.AvailabilityType;
+
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
+import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+import org.rhq.core.pluginapi.inventory.ResourceComponent;
+import org.rhq.core.pluginapi.inventory.ResourceContext;
 
 /**
  * @author Jason Dobies
@@ -49,7 +51,8 @@ public class GrubComponent implements ResourceComponent, ConfigurationFacet {
         PropertySimple grubPathProperty = pluginConfiguration.getSimple("grub-conf-path");
 
         if (grubPathProperty == null) {
-            throw new InvalidPluginConfigurationException("GRUB configuration file path not found in the plugin configuration, cannot start resource component");
+            throw new InvalidPluginConfigurationException(
+                "GRUB configuration file path not found in the plugin configuration, cannot start resource component");
         }
 
         String grubPath = grubPathProperty.getStringValue();
@@ -57,7 +60,8 @@ public class GrubComponent implements ResourceComponent, ConfigurationFacet {
         grubFile = new File(grubPath);
 
         if (!grubFile.exists()) {
-            throw new InvalidPluginConfigurationException("GRUB configuration file not found at specified location: " + grubPath);
+            throw new InvalidPluginConfigurationException("GRUB configuration file not found at specified location: "
+                + grubPath);
         }
     }
 
@@ -95,7 +99,7 @@ public class GrubComponent implements ResourceComponent, ConfigurationFacet {
         String lensesPath = lensesPathProperty.getStringValue();
         String rootPath = rootPathProperty.getStringValue();
 
-        Augeas augeas = new Augeas(rootPath, lensesPath);
+        Augeas augeas = new Augeas(rootPath, lensesPath, Augeas.NONE);
 
         // Find out where to look for the grub tree
         PropertySimple augeasTreeNodeProperty = pluginConfiguration.getSimple("augeas-grub-path");
@@ -107,7 +111,7 @@ public class GrubComponent implements ResourceComponent, ConfigurationFacet {
         // Parse configuration properties
         Configuration configuration = new Configuration();
         configuration.setNotes("Loaded from Augeas at " + new Date());
-        
+
         // Load default properties
         String grubTreeNode = augeasTreeNodeProperty.getStringValue();
 

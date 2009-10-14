@@ -19,19 +19,21 @@
 package org.rhq.plugins.apt;
 
 import java.io.File;
-import java.util.List;
 import java.util.Date;
+import java.util.List;
+
 import net.augeas.Augeas;
-import org.rhq.core.pluginapi.inventory.ResourceComponent;
-import org.rhq.core.pluginapi.inventory.ResourceContext;
-import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
-import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
-import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
-import org.rhq.core.domain.measurement.AvailabilityType;
+
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
+import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+import org.rhq.core.pluginapi.inventory.ResourceComponent;
+import org.rhq.core.pluginapi.inventory.ResourceContext;
 
 /**
  * @author Jason Dobies
@@ -49,7 +51,8 @@ public class AptSourcesComponent implements ResourceComponent, ConfigurationFace
         PropertySimple aptSourcesPathProperty = pluginConfiguration.getSimple("apt-sources-path");
 
         if (aptSourcesPathProperty == null) {
-            throw new InvalidPluginConfigurationException("Apt sources not found in the plugin configuration, cannot start resource component");
+            throw new InvalidPluginConfigurationException(
+                "Apt sources not found in the plugin configuration, cannot start resource component");
         }
 
         String aptSourcesPath = aptSourcesPathProperty.getStringValue();
@@ -57,7 +60,8 @@ public class AptSourcesComponent implements ResourceComponent, ConfigurationFace
         aptSourcesFile = new File(aptSourcesPath);
 
         if (!aptSourcesFile.exists()) {
-            throw new InvalidPluginConfigurationException("Apt sources file not found at specified location: " + aptSourcesPath);
+            throw new InvalidPluginConfigurationException("Apt sources file not found at specified location: "
+                + aptSourcesPath);
         }
     }
 
@@ -95,7 +99,7 @@ public class AptSourcesComponent implements ResourceComponent, ConfigurationFace
         String lensesPath = lensesPathProperty.getStringValue();
         String rootPath = rootPathProperty.getStringValue();
 
-        Augeas augeas = new Augeas(rootPath, lensesPath);
+        Augeas augeas = new Augeas(rootPath, lensesPath, Augeas.NONE);
 
         // Find out where to look for the apt sources tree
         PropertySimple augeasTreeNodeProperty = pluginConfiguration.getSimple("augeas-apt-sources-path");

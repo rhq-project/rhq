@@ -25,7 +25,9 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+
 import net.augeas.Augeas;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
@@ -73,8 +75,8 @@ public class OpenSSHDComponent implements ResourceComponent, ConfigurationFacet,
 
     private void getSSHDProcess() {
 
-        List<ProcessInfo> procs =
-            resourceContext.getSystemInformation().getProcesses("process|basename|match=sshd,process|basename|nomatch|parent=sshd");
+        List<ProcessInfo> procs = resourceContext.getSystemInformation().getProcesses(
+            "process|basename|match=sshd,process|basename|nomatch|parent=sshd");
 
         if (procs.size() == 1) {
             this.processInfo = procs.get(0).getAggregateProcessTree();
@@ -83,8 +85,8 @@ public class OpenSSHDComponent implements ResourceComponent, ConfigurationFacet,
 
     public Configuration loadResourceConfiguration() throws Exception {
         Configuration pluginConfiguration = resourceContext.getPluginConfiguration();
-        ConfigurationDefinition resourceConfigurationDefinition =
-            resourceContext.getResourceType().getResourceConfigurationDefinition();
+        ConfigurationDefinition resourceConfigurationDefinition = resourceContext.getResourceType()
+            .getResourceConfigurationDefinition();
 
         return loadResourceConfiguration(pluginConfiguration, resourceConfigurationDefinition);
     }
@@ -100,7 +102,8 @@ public class OpenSSHDComponent implements ResourceComponent, ConfigurationFacet,
      *
      * @throws Exception if the augeas configuration is incorrect and the configuration cannot be loaded
      */
-    public Configuration loadResourceConfiguration(Configuration pluginConfiguration, ConfigurationDefinition resourceConfigurationDefinition) throws Exception {
+    public Configuration loadResourceConfiguration(Configuration pluginConfiguration,
+        ConfigurationDefinition resourceConfigurationDefinition) throws Exception {
         // Gather data necessary to create the Augeas hook
         PropertySimple lensesPathProperty = pluginConfiguration.getSimple("lenses-path");
 
@@ -117,13 +120,14 @@ public class OpenSSHDComponent implements ResourceComponent, ConfigurationFacet,
         String lensesPath = lensesPathProperty.getStringValue();
         String rootPath = rootPathProperty.getStringValue();
 
-        Augeas augeas = new Augeas(rootPath, lensesPath);
+        Augeas augeas = new Augeas(rootPath, lensesPath, Augeas.NONE);
 
         // Find out where to look for sshd configuration files
         PropertySimple sshdPathProperty = pluginConfiguration.getSimple("config-path");
 
         if (sshdPathProperty == null) {
-            throw new Exception("SSHD configuration path not found in plugin configuration, cannot retrive configuration");
+            throw new Exception(
+                "SSHD configuration path not found in plugin configuration, cannot retrive configuration");
         }
 
         String sshdPath = sshdPathProperty.getStringValue();
@@ -160,7 +164,8 @@ public class OpenSSHDComponent implements ResourceComponent, ConfigurationFacet,
                 // This very hackish bit of code is to suport the list-of-maps standard with a single simple definition in the map
                 PropertyDefinitionList listDef = ((PropertyDefinitionList) p);
                 PropertyDefinitionMap mapDef = ((PropertyDefinitionMap) listDef.getMemberDefinition());
-                PropertyDefinitionSimple simpleDef = (PropertyDefinitionSimple) mapDef.getPropertyDefinitions().values().iterator().next();
+                PropertyDefinitionSimple simpleDef = (PropertyDefinitionSimple) mapDef.getPropertyDefinitions()
+                    .values().iterator().next();
                 String name = simpleDef.getName();
 
                 List<String> allValues = new ArrayList<String>();
@@ -194,7 +199,8 @@ public class OpenSSHDComponent implements ResourceComponent, ConfigurationFacet,
                 int val = stats.getByName(request.getName().substring("NetworkStat.".length()));
                 report.addData(new MeasurementDataNumeric(request, (double) val));
             } else if (request.getName().startsWith("Process.")) {
-                Double value = ObjectUtil.lookupDeepNumericAttributeProperty(processInfo, request.getName().substring("Process.".length()));
+                Double value = ObjectUtil.lookupDeepNumericAttributeProperty(processInfo, request.getName().substring(
+                    "Process.".length()));
                 report.addData(new MeasurementDataNumeric(request, value));
             }
         }

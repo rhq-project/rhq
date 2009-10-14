@@ -81,7 +81,9 @@
 	<classpathentry kind="src" path="modules/plugins/hardware/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/oracle/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/grub/src/test/java"/>
-	<classpathentry kind="src" path="modules/plugins/grub/src/main/java"/>
+    <classpathentry kind="src" path="modules/plugins/grub/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/samba/src/test/java"/>
+	<classpathentry kind="src" path="modules/plugins/samba/src/main/java"/>    
 	<classpathentry kind="src" path="modules/plugins/hudson/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/platform/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/apt/src/main/java"/>
@@ -165,7 +167,7 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/maven/maven-plugin-api/2.0.8/maven-plugin-api-2.0.8.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/codehaus/swizzle/swizzle-confluence/1.2.Alpha1/swizzle-confluence-1.2.Alpha1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jvnet/inflector/0.7.0/inflector-0.7.0.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/net/augeas/java-augeas/1.0/java-augeas-1.0.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/net/augeas/augeas/0.0.1/augeas-0.0.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/json/json/20080701/json-20080701.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/sun/jna/jna/3.0.1/jna-3.0.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/freemarker/freemarker/2.3.11/freemarker-2.3.11.jar"/>

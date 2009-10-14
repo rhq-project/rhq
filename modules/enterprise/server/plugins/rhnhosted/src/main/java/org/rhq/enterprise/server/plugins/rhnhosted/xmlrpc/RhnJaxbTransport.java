@@ -1,6 +1,8 @@
 package org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc;
 
+import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -50,7 +52,7 @@ public class RhnJaxbTransport extends CustomReqPropTransport {
     }
 
     protected Object readResponse(XmlRpcStreamRequestConfig pConfig, InputStream pStream) throws XmlRpcException {
-       /*
+       ///*
         String data = "";
         try {
             System.err.println("inside RhnJaxbTransport " + pStream.available()
@@ -62,13 +64,17 @@ public class RhnJaxbTransport extends CustomReqPropTransport {
                 sb.append(line + "\n");
             }
             data = sb.toString();
-            System.err.println("Contents = " + data);
+            //System.err.println("Contents = " + data);
+            FileWriter fstream = new FileWriter("/tmp/rhnhosted-xmlrpc-debug_dump.xml");
+            BufferedWriter out = new BufferedWriter(fstream);
+            out.write(data);
+            out.close();
         }
         catch (Exception e) {
             e.printStackTrace();
         }
         ByteArrayInputStream str = new ByteArrayInputStream(data.getBytes());
-        */
+        //*/
 
         /**
          * Point of this method is to not require the traditional "methodResponse" xml wrapping
@@ -77,8 +83,8 @@ public class RhnJaxbTransport extends CustomReqPropTransport {
         try {
             JAXBContext jc = JAXBContext.newInstance(jaxbDomain);
             Unmarshaller u = jc.createUnmarshaller();
-            return u.unmarshal(pStream);
-            //return u.unmarshal(str);
+            //return u.unmarshal(pStream);
+            return u.unmarshal(str);
         }
         catch (JAXBException e) {
             e.printStackTrace();

@@ -125,8 +125,10 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     private SubjectManagerLocal subjectManager;
     @EJB
     private ProductVersionManagerLocal productVersionManager;
+/*
     @EJB
     private RepoManagerLocal repoManager;
+*/
 
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
@@ -353,6 +355,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             String repoName = createMe.getName();
 
             // Make sure the repo doesn't already exist. If we add twice, currently we'll get an exception 
+/*
             List<Repo> existingRepo = repoManager.getRepoByName(repoName);
             if (existingRepo != null) {
                 continue;
@@ -367,6 +370,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             catch (RepoException e) {
                 log.error("Error creating repo [" + repo + "]", e);
             }
+*/
         }
 
     }

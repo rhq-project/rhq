@@ -3,17 +3,16 @@
    <modelVersion>4.0.0</modelVersion>
 
    <parent>
-      <groupId>org.jboss.on</groupId>
-      <!--  Bypass the jopr-plugins-parent which can not have children. It must build after the plugins in order to execute integration tests on them. -->
-      <artifactId>jopr-modules-parent</artifactId>
-      <version>2.4.0-SNAPSHOT</version>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-plugins-parent</artifactId>
+      <version>1.4.0-SNAPSHOT</version>
    </parent>
 
    <groupId>org.jboss.on</groupId>
    <artifactId>jopr-jboss-as-plugin</artifactId>
    <packaging>jar</packaging>
 
-   <name>Jopr JBossAS 3.2.x/4.x Plugin</name>
+   <name>RHQ JBossAS 3.2.x/4.x Plugin</name>
    <description>A plugin for managing JBoss Application Server 3.2.x/4.x</description>
 
    <scm>
@@ -33,27 +32,27 @@
       <dependency>
          <groupId>${rhq.groupId}</groupId>
          <artifactId>rhq-core-util</artifactId>
-         <version>${rhq.version}</version>
+         <version>${project.version}</version>
          <scope>provided</scope> <!-- by plugin container -->
       </dependency>
 
       <dependency>
          <groupId>${rhq.groupId}</groupId>
          <artifactId>rhq-core-client-api</artifactId>
-         <version>${rhq.version}</version>
+         <version>${project.version}</version>
          <scope>test</scope> <!-- this is OK. plugins do not have access to clientapi, but this is only for tests so this is OK -->
       </dependency>
       
       <dependency>
          <groupId>${rhq.groupId}</groupId>
          <artifactId>rhq-jmx-plugin</artifactId>
-         <version>${rhq.version}</version>
+         <version>${project.version}</version>
          <scope>provided</scope>
       </dependency>
       
       <dependency>
-         <groupId>org.jboss.on</groupId>
-         <artifactId>jopr-jboss-as-common</artifactId>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-jboss-as-common</artifactId>
          <version>${project.version}</version>
       </dependency>
 
@@ -125,8 +124,8 @@
                            <version>1.6.5</version>
                         </artifactItem>
                         <artifactItem>
-                           <groupId>org.jboss.on</groupId>
-                           <artifactId>jopr-jboss-as-common</artifactId>
+                           <groupId>org.rhq</groupId>
+                           <artifactId>rhq-jboss-as-common</artifactId>
                            <version>${project.version}</version>
                         </artifactItem>
                      </artifactItems>
@@ -199,9 +198,9 @@
                               <mkdir dir="target/itest/lib" />
                               <copy toDir="target/itest/plugins" flatten="true">
                                  <fileset dir="${settings.localRepository}/">
-                                    <include name="org/rhq/rhq-platform-plugin/${rhq.version}/rhq-platform-plugin-${rhq.version}.jar" />
+                                    <include name="org/rhq/rhq-platform-plugin/${project.version}/rhq-platform-plugin-${project.version}.jar" />
                                     <include name="org/jboss/on/jopr-tomcat-plugin/${project.version}/jopr-tomcat-plugin-${project.version}.jar" />
-                                    <include name="org/rhq/rhq-jmx-plugin/${rhq.version}/rhq-jmx-plugin-${rhq.version}.jar" />
+                                    <include name="org/rhq/rhq-jmx-plugin/${project.version}/rhq-jmx-plugin-${project.version}.jar" />
                                  </fileset>
                                  <fileset dir="${project.build.directory}">
                                     <include name="${project.artifactId}-${project.version}.jar" />

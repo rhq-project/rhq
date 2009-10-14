@@ -8,38 +8,38 @@
       <version>1.4.0-SNAPSHOT</version>
    </parent>
 
-   <groupId>org.jboss.on</groupId>
-   <artifactId>jopr-jboss-cache-plugin</artifactId>
+   <groupId>org.rhq</groupId>
+   <artifactId>rhq-sudoers-plugin</artifactId>
    <packaging>jar</packaging>
 
-   <name>RHQ JBossCache 4.x Plugin</name>
-   <description>A plugin for managing JBossCache 4.x services</description>
+   <name>RHQ Augeas-based Sudoers Plugin</name>
+   <description>A plugin for managing the *nix sudoers file</description>
 
    <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/jboss-cache/</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/jboss-cache/</developerConnection>
+      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/sudoers</connection>
+      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/sudoers</developerConnection>
    </scm>
 
    <properties>
-      <scm.module.path>modules/plugins/jboss-cache/</scm.module.path>
+      <scm.module.path>modules/plugins/sudoers/</scm.module.path>
    </properties>
-   
+
    <dependencies>
-   
-     <dependency>
-         <groupId>${rhq.groupId}</groupId>
-         <artifactId>rhq-jmx-plugin</artifactId>
-         <version>${project.version}</version>
-         <scope>provided</scope>
-     </dependency>
-   
-     <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>jopr-jboss-as-plugin</artifactId>
-         <version>${project.version}</version>
+
+      <dependency>
+         <groupId>net.augeas</groupId>
+         <artifactId>augeas</artifactId>
+         <version>0.0.1</version>
       </dependency>
+
+      <dependency>
+         <groupId>com.sun.jna</groupId>
+         <artifactId>jna</artifactId>
+         <version>3.0.9</version>
+      </dependency>
+
    </dependencies>
-   
+
    <profiles>
       <profile>
          <id>integration-tests</id>
@@ -52,8 +52,6 @@
 
          <build>
             <plugins>
-
-               <!-- Integration testing voodoo to load and test this plugin with its plugin dependencies -->
                <plugin>
                   <artifactId>maven-antrun-plugin</artifactId>
                   <executions>
@@ -61,7 +59,8 @@
                         <phase>pre-integration-test</phase>
                         <configuration>
                            <tasks>
-                              <echo>Setting up plugin dependencies for ${project.artifactId}-${project.version}.jar...</echo>
+                              <echo>Setting up plugin dependencies for ${project.artifactId}-${project.version}.jar...
+                              </echo>
                               <property name="settings.localRepository" location="${user.home}/.m2/repository" />
                               <mkdir dir="target/itest" />
                               <mkdir dir="target/itest/plugins" />
@@ -69,9 +68,6 @@
                               <copy toDir="target/itest/plugins" flatten="true">
                                  <fileset dir="${settings.localRepository}/">
                                     <include name="org/rhq/rhq-platform-plugin/${project.version}/rhq-platform-plugin-${project.version}.jar" />
-                                    <include name="org/rhq/rhq-jmx-plugin/${project.version}/rhq-jmx-plugin-${project.version}.jar" />
-                                    <include name="org/jboss/on/rhq-tomcat-plugin/${project.version}/rhq-tomcat-plugin-${project.version}.jar" />
-                                    <include name="org/jboss/on/rhq-jbossas-plugin/${project.version}/rhq-jbossas-plugin-${project.version}.jar" />
                                  </fileset>
                                  <fileset dir="${project.build.directory}">
                                     <include name="${project.artifactId}-${project.version}.jar" />
@@ -103,6 +99,7 @@
                   </executions>
                </plugin>
 
+               <!-- Integration testing voodoo to load and test this plugin with its plugin dependencies -->
                <plugin>
                   <artifactId>maven-surefire-plugin</artifactId>
                   <configuration>
@@ -136,7 +133,6 @@
                   </executions>
                </plugin>
 
-
             </plugins>
          </build>
       </profile>
@@ -147,30 +143,32 @@
          <properties>
             <rhq.rootDir>../../..</rhq.rootDir>
             <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
-            <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/rhq-downloads/rhq-plugins</rhq.deploymentDir>
+            <rhq.deploymentDir>
+               ${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/rhq-downloads/rhq-plugins
+            </rhq.deploymentDir>
          </properties>
 
          <build>
             <plugins>
 
                <plugin>
-                 <artifactId>maven-antrun-plugin</artifactId>
-                 <version>1.1</version>
-                 <executions>
+                  <artifactId>maven-antrun-plugin</artifactId>
+                  <version>1.1</version>
+                  <executions>
 
                      <execution>
                         <id>deploy</id>
                         <phase>compile</phase>
                         <configuration>
-                          <tasks>
-                            <mkdir dir="${rhq.deploymentDir}" />
-                            <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
-                            <echo>*** Updating ${deployment.file}...</echo>
-                            <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}" />
-                          </tasks>
+                           <tasks>
+                              <mkdir dir="${rhq.deploymentDir}" />
+                              <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
+                              <echo>*** Updating ${deployment.file}...</echo>
+                              <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}" />
+                           </tasks>
                         </configuration>
                         <goals>
-                          <goal>run</goal>
+                           <goal>run</goal>
                         </goals>
                      </execution>
 
@@ -192,23 +190,23 @@
                           <goal>run</goal>
                         </goals>
                      </execution>
-               
+                     
                      <execution>
                         <id>undeploy</id>
                         <phase>clean</phase>
                         <configuration>
-                          <tasks>
-                            <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
-                            <echo>*** Deleting ${deployment.file}...</echo>
-                            <delete file="${deployment.file}" />
-                          </tasks>
+                           <tasks>
+                              <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
+                              <echo>*** Deleting ${deployment.file}...</echo>
+                              <delete file="${deployment.file}" />
+                           </tasks>
                         </configuration>
                         <goals>
-                          <goal>run</goal>
+                           <goal>run</goal>
                         </goals>
                      </execution>
 
-                   </executions>
+                  </executions>
                </plugin>
 
             </plugins>

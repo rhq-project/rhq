@@ -28,6 +28,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -229,6 +230,34 @@ public class HostsComponentTest {
         
         Configuration updatedConfiguration = updateResourceConfiguration(getHostFileResource(), configuration, BIG_TIMEOUT);
         
+        assertEquals(configuration, updatedConfiguration);
+    }
+    
+    @Test(dependsOnMethods = "basicUpdateResourceConfiguration")
+    public void updateReorderedResourceConfiguration() throws Exception {
+        Configuration configuration = loadResourceConfiguration(getHostFileResource());
+
+        Configuration reversedConfiguration = configuration.deepCopy();
+        //reverse all the lists in the configuration and update it. this shouldn't change the file at all
+        PropertyList file = reversedConfiguration.getList("config:///file");
+        for(Property prop : file.getList()) {
+            PropertyMap hostDef = (PropertyMap) prop;
+            String aliasesString = hostDef.getSimpleValue("config://$3", "");
+            String[] aliases = aliasesString.split("\\s+");
+            aliasesString = "";
+            for(int i = aliases.length; i > 0; --i) {
+                aliasesString += " " + aliases[i - 1];
+            }
+            if (aliasesString.length() > 0) {
+                aliasesString = aliasesString.substring(1);
+            }
+            hostDef.getSimple("config://$3").setValue(aliasesString);
+        }
+        Collections.reverse(file.getList());
+        
+        Configuration updatedConfiguration = updateResourceConfiguration(getHostFileResource(), reversedConfiguration, BIG_TIMEOUT);
+        
+        //what we get the second time should be the same as the first time
         assertEquals(configuration, updatedConfiguration);
     }
     

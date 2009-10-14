@@ -518,7 +518,7 @@ public class ResourceContainer implements Serializable {
             try {
                 ClassLoader pluginClassLoader = this.resourceContainer.getResourceClassLoader();
                 if (pluginClassLoader == null) {
-                    throw new IllegalStateException("No plugin classloader was specified for " + this + ".");
+                    throw new IllegalStateException("No plugin class loader was specified for " + this + ".");
                 }
                 Thread.currentThread().setContextClassLoader(pluginClassLoader);
                 // This is the actual call into the resource component's facet interface.

@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="modules/common/jboss-as/src/test/java"/>
+	<classpathentry kind="src" path="modules/enterprise/server/plugins/rhnhosted/src/main/java"/>
+	<classpathentry kind="src" path="modules/enterprise/server/plugins/rhnhosted/src/test/java"/>
 	<classpathentry kind="src" path="modules/common/jboss-as/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/jboss-as/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/jboss-as/src/test/java"/>
@@ -81,9 +83,9 @@
 	<classpathentry kind="src" path="modules/plugins/hardware/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/oracle/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/grub/src/test/java"/>
-    <classpathentry kind="src" path="modules/plugins/grub/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/grub/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/samba/src/test/java"/>
-	<classpathentry kind="src" path="modules/plugins/samba/src/main/java"/>    
+	<classpathentry kind="src" path="modules/plugins/samba/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/hudson/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/platform/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/apt/src/main/java"/>
@@ -178,6 +180,9 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/ettrema/milton-api/1.4.1/milton-api-1.4.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/jboss/javassist/3.8.0.GA/javassist-3.8.0.GA.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/net/sf/opencsv/opencsv/1.8/opencsv-1.8.jar"/>
+    <classpathentry exported="true" kind="var" path="M2_REPO/bouncycastle/bcpg-jdk15/140/bcpg-jdk15-140.jar"/>
+    <classpathentry exported="true" kind="var" path="M2_REPO/bouncycastle/bcprov-jdk15/140/bcprov-jdk15-140.jar"/>
 	<classpathentry exported="true" kind="lib" path="modules/enterprise/remoting/webservices/target/rhq-remoting-webservices-1.4.0-SNAPSHOT/wsconsume-output"/>
+    
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

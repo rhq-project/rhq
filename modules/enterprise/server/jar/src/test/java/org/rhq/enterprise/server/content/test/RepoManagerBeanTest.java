@@ -19,9 +19,11 @@
 package org.rhq.enterprise.server.content.test;
 
 import javax.transaction.TransactionManager;
+
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
@@ -54,11 +56,15 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
         Repo repo = new Repo("testCreateContentSourceRepo");
         int id = repoManager.createRepo(overlord, repo).getId();
         Repo lookedUp = repoManager.getRepo(overlord, id);
+        Repo lookedUp2 = repoManager.getRepoByName(lookedUp.getName()).get(0);
+        assert lookedUp2 != null;
         assert lookedUp != null;
         assert id == lookedUp.getId();
+        assert id == lookedUp2.getId();
 
         repoManager.deleteRepo(overlord, id);
         lookedUp = repoManager.getRepo(overlord, id);
         assert lookedUp == null;
+
     }
 }

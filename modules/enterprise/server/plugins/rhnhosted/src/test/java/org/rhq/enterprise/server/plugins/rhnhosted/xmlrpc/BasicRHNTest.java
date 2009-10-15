@@ -25,6 +25,7 @@ import org.apache.xmlrpc.common.TypeFactory;
 import org.apache.xmlrpc.jaxb.JaxbTypeFactory;
 
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelFamilyType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnKickstartableTreeType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageShortType;
@@ -222,24 +223,29 @@ public class BasicRHNTest extends TestCase
 
             List<String> channel_labels = new ArrayList<String>();
             channel_labels.add("rhel-i386-server-5");
+            channel_labels.add("rhn-tools-rhel-i386-server-5");
+            channel_labels.add("rhel-x86_64-server-5");
+            channel_labels.add("rhn-tools-rhel-x86_64-server-5");
             Object[] params = new Object[]{systemid, channel_labels};
             JAXBElement<RhnSatelliteType> result =  (JAXBElement) client.execute("dump.channels", params);
             RhnSatelliteType sat = result.getValue();
 
-            assertFalse(StringUtils.isBlank(sat.getRhnChannels().getRhnChannel().getRhnChannelName()));
-            assertFalse(StringUtils.isBlank(sat.getRhnChannels().getRhnChannel().getRhnChannelSummary()));
-
-            String packages = sat.getRhnChannels().getRhnChannel().getPackages();
-            assertFalse(StringUtils.isBlank(packages));
-            String[] pkgIds = packages.split(" ");
-            ///*
-            System.err.println(pkgIds.length + " package IDs parsed.");
-            System.err.println("package[0] = " + pkgIds[0]);
-            System.err.println("package[1] = " + pkgIds[1]);
-            System.err.println("package[2] = " + pkgIds[2]);
-            System.err.println("package[3] = " + pkgIds[3]);
-            //*/
-            assertTrue(pkgIds.length > 1);
+            List<RhnChannelType> channels = sat.getRhnChannels().getRhnChannel();
+            for (RhnChannelType channel: channels) {
+                assertFalse(StringUtils.isBlank(channel.getRhnChannelName()));
+                assertFalse(StringUtils.isBlank(channel.getRhnChannelSummary()));
+                String packages = channel.getPackages();
+                assertFalse(StringUtils.isBlank(packages));
+                String[] pkgIds = packages.split(" ");
+                System.err.println("Channel Label = " + channel.getLabel());
+                System.err.println("Channel Name = " + channel.getRhnChannelName());
+                System.err.println(pkgIds.length + " package IDs parsed.");
+                System.err.println("package[0] = " + pkgIds[0]);
+                System.err.println("package[1] = " + pkgIds[1]);
+                System.err.println("package[2] = " + pkgIds[2]);
+                System.err.println("package[3] = " + pkgIds[3]);
+                assertTrue(pkgIds.length > 1);
+            }
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -420,6 +426,61 @@ public class BasicRHNTest extends TestCase
             transportFactory.setJaxbDomain("org.rhq.enterprise.server.plugins.rhnhosted.xml");
             transportFactory.setDumpMessageToFile(debugDumpFile);
             transportFactory.setDumpFilePath("/tmp/sample-rhnhosted-dump.kickstartable_trees.xml");
+            client.setTransportFactory(transportFactory);
+
+            List<String> reqLabels = new ArrayList<String>();
+            // To get data for this call, look at channels kickstartable-trees=""
+            reqLabels.add("ks-rhel-i386-server-5");
+            reqLabels.add("ks-rhel-i386-server-5-u1");
+            reqLabels.add("ks-rhel-i386-server-5-u2");
+            reqLabels.add("ks-rhel-i386-server-5-u3");
+            reqLabels.add("ks-rhel-i386-server-5-u4");
+            Object[] params = new Object[]{systemid, reqLabels};
+            JAXBElement<RhnSatelliteType> result = (JAXBElement) client.execute("dump.kickstartable_trees", params);
+            RhnSatelliteType sat = result.getValue();
+
+            List<RhnKickstartableTreeType> trees = sat.getRhnKickstartableTrees().getRhnKickstartableTree();
+
+            for (RhnKickstartableTreeType t: trees) {
+                assertFalse(StringUtils.isBlank(t.getBasePath()));
+                assertFalse(StringUtils.isBlank(t.getBootImage()));
+                assertFalse(StringUtils.isBlank(t.getChannel()));
+                assertFalse(StringUtils.isBlank(t.getInstallTypeLabel()));
+                assertFalse(StringUtils.isBlank(t.getInstallTypeName()));
+                assertFalse(StringUtils.isBlank(t.getKstreeTypeLabel()));
+                assertFalse(StringUtils.isBlank(t.getKstreeTypeName()));
+                assertFalse(StringUtils.isBlank(t.getLabel()));
+                assertFalse(StringUtils.isBlank(t.getLastModified()));
+            }
+
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            success = false;
+        }
+        assertTrue(success);
+    }
+
+    public void testDumpGetRPM() throws Exception
+    {
+        boolean success = true;
+
+        try {
+            String systemid = getSystemId();
+            if (StringUtils.isBlank(systemid)) {
+                System.out.println("Skipping test since systemid is not readable");
+                return;
+            }
+
+            XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
+            config.setServerURL(new URL("http://satellite.rhn.redhat.com/SAT-DUMP"));
+            XmlRpcClient client = new XmlRpcClient();
+            client.setConfig(config);
+            RhnJaxbTransportFactory transportFactory = new RhnJaxbTransportFactory(client);
+            transportFactory.setRequestProperties(getRequestProperties());
+            transportFactory.setJaxbDomain("org.rhq.enterprise.server.plugins.rhnhosted.xml");
+            transportFactory.setDumpMessageToFile(debugDumpFile);
+            transportFactory.setDumpFilePath("/tmp/sample-rhnhosted-dump.get_rpm.xml");
             client.setTransportFactory(transportFactory);
 
             List<String> reqLabels = new ArrayList<String>();

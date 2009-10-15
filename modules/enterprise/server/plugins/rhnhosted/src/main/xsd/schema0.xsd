@@ -41,9 +41,9 @@
       <xs:element type="rhn-package-obsoletes-entryType" name="rhn-package-obsoletes-entry" minOccurs="0"/>
     </xs:sequence>
   </xs:complexType>
-  <xs:complexType name="rhn-distsType">
+  <xs:complexType name="rhn-distsType" mixed="true">
     <xs:sequence>
-      <xs:element type="rhn-distType" name="rhn-dist"/>
+      <xs:element type="rhn-distType" name="rhn-dist" minOccurs="0"/>
     </xs:sequence>
   </xs:complexType>
   <xs:complexType name="rhn-channel-familiesType">
@@ -109,9 +109,9 @@
   <xs:complexType name="rhn-distType">
     <xs:simpleContent>
       <xs:extension base="xs:string">
-        <xs:attribute type="xs:string" name="release"/>
-        <xs:attribute type="xs:string" name="channel-arch"/>
-        <xs:attribute type="xs:string" name="os"/>
+        <xs:attribute type="xs:string" name="release" use="optional"/>
+        <xs:attribute type="xs:string" name="channel-arch" use="optional"/>
+        <xs:attribute type="xs:string" name="os" use="optional"/>
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
@@ -175,9 +175,9 @@
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
-  <xs:complexType name="rhn-channel-parent-channelType">
+  <xs:complexType name="rhn-channel-parent-channelType" mixed="true">
     <xs:sequence>
-      <xs:element type="xs:string" name="rhn-null"/>
+      <xs:element type="xs:string" name="rhn-null" minOccurs="0"/>
     </xs:sequence>
   </xs:complexType>
   <xs:complexType name="rhn-source-packageType">
@@ -250,6 +250,11 @@
       <xs:element type="rhn-kickstart-fileType" name="rhn-kickstart-file" maxOccurs="unbounded" minOccurs="0"/>
     </xs:sequence>
   </xs:complexType>
+  <xs:complexType name="rhn-channel-descriptionType">
+    <xs:sequence>
+      <xs:element type="xs:string" name="rhn-null" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
   <xs:complexType name="rhn-kickstartable-treeType">
     <xs:sequence>
       <xs:element type="rhn-kickstart-filesType" name="rhn-kickstart-files"/>
@@ -276,7 +281,7 @@
   </xs:complexType>
   <xs:complexType name="rhn-channelsType">
     <xs:sequence>
-      <xs:element type="rhn-channelType" name="rhn-channel"/>
+      <xs:element type="rhn-channelType" name="rhn-channel" maxOccurs="unbounded" minOccurs="0"/>
     </xs:sequence>
   </xs:complexType>
   <xs:complexType name="rhn-channelType">
@@ -285,7 +290,13 @@
       <xs:element type="xs:string" name="rhn-channel-basedir"/>
       <xs:element type="xs:string" name="rhn-channel-name"/>
       <xs:element type="xs:string" name="rhn-channel-summary"/>
-      <xs:element type="xs:string" name="rhn-channel-description"/>
+      <xs:element name="rhn-channel-description">
+        <xs:complexType mixed="true">
+          <xs:sequence>
+            <xs:element type="xs:string" name="rhn-null" minOccurs="0"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
       <xs:element type="xs:string" name="rhn-channel-gpg-key-url"/>
       <xs:element type="xs:string" name="rhn-channel-receiving-updates"/>
       <xs:element type="xs:string" name="rhn-channel-last-modified"/>
@@ -298,13 +309,13 @@
       <xs:element type="rhn-channel-errataType" name="rhn-channel-errata"/>
       <xs:element type="xs:string" name="rhn-release"/>
     </xs:sequence>
-    <xs:attribute type="xs:string" name="channel-arch"/>
-    <xs:attribute type="xs:string" name="has-comps"/>
-    <xs:attribute type="xs:string" name="channel-errata"/>
-    <xs:attribute type="xs:string" name="kickstartable-trees"/>
-    <xs:attribute type="xs:string" name="label"/>
-    <xs:attribute type="xs:string" name="packages"/>
-    <xs:attribute type="xs:string" name="channel-id"/>
+    <xs:attribute type="xs:string" name="channel-arch" use="optional"/>
+    <xs:attribute type="xs:string" name="has-comps" use="optional"/>
+    <xs:attribute type="xs:string" name="channel-errata" use="optional"/>
+    <xs:attribute type="xs:string" name="kickstartable-trees" use="optional"/>
+    <xs:attribute type="xs:string" name="label" use="optional"/>
+    <xs:attribute type="xs:string" name="packages" use="optional"/>
+    <xs:attribute type="xs:string" name="channel-id" use="optional"/>
   </xs:complexType>
   <xs:complexType name="rhn-package-requires-entryType">
     <xs:simpleContent>

@@ -58,7 +58,8 @@ public class HostDefCreator implements NewEntryCreator {
     }
     
     
-    public List<OpDef> getInstructions(CommonTree fullTree, Property property) {
+    public List<OpDef> getInstructions(CommonTree fullTree, CommonTree immediateParent, Property property) {
+        //TODO this is missing create instructions for aliases...
         if (HOST_DEF_NAME.equals(property.getName())) {
             try {
                 PropertyMap hostDef = (PropertyMap)property;

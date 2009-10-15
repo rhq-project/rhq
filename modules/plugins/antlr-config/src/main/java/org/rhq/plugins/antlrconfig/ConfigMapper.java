@@ -38,6 +38,7 @@ import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
@@ -119,7 +120,7 @@ public class ConfigMapper {
             boolean isDelete = rec.property == null && rec.tree != null;
             
             if (isAdd) {
-                List<OpDef> instructions = newEntryCreator.getInstructions(configurationFileAST, rec.property);
+                List<OpDef> instructions = newEntryCreator.getInstructions(configurationFileAST, rec.parent, rec.property);
                 applyInstructions(instructions, fileStream);
             } else if (isDelete) {
                 fileStream.delete(rec.tree.getTokenStartIndex(), rec.tree.getTokenStopIndex());
@@ -139,16 +140,9 @@ public class ConfigMapper {
             
             List<CommonTree> matches = subTreePath.matches();
             for(CommonTree match : matches) {
+                //TODO why am i doing this? shouldn't this always be the same as pd? 
                 PropertyDefinition propDef = configFacade.getPropertyDefinition(TreePath.getPath(match, treeTypeNames));
-                Property prop = instantiate(propDef);
-                
-                if (parentList != null) {
-                    parentList.add(prop);
-                } else if (parentMap != null) {
-                    parentMap.put(prop);
-                } else {
-                    configuration.put(prop);
-                }
+                Property prop = instantiate(propDef, configuration, parentList, parentMap);
                 
                 if (propDef instanceof PropertyDefinitionList) {
                     createProperty(root, match, Collections.singleton(((PropertyDefinitionList) propDef).getMemberDefinition()), configuration, (PropertyList)prop, null);
@@ -156,6 +150,20 @@ public class ConfigMapper {
                     createProperty(root, match, ((PropertyDefinitionMap)propDef).getPropertyDefinitions().values(), configuration, null, (PropertyMap)prop);
                 } else {
                     configFacade.applyValue((PropertySimple)prop, match.getText());
+                }
+            }
+            
+            if (matches.size() == 0 && pd.isRequired()) {
+                Property prop = instantiate(pd, configuration, parentList, parentMap);
+                if (pd instanceof PropertyDefinitionSimple) {
+                    ConfigurationTemplate defaultTemplate = configurationDefinition.getDefaultTemplate();
+                    
+                    if (defaultTemplate != null) {
+                        //TODO find the default value for the property we're creating.
+                    } else {
+                        //a poor man's default
+                        ((PropertySimple)prop).setStringValue("");
+                    }
                 }
             }
         }
@@ -191,7 +199,8 @@ public class ConfigMapper {
                 MergeRecord rec = new MergeRecord();
                 rec.property = prop;
                 rec.tree = match;
-              
+                rec.parent = lookingForChildren ? tree : astStructure.getParent(tree);
+                
                 if (match == null) {
                     mergeRecords.add(rec);
                 } else if (prop instanceof PropertySimple) {
@@ -232,16 +241,28 @@ public class ConfigMapper {
         }
     }
     
-    private Property instantiate(PropertyDefinition definition) {
+    private Property instantiate(PropertyDefinition definition, Configuration config, PropertyList parentList, PropertyMap parentMap) {
+        Property prop = null;
+        
         if (definition instanceof PropertyDefinitionSimple) {
-            return new PropertySimple(definition.getName(), null);
+            prop = new PropertySimple(definition.getName(), null);
         } else if (definition instanceof PropertyDefinitionList) {
-            return new PropertyList(definition.getName());
+            prop = new PropertyList(definition.getName());
         } else if (definition instanceof PropertyDefinitionMap) {
-            return new PropertyMap(definition.getName());
+            prop = new PropertyMap(definition.getName());
         }
         
-        return null;
+        if (prop != null) {
+            if (parentList != null) {
+                parentList.add(prop);
+            } else if (parentMap != null) {
+                parentMap.put(prop);
+            } else {
+                config.put(prop);
+            }
+        }
+        
+        return prop;
     }
     
     private void applyInstructions(List<NewEntryCreator.OpDef> instructions, TokenRewriteStream fileStream) {
@@ -339,5 +360,6 @@ public class ConfigMapper {
     private static class MergeRecord {
         public Property property;
         public CommonTree tree;
+        public CommonTree parent;
     }
 }

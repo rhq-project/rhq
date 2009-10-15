@@ -59,9 +59,10 @@ public interface NewEntryCreator {
     
     /**
      * @param fullTree the full tree representing the whole configuration
+     * @param immediateParent the nearest known parent in the tree (might be null)
      * @param property the property that is being added
      * @return the list of instructions to execute on the tree to insert the property into it
      * or null if there is nothing to create at this point.
      */
-    List<OpDef> getInstructions(CommonTree fullTree, Property property);
+    List<OpDef> getInstructions(CommonTree fullTree, CommonTree immediateParent, Property property);
 }

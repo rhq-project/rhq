@@ -128,24 +128,12 @@ public class HostsComponent implements ResourceComponent, ConfigurationFacet {
         }
     }
     
-    /**
-     * TODO this should be provided by the resource context ideally
-     * @return
-     */
     private ConfigurationDefinition getResourceConfigurationDefinition() {
-        ConfigurationDefinition def = new ConfigurationDefinition("", null);
+        ConfigurationDefinition def = resourceContext.getResourceType().getResourceConfigurationDefinition();
+        PropertyDefinitionMap hostDef = (PropertyDefinitionMap) def.getPropertyDefinitionList(FILE_PROPERTY_NAME).getMemberDefinition();
         
-        PropertyDefinitionList aliases = new PropertyDefinitionList(ALIASES_PROPERTY_NAME, null, false, 
-            new PropertyDefinitionSimple(ALIAS_PROPERTY_NAME, null, false, PropertySimpleType.STRING));
-        
-        PropertyDefinitionMap map = new PropertyDefinitionMap(HOST_DEF_PROPERTY_NAME, null, false, 
-            new PropertyDefinitionSimple(IP_ADDRESS_PROPERTY_NAME, null, true, PropertySimpleType.STRING),
-            new PropertyDefinitionSimple(CANONICAL_PROPERTY_NAME, null, true, PropertySimpleType.STRING),
-            aliases);
-        
-        PropertyDefinitionList list = new PropertyDefinitionList(FILE_PROPERTY_NAME, null, true, map);
-        
-        def.put(list);
+        PropertyDefinitionList aliases = new PropertyDefinitionList(ALIASES_PROPERTY_NAME, null, false, new PropertyDefinitionSimple(ALIAS_PROPERTY_NAME, null, false, PropertySimpleType.STRING));
+        hostDef.put(aliases);
         
         return def;
     }

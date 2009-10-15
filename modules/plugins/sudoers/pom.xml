@@ -9,29 +9,22 @@
    </parent>
 
    <groupId>org.rhq</groupId>
-   <artifactId>rhq-samba-plugin</artifactId>
+   <artifactId>rhq-sudoers-plugin</artifactId>
    <packaging>jar</packaging>
 
-   <name>RHQ Samba Plugin</name>
-   <description>A plugin for managing Samba</description>
+   <name>RHQ Augeas-based Sudoers Plugin</name>
+   <description>A plugin for managing the *nix sudoers file</description>
 
    <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/hosts</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/hosts</developerConnection>
+      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/sudoers</connection>
+      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/sudoers</developerConnection>
    </scm>
 
    <properties>
-      <scm.module.path>modules/plugins/samba/</scm.module.path>
+      <scm.module.path>modules/plugins/sudoers/</scm.module.path>
    </properties>
 
    <dependencies>
-
-      <dependency>
-         <groupId>${rhq.groupId}</groupId>
-         <artifactId>rhq-core-plugin-container</artifactId>
-         <version>${project.version}</version>
-         <scope>provided</scope>
-      </dependency>
 
       <dependency>
          <groupId>net.augeas</groupId>
@@ -42,48 +35,10 @@
       <dependency>
          <groupId>com.sun.jna</groupId>
          <artifactId>jna</artifactId>
-         <version>3.0.1</version>
+         <version>3.0.9</version>
       </dependency>
 
    </dependencies>
-
-
-   <build>
-
-      <plugins>
-
-         <plugin>
-            <artifactId>maven-dependency-plugin</artifactId>
-            <version>2.0</version>
-            <executions>
-               <execution>
-                  <id>copy-jna-jar</id>
-                  <phase>process-resources</phase>
-                  <goals>
-                     <goal>copy</goal>
-                  </goals>
-                  <configuration>
-                     <artifactItems>
-                        <artifactItem>
-                           <groupId>com.sun.jna</groupId>
-                           <artifactId>jna</artifactId>
-                           <version>3.0.1</version>
-                        </artifactItem>
-                        <artifactItem>
-                            <groupId>net.augeas</groupId>
-                            <artifactId>java-augeas</artifactId>
-                            <version>1.0</version>
-                        </artifactItem>
-                     </artifactItems>
-                     <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
-                  </configuration>
-               </execution>
-            </executions>
-         </plugin>
-
-      </plugins>
-
-   </build>
 
    <profiles>
       <profile>

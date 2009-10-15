@@ -33,14 +33,11 @@
 
           <c:simple-property name="configurationFile" displayName="Hosts File Path" type="file" required="true" readOnly="true"
                              description="the absolute path of the hosts file (e.g. /etc/hosts on Unix systems or C:\windows\system32\drivers\etc\hosts)"/>
-
-          <c:map-property name="mapKeyNames">
-              <c:simple-property name="entry" default="canonical" readOnly="true"/>
+<!--
+          <c:map-property name="listMemberMapKeyNames">
+              <c:simple-property name="." default="key" readOnly="true"/>
           </c:map-property>
-          
-          <c:map-property name="mapKeyAugeasMappings">
-              <c:simple-property name="entry" default="map_entry_value" readOnly="true"/>
-          </c:map-property>
+-->
       </plugin-configuration>
 
       <resource-configuration>
@@ -50,7 +47,7 @@
                                   description="The IP address of the host entry. The address may be an IPv4 address (e.g., 192.168.1.10) or an IPv6 address (e.g., fec0:0:0:bebe::2)."/>
 
                <c:simple-property name="canonical" displayName="Canonical Host Name" type="string" required="true" activationPolicy="immediate"
-                                  description="The canonical host name to refer to the IP address. Host names may contain only alphanumeric characters, minus signs ('-'), and periods ('.'). They must begin with an alphabetic character and end with an alphanumeric character. (e.g., foo.mydomain.org)"/>
+                                  description="The canonical host name to refer to the IP address. Host names may contain only alphanumeric characters, minus signs ('-'), and periods ('.'). They must begin with an alphabetic character and end with an alphanumeric character (e.g., foo.mydomain.org). A canonical name can be mapped to only one IPv4 address and/or to only one IPv6 address."/>
 
                <c:simple-property name="alias" displayName="Aliases" type="longString" required="false" activationPolicy="immediate"
                                   description="Optional aliases provide for name changes, alternate spellings, shorter host names, or generic host names (e.g., localhost); aliases should be newline or space separated)."/>

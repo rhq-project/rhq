@@ -106,6 +106,7 @@
       <module>grub</module>
       <!-- not behaving       <module>hardware</module> -->
       <module>hosts</module>
+      <module>sudoers</module>      
       <module>hudson</module>
       <!-- error in code generation (see RHQ-1225)  <module>jira</module> -->
       <module>mysql</module>
@@ -113,6 +114,7 @@
       <!-- non-public dependency        <module>onewire</module> -->
       <module>oracle</module>
       <module>perftest</module>
+      <module>samba</module>
       <module>snmptrapd</module>
       <module>sshd</module>
       <module>twitter</module>

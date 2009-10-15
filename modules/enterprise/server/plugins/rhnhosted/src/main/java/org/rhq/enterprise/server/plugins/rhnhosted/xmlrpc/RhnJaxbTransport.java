@@ -96,6 +96,11 @@ public class RhnJaxbTransport extends CustomReqPropTransport {
         /**
          * Point of this method is to not require the traditional "methodResponse" xml wrapping
          * around the response.  RHN just returns the pure XML data.
+         *
+         * TODO:  For error conditions, RHN defaults back to using "methodResponse".
+         * We need to check what the top element is.  If it's "rhn-satellite" do JAXB parsing,
+         * if it's "methodResponse" do traditional XMLRPC parsing.
+         *
          * */
         try {
             JAXBContext jc = JAXBContext.newInstance(jaxbDomain);

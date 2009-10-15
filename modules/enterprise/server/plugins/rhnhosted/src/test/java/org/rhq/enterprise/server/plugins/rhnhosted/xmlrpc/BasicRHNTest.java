@@ -25,10 +25,12 @@ import org.apache.xmlrpc.common.TypeFactory;
 import org.apache.xmlrpc.jaxb.JaxbTypeFactory;
 
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelFamilyType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnKickstartableTreeType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageShortType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnProductNameType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnSatelliteType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnSourcePackageType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.CustomReqPropTransportFactory;
 import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.RhnJaxbTransportFactory;
 
@@ -277,7 +279,6 @@ public class BasicRHNTest extends TestCase
             JAXBElement<RhnSatelliteType> result = (JAXBElement) client.execute("dump.packages_short", params);
             RhnSatelliteType sat = result.getValue();
             List<RhnPackageShortType> pkgs = sat.getRhnPackagesShort().getRhnPackageShort();
-            System.err.println(pkgs.size() + " packages were returned.");
             assertTrue(pkgs.size() == reqPackages.size());
 
             for (RhnPackageShortType pkgShort: pkgs) {
@@ -335,6 +336,117 @@ public class BasicRHNTest extends TestCase
                 assertFalse(StringUtils.isBlank(pkg.getRhnPackageSummary()));
                 assertFalse(StringUtils.isBlank(pkg.getRhnPackageDescription()));
             }
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            success = false;
+        }
+        assertTrue(success);
+    }
+
+    public void testDumpSourcePackages() throws Exception
+    {
+        boolean success = true;
+
+        try {
+            String systemid = getSystemId();
+            if (StringUtils.isBlank(systemid)) {
+                System.out.println("Skipping test since systemid is not readable");
+                return;
+            }
+
+            XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
+            config.setServerURL(new URL("http://satellite.rhn.redhat.com/SAT-DUMP"));
+            XmlRpcClient client = new XmlRpcClient();
+            client.setConfig(config);
+            RhnJaxbTransportFactory transportFactory = new RhnJaxbTransportFactory(client);
+            transportFactory.setRequestProperties(getRequestProperties());
+            transportFactory.setJaxbDomain("org.rhq.enterprise.server.plugins.rhnhosted.xml");
+            transportFactory.setDumpMessageToFile(debugDumpFile);
+            transportFactory.setDumpFilePath("/tmp/sample-rhnhosted-dump.source_packages.xml");
+            client.setTransportFactory(transportFactory);
+
+            List<String> reqPackages = new ArrayList<String>();
+            // To get data for this call, look at channels <source-packages>
+            reqPackages.add("rhn-source-package-41215");
+            reqPackages.add("rhn-source-package-41217");
+            reqPackages.add("rhn-source-package-41218");
+            reqPackages.add("rhn-source-package-41228");
+            Object[] params = new Object[]{systemid, reqPackages};
+            JAXBElement<RhnSatelliteType> result = (JAXBElement) client.execute("dump.source_packages", params);
+            RhnSatelliteType sat = result.getValue();
+
+            List<RhnSourcePackageType> pkgs = sat.getRhnSourcePackages().getRhnSourcePackage();
+            assertTrue(pkgs.size() == reqPackages.size());
+
+            for (RhnSourcePackageType pkg: pkgs) {
+                assertFalse(StringUtils.isBlank(pkg.getBuildTime()));
+                assertFalse(StringUtils.isBlank(pkg.getId()));
+                assertFalse(StringUtils.isBlank(pkg.getLastModified()));
+                assertFalse(StringUtils.isBlank(pkg.getLastModified()));
+                assertFalse(StringUtils.isBlank(pkg.getMd5Sum()));
+                assertFalse(StringUtils.isBlank(pkg.getPackageSize()));
+                assertFalse(StringUtils.isBlank(pkg.getPayloadSize()));
+                assertFalse(StringUtils.isBlank(pkg.getRpmVersion()));
+                assertFalse(StringUtils.isBlank(pkg.getSourceRpm()));
+                System.err.println("SourceRPM = " + pkg.getSourceRpm());
+            }
+
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            success = false;
+        }
+        assertTrue(success);
+    }
+
+    public void testDumpKickstartableTrees() throws Exception
+    {
+        boolean success = true;
+
+        try {
+            String systemid = getSystemId();
+            if (StringUtils.isBlank(systemid)) {
+                System.out.println("Skipping test since systemid is not readable");
+                return;
+            }
+
+            XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
+            config.setServerURL(new URL("http://satellite.rhn.redhat.com/SAT-DUMP"));
+            XmlRpcClient client = new XmlRpcClient();
+            client.setConfig(config);
+            RhnJaxbTransportFactory transportFactory = new RhnJaxbTransportFactory(client);
+            transportFactory.setRequestProperties(getRequestProperties());
+            transportFactory.setJaxbDomain("org.rhq.enterprise.server.plugins.rhnhosted.xml");
+            transportFactory.setDumpMessageToFile(debugDumpFile);
+            transportFactory.setDumpFilePath("/tmp/sample-rhnhosted-dump.kickstartable_trees.xml");
+            client.setTransportFactory(transportFactory);
+
+            List<String> reqLabels = new ArrayList<String>();
+            // To get data for this call, look at channels kickstartable-trees=""
+            reqLabels.add("ks-rhel-i386-server-5");
+            reqLabels.add("ks-rhel-i386-server-5-u1");
+            reqLabels.add("ks-rhel-i386-server-5-u2");
+            reqLabels.add("ks-rhel-i386-server-5-u3");
+            reqLabels.add("ks-rhel-i386-server-5-u4");
+            Object[] params = new Object[]{systemid, reqLabels};
+            JAXBElement<RhnSatelliteType> result = (JAXBElement) client.execute("dump.kickstartable_trees", params);
+            RhnSatelliteType sat = result.getValue();
+
+            List<RhnKickstartableTreeType> trees = sat.getRhnKickstartableTrees().getRhnKickstartableTree();
+
+            for (RhnKickstartableTreeType t: trees) {
+                assertFalse(StringUtils.isBlank(t.getBasePath()));
+                assertFalse(StringUtils.isBlank(t.getBootImage()));
+                assertFalse(StringUtils.isBlank(t.getChannel()));
+                assertFalse(StringUtils.isBlank(t.getInstallTypeLabel()));
+                assertFalse(StringUtils.isBlank(t.getInstallTypeName()));
+                assertFalse(StringUtils.isBlank(t.getKstreeTypeLabel()));
+                assertFalse(StringUtils.isBlank(t.getKstreeTypeName()));
+                assertFalse(StringUtils.isBlank(t.getLabel()));
+                assertFalse(StringUtils.isBlank(t.getLastModified()));
+            }
+
         }
         catch (Exception e) {
             e.printStackTrace();

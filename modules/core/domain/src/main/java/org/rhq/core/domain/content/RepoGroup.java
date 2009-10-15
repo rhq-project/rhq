@@ -37,6 +37,9 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.CascadeType;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 
 /**
  * A RepoGroup represents a set of related {@link Repo}s. Repos can be tied together
@@ -46,12 +49,17 @@ import javax.persistence.Table;
  */
 
 @Entity
+@NamedQueries(
+    @NamedQuery(name = RepoGroup.QUERY_FIND_BY_NAME, query = "SELECT c FROM Repo c WHERE c.name = :name")
+)
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_REPO_GROUP_ID_SEQ")
 @Table(name = "RHQ_REPO_GROUP")
 public class RepoGroup implements Serializable {
     // Constants  --------------------------------------------
 
     private static final long serialVersionUID = 1L;
+
+    public static final String QUERY_FIND_BY_NAME = "RepoGroup.findByName";
 
     // Attributes  --------------------------------------------
 
@@ -70,7 +78,7 @@ public class RepoGroup implements Serializable {
     @ManyToOne
     private RepoGroupType repoGroupType;
 
-    @OneToMany(mappedBy = "repoGroup", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "repoGroup", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<RepoRepoGroup> repoRepoGroups;
 
     // Constructor ----------------------------------------

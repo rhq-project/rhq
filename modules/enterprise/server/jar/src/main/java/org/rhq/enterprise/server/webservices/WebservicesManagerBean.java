@@ -51,6 +51,7 @@ import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.content.RepoGroup;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.criteria.RepoCriteria;
@@ -250,6 +251,19 @@ public class WebservicesManagerBean implements WebservicesRemote {
 
     public Repo getRepo(Subject subject, int repoId) {
         return repoManager.getRepo(subject, repoId);
+    }
+
+    public RepoGroup createRepoGroup(Subject subject, RepoGroup repoGroup)
+        throws RepoException {
+        return repoManager.createRepoGroup(subject, repoGroup);
+    }
+
+    public void deleteRepoGroup(Subject subject, int repoGroupId) {
+        repoManager.deleteRepoGroup(subject, repoGroupId);
+    }
+
+    public RepoGroup getRepoGroup(Subject subject, int repoGroupId) {
+        return repoManager.getRepoGroup(subject, repoGroupId);
     }
 
     public void subscribeResourceToRepos(Subject subject, int resourceId, int[] repoIds) {

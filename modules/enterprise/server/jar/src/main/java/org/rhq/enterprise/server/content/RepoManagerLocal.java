@@ -26,6 +26,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.content.RepoGroup;
 import org.rhq.core.domain.content.composite.RepoComposite;
 import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
@@ -136,9 +137,24 @@ public interface RepoManagerLocal {
     void deleteRepo(Subject subject, int repoId);
 
     /**
+     * @see RepoManagerRemote#createRepoGroup(Subject, RepoGroup)
+     */
+    RepoGroup createRepoGroup(Subject subject, RepoGroup repoGroup) throws RepoException;
+
+    /**
+     * @see RepoManagerRemote#deleteRepoGroup(Subject, int)
+     */
+    void deleteRepoGroup(Subject subject, int repoGroupId);
+
+    /**
      * @see RepoManagerRemote#getRepo(Subject, int)
      */
     Repo getRepo(Subject subject, int repoId);
+
+    /**
+     * @see RepoManagerRemote#getRepoGroup(Subject, int)
+     */
+    RepoGroup getRepoGroup(Subject subject, int repoGroupId);
 
     /**
      * Returns all repos that match the given name. The returned list should only be of size 0 or 1.
@@ -147,6 +163,14 @@ public interface RepoManagerLocal {
      * @return list of matching repos; presumably of size 0 or 1
      */
     List<Repo> getRepoByName(String name);
+
+    /**
+     * Returns the repo group with the given name if it exists.
+     *
+     * @param name name of the repo group to match
+     * @return repo group with the given name; <code>null</code> if one does not
+     */
+    RepoGroup getRepoGroupByName(String name);
 
     /**
      * @see RepoManagerRemote#findPackageVersionsInRepoByCriteria(Subject, PackageVersionCriteria)

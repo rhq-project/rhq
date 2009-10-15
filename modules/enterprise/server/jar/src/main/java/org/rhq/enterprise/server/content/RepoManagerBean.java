@@ -41,6 +41,7 @@ import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.PackageVersionContentSource;
 import org.rhq.core.domain.content.ResourceRepo;
+import org.rhq.core.domain.content.RepoGroup;
 import org.rhq.core.domain.content.composite.RepoComposite;
 import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
@@ -98,8 +99,12 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
 
         // remove any unused, orphaned package versions
         contentSourceManager.purgeOrphanedPackageVersions(subject);
+    }
 
-        return;
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public void deleteRepoGroup(Subject subject, int repoGroupId) {
+        RepoGroup deleteMe = getRepoGroup(subject, repoGroupId);
+        entityManager.remove(deleteMe);
     }
 
     @SuppressWarnings("unchecked")
@@ -127,6 +132,12 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         }
 
         return repo;
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public RepoGroup getRepoGroup(Subject subject, int repoGroupId) {
+        RepoGroup repoGroup = entityManager.find(RepoGroup.class, repoGroupId);
+        return repoGroup;
     }
 
     @SuppressWarnings("unchecked")
@@ -281,15 +292,14 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         return repo; // now has the ID set
     }
 
-    private void validateRepo(Repo c) throws RepoException {
-        if (c.getName() == null || c.getName().trim().equals("")) {
-            throw new RepoException("Repo name is required");
-        }
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public RepoGroup createRepoGroup(Subject subject, RepoGroup repoGroup)
+        throws RepoException {
+        validateRepoGroup(repoGroup);
 
-        List<Repo> repos = getRepoByName(c.getName());
-        if (repos.size() != 0) {
-            throw new RepoException("There is already a repo with the name of [" + c.getName() + "]");
-        }
+        entityManager.persist(repoGroup);
+
+        return repoGroup;
     }
 
     @SuppressWarnings("unchecked")
@@ -300,6 +310,21 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         List<Repo> results = query.getResultList();
 
         return results;
+    }
+
+    @SuppressWarnings("unchecked")
+    public RepoGroup getRepoGroupByName(String name) {
+        Query query = entityManager.createNamedQuery(RepoGroup.QUERY_FIND_BY_NAME);
+
+        query.setParameter("name", name);
+        List<RepoGroup> results = query.getResultList();
+
+        if (results.size() > 0) {
+            return results.get(0);
+        }
+        else {
+            return null;
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -392,8 +417,6 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
 
         // note that we specifically do not disassociate package versions from the repo, even if those
         // package versions come from the content source that is being removed
-
-        return;
     }
 
     @SuppressWarnings("unchecked")
@@ -434,8 +457,6 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
             ResourceRepo mapping = repo.addResource(resource);
             entityManager.persist(mapping);
         }
-
-        return;
     }
 
     @SuppressWarnings("unchecked")
@@ -476,8 +497,6 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
             ResourceRepo mapping = repo.removeResource(resource);
             entityManager.remove(mapping);
         }
-
-        return;
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
@@ -524,6 +543,35 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         List<PackageVersion> packageVersions = query.getResultList();
 
         return new PageList<PackageVersion>(packageVersions, (int) count, criteria.getPageControl());
+    }
+
+    private void validateRepo(Repo c) throws RepoException {
+        if (c.getName() == null || c.getName().trim().equals("")) {
+            throw new RepoException("Repo name is required");
+        }
+
+        List<Repo> repos = getRepoByName(c.getName());
+        if (repos.size() != 0) {
+            throw new RepoException("There is already a repo with the name of [" + c.getName() + "]");
+        }
+    }
+
+    /**
+     * Tests the values of the given repo group to ensure creating the group would be a valid operation, including
+     * ensuring the name is specified and there isn't already an existing group with the same name.
+     *
+     * @param repoGroup group to test
+     * @throws RepoException if the group should not be allowed to be created
+     */
+    private void validateRepoGroup(RepoGroup repoGroup) throws RepoException {
+        if (repoGroup.getName() == null || repoGroup.getName().trim().equals("")) {
+            throw new RepoException("Repo group name is required");
+        }
+
+        RepoGroup existingRepoGroup = getRepoGroupByName(repoGroup.getName());
+        if (existingRepoGroup != null) {
+            throw new RepoException("There is already a repo group with the name [" + repoGroup.getName() + "]");
+        }
     }
 
 }

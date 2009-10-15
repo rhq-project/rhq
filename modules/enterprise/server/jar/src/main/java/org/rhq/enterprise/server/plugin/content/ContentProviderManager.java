@@ -24,7 +24,6 @@ import java.io.PrintStream;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.lang.reflect.UndeclaredThrowableException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -35,7 +34,16 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.clientapi.server.plugin.content.*;
+import org.rhq.core.clientapi.server.plugin.content.ContentProvider;
+import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetails;
+import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetailsKey;
+import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
+import org.rhq.core.clientapi.server.plugin.content.PackageSource;
+import org.rhq.core.clientapi.server.plugin.content.RepoSource;
+import org.rhq.core.clientapi.server.plugin.content.RepoDetails;
+import org.rhq.core.clientapi.server.plugin.content.RepoImportReport;
+import org.rhq.core.clientapi.server.plugin.content.RepoGroupDetails;
+import org.rhq.core.clientapi.server.plugin.content.InitializationException;
 import org.rhq.core.clientapi.server.plugin.content.metadata.ContentSourcePluginMetadataManager;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.ContentSource;
@@ -45,10 +53,12 @@ import org.rhq.core.domain.content.ContentSourceType;
 import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.PackageVersionContentSource;
+import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
+import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.content.metadata.ContentSourceMetadataManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -108,15 +118,17 @@ public class ContentProviderManager {
      * @throws Exception
      */
     public boolean synchronizeContentSource(int contentSourceId) throws Exception {
+
         ContentSourceManagerLocal manager = LookupUtil.getContentSourceManager();
         ContentProvider provider = getIsolatedContentProvider(contentSourceId);
         ContentSourceSyncResults results = null;
         SubjectManagerLocal subjMgr = LookupUtil.getSubjectManager();
+        Subject overlord = subjMgr.getOverlord();
         StringBuilder progress = new StringBuilder(); // append to this as we go along, building a status report
         long start;
 
         try {
-            ContentSource contentSource = manager.getContentSource(subjMgr.getOverlord(), contentSourceId);
+            ContentSource contentSource = manager.getContentSource(overlord, contentSourceId);
             if (contentSource == null) {
                 throw new Exception("Cannot sync a non-existing content source [" + contentSourceId + "]");
             }
@@ -143,22 +155,54 @@ public class ContentProviderManager {
                 // both enter the persistContentSourceSyncResults method at the same time, you'll get two
                 // inprogress rows - this is so rare as to not care.  Even if it does happen, it may still work, or
                 // one sync will get an error and rollback its tx and no harm will be done.
-                log.info("Content source [" + contentSource.getName()
+                log.info("Content provider [" + contentSource.getName()
                     + "] is already currently being synchronized, this sync request will be ignored");
                 return false;
             }
 
             // If the provider is capable of syncing repos, do that call first
             if (provider instanceof RepoSource) {
+                RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
                 RepoSource repoSource = (RepoSource) provider;
 
                 start = System.currentTimeMillis();
 
+                // Call to the plugin
                 RepoImportReport report = repoSource.importRepos();
+
+                // Import groups first
+                List<RepoGroupDetails> repoGroups = report.getRepoGroups();
+
+                for (RepoGroupDetails createMe : repoGroups) {
+                    // See if repo group already exists
+                    // Add if it doesn't
+                    // Still need to add these calls to the manager
+                }
+
+                // Once the groups are in the system, import any repos that were added
                 List<RepoDetails> repos = report.getRepos();
 
-                if (repos != null && repos.size() > 0) {
+                for (RepoDetails createMe : repos) {
+                    String name = createMe.getName();
 
+                    List<Repo> existingRepo = repoManager.getRepoByName(name);
+                    Repo repo;
+
+                    // If the repo doesn't exist, create it.
+                    if (existingRepo.size() == 0) {
+                        repo = new Repo(name);
+                        repo.setDescription(createMe.getDescription());
+
+                        repo = repoManager.createRepo(overlord, repo);
+                    }
+                    else {
+                        repo = existingRepo.get(0);
+                    }
+
+                    // This call is safe even if the content source is already associated.
+                    // We either need to associate the content source with the newly created repo, or
+                    // associate the content source with the repo that was created elsewhere.
+                    repoManager.addContentSourcesToRepo(overlord, repo.getId(), new int[] {contentSourceId});
                 }
 
                 log.info("importRepos: [" + contentSource.getName() + "]: report has been merged ("

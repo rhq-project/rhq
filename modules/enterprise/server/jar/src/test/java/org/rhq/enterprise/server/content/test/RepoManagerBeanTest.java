@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.content.test;
 
 import javax.transaction.TransactionManager;
+import javax.persistence.EntityManager;
 
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -26,6 +27,8 @@ import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.content.RepoGroup;
+import org.rhq.core.domain.content.RepoGroupType;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -53,18 +56,55 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
 
     @Test
     public void testCreateDeleteRepo() throws Exception {
-        Repo repo = new Repo("testCreateContentSourceRepo");
+        Repo repo = new Repo("testCreateDeleteRepo");
         int id = repoManager.createRepo(overlord, repo).getId();
         Repo lookedUp = repoManager.getRepo(overlord, id);
+        assert lookedUp != null;
         Repo lookedUp2 = repoManager.getRepoByName(lookedUp.getName()).get(0);
         assert lookedUp2 != null;
-        assert lookedUp != null;
         assert id == lookedUp.getId();
         assert id == lookedUp2.getId();
 
         repoManager.deleteRepo(overlord, id);
         lookedUp = repoManager.getRepo(overlord, id);
         assert lookedUp == null;
+    }
 
+    @Test
+    public void testCreateDeleteRepoGroup() throws Exception {
+        // Setup
+        EntityManager entityManager = getEntityManager();
+
+        RepoGroupType groupType = new RepoGroupType("testCreateDeleteRepoGroupType");
+        entityManager.persist(groupType);
+
+        String groupName = "testCreateDeleteRepoGroup";
+        RepoGroup group = repoManager.getRepoGroupByName(groupName);
+        assert group == null;
+
+        // Test
+        group = new RepoGroup(groupName);
+        group.setRepoGroupType(groupType);
+        group = repoManager.createRepoGroup(overlord, group);
+
+        // Verify
+        int id = group.getId();
+        group = repoManager.getRepoGroup(overlord, id);
+        assert group != null;
+        assert group.getName().equals(groupName);
+
+        // Cleanup
+        repoManager.deleteRepoGroup(overlord, id);
+        group = repoManager.getRepoGroup(overlord, id);
+        assert group == null;
+
+        entityManager.remove(groupType);
+    }
+
+    public void testGetRepoGroupByNameNoGroup() throws Exception {
+        // Test
+        RepoGroup group = repoManager.getRepoGroupByName("foo");
+
+        assert group == null;
     }
 }

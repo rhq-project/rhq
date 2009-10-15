@@ -27,6 +27,7 @@ import javax.jws.soap.SOAPBinding;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.content.RepoGroup;
 import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.resource.Resource;
@@ -69,21 +70,51 @@ public interface RepoManagerRemote {
         throws RepoException;
 
     /**
-     * Deletes the identified repo. If this deletion orphans package versions (that is, its originating resource or
+     * Creates a new {@link RepoGroup} in the server.
+     *
+     * @param subject   represents the user creating the group
+     * @param repoGroup group data to create
+     * @return group instance populated after persisting
+     * @throws RepoException if a repo group already exists with this name
+     */
+    @WebMethod
+    RepoGroup createRepoGroup( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "repoGroup") RepoGroup repoGroup) //
+        throws RepoException;
+
+    /**
+     * Deletes the indicated repo. If this deletion orphans package versions (that is, its originating resource or
      * content source has been deleted), this will also purge those orphaned package versions.
      *
      * @param subject The logged in user's subject.
-     * @param repoId
+     * @param repoId  identifies the repo to delete
      */
     @WebMethod
     void deleteRepo( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "repoId") int repoId);
 
+    /**
+     * Deletes the indicated repo group.
+     *
+     * @param subject     user deleting the group
+     * @param repoGroupId identifies the group being deleted
+     */
+    @WebMethod
+    void deleteRepoGroup( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "repoGroupId") int repoGroupId);
+
     @WebMethod
     Repo getRepo( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "repoId") int repoId);
+
+    @WebMethod
+    RepoGroup getRepoGroup(
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "repoGroupId") int repoGroupId);
 
     @WebMethod
     PageList<Repo> findReposByCriteria( //
@@ -92,7 +123,7 @@ public interface RepoManagerRemote {
 
     /**
      * @param subject
-     * @param criteria Caller must add a valid repoId via {@link PackageVersionCriteria.addFilterRepoId}
+     * @param criteria Caller must add a valid repoId via {@link PackageVersionCriteria#addFilterRepoId(Integer)}}
      * @return PackageVersions for the repo
      * @throws IllegalArgumentException for invalid repoId filter
      */
@@ -101,12 +132,10 @@ public interface RepoManagerRemote {
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "criteria") PackageVersionCriteria criteria);
 
-    // change exception
     /**
      * Update an existing {@link Repo} object's basic fields, like name, description, etc. Note that the given <code>
      * repo</code>'s relationships will be ignored and not merged with the existing repo (e.g. is subscribed
-     * resources will not be changed, regardless of what the given repo's subscribed resources set it). See methods
-     * like {@link #addContentSourcesToRepo(Subject, int, int[])} to alter its relationships.
+     * resources will not be changed, regardless of what the given repo's subscribed resources set it).
      *
      * @param subject The logged in user's subject.
      * @param repo to be updated

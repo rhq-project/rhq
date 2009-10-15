@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Collection;
 
 import javax.persistence.EntityManager;
 
@@ -45,6 +46,7 @@ import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
+import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.discovery.InventoryReport;
@@ -928,6 +930,63 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         } catch (Exception expected) {
             System.out.println("This was expected and OK:\n" + expected);
         }
+    }
+
+    @Test
+    public void testFindRawConfigurationsByConfigurationId() throws Exception {
+        Configuration config = persistNewConfigWithRawConfigs();
+
+        getTransactionManager().begin();
+        EntityManager entityMgr = getEntityManager();
+
+        try {
+            Collection<RawConfiguration> rawConfigs = configurationManager.findRawConfigurationsByConfigurationId(
+                config.getId());
+
+            assertEquals("Failed to find raw configs for " + config, config.getRawConfigurations().size(), rawConfigs.size());
+        }
+        finally {
+            getTransactionManager().rollback();
+
+            getTransactionManager().begin();
+            delete(config);
+            getTransactionManager().commit();
+        }
+    }
+
+    Configuration persistNewConfigWithRawConfigs() throws Exception {
+        getTransactionManager().begin();
+
+        Configuration config = new Configuration();
+        config.addRawConfiguration(createRawConfiguration("12345"));
+        config.addRawConfiguration(createRawConfiguration("54321"));
+
+        persist(config);
+
+        getTransactionManager().commit();
+
+        return config;
+    }
+
+    RawConfiguration createRawConfiguration(String sha256) {
+        RawConfiguration rawConfig = new RawConfiguration();
+        rawConfig.setContents(new byte[] {});
+        rawConfig.setSha256(sha256);
+
+        return rawConfig;
+    }
+
+    void persist(Object entity) throws Exception {
+        EntityManager entityMgr = getEntityManager();
+        getEntityManager().persist(entity);
+        entityMgr.flush();
+        entityMgr.clear();
+    }
+
+    void delete(Configuration configuration) {
+        EntityManager entityMgr = getEntityManager();
+        Configuration managedConfig = entityMgr.find(Configuration.class, configuration.getId());
+        entityMgr.remove(managedConfig);    
     }
 
     private class TestServices implements ConfigurationAgentService, DiscoveryAgentService {

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="modules/common/jboss-as/src/test/java"/>
+	<classpathentry kind="src" path="modules/enterprise/server/plugins/rhnhosted/src/main/generated-source"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/rhnhosted/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/rhnhosted/src/test/java"/>
 	<classpathentry kind="src" path="modules/common/jboss-as/src/main/java"/>
@@ -180,9 +181,11 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/ettrema/milton-api/1.4.1/milton-api-1.4.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/jboss/javassist/3.8.0.GA/javassist-3.8.0.GA.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/net/sf/opencsv/opencsv/1.8/opencsv-1.8.jar"/>
-    <classpathentry exported="true" kind="var" path="M2_REPO/bouncycastle/bcpg-jdk15/140/bcpg-jdk15-140.jar"/>
-    <classpathentry exported="true" kind="var" path="M2_REPO/bouncycastle/bcprov-jdk15/140/bcprov-jdk15-140.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/bouncycastle/bcpg-jdk15/140/bcpg-jdk15-140.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/bouncycastle/bcprov-jdk15/140/bcprov-jdk15-140.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/xmlrpc/xmlrpc-client/3.1.2/xmlrpc-client-3.1.2.jar"/>
+    <classpathentry exported="true" kind="var" path="M2_REPO/org/apache/xmlrpc/xmlrpc-common/3.1.2/xmlrpc-common-3.1.2.jar"/>
+    <classpathentry exported="true" kind="var" path="M2_REPO/net/sf/xmlrpc/xmlrpc/1.1.1/xmlrpc-1.1.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="modules/enterprise/remoting/webservices/target/rhq-remoting-webservices-1.4.0-SNAPSHOT/wsconsume-output"/>
-    
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

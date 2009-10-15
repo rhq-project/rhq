@@ -34,6 +34,7 @@ import java.util.Map;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
@@ -54,14 +55,14 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
  * 
  * @author Lukas Krejci
  */
-public class DefaultConfigurationToPathConvertor implements ConfigurationToPathConvertor {
+public class DefaultConfigurationFacade implements ConfigurationFacade {
 
     public static final String NAME_PREFIX = "config://";
     public static final int NAME_PREFIX_LENGTH = NAME_PREFIX.length();
     
     private ConfigurationDefinition configurationDefinition;
     
-    public DefaultConfigurationToPathConvertor(ConfigurationDefinition configurationDefinition) {
+    public DefaultConfigurationFacade(ConfigurationDefinition configurationDefinition) {
         this.configurationDefinition = configurationDefinition;
     }
     
@@ -241,6 +242,19 @@ public class DefaultConfigurationToPathConvertor implements ConfigurationToPathC
         }
         
         return -1;
+    }
+    
+    public void applyValue(PropertySimple property, String value) {
+        property.setStringValue(value);
+    }
+
+    public boolean isEqual(PropertySimple property, String value) {
+        if (value == null) return property.getStringValue() == null;
+        return value.equals(property.getStringValue());
+    }
+    
+    public String getPersistableValue(PropertySimple property) {
+        return property.getStringValue();
     }
     
     private AbsoluteIndexAndFollowupIndex getAbsoluteIndexFromName(String name) {

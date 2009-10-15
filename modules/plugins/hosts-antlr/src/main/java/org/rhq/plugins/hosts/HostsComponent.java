@@ -26,7 +26,6 @@ import org.antlr.runtime.ANTLRFileStream;
 import org.antlr.runtime.RecognitionException;
 import org.antlr.runtime.TokenRewriteStream;
 import org.antlr.runtime.tree.CommonTree;
-import org.antlr.runtime.tree.Tree;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -48,7 +47,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.plugins.antlrconfig.ConfigMapper;
-import org.rhq.plugins.antlrconfig.DefaultConfigurationToPathConvertor;
+import org.rhq.plugins.antlrconfig.DefaultConfigurationFacade;
 import org.rhq.plugins.hosts.helper.HostDefCreator;
 import org.rhq.plugins.hosts.helper.HostsComponentHelper;
 import org.rhq.plugins.hosts.parser.HostsLexer;
@@ -82,7 +81,7 @@ public class HostsComponent implements ResourceComponent, ConfigurationFacet {
         this.hostsFile = HostsComponentHelper.getHostsFile(this.resourceContext.getPluginConfiguration());
         HostsComponentHelper.validateHostFileExists(this.hostsFile);
 
-        configMapper = new ConfigMapper(getResourceConfigurationDefinition(), new DefaultConfigurationToPathConvertor(getResourceConfigurationDefinition()), 
+        configMapper = new ConfigMapper(getResourceConfigurationDefinition(), new DefaultConfigurationFacade(getResourceConfigurationDefinition()), 
             new HostDefCreator("file/host_def", HostsParser.tokenNames), HostsParser.tokenNames);
         
         return;

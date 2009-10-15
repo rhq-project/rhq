@@ -53,7 +53,7 @@ import org.rhq.plugins.antlrconfig.tokens.Unordered;
  */
 public class ConfigMapper {
 
-    private ConfigurationToPathConvertor pathConvertor;
+    private ConfigurationFacade configFacade;
     private NewEntryCreator newEntryCreator;
     private String[] treeTypeNames;
     private ConfigurationDefinition configurationDefinition;
@@ -63,9 +63,9 @@ public class ConfigMapper {
     public ConfigMapper() {
     }
     
-    public ConfigMapper(ConfigurationDefinition configurationDefinition, ConfigurationToPathConvertor pathConvertor, NewEntryCreator newEntryCreator, String[] treeTypeNames) {
+    public ConfigMapper(ConfigurationDefinition configurationDefinition, ConfigurationFacade configFacade, NewEntryCreator newEntryCreator, String[] treeTypeNames) {
         this.configurationDefinition = configurationDefinition;
-        this.pathConvertor = pathConvertor;
+        this.configFacade = configFacade;
         this.newEntryCreator = newEntryCreator;
         this.treeTypeNames = treeTypeNames;
     }
@@ -78,12 +78,12 @@ public class ConfigMapper {
         this.configurationDefinition = configurationDefinition;
     }
 
-    public ConfigurationToPathConvertor getPathConvertor() {
-        return pathConvertor;
+    public ConfigurationFacade getConfigFacade() {
+        return configFacade;
     }
 
-    public void setPathConvertor(ConfigurationToPathConvertor pathConvertor) {
-        this.pathConvertor = pathConvertor;
+    public void setConfigFacade(ConfigurationFacade pathConvertor) {
+        this.configFacade = pathConvertor;
     }
 
     public NewEntryCreator getNewEntryCreator() {
@@ -124,7 +124,7 @@ public class ConfigMapper {
             } else if (isDelete) {
                 fileStream.delete(rec.tree.getTokenStartIndex(), rec.tree.getTokenStopIndex());
             } else if (rec.property instanceof PropertySimple) {
-                String value = ((PropertySimple)rec.property).getStringValue();
+                String value = configFacade.getPersistableValue((PropertySimple)rec.property);
                 fileStream.replace(rec.tree.getTokenStartIndex(), rec.tree.getTokenStopIndex(), value);
             }
         }
@@ -132,14 +132,14 @@ public class ConfigMapper {
     
     private void createProperty(CommonTree root, CommonTree tree, Collection<PropertyDefinition> childDefinitions, Configuration configuration, PropertyList parentList, PropertyMap parentMap) throws RecognitionException {
         for(PropertyDefinition pd : childDefinitions) {
-            String subPath = pathConvertor.getPathRelativeToParent(pd);
+            String subPath = configFacade.getPathRelativeToParent(pd);
             if (subPath == null) continue;
             
             TreePath subTreePath = new TreePath(tree, subPath, treeTypeNames);
             
             List<CommonTree> matches = subTreePath.matches();
             for(CommonTree match : matches) {
-                PropertyDefinition propDef = pathConvertor.getPropertyDefinition(TreePath.getPath(match, treeTypeNames));
+                PropertyDefinition propDef = configFacade.getPropertyDefinition(TreePath.getPath(match, treeTypeNames));
                 Property prop = instantiate(propDef);
                 
                 if (parentList != null) {
@@ -155,7 +155,7 @@ public class ConfigMapper {
                 } else if (propDef instanceof PropertyDefinitionMap) {
                     createProperty(root, match, ((PropertyDefinitionMap)propDef).getPropertyDefinitions().values(), configuration, null, (PropertyMap)prop);
                 } else {
-                    ((PropertySimple)prop).setValue(match.getText());
+                    configFacade.applyValue((PropertySimple)prop, match.getText());
                 }
             }
         }
@@ -179,7 +179,7 @@ public class ConfigMapper {
             }
             
             //find all the trees in the AST corresponding to this property definition
-            TreePath path = new TreePath(tree, pathConvertor.getPathRelativeToParent(def), treeTypeNames);
+            TreePath path = new TreePath(tree, configFacade.getPathRelativeToParent(def), treeTypeNames);
             List<CommonTree> treeMatches = path.matches();
             
             boolean lookingForChildren = path.getPath().size() > 1;
@@ -195,10 +195,8 @@ public class ConfigMapper {
                 if (match == null) {
                     mergeRecords.add(rec);
                 } else if (prop instanceof PropertySimple) {
-                    //only add in updates
-                    String propValue = ((PropertySimple)prop).getStringValue();
-                    String matchValue = match.getText();
-                    if (!propValue.equals(matchValue)) {
+                    //only add in the updates
+                    if (!configFacade.isEqual((PropertySimple)prop, match.getText())) {
                         mergeRecords.add(rec);
                     }
                 }
@@ -277,11 +275,11 @@ public class ConfigMapper {
             //generally we cannot assume that all the Id tokens will be in the same
             //position in the tree. We need to recompute the position for each such id.
             for(CommonTree idToken : idTokensInTree) {
-                PropertyDefinition idPropDef = pathConvertor.getPropertyDefinition(TreePath.getPath(idToken, treeTypeNames));
+                PropertyDefinition idPropDef = configFacade.getPropertyDefinition(TreePath.getPath(idToken, treeTypeNames));
                 String idValue = idToken.getText();
                 
                 //now find out the corresponding property for the id
-                Collection<Property> idProps = pathConvertor.findCorrespondingProperties(prop, idPropDef);
+                Collection<Property> idProps = configFacade.findCorrespondingProperties(prop, idPropDef);
                 if (idProps.size() != 1) {
                     if (idProps.size() == 0) {
                         throw new MatchException("Found 0 Id properties in the subtree of property " + prop + " but was expecting 1.");
@@ -295,8 +293,7 @@ public class ConfigMapper {
                     throw new MatchException("Id property must be a simple property but is instead " + idProp);
                 }
                 
-                String value = ((PropertySimple)idProp).getStringValue();
-                if (value.equals(idValue)) {
+                if (configFacade.isEqual((PropertySimple)idProp, idValue)) {
                     //right off to finding the right tree
                     return getParentOutOf(idToken, possibleMatches);
                 }
@@ -304,7 +301,7 @@ public class ConfigMapper {
             
             return null;
         } else {
-            String propTreePath = pathConvertor.getPathRelativeToParent(prop);
+            String propTreePath = configFacade.getPathRelativeToParent(prop);
             TreePath treePath = new TreePath(tree, propTreePath, treeTypeNames);
             return treePath.match();
         }

@@ -27,6 +27,7 @@ import java.util.Collection;
 import java.util.List;
 
 import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 
 /**
@@ -35,7 +36,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinition;
  * 
  * @author Lukas Krejci
  */
-public interface ConfigurationToPathConvertor {
+public interface ConfigurationFacade {
 
     String getPathRelativeToParent(PropertyDefinition propertyDefinition);
     
@@ -60,4 +61,29 @@ public interface ConfigurationToPathConvertor {
      * @return the corresponding properties or an empty collection if none such found
      */
     Collection<Property> findCorrespondingProperties(Property start, PropertyDefinition definition);
+    
+    /**
+     * Applies given value to the property.
+     * 
+     * @param property
+     * @param value the value from the AST
+     */
+    void applyValue(PropertySimple property, String value);
+    
+    /**
+     * Tells whether given value is equal to the value of the property.
+     * 
+     * @param property
+     * @param value
+     * @return
+     */
+    boolean isEqual(PropertySimple property, String value);
+    
+    /**
+     * Returns a value to be persisted into the file.
+     * 
+     * @param property
+     * @return
+     */
+    String getPersistableValue(PropertySimple property);
 }

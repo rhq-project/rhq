@@ -37,6 +37,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.lang.reflect.UndeclaredThrowableException;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -54,10 +55,7 @@ import org.apache.commons.logging.LogFactory;
 import org.jboss.annotation.ejb.TransactionTimeout;
 import org.jboss.util.StringPropertyReplacer;
 
-import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetails;
-import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetailsKey;
-import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
-import org.rhq.core.clientapi.server.plugin.content.RepoDetails;
+import org.rhq.core.clientapi.server.plugin.content.*;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.Configuration;
@@ -385,7 +383,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public ContentSource createContentSource(Subject subject, String name, String description, String typeName,
-        Configuration configuration, boolean lazyLoad, DownloadMode downloadMode) throws ContentSourceException {
+        Configuration configuration, boolean lazyLoad, DownloadMode downloadMode)
+            throws ContentSourceException, InitializationException {
         log.debug("User [" + subject + "] is creating a content source [" + name + "] of type [" + typeName + "]");
 
         // we first must get the content source type - if it doesn't exist, we throw an exception
@@ -414,27 +413,32 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public ContentSource createContentSource(Subject subject, ContentSource contentSource)
-        throws ContentSourceException {
+        //throws ContentSourceException, InitializationException {
+       throws ContentSourceException, InitializationException {
         validateContentSource(contentSource);
 
         log.debug("User [" + subject + "] is creating content source [" + contentSource + "]");
 
-        // these aren't cascaded during persist, but I want to set them to null anyway, just to be sure
-        contentSource.setSyncResults(null);
 
-        entityManager.persist(contentSource);
-
-        log.debug("User [" + subject + "] created content source [" + contentSource + "]");
 
         // now that a new content source has been added to the system, let's start its adapter now
         try {
             ContentProviderPluginContainer pc = ContentManagerHelper.getPluginContainer();
             pc.getAdapterManager().startAdapter(contentSource);
             pc.scheduleSyncJob(contentSource);
-        } catch (Exception e) {
+
+        } catch (InitializationException ie) {
+            log.warn("Failed to start adapter for [" + contentSource + "]", ie);
+            throw ie;
+        }  catch (Exception e) {
             log.warn("Failed to start adapter for [" + contentSource + "]", e);
         }
 
+        entityManager.persist(contentSource);
+        // these aren't cascaded during persist, but I want to set them to null anyway, just to be sure
+        contentSource.setSyncResults(null);
+
+        log.debug("User [" + subject + "] created content source [" + contentSource + "]");
         return contentSource; // now has the ID set
     }
 

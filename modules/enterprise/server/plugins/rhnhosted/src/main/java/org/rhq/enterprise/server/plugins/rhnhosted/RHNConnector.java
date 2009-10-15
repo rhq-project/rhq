@@ -30,9 +30,9 @@ import java.security.KeyException;
 import java.util.ArrayList;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.RandomStringUtils;
-
 import redstone.xmlrpc.XmlRpcClient;
+import redstone.xmlrpc.XmlRpcException;
+import redstone.xmlrpc.XmlRpcFault;
 
 /**
  * @author pkilambi
@@ -81,24 +81,34 @@ public class RHNConnector {
         this.systemid = FileUtils.readFileToString(systemid_file);
     }
 
+    /**
+     * Call that invokes the server object and passing in the xmlrpc
+     * exposed call to activate the rhq server.
+     *
+     */
     public void Activate() throws Exception {
 
-        File rhq_cert_file = new File(this.certificateFileName);
-        Certificate cert = CertificateFactory.read(rhq_cert_file);
-        PublicKeyRing keyRing = this.readDefaultKeyRing();
-
-        System.out.println("Valid Certificate: " + cert.verifySignature(keyRing));
-        // String cert_data = cert.toString();
-        String cert_data = FileUtils.readFileToString(rhq_cert_file);
+//        File rhq_cert_file = new File(this.certificateFileName);
+//        Certificate cert = CertificateFactory.read(rhq_cert_file);
+//        PublicKeyRing keyRing = this.readDefaultKeyRing();
+//
+//        System.out.println("Valid Certificate: " + cert.verifySignature(keyRing));
+//        // String cert_data = cert.toString();
+//        String cert_data = FileUtils.readFileToString(rhq_cert_file);
 
         ArrayList<String> params = new ArrayList<String>();
         params.add(this.systemid);
-        params.add(cert_data);
+        params.add(this.certificateText);
 
         this.client.invoke("satellite.activateSatellite", params);
 
     }
 
+    /**
+     * Call that invokes the server object and passing in the xmlrpc
+     * exposed call to deactivate the rhq server.
+     *
+     */
     public void DeActivate() throws Exception {
         ArrayList<String> params = new ArrayList<String>();
         params.add(this.systemid);
@@ -114,11 +124,14 @@ public class RHNConnector {
         return new PublicKeyRing(keyringStream);
     }
 
+    /**
+     * Stores the certificate text string as a file on the filesystem
+     *
+     */
     protected void writeStringToFile() throws Exception {
         String tmpDir = System.getProperty("java.io.tmpdir");
 
-        this.certificateFileName = tmpDir + "/cert_text" +
-                RandomStringUtils.randomAlphanumeric(13) + ".cert";
+        this.certificateFileName = tmpDir + "/rhn-entitlement-cert" + ".cert";
 
         FileOutputStream out = new FileOutputStream(this.certificateFileName);
         PrintStream printer = new PrintStream(out);
@@ -130,6 +143,12 @@ public class RHNConnector {
         }
     }
 
+    /**
+     * Delete the certificate file from the filesystem.
+     * @param fileName certificate filename
+     * @return boolean returns delete operation status
+     *
+     */
     protected boolean deleteCertTempFile(String fileName) {
         File f = new File(fileName);
         return f.delete();

@@ -26,10 +26,7 @@ import java.util.List;
 
 import javax.ejb.Local;
 
-import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetails;
-import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetailsKey;
-import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
-import org.rhq.core.clientapi.server.plugin.content.RepoDetails;
+import org.rhq.core.clientapi.server.plugin.content.*;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.ContentSource;
@@ -168,7 +165,7 @@ public interface ContentSourceManagerLocal {
      * 
      * @return The created content source.
      */
-    ContentSource createContentSource(Subject subject, ContentSource contentSource) throws ContentSourceException;
+    ContentSource createContentSource(Subject subject, ContentSource contentSource) throws ContentSourceException, InitializationException;
 
     /**
      * Update an existing {@link ContentSource} object and restarts its underlying adapter. This also forces the adapter

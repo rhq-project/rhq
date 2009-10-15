@@ -24,6 +24,7 @@ import java.io.PrintStream;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.lang.reflect.UndeclaredThrowableException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -34,14 +35,7 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.clientapi.server.plugin.content.ContentProvider;
-import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetails;
-import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetailsKey;
-import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
-import org.rhq.core.clientapi.server.plugin.content.PackageSource;
-import org.rhq.core.clientapi.server.plugin.content.RepoSource;
-import org.rhq.core.clientapi.server.plugin.content.RepoDetails;
-import org.rhq.core.clientapi.server.plugin.content.RepoImportReport;
+import org.rhq.core.clientapi.server.plugin.content.*;
 import org.rhq.core.clientapi.server.plugin.content.metadata.ContentSourcePluginMetadataManager;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.ContentSource;
@@ -338,7 +332,7 @@ public class ContentProviderManager {
      *
      * @param contentSource the new content source that was added
      */
-    public void startAdapter(ContentSource contentSource) {
+    public void startAdapter(ContentSource contentSource) throws InitializationException {
         synchronized (this.adapters) {
             if (this.adapters.containsKey(contentSource)) {
                 return; // already exists, which means it was already initialized
@@ -353,9 +347,11 @@ public class ContentProviderManager {
 
             ContentProvider adapter = getIsolatedContentSourceAdapter(contentSource);
             adapter.initialize(contentSource.getConfiguration());
-        } catch (Throwable t) {
-            log.warn("Failed to initialize adapter for content source [" + contentSource.getName() + "]", t);
+        } catch (Exception e) {
+            log.warn("Failed to initialize adapter for content source [" + contentSource.getName() + "]", e);
+            throw new InitializationException(e.getCause());
         }
+
     }
 
     /**
@@ -393,7 +389,7 @@ public class ContentProviderManager {
      *
      * @param contentSource the content source whose adapter is to be restarted
      */
-    public void restartAdapter(ContentSource contentSource) {
+    public void restartAdapter(ContentSource contentSource) throws Exception {
         shutdownAdapter(contentSource);
         startAdapter(contentSource);
     }
@@ -416,7 +412,7 @@ public class ContentProviderManager {
      *
      * @param pluginManager the plugin manager this object can use to obtain information from (like classloaders)
      */
-    protected void initialize(ContentProviderPluginManager pluginManager) {
+    protected void initialize(ContentProviderPluginManager pluginManager) throws InitializationException {
         this.pluginManager = pluginManager;
 
         ContentSourceMetadataManagerLocal metadataManager = LookupUtil.getContentSourceMetadataManager();

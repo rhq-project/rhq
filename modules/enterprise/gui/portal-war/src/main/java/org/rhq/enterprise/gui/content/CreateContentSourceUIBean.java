@@ -34,6 +34,7 @@ import org.rhq.core.domain.content.DownloadMode;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.core.clientapi.server.plugin.content.InitializationException;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
@@ -102,6 +103,9 @@ public class CreateContentSourceUIBean extends PagedDataTableUIBean {
         } catch (ContentException ce) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Error: " + ce.getMessage());
             return "edit"; // stay in edit mode upon failure
+        } catch ( InitializationException ie) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Error: " + ie.getMessage());
+            return "edit";
         }
 
         selectedContentSourceType = null;

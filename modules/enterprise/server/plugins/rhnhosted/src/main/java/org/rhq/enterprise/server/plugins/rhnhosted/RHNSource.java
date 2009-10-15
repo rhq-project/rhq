@@ -4,6 +4,12 @@ package org.rhq.enterprise.server.plugins.rhnhosted;
  import org.apache.commons.logging.LogFactory;
  import org.rhq.core.domain.configuration.Configuration;
  import org.rhq.core.clientapi.server.plugin.content.ContentProvider;
+ import org.rhq.core.clientapi.server.plugin.content.InitializationException;
+
+ import java.security.KeyException;
+ import java.io.IOException;
+ import java.io.InputStream;
+ import java.io.FileInputStream;
 
 
 /**
@@ -42,18 +48,31 @@ public class RHNSource implements ContentProvider {
         String locationIn = configuration.getSimpleValue("location", null);
         String certificate = configuration.getSimpleValue("certificate", null);
         String location = locationIn + RHNConstants.DEFAULT_HANDLER;
-        
+        // check location field validity
         if (location == null) {
             throw new IllegalArgumentException("Missing required 'location' property");
         }
 
-        if (certificate == null) {
-            throw new IllegalArgumentException("Invalid Cerdentials");
+        // check certificate field validity
+        try {
+            Certificate cert = CertificateFactory.read(certificate);
+            PublicKeyRing keyRing = this.readDefaultKeyRing();
+            cert.verifySignature(keyRing);
+
+        } catch(Exception e) {
+            log.debug("Invalid Cert");
+            throw new InitializationException("Invalid Certificate", e);
         }
-
-        rhnObject = new RHNConnector(certificate, location);
-        rhnObject.Activate();
-
+        
+        // Now we have valid data. Spawn the activation.
+        try {
+            rhnObject = new RHNConnector(certificate, location);
+            rhnObject.Activate();
+            log.debug("Activation successful");
+        } catch (Exception e) {
+            log.debug("Activation Failed. Please check your configuration");
+            throw new InitializationException("Server Activation Failed.", e);
+        }
     }
 
     /**
@@ -73,6 +92,12 @@ public class RHNSource implements ContentProvider {
     public void testConnection() throws Exception {
         rhnObject.DeActivate();
         rhnObject.Activate();
+    }
+
+    protected PublicKeyRing readDefaultKeyRing()
+        throws ClassNotFoundException, KeyException, IOException {
+        InputStream keyringStream = new FileInputStream(RHNConstants.DEFAULT_WEBAPP_GPG_KEY_RING);
+        return new PublicKeyRing(keyringStream);
     }
 
 }

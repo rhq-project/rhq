@@ -28,6 +28,7 @@ import org.quartz.SimpleTrigger;
 
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.clientapi.server.plugin.content.InitializationException;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.scheduler.jobs.ContentSourceSyncJob;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -51,7 +52,7 @@ public class ContentProviderPluginContainer {
      *
      * @param config
      */
-    public void initialize(ContentProviderPluginContainerConfiguration config) {
+    public void initialize(ContentProviderPluginContainerConfiguration config) throws InitializationException {
         log.debug("Content server plugin container has been initialized with config: " + config);
 
         this.configuration = config;
@@ -223,7 +224,8 @@ public class ContentProviderPluginContainer {
      *
      * @return the new adapter manager
      */
-    protected ContentProviderManager createAdapterManager(ContentProviderPluginManager pluginManager) {
+    protected ContentProviderManager createAdapterManager(ContentProviderPluginManager pluginManager)
+            throws InitializationException {
         ContentProviderManager am = new ContentProviderManager();
         am.setConfiguration(getConfiguration());
         am.initialize(pluginManager);

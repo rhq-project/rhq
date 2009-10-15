@@ -16,6 +16,7 @@
                   name="location"
                   type="string"
                   required="true"
+                  default="http://satellite.rhn.redhat.com/"
                   description="RHN Hosted server url for connection."/>
           
           <c:simple-property

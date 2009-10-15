@@ -148,7 +148,7 @@ public class SimpleTest {
                 }
                 
                 OpDef op = new OpDef();
-                op.type = OpType.INSERT_BEFORE;
+                op.type = OpType.INSERT_AFTER;
                 op.tokenIndex = tokenIndex;
                 
                 StringBuilder bld = new StringBuilder();
@@ -162,7 +162,7 @@ public class SimpleTest {
                 
                 bld.append(assignment.getSimpleValue(NAME, ""));
                 
-                bld.append("=");
+                bld.append(" = ");
                 
                 bld.append(assignment.getSimpleValue(VALUE, ""));
                 
@@ -259,17 +259,7 @@ public class SimpleTest {
         firstAssignment.getSimple(VALUE).setStringValue("12");
         firstAssignment.getSimple(EXPORT).setBooleanValue(true);
         
-        TokenRewriteStream stream = getStream();
-        
-        mapper.update(loadFile(stream), stream, config);
-        
-        String updatedConfig = stream.toString();
-        
-        ByteArrayInputStream updatedInputStream = new ByteArrayInputStream(updatedConfig.getBytes());
-        
-        TokenRewriteStream updatedStream = getStream(updatedInputStream);
-        
-        Configuration config2 = mapper.read(loadFile(updatedStream));
+        Configuration config2 = storeAndLoad(config);
         
         assertEquals(config, config2);
     }
@@ -281,6 +271,16 @@ public class SimpleTest {
         
         PropertyList file = config.getList(FILE);
         assertNotNull(file, "the configuration should contain a list of assignments.");
+        
+        PropertyMap newAssignment = new PropertyMap(ASSIGNMENT);
+        newAssignment.put(new PropertySimple(NAME, "new"));
+        newAssignment.put(new PropertySimple(VALUE, "42"));
+        newAssignment.put(new PropertySimple(EXPORT, true));
+        file.add(newAssignment);
+        
+        Configuration config2 = storeAndLoad(config);
+        
+        assertEquals(config, config2);
     }
     
     @Test
@@ -290,5 +290,21 @@ public class SimpleTest {
         
         PropertyList file = config.getList(FILE);        
         assertNotNull(file, "the configuration should contain a list of assignments.");
+    }
+    
+    private Configuration storeAndLoad(Configuration config) throws RecognitionException, IOException {
+        ConfigMapper mapper = getMapper();
+        
+        TokenRewriteStream stream = getStream();
+        
+        mapper.update(loadFile(stream), stream, config);
+        
+        String updatedConfig = stream.toString();
+        
+        ByteArrayInputStream updatedInputStream = new ByteArrayInputStream(updatedConfig.getBytes());
+        
+        TokenRewriteStream updatedStream = getStream(updatedInputStream);
+        
+        return mapper.read(loadFile(updatedStream));
     }
 }

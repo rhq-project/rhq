@@ -33,7 +33,7 @@ WORD : LETTER (LETTER | DIGIT)* ;
 
 EQUALS : '=' ;
 
-VALUE : ('\u0021'..'\uFFFE')+;
+VALUE : DIGIT+;
 
 WS : (' ' | '\t')+ {$channel = HIDDEN;} ;
 

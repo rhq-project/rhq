@@ -25,6 +25,7 @@ import org.jboss.annotation.ejb.Management;
 import org.jboss.annotation.ejb.Service;
 import org.jboss.system.server.ServerConfig;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.core.clientapi.server.plugin.content.InitializationException;
 
 /**
  * This is the singleton management service responsible for managing the lifecycle of the
@@ -120,7 +121,12 @@ public class ContentProviderPluginService implements ContentProviderPluginServic
         String tmpDirStr = System.getProperty(ServerConfig.SERVER_TEMP_DIR);
         config.setTemporaryDirectory(new File(tmpDirStr));
 
-        pc.initialize(config);
+        try {
+            pc.initialize(config);
+        }
+        catch (InitializationException e) {
+            log.error("Error initializing plugin container [" + pc + "]", e);
+        }
 
         return pc;
     }

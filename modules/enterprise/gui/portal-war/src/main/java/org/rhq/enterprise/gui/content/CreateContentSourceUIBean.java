@@ -104,7 +104,7 @@ public class CreateContentSourceUIBean extends PagedDataTableUIBean {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Error: " + ce.getMessage());
             return "edit"; // stay in edit mode upon failure
         } catch ( InitializationException ie) {
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Error: " + ie.getMessage());
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Error: " + ie.getCause().getMessage());
             return "edit";
         }
 

@@ -30,9 +30,9 @@ import java.security.KeyException;
 import java.util.ArrayList;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import redstone.xmlrpc.XmlRpcClient;
-import redstone.xmlrpc.XmlRpcException;
-import redstone.xmlrpc.XmlRpcFault;
 
 /**
  * @author pkilambi
@@ -44,6 +44,7 @@ public class RHNConnector {
     private String certificateText;
     private String systemid;
     private XmlRpcClient client;
+    private final Log log = LogFactory.getLog(RHNConnector.class);
 
     /**
      * RHN Connector Constructor
@@ -86,15 +87,7 @@ public class RHNConnector {
      * exposed call to activate the rhq server.
      *
      */
-    public void Activate() throws Exception {
-
-//        File rhq_cert_file = new File(this.certificateFileName);
-//        Certificate cert = CertificateFactory.read(rhq_cert_file);
-//        PublicKeyRing keyRing = this.readDefaultKeyRing();
-//
-//        System.out.println("Valid Certificate: " + cert.verifySignature(keyRing));
-//        // String cert_data = cert.toString();
-//        String cert_data = FileUtils.readFileToString(rhq_cert_file);
+    public void processActivation() throws Exception {
 
         ArrayList<String> params = new ArrayList<String>();
         params.add(this.systemid);
@@ -109,7 +102,7 @@ public class RHNConnector {
      * exposed call to deactivate the rhq server.
      *
      */
-    public void DeActivate() throws Exception {
+    public void processDeActivation() throws Exception {
         ArrayList<String> params = new ArrayList<String>();
         params.add(this.systemid);
 
@@ -163,9 +156,9 @@ public class RHNConnector {
             String serverUrl = "http://satellite.rhn.redhat.com/rpc/api";
             try {
                 RHNConnector rhqServer = new RHNConnector(systemid, cert, serverUrl);
-                rhqServer.Activate();
+                rhqServer.processActivation();
                 System.out.println("Activation Complete");
-                rhqServer.DeActivate();
+                rhqServer.processDeActivation();
                 System.out.println("De-Activation Complete");
 
             }

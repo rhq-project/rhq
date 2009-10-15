@@ -36,7 +36,7 @@ public class RHNConnectorTest extends TestCase {
     public final void testActivate() throws Exception {
         boolean success = true;
         try {
-            rhnObject.Activate();
+            rhnObject.processActivation();
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -48,7 +48,7 @@ public class RHNConnectorTest extends TestCase {
     public final void testDeActivate() throws Exception {
         boolean success = true;
         try {
-            rhnObject.DeActivate();
+            rhnObject.processDeActivation();
         }
         catch (Exception e) {
             e.printStackTrace();

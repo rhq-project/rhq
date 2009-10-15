@@ -67,7 +67,7 @@ public class RHNSource implements ContentProvider {
         // Now we have valid data. Spawn the activation.
         try {
             rhnObject = new RHNConnector(certificate, location);
-            rhnObject.Activate();
+            rhnObject.processActivation();
             log.debug("Activation successful");
         } catch (Exception e) {
             log.debug("Activation Failed. Please check your configuration");
@@ -90,8 +90,8 @@ public class RHNSource implements ContentProvider {
      * @throws Exception When connection is not functional for any reason.
      */
     public void testConnection() throws Exception {
-        rhnObject.DeActivate();
-        rhnObject.Activate();
+        rhnObject.processDeActivation();
+        rhnObject.processActivation();
     }
 
     protected PublicKeyRing readDefaultKeyRing()

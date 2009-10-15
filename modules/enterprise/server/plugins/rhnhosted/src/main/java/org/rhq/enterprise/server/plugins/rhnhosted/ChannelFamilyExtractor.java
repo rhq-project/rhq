@@ -26,7 +26,7 @@ import org.jdom.Element;
 /**
  * ChannelFamilyExtractor
  */
-class ChannelFamilyExtractor implements FieldExtractor {
+public class ChannelFamilyExtractor implements FieldExtractor {
 
     private String fieldName;
 

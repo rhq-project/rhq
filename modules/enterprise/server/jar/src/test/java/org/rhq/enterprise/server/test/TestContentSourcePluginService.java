@@ -27,8 +27,9 @@ import java.util.Set;
 
 import org.rhq.core.clientapi.server.plugin.content.ContentProvider;
 import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetails;
-import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
+import org.rhq.core.clientapi.server.plugin.content.InitializationException;
 import org.rhq.core.clientapi.server.plugin.content.PackageSource;
+import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.enterprise.server.plugin.content.ContentProviderManager;
 import org.rhq.enterprise.server.plugin.content.ContentProviderPluginContainer;
@@ -50,7 +51,11 @@ public class TestContentSourcePluginService extends ContentProviderPluginService
     protected ContentProviderPluginContainer createPluginContainer() {
         ContentProviderPluginContainer pc = new TestContentSourcePluginContainer();
         ContentProviderPluginContainerConfiguration config = new ContentProviderPluginContainerConfiguration();
-        pc.initialize(config);
+        try {
+            pc.initialize(config);
+        } catch (InitializationException e) {
+            e.printStackTrace();
+        }
         return pc;
     }
 

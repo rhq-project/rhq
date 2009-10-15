@@ -121,7 +121,9 @@ public class ConfigMapper {
             
             if (isAdd) {
                 List<OpDef> instructions = newEntryCreator.getInstructions(configurationFileAST, rec.parent, rec.property);
-                applyInstructions(instructions, fileStream);
+                if (instructions != null && instructions.size() > 0) {
+                    applyInstructions(instructions, fileStream);
+                }
             } else if (isDelete) {
                 fileStream.delete(rec.tree.getTokenStartIndex(), rec.tree.getTokenStopIndex());
             } else if (rec.property instanceof PropertySimple) {

@@ -16,9 +16,9 @@ package org.rhq.enterprise.server.plugins.rhnhosted;
  * @author pkilambi
  *
  */
-public class RHNSource implements ContentProvider {
+public class RHNProvider implements ContentProvider {
 
-    private final Log log = LogFactory.getLog(RHNSource.class);
+    private final Log log = LogFactory.getLog(RHNProvider.class);
     private RHNConnector rhnObject;
 
     /**

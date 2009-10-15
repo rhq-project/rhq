@@ -9,7 +9,7 @@
                       description="This plugin facilitates communication with Red Hat Network."
                       lazyLoad="true"
                       downloadMode="never"
-                      apiClass="org.rhq.enterprise.server.plugins.rhnhosted.RHNSource">
+                      apiClass="org.rhq.enterprise.server.plugins.rhnhosted.RHNProvider">
 
       <configuration>
           <c:simple-property

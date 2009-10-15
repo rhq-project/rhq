@@ -25,6 +25,7 @@ package org.rhq.plugins.antlrconfig.test;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertEquals;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
@@ -59,7 +60,6 @@ import org.rhq.plugins.antlrconfig.test.parsers.SimpleParser;
  * 
  * @author Lukas Krejci
  */
-@Test(enabled = true)
 public class SimpleTest {
 
     private static final String FILE = "config:///file";
@@ -130,11 +130,11 @@ public class SimpleTest {
     private static class EntryCreator implements NewEntryCreator {
 
         public List<OpDef> getInstructions(CommonTree fullTree, CommonTree immediateParent, Property property) {
-            if (EXPORT.equals(property.getName())) {
+            if (EXPORT.equals(property.getName()) && ((PropertySimple)property).getBooleanValue()) {
                 //immediate parent should never be null
                 if (immediateParent != null) {
                     OpDef op = new OpDef();
-                    op.type = OpType.INSERT_AFTER;
+                    op.type = OpType.INSERT_BEFORE;
                     op.text = "export ";
                     op.tokenIndex = immediateParent.getTokenStartIndex();
                     return Collections.singletonList(op);
@@ -180,9 +180,13 @@ public class SimpleTest {
         return new ConfigMapper(getConfigurationDefinition(), new CustomFacade(), new EntryCreator(), SimpleParser.tokenNames);
     }
     
+    private static TokenRewriteStream getStream(InputStream stream) throws IOException {
+        return new TokenRewriteStream(new SimpleLexer(new ANTLRInputStream(stream)));
+    }
+    
     private static TokenRewriteStream getStream() throws IOException {
         InputStream inputStream = SimpleTest.class.getClassLoader().getResourceAsStream("simple");
-        return new TokenRewriteStream(new SimpleLexer(new ANTLRInputStream(inputStream)));
+        return getStream(inputStream);
     }
     
     private static CommonTree loadFile(TokenRewriteStream stream) throws IOException, RecognitionException {
@@ -238,5 +242,53 @@ public class SimpleTest {
                 break;                
             }
         }
+    }
+    
+    @Test
+    public void testUpdate() throws Exception {
+        ConfigMapper mapper = getMapper();
+        
+        Configuration config = mapper.read(loadFile(getStream()));
+        assertNotNull(config, "Could not read the configuration from the file.");
+        
+        PropertyList file = config.getList(FILE);
+        assertNotNull(file, "the configuration should contain a list of assignments.");
+        
+        PropertyMap firstAssignment = (PropertyMap) file.getList().get(0);
+        
+        firstAssignment.getSimple(VALUE).setStringValue("12");
+        firstAssignment.getSimple(EXPORT).setBooleanValue(true);
+        
+        TokenRewriteStream stream = getStream();
+        
+        mapper.update(loadFile(stream), stream, config);
+        
+        String updatedConfig = stream.toString();
+        
+        ByteArrayInputStream updatedInputStream = new ByteArrayInputStream(updatedConfig.getBytes());
+        
+        TokenRewriteStream updatedStream = getStream(updatedInputStream);
+        
+        Configuration config2 = mapper.read(loadFile(updatedStream));
+        
+        assertEquals(config, config2);
+    }
+    
+    @Test
+    public void testCreate() throws Exception {
+        Configuration config = getMapper().read(loadFile(getStream()));
+        assertNotNull(config, "Could not read the configuration from the file.");
+        
+        PropertyList file = config.getList(FILE);
+        assertNotNull(file, "the configuration should contain a list of assignments.");
+    }
+    
+    @Test
+    public void testDelete() throws Exception {
+        Configuration config = getMapper().read(loadFile(getStream()));
+        assertNotNull(config, "Could not read the configuration from the file.");
+        
+        PropertyList file = config.getList(FILE);        
+        assertNotNull(file, "the configuration should contain a list of assignments.");
     }
 }

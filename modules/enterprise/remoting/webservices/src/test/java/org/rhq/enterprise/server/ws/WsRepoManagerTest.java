@@ -16,7 +16,6 @@ import org.testng.AssertJUnit;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.enterprise.server.ws.ConfigurationDefinition.PropertyDefinitions;
 import org.rhq.enterprise.server.ws.ConfigurationDefinition.PropertyDefinitions.Entry;
 import org.rhq.enterprise.server.ws.utility.WsUtility;
@@ -24,7 +23,7 @@ import org.rhq.enterprise.server.ws.utility.WsUtility;
 /**
  * These tests can not be executed in our standard unit test fashion as they
  * require a running RHQ Server with our web services deployed.
- *
+ * 
  * This is still in development and has the current restrictions: - add
  * [dev_root
  * ]/modules/enterprise/remoting/webservices/target/rhq-remoting-webservices
@@ -35,7 +34,7 @@ import org.rhq.enterprise.server.ws.utility.WsUtility;
  * inventory. - The -Ptest-ws profile specified when running mvn test from
  * webservices dir - Perftest plugin installed and agent started as described in
  * modules/enterprise/remoting/scripts/README.txt
- *
+ * 
  * @author Jay Shaughnessy, Simeon Pinder
  */
 @Test(groups = "ws")
@@ -78,41 +77,41 @@ public class WsRepoManagerTest extends AssertJUnit implements TestPropertiesInte
             return;
         }
 
-        // delete any existing test repos in the db
-        List<Repo> repos = WEBSERVICE_REMOTE.findRepos(subject, pc_unlimited);
-        for (int i = 0; (i < repos.size()); ++i) {
-            Repo repo = repos.get(i);
-            if (repo.getName().startsWith("test-repo-")) {
-                WEBSERVICE_REMOTE.deleteRepo(subject, repo.getId());
+        // delete any existing test channels in the db
+        List<Repo> channels = WEBSERVICE_REMOTE.findRepos(subject, pc_unlimited);
+        for (int i = 0; (i < channels.size()); ++i) {
+            Repo channel = channels.get(i);
+            if (channel.getName().startsWith("test-channel-")) {
+                WEBSERVICE_REMOTE.deleteRepo(subject, channel.getId());
             }
         }
 
-        // ensure test repo does not exist
+        // ensure test channel does not exist
         RepoCriteria criteria = new RepoCriteria();
         criteria.caseSensitive = true;
-        criteria.setFilterName("test-repo-0");
+        criteria.setFilterName("test-channel-0");
 
-        repos = WEBSERVICE_REMOTE.findReposByCriteria(subject, criteria);
-        assertTrue("test repo should not exist.", repos.size() == 0);
+        channels = WEBSERVICE_REMOTE.findReposByCriteria(subject, criteria);
+        assertTrue("test channel should not exist.", channels.size() == 0);
 
-        // create a test repo
-        // newRepo = new Repo("test-repo-0");
+        // create a test channel
+        // newRepo = new Repo("test-channel-0");
         Repo newRepo = WS_OBJECT_FACTORY.createRepo();
-        newRepo.setName("test-repo-0");
+        newRepo.setName("test-channel-0");
         newRepo.setDescription("description-0");
         Repo testRepo = WEBSERVICE_REMOTE.createRepo(subject, newRepo);
-        assertNotNull("test repo should exist.", testRepo);
-        assertEquals("test-repo-0", testRepo.getName());
+        assertNotNull("test channel should exist.", testRepo);
+        assertEquals("test-channel-0", testRepo.getName());
 
-        repos = WEBSERVICE_REMOTE.findReposByCriteria(subject, criteria);
-        assertTrue("test repo should exist.", repos.size() == 1);
+        channels = WEBSERVICE_REMOTE.findReposByCriteria(subject, criteria);
+        assertTrue("test channel should exist.", channels.size() == 1);
 
         // test getter
         testRepo = WEBSERVICE_REMOTE.getRepo(subject, 8888888);
-        assertNull("bogus repo should not exist.", testRepo);
-        testRepo = WEBSERVICE_REMOTE.getRepo(subject, repos.get(0).getId());
-        assertNotNull("test repo should exist.", testRepo);
-        assertEquals("test-repo-0", testRepo.getName());
+        assertNull("bogus channel should not exist.", testRepo);
+        testRepo = WEBSERVICE_REMOTE.getRepo(subject, channels.get(0).getId());
+        assertNotNull("test channel should exist.", testRepo);
+        assertEquals("test-channel-0", testRepo.getName());
         assertEquals("description-0", testRepo.getDescription());
 
         // test update
@@ -120,16 +119,16 @@ public class WsRepoManagerTest extends AssertJUnit implements TestPropertiesInte
         testRepo = WEBSERVICE_REMOTE.updateRepo(subject, testRepo);
         assertEquals("description-1", testRepo.getDescription());
         testRepo = WEBSERVICE_REMOTE.getRepo(subject, testRepo.getId());
-        assertNotNull("test repo should exist.", testRepo);
-        assertEquals("test-repo-0", testRepo.getName());
+        assertNotNull("test channel should exist.", testRepo);
+        assertEquals("test-channel-0", testRepo.getName());
         assertEquals("description-1", testRepo.getDescription());
 
         // test delete
         WEBSERVICE_REMOTE.deleteRepo(subject, testRepo.getId());
         testRepo = WEBSERVICE_REMOTE.getRepo(subject, testRepo.getId());
-        assertNull("repo should not exist.", testRepo);
-        repos = WEBSERVICE_REMOTE.findReposByCriteria(subject, criteria);
-        assertTrue("test repo should not exist.", repos.size() == 0);
+        assertNull("channel should not exist.", testRepo);
+        channels = WEBSERVICE_REMOTE.findReposByCriteria(subject, criteria);
+        assertTrue("test channel should not exist.", channels.size() == 0);
     }
 
     @Test(enabled = TESTS_ENABLED)
@@ -138,87 +137,87 @@ public class WsRepoManagerTest extends AssertJUnit implements TestPropertiesInte
             return;
         }
 
-        // delete any existing test repos in the db
-        List<Repo> repos = WEBSERVICE_REMOTE.findRepos(subject, pc_unlimited);
-        int numRealRepos = repos.size();
-        Repo repo;
-        for (int i = 0; (i < repos.size()); ++i) {
-            repo = repos.get(i);
-            if (repo.getName().startsWith("test-repo-")) {
-                WEBSERVICE_REMOTE.deleteRepo(subject, repo.getId());
+        // delete any existing test channels in the db
+        List<Repo> channels = WEBSERVICE_REMOTE.findRepos(subject, pc_unlimited);
+        int numRealRepos = channels.size();
+        Repo channel;
+        for (int i = 0; (i < channels.size()); ++i) {
+            channel = channels.get(i);
+            if (channel.getName().startsWith("test-channel-")) {
+                WEBSERVICE_REMOTE.deleteRepo(subject, channel.getId());
                 --numRealRepos;
             }
         }
 
         Repo newRepo = WS_OBJECT_FACTORY.createRepo();
-        newRepo.setName("test-repo-xxx");
+        newRepo.setName("test-channel-xxx");
         newRepo.setDescription("description-0");
         Repo testRepo = WEBSERVICE_REMOTE.createRepo(subject, newRepo);
 
         newRepo = WS_OBJECT_FACTORY.createRepo();
-        newRepo.setName("test-repo-yyy");
+        newRepo.setName("test-channel-yyy");
         newRepo.setDescription("description-1");
         testRepo = WEBSERVICE_REMOTE.createRepo(subject, newRepo);
 
         newRepo = WS_OBJECT_FACTORY.createRepo();
-        newRepo.setName("test-repo-xyz");
+        newRepo.setName("test-channel-xyz");
         newRepo.setDescription("description-2");
         testRepo = WEBSERVICE_REMOTE.createRepo(subject, newRepo);
 
         RepoCriteria criteria = new RepoCriteria();
-        repos = WEBSERVICE_REMOTE.findReposByCriteria(subject, criteria);
-        assertEquals("empty criteria failed.", repos.size(), numRealRepos + 3);
+        channels = WEBSERVICE_REMOTE.findReposByCriteria(subject, criteria);
+        assertEquals("empty criteria failed.", channels.size(), numRealRepos + 3);
 
         criteria.caseSensitive = true;
         criteria.strict = true;
 
-        criteria.setFilterName("test-repo-xyz");
-        repos = WEBSERVICE_REMOTE.findReposByCriteria(subject, criteria);
-        assertEquals("CS/Strict name criteria failed.", repos.size(), 1);
+        criteria.setFilterName("test-channel-xyz");
+        channels = WEBSERVICE_REMOTE.findReposByCriteria(subject, criteria);
+        assertEquals("CS/Strict name criteria failed.", channels.size(), 1);
 
-        criteria.setFilterName("TEST-repo-xyz");
-        repos = WEBSERVICE_REMOTE.findReposByCriteria(subject, criteria);
-        assertEquals("CS/Strict name criteria failed.", repos.size(), 0);
+        criteria.setFilterName("TEST-channel-xyz");
+        channels = WEBSERVICE_REMOTE.findReposByCriteria(subject, criteria);
+        assertEquals("CS/Strict name criteria failed.", channels.size(), 0);
 
         criteria.caseSensitive = false;
         criteria.strict = true;
 
-        criteria.setFilterName("TEST-repo-xyz");
-        repos = WEBSERVICE_REMOTE.findReposByCriteria(subject, criteria);
-        assertEquals("CS/Strict name criteria failed.", repos.size(), 1);
+        criteria.setFilterName("TEST-channel-xyz");
+        channels = WEBSERVICE_REMOTE.findReposByCriteria(subject, criteria);
+        assertEquals("CS/Strict name criteria failed.", channels.size(), 1);
 
         criteria.caseSensitive = true;
         criteria.strict = false;
 
         criteria.setFilterName("XXX");
-        repos = WEBSERVICE_REMOTE.findReposByCriteria(subject, criteria);
-        assertEquals("CS/Strict name criteria failed.", repos.size(), 0);
+        channels = WEBSERVICE_REMOTE.findReposByCriteria(subject, criteria);
+        assertEquals("CS/Strict name criteria failed.", channels.size(), 0);
 
         criteria.caseSensitive = false;
         criteria.strict = false;
 
         criteria.setFilterName("XXX");
-        repos = WEBSERVICE_REMOTE.findReposByCriteria(subject, criteria);
-        assertEquals("CS/Strict name criteria failed.", repos.size(), 1);
+        channels = WEBSERVICE_REMOTE.findReposByCriteria(subject, criteria);
+        assertEquals("CS/Strict name criteria failed.", channels.size(), 1);
 
-        criteria.setFilterName("test-repo-");
-        repos = WEBSERVICE_REMOTE.findReposByCriteria(subject, criteria);
-        assertEquals("CS/Strict name criteria failed.", repos.size(), 3);
+        criteria.setFilterName("test-channel-");
+        channels = WEBSERVICE_REMOTE.findReposByCriteria(subject, criteria);
+        assertEquals("CS/Strict name criteria failed.", channels.size(), 3);
 
         criteria.setFilterName("-x");
-        repos = WEBSERVICE_REMOTE.findReposByCriteria(subject, criteria);
-        assertEquals("CS/Strict name criteria failed.", repos.size(), 2);
+        channels = WEBSERVICE_REMOTE.findReposByCriteria(subject, criteria);
+        assertEquals("CS/Strict name criteria failed.", channels.size(), 2);
 
         criteria.setFilterDescription("-2");
-        repos = WEBSERVICE_REMOTE.findReposByCriteria(subject, criteria);
-        assertEquals("CS/Strict name/descrip criteria failed.", repos.size(), 1);
+        channels = WEBSERVICE_REMOTE.findReposByCriteria(subject, criteria);
+        assertEquals("CS/Strict name/descrip criteria failed.", channels.size(), 1);
 
-        // delete any existing test repos in the db
-        repos = WEBSERVICE_REMOTE.findRepos(subject, pc_unlimited);
-        for (int i = 0; (i < repos.size()); ++i) {
-            repo = repos.get(i);
-            if (repo.getName().startsWith("test-repo-")) {
-                WEBSERVICE_REMOTE.deleteRepo(subject, repo.getId());
+        // delete any existing test channels in the db
+        channels = WEBSERVICE_REMOTE.findRepos(subject, pc_unlimited);
+        for (int i = 0; (i < channels.size()); ++i) {
+            channel = channels.get(i);
+            if (channel.getName().startsWith("test-channel-")) {
+                WEBSERVICE_REMOTE.deleteRepo(subject, channel.getId());
             }
         }
     }
@@ -243,17 +242,17 @@ public class WsRepoManagerTest extends AssertJUnit implements TestPropertiesInte
         assertTrue("Test requires and available Tomcat Server in inventory.", (tomcatServers.size() > 0));
         Resource tomcatServer = tomcatServers.get(0);
 
-        // delete test-repo-war if in inventory
+        // delete test-channel-war if in inventory
         criteria = new ResourceCriteria();
         criteria.strict = true;
-        criteria.setFilterName("test-repo-war");
+        criteria.setFilterName("test-channel-war");
         criteria.setFilterResourceTypeName("Tomcat Web Application (WAR)");
         List<Resource> wars = WEBSERVICE_REMOTE.findResourcesByCriteria(subject, criteria);
         Resource war = null;
 
         if ((null != wars) && !wars.isEmpty()) {
-            System.out.println("\n Deleting existing test-repo-war in order to test create...");
-            assertEquals("Found more than 1 test-repo-war", wars.size(), 1);
+            System.out.println("\n Deleting existing test-channel-war in order to test create...");
+            assertEquals("Found more than 1 test-channel-war", wars.size(), 1);
             war = wars.get(0);
             // ResourceFactoryManager.deleteResource(war.getId());
             WEBSERVICE_REMOTE.deleteResource(subject, war.getId());
@@ -269,8 +268,8 @@ public class WsRepoManagerTest extends AssertJUnit implements TestPropertiesInte
             }
 
             wars = WEBSERVICE_REMOTE.findResourcesByCriteria(subject, criteria);
-            assertTrue("test-repo-war should not exist", ((null == wars) || wars.isEmpty()));
-            System.out.println("\n Done deleting existing test-repo-war in order to test create...");
+            assertTrue("test-channel-war should not exist", ((null == wars) || wars.isEmpty()));
+            System.out.println("\n Done deleting existing test-channel-war in order to test create...");
 
             // Give Tomcat a few additional seconds to perform its cleanup of
             // the app, just in case the resource is
@@ -297,14 +296,14 @@ public class WsRepoManagerTest extends AssertJUnit implements TestPropertiesInte
         assertNotNull("Test requires Tomcat WAR resource type.", warType);
 
         // read in the file
-        File file = new java.io.File("./src/test/resources/test-repo-war.war");
+        File file = new java.io.File("./src/test/resources/test-channel-war.war");
         if ((file == null) || (!file.exists())) {
-            file = new java.io.File("../scripts/src/test/resources/test-repo-war.war");
+            file = new java.io.File("../scripts/src/test/resources/test-channel-war.war");
         }
         if ((file == null) || (!file.exists())) {
             // THE FOLLOWING IS BAD, but there are some test situations where
             // mvn is NOT running from within project structure
-            file = new java.io.File(HARDCODED_WAR_DIRECTORY + "/test-repo-war.war");
+            file = new java.io.File(HARDCODED_WAR_DIRECTORY + "/test-channel-war.war");
         }
         assertNotNull("Unable to locate .war file to continue with testing.", file);
         FileInputStream inputStream = new java.io.FileInputStream(file);
@@ -369,7 +368,7 @@ public class WsRepoManagerTest extends AssertJUnit implements TestPropertiesInte
 
         criteria = new ResourceCriteria();
         criteria.strict = false;
-        criteria.setFilterName("test-repo-war");
+        criteria.setFilterName("test-channel-war");
         criteria.setFilterResourceTypeName("Tomcat Web Application (WAR)");
         criteria.setFilterCurrentAvailability(AvailabilityType.UP);
 
@@ -386,7 +385,7 @@ public class WsRepoManagerTest extends AssertJUnit implements TestPropertiesInte
         wars = WEBSERVICE_REMOTE.findResourcesByCriteria(subject, criteria);
         war = null;
         if ((null != wars) && !wars.isEmpty()) {
-            assertEquals("Found more than 1 test-repo-war", wars.size(), 1);
+            assertEquals("Found more than 1 test-channel-war", wars.size(), 1);
             war = wars.get(0);
         }
         assertNotNull("War should have been created", war);
@@ -411,73 +410,73 @@ public class WsRepoManagerTest extends AssertJUnit implements TestPropertiesInte
         assertNotNull("backing package should exist after create", backingPackage);
         System.out.println("\n After Create: Backing Package=" + backingPackage.getId());
 
-        // delete existing test repo in the db, this will unsubscribe
+        // delete existing test channel in the db, this will unsubscribe
         // resources and remove orphaned pvs
         RepoCriteria criteriaChan = new RepoCriteria();
         criteriaChan.caseSensitive = true;
         criteriaChan.strict = true;
-        criteriaChan.setFilterName("test-repo-0");
+        criteriaChan.setFilterName("test-channel-0");
 
-        List<Repo> repos = WEBSERVICE_REMOTE.findReposByCriteria(subject, criteriaChan);
-        Repo repo;
-        if (!repos.isEmpty()) {
-            repo = repos.get(0);
-            WEBSERVICE_REMOTE.deleteRepo(subject, repo.getId());
+        List<Repo> channels = WEBSERVICE_REMOTE.findReposByCriteria(subject, criteriaChan);
+        Repo channel;
+        if (!channels.isEmpty()) {
+            channel = channels.get(0);
+            WEBSERVICE_REMOTE.deleteRepo(subject, channel.getId());
         }
 
-        // create a test repo
-        // newRepo = new Repo("test-repo-0");
+        // create a test channel
+        // newRepo = new Repo("test-channel-0");
         Repo newRepo = new Repo();
-        newRepo.setName("test-repo-0");
+        newRepo.setName("test-channel-0");
         newRepo.setDescription("description-0");
-        repo = WEBSERVICE_REMOTE.createRepo(subject, newRepo);
+        channel = WEBSERVICE_REMOTE.createRepo(subject, newRepo);
 
-        assertNotNull("repo should have existed or been created", repo);
-        assertTrue("repo should have existed or been created", (repo.getId() > 0));
+        assertNotNull("channel should have existed or been created", channel);
+        assertTrue("channel should have existed or been created", (channel.getId() > 0));
 
-        // test repo subscription
+        // test channel subscription
         // subscribedResources;
-        List<Resource> subscribedResources = WEBSERVICE_REMOTE.findSubscribedResources(subject, repo.getId(),
+        List<Resource> subscribedResources = WEBSERVICE_REMOTE.findSubscribedResources(subject, channel.getId(),
             pc_unlimited);
-        assertTrue("test repo should not have resources", ((null == subscribedResources) || subscribedResources
+        assertTrue("test channel should not have resources", ((null == subscribedResources) || subscribedResources
             .isEmpty()));
 
         // RepoManager.subscribeResourceToRepos( war.getId(),
-        // [repo.getId()] );
+        // [channel.getId()] );
         List<Integer> bag = new ArrayList<Integer>();
-        bag.add(repo.getId());
+        bag.add(channel.getId());
         WEBSERVICE_REMOTE.subscribeResourceToRepos(subject, war.getId(), bag);
 
-        subscribedResources = WEBSERVICE_REMOTE.findSubscribedResources(subject, repo.getId(), pc_unlimited);
-        assertEquals("repo should have the test war", subscribedResources.size(), 1);
+        subscribedResources = WEBSERVICE_REMOTE.findSubscribedResources(subject, channel.getId(), pc_unlimited);
+        assertEquals("channel should have the test war", subscribedResources.size(), 1);
 
         // RepoManager.unsubscribeResourceFromRepos( war.getId(),
-        // [repo.getId()] );
+        // [channel.getId()] );
         WEBSERVICE_REMOTE.unsubscribeResourceFromRepos(subject, war.getId(), bag);
 
-        subscribedResources = WEBSERVICE_REMOTE.findSubscribedResources(subject, repo.getId(), pc_unlimited);
-        assertTrue("test repo should not have resources", ((null == subscribedResources) || subscribedResources
+        subscribedResources = WEBSERVICE_REMOTE.findSubscribedResources(subject, channel.getId(), pc_unlimited);
+        assertTrue("test channel should not have resources", ((null == subscribedResources) || subscribedResources
             .isEmpty()));
 
         // Create packageVersion in an attempt to upgrade the web-app
 
-        List<PackageVersion> pvsInRepo = WEBSERVICE_REMOTE.findPackageVersionsInRepo(subject, repo.getId(),
-            null, pc_unlimited);
-        assertTrue("test repo should not have pvs", ((null == pvsInRepo) || pvsInRepo.isEmpty()));
+        List<PackageVersion> pvsInRepo = WEBSERVICE_REMOTE.findPackageVersionsInRepo(subject, channel.getId(), null,
+            pc_unlimited);
+        assertTrue("test channel should not have pvs", ((null == pvsInRepo) || pvsInRepo.isEmpty()));
 
         List<Architecture> architectures = WEBSERVICE_REMOTE.findArchitectures(subject);
         assertNotNull("missing architectures", architectures);
         assertTrue("missing architectures", !architectures.isEmpty());
 
         // read in the package file
-        file = new java.io.File("./src/test/resources/test-repo-war-2.0.war");
+        file = new java.io.File("./src/test/resources/test-channel-war-2.0.war");
         if ((file == null) || (!file.exists())) {
-            file = new java.io.File("../scripts/src/test/resources/test-repo-war-2.0.war");
+            file = new java.io.File("../scripts/src/test/resources/test-channel-war-2.0.war");
         }
         if ((file == null) || (!file.exists())) {
             // THE FOLLOWING IS BAD, but there are some test situations where
             // mvn is NOT running from within project structure
-            file = new java.io.File(HARDCODED_WAR_DIRECTORY + "/test-repo-war-2.0.war");
+            file = new java.io.File(HARDCODED_WAR_DIRECTORY + "/test-channel-war-2.0.war");
         }
 
         inputStream = new java.io.FileInputStream(file);
@@ -490,19 +489,19 @@ public class WsRepoManagerTest extends AssertJUnit implements TestPropertiesInte
         inputStream.close();
         assertTrue("Could not completely read file " + file.getName(), (offset == fileBytes.length));
 
-        PackageVersion pv = WEBSERVICE_REMOTE.createPackageVersion(subject, "test-repo-war-2.0.war", packageType
+        PackageVersion pv = WEBSERVICE_REMOTE.createPackageVersion(subject, "test-channel-war-2.0.war", packageType
             .getId(), "2.0", null, fileBytes);
         assertNotNull("failed to create packageVersion", pv);
         assertTrue(" Bad PV Id from createPV", (pv.getId() > 0));
 
-        // RepoManager.addPackageVersionsToRepo( repo.getId(),
+        // RepoManager.addPackageVersionsToRepo( channel.getId(),
         // [pv.getId()] );
         List<Integer> pvBag = new ArrayList<Integer>();
         pvBag.add(pv.getId());
-        WEBSERVICE_REMOTE.addPackageVersionsToRepo(subject, repo.getId(), pvBag);
+        WEBSERVICE_REMOTE.addPackageVersionsToRepo(subject, channel.getId(), pvBag);
 
-        pvsInRepo = WEBSERVICE_REMOTE.findPackageVersionsInRepo(subject, repo.getId(), null, pc_unlimited);
-        assertNotNull("pv should be in repo", pvsInRepo);
+        pvsInRepo = WEBSERVICE_REMOTE.findPackageVersionsInRepo(subject, channel.getId(), null, pc_unlimited);
+        assertNotNull("pv should be in channel", pvsInRepo);
         assertEquals("unexpected pvs", pvsInRepo.size(), 1);
         assertEquals("unexpected pv returned", pvsInRepo.get(0).getId(), pv.getId());
 
@@ -516,7 +515,7 @@ public class WsRepoManagerTest extends AssertJUnit implements TestPropertiesInte
 
         criteria = new ResourceCriteria();
         criteria.strict = false;
-        criteria.setFilterName("test-repo-war");
+        criteria.setFilterName("test-channel-war");
         criteria.setFilterResourceTypeName("Tomcat Web Application (WAR)");
         criteria.setFilterCurrentAvailability(AvailabilityType.UP);
 
@@ -533,7 +532,7 @@ public class WsRepoManagerTest extends AssertJUnit implements TestPropertiesInte
         wars = WEBSERVICE_REMOTE.findResourcesByCriteria(subject, criteria);
         war = null;
         if ((null != wars) && !wars.isEmpty()) {
-            assertEquals("Found more than 1 test-repo-war", wars.size(), 1);
+            assertEquals("Found more than 1 test-channel-war", wars.size(), 1);
             war = wars.get(0);
         }
         assertNotNull("War should have been updated", war);
@@ -547,12 +546,12 @@ public class WsRepoManagerTest extends AssertJUnit implements TestPropertiesInte
         // newBackingPackage.getId() ),
         // "Backing ackage should differ after update" );
 
-        // delete any existing test repos in the db
-        repos = WEBSERVICE_REMOTE.findRepos(subject, pc_unlimited);
-        for (int i = 0; (i < repos.size()); ++i) {
-            repo = repos.get(i);
-            if (repo.getName().startsWith("test-repo-")) {
-                WEBSERVICE_REMOTE.deleteRepo(subject, repo.getId());
+        // delete any existing test channels in the db
+        channels = WEBSERVICE_REMOTE.findRepos(subject, pc_unlimited);
+        for (int i = 0; (i < channels.size()); ++i) {
+            channel = channels.get(i);
+            if (channel.getName().startsWith("test-channel-")) {
+                WEBSERVICE_REMOTE.deleteRepo(subject, channel.getId());
             }
         }
 

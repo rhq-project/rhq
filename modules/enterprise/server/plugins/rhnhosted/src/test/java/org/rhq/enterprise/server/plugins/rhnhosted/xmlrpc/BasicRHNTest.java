@@ -461,7 +461,7 @@ public class BasicRHNTest extends TestCase
         assertTrue(success);
     }
 
-    public void testDumpGetRPM() throws Exception
+    public void BROKENtestDumpGetRPM() throws Exception
     {
         boolean success = true;
 
@@ -473,41 +473,26 @@ public class BasicRHNTest extends TestCase
             }
 
             XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
-            config.setServerURL(new URL("http://satellite.rhn.redhat.com/SAT-DUMP"));
+            config.setServerURL(new URL("http://satellite.rhn.redhat.com/SAT"));
             XmlRpcClient client = new XmlRpcClient();
             client.setConfig(config);
             RhnJaxbTransportFactory transportFactory = new RhnJaxbTransportFactory(client);
             transportFactory.setRequestProperties(getRequestProperties());
             transportFactory.setJaxbDomain("org.rhq.enterprise.server.plugins.rhnhosted.xml");
             transportFactory.setDumpMessageToFile(debugDumpFile);
-            transportFactory.setDumpFilePath("/tmp/sample-rhnhosted-dump.get_rpm.xml");
+            transportFactory.setDumpFilePath("/tmp/sample-rhnhosted-package.get.xml");
             client.setTransportFactory(transportFactory);
 
-            List<String> reqLabels = new ArrayList<String>();
-            // To get data for this call, look at channels kickstartable-trees=""
-            reqLabels.add("ks-rhel-i386-server-5");
-            reqLabels.add("ks-rhel-i386-server-5-u1");
-            reqLabels.add("ks-rhel-i386-server-5-u2");
-            reqLabels.add("ks-rhel-i386-server-5-u3");
-            reqLabels.add("ks-rhel-i386-server-5-u4");
-            Object[] params = new Object[]{systemid, reqLabels};
-            JAXBElement<RhnSatelliteType> result = (JAXBElement) client.execute("dump.kickstartable_trees", params);
+            List<String> nvrea = new ArrayList<String>();
+            nvrea.add("vim");
+            nvrea.add("7.0.109");
+            nvrea.add("6.el5");
+            nvrea.add("");
+            nvrea.add("i386");
+            // Call expects: systemID, channel label, (name, version, release, epoch, arch)
+            Object[] params = new Object[]{systemid, "rhel-i386-server-5", nvrea};
+            JAXBElement<RhnSatelliteType> result = (JAXBElement) client.execute("package.get", params);
             RhnSatelliteType sat = result.getValue();
-
-            List<RhnKickstartableTreeType> trees = sat.getRhnKickstartableTrees().getRhnKickstartableTree();
-
-            for (RhnKickstartableTreeType t: trees) {
-                assertFalse(StringUtils.isBlank(t.getBasePath()));
-                assertFalse(StringUtils.isBlank(t.getBootImage()));
-                assertFalse(StringUtils.isBlank(t.getChannel()));
-                assertFalse(StringUtils.isBlank(t.getInstallTypeLabel()));
-                assertFalse(StringUtils.isBlank(t.getInstallTypeName()));
-                assertFalse(StringUtils.isBlank(t.getKstreeTypeLabel()));
-                assertFalse(StringUtils.isBlank(t.getKstreeTypeName()));
-                assertFalse(StringUtils.isBlank(t.getLabel()));
-                assertFalse(StringUtils.isBlank(t.getLastModified()));
-            }
-
         }
         catch (Exception e) {
             e.printStackTrace();

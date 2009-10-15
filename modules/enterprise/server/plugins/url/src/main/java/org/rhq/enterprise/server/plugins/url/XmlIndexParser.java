@@ -72,7 +72,7 @@ public class XmlIndexParser implements IndexParser {
 
     private static final String PLUGIN_SCHEMA_PATH = "rhq-contentsource-packagedetails.xsd";
 
-    public Map<String, RemotePackageInfo> parse(InputStream indexStream, UrlSource contentSource) throws Exception {
+    public Map<String, RemotePackageInfo> parse(InputStream indexStream, UrlProvider contentSource) throws Exception {
         return jaxbParse(indexStream, contentSource.getIndexUrl(), contentSource.getRootUrlString());
     }
 

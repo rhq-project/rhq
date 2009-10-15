@@ -37,13 +37,13 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.configuration.Configuration;
 
 /**
- * Similiar to the {@link UrlSource} content source, but this expects the URL to use
+ * Similiar to the {@link UrlProvider} content source, but this expects the URL to use
  * the HTTP protocol. This provides the ability to go through an HTTP proxy.
  * 
  * @author John Mazzitelli
  */
-public class HttpSource extends UrlSource {
-    private final Log log = LogFactory.getLog(HttpSource.class);
+public class HttpProvider extends UrlProvider {
+    private final Log log = LogFactory.getLog(HttpProvider.class);
 
     private String username;
     private String password;

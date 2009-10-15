@@ -35,7 +35,7 @@ import org.rhq.core.domain.configuration.Configuration;
  *
  * @author jortel
  */
-public class RepoSource implements ContentProvider, PackageSource {
+public class RepoProvider implements ContentProvider, PackageSource {
     /**
      * The reader used to access a yum repo's metadata and packages.
      */
@@ -49,7 +49,7 @@ public class RepoSource implements ContentProvider, PackageSource {
     /**
      * Logger
      */
-    private final Log log = LogFactory.getLog(RepoSource.class);
+    private final Log log = LogFactory.getLog(RepoProvider.class);
 
     /**
      * Initializes the adapter with the specified configuration.

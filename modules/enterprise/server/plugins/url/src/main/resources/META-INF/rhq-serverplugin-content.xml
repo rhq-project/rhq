@@ -9,7 +9,7 @@
                       description="This content source retrieves packages from a remote system identified by a URL."
                       lazyLoad="true"
                       downloadMode="database"
-                      apiClass="org.rhq.enterprise.server.plugins.url.UrlSource">
+                      apiClass="org.rhq.enterprise.server.plugins.url.UrlProvider">
 
       <configuration>
          <c:simple-property name="rootUrl" type="string" required="true" description="The URL that contains all content that is to be served by this content source."/>
@@ -34,7 +34,7 @@
                       description="This content source retrieves packages from a remote HTTP server, possibly via a proxy."
                       lazyLoad="true"
                       downloadMode="database"
-                      apiClass="org.rhq.enterprise.server.plugins.url.HttpSource">
+                      apiClass="org.rhq.enterprise.server.plugins.url.HttpProvider">
 
       <configuration>
          <c:simple-property name="rootUrl" type="string" required="true" description="The HTTP URL that contains all content that is to be served by this content source."/>

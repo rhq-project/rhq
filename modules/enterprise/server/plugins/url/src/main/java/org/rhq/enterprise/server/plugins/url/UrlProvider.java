@@ -76,7 +76,7 @@ import org.rhq.enterprise.server.plugins.url.RemotePackageInfo.SupportedPackageT
  *
  * @author John Mazzitelli
  */
-public class UrlSource implements ContentProvider, PackageSource {
+public class UrlProvider implements ContentProvider, PackageSource {
 
     /**
      * The default index file is located at the root URL under this filename.

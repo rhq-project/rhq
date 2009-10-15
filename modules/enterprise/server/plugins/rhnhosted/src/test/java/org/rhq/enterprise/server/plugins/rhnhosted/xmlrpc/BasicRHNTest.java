@@ -24,8 +24,11 @@ import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
 import org.apache.xmlrpc.common.TypeFactory;
 import org.apache.xmlrpc.jaxb.JaxbTypeFactory;
 
-import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnSatelliteType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelFamilyType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageShortType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnProductNameType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnSatelliteType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.CustomReqPropTransportFactory;
 import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.RhnJaxbTransportFactory;
 
@@ -35,6 +38,7 @@ import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.RhnJaxbTransportFactor
 public class BasicRHNTest extends TestCase
 {
     public String systemIdPath = "./src/test/resources/systemid";
+    protected boolean debugDumpFile = true;
 
     public BasicRHNTest( String testName )
     {
@@ -84,7 +88,7 @@ public class BasicRHNTest extends TestCase
         assertTrue(success);
     }
 
-    public void XXtestAuth() throws Exception
+    public void testAuth() throws Exception
     {
         boolean success = true;
     
@@ -113,6 +117,84 @@ public class BasicRHNTest extends TestCase
         assertTrue(success);
     }
 
+    public void testDumpProductNames() throws Exception
+    {
+        boolean success = true;
+
+        try {
+            String systemid = getSystemId();
+            if (StringUtils.isBlank(systemid)) {
+                System.out.println("Skipping test since systemid is not readable");
+                return;
+            }
+
+            XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
+            config.setServerURL(new URL("http://satellite.rhn.redhat.com/SAT-DUMP"));
+            XmlRpcClient client = new XmlRpcClient();
+            client.setConfig(config);
+            RhnJaxbTransportFactory transportFactory = new RhnJaxbTransportFactory(client);
+            transportFactory.setRequestProperties(getRequestProperties());
+            transportFactory.setJaxbDomain("org.rhq.enterprise.server.plugins.rhnhosted.xml");
+            transportFactory.setDumpMessageToFile(debugDumpFile);
+            transportFactory.setDumpFilePath("/tmp/sample-rhnhosted-dump.product_names.xml");
+            client.setTransportFactory(transportFactory);
+
+            Object[] params = new Object[]{systemid};
+            JAXBElement<RhnSatelliteType> result =  (JAXBElement) client.execute("dump.product_names", params);
+            RhnSatelliteType sat = result.getValue();
+            List<RhnProductNameType> names = sat.getRhnProductNames().getRhnProductName();
+            assertTrue(names.size() > 0);
+            for (RhnProductNameType name: names) {
+                assertFalse(StringUtils.isBlank(name.getName()));
+                assertFalse(StringUtils.isBlank(name.getLabel()));
+            }
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            success = false;
+        }
+        assertTrue(success);
+    }
+
+    public void testDumpChannelFamilies() throws Exception
+    {
+        boolean success = true;
+
+        try {
+            String systemid = getSystemId();
+            if (StringUtils.isBlank(systemid)) {
+                System.out.println("Skipping test since systemid is not readable");
+                return;
+            }
+
+            XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
+            config.setServerURL(new URL("http://satellite.rhn.redhat.com/SAT-DUMP"));
+            XmlRpcClient client = new XmlRpcClient();
+            client.setConfig(config);
+            RhnJaxbTransportFactory transportFactory = new RhnJaxbTransportFactory(client);
+            transportFactory.setRequestProperties(getRequestProperties());
+            transportFactory.setJaxbDomain("org.rhq.enterprise.server.plugins.rhnhosted.xml");
+            transportFactory.setDumpMessageToFile(debugDumpFile);
+            transportFactory.setDumpFilePath("/tmp/sample-rhnhosted-dump.channel_families.xml");
+            client.setTransportFactory(transportFactory);
+
+            Object[] params = new Object[]{systemid};
+            JAXBElement<RhnSatelliteType> result =  (JAXBElement) client.execute("dump.channel_families", params);
+            RhnSatelliteType sat = result.getValue();
+            List<RhnChannelFamilyType> families = sat.getRhnChannelFamilies().getRhnChannelFamily();
+            for (RhnChannelFamilyType family: families) {
+                /* Note that MaxMembers, VirtSubLevelLabel, and VirtSubLevelName may be null */
+                assertFalse(StringUtils.isBlank(family.getChannelLabels()));
+                assertFalse(StringUtils.isBlank(family.getId()));
+                assertFalse(StringUtils.isBlank(family.getLabel()));
+            }
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            success = false;
+        }
+        assertTrue(success);
+    }
 
     public void testDumpChannels() throws Exception 
     {
@@ -132,6 +214,8 @@ public class BasicRHNTest extends TestCase
             RhnJaxbTransportFactory transportFactory = new RhnJaxbTransportFactory(client);
             transportFactory.setRequestProperties(getRequestProperties());
             transportFactory.setJaxbDomain("org.rhq.enterprise.server.plugins.rhnhosted.xml");
+            transportFactory.setDumpMessageToFile(debugDumpFile);
+            transportFactory.setDumpFilePath("/tmp/sample-rhnhosted-dump.channels.xml");
             client.setTransportFactory(transportFactory);
 
             List<String> channel_labels = new ArrayList<String>();
@@ -140,15 +224,12 @@ public class BasicRHNTest extends TestCase
             JAXBElement<RhnSatelliteType> result =  (JAXBElement) client.execute("dump.channels", params);
             RhnSatelliteType sat = result.getValue();
 
-
-            /*
-            System.err.println("channel name = " + sat.getRhnChannels().getRhnChannel().getRhnChannelName());
-            System.err.println("channel summary = " + sat.getRhnChannels().getRhnChannel().getRhnChannelSummary());
-            */
+            assertFalse(StringUtils.isBlank(sat.getRhnChannels().getRhnChannel().getRhnChannelName()));
+            assertFalse(StringUtils.isBlank(sat.getRhnChannels().getRhnChannel().getRhnChannelSummary()));
 
             String packages = sat.getRhnChannels().getRhnChannel().getPackages();
+            assertFalse(StringUtils.isBlank(packages));
             String[] pkgIds = packages.split(" ");
-
             ///*
             System.err.println(pkgIds.length + " package IDs parsed.");
             System.err.println("package[0] = " + pkgIds[0]);
@@ -184,6 +265,8 @@ public class BasicRHNTest extends TestCase
             RhnJaxbTransportFactory transportFactory = new RhnJaxbTransportFactory(client);
             transportFactory.setRequestProperties(getRequestProperties());
             transportFactory.setJaxbDomain("org.rhq.enterprise.server.plugins.rhnhosted.xml");
+            transportFactory.setDumpMessageToFile(debugDumpFile);
+            transportFactory.setDumpFilePath("/tmp/sample-rhnhosted-dump.packages_short.xml");
             client.setTransportFactory(transportFactory);
             List<String> reqPackages = new ArrayList<String>();
             reqPackages.add("rhn-package-386981");
@@ -198,15 +281,13 @@ public class BasicRHNTest extends TestCase
             assertTrue(pkgs.size() == reqPackages.size());
 
             for (RhnPackageShortType pkgShort: pkgs) {
-                System.err.println("Id: " + pkgShort.getId());
-                System.err.println("Name: " + pkgShort.getName());
-                System.err.println("Epoch: " + pkgShort.getEpoch());
-                System.err.println("Version: " + pkgShort.getVersion());
-                System.err.println("Release: " + pkgShort.getRelease());
-                System.err.println("PackageArch: " + pkgShort.getPackageArch());
-                System.err.println("PackageSize: " + pkgShort.getPackageSize());
-                System.err.println("Md5Sum: " + pkgShort.getMd5Sum());
-                System.err.println("LastModified: " + pkgShort.getLastModified() + "\n");
+                assertFalse(StringUtils.isBlank(pkgShort.getId()));
+                assertFalse(StringUtils.isBlank(pkgShort.getName()));
+                assertFalse(StringUtils.isBlank(pkgShort.getVersion()));
+                assertFalse(StringUtils.isBlank(pkgShort.getRelease()));
+                assertFalse(StringUtils.isBlank(pkgShort.getPackageSize()));
+                assertFalse(StringUtils.isBlank(pkgShort.getMd5Sum()));
+                assertFalse(StringUtils.isBlank(pkgShort.getLastModified()));
             }
         }
         catch (Exception e) {
@@ -216,7 +297,7 @@ public class BasicRHNTest extends TestCase
         assertTrue(success);
     }
 
-    public void XXtestDumpPackages() throws Exception
+    public void testDumpPackages() throws Exception
     {
         boolean success = true;
 
@@ -234,7 +315,10 @@ public class BasicRHNTest extends TestCase
             RhnJaxbTransportFactory transportFactory = new RhnJaxbTransportFactory(client);
             transportFactory.setRequestProperties(getRequestProperties());
             transportFactory.setJaxbDomain("org.rhq.enterprise.server.plugins.rhnhosted.xml");
+            transportFactory.setDumpMessageToFile(debugDumpFile);
+            transportFactory.setDumpFilePath("/tmp/sample-rhnhosted-dump.packages.xml");
             client.setTransportFactory(transportFactory);
+
             List<String> reqPackages = new ArrayList<String>();
             reqPackages.add("rhn-package-386981");
             reqPackages.add("rhn-package-386982");
@@ -243,20 +327,13 @@ public class BasicRHNTest extends TestCase
             Object[] params = new Object[]{systemid, reqPackages};
             JAXBElement<RhnSatelliteType> result = (JAXBElement) client.execute("dump.packages", params);
             RhnSatelliteType sat = result.getValue();
-            List<RhnPackageShortType> pkgs = sat.getRhnPackagesShort().getRhnPackageShort();
-            System.err.println(pkgs.size() + " packages were returned.");
+
+            List<RhnPackageType> pkgs = sat.getRhnPackages().getRhnPackage();
             assertTrue(pkgs.size() == reqPackages.size());
 
-            for (RhnPackageShortType pkgShort: pkgs) {
-                System.err.println("Id: " + pkgShort.getId());
-                System.err.println("Name: " + pkgShort.getName());
-                System.err.println("Epoch: " + pkgShort.getEpoch());
-                System.err.println("Version: " + pkgShort.getVersion());
-                System.err.println("Release: " + pkgShort.getRelease());
-                System.err.println("PackageArch: " + pkgShort.getPackageArch());
-                System.err.println("PackageSize: " + pkgShort.getPackageSize());
-                System.err.println("Md5Sum: " + pkgShort.getMd5Sum());
-                System.err.println("LastModified: " + pkgShort.getLastModified() + "\n");
+            for (RhnPackageType pkg: pkgs) {
+                assertFalse(StringUtils.isBlank(pkg.getRhnPackageSummary()));
+                assertFalse(StringUtils.isBlank(pkg.getRhnPackageDescription()));
             }
         }
         catch (Exception e) {

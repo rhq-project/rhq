@@ -37,10 +37,28 @@ import org.xml.sax.XMLReader;
 
 public class RhnJaxbTransport extends CustomReqPropTransport {
 
-    String jaxbDomain;
+    protected String jaxbDomain;
+    protected boolean dumpMessageToFile;
+    protected String dumpPath;
 
     public RhnJaxbTransport(XmlRpcClient pClient) {
         super(pClient);
+    }
+
+    public void setDumpMessageToFile(boolean dump) {
+        dumpMessageToFile = dump;
+    }
+
+    public boolean getDumpMessageToFile() {
+        return dumpMessageToFile;
+    }
+
+    public void setDumpFilePath(String path) {
+        dumpPath = path;
+    }
+
+    public String getDumpFilePath() {
+        return dumpPath;
     }
 
     public void setJaxbDomain(String domain) {
@@ -52,29 +70,28 @@ public class RhnJaxbTransport extends CustomReqPropTransport {
     }
 
     protected Object readResponse(XmlRpcStreamRequestConfig pConfig, InputStream pStream) throws XmlRpcException {
-       ///*
-        String data = "";
-        try {
-            System.err.println("inside RhnJaxbTransport " + pStream.available()
-                    + " bytes available.");
-            BufferedReader reader = new BufferedReader(new InputStreamReader(pStream));
-            String line;
-            StringBuffer sb = new StringBuffer();
-            while ((line = reader.readLine()) != null) {
-                sb.append(line + "\n");
+        InputStream stream = pStream;
+        if (dumpMessageToFile) {
+            String data = "";
+            try {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(pStream));
+                String line;
+                StringBuffer sb = new StringBuffer();
+                while ((line = reader.readLine()) != null) {
+                    sb.append(line + "\n");
+                }
+                data = sb.toString();
+                FileWriter fstream = new FileWriter(getDumpFilePath());
+                BufferedWriter out = new BufferedWriter(fstream);
+                out.write(data);
+                out.close();
+                stream = new ByteArrayInputStream(data.getBytes());
             }
-            data = sb.toString();
-            //System.err.println("Contents = " + data);
-            FileWriter fstream = new FileWriter("/tmp/rhnhosted-xmlrpc-debug_dump.xml");
-            BufferedWriter out = new BufferedWriter(fstream);
-            out.write(data);
-            out.close();
+            catch (Exception e) {
+                e.printStackTrace();
+                throw new XmlRpcException(e.getMessage());
+            }
         }
-        catch (Exception e) {
-            e.printStackTrace();
-        }
-        ByteArrayInputStream str = new ByteArrayInputStream(data.getBytes());
-        //*/
 
         /**
          * Point of this method is to not require the traditional "methodResponse" xml wrapping
@@ -83,8 +100,7 @@ public class RhnJaxbTransport extends CustomReqPropTransport {
         try {
             JAXBContext jc = JAXBContext.newInstance(jaxbDomain);
             Unmarshaller u = jc.createUnmarshaller();
-            //return u.unmarshal(pStream);
-            return u.unmarshal(str);
+            return u.unmarshal(stream);
         }
         catch (JAXBException e) {
             e.printStackTrace();

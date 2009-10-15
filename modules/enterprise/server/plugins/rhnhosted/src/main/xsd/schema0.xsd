@@ -48,13 +48,13 @@
   </xs:complexType>
   <xs:complexType name="rhn-channel-familiesType">
     <xs:sequence>
-      <xs:element type="rhn-channel-familyType" name="rhn-channel-family"/>
+      <xs:element type="rhn-channel-familyType" name="rhn-channel-family" maxOccurs="unbounded" minOccurs="0"/>
     </xs:sequence>
   </xs:complexType>
   <xs:complexType name="rhn-packages-shortType">
-    <xs:choice maxOccurs="unbounded" minOccurs="0">
-      <xs:element type="rhn-package-shortType" name="rhn-package-short"/>
-    </xs:choice>
+    <xs:sequence>
+      <xs:element type="rhn-package-shortType" name="rhn-package-short" maxOccurs="unbounded" minOccurs="0"/>
+    </xs:sequence>
   </xs:complexType>
   <xs:complexType name="rhn-package-provides-entryType">
     <xs:simpleContent>
@@ -64,6 +64,11 @@
         <xs:attribute type="xs:string" name="sense" use="optional"/>
       </xs:extension>
     </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="rhn-product-namesType">
+    <xs:sequence>
+      <xs:element type="rhn-product-nameType" name="rhn-product-name" maxOccurs="unbounded" minOccurs="0"/>
+    </xs:sequence>
   </xs:complexType>
   <xs:complexType name="erratumType">
     <xs:simpleContent>
@@ -81,9 +86,11 @@
   </xs:complexType>
   <xs:complexType name="rhn-satelliteType">
     <xs:sequence>
+      <xs:element type="rhn-channel-familiesType" name="rhn-channel-families" minOccurs="0"/>
       <xs:element type="rhn-channelsType" name="rhn-channels" minOccurs="0"/>
       <xs:element type="rhn-packages-shortType" name="rhn-packages-short" minOccurs="0"/>
       <xs:element type="rhn-packagesType" name="rhn-packages" minOccurs="0"/>
+      <xs:element type="rhn-product-namesType" name="rhn-product-names" minOccurs="0"/>
     </xs:sequence>
     <xs:attribute type="xs:string" name="generation" use="optional"/>
     <xs:attribute type="xs:string" name="version" use="optional"/>
@@ -103,6 +110,14 @@
         <xs:attribute type="xs:string" name="release"/>
         <xs:attribute type="xs:string" name="channel-arch"/>
         <xs:attribute type="xs:string" name="os"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="rhn-product-nameType">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attribute type="xs:string" name="name" use="optional"/>
+        <xs:attribute type="xs:string" name="label" use="optional"/>
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
@@ -163,16 +178,17 @@
       <xs:element type="xs:string" name="rhn-null"/>
     </xs:sequence>
   </xs:complexType>
-  <xs:complexType name="rhn-channel-familyType">
-    <xs:simpleContent>
-      <xs:extension base="xs:string">
-        <xs:attribute type="xs:string" name="virt-sub-level-name"/>
-        <xs:attribute type="xs:string" name="channel-labels"/>
-        <xs:attribute type="xs:string" name="virt-sub-level-label"/>
-        <xs:attribute type="xs:string" name="id"/>
-        <xs:attribute type="xs:string" name="label"/>
-      </xs:extension>
-    </xs:simpleContent>
+  <xs:complexType name="rhn-channel-familyType" mixed="true">
+    <xs:sequence>
+      <xs:element type="xs:string" name="rhn-channel-family-name" minOccurs="0"/>
+      <xs:element type="xs:string" name="rhn-channel-family-product-url" minOccurs="0"/>
+    </xs:sequence>
+    <xs:attribute type="xs:string" name="channel-labels" use="optional"/>
+    <xs:attribute type="xs:string" name="id" use="optional"/>
+    <xs:attribute type="xs:string" name="label" use="optional"/>
+    <xs:attribute type="xs:string" name="max-members" use="optional"/>
+    <xs:attribute type="xs:string" name="virt-sub-level-label" use="optional"/>
+    <xs:attribute type="xs:string" name="virt-sub-level-name" use="optional"/>
   </xs:complexType>
   <xs:complexType name="rhn-packagesType">
     <xs:sequence>

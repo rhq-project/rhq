@@ -18,33 +18,10 @@
  */
 package org.rhq.plugins.sudoers;
 
-import java.io.File;
-import java.util.HashSet;
-import java.util.Set;
-
-import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
-import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
-import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
-import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.plugins.augeas.AugeasConfigurationDiscoveryComponent;
 
 /**
- * @author Jason Dobies
+ * @author Partha Aji
  */
-public class SudoersDiscoveryComponent implements ResourceDiscoveryComponent {
-
-    public Set discoverResources(ResourceDiscoveryContext discoveryContext) throws InvalidPluginConfigurationException,
-        Exception {
-
-        Set<DiscoveredResourceDetails> details = new HashSet<DiscoveredResourceDetails>();
-
-        File hostsFile = new File("/etc/sudoers");
-        if (hostsFile.exists()) {
-            DiscoveredResourceDetails resource = new DiscoveredResourceDetails(discoveryContext.getResourceType(),
-                hostsFile.getPath(), "Sudoers File", null, "Sudoers File", discoveryContext
-                    .getDefaultPluginConfiguration(), null);
-            details.add(resource);
-        }
-
-        return details;
-    }
+public class SudoersDiscoveryComponent extends AugeasConfigurationDiscoveryComponent {
 }

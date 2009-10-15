@@ -933,12 +933,31 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
     }
 
     @Test
-    public void testFindRawConfigurationsByConfigurationId() throws Exception {
+    public void testFindRawConfigurationById() throws Exception {
         Configuration config = persistNewConfigWithRawConfigs();
 
         getTransactionManager().begin();
         EntityManager entityMgr = getEntityManager();
 
+        try {
+            for (RawConfiguration rawConfig : config.getRawConfigurations()) {
+                assertNotNull(
+                    "Failed to find raw config by id[" + rawConfig.getId() + "]",
+                    entityMgr.find(RawConfiguration.class, rawConfig.getId())
+                );
+            }
+        }
+        finally {
+            getTransactionManager().rollback();
+        }
+    }
+
+    @Test
+    public void testFindRawConfigurationsByConfigurationId() throws Exception {
+        Configuration config = persistNewConfigWithRawConfigs();
+
+        getTransactionManager().begin();
+        
         try {
             Collection<RawConfiguration> rawConfigs = configurationManager.findRawConfigurationsByConfigurationId(
                 config.getId());

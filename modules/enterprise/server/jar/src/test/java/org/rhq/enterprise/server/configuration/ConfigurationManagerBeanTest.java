@@ -949,6 +949,10 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         }
         finally {
             getTransactionManager().rollback();
+
+            getTransactionManager().begin();
+            delete(config);
+            getTransactionManager().commit();
         }
     }
 

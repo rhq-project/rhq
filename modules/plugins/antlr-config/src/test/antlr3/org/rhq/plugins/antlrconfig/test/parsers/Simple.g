@@ -3,6 +3,7 @@ grammar Simple;
 options {
   language = Java;
   output = AST;
+  ASTLabelType = CommonTree;
 }
 
 tokens {
@@ -20,19 +21,25 @@ tokens {
   package org.rhq.plugins.antlrconfig.test.parsers;
 }
 
-LETTER : 'a'..'z' | 'A'..'Z';
-DIGIT : '0'..'9';
+fragment
+LETTER : 'a'..'z' | 'A'..'Z' ;
 
-EXPORT : 'e' 'x' 'p' 'o' 'r' 't';
+fragment
+DIGIT : '0'..'9' ;
 
-WORD : LETTER (LETTER | DIGIT)*;
+EXPORT : 'e' 'x' 'p' 'o' 'r' 't' ;
 
-WS : (' ' | '\t')+ {$channel = HIDDEN;};
+WORD : LETTER (LETTER | DIGIT)* ;
 
-NL : '\r'? '\n';
+EQUALS : '=' ;
 
-file : assignment* -> ^(FILE<Unordered> assignment*) 
-     | EOF!
+VALUE : ('\u0021'..'\uFFFE')+;
+
+WS : (' ' | '\t')+ {$channel = HIDDEN;} ;
+
+NL : '\r'? '\n' ;
+
+file : (assignment | NL)* -> ^(FILE<Unordered> assignment*)
      ; 
 
-assignment : EXPORT? WORD '=' WORD NL -> ^(ASSIGNMENT WORD<Id> WORD EXPORT?) ;
+assignment : EXPORT? WORD EQUALS VALUE (NL | EOF) -> ^(ASSIGNMENT ^(WORD<Id>) VALUE EXPORT?);

@@ -705,25 +705,25 @@ DB Upgrade:
          </statement>
       </schema-directSQL>
 
-      <!-- RHQ_REPO timestamp to long conversion -->
-      <schema-addColumn table="RHQ_REPO" column="CREATION_TIME_LONG" columnType="LONG" />
-      <schema-addColumn table="RHQ_REPO" column="LAST_MODIFIED_TIME_LONG" columnType="LONG" />
+      <!-- RHQ_CHANNEL timestamp to long conversion -->
+      <schema-addColumn table="RHQ_CHANNEL" column="CREATION_TIME_LONG" columnType="LONG" />
+      <schema-addColumn table="RHQ_CHANNEL" column="LAST_MODIFIED_TIME_LONG" columnType="LONG" />
       <schema-directSQL>
          <statement targetDBVendor="postgresql"
-                    desc="Converting RHQ_REPO.CREATION_TIME timestamp to long">
-            UPDATE RHQ_REPO
+                    desc="Converting RHQ_CHANNEL.CREATION_TIME timestamp to long">
+            UPDATE RHQ_CHANNEL
             SET CREATION_TIME_LONG = EXTRACT ( EPOCH FROM CREATION_TIME )
             WHERE CREATION_TIME IS NOT NULL
          </statement>
          <statement targetDBVendor="postgresql"
-                    desc="Converting RHQ_REPO.LAST_MODIFIED_TIME timestamp to long">
-            UPDATE RHQ_REPO
+                    desc="Converting RHQ_CHANNEL.LAST_MODIFIED_TIME timestamp to long">
+            UPDATE RHQ_CHANNEL
             SET LAST_MODIFIED_TIME_LONG = EXTRACT ( EPOCH FROM LAST_MODIFIED_TIME )
             WHERE LAST_MODIFIED_TIME IS NOT NULL
          </statement>
          <statement targetDBVendor="oracle"
-                    desc="Converting RHQ_REPO.CREATION_TIME timestamp to long">
-            UPDATE RHQ_REPO
+                    desc="Converting RHQ_CHANNEL.CREATION_TIME timestamp to long">
+            UPDATE RHQ_CHANNEL
             SET CREATION_TIME_LONG = 1000 *
             (   extract(day    from (CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*86400+
                 extract(hour   from (CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*3600+
@@ -733,8 +733,8 @@ DB Upgrade:
             WHERE CREATION_TIME IS NOT NULL
          </statement>
          <statement targetDBVendor="oracle"
-                    desc="Converting RHQ_REPO.LAST_MODIFIED_TIME timestamp to long">
-            UPDATE RHQ_REPO
+                    desc="Converting RHQ_CHANNEL.LAST_MODIFIED_TIME timestamp to long">
+            UPDATE RHQ_CHANNEL
             SET LAST_MODIFIED_TIME_LONG = 1000 *
             (   extract(day    from (LAST_MODIFIED_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*86400+
                 extract(hour   from (LAST_MODIFIED_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*3600+
@@ -744,16 +744,16 @@ DB Upgrade:
             WHERE LAST_MODIFIED_TIME IS NOT NULL
          </statement>
       </schema-directSQL>
-      <schema-deleteColumn table="RHQ_REPO" column="CREATION_TIME" />
-      <schema-deleteColumn table="RHQ_REPO" column="LAST_MODIFIED_TIME" />
+      <schema-deleteColumn table="RHQ_CHANNEL" column="CREATION_TIME" />
+      <schema-deleteColumn table="RHQ_CHANNEL" column="LAST_MODIFIED_TIME" />
       <schema-directSQL>
-         <statement desc="Renaming new RHQ_REPO.CREATION_TIME column to match old schema expectations">
-            ALTER TABLE RHQ_REPO
+         <statement desc="Renaming new RHQ_CHANNEL.CREATION_TIME column to match old schema expectations">
+            ALTER TABLE RHQ_CHANNEL
             RENAME COLUMN CREATION_TIME_LONG
             TO CREATION_TIME
          </statement>
-         <statement desc="Renaming new RHQ_REPO.LAST_MODIFIED_TIME column to match old schema expectations">
-            ALTER TABLE RHQ_REPO
+         <statement desc="Renaming new RHQ_CHANNEL.LAST_MODIFIED_TIME column to match old schema expectations">
+            ALTER TABLE RHQ_CHANNEL
             RENAME COLUMN LAST_MODIFIED_TIME_LONG
             TO LAST_MODIFIED_TIME
          </statement>

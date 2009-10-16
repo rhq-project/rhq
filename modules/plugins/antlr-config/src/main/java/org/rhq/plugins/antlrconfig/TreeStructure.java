@@ -1,5 +1,5 @@
 /*
- * Jopr Management Platform
+ * RHQ Management Platform
  * Copyright (C) 2005-2009 Red Hat, Inc.
  * All rights reserved.
  *
@@ -20,30 +20,19 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.plugins.augeas.helper;
+
+package org.rhq.plugins.antlrconfig;
+
+import java.util.List;
 
 /**
- * @author Ian Springer
+ * Implementations abstract away the internals of arbitrary tree structure.
+ * 
+ * @author Lukas Krejci
  */
-public class MapKey {
-    private String name;
-    private AugeasMapping augeasMapping;
+public interface TreeStructure<NodeType> {
 
-    public MapKey(String name, AugeasMapping augeasMapping) {
-        this.name = name;
-        this.augeasMapping = augeasMapping;
-    }
-
-    public String getName() {
-        return this.name;
-    }
-
-    public AugeasMapping getAugeasMapping() {
-        return this.augeasMapping;
-    }
-
-    public enum AugeasMapping {
-        MAP_NODE_NAME,
-        ENTRY_NODE_VALUE
-    }
+    List<NodeType> getChildren(NodeType parent);
+    
+    NodeType getParent(NodeType child);
 }

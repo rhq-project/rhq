@@ -31,20 +31,20 @@ import java.net.URI;
  */
 public class AugeasNode {
     public static final char SEPARATOR_CHAR = '/';
-    public static final String SEPARATOR = new String(new char[] {SEPARATOR_CHAR});
+    public static final String SEPARATOR = new String(new char[] { SEPARATOR_CHAR });
 
     private String path;
 
     public AugeasNode(String path) {
         if (path == null) {
-	        throw new IllegalArgumentException("'path' parameter must not be null.");
-	    }
+            throw new IllegalArgumentException("'path' parameter must not be null.");
+        }
         if (path.charAt(0) != SEPARATOR_CHAR) {
             throw new IllegalArgumentException("Specified path (" + path + ") is not absolute.");
         }
 
         // Remove redundant "." and ".." components and redundant slashes.
-        this.path = normalize(path);
+        this.path = path;
     }
 
     public AugeasNode(AugeasNode parent, String name) {
@@ -52,8 +52,8 @@ public class AugeasNode {
             throw new IllegalArgumentException("'parentNode' parameter must not be null.");
         }
         if (name == null) {
-	        throw new IllegalArgumentException("'name' parameter must not be null.");
-	    }
+            throw new IllegalArgumentException("'name' parameter must not be null.");
+        }
         if (name.charAt(0) == SEPARATOR_CHAR) {
             throw new IllegalArgumentException("Specified path (" + path + ") is not relative.");
         }
@@ -71,7 +71,7 @@ public class AugeasNode {
             // special case - parent of "/" is "/".
             this.path = path;
         } else {
-            char lastChar = path.charAt(path.length() -1);
+            char lastChar = path.charAt(path.length() - 1);
             if (lastChar == SEPARATOR_CHAR) {
                 path = path.substring(0, path.length() - 1);
             }
@@ -95,12 +95,15 @@ public class AugeasNode {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
+        if (this == obj)
+            return true;
+        if (obj == null || getClass() != obj.getClass())
+            return false;
 
-        AugeasNode that = (AugeasNode)obj;
+        AugeasNode that = (AugeasNode) obj;
 
-        if (this.path != null ? !this.path.equals(that.path) : that.path != null) return false;
+        if (this.path != null ? !this.path.equals(that.path) : that.path != null)
+            return false;
 
         return true;
     }

@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.plugins.samba;
+package org.rhq.plugins.sudoers;
 
 import java.util.Collection;
 
@@ -32,11 +32,11 @@ import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 
 /**
- * @author Jason Dobies
+ * @author Partha Aji
  */
-public class HostsComponentTest {
+public class SudoersComponentTest {
 
-    private SambaServerComponent component = new SambaServerComponent();
+    private SudoersComponent component = new SudoersComponent();
 
     private Configuration pluginConfiguration = new Configuration();
 
@@ -45,16 +45,16 @@ public class HostsComponentTest {
     @BeforeSuite
     public void initPluginConfiguration() throws Exception {
         pluginConfiguration.put(new PropertySimple("lenses-path", "/usr/local/share/augeas/lenses"));
-        pluginConfiguration.put(new PropertySimple("root-path", "/"));
-        pluginConfiguration.put(new PropertySimple("hosts-path", "/etc/hosts"));
-        pluginConfiguration.put(new PropertySimple("augeas-hosts-path", "/files/etc/hosts/*"));
+        pluginConfiguration.put(new PropertySimple("root-path", "/tmp"));
+        pluginConfiguration.put(new PropertySimple("sudoers-path", "/etc/sudoers"));
+        pluginConfiguration.put(new PropertySimple("augeas-sudoers-path", "/files/etc/sudoers/spec[*]"));
     }
 
-    @Test
+    @Test(enabled = false)
     public void loadResourceConfiguration() throws Exception {
         Configuration configuration;
         try {
-            configuration = component.loadResourceConfiguration(pluginConfiguration);
+            configuration = component.loadResourceConfiguration();
         } catch (UnsatisfiedLinkError ule) {
             // Skip tests if augeas not available
             return;
@@ -72,14 +72,16 @@ public class HostsComponentTest {
         for (Property property : entryList.getList()) {
             PropertyMap entry = (PropertyMap) property;
 
-            Property ipProperty = entry.get("ip");
-            Property canonicalProperty = entry.get("canonical");
+            Property user = entry.get("user");
+            Property host = entry.get("host");
 
-            assert ipProperty != null : "IP was null in entry";
-            assert canonicalProperty != null : "Canonical was null in entry";
+            assert user != null : "IP was null in entry";
+            assert host != null : "Canonical was null in entry";
 
-            log.info("IP: " + ((PropertySimple) ipProperty).getStringValue());
-            log.info("Canonical: " + ((PropertySimple) canonicalProperty).getStringValue());
+            System.out.println(entry);
+
+            log.info("USER: " + ((PropertySimple) user).getStringValue());
+            log.info("host: " + ((PropertySimple) host).getStringValue());
         }
 
     }

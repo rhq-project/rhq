@@ -5,19 +5,19 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-plugins-parent</artifactId>
-      <version>1.3.0-SNAPSHOT</version>
+      <version>1.4.0-SNAPSHOT</version>
    </parent>
 
    <groupId>org.rhq</groupId>
    <artifactId>rhq-samba-plugin</artifactId>
    <packaging>jar</packaging>
 
-   <name>RHQ Samba Plugin</name>
-   <description>A plugin for managing Samba</description>
+   <name>RHQ Augeas-based Samba Plugin</name>
+   <description>A plugin for managing the RHEL samba file</description>
 
    <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/hosts</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/hosts</developerConnection>
+      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/samba</connection>
+      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/samba</developerConnection>
    </scm>
 
    <properties>
@@ -25,13 +25,6 @@
    </properties>
 
    <dependencies>
-
-      <dependency>
-         <groupId>${rhq.groupId}</groupId>
-         <artifactId>rhq-core-plugin-container</artifactId>
-         <version>${project.version}</version>
-         <scope>provided</scope>
-      </dependency>
 
       <dependency>
          <groupId>net.augeas</groupId>
@@ -42,48 +35,10 @@
       <dependency>
          <groupId>com.sun.jna</groupId>
          <artifactId>jna</artifactId>
-         <version>3.0.1</version>
+         <version>3.0.9</version>
       </dependency>
 
    </dependencies>
-
-
-   <build>
-
-      <plugins>
-
-         <plugin>
-            <artifactId>maven-dependency-plugin</artifactId>
-            <version>2.0</version>
-            <executions>
-               <execution>
-                  <id>copy-jna-jar</id>
-                  <phase>process-resources</phase>
-                  <goals>
-                     <goal>copy</goal>
-                  </goals>
-                  <configuration>
-                     <artifactItems>
-                        <artifactItem>
-                           <groupId>com.sun.jna</groupId>
-                           <artifactId>jna</artifactId>
-                           <version>3.0.1</version>
-                        </artifactItem>
-                        <artifactItem>
-                            <groupId>net.augeas</groupId>
-                            <artifactId>java-augeas</artifactId>
-                            <version>1.0</version>
-                        </artifactItem>
-                     </artifactItems>
-                     <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
-                  </configuration>
-               </execution>
-            </executions>
-         </plugin>
-
-      </plugins>
-
-   </build>
 
    <profiles>
       <profile>
@@ -203,7 +158,7 @@
 
                      <execution>
                         <id>deploy</id>
-                        <!--<phase>compile</phase>-->
+                        <phase>compile</phase>
                         <configuration>
                            <tasks>
                               <mkdir dir="${rhq.deploymentDir}" />
@@ -219,7 +174,7 @@
 
                      <execution>
                         <id>deploy-jar-meta-inf</id>
-                        <!--<phase>package</phase>-->
+                        <phase>package</phase>
                         <configuration>
                           <tasks>                             
                              <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />                             
@@ -238,7 +193,7 @@
                      
                      <execution>
                         <id>undeploy</id>
-                        <!--<phase>clean</phase>-->
+                        <phase>clean</phase>
                         <configuration>
                            <tasks>
                               <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />

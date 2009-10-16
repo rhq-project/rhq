@@ -33,6 +33,7 @@ public class RepoGroupDetails {
 
     private String name;
     private String typeName;
+    private String description;
 
     public RepoGroupDetails(String name, String typeName) {
         setName(name);
@@ -81,5 +82,23 @@ public class RepoGroupDetails {
         }
 
         this.typeName = typeName;
+    }
+
+    /**
+     * Returns the description of what this type represents.
+     *
+     * @return may be <code>null</code>
+     */
+    public String getDescription() {
+        return description;
+    }
+
+    /**
+     * Sets the description the group type should display to users.
+     *
+     * @param description may be <code>null</code>
+     */
+    public void setDescription(String description) {
+        this.description = description;
     }
 }

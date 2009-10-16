@@ -10,6 +10,8 @@ package org.rhq.enterprise.server.plugins.rhnhosted;
  import java.io.IOException;
  import java.io.InputStream;
  import java.io.FileInputStream;
+ import java.net.URL;
+ import java.net.MalformedURLException;
 
 
 /**
@@ -48,9 +50,15 @@ public class RHNProvider implements ContentProvider {
         String locationIn = configuration.getSimpleValue("location", null);
         String certificate = configuration.getSimpleValue("certificate", null);
         String location = locationIn + RHNConstants.DEFAULT_HANDLER;
+
+        location = trim(location);
+        log.info("Initialized with location: " + location);
+
         // check location field validity
-        if (location == null) {
-            throw new IllegalArgumentException("Missing required 'location' property");
+        try {
+            URL url = new URL(location);
+        } catch (MalformedURLException mue) {
+            throw new IllegalArgumentException("Invalid 'location' property");
         }
 
         // check certificate field validity
@@ -61,7 +69,7 @@ public class RHNProvider implements ContentProvider {
 
         } catch(Exception e) {
             log.debug("Invalid Cert");
-            throw new InitializationException("Invalid Certificate", e);
+            throw new InitializationException("Invalid 'Certificate' property", e);
         }
         
         // Now we have valid data. Spawn the activation.
@@ -82,8 +90,6 @@ public class RHNProvider implements ContentProvider {
         log.debug("shutdown");
     }
 
-
-
    /**
      * Test's the adapter's connection.
      *
@@ -94,10 +100,31 @@ public class RHNProvider implements ContentProvider {
         rhnObject.processActivation();
     }
 
+    /**
+     * Reads the public keyring on filesystem into memory
+     *
+     * @return A PublicKeyRing object.
+     */
     protected PublicKeyRing readDefaultKeyRing()
         throws ClassNotFoundException, KeyException, IOException {
         InputStream keyringStream = new FileInputStream(RHNConstants.DEFAULT_WEBAPP_GPG_KEY_RING);
         return new PublicKeyRing(keyringStream);
+    }
+
+     /**
+     * Trim white space and trailing (/) characters.
+     *
+     * @param  path A url/directory path string.
+     *
+     * @return A trimmed string.
+     */
+    private String trim(String path) {
+        path = path.trim();
+        while ((path.length() > 1) && path.endsWith("/")) {
+            path = path.substring(0, path.length() - 1);
+        }
+
+        return path;
     }
 
 }

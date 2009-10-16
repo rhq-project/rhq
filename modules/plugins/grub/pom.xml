@@ -16,8 +16,8 @@
    <description>A plugin for managing the GRUB boot loader</description>
 
    <scm>
-      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_2_0_EmbJopr_1_2_0-1/modules/plugins/grub</connection>
-      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_2_0_EmbJopr_1_2_0-1/modules/plugins/grub</developerConnection>
+      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/grub</connection>
+      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/grub</developerConnection>
    </scm>
 
    <properties>
@@ -25,11 +25,10 @@
    </properties>
 
    <dependencies>
-
       <dependency>
          <groupId>net.augeas</groupId>
-         <artifactId>java-augeas</artifactId>
-         <version>1.0</version>
+         <artifactId>augeas</artifactId>
+         <version>0.0.1</version>
       </dependency>
 
       <dependency>

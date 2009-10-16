@@ -16,8 +16,8 @@
   <description>parent POM for all JBossAS services</description>
 
   <scm>
-    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/sars/</connection>
-    <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/sars/</developerConnection>
+    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/sars/</connection>
+    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/sars/</developerConnection>
   </scm>
 
   <properties>

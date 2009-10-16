@@ -1,0 +1,223 @@
+<?xml version="1.0"?>
+
+<!-- $Id$ -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>test</groupId>
+    <artifactId>jbas5-jnp-client</artifactId>
+    <version>1.0</version>
+    <packaging>jar</packaging>
+
+    <name>JBAS5 JNP Client</name>
+    <description>a simple client for testing connecting to a JBAS5 instance via JNP and looking up the ProfileService</description>
+    
+    <properties>        
+        <jbossas.version>5.1.0-SNAPSHOT</jbossas.version>
+    </properties>
+    
+    <dependencyManagement>
+        <dependencies>
+          <dependency>
+            <groupId>org.jboss.jbossas</groupId>
+		    <artifactId>jboss-as-parent</artifactId>
+		    <version>${jbossas.version}</version>
+            <type>pom</type>
+            <scope>import</scope>
+          </dependency>
+          <dependency>
+            <groupId>org.jboss.jbossas</groupId>
+		    <artifactId>jboss-as-component-matrix</artifactId>
+		    <version>${jbossas.version}</version>
+            <type>pom</type>
+            <scope>import</scope>
+          </dependency>
+        </dependencies>
+    </dependencyManagement>
+    
+    <dependencies>
+
+        <dependency>
+          <groupId>org.jboss.naming</groupId>
+          <artifactId>jnp-client</artifactId>
+          <scope>runtime</scope>                 
+        </dependency>
+        
+        <dependency>
+          <groupId>org.jboss.security</groupId>
+          <artifactId>jbosssx-client</artifactId>
+          <scope>runtime</scope>          
+        </dependency>       
+
+        <dependency>
+          <groupId>org.jboss.aspects</groupId>
+          <artifactId>jboss-security-aspects</artifactId>
+          <scope>runtime</scope>                   
+        </dependency>
+        
+        <dependency>
+          <groupId>org.jboss.aop</groupId>
+          <artifactId>jboss-aop</artifactId>
+          <classifier>client</classifier>          
+          <scope>runtime</scope>          
+        </dependency>       
+        
+        <dependency>
+          <groupId>org.jboss</groupId>
+          <artifactId>jboss-common-core</artifactId>
+          <scope>runtime</scope>          
+        </dependency>       
+        
+        <dependency>
+          <groupId>org.jboss.remoting</groupId>
+          <artifactId>jboss-remoting</artifactId>
+          <scope>runtime</scope>          
+        </dependency>       
+
+        <dependency>
+          <groupId>org.jboss.jbossas</groupId>
+          <artifactId>jboss-as-aspects</artifactId>
+          <version>${jbossas.version}</version>   
+          <classifier>jboss-aspect-jdk50-client</classifier>
+          <scope>runtime</scope>              
+        </dependency>        
+
+        <dependency>
+          <groupId>trove</groupId>
+          <artifactId>trove</artifactId>
+          <scope>runtime</scope>          
+        </dependency>       
+
+        <dependency>
+          <groupId>javassist</groupId>
+          <artifactId>javassist</artifactId>
+          <scope>runtime</scope>          
+        </dependency>       
+
+        <dependency>
+          <groupId>org.jboss.security</groupId>
+          <artifactId>jboss-security-spi</artifactId>
+          <scope>runtime</scope>          
+        </dependency>       
+        
+        <dependency>
+          <groupId>org.jboss.javaee</groupId>
+          <artifactId>jboss-javaee</artifactId>
+          <scope>runtime</scope>          
+        </dependency>       
+
+        <dependency>
+          <groupId>oswego-concurrent</groupId>
+          <artifactId>concurrent</artifactId>
+          <scope>runtime</scope>          
+        </dependency>       
+
+        <!-- aka jboss-client.jar -->
+        <dependency>
+            <groupId>org.jboss.jbossas</groupId>
+            <artifactId>jboss-as-server</artifactId>           
+            <classifier>client</classifier>
+            <scope>runtime</scope>
+        </dependency>         
+
+        <dependency>
+          <groupId>org.jboss</groupId>
+          <artifactId>jboss-mdr</artifactId>
+          <scope>runtime</scope>              
+        </dependency>               
+
+        <dependency>
+          <groupId>org.jboss.logging</groupId>
+          <artifactId>jboss-logging-spi</artifactId>
+          <scope>runtime</scope>                  
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.logging</groupId>
+          <artifactId>jboss-logging-log4j</artifactId>
+          <scope>runtime</scope>                  
+        </dependency>
+        
+        <dependency>
+          <groupId>org.jboss.integration</groupId>
+          <artifactId>jboss-profileservice-spi</artifactId>                    
+        </dependency>        
+        
+        <dependency>
+          <groupId>org.jboss.man</groupId>
+          <artifactId>jboss-managed</artifactId>
+        </dependency>
+        
+        <dependency>
+          <groupId>org.jboss.man</groupId>
+          <artifactId>jboss-metatype</artifactId>
+        </dependency>        
+        
+      </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.5</source>
+                    <target>1.5</target>
+                </configuration>
+            </plugin>
+
+          <plugin>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>copy-dependencies</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>copy-dependencies</goal>
+                </goals>
+                <configuration>              
+                  <includeScope>runtime</includeScope>
+                  <excludeTransitive>true</excludeTransitive>
+                  <outputDirectory>target/lib</outputDirectory>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+      
+          <plugin>
+            <artifactId>maven-jar-plugin</artifactId>
+            <configuration>
+              <archive>
+                <manifest>
+                  <mainClass>test.RmiClient</mainClass>
+                  <addClasspath>true</addClasspath>
+                  <classpathPrefix>lib</classpathPrefix>
+                </manifest>
+              </archive>
+            </configuration>
+          </plugin>    
+          
+        </plugins>
+    </build>
+
+    <repositories>    
+        <repository>
+            <id>jboss</id>
+            <name>JBoss Repository</name>
+            <url>http://repository.jboss.org/maven2/</url>
+        </repository>
+           
+        <repository>
+            <id>jboss-snapshots</id>
+            <name>JBoss Snapshot Repository</name>
+            <url>http://snapshots.jboss.org/maven2/</url>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>always</updatePolicy>
+            </snapshots>
+        </repository>
+
+    </repositories>
+
+</project>

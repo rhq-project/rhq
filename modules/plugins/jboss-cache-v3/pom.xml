@@ -1,0 +1,590 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+      <groupId>org.jboss.on</groupId>
+      <!--  Bypass the jon-plugins-parent which can not have children. It must build after the plugins in order to execute integration tests on them. -->
+      <artifactId>jopr-modules-parent</artifactId>
+      <version>2.4.0-SNAPSHOT</version>
+    </parent>
+    
+   <groupId>org.jboss.on</groupId>
+    <artifactId>jopr-jboss-cache-v3-plugin</artifactId>
+   <packaging>jar</packaging>
+
+   <name>RHQ JBossCache 3.x Plugin</name>
+   <description>A plugin for managing JBossCache 3.x services</description>
+
+   <scm>
+      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/jboss-cache-v3/</connection>
+      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/jboss-cache-v3/</developerConnection>
+   </scm>
+
+    <properties>
+        <scm.module.path>modules/plugins/jboss-cache-v3/</scm.module.path>
+        <jbossas.version>5.1.0-SNAPSHOT</jbossas.version>
+    </properties>
+                      
+    <dependencyManagement>
+        <dependencies>
+          <dependency>
+            <groupId>org.jboss.jbossas</groupId>
+          <artifactId>jboss-as-parent</artifactId>
+          <version>${jbossas.version}</version>
+            <type>pom</type>
+            <scope>import</scope>
+          </dependency>
+          <dependency>
+            <groupId>org.jboss.jbossas</groupId>
+          <artifactId>jboss-as-component-matrix</artifactId>
+          <version>${jbossas.version}</version>
+            <type>pom</type>
+            <scope>import</scope>
+          </dependency>
+        </dependencies>
+    </dependencyManagement>    
+       
+    <dependencies>
+
+     <dependency>
+         <groupId>${rhq.groupId}</groupId>
+         <artifactId>rhq-jmx-plugin</artifactId>
+         <version>${rhq.version}</version>
+         <scope>provided</scope>
+     </dependency>
+
+     <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>jopr-jboss-as-5-plugin</artifactId>
+         <version>${project.version}</version>
+         <scope>provided</scope>
+     </dependency>
+
+     <dependency>
+          <groupId>org.jboss.integration</groupId>
+          <artifactId>jboss-profileservice-spi</artifactId>          
+          <scope>provided</scope>
+     </dependency>
+
+      <dependency>
+          <groupId>org.jboss.remoting</groupId>
+          <artifactId>jboss-remoting</artifactId>
+          <scope>provided</scope>
+      </dependency>
+       
+       <dependency>
+          <groupId>org.jboss.naming</groupId>
+          <artifactId>jnp-client</artifactId>
+          <scope>test</scope>
+       </dependency>
+        
+        <dependency>
+            <groupId>jboss.messaging</groupId>
+            <artifactId>jboss-messaging-client</artifactId>            
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jboss.microcontainer</groupId>
+            <artifactId>jboss-kernel</artifactId>
+            <scope>test</scope>
+        </dependency>
+        
+        <dependency>
+          <groupId>org.jboss.jbossas</groupId>
+          <artifactId>jboss-as-aspects</artifactId>
+          <version>5.1.0.CR1</version>
+          <classifier>jboss-aspect-jdk50-client</classifier>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>trove</groupId>
+          <artifactId>trove</artifactId>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>javassist</groupId>
+          <artifactId>javassist</artifactId>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.security</groupId>
+          <artifactId>jboss-security-spi</artifactId>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.javaee</groupId>
+          <artifactId>jboss-javaee</artifactId>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>oswego-concurrent</groupId>
+          <artifactId>concurrent</artifactId>
+          <version>1.3.4-jboss</version>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jboss.jbossas</groupId>
+            <artifactId>jboss-as-server</artifactId>
+            <classifier>client</classifier>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss</groupId>
+          <artifactId>jboss-mdr</artifactId>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.logging</groupId>
+          <artifactId>jboss-logging-spi</artifactId>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.logging</groupId>
+          <artifactId>jboss-logging-log4j</artifactId>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.jbossas</groupId>
+          <artifactId>jboss-as-security</artifactId>
+          <version>5.1.0.CR1</version>
+          <classifier>client</classifier>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.integration</groupId>
+          <artifactId>jboss-transaction-spi</artifactId>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.ejb3</groupId>
+          <artifactId>jboss-ejb3-common</artifactId>
+          <classifier>client</classifier>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.ejb3</groupId>
+          <artifactId>jboss-ejb3-core</artifactId>
+          <classifier>client</classifier>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.ejb3</groupId>
+          <artifactId>jboss-ejb3-ext-api</artifactId>
+          <version>1.0.0</version>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.ejb3</groupId>
+          <artifactId>jboss-ejb3-proxy-spi</artifactId>
+          <classifier>client</classifier>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.ejb3</groupId>
+          <artifactId>jboss-ejb3-proxy-impl</artifactId>
+          <classifier>client</classifier>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.ejb3</groupId>
+          <artifactId>jboss-ejb3-security</artifactId>
+          <classifier>client</classifier>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.microcontainer</groupId>
+          <artifactId>jboss-dependency</artifactId>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.security</groupId>
+          <artifactId>jbosssx-client</artifactId>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.aspects</groupId>
+          <artifactId>jboss-security-aspects</artifactId>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.aop</groupId>
+          <artifactId>jboss-aop</artifactId>
+          <classifier>client</classifier>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss</groupId>
+          <artifactId>jboss-common-core</artifactId>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jboss</groupId>
+            <artifactId>jboss-reflect</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>jboss</groupId>
+            <artifactId>jboss-serialization</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jboss.deployers</groupId>
+            <artifactId>jboss-deployers-core-spi</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jboss.deployers</groupId>
+            <artifactId>jboss-deployers-client-spi</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jboss.jbossas</groupId>
+            <artifactId>jboss-as-profileservice</artifactId>
+            <classifier>client</classifier>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jboss.jbossas</groupId>
+            <artifactId>jboss-as-server</artifactId>
+            <classifier>jmx-invoker-adaptor-client</classifier>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>jboss.messaging</groupId>
+            <artifactId>jboss-messaging-client</artifactId>
+            <scope>test</scope>
+        </dependency>        
+
+    </dependencies>
+
+    <build>
+        <plugins>
+
+            <plugin>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>2.0</version>
+                <executions>
+
+                   <execution>
+                      <id>copy-dependencies</id>
+                      <phase>process-resources</phase>
+                      <goals>
+                        <goal>copy-dependencies</goal>
+                      </goals>
+                      <configuration>
+                         <includeScope>runtime</includeScope>
+                         <excludeTransitive>true</excludeTransitive>
+                         <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
+                      </configuration>
+                   </execution>
+
+                </executions>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>surefire-it</id>
+                        <phase>integration-test</phase>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                        <configuration>
+                            <skip>${maven.test.skip}</skip>
+                          <excludedGroups>jbosscache3-test</excludedGroups>   
+                            <useSystemClassLoader>false</useSystemClassLoader>
+                            <additionalClasspathElements>
+                               <additionalClasspathElement>${project.build.testSourceDirectory}/../jars/TestCacheEJB.jar</additionalClasspathElement>
+                            </additionalClasspathElements>
+                            <systemProperties>
+                                <property>
+                                    <name>project.artifactId</name>
+                                    <value>${project.artifactId}</value>
+                                </property>
+                                <property>
+                                    <name>project.version</name>
+                                    <value>${project.version}</value>
+                                </property>
+                                  <property>
+                                    <name>principal</name>
+                                    <value>admin</value>
+                                </property>
+                                <property>
+                                    <name>credentials</name>
+                                    <value>admin</value>
+                                </property>
+                                <property>
+                                     <name>testJarPath</name>
+                                     <value>${project.build.testSourceDirectory}/../jars/TestEar.ear</value>
+                                 </property>
+                                 <property>
+                                     <name>xmlFilePath</name>
+                                     <value>${project.build.testSourceDirectory}/../resources/test-service.xml</value>
+                                 </property>
+                            </systemProperties>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+        </plugins>
+    </build>
+
+    <profiles>
+
+        <profile>
+           <id>integration-tests</id>
+           <activation>
+              <property>
+                 <name>maven.test.skip</name>
+                 <value>!true</value>
+              </property>
+           </activation>
+
+           <build>
+              <plugins>
+
+                 <plugin>
+                    <artifactId>maven-antrun-plugin</artifactId>
+                    <executions>
+                       <execution>
+                          <phase>pre-integration-test</phase>
+                          <configuration>
+                          <additionalClasspathElements>
+                                   <additionalClasspathElement>${project.build.testSourceDirectory}/../jars/TestCacheEJB.jar</additionalClasspathElement>
+                          </additionalClasspathElements>   
+                             <tasks>
+                                <echo>Setting up plugin dependencies...</echo>
+                                <property name="settings.localRepository" location="${user.home}/.m2/repository" />
+                                <mkdir dir="target/itest" />
+                                <mkdir dir="target/itest/plugins" />
+                                <mkdir dir="target/itest/lib" />
+                                <copy toDir="target/itest/plugins" flatten="true">
+                                   <fileset dir="${settings.localRepository}/">
+                                      <include name="org/rhq/rhq-platform-plugin/${rhq.version}/rhq-platform-plugin-${rhq.version}.jar" />
+                                      <include name="org/rhq/rhq-jmx-plugin/${rhq.version}/rhq-jmx-plugin-${rhq.version}.jar" />
+                                      <include name="org/jboss/on/jopr-jboss-as-5-plugin/${project.version}/jopr-jboss-as-5-plugin-${project.version}.jar" />
+                                   </fileset>
+                                   <fileset dir="${project.build.directory}">
+                                      <include name="${project.artifactId}-${project.version}.jar" />
+                                   </fileset>
+                                </copy>
+                                <unzip dest="target/itest/lib">
+                                   <fileset dir="${settings.localRepository}/org/hyperic/sigar-dist/${sigar.version}" includes="*.zip" />
+                                   <patternset>
+                                      <include name="**/lib/sigar.jar" />
+                                      <include name="**/lib/bcel*.jar" />
+                                      <include name="**/lib/*.so" />
+                                      <include name="**/lib/*.sl" />
+                                      <include name="**/lib/*.dll" />
+                                      <include name="**/lib/*.dylib" />
+                                   </patternset>
+                                </unzip>
+                                <move todir="target/itest/lib" flatten="true">
+                                   <fileset dir="target/itest/lib">
+                                      <include name="**/lib/*" />
+                                   </fileset>
+                                </move>
+                                <delete dir="target/itest/lib/hyperic-sigar-${sigar.version}" />
+                             </tasks>
+                          </configuration>
+                          <goals>
+                             <goal>run</goal>
+                          </goals>
+                       </execution>
+                    </executions>
+                 </plugin>
+
+                 <plugin>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <configuration>
+                       <skip>true</skip>
+                    </configuration>
+                    <executions>
+                       <execution>
+                          <id>surefire-it</id>
+                          <phase>integration-test</phase>
+                          <goals>
+                             <goal>test</goal>
+                          </goals>
+                          <configuration>
+                             <skip>${maven.test.skip}</skip>
+                             <parallel>false</parallel>                             
+                             <useSystemClassLoader>false</useSystemClassLoader>
+                             <additionalClasspathElements>
+                                <additionalClasspathElement>${project.build.testSourceDirectory}/../jars/TestCacheEJB.jar</additionalClasspathElement>
+                            </additionalClasspathElements>                         
+                                 <excludedGroups>jbosscache3-test</excludedGroups> 
+                             <argLine>-Dorg.hyperic.sigar.path=${basedir}/target/itest/lib</argLine>
+                             <!--<argLine>-Dorg.hyperic.sigar.path=${basedir}/target/itest/lib -Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</argLine>-->
+                             <systemProperties>
+                                <property>
+                                   <name>project.artifactId</name>
+                                   <value>${project.artifactId}</value>
+                                </property>
+                                <property>
+                                   <name>project.version</name>
+                                   <value>${project.version}</value>
+                                </property>
+                                 <property>
+                                    <name>principal</name>
+                                    <value>admin</value>
+                                </property>
+                                <property>
+                                    <name>credentials</name>
+                                    <value>admin</value>
+                                </property>
+                                  <property>
+                                     <name>testJarPath</name>
+                                     <value>${project.build.testSourceDirectory}/../jars/TestEar.ear</value>
+                                 </property>
+                                 <property>
+                                     <name>xmlFilePath</name>
+                                     <value>${project.build.testSourceDirectory}/../resources/test-service.xml</value>
+                                 </property>
+                             </systemProperties>
+                          </configuration>
+                       </execution>
+                    </executions>
+                 </plugin>
+
+              </plugins>
+           </build>
+        </profile>
+
+      <profile>
+         <id>dev</id>
+
+         <properties>
+            <rhq.rootDir>../../..</rhq.rootDir>
+            <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
+            <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/rhq-downloads/rhq-plugins</rhq.deploymentDir>
+         </properties>
+
+         <build>
+            <plugins>
+
+               <plugin>
+                 <artifactId>maven-antrun-plugin</artifactId>
+                 <version>1.1</version>
+                 <executions>
+
+                     <execution>
+                        <id>deploy</id>
+                        <phase>compile</phase>
+                        <configuration>
+                          <tasks>
+                            <mkdir dir="${rhq.deploymentDir}" />
+                            <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
+                            <echo>*** Updating ${deployment.file}...</echo>
+                            <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}" />
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                     <execution>
+                        <id>deploy-jar-meta-inf</id>
+                        <phase>package</phase>
+                        <configuration>
+                          <tasks>
+                             <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
+                             <echo>*** Updating META-INF dir in ${deployment.file}...</echo>
+                             <unjar src="${project.build.directory}/${project.build.finalName}.jar" dest="${project.build.outputDirectory}">
+                               <patternset><include name="META-INF/**" /></patternset>
+                             </unjar>
+                             <jar destfile="${deployment.file}" manifest="${project.build.outputDirectory}/META-INF/MANIFEST.MF" update="true">
+                             </jar>
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                     <execution>
+                        <id>undeploy</id>
+                        <phase>clean</phase>
+                        <configuration>
+                          <tasks>
+                            <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
+                            <echo>*** Deleting ${deployment.file}...</echo>
+                            <delete file="${deployment.file}" />
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                   </executions>
+               </plugin>
+
+            </plugins>
+         </build>
+      </profile>
+
+    </profiles>
+  
+    <repositories>
+
+        <repository>
+            <id>jboss-snapshots</id>
+            <name>JBoss Snapshot Repository</name>
+            <url>http://snapshots.jboss.org/maven2/</url>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>always</updatePolicy>
+            </snapshots>
+        </repository>
+     
+    </repositories>  
+
+    <reporting>
+       <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>findbugs-maven-plugin</artifactId>
+            <version>2.0.1</version>
+          </plugin>
+       </plugins>
+    </reporting>
+ 
+</project>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<server>
+<mbean code="org.jboss.cache.jmx.CacheJmxWrapper"
+name="foo:config=test,testName=testValue,Dname=testName,service=ExampleCacheJmxWrapper">
+<attribute name="TransactionManagerLookupClass">
+org.jboss.cache.transaction.JBossTransactionManagerLookup
+</attribute>
+<attribute name="MuxChannelFactory"><inject bean="JChannelFactory"/></attribute>
+<attribute name="MultiplexerStack">udp</attribute>
+<attribute name="ClusterName">Example-EntityCache</attribute>
+<attribute name="IsolationLevel">REPEATABLE_READ</attribute>
+<attribute name="CacheMode">REPL_SYNC</attribute>
+<attribute name="InitialStateRetrievalTimeout">15000</attribute>
+<attribute name="SyncReplTimeout">20000</attribute>
+<attribute name="LockAcquisitionTimeout">15000</attribute>
+<attribute name="ExposeManagementStatistics">true</attribute>
+</mbean>
+
+</server>
+ 

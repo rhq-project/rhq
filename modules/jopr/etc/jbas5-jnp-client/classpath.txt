@@ -1,0 +1,57 @@
+This is what Scott recommended using for JBAS 5.1:
+
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="var" path="JBOSS/client/jboss-common-core.jar"/>
+	<classpathentry kind="var" path="JBOSS/client/jnp-client.jar"/>
+	<classpathentry kind="var" path="JBOSS/lib/jboss-profileservice-spi.jar"/>
+	<classpathentry kind="var" path="JBOSS/client/jboss-logging-jdk.jar"/>
+	<classpathentry kind="var" path="JBOSS/client/jboss-logging-log4j.jar"/>
+	<classpathentry kind="var" path="JBOSS/client/log4j.jar"/>
+	<classpathentry kind="var" path="JBOSS/client/jboss-logging-spi.jar"/>
+	<classpathentry kind="var" path="JBOSS/client/jboss-aop-client.jar"/>
+	<classpathentry kind="var" path="JBOSS/client/jboss-remoting.jar"/>
+	<classpathentry kind="var" path="JBOSS/common/lib/jboss-security-aspects.jar"/>
+	<classpathentry kind="var" path="JBOSS/client/jboss-aspect-jdk50-client.jar"/>
+	<classpathentry kind="var" path="JBOSS/client/trove.jar"/>
+	<classpathentry kind="var" path="JBOSS/client/javassist.jar"/>
+	<classpathentry kind="var" path="JBOSS/client/jboss-mdr.jar"/>
+	<classpathentry kind="var" path="JBOSS/client/jboss-security-spi.jar"/>
+	<classpathentry kind="var" path="JBOSS/client/jbosssx-client.jar"/>
+	<classpathentry kind="var" path="JBOSS/client/jboss-javaee.jar"/>
+	<classpathentry kind="var" path="JBOSS/client/concurrent.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
+
+And this is what EMS uses for JBAS 3.x/4.x:
+
+    public String[] getConnectionClasspathEntries() {
+        return
+        new String[] {
+            // 3.x + jars
+            "lib/jboss-jmx.jar",
+            "client/jboss-common.jar",
+            "lib/jboss-system.jar",
+            "client/jbossall-client.jar",
+            "client/log4j.jar",
+            "*/*/lib/jboss.jar",
+            "client/concurrent.jar",
+            "client/jboss-jsr77-client.jar",
+            // 3.2.3 jars
+            "*/*/lib/jboss-transaction.jar",
+            "lib/xercesImpl.jar",
+            "lib/xml-apis.jar",
+            // 4.0 jars
+            "lib/dom4j.jar",
+            "client/jnp-client.jar",
+            "client/jmx-rmi-connector-client.jar",
+            "client/jboss-j2ee.jar",
+            "*/*/lib/jboss-management.jar",
+            "*/*/lib/jbosssx.jar",
+            "client/jbosssx-client.jar",
+            "lib/endorsed/xercesImpl.jar",
+            "lib/endorsed/xml-apis.jar",
+            "*/*/lib/hibernate3.jar"
+        };
+    }

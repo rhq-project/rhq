@@ -18,8 +18,8 @@
   </description>
 
   <scm>
-    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_2_0_EmbJopr_1_2_0-1/modules/core/native-system</connection>
-    <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_2_0_EmbJopr_1_2_0-1/modules/core/native-system</developerConnection>
+    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/core/native-system</connection>
+    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/core/native-system</developerConnection>
   </scm>
 
   <properties>

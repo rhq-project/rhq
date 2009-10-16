@@ -16,8 +16,8 @@
   <description>a Maven plugin for generating license files for RHQ Enterprise Server</description>
 
   <scm>
-    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/license-gen/</connection>
-    <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/license-gen/</developerConnection>
+    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/license-gen/</connection>
+    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/license-gen/</developerConnection>
   </scm>
 
   <properties>

@@ -1,0 +1,71 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+   <modelVersion>4.0.0</modelVersion>
+
+   <parent>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-parent</artifactId>
+      <version>1.4.0-SNAPSHOT</version>
+   </parent>
+
+   <groupId>org.rhq</groupId>
+   <artifactId>rhq-common-parent</artifactId>
+   <packaging>pom</packaging>
+   <name>RHQ Common Plugin Libraries</name>
+   <description>parent POM for all RHQ common plugin libraries</description>
+
+   <scm>
+      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/common</connection>
+      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/common</developerConnection>
+   </scm>
+
+   <properties>
+      <scm.module.path>modules/common/</scm.module.path>
+
+      <hibernate-all.version>1.0.0.Alpha9</hibernate-all.version>
+      <persistence-api.version>1.0</persistence-api.version>
+   </properties>
+
+   <dependencies>
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>rhq-core-domain</artifactId>
+         <version>${project.version}</version>
+         <scope>provided</scope> <!-- by PC -->
+      </dependency>
+
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>rhq-core-plugin-api</artifactId>
+         <version>${project.version}</version>
+         <scope>provided</scope> <!-- by PC -->
+      </dependency>
+
+      <!--
+         TODO: This is a fix for the Javac bug requiring annotations to be available when compiling dependent classes.
+         It is fixed in JDK 6.
+      -->
+      <dependency>
+         <groupId>javax.persistence</groupId>
+         <artifactId>persistence-api</artifactId>
+         <version>${persistence-api.version}</version>
+         <scope>provided</scope> <!-- by ON container -->
+      </dependency>
+
+      <!--
+         TODO: This is a fix for the Javac bug requiring annotations to be available when compiling dependent classes;
+         it is fixed in JDK 6.
+      -->
+      <dependency>
+         <groupId>jboss.jboss-embeddable-ejb3</groupId>
+         <artifactId>hibernate-all</artifactId>
+         <version>${hibernate-all.version}</version>
+         <scope>provided</scope> <!-- by ON container -->
+      </dependency>
+
+   </dependencies>
+
+   <modules>
+      <module>jboss-as</module>
+   </modules>
+</project>

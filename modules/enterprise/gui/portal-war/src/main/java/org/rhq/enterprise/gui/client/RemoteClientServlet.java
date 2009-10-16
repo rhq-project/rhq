@@ -36,7 +36,7 @@ import org.jboss.mx.util.MBeanServerLocator;
 import org.jboss.system.server.ServerConfig;
 
 import org.rhq.core.domain.cloud.Server.OperationMode;
-import org.rhq.core.util.MD5Generator;
+import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.core.CoreServerMBean;
@@ -253,7 +253,7 @@ public class RemoteClientServlet extends HttpServlet {
 
             // calculate the MD5 of the client zip
             File zip = getRemoteClientZip();
-            String md5Property = RHQ_CLIENT_MD5 + '=' + MD5Generator.getDigestString(zip) + '\n';
+            String md5Property = RHQ_CLIENT_MD5 + '=' + MessageDigestGenerator.getDigestString(zip) + '\n';
 
             // now write the server version info in our internal version file our servlet will use
             FileOutputStream versionFileOutputStream = new FileOutputStream(versionFile);

@@ -99,7 +99,7 @@
         </index>
         <!-- List entries all have the same name -->
     </table>
-e
+
     <table name="RHQ_CONFIG_TEMPLATE">
         <column name="ID" type="INTEGER" required="true" default="sequence-only" initial="10001" primarykey="true"/>
         <column name="NAME" type="VARCHAR2" required="false" size="100"/>

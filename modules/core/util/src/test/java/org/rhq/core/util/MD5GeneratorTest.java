@@ -24,7 +24,7 @@ package org.rhq.core.util;
 
 import org.testng.annotations.Test;
 
-import org.rhq.core.util.MD5Generator;
+import org.rhq.core.util.MessageDigestGenerator;
 
 /**
  * Tests MD5 generation.
@@ -37,12 +37,12 @@ public class MD5GeneratorTest {
      * Tests generating the MD5 of a String.
      */
     public void testString() {
-        String md5 = MD5Generator.getDigestString("calculate MD5 of this String!\n");
+        String md5 = MessageDigestGenerator.getDigestString("calculate MD5 of this String!\n");
         assert md5.equals("ac98d9c00ea0d821cd757b0f3c628c99") : "Invalid MD5 was " + md5;
     }
 
     public void testEmpty() {
-        MD5Generator md5 = new MD5Generator();
+        MessageDigestGenerator md5 = new MessageDigestGenerator();
         assert md5.getDigestString().equals("d41d8cd98f00b204e9800998ecf8427e"); // empty data results in this MD5
     }
 }

@@ -31,7 +31,7 @@ import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.clientapi.server.core.CoreServerService;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.pc.PluginContainerConfiguration;
-import org.rhq.core.util.MD5Generator;
+import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.agent.AgentMain;
 import org.rhq.enterprise.agent.PluginUpdate;
@@ -130,7 +130,7 @@ public class PluginsPromptCommand implements AgentPromptCommand {
                 String filename = current_plugin.getName();
                 Date last_mod = new Date(current_plugin.lastModified());
                 long filesize = current_plugin.length();
-                String md5 = MD5Generator.getDigestString(current_plugin);
+                String md5 = MessageDigestGenerator.getDigestString(current_plugin);
 
                 out.println();
                 out.println(MSG.getMsg(AgentI18NResourceKeys.PLUGINS_PLUGINS_INFO_FILENAME, filename));

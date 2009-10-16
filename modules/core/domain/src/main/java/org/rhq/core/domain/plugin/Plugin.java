@@ -38,7 +38,7 @@ import javax.persistence.Table;
 
 import org.jetbrains.annotations.NotNull;
 
-import org.rhq.core.util.MD5Generator;
+import org.rhq.core.util.MessageDigestGenerator;
 
 /**
  * An agent plugin.
@@ -212,7 +212,7 @@ public class Plugin implements Serializable {
 
         try {
             ByteArrayInputStream stream = new ByteArrayInputStream(content);
-            this.md5 = MD5Generator.getDigestString(stream);
+            this.md5 = MessageDigestGenerator.getDigestString(stream);
         } catch (Exception e) {
             throw new RuntimeException("Cannot determine plugin's MD5!", e);
         }

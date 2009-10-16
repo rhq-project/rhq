@@ -16,8 +16,8 @@
    <description>RHQ domain model classes (i.e. POJOs used by both server and agent)</description>
 
    <scm>
-     <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_2_0_EmbJopr_1_2_0-1/modules/core/domain</connection>
-     <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_2_0_EmbJopr_1_2_0-1/modules/core/domain</developerConnection>
+     <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/core/domain</connection>
+     <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/core/domain</developerConnection>
    </scm>
 
    <properties>
@@ -160,6 +160,13 @@
       </dependency>
 
       <dependency>
+         <groupId>commons-codec</groupId>
+         <artifactId>commons-codec</artifactId>
+         <version>1.4</version>
+         <scope>test</scope>
+      </dependency>
+
+     <dependency>
          <groupId>dom4j</groupId>
          <artifactId>dom4j</artifactId>
          <version>1.6.1-jboss</version>

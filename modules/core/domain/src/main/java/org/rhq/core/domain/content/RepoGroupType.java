@@ -35,6 +35,8 @@ import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 
 /**
  * Defines a type of (@link RepoGroup) e.g. Channel families in RHN map to a type of 
@@ -43,11 +45,16 @@ import javax.persistence.Table;
  */
 
 @Entity
+@NamedQueries(
+    @NamedQuery(name = RepoGroupType.QUERY_FIND_BY_NAME, query = "SELECT t FROM RepoGroupType t WHERE t.name = :name")
+)
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_REPO_GROUP_TYPE_ID_SEQ")
 @Table(name = "RHQ_REPO_GROUP_TYPE")
 public class RepoGroupType implements Serializable {
 
     private static final long serialVersionUID = 1L;
+
+    public static final String QUERY_FIND_BY_NAME = "RepoGroupType.findByName";
 
     // Attributes  --------------------------------------------
 

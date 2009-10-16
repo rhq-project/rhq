@@ -42,6 +42,7 @@ import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.PackageVersionContentSource;
 import org.rhq.core.domain.content.ResourceRepo;
 import org.rhq.core.domain.content.RepoGroup;
+import org.rhq.core.domain.content.RepoGroupType;
 import org.rhq.core.domain.content.composite.RepoComposite;
 import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
@@ -318,6 +319,21 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
 
         query.setParameter("name", name);
         List<RepoGroup> results = query.getResultList();
+
+        if (results.size() > 0) {
+            return results.get(0);
+        }
+        else {
+            return null;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public RepoGroupType getRepoGroupTypeByName(Subject subject, String name) {
+        Query query = entityManager.createNamedQuery(RepoGroupType.QUERY_FIND_BY_NAME);
+
+        query.setParameter("name", name);
+        List<RepoGroupType> results = query.getResultList();
 
         if (results.size() > 0) {
             return results.get(0);

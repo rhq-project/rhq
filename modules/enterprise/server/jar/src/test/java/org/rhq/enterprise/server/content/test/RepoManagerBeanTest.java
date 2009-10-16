@@ -30,11 +30,14 @@ import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.RepoGroup;
 import org.rhq.core.domain.content.RepoGroupType;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
+import org.rhq.enterprise.server.content.RepoException;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 
-@Test
 public class RepoManagerBeanTest extends AbstractEJB3Test {
+
+    private final static boolean ENABLED = true;
+
     private RepoManagerLocal repoManager;
     private Subject overlord;
 
@@ -54,8 +57,8 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
         }
     }
 
-    @Test
-    public void testCreateDeleteRepo() throws Exception {
+    @Test(enabled = ENABLED)
+    public void createDeleteRepo() throws Exception {
         Repo repo = new Repo("testCreateDeleteRepo");
         int id = repoManager.createRepo(overlord, repo).getId();
         Repo lookedUp = repoManager.getRepo(overlord, id);
@@ -70,13 +73,14 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
         assert lookedUp == null;
     }
 
-    @Test
-    public void testCreateDeleteRepoGroup() throws Exception {
+    @Test(enabled = ENABLED)
+    public void createDeleteRepoGroup() throws Exception {
         // Setup
         EntityManager entityManager = getEntityManager();
 
         RepoGroupType groupType = new RepoGroupType("testCreateDeleteRepoGroupType");
         entityManager.persist(groupType);
+        entityManager.flush();
 
         String groupName = "testCreateDeleteRepoGroup";
         RepoGroup group = repoManager.getRepoGroupByName(groupName);
@@ -101,10 +105,70 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
         entityManager.remove(groupType);
     }
 
-    public void testGetRepoGroupByNameNoGroup() throws Exception {
+    @Test(enabled = ENABLED)
+    public void createDuplicateRepoGroup() throws Exception {
+        // Setup
+        EntityManager entityManager = getEntityManager();
+
+        RepoGroupType groupType = new RepoGroupType("testCreateDuplicateRepoGroup");
+        entityManager.persist(groupType);
+        entityManager.flush();
+
+        String groupName = "testCreateDuplicateRepoGroup";
+
+        RepoGroup existing = new RepoGroup(groupName);
+        existing.setRepoGroupType(groupType);
+        repoManager.createRepoGroup(overlord, existing);
+
+        existing = repoManager.getRepoGroupByName(groupName);
+        assert existing != null;
+
+        // Test
+        RepoGroup duplicate = new RepoGroup(groupName);
+        duplicate.setRepoGroupType(groupType);
+
+        try {
+            repoManager.createRepoGroup(overlord, existing);
+            assert false;
+        }
+        catch (RepoException e) {
+            // Expected
+        }
+
+        // Cleanup
+        repoManager.deleteRepoGroup(overlord, existing.getId());
+        existing = repoManager.getRepoGroup(overlord, existing.getId());
+        assert existing == null;
+        
+        entityManager.remove(groupType);
+    }
+
+    @Test(enabled = ENABLED)
+    public void getRepoGroupByNameNoGroup() throws Exception {
         // Test
         RepoGroup group = repoManager.getRepoGroupByName("foo");
 
         assert group == null;
+    }
+
+    @Test(enabled = ENABLED)
+    public void getRepoGroupTypeByName() throws Exception {
+        // Setup
+        EntityManager entityManager = getEntityManager();
+        String name = "test-repo-type";
+
+        RepoGroupType groupType = new RepoGroupType(name);
+        entityManager.persist(groupType);
+        entityManager.flush();
+
+        // Test
+        RepoGroupType type = repoManager.getRepoGroupTypeByName(overlord, name);
+        assert type != null;
+        assert type.getName().equals(name);
+
+        // Cleanup
+        type = entityManager.find(RepoGroupType.class, type.getId());
+        entityManager.remove(type);
+        entityManager.flush();
     }
 }

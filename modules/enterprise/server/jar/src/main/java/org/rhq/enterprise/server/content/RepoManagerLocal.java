@@ -27,6 +27,7 @@ import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.RepoGroup;
+import org.rhq.core.domain.content.RepoGroupType;
 import org.rhq.core.domain.content.composite.RepoComposite;
 import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
@@ -155,6 +156,11 @@ public interface RepoManagerLocal {
      * @see RepoManagerRemote#getRepoGroup(Subject, int)
      */
     RepoGroup getRepoGroup(Subject subject, int repoGroupId);
+
+    /**
+     * @see RepoManagerRemote#getRepoGroupTypeByName(Subject, String)
+     */
+    RepoGroupType getRepoGroupTypeByName(Subject subject, String name);
 
     /**
      * Returns all repos that match the given name. The returned list should only be of size 0 or 1.

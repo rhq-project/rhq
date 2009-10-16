@@ -50,7 +50,7 @@ import javax.persistence.NamedQuery;
 
 @Entity
 @NamedQueries(
-    @NamedQuery(name = RepoGroup.QUERY_FIND_BY_NAME, query = "SELECT c FROM Repo c WHERE c.name = :name")
+    @NamedQuery(name = RepoGroup.QUERY_FIND_BY_NAME, query = "SELECT g FROM RepoGroup g WHERE g.name = :name")
 )
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_REPO_GROUP_ID_SEQ")
 @Table(name = "RHQ_REPO_GROUP")

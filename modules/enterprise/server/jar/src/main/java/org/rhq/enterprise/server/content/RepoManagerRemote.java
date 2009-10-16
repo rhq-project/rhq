@@ -28,6 +28,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.RepoGroup;
+import org.rhq.core.domain.content.RepoGroupType;
 import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.resource.Resource;
@@ -115,6 +116,11 @@ public interface RepoManagerRemote {
     RepoGroup getRepoGroup(
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "repoGroupId") int repoGroupId);
+
+    @WebMethod
+    RepoGroupType getRepoGroupTypeByName(
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "name") String name);
 
     @WebMethod
     PageList<Repo> findReposByCriteria( //

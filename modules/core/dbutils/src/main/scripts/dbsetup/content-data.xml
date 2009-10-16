@@ -41,4 +41,9 @@
         <data id="37" name="solaris-patch"/>
         <data id="38" name="solaris-patch-cluster"/>
     </table>
+
+   <table name="RHQ_REPO_GROUP_TYPE">
+      <data id="1" name="family"/>
+   </table>
+
 </dbsetup>

@@ -32,27 +32,43 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 /**
- * An object that can be used to generate an MD5 hashcode (called a "digest") for files, streams or strings. 128 bit
- * fingerprints are computed as described in <i>R. Rivest, The MD5 Message-Digest Algorithm, RFC1321</i>.
+ * An object that generates a message digest or hash for algorithms such as MD5 or SHA. This class is basically a
+ * wrapper around {@link java.security.MessageDigest} and provides convenience methods making it easier to generate
+ * hashes.
  */
-public class MD5Generator {
+public class MessageDigestGenerator {
     private final MessageDigest messageDigest;
 
     /**
-     * Creates a new {@link MD5Generator} object.
+     * Creates a new {@link MessageDigestGenerator} object using MD5 as the default algorithm.
+     * <p/>
+     * MD5 is used as the default algorithm for backward compatibility. It originally only supported MD5 and has since
+     * been refactored to support algortithms that are supported by your version of Java.
      *
      * @throws IllegalStateException if the MD5 algorithm cannot be computed by the VM
      */
-    public MD5Generator() {
+    public MessageDigestGenerator() {
+        this("MD5");
+    }
+
+    /**
+     * Creates a new MessageDigestGenerator using the specified algorithm.
+     *
+     * @param algorithm The algorithm to use (e.g., MD5, SHA-256)
+     *
+     * @throws IllegalStateException if the algorithm is not supported by the VM
+     */
+    public MessageDigestGenerator(String algorithm) {
         try {
-            this.messageDigest = MessageDigest.getInstance("MD5");
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("Could not find MD5 Algorithm");
+            messageDigest = MessageDigest.getInstance(algorithm);
+        }
+        catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException(algorithm + " is not a supported algorithm");
         }
     }
 
     /**
-     * Returns the <code>MessageDigest</code> object that is used to compute the MD5.
+     * Returns the <code>MessageDigest</code> object that is used to compute the digest.
      *
      * @return object that will perform the calculations
      */
@@ -61,10 +77,10 @@ public class MD5Generator {
     }
 
     /**
-     * Use this to add more data to the set of data used to calculate the MD5. Once all data has been added, call
-     * {@link #getDigest()} to get the final MD5 value.
+     * Use this to add more data to the set of data used to calculate the digest. Once all data has been added, call
+     * {@link #getDigest()} to get the final value.
      *
-     * @param  is the stream whose data is to be part of the set of data from which the MD5 is to be calculated
+     * @param  is the stream whose data is to be part of the set of data from which the digest is to be calculated
      *
      * @throws IOException if there was a problem reading from the stream
      */
@@ -80,12 +96,12 @@ public class MD5Generator {
     }
 
     /**
-     * Use this to add more data to the set of data used to calculate the MD5. Once all data has been added, call
-     * {@link #getDigest()} to get the final MD5 value.
+     * Use this to add more data to the set of data used to calculate the hash. Once all data has been added, call
+     * {@link #getDigest()} to get the final digest value.
      *
      * <p>If <code>bytes</code> is <code>null</code>, this method is a no-op and simply returns.</p>
      *
-     * @param bytes data to be part of the set of data from which the MD5 is to be calculated
+     * @param bytes data to be part of the set of data from which the digest is to be calculated
      */
     public void add(byte[] bytes) {
         if (bytes != null) {
@@ -95,10 +111,10 @@ public class MD5Generator {
 
     /**
      * After all the data has been added to the message digest via {@link #add(InputStream)}, this method is used to
-     * finalize the MD5 calcualation and return the MD5 hashcode. You can get the String form of this MD5 hashcode if
+     * finalize the digest calcualation and return the digest. You can get the String form of this digest if
      * you call {@link #getDigestString()} instead.
      *
-     * @return the bytes of the MD5 hashcode
+     * @return the bytes of the digest
      */
     public byte[] getDigest() {
         return this.messageDigest.digest();
@@ -106,52 +122,52 @@ public class MD5Generator {
 
     /**
      * After all the data has been added to the message digest via {@link #add(InputStream)} or {@link #add(byte[])}
-     * this method is used to finalize the MD5 calcualation and return the MD5 hashcode as a String. You can get the
-     * actual bytes of the MD5 hashcode if you call {@link #getDigest()} instead.
+     * this method is used to finalize the digest calcualation and return the digest as a String. You can get the
+     * actual bytes of the digest if you call {@link #getDigest()} instead.
      *
-     * @return the MD5 hashcode as a string
+     * @return the digest as a string
      */
     public String getDigestString() {
         return calculateDigestStringFromBytes(getDigest());
     }
 
     /**
-     * Returns the MD5 hashcode for the data found in the given stream. The MD5 is returned as a byte array; if you want
-     * the MD5 as a String, call {@link #getDigestString(InputStream)} instead.
+     * Returns the digest for the data found in the given stream. The digest is returned as a byte array; if you want
+     * the digest as a String, call {@link #getDigestString(InputStream)} instead.
      *
-     * @param  is the stream whose data is to be used to calculate the MD5
+     * @param  is the stream whose data is to be used to calculate the digest
      *
-     * @return the stream data's MD5
+     * @return the stream data's hash
      *
      * @throws IOException if failed to read the stream for some reason
      */
     public static byte[] getDigest(InputStream is) throws IOException {
-        MD5Generator md5 = new MD5Generator();
+        MessageDigestGenerator md5 = new MessageDigestGenerator();
         md5.add(is);
         return md5.getDigest();
     }
 
     /**
-     * Similar to {@link #getDigest(InputStream)}, only this returns the MD5 as a String.
+     * Similar to {@link #getDigest(InputStream)}, only this returns the digest as a String.
      *
-     * @param  is the stream whose data is to be used to calculate the MD5
+     * @param  is the stream whose data is to be used to calculate the digest
      *
-     * @return the stream data's MD5 as a String
+     * @return the stream data's digest as a String
      *
      * @throws IOException if failed to read the stream for some reason
      */
     public static String getDigestString(InputStream is) throws IOException {
-        MD5Generator md5 = new MD5Generator();
+        MessageDigestGenerator md5 = new MessageDigestGenerator();
         md5.add(is);
         return md5.getDigestString();
     }
 
     /**
-     * Calculates an MD5 for a given string.
+     * Calculates a digest for a given string.
      *
-     * @param  source_str the string whose contents will be used as the data to calculate the MD5 hashcode
+     * @param  source_str the string whose contents will be used as the data to calculate the digest
      *
-     * @return the string's MD5
+     * @return the string's digest
      *
      * @throws RuntimeException if a system error occurred - should never really happen
      */
@@ -165,22 +181,22 @@ public class MD5Generator {
     }
 
     /**
-     * Calculates an MD5 for a given string and returns the MD5's String representation.
+     * Calculates a digest for a given string and returns the digest's String representation.
      *
-     * @param  source_str the string whose contents will be used as the data to calculate the MD5 hashcode
+     * @param  source_str the string whose contents will be used as the data to calculate the digest
      *
-     * @return the string's MD5 as a String
+     * @return the string's digest or hash as a String
      */
     public static String getDigestString(String source_str) {
         return calculateDigestStringFromBytes(getDigest(source_str));
     }
 
     /**
-     * Calculates the MD5 for a given file. The file's contents will be used as the source data for the MD5 calculation.
+     * Calculates the digest for a given file. The file's contents will be used as the source data for the digest calculation.
      *
-     * @param  file the file whose contents are to be used to calculate the MD5.
+     * @param  file the file whose contents are to be used to calculate the digest.
      *
-     * @return the file content's MD5
+     * @return the file content's digest
      *
      * @throws IOException if the file could not be read or accessed
      */
@@ -198,11 +214,11 @@ public class MD5Generator {
     }
 
     /**
-     * Calculates the MD5 for a given file. The file's contents will be used as the source data for the MD5 calculation.
+     * Calculates the digest for a given file. The file's contents will be used as the source data for the digest calculation.
      *
-     * @param  file the file whose contents are to be used to calculate the MD5.
+     * @param  file the file whose contents are to be used to calculate the digest.
      *
-     * @return the file content's MD5 as a String
+     * @return the file content's digest as a String
      *
      * @throws IOException if the file could not be read or accessed
      */
@@ -211,11 +227,11 @@ public class MD5Generator {
     }
 
     /**
-     * Given an MD5 hashcode byte array, this will return its String representation.
+     * Given a digest byte array, this will return its String representation.
      *
-     * @param  bytes the MD5 digest whose String representation is to be returned
+     * @param  bytes the digest whose String representation is to be returned
      *
-     * @return the MD5 string
+     * @return the digest string
      */
     private static String calculateDigestStringFromBytes(byte[] bytes) {
         StringBuffer sb = new StringBuffer(bytes.length * 2);
@@ -231,15 +247,15 @@ public class MD5Generator {
     }
 
     /**
-     * This can be used to generate the MD5 hashcode from the command line.
+     * This can be used to generate the digest hash from the command line.
      *
      * @param  args one and only one filename - may or may not be a .jar file.
      *
-     * @throws Exception if failed to compute the MD5 for some reason
+     * @throws Exception if failed to compute the digest for some reason
      */
     public static void main(String[] args) throws Exception {
         String file = args[0];
-        String digest = MD5Generator.getDigestString(new File(file));
+        String digest = MessageDigestGenerator.getDigestString(new File(file));
         System.out.println("MD5=" + digest);
     }
 }

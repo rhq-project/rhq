@@ -23,45 +23,92 @@
 
 package org.rhq.core.domain.configuration;
 
-import org.rhq.core.domain.test.AbstractEJB3Test;
+import static org.testng.Assert.*;
 import org.testng.annotations.Test;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.FileUtils;
 
-import javax.persistence.EntityManager;
+import java.io.File;
 
-public class RawConfigurationTest extends AbstractEJB3Test {
+public class RawConfigurationTest {
 
-    @Test(groups = "integration.ejb3")
-    public void veryPersistAndFindById() throws Exception {
-        getTransactionManager().begin();
-        EntityManager entityMgr = getEntityManager();
+    @Test
+    public void getContentsShouldReturnADeepCopyOfArray() {
+        RawConfiguration rawConfig = new RawConfiguration();
+        rawConfig.setContents(getBytes());
 
-        try {
-            Configuration config = createAndSaveConfiguration();
+        byte[] contents = rawConfig.getContents();
+        contents[0] = 5;
 
-            RawConfiguration rawConfig = new RawConfiguration();
-            rawConfig.setConfiguration(config);
-            rawConfig.setContents(new byte[] {});
-            rawConfig.setPath("/tmp/foo");
-            rawConfig.setSha256("12242432nde");
-
-            entityMgr.persist(rawConfig);
-
-            RawConfiguration savedRawConfig = entityMgr.find(RawConfiguration.class, rawConfig.getId());
-
-            assertNotNull("Failed to find " + RawConfiguration.class.getSimpleName() + " by id.", savedRawConfig);
-        }
-        finally {
-            getTransactionManager().rollback();    
-        }
+        assertEquals(
+            rawConfig.getContents(),
+            getBytes(),
+            "The contents property should only be mutable through setContents(). Therefore getContents() must return a copy of the underlying array."
+        ); 
     }
 
-    Configuration createAndSaveConfiguration() {
-        Configuration config = new Configuration();
-        EntityManager entityMgr = getEntityManager();
+    @Test
+    public void setContentsShouldUpdateContentsArrayWithCopyOfSpecifiedValue() {
+        byte[] bytes = getBytes();
 
-        entityMgr.persist(config);
+        RawConfiguration rawConfig = new RawConfiguration();
+        rawConfig.setContents(bytes);
 
-        return config;
+        bytes[0] = 9;
+
+        assertEquals(
+            rawConfig.getContents(),
+            getBytes(),
+            "setContents() should update the underlying array to refer to a copy of the incoming array to enforce the contents property being mutable only through setContents()."
+        );
+    }
+
+    byte[] getBytes() {
+        return new byte[] {1, 2, 3};
+    }
+
+    @Test
+    public void sha256ShouldChangeWhenContentsChange() throws Exception {
+        RawConfiguration rawConfig = new RawConfiguration();
+        rawConfig.setContents(new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
+
+        String actualSha256 = rawConfig.getSha256();
+
+        String expectedSha256 = calculateSHA256(rawConfig.getContents());
+
+        assertEquals(actualSha256, expectedSha256, "Failed to calculate the SHA-256 correctly.");
+
+        byte[] contents = rawConfig.getContents();
+        contents[4] = 15;
+        rawConfig.setContents(contents);
+
+        actualSha256 = rawConfig.getSha256();
+
+        expectedSha256 = calculateSHA256(rawConfig.getContents());
+
+        assertEquals(actualSha256, expectedSha256, "Failed to update sha256 when contents property changes");
+    }
+
+    String calculateSHA256(byte[] data) throws DecoderException {
+        //StringUtils stringUtils = new StringUtils();
+//        byte[] shaBytes = new Hex().encode(data);
+//        return DigestUtils.shaHex(shaBytes);
+        //byte[] shaBytes = DigestUtils.sha(data);
+        //return DigestUtils.sha
+        return DigestUtils.sha256Hex(data);
+//        Base64 base64 = new Base64();
+//        return base64.encode(shaBytes).toString();
+//        char[] chars = Hex.encodeHex(shaBytes);
+//
+//        return new String(chars);
+    }
+
+    byte[] getFileBytes() throws Exception {
+        return FileUtils.readFileToByteArray(new File("/home/jsanda/test.txt"));
     }
 
 }

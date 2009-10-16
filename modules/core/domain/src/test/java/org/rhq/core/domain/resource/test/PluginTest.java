@@ -38,7 +38,7 @@ import org.testng.annotations.Test;
 
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.test.AbstractEJB3Test;
-import org.rhq.core.util.MD5Generator;
+import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.stream.StreamUtil;
 
 @Test
@@ -199,7 +199,7 @@ public class PluginTest extends AbstractEJB3Test {
             String description = "the test description is here";
             String help = "the test help string is here";
             byte[] content = "this is the test content".getBytes();
-            String md5 = MD5Generator.getDigestString(new String(content));
+            String md5 = MessageDigestGenerator.getDigestString(new String(content));
 
             Plugin plugin = new Plugin(name, path);
             plugin.setDisplayName(displayName);
@@ -285,7 +285,7 @@ public class PluginTest extends AbstractEJB3Test {
             String description = "the test description is here";
             String help = "the test help string is here";
             byte[] content = "this is the test content".getBytes();
-            String md5 = MD5Generator.getDigestString(new String(content));
+            String md5 = MessageDigestGenerator.getDigestString(new String(content));
 
             // persist the plugin, but without any content
             Plugin plugin = new Plugin(name, path);
@@ -355,7 +355,7 @@ public class PluginTest extends AbstractEJB3Test {
             byte[] contentFromDb = StreamUtil.slurp(dbStream);
             assert contentFromDb.length == content.length;
             assert new String(contentFromDb).equals(new String(content));
-            assert MD5Generator.getDigestString(new String(contentFromDb)).equals(md5);
+            assert MessageDigestGenerator.getDigestString(new String(contentFromDb)).equals(md5);
             rs.close();
             rs = null;
             ps.close();
@@ -404,7 +404,7 @@ public class PluginTest extends AbstractEJB3Test {
             Plugin plugin = new Plugin("PluginTest-testPersist", path);
             plugin.setDisplayName("Plugin Test - testPersist");
             plugin.setEnabled(true);
-            plugin.setMD5(MD5Generator.getDigestString(new String(content)));
+            plugin.setMD5(MessageDigestGenerator.getDigestString(new String(content)));
             em.persist(plugin);
             assert plugin.getId() > 0;
 
@@ -463,8 +463,8 @@ public class PluginTest extends AbstractEJB3Test {
             byte[] contentFromDb = StreamUtil.slurp(dbStream);
             assert contentFromDb.length == content.length;
             assert new String(contentFromDb).equals(new String(content));
-            assert MD5Generator.getDigestString(new String(contentFromDb)).equals(
-                MD5Generator.getDigestString(new String(content)));
+            assert MessageDigestGenerator.getDigestString(new String(contentFromDb)).equals(
+                MessageDigestGenerator.getDigestString(new String(content)));
             rs.close();
             rs = null;
             ps.close();

@@ -60,7 +60,7 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.util.MD5Generator;
+import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.enterprise.server.content.ChannelManagerLocal;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
@@ -381,7 +381,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             long modifiedTimestamp = channel.getLastModifiedDate();
             Date modifiedDate = new Date(modifiedTimestamp);
             String datehash = Integer.toString(modifiedDate.hashCode());
-            assert metadataMd5.equals(MD5Generator.getDigestString(datehash)) : "-->" + metadataMd5;
+            assert metadataMd5.equals(MessageDigestGenerator.getDigestString(datehash)) : "-->" + metadataMd5;
 
             channelManager.unsubscribeResourceFromChannels(overlord, resource1.getId(), new int[] { channelId });
 

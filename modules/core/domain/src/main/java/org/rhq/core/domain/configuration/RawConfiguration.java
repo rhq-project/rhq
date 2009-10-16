@@ -23,6 +23,8 @@
 
 package org.rhq.core.domain.configuration;
 
+import org.rhq.core.util.MessageDigestGenerator;
+
 import javax.persistence.Entity;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -81,6 +83,8 @@ public class RawConfiguration implements Serializable {
     @JoinColumn(name = "CONFIG_ID", nullable = false)
     private Configuration configuration;
 
+    private MessageDigestGenerator sha256Generator = new MessageDigestGenerator("SHA-256");
+
     public int getId() {
         return id;
     }
@@ -97,20 +101,44 @@ public class RawConfiguration implements Serializable {
         this.path = path;
     }
 
+    /**
+     * Returns a copy of the contents as an array of bytes. Modifications to the underlying array have to happen through
+     * {@link #setContents(byte[])}; otherwise, we could wind up with an incorrect SHA-256 hash. This behavior is
+     * enforced by returning a copy instead of a reference to the underlying array. By returning a copy, callers can only
+     * modify the underlying array by calling the setter.
+     *
+     * @return A copy of the file contents as an array of bytes
+     */
     public byte[] getContents() {
-        return contents;
+        return copy(contents);
     }
 
-    public void setContents(byte[] contents) {
-        this.contents = contents;
+    /**
+     * Replaces the contents of this raw config with a copy of the specified bytes. The SHA-256 hash returned from
+     * {@link #getSha256()} will be changed as well, provided the contents actually changed in some way.
+     *
+     * @param newContents The new bytes
+     */
+    public void setContents(byte[] newContents) {
+        this.contents = copy(newContents);
+        updateSha256();
+    }
+
+    private byte[] copy(byte[] original) {
+        byte[] copy = new byte[original.length];
+        for (int i = 0; i < original.length; ++i) {
+            copy[i] = original[i];
+        }
+        return copy;
+    }
+
+    private void updateSha256() {
+        sha256Generator.add(contents);
+        sha256 = sha256Generator.getDigestString();
     }
 
     public String getSha256() {
         return sha256;
-    }
-
-    public void setSha256(String sha256) {
-        this.sha256 = sha256;
     }
 
     public long getCtime() {
@@ -190,6 +218,7 @@ public class RawConfiguration implements Serializable {
             .append(", path=").append(path)
             .append(", sha256=").append(sha256)
             .append(", configuration=").append(configuration)
+            .append("]")
             .toString();
     }
 }

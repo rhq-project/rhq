@@ -255,9 +255,8 @@ public class ConfigurationTest extends AbstractEJB3Test {
 
     RawConfiguration createRawConfiguration() {
         RawConfiguration rawConfig = new RawConfiguration();
-        rawConfig.setContents(new byte[] {});
+        rawConfig.setContents(new byte[] {1, 2, 3, 4, 5});
         rawConfig.setPath("/tmp/foo");
-        rawConfig.setSha256("38hr3f");
 
         return rawConfig;
     }

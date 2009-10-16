@@ -6,6 +6,8 @@
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
 
+   <depends plugin="Augeas"/>
+
    <server name="Samba Server"
             description="The static table lookup for host names"
             discovery="SambaServerDiscoveryComponent"
@@ -23,11 +25,10 @@
             <c:simple-property name="smb-path" displayName="Samba Config File Path" required="true"
                                default="/etc/samba/smb.conf" description="Location of the samba file."/>
             <c:simple-property name="augeas-smb-path" displayName="Augeas Samba Tree Path" required="true"
-                               default="/files/etc/samba/smb.conf/*" description="Augeas tree location of the samba configuration values."/>
+                               default="/files/etc/samba/smb.conf/target[.='global']" description="Augeas tree location of the samba configuration values."/>
          </c:group>
       </plugin-configuration>
 
-<!--
        <metric property="NetworkStat.tcpInboundTotal" displayName="TCP Inbound Connections" displayType="summary"/>
        <metric property="NetworkStat.tcpOutboundTotal" displayName="TCP Outbound Connections" displayType="summary"/>
        <metric property="NetworkStat.allInboundTotal" displayName="All Inbound Connections" displayType="summary"/>
@@ -45,7 +46,7 @@
        <metric property="NetworkStat.tcpClosing" displayName="State CLOSING"/>
        <metric property="NetworkStat.tcpIdle" displayName="State IDLE"/>
        <metric property="NetworkStat.tcpBound" displayName="State BOUND"/>
--->
+
       <resource-configuration>
         <c:group name="Basic Configurations">
             

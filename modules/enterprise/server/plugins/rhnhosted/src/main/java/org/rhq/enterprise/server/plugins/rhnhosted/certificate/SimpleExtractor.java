@@ -16,14 +16,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.server.plugins.rhnhosted;
+package org.rhq.enterprise.server.plugins.rhnhosted.certificate;
 
 import java.lang.reflect.InvocationTargetException;
 
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.jdom.Element;
-import org.jdom.JDOMException;
+import org.jdom.JDOMException; 
+
 /**
  * @author pkilambi
  *

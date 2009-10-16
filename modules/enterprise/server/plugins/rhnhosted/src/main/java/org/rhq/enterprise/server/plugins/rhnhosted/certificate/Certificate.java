@@ -17,7 +17,9 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.server.plugins.rhnhosted;
+package org.rhq.enterprise.server.plugins.rhnhosted.certificate;
+
+import org.rhq.enterprise.server.plugins.rhnhosted.certificate.XmlTag;
 
 import java.security.SignatureException;
 import java.text.ParseException;

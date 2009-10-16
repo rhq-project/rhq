@@ -5,6 +5,9 @@ package org.rhq.enterprise.server.plugins.rhnhosted;
  import org.rhq.core.domain.configuration.Configuration;
  import org.rhq.core.clientapi.server.plugin.content.ContentProvider;
  import org.rhq.core.clientapi.server.plugin.content.InitializationException;
+ import org.rhq.enterprise.server.plugins.rhnhosted.certificate.Certificate;
+ import org.rhq.enterprise.server.plugins.rhnhosted.certificate.CertificateFactory;
+ import org.rhq.enterprise.server.plugins.rhnhosted.certificate.PublicKeyRing;
 
  import java.security.KeyException;
  import java.io.IOException;

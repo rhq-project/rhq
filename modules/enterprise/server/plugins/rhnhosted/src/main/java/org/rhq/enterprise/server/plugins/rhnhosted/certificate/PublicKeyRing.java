@@ -17,7 +17,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.server.plugins.rhnhosted;
+package org.rhq.enterprise.server.plugins.rhnhosted.certificate;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -36,6 +36,7 @@ import org.bouncycastle.openpgp.PGPPublicKeyRingCollection;
 import org.bouncycastle.openpgp.PGPSignature;
 import org.bouncycastle.openpgp.PGPSignatureList;
 import org.bouncycastle.openpgp.PGPUtil;
+
 /**
  * @author pkilambi
  *  This module is taken from Satellite

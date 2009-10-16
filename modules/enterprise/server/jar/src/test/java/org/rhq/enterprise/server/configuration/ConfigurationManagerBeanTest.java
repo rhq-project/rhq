@@ -994,8 +994,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
     RawConfiguration createRawConfiguration(String sha256) {
         RawConfiguration rawConfig = new RawConfiguration();
         rawConfig.setContents(new byte[] {});
-        rawConfig.setSha256(sha256);
-
+        
         return rawConfig;
     }
 

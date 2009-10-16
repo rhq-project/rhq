@@ -137,6 +137,7 @@ public class RawConfiguration implements Serializable {
         sha256 = sha256Generator.getDigestString();
     }
 
+    /** @return A SHA-256 hash of the bytes for this raw configuration, which can be accessed via {@link #getContents()} */
     public String getSha256() {
         return sha256;
     }
@@ -157,6 +158,7 @@ public class RawConfiguration implements Serializable {
         this.mtime = mtime;
     }
 
+    /** @return The owning {@link org.rhq.core.domain.configuration.Configuration} object */
     public Configuration getConfiguration() {
         return configuration;
     }
@@ -177,11 +179,17 @@ public class RawConfiguration implements Serializable {
     }
 
     /**
-     * Two RawConfiguration objects are considered equal if they have the same SHA-256 sum.
+     * Two RawConfiguration objects are considered equal when the following conditions hold:
+     * <ul>
+     *   <li>Both have the same sha256 and path property is null for both or</li>
+     *   <li>Both have the same sha256, path property is non-null and equal for both</li>
+     * </ul>
+     *
+     * <strong>Note:</strong> This definition of equality holdsonly when comparing RawConfigurations belonging to
+     * the same resource.
      *
      * @param obj The object to compare for equality
-     * @return true if obj is a RawConfiguration and has the same SHA-256 sum, false otherwise. Note that false is
-     * returned if {@link #getSha256()} returns null.
+     * @return true if obj is a RawConfiguration and has the same values for the sha256 and path properties.
      */
     @Override
     public boolean equals(Object obj) {
@@ -193,21 +201,32 @@ public class RawConfiguration implements Serializable {
             return true;
         }
 
-        if (obj instanceof RawConfiguration && sha256 != null) {
+        if (obj instanceof RawConfiguration) {
             RawConfiguration that = (RawConfiguration) obj;
-            return this.sha256.equals(that.sha256);
+            if (this.sha256 != null && this.sha256.equals(that.sha256)) {
+                if (this.path == null && that.path == null) {
+                    return true;
+                }
+                if ((this.path !=null && that.path != null) && this.path.equals(that.path)) {
+                    return true;
+                }
+            }
         }
-
         return false;
     }
 
-    /**@return A hash which is generated off of {@link #getSha256()} */
+    /**@return A hash which is calculated from the sha256 and path properties. */
     @Override
     public int hashCode() {
         if (sha256 == null) {
             return 0;
         }
-        return sha256.hashCode();
+
+        if (path == null) {
+            return sha256.hashCode() * 37;
+        }
+
+        return sha256.hashCode() * path.hashCode() * 37;
     }
 
     @Override

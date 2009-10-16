@@ -65,6 +65,14 @@
     </tag>
 
     <tag>
+        <tag-name>rawconfig</tag-name>
+        <component>
+            <component-type>org.jboss.on.RawConfig</component-type>
+            <renderer-type>org.jboss.on.RawConfig</renderer-type>
+        </component>
+    </tag>
+
+    <tag>
         <tag-name>configSet</tag-name>
         <component>
             <component-type>org.rhq.ConfigurationSet</component-type>

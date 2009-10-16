@@ -8,7 +8,9 @@
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:f="http://java.sun.com/jsf/core"
       xmlns:ui="http://java.sun.com/jsf/facelets"
-      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:c="http://java.sun.com/jstl/core"      
+      xmlns:a4j="http://richfaces.org/a4j"
+      xmlns:rich="http://richfaces.org/rich"
       xmlns:onc="http://jboss.org/on/component">
 
 THIS TEXT WILL BE REMOVED.
@@ -28,27 +30,54 @@ THIS TEXT WILL BE REMOVED.
              <f:param name="id" value="#{ResourceUIBean.id}"/>
              <h:outputText value=" standard mode"/>
            </h:outputLink>
-      <h:form id="editResourceConfigurationForm" onsubmit="prepareInputsForSubmission(this)" rendered="#{!ViewResourceConfigurationUIBean.updateInProgress}">
+      <a4j:form id="editResourceConfigurationForm"  >
 
+<!--  
+	 <onc:rawconfig configurationDefinition="#{ExistingResourceConfigurationUIBean.configurationDefinition}"
+                     configuration="#{ExistingResourceConfigurationUIBean.configuration}"
+                     nullConfigurationDefinitionMessage="#{ExistingResourceConfigurationUIBean.nullConfigurationDefinitionMessage}"
+                     nullConfigurationMessage="#{ExistingResourceConfigurationUIBean.nullConfigurationMessage}"
+                     prevalidate="true"/>
+-->
+
+      <table class="summary-props-table" style="" >
+        <tr>
+        <td bgcolor="lightblue" width="25%" valign="top">
+        Files
+                
+        <div>#{RawConfigCollection.current.path}</div>
+		<a4j:repeat 
+			value="#{RawConfigCollection.paths}" 
+				var="path"  
+			binding="#{RawConfigCollection.repeater}" >
+           <div>
+            <a4j:commandLink reRender="editor"  >
+                <h:outputText value="${path}"   />                 
+            </a4j:commandLink>
+         </div>
+		</a4j:repeat>
+
+        <div>______________________________________</div>
+        </td>
+        <td>
+         <h:panelGroup id="title">
+        <h:outputText value="#{RawConfigCollection.current.path}" styleClass="outhello" />
+        </h:panelGroup>
+        
+        [Icon]View Full Screen [^] Upload Now [v] Download
+        
+                <rich:editor 
+                    id="editor" width="600" height="400" 
+	                     viewMode="visual" value="#{RawConfigCollection.currentContents}" useSeamText="false">   
+                    
+                </rich:editor>
+        
+        <div>Upload A New Version</div>
+        <input type="file" /> <input type="submit" value="Upload"/>
+        </td></tr>
+		</table>
          <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
-
-         <table class="summary-props-table" style="" >
-         <tr>
-         <td bgcolor="lightblue" width="25%" valign="top">
-         Files
-         <div>.../etc/httpd/conf/httpd.conf</div>
-         <div>.../etc/httpd/conf/magic</div>
-         <div>*../etc/httpd/conf.d/cobbler.conf</div>
-         <div>*../etc/httpd/conf.d/cobbler_svc.conf</div>
-         <div>______________________________________</div>
-         </td>
-         <td>/etc/httpd/conf/httpd.conf     [Icon]View Full Screen [^] Upload Now [v] Download
-         <textarea disabled="true"  rows="40" cols="60">Lorem Ipsum</textarea>
-         <div>Upload A New Version</div>
-         <input type="file" /> <input type="submit" value="Upload"/>
-         </td></tr>
-         </table>
-      </h:form>
+      </a4j:form>
 
       <h:panelGroup layout="block" styleClass="InfoBlock" rendered="#{ExistingResourceConfigurationUIBean.updateInProgress}">
          <b>${msg['note']}</b> ${msg['resource.config.Current.updateInProgress']}

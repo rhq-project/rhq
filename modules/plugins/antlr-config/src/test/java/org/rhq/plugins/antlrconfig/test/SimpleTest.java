@@ -56,7 +56,7 @@ import org.rhq.plugins.antlrconfig.test.parsers.SimpleLexer;
 import org.rhq.plugins.antlrconfig.test.parsers.SimpleParser;
 
 /**
- * Tests with the SimpleTest.g grammar
+ * Tests with the Simple.g grammar
  * 
  * @author Lukas Krejci
  */
@@ -290,6 +290,12 @@ public class SimpleTest {
         
         PropertyList file = config.getList(FILE);        
         assertNotNull(file, "the configuration should contain a list of assignments.");
+        
+        file.getList().remove(0);
+        
+        Configuration config2 = storeAndLoad(config);
+        
+        assertEquals(config, config2);
     }
     
     private Configuration storeAndLoad(Configuration config) throws RecognitionException, IOException {
@@ -297,7 +303,9 @@ public class SimpleTest {
         
         TokenRewriteStream stream = getStream();
         
-        mapper.update(loadFile(stream), stream, config);
+        CommonTree file = loadFile(stream);
+        
+        mapper.update(file, stream, config);
         
         String updatedConfig = stream.toString();
         

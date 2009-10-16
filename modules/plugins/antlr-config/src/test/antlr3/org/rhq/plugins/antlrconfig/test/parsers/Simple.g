@@ -39,7 +39,7 @@ WS : (' ' | '\t')+ {$channel = HIDDEN;} ;
 
 NL : '\r'? '\n' ;
 
-file : (assignment | NL)* -> ^(FILE<Unordered> assignment*)
+file : (assignment | NL)* -> ^(FILE<Ordered> assignment*)
      ; 
 
 assignment : EXPORT? WORD EQUALS VALUE (NL | EOF) -> ^(ASSIGNMENT ^(WORD<Id>) VALUE EXPORT?);

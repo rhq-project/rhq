@@ -291,7 +291,11 @@ public class SimpleTest {
         PropertyList file = config.getList(FILE);        
         assertNotNull(file, "the configuration should contain a list of assignments.");
         
-        file.getList().remove(0);
+        //remove export c = 3
+        file.getList().remove(2);
+        Property firstAssignment = file.getList().remove(0);
+        //add it as last
+        file.add(firstAssignment);
         
         Configuration config2 = storeAndLoad(config);
         

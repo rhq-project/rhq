@@ -23,11 +23,7 @@
 package org.rhq.plugins.augeas;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import net.augeas.Augeas;
 import net.augeas.AugeasException;
@@ -64,6 +60,8 @@ import org.rhq.plugins.platform.PlatformComponent;
  */
 public class AugeasConfigurationComponent implements ResourceComponent<PlatformComponent>, ConfigurationFacet {
     public static final String CONFIGURATION_FILE_PROP = "configurationFile";
+    public static final String RESOURCE_CONFIGURATION_ROOT_NODE_PROP = "resourceConfigurationRootNode";
+    public static final String AUGEAS_MODULE_NAME_PROP = "augeasModuleName";
 
     private static final boolean IS_WINDOWS = (File.separatorChar == '\\');
     private static final String AUGEAS_LOAD_PATH = "/usr/local/share/augeas/lenses";
@@ -74,8 +72,8 @@ public class AugeasConfigurationComponent implements ResourceComponent<PlatformC
     private ResourceContext resourceContext;
     private File configFile;
     private Augeas augeas;
-    private AugeasNode augeasConfigFileNode;
     private AugeasNode augeasConfigFileMetadataNode;
+    private AugeasNode resourceConfigRootNode;
 
     public void start(ResourceContext<PlatformComponent> resourceContext) throws InvalidPluginConfigurationException,
         Exception {
@@ -85,9 +83,21 @@ public class AugeasConfigurationComponent implements ResourceComponent<PlatformC
         this.configFile = new File(configFilePath);
         this.augeas = createAugeas();
         if (this.augeas != null) {
-            this.augeasConfigFileNode = new AugeasNode("/files" + AugeasNode.SEPARATOR_CHAR + this.configFile.getPath());
+            AugeasNode augeasConfigFileNode = new AugeasNode("/files" + AugeasNode.SEPARATOR_CHAR + this.configFile.getPath());
+            // This is the metadata portion of the tree for this config file (e.g. /augeas/files/etc/hosts, where error
+            // messages are stored as node values.
             this.augeasConfigFileMetadataNode = new AugeasNode("/augeas/files" + AugeasNode.SEPARATOR_CHAR
-                + this.configFile.getPath());
+                    + this.configFile.getPath());
+            String resourceConfigRootNodePath = pluginConfig.getSimpleValue(RESOURCE_CONFIGURATION_ROOT_NODE_PROP, null);
+            if (resourceConfigRootNodePath != null) {
+                if (resourceConfigRootNodePath.indexOf(AugeasNode.SEPARATOR_CHAR) == 0) {
+                    this.resourceConfigRootNode = new AugeasNode(resourceConfigRootNodePath);
+                } else {
+                    this.resourceConfigRootNode = new AugeasNode(augeasConfigFileNode, resourceConfigRootNodePath);
+                }
+            } else {
+                this.resourceConfigRootNode = augeasConfigFileNode;
+            }
         }
     }
 
@@ -123,7 +133,7 @@ public class AugeasConfigurationComponent implements ResourceComponent<PlatformC
         Collection<PropertyDefinition> propDefs = resourceConfigDef.getPropertyDefinitions().values();
 
         for (PropertyDefinition propDef : propDefs) {
-            loadProperty(propDef, resourceConfig, this.augeas, this.augeasConfigFileNode);
+            loadProperty(propDef, resourceConfig, this.augeas, this.resourceConfigRootNode);
         }
 
         return resourceConfig;
@@ -131,16 +141,27 @@ public class AugeasConfigurationComponent implements ResourceComponent<PlatformC
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
         if (!validateResourceConfiguration(report)) {
+            log.debug("Validation of updated Resource configuration for "
+                    + this.getResourceContext().getResourceType() + " Resource with key '"
+                    + this.getResourceContext().getResourceKey() + "' failed with the following errors: "
+                    + report.getErrorMessage());
             report.setStatus(ConfigurationUpdateStatus.FAILURE);
             return;
         }
 
         if (!this.configFile.canWrite()) {
-            report.setErrorMessage("Configuration file '" + this.configFile + "' is not writeable.");
+            report.setErrorMessage("Configuration file '" + this.configFile + "' is not writable.");
             return;
         }
 
-        // Load the config file from disk and build a tree representation of it.
+        File configFileParentDir = this.configFile.getParentFile();
+        if (!configFileParentDir.canWrite()) {
+            report.setErrorMessage("Configuration file parent directory '" + configFileParentDir
+                    + "' is not writable.");
+            return;
+        }
+
+        // Load the config file from disk and build a tree representation of it in memory.
         this.augeas.load();
 
         ConfigurationDefinition resourceConfigDef = this.resourceContext.getResourceType()
@@ -149,7 +170,7 @@ public class AugeasConfigurationComponent implements ResourceComponent<PlatformC
 
         Collection<PropertyDefinition> propDefs = resourceConfigDef.getPropertyDefinitions().values();
         for (PropertyDefinition propDef : propDefs) {
-            setNode(propDef, resourceConfig, this.augeas, this.augeasConfigFileNode);
+            setNode(propDef, resourceConfig, this.augeas, this.resourceConfigRootNode);
         }
 
         // Write the updated tree out to the config file.
@@ -197,7 +218,7 @@ public class AugeasConfigurationComponent implements ResourceComponent<PlatformC
 
     private Augeas createAugeas() {
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
-        String augeasModuleName = pluginConfig.getSimpleValue("augeasModuleName", null);
+        String augeasModuleName = pluginConfig.getSimpleValue(AUGEAS_MODULE_NAME_PROP, null);
         if (augeasModuleName == null) {
             return null;
         }
@@ -289,10 +310,10 @@ public class AugeasConfigurationComponent implements ResourceComponent<PlatformC
         PropertyList propList = new PropertyList(propDefList.getName());
 
         String mapKey = getListMemberMapKey(propDefList);
-        List<String> listMemberPaths = augeas.match(node.getPath());
+        String listMemberPathsExpression = node.getPath() + AugeasNode.SEPARATOR_CHAR + listMemberPropDefMap.getName();
+        List<String> listMemberPaths = augeas.match(listMemberPathsExpression);
         for (String listMemberPath : listMemberPaths) {
             AugeasNode listMemberNode = new AugeasNode(listMemberPath);
-
             PropertyMap listMemberPropMap = new PropertyMap(listMemberPropDefMap.getName());
             propList.add(listMemberPropMap);
 
@@ -301,6 +322,7 @@ public class AugeasConfigurationComponent implements ResourceComponent<PlatformC
                 PropertySimple keyProp = new PropertySimple(mapKey, listMemberNode.getName());
                 listMemberPropMap.put(keyProp);
             }
+
             // Populate the rest of the map child properties.
             populatePropertyMap(listMemberPropDefMap, listMemberPropMap, augeas, listMemberNode);
         }
@@ -383,11 +405,15 @@ public class AugeasConfigurationComponent implements ResourceComponent<PlatformC
                 "Invalid Resource ConfigurationDefinition - only lists of maps are supported.");
         }
         PropertyDefinitionMap listMemberPropDefMap = (PropertyDefinitionMap) listMemberPropDef;
-        String mapKey = getListMemberMapKey(propDefList);
 
-        Set<String> keys = new HashSet<String>();
         int listIndex = 0;
-        Set<AugeasNode> updatedMemberNodes = new HashSet<AugeasNode>();
+        List<String> existingListMemberPaths = augeas.match(listNode.getPath() + AugeasNode.SEPARATOR_CHAR
+                + listMemberPropDefMap.getName());
+        List<AugeasNode> existingListMemberNodes = new ArrayList<AugeasNode>();
+        for (String existingListMemberPath : existingListMemberPaths) {
+            existingListMemberNodes.add(new AugeasNode(existingListMemberPath));
+        }
+        Set<AugeasNode> updatedListMemberNodes = new HashSet<AugeasNode>();
         for (Property listMemberProp : propList.getList()) {
             PropertyMap listMemberPropMap = (PropertyMap) listMemberProp;
             AugeasNode memberNodeToUpdate = getExistingChildNodeForListMemberPropertyMap(listNode, propDefList,
@@ -395,11 +421,11 @@ public class AugeasConfigurationComponent implements ResourceComponent<PlatformC
             if (memberNodeToUpdate != null) {
                 // Keep track of the existing nodes that we'll be updating, so that we can remove all other existing
                 // nodes.
-                updatedMemberNodes.add(memberNodeToUpdate);
+                updatedListMemberNodes.add(memberNodeToUpdate);
             } else {
                 // The maps in the list are non-keyed, or there is no map in the list with the same key as the map
                 // being added, so create a new node for the map to add to the list.
-                memberNodeToUpdate = new AugeasNode(listNode, "0" + listIndex);
+                memberNodeToUpdate = new AugeasNode(listNode, "0" + (listIndex++));
             }
 
             // Update the node's children.
@@ -407,11 +433,9 @@ public class AugeasConfigurationComponent implements ResourceComponent<PlatformC
         }
 
         // Now remove any existing nodes that we did not update in the previous loop.
-        List<String> existingListMemberPaths = augeas.match(listNode.getPath() + "/*");
-        for (String existingListMemberPath : existingListMemberPaths) {
-            AugeasNode existingListMemberNode = new AugeasNode(existingListMemberPath);
-            if (!updatedMemberNodes.contains(existingListMemberNode)) {
-                augeas.remove(existingListMemberPath);
+        for (AugeasNode existingListMemberNode : existingListMemberNodes) {
+            if (!updatedListMemberNodes.contains(existingListMemberNode)) {
+                augeas.remove(existingListMemberNode.getPath());
             }
         }
     }

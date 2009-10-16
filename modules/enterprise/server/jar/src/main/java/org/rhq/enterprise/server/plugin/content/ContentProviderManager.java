@@ -54,6 +54,8 @@ import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.PackageVersionContentSource;
 import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.content.RepoGroup;
+import org.rhq.core.domain.content.RepoGroupType;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -174,9 +176,18 @@ public class ContentProviderManager {
                 List<RepoGroupDetails> repoGroups = report.getRepoGroups();
 
                 for (RepoGroupDetails createMe : repoGroups) {
-                    // See if repo group already exists
-                    // Add if it doesn't
-                    // Still need to add these calls to the manager
+                    String name = createMe.getName();
+
+                    RepoGroup existingGroup = repoManager.getRepoGroupByName(name);
+                    if (existingGroup == null) {
+                        existingGroup = new RepoGroup(name);
+                        existingGroup.setDescription(createMe.getDescription());
+
+                        RepoGroupType groupType = repoManager.getRepoGroupTypeByName(overlord, createMe.getTypeName());
+                        existingGroup.setRepoGroupType(groupType);
+
+                        repoManager.createRepoGroup(overlord, existingGroup);
+                    }
                 }
 
                 // Once the groups are in the system, import any repos that were added
@@ -192,6 +203,9 @@ public class ContentProviderManager {
                     if (existingRepo.size() == 0) {
                         repo = new Repo(name);
                         repo.setDescription(createMe.getDescription());
+
+                        RepoGroup group = repoManager.getRepoGroupByName(createMe.getRepoGroup());
+                        repo.addRepoGroup(group);
 
                         repo = repoManager.createRepo(overlord, repo);
                     }

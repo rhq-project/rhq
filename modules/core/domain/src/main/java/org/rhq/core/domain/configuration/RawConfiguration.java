@@ -36,6 +36,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.JoinColumn;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
+import javax.persistence.Transient;
 import java.io.Serializable;
 
 /**
@@ -83,6 +84,7 @@ public class RawConfiguration implements Serializable {
     @JoinColumn(name = "CONFIG_ID", nullable = false)
     private Configuration configuration;
 
+    @Transient
     private MessageDigestGenerator sha256Generator = new MessageDigestGenerator("SHA-256");
 
     public int getId() {

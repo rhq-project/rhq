@@ -18,7 +18,6 @@
  */
 package org.rhq.plugins.augeas.helper;
 
-import java.net.URI;
 
 /**
  * An abstract representation of a node in an Augeas configuration tree (e.g. /files/etc/hosts/3/canonical).
@@ -40,7 +39,7 @@ public class AugeasNode {
         }
 
         // Remove redundant "." and ".." components and redundant slashes.
-        this.path = normalize(path);
+        this.path = path;
     }
 
     public AugeasNode(AugeasNode parent, String name) {
@@ -112,10 +111,5 @@ public class AugeasNode {
     @Override
     public String toString() {
         return this.path;
-    }
-
-    private static String normalize(String path) {
-        URI uri = URI.create(path);
-        return uri.normalize().getPath();
     }
 }

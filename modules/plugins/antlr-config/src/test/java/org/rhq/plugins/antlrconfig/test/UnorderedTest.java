@@ -59,14 +59,11 @@ import org.rhq.plugins.antlrconfig.test.parsers.UnorderedParser;
  * @author Lukas Krejci
  */
 public class UnorderedTest extends AbstractTest {
-    /**
-     * 
-     */
     private static final String TEST_CONFIGURATION_FILE_NAME = "unordered";
-    private static final String FILE = "config:///file";
-    private static final String ASSIGNMENT = "config://assignment";
-    private static final String NAME = "config://$1";
-    private static final String VALUE = "config://$2";
+    protected static final String FILE = "config:///file";
+    protected static final String ASSIGNMENT = "config://assignment";
+    protected static final String NAME = "config://$1";
+    protected static final String VALUE = "config://$2";
     
 
     private static class EntryCreator implements NewEntryCreator {
@@ -141,6 +138,10 @@ public class UnorderedTest extends AbstractTest {
         return (CommonTree) ret.getTree();
     }
         
+    protected String getConfigurationFileResourceName() {
+        return TEST_CONFIGURATION_FILE_NAME;
+    }
+    
     @Test
     public void testRead() throws Exception {
         Configuration config = getConfigMapper().read(loadFile(getStream()));        
@@ -241,14 +242,6 @@ public class UnorderedTest extends AbstractTest {
         Configuration updated = storeAndLoad(config);
         
         assertEquals(updated, config, "Simple create failed.");
-    }
-    
-    private Configuration storeAndLoad(Configuration config) throws RecognitionException, IOException {
-        return storeAndLoad(config, getResourceStream(TEST_CONFIGURATION_FILE_NAME));
-    }
-    
-    private TokenRewriteStream getStream() throws IOException {
-        return getStreamFromResource(TEST_CONFIGURATION_FILE_NAME);
     }
     
     private void basicTests(Configuration config) throws Exception {

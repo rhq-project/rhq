@@ -194,6 +194,10 @@ public class OrderedTest extends AbstractTest {
         return (CommonTree) ret.getTree();
     }
 
+    protected String getConfigurationFileResourceName() {
+        return TEST_CONFIGURATION_FILE_NAME;
+    }
+    
     @Test
     public void testRead() throws Exception {
         Configuration config = getConfigMapper().read(loadFile(getStream()));
@@ -299,13 +303,5 @@ public class OrderedTest extends AbstractTest {
         Configuration config2 = storeAndLoad(config);
         
         assertEquals(config, config2);
-    }
-    
-    private TokenRewriteStream getStream() throws IOException {
-        return getStreamFromResource(TEST_CONFIGURATION_FILE_NAME);
-    }
-    
-    private Configuration storeAndLoad(Configuration config) throws RecognitionException, IOException {
-        return storeAndLoad(config, getResourceStream(TEST_CONFIGURATION_FILE_NAME));
-    }
+    }    
 }

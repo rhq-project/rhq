@@ -56,6 +56,8 @@ public abstract class AbstractTest {
     
     protected abstract String[] getTokenNames();
     
+    protected abstract String getConfigurationFileResourceName();
+    
     protected abstract CommonTree loadFile(TokenRewriteStream stream) throws IOException, RecognitionException;
     
     protected ConfigMapper getConfigMapper() {
@@ -76,10 +78,14 @@ public abstract class AbstractTest {
         return getStream(getResourceStream(resourceName));
     }
 
-    protected Configuration storeAndLoad(Configuration config, InputStream origSource) throws RecognitionException, IOException {
+    protected TokenRewriteStream getStream() throws IOException {
+        return getStreamFromResource(getConfigurationFileResourceName());
+    }
+    
+    protected Configuration storeAndLoad(Configuration config) throws RecognitionException, IOException {
         ConfigMapper mapper = getConfigMapper();
         
-        TokenRewriteStream stream = getStream(origSource);
+        TokenRewriteStream stream = getStream();
         
         CommonTree file = loadFile(stream);
         

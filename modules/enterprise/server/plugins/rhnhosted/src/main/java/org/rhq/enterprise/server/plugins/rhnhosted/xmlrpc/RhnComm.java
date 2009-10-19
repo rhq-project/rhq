@@ -130,6 +130,44 @@ public class RhnComm {
         return channels;
     }
 
+    public List<RhnPackageShortType> getPackageShortInfo(String systemId, List<String> pkgIds) 
+        throws IOException, XmlRpcException {
+        
+        XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
+        config.setServerURL(new URL(serverUrl + SATDUMP_HANDLER));
+        XmlRpcClient client = new XmlRpcClient();
+        client.setConfig(config);
+        RhnJaxbTransportFactory transportFactory = new RhnJaxbTransportFactory(client);
+        transportFactory.setRequestProperties(getRequestProperties());
+        transportFactory.setJaxbDomain("org.rhq.enterprise.server.plugins.rhnhosted.xml");
+        transportFactory.setDumpMessageToFile(false);
+        client.setTransportFactory(transportFactory);
+        Object[] params = new Object[]{systemId, pkgIds};
+        JAXBElement<RhnSatelliteType> result = (JAXBElement) client.execute("dump.packages_short", params);
+        RhnSatelliteType sat = result.getValue();
+        List<RhnPackageShortType> pkgs = sat.getRhnPackagesShort().getRhnPackageShort();
+        return pkgs;
+    }
+
+    public List<RhnPackageType> getPackageMetadata(String systemId, List<String> pkgIds) 
+        throws IOException, XmlRpcException {
+        
+        XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
+        config.setServerURL(new URL(serverUrl + SATDUMP_HANDLER));
+        XmlRpcClient client = new XmlRpcClient();
+        client.setConfig(config);
+        RhnJaxbTransportFactory transportFactory = new RhnJaxbTransportFactory(client);
+        transportFactory.setRequestProperties(getRequestProperties());
+        transportFactory.setJaxbDomain("org.rhq.enterprise.server.plugins.rhnhosted.xml");
+        transportFactory.setDumpMessageToFile(false);
+        client.setTransportFactory(transportFactory);
+        Object[] params = new Object[]{systemId, pkgIds};
+        JAXBElement<RhnSatelliteType> result = (JAXBElement) client.execute("dump.packages", params);
+        RhnSatelliteType sat = result.getValue();
+        List<RhnPackageType> pkgs = sat.getRhnPackages().getRhnPackage();
+        return pkgs;
+    }
+
     /**
      * Expected return header values for: X-Client-Version, X-RHN-Server-Id, X-RHN-Auth
      * X-RHN-Auth-User-Id, X-RHN-Auth-Expire-Offset, X-RHN-Auth-Server-Time

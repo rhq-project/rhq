@@ -64,6 +64,11 @@ public class RhnCommTest extends TestCase {
     public void testGetProductNames() throws Exception {
         boolean success = false;
         try {
+            if (StringUtils.isBlank(getSystemId())) {
+                System.out.println("Skipping test since systemid is not readable");
+                return;
+            }
+            
             RhnComm comm = getRhnComm();
             List<RhnProductNameType> names = comm.getProductNames(getSystemId());
             assertTrue(names != null);
@@ -131,6 +136,56 @@ public class RhnCommTest extends TestCase {
         assertTrue(success);
     }
 
+    public void testGetPackageShortInfo() throws Exception {
+        boolean success = false;
+        try {
+            RhnComm comm = getRhnComm();
+            List<String> reqPackages = new ArrayList<String>();
+            reqPackages.add("rhn-package-386981");
+            reqPackages.add("rhn-package-386982");
+            reqPackages.add("rhn-package-386983");
+            reqPackages.add("rhn-package-386984");
+            List<RhnPackageShortType> pkgs = comm.getPackageShortInfo(getSystemId(), reqPackages);
+            assertTrue(pkgs.size() == reqPackages.size());
+            for (RhnPackageShortType pkgShort: pkgs) {
+                assertFalse(StringUtils.isBlank(pkgShort.getId()));
+                assertFalse(StringUtils.isBlank(pkgShort.getName()));
+                assertFalse(StringUtils.isBlank(pkgShort.getVersion()));
+                assertFalse(StringUtils.isBlank(pkgShort.getRelease()));
+                assertFalse(StringUtils.isBlank(pkgShort.getPackageSize()));
+                assertFalse(StringUtils.isBlank(pkgShort.getMd5Sum()));
+                assertFalse(StringUtils.isBlank(pkgShort.getLastModified()));
+            }
+            success = true;
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+        assertTrue(success);
+    }
+    
+    public void testGetPackageMetadata() throws Exception {
+        boolean success = false;
+        try {
+            RhnComm comm = getRhnComm();
+            List<String> reqPackages = new ArrayList<String>();
+            reqPackages.add("rhn-package-386981");
+            reqPackages.add("rhn-package-386982");
+            reqPackages.add("rhn-package-386983");
+            reqPackages.add("rhn-package-386984");
+            List<RhnPackageType> pkgs = comm.getPackageMetadata(getSystemId(), reqPackages);
+            assertTrue(pkgs.size() == reqPackages.size());
+            for (RhnPackageType pkg: pkgs) {
+                assertFalse(StringUtils.isBlank(pkg.getRhnPackageSummary()));
+                assertFalse(StringUtils.isBlank(pkg.getRhnPackageDescription()));
+            }
+            success = true;
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+        assertTrue(success);
+    }
 
     public void testGetRPM() throws Exception {
         boolean success = false;

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2009 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -60,6 +60,10 @@ public class EditGeneralPropertiesUIBean {
         resource.setName(this.name);
         resource.setDescription(this.description);
         resource.setLocation(this.location);
+
+        // Update the mtime so the corresponding Agent will know it needs to sync this Resource.
+        resource.setAgentSynchronizationNeeded();
+        
         this.resourceManager.updateResource(EnterpriseFacesContextUtility.getSubject(), resource);
         FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "General properties updated.");
         return OUTCOME_SUCCESS;

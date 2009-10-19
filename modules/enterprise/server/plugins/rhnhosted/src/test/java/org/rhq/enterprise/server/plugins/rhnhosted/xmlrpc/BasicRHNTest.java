@@ -29,6 +29,7 @@ import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnProductNameType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnSatelliteType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnSourcePackageType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.CustomReqPropTransportFactory;
+import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.RhnComm;
 import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.RhnJaxbTransportFactory;
 
 /**
@@ -87,10 +88,41 @@ public class BasicRHNTest extends TestCase
         assertTrue(success);
     }
 
+    public void testAuthenticationLogin() throws Exception
+    {
+        boolean success = true;
+
+        try {
+            String systemid = getSystemId(); 
+            if (StringUtils.isBlank(systemid)) {
+                System.out.println("Skipping test since systemid is not readable");
+                return;
+            }
+            XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
+            config.setServerURL(new URL("http://satellite.rhn.redhat.com/SAT"));
+            XmlRpcClient client = new XmlRpcClient();
+            client.setConfig(config);
+            CustomReqPropTransportFactory transportFactory = new CustomReqPropTransportFactory(client);
+            transportFactory.setRequestProperties(getRequestProperties());
+            client.setTransportFactory(transportFactory);
+
+            Object[] params = new Object[]{systemid};
+            Map result = (Map) client.execute("authentication.login", params);
+            for (Object key: result.keySet()) {
+                System.err.println("Header: " + key + " = " + result.get(key));
+            }
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            success = false;
+        }
+        assertTrue(success);
+    }
+
     public void testAuth() throws Exception
     {
         boolean success = true;
-    
+
         try {
             String systemid = getSystemId(); 
             if (StringUtils.isBlank(systemid)) {

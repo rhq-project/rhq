@@ -154,7 +154,7 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
     @MapKey(name = "name")
     @OneToMany(mappedBy = "configuration", fetch = FetchType.EAGER)
     @XmlTransient
-    private Map<String, Property> properties;
+    private Map<String, Property> properties = new LinkedHashMap<String, Property>();
 
     @OneToMany(mappedBy = "configuration")
     @Cascade({CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DELETE_ORPHAN})
@@ -310,10 +310,6 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
      */
     @NotNull
     public Map<String, Property> getMap() {
-        if (this.properties == null) {
-            this.properties = new LinkedHashMap<String, Property>();
-        }
-
         return this.properties;
     }
 
@@ -553,25 +549,18 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
             return false;
         }
 
-        // NOTE: Use instanceof, rather than getClass(), because a) obj may be a JPA/Hibernate proxy or b) obj may be a
-        //       subclass with same equals semantics.
         if (!(obj instanceof Configuration)) {
             return false;
         }
 
         Configuration that = (Configuration) obj;
-        if ((this.properties == null) || this.properties.isEmpty()) {
-            // NOTE: Use that.getMap() (*not* that.getProperties()!), rather than that.properties, in case 'that' is a
-            //       JPA/Hibernate proxy, to force loading of the field.
-            return (that.getMap() == null) || that.getMap().isEmpty();
-        }
 
-        return this.properties.equals(that.getMap());
+        return (this.properties.equals(that.properties)) && (this.rawConfigurations.equals(that.rawConfigurations));
     }
 
     @Override
     public int hashCode() {
-        return (((this.properties != null) && !this.properties.isEmpty()) ? this.properties.hashCode() : 0);
+        return properties.hashCode() * rawConfigurations.hashCode() * 19;
     }
 
     @Override
@@ -588,6 +577,7 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
             builder.append(", notes=").append(this.notes);
 
         if (verbose) {
+            builder.append("properties[");
             for (Property property : this.getMap().values()) {
                 builder.append(", ");
                 builder.append(property.getName());
@@ -597,6 +587,16 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
                 else
                     builder.append(property);
             }
+            builder.append("], rawConfigurations[");
+
+            for (RawConfiguration rawConfig : rawConfigurations) {
+                builder.append("[")
+                       .append(rawConfig.getPath())
+                       .append(", ")
+                       .append(rawConfig.getSha256())
+                       .append("]");
+            }
+            builder.append("]");
         }
         return builder.append("]").toString();
     }

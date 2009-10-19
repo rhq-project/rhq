@@ -39,7 +39,7 @@ public class AugeasNode {
         }
 
         // Remove redundant "." and ".." components and redundant slashes.
-        this.path = normalize(path);
+        this.path = path;
     }
 
     public AugeasNode(AugeasNode parent, String name) {

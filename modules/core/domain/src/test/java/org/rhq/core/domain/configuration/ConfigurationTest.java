@@ -99,6 +99,43 @@ public class ConfigurationTest {
     }
 
     @Test
+    public void deepCopyWithoutProxiesShouldCopyRawConfigurations() {
+        Configuration original = createConfiguration();
+        original.addRawConfiguration(createRawConfiguration("/tmp/foo"));
+
+        Configuration copy = original.deepCopyWithoutProxies();
+
+        assertNotSame(
+            copy.getRawConfigurations(),
+            original.getRawConfigurations(),
+            "The rawConfigurations property should not refer to the original rawConfigurations of the copied object."
+        );
+        assertEquals(copy.getRawConfigurations(), original.getRawConfigurations(), "Failed to copy rawConfigurations property.");
+    }
+
+    @Test
+    public void deepCopyWithoutProxiesShouldSetParentReferenceOfCopiedRawConfigurations() {
+        Configuration original = createConfiguration();
+        original.addRawConfiguration(createRawConfiguration("/tmp/foo"););
+
+        Configuration copy = original.deepCopyWithoutProxies();
+        RawConfiguration copiedRawConfig = getCopiedRawConfiguration(copy);
+
+        assertSame(
+            copiedRawConfig.getConfiguration(),
+            copy,
+            "The reference to the parent configuration should point to the newly copied configuration, not the original configuration."
+        );
+    }
+
+    private RawConfiguration getCopiedRawConfiguration(Configuration config) {
+        for (RawConfiguration rawConfig : config.getRawConfigurations()) {
+            return rawConfig;
+        }
+        return null;
+    }
+
+    @Test
     public void equalsShouldBeFalseWhenArgumentIsNull() {
         Configuration config = new Configuration();
 

@@ -499,7 +499,7 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
         }
 
         for (RawConfiguration rawConfig : rawConfigurations) {
-            
+            copy.addRawConfiguration(rawConfig.deepCopy());    
         }
 
         return copy;

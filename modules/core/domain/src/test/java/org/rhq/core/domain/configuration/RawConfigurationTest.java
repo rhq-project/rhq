@@ -210,4 +210,35 @@ public class RawConfigurationTest {
 
         assertEquals(r1.hashCode(), r3.hashCode(), "hashCode() should be the same for r1 and r3 via transitivity.");
     }
+
+    @Test
+    public void deepCopyShouldCopyPath() {
+        RawConfiguration original = new RawConfiguration();
+        original.setPath("/tmp/foo");
+
+        RawConfiguration copy = original.deepCopy();
+
+        assertEquals(copy.getPath(), original.getPath(), "Failed to copy the path property.");
+    }
+
+    @Test
+    public void deepCopyShouldCopyContents() {
+        RawConfiguration original = new RawConfiguration();
+        original.setContents(new byte[] {1, 2, 3, 4, 5});
+
+        RawConfiguration copy = original.deepCopy();
+
+        assertFalse(original.getContents() == copy.getContents(), "The values in the contents array should be copied, not the reference to the original object.");
+        assertEquals(copy.getContents(), original.getContents(), "Failed to copy contents property.");
+    }
+
+    @Test
+    public void deepCopyShouldNotCopyIdProperty() {
+        RawConfiguration original = new RawConfiguration();
+        original.setId(1);
+
+        RawConfiguration copy = original.deepCopy();
+
+        assertFalse(original.getId() == copy.getId(), "The id property should not be copied.");
+    }
 }

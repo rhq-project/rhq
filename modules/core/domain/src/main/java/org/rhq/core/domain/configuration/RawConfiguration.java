@@ -56,7 +56,7 @@ import java.io.Serializable;
 @Entity
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_RAW_CONFIG_ID_SEQ")
 @Table(name = "RHQ_RAW_CONFIG")
-public class RawConfiguration implements Serializable {
+public class RawConfiguration implements Serializable, DeepCopyable<RawConfiguration> {
 
     private static final long serialVersionUID = 1L;
 
@@ -241,5 +241,15 @@ public class RawConfiguration implements Serializable {
             .append(", configuration=").append(configuration)
             .append("]")
             .toString();
+    }
+
+    public RawConfiguration deepCopy() {
+        RawConfiguration copy = new RawConfiguration();
+        copy.path = this.path;
+        if (this.contents != null) {
+            copy.contents = this.getContents();
+        }
+
+        return copy;
     }
 }

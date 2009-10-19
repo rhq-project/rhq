@@ -156,7 +156,7 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
     @XmlTransient
     private Map<String, Property> properties = new LinkedHashMap<String, Property>();
 
-    @OneToMany(mappedBy = "configuration")
+    @OneToMany(mappedBy = "configuration", fetch = FetchType.EAGER)
     @Cascade({CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DELETE_ORPHAN})
     private Set<RawConfiguration> rawConfigurations = new HashSet<RawConfiguration>();
 
@@ -496,6 +496,10 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
 
         for (Property property : this.properties.values()) {
             copy.put(property.deepCopy());
+        }
+
+        for (RawConfiguration rawConfig : rawConfigurations) {
+            
         }
 
         return copy;

@@ -1,4 +1,4 @@
-grammar Simple;
+grammar Ordered;
 
 options {
   language = Java;

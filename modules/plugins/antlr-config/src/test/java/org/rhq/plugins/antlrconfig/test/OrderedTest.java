@@ -50,6 +50,8 @@ import org.rhq.plugins.antlrconfig.ConfigMapper;
 import org.rhq.plugins.antlrconfig.ConfigurationFacade;
 import org.rhq.plugins.antlrconfig.DefaultConfigurationFacade;
 import org.rhq.plugins.antlrconfig.NewEntryCreator;
+import org.rhq.plugins.antlrconfig.test.parsers.OrderedLexer;
+import org.rhq.plugins.antlrconfig.test.parsers.OrderedParser;
 import org.rhq.plugins.antlrconfig.test.parsers.SimpleLexer;
 import org.rhq.plugins.antlrconfig.test.parsers.SimpleParser;
 
@@ -58,9 +60,9 @@ import org.rhq.plugins.antlrconfig.test.parsers.SimpleParser;
  * 
  * @author Lukas Krejci
  */
-public class SimpleTest extends AbstractTest {
+public class OrderedTest extends AbstractTest {
 
-    private static final String TEST_CONFIGURATION_FILE_NAME = "simple";
+    private static final String TEST_CONFIGURATION_FILE_NAME = "ordered";
     private static final String FILE = "config:///file";
     private static final String ASSIGNMENT = "config://assignment";
     private static final String NAME = "config://$1";
@@ -175,7 +177,7 @@ public class SimpleTest extends AbstractTest {
     }
 
     protected Lexer getLexer() {
-        return new SimpleLexer();
+        return new OrderedLexer();
     }
 
     protected NewEntryCreator getNewEntryCreator() {
@@ -183,12 +185,12 @@ public class SimpleTest extends AbstractTest {
     }
 
     protected String[] getTokenNames() {
-        return SimpleParser.tokenNames;
+        return OrderedParser.tokenNames;
     }
 
     protected CommonTree loadFile(TokenRewriteStream stream) throws IOException, RecognitionException {
-        SimpleParser parser = new SimpleParser(stream);
-        SimpleParser.file_return ret = parser.file();
+        OrderedParser parser = new OrderedParser(stream);
+        OrderedParser.file_return ret = parser.file();
         return (CommonTree) ret.getTree();
     }
 

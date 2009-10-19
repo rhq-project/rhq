@@ -49,7 +49,6 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.plugins.antlrconfig.NewEntryCreator.OpDef;
 import org.rhq.plugins.antlrconfig.tokens.Id;
 import org.rhq.plugins.antlrconfig.tokens.Ordered;
-import org.rhq.plugins.antlrconfig.tokens.Transparent;
 import org.rhq.plugins.antlrconfig.tokens.Unordered;
 
 /**
@@ -133,7 +132,12 @@ public class ConfigMapper {
                     applyInstructions(instructions, fileStream);
                 }
             } else if (isDelete) {
-                addReorder(rec, reorders);
+                if (rec.parent != null && rec.parent.getToken() instanceof Ordered) {
+                    //this sub tree is inside an <Ordered> list. Will deal with it later.
+                    addReorder(rec, reorders);
+                } else {
+                    fileStream.delete(rec.tree.getTokenStartIndex(), rec.tree.getTokenStopIndex());
+                }
             } else if (rec.property instanceof PropertySimple) {
                 String value = configFacade.getPersistableValue((PropertySimple)rec.property);
                 fileStream.replace(rec.tree.getTokenStartIndex(), rec.tree.getTokenStopIndex(), value);
@@ -147,6 +151,7 @@ public class ConfigMapper {
                 return o1.treeIndex - o2.treeIndex;
             }
         };
+        
         for(Map.Entry<CommonTree, List<MergeRecord>> entry : reorders.entrySet()) {
             List<MergeRecord> thisReorders = entry.getValue();
             Collections.sort(thisReorders, sorter);
@@ -416,14 +421,12 @@ public class ConfigMapper {
     }
         
     private void addReorder(MergeRecord rec, Map<CommonTree, List<MergeRecord>> reorders) {
-        if (rec.parent.getToken() instanceof Ordered) {
-            List<MergeRecord> concreteReorders = reorders.get(rec.parent);
-            if (concreteReorders == null) {
-                concreteReorders = new ArrayList<MergeRecord>();
-                reorders.put(rec.parent, concreteReorders);
-            }
-            concreteReorders.add(rec);
+        List<MergeRecord> concreteReorders = reorders.get(rec.parent);
+        if (concreteReorders == null) {
+            concreteReorders = new ArrayList<MergeRecord>();
+            reorders.put(rec.parent, concreteReorders);
         }
+        concreteReorders.add(rec);
     }
     
     private static class MergeRecord {

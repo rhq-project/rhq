@@ -265,13 +265,6 @@ public class BasicRHNTest extends TestCase
                 String packages = channel.getPackages();
                 assertFalse(StringUtils.isBlank(packages));
                 String[] pkgIds = packages.split(" ");
-                System.err.println("Channel Label = " + channel.getLabel());
-                System.err.println("Channel Name = " + channel.getRhnChannelName());
-                System.err.println(pkgIds.length + " package IDs parsed.");
-                System.err.println("package[0] = " + pkgIds[0]);
-                System.err.println("package[1] = " + pkgIds[1]);
-                System.err.println("package[2] = " + pkgIds[2]);
-                System.err.println("package[3] = " + pkgIds[3]);
                 assertTrue(pkgIds.length > 1);
             }
         }

@@ -38,7 +38,6 @@ public class RhnCommTest extends TestCase {
     public void testGetRPM() throws Exception {
         boolean success = false;
         try {
-        System.err.println("testGetRPM");
         RhnComm comm = getRhnComm();
         String channelName = "rhel-x86_64-server-5";
         String rpmName = "openhpi-2.4.1-6.el5.1.x86_64.rpm";

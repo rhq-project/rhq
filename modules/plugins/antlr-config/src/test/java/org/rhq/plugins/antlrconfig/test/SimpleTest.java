@@ -25,17 +25,14 @@ package org.rhq.plugins.antlrconfig.test;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertEquals;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Collections;
 import java.util.List;
 
-import org.antlr.runtime.ANTLRInputStream;
+import org.antlr.runtime.Lexer;
 import org.antlr.runtime.RecognitionException;
 import org.antlr.runtime.TokenRewriteStream;
 import org.antlr.runtime.tree.CommonTree;
-import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -50,6 +47,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.plugins.antlrconfig.ConfigMapper;
+import org.rhq.plugins.antlrconfig.ConfigurationFacade;
 import org.rhq.plugins.antlrconfig.DefaultConfigurationFacade;
 import org.rhq.plugins.antlrconfig.NewEntryCreator;
 import org.rhq.plugins.antlrconfig.test.parsers.SimpleLexer;
@@ -60,20 +58,16 @@ import org.rhq.plugins.antlrconfig.test.parsers.SimpleParser;
  * 
  * @author Lukas Krejci
  */
-public class SimpleTest {
+public class SimpleTest extends AbstractTest {
 
+    private static final String TEST_CONFIGURATION_FILE_NAME = "simple";
     private static final String FILE = "config:///file";
     private static final String ASSIGNMENT = "config://assignment";
     private static final String NAME = "config://$1";
     private static final String VALUE = "config://$2";
     private static final String EXPORT = "config://$3";
     
-    @BeforeSuite
-    public void dummy() {
-        
-    }
-    
-    private static ConfigurationDefinition getConfigurationDefinition() {
+    protected ConfigurationDefinition getConfigurationDefinition() {
         ConfigurationDefinition def = new ConfigurationDefinition("", null);
         
         PropertyDefinitionList file = new PropertyDefinitionList(FILE, null, true, null);
@@ -91,8 +85,8 @@ public class SimpleTest {
     
     private static class CustomFacade extends DefaultConfigurationFacade {
 
-        public CustomFacade() {
-            super(getConfigurationDefinition());
+        public CustomFacade(ConfigurationDefinition definition) {
+            super(definition);
         }
 
         @Override
@@ -176,28 +170,31 @@ public class SimpleTest {
         }
     }
     
-    private static ConfigMapper getMapper() {
-        return new ConfigMapper(getConfigurationDefinition(), new CustomFacade(), new EntryCreator(), SimpleParser.tokenNames);
+    protected ConfigurationFacade getConfigurationFacade() {
+        return new CustomFacade(getConfigurationDefinition());
     }
-    
-    private static TokenRewriteStream getStream(InputStream stream) throws IOException {
-        return new TokenRewriteStream(new SimpleLexer(new ANTLRInputStream(stream)));
+
+    protected Lexer getLexer() {
+        return new SimpleLexer();
     }
-    
-    private static TokenRewriteStream getStream() throws IOException {
-        InputStream inputStream = SimpleTest.class.getClassLoader().getResourceAsStream("simple");
-        return getStream(inputStream);
+
+    protected NewEntryCreator getNewEntryCreator() {
+        return new EntryCreator();
     }
-    
-    private static CommonTree loadFile(TokenRewriteStream stream) throws IOException, RecognitionException {
+
+    protected String[] getTokenNames() {
+        return SimpleParser.tokenNames;
+    }
+
+    protected CommonTree loadFile(TokenRewriteStream stream) throws IOException, RecognitionException {
         SimpleParser parser = new SimpleParser(stream);
         SimpleParser.file_return ret = parser.file();
         return (CommonTree) ret.getTree();
     }
-    
+
     @Test
     public void testRead() throws Exception {
-        Configuration config = getMapper().read(loadFile(getStream()));
+        Configuration config = getConfigMapper().read(loadFile(getStream()));
         
         assertNotNull(config, "Could not read the configuration from the file.");
         
@@ -246,7 +243,7 @@ public class SimpleTest {
     
     @Test
     public void testUpdate() throws Exception {
-        ConfigMapper mapper = getMapper();
+        ConfigMapper mapper = getConfigMapper();
         
         Configuration config = mapper.read(loadFile(getStream()));
         assertNotNull(config, "Could not read the configuration from the file.");
@@ -266,7 +263,7 @@ public class SimpleTest {
     
     @Test
     public void testCreate() throws Exception {
-        Configuration config = getMapper().read(loadFile(getStream()));
+        Configuration config = getConfigMapper().read(loadFile(getStream()));
         assertNotNull(config, "Could not read the configuration from the file.");
         
         PropertyList file = config.getList(FILE);
@@ -285,7 +282,7 @@ public class SimpleTest {
     
     @Test
     public void testDelete() throws Exception {
-        Configuration config = getMapper().read(loadFile(getStream()));
+        Configuration config = getConfigMapper().read(loadFile(getStream()));
         assertNotNull(config, "Could not read the configuration from the file.");
         
         PropertyList file = config.getList(FILE);        
@@ -302,21 +299,11 @@ public class SimpleTest {
         assertEquals(config, config2);
     }
     
+    private TokenRewriteStream getStream() throws IOException {
+        return getStreamFromResource(TEST_CONFIGURATION_FILE_NAME);
+    }
+    
     private Configuration storeAndLoad(Configuration config) throws RecognitionException, IOException {
-        ConfigMapper mapper = getMapper();
-        
-        TokenRewriteStream stream = getStream();
-        
-        CommonTree file = loadFile(stream);
-        
-        mapper.update(file, stream, config);
-        
-        String updatedConfig = stream.toString();
-        
-        ByteArrayInputStream updatedInputStream = new ByteArrayInputStream(updatedConfig.getBytes());
-        
-        TokenRewriteStream updatedStream = getStream(updatedInputStream);
-        
-        return mapper.read(loadFile(updatedStream));
+        return storeAndLoad(config, getResourceStream(TEST_CONFIGURATION_FILE_NAME));
     }
 }

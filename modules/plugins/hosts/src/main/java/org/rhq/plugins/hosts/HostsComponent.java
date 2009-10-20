@@ -54,6 +54,7 @@ public class HostsComponent extends AugeasConfigurationComponent {
             "(([a-zA-Z\\d]|[a-zA-Z\\d][a-zA-Z\\d\\-]*[a-zA-Z\\d])\\.)*([A-Za-z]|[A-Za-z][A-Za-z\\d\\-]*[A-Za-z\\d])";
     private static final Pattern DOMAIN_NAME_PATTERN = Pattern.compile(DOMAIN_NAME_REGEX);
 
+
     public void start(ResourceContext resourceContext) throws InvalidPluginConfigurationException, Exception {
         super.start(resourceContext);
     }
@@ -187,7 +188,7 @@ public class HostsComponent extends AugeasConfigurationComponent {
             String existingIpaddr = augeas.get(ipaddrNode.getPath());
             int existingIpAddressVersion = (existingIpaddr.indexOf(':') == -1) ? 4 : 6;
             if (existingIpAddressVersion == ipAddressVersion) {
-                return childNode;
+                return ipaddrNode;
             }
         }
         return null;

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2009 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,6 +24,7 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.ResourceType;
@@ -39,8 +40,8 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 public class AugeasConfigurationDiscoveryComponent implements ResourceDiscoveryComponent, ManualAddFacet {
     private final Log log = LogFactory.getLog(this.getClass());
 
-    public Set discoverResources(ResourceDiscoveryContext discoveryContext)
-            throws InvalidPluginConfigurationException, Exception {
+    public Set discoverResources(ResourceDiscoveryContext discoveryContext) throws InvalidPluginConfigurationException,
+        Exception {
         Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>(1);
 
         File configFile = getConfigurationFile(discoveryContext);
@@ -55,32 +56,35 @@ public class AugeasConfigurationDiscoveryComponent implements ResourceDiscoveryC
         }
 
         Configuration pluginConfig = discoveryContext.getDefaultPluginConfiguration();
-        pluginConfig.put(new PropertySimple(AugeasConfigurationComponent.CONFIGURATION_FILE_PROP, configFile.getPath()));
+        pluginConfig
+            .put(new PropertySimple(AugeasConfigurationComponent.CONFIGURATION_FILE_PROP, configFile.getPath()));
         DiscoveredResourceDetails resource = createResourceDetails(discoveryContext, pluginConfig);
         discoveredResources.add(resource);
         log.debug("Discovered " + discoveryContext.getResourceType().getName() + " Resource with key ["
-                    + resource.getResourceKey() + "].");
+            + resource.getResourceKey() + "].");
 
         return discoveredResources;
     }
 
     public DiscoveredResourceDetails discoverResource(Configuration pluginConfig,
-                                                      ResourceDiscoveryContext discoveryContext)
-            throws InvalidPluginConfigurationException {
-        String configFilePath = pluginConfig.getSimple(AugeasConfigurationComponent.CONFIGURATION_FILE_PROP).getStringValue();
+        ResourceDiscoveryContext discoveryContext) throws InvalidPluginConfigurationException {
+        String configFilePath = pluginConfig.getSimple(AugeasConfigurationComponent.CONFIGURATION_FILE_PROP)
+            .getStringValue();
 
         File configFile = new File(configFilePath);
         if (!configFile.isAbsolute()) {
-            throw new InvalidPluginConfigurationException("Location specified by '" + AugeasConfigurationComponent.CONFIGURATION_FILE_PROP
-                    + "' connection property is not an absolute path.");
+            throw new InvalidPluginConfigurationException("Location specified by '"
+                + AugeasConfigurationComponent.CONFIGURATION_FILE_PROP
+                + "' connection property is not an absolute path.");
         }
         if (!configFile.exists()) {
-            throw new InvalidPluginConfigurationException("Location specified by '" + AugeasConfigurationComponent.CONFIGURATION_FILE_PROP
-                    + "' connection property does not exist.");
+            throw new InvalidPluginConfigurationException("Location specified by '"
+                + AugeasConfigurationComponent.CONFIGURATION_FILE_PROP + "' connection property does not exist.");
         }
         if (configFile.isDirectory()) {
-            throw new InvalidPluginConfigurationException("Location specified by '" + AugeasConfigurationComponent.CONFIGURATION_FILE_PROP
-                    + "' connection property is a directory, not a regular file.");
+            throw new InvalidPluginConfigurationException("Location specified by '"
+                + AugeasConfigurationComponent.CONFIGURATION_FILE_PROP
+                + "' connection property is a directory, not a regular file.");
         }
 
         DiscoveredResourceDetails resource = createResourceDetails(discoveryContext, pluginConfig);
@@ -89,17 +93,17 @@ public class AugeasConfigurationDiscoveryComponent implements ResourceDiscoveryC
 
     protected File getConfigurationFile(ResourceDiscoveryContext discoveryContext) {
         Configuration defaultPluginConfig = discoveryContext.getDefaultPluginConfiguration();
-        String configFilePath = defaultPluginConfig.getSimple(AugeasConfigurationComponent.CONFIGURATION_FILE_PROP).getStringValue();
+        String configFilePath = defaultPluginConfig.getSimple(AugeasConfigurationComponent.CONFIGURATION_FILE_PROP)
+            .getStringValue();
         return new File(configFilePath);
     }
 
     protected DiscoveredResourceDetails createResourceDetails(ResourceDiscoveryContext discoveryContext,
-                                                            Configuration pluginConfig) {
+        Configuration pluginConfig) {
         ResourceType resourceType = discoveryContext.getResourceType();
         String resourceKey = getConfigurationFile(discoveryContext).getPath();
-        DiscoveredResourceDetails resource =
-            new DiscoveredResourceDetails(resourceType, resourceKey, resourceType.getName(), null,
-                    resourceType.getDescription(), pluginConfig, null);
+        DiscoveredResourceDetails resource = new DiscoveredResourceDetails(resourceType, resourceKey, resourceType
+            .getName(), null, resourceType.getDescription(), pluginConfig, null);
         return resource;
     }
 }

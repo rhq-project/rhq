@@ -54,9 +54,7 @@ public abstract class PostgresqlDatabaseType extends DatabaseType {
      * @see DatabaseType#isTableNotFoundException(SQLException)
      */
     public boolean isTableNotFoundException(SQLException e) {
-        String msg = e.getMessage();
-        msg = (msg == null) ? "" : msg.trim();
-        return msg.endsWith("does not exist");
+        return (e.getSQLState().toUpperCase().equals("42P01"));
     }
 
     /**

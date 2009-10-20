@@ -34,7 +34,7 @@ import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 
 /**
- * @author Greg Hinkle
+ * @author Greg Hinkle, shughes
  */
 public class SambaServerComponent implements ResourceComponent, ConfigurationFacet {
 
@@ -67,7 +67,7 @@ public class SambaServerComponent implements ResourceComponent, ConfigurationFac
                 + smbConfPath);
         }
 
-        // getProcess();
+        //getProcess();
     }
 
     public void stop() {
@@ -95,17 +95,10 @@ public class SambaServerComponent implements ResourceComponent, ConfigurationFac
         // Request data from augeas
         List<String> matches = augeas.match(sambaAugPath);
         if (matches.size() == 0) {
-            throw new Exception("Unable to load hosts data from augeas");
+            throw new Exception("Unable to load hosts data from augeas:" + sambaAugPath);
         }
 
-        String globalNode = null;
-
-        for (String entyNode : matches) {
-            if ("global".equals(augeas.get(entyNode))) {
-
-                globalNode = entyNode;
-            }
-        }
+        String globalNode = matches.get(0);
 
         // Parse out the properties
         Configuration configuration = new Configuration();
@@ -151,7 +144,7 @@ public class SambaServerComponent implements ResourceComponent, ConfigurationFac
         String lensesPath = lensesPathProperty.getStringValue();
         String rootPath = rootPathProperty.getStringValue();
 
-        Augeas augeas = new Augeas(rootPath, lensesPath, Augeas.NO_MODL_AUTOLOAD);
+        Augeas augeas = new Augeas(rootPath, lensesPath, Augeas.NONE);
         return augeas;
     }
 
@@ -185,7 +178,6 @@ public class SambaServerComponent implements ResourceComponent, ConfigurationFac
             throw new RuntimeException("Unable to save samba configuration", e);
         }
     }
-
     /*
     private void getProcess() {
 
@@ -212,5 +204,5 @@ public class SambaServerComponent implements ResourceComponent, ConfigurationFac
                 }
             }
         }
-        */
+    */
 }

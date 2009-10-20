@@ -25,19 +25,18 @@
    </properties>
 
    <dependencies>
-
       <dependency>
-         <groupId>net.augeas</groupId>
-         <artifactId>augeas</artifactId>
-         <version>0.0.1</version>
+         <groupId>${rhq.groupId}</groupId>
+         <artifactId>rhq-platform-plugin</artifactId>
+         <version>${project.version}</version>
+         <scope>provided</scope>
       </dependency>
 
-      <dependency>
-         <groupId>com.sun.jna</groupId>
-         <artifactId>jna</artifactId>
-         <version>3.0.9</version>
-      </dependency>
-
+       <dependency>
+          <groupId>org.rhq</groupId>
+          <artifactId>rhq-augeas-plugin</artifactId>
+          <version>${project.version}</version>
+       </dependency>
    </dependencies>
 
    <profiles>

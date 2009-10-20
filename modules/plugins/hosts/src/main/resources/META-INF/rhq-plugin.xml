@@ -41,7 +41,7 @@
       </plugin-configuration>
 
       <resource-configuration>
-         <c:list-property name="." displayName="Entries">
+         <c:list-property name="/*" displayName="Entries">
             <c:map-property name="entry">
                <c:simple-property name="ipaddr" displayName="IP Address" type="string" required="true" activationPolicy="immediate"
                                   description="The IP address of the host entry. The address may be an IPv4 address (e.g., 192.168.1.10) or an IPv6 address (e.g., fec0:0:0:bebe::2)."/>

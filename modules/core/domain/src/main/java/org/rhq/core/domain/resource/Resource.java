@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2009 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -1046,7 +1046,6 @@ public class Resource implements Comparable<Resource>, Externalizable {
 
     public void setId(int id) {
         this.id = id;
-        setAgentSynchronizationNeeded();
     }
 
     /**
@@ -1061,7 +1060,6 @@ public class Resource implements Comparable<Resource>, Externalizable {
 
     public void setUuid(String uuid) {
         this.uuid = uuid;
-        setAgentSynchronizationNeeded();
     }
 
     @NotNull
@@ -1071,7 +1069,6 @@ public class Resource implements Comparable<Resource>, Externalizable {
 
     public void setName(@NotNull String name) {
         this.name = name;
-        setAgentSynchronizationNeeded();
     }
 
     public String getResourceKey() {
@@ -1080,7 +1077,6 @@ public class Resource implements Comparable<Resource>, Externalizable {
 
     public void setResourceKey(String resourceKey) {
         this.resourceKey = resourceKey;
-        setAgentSynchronizationNeeded();
     }
 
     public ResourceType getResourceType() {
@@ -1089,7 +1085,6 @@ public class Resource implements Comparable<Resource>, Externalizable {
 
     public void setResourceType(ResourceType resourceType) {
         this.resourceType = resourceType;
-        setAgentSynchronizationNeeded();
     }
 
     public InventoryStatus getInventoryStatus() {
@@ -1098,7 +1093,6 @@ public class Resource implements Comparable<Resource>, Externalizable {
 
     public void setInventoryStatus(InventoryStatus inventoryStatus) {
         this.inventoryStatus = inventoryStatus;
-        setAgentSynchronizationNeeded();
     }
 
     /**
@@ -1130,7 +1124,6 @@ public class Resource implements Comparable<Resource>, Externalizable {
 
     public void setDescription(String description) {
         this.description = description;
-        setAgentSynchronizationNeeded();
     }
 
     /**
@@ -1216,7 +1209,6 @@ public class Resource implements Comparable<Resource>, Externalizable {
 
     public void setLocation(String location) {
         this.location = location;
-        setAgentSynchronizationNeeded();
     }
 
     public Set<Resource> getChildResources() {

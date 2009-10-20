@@ -23,7 +23,7 @@ import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnProductNameType;
 
 public class RhnCommTest extends TestCase {
 
-    public String[] systemIdPath = { "./src/test/resources/systemid", "/etc/sysconfig/rhn/entitlement-cert.xml" };
+    public String[] systemIdPath = { "./src/test/resources/systemid", "/etc/sysconfig/rhn/systemid" };
 
     public RhnCommTest(String testName) {
         super(testName);
@@ -219,7 +219,7 @@ public class RhnCommTest extends TestCase {
         }
         assertTrue(success);
     }
-    
+
     public void testGetKickstartTree() throws Exception {
         boolean success = false;
         try {
@@ -244,8 +244,7 @@ public class RhnCommTest extends TestCase {
             assertTrue(in != null);
             in.close();
             success = true;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         assertTrue(success);

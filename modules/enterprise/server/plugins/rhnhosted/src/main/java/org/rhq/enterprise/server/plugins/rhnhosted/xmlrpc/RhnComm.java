@@ -23,43 +23,22 @@ import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnSatelliteType;
 
 public class RhnComm {
 
-    protected XmlRpcExecutor client;
+    protected XmlRpcExecutor satHandler;
+    protected XmlRpcExecutor dumpHandler;
     protected String serverUrl = "http://satellite.rhn.redhat.com";
     protected String SAT_HANDLER = "/SAT";
     protected String SATDUMP_HANDLER = "/SAT-DUMP";
     protected String XML_DUMP_VERSION = "3.3";
 
-    public RhnComm(String serverUrl) {
-        setServerURL(serverUrl);
-        client = XmlRpcExecutorFactory.getClient(serverUrl + SAT_HANDLER);
-    }
-
-    public void setServerURL(String url) {
-        serverUrl = url;
-    }
-
-    public String getServerURL() {
-        return serverUrl;
-    }
-
-    /**private Map getRequestProperties() {
-        Map reqProps = new HashMap();
-        reqProps.put("X-RHN-Satellite-XML-Dump-Version", XML_DUMP_VERSION);
-        return reqProps;
-    }*/
-
-    public boolean checkAuth(String systemId) throws IOException, XmlRpcException {
-        Object[] params = new Object[] { systemId };
-        Integer result = (Integer) client.execute("authentication.check", params);
-        if (result.intValue() == 1) {
-            return true;
-        }
-        return false;
+    public RhnComm(String serverUrlIn) {
+        satHandler = XmlRpcExecutorFactory.getClient(serverUrl + SAT_HANDLER);
+        dumpHandler = XmlRpcExecutorFactory.getClient(serverUrl + SATDUMP_HANDLER);
+        serverUrl = serverUrlIn;
     }
 
     public List<RhnProductNameType> getProductNames(String systemId) throws IOException, XmlRpcException {
         Object[] params = new Object[] { systemId };
-        JAXBElement<RhnSatelliteType> result = (JAXBElement) client.execute("dump.product_names", params);
+        JAXBElement<RhnSatelliteType> result = (JAXBElement) dumpHandler.execute("dump.product_names", params);
         RhnSatelliteType sat = result.getValue();
         List<RhnProductNameType> names = sat.getRhnProductNames().getRhnProductName();
         return names;
@@ -67,7 +46,7 @@ public class RhnComm {
 
     public List<RhnChannelFamilyType> getChannelFamilies(String systemId) throws IOException, XmlRpcException {
         Object[] params = new Object[] { systemId };
-        JAXBElement<RhnSatelliteType> result = (JAXBElement) client.execute("dump.channel_families", params);
+        JAXBElement<RhnSatelliteType> result = (JAXBElement) dumpHandler.execute("dump.channel_families", params);
         RhnSatelliteType sat = result.getValue();
         List<RhnChannelFamilyType> families = sat.getRhnChannelFamilies().getRhnChannelFamily();
         return families;
@@ -77,7 +56,7 @@ public class RhnComm {
         XmlRpcException {
 
         Object[] params = new Object[] { systemId, channelLabels };
-        JAXBElement<RhnSatelliteType> result = (JAXBElement) client.execute("dump.channels", params);
+        JAXBElement<RhnSatelliteType> result = (JAXBElement) dumpHandler.execute("dump.channels", params);
         RhnSatelliteType sat = result.getValue();
         List<RhnChannelType> channels = sat.getRhnChannels().getRhnChannel();
         return channels;
@@ -87,7 +66,7 @@ public class RhnComm {
         XmlRpcException {
 
         Object[] params = new Object[] { systemId, pkgIds };
-        JAXBElement<RhnSatelliteType> result = (JAXBElement) client.execute("dump.packages_short", params);
+        JAXBElement<RhnSatelliteType> result = (JAXBElement) dumpHandler.execute("dump.packages_short", params);
         RhnSatelliteType sat = result.getValue();
         List<RhnPackageShortType> pkgs = sat.getRhnPackagesShort().getRhnPackageShort();
         return pkgs;
@@ -97,7 +76,7 @@ public class RhnComm {
         XmlRpcException {
 
         Object[] params = new Object[] { systemId, pkgIds };
-        JAXBElement<RhnSatelliteType> result = (JAXBElement) client.execute("dump.packages", params);
+        JAXBElement<RhnSatelliteType> result = (JAXBElement) dumpHandler.execute("dump.packages", params);
         RhnSatelliteType sat = result.getValue();
         List<RhnPackageType> pkgs = sat.getRhnPackages().getRhnPackage();
         return pkgs;
@@ -107,7 +86,7 @@ public class RhnComm {
         throws IOException, XmlRpcException {
 
         Object[] params = new Object[] { systemId, ksLabels };
-        JAXBElement<RhnSatelliteType> result = (JAXBElement) client.execute("dump.kickstartable_trees", params);
+        JAXBElement<RhnSatelliteType> result = (JAXBElement) dumpHandler.execute("dump.kickstartable_trees", params);
         RhnSatelliteType sat = result.getValue();
         return sat.getRhnKickstartableTrees().getRhnKickstartableTree();
     }
@@ -119,8 +98,17 @@ public class RhnComm {
     public Map login(String systemId) throws IOException, XmlRpcException {
 
         Object[] params = new Object[] { systemId };
-        Map result = (Map) client.execute("authentication.login", params);
+        Map result = (Map) satHandler.execute("authentication.login", params);
         return result;
+    }
+
+    public boolean checkAuth(String systemId) throws IOException, XmlRpcException {
+        Object[] params = new Object[] { systemId };
+        Integer result = (Integer) satHandler.execute("authentication.check", params);
+        if (result.intValue() == 1) {
+            return true;
+        }
+        return false;
     }
 
     public boolean getRPM(String systemId, String channelName, String rpmName, String saveFilePath) throws IOException,

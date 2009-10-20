@@ -9,26 +9,23 @@
    <depends plugin="Augeas"/>
 
    <server name="Samba Server"
-            description="The static table lookup for host names"
+            description="Configuration for Samba Server"
             discovery="SambaServerDiscoveryComponent"
             class="SambaServerComponent">
 
-      <plugin-configuration>
-         <c:group name="augeas" displayName="Augeas Settings">
-            <c:simple-property name="lenses-path" displayName="Augeas Lenses Path"
-                               default="/usr/share/augeas/lenses" required="true"
-                               description="Full path to the augeas lenses directory"/>
-            <c:simple-property name="root-path" displayName="Augeas Root Path" default="/" required="true"
-                               description="Path from which augeas should begin to search for configuration files. Example: /"/>
-         </c:group>
-         <c:group name="samba" displayName="Samba Settings">
-            <c:simple-property name="smb-path" displayName="Samba Config File Path" required="true"
-                               default="/etc/samba/smb.conf" description="Location of the samba file."/>
-            <c:simple-property name="augeas-smb-path" displayName="Augeas Samba Tree Path" required="true"
-                               default="/files/etc/samba/smb.conf/target[.='global']" description="Augeas tree location of the samba configuration values."/>
-         </c:group>
-      </plugin-configuration>
+       <plugin-configuration>
+           <c:simple-property name="augeasModuleName" displayName="Augeas Module Name" default="Samba" required="true" readOnly="true"
+                              description="the name of the Augeas module/lens to use for loading and updating this resource's configuration"/>
 
+           <c:simple-property name="configurationFile" displayName="File Path" type="file" required="true" readOnly="true"
+                              default="/etc/samba/smb.conf"
+                              description="the absolute path of the samba configuration"/>
+
+           <c:simple-property name="resourceConfigurationRootNode" required="true" readOnly="true"
+                              default="/files/etc/samba/smb.conf/target[.='global']"/>
+       </plugin-configuration>
+
+       <!--
        <metric property="NetworkStat.tcpInboundTotal" displayName="TCP Inbound Connections" displayType="summary"/>
        <metric property="NetworkStat.tcpOutboundTotal" displayName="TCP Outbound Connections" displayType="summary"/>
        <metric property="NetworkStat.allInboundTotal" displayName="All Inbound Connections" displayType="summary"/>
@@ -46,7 +43,7 @@
        <metric property="NetworkStat.tcpClosing" displayName="State CLOSING"/>
        <metric property="NetworkStat.tcpIdle" displayName="State IDLE"/>
        <metric property="NetworkStat.tcpBound" displayName="State BOUND"/>
-
+       -->
       <resource-configuration>
         <c:group name="Basic Configurations">
             
@@ -75,12 +72,25 @@
               
           </c:group>
       </resource-configuration>
-<!--
+
        <service name="SambaShare" description="Shares on Samba"
                discovery="SambaShareDiscoveryComponent" class="SambaShareComponent">
-           
+
+           <plugin-configuration>
+               <c:simple-property name="augeasModuleName" displayName="Augeas Module Name" default="Samba" required="true" readOnly="true"
+                                  description="the name of the Augeas module/lens to use for loading and updating this resource's configuration"/>
+
+               <c:simple-property name="configurationFile" displayName="File Path" type="file" required="true" readOnly="true"
+                                  default="/etc/samba/smb.conf"
+                                  description="the absolute path of the samba configuration"/>
+
+               <c:simple-property name="resourceConfigurationRootNode" required="true" readOnly="true"/>
+           </plugin-configuration>
+
+          <!--
            <metric property="connections" description="The count of active connections to this share"/>
-           
+          -->
+
            <resource-configuration>
                <c:simple-property name="path" required="true"/>
                <c:simple-property name="comment" required="false"/>
@@ -94,7 +104,6 @@
                <c:simple-property name="valid users" required="false"/>
            </resource-configuration>
        </service>
--->
    </server>
 
 </plugin>

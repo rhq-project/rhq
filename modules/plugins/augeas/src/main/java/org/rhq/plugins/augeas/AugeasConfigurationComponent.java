@@ -205,6 +205,21 @@ public class AugeasConfigurationComponent implements ResourceComponent<PlatformC
         }
     }
 
+    protected AugeasNode getResourceConfigurationRootNode(Configuration pluginConfig, AugeasNode augeasConfigFileNode) {
+        AugeasNode resourceConfigRootNode;
+        String resourceConfigRootNodePath = pluginConfig.getSimpleValue(RESOURCE_CONFIGURATION_ROOT_NODE_PROP, null);
+        if (resourceConfigRootNodePath != null) {
+            if (resourceConfigRootNodePath.indexOf(AugeasNode.SEPARATOR_CHAR) == 0) {
+                resourceConfigRootNode = new AugeasNode(resourceConfigRootNodePath);
+            } else {
+                resourceConfigRootNode = new AugeasNode(augeasConfigFileNode, resourceConfigRootNodePath);
+            }
+        } else {
+            resourceConfigRootNode = augeasConfigFileNode;
+        }
+        return resourceConfigRootNode;
+    }
+
     public ResourceContext getResourceContext() {
         return resourceContext;
     }

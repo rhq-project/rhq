@@ -18,119 +18,50 @@
  */
 package org.rhq.plugins.samba;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
-
 import net.augeas.Augeas;
-
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.domain.measurement.MeasurementReport;
-import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
-import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
-import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
-import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
-import org.rhq.core.pluginapi.measurement.MeasurementFacet;
-import org.rhq.core.system.ProcessExecution;
-import org.rhq.core.system.ProcessExecutionResults;
+import org.rhq.plugins.augeas.AugeasConfigurationComponent;
+import org.rhq.plugins.augeas.helper.AugeasNode;
 
-/**
- * @author Greg Hinkle
- */
-public class SambaShareComponent implements ResourceComponent<SambaServerComponent>, ConfigurationFacet,
-    MeasurementFacet {
+import java.util.List;
 
-    private ResourceContext<SambaServerComponent> resourceContext;
+public class SambaShareComponent extends AugeasConfigurationComponent {
 
-    private static String[] PROPERTIES = { "path", "comment", "public", "browseable", "writable", "printable",
-        "write list", "guest ok", "share modes", "printable", "valid users" };
+    private AugeasNode rootNode;
 
-    public void start(ResourceContext<SambaServerComponent> sambaServerComponentResourceContext)
-        throws InvalidPluginConfigurationException, Exception {
-        this.resourceContext = sambaServerComponentResourceContext;
+    public void start(ResourceContext resourceContext)
+        throws Exception {
+
+        Configuration pluginConfig = resourceContext.getPluginConfiguration();
+        String targetName = pluginConfig.getSimple("targetName").getStringValue();
+        Augeas augeas = getAugeas();
+        List<String> matches = augeas.match("/files/etc/samba/smb/conf/target[.='"+targetName+"']");
+        String rootPath = matches.get(0);
+        this.rootNode = new AugeasNode(rootPath);
+    }
+
+    @Override
+    protected AugeasNode getResourceConfigurationRootNode(Configuration pluginConfig, AugeasNode augeasConfigFileNode) {
+        return this.rootNode;
     }
 
     public void stop() {
-
+        super.stop();
     }
 
     public AvailabilityType getAvailability() {
-        return null;
+       return super.getAvailability();
     }
 
     public Configuration loadResourceConfiguration() throws Exception {
-        String path = getAugeasPath();
-        Augeas augeas = this.resourceContext.getParentResourceComponent().getAugeas();
-
-        List<String> matches = augeas.match(path);
-
-        // Parse out the properties
-        Configuration configuration = new Configuration();
-        configuration.setNotes("Loaded from Augeas at " + new Date());
-
-        for (String prop : PROPERTIES) {
-            String value = augeas.get(path + "/" + prop.replaceAll(" ", "\\\\ "));
-            configuration.put(new PropertySimple(prop, value));
-        }
-
-        return configuration;
+        return super.loadResourceConfiguration();
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
-        try {
-            String path = getAugeasPath();
-            Augeas augeas = this.resourceContext.getParentResourceComponent().getAugeas();
-
-            // Parse out the properties
-            Configuration configuration = report.getConfiguration();
-            for (String prop : PROPERTIES) {
-                augeas.set(path + "/" + prop.replaceAll(" ", "\\\\ "), configuration.getSimpleValue(prop, ""));
-            }
-        } catch (Exception e) {
-            report.setErrorMessageFromThrowable(e);
-        }
+        super.updateResourceConfiguration(report);
     }
 
-    private String getAugeasPath() throws Exception {
-        SambaServerComponent serverComponent = this.resourceContext.getParentResourceComponent();
-
-        Augeas augeas = serverComponent.getAugeas();
-
-        String path = null;
-        for (String p : augeas.match(serverComponent.getAugeasPath())) {
-            if (this.resourceContext.getResourceKey().equals(augeas.get(p))) {
-                path = p;
-            }
-        }
-
-        return path;
-    }
-
-    public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
-        ProcessExecution exec = new ProcessExecution("smbstatus");
-        exec.setArguments(new String[] { "-S" });
-        exec.setCaptureOutput(true);
-
-        ProcessExecutionResults results = this.resourceContext.getSystemInformation().executeProcess(exec);
-
-        String output = results.getCapturedOutput();
-
-        String[] lines = output.split("\\n");
-        boolean dataLines = false;
-        int count = 0;
-        for (String line : lines) {
-            if (!dataLines && line.startsWith("--------------")) {
-                dataLines = true;
-                continue;
-            }
-            //            String[] row = line.split("\\s", 4);
-
-            count++;
-        }
-
-    }
 }

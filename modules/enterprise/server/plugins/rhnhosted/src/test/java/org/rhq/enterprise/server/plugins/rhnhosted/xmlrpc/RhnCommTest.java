@@ -1,6 +1,7 @@
 package org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc;
 
 import java.io.File;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,6 +14,8 @@ import org.apache.commons.lang.StringUtils;
 
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelFamilyType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnKickstartFileType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnKickstartFilesType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnKickstartableTreeType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageShortType;
@@ -231,6 +234,37 @@ public class RhnCommTest extends TestCase {
         File t = new File(saveFilePath);
         assertTrue(t.exists());
         success = true;
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+        assertTrue(success);
+    }
+    
+    public void testGetKickstartTree() throws Exception {
+        boolean success = false;
+        try {
+            RhnComm comm = getRhnComm();
+            String channelName = "rhel-i386-server-5";
+            String ksTreeLabel = "ks-rhel-i386-server-5";
+            List<String> reqLabels = new ArrayList<String>();
+            // To get data for this call, look at channels kickstartable-trees=""
+            reqLabels.add("ks-rhel-i386-server-5");
+            List<RhnKickstartableTreeType> ksTrees = comm.getKickstartTreeMetadata(getSystemId(), reqLabels);
+            RhnKickstartableTreeType tree = ksTrees.get(0);
+            RhnKickstartFilesType ksFiles = tree.getRhnKickstartFiles();
+            List<RhnKickstartFileType> files = ksFiles.getRhnKickstartFile();
+            RhnKickstartFileType f = files.get(0);
+            //Only fetching one kickstart file to save time.
+            //To do a more exhaustive test, simply interate of ks.getRhnKickstartFile()
+            //and fetch each file, this will take a few minutes to complete.
+            String ksRelativePath = f.getRelativePath();
+            assertFalse(StringUtils.isBlank(ksRelativePath));
+            System.err.println("fetching ks file: " + f.getRelativePath());
+            InputStream in = comm.getKickstartTreeFile(getSystemId(), channelName, ksTreeLabel, ksRelativePath);
+            assertTrue(in != null);
+            in.close();
+            success = true;
         }
         catch (Exception e) {
             e.printStackTrace();

@@ -235,5 +235,20 @@ public class RhnComm {
         return true;
     }
 
+    public InputStream getKickstartTreeFile(String systemId, String channelName, String ksTreeLabel, String ksFilePath)
+            throws IOException, XmlRpcException {
 
+            String baseUrl = "http://satellite.rhn.redhat.com";
+            String extra = "/SAT/$RHN/" + channelName + "/getKickstartFile/" + ksTreeLabel + "/" + ksFilePath;
+            URL url = new URL(serverUrl + extra);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            Map props = login(systemId);
+            for (Object key: props.keySet()) {
+                conn.setRequestProperty((String)key, props.get(key).toString());
+            }
+            conn.setRequestMethod("GET");
+            conn.connect();
+            InputStream in = conn.getInputStream();
+            return in;
+        }
 }

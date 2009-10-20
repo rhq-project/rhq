@@ -240,7 +240,7 @@
         <column name="CONTENT_SRC_ID" type="INTEGER" required="true" references="RHQ_CONTENT_SOURCE"/>
         <column name="CTIME" type="LONG" required="true"/>
 
-        <constraint name="RHQ_CHAN_CONTENT_SRC_MAP_KEY">
+        <constraint name="RHQ_REPO_CONTENT_SRC_MAP_KEY">
             <primaryKey>
                 <field ref="REPO_ID"/>
                 <field ref="CONTENT_SRC_ID"/>

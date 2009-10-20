@@ -164,7 +164,40 @@ public class RhnCommTest extends TestCase {
         assertTrue(success);
     }
     
-    public void testGetPackageMetadata() throws Exception {
+    public void testGetKickstartTreeMetadata() throws Exception {
+        boolean success = false;
+        try {
+            RhnComm comm = getRhnComm();
+            List<String> reqLabels = new ArrayList<String>();
+            // To get data for this call, look at channels kickstartable-trees=""
+            reqLabels.add("ks-rhel-i386-server-5");
+            reqLabels.add("ks-rhel-i386-server-5-u1");
+            reqLabels.add("ks-rhel-i386-server-5-u2");
+            reqLabels.add("ks-rhel-i386-server-5-u3");
+            reqLabels.add("ks-rhel-i386-server-5-u4");
+
+            List<RhnKickstartableTreeType> ksTrees = comm.getKickstartTreeMetadata(getSystemId(), reqLabels);
+            assertTrue(reqLabels.size() == ksTrees.size());
+            for (RhnKickstartableTreeType tree: ksTrees) {
+                assertFalse(StringUtils.isBlank(tree.getBasePath()));
+                assertFalse(StringUtils.isBlank(tree.getBootImage()));
+                assertFalse(StringUtils.isBlank(tree.getChannel()));
+                assertFalse(StringUtils.isBlank(tree.getInstallTypeLabel()));
+                assertFalse(StringUtils.isBlank(tree.getInstallTypeName()));
+                assertFalse(StringUtils.isBlank(tree.getKstreeTypeLabel()));
+                assertFalse(StringUtils.isBlank(tree.getKstreeTypeName()));
+                assertFalse(StringUtils.isBlank(tree.getLabel()));
+                assertFalse(StringUtils.isBlank(tree.getLastModified()));
+            }
+            success = true;
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+        assertTrue(success);
+    }
+    
+    public void testGetPackageMetada() throws Exception {
         boolean success = false;
         try {
             RhnComm comm = getRhnComm();

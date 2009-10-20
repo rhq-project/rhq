@@ -167,6 +167,24 @@ public class RhnComm {
         List<RhnPackageType> pkgs = sat.getRhnPackages().getRhnPackage();
         return pkgs;
     }
+    
+    public List<RhnKickstartableTreeType> getKickstartTreeMetadata(String systemId, List<String> ksLabels) 
+        throws IOException, XmlRpcException {
+        
+        XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
+        config.setServerURL(new URL(serverUrl + SATDUMP_HANDLER));
+        XmlRpcClient client = new XmlRpcClient();
+        client.setConfig(config);
+        RhnJaxbTransportFactory transportFactory = new RhnJaxbTransportFactory(client);
+        transportFactory.setRequestProperties(getRequestProperties());
+        transportFactory.setJaxbDomain("org.rhq.enterprise.server.plugins.rhnhosted.xml");
+        transportFactory.setDumpMessageToFile(false);
+        client.setTransportFactory(transportFactory);
+        Object[] params = new Object[]{systemId, ksLabels};
+        JAXBElement<RhnSatelliteType> result = (JAXBElement) client.execute("dump.kickstartable_trees", params);
+        RhnSatelliteType sat = result.getValue();
+        return sat.getRhnKickstartableTrees().getRhnKickstartableTree();
+    }
 
     /**
      * Expected return header values for: X-Client-Version, X-RHN-Server-Id, X-RHN-Auth

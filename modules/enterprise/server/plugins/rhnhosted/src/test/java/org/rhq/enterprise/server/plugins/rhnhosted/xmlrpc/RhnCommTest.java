@@ -17,18 +17,13 @@ import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnKickstartFileType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnKickstartFilesType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnKickstartableTreeType;
-import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageShortType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnProductNameType;
-import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnSatelliteType;
-import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnSourcePackageType;
-import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.RhnComm;
-
-
 
 public class RhnCommTest extends TestCase {
-    
-    public String systemIdPath = "./src/test/resources/systemid";
+
+    public String[] systemIdPath = { "./src/test/resources/systemid", "/etc/sysconfig/rhn/entitlement-cert.xml" };
 
     public RhnCommTest(String testName) {
         super(testName);
@@ -39,52 +34,42 @@ public class RhnCommTest extends TestCase {
     }
 
     protected String getSystemId() throws Exception {
-        if (new File(systemIdPath).exists() == false) {
-            return "";
+        boolean exists = false;
+        for (String path : systemIdPath) {
+            System.out.println("checking: " + path);
+            if (new File(path).exists()) {
+                return FileUtils.readFileToString(new File(path));
+            }
         }
-        return FileUtils.readFileToString(new File(systemIdPath));
+        return "";
     }
 
     protected RhnComm getRhnComm() {
-        RhnComm comm = new RhnComm();
-        comm.setServerURL("http://satellite.rhn.redhat.com");
+        RhnComm comm = new RhnComm("http://satellite.rhn.redhat.com");
         return comm;
     }
 
     public void testCheckAuth() throws Exception {
-        boolean success = false;
-        try {
-            RhnComm comm = getRhnComm();
-            assertTrue(comm.checkAuth(getSystemId()));
-            success = true;
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-        }
-        assertTrue(success);
+        RhnComm comm = getRhnComm();
+        assertTrue(comm.checkAuth(getSystemId()));
     }
 
     public void testGetProductNames() throws Exception {
         boolean success = false;
-        try {
-            if (StringUtils.isBlank(getSystemId())) {
-                System.out.println("Skipping test since systemid is not readable");
-                return;
-            }
-            
-            RhnComm comm = getRhnComm();
-            List<RhnProductNameType> names = comm.getProductNames(getSystemId());
-            assertTrue(names != null);
-            assertTrue(names.size() > 0);
-            for (RhnProductNameType name: names) {
-                assertFalse(StringUtils.isBlank(name.getName()));
-                assertFalse(StringUtils.isBlank(name.getLabel()));
-            }
-            success = true;
+        if (StringUtils.isBlank(getSystemId())) {
+            System.out.println("Skipping test since systemid is not readable");
+            return;
         }
-        catch (Exception e) {
-            e.printStackTrace();
+
+        RhnComm comm = getRhnComm();
+        List<RhnProductNameType> names = comm.getProductNames(getSystemId());
+        assertTrue(names != null);
+        assertTrue(names.size() > 0);
+        for (RhnProductNameType name : names) {
+            assertFalse(StringUtils.isBlank(name.getName()));
+            assertFalse(StringUtils.isBlank(name.getLabel()));
         }
+        success = true;
         assertTrue(success);
     }
 
@@ -95,15 +80,14 @@ public class RhnCommTest extends TestCase {
             List<RhnChannelFamilyType> families = comm.getChannelFamilies(getSystemId());
             assertTrue(families != null);
             assertTrue(families.size() > 0);
-            for (RhnChannelFamilyType family: families) {
+            for (RhnChannelFamilyType family : families) {
                 /* Note that MaxMembers, VirtSubLevelLabel, and VirtSubLevelName may be null */
                 assertFalse(StringUtils.isBlank(family.getChannelLabels()));
                 assertFalse(StringUtils.isBlank(family.getId()));
                 assertFalse(StringUtils.isBlank(family.getLabel()));
             }
             success = true;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         assertTrue(success);
@@ -121,7 +105,7 @@ public class RhnCommTest extends TestCase {
             List<RhnChannelType> channels = comm.getChannels(getSystemId(), channel_labels);
             assertTrue(channels != null);
             assertTrue(channels.size() > 0);
-            for (RhnChannelType channel: channels) {
+            for (RhnChannelType channel : channels) {
                 assertFalse(StringUtils.isBlank(channel.getRhnChannelName()));
                 assertFalse(StringUtils.isBlank(channel.getRhnChannelSummary()));
                 String packages = channel.getPackages();
@@ -132,8 +116,7 @@ public class RhnCommTest extends TestCase {
                 System.err.println("testGetChannels: " + pkgIds[0]);
             }
             success = true;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         assertTrue(success);
@@ -150,7 +133,7 @@ public class RhnCommTest extends TestCase {
             reqPackages.add("rhn-package-386984");
             List<RhnPackageShortType> pkgs = comm.getPackageShortInfo(getSystemId(), reqPackages);
             assertTrue(pkgs.size() == reqPackages.size());
-            for (RhnPackageShortType pkgShort: pkgs) {
+            for (RhnPackageShortType pkgShort : pkgs) {
                 assertFalse(StringUtils.isBlank(pkgShort.getId()));
                 assertFalse(StringUtils.isBlank(pkgShort.getName()));
                 assertFalse(StringUtils.isBlank(pkgShort.getVersion()));
@@ -160,13 +143,12 @@ public class RhnCommTest extends TestCase {
                 assertFalse(StringUtils.isBlank(pkgShort.getLastModified()));
             }
             success = true;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         assertTrue(success);
     }
-    
+
     public void testGetKickstartTreeMetadata() throws Exception {
         boolean success = false;
         try {
@@ -181,7 +163,7 @@ public class RhnCommTest extends TestCase {
 
             List<RhnKickstartableTreeType> ksTrees = comm.getKickstartTreeMetadata(getSystemId(), reqLabels);
             assertTrue(reqLabels.size() == ksTrees.size());
-            for (RhnKickstartableTreeType tree: ksTrees) {
+            for (RhnKickstartableTreeType tree : ksTrees) {
                 assertFalse(StringUtils.isBlank(tree.getBasePath()));
                 assertFalse(StringUtils.isBlank(tree.getBootImage()));
                 assertFalse(StringUtils.isBlank(tree.getChannel()));
@@ -193,13 +175,12 @@ public class RhnCommTest extends TestCase {
                 assertFalse(StringUtils.isBlank(tree.getLastModified()));
             }
             success = true;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         assertTrue(success);
     }
-    
+
     public void testGetPackageMetada() throws Exception {
         boolean success = false;
         try {
@@ -211,13 +192,12 @@ public class RhnCommTest extends TestCase {
             reqPackages.add("rhn-package-386984");
             List<RhnPackageType> pkgs = comm.getPackageMetadata(getSystemId(), reqPackages);
             assertTrue(pkgs.size() == reqPackages.size());
-            for (RhnPackageType pkg: pkgs) {
+            for (RhnPackageType pkg : pkgs) {
                 assertFalse(StringUtils.isBlank(pkg.getRhnPackageSummary()));
                 assertFalse(StringUtils.isBlank(pkg.getRhnPackageDescription()));
             }
             success = true;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         assertTrue(success);
@@ -226,16 +206,15 @@ public class RhnCommTest extends TestCase {
     public void testGetRPM() throws Exception {
         boolean success = false;
         try {
-        RhnComm comm = getRhnComm();
-        String channelName = "rhel-x86_64-server-5";
-        String rpmName = "openhpi-2.4.1-6.el5.1.x86_64.rpm";
-        String saveFilePath = "./target/" + rpmName;
-        assertTrue(comm.getRPM(getSystemId(), channelName, rpmName, saveFilePath));
-        File t = new File(saveFilePath);
-        assertTrue(t.exists());
-        success = true;
-        }
-        catch (Exception e) {
+            RhnComm comm = getRhnComm();
+            String channelName = "rhel-x86_64-server-5";
+            String rpmName = "openhpi-2.4.1-6.el5.1.x86_64.rpm";
+            String saveFilePath = "./target/" + rpmName;
+            assertTrue(comm.getRPM(getSystemId(), channelName, rpmName, saveFilePath));
+            File t = new File(saveFilePath);
+            assertTrue(t.exists());
+            success = true;
+        } catch (Exception e) {
             e.printStackTrace();
         }
         assertTrue(success);

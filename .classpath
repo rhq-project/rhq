@@ -54,7 +54,6 @@
 	<classpathentry kind="src" path="modules/enterprise/remoting/cli/src/test/java"/>
 	<classpathentry kind="src" path="modules/enterprise/remoting/cli/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/remoting/webservices/src/main/java"/>
-	<classpathentry kind="src" path="modules/enterprise/remoting/webservices/src/test/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/sars/agent-sar/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/safe-invoker/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/container-lib/src/main/java"/>
@@ -189,6 +188,7 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/xmlrpc/xmlrpc-client/3.1.2/xmlrpc-client-3.1.2.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/xmlrpc/xmlrpc-common/3.1.2/xmlrpc-common-3.1.2.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/net/sf/xmlrpc/xmlrpc/1.1.1/xmlrpc-1.1.1.jar"/>
+    <classpathentry exported="true" kind="var" path="M2_REPO/org/apache/ws/commons/util/ws-commons-util/1.0.2/ws-commons-util-1.0.2.jar"/>
 	<classpathentry exported="true" kind="lib" path="modules/enterprise/remoting/webservices/target/rhq-remoting-webservices-1.4.0-SNAPSHOT/wsconsume-output"/>
 	<classpathentry kind="var" path="M2_REPO/org/antlr/antlr-runtime/3.2/antlr-runtime-3.2.jar"/>
 	<classpathentry kind="output" path="eclipse-classes"/>

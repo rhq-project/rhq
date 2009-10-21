@@ -17,7 +17,7 @@
 <ui:composition template="/rhq/layout/main.xhtml">
 
    <ui:param name="id" value="${param.id}" />
-   <ui:param name="pageTitle" value="Subscribe Resources to Repo '#{RepoDetailsUIBean.repo.name}'"/>
+   <ui:param name="pageTitle" value="Subscribe Resources to Repository '#{RepoDetailsUIBean.repo.name}'"/>
    <ui:param name="item" value="#{RepoDetailsUIBean.repo}" />
 
    <ui:define name="breadcrumbs">
@@ -56,7 +56,7 @@
 
          <rich:panel>
             <f:facet name="header">
-               <h:outputText value="Resources Subscribed To This Repo"/>
+               <h:outputText value="Resources Subscribed To This Repository"/>
             </f:facet>
 
             <h:panelGrid columns="1" width="100%">

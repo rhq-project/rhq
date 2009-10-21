@@ -16,7 +16,7 @@
 <ui:composition template="/rhq/layout/main.xhtml">
 
    <ui:param name="id" value="${param.id}" />
-   <ui:param name="pageTitle" value="Associate Content Providers to Repo '#{RepoDetailsUIBean.repo.name}'"/>
+   <ui:param name="pageTitle" value="Associate Content Providers to Repository '#{RepoDetailsUIBean.repo.name}'"/>
    <ui:param name="item" value="#{RepoDetailsUIBean.repo}" />
 
    <ui:define name="breadcrumbs">
@@ -55,7 +55,7 @@
 
          <rich:panel>
             <f:facet name="header">
-               <h:outputText value="Content Sources Associated With This Repo"/>
+               <h:outputText value="Content Sources Associated With This Repository"/>
             </f:facet>
 
             <h:panelGrid columns="1" width="100%">

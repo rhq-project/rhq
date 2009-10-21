@@ -60,21 +60,6 @@ public class AugeasNode {
         this(new AugeasNode(parentPath), name);
     }
 
-    private AugeasNode(AugeasNode child) {
-        String path = child.getPath();
-        if (path.equals(SEPARATOR)) {
-            // special case - parent of "/" is "/".
-            this.path = path;
-        } else {
-            char lastChar = path.charAt(path.length() - 1);
-            if (lastChar == SEPARATOR_CHAR) {
-                path = path.substring(0, path.length() - 1);
-            }
-            int lastSlashIndex = path.lastIndexOf(SEPARATOR_CHAR);
-            this.path = path.substring(0, lastSlashIndex);
-        }
-    }
-
     public String getName() {
         int lastSlashIndex = this.path.lastIndexOf(SEPARATOR_CHAR);
         return (lastSlashIndex == 0) ? this.path : this.path.substring(lastSlashIndex + 1);
@@ -85,7 +70,12 @@ public class AugeasNode {
     }
 
     public AugeasNode getParent() {
-        return new AugeasNode(this);
+        String parentPath = getParentPath();
+        if (parentPath.indexOf(SEPARATOR_CHAR) == -1 && parentPath.startsWith(AugeasVariable.VARIABLE_NAME_PREFIX)) {
+            return new AugeasVariable(parentPath.substring(AugeasVariable.VARIABLE_NAME_PREFIX.length()));
+        } else {
+            return new AugeasNode(parentPath);
+        }
     }
 
     @Override
@@ -111,5 +101,20 @@ public class AugeasNode {
     @Override
     public String toString() {
         return this.path;
+    }
+    
+    protected String getParentPath() {
+        String path = getPath();
+        if (path.equals(SEPARATOR)) {
+            // special case - parent of "/" is "/".
+            return path;
+        } else {
+            char lastChar = path.charAt(path.length() - 1);
+            if (lastChar == SEPARATOR_CHAR) {
+                path = path.substring(0, path.length() - 1);
+            }
+            int lastSlashIndex = path.lastIndexOf(SEPARATOR_CHAR);
+            return path.substring(0, lastSlashIndex);
+        }
     }
 }

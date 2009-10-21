@@ -54,50 +54,49 @@ import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.plugins.augeas.helper.AugeasNode;
-import org.rhq.plugins.platform.PlatformComponent;
+import org.rhq.plugins.augeas.helper.Glob;
 
 /**
  * @author Ian Springer
+ * @author Lukas Krejci
  */
-public class AugeasConfigurationComponent implements ResourceComponent<PlatformComponent>, ConfigurationFacet {
-    public static final String CONFIGURATION_FILE_PROP = "configurationFile";
+public class AugeasConfigurationComponent<T extends ResourceComponent<?>> implements ResourceComponent<T>, ConfigurationFacet {
+    public static final String INCLUDE_GLOBS_PROP = "includeConfigurationFilesPatterns";
+    public static final String EXCLUDE_GLOBS_PROP = "excludeConfigurationFilesPatterns";
     public static final String RESOURCE_CONFIGURATION_ROOT_NODE_PROP = "resourceConfigurationRootNode";
     public static final String AUGEAS_MODULE_NAME_PROP = "augeasModuleName";
 
     private static final boolean IS_WINDOWS = (File.separatorChar == '\\');
     private static final String AUGEAS_LOAD_PATH = "/usr/share/augeas/lenses";
-    private static final String AUGEAS_ROOT_PATH = "/";
+    public static final String AUGEAS_ROOT_PATH = "/";
 
     private final Log log = LogFactory.getLog(this.getClass());
 
-    private ResourceContext resourceContext;
-    private File configFile;
+    private ResourceContext<T> resourceContext;
+    private List<String> includeGlobs;
+    private List<String> excludeGlobs;
     private Augeas augeas;
-    private AugeasNode augeasConfigFileMetadataNode;
     private AugeasNode resourceConfigRootNode;
 
-    public void start(ResourceContext<PlatformComponent> resourceContext) throws InvalidPluginConfigurationException,
+    public void start(ResourceContext<T> resourceContext) throws InvalidPluginConfigurationException,
         Exception {
         this.resourceContext = resourceContext;
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
-        String configFilePath = pluginConfig.getSimple(CONFIGURATION_FILE_PROP).getStringValue();
-        this.configFile = new File(configFilePath);
+
+        initGlobs(pluginConfig);
+        
         this.augeas = createAugeas();
+        
         if (this.augeas != null) {
-            AugeasNode augeasConfigFileNode = new AugeasNode("/files" + AugeasNode.SEPARATOR_CHAR + this.configFile.getPath());
-            // This is the metadata portion of the tree for this config file (e.g. /augeas/files/etc/hosts, where error
-            // messages are stored as node values.
-            this.augeasConfigFileMetadataNode = new AugeasNode("/augeas/files" + AugeasNode.SEPARATOR_CHAR
-                    + this.configFile.getPath());
             String resourceConfigRootNodePath = pluginConfig.getSimpleValue(RESOURCE_CONFIGURATION_ROOT_NODE_PROP, null);
             if (resourceConfigRootNodePath != null) {
                 if (resourceConfigRootNodePath.indexOf(AugeasNode.SEPARATOR_CHAR) == 0) {
                     this.resourceConfigRootNode = new AugeasNode(resourceConfigRootNodePath);
                 } else {
-                    this.resourceConfigRootNode = new AugeasNode(augeasConfigFileNode, resourceConfigRootNodePath);
+                    this.resourceConfigRootNode = new AugeasNode("/files//", resourceConfigRootNodePath);
                 }
             } else {
-                this.resourceConfigRootNode = augeasConfigFileNode;
+                this.resourceConfigRootNode = new AugeasNode("/");
             }
         }
     }
@@ -107,19 +106,10 @@ public class AugeasConfigurationComponent implements ResourceComponent<PlatformC
     }
 
     public AvailabilityType getAvailability() {
-        if (!this.configFile.isAbsolute()) {
-            throw new InvalidPluginConfigurationException("Location specified by '" + CONFIGURATION_FILE_PROP
-                + "' connection property is not an absolute path.");
+        for(File f : getConfigurationFiles()) {
+            singleFileAvailabilityCheck(f);
         }
-        if (!this.configFile.exists()) {
-            throw new InvalidPluginConfigurationException("Location specified by '" + CONFIGURATION_FILE_PROP
-                + "' connection property does not exist.");
-        }
-        if (this.configFile.isDirectory()) {
-            throw new InvalidPluginConfigurationException("Location specified by '" + CONFIGURATION_FILE_PROP
-                + "' connection property is a directory, not a regular file.");
-        }
-        return this.configFile.exists() ? AvailabilityType.UP : AvailabilityType.DOWN;
+        return AvailabilityType.UP;
     }
 
     public Configuration loadResourceConfiguration() throws Exception {
@@ -147,18 +137,6 @@ public class AugeasConfigurationComponent implements ResourceComponent<PlatformC
                     + this.getResourceContext().getResourceKey() + "' failed with the following errors: "
                     + report.getErrorMessage());
             report.setStatus(ConfigurationUpdateStatus.FAILURE);
-            return;
-        }
-
-        if (!this.configFile.canWrite()) {
-            report.setErrorMessage("Configuration file '" + this.configFile + "' is not writable.");
-            return;
-        }
-
-        File configFileParentDir = this.configFile.getParentFile();
-        if (!configFileParentDir.canWrite()) {
-            report.setErrorMessage("Configuration file parent directory '" + configFileParentDir
-                    + "' is not writable.");
             return;
         }
 
@@ -220,12 +198,14 @@ public class AugeasConfigurationComponent implements ResourceComponent<PlatformC
         return resourceConfigRootNode;
     }
 
-    public ResourceContext getResourceContext() {
+    public ResourceContext<T> getResourceContext() {
         return resourceContext;
     }
 
-    public File getConfigurationFile() {
-        return this.configFile;
+    public List<File> getConfigurationFiles() {
+        List<File> files = Glob.matchAll(new File(AUGEAS_ROOT_PATH), includeGlobs);
+        Glob.excludeAll(files, excludeGlobs);
+        return files;
     }
 
     public Augeas getAugeas() {
@@ -247,7 +227,15 @@ public class AugeasConfigurationComponent implements ResourceComponent<PlatformC
         try {
             augeas = new Augeas(AUGEAS_ROOT_PATH, AUGEAS_LOAD_PATH, Augeas.NO_MODL_AUTOLOAD);
             augeas.set("/augeas/load/" + augeasModuleName + "/lens", augeasModuleName + ".lns");
-            augeas.set("/augeas/load/" + augeasModuleName + "/incl", this.configFile.getPath());
+            
+            int idx = 1;
+            for(String incl : includeGlobs) {
+                augeas.set("/augeas/load/" + augeasModuleName + "/incl[" + (idx++) + "]", incl);
+            }
+            idx = 1;
+            for(String excl : excludeGlobs) {
+                augeas.set("/augeas/load/" + augeasModuleName + "/excl[" + (idx++) + "]", excl);
+            }
         } catch (RuntimeException e) {
             augeas = null;
             log.warn("Failed to initialize Augeas Java API.", e);
@@ -489,18 +477,57 @@ public class AugeasConfigurationComponent implements ResourceComponent<PlatformC
         try {
             this.augeas.save();
         } catch (AugeasException e) {
-            StringBuilder buffer = new StringBuilder("Failed to save " + this.configFile + ".");
-            AugeasNode errorNode = new AugeasNode(this.augeasConfigFileMetadataNode, "error");
-            String error = this.augeas.get(errorNode.getPath());
-            if (error != null) {
-                buffer.append(" Cause: ").append(error);
-                AugeasNode errorMessageNode = new AugeasNode(errorNode, "message");
-                String errorMessage = this.augeas.get(errorMessageNode.getPath());
-                if (errorMessage != null) {
-                    buffer.append(": ").append(errorMessage);
-                }
-            }
-            throw new RuntimeException(buffer.toString(), e);
+            throw new RuntimeException(summarizeAugeasError(), e);
         }
+    }
+    
+    private void initGlobs(Configuration pluginConfiguration) {
+        PropertyList includes = pluginConfiguration.getList(INCLUDE_GLOBS_PROP);
+        PropertyList excludes = pluginConfiguration.getList(EXCLUDE_GLOBS_PROP);
+        
+        includeGlobs = new ArrayList<String>();
+        excludeGlobs = new ArrayList<String>();
+        
+        for(Property p : includes.getList()) {
+            PropertySimple include = (PropertySimple) p;
+            includeGlobs.add(include.getStringValue());
+        }
+        
+        for(Property p : excludes.getList()) {
+            PropertySimple exclude = (PropertySimple)p;
+            excludeGlobs.add(exclude.getStringValue());
+        }
+    }
+    
+    private void singleFileAvailabilityCheck(File f) {
+        if (!f.isAbsolute()) {
+            throw new InvalidPluginConfigurationException("Path '" + f.getPath()
+                + "' is not an absolute path.");
+        }
+        if (!f.exists()) {
+            throw new InvalidPluginConfigurationException("File '" + f.getPath()
+                + "' does not exist.");
+        }
+        if (f.isDirectory()) {
+            throw new InvalidPluginConfigurationException("Path '" + f.getPath()
+                + "' is a directory, not a regular file.");
+        }
+    }
+    
+    private String summarizeAugeasError() {
+        StringBuilder summary = new StringBuilder();
+        String metadataNodePrefix = "/augeas/files";
+        for(String glob : includeGlobs) {
+            AugeasNode metadataNode = new AugeasNode(metadataNodePrefix, glob);
+            AugeasNode errorNode = new AugeasNode(metadataNode, "error");
+            List<String> nodePaths = this.augeas.match(errorNode.getPath());
+            for (String path : nodePaths) {
+                String error = this.augeas.get(path);
+                summary.append("File '").append(path.substring(metadataNodePrefix.length(), path.length() - 5))
+                .append("':\n").append(error).append("\n");
+            }
+        }
+        
+        return summary.toString();
     }
 }

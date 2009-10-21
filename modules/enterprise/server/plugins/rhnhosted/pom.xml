@@ -149,7 +149,7 @@
                   </goals>
                   <configuration>
                     <includeScope>runtime</includeScope>
-                    <excludeTransitive>true</excludeTransitive>
+                    <excludeTransitive>false</excludeTransitive>
                     <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
                   </configuration>
             </execution>

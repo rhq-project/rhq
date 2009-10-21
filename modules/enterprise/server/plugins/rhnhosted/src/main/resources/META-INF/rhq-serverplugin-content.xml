@@ -7,8 +7,8 @@
    <contentSourceType name="RHNSource"
                       displayName="RHN Hosted Source"
                       description="This plugin facilitates communication with Red Hat Network."
-                      lazyLoad="true"
-                      downloadMode="never"
+                      lazyLoad="false"
+                      downloadMode="filesystem"
                       apiClass="org.rhq.enterprise.server.plugins.rhnhosted.RHNProvider">
 
       <configuration>
@@ -24,6 +24,11 @@
                   type="longString"
                   required="true"
                   description="certificate for cerdentials."/>
+
+          <c:group name="repos" displayName="repo list">
+              <c:simple-property name="repos" type="string" default="rhn-tools-rhel-i386-server-5"/>
+         </c:group>
+
           
       </configuration>
 

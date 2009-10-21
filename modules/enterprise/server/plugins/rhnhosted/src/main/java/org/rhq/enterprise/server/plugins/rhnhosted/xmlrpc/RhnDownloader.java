@@ -45,7 +45,6 @@ public class RhnDownloader {
     public boolean getRPM(String systemId, String channelName, String rpmName, String saveFilePath) throws IOException,
         XmlRpcException {
 
-        String baseUrl = "http://satellite.rhn.redhat.com";
         String extra = "/SAT/$RHN/" + channelName + "/getPackage/" + rpmName;
         URL url = new URL(serverUrl + extra);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -70,6 +69,22 @@ public class RhnDownloader {
             conn.disconnect();
         }
         return true;
+    }
+
+    public InputStream getRPMStream(String systemId, String locationUrl)
+        throws IOException, XmlRpcException {
+
+        URL url = new URL(locationUrl);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        Map props = login(systemId);
+        for (Object key: props.keySet()) {
+            conn.setRequestProperty((String)key, props.get(key).toString());
+        }
+        conn.setRequestMethod("GET");
+        conn.connect();
+        InputStream in = conn.getInputStream();
+
+        return in;
     }
 
     public InputStream getKickstartTreeFile(String systemId, String channelName, String ksTreeLabel, String ksFilePath)

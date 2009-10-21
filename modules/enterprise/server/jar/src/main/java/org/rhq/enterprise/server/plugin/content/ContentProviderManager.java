@@ -161,7 +161,6 @@ public class ContentProviderManager {
                     + "] is already currently being synchronized, this sync request will be ignored");
                 return false;
             }
-
             // If the provider is capable of syncing repos, do that call first
             if (provider instanceof RepoSource) {
                 RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
@@ -624,7 +623,8 @@ public class ContentProviderManager {
 
         ClassLoader classLoader = env.getClassLoader();
         IsolatedInvocationHandler handler = new IsolatedInvocationHandler(adapter, classLoader);
-        Class<?>[] ifaces = new Class<?>[] { ContentProvider.class };
+        //TODO: Note to jdob. PackageSource.class should be removed once proxy bug is fixed.
+        Class<?>[] ifaces = new Class<?>[] { ContentProvider.class, PackageSource.class };
 
         return (ContentProvider) Proxy.newProxyInstance(classLoader, ifaces, handler);
     }

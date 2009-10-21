@@ -46,4 +46,9 @@
       <data id="1" name="family"/>
    </table>
 
+   <table name="RHQ_REPO_RELATION_TYPE">
+      <data id="1" name="parent"/>
+      <data id="2" name="clone"/>
+   </table>
+
 </dbsetup>

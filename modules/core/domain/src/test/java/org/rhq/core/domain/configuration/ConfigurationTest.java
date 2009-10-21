@@ -116,7 +116,7 @@ public class ConfigurationTest {
     @Test
     public void deepCopyWithoutProxiesShouldSetParentReferenceOfCopiedRawConfigurations() {
         Configuration original = createConfiguration();
-        original.addRawConfiguration(createRawConfiguration("/tmp/foo"););
+        original.addRawConfiguration(createRawConfiguration("/tmp/foo");
 
         Configuration copy = original.deepCopyWithoutProxies();
         RawConfiguration copiedRawConfig = getCopiedRawConfiguration(copy);

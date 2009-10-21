@@ -18,14 +18,12 @@ import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnSatelliteType;
 public class RhnComm {
 
     protected XmlRpcExecutor dumpHandler;
-    protected String serverUrl = "http://satellite.rhn.redhat.com";
-    protected String SAT_HANDLER = "/SAT";
+    protected String serverUrl;
     protected String SATDUMP_HANDLER = "/SAT-DUMP";
-    protected String XML_DUMP_VERSION = "3.3";
 
     public RhnComm(String serverUrlIn) {
-        dumpHandler = XmlRpcExecutorFactory.getJaxbClient(serverUrl + SATDUMP_HANDLER);
         serverUrl = serverUrlIn;
+        dumpHandler = XmlRpcExecutorFactory.getJaxbClient(serverUrl + SATDUMP_HANDLER);
     }
 
     public List<RhnProductNameType> getProductNames(String systemId) throws IOException, XmlRpcException {

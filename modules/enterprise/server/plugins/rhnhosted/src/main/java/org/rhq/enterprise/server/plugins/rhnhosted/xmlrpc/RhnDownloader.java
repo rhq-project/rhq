@@ -15,7 +15,6 @@ public class RhnDownloader {
     protected XmlRpcExecutor satHandler;
     protected String serverUrl;
     protected String SAT_HANDLER = "/SAT";
-    //protected String XML_DUMP_VERSION = "3.3";
 
     public RhnDownloader(String serverUrlIn) {
         serverUrl = serverUrlIn;

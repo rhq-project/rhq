@@ -28,7 +28,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 
 /**
- * This is the composite primary key for the {@link RepoContentSource} entity. That entity is an explicit
+ * This is the composite primary key for the {@link RepoRepoGroup} entity. That entity is an explicit
  * many-to-many mapping table, so this composite key is simply the foreign keys to both ends of that relationship.
  *
  * @author Sayli Karmarkar

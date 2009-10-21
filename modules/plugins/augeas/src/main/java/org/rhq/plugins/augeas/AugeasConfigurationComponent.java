@@ -20,6 +20,7 @@ package org.rhq.plugins.augeas;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
@@ -63,7 +64,6 @@ import org.rhq.plugins.augeas.helper.Glob;
 public class AugeasConfigurationComponent<T extends ResourceComponent<?>> implements ResourceComponent<T>, ConfigurationFacet {
     public static final String INCLUDE_GLOBS_PROP = "includeConfigurationFilesPatterns";
     public static final String EXCLUDE_GLOBS_PROP = "excludeConfigurationFilesPatterns";
-    public static final String GLOB_PATTERN_PROP = "pattern";
     public static final String RESOURCE_CONFIGURATION_ROOT_NODE_PROP = "resourceConfigurationRootNode";
     public static final String AUGEAS_MODULE_NAME_PROP = "augeasModuleName";
 
@@ -483,20 +483,15 @@ public class AugeasConfigurationComponent<T extends ResourceComponent<?>> implem
     }
     
     private void initGlobs(Configuration pluginConfiguration) {
-        PropertyList includes = pluginConfiguration.getList(INCLUDE_GLOBS_PROP);
-        PropertyList excludes = pluginConfiguration.getList(EXCLUDE_GLOBS_PROP);
+        PropertySimple includes = pluginConfiguration.getSimple(INCLUDE_GLOBS_PROP);
+        PropertySimple excludes = pluginConfiguration.getSimple(EXCLUDE_GLOBS_PROP);
         
         includeGlobs = new ArrayList<String>();
         excludeGlobs = new ArrayList<String>();
         
-        for(Property p : includes.getList()) {
-            PropertySimple include = (PropertySimple) p;
-            includeGlobs.add(include.getStringValue());
-        }
-        
-        for(Property p : excludes.getList()) {
-            PropertySimple exclude = (PropertySimple)p;
-            excludeGlobs.add(exclude.getStringValue());
+        includeGlobs.addAll(Arrays.asList(includes.getStringValue().split("\\s*|\\s*")));
+        if (excludes != null) {
+            excludeGlobs.addAll(Arrays.asList(excludes.getStringValue().split("\\s*|\\s*")));
         }
     }
     

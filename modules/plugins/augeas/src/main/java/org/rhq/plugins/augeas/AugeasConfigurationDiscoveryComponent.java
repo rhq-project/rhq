@@ -20,6 +20,7 @@ package org.rhq.plugins.augeas;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -55,8 +56,8 @@ public class AugeasConfigurationDiscoveryComponent<T extends ResourceComponent<?
         List<String> excludes = determineExcludeGlobs(discoveryContext);
         
         Configuration pluginConfig = discoveryContext.getDefaultPluginConfiguration();
-        PropertyList includeProps = getGlobList(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP, AugeasConfigurationComponent.GLOB_PATTERN_PROP, includes);
-        PropertyList excludeProps = getGlobList(AugeasConfigurationComponent.EXCLUDE_GLOBS_PROP, AugeasConfigurationComponent.GLOB_PATTERN_PROP, excludes);
+        PropertySimple includeProps = getGlobList(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP, includes);
+        PropertySimple excludeProps = getGlobList(AugeasConfigurationComponent.EXCLUDE_GLOBS_PROP, excludes);
         pluginConfig.put(includeProps);
         pluginConfig.put(excludeProps);
         
@@ -90,7 +91,7 @@ public class AugeasConfigurationDiscoveryComponent<T extends ResourceComponent<?
     
     protected List<String> determineIncludeGlobs(ResourceDiscoveryContext<T> discoveryContext) {
         Configuration pluginConfiguration = discoveryContext.getDefaultPluginConfiguration();
-        PropertyList includeGlobsProp = pluginConfiguration.getList(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP);
+        PropertySimple includeGlobsProp = pluginConfiguration.getSimple(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP);
        
         List<String> ret = getGlobList(includeGlobsProp);
         if (ret == null || ret.size() == 0) {
@@ -102,7 +103,7 @@ public class AugeasConfigurationDiscoveryComponent<T extends ResourceComponent<?
     
     protected List<String> determineExcludeGlobs(ResourceDiscoveryContext<T> discoveryContext) {
         Configuration pluginConfiguration = discoveryContext.getDefaultPluginConfiguration();
-        PropertyList excludeGlobsProp = pluginConfiguration.getList(AugeasConfigurationComponent.EXCLUDE_GLOBS_PROP);
+        PropertySimple excludeGlobsProp = pluginConfiguration.getSimple(AugeasConfigurationComponent.EXCLUDE_GLOBS_PROP);
        
         List<String> ret = getGlobList(excludeGlobsProp);
         
@@ -149,22 +150,16 @@ public class AugeasConfigurationDiscoveryComponent<T extends ResourceComponent<?
     }
     
     private String composeResourceKey(Configuration pluginConfiguration) {
-        PropertyList includeGlobsProp = pluginConfiguration.getList(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP);
-        PropertyList excludeGlobsProp = pluginConfiguration.getList(AugeasConfigurationComponent.EXCLUDE_GLOBS_PROP);
+        PropertySimple includeGlobsProp = pluginConfiguration.getSimple(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP);
+        PropertySimple excludeGlobsProp = pluginConfiguration.getSimple(AugeasConfigurationComponent.EXCLUDE_GLOBS_PROP);
         
         StringBuilder bld = new StringBuilder();
         
-        for (Property p : includeGlobsProp.getList()) {
-            PropertySimple include = (PropertySimple) p;
-            bld.append(include.getStringValue()).append(File.pathSeparatorChar);
-        }
+        bld.append(includeGlobsProp.getStringValue());
         
-        if (excludeGlobsProp != null && excludeGlobsProp.getList().size() > 0) {   
+        if (excludeGlobsProp != null && excludeGlobsProp.getStringValue().length() > 0) {   
             bld.append("---");
-            for (Property p : excludeGlobsProp.getList()) {
-                PropertySimple exclude = (PropertySimple) p;
-                bld.append(exclude.getStringValue()).append(File.pathSeparatorChar);
-            }
+            bld.append(excludeGlobsProp.getStringValue());
         }
         
         bld.deleteCharAt(bld.length() - 1);
@@ -172,24 +167,18 @@ public class AugeasConfigurationDiscoveryComponent<T extends ResourceComponent<?
         return bld.toString();
     }
    
-    private PropertyList getGlobList(String name, String simpleName, List<String> simples) {
-        PropertyList ret = new PropertyList(name);
+    private PropertySimple getGlobList(String name, List<String> simples) {
+        StringBuilder bld = new StringBuilder();
         if (simples != null) {
             for(String s : simples) {
-                PropertySimple simple = new PropertySimple(simpleName, s);
-                ret.add(simple);
+                bld.append(s).append("|");
             }
         }
-        return ret;
+        bld.deleteCharAt(bld.length() - 1);
+        return new PropertySimple(name, bld.toString());
     }
     
-    private List<String> getGlobList(PropertyList list) {
-        if (list == null) return null;
-        ArrayList<String> ret = new ArrayList<String>();
-        for(Property p : list.getList()) {
-            ret.add(((PropertySimple)p).getStringValue());
-        }
-        
-        return ret;
+    private List<String> getGlobList(PropertySimple list) {
+        return Arrays.asList(list.getStringValue().split("\\s*|\\s*"));
     }
 }

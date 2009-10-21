@@ -17,7 +17,6 @@
 
        <runs-inside>
          <parent-resource-type name="Linux"    plugin="Platforms"/>
-         <parent-resource-type name="Windows"  plugin="Platforms"/>
          <parent-resource-type name="Solaris"  plugin="Platforms"/>
          <parent-resource-type name="HP-UX"    plugin="Platforms"/>
          <parent-resource-type name="AIX"      plugin="Platforms"/>
@@ -29,8 +28,14 @@
       <plugin-configuration>
 		<c:simple-property name="augeasModuleName" displayName="Augeas Module Name" default="Cron" required="true" readOnly="true"
                              description="the name of the Augeas module/lens to use for loading and updating this resource's configuration"/>
-         <c:simple-property name="configurationFile" displayName="Crontab File Path" required="true" readOnly="true"
-                               default="/etc/crontab" description="Location of the crontab file."/>         
+        <c:simple-property name="configurationFilesInclusionPatterns" required="true" readOnly="true"
+          default="/etc/crontab|etc/cron.d/*">
+          <c:description>A | delimited list of patterns of files to configure.</c:description>
+        </c:simple-property>
+        <c:simple-property name="configurationFilesExclusionPatterns" required="true" readOnly="true"
+            default="*.augnew|*.augsave|*.rpmsave|*.rpmnew|*~">
+          <c:description>A | delimited list of patterns of files to exclude from configuration.</c:description>
+        </c:simple-property>
       </plugin-configuration>
 
       <resource-configuration>

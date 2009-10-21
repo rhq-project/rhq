@@ -75,7 +75,7 @@ public class AugeasConfigurationDiscoveryComponent<T extends ResourceComponent<?
     protected DiscoveredResourceDetails createResourceDetails(ResourceDiscoveryContext<T> discoveryContext,
         Configuration pluginConfig) {
         ResourceType resourceType = discoveryContext.getResourceType();
-        String resourceKey = pluginConfig.getSimpleValue(AugeasConfigurationComponent.AUGEAS_MODULE_NAME_PROP, null);
+        String resourceKey = composeResourceKey(pluginConfig);
         DiscoveredResourceDetails resource = new DiscoveredResourceDetails(resourceType, resourceKey, resourceType
             .getName(), null, resourceType.getDescription(), pluginConfig, null);
         return resource;
@@ -118,5 +118,29 @@ public class AugeasConfigurationDiscoveryComponent<T extends ResourceComponent<?
                 throw new IllegalStateException("Configuration files inclusion patterns refer to a directory.");
             }
         }
+    }
+    
+    private String composeResourceKey(Configuration pluginConfiguration) {
+        PropertyList includeGlobsProp = pluginConfiguration.getList(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP);
+        PropertyList excludeGlobsProp = pluginConfiguration.getList(AugeasConfigurationComponent.EXCLUDE_GLOBS_PROP);
+        
+        StringBuilder bld = new StringBuilder();
+        
+        for (Property p : includeGlobsProp.getList()) {
+            PropertySimple include = (PropertySimple) p;
+            bld.append(include.getStringValue()).append(File.pathSeparatorChar);
+        }
+        
+        if (excludeGlobsProp != null && excludeGlobsProp.getList().size() > 0) {   
+            bld.append("---");
+            for (Property p : excludeGlobsProp.getList()) {
+                PropertySimple exclude = (PropertySimple) p;
+                bld.append(exclude.getStringValue()).append(File.pathSeparatorChar);
+            }
+        }
+        
+        bld.deleteCharAt(bld.length() - 1);
+        
+        return bld.toString();
     }
 }

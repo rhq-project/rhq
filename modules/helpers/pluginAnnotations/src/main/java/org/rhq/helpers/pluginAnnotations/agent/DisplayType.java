@@ -23,8 +23,8 @@
 package org.rhq.helpers.pluginAnnotations.agent;
 
 /**
- * RhqDisplayType.
- * 
+ * DisplayType.
+ *
  * @author Galder Zamarreño
  * @since 4.0
  */

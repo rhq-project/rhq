@@ -23,14 +23,14 @@
 package org.rhq.helpers.pluginAnnotations.agent;
 
 /**
- * RhqDataType.
- * 
+ * DataType.
+ *
  * @author Galder Zamarreño
  * @since 4.0
  */
 public enum DataType {
    MEASUREMENT, TRAIT, CALLTIME;
-   
+
    @Override
    public String toString() {
       return super.toString().toLowerCase();

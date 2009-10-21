@@ -23,14 +23,14 @@
 package org.rhq.helpers.pluginAnnotations.agent;
 
 /**
- * RhqUnits.
- * 
+ * Metric Units.
+ *
  * @author Galder Zamarreño
  * @since 4.0
  */
 public enum Units {
    NONE, MILLISECONDS, SECONDS, PERCENTAGE;
-   
+
    @Override
    public String toString() {
       return super.toString().toLowerCase();

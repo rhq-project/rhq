@@ -25,25 +25,6 @@
                               default="/files/etc/samba/smb.conf/target[.='global']"/>
        </plugin-configuration>
 
-       <!--
-       <metric property="NetworkStat.tcpInboundTotal" displayName="TCP Inbound Connections" displayType="summary"/>
-       <metric property="NetworkStat.tcpOutboundTotal" displayName="TCP Outbound Connections" displayType="summary"/>
-       <metric property="NetworkStat.allInboundTotal" displayName="All Inbound Connections" displayType="summary"/>
-       <metric property="NetworkStat.allOutboundTotal" displayName="All Outbound Connections" displayType="summary"/>
-       <metric property="NetworkStat.tcpEstablished" displayName="State ESTABLISHED"/>
-       <metric property="NetworkStat.tcpSynSent" displayName="State SYN_SENT"/>
-       <metric property="NetworkStat.tcpSynRecv" displayName="State SYN_RECV"/>
-       <metric property="NetworkStat.tcpFinWait1" displayName="State FIN_WAIT1"/>
-       <metric property="NetworkStat.tcpFinWait2" displayName="State FIN_WAIT2"/>
-       <metric property="NetworkStat.tcpTimeWait" displayName="State TIME_WAIT"/>
-       <metric property="NetworkStat.tcpClose" displayName="State CLOSE"/>
-       <metric property="NetworkStat.tcpCloseWait" displayName="State CLOSE_WAIT"/>
-       <metric property="NetworkStat.tcpLastAck" displayName="State LAST_ACK"/>
-       <metric property="NetworkStat.tcpListen" displayName="State LISTEN"/>
-       <metric property="NetworkStat.tcpClosing" displayName="State CLOSING"/>
-       <metric property="NetworkStat.tcpIdle" displayName="State IDLE"/>
-       <metric property="NetworkStat.tcpBound" displayName="State BOUND"/>
-       -->
       <resource-configuration>
         <c:group name="Basic Configurations">
             
@@ -86,10 +67,6 @@
 
                <c:simple-property name="resourceConfigurationRootNode" required="true" readOnly="true"/>
            </plugin-configuration>
-
-          <!--
-           <metric property="connections" description="The count of active connections to this share"/>
-          -->
 
            <resource-configuration>
                <c:simple-property name="path" required="true"/>

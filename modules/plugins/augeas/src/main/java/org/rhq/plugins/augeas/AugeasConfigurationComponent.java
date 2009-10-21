@@ -65,7 +65,7 @@ public class AugeasConfigurationComponent implements ResourceComponent<PlatformC
     public static final String AUGEAS_MODULE_NAME_PROP = "augeasModuleName";
 
     private static final boolean IS_WINDOWS = (File.separatorChar == '\\');
-    private static final String AUGEAS_LOAD_PATH = "/usr/local/share/augeas/lenses";
+    private static final String AUGEAS_LOAD_PATH = "/usr/share/augeas/lenses";
     private static final String AUGEAS_ROOT_PATH = "/";
 
     private final Log log = LogFactory.getLog(this.getClass());
@@ -304,7 +304,8 @@ public class AugeasConfigurationComponent implements ResourceComponent<PlatformC
             propValue.deleteCharAt(propValue.length() - 1);
             value = propValue.toString();
         } else {
-            value = augeas.get(node.getPath());
+            value = augeas.get(node.getPath().replaceAll(" ", "\\\\ "));
+            //value = augeas.get(node.getPath());
         }
         return new PropertySimple(propDefSimple.getName(), value);
     }

@@ -645,7 +645,7 @@ public class ContentProviderManager {
             ifacesList.add(PackageSource.class);
         }
 
-        Class<?>[] ifaces = (Class<?>[]) ifacesList.toArray();
+        Class<?>[] ifaces = ifacesList.toArray(new Class<?>[ifacesList.size()]);
         
         return (ContentProvider) Proxy.newProxyInstance(classLoader, ifaces, handler);
     }

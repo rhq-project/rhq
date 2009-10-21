@@ -29,6 +29,7 @@ import java.util.Arrays;
 
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelFamilyType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.RhnComm;
 import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.RhnDownloader;
 import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetails;
@@ -140,6 +141,26 @@ public class RHNHelper {
         }
 
         return allPackages;
+    }
+
+    /**
+     * Get a list of all Syncable Channels based on entitled channel families
+     * @return A list of channel labels
+     * @throws IOException on systemid reads
+     * @throws XmlRpcException on xmlrpc faults
+     */
+    public ArrayList getSyncableChannels() throws IOException, XmlRpcException {
+        ArrayList<String> allchannels = new ArrayList();
+        List<RhnChannelFamilyType> cfts = rhndata.getChannelFamilies(this.systemid);
+        for (RhnChannelFamilyType cf : cfts) {
+             String channeldata = cf.getChannelLabels();
+             String[] clabels  = channeldata.split(" ");
+             if (clabels.length > 1) {
+                allchannels.addAll(Arrays.asList(clabels));
+            }
+        }
+
+        return allchannels;
     }
 
     /**

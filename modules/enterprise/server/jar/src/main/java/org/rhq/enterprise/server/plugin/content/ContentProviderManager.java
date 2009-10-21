@@ -209,8 +209,11 @@ public class ContentProviderManager {
                         repo = new Repo(name);
                         repo.setDescription(createMe.getDescription());
 
-                        RepoGroup group = repoManager.getRepoGroupByName(createMe.getRepoGroup());
-                        repo.addRepoGroup(group);
+                        String createMeGroup = createMe.getRepoGroup();
+                        if (createMeGroup != null) {
+                            RepoGroup group = repoManager.getRepoGroupByName(createMeGroup);
+                            repo.addRepoGroup(group);
+                        }
 
                         repo = repoManager.createRepo(overlord, repo);
                     }

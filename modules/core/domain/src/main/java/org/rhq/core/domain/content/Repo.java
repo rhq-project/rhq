@@ -129,7 +129,7 @@ public class Repo implements Serializable {
     @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY)
     private Set<RepoPackageVersion> repoPackageVersions;
 
-    @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<RepoRepoGroup> repoRepoGroups;
     
     @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY)

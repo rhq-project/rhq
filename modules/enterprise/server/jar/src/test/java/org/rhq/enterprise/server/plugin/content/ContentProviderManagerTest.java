@@ -22,37 +22,44 @@
 */
 package org.rhq.enterprise.server.plugin.content;
 
-import java.io.InputStream;
-import java.util.Collection;
-import java.util.List;
-import java.util.ArrayList;
-import javax.persistence.EntityManager;
-import javax.transaction.TransactionManager;
 import org.rhq.core.clientapi.server.plugin.content.ContentProvider;
 import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetails;
 import org.rhq.core.clientapi.server.plugin.content.PackageSource;
 import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
-import org.rhq.core.clientapi.server.plugin.content.RepoImportReport;
-import org.rhq.core.clientapi.server.plugin.content.RepoSource;
 import org.rhq.core.clientapi.server.plugin.content.RepoDetails;
 import org.rhq.core.clientapi.server.plugin.content.RepoGroupDetails;
+import org.rhq.core.clientapi.server.plugin.content.RepoImportReport;
+import org.rhq.core.clientapi.server.plugin.content.RepoSource;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceType;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.RepoGroup;
+import org.rhq.core.domain.content.RepoRepoGroup;
+import org.rhq.core.domain.criteria.RepoCriteria;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestContentSourcePluginService;
 import org.rhq.enterprise.server.util.LookupUtil;
-import org.testng.annotations.Test;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
-/** @author Jason Dobies */
+import javax.persistence.EntityManager;
+import javax.transaction.TransactionManager;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+
+/**
+ * @author Jason Dobies
+ */
 public class ContentProviderManagerTest extends AbstractEJB3Test {
 
     // The following variables need to be cleaned up at the end of the test
@@ -132,6 +139,8 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
     public void synchronizeContentSource() throws Exception {
         // Setup
         RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
+        SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
+        Subject overlord = subjectManager.getOverlord();
 
         TestContentProviderManager providerManager = new TestContentProviderManager();
 
@@ -147,19 +156,40 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
         // Verify Repos
         List<Repo> retrievedRepos;
 
+        // -> Simple Repo
         retrievedRepos = repoManager.getRepoByName("testRepo1");
         assert retrievedRepos.size() == 1;
         reposToDelete.add(retrievedRepos.get(0).getId());
 
+        // -> Repo in a group
         retrievedRepos = repoManager.getRepoByName("testRepo2");
         assert retrievedRepos.size() == 1;
         reposToDelete.add(retrievedRepos.get(0).getId());
 
-        retrievedRepos= repoManager.getRepoByName("testRepoFoo");
+        Repo repoInGroup = retrievedRepos.get(0);
+
+        RepoCriteria findWithRepoGroup = new RepoCriteria();
+        findWithRepoGroup.fetchRepoRepoGroups(true);
+        findWithRepoGroup.addFilterId(repoInGroup.getId());
+
+        PageList<Repo> repoPageList = repoManager.findReposByCriteria(overlord, findWithRepoGroup);
+        repoInGroup = repoPageList.get(0);
+
+        Set<RepoRepoGroup> repoGroups = repoInGroup.getRepoRepoGroups();
+        assert repoGroups.size() == 1;
+
+        RepoRepoGroup repoRepoGroup = repoGroups.iterator().next();
+        assert repoRepoGroup.getRepoRepoGroupPK().getRepoGroup().getName().equals("testRepoGroup");
+        assert repoRepoGroup.getRepoRepoGroupPK().getRepo().getName().equals("testRepo2");
+
+        // -> Non-existent repo
+        retrievedRepos = repoManager.getRepoByName("testRepoFoo");
         assert retrievedRepos.size() == 0;
     }
 
-    /** Mock implementation of a content provider that will return known data. */
+    /**
+     * Mock implementation of a content provider that will return known data.
+     */
     private class TestContentProvider implements ContentProvider, PackageSource, RepoSource {
 
         public RepoImportReport importRepos() throws Exception {
@@ -169,12 +199,19 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
             RepoGroupDetails group1 = new RepoGroupDetails("testRepoGroup", "family");
             report.addRepoGroup(group1);
 
+            // Simple repo
             RepoDetails repo1 = new RepoDetails("testRepo1");
+            repo1.setDescription("First test repo");
             report.addRepo(repo1);
 
+            // Repo belonging to a group that was created in the sync
             RepoDetails repo2 = new RepoDetails("testRepo2");
+            repo2.setRepoGroup("testRepoGroup");
             report.addRepo(repo2);
 
+            // Repo with a parent repo created in this sync
+            RepoDetails repo3 = new RepoDetails("testRepo3");
+            repo3.setParentRepoName("testRepo1");
 
             return report;
         }
@@ -205,8 +242,8 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
     }
 
     /**
-     * Stubs out the methods in {@link ContentProviderManager} that would go out and expect a fully
-     * packaged plugin. Instead, use the mock implementation provided above.
+     * Stubs out the methods in {@link ContentProviderManager} that would go out and expect a fully packaged plugin.
+     * Instead, use the mock implementation provided above.
      */
     private class TestContentProviderManager extends ContentProviderManager {
 

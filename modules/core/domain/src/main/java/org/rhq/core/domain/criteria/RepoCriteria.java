@@ -39,7 +39,7 @@ import org.rhq.core.domain.util.PageOrdering;
 public class RepoCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 
-    private String filterId;
+    private Integer filterId;
     private String filterName;
     private String filterDescription;
     private List<Integer> filterResourceIds; // needs overrides
@@ -47,6 +47,7 @@ public class RepoCriteria extends Criteria {
     private boolean fetchResourceRepos;
     private boolean fetchRepoContentSources;
     private boolean fetchRepoPackageVersions;
+    private boolean fetchRepoRepoGroups;
 
     private PageOrdering sortName;
 
@@ -56,7 +57,7 @@ public class RepoCriteria extends Criteria {
         filterOverrides.put("resourceIds", "resourceRepos.resource.id IN ( ? )");
     }
 
-    public void addFilterId(String filterId) {
+    public void addFilterId(Integer filterId) {
         this.filterId = filterId;
     }
 
@@ -82,6 +83,10 @@ public class RepoCriteria extends Criteria {
 
     public void fetchRepoPackageVersions(boolean fetchRepoPackageVersions) {
         this.fetchRepoPackageVersions = fetchRepoPackageVersions;
+    }
+
+    public void fetchRepoRepoGroups(boolean fetchRepoRepoGroups) {
+        this.fetchRepoRepoGroups = fetchRepoRepoGroups;
     }
 
     public void addSortName(PageOrdering sortName) {

@@ -63,6 +63,7 @@ import org.rhq.plugins.augeas.helper.Glob;
 public class AugeasConfigurationComponent<T extends ResourceComponent<?>> implements ResourceComponent<T>, ConfigurationFacet {
     public static final String INCLUDE_GLOBS_PROP = "includeConfigurationFilesPatterns";
     public static final String EXCLUDE_GLOBS_PROP = "excludeConfigurationFilesPatterns";
+    public static final String GLOB_PATTERN_PROP = "pattern";
     public static final String RESOURCE_CONFIGURATION_ROOT_NODE_PROP = "resourceConfigurationRootNode";
     public static final String AUGEAS_MODULE_NAME_PROP = "augeasModuleName";
 

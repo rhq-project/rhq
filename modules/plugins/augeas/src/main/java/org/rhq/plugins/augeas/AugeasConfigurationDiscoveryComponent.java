@@ -51,10 +51,17 @@ public class AugeasConfigurationDiscoveryComponent<T extends ResourceComponent<?
         Exception {
         Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>(1);
 
-        checkConfigurationFiles(discoveryContext.getDefaultPluginConfiguration());
-
+        List<String> includes = determineIncludeGlobs(discoveryContext);
+        List<String> excludes = determineExcludeGlobs(discoveryContext);
+        
         Configuration pluginConfig = discoveryContext.getDefaultPluginConfiguration();
-
+        PropertyList includeProps = getGlobList(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP, AugeasConfigurationComponent.GLOB_PATTERN_PROP, includes);
+        PropertyList excludeProps = getGlobList(AugeasConfigurationComponent.EXCLUDE_GLOBS_PROP, AugeasConfigurationComponent.GLOB_PATTERN_PROP, excludes);
+        pluginConfig.put(includeProps);
+        pluginConfig.put(excludeProps);
+        
+        checkFiles(pluginConfig);
+        
         DiscoveredResourceDetails resource = createResourceDetails(discoveryContext, pluginConfig);
         discoveredResources.add(resource);
         log.debug("Discovered " + discoveryContext.getResourceType().getName() + " Resource with key ["
@@ -66,7 +73,7 @@ public class AugeasConfigurationDiscoveryComponent<T extends ResourceComponent<?
     public DiscoveredResourceDetails discoverResource(Configuration pluginConfig,
         ResourceDiscoveryContext<T> discoveryContext) throws InvalidPluginConfigurationException {
         
-        checkConfigurationFiles(pluginConfig);
+        checkFiles(pluginConfig);
 
         DiscoveredResourceDetails resource = createResourceDetails(discoveryContext, pluginConfig);
         return resource;
@@ -81,7 +88,28 @@ public class AugeasConfigurationDiscoveryComponent<T extends ResourceComponent<?
         return resource;
     }
     
-    private void checkConfigurationFiles(Configuration pluginConfiguration) {
+    protected List<String> determineIncludeGlobs(ResourceDiscoveryContext<T> discoveryContext) {
+        Configuration pluginConfiguration = discoveryContext.getDefaultPluginConfiguration();
+        PropertyList includeGlobsProp = pluginConfiguration.getList(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP);
+       
+        List<String> ret = getGlobList(includeGlobsProp);
+        if (ret == null || ret.size() == 0) {
+            throw new IllegalStateException("Expecting at least once inclusion pattern for configuration files.");            
+        }
+        
+        return ret;
+    }
+    
+    protected List<String> determineExcludeGlobs(ResourceDiscoveryContext<T> discoveryContext) {
+        Configuration pluginConfiguration = discoveryContext.getDefaultPluginConfiguration();
+        PropertyList excludeGlobsProp = pluginConfiguration.getList(AugeasConfigurationComponent.EXCLUDE_GLOBS_PROP);
+       
+        List<String> ret = getGlobList(excludeGlobsProp);
+        
+        return ret;
+    }
+
+    private void checkFiles(Configuration pluginConfiguration) {
         PropertyList includeGlobsProp = pluginConfiguration.getList(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP);
         PropertyList excludeGlobsProp = pluginConfiguration.getList(AugeasConfigurationComponent.EXCLUDE_GLOBS_PROP);
         
@@ -142,5 +170,26 @@ public class AugeasConfigurationDiscoveryComponent<T extends ResourceComponent<?
         bld.deleteCharAt(bld.length() - 1);
         
         return bld.toString();
+    }
+   
+    private PropertyList getGlobList(String name, String simpleName, List<String> simples) {
+        PropertyList ret = new PropertyList(name);
+        if (simples != null) {
+            for(String s : simples) {
+                PropertySimple simple = new PropertySimple(simpleName, s);
+                ret.add(simple);
+            }
+        }
+        return ret;
+    }
+    
+    private List<String> getGlobList(PropertyList list) {
+        if (list == null) return null;
+        ArrayList<String> ret = new ArrayList<String>();
+        for(Property p : list.getList()) {
+            ret.add(((PropertySimple)p).getStringValue());
+        }
+        
+        return ret;
     }
 }

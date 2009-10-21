@@ -43,8 +43,8 @@ import javax.persistence.Table;
  */
 
 @Entity
-@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_REPO_RELATIONSHIP_TYPE_ID_SEQ")
-@Table(name = "RHQ_REPO_RELATIONSHIP_TYPE")
+@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_REPO_RELATION_TYPE_ID_SEQ")
+@Table(name = "RHQ_REPO_RELATION_TYPE")
 public class RepoRelationshipType implements Serializable {
 
     private static final long serialVersionUID = 1L;

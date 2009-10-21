@@ -44,7 +44,7 @@ import javax.persistence.Table;
 
 @Entity
 @IdClass(RepoRepoRelationshipPK.class)
-@Table(name = "RHQ_REPO_REPO_RELATIONSHIP_MAP")
+@Table(name = "RHQ_REPO_REPO_RELATION_MAP")
 public class RepoRepoRelationship implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -61,7 +61,7 @@ public class RepoRepoRelationship implements Serializable {
 
     @Id
     @ManyToOne
-    @JoinColumn(name = "REPO_RELATIONSHIP_ID", referencedColumnName = "ID", nullable = false, insertable = false, updatable = false)
+    @JoinColumn(name = "REPO_RELATION_ID", referencedColumnName = "ID", nullable = false, insertable = false, updatable = false)
     private RepoRelationship repoRelationship;
 
     @Column(name = "CTIME", nullable = false)

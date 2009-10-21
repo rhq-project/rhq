@@ -31,27 +31,7 @@
         </index>
     </table>
 
-
-    <table name="RHQ_REPO_RELATIONSHIP_TYPE">
-        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
-        <column name="NAME" size="200" type="VARCHAR2" required="true"/>
-        <column name="DESCRIPTION" size="500" type="VARCHAR2" required="false"/>
-    </table>
-
-
-    <table name="RHQ_REPO_RELATIONSHIP">
-        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
-        
-        <column name="RELATED_REPO_ID" type="INTEGER" references="RHQ_RELATED_REPO" required="true"/>
-
-        <column name="REPO_RELATIONSHIP_TYPE_ID" type="INTEGER" references="RHQ_REPO_RELATIONSHIP_TYPE" required="true"/>
-        
-        <index name="RHQ_REPO_RELATIONSHIP_IDX" unique="true">
-            <field ref="NAME"/>
-            <field ref="REPO_RELATIONSHIP_TYPE_ID"/>
-        </index>
-    </table>
-
+    
     <table name="RHQ_CONTENT_SOURCE_TYPE">
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
         <column name="NAME" size="200" type="VARCHAR2" required="true"/>
@@ -103,6 +83,28 @@
             <field ref="NAME"/>
         </index>
     </table>
+
+
+    <table name="RHQ_REPO_RELATION_TYPE">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="NAME" size="200" type="VARCHAR2" required="true"/>
+        <column name="DESCRIPTION" size="500" type="VARCHAR2" required="false"/>
+    </table>
+
+
+    <table name="RHQ_REPO_RELATION">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        
+        <column name="RELATED_REPO_ID" type="INTEGER" references="RHQ_REPO" required="true"/>
+
+        <column name="REPO_RELATION_TYPE_ID" type="INTEGER" references="RHQ_REPO_RELATION_TYPE" required="true"/>
+        
+        <index name="RHQ_REPO_RELATION_IDX" unique="true">
+          <field ref="REPO_RELATION_TYPE_ID"/>
+        </index>
+    </table>
+
+
 
     <table name="RHQ_PACKAGE_TYPE">
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>

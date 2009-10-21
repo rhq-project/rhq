@@ -47,8 +47,8 @@ import javax.persistence.Table;
  */
 
 @Entity
-@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_REPO_RELATIONSHIP_ID_SEQ")
-@Table(name = "RHQ_REPO_RELATIONSHIP")
+@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_REPO_RELATION_ID_SEQ")
+@Table(name = "RHQ_REPO_RELATION")
 public class RepoRelationship implements Serializable {
     // Constants  --------------------------------------------
 
@@ -65,7 +65,7 @@ public class RepoRelationship implements Serializable {
     @ManyToOne
     private Repo relatedRepo;
 
-    @JoinColumn(name = "REPO_RELATIONSHIP_TYPE_ID", referencedColumnName = "ID", nullable = false)
+    @JoinColumn(name = "REPO_RELATION_TYPE_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne
     private RepoRelationshipType repoRelationshipType;
 

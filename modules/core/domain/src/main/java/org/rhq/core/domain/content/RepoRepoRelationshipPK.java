@@ -46,7 +46,7 @@ public class RepoRepoRelationshipPK implements Serializable {
     @ManyToOne
     private Repo repo;
 
-    @JoinColumn(name = "REPO_RELATIONSHIP_ID", referencedColumnName = "ID", nullable = false)
+    @JoinColumn(name = "REPO_RELATION_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne
     private RepoRelationship repoRelationship;
 

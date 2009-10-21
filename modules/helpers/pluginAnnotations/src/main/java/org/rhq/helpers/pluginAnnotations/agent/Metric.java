@@ -24,11 +24,20 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation that denotes an Operation that can be executed
+ * Annotation to denote a metric that should be measured
+ *
  * @author Heiko W. Rupp
+ * @author Galder Zamarre–o
  */
-@Retention(RetentionPolicy.CLASS)
-@Target(ElementType.METHOD)
-public @interface RhqOperation {
-    String name();
-}
+@Retention(RetentionPolicy.RUNTIME)
+@Target( { ElementType.FIELD, ElementType.METHOD })
+public @interface Metric {
+   String property() default "";
+   String displayName() default "";
+   String description() default "";
+   long defaultInterval() default 120000000L; // 20 min
+   DisplayType displayType() default DisplayType.DETAIL;
+   DataType dataType() default DataType.MEASUREMENT;
+   Units units() default Units.NONE;
+   MeasurementType measurementType() default MeasurementType.DYNAMIC;
+ }

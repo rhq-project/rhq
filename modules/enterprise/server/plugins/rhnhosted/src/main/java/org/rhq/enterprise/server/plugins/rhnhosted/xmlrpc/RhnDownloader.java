@@ -13,13 +13,13 @@ import org.apache.xmlrpc.XmlRpcException;
 public class RhnDownloader {
 
     protected XmlRpcExecutor satHandler;
-    protected String serverUrl = "http://satellite.rhn.redhat.com";
+    protected String serverUrl;
     protected String SAT_HANDLER = "/SAT";
-    protected String XML_DUMP_VERSION = "3.3";
+    //protected String XML_DUMP_VERSION = "3.3";
 
     public RhnDownloader(String serverUrlIn) {
-        satHandler = XmlRpcExecutorFactory.getClient(serverUrl + SAT_HANDLER);
         serverUrl = serverUrlIn;
+        satHandler = XmlRpcExecutorFactory.getClient(serverUrl + SAT_HANDLER);
     }
 
     /**
@@ -90,7 +90,6 @@ public class RhnDownloader {
     public InputStream getKickstartTreeFile(String systemId, String channelName, String ksTreeLabel, String ksFilePath)
         throws IOException, XmlRpcException {
 
-        String baseUrl = "http://satellite.rhn.redhat.com";
         String extra = "/SAT/$RHN/" + channelName + "/getKickstartFile/" + ksTreeLabel + "/" + ksFilePath;
         URL url = new URL(serverUrl + extra);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();

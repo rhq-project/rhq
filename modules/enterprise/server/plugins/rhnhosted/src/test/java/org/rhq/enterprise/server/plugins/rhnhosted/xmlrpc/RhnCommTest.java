@@ -2,6 +2,7 @@ package org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc;
 
 import java.io.File;
 import java.io.InputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,6 +12,7 @@ import junit.framework.TestSuite;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.xmlrpc.XmlRpcException;
 
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelFamilyType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelType;
@@ -23,7 +25,10 @@ import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnProductNameType;
 
 public class RhnCommTest extends TestCase {
 
+    // Assumption is that the systemid file used is registered to RHN Hosted and it is a registered satellite
     public String[] systemIdPath = { "./src/test/resources/systemid", "/etc/sysconfig/rhn/systemid" };
+    public String badSystemIdPath = "./src/test/resources/systemid-BAD-ID";
+    public String serverUrl = "http://satellite.rhn.redhat.com";
 
     public RhnCommTest(String testName) {
         super(testName);
@@ -34,25 +39,62 @@ public class RhnCommTest extends TestCase {
     }
 
     protected String getSystemId() throws Exception {
-        boolean exists = false;
-        for (String path : systemIdPath) {
-            System.out.println("checking: " + path);
-            if (new File(path).exists()) {
-                return FileUtils.readFileToString(new File(path));
+        for (String path: systemIdPath) {
+            String data = getSystemId(path);
+            if (!StringUtils.isBlank(data)) {
+                return data;
             }
         }
         return "";
     }
 
+    protected String getSystemId(String path) throws Exception {
+        if (new File(path).exists()) {
+            return FileUtils.readFileToString(new File(path));
+        }
+        return "";
+    }
+
     protected RhnComm getRhnComm() {
-        RhnComm comm = new RhnComm("http://satellite.rhn.redhat.com");
+        RhnComm comm = new RhnComm(serverUrl);
         return comm;
     }
 
     public void testCheckAuth() throws Exception {
-        RhnDownloader downloader = new RhnDownloader("http://satellite.rhn.redhat.com");
+        RhnDownloader downloader = new RhnDownloader(serverUrl);
         assertTrue(downloader.checkAuth(getSystemId()));
     }
+
+    public void testCheckAuth_withBadSystemId() throws Exception {
+        boolean success = false;
+        RhnDownloader downloader = new RhnDownloader(serverUrl);
+        try {
+            boolean result = downloader.checkAuth(getSystemId(badSystemIdPath));
+            assertTrue(false);
+        }
+        catch (XmlRpcException e) {
+            assertTrue(e.getMessage().contains("Invalid System Credentials"));
+            assertTrue(e.code == -9);
+            success = true;
+        }
+        assertTrue(success);
+    }
+
+    public void testCheckAuth_withBadURL() throws Exception {
+        boolean success = false;
+        RhnDownloader downloader = new RhnDownloader("http://badurl.example.com/BAD");
+        try {
+            boolean result = downloader.checkAuth(getSystemId());
+            assertTrue(false);
+        }
+        catch (XmlRpcException e) {
+            assertTrue(e.getMessage().contains("Failed to read server's response"));
+            assertTrue(e.code == 0);
+            success = true;
+        }
+        assertTrue(success);
+    }
+
 
     public void testGetProductNames() throws Exception {
         boolean success = false;
@@ -203,10 +245,30 @@ public class RhnCommTest extends TestCase {
         assertTrue(success);
     }
 
+    public void testGetPackageMetada_withBadSystemId() throws Exception {
+        boolean success = false;
+        try {
+            RhnComm comm = getRhnComm();
+            List<String> reqPackages = new ArrayList<String>();
+            reqPackages.add("rhn-package-386981");
+            reqPackages.add("rhn-package-386982");
+            reqPackages.add("rhn-package-386983");
+            reqPackages.add("rhn-package-386984");
+            List<RhnPackageType> pkgs = comm.getPackageMetadata(getSystemId(badSystemIdPath), reqPackages);
+            assertTrue(false);
+        } catch (XmlRpcException e) {
+            assertTrue(e.getMessage().contains("Invalid System Credentials"));
+            assertTrue(e.code == -9);
+            success = true;
+        }
+        assertTrue(success);
+    }
+
+
     public void testGetRPM() throws Exception {
         boolean success = false;
         try {
-            RhnDownloader comm = new RhnDownloader("http://satellite.rhn.redhat.com");
+            RhnDownloader comm = new RhnDownloader(serverUrl);
             String channelName = "rhel-x86_64-server-5";
             String rpmName = "openhpi-2.4.1-6.el5.1.x86_64.rpm";
             String saveFilePath = "./target/" + rpmName;
@@ -220,10 +282,27 @@ public class RhnCommTest extends TestCase {
         assertTrue(success);
     }
 
+    public void testGetRPM_withBadSystemId() throws Exception {
+        boolean success = false;
+        try {
+            RhnDownloader comm = new RhnDownloader(serverUrl);
+            String channelName = "rhel-x86_64-server-5";
+            String rpmName = "openhpi-2.4.1-6.el5.1.x86_64.rpm";
+            String saveFilePath = "./target/" + rpmName;
+            assertTrue(comm.getRPM(getSystemId(badSystemIdPath), channelName, rpmName, saveFilePath));
+            assertTrue(false);
+        } catch (XmlRpcException e) {
+            assertTrue(e.getMessage().contains("Invalid System Credentials"));
+            assertTrue(e.code == -9);
+            success = true;
+        }
+        assertTrue(success);
+    }
+
     public void testGetKickstartTree() throws Exception {
         boolean success = false;
         try {
-            RhnComm comm = new RhnComm("http://satellite.rhn.redhat.com");
+            RhnComm comm = new RhnComm(serverUrl);
             String channelName = "rhel-i386-server-5";
             String ksTreeLabel = "ks-rhel-i386-server-5";
             List<String> reqLabels = new ArrayList<String>();
@@ -240,7 +319,7 @@ public class RhnCommTest extends TestCase {
             String ksRelativePath = f.getRelativePath();
             assertFalse(StringUtils.isBlank(ksRelativePath));
             System.err.println("fetching ks file: " + f.getRelativePath());
-            RhnDownloader downloader = new RhnDownloader("http://satellite.rhn.redhat.com");
+            RhnDownloader downloader = new RhnDownloader(serverUrl);
             InputStream in = downloader.getKickstartTreeFile(getSystemId(), channelName, ksTreeLabel, ksRelativePath);
             assertTrue(in != null);
             in.close();

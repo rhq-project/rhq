@@ -28,9 +28,12 @@ import org.apache.xmlrpc.common.XmlRpcStreamRequestConfig;
 import org.apache.xmlrpc.parser.XmlRpcResponseParser;
 import org.apache.xmlrpc.serializer.XmlRpcWriter;
 import org.apache.xmlrpc.util.SAXParsers;
+import org.apache.commons.logging.LogFactory;
+import org.apache.commons.logging.Log;
 
 public class CustomReqPropTransport extends XmlRpcSun15HttpTransport {
 
+    private final Log log = LogFactory.getLog(CustomReqPropTransport.class);
     protected Map<String,String> reqProps;
 
     public CustomReqPropTransport(XmlRpcClient pClient) {
@@ -87,6 +90,7 @@ public class CustomReqPropTransport extends XmlRpcSun15HttpTransport {
         ByteArrayInputStream str = new ByteArrayInputStream(data.getBytes());
         return super.readResponse(pConfig, str);
         */
+
         return super.readResponse(pConfig, pStream);
     }
 }

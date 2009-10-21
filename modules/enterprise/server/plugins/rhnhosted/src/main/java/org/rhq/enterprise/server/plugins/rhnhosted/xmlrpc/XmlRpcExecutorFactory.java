@@ -69,7 +69,6 @@ public class XmlRpcExecutorFactory {
         CustomReqPropTransportFactory transportFactory = new CustomReqPropTransportFactory(client);
         transportFactory.setRequestProperties(getRequestProperties());
         client.setTransportFactory(transportFactory);
-        client.setTransportFactory(transportFactory);
 
         return new ApacheXmlRpcExecutor(client);
     }

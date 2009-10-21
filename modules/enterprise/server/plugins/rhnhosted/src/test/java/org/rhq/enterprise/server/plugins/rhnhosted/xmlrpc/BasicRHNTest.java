@@ -19,6 +19,7 @@ import org.apache.commons.lang.StringUtils;
 
 import org.apache.xmlrpc.client.XmlRpcClient;
 import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
+import org.apache.xmlrpc.XmlRpcException;
 
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelFamilyType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelType;
@@ -38,6 +39,8 @@ import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.RhnJaxbTransportFactor
 public class BasicRHNTest extends TestCase
 {
     public String systemIdPath = "./src/test/resources/systemid";
+    public String badSystemIdPath = "./src/test/resources/systemid-BAD-ID";
+
     protected boolean debugDumpFile = true;
 
     public BasicRHNTest( String testName )
@@ -60,10 +63,14 @@ public class BasicRHNTest extends TestCase
     }
 
     protected String getSystemId() throws Exception {
-        if (new File(systemIdPath).exists() == false) {
+        return getSystemId(systemIdPath);
+    }
+
+    protected String getSystemId(String path) throws Exception {
+        if (new File(path).exists() == false) {
             return "";
         }
-        return FileUtils.readFileToString(new File(systemIdPath));
+        return FileUtils.readFileToString(new File(path));
     }
 
     /**
@@ -148,6 +155,37 @@ public class BasicRHNTest extends TestCase
         assertTrue(success);
     }
 
+    public void testAuth_BadSystemId() throws Exception
+    {
+        boolean success = false;
+
+        try {
+            String systemid = getSystemId(badSystemIdPath);
+            if (StringUtils.isBlank(systemid)) {
+                System.out.println("Skipping test since systemid is not readable");
+                return;
+            }
+            XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
+            config.setServerURL(new URL("http://satellite.rhn.redhat.com/SAT"));
+            XmlRpcClient client = new XmlRpcClient();
+            client.setConfig(config);
+            CustomReqPropTransportFactory transportFactory = new CustomReqPropTransportFactory(client);
+            transportFactory.setRequestProperties(getRequestProperties());
+            client.setTransportFactory(transportFactory);
+
+            Object[] params = new Object[]{systemid};
+            Integer result = (Integer) client.execute("authentication.check", params);
+            assertTrue(false); // We shouldn't reach here, as an exception should be thrown
+        }
+        catch (XmlRpcException e) {
+            success = true;
+            assertTrue(e.getMessage().contains("Invalid System Credentials"));
+            assertTrue(e.code == -9);
+        }
+        assertTrue(success);
+    }
+
+
     public void testDumpProductNames() throws Exception
     {
         boolean success = true;
@@ -187,6 +225,43 @@ public class BasicRHNTest extends TestCase
         assertTrue(success);
     }
 
+    public void testJaxbCallWithBadSystemId() throws Exception
+    {
+        // Point of this test is to use a systemid which is not valid
+        // We want to see an exception thrown from the xmlrpc code with a proper
+        // message and error code
+        boolean success = false;
+
+        try {
+            String systemid = getSystemId(badSystemIdPath);
+            //String systemid = getSystemId();
+            if (StringUtils.isBlank(systemid)) {
+                System.out.println("Skipping test since systemid is not readable");
+                return;
+            }
+
+            XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
+            config.setServerURL(new URL("http://satellite.rhn.redhat.com/SAT-DUMP"));
+            XmlRpcClient client = new XmlRpcClient();
+            client.setConfig(config);
+            RhnJaxbTransportFactory transportFactory = new RhnJaxbTransportFactory(client);
+            transportFactory.setRequestProperties(getRequestProperties());
+            transportFactory.setJaxbDomain("org.rhq.enterprise.server.plugins.rhnhosted.xml");
+            transportFactory.setDumpMessageToFile(debugDumpFile);
+            transportFactory.setDumpFilePath("/tmp/sample-rhnhosted-dump.product_names.xml");
+            client.setTransportFactory(transportFactory);
+
+            Object[] params = new Object[]{systemid};
+            JAXBElement<RhnSatelliteType> result =  (JAXBElement) client.execute("dump.product_names", params);
+            assertTrue(false); //We should never get here, an exception should be thrown
+        }
+        catch (XmlRpcException e) {
+            assertTrue(e.getMessage().contains("Invalid System Credentials"));
+            assertTrue(e.code == -9);
+            success = true;
+        }
+        assertTrue(success);
+    }
     public void testDumpChannelFamilies() throws Exception
     {
         boolean success = true;

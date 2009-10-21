@@ -39,6 +39,7 @@ import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.CascadeType;
 
 import org.rhq.core.domain.resource.Resource;
 
@@ -122,13 +123,13 @@ public class Repo implements Serializable {
     @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY)
     private Set<ResourceRepo> resourceRepos;
 
-    @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<RepoContentSource> repoContentSources;
 
     @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY)
     private Set<RepoPackageVersion> repoPackageVersions;
 
-    @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private Set<RepoRepoGroup> repoRepoGroups;
     
     @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY)

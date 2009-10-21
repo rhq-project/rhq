@@ -443,6 +443,15 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public ContentSource simpleCreateContentSource(Subject subject, ContentSource contentSource)
+        throws ContentSourceException {
+        validateContentSource(contentSource);
+        contentSource.setSyncResults(new ArrayList<ContentSourceSyncResults>());
+        entityManager.persist(contentSource);
+        return contentSource;
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
     public ContentSource updateContentSource(Subject subject, ContentSource contentSource)
         throws ContentSourceException {
 

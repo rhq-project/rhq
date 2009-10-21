@@ -135,7 +135,7 @@ public class ContentSource implements Serializable {
     // latest appears first, oldest last
     private List<ContentSourceSyncResults> syncResults;
 
-    @OneToMany(mappedBy = "contentSource", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "contentSource", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private Set<RepoContentSource> repoContentSources;
 
     // Constructor

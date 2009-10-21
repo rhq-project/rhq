@@ -30,6 +30,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.ArrayList;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -142,7 +143,7 @@ public class ContentProviderManager {
             // We can come back and revisit if we need more fine-grained locking.
             synchronized (synchronizeContentSourceLock) {
                 progress.append(new Date()).append(": ");
-                progress.append("Start synchronization of content source [").append(contentSource.getName()).append("]");
+                progress.append("Start synchronization of content provider [").append(contentSource.getName()).append("]");
                 progress.append('\n');
                 progress.append(new Date()).append(": ");
                 progress.append("Getting currently known list of content source packages...");
@@ -161,8 +162,12 @@ public class ContentProviderManager {
                     + "] is already currently being synchronized, this sync request will be ignored");
                 return false;
             }
+
             // If the provider is capable of syncing repos, do that call first
             if (provider instanceof RepoSource) {
+                progress.append(new Date()).append(": ");
+                progress.append("Asking content provider for repositories to import...");
+
                 RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
                 RepoSource repoSource = (RepoSource) provider;
 
@@ -188,6 +193,7 @@ public class ContentProviderManager {
                         repoManager.createRepoGroup(overlord, existingGroup);
                     }
                 }
+                progress.append("Number of repo groups imported: ").append(repoGroups.size());
 
                 // Once the groups are in the system, import any repos that were added
                 List<RepoDetails> repos = report.getRepos();
@@ -220,6 +226,8 @@ public class ContentProviderManager {
 
                 log.info("importRepos: [" + contentSource.getName() + "]: report has been merged ("
                     + (System.currentTimeMillis() - start) + ")ms");
+
+                progress.append("Number of new repos imported: ").append(repos.size());
             }
 
             // If the provider is capable of handling packages, perform the package synchronization portion of the sync
@@ -575,7 +583,7 @@ public class ContentProviderManager {
 
     /**
      * Given a ID to a content source, this returns the adapter that is responsible for communicating with that content
-     * source where that adaptor object will ensure invocations on it are isolated to its plugin classloader.
+     * source where that adapter object will ensure invocations on it are isolated to its plugin classloader.
      *
      * @param  contentProviderId an ID to a {@link ContentSource}
      *
@@ -583,7 +591,7 @@ public class ContentProviderManager {
      *
      * @throws RuntimeException if there is no content source with the given ID
      */
-    private ContentProvider getIsolatedContentProvider(int contentProviderId) throws RuntimeException {
+    protected ContentProvider getIsolatedContentProvider(int contentProviderId) throws RuntimeException {
         synchronized (this.adapters) {
             for (ContentSource contentSource : this.adapters.keySet()) {
                 if (contentSource.getId() == contentProviderId) {
@@ -605,7 +613,7 @@ public class ContentProviderManager {
      *
      * @throws RuntimeException if there is no content source adapter available
      */
-    private ContentProvider getIsolatedContentSourceAdapter(ContentSource contentSource) throws RuntimeException {
+    protected ContentProvider getIsolatedContentSourceAdapter(ContentSource contentSource) throws RuntimeException {
         ContentProvider adapter;
 
         synchronized (this.adapters) {
@@ -623,9 +631,19 @@ public class ContentProviderManager {
 
         ClassLoader classLoader = env.getClassLoader();
         IsolatedInvocationHandler handler = new IsolatedInvocationHandler(adapter, classLoader);
-        //TODO: Note to jdob. PackageSource.class should be removed once proxy bug is fixed.
-        Class<?>[] ifaces = new Class<?>[] { ContentProvider.class, PackageSource.class };
 
+        List<Class<?>> ifacesList = new ArrayList<Class<?>>(1);
+        ifacesList.add(ContentProvider.class);
+
+        if (adapter instanceof RepoSource) {
+            ifacesList.add(RepoSource.class);
+        }
+        if (adapter instanceof PackageSource) {
+            ifacesList.add(PackageSource.class);
+        }
+
+        Class<?>[] ifaces = (Class<?>[]) ifacesList.toArray();
+        
         return (ContentProvider) Proxy.newProxyInstance(classLoader, ifaces, handler);
     }
 

@@ -477,4 +477,19 @@ public interface ContentSourceManagerLocal {
      */
     long outputPackageBitsForChildResource(int parentResourceId, String resourceTypeName,
         PackageDetailsKey packageDetailsKey, OutputStream outputStream);
+
+    /**
+     * Adds the specified content source to the database but does not attempt to create or start
+     * the server-side plugin provider implementation associated with it.
+     * <p/>
+     * This should only be used for test purposes.
+     *
+     * @param subject       may not be <code>null</code>
+     * @param contentSource may not be <code>null</code>
+     * @return instance after being persisted; will contain a populated ID value
+     * @throws ContentSourceException if the content source cannot be created, such as if the data in
+     *                                the given object are not valid
+     */
+    ContentSource simpleCreateContentSource(Subject subject, ContentSource contentSource)
+        throws ContentSourceException;
 }

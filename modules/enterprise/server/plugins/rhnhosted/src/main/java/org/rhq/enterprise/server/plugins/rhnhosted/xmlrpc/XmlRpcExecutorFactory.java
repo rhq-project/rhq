@@ -24,9 +24,10 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.xmlrpc.XmlRpcException;
 import org.apache.xmlrpc.client.XmlRpcClient;
 import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
+
+import org.rhq.enterprise.server.util.MethodUtil;
 
 /**
  * Class responsible for handing out XmlRpcClient classes, either real or mocked.
@@ -34,6 +35,13 @@ import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
 public class XmlRpcExecutorFactory {
 
     protected static String XML_DUMP_VERSION = "3.3";
+
+    private static XmlRpcExecutor getExecutor(XmlRpcClient wrappedClient) {
+        Object[] args = { wrappedClient };
+        XmlRpcExecutor retval = (XmlRpcExecutor) MethodUtil.getClassFromSystemProperty(ApacheXmlRpcExecutor.class
+            .getName(), args);
+        return retval;
+    }
 
     public static XmlRpcExecutor getJaxbClient(String url) {
         XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
@@ -51,8 +59,7 @@ public class XmlRpcExecutorFactory {
         transportFactory.setJaxbDomain("org.rhq.enterprise.server.plugins.rhnhosted.xml");
         transportFactory.setDumpMessageToFile(false);
         client.setTransportFactory(transportFactory);
-
-        return new ApacheXmlRpcExecutor(client);
+        return getExecutor(client);
     }
 
     public static XmlRpcExecutor getClient(String url) {
@@ -70,28 +77,13 @@ public class XmlRpcExecutorFactory {
         transportFactory.setRequestProperties(getRequestProperties());
         client.setTransportFactory(transportFactory);
 
-        return new ApacheXmlRpcExecutor(client);
+        return getExecutor(client);
     }
 
     public static Map getRequestProperties() {
         Map reqProps = new HashMap();
         reqProps.put("X-RHN-Satellite-XML-Dump-Version", XML_DUMP_VERSION);
         return reqProps;
-    }
-
-}
-
-class ApacheXmlRpcExecutor implements XmlRpcExecutor {
-
-    private XmlRpcClient client;
-
-    public ApacheXmlRpcExecutor(XmlRpcClient clientIn) {
-        this.client = clientIn;
-    }
-
-    @Override
-    public Object execute(String methodName, Object[] params) throws XmlRpcException {
-        return client.execute(methodName, params);
     }
 
 }

@@ -32,6 +32,7 @@ public class RhnCommTest extends TestCase {
 
     public RhnCommTest(String testName) {
         super(testName);
+        System.setProperty(ApacheXmlRpcExecutor.class.getName(), MockRhnXmlRpcExecutor.class.getName());
     }
 
     public static Test suite() {
@@ -39,7 +40,7 @@ public class RhnCommTest extends TestCase {
     }
 
     protected String getSystemId() throws Exception {
-        for (String path: systemIdPath) {
+        for (String path : systemIdPath) {
             String data = getSystemId(path);
             if (!StringUtils.isBlank(data)) {
                 return data;
@@ -62,6 +63,7 @@ public class RhnCommTest extends TestCase {
 
     public void testCheckAuth() throws Exception {
         RhnDownloader downloader = new RhnDownloader(serverUrl);
+        assertFalse(downloader.checkAuth("not a systemid"));
         assertTrue(downloader.checkAuth(getSystemId()));
     }
 
@@ -71,8 +73,7 @@ public class RhnCommTest extends TestCase {
         try {
             boolean result = downloader.checkAuth(getSystemId(badSystemIdPath));
             assertTrue(false);
-        }
-        catch (XmlRpcException e) {
+        } catch (XmlRpcException e) {
             assertTrue(e.getMessage().contains("Invalid System Credentials"));
             assertTrue(e.code == -9);
             success = true;
@@ -86,15 +87,13 @@ public class RhnCommTest extends TestCase {
         try {
             boolean result = downloader.checkAuth(getSystemId());
             assertTrue(false);
-        }
-        catch (XmlRpcException e) {
+        } catch (XmlRpcException e) {
             assertTrue(e.getMessage().contains("Failed to read server's response"));
             assertTrue(e.code == 0);
             success = true;
         }
         assertTrue(success);
     }
-
 
     public void testGetProductNames() throws Exception {
         boolean success = false;
@@ -263,7 +262,6 @@ public class RhnCommTest extends TestCase {
         }
         assertTrue(success);
     }
-
 
     public void testGetRPM() throws Exception {
         boolean success = false;

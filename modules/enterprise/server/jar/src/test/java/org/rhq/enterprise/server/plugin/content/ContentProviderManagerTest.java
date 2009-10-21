@@ -25,6 +25,7 @@ package org.rhq.enterprise.server.plugin.content;
 import java.io.InputStream;
 import java.util.Collection;
 import java.util.List;
+import java.util.ArrayList;
 import javax.persistence.EntityManager;
 import javax.transaction.TransactionManager;
 import org.rhq.core.clientapi.server.plugin.content.ContentProvider;
@@ -34,11 +35,13 @@ import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
 import org.rhq.core.clientapi.server.plugin.content.RepoImportReport;
 import org.rhq.core.clientapi.server.plugin.content.RepoSource;
 import org.rhq.core.clientapi.server.plugin.content.RepoDetails;
+import org.rhq.core.clientapi.server.plugin.content.RepoGroupDetails;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceType;
 import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.content.RepoGroup;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
@@ -52,54 +55,65 @@ import org.testng.annotations.AfterMethod;
 /** @author Jason Dobies */
 public class ContentProviderManagerTest extends AbstractEJB3Test {
 
-    private ContentSourceManagerLocal contentManager;
-    private SubjectManagerLocal subjectManager;
-    private RepoManagerLocal repoManager;
-
-    private TestContentSourcePluginService pluginService;
-
-    private Subject overlord;
+    // The following variables need to be cleaned up at the end of the test
     private ContentSourceType testSourceType;
     private ContentSource testSource;
+    private List<Integer> reposToDelete = new ArrayList<Integer>();
+    private List<Integer> repoGroupsToDelete = new ArrayList<Integer>();
 
     @BeforeMethod
     public void setupBeforeMethod() throws Exception {
+
+        // Plugin service setup
         prepareScheduler();
-        pluginService = prepareContentSourcePluginService();
+        TestContentSourcePluginService pluginService = prepareContentSourcePluginService();
         pluginService.startPluginContainer();
 
+        // Because of the (current) transaction settings of some of the nested methods (i.e. REQUIRES_NEW),
+        // this test must commit its data and clean up after itself, as compared to simply rolling back the
+        // transaction at the end.
         TransactionManager tx = getTransactionManager();
         tx.begin();
         EntityManager entityManager = getEntityManager();
 
-        contentManager = LookupUtil.getContentSourceManager();
-        subjectManager = LookupUtil.getSubjectManager();
-        repoManager = LookupUtil.getRepoManagerLocal();
+        ContentSourceManagerLocal contentManager = LookupUtil.getContentSourceManager();
+        SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
+        Subject overlord = subjectManager.getOverlord();
 
-        overlord = subjectManager.getOverlord();
-
-        // Make a sample content source type that will be used in this test
+        // Create a sample content source type that will be used in this test
         testSourceType = new ContentSourceType("testType");
         entityManager.persist(testSourceType);
-        entityManager.flush();
 
-        // Add a content source to the DB to hang the lookups against
+        // Add a content source to the DB to hang the sync against
         testSource = new ContentSource("testSource", testSourceType);
-
         contentManager.simpleCreateContentSource(overlord, testSource);
-        entityManager.flush();
 
         tx.commit();
     }
 
     @AfterMethod
     public void tearDownAfterMethod() throws Exception {
+
+        // Transactional stuff
         TransactionManager tx = getTransactionManager();
         tx.begin();
-
-        // Delete the source that was created
         EntityManager entityManager = getEntityManager();
 
+        RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
+        SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
+        Subject overlord = subjectManager.getOverlord();
+
+        // Delete any repos that were created in this test
+        for (Integer repoId : reposToDelete) {
+            repoManager.deleteRepo(overlord, repoId);
+        }
+
+        // Delete any repo groups that were created in this test
+        for (Integer repoGroupId : repoGroupsToDelete) {
+            repoManager.deleteRepoGroup(overlord, repoGroupId);
+        }
+
+        // Delete the source that was created
         testSource = entityManager.find(ContentSource.class, testSource.getId());
         entityManager.remove(testSource);
 
@@ -109,25 +123,37 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
 
         tx.commit();
 
+        // Plugin service teardown
         unprepareContentSourcePluginService();
         unprepareScheduler();
     }
 
     @Test
-    public void test() throws Exception {
+    public void synchronizeContentSource() throws Exception {
+        // Setup
+        RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
+
         TestContentProviderManager providerManager = new TestContentProviderManager();
 
+        // Test
         boolean completed = providerManager.synchronizeContentSource(testSource.getId());
         assert completed;
 
-        // Make sure the repos were created
+        // Verify RepoGroups
+        RepoGroup repoGroup = repoManager.getRepoGroupByName("testRepoGroup");
+        assert repoGroup != null;
+        repoGroupsToDelete.add(repoGroup.getId());
+
+        // Verify Repos
         List<Repo> retrievedRepos;
 
         retrievedRepos = repoManager.getRepoByName("testRepo1");
         assert retrievedRepos.size() == 1;
+        reposToDelete.add(retrievedRepos.get(0).getId());
 
         retrievedRepos = repoManager.getRepoByName("testRepo2");
         assert retrievedRepos.size() == 1;
+        reposToDelete.add(retrievedRepos.get(0).getId());
 
         retrievedRepos= repoManager.getRepoByName("testRepoFoo");
         assert retrievedRepos.size() == 0;
@@ -135,6 +161,29 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
 
     /** Mock implementation of a content provider that will return known data. */
     private class TestContentProvider implements ContentProvider, PackageSource, RepoSource {
+
+        public RepoImportReport importRepos() throws Exception {
+            RepoImportReport report = new RepoImportReport();
+
+            // Create a repo group in the system
+            RepoGroupDetails group1 = new RepoGroupDetails("testRepoGroup", "family");
+            report.addRepoGroup(group1);
+
+            RepoDetails repo1 = new RepoDetails("testRepo1");
+            report.addRepo(repo1);
+
+            RepoDetails repo2 = new RepoDetails("testRepo2");
+            report.addRepo(repo2);
+
+
+            return report;
+        }
+
+        public void synchronizePackages(PackageSyncReport report,
+                                        Collection<ContentProviderPackageDetails> existingPackages) throws Exception {
+
+        }
+
         public void initialize(Configuration configuration) throws Exception {
             // No-op
         }
@@ -147,26 +196,12 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
             // No-op
         }
 
-        public void synchronizePackages(PackageSyncReport report, Collection<ContentProviderPackageDetails> existingPackages) throws Exception {
-            
-        }
 
         public InputStream getInputStream(String location) throws Exception {
             // No-op
             return null;
         }
 
-        public RepoImportReport importRepos() throws Exception {
-            RepoImportReport report = new RepoImportReport();
-
-            RepoDetails repo1 = new RepoDetails("testRepo1");
-            RepoDetails repo2 = new RepoDetails("testRepo2");
-
-            report.addRepo(repo1);
-            report.addRepo(repo2);
-
-            return report;
-        }
     }
 
     /**
@@ -181,6 +216,5 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
             return testProvider;
         }
     }
-
 
 }

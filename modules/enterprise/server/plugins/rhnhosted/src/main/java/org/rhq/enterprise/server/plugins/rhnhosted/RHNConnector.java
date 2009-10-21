@@ -33,7 +33,11 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.rhq.enterprise.server.plugins.rhnhosted.certificate.PublicKeyRing;
-import redstone.xmlrpc.XmlRpcClient;
+
+import org.apache.xmlrpc.client.XmlRpcClient;
+import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
+
+
 
 /**
  * @author pkilambi
@@ -59,7 +63,10 @@ public class RHNConnector {
         this.certificateFileName = certificateIn;
 
         URL serverUrl = new URL(serverUrlIn);
-        client = new XmlRpcClient(serverUrl, true);
+        XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
+        config.setServerURL(serverUrl);
+        client = new XmlRpcClient();
+        client.setConfig(config);
 
         File systemid_file = new File(systemidIn);
         this.systemid = FileUtils.readFileToString(systemid_file);
@@ -77,7 +84,10 @@ public class RHNConnector {
         // store the file to local server
         this.writeStringToFile();
         URL serverUrl = new URL(serverUrlIn);
-        client = new XmlRpcClient(serverUrl, true);
+        XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
+        config.setServerURL(serverUrl);
+        client = new XmlRpcClient();
+        client.setConfig(config);
 
         File systemid_file = new File(RHNConstants.DEFAULT_SYSTEM_ID);
         this.systemid = FileUtils.readFileToString(systemid_file);
@@ -94,8 +104,8 @@ public class RHNConnector {
         params.add(this.systemid);
         params.add(this.certificateText);
 
-        this.client.invoke("satellite.activateSatellite", params);
-
+        this.client.execute("satellite.activateSatellite", params);
+        log.info("Activation successful");
     }
 
     /**
@@ -107,7 +117,8 @@ public class RHNConnector {
         ArrayList<String> params = new ArrayList<String>();
         params.add(this.systemid);
 
-        this.client.invoke("satellite.deactivateSatellite", params);
+        this.client.execute("satellite.deactivateSatellite", params);
+        log.info("Activation successful");
 
         // this.deleteCertTempFile(this.certificateFileName);
     }

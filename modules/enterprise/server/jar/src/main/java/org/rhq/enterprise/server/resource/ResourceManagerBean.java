@@ -479,26 +479,20 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         }
 
         long now = System.currentTimeMillis();
-
-        resource.setInventoryStatus(newStatus);
-        resource.setItime(now);
-
+        updateInventoryStatus(resource, newStatus, now);
         resource = entityManager.merge(resource);
+
         if (setDescendents) {
             for (Resource childResource : resource.getChildResources()) {
-                childResource.setInventoryStatus(newStatus);
-                childResource.setItime(now);
-
+                updateInventoryStatus(childResource, newStatus, now);
                 childResource = entityManager.merge(childResource);
                 setResourceStatus(user, childResource, newStatus, setDescendents);
             }
         } else if (resource.getResourceType().getCategory() == ResourceCategory.PLATFORM) {
-            // Commit platform services when the platform is committed
+            // Commit platform services when the platform is committed.
             for (Resource childResource : resource.getChildResources()) {
                 if (childResource.getResourceType().getCategory() == ResourceCategory.SERVICE) {
-                    childResource.setInventoryStatus(newStatus);
-                    childResource.setItime(now);
-
+                    updateInventoryStatus(childResource, newStatus, now);
                     childResource = entityManager.merge(childResource);
                     setResourceStatus(user, childResource, newStatus, setDescendents);
                 }
@@ -506,6 +500,12 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         }
 
         return resource;
+    }
+
+    private void updateInventoryStatus(Resource resource, InventoryStatus newStatus, long now) {
+        resource.setInventoryStatus(newStatus);
+        resource.setItime(now);
+        resource.setMtime(now);
     }
 
     @SuppressWarnings("unchecked")

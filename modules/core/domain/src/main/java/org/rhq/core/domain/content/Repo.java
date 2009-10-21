@@ -130,6 +130,9 @@ public class Repo implements Serializable {
 
     @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY)
     private Set<RepoRepoGroup> repoRepoGroups;
+    
+    @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY)
+    private Set<RepoRepoRelationship> repoRepoRelationships;
 
     // Constructor ----------------------------------------
 
@@ -511,6 +514,88 @@ public class Repo implements Serializable {
         return doomed;
     }
 
+    
+    
+    /**
+     * Returns the explicit mapping entities.
+     *
+     * @return the mapping entities
+     *
+     * @see    #getRepoRelationships()
+     */
+    public Set<RepoRepoRelationship> getRepoRepoRelationships() {
+        return repoRepoRelationships;
+    }
+
+    /**
+     * The reporelationships that this repo belongs to.
+     *
+     * <p>The returned set is not backed by this entity - if you want to alter
+     * the set of associated repoRelationships,
+     * use {@link #getRepoRepoRelationships()} or {@link #addRepoRelationship(RepoRelationship)},
+     * {@link #removeRepoRelationship(RepoRelationship)}.</p>
+     */
+    public Set<RepoRelationship> getRepoRelationships() {
+        HashSet<RepoRelationship> repoRelationships = new HashSet<RepoRelationship>();
+
+        if (repoRepoRelationships != null) {
+            for (RepoRepoRelationship rrr : repoRepoRelationships) {
+                repoRelationships.add(rrr.getRepoRepoRelationshipPK().getRepoRelationship());
+            }
+        }
+
+        return repoRelationships;
+    }
+
+    /**
+     * Directly assign a reporelationship to this repo.
+     *
+     * @param  repoRelationship
+     *
+     * @return the mapping that was added
+     */
+    public RepoRepoRelationship addRepoRelationship(RepoRelationship repoRelationship) {
+        if (this.repoRepoRelationships == null) {
+            this.repoRepoRelationships = new HashSet<RepoRepoRelationship>();
+        }
+
+        RepoRepoRelationship mapping = new RepoRepoRelationship(this, repoRelationship);
+        this.repoRepoRelationships.add(mapping);
+        return mapping;
+    }
+
+    /**
+     * Removes association with a repo relationship, if it exists. If it does exist, the mapping that was removed is
+     * returned; if the given repo relationship did not exist as one that is a associated to this repo, <code>null</code> is
+     * returned.
+     *
+     * @param  repoRelationship the repo relationship to disassociate from this repo
+     *
+     * @return the mapping that was removed or <code>null</code> if the repo relationship was not associated with this repo
+     */
+    public RepoRepoRelationship removeRepoRelationship(RepoRelationship repoRelationship) {
+        if ((this.repoRepoRelationships == null) || (repoRelationship == null)) {
+            return null;
+        }
+
+        RepoRepoRelationship doomed = null;
+
+        for (RepoRepoRelationship rrr : this.repoRepoRelationships) {
+            if (repoRelationship.equals(rrr.getRepoRepoRelationshipPK().getRepoRelationship())) {
+                doomed = rrr;
+                break;
+            }
+        }
+
+        if (doomed != null) {
+            this.repoRepoRelationships.remove(doomed);
+        }
+
+        return doomed;
+    }
+
+    
+    
     @Override
     public String toString() {
         return "Repo: id=[" + this.id + "], name=[" + this.name + "]";

@@ -50,8 +50,8 @@ public class RhnCommTest extends TestCase {
     }
 
     public void testCheckAuth() throws Exception {
-        RhnComm comm = getRhnComm();
-        assertTrue(comm.checkAuth(getSystemId()));
+        RhnDownloader downloader = new RhnDownloader("http://satellite.rhn.redhat.com");
+        assertTrue(downloader.checkAuth(getSystemId()));
     }
 
     public void testGetProductNames() throws Exception {
@@ -206,7 +206,7 @@ public class RhnCommTest extends TestCase {
     public void testGetRPM() throws Exception {
         boolean success = false;
         try {
-            RhnComm comm = getRhnComm();
+            RhnDownloader comm = new RhnDownloader("http://satellite.rhn.redhat.com");
             String channelName = "rhel-x86_64-server-5";
             String rpmName = "openhpi-2.4.1-6.el5.1.x86_64.rpm";
             String saveFilePath = "./target/" + rpmName;
@@ -223,7 +223,7 @@ public class RhnCommTest extends TestCase {
     public void testGetKickstartTree() throws Exception {
         boolean success = false;
         try {
-            RhnComm comm = getRhnComm();
+            RhnComm comm = new RhnComm("http://satellite.rhn.redhat.com");
             String channelName = "rhel-i386-server-5";
             String ksTreeLabel = "ks-rhel-i386-server-5";
             List<String> reqLabels = new ArrayList<String>();
@@ -240,7 +240,8 @@ public class RhnCommTest extends TestCase {
             String ksRelativePath = f.getRelativePath();
             assertFalse(StringUtils.isBlank(ksRelativePath));
             System.err.println("fetching ks file: " + f.getRelativePath());
-            InputStream in = comm.getKickstartTreeFile(getSystemId(), channelName, ksTreeLabel, ksRelativePath);
+            RhnDownloader downloader = new RhnDownloader("http://satellite.rhn.redhat.com");
+            InputStream in = downloader.getKickstartTreeFile(getSystemId(), channelName, ksTreeLabel, ksRelativePath);
             assertTrue(in != null);
             in.close();
             success = true;

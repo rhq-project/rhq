@@ -35,6 +35,26 @@ public class XmlRpcExecutorFactory {
 
     protected static String XML_DUMP_VERSION = "3.3";
 
+    public static XmlRpcExecutor getJaxbClient(String url) {
+        XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
+
+        try {
+            config.setServerURL(new URL(url));
+        } catch (MalformedURLException e) {
+            throw new RuntimeException(e);
+        }
+
+        XmlRpcClient client = new XmlRpcClient();
+        client.setConfig(config);
+        RhnJaxbTransportFactory transportFactory = new RhnJaxbTransportFactory(client);
+        transportFactory.setRequestProperties(getRequestProperties());
+        transportFactory.setJaxbDomain("org.rhq.enterprise.server.plugins.rhnhosted.xml");
+        transportFactory.setDumpMessageToFile(false);
+        client.setTransportFactory(transportFactory);
+
+        return new ApacheXmlRpcExecutor(client);
+    }
+
     public static XmlRpcExecutor getClient(String url) {
         XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
 
@@ -49,11 +69,12 @@ public class XmlRpcExecutorFactory {
         CustomReqPropTransportFactory transportFactory = new CustomReqPropTransportFactory(client);
         transportFactory.setRequestProperties(getRequestProperties());
         client.setTransportFactory(transportFactory);
+        client.setTransportFactory(transportFactory);
 
         return new ApacheXmlRpcExecutor(client);
     }
 
-    private static Map getRequestProperties() {
+    public static Map getRequestProperties() {
         Map reqProps = new HashMap();
         reqProps.put("X-RHN-Satellite-XML-Dump-Version", XML_DUMP_VERSION);
         return reqProps;

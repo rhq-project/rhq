@@ -25,6 +25,10 @@ public class RhnDownloader {
         return this.serverUrl;
     }
 
+    protected HttpURLConnection getNewConnection(String urlIn) throws IOException {
+        return (HttpURLConnection) RhnHttpURLConnectionFactory.openConnection(new URL(urlIn));
+    }
+
     /**
      * Expected return header values for: X-Client-Version, X-RHN-Server-Id, X-RHN-Auth
      * X-RHN-Auth-User-Id, X-RHN-Auth-Expire-Offset, X-RHN-Auth-Server-Time
@@ -49,8 +53,7 @@ public class RhnDownloader {
         XmlRpcException {
 
         String extra = "/SAT/$RHN/" + channelName + "/getPackage/" + rpmName;
-        URL url = new URL(serverUrl + extra);
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        HttpURLConnection conn = getNewConnection(serverUrl + extra);
         Map props = login(systemId);
         for (Object key : props.keySet()) {
             conn.setRequestProperty((String) key, props.get(key).toString());
@@ -76,8 +79,7 @@ public class RhnDownloader {
 
     public InputStream getRPMStream(String systemId, String locationUrl) throws IOException, XmlRpcException {
 
-        URL url = new URL(locationUrl);
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        HttpURLConnection conn = getNewConnection(locationUrl);
         Map props = login(systemId);
         for (Object key : props.keySet()) {
             conn.setRequestProperty((String) key, props.get(key).toString());
@@ -93,8 +95,7 @@ public class RhnDownloader {
         throws IOException, XmlRpcException {
 
         String extra = "/SAT/$RHN/" + channelName + "/getKickstartFile/" + ksTreeLabel + "/" + ksFilePath;
-        URL url = new URL(serverUrl + extra);
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        HttpURLConnection conn = getNewConnection(serverUrl + extra);
         Map props = login(systemId);
         for (Object key : props.keySet()) {
             conn.setRequestProperty((String) key, props.get(key).toString());

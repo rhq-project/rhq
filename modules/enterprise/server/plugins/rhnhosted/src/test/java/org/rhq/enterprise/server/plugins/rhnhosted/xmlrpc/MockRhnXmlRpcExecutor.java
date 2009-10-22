@@ -34,12 +34,15 @@ import org.apache.xmlrpc.XmlRpcException;
 import org.apache.xmlrpc.client.XmlRpcClient;
 import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
 
+
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelFamiliesType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelFamilyType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelsType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnKickstartableTreeType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnKickstartableTreesType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnKickstartFileType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnKickstartFilesType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageShortType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackagesShortType;
@@ -125,8 +128,9 @@ public class MockRhnXmlRpcExecutor implements XmlRpcExecutor {
         } else if (methodName.equals("dump.kickstartable_trees")) {
             JAXBElement element = getRhnSatelliteType();
             RhnSatelliteType retval = (RhnSatelliteType) element.getValue();
+            RhnKickstartableTreesType parentKSTree = new RhnKickstartableTreesType();
+            List<RhnKickstartableTreeType> ksTreeList =  parentKSTree.getRhnKickstartableTree();
             List<String> kstids = (List<String>) params[1];
-            List<RhnKickstartableTreeType> rhnKickstartableTree = new LinkedList<RhnKickstartableTreeType>();
             for (String kid : kstids) {
                 RhnKickstartableTreeType kstype = new RhnKickstartableTreeType();
                 kstype.setBasePath("basepath");
@@ -138,12 +142,20 @@ public class MockRhnXmlRpcExecutor implements XmlRpcExecutor {
                 kstype.setKstreeTypeName("type");
                 kstype.setLabel("label");
                 kstype.setLastModified("lastmod");
-                rhnKickstartableTree.add(kstype);
+                // Need to add ks file
+                RhnKickstartFilesType parentFiles = new RhnKickstartFilesType();
+                List<RhnKickstartFileType> files = parentFiles.getRhnKickstartFile();
+                RhnKickstartFileType f = new RhnKickstartFileType();
+                f.setFileSize("192");
+                f.setLastModified("tbd");
+                f.setMd5Sum("tbd");
+                f.setRelativePath("path");
+                files.add(f);
+                kstype.setRhnKickstartFiles(parentFiles);
 
-                RhnKickstartableTreesType pshortypes = new RhnKickstartableTreesType();
-                setPrivateList("rhnKickstartableTree", pshortypes, rhnKickstartableTree);
-                retval.setRhnKickstartableTrees(pshortypes);
+                ksTreeList.add(kstype);
             }
+            retval.setRhnKickstartableTrees(parentKSTree);
             return element;
         } else if (methodName.equals("dump.packages")) {
             if (systemid.contains("<value><string>ID-0000000000</string></value>")) {

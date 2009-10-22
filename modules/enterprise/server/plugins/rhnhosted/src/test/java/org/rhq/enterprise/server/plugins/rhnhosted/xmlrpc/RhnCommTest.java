@@ -24,6 +24,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.net.URL;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -53,6 +54,8 @@ public class RhnCommTest extends TestCase {
         super(testName);
         /* OVERRIDE THE XMLRPC CLIENT WITH A MOCK OBJECT */
         System.setProperty(ApacheXmlRpcExecutor.class.getName(), MockRhnXmlRpcExecutor.class.getName());
+        System.setProperty(RhnHttpURLConnectionFactory.RHN_MOCK_HTTP_URL_CONNECTION,
+                MockRhnHttpURLConnection.class.getName());
         /* Comment this out if you want to actually connect to RHN Hosted. */
 
     }
@@ -315,6 +318,12 @@ public class RhnCommTest extends TestCase {
     }
 
     public void testGetRPM_withBadSystemId() throws Exception {
+        String prop = System.getProperty(RhnHttpURLConnectionFactory.RHN_MOCK_HTTP_URL_CONNECTION);
+        if (!StringUtils.isEmpty(prop)) {
+            System.err.println("Skipping testGetRPM_withBadSystemId() since we are mocking the HTTP connection.");
+            return;
+        }
+
         boolean success = false;
         try {
             RhnDownloader comm = new RhnDownloader(serverUrl);
@@ -343,6 +352,7 @@ public class RhnCommTest extends TestCase {
             List<RhnKickstartableTreeType> ksTrees = comm.getKickstartTreeMetadata(getSystemId(), reqLabels);
             RhnKickstartableTreeType tree = ksTrees.get(0);
             RhnKickstartFilesType ksFiles = tree.getRhnKickstartFiles();
+            System.err.println("ksFiles = " + ksFiles);
             List<RhnKickstartFileType> files = ksFiles.getRhnKickstartFile();
             RhnKickstartFileType f = files.get(0);
             //Only fetching one kickstart file to save time.

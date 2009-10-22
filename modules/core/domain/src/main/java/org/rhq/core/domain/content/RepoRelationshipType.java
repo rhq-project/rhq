@@ -35,6 +35,8 @@ import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 
 /**
  * Defines a type of (@link RepoRelationship) e.g. Clone, Parent-child are types of 
@@ -43,11 +45,17 @@ import javax.persistence.Table;
  */
 
 @Entity
+@NamedQueries( {
+    @NamedQuery(name = RepoRelationshipType.QUERY_FIND_BY_NAME, query = "SELECT r FROM RepoRelationshipType r WHERE r.name = :name")
+})
+
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_REPO_RELATION_TYPE_ID_SEQ")
 @Table(name = "RHQ_REPO_RELATION_TYPE")
 public class RepoRelationshipType implements Serializable {
 
     private static final long serialVersionUID = 1L;
+
+    public static final String QUERY_FIND_BY_NAME = "RepoRelationshipType.findByName";
 
     // Attributes  --------------------------------------------
 

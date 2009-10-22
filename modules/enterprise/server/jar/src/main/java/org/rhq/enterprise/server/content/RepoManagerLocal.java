@@ -116,6 +116,18 @@ public interface RepoManagerLocal {
      */
     long getPackageVersionCountFromRepo(Subject subject, int repoId);
 
+    /**
+     * Creates a relationship between two repos. The relationship will be marked as being the specified
+     * type. For relationships where the order matters, think of the <code>repoId</code> as being the source
+     * of the relationship and <code>relatedRepoId</code> as being the destination or target of it.
+     *
+     * @param subject              user making the relationship
+     * @param repoId               must reference a valid repo in the system the user has permissions to access
+     * @param relatedRepoId        must reference a valid repo in the system the user has permissions to access
+     * @param relationshipTypeName must identify an existing relationship in the database
+     */
+    void addRepoRelationship(Subject subject, int repoId, int relatedRepoId, String relationshipTypeName);
+
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
     // The following are shared with the Remote Interface

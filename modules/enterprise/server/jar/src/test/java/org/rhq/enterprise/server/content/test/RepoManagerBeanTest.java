@@ -29,10 +29,16 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.RepoGroup;
 import org.rhq.core.domain.content.RepoGroupType;
+import org.rhq.core.domain.content.RepoRelationshipType;
+import org.rhq.core.domain.content.RepoRepoRelationship;
+import org.rhq.core.domain.criteria.RepoCriteria;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.content.RepoException;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
+
+import java.util.Set;
 
 public class RepoManagerBeanTest extends AbstractEJB3Test {
 
@@ -170,5 +176,44 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
         type = entityManager.find(RepoGroupType.class, type.getId());
         entityManager.remove(type);
         entityManager.flush();
+    }
+
+    @Test(enabled = ENABLED)
+    public void addRepoRelationship() throws Exception {
+        // Setup
+        EntityManager entityManager = getEntityManager();
+
+        Repo repo = new Repo("repo1");
+        Repo relatedRepo = new Repo("repo2");
+
+        repo = repoManager.createRepo(overlord, repo);
+        relatedRepo = repoManager.createRepo(overlord, relatedRepo);
+
+        String relationshipTypeName = "testRelationshipType";
+        RepoRelationshipType relationshipType = new RepoRelationshipType(relationshipTypeName);
+        entityManager.persist(relationshipType);
+        entityManager.flush();
+
+        // Test
+        repoManager.addRepoRelationship(overlord, repo.getId(), relatedRepo.getId(), relationshipTypeName);
+
+        // Verify
+        RepoCriteria repoCriteria = new RepoCriteria();
+        repoCriteria.fetchRepoRepoGroups(true);
+        repoCriteria.addFilterId(repo.getId());
+
+        PageList<Repo> repoPageList = repoManager.findReposByCriteria(overlord, repoCriteria);
+        assert repoPageList.size() == 1;
+
+        Repo persistedRepo = repoPageList.get(0);
+        Set<RepoRepoRelationship> relationships = persistedRepo.getRepoRepoRelationships();
+        assert relationships.size() == 1;
+
+        RepoRepoRelationship relationship = relationships.iterator().next();
+        assert relationship.getRepoRepoRelationshipPK().getRepo().getName().equals("repo1");
+        assert relationship.getRepoRepoRelationshipPK().getRepoRelationship().getRelatedRepo().getName().equals("repo2");
+        assert relationship.getRepoRepoRelationshipPK().getRepoRelationship().getRepoRelationshipType().getName().equals(relationshipTypeName);
+
+        // Cleanup handled by rollback in tear down method
     }
 }

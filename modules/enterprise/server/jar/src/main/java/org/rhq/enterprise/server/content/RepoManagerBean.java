@@ -25,6 +25,8 @@ import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
@@ -43,6 +45,8 @@ import org.rhq.core.domain.content.PackageVersionContentSource;
 import org.rhq.core.domain.content.ResourceRepo;
 import org.rhq.core.domain.content.RepoGroup;
 import org.rhq.core.domain.content.RepoGroupType;
+import org.rhq.core.domain.content.RepoRelationshipType;
+import org.rhq.core.domain.content.RepoRelationship;
 import org.rhq.core.domain.content.composite.RepoComposite;
 import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
@@ -559,6 +563,28 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         List<PackageVersion> packageVersions = query.getResultList();
 
         return new PageList<PackageVersion>(packageVersions, (int) count, criteria.getPageControl());
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public void addRepoRelationship(Subject subject, int repoId, int relatedRepoId, String relationshipTypeName) {
+
+        Repo repo = getRepo(subject, repoId);
+        Repo relatedRepo = getRepo(subject, relatedRepoId);
+
+        Query typeQuery = entityManager.createNamedQuery(RepoRelationshipType.QUERY_FIND_BY_NAME);
+        typeQuery.setParameter("name", relationshipTypeName);
+
+        RepoRelationshipType relationshipType = (RepoRelationshipType) typeQuery.getSingleResult();
+
+        RepoRelationship relationship = new RepoRelationship();
+        relationship.setRelatedRepo(relatedRepo);
+        relationship.setRepoRelationshipType(relationshipType);
+        relationship.addRepo(repo);
+
+        entityManager.persist(relationship);
+
+        repo.addRepoRelationship(relationship);
     }
 
     private void validateRepo(Repo c) throws RepoException {

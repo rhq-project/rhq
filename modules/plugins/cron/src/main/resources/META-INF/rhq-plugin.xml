@@ -1,5 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<!DOCTYPE plugin [
+
+<!ENTITY cronEntry '
+    <c:simple-property name="time/minute" displayName="Minute" type="string" required="true" activationPolicy="immediate"
+                       default="*" description="TODO"/>
+    <c:simple-property name="time/hour" displayName="Hour" type="string" required="true" activationPolicy="immediate"
+                       default="*" description="TODO"/>
+    <c:simple-property name="time/dayofmonth" displayName="Day of Month" type="string" required="true" activationPolicy="immediate"
+                       default="*" description="TODO"/>
+    <c:simple-property name="time/month" displayName="Month" type="string" required="true" activationPolicy="immediate"
+                       default="*" description="TODO"/>
+    <c:simple-property name="time/dayofweek" displayName="Day of Week" type="string" required="true" activationPolicy="immediate"
+                       default="*" description="TODO"/>
+    <c:simple-property name="user" displayName="Executing user" required="false" description="TODO"/>
+    <c:simple-property name="." displayName="Command" required="true" description="TODO"/>
+'>
+
+]>
 <plugin name="Cron"
         displayName="Cron"
         description="Configuration of cron"
@@ -22,14 +40,13 @@
          <parent-resource-type name="AIX"      plugin="Platforms"/>
          <parent-resource-type name="FreeBSD"  plugin="Platforms"/>
          <parent-resource-type name="Mac OS X" plugin="Platforms"/>
-         <parent-resource-type name="Java"     plugin="Platforms"/>
        </runs-inside>
 
       <plugin-configuration>
 		<c:simple-property name="augeasModuleName" displayName="Augeas Module Name" default="Cron" required="true" readOnly="true"
                              description="the name of the Augeas module/lens to use for loading and updating this resource's configuration"/>
         <c:simple-property name="configurationFilesInclusionPatterns" required="true" readOnly="true"
-          default="/etc/crontab|etc/cron.d/*">
+          default="/etc/crontab|/etc/cron.d/*">
           <c:description>A | delimited list of patterns of files to configure.</c:description>
         </c:simple-property>
         <c:simple-property name="configurationFilesExclusionPatterns" required="true" readOnly="true"
@@ -39,22 +56,66 @@
       </plugin-configuration>
 
       <resource-configuration>
-         <c:list-property name="." displayName="Entries">
-            <c:map-property name="spec[*]">
-              <c:simple-property name="user" displayName="User/Group" type="string" required="true" activationPolicy="immediate"
-                                  description="The User/User Alias/Group/Group Alias who needs to be given access to run a command. Alternatively you can specify aliases defined using User_Alias. Eg:  if you had  this defined previously User_Alias  OPERATORS = joe, mike, jude - You could enter OPERATORS for the user"/>
-               <c:simple-property name="host_group/host" displayName="Host Alias" type="string" required="true" activationPolicy="immediate"
-                                  description="The Host alias of the terminal from which the above user can run the given command. Set it to ALL if the user is allowed to execute from any host.   Alternatively if you have a Host_Alias defined  you can use that here. Eg: if you defined Host_Alias OFNET = 10.1.2.0/255.255.255.0 - you could use &quot;OFNET'&quot; here"/>
-               <c:simple-property name="host_group/command" displayName="Command" type="string" required="false" activationPolicy="immediate"
-                                  description="The Command/Command Alias that the specified user is allowed to execute from the specified hosts. Set it to ALL if the user is allowed to execute any command.  Alternatively if you have a Cmnd_Alias defined you can use that here. Eg:if you defined  Cmnd_Alias NETWORKING = /sbin/route, /sbin/ifconfig, /bin/ping, /sbin/dhclient, /usr/bin/net, /sbin/iptables - in /etc/sudoers you can specify NETWORKING here."/>
-               <c:simple-property name="host_group/command/runas_user" displayName="Run as User" type="string" required="false" activationPolicy="immediate"
-                                  description="The User name/Run Alias of the user the specified command will be run as. For example if you wanted the command to be run as user 'foo' you would specify foo here. Set it to ALL if the user is allowed to execute the command as any user. Alternatively if you have a Run_Alias defined you can use that here. Eg:if you defined  Runas_Alias    OP = root, operator - in /etc/sudoers you can specify OP here."/>
-               <c:simple-property name="host_group/command/tag" displayName="Require Password" type="string" required="false" activationPolicy="immediate"
-                                  description="True if password is required to execute the command. False otherwise."/>
+         <c:list-property  displayName="Hourly Jobs" name='entry[time/minute != "*" and time/hour = "*" and time/dayofmonth = "*" and time/month = "*" and time/dayofweek = "*"]'>
+            <c:map-property name=".">
+               &cronEntry;
+               <c:simple-property name=".." displayName="Cron Tab" type="string" required="false" readOnly="true" description="TODO"/>
+            </c:map-property>
+         </c:list-property>
+         <c:list-property  displayName="Daily Jobs" name='entry[time/minute != "*" and time/hour != "*" and time/dayofmonth = "*" and time/month = "*" and time/dayofweek = "*"]'>
+            <c:map-property name=".">
+               &cronEntry;
+               <c:simple-property name=".." displayName="Cron Tab" type="string" required="false" readOnly="true" description="TODO"/>
+            </c:map-property>
+         </c:list-property>
+         <c:list-property  displayName="Weekly Jobs" name='entry[time/minute != "*" and time/hour != "*" and time/dayofmonth = "*" and time/month = "*" and time/dayofweek != "*"]'>
+            <c:map-property name=".">
+               &cronEntry;
+               <c:simple-property name=".." displayName="Cron Tab" type="string" required="false" readOnly="true" description="TODO"/>
+            </c:map-property>
+         </c:list-property>
+         <c:list-property  displayName="Monthly Jobs" name='entry[time/minute != "*" and time/hour != "*" and time/dayofmonth != "*" and time/month = "*" and time/dayofweek = "*"]'>
+            <c:map-property name=".">
+               &cronEntry;
+               <c:simple-property name=".." displayName="Cron Tab" type="string" required="false" readOnly="true" description="TODO"/>
+            </c:map-property>
+         </c:list-property>
+         <c:list-property  displayName="Yearly Jobs" name='entry[time/minute != "*" and time/hour != "*" and time/dayofmonth != "*" and time/month != "*" and time/dayofweek = "*"]'>
+            <c:map-property name=".">
+               &cronEntry;
+               <c:simple-property name=".." displayName="Cron Tab" type="string" required="false" readOnly="true" description="TODO"/>
             </c:map-property>
          </c:list-property>
       </resource-configuration>
 
+      <service name="Cron Tab"
+               description="A single cron tab file"
+               discovery="CronTabDiscoveryComponent"
+               class="CronTabComponent">
+        <resource-configuration>
+            <c:map-property name="basicSettings" displayName="Basic Environment Settings">
+                <c:simple-property name="SHELL" displayName="Shell" default="/bin/sh" required="false"/>
+                <c:simple-property name="MAILTO" displayName="Mail To" required="false"/>
+                <c:simple-property name="HOME" displayName="Home directory" required="false"/>
+                <c:simple-property name="CRON_TZ" displayName="Cron Timezone" required="false"/>
+                <c:simple-property name="MLS_LEVEL" displayName="SELinux security context" required="false"/>
+            </c:map-property>
+            <c:list-property name="commands" displayName="Cron Commands">
+                <c:map-property name="command">
+                    &cronEntry;
+                </c:map-property>
+            </c:list-property>
+            
+            <c:group name="advanced" displayName="Advanced">
+                <c:list-property name="additionalSettings">
+                    <c:map-property name="setting">
+                        <c:simple-property name="name" required="true" />
+                        <c:simple-property name="value" required="true"/>
+                    </c:map-property>
+                </c:list-property>
+            </c:group>
+        </resource-configuration>
+      </service>
    </service>
 
 </plugin>

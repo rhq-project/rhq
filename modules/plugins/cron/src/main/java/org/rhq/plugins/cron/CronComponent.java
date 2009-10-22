@@ -19,9 +19,10 @@
 package org.rhq.plugins.cron;
 
 import org.rhq.plugins.augeas.AugeasConfigurationComponent;
+import org.rhq.plugins.platform.PlatformComponent;
 
 /**
  * @author Lukas Krejci 
  */
-public class CronComponent extends AugeasConfigurationComponent {
+public class CronComponent extends AugeasConfigurationComponent<PlatformComponent> {
 }

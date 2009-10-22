@@ -41,6 +41,7 @@ public class BasicRHNTest extends TestCase
     public String systemIdPath = "./src/test/resources/systemid";
     public String badSystemIdPath = "./src/test/resources/systemid-BAD-ID";
 
+    protected String serverUrl = "http://satellite.rhn.redhat.com";
     protected boolean debugDumpFile = true;
 
     public BasicRHNTest( String testName )
@@ -82,7 +83,7 @@ public class BasicRHNTest extends TestCase
 
         try {
             XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
-            config.setServerURL(new URL("http://xmlrpc.rhn.redhat.com/rpc/api"));
+            config.setServerURL(new URL(serverUrl +  "/rpc/api"));
             XmlRpcClient client = new XmlRpcClient();
             client.setConfig(config);
             String version = (String) client.execute( "api.getVersion", new Object[] {});
@@ -106,7 +107,7 @@ public class BasicRHNTest extends TestCase
                 return;
             }
             XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
-            config.setServerURL(new URL("http://satellite.rhn.redhat.com/SAT"));
+            config.setServerURL(new URL(serverUrl + "/SAT"));
             XmlRpcClient client = new XmlRpcClient();
             client.setConfig(config);
             CustomReqPropTransportFactory transportFactory = new CustomReqPropTransportFactory(client);
@@ -137,7 +138,7 @@ public class BasicRHNTest extends TestCase
                 return;
             }
             XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
-            config.setServerURL(new URL("http://satellite.rhn.redhat.com/SAT"));
+            config.setServerURL(new URL(serverUrl + "/SAT"));
             XmlRpcClient client = new XmlRpcClient();
             client.setConfig(config);
             CustomReqPropTransportFactory transportFactory = new CustomReqPropTransportFactory(client);
@@ -166,7 +167,7 @@ public class BasicRHNTest extends TestCase
                 return;
             }
             XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
-            config.setServerURL(new URL("http://satellite.rhn.redhat.com/SAT"));
+            config.setServerURL(new URL(serverUrl + "/SAT"));
             XmlRpcClient client = new XmlRpcClient();
             client.setConfig(config);
             CustomReqPropTransportFactory transportFactory = new CustomReqPropTransportFactory(client);
@@ -198,7 +199,7 @@ public class BasicRHNTest extends TestCase
             }
 
             XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
-            config.setServerURL(new URL("http://satellite.rhn.redhat.com/SAT-DUMP"));
+            config.setServerURL(new URL(serverUrl + "/SAT-DUMP"));
             XmlRpcClient client = new XmlRpcClient();
             client.setConfig(config);
             RhnJaxbTransportFactory transportFactory = new RhnJaxbTransportFactory(client);
@@ -241,7 +242,7 @@ public class BasicRHNTest extends TestCase
             }
 
             XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
-            config.setServerURL(new URL("http://satellite.rhn.redhat.com/SAT-DUMP"));
+            config.setServerURL(new URL(serverUrl + "/SAT-DUMP"));
             XmlRpcClient client = new XmlRpcClient();
             client.setConfig(config);
             RhnJaxbTransportFactory transportFactory = new RhnJaxbTransportFactory(client);
@@ -274,7 +275,7 @@ public class BasicRHNTest extends TestCase
             }
 
             XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
-            config.setServerURL(new URL("http://satellite.rhn.redhat.com/SAT-DUMP"));
+            config.setServerURL(new URL(serverUrl + "/SAT-DUMP"));
             XmlRpcClient client = new XmlRpcClient();
             client.setConfig(config);
             RhnJaxbTransportFactory transportFactory = new RhnJaxbTransportFactory(client);
@@ -314,7 +315,7 @@ public class BasicRHNTest extends TestCase
             }
             
             XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
-            config.setServerURL(new URL("http://satellite.rhn.redhat.com/SAT-DUMP"));
+            config.setServerURL(new URL(serverUrl + "/SAT-DUMP"));
             XmlRpcClient client = new XmlRpcClient();
             client.setConfig(config);
             RhnJaxbTransportFactory transportFactory = new RhnJaxbTransportFactory(client);
@@ -363,7 +364,7 @@ public class BasicRHNTest extends TestCase
             }
             
             XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
-            config.setServerURL(new URL("http://satellite.rhn.redhat.com/SAT-DUMP"));
+            config.setServerURL(new URL(serverUrl + "/SAT-DUMP"));
             XmlRpcClient client = new XmlRpcClient();
             client.setConfig(config);
             RhnJaxbTransportFactory transportFactory = new RhnJaxbTransportFactory(client);
@@ -412,7 +413,7 @@ public class BasicRHNTest extends TestCase
             }
             
             XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
-            config.setServerURL(new URL("http://satellite.rhn.redhat.com/SAT-DUMP"));
+            config.setServerURL(new URL(serverUrl + "/SAT-DUMP"));
             XmlRpcClient client = new XmlRpcClient();
             client.setConfig(config);
             RhnJaxbTransportFactory transportFactory = new RhnJaxbTransportFactory(client);
@@ -458,7 +459,7 @@ public class BasicRHNTest extends TestCase
             }
 
             XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
-            config.setServerURL(new URL("http://satellite.rhn.redhat.com/SAT-DUMP"));
+            config.setServerURL(new URL(serverUrl + "/SAT-DUMP"));
             XmlRpcClient client = new XmlRpcClient();
             client.setConfig(config);
             RhnJaxbTransportFactory transportFactory = new RhnJaxbTransportFactory(client);
@@ -514,7 +515,7 @@ public class BasicRHNTest extends TestCase
             }
 
             XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
-            config.setServerURL(new URL("http://satellite.rhn.redhat.com/SAT-DUMP"));
+            config.setServerURL(new URL(serverUrl + "/SAT-DUMP"));
             XmlRpcClient client = new XmlRpcClient();
             client.setConfig(config);
             RhnJaxbTransportFactory transportFactory = new RhnJaxbTransportFactory(client);
@@ -577,10 +578,9 @@ public class BasicRHNTest extends TestCase
                 System.out.println("Skipping test since systemid is not readable");
                 return;
             }
-
-            String baseUrl = "http://satellite.rhn.redhat.com";
+            
             String extra = "/SAT/$RHN/rhel-x86_64-server-5/getPackage/openhpi-2.4.1-6.el5.1.x86_64.rpm";
-            URL url = new URL(baseUrl + extra);
+            URL url = new URL(serverUrl + extra);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestProperty("X-Client-Version", "1");
             conn.setRequestProperty("X-RHN-Server-Id", "XXXXXXXXXX");

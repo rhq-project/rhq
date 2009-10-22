@@ -62,8 +62,8 @@ import org.rhq.plugins.augeas.helper.Glob;
  * @author Lukas Krejci
  */
 public class AugeasConfigurationComponent<T extends ResourceComponent<?>> implements ResourceComponent<T>, ConfigurationFacet {
-    public static final String INCLUDE_GLOBS_PROP = "includeConfigurationFilesPatterns";
-    public static final String EXCLUDE_GLOBS_PROP = "excludeConfigurationFilesPatterns";
+    public static final String INCLUDE_GLOBS_PROP = "configurationFilesInclusionPatterns";
+    public static final String EXCLUDE_GLOBS_PROP = "configurationFilesExclusionPatterns";
     public static final String RESOURCE_CONFIGURATION_ROOT_NODE_PROP = "resourceConfigurationRootNode";
     public static final String AUGEAS_MODULE_NAME_PROP = "augeasModuleName";
 
@@ -489,9 +489,9 @@ public class AugeasConfigurationComponent<T extends ResourceComponent<?>> implem
         includeGlobs = new ArrayList<String>();
         excludeGlobs = new ArrayList<String>();
         
-        includeGlobs.addAll(Arrays.asList(includes.getStringValue().split("\\s*|\\s*")));
+        includeGlobs.addAll(Arrays.asList(includes.getStringValue().split("\\s*\\|\\s*")));
         if (excludes != null) {
-            excludeGlobs.addAll(Arrays.asList(excludes.getStringValue().split("\\s*|\\s*")));
+            excludeGlobs.addAll(Arrays.asList(excludes.getStringValue().split("\\s*\\|\\s*")));
         }
     }
     

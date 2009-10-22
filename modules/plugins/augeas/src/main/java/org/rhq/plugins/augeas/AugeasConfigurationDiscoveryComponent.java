@@ -111,29 +111,22 @@ public class AugeasConfigurationDiscoveryComponent<T extends ResourceComponent<?
     }
 
     private void checkFiles(Configuration pluginConfiguration) {
-        PropertyList includeGlobsProp = pluginConfiguration.getList(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP);
-        PropertyList excludeGlobsProp = pluginConfiguration.getList(AugeasConfigurationComponent.EXCLUDE_GLOBS_PROP);
+        PropertySimple includeGlobsProp = pluginConfiguration.getSimple(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP);
+        PropertySimple excludeGlobsProp = pluginConfiguration.getSimple(AugeasConfigurationComponent.EXCLUDE_GLOBS_PROP);
         
         File root = new File(AugeasConfigurationComponent.AUGEAS_ROOT_PATH);
         
-        ArrayList<String> includeGlobs = new ArrayList<String>();
+        List<String> includeGlobs = getGlobList(includeGlobsProp);
         
         if (includeGlobsProp == null) {
             throw new IllegalStateException("Expecting at least once inclusion pattern for configuration files.");
         }
         
-        for(Property p : includeGlobsProp.getList()) {
-            PropertySimple include = (PropertySimple)p;
-            includeGlobs.add(include.getStringValue());
-        }
-        
         List<File> files = Glob.matchAll(root, includeGlobs);
         
         if (excludeGlobsProp != null) {
-            for(Property p : excludeGlobsProp.getList()) {
-                PropertySimple exclude = (PropertySimple)p;
-                Glob.exclude(files, exclude.getStringValue());
-            }
+            List<String> excludeGlobs = getGlobList(excludeGlobsProp);
+            Glob.excludeAll(files, excludeGlobs);
         }
         
         for(File configFile : files) {
@@ -179,6 +172,6 @@ public class AugeasConfigurationDiscoveryComponent<T extends ResourceComponent<?
     }
     
     private List<String> getGlobList(PropertySimple list) {
-        return Arrays.asList(list.getStringValue().split("\\s*|\\s*"));
+        return Arrays.asList(list.getStringValue().split("\\s*\\|\\s*"));
     }
 }

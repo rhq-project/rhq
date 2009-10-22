@@ -81,7 +81,12 @@ public class Glob {
                 //move the parent path down to the nearest parent of the wildcard part of the 
                 //glob pattern
                 parentPath = new File(parentPath, globPattern.substring(0, globParentIdx));
+                globPattern = parentPath.getAbsolutePath() + globPattern.substring(globParentIdx);
+            } else {
+                globPattern = parentPath.getAbsolutePath() + globPattern;
             }
+        } else {
+            globPattern = parentPath.getAbsolutePath() + globPattern;            
         }
         
         return Arrays.asList(parentPath.listFiles(new GlobFilter(globPattern)));

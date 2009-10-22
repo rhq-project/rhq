@@ -98,6 +98,9 @@ public class GlobFilter implements FileFilter {
             case '/':
                 regexPattern.append("\\/");
                 break;
+            default:
+                regexPattern.append(globPattern.charAt(i));
+                break;
             }
             i++;
         }

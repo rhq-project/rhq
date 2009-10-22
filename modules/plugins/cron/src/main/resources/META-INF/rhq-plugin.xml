@@ -59,31 +59,31 @@
          <c:list-property  displayName="Hourly Jobs" name='entry[time/minute != "*" and time/hour = "*" and time/dayofmonth = "*" and time/month = "*" and time/dayofweek = "*"]'>
             <c:map-property name=".">
                &cronEntry;
-               <c:simple-property name=".." displayName="Cron Tab" type="string" required="false" readOnly="true" description="TODO"/>
+               <c:simple-property name=".." displayName="Cron Tab" type="string" required="true" readOnly="true" description="TODO"/>
             </c:map-property>
          </c:list-property>
          <c:list-property  displayName="Daily Jobs" name='entry[time/minute != "*" and time/hour != "*" and time/dayofmonth = "*" and time/month = "*" and time/dayofweek = "*"]'>
             <c:map-property name=".">
                &cronEntry;
-               <c:simple-property name=".." displayName="Cron Tab" type="string" required="false" readOnly="true" description="TODO"/>
+               <c:simple-property name=".." displayName="Cron Tab" type="string" required="true" readOnly="true" description="TODO"/>
             </c:map-property>
          </c:list-property>
          <c:list-property  displayName="Weekly Jobs" name='entry[time/minute != "*" and time/hour != "*" and time/dayofmonth = "*" and time/month = "*" and time/dayofweek != "*"]'>
             <c:map-property name=".">
                &cronEntry;
-               <c:simple-property name=".." displayName="Cron Tab" type="string" required="false" readOnly="true" description="TODO"/>
+               <c:simple-property name=".." displayName="Cron Tab" type="string" required="true" readOnly="true" description="TODO"/>
             </c:map-property>
          </c:list-property>
          <c:list-property  displayName="Monthly Jobs" name='entry[time/minute != "*" and time/hour != "*" and time/dayofmonth != "*" and time/month = "*" and time/dayofweek = "*"]'>
             <c:map-property name=".">
                &cronEntry;
-               <c:simple-property name=".." displayName="Cron Tab" type="string" required="false" readOnly="true" description="TODO"/>
+               <c:simple-property name=".." displayName="Cron Tab" type="string" required="true" readOnly="true" description="TODO"/>
             </c:map-property>
          </c:list-property>
          <c:list-property  displayName="Yearly Jobs" name='entry[time/minute != "*" and time/hour != "*" and time/dayofmonth != "*" and time/month != "*" and time/dayofweek = "*"]'>
             <c:map-property name=".">
                &cronEntry;
-               <c:simple-property name=".." displayName="Cron Tab" type="string" required="false" readOnly="true" description="TODO"/>
+               <c:simple-property name=".." displayName="Cron Tab" type="string" required="true" readOnly="true" description="TODO"/>
             </c:map-property>
          </c:list-property>
       </resource-configuration>

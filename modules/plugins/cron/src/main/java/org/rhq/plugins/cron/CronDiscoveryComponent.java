@@ -25,4 +25,5 @@ import org.rhq.plugins.platform.PlatformComponent;
  * @author Lukas Krejci
  */
 public class CronDiscoveryComponent extends AugeasConfigurationDiscoveryComponent<PlatformComponent> {
+    //the super class provides everything we need...
 }

@@ -31,7 +31,8 @@
    <service name="Cron"
             description="The cron configuration"
             discovery="CronDiscoveryComponent"
-            class="CronComponent">
+            class="CronComponent"
+            singleton="true">
 
        <runs-inside>
          <parent-resource-type name="Linux"    plugin="Platforms"/>
@@ -91,7 +92,8 @@
       <service name="Cron Tab"
                description="A single cron tab file"
                discovery="CronTabDiscoveryComponent"
-               class="CronTabComponent">
+               class="CronTabComponent"
+               createDeletePolicy="both">
         <resource-configuration>
             <c:map-property name="basicSettings" displayName="Basic Environment Settings">
                 <c:simple-property name="SHELL" displayName="Shell" default="/bin/sh" required="false"/>
@@ -100,8 +102,8 @@
                 <c:simple-property name="CRON_TZ" displayName="Cron Timezone" required="false"/>
                 <c:simple-property name="MLS_LEVEL" displayName="SELinux security context" required="false"/>
             </c:map-property>
-            <c:list-property name="commands" displayName="Cron Commands">
-                <c:map-property name="command">
+            <c:list-property name="entries" displayName="Cron Entries">
+                <c:map-property name="entry">
                     &cronEntry;
                 </c:map-property>
             </c:list-property>

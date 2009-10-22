@@ -18,11 +18,24 @@
  */
 package org.rhq.plugins.cron;
 
+import java.io.File;
+import java.util.Date;
+import java.util.List;
+
 import net.augeas.Augeas;
 
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertyList;
+import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.core.domain.resource.CreateResourceStatus;
+import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
+import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.plugins.augeas.AugeasConfigurationComponent;
 import org.rhq.plugins.augeas.helper.AugeasNode;
 import org.rhq.plugins.platform.PlatformComponent;
@@ -30,19 +43,35 @@ import org.rhq.plugins.platform.PlatformComponent;
 /**
  * @author Lukas Krejci 
  */
-public class CronComponent extends AugeasConfigurationComponent<PlatformComponent> {
+public class CronComponent extends AugeasConfigurationComponent<PlatformComponent> implements CreateChildResourceFacet {
 
     private static final String CRONTAB_PROP = "..";
-    private static final int AUGEAS_FILES_PREFIX_LENGTH = "/files".length();
+    private static final String AUGEAS_FILES_PREFIX = "/files";
+    private static final int AUGEAS_FILES_PREFIX_LENGTH = AUGEAS_FILES_PREFIX.length();
+    private static final String CRONTAB_RESOURCE_TYPE_NAME = "Cron Tab";
     
+    public CreateResourceReport createResource(CreateResourceReport report) {
+        if (CRONTAB_RESOURCE_TYPE_NAME.equals(report.getResourceType().getName())) {
+            try {
+                String resourceKey = createCrontab(report.getResourceName(), report.getResourceType().getResourceConfigurationDefinition(), report.getResourceConfiguration());
+                report.setResourceKey(resourceKey);
+                report.setStatus(CreateResourceStatus.SUCCESS);
+            } catch (Exception e) {
+                report.setException(e);
+                report.setStatus(CreateResourceStatus.FAILURE);
+            }
+        } else {
+            report.setErrorMessage("Don't know how to create resource of type " + report.getResourceType().getName());
+            report.setStatus(CreateResourceStatus.FAILURE);
+        }
+        return report;
+    }
+
     @Override
     protected Property createPropertySimple(PropertyDefinitionSimple propDefSimple, Augeas augeas, AugeasNode node) {
         if (CRONTAB_PROP.equals(propDefSimple.getName())) {
             //we want the full path to the crontab file the entry is in..
-            //the node's path is /files/blah/blah/entry/..
-            //we want the /blah/blah part
-            String crontabPath = node.getParent().getParent().getPath().substring(AUGEAS_FILES_PREFIX_LENGTH);
-            
+            String crontabPath = getEntryCrontabPath(node);
             return new PropertySimple(CRONTAB_PROP, crontabPath);
         } else {
             return super.createPropertySimple(propDefSimple, augeas, node);
@@ -54,9 +83,123 @@ public class CronComponent extends AugeasConfigurationComponent<PlatformComponen
         PropertySimple propSimple) {
         
         if (CRONTAB_PROP.equals(propDefSimple.getName())) {
-            //TODO we want to move this entry into the crontab specified
+            String origPath = getEntryCrontabPath(node);
+            if (!propSimple.getStringValue().equals(origPath)) {
+                String newCrontab = AUGEAS_FILES_PREFIX + propSimple.getStringValue();
+                //check that the newly specified crontab exists
+                if (!augeas.exists(newCrontab)) {
+                    throw new RuntimeException("The crontab '" + newCrontab + "' doesn't exist. You need to create it before you can move entries into it.");
+                }
+                augeas.move(node.getPath(), newCrontab);
+            }
         } else {
             super.setNodeFromPropertySimple(augeas, node, propDefSimple, propSimple);
         }
+    }
+    
+    private String getEntryCrontabPath(AugeasNode crontabNode) {
+        //the node's path is /files/blah/blah/entry/..
+        //we want the /blah/blah part
+        return crontabNode.getParent().getParent().getPath().substring(AUGEAS_FILES_PREFIX_LENGTH);        
+    }
+
+    /**
+     * Creates a new crontab resource based on the provided configuration.
+     * 
+     * @param resourceConfiguration
+     * @return the resource key of the crontab
+     */
+    private String createCrontab(String resourceName, ConfigurationDefinition configurationDefinition, Configuration resourceConfiguration) {
+        File crontabFile = new File(resourceName);
+        if (crontabFile.exists()) {
+            throw new RuntimeException("A file with given name already exists. Creating the crontab would overwrite it.");
+        }
+        
+        updateCrontab(resourceName, configurationDefinition, resourceConfiguration);
+        
+        return resourceName;
+    }
+    
+    protected void updateCrontab(String crontabPath, ConfigurationDefinition crontabConfigurationDefinition, Configuration crontabConfiguration) {
+        Augeas augeas = getAugeas();
+        augeas.load();
+        
+        File crontabFile = new File(crontabPath);
+        String basePath = AUGEAS_FILES_PREFIX + crontabFile.getAbsolutePath();
+        AugeasNode baseNode = new AugeasNode(basePath);
+        
+        PropertyMap basicSettings = crontabConfiguration.getMap(CronTabComponent.BASIC_SETTINGS_PROP);
+        PropertyDefinitionMap basicSettingsDef = crontabConfigurationDefinition.getPropertyDefinitionMap(CronTabComponent.BASIC_SETTINGS_PROP);
+        
+        setNodeFromPropertyMap(basicSettingsDef, basicSettings, augeas, baseNode);
+        
+        PropertyList entries = crontabConfiguration.getList(CronTabComponent.ENTRIES_PROP);
+        PropertyDefinitionList entriesDef = crontabConfigurationDefinition.getPropertyDefinitionList(CronTabComponent.ENTRIES_PROP);
+        setNodeFromPropertyList(entriesDef, entries, augeas, baseNode);
+        
+        PropertyList additionalSettings = crontabConfiguration.getList(CronTabComponent.ADDITIONAL_SETTINGS_PROP);
+        if (additionalSettings != null) {
+            for(Property p : additionalSettings.getList()) {
+                PropertyMap setting = (PropertyMap)p;
+                String name = setting.getSimpleValue(CronTabComponent.NAME_PROP, null);
+                String value = setting.getSimpleValue(CronTabComponent.VALUE_PROP, "");
+                if (name != null) {
+                    String settingPath = basePath + AugeasNode.SEPARATOR + name;
+                    augeas.set(settingPath, value);
+                }
+            }
+        }
+        
+        augeas.save();        
+    }
+    
+    /**
+     * This method is only used by the {@link CronTabComponent}.
+     * I placed the method in the parent component class, because here, we have all the information the
+     * sub component need and we don't have to make them load stuff that is accessible right here and now.
+     * 
+     * @param crontabPath
+     * @param crontabConfigurationDefinition
+     * @return
+     */
+    protected Configuration loadCronTab(String crontabPath, ConfigurationDefinition crontabConfigurationDefinition) {
+        Augeas augeas = getAugeas();
+        augeas.load();
+        
+        File crontabFile = new File(crontabPath);
+        String basePath = AUGEAS_FILES_PREFIX + crontabFile.getAbsolutePath();
+        AugeasNode baseNode = new AugeasNode(basePath);
+        
+        Configuration ret = new Configuration();
+        ret.setNotes("Loaded by Augeas at " + new Date());
+        
+        PropertyDefinitionMap basicSettingsDef = crontabConfigurationDefinition.getPropertyDefinitionMap(CronTabComponent.BASIC_SETTINGS_PROP);
+        PropertyMap basicSettings = new PropertyMap(basicSettingsDef.getName());
+        ret.put(basicSettings);
+        loadProperty(basicSettingsDef, basicSettings, augeas, baseNode);
+                
+        PropertyDefinitionList entriesDef = crontabConfigurationDefinition.getPropertyDefinitionList(CronTabComponent.ENTRIES_PROP);
+        PropertyList entries = new PropertyList(entriesDef.getName());
+        ret.put(entries);
+        loadProperty(entriesDef, ret, augeas, baseNode);
+
+        List<String> envSettings = augeas.match(basePath + "/*[label() != \"entry\" and label() != \"#comment\"]");
+        
+        PropertyList additionalSettings = new PropertyList(CronTabComponent.ADDITIONAL_SETTINGS_PROP);
+        ret.put(additionalSettings);
+        
+        for(String env : envSettings) {
+            String name = env.substring(env.lastIndexOf(AugeasNode.SEPARATOR_CHAR) + 1);
+            if (!basicSettings.getMap().containsKey(name)) {
+                String value = augeas.get(env);
+                PropertyMap entry = new PropertyMap(CronTabComponent.SETTING_PROP);
+                additionalSettings.add(entry);
+                entry.put(new PropertySimple(CronTabComponent.NAME_PROP, name));
+                entry.put(new PropertySimple(CronTabComponent.VALUE_PROP, value));                
+            }
+            
+        }
+        
+        return ret;
     }
 }

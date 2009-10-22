@@ -1,41 +1,69 @@
 package org.rhq.enterprise.gui.configuration.resource;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.TreeMap;
 
-import javax.faces.component.UIComponent;
+import org.jboss.seam.ScopeType;
+import org.jboss.seam.annotations.Begin;
+import org.jboss.seam.annotations.Create;
+import org.jboss.seam.annotations.End;
+import org.jboss.seam.annotations.In;
+import org.jboss.seam.annotations.Name;
+import org.jboss.seam.annotations.Scope;
+import org.jboss.seam.faces.Redirect;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.RawConfiguration;
+import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
-//@Name("RawConfigCollection")
-//@Scope(ScopeType.CONVERSATION)
-public class RawConfigCollection {
+@Name("RawConfigCollection")
+@Scope(ScopeType.CONVERSATION)
+public class RawConfigCollection implements Serializable {
 
-    UIComponent binding;
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 4837157548556168146L;
     private String selectedPath;
     private TreeMap<String, RawConfiguration> raws;
     private TreeMap<String, RawConfiguration> modified = new TreeMap<String, RawConfiguration>();
-    protected ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
-    RawConfiguration current;
-    private Configuration configuration;
+    private RawConfiguration current = null;
+    @In(value = "org.jboss.seam.faces.redirect")
+    private Redirect redirect;
+
+    public Redirect getRedirect() {
+        return redirect;
+    }
+
+    public void setRedirect(Redirect redirect) {
+        this.redirect = redirect;
+    }
+
+    @Create
+    @Begin
+    public void init() {
+
+    }
+
+    /**
+     * These values are transient due to the need to save and restore the view.  
+     * We can always fetch them again.
+     */
+    transient private ConfigurationManagerLocal configurationManager;
+    transient private Configuration configuration = null;
 
     //This is for development, to prevent actually going to the EJBs.
     //It should be set to false prior to check in
-    private static final boolean useMock = false;
+    private static final boolean useMock = true;
 
-    public UIComponent getBinding() {
-        return binding;
-    }
-
-    public void setBinding(UIComponent binding) {
-        this.binding = binding;
+    public RawConfigCollection() {
     }
 
     public void select(String s) {
@@ -43,16 +71,35 @@ public class RawConfigCollection {
         setCurrentPath(selectedPath);
     }
 
-    public int getConfigId() {
-
+    public Configuration getConfiguration() {
         if (null == configuration) {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
             int resourceId = EnterpriseFacesContextUtility.getResource().getId();
-            AbstractResourceConfigurationUpdate configurationUpdate = this.configurationManager
+            AbstractResourceConfigurationUpdate configurationUpdate = this.getConfigurationManager()
                 .getLatestResourceConfigurationUpdate(subject, resourceId);
             configuration = (configurationUpdate != null) ? configurationUpdate.getConfiguration() : null;
         }
-        return configuration.getId();
+
+        return configuration;
+    }
+
+    public int getConfigId() {
+
+        return getConfiguration().getId();
+    }
+
+    @End
+    public void commit() {
+        //        configurationManager.findRawConfigurationsByConfigurationId(getConfigId());   
+
+        for (RawConfiguration raw : modified.values()) {
+            getRaws().put(raw.getPath(), raw);
+        }
+        getConfigurationManager();
+        //        getConfigurationManager().setRawConfigurations(configId, raws.values());
+
+        this.redirect.setParameter(ParamConstants.CONFIG_ID_PARAM, getConfigId());
+        this.redirect.setViewId("http://localhost:7080/rhq/resource/configuration/history.xhtml");
     }
 
     public TreeMap<String, RawConfiguration> getRaws() {
@@ -69,7 +116,8 @@ public class RawConfigCollection {
     }
 
     private void populateRawsMock() {
-        String[] files = { "/etc/mock/file1", "/etc/mock/file2", "/etc/mock/file2" };
+        String[] files = { "/etc/mock/file1", "/etc/mock/file2", "/etc/mock/file3", "/etc/mock/me/will/you",
+            "/etc/mock/turtle/soup", "/etc/mock/mysmock/iclean/yourclock" };
 
         for (String file : files) {
             RawConfiguration raw = new RawConfiguration();
@@ -81,14 +129,11 @@ public class RawConfigCollection {
     }
 
     private void populateRaws() {
-        Collection<RawConfiguration> rawConfigurations = configurationManager
+        Collection<RawConfiguration> rawConfigurations = getConfigurationManager()
             .findRawConfigurationsByConfigurationId(getConfigId());
         for (RawConfiguration raw : rawConfigurations) {
             raws.put(raw.getPath(), raw);
         }
-    }
-
-    public RawConfigCollection() {
     }
 
     public RawConfiguration getCurrent() {
@@ -145,5 +190,13 @@ public class RawConfigCollection {
 
     public boolean isModified(String path) {
         return modified.keySet().contains(path);
+    }
+
+    private ConfigurationManagerLocal getConfigurationManager() {
+        if (null == configurationManager) {
+            configurationManager = LookupUtil.getConfigurationManager();
+        }
+
+        return configurationManager;
     }
 }

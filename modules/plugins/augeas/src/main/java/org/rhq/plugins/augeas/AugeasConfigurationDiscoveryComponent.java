@@ -45,7 +45,7 @@ import org.rhq.plugins.augeas.helper.Glob;
  * @author Ian Springer
  * @author Lukas Krejci
  */
-public class AugeasConfigurationDiscoveryComponent<T extends ResourceComponent<?>> implements ResourceDiscoveryComponent<T>, ManualAddFacet<T> {
+public class AugeasConfigurationDiscoveryComponent<T extends ResourceComponent> implements ResourceDiscoveryComponent<T>, ManualAddFacet<T> {
     private final Log log = LogFactory.getLog(this.getClass());
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<T> discoveryContext) throws InvalidPluginConfigurationException,

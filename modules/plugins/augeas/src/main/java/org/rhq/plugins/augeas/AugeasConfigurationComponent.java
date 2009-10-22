@@ -61,7 +61,7 @@ import org.rhq.plugins.augeas.helper.Glob;
  * @author Ian Springer
  * @author Lukas Krejci
  */
-public class AugeasConfigurationComponent<T extends ResourceComponent<?>> implements ResourceComponent<T>, ConfigurationFacet {
+public class AugeasConfigurationComponent<T extends ResourceComponent> implements ResourceComponent<T>, ConfigurationFacet {
     public static final String INCLUDE_GLOBS_PROP = "configurationFilesInclusionPatterns";
     public static final String EXCLUDE_GLOBS_PROP = "configurationFilesExclusionPatterns";
     public static final String RESOURCE_CONFIGURATION_ROOT_NODE_PROP = "resourceConfigurationRootNode";
@@ -260,7 +260,7 @@ public class AugeasConfigurationComponent<T extends ResourceComponent<?>> implem
         return true;
     }
 
-    private void loadProperty(PropertyDefinition propDef, AbstractPropertyMap parentPropMap, Augeas augeas,
+    protected void loadProperty(PropertyDefinition propDef, AbstractPropertyMap parentPropMap, Augeas augeas,
         AugeasNode parentNode) {
         String propName = propDef.getName();
         AugeasNode node = (propName.equals(".")) ? parentNode : new AugeasNode(parentNode, propName);
@@ -277,7 +277,7 @@ public class AugeasConfigurationComponent<T extends ResourceComponent<?>> implem
         parentPropMap.put(prop);
     }
 
-    private Property createPropertySimple(PropertyDefinitionSimple propDefSimple, Augeas augeas, AugeasNode node) {
+    protected Property createPropertySimple(PropertyDefinitionSimple propDefSimple, Augeas augeas, AugeasNode node) {
         String value;
         if (propDefSimple.getType() == PropertySimpleType.LONG_STRING) {
             List<String> childPaths = augeas.match(node.getPath());
@@ -299,13 +299,13 @@ public class AugeasConfigurationComponent<T extends ResourceComponent<?>> implem
         return new PropertySimple(propDefSimple.getName(), value);
     }
 
-    private PropertyMap createPropertyMap(PropertyDefinitionMap propDefMap, Augeas augeas, AugeasNode node) {
+    protected PropertyMap createPropertyMap(PropertyDefinitionMap propDefMap, Augeas augeas, AugeasNode node) {
         PropertyMap propMap = new PropertyMap(propDefMap.getName());
         populatePropertyMap(propDefMap, propMap, augeas, node);
         return propMap;
     }
 
-    private Property createPropertyList(PropertyDefinitionList propDefList, Augeas augeas, AugeasNode node) {
+    protected Property createPropertyList(PropertyDefinitionList propDefList, Augeas augeas, AugeasNode node) {
         PropertyDefinition listMemberPropDef = propDefList.getMemberDefinition();
         if (!(listMemberPropDef instanceof PropertyDefinitionMap)) {
             throw new IllegalArgumentException(
@@ -336,14 +336,14 @@ public class AugeasConfigurationComponent<T extends ResourceComponent<?>> implem
         return propList;
     }
 
-    private void populatePropertyMap(PropertyDefinitionMap propDefMap, PropertyMap propMap, Augeas augeas,
+    protected void populatePropertyMap(PropertyDefinitionMap propDefMap, PropertyMap propMap, Augeas augeas,
         AugeasNode mapNode) {
         for (PropertyDefinition mapEntryPropDef : propDefMap.getPropertyDefinitions().values()) {
             loadProperty(mapEntryPropDef, propMap, augeas, mapNode);
         }
     }
 
-    private void setNode(PropertyDefinition propDef, AbstractPropertyMap parentPropMap, Augeas augeas,
+    protected void setNode(PropertyDefinition propDef, AbstractPropertyMap parentPropMap, Augeas augeas,
         AugeasNode parentNode) {
         String propName = propDef.getName();
         AugeasNode node = (propName.equals(".")) ? parentNode : new AugeasNode(parentNode, propName);
@@ -373,7 +373,7 @@ public class AugeasConfigurationComponent<T extends ResourceComponent<?>> implem
         }
     }
 
-    private void setNodeFromPropertySimple(Augeas augeas, AugeasNode node, PropertyDefinitionSimple propDefSimple,
+    protected void setNodeFromPropertySimple(Augeas augeas, AugeasNode node, PropertyDefinitionSimple propDefSimple,
         PropertySimple propSimple) {
         String value = propSimple.getStringValue();
         if (propDefSimple.getType() == PropertySimpleType.LONG_STRING) {
@@ -396,14 +396,14 @@ public class AugeasConfigurationComponent<T extends ResourceComponent<?>> implem
         }
     }
 
-    private void setNodeFromPropertyMap(PropertyDefinitionMap propDefMap, PropertyMap propMap, Augeas augeas,
+    protected void setNodeFromPropertyMap(PropertyDefinitionMap propDefMap, PropertyMap propMap, Augeas augeas,
         AugeasNode mapNode) {
         for (PropertyDefinition mapEntryPropDef : propDefMap.getPropertyDefinitions().values()) {
             setNode(mapEntryPropDef, propMap, augeas, mapNode);
         }
     }
 
-    private void setNodeFromPropertyList(PropertyDefinitionList propDefList, PropertyList propList, Augeas augeas,
+    protected void setNodeFromPropertyList(PropertyDefinitionList propDefList, PropertyList propList, Augeas augeas,
         AugeasNode listNode) {
         PropertyDefinition listMemberPropDef = propDefList.getMemberDefinition();
         if (!(listMemberPropDef instanceof PropertyDefinitionMap)) {

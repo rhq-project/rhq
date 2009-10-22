@@ -21,6 +21,10 @@ public class RhnDownloader {
         satHandler = XmlRpcExecutorFactory.getClient(serverUrl + SAT_HANDLER);
     }
 
+    public String getServerUrl() {
+        return this.serverUrl;
+    }
+
     /**
      * Expected return header values for: X-Client-Version, X-RHN-Server-Id, X-RHN-Auth
      * X-RHN-Auth-User-Id, X-RHN-Auth-Expire-Offset, X-RHN-Auth-Server-Time
@@ -70,14 +74,13 @@ public class RhnDownloader {
         return true;
     }
 
-    public InputStream getRPMStream(String systemId, String locationUrl)
-        throws IOException, XmlRpcException {
+    public InputStream getRPMStream(String systemId, String locationUrl) throws IOException, XmlRpcException {
 
         URL url = new URL(locationUrl);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         Map props = login(systemId);
-        for (Object key: props.keySet()) {
-            conn.setRequestProperty((String)key, props.get(key).toString());
+        for (Object key : props.keySet()) {
+            conn.setRequestProperty((String) key, props.get(key).toString());
         }
         conn.setRequestMethod("GET");
         conn.connect();

@@ -20,15 +20,30 @@
 package org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc;
 
 import java.lang.reflect.Field;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
 
 import org.apache.xmlrpc.XmlRpcException;
 import org.apache.xmlrpc.client.XmlRpcClient;
+import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
 
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelFamiliesType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelFamilyType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelsType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnKickstartableTreeType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnKickstartableTreesType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageShortType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackagesShortType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackagesType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnProductNameType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnProductNamesType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnSatelliteType;
@@ -39,12 +54,15 @@ import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnSatelliteType;
  */
 public class MockRhnXmlRpcExecutor implements XmlRpcExecutor {
 
+    private URL serverUrl;
+
     /**
      * Constructor
      * @param client to ignore
      */
     public MockRhnXmlRpcExecutor(XmlRpcClient client) {
-
+        XmlRpcClientConfigImpl config = (XmlRpcClientConfigImpl) client.getClientConfig();
+        this.serverUrl = config.getServerURL();
     }
 
     /* (non-Javadoc)
@@ -53,42 +71,157 @@ public class MockRhnXmlRpcExecutor implements XmlRpcExecutor {
     @Override
     public Object execute(String methodName, Object[] params) throws XmlRpcException {
         System.out.println("MethodName: " + methodName);
-        for (Object object : params) {
-            System.out.println("parm: " + object);
+        //for (Object object : params) {
+        //    System.out.println("parm: " + object);
+        //}
+
+        // Check auth
+        String systemid = (String) params[0];
+        // Check URL
+        URLConnection conn;
+        try {
+            conn = serverUrl.openConnection();
+            conn.connect();
+        } catch (Exception e) {
+            System.out.println("serverUrl: " + serverUrl);
+            throw new XmlRpcException(0, "Failed to read server's response");
+        }
+        if (!systemid.contains("<name>system_id</name>")) {
+            throw new XmlRpcException(-9, "Invalid System Credentials");
         }
         if (methodName.equals("authentication.check")) {
-            String systemid = (String) params[0];
-            if (systemid.contains("<name>system_id</name>")) {
-                return new Integer(1);
-            } else {
-                return new Integer(0);
+            return new Integer(1);
+        } else if (methodName.equals("authentication.login")) {
+            Map retval = new HashMap();
+            retval.put("foo", "bar");
+            return retval;
+        } else if (methodName.equals("dump.packages_short")) {
+            JAXBElement element = getRhnSatelliteType();
+            RhnSatelliteType retval = (RhnSatelliteType) element.getValue();
+            List<String> pids = (List<String>) params[1];
+            List<RhnPackageShortType> rhnPackageShort = new LinkedList<RhnPackageShortType>();
+            for (String pid : pids) {
+                // PackageInfoShort
+                RhnPackageShortType pstype = new RhnPackageShortType();
+                pstype.setId("1");
+                pstype.setName("foo");
+                pstype.setEpoch("0");
+                pstype.setVersion("1");
+                pstype.setRelease("1");
+                pstype.setPackageSize("999");
+                pstype.setMd5Sum("ABCDE");
+                pstype.setLastModified("Wed Oct 21 16:03:26 PDT 2009");
+                rhnPackageShort.add(pstype);
+
+                RhnPackagesShortType pshortypes = new RhnPackagesShortType();
+                setPrivateList("rhnPackageShort", pshortypes, rhnPackageShort);
+                retval.setRhnPackagesShort(pshortypes);
+
             }
-        }
-        if (methodName.equals("dump.product_names")) {
-
-            // getRhnProductNames().getRhnProductName();
-            RhnProductNameType type = new RhnProductNameType();
-            type.setLabel("some-prod-label");
-            type.setName("some product name");
-            List<RhnProductNameType> rhnProductName = new LinkedList<RhnProductNameType>();
-            rhnProductName.add(type);
-
-            RhnProductNamesType prodNamesType = new RhnProductNamesType();
-            try {
-                Field privateListField = RhnProductNamesType.class.getDeclaredField("rhnProductName");
-                privateListField.setAccessible(true);
-                privateListField.set(prodNamesType, rhnProductName);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-            RhnSatelliteType sattype = new RhnSatelliteType();
-            sattype.setRhnProductNames(prodNamesType);
-
-            JAXBElement<RhnSatelliteType> element = new JAXBElement<RhnSatelliteType>(new QName(""),
-                RhnSatelliteType.class, sattype);
-            element.setValue(sattype);
             return element;
+        } else if (methodName.equals("dump.kickstartable_trees")) {
+            JAXBElement element = getRhnSatelliteType();
+            RhnSatelliteType retval = (RhnSatelliteType) element.getValue();
+            List<String> kstids = (List<String>) params[1];
+            List<RhnKickstartableTreeType> rhnKickstartableTree = new LinkedList<RhnKickstartableTreeType>();
+            for (String kid : kstids) {
+                RhnKickstartableTreeType kstype = new RhnKickstartableTreeType();
+                kstype.setBasePath("basepath");
+                kstype.setBootImage("boot");
+                kstype.setChannel("channel");
+                kstype.setInstallTypeLabel("type");
+                kstype.setInstallTypeName("name");
+                kstype.setKstreeTypeLabel("label");
+                kstype.setKstreeTypeName("type");
+                kstype.setLabel("label");
+                kstype.setLastModified("lastmod");
+                rhnKickstartableTree.add(kstype);
+
+                RhnKickstartableTreesType pshortypes = new RhnKickstartableTreesType();
+                setPrivateList("rhnKickstartableTree", pshortypes, rhnKickstartableTree);
+                retval.setRhnKickstartableTrees(pshortypes);
+            }
+            return element;
+        } else if (methodName.equals("dump.packages")) {
+            JAXBElement element = getRhnSatelliteType();
+            RhnSatelliteType retval = (RhnSatelliteType) element.getValue();
+            List<String> pids = (List<String>) params[1];
+            List<RhnPackageType> rhnPackage = new LinkedList<RhnPackageType>();
+            for (String pid : pids) {
+                RhnPackageType ptype = new RhnPackageType();
+                ptype.setId(pid);
+                ptype.setLastModified("lastmod");
+                ptype.setRhnPackageSummary("summary");
+                ptype.setRhnPackageDescription("desc");
+                rhnPackage.add(ptype);
+
+                RhnPackagesType ptypes = new RhnPackagesType();
+                setPrivateList("rhnPackage", ptypes, rhnPackage);
+                retval.setRhnPackages(ptypes);
+            }
+            return element;
+
+        } else {
+            return getRhnSatelliteType();
         }
-        return null;
+
+    }
+
+    private JAXBElement getRhnSatelliteType() {
+        RhnSatelliteType sattype = new RhnSatelliteType();
+
+        // ProductNames
+        RhnProductNameType type = new RhnProductNameType();
+        type.setLabel("some-prod-label");
+        type.setName("some product name");
+        List<RhnProductNameType> rhnProductName = new LinkedList<RhnProductNameType>();
+        rhnProductName.add(type);
+
+        RhnProductNamesType prodNamesType = new RhnProductNamesType();
+        setPrivateList("rhnProductName", prodNamesType, rhnProductName);
+        sattype.setRhnProductNames(prodNamesType);
+
+        // ChannelFamilies
+        List<RhnChannelFamilyType> rhnChannelFamily = new LinkedList<RhnChannelFamilyType>();
+        RhnChannelFamilyType ctype = new RhnChannelFamilyType();
+        ctype.setLabel("channel-fam-label");
+        ctype.setMaxMembers("2112");
+        ctype.setChannelLabels("foo,bar,baz");
+        ctype.setId("1");
+        rhnChannelFamily.add(ctype);
+
+        RhnChannelFamiliesType cfamtypes = new RhnChannelFamiliesType();
+        setPrivateList("rhnChannelFamily", cfamtypes, rhnChannelFamily);
+        sattype.setRhnChannelFamilies(cfamtypes);
+
+        // Channels
+        List<RhnChannelType> rhnChannel = new LinkedList<RhnChannelType>();
+        RhnChannelType chantype = new RhnChannelType();
+        chantype.setLabel("channel-fam-label");
+        chantype.setRhnChannelName("channel name");
+        chantype.setRhnChannelSummary("channel summary");
+        chantype.setPackages("1 2 3 4");
+        rhnChannel.add(chantype);
+
+        RhnChannelsType chantypes = new RhnChannelsType();
+        setPrivateList("rhnChannel", chantypes, rhnChannel);
+        sattype.setRhnChannels(chantypes);
+
+        JAXBElement<RhnSatelliteType> element = new JAXBElement<RhnSatelliteType>(new QName(""),
+            RhnSatelliteType.class, sattype);
+        element.setValue(sattype);
+        return element;
+
+    }
+
+    private void setPrivateList(String fieldName, Object oIn, List listIn) {
+        try {
+            Field privateListField = oIn.getClass().getDeclaredField(fieldName);
+            privateListField.setAccessible(true);
+            privateListField.set(oIn, listIn);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
     }
 }

@@ -24,6 +24,7 @@ package org.rhq.enterprise.server.plugin.content;
 
 import org.rhq.core.clientapi.server.plugin.content.ContentProvider;
 import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetails;
+import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetailsKey;
 import org.rhq.core.clientapi.server.plugin.content.PackageSource;
 import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
 import org.rhq.core.clientapi.server.plugin.content.RepoDetails;
@@ -34,10 +35,15 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceType;
+import org.rhq.core.domain.content.PackageType;
+import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.content.PackageVersionContentSource;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.RepoGroup;
 import org.rhq.core.domain.content.RepoRepoGroup;
 import org.rhq.core.domain.criteria.RepoCriteria;
+import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
@@ -50,6 +56,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.persistence.EntityManager;
+import javax.persistence.Query;
 import javax.transaction.TransactionManager;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -62,11 +69,24 @@ import java.util.Set;
  */
 public class ContentProviderManagerTest extends AbstractEJB3Test {
 
+    private static final String PACKAGE_TYPE_NAME = "testPackageType";
+    private static final String RESOURCE_TYPE_NAME = "testResourceType";
+    private static final String PLUGIN_NAME = "testPlugin";
+    private static final String PACKAGE_NAME = "package1";
+    private static final String PACKAGE_VERSION = "1.0";
+    private static final String PACKAGE_ARCH = "noarch";
+
     // The following variables need to be cleaned up at the end of the test
+
     private ContentSourceType testSourceType;
+
     private ContentSource testSource;
+    private PackageType testPackageType;
+
+    private ResourceType testResourceType;
     private List<Integer> reposToDelete = new ArrayList<Integer>();
     private List<Integer> repoGroupsToDelete = new ArrayList<Integer>();
+    private List<Integer> packagesToDelete = new ArrayList<Integer>();
 
     @BeforeMethod
     public void setupBeforeMethod() throws Exception {
@@ -95,6 +115,13 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
         testSource = new ContentSource("testSource", testSourceType);
         contentManager.simpleCreateContentSource(overlord, testSource);
 
+        // Create a sample package type that will be used for packages sync'd in the test
+        testResourceType = new ResourceType(RESOURCE_TYPE_NAME, PLUGIN_NAME, ResourceCategory.PLATFORM, null);
+        entityManager.persist(testResourceType);
+
+        testPackageType = new PackageType(PACKAGE_TYPE_NAME, testResourceType);
+        entityManager.persist(testPackageType);
+
         tx.commit();
     }
 
@@ -120,11 +147,29 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
             repoManager.deleteRepoGroup(overlord, repoGroupId);
         }
 
+        // First disassociate packages from the content source
+        entityManager.createNamedQuery(PackageVersionContentSource.DELETE_BY_CONTENT_SOURCE_ID).setParameter(
+            "contentSourceId", testSource.getId()).executeUpdate();
+        
+        // Delete any packages created in this test
+        for (Integer packageId : packagesToDelete) {
+            PackageVersion deleteMe = entityManager.find(PackageVersion.class, packageId);
+            entityManager.remove(deleteMe);
+        }
+
         // Delete the source that was created
         testSource = entityManager.find(ContentSource.class, testSource.getId());
         entityManager.remove(testSource);
 
-        // Delete the type that was created
+        // Delete the fake package type
+        testPackageType = entityManager.find(PackageType.class, testPackageType.getId());
+        entityManager.remove(testPackageType);
+
+        // Delete the fake resource type
+        testResourceType = entityManager.find(ResourceType.class, testResourceType.getId());
+        entityManager.remove(testResourceType);
+
+        // Delete the fake source type
         testSourceType = entityManager.find(ContentSourceType.class, testSourceType.getId());
         entityManager.remove(testSourceType);
 
@@ -136,7 +181,9 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void synchronizeContentSource() throws Exception {
+
         // Setup
         RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
         SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
@@ -182,9 +229,41 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
         assert repoRepoGroup.getRepoRepoGroupPK().getRepoGroup().getName().equals("testRepoGroup");
         assert repoRepoGroup.getRepoRepoGroupPK().getRepo().getName().equals("testRepo2");
 
+        // -> Repo with a parent
+        retrievedRepos = repoManager.getRepoByName("testRepo3");
+        assert retrievedRepos.size() == 1;
+        reposToDelete.add(retrievedRepos.get(0).getId());
+
+        retrievedRepos = repoManager.getRepoByName("testRepo4");
+        assert retrievedRepos.size() == 1;
+        reposToDelete.add(retrievedRepos.get(0).getId());
+
+        // TODO: Test parent relationship
+
         // -> Non-existent repo
         retrievedRepos = repoManager.getRepoByName("testRepoFoo");
         assert retrievedRepos.size() == 0;
+
+        // Verify Packages
+        TransactionManager tx = getTransactionManager();
+        tx.begin();
+        EntityManager entityManager = getEntityManager();
+
+        try {
+            Query packageQuery = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY);
+            packageQuery.setParameter("packageName", PACKAGE_NAME);
+            packageQuery.setParameter("packageTypeName", PACKAGE_TYPE_NAME);
+            packageQuery.setParameter("resourceTypeId", testResourceType.getId());
+            packageQuery.setParameter("architectureName", PACKAGE_ARCH);
+            packageQuery.setParameter("version", PACKAGE_VERSION);
+
+            List<PackageVersion> packageList = packageQuery.getResultList();
+            assert packageList.size() == 1;
+            packagesToDelete.add(packageList.get(0).getId());
+        } finally {
+            tx.rollback();
+        }
+
     }
 
     /**
@@ -210,15 +289,27 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
             report.addRepo(repo2);
 
             // Repo with a parent repo created in this sync
+            // Parent explicitly added to this list *after* this child to ensure that's not a problem
             RepoDetails repo3 = new RepoDetails("testRepo3");
             repo3.setParentRepoName("testRepo1");
+            report.addRepo(repo3);
+
+            RepoDetails repo4 = new RepoDetails("testRepo4");
+            repo4.setParentRepoName("testRepo3");
+            report.addRepo(repo4);
 
             return report;
         }
 
         public void synchronizePackages(PackageSyncReport report,
                                         Collection<ContentProviderPackageDetails> existingPackages) throws Exception {
+            ContentProviderPackageDetailsKey key1 =
+                new ContentProviderPackageDetailsKey(PACKAGE_NAME, PACKAGE_VERSION, PACKAGE_TYPE_NAME,
+                    PACKAGE_ARCH, RESOURCE_TYPE_NAME, PLUGIN_NAME);
+            ContentProviderPackageDetails pkg1 = new ContentProviderPackageDetails(key1);
+            pkg1.setLocation("repo/foo");
 
+            report.addNewPackage(pkg1);
         }
 
         public void initialize(Configuration configuration) throws Exception {

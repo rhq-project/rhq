@@ -62,6 +62,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
+import org.rhq.enterprise.server.content.RepoException;
 import org.rhq.enterprise.server.content.metadata.ContentSourceMetadataManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -199,32 +200,21 @@ public class ContentProviderManager {
                 List<RepoDetails> repos = report.getRepos();
 
                 for (RepoDetails createMe : repos) {
-                    String name = createMe.getName();
 
-                    List<Repo> existingRepo = repoManager.getRepoByName(name);
-                    Repo repo;
-
-                    // If the repo doesn't exist, create it.
-                    if (existingRepo.size() == 0) {
-                        repo = new Repo(name);
-                        repo.setDescription(createMe.getDescription());
-
-                        String createMeGroup = createMe.getRepoGroup();
-                        if (createMeGroup != null) {
-                            RepoGroup group = repoManager.getRepoGroupByName(createMeGroup);
-                            repo.addRepoGroup(group);
-                        }
-
-                        repo = repoManager.createRepo(overlord, repo);
+                    // Will add repos with a parent afterwards to prevent issues where both the parent and
+                    // child are specified in this report.
+                    if (createMe.getParentRepoName() == null) {
+                        processRepo(contentSourceId, createMe);
                     }
-                    else {
-                        repo = existingRepo.get(0);
-                    }
+                }
 
-                    // This call is safe even if the content source is already associated.
-                    // We either need to associate the content source with the newly created repo, or
-                    // associate the content source with the repo that was created elsewhere.
-                    repoManager.addContentSourcesToRepo(overlord, repo.getId(), new int[] {contentSourceId});
+                // Take a second pass through the list checking for any repos that were created to be
+                // a child of another repo
+                for (RepoDetails createMe : repos) {
+
+                    if (createMe.getParentRepoName() != null) {
+                        processRepo(contentSourceId, createMe);
+                    }
                 }
 
                 log.info("importRepos: [" + contentSource.getName() + "]: report has been merged ("
@@ -357,6 +347,56 @@ public class ContentProviderManager {
         }
 
         return true;
+    }
+
+    private void processRepo(int contentSourceId, RepoDetails createMe)
+        throws Exception {
+
+        RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
+        SubjectManagerLocal subjMgr = LookupUtil.getSubjectManager();
+        Subject overlord = subjMgr.getOverlord();
+
+        String name = createMe.getName();
+
+        List<Repo> existingRepo = repoManager.getRepoByName(name);
+        Repo repo;
+
+        // If the repo doesn't exist, create it.
+        if (existingRepo.size() == 0) {
+            repo = new Repo(name);
+            repo.setDescription(createMe.getDescription());
+
+            String createMeGroup = createMe.getRepoGroup();
+            if (createMeGroup != null) {
+                RepoGroup group = repoManager.getRepoGroupByName(createMeGroup);
+                repo.addRepoGroup(group);
+            }
+
+            String parentName = createMe.getParentRepoName();
+            if (parentName != null) {
+                List<Repo> parentList = repoManager.getRepoByName(parentName);
+
+                if (parentList.size() == 0) {
+                    String error = "Attempting to create repo [" + name + "] with parent [" + parentName +
+                        "] but cannot find the parent";
+                    log.error(error);
+                    throw new RepoException(error);
+                }
+                else {
+                    // TODO: Establish relationship and associate with repo
+                }
+            }
+
+            repo = repoManager.createRepo(overlord, repo);
+        }
+        else {
+            repo = existingRepo.get(0);
+        }
+
+        // This call is safe even if the content source is already associated.
+        // We either need to associate the content source with the newly created repo, or
+        // associate the content source with the repo that was created elsewhere.
+        repoManager.addContentSourcesToRepo(overlord, repo.getId(), new int[] {contentSourceId});
     }
 
     /**

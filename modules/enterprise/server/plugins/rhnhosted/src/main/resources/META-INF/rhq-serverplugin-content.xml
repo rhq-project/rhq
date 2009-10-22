@@ -23,7 +23,7 @@
                   name="certificate"
                   type="longString"
                   required="true"
-                  description="certificate for cerdentials."/>
+                  description="RHQ subscription Certificate for activation ."/>
 
          <!--<c:group name="repos" displayName="repo list">
               <c:simple-property name="repos" type="string" default="rhn-tools-rhel-i386-server-5"/>

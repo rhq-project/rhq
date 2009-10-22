@@ -112,7 +112,9 @@ public class RHNProvider implements ContentProvider, PackageSource {
             throw new InitializationException("Server Activation Failed.", e);
         }
 
-        String repos = configuration.getSimpleValue("repos", "rhel-i386-server-5");
+        String repos = configuration.getSimpleValue("SyncableChannels", null);
+        log.info("Syncable Channel list :" + repos);
+
 
         // RHQ Server is now active, initialize the handler for the bits.
         helper = new RHNHelper(locationIn, repos);

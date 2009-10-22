@@ -700,6 +700,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                 } else {
                     // store content to local file system
                     File outputFile = getPackageBitsLocalFilesystemFile(pv.getId(), pv.getFileName());
+                    log.info("OutPutFile is located at: " + outputFile);
                     if (outputFile.exists()) {
                         // hmmm... it already exists, maybe we already have it?
                         // if the MD5's match, just ignore this download request and continue on

@@ -98,6 +98,8 @@ public class RhnCommTest extends TestCase {
             assertTrue(e.getMessage().contains("Invalid System Credentials"));
             assertTrue(e.code == -9);
             success = true;
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         assertTrue(success);
     }

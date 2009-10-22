@@ -90,6 +90,9 @@ public class MockRhnXmlRpcExecutor implements XmlRpcExecutor {
             throw new XmlRpcException(-9, "Invalid System Credentials");
         }
         if (methodName.equals("authentication.check")) {
+            if (systemid.contains("<value><string>ID-0000000000</string></value>")) {
+                throw new XmlRpcException(-9, "Invalid System Credentials");
+            }
             return new Integer(1);
         } else if (methodName.equals("authentication.login")) {
             Map retval = new HashMap();
@@ -143,6 +146,9 @@ public class MockRhnXmlRpcExecutor implements XmlRpcExecutor {
             }
             return element;
         } else if (methodName.equals("dump.packages")) {
+            if (systemid.contains("<value><string>ID-0000000000</string></value>")) {
+                throw new XmlRpcException(-9, "Invalid System Credentials");
+            }
             JAXBElement element = getRhnSatelliteType();
             RhnSatelliteType retval = (RhnSatelliteType) element.getValue();
             List<String> pids = (List<String>) params[1];

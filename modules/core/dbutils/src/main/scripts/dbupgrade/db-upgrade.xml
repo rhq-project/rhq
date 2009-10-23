@@ -1580,6 +1580,14 @@ DB Upgrade:
 
    </schemaSpec>
 
+   <schemaSpec version="2.59.1">
+      <schema-addColumn table="RHQ_PLUGIN" column="AMPS_VERSION" columnType="VARCHAR2"/>
+      <schema-alterColumn table="RHQ_PLUGIN"
+                          column="AMPS_VERSION"
+                          columnType="VARCHAR2"
+                          precision="16"/>
+   </schemaSpec>
+
 </dbupgrade>
 
 </target>

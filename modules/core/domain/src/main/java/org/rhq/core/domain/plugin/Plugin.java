@@ -61,6 +61,7 @@ import org.rhq.core.util.MessageDigestGenerator;
         + "        p.help, " //
         + "        p.md5, " //
         + "        p.version, " //
+        + "        p.ampsVersion, "
         + "        p.ctime, " //
         + "        p.mtime) " //
         + "   FROM Plugin AS p " // 
@@ -78,6 +79,7 @@ import org.rhq.core.util.MessageDigestGenerator;
         + "        p.help, " //
         + "        p.md5, " //
         + "        p.version, " //
+        + "        p.ampsVersion, "
         + "        p.ctime, " //
         + "        p.mtime) " //
         + "   FROM Plugin AS p "), //
@@ -91,6 +93,7 @@ import org.rhq.core.util.MessageDigestGenerator;
         + "       p.enabled = :enabled, " //
         + "       p.help = :help, " //
         + "       p.version = :version, " //
+        + "       p.ampsVersion = :ampsVersion,"
         + "       p.path = :path, " //
         + "       p.md5 = :md5, " //
         + "       p.mtime = :mtime " //
@@ -108,6 +111,7 @@ import org.rhq.core.util.MessageDigestGenerator;
         + "         p.help, " //
         + "         p.md5, " //
         + "         p.version, " //
+        + "         p.ampsVersion, "
         + "         p.ctime, " //
         + "         p.mtime) " //
         + "    FROM Plugin p " //
@@ -152,6 +156,9 @@ public class Plugin implements Serializable {
     @Column(name = "VERSION", nullable = true)
     private String version;
 
+    @Column(name = "AMPS_VERSION", nullable = true)
+    private String ampsVersion;
+
     @Column(name = "PATH", nullable = false)
     private String path;
 
@@ -167,7 +174,7 @@ public class Plugin implements Serializable {
     @Column(name = "CONTENT", nullable = true)
     private byte[] content;
 
-    protected Plugin() {
+    public Plugin() {
     }
 
     /**
@@ -236,7 +243,7 @@ public class Plugin implements Serializable {
      * @param mtime
      */
     public Plugin(int id, String name, String path, String displayName, boolean enabled, String description,
-        String help, String md5, String version, long ctime, long mtime) {
+        String help, String md5, String version, String ampsVersion, long ctime, long mtime) {
         this.id = id;
         this.name = name;
         this.path = path;
@@ -246,6 +253,7 @@ public class Plugin implements Serializable {
         this.help = help;
         this.md5 = md5;
         this.version = version;
+        this.ampsVersion = ampsVersion;
         this.ctime = ctime;
         this.mtime = mtime;
     }
@@ -354,6 +362,14 @@ public class Plugin implements Serializable {
 
     public void setVersion(String version) {
         this.version = version;
+    }
+
+    public String getAmpsVersion() {
+        return ampsVersion;
+    }
+
+    public void setAmpsVersion(String ampsVersion) {
+        this.ampsVersion = ampsVersion;
     }
 
     public String getMd5() {

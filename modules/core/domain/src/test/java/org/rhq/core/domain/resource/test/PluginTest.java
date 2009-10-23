@@ -28,6 +28,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.List;
+import java.lang.reflect.Constructor;
 
 import javax.naming.InitialContext;
 import javax.persistence.EntityManager;
@@ -40,6 +41,11 @@ import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.test.AbstractEJB3Test;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.stream.StreamUtil;
+import org.hibernate.Session;
+import org.hibernate.transform.ResultTransformer;
+import org.hibernate.type.Type;
+import org.hibernate.criterion.Example;
+import org.hibernate.criterion.Projections;
 
 @Test
 public class PluginTest extends AbstractEJB3Test {
@@ -90,6 +96,7 @@ public class PluginTest extends AbstractEJB3Test {
             enabled = !enabled;
             md5 = md5 + "00000";
             String version = "version-UPDATED";
+            String ampsVersion = "ampsVersion-UPDATED";
             String description = "description-UPDATED";
             String help = "help-UPDATED";
 
@@ -106,6 +113,7 @@ public class PluginTest extends AbstractEJB3Test {
             q.setParameter("enabled", enabled);
             q.setParameter("md5", md5);
             q.setParameter("version", version);
+            q.setParameter("ampsVersion", ampsVersion);
             q.setParameter("description", description);
             q.setParameter("help", help);
             q.setParameter("mtime", System.currentTimeMillis());
@@ -496,4 +504,5 @@ public class PluginTest extends AbstractEJB3Test {
             }
         }
     }
+
 }

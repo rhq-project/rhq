@@ -1,20 +1,78 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<!-- 
+    <c:simple-property name="time/minute" displayName="Minute" type="string" required="true" activationPolicy="immediate"
+                       default="*" description="TODO">
+        <c:constraint><c:regex-constraint expression="[0-9\*][0-9\/,-\*]*"/></c:constraint>
+    </c:simple-property>
+    <c:simple-property name="time/hour" displayName="Hour" type="string" required="true" activationPolicy="immediate"
+                       default="*" description="TODO">
+        <c:constraint><c:regex-constraint expression="[0-9\*][0-9\/,-\*]*"/></c:constraint>
+    <c:simple-property>
+    <c:simple-property name="time/dayofmonth" displayName="Day of Month" type="string" required="true" activationPolicy="immediate"
+                       default="*" description="TODO">
+        <c:constraint><c:regex-constraint expression="[0-9\*][0-9\/,-\*]*"/></c:constraint>
+    </c:simple-property>
+    <c:simple-property name="time/month" displayName="Month" type="string" required="true" activationPolicy="immediate"
+                       default="*" description="TODO">
+        <c:constraint><c:regex-constraint expression="[0-9\*][0-9\/,-\*]*|[a-zA-Z]{3}"/></c:constraint>        
+    </c:simple-property>
+    <c:simple-property name="time/dayofweek" displayName="Day of Week" type="string" required="true" activationPolicy="immediate"
+                       default="*" description="TODO">
+        <c:constraint><c:regex-constraint expression="[0-9\*][0-9\/,-\*]*|[a-zA-Z]{3}"/></c:constraint>                   
+    </c:simple-property>                   
+    <c:simple-property name="user" displayName="Executing user" required="true" description="TODO"/>
+    <c:simple-property name="." displayName="Command" required="true" description="TODO"/>
+ -->
+<!-- 
+    <c:simple-property name="time/minute" displayName="Minute" type="string" required="true" activationPolicy="immediate"
+                       default="*" description="TODO">
+        <c:constraint><c:regex-constraint expression="&#5B;0-9\*&#5D;&#5B;0-9\/,-\*&#5D;*"/></c:constraint>
+    </c:simple-property>
+    <c:simple-property name="time/hour" displayName="Hour" type="string" required="true" activationPolicy="immediate"
+                       default="*" description="TODO">
+        <c:constraint><c:regex-constraint expression="&#5B;0-9\*&#5D;&#5B;0-9\/,-\*&#5D;*"/></c:constraint>
+    </c:simple-property>
+    <c:simple-property name="time/dayofmonth" displayName="Day of Month" type="string" required="true" activationPolicy="immediate"
+                       default="*" description="TODO">
+        <c:constraint><c:regex-constraint expression="&#5B;0-9\*&#5D;&#5B;0-9\/,-\*&#5D;*"/></c:constraint>
+    </c:simple-property>
+    <c:simple-property name="time/month" displayName="Month" type="string" required="true" activationPolicy="immediate"
+                       default="*" description="TODO">
+        <c:constraint><c:regex-constraint expression="&#5B;0-9\*&#5D;&#5B;0-9\/,-\*&#5D;*|&#5B;a-zA-Z&#5D;{3}"/></c:constraint>
+    </c:simple-property>                       
+    <c:simple-property name="time/dayofweek" displayName="Day of Week" type="string" required="true" activationPolicy="immediate"
+                       default="*" description="TODO">
+        <c:constraint><c:regex-constraint expression="&#5B;0-9\*&#5D;&#5B;0-9\/,-\*&#5D;*|&#5B;a-zA-Z&#5D;{3}"/></c:constraint>
+    </c:simple-property>                       
+    <c:simple-property name="user" displayName="Executing user" required="false" description="TODO"/>
+    <c:simple-property name="." displayName="Command" required="true" description="TODO"/>
+
+ -->
 <!DOCTYPE plugin [
 
 <!ENTITY cronEntry '
     <c:simple-property name="time/minute" displayName="Minute" type="string" required="true" activationPolicy="immediate"
-                       default="*" description="TODO"/>
+                       default="*" description="TODO">
+    </c:simple-property>
     <c:simple-property name="time/hour" displayName="Hour" type="string" required="true" activationPolicy="immediate"
-                       default="*" description="TODO"/>
+                       default="*" description="TODO">
+    </c:simple-property>
     <c:simple-property name="time/dayofmonth" displayName="Day of Month" type="string" required="true" activationPolicy="immediate"
-                       default="*" description="TODO"/>
+                       default="*" description="TODO">
+    </c:simple-property>
     <c:simple-property name="time/month" displayName="Month" type="string" required="true" activationPolicy="immediate"
-                       default="*" description="TODO"/>
+                       default="*" description="TODO">
+    </c:simple-property>                       
     <c:simple-property name="time/dayofweek" displayName="Day of Week" type="string" required="true" activationPolicy="immediate"
-                       default="*" description="TODO"/>
+                       default="*" description="TODO">
+    </c:simple-property>                       
     <c:simple-property name="user" displayName="Executing user" required="false" description="TODO"/>
     <c:simple-property name="." displayName="Command" required="true" description="TODO"/>
+'>
+
+<!ENTITY cronTabRef '
+    <c:simple-property name=".." displayName="Cron Tab" type="string" required="true" description="TODO"/>
 '>
 
 ]>
@@ -41,6 +99,7 @@
          <parent-resource-type name="AIX"      plugin="Platforms"/>
          <parent-resource-type name="FreeBSD"  plugin="Platforms"/>
          <parent-resource-type name="Mac OS X" plugin="Platforms"/>
+         <parent-resource-type name="Java"     plugin="Platforms"/>
        </runs-inside>
 
       <plugin-configuration>
@@ -57,34 +116,39 @@
       </plugin-configuration>
 
       <resource-configuration>
-         <c:list-property  displayName="Hourly Jobs" name='entry[time/minute != "*" and time/hour = "*" and time/dayofmonth = "*" and time/month = "*" and time/dayofweek = "*"]'>
+         <c:list-property  displayName="Hourly Jobs" readOnly="true" 
+            name='entry[time/minute != "*" and time/hour = "*" and time/dayofmonth = "*" and time/month = "*" and time/dayofweek = "*"]'>
             <c:map-property name=".">
                &cronEntry;
-               <c:simple-property name=".." displayName="Cron Tab" type="string" required="true" readOnly="true" description="TODO"/>
+               &cronTabRef;
             </c:map-property>
          </c:list-property>
-         <c:list-property  displayName="Daily Jobs" name='entry[time/minute != "*" and time/hour != "*" and time/dayofmonth = "*" and time/month = "*" and time/dayofweek = "*"]'>
+         <c:list-property  displayName="Daily Jobs" readOnly="true" 
+            name='entry[time/minute != "*" and time/hour != "*" and time/dayofmonth = "*" and time/month = "*" and time/dayofweek = "*"]'>
             <c:map-property name=".">
                &cronEntry;
-               <c:simple-property name=".." displayName="Cron Tab" type="string" required="true" readOnly="true" description="TODO"/>
+               &cronTabRef;
             </c:map-property>
          </c:list-property>
-         <c:list-property  displayName="Weekly Jobs" name='entry[time/minute != "*" and time/hour != "*" and time/dayofmonth = "*" and time/month = "*" and time/dayofweek != "*"]'>
+         <c:list-property  displayName="Weekly Jobs" readOnly="true" 
+            name='entry[time/minute != "*" and time/hour != "*" and time/dayofmonth = "*" and time/month = "*" and time/dayofweek != "*"]'>
             <c:map-property name=".">
                &cronEntry;
-               <c:simple-property name=".." displayName="Cron Tab" type="string" required="true" readOnly="true" description="TODO"/>
+               &cronTabRef;
             </c:map-property>
          </c:list-property>
-         <c:list-property  displayName="Monthly Jobs" name='entry[time/minute != "*" and time/hour != "*" and time/dayofmonth != "*" and time/month = "*" and time/dayofweek = "*"]'>
+         <c:list-property  displayName="Monthly Jobs" readOnly="true" 
+            name='entry[time/minute != "*" and time/hour != "*" and time/dayofmonth != "*" and time/month = "*" and time/dayofweek = "*"]'>
             <c:map-property name=".">
                &cronEntry;
-               <c:simple-property name=".." displayName="Cron Tab" type="string" required="true" readOnly="true" description="TODO"/>
+               &cronTabRef;
             </c:map-property>
          </c:list-property>
-         <c:list-property  displayName="Yearly Jobs" name='entry[time/minute != "*" and time/hour != "*" and time/dayofmonth != "*" and time/month != "*" and time/dayofweek = "*"]'>
+         <c:list-property  displayName="Yearly Jobs" readOnly="true" 
+            name='entry[time/minute != "*" and time/hour != "*" and time/dayofmonth != "*" and time/month != "*" and time/dayofweek = "*"]'>
             <c:map-property name=".">
                &cronEntry;
-               <c:simple-property name=".." displayName="Cron Tab" type="string" required="true" readOnly="true" description="TODO"/>
+               &cronTabRef;
             </c:map-property>
          </c:list-property>
       </resource-configuration>

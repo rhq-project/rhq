@@ -23,32 +23,49 @@
 
 package org.rhq.plugins.cron;
 
+import java.io.File;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
-import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.plugins.augeas.AugeasConfigurationComponent;
+import org.rhq.plugins.augeas.AugeasConfigurationDiscoveryComponent;
+import org.rhq.plugins.augeas.helper.Glob;
 
 /**
- * 
+ * Discovery for cron tabs.
  * 
  * @author Lukas Krejci
  */
-public class CronTabDiscoveryComponent implements ResourceDiscoveryComponent<CronComponent>, ManualAddFacet<CronComponent>{
-
-    public DiscoveredResourceDetails discoverResource(Configuration pluginConfiguration,
-        ResourceDiscoveryContext<CronComponent> context) throws InvalidPluginConfigurationException {
-        // TODO Auto-generated method stub
-        return null;
-    }
+public class CronTabDiscoveryComponent implements ResourceDiscoveryComponent<CronComponent> {
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<CronComponent> context)
         throws InvalidPluginConfigurationException, Exception {
-        // TODO Auto-generated method stub
-        return null;
-    }
 
+        Configuration cronConfiguration = context.getParentResourceContext().getPluginConfiguration();
+        
+        List<String> includes = AugeasConfigurationDiscoveryComponent.getGlobList(cronConfiguration.getSimple(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP));
+        List<String> excludes = AugeasConfigurationDiscoveryComponent.getGlobList(cronConfiguration.getSimple(AugeasConfigurationComponent.EXCLUDE_GLOBS_PROP));
+        
+        List<File> files = Glob.matchAll(new File(AugeasConfigurationComponent.AUGEAS_ROOT_PATH), includes);
+        Glob.excludeAll(files, excludes);
+        
+        HashSet<DiscoveredResourceDetails> results = new HashSet<DiscoveredResourceDetails>();
+        
+        ResourceType resourceType = context.getResourceType();
+        
+        for(File f : files) {
+            String resourceKey = f.getAbsolutePath();
+            Configuration defaultConfiguration = context.getDefaultPluginConfiguration();
+            DiscoveredResourceDetails result = new DiscoveredResourceDetails(resourceType, resourceKey, resourceKey, null, null, defaultConfiguration, null);
+            results.add(result);
+        }
+        return results;
+    }
 }

@@ -33,6 +33,8 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.PrePersist;
 import javax.persistence.Table;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 
 /**
  * This is the many-to-many entity that correlates a repo with a repo relationship. 
@@ -43,11 +45,16 @@ import javax.persistence.Table;
  */
 
 @Entity
+@NamedQueries({
+    @NamedQuery(name = RepoRepoRelationship.DELETE_BY_REPO_ID, query = "DELETE RepoRepoRelationship rrr WHERE rrr.repo.id = :repoId")
+})
 @IdClass(RepoRepoRelationshipPK.class)
 @Table(name = "RHQ_REPO_REPO_RELATION_MAP")
 public class RepoRepoRelationship implements Serializable {
 
     private static final long serialVersionUID = 1L;
+
+    public static final String DELETE_BY_REPO_ID = "RepoRepoRelationship.deleteByRepoId";
 
     /*
      * http://opensource.atlassian.com/projects/hibernate/browse/EJB-286 Hibernate seems to want these mappings in the

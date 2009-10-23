@@ -94,14 +94,8 @@
 
     <table name="RHQ_REPO_RELATION">
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
-        
         <column name="RELATED_REPO_ID" type="INTEGER" references="RHQ_REPO" required="true"/>
-
         <column name="REPO_RELATION_TYPE_ID" type="INTEGER" references="RHQ_REPO_RELATION_TYPE" required="true"/>
-        
-        <index name="RHQ_REPO_RELATION_IDX" unique="true">
-          <field ref="REPO_RELATION_TYPE_ID"/>
-        </index>
     </table>
 
 

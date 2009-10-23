@@ -41,6 +41,8 @@ import org.rhq.core.domain.content.PackageVersionContentSource;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.RepoGroup;
 import org.rhq.core.domain.content.RepoRepoGroup;
+import org.rhq.core.domain.content.RepoRepoRelationship;
+import org.rhq.core.domain.content.RepoRelationship;
 import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
@@ -87,6 +89,8 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
     private List<Integer> reposToDelete = new ArrayList<Integer>();
     private List<Integer> repoGroupsToDelete = new ArrayList<Integer>();
     private List<Integer> packagesToDelete = new ArrayList<Integer>();
+    private Integer repoId;
+    private Integer relatedRepoId;
 
     @BeforeMethod
     public void setupBeforeMethod() throws Exception {
@@ -136,6 +140,13 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
         RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
         SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
         Subject overlord = subjectManager.getOverlord();
+
+        // Delete the repo relationships
+        entityManager.createNamedQuery(RepoRepoRelationship.DELETE_BY_REPO_ID).setParameter(
+            "repoId", repoId).executeUpdate();
+
+        entityManager.createNamedQuery(RepoRelationship.DELETE_BY_RELATED_REPO_ID).setParameter(
+            "relatedRepoId", relatedRepoId).executeUpdate();
 
         // Delete any repos that were created in this test
         for (Integer repoId : reposToDelete) {
@@ -233,12 +244,22 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
         retrievedRepos = repoManager.getRepoByName("testRepo3");
         assert retrievedRepos.size() == 1;
         reposToDelete.add(retrievedRepos.get(0).getId());
+        relatedRepoId = retrievedRepos.get(0).getId();
 
         retrievedRepos = repoManager.getRepoByName("testRepo4");
         assert retrievedRepos.size() == 1;
         reposToDelete.add(retrievedRepos.get(0).getId());
+        repoId = retrievedRepos.get(0).getId();
 
-        // TODO: Test parent relationship
+        RepoCriteria findWithRelationships = new RepoCriteria();
+        findWithRelationships.addFilterName("testRepo4");
+        findWithRelationships.fetchRepoRepoRelationships(true);
+        PageList<Repo> childRepoList = repoManager.findReposByCriteria(overlord, findWithRelationships);
+        assert childRepoList.size() == 1;
+
+        Repo childRepo = childRepoList.get(0);
+        Set<RepoRepoRelationship> childRepoRepoRelationship = childRepo.getRepoRepoRelationships();
+        assert childRepoRepoRelationship.size() == 1;
 
         // -> Non-existent repo
         retrievedRepos = repoManager.getRepoByName("testRepoFoo");
@@ -291,7 +312,6 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
             // Repo with a parent repo created in this sync
             // Parent explicitly added to this list *after* this child to ensure that's not a problem
             RepoDetails repo3 = new RepoDetails("testRepo3");
-            repo3.setParentRepoName("testRepo1");
             report.addRepo(repo3);
 
             RepoDetails repo4 = new RepoDetails("testRepo4");

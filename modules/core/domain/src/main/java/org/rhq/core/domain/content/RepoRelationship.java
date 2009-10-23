@@ -37,6 +37,8 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 
 /**
  * A RepoRelationship represents relationship with a {@link Repo} 
@@ -47,12 +49,17 @@ import javax.persistence.Table;
  */
 
 @Entity
+@NamedQueries({
+    @NamedQuery(name = RepoRelationship.DELETE_BY_RELATED_REPO_ID, query = "DELETE RepoRelationship rr WHERE rr.relatedRepo.id = :relatedRepoId")
+})
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_REPO_RELATION_ID_SEQ")
 @Table(name = "RHQ_REPO_RELATION")
 public class RepoRelationship implements Serializable {
     // Constants  --------------------------------------------
 
     private static final long serialVersionUID = 1L;
+
+    public static final String DELETE_BY_RELATED_REPO_ID = "RepoRelationship.deleteByRelatedRepoId";
 
     // Attributes  --------------------------------------------
 

@@ -59,6 +59,8 @@ import org.rhq.core.domain.content.RepoGroup;
 import org.rhq.core.domain.content.RepoGroupType;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
@@ -73,6 +75,8 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class ContentProviderManager {
     private static final Log log = LogFactory.getLog(ContentProviderManager.class);
+
+    private static final String PARENT_RELATIONSHIP_NAME = "parent";
 
     private ContentProviderPluginContainerConfiguration configuration;
     private ContentProviderPluginManager pluginManager;
@@ -372,6 +376,8 @@ public class ContentProviderManager {
                 repo.addRepoGroup(group);
             }
 
+            repo = repoManager.createRepo(overlord, repo);
+
             String parentName = createMe.getParentRepoName();
             if (parentName != null) {
                 List<Repo> parentList = repoManager.getRepoByName(parentName);
@@ -383,11 +389,11 @@ public class ContentProviderManager {
                     throw new RepoException(error);
                 }
                 else {
-                    // TODO: Establish relationship and associate with repo
+                    Repo parent = parentList.get(0);
+                    repoManager.addRepoRelationship(overlord, repo.getId(), parent.getId(), PARENT_RELATIONSHIP_NAME);
                 }
             }
 
-            repo = repoManager.createRepo(overlord, repo);
         }
         else {
             repo = existingRepo.get(0);

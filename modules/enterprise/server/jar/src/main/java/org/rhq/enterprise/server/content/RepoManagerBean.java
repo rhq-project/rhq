@@ -47,6 +47,7 @@ import org.rhq.core.domain.content.RepoGroup;
 import org.rhq.core.domain.content.RepoGroupType;
 import org.rhq.core.domain.content.RepoRelationshipType;
 import org.rhq.core.domain.content.RepoRelationship;
+import org.rhq.core.domain.content.RepoRepoRelationship;
 import org.rhq.core.domain.content.composite.RepoComposite;
 import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
@@ -566,25 +567,28 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void addRepoRelationship(Subject subject, int repoId, int relatedRepoId, String relationshipTypeName) {
 
-        Repo repo = getRepo(subject, repoId);
-        Repo relatedRepo = getRepo(subject, relatedRepoId);
+        Repo repo = entityManager.find(Repo.class, repoId);
+        Repo relatedRepo = entityManager.find(Repo.class, relatedRepoId);
 
         Query typeQuery = entityManager.createNamedQuery(RepoRelationshipType.QUERY_FIND_BY_NAME);
         typeQuery.setParameter("name", relationshipTypeName);
-
         RepoRelationshipType relationshipType = (RepoRelationshipType) typeQuery.getSingleResult();
 
-        RepoRelationship relationship = new RepoRelationship();
-        relationship.setRelatedRepo(relatedRepo);
-        relationship.setRepoRelationshipType(relationshipType);
-        relationship.addRepo(repo);
+        RepoRelationship repoRelationship = new RepoRelationship();
+        repoRelationship.setRelatedRepo(relatedRepo);
+        repoRelationship.setRepoRelationshipType(relationshipType);
+        repoRelationship.addRepo(repo);
 
-        entityManager.persist(relationship);
+        entityManager.persist(repoRelationship);
+        relatedRepo.addRepoRelationship(repoRelationship);
 
-        repo.addRepoRelationship(relationship);
+        RepoRepoRelationship repoRepoRelationship = new RepoRepoRelationship(repo, repoRelationship);
+
+        entityManager.persist(repoRepoRelationship);
+        repo.addRepoRelationship(repoRelationship);
     }
 
     private void validateRepo(Repo c) throws RepoException {

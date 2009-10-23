@@ -48,6 +48,7 @@ public class RepoCriteria extends Criteria {
     private boolean fetchRepoContentSources;
     private boolean fetchRepoPackageVersions;
     private boolean fetchRepoRepoGroups;
+    private boolean fetchRepoRepoRelationships;
 
     private PageOrdering sortName;
 
@@ -87,6 +88,10 @@ public class RepoCriteria extends Criteria {
 
     public void fetchRepoRepoGroups(boolean fetchRepoRepoGroups) {
         this.fetchRepoRepoGroups = fetchRepoRepoGroups;
+    }
+
+    public void fetchRepoRepoRelationships(boolean fetchRepoRepoRelationships) {
+        this.fetchRepoRepoRelationships = fetchRepoRepoRelationships;
     }
 
     public void addSortName(PageOrdering sortName) {

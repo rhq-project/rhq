@@ -1500,7 +1500,7 @@
         <schema-addColumn table="RHQ_ALERT_DEFINITION" column="GROUP_ALERT_DEF_ID" columnType="INTEGER" />
       </schemaSpec>
 
-      <schemaSpec version="2.59">
+      <schemaSpec version="2.60.1">
         <schema-directSQL>
           <!-- RHN_CHANNEL => RHQ_REPO -->
           <statement>
@@ -1516,6 +1516,14 @@
             ALTER INDEX RHQ_CHANNEL_IDX
             RENAME TO RHQ_REPO_IDX
           </statement>
+          <statement>
+            ALTER TABLE RHQ_REPO
+            DROP CONSTRAINT RHQ_CHANNEL_PKEY CASCADE
+          </statement>
+          <statement>
+            ALTER TABLE RHQ_REPO
+            ADD CONSTRAINT RHQ_REPO_PKEY PRIMARY KEY ( ID )
+          </statement>
           <!-- RHQ_CHANNEL_CONTENT_SRC_MAP => RHQ_CHANNEL_CONTENT_SRC_MAP -->
           <statement>
             ALTER TABLE RHQ_CHANNEL_CONTENT_SRC_MAP
@@ -1523,8 +1531,32 @@
           </statement>
           <statement>
             ALTER TABLE RHQ_REPO_CONTENT_SRC_MAP
-              RENAME COLUMN CHANNEL_ID
-                TO REPO_ID
+              RENAME COLUMN CHANNEL_ID TO REPO_ID
+          </statement>
+          <statement>
+            ALTER TABLE RHQ_REPO_CONTENT_SRC_MAP
+            DROP CONSTRAINT RHQ_CHAN_CONTENT_SRC_MAP_KEY
+          </statement>
+          <statement>
+            ALTER TABLE RHQ_REPO_CONTENT_SRC_MAP
+            ADD CONSTRAINT RHQ_REPO_CONTENT_SRC_MAP_KEY
+            PRIMARY KEY ( REPO_ID, CONTENT_SRC_ID )
+          </statement>
+          <statement>
+            ALTER TABLE RHQ_REPO_CONTENT_SRC_MAP
+            ADD CONSTRAINT RHQ_REPO_CONTENT_SRC_MAP_REPO_ID_FKEY
+            FOREIGN KEY ( REPO_ID )
+            REFERENCES RHQ_REPO ( ID )
+          </statement>
+          <statement>
+            ALTER TABLE RHQ_REPO_CONTENT_SRC_MAP
+            DROP CONSTRAINT RHQ_CHANNEL_CONTENT_SRC_MAP_CONTENT_SRC_ID_FKEY
+          </statement>
+          <statement>
+            ALTER TABLE RHQ_REPO_CONTENT_SRC_MAP
+            ADD CONSTRAINT RHQ_REPO_CONTENT_SRC_MAP_CONTENT_SRC_ID_FKEY
+            FOREIGN KEY ( CONTENT_SRC_ID )
+            REFERENCES RHQ_CONTENT_SOURCE( ID )
           </statement>
           <!-- RHQ_CHANNEL_PKG_VERSION_MAP => RHQ_CHANNEL_PKG_VERSION_MAP -->
           <statement>
@@ -1533,8 +1565,32 @@
           </statement>
           <statement>
             ALTER TABLE RHQ_REPO_PKG_VERSION_MAP
-              RENAME COLUMN CHANNEL_ID
-                TO REPO_ID
+              RENAME COLUMN CHANNEL_ID TO REPO_ID
+          </statement>
+          <statement>
+            ALTER TABLE RHQ_REPO_PKG_VERSION_MAP
+            DROP CONSTRAINT RHQ_CHANNEL_PKG_VER_MAP_KEY
+          </statement>
+          <statement>
+            ALTER TABLE RHQ_REPO_PKG_VERSION_MAP
+            ADD CONSTRAINT RHQ_REPO_PKG_VER_MAP_KEY
+              PRIMARY KEY ( REPO_ID, PACKAGE_VERSION_ID )
+          </statement>
+          <statement>
+            ALTER TABLE RHQ_REPO_PKG_VERSION_MAP
+            DROP CONSTRAINT RHQ_CHANNEL_PKG_VERSION_MAP_PACKAGE_VERSION_ID_FKEY
+          </statement>
+          <statement>
+            ALTER TABLE RHQ_REPO_PKG_VERSION_MAP
+            ADD CONSTRAINT RHQ_REPO_PKG_VERSION_MAP_PACKAGE_VERSION_ID_FKEY
+            FOREIGN KEY ( PACKAGE_VERSION_ID )
+            REFERENCES RHQ_PACKAGE_VERSION ( ID )
+          </statement>
+          <statement>
+            ALTER TABLE RHQ_REPO_PKG_VERSION_MAP
+            ADD CONSTRAINT RHQ_REPO_PKG_VERSION_MAP_REPO_ID_FKEY
+            FOREIGN KEY ( REPO_ID )
+            REFERENCES RHQ_REPO ( ID )
           </statement>
           <!-- RHQ_CHANNEL_RESOURCE_MAP => RHQ_REPO_RESOURCE_MAP -->
           <statement>
@@ -1543,8 +1599,32 @@
           </statement>
           <statement>
             ALTER TABLE RHQ_REPO_RESOURCE_MAP
-              RENAME COLUMN CHANNEL_ID
-                TO REPO_ID
+              RENAME COLUMN CHANNEL_ID TO REPO_ID
+          </statement>
+          <statement>
+            ALTER TABLE RHQ_REPO_RESOURCE_MAP
+            DROP CONSTRAINT RHQ_CHANNEL_RESOURCE_MAP_KEY
+          </statement>
+          <statement>
+            ALTER TABLE RHQ_REPO_RESOURCE_MAP
+            ADD CONSTRAINT RHQ_REPO_RESOURCE_MAP_KEY
+              PRIMARY KEY ( REPO_ID, RESOURCE_ID )
+          </statement>
+          <statement>
+            ALTER TABLE RHQ_REPO_RESOURCE_MAP
+            DROP CONSTRAINT RHQ_CHANNEL_RESOURCE_MAP_RESOURCE_ID_FKEY
+          </statement>
+          <statement>
+            ALTER TABLE RHQ_REPO_RESOURCE_MAP
+            ADD CONSTRAINT RHQ_REPO_RESOURCE_MAP_RESOURCE_ID_FKEY
+            FOREIGN KEY ( RESOURCE_ID )
+            REFERENCES RHQ_RESOURCE ( ID )
+          </statement>
+          <statement>
+            ALTER TABLE RHQ_REPO_RESOURCE_MAP
+            ADD CONSTRAINT RHQ_REPO_RESOURCE_MAP_REPO_ID_FKEY
+            FOREIGN KEY ( REPO_ID )
+            REFERENCES RHQ_REPO ( ID )
           </statement>
         </schema-directSQL>
         <!-- RHQ_REPO_GROUP_TYPE -->
@@ -1573,18 +1653,22 @@
         <schema-alterColumn table="RHQ_REPO_GROUP" column="REPO_GROUP_TYPE_ID" nullable="false" />
         <schema-directSQL>
           <statement>
+            ALTER TABLE RHQ_REPO_GROUP
+            ADD CONSTRAINT RHQ_REPO_GROUP_REPO_GROUP_TYPE_ID_FKEY
+            FOREIGN KEY ( REPO_GROUP_TYPE_ID )
+            REFERENCES RHQ_REPO_GROUP_TYPE ( ID )
+          </statement>
+          <statement>
             CREATE UNIQUE INDEX RHQ_REPO_GROUP_IDX
             ON RHQ_REPO_GROUP ( NAME, REPO_GROUP_TYPE_ID )
           </statement>
         </schema-directSQL>
         <!-- RHQ_REPO_REPO_GRP_MAP -->
-        <schema-createSequence name="RHQ_REPO_REPO_GRP_MAP_ID_SEQ" initial="10001" />
         <schema-directSQL>
           <statement>
-            CREATE TABLE RHQ_REPO_REPO_GRP_MAP ( ID INTEGER PRIMARY KEY )
+            CREATE TABLE RHQ_REPO_REPO_GRP_MAP ( REPO_ID INTEGER )
           </statement>
         </schema-directSQL>
-        <schema-addColumn table="RHQ_REPO_REPO_GRP_MAP" column="REPO_ID" columnType="INTEGER" />
         <schema-alterColumn table="RHQ_REPO_REPO_GRP_MAP" column="REPO_ID" nullable="false" />
         <schema-addColumn table="RHQ_REPO_REPO_GRP_MAP" column="REPO_GRP_ID" columnType="INTEGER" />
         <schema-alterColumn table="RHQ_REPO_REPO_GRP_MAP" column="REPO_GRP_ID" nullable="false" />
@@ -1593,13 +1677,18 @@
         <schema-directSQL>
           <statement>
             ALTER TABLE RHQ_REPO_REPO_GRP_MAP
-            ADD CONSTRAINT RHQ_REPO_REPO_GRP_MAP_ID_FK
+            ADD CONSTRAINT RHQ_REPO_REPO_GRP_MAP_KEY
+            PRIMARY KEY ( REPO_ID, REPO_GRP_ID )
+          </statement>
+          <statement>
+            ALTER TABLE RHQ_REPO_REPO_GRP_MAP
+            ADD CONSTRAINT RHQ_REPO_REPO_GRP_MAP_REPO_ID_FKEY
             FOREIGN KEY ( REPO_ID )
             REFERENCES RHQ_REPO ( ID )
           </statement>
           <statement>
             ALTER TABLE RHQ_REPO_REPO_GRP_MAP
-            ADD CONSTRAINT RHQ_REPO_REPO_GRP_MAP_REPO_GRP_ID_FK
+            ADD CONSTRAINT RHQ_REPO_REPO_GRP_MAP_REPO_GRP_ID_FKEY
             FOREIGN KEY ( REPO_GRP_ID )
             REFERENCES RHQ_REPO_GROUP ( ID )
           </statement>

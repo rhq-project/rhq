@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="modules/common/jboss-as/src/test/java"/>
+	<classpathentry kind="src" path="modules/helpers/pluginAnnotations/src/main/java"/>
 	<classpathentry kind="src" path="modules/common/jboss-as/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/jboss-as/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/jboss-as/src/test/java"/>
@@ -74,7 +75,7 @@
 	<classpathentry kind="src" path="modules/plugins/netservices/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/iis/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/perftest/target/generated-sources/xjc"/>
-    <classpathentry kind="src" path="modules/plugins/antlr-config/target/generated-sources/antlr3"/>
+	<classpathentry kind="src" path="modules/plugins/antlr-config/target/generated-sources/antlr3"/>
 	<classpathentry kind="src" path="modules/plugins/perftest/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/perftest/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/apt/src/test/java"/>
@@ -83,9 +84,9 @@
 	<classpathentry kind="src" path="modules/plugins/hardware/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/oracle/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/grub/src/test/java"/>
-    <classpathentry kind="src" path="modules/plugins/grub/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/grub/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/samba/src/test/java"/>
-	<classpathentry kind="src" path="modules/plugins/samba/src/main/java"/>    
+	<classpathentry kind="src" path="modules/plugins/samba/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/sudoers/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/sudoers/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/hudson/src/main/java"/>

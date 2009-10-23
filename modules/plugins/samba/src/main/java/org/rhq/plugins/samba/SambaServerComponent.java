@@ -21,10 +21,13 @@ package org.rhq.plugins.samba;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
+import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
+import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.plugins.augeas.AugeasConfigurationComponent;
 
-public class SambaServerComponent extends AugeasConfigurationComponent {
+public class SambaServerComponent extends AugeasConfigurationComponent
+        implements CreateChildResourceFacet {
 
     public void start(ResourceContext resourceContext) throws Exception {
         super.start(resourceContext);
@@ -44,5 +47,10 @@ public class SambaServerComponent extends AugeasConfigurationComponent {
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
         super.updateResourceConfiguration(report);
+    }
+
+    public CreateResourceReport createResource(CreateResourceReport report) {
+        // TODO
+        return null;
     }
 }

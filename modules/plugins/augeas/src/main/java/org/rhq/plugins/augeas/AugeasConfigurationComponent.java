@@ -89,15 +89,11 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
         this.augeas = createAugeas();
         
         if (this.augeas != null) {
-            String resourceConfigRootNodePath = pluginConfig.getSimpleValue(RESOURCE_CONFIGURATION_ROOT_NODE_PROP, null);
-            if (resourceConfigRootNodePath != null) {
-                if (resourceConfigRootNodePath.indexOf(AugeasNode.SEPARATOR_CHAR) == 0) {
-                    this.resourceConfigRootNode = new AugeasNode(resourceConfigRootNodePath);
-                } else {
-                    this.resourceConfigRootNode = new AugeasNode("/files//", resourceConfigRootNodePath);
-                }
+            String resourceConfigRootPath = getResourceConfigurationRootPath();
+            if (resourceConfigRootPath.indexOf(AugeasNode.SEPARATOR_CHAR) != 0) {
+                this.resourceConfigRootNode = new AugeasNode("/files//", resourceConfigRootPath);
             } else {
-                this.resourceConfigRootNode = new AugeasNode("/files//");
+                this.resourceConfigRootNode = new AugeasNode(resourceConfigRootPath);
             }
         }
     }
@@ -184,19 +180,9 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
         }
     }
 
-    protected AugeasNode getResourceConfigurationRootNode(Configuration pluginConfig, AugeasNode augeasConfigFileNode) {
-        AugeasNode resourceConfigRootNode;
-        String resourceConfigRootNodePath = pluginConfig.getSimpleValue(RESOURCE_CONFIGURATION_ROOT_NODE_PROP, null);
-        if (resourceConfigRootNodePath != null) {
-            if (resourceConfigRootNodePath.indexOf(AugeasNode.SEPARATOR_CHAR) == 0) {
-                resourceConfigRootNode = new AugeasNode(resourceConfigRootNodePath);
-            } else {
-                resourceConfigRootNode = new AugeasNode(augeasConfigFileNode, resourceConfigRootNodePath);
-            }
-        } else {
-            resourceConfigRootNode = augeasConfigFileNode;
-        }
-        return resourceConfigRootNode;
+    protected String getResourceConfigurationRootPath() {
+        Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
+        return pluginConfig.getSimpleValue(RESOURCE_CONFIGURATION_ROOT_NODE_PROP, null);
     }
 
     public ResourceContext<T> getResourceContext() {
@@ -293,8 +279,7 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
             propValue.deleteCharAt(propValue.length() - 1);
             value = propValue.toString();
         } else {
-            value = augeas.get(node.getPath().replaceAll(" ", "\\\\ "));
-            //value = augeas.get(node.getPath());
+            value = augeas.get(node.getPath());            
         }
         return new PropertySimple(propDefSimple.getName(), value);
     }

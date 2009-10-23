@@ -17,7 +17,7 @@
            <c:simple-property name="augeasModuleName" displayName="Augeas Module Name" default="Samba" required="true" readOnly="true"
                               description="the name of the Augeas module/lens to use for loading and updating this resource's configuration"/>
 
-           <c:simple-property name="configurationFile" displayName="File Path" type="file" required="true" readOnly="true"
+           <c:simple-property name="configurationFilesInclusionPatterns" displayName="File Path" type="file" required="true" readOnly="true"
                               default="/etc/samba/smb.conf"
                               description="the absolute path of the samba configuration"/>
 
@@ -55,17 +55,18 @@
       </resource-configuration>
 
        <service name="SambaShare" description="Shares on Samba"
-               discovery="SambaShareDiscoveryComponent" class="SambaShareComponent">
+                discovery="SambaShareDiscoveryComponent" class="SambaShareComponent"
+                createDeletePolicy="both">
 
            <plugin-configuration>
                <c:simple-property name="augeasModuleName" displayName="Augeas Module Name" default="Samba" required="true" readOnly="true"
                                   description="the name of the Augeas module/lens to use for loading and updating this resource's configuration"/>
 
-               <c:simple-property name="configurationFile" displayName="File Path" type="file" required="true" readOnly="true"
+               <c:simple-property name="configurationFilesInclusionPatterns" displayName="File Path" type="file" required="true" readOnly="true"
                                   default="/etc/samba/smb.conf"
                                   description="the absolute path of the samba configuration"/>
 
-               <c:simple-property name="resourceConfigurationRootNode" required="true" readOnly="true"/>
+               <c:simple-property name="targetName" required="true" readOnly="true"/>
            </plugin-configuration>
 
            <resource-configuration>

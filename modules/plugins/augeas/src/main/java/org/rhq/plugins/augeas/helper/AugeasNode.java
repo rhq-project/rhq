@@ -39,7 +39,8 @@ public class AugeasNode {
         }
 
         // Remove redundant "." and ".." components and redundant slashes.
-        this.path = path;
+        // TODO: This is temporary until augeas-java fixes a bug.
+        this.path = path.replaceAll(" ", "\\\\ ");
     }
 
     public AugeasNode(AugeasNode parent, String name) {
@@ -53,7 +54,8 @@ public class AugeasNode {
             throw new IllegalArgumentException("Specified path (" + path + ") is not relative.");
         }
 
-        this.path = parent.getPath() + SEPARATOR_CHAR + name;
+        // TODO: This is temporary until augeas-java fixes a bug.
+        this.path = parent.getPath() + SEPARATOR_CHAR + name.replaceAll(" ", "\\\\ ");
     }
 
     public AugeasNode(String parentPath, String name) {

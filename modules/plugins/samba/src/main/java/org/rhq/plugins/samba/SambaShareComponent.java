@@ -22,30 +22,32 @@ import net.augeas.Augeas;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
+import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.plugins.augeas.AugeasConfigurationComponent;
 import org.rhq.plugins.augeas.helper.AugeasNode;
 
 import java.util.List;
 
-public class SambaShareComponent extends AugeasConfigurationComponent {
-
-    private AugeasNode rootNode;
-
+/**
+ *
+ */
+public class SambaShareComponent extends AugeasConfigurationComponent implements DeleteResourceFacet {
     public void start(ResourceContext resourceContext)
-        throws Exception {
-
-        Configuration pluginConfig = resourceContext.getPluginConfiguration();
-        String targetName = pluginConfig.getSimple("targetName").getStringValue();
-        Augeas augeas = getAugeas();
-        List<String> matches = augeas.match("/files/etc/samba/smb/conf/target[.='"+targetName+"']");
-        String rootPath = matches.get(0);
-        this.rootNode = new AugeasNode(rootPath);
+        throws Exception {        
+        super.start(resourceContext);
     }
 
     @Override
-    protected AugeasNode getResourceConfigurationRootNode(Configuration pluginConfig, AugeasNode augeasConfigFileNode) {
-        return this.rootNode;
+    protected String getResourceConfigurationRootPath() {
+        Configuration pluginConfig = getResourceContext().getPluginConfiguration();
+        String targetName = pluginConfig.getSimple("targetName").getStringValue();
+        String targetPath = "/files/etc/samba/smb.conf/target[.='" + targetName + "']";
+        AugeasNode targetNode = new AugeasNode(targetPath);
+        Augeas augeas = getAugeas();
+        augeas.load();
+        List<String> matches = augeas.match(targetNode.getPath());
+        return matches.get(0);
     }
 
     public void stop() {
@@ -64,4 +66,11 @@ public class SambaShareComponent extends AugeasConfigurationComponent {
         super.updateResourceConfiguration(report);
     }
 
+    public void deleteResource() throws Exception {
+        String rootPath = getResourceConfigurationRootPath();
+        Augeas augeas = getAugeas();
+        augeas.remove(rootPath);
+        augeas.save();
+        return;        
+    }
 }

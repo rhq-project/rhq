@@ -30,14 +30,16 @@ import org.apache.commons.lang.StringUtils;
 public class RHNConnectorTest extends TestCase {
 
     private static final String TEST_CERT_PATH = "./entitlement-cert.xml";
-    private static final String TEST_SERVER_URL = "http://satellite.rhn.redhat.com/";
+    private static final String TEST_SERVER_URL = "http://satellite.rhn.redhat.com/rpc/api";
+    private static final String TEST_SYSTEM_ID = RHNConstants.DEFAULT_SYSTEM_ID;
 
     private RHNConnector rhnObject;
 
     public void setUp() throws Exception {
-        rhnObject = new RHNConnector(readSystemId(), readCertificate(), TEST_SERVER_URL);
+        rhnObject = new RHNConnector(TEST_SYSTEM_ID, TEST_CERT_PATH, TEST_SERVER_URL);
         assertNotNull(rhnObject);
     }
+
 
     public final void testActivate() throws Exception {
         String systemid = readSystemId();
@@ -78,7 +80,7 @@ public class RHNConnectorTest extends TestCase {
 
     protected String readSystemId() throws Exception {
         try {
-            return FileUtils.readFileToString(new File(RHNConstants.DEFAULT_SYSTEM_ID));
+            return FileUtils.readFileToString(new File(TEST_SYSTEM_ID));
         } catch (IOException e) {
             return "";
         }

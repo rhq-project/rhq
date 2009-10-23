@@ -1,3 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+        
 <plugin name="Samba"
         displayName="Samba"
         description="Support for RHEL Samba service"
@@ -54,7 +56,7 @@
           </c:group>
       </resource-configuration>
 
-       <service name="SambaShare" description="Shares on Samba"
+       <service name="Samba Share" description="a Samba share"
                 discovery="SambaShareDiscoveryComponent" class="SambaShareComponent"
                 createDeletePolicy="both">
 
@@ -70,7 +72,8 @@
            </plugin-configuration>
 
            <resource-configuration>
-               <c:simple-property name="path" required="true"/>
+               <c:simple-property name="name" required="true" readOnly="true"/>
+               <c:simple-property name="path" required="false"/>
                <c:simple-property name="comment" required="false"/>
                <c:simple-property name="public" type="boolean"  required="false"/>
                <c:simple-property name="browseable" type="boolean"  required="false"/>
@@ -78,7 +81,7 @@
                <c:simple-property name="printable" type="boolean"  required="false"/>
                <c:simple-property name="write list" required="false"/>
                <c:simple-property name="guest ok" type="boolean"  required="false"/>
-               <c:simple-property name="share modes" />
+               <c:simple-property name="share modes" required="false" />
                <c:simple-property name="valid users" required="false"/>
            </resource-configuration>
        </service>

@@ -20,9 +20,9 @@ package org.rhq.plugins.samba;
 
 import net.augeas.Augeas;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
-import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.plugins.augeas.AugeasConfigurationComponent;
 import org.rhq.plugins.augeas.helper.AugeasNode;
@@ -30,18 +30,23 @@ import org.rhq.plugins.augeas.helper.AugeasNode;
 import java.util.List;
 
 /**
- *
+ * TODO
  */
-public class SambaShareComponent extends AugeasConfigurationComponent implements DeleteResourceFacet {
-    public void start(ResourceContext resourceContext)
-        throws Exception {        
+public class SambaShareComponent extends AugeasConfigurationComponent<SambaServerComponent> {
+    public static final String TARGET_NAME_PROP = "targetName";
+
+    public static final String NAME_RESOURCE_CONFIG_PROP = "name";
+
+    static final String RESOURCE_TYPE_NAME = "Samba Share";
+
+    public void start(ResourceContext<SambaServerComponent> resourceContext) throws Exception {
         super.start(resourceContext);
     }
 
     @Override
     protected String getResourceConfigurationRootPath() {
         Configuration pluginConfig = getResourceContext().getPluginConfiguration();
-        String targetName = pluginConfig.getSimple("targetName").getStringValue();
+        String targetName = pluginConfig.getSimple(TARGET_NAME_PROP).getStringValue();
         String targetPath = "/files/etc/samba/smb.conf/target[.='" + targetName + "']";
         AugeasNode targetNode = new AugeasNode(targetPath);
         Augeas augeas = getAugeas();
@@ -59,7 +64,11 @@ public class SambaShareComponent extends AugeasConfigurationComponent implements
     }
 
     public Configuration loadResourceConfiguration() throws Exception {
-        return super.loadResourceConfiguration();
+        Configuration resourceConfig = super.loadResourceConfiguration();
+        Configuration pluginConfig = getResourceContext().getPluginConfiguration();
+        String targetName = pluginConfig.getSimple(TARGET_NAME_PROP).getStringValue();
+        resourceConfig.put(new PropertySimple(NAME_RESOURCE_CONFIG_PROP, targetName));
+        return resourceConfig;
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
@@ -67,10 +76,6 @@ public class SambaShareComponent extends AugeasConfigurationComponent implements
     }
 
     public void deleteResource() throws Exception {
-        String rootPath = getResourceConfigurationRootPath();
-        Augeas augeas = getAugeas();
-        augeas.remove(rootPath);
-        augeas.save();
-        return;        
+        super.deleteResource();
     }
 }

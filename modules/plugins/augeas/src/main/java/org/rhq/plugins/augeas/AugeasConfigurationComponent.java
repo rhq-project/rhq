@@ -49,11 +49,11 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.resource.CreateResourceStatus;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
-import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
-import org.rhq.core.pluginapi.inventory.ResourceComponent;
-import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.core.pluginapi.inventory.*;
 import org.rhq.plugins.augeas.helper.AugeasNode;
 import org.rhq.plugins.augeas.helper.Glob;
 
@@ -61,7 +61,8 @@ import org.rhq.plugins.augeas.helper.Glob;
  * @author Ian Springer
  * @author Lukas Krejci
  */
-public class AugeasConfigurationComponent<T extends ResourceComponent> implements ResourceComponent<T>, ConfigurationFacet {
+public class AugeasConfigurationComponent<T extends ResourceComponent> implements ResourceComponent<T>,
+        ConfigurationFacet, CreateChildResourceFacet, DeleteResourceFacet {
     public static final String INCLUDE_GLOBS_PROP = "configurationFilesInclusionPatterns";
     public static final String EXCLUDE_GLOBS_PROP = "configurationFilesExclusionPatterns";
     public static final String RESOURCE_CONFIGURATION_ROOT_NODE_PROP = "resourceConfigurationRootNode";
@@ -85,9 +86,9 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
 
         initGlobs(pluginConfig);
-        
+
         this.augeas = createAugeas();
-        
+
         if (this.augeas != null) {
             String resourceConfigRootPath = getResourceConfigurationRootPath();
             if (resourceConfigRootPath.indexOf(AugeasNode.SEPARATOR_CHAR) != 0) {
@@ -156,6 +157,45 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
         report.setStatus(ConfigurationUpdateStatus.SUCCESS);
     }
 
+    public CreateResourceReport createResource(CreateResourceReport report) {
+        Configuration resourceConfig = report.getResourceConfiguration();
+        ConfigurationDefinition resourceConfigDef = report.getResourceType()
+            .getResourceConfigurationDefinition();
+
+        // First insert the root node corresponding to the new child Resource.
+        String rootPath = getChildResourceConfigurationRootPath(report.getResourceType(),
+                report.getResourceConfiguration());
+        AugeasNode rootNode = new AugeasNode(rootPath);
+        if (this.augeas.exists(rootNode.getPath())) {
+            report.setStatus(CreateResourceStatus.FAILURE);
+            report.setErrorMessage("An Augeas node already exists with path " + rootPath);
+            return report;
+        }
+        String rootLabel = getChildResourceConfigurationRootLabel(report.getResourceType(),
+                report.getResourceConfiguration());
+        this.augeas.insert(rootNode.getPath(), rootLabel, false);
+
+        // Then set all its child nodes.
+        Collection<PropertyDefinition> propDefs = resourceConfigDef.getPropertyDefinitions().values();
+        for (PropertyDefinition propDef : propDefs) {
+            setNode(propDef, resourceConfig, this.augeas, rootNode);
+        }
+
+        // Write the updated tree out to the config file.
+        saveConfigurationFile();
+
+        // If we got this far, we've succeeded in our mission.
+        report.setStatus(CreateResourceStatus.SUCCESS);
+        return report;
+    }
+
+    public void deleteResource() throws Exception {
+        String rootPath = getResourceConfigurationRootPath();
+        Augeas augeas = getAugeas();
+        augeas.remove(rootPath);
+        augeas.save();
+    }
+
     /**
      * Subclasses should override this method in order to perform any validation that is not encapsulated
      * in the Configuration metadata.
@@ -183,6 +223,34 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
     protected String getResourceConfigurationRootPath() {
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
         return pluginConfig.getSimpleValue(RESOURCE_CONFIGURATION_ROOT_NODE_PROP, null);
+    }
+
+    /**
+     * Subclasses that wish to support child Resource creation must override this method.
+     *
+     * @param resourceType the type of child Resource being created
+     * @param resourceConfig the Resource configuration for the child Resource being created
+     *
+     * @return the path of the Augeas node that should be created for the child Resource being created
+     */
+    protected String getChildResourceConfigurationRootPath(ResourceType resourceType,
+                                                           Configuration resourceConfig) {
+        throw new IllegalStateException("Class " + getClass().getName()
+                + " does not override getChildResourceConfigurationRootPath() for " + resourceType + ".");
+    }
+
+    /**
+     * Subclasses that wish to support child Resource creation must override this method.
+     *
+     * @param resourceType the type of child Resource being created
+     * @param resourceConfig the Resource configuration for the child Resource being created
+     *
+     * @return the value of the Augeas node that should be created for the child Resource being created
+     */
+    protected String getChildResourceConfigurationRootLabel(ResourceType resourceType,
+                                                            Configuration resourceConfig) {
+        throw new IllegalStateException("Class " + getClass().getName()
+                + " does not override getChildResourceConfigurationRootLabel() for " + resourceType + ".");
     }
 
     public ResourceContext<T> getResourceContext() {

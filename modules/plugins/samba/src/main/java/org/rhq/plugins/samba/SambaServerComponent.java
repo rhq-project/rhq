@@ -20,14 +20,16 @@ package org.rhq.plugins.samba;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
-import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.plugins.augeas.AugeasConfigurationComponent;
 
-public class SambaServerComponent extends AugeasConfigurationComponent
-        implements CreateChildResourceFacet {
+/**
+ * TODO
+ */
+public class SambaServerComponent extends AugeasConfigurationComponent {
 
     public void start(ResourceContext resourceContext) throws Exception {
         super.start(resourceContext);
@@ -49,8 +51,27 @@ public class SambaServerComponent extends AugeasConfigurationComponent
         super.updateResourceConfiguration(report);
     }
 
+    @Override
     public CreateResourceReport createResource(CreateResourceReport report) {
-        // TODO
-        return null;
+        return super.createResource(report);
+    }
+
+    @Override
+    protected String getChildResourceConfigurationRootPath(ResourceType resourceType, Configuration resourceConfig) {
+        if (resourceType.getName().equals(SambaShareComponent.RESOURCE_TYPE_NAME)) {
+            String targetName = resourceConfig.getSimple(SambaShareComponent.NAME_RESOURCE_CONFIG_PROP).getStringValue();
+            return "/files/etc/samba/smb.conf/target[.='" + targetName + "']";
+        } else {
+            throw new IllegalArgumentException("Unsupported child Resource type: " + resourceType);
+        }
+    }
+
+    @Override
+    protected String getChildResourceConfigurationRootLabel(ResourceType resourceType, Configuration resourceConfig) {
+        if (resourceType.getName().equals(SambaShareComponent.RESOURCE_TYPE_NAME)) {
+            return resourceConfig.getSimple(SambaShareComponent.NAME_RESOURCE_CONFIG_PROP).getStringValue();
+        } else {
+            throw new IllegalArgumentException("Unsupported child Resource type: " + resourceType);
+        }
     }
 }

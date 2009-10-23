@@ -4,6 +4,7 @@
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/rhnhosted/src/main/generated-source"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/rhnhosted/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/rhnhosted/src/test/java"/>
+	<classpathentry kind="src" path="modules/helpers/pluginAnnotations/src/main/java"/>
 	<classpathentry kind="src" path="modules/common/jboss-as/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/jboss-as/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/jboss-as/src/test/java"/>

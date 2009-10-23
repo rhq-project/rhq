@@ -21,6 +21,7 @@ package org.rhq.plugins.augeas;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -160,18 +161,24 @@ public class AugeasConfigurationDiscoveryComponent<T extends ResourceComponent> 
         return bld.toString();
     }
    
-    private PropertySimple getGlobList(String name, List<String> simples) {
+    public static PropertySimple getGlobList(String name, List<String> simples) {
         StringBuilder bld = new StringBuilder();
         if (simples != null) {
             for(String s : simples) {
                 bld.append(s).append("|");
             }
         }
-        bld.deleteCharAt(bld.length() - 1);
+        if (bld.length() > 0) {
+            bld.deleteCharAt(bld.length() - 1);
+        }
         return new PropertySimple(name, bld.toString());
     }
     
-    private List<String> getGlobList(PropertySimple list) {
-        return Arrays.asList(list.getStringValue().split("\\s*\\|\\s*"));
+    public static List<String> getGlobList(PropertySimple list) {
+        if (list != null) {
+            return Arrays.asList(list.getStringValue().split("\\s*\\|\\s*"));
+        } else {
+            return Collections.emptyList();
+        }
     }
 }

@@ -21,16 +21,15 @@ package org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc;
 
 import java.io.File;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.net.URL;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.xmlrpc.XmlRpcException;
 
@@ -45,17 +44,14 @@ import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnProductNameType;
 
 public class RhnCommTest extends TestCase {
 
-    // Assumption is that the systemid file used is registered to RHN Hosted and it is a registered satellite
-    public String[] systemIdPath = { "./src/test/resources/systemid", "/etc/sysconfig/rhn/systemid" };
-    public String badSystemIdPath = "./src/test/resources/systemid-BAD-ID";
     public String serverUrl = "http://satellite.rhn.redhat.com";
 
     public RhnCommTest(String testName) {
         super(testName);
         /* OVERRIDE THE XMLRPC CLIENT WITH A MOCK OBJECT */
         System.setProperty(ApacheXmlRpcExecutor.class.getName(), MockRhnXmlRpcExecutor.class.getName());
-        System.setProperty(RhnHttpURLConnectionFactory.RHN_MOCK_HTTP_URL_CONNECTION,
-                MockRhnHttpURLConnection.class.getName());
+        System.setProperty(RhnHttpURLConnectionFactory.RHN_MOCK_HTTP_URL_CONNECTION, MockRhnHttpURLConnection.class
+            .getName());
         /* Comment this out if you want to actually connect to RHN Hosted. */
 
     }
@@ -64,38 +60,44 @@ public class RhnCommTest extends TestCase {
         return new TestSuite(RhnCommTest.class);
     }
 
-    protected String getSystemId() throws Exception {
-        for (String path : systemIdPath) {
-            String data = getSystemId(path);
-            if (!StringUtils.isBlank(data)) {
-                return data;
-            }
-        }
-        return "";
-    }
-
-    protected String getSystemId(String path) throws Exception {
-        if (new File(path).exists()) {
-            return FileUtils.readFileToString(new File(path));
-        }
-        return "";
-    }
-
     protected RhnComm getRhnComm() {
         RhnComm comm = new RhnComm(serverUrl);
         return comm;
     }
 
+    /**
+     * method to find a file relative to the calling class.  primarily
+     * useful when writing tests that need access to external data.
+     * this lets you put the data relative to the test class file.
+     *
+     * @param path the path, relative to caller's location
+     * @return URL a URL referencing the file
+     * @throws ClassNotFoundException if the calling class can not be found
+     * (i.e., should not happen)
+     */
+    public static URL findTestData(String path) throws ClassNotFoundException {
+        Throwable t = new Throwable();
+        StackTraceElement[] ste = t.getStackTrace();
+
+        String className = ste[1].getClassName();
+        Class clazz = Class.forName(className);
+
+        URL ret = clazz.getResource(path);
+        return ret;
+    }
+
     public void testCheckAuth() throws Exception {
+        URL f = findTestData("RhnCommTest.class");
+        System.out.println("foo: " + f);
         RhnDownloader downloader = new RhnDownloader(serverUrl);
-        assertTrue(downloader.checkAuth(getSystemId()));
+        assertTrue(downloader.checkAuth(SYSTEM_ID));
     }
 
     public void testCheckAuth_withBadSystemId() throws Exception {
         boolean success = false;
         RhnDownloader downloader = new RhnDownloader(serverUrl);
         try {
-            boolean result = downloader.checkAuth(getSystemId(badSystemIdPath));
+            boolean result = downloader.checkAuth(SYSTEM_ID_BAD);
             assertTrue(false);
         } catch (XmlRpcException e) {
             assertTrue(e.getMessage().contains("Invalid System Credentials"));
@@ -111,7 +113,7 @@ public class RhnCommTest extends TestCase {
         boolean success = false;
         RhnDownloader downloader = new RhnDownloader("http://badurl.example.com/BAD");
         try {
-            boolean result = downloader.checkAuth(getSystemId());
+            boolean result = downloader.checkAuth(SYSTEM_ID);
             assertTrue(false);
         } catch (XmlRpcException e) {
             assertTrue(e.getMessage().contains("Failed to read server's response"));
@@ -123,13 +125,13 @@ public class RhnCommTest extends TestCase {
 
     public void testGetProductNames() throws Exception {
         boolean success = false;
-        if (StringUtils.isBlank(getSystemId())) {
+        if (StringUtils.isBlank(SYSTEM_ID)) {
             System.out.println("Skipping test since systemid is not readable");
             return;
         }
 
         RhnComm comm = getRhnComm();
-        List<RhnProductNameType> names = comm.getProductNames(getSystemId());
+        List<RhnProductNameType> names = comm.getProductNames(SYSTEM_ID);
         assertTrue(names != null);
         assertTrue(names.size() > 0);
         for (RhnProductNameType name : names) {
@@ -144,7 +146,7 @@ public class RhnCommTest extends TestCase {
         boolean success = false;
         try {
             RhnComm comm = getRhnComm();
-            List<RhnChannelFamilyType> families = comm.getChannelFamilies(getSystemId());
+            List<RhnChannelFamilyType> families = comm.getChannelFamilies(SYSTEM_ID);
             assertTrue(families != null);
             assertTrue(families.size() > 0);
             for (RhnChannelFamilyType family : families) {
@@ -170,7 +172,7 @@ public class RhnCommTest extends TestCase {
             channel_labels.add("rhn-tools-rhel-i386-server-5");
             channel_labels.add("rhel-x86_64-server-5");
             channel_labels.add("rhn-tools-rhel-x86_64-server-5");
-            List<RhnChannelType> channels = comm.getChannels(getSystemId(), channel_labels);
+            List<RhnChannelType> channels = comm.getChannels(SYSTEM_ID, channel_labels);
             assertTrue(channels != null);
             assertTrue(channels.size() > 0);
             for (RhnChannelType channel : channels) {
@@ -200,7 +202,7 @@ public class RhnCommTest extends TestCase {
             reqPackages.add("rhn-package-386982");
             reqPackages.add("rhn-package-386983");
             reqPackages.add("rhn-package-386984");
-            List<RhnPackageShortType> pkgs = comm.getPackageShortInfo(getSystemId(), reqPackages);
+            List<RhnPackageShortType> pkgs = comm.getPackageShortInfo(SYSTEM_ID, reqPackages);
             assertTrue(pkgs.size() == reqPackages.size());
             for (RhnPackageShortType pkgShort : pkgs) {
                 assertFalse(StringUtils.isBlank(pkgShort.getId()));
@@ -231,7 +233,7 @@ public class RhnCommTest extends TestCase {
             reqLabels.add("ks-rhel-i386-server-5-u3");
             reqLabels.add("ks-rhel-i386-server-5-u4");
 
-            List<RhnKickstartableTreeType> ksTrees = comm.getKickstartTreeMetadata(getSystemId(), reqLabels);
+            List<RhnKickstartableTreeType> ksTrees = comm.getKickstartTreeMetadata(SYSTEM_ID, reqLabels);
             assertTrue(reqLabels.size() == ksTrees.size());
             for (RhnKickstartableTreeType tree : ksTrees) {
                 assertFalse(StringUtils.isBlank(tree.getBasePath()));
@@ -261,7 +263,7 @@ public class RhnCommTest extends TestCase {
             reqPackages.add("rhn-package-386982");
             reqPackages.add("rhn-package-386983");
             reqPackages.add("rhn-package-386984");
-            List<RhnPackageType> pkgs = comm.getPackageMetadata(getSystemId(), reqPackages);
+            List<RhnPackageType> pkgs = comm.getPackageMetadata(SYSTEM_ID, reqPackages);
             assertTrue(pkgs.size() == reqPackages.size());
             for (RhnPackageType pkg : pkgs) {
                 assertFalse(StringUtils.isBlank(pkg.getRhnPackageSummary()));
@@ -283,7 +285,7 @@ public class RhnCommTest extends TestCase {
             reqPackages.add("rhn-package-386982");
             reqPackages.add("rhn-package-386983");
             reqPackages.add("rhn-package-386984");
-            List<RhnPackageType> pkgs = comm.getPackageMetadata(getSystemId(badSystemIdPath), reqPackages);
+            List<RhnPackageType> pkgs = comm.getPackageMetadata(SYSTEM_ID_BAD, reqPackages);
             assertTrue(false);
         } catch (XmlRpcException e) {
             assertTrue(e.getMessage().contains("Invalid System Credentials"));
@@ -295,7 +297,7 @@ public class RhnCommTest extends TestCase {
 
     public void testLogin() throws Exception {
         RhnDownloader comm = new RhnDownloader(serverUrl);
-        Map credentials = comm.login(getSystemId());
+        Map credentials = comm.login(SYSTEM_ID);
         assertNotNull(credentials);
     }
 
@@ -306,7 +308,7 @@ public class RhnCommTest extends TestCase {
             String channelName = "rhel-x86_64-server-5";
             String rpmName = "openhpi-2.4.1-6.el5.1.x86_64.rpm";
             String saveFilePath = "./target/" + rpmName;
-            assertTrue(comm.getRPM(getSystemId(), channelName, rpmName, saveFilePath));
+            assertTrue(comm.getRPM(SYSTEM_ID, channelName, rpmName, saveFilePath));
             File t = new File(saveFilePath);
             assertTrue(t.exists());
             success = true;
@@ -330,7 +332,7 @@ public class RhnCommTest extends TestCase {
             String channelName = "rhel-x86_64-server-5";
             String rpmName = "openhpi-2.4.1-6.el5.1.x86_64.rpm";
             String saveFilePath = "./target/" + rpmName;
-            assertTrue(comm.getRPM(getSystemId(badSystemIdPath), channelName, rpmName, saveFilePath));
+            assertTrue(comm.getRPM(SYSTEM_ID_BAD, channelName, rpmName, saveFilePath));
             assertTrue(false);
         } catch (XmlRpcException e) {
             assertTrue(e.getMessage().contains("Invalid System Credentials"));
@@ -349,7 +351,7 @@ public class RhnCommTest extends TestCase {
             List<String> reqLabels = new ArrayList<String>();
             // To get data for this call, look at channels kickstartable-trees=""
             reqLabels.add("ks-rhel-i386-server-5");
-            List<RhnKickstartableTreeType> ksTrees = comm.getKickstartTreeMetadata(getSystemId(), reqLabels);
+            List<RhnKickstartableTreeType> ksTrees = comm.getKickstartTreeMetadata(SYSTEM_ID, reqLabels);
             RhnKickstartableTreeType tree = ksTrees.get(0);
             RhnKickstartFilesType ksFiles = tree.getRhnKickstartFiles();
             System.err.println("ksFiles = " + ksFiles);
@@ -362,7 +364,7 @@ public class RhnCommTest extends TestCase {
             assertFalse(StringUtils.isBlank(ksRelativePath));
             System.err.println("fetching ks file: " + f.getRelativePath());
             RhnDownloader downloader = new RhnDownloader(serverUrl);
-            InputStream in = downloader.getKickstartTreeFile(getSystemId(), channelName, ksTreeLabel, ksRelativePath);
+            InputStream in = downloader.getKickstartTreeFile(SYSTEM_ID, channelName, ksTreeLabel, ksRelativePath);
             assertTrue(in != null);
             in.close();
             success = true;
@@ -371,4 +373,43 @@ public class RhnCommTest extends TestCase {
         }
         assertTrue(success);
     }
+
+    public static String SYSTEM_ID = "<?xml version=\"1.0\"?>" + "<params>\n" + "<param>\n" + "<value><struct>\n"
+        + "<member>\n" + "<name>username</name>\n" + "<value><string>unknown</string></value>\n" + "</member>\n"
+        + "<member>\n" + "<name>operating_system</name>\n" + "<value><string>redhat-release</string></value>\n"
+        + "</member>\n" + "<member>\n" + "<name>description</name>\n"
+        + "<value><string>Initial Registration Parameters:\n" + "OS: redhat-release\n" + "Release: 5Server\n"
+        + "CPU Arch: athlon-redhat-linux</string></value>\n" + "</member>\n" + "<member>\n" + "<name>checksum</name>\n"
+        + "<value><string>b57e3b8f0ffe10807b041905197068a7</string></value>\n" + "</member>\n" + "<member>\n"
+        + "<name>profile_name</name>\n" + "<value><string>unknown</string></value>\n" + "</member>\n" + "<member>\n"
+        + "<name>system_id</name>\n" + "<value><string>ID-1234</string></value>\n" + "</member>\n" + "<member>\n"
+        + "<name>architecture</name>\n" + "<value><string>athlon-redhat-linux</string></value>\n" + "</member>\n"
+        + "<member>\n" + "<name>os_release</name>\n" + "<value><string>5Server</string></value>\n" + "</member>\n"
+        + "<member>\n" + "<name>fields</name>\n" + "<value><array><data>\n"
+        + "<value><string>system_id</string></value>\n" + "<value><string>os_release</string></value>\n"
+        + "<value><string>operating_system</string></value>\n" + "<value><string>architecture</string></value>\n"
+        + "<value><string>username</string></value>\n" + "<value><string>type</string></value>\n"
+        + "</data></array></value>\n" + "</member>\n" + "<member>\n" + "<name>type</name>\n"
+        + "<value><string>REAL</string></value>\n" + "</member>\n" + "</struct></value>\n" + "</param>\n"
+        + "</params>\n";
+
+    public static String SYSTEM_ID_BAD = "<?xml version=\"1.0\"?>" + "<params>\n" + "<param>\n" + "<value><struct>\n"
+        + "<member>\n" + "<name>username</name>\n" + "<value><string>unknown</string></value>\n" + "</member>\n"
+        + "<member>\n" + "<name>operating_system</name>\n" + "<value><string>redhat-release</string></value>\n"
+        + "</member>\n" + "<member>\n" + "<name>description</name>\n"
+        + "<value><string>Initial Registration Parameters:\n" + "OS: redhat-release\n" + "Release: 5Server\n"
+        + "CPU Arch: athlon-redhat-linux</string></value>\n" + "</member>\n" + "<member>\n" + "<name>checksum</name>\n"
+        + "<value><string>b57e3b8f0ffe10807b041905197068a7</string></value>\n" + "</member>\n" + "<member>\n"
+        + "<name>profile_name</name>\n" + "<value><string>unknown</string></value>\n" + "</member>\n" + "<member>\n"
+        + "<name>system_id</name>\n" + "<value><string>ID-0000000000</string></value>\n" + "</member>\n" + "<member>\n"
+        + "<name>architecture</name>\n" + "<value><string>athlon-redhat-linux</string></value>\n" + "</member>\n"
+        + "<member>\n" + "<name>os_release</name>\n" + "<value><string>5Server</string></value>\n" + "</member>\n"
+        + "<member>\n" + "<name>fields</name>\n" + "<value><array><data>\n"
+        + "<value><string>system_id</string></value>\n" + "<value><string>os_release</string></value>\n"
+        + "<value><string>operating_system</string></value>\n" + "<value><string>architecture</string></value>\n"
+        + "<value><string>username</string></value>\n" + "<value><string>type</string></value>\n"
+        + "</data></array></value>\n" + "</member>\n" + "<member>\n" + "<name>type</name>\n"
+        + "<value><string>REAL</string></value>\n" + "</member>\n" + "</struct></value>\n" + "</param>\n"
+        + "</params>\n";
+
 }

@@ -97,7 +97,7 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
                     this.resourceConfigRootNode = new AugeasNode("/files//", resourceConfigRootNodePath);
                 }
             } else {
-                this.resourceConfigRootNode = new AugeasNode("/");
+                this.resourceConfigRootNode = new AugeasNode("/files//");
             }
         }
     }

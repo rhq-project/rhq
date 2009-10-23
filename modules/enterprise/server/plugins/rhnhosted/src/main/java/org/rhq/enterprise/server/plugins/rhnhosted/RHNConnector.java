@@ -61,7 +61,8 @@ public class RHNConnector {
     public RHNConnector(String systemidIn, String certificateIn, String serverUrlIn)
         throws Exception {
         this.certificateFileName = certificateIn;
-
+        this.certificateText = FileUtils.readFileToString(new File(this.certificateFileName));
+        
         URL serverUrl = new URL(serverUrlIn);
         XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
         config.setServerURL(serverUrl);

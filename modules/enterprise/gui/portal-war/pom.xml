@@ -26,6 +26,7 @@
       <el.version>1.0</el.version>
       <jsf-facelets.version>1.1.14</jsf-facelets.version>
       <seam.version>2.1.0.SP1</seam.version>
+      <jetty-jspc.version>7.0.0.RC6</jetty-jspc.version>
 
       <product.shortName>RHQ</product.shortName>
       <product.name>RHQ</product.name>
@@ -367,8 +368,8 @@
       <!--  new jetty based jsp compiler -->
       <dependency>
          <groupId>org.mortbay.jetty</groupId>
-         <artifactId>maven-jetty-jspc-plugin</artifactId>
-         <version>6.1.5</version>
+         <artifactId>jetty-jspc-maven-plugin</artifactId>
+         <version>${jetty-jspc.version}</version>
          <scope>provided</scope>
       </dependency>
 
@@ -556,8 +557,8 @@
                <plugin>
                   <!--  See http://jetty.mortbay.org/jspc-maven-plugin/ -->
                   <groupId>org.mortbay.jetty</groupId>
-                  <artifactId>maven-jetty-jspc-plugin</artifactId>
-                  <version>6.1.7</version>
+                  <artifactId>jetty-jspc-maven-plugin</artifactId>
+                  <version>${jetty-jspc.version}</version>
                   <configuration>
                      <keepSources>false</keepSources>
                      <validateXml>false</validateXml>  <!--  TODO: set to true -->

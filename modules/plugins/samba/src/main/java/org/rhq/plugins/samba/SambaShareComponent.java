@@ -22,8 +22,10 @@ import net.augeas.Augeas;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.resource.CreateResourceHistory;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.plugins.augeas.AugeasConfigurationComponent;
 import org.rhq.plugins.augeas.helper.AugeasNode;
 
@@ -78,4 +80,9 @@ public class SambaShareComponent extends AugeasConfigurationComponent<SambaServe
     public void deleteResource() throws Exception {
         super.deleteResource();
     }
+
+    public CreateResourceReport createResource(CreateResourceReport report) {
+        return super.createResource(report);
+    }
+    
 }

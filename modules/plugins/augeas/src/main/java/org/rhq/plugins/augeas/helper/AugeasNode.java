@@ -18,7 +18,6 @@
  */
 package org.rhq.plugins.augeas.helper;
 
-
 /**
  * An abstract representation of a node in an Augeas configuration tree (e.g. /files/etc/hosts/3/canonical).
  *
@@ -50,9 +49,10 @@ public class AugeasNode {
         if (name == null) {
             throw new IllegalArgumentException("'name' parameter must not be null.");
         }
+        /*
         if (name.charAt(0) == SEPARATOR_CHAR) {
             throw new IllegalArgumentException("Specified path (" + path + ") is not relative.");
-        }
+        }*/
 
         // TODO: This is temporary until augeas-java fixes a bug.
         this.path = parent.getPath() + SEPARATOR_CHAR + name.replaceAll(" ", "\\\\ ");
@@ -104,7 +104,7 @@ public class AugeasNode {
     public String toString() {
         return this.path;
     }
-    
+
     protected String getParentPath() {
         String path = getPath();
         if (path.equals(SEPARATOR)) {

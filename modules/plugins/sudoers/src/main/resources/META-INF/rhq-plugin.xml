@@ -29,8 +29,10 @@
       <plugin-configuration>
 		<c:simple-property name="augeasModuleName" displayName="Augeas Module Name" default="Sudoers" required="true" readOnly="true"
                              description="the name of the Augeas module/lens to use for loading and updating this resource's configuration"/>
-         <c:simple-property name="configurationFile" displayName="Sudoers File Path" required="true" readOnly="true"
-                               default="/etc/sudoers" description="Location of the sudoers file."/>         
+         <c:simple-property name="configurationFilesInclusionPatterns" displayName="Sudoers File Path" required="true" readOnly="true"
+                               default="/etc/sudoers" description="Location of the sudoers file."/>
+           <c:simple-property name="resourceConfigurationRootNode" required="true" readOnly="true"
+                              default="/files/etc/sudoers"/>                                        
       </plugin-configuration>
 
       <resource-configuration>
@@ -44,7 +46,7 @@
                                   description="The Command/Command Alias that the specified user is allowed to execute from the specified hosts. Set it to ALL if the user is allowed to execute any command.  Alternatively if you have a Cmnd_Alias defined you can use that here. Eg:if you defined  Cmnd_Alias NETWORKING = /sbin/route, /sbin/ifconfig, /bin/ping, /sbin/dhclient, /usr/bin/net, /sbin/iptables - in /etc/sudoers you can specify NETWORKING here."/>
                <c:simple-property name="host_group/command/runas_user" displayName="Run as User" type="string" required="false" activationPolicy="immediate"
                                   description="The User name/Run Alias of the user the specified command will be run as. For example if you wanted the command to be run as user 'foo' you would specify foo here. Set it to ALL if the user is allowed to execute the command as any user. Alternatively if you have a Run_Alias defined you can use that here. Eg:if you defined  Runas_Alias    OP = root, operator - in /etc/sudoers you can specify OP here."/>
-               <c:simple-property name="host_group/command/tag" displayName="Require Password" type="string" required="false" activationPolicy="immediate"
+               <c:simple-property name="host_group/command/tag" displayName="Tag Specification" type="boolean" required="false" activationPolicy="immediate"
                                   description="True if password is required to execute the command. False otherwise."/>
             </c:map-property>
          </c:list-property>

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-        
+
 <plugin name="Samba"
         displayName="Samba"
         description="Support for RHEL Samba service"
@@ -29,7 +29,7 @@
 
       <resource-configuration>
         <c:group name="Basic Configurations">
-            
+
             <c:simple-property name="workgroup" description="The workgroup your server will appear to be in when queried by clients" required="false"/>
             <c:simple-property name="server string" description="Value that will display in the printer comment box in print manager" required="false"/>
 
@@ -44,15 +44,15 @@
                       <c:option value="user"/>
                   </c:property-options>
               </c:simple-property>
-              
+
               <c:simple-property name="encrypt passwords" type="boolean" required="false" description="This option must be enabled if the clients are connecting from a Windows 98, Windows NT 4.0 with Service Pack 3, or other more recent versions of Microsoft Windows. The passwords are transfered between the server and the client in an encrypted format instead of in as a plain-text word that can be intercepted."/>
-              
+
           </c:group>
-          
+
           <c:group name="Printing">
               <c:simple-property name="load printers" displayName="Printing Enabled" type="boolean" description="Controls whether all printers in the printcap will be loaded for browsing by default"/>
-              <c:simple-property name="cups options" required="false" description=""/>
-              
+              <c:simple-property name="cups options" required="false" description="Free form string of options passed to cups library"/>
+
           </c:group>
       </resource-configuration>
 
@@ -62,7 +62,7 @@
 
            <plugin-configuration>
                <c:simple-property name="augeasModuleName" displayName="Augeas Module Name" default="Samba" required="true" readOnly="true"
-                                  description="the name of the Augeas module/lens to use for loading and updating this resource's configuration"/>
+                                  description="the name of the Augeas lens to use for loading and updating this resource's configuration"/>
 
                <c:simple-property name="configurationFilesInclusionPatterns" displayName="File Path" type="file" required="true" readOnly="true"
                                   default="/etc/samba/smb.conf"

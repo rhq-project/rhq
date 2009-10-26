@@ -10,7 +10,7 @@ import org.apache.xmlrpc.client.XmlRpcSun15HttpTransport;
 import org.apache.xmlrpc.client.XmlRpcSun15HttpTransportFactory;
 import org.apache.xmlrpc.client.XmlRpcTransport;
 
-public class CustomReqPropTransportFactory extends XmlRpcSun15HttpTransportFactory {
+public class CustomReqPropTransportFactory extends RhnSSLTransportFactory {
 
     protected Map reqProps;
 
@@ -46,16 +46,6 @@ public class CustomReqPropTransportFactory extends XmlRpcSun15HttpTransportFacto
      * */
     protected CustomReqPropTransport newTransportInstance() {
         return new CustomReqPropTransport(getClient());
-    }
-
-    /** 
-     * We can't access the proxy member directly from our super class
-     * so we are grabbing it from the transport instance.
-     * Would prefer if XmlRpcSun15HttpTransportFactory had a getProxy method
-     * */
-    protected Proxy getProxy() {
-        XmlRpcSun15HttpTransport hackGetProxy = (XmlRpcSun15HttpTransport)super.getTransport();
-        return hackGetProxy.getProxy();
     }
 
     public XmlRpcTransport getTransport() {

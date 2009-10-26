@@ -31,7 +31,7 @@ import org.apache.xmlrpc.util.SAXParsers;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.Log;
 
-public class CustomReqPropTransport extends XmlRpcSun15HttpTransport {
+public class CustomReqPropTransport extends RhnSSLTransport {
 
     private final Log log = LogFactory.getLog(CustomReqPropTransport.class);
     protected Map<String,String> reqProps;

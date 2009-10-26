@@ -33,6 +33,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.rhq.enterprise.server.plugins.rhnhosted.certificate.PublicKeyRing;
+import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.RhnSSLTransportFactory;
 
 import org.apache.xmlrpc.client.XmlRpcClient;
 import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
@@ -60,15 +61,11 @@ public class RHNConnector {
      */
     public RHNConnector(String systemidIn, String certificateIn, String serverUrlIn)
         throws Exception {
+        
         this.certificateFileName = certificateIn;
         this.certificateText = FileUtils.readFileToString(new File(this.certificateFileName));
-        
         URL serverUrl = new URL(serverUrlIn);
-        XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
-        config.setServerURL(serverUrl);
-        client = new XmlRpcClient();
-        client.setConfig(config);
-
+        client = newClient(serverUrl);
         File systemid_file = new File(systemidIn);
         this.systemid = FileUtils.readFileToString(systemid_file);
     }
@@ -85,15 +82,21 @@ public class RHNConnector {
         // store the file to local server
         this.writeStringToFile();
         URL serverUrl = new URL(serverUrlIn);
-        XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
-        config.setServerURL(serverUrl);
-        client = new XmlRpcClient();
-        client.setConfig(config);
-
+        client = newClient(serverUrl);
         File systemid_file = new File(RHNConstants.DEFAULT_SYSTEM_ID);
         this.systemid = FileUtils.readFileToString(systemid_file);
     }
 
+    protected XmlRpcClient newClient(URL serverUrl) {
+       XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
+       config.setServerURL(serverUrl);
+       client = new XmlRpcClient();
+       client.setConfig(config);
+       // Add support for SSL connections to RHN Hosted
+       RhnSSLTransportFactory transportFactory = new RhnSSLTransportFactory(client);
+       client.setTransportFactory(transportFactory);
+       return client;
+    }
     /**
      * Call that invokes the server object and passing in the xmlrpc
      * exposed call to activate the rhq server.

@@ -56,9 +56,9 @@ public class ListReposUIBean extends PagedDataTableUIBean {
                     repoManager.deleteRepo(subject, id);
                 }
 
-                FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Deleted [" + ids.length + "] repos.");
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Deleted [" + ids.length + "] repositories.");
             } catch (Exception e) {
-                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to delete repos.", e);
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to delete repositories.", e);
             }
         }
 

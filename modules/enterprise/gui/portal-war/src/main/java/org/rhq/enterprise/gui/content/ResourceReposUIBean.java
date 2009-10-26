@@ -52,10 +52,10 @@ public class ResourceReposUIBean extends PagedDataTableUIBean {
                 manager.unsubscribeResourceFromRepos(subject, resourceId, repoIds);
 
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Unsubscribed [" + repoIds.length
-                    + "] repos from resource");
+                    + "] repositories from resource");
             } catch (Exception e) {
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
-                    "Failed to unsubscribe one or more repos from resource", e);
+                    "Failed to unsubscribe one or more repositories from resource", e);
             }
         }
 

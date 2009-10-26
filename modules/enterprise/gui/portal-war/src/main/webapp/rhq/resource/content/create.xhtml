@@ -82,23 +82,23 @@
 
          <rich:panel>
 
-            <f:facet name="header">Repo</f:facet>
+            <f:facet name="header">Repository</f:facet>
 
-            <p>Select one of the following options describing in which repo the new package should be created.</p>
+            <p>Select one of the following options describing in which repository the new package should be created.</p>
 
-            <input type="radio" name="repoOption" value="subscribed">Currently Subscribed Repo</input>
+            <input type="radio" name="repoOption" value="subscribed">Currently Subscribed Repository</input>
                <rich:spacer width="5"/>
                <h:selectOneMenu value="#{CreateNewPackageUIBean.subscribedRepoId}">
                   <f:selectItems value="#{CreateNewPackageUIBean.subscribedRepos}" />
                </h:selectOneMenu>
             <br/>
-            <input type="radio" name="repoOption" value="unsubscribed">Existing Repo</input>
+            <input type="radio" name="repoOption" value="unsubscribed">Existing Repository</input>
                <rich:spacer width="5"/>
                <h:selectOneMenu value="#{CreateNewPackageUIBean.unsubscribedRepoId}">
                   <f:selectItems value="#{CreateNewPackageUIBean.unsubscribedRepos}" />
                </h:selectOneMenu>
             <br/>
-            <input type="radio" name="repoOption" value="new">New Repo</input>
+            <input type="radio" name="repoOption" value="new">New Repository</input>
             <rich:spacer width="5"/><h:inputText value="#{CreateNewPackageUIBean.newRepoName}"/>
 
          </rich:panel>

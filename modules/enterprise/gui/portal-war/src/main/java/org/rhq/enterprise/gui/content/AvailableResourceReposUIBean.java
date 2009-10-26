@@ -52,10 +52,10 @@ public class AvailableResourceReposUIBean extends PagedDataTableUIBean {
                 manager.subscribeResourceToRepos(subject, resourceId, repoIds);
 
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Subscribed [" + repoIds.length
-                    + "] repos to resource");
+                    + "] repositories to resource");
             } catch (Exception e) {
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
-                    "Failed to subscribe one or more repos to resource", e);
+                    "Failed to subscribe one or more repositories to resource", e);
             }
         }
 

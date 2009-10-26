@@ -30,8 +30,8 @@
       <resource-configuration>
         <c:group name="Basic Configurations">
             
-            <c:simple-property name="workgroup" description="The workgroup of this computer" required="false"/>
-            <c:simple-property name="server string" description="A description of this computer" required="false"/>
+            <c:simple-property name="workgroup" description="The workgroup your server will appear to be in when queried by clients" required="false"/>
+            <c:simple-property name="server string" description="Value that will display in the printer comment box in print manager" required="false"/>
 
         </c:group>
 
@@ -50,8 +50,8 @@
           </c:group>
           
           <c:group name="Printing">
-              <c:simple-property name="load printers" displayName="Printing Enabled" type="boolean"/>
-              <c:simple-property name="cups options" required="false"/>
+              <c:simple-property name="load printers" displayName="Printing Enabled" type="boolean" description="Controls whether all printers in the printcap will be loaded for browsing by default""/>
+              <c:simple-property name="cups options" required="false" description=""/>
               
           </c:group>
       </resource-configuration>
@@ -72,17 +72,16 @@
            </plugin-configuration>
 
            <resource-configuration>
-               <c:simple-property name="name" required="true" readOnly="true"/>
-               <c:simple-property name="path" required="false"/>
-               <c:simple-property name="comment" required="false"/>
-               <c:simple-property name="public" type="boolean"  required="false"/>
-               <c:simple-property name="browseable" type="boolean"  required="false"/>
-               <c:simple-property name="writable" type="boolean"  required="false"/>
-               <c:simple-property name="printable" type="boolean"  required="false"/>
-               <c:simple-property name="write list" required="false"/>
-               <c:simple-property name="guest ok" type="boolean"  required="false"/>
-               <c:simple-property name="share modes" required="false" />
-               <c:simple-property name="valid users" required="false"/>
+               <c:simple-property name="name" required="true" readOnly="true" description="Name of share"/>
+               <c:simple-property name="path" required="false" description="Directory to which the user of the service is to be given access"/>
+               <c:simple-property name="comment" required="false" description="Comment string to associate with the new share"/>
+               <c:simple-property name="browseable" type="boolean"  required="false" description="Controls whether this share is seen in the list of available shares"/>
+               <c:simple-property name="read only" type="boolean"  required="false" description="Users of service may not create or modify files"/>
+               <c:simple-property name="printable" type="boolean"  required="false" description="Clients may open, write to and submit spool files on the service directory "/>
+               <c:simple-property name="write list" required="false" description="List of users that are given read-write access to the service"/>
+               <c:simple-property name="guest ok" type="boolean"  required="false" description="No password is required to connect"/>
+               <c:simple-property name="share modes" required="false" description="Enables or disables the honoring of the share modes during a file open"/>
+               <c:simple-property name="valid users" required="false" description="List of users that should be allowed to login to this service"/>
            </resource-configuration>
        </service>
    </server>

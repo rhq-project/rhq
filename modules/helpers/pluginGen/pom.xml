@@ -10,7 +10,7 @@
     </parent>
 
 
-    <groupId>org.rhq</groupId>
+    <groupId>org.rhq.helpers</groupId>
     <artifactId>rhq-pluginGen</artifactId>
     <packaging>jar</packaging>
 
@@ -86,7 +86,7 @@
             <version>2.3.11</version>
         </dependency>
         <dependency>
-            <groupId>org.rhq</groupId>
+            <groupId>org.rhq.helpers</groupId>
             <artifactId>rhq-pluginAnnotations</artifactId>
             <version>1.4.0-SNAPSHOT</version>
         </dependency>

@@ -26,7 +26,10 @@ package org.rhq.plugins.antlrconfig;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.antlr.runtime.RecognitionException;
 import org.antlr.runtime.TokenRewriteStream;
@@ -45,6 +48,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.plugins.antlrconfig.NewEntryCreator.OpDef;
 import org.rhq.plugins.antlrconfig.tokens.Id;
+import org.rhq.plugins.antlrconfig.tokens.Ordered;
 import org.rhq.plugins.antlrconfig.tokens.Unordered;
 
 /**
@@ -115,6 +119,9 @@ public class ConfigMapper {
         List<MergeRecord> mergeRecords = new ArrayList<MergeRecord>();
         mapTreeForMerge(configurationDefinition.getPropertyDefinitions().values(), configuration.getProperties(), configurationFileAST, mergeRecords);
         
+        //reordering has to be done after all other processing has been done.
+        HashMap<CommonTree, List<MergeRecord>> reorders = new HashMap<CommonTree, List<MergeRecord>>();
+
         for(MergeRecord rec : mergeRecords) {
             boolean isAdd = rec.property != null && rec.tree == null;
             boolean isDelete = rec.property == null && rec.tree != null;
@@ -125,10 +132,43 @@ public class ConfigMapper {
                     applyInstructions(instructions, fileStream);
                 }
             } else if (isDelete) {
-                fileStream.delete(rec.tree.getTokenStartIndex(), rec.tree.getTokenStopIndex());
+                if (rec.parent != null && rec.parent.getToken() instanceof Ordered) {
+                    //this sub tree is inside an <Ordered> list. Will deal with it later.
+                    addReorder(rec, reorders);
+                } else {
+                    fileStream.delete(rec.tree.getTokenStartIndex(), rec.tree.getTokenStopIndex());
+                }
             } else if (rec.property instanceof PropertySimple) {
                 String value = configFacade.getPersistableValue((PropertySimple)rec.property);
                 fileStream.replace(rec.tree.getTokenStartIndex(), rec.tree.getTokenStopIndex(), value);
+            } else if (rec.propertyIndex != -1 && rec.treeIndex != -1 && rec.propertyIndex != rec.treeIndex && rec.parent != null) {
+                addReorder(rec, reorders);
+            }
+        }
+        
+        Comparator<MergeRecord> sorter = new Comparator<MergeRecord>() {
+            public int compare(MergeRecord o1, MergeRecord o2) {
+                return o1.treeIndex - o2.treeIndex;
+            }
+        };
+        
+        for(Map.Entry<CommonTree, List<MergeRecord>> entry : reorders.entrySet()) {
+            List<MergeRecord> thisReorders = entry.getValue();
+            Collections.sort(thisReorders, sorter);
+            int toDelete = 0;
+            List<CommonTree> siblings = astStructure.getChildren(entry.getKey());
+            for(MergeRecord rec : thisReorders) {
+                if (rec.propertyIndex != -1) {
+                    CommonTree treeAtPropertyIndex = siblings.get(rec.propertyIndex);
+                    fileStream.replace(treeAtPropertyIndex.getTokenStartIndex(), treeAtPropertyIndex.getTokenStopIndex(), treeToString(rec.tree, fileStream));
+                } else {
+                    toDelete++;
+                }
+            }
+            
+            for (int i = siblings.size() - 1; toDelete > 0; --i, --toDelete) {
+                MergeRecord rec = thisReorders.get(i);
+                fileStream.delete(rec.tree.getTokenStartIndex(), rec.tree.getTokenStopIndex());
             }
         }
     }
@@ -193,6 +233,10 @@ public class ConfigMapper {
             List<CommonTree> treeMatches = path.matches();
             
             boolean lookingForChildren = path.getPath().size() > 1;
+            boolean inOrdered = tree.getToken() instanceof Ordered;
+            int propIndex = 0;
+            
+            List<CommonTree> matched = new ArrayList<CommonTree>();
             
             //now figure out what to delete and what to add
             for (Property prop : matchedProperties) {
@@ -203,19 +247,25 @@ public class ConfigMapper {
                 rec.tree = match;
                 rec.parent = lookingForChildren ? tree : astStructure.getParent(tree);
                 
-                if (match == null) {
-                    mergeRecords.add(rec);
-                } else if (prop instanceof PropertySimple) {
-                    //only add in the updates
-                    if (!configFacade.isEqual((PropertySimple)prop, match.getText())) {
-                        mergeRecords.add(rec);
-                    }
+                if(inOrdered) {
+                    rec.propertyIndex = propIndex;
                 }
                 
-                if (match != null) {
-                    int treeIdx = treeMatches.indexOf(match);
-                    if (treeIdx >= 0) {
-                        treeMatches.remove(treeIdx);
+                if (match == null) {
+                    mergeRecords.add(rec);
+                } else {
+                    rec.treeIndex = treeMatches.indexOf(match);
+                    if (prop instanceof PropertySimple) {
+                        //only add in the updates
+                        if (!configFacade.isEqual((PropertySimple)prop, match.getText())) {
+                            mergeRecords.add(rec);
+                        }
+                    } else if (rec.propertyIndex != -1 && rec.treeIndex != rec.propertyIndex) {
+                        mergeRecords.add(rec);
+                    }
+
+                    if (rec.treeIndex >= 0) {
+                        matched.add(match);
                     }
                     
                     //if we have a matching sub tree, let's go down a level if we can
@@ -230,15 +280,22 @@ public class ConfigMapper {
                         mapTreeForMerge(subDefs, subProps, match, mergeRecords);
                     }
                 } 
+                
+                propIndex++;
             }
             
-            //after the previous loop, we're left with the sub trees that
+            //we're left with the sub trees that
             //correspond to a definition (i.e. are mapped) but aren't present
             //in the supplied configuration - i.e. are to be deleted.
             for(CommonTree toDelete : treeMatches) {
-                MergeRecord rec = new MergeRecord();
-                rec.tree = toDelete;
-                mergeRecords.add(rec);
+                if(!matched.contains(toDelete)) {
+                    MergeRecord rec = new MergeRecord();
+                    rec.tree = toDelete;
+                    rec.parent = lookingForChildren ? tree : astStructure.getParent(tree);
+                    rec.treeIndex = treeMatches.indexOf(toDelete);
+                    
+                    mergeRecords.add(rec);
+                }
             }
         }
     }
@@ -287,7 +344,7 @@ public class ConfigMapper {
     }
     
     private CommonTree getMatch(Property prop, CommonTree tree, List<CommonTree> possibleMatches, boolean lookingForChildren) throws RecognitionException, MatchException {
-        if (lookingForChildren && tree.getToken() instanceof Unordered) {
+        if (lookingForChildren && (tree.getToken() instanceof Unordered || tree.getToken() instanceof Ordered)) {
             List<CommonTree> idTokensInTree = new ArrayList<CommonTree>();
             for(CommonTree child : astStructure.getChildren(tree)) {
                 getIdTokensInTree(child, idTokensInTree);
@@ -336,8 +393,8 @@ public class ConfigMapper {
             return;
         }
         
-        //do not traverse into another Unordered dictionary
-        if (tree.getToken() instanceof Unordered) {
+        //do not traverse into another (Un)ordered dictionary
+        if (tree.getToken() instanceof Unordered || tree.getToken() instanceof Ordered) {
             return;
         }
         
@@ -359,9 +416,24 @@ public class ConfigMapper {
         return parent;
     }
     
+    private String treeToString(CommonTree tree, TokenRewriteStream stream) {
+        return stream.toOriginalString(tree.getTokenStartIndex(), tree.getTokenStopIndex());
+    }
+        
+    private void addReorder(MergeRecord rec, Map<CommonTree, List<MergeRecord>> reorders) {
+        List<MergeRecord> concreteReorders = reorders.get(rec.parent);
+        if (concreteReorders == null) {
+            concreteReorders = new ArrayList<MergeRecord>();
+            reorders.put(rec.parent, concreteReorders);
+        }
+        concreteReorders.add(rec);
+    }
+    
     private static class MergeRecord {
         public Property property;
         public CommonTree tree;
         public CommonTree parent;
+        public int treeIndex = -1;
+        public int propertyIndex = -1;
     }
 }

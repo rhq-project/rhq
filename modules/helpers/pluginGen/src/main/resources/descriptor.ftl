@@ -20,8 +20,9 @@
 -->
 <#-- @ftlvariable name="props" type="org.rhq.helpers.pluginGen.Props" -->
 <?xml version="1.0"?>
-<plugin name="${props.name}"
-        displayName="${props.name}Plugin"
+<plugin name="${props.pluginName}"
+        displayName="${props.pluginName}Plugin"
+        description="${props.pluginDescription}"
 <#if props.usePluginLifecycleListenerApi>
         pluginLifecycleListener="${props.componentClass}"
 </#if>
@@ -31,20 +32,16 @@
         xmlns:c="urn:xmlns:rhq-configuration">
 
 <#if props.dependsOnJmxPlugin>
-    <depends plugin="JMX" useClasses="true"/>
-</#if>    
+   <depends plugin="JMX" useClasses="true"/>
+</#if>
 
-    <${props.category.lowerName}
-    <#include "descriptorMain.ftl"/>
+   <${props.category.lowerName} <#include "descriptorMain.ftl"/>
 
-    <#-- Those are the embedded children -->
-    <#list props.children as props>
-        <${props.category.lowerName}
-        <#include "./descriptorMain.ftl"/>
-        </${props.category.lowerName}>
-
-    </#list>
-    </${props.category.lowerName}>
-
+   <#-- Those are the embedded children -->
+   <#list props.children as props>
+       <${props.category.lowerName} <#include "./descriptorMain.ftl"/>
+       </${props.category.lowerName}>
+   </#list>
+   </${props.category.lowerName}>
 
 </plugin>

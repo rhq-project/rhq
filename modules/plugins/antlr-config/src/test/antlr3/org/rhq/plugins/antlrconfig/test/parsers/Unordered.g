@@ -1,4 +1,4 @@
-grammar Simple;
+grammar Unordered;
 
 options {
   language = Java;
@@ -27,8 +27,6 @@ LETTER : 'a'..'z' | 'A'..'Z' ;
 fragment
 DIGIT : '0'..'9' ;
 
-EXPORT : 'e' 'x' 'p' 'o' 'r' 't' ;
-
 WORD : LETTER (LETTER | DIGIT)* ;
 
 EQUALS : '=' ;
@@ -42,4 +40,4 @@ NL : '\r'? '\n' ;
 file : (assignment | NL)* -> ^(FILE<Unordered> assignment*)
      ; 
 
-assignment : EXPORT? WORD EQUALS VALUE (NL | EOF) -> ^(ASSIGNMENT ^(WORD<Id>) VALUE EXPORT?);
+assignment : WORD EQUALS VALUE (NL | EOF) -> ^(ASSIGNMENT ^(WORD<Id>) VALUE);

@@ -1,0 +1,14 @@
+segment [
+    a = 1
+    b = 2
+    c = 3
+]
+
+
+segment [
+    d = 4
+]
+
+segment [
+    e = 5
+]

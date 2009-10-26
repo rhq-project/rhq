@@ -1516,11 +1516,11 @@
             ALTER INDEX RHQ_CHANNEL_IDX
             RENAME TO RHQ_REPO_IDX
           </statement>
-          <statement>
+          <statement targetDBVendor="postgresql">
             ALTER TABLE RHQ_REPO
             DROP CONSTRAINT RHQ_CHANNEL_PKEY CASCADE
           </statement>
-          <statement>
+          <statement targetDBVendor="postgresql">
             ALTER TABLE RHQ_REPO
             ADD CONSTRAINT RHQ_REPO_PKEY PRIMARY KEY ( ID )
           </statement>
@@ -1542,17 +1542,17 @@
             ADD CONSTRAINT RHQ_REPO_CONTENT_SRC_MAP_KEY
             PRIMARY KEY ( REPO_ID, CONTENT_SRC_ID )
           </statement>
-          <statement>
+          <statement targetDBVendor="postgresql">
             ALTER TABLE RHQ_REPO_CONTENT_SRC_MAP
             ADD CONSTRAINT RHQ_REPO_CONTENT_SRC_MAP_REPO_ID_FKEY
             FOREIGN KEY ( REPO_ID )
             REFERENCES RHQ_REPO ( ID )
           </statement>
-          <statement>
+          <statement targetDBVendor="postgresql">
             ALTER TABLE RHQ_REPO_CONTENT_SRC_MAP
             DROP CONSTRAINT RHQ_CHANNEL_CONTENT_SRC_MAP_CONTENT_SRC_ID_FKEY
           </statement>
-          <statement>
+          <statement targetDBVendor="postgresql">
             ALTER TABLE RHQ_REPO_CONTENT_SRC_MAP
             ADD CONSTRAINT RHQ_REPO_CONTENT_SRC_MAP_CONTENT_SRC_ID_FKEY
             FOREIGN KEY ( CONTENT_SRC_ID )
@@ -1576,17 +1576,17 @@
             ADD CONSTRAINT RHQ_REPO_PKG_VER_MAP_KEY
               PRIMARY KEY ( REPO_ID, PACKAGE_VERSION_ID )
           </statement>
-          <statement>
+          <statement targetDBVendor="postgresql">
             ALTER TABLE RHQ_REPO_PKG_VERSION_MAP
             DROP CONSTRAINT RHQ_CHANNEL_PKG_VERSION_MAP_PACKAGE_VERSION_ID_FKEY
           </statement>
-          <statement>
+          <statement targetDBVendor="postgresql">
             ALTER TABLE RHQ_REPO_PKG_VERSION_MAP
             ADD CONSTRAINT RHQ_REPO_PKG_VERSION_MAP_PACKAGE_VERSION_ID_FKEY
             FOREIGN KEY ( PACKAGE_VERSION_ID )
             REFERENCES RHQ_PACKAGE_VERSION ( ID )
           </statement>
-          <statement>
+          <statement targetDBVendor="postgresql">
             ALTER TABLE RHQ_REPO_PKG_VERSION_MAP
             ADD CONSTRAINT RHQ_REPO_PKG_VERSION_MAP_REPO_ID_FKEY
             FOREIGN KEY ( REPO_ID )
@@ -1608,19 +1608,19 @@
           <statement>
             ALTER TABLE RHQ_REPO_RESOURCE_MAP
             ADD CONSTRAINT RHQ_REPO_RESOURCE_MAP_KEY
-              PRIMARY KEY ( REPO_ID, RESOURCE_ID )
+             PRIMARY KEY ( REPO_ID, RESOURCE_ID )
           </statement>
-          <statement>
+          <statement targetDBVendor="postgresql">
             ALTER TABLE RHQ_REPO_RESOURCE_MAP
             DROP CONSTRAINT RHQ_CHANNEL_RESOURCE_MAP_RESOURCE_ID_FKEY
           </statement>
-          <statement>
+          <statement targetDBVendor="postgresql">
             ALTER TABLE RHQ_REPO_RESOURCE_MAP
             ADD CONSTRAINT RHQ_REPO_RESOURCE_MAP_RESOURCE_ID_FKEY
             FOREIGN KEY ( RESOURCE_ID )
             REFERENCES RHQ_RESOURCE ( ID )
           </statement>
-          <statement>
+          <statement targetDBVendor="postgresql">
             ALTER TABLE RHQ_REPO_RESOURCE_MAP
             ADD CONSTRAINT RHQ_REPO_RESOURCE_MAP_REPO_ID_FKEY
             FOREIGN KEY ( REPO_ID )
@@ -1634,10 +1634,16 @@
             CREATE TABLE RHQ_REPO_GROUP_TYPE ( ID INTEGER PRIMARY KEY )
           </statement>
         </schema-directSQL>
+        <schema-alterColumn table="RHQ_REPO_GROUP_TYPE" column="ID" nullable="false" />
         <schema-addColumn table="RHQ_REPO_GROUP_TYPE" column="NAME" precision="200" columnType="VARCHAR2" />
         <schema-alterColumn table="RHQ_REPO_GROUP_TYPE" column="NAME" nullable="false" />
         <schema-addColumn table="RHQ_REPO_GROUP_TYPE" column="DESCRIPTION" precision="500" columnType="VARCHAR2" />
-        <schema-alterColumn table="RHQ_REPO_GROUP_TYPE" column="DESCRIPTION" nullable="true" />
+        <schema-directSQL>
+          <statement>
+            INSERT INTO RHQ_REPO_GROUP_TYPE ( ID, NAME )
+            VALUES ( 1, 'family' )
+          </statement>
+        </schema-directSQL>
         <!-- RHQ_REPO_GROUP -->
         <schema-createSequence name="RHQ_REPO_GROUP_ID_SEQ" initial="10001" />
         <schema-directSQL>
@@ -1645,20 +1651,29 @@
             CREATE TABLE RHQ_REPO_GROUP ( ID INTEGER PRIMARY KEY )
           </statement>
         </schema-directSQL>
+        <schema-alterColumn table="RHQ_REPO_GROUP" column="ID" nullable="false" />
         <schema-addColumn table="RHQ_REPO_GROUP" column="NAME" precision="200" columnType="VARCHAR2" />
         <schema-alterColumn table="RHQ_REPO_GROUP" column="NAME" nullable="false" />
         <schema-addColumn table="RHQ_REPO_GROUP" column="DESCRIPTION" precision="500" columnType="VARCHAR2" />
-        <schema-alterColumn table="RHQ_REPO_GROUP" column="DESCRIPTION" nullable="true" />
         <schema-addColumn table="RHQ_REPO_GROUP" column="REPO_GROUP_TYPE_ID" columnType="INTEGER" />
         <schema-alterColumn table="RHQ_REPO_GROUP" column="REPO_GROUP_TYPE_ID" nullable="false" />
         <schema-directSQL>
-          <statement>
+          <statement targetDBVendor="postgresql">
             ALTER TABLE RHQ_REPO_GROUP
             ADD CONSTRAINT RHQ_REPO_GROUP_REPO_GROUP_TYPE_ID_FKEY
             FOREIGN KEY ( REPO_GROUP_TYPE_ID )
             REFERENCES RHQ_REPO_GROUP_TYPE ( ID )
           </statement>
-          <statement>
+          <statement targetDBVendor="oracle">
+            ALTER TABLE RHQ_REPO_GROUP
+            ADD FOREIGN KEY ( REPO_GROUP_TYPE_ID )
+            REFERENCES RHQ_REPO_GROUP_TYPE ( ID )
+          </statement>
+          <statement targetDBVendor="postgresql">
+            CREATE UNIQUE INDEX RHQ_REPO_GROUP_IDX
+            ON RHQ_REPO_GROUP ( NAME, REPO_GROUP_TYPE_ID )
+          </statement>
+          <statement targetDBVendor="oracle">
             CREATE UNIQUE INDEX RHQ_REPO_GROUP_IDX
             ON RHQ_REPO_GROUP ( NAME, REPO_GROUP_TYPE_ID )
           </statement>
@@ -1680,24 +1695,129 @@
             ADD CONSTRAINT RHQ_REPO_REPO_GRP_MAP_KEY
             PRIMARY KEY ( REPO_ID, REPO_GRP_ID )
           </statement>
-          <statement>
+          <statement targetDBVendor="postgresql">
             ALTER TABLE RHQ_REPO_REPO_GRP_MAP
             ADD CONSTRAINT RHQ_REPO_REPO_GRP_MAP_REPO_ID_FKEY
             FOREIGN KEY ( REPO_ID )
             REFERENCES RHQ_REPO ( ID )
           </statement>
-          <statement>
+          <statement targetDBVendor="oracle">
+            ALTER TABLE RHQ_REPO_REPO_GRP_MAP
+            ADD FOREIGN KEY ( REPO_ID )
+            REFERENCES RHQ_REPO ( ID )
+          </statement>
+          <statement targetDBVendor="postgresql">
             ALTER TABLE RHQ_REPO_REPO_GRP_MAP
             ADD CONSTRAINT RHQ_REPO_REPO_GRP_MAP_REPO_GRP_ID_FKEY
             FOREIGN KEY ( REPO_GRP_ID )
             REFERENCES RHQ_REPO_GROUP ( ID )
           </statement>
+          <statement targetDBVendor="oracle">
+            ALTER TABLE RHQ_REPO_REPO_GRP_MAP
+            ADD FOREIGN KEY ( REPO_GRP_ID )
+            REFERENCES RHQ_REPO_GROUP ( ID )
+          </statement>
+        </schema-directSQL>
+        <!-- RHQ_REPO_RELATION_TYPE -->
+        <schema-createSequence name="RHQ_REPO_RELATION_TYPE_ID_SEQ" initial="10001" />
+        <schema-directSQL>
+          <statement>
+            CREATE TABLE RHQ_REPO_RELATION_TYPE ( ID INTEGER PRIMARY KEY )
+          </statement>
+        </schema-directSQL>
+        <schema-alterColumn table="RHQ_REPO_RELATION_TYPE" column="ID" nullable="false" />
+        <schema-addColumn table="RHQ_REPO_RELATION_TYPE" column="NAME" precision="200" columnType="VARCHAR2" />
+        <schema-alterColumn table="RHQ_REPO_RELATION_TYPE" column="NAME" nullable="false" />
+        <schema-addColumn table="RHQ_REPO_RELATION_TYPE" column="DESCRIPTION" precision="500" columnType="VARCHAR2" />
+        <schema-directSQL>
+          <statement>
+            INSERT INTO
+            RHQ_REPO_RELATION_TYPE ( ID, NAME )
+            VALUES ( 1, 'parent' )
+          </statement>
+          <statement>
+            INSERT INTO
+            RHQ_REPO_RELATION_TYPE ( ID, NAME )
+            VALUES ( 2, 'clone' )
+          </statement>
+        </schema-directSQL>
+        <!-- RHQ_REPO_RELATION -->
+        <schema-createSequence name="RHQ_REPO_RELATION_ID_SEQ" initial="10001" />
+        <schema-directSQL>
+          <statement>
+            CREATE TABLE RHQ_REPO_RELATION ( ID INTEGER PRIMARY KEY )
+          </statement>
+        </schema-directSQL>
+        <schema-alterColumn table="RHQ_REPO_RELATION" column="ID" nullable="false" />
+        <schema-addColumn table="RHQ_REPO_RELATION" column="RELATED_REPO_ID" columnType="INTEGER" />
+        <schema-alterColumn table="RHQ_REPO_RELATION" column="RELATED_REPO_ID" nullable="false" />
+        <schema-addColumn table="RHQ_REPO_RELATION" column="REPO_RELATION_TYPE_ID" columnType="INTEGER" />
+        <schema-alterColumn table="RHQ_REPO_RELATION" column="REPO_RELATION_TYPE_ID" nullable="false" />
+        <schema-directSQL>
+          <statement targetDBVendor="postgresql">
+            ALTER TABLE RHQ_REPO_RELATION
+            ADD CONSTRAINT RHQ_REPO_RELATION_RELATED_REPO_ID_FKEY
+            FOREIGN KEY ( RELATED_REPO_ID )
+            REFERENCES RHQ_REPO ( ID )
+          </statement>
+          <statement targetDBVendor="oracle">
+            ALTER TABLE RHQ_REPO_RELATION
+            ADD FOREIGN KEY ( RELATED_REPO_ID )
+            REFERENCES RHQ_REPO ( ID )
+          </statement>
+          <statement targetDBVendor="postgresql">
+            ALTER TABLE RHQ_REPO_RELATION
+            ADD CONSTRAINT RHQ_REPO_RELATION_REPO_RELATION_TYPE_ID_FKEY
+            FOREIGN KEY ( REPO_RELATION_TYPE_ID )
+            REFERENCES RHQ_REPO_RELATION_TYPE ( ID )
+          </statement>
+          <statement targetDBVendor="oracle">
+            ALTER TABLE RHQ_REPO_RELATION
+            ADD FOREIGN KEY ( REPO_RELATION_TYPE_ID )
+            REFERENCES RHQ_REPO_RELATION_TYPE ( ID )
+          </statement>
+        </schema-directSQL>
+        <!-- RHQ_REPO_REPO_RELATION_MAP -->
+        <schema-directSQL>
+          <statement>
+            CREATE TABLE RHQ_REPO_REPO_RELATION_MAP ( REPO_ID INTEGER )
+          </statement>
+        </schema-directSQL>
+        <schema-alterColumn table="RHQ_REPO_REPO_RELATION_MAP" column="REPO_ID" nullable="false" />
+        <schema-addColumn table="RHQ_REPO_REPO_RELATION_MAP" column="REPO_RELATION_ID" columnType="INTEGER" />
+        <schema-alterColumn table="RHQ_REPO_REPO_RELATION_MAP" column="REPO_RELATION_ID" nullable="false" />
+        <schema-addColumn table="RHQ_REPO_REPO_RELATION_MAP" column="CTIME" columnType="LONG" />
+        <schema-alterColumn table="RHQ_REPO_REPO_RELATION_MAP" column="CTIME" nullable="false" />
+        <schema-directSQL>
+          <statement>
+            ALTER TABLE RHQ_REPO_REPO_RELATION_MAP
+            ADD CONSTRAINT RHQ_REPO_REPO_RELATION_MAP_KEY
+            PRIMARY KEY ( REPO_ID, REPO_RELATION_ID )
+          </statement>
+          <statement targetDBVendor="postgresql">
+            ALTER TABLE RHQ_REPO_REPO_RELATION_MAP
+            ADD CONSTRAINT RHQ_REPO_REPO_RELATION_MAP_REPO_ID_FKEY
+            FOREIGN KEY ( REPO_ID )
+            REFERENCES RHQ_REPO ( ID )
+          </statement>
+          <statement targetDBVendor="oracle">
+            ALTER TABLE RHQ_REPO_REPO_RELATION_MAP
+            ADD FOREIGN KEY ( REPO_ID )
+            REFERENCES RHQ_REPO ( ID )
+          </statement>
+          <statement targetDBVendor="postgresql">
+            ALTER TABLE RHQ_REPO_REPO_RELATION_MAP
+            ADD CONSTRAINT RHQ_REPO_REPO_RELATION_MAP_REPO_RELATION_ID_FKEY
+            FOREIGN KEY ( REPO_RELATION_ID )
+            REFERENCES RHQ_REPO_RELATION ( ID )
+          </statement>
+          <statement targetDBVendor="oracle">
+            ALTER TABLE RHQ_REPO_REPO_RELATION_MAP
+            ADD FOREIGN KEY ( REPO_RELATION_ID )
+            REFERENCES RHQ_REPO_RELATION ( ID )
+          </statement>
         </schema-directSQL>
       </schemaSpec>
-
-
     </dbupgrade>
-
   </target>
-
 </project>

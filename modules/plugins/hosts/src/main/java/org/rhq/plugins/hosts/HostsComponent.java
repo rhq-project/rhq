@@ -62,6 +62,13 @@ public class HostsComponent extends AugeasConfigurationComponent {
         return;
     }
 
+    @Override
+    protected String getResourceConfigurationRootPath() {
+        String include = getResourceContext().getPluginConfiguration().getSimpleValue(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP, null);
+        
+        return "/files" + include;
+    }
+
     public AvailabilityType getAvailability() {
         return super.getAvailability();
     }

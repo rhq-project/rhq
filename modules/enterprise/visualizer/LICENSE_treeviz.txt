@@ -1,0 +1,10 @@
+The treeviz portions of this code, including all code under ch.randelshofer are hereby licensed under LGPL.
+
+
+Text from:
+http://www.randelshofer.ch/treeviz/index.html
+
+Licensing
+The Hypertree code is licensed under the MIT license.
+All other code is Copyright © Werner Randelshofer. All rights reserved.
+You can license the overall code either under Creative Commons Attribution 3.0, the MIT license, or the GNU Lesser General License LGPL.

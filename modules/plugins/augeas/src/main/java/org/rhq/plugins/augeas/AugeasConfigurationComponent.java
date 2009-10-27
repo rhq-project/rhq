@@ -97,7 +97,7 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
         if (this.augeas != null) {
             String resourceConfigRootPath = getResourceConfigurationRootPath();
             if (resourceConfigRootPath.indexOf(AugeasNode.SEPARATOR_CHAR) != 0) {
-                this.resourceConfigRootNode = new AugeasNode("/files//", resourceConfigRootPath);
+                this.resourceConfigRootNode = new AugeasNode("/files/", resourceConfigRootPath);
             } else {
                 this.resourceConfigRootNode = new AugeasNode(resourceConfigRootPath);
             }
@@ -578,18 +578,20 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
                 + "' is a directory, not a regular file.");
         }
     }
-
-    private String summarizeAugeasError() {
+    protected String summarizeAugeasError() {
         StringBuilder summary = new StringBuilder();
         String metadataNodePrefix = "/augeas/files";
-        for (String glob : includeGlobs) {
+        for(String glob : includeGlobs) {
+            if (glob.startsWith(AugeasNode.SEPARATOR)) {
+                glob = glob.substring(1);
+            }
             AugeasNode metadataNode = new AugeasNode(metadataNodePrefix, glob);
             AugeasNode errorNode = new AugeasNode(metadataNode, "error");
             List<String> nodePaths = this.augeas.match(errorNode.getPath() + "/*");
             for (String path : nodePaths) {
                 String error = this.augeas.get(path);
-                summary.append("File '").append(path.substring(metadataNodePrefix.length(), path.length() - 5)).append(
-                    "':\n").append(error).append("\n");
+                summary.append("File \"").append(path.substring(metadataNodePrefix.length(), path.length() - 5))
+                .append("\":\n").append(error).append("\n");
             }
         }
 

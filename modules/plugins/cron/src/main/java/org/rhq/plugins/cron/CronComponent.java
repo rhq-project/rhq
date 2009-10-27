@@ -23,6 +23,7 @@ import java.util.Date;
 import java.util.List;
 
 import net.augeas.Augeas;
+import net.augeas.AugeasException;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
@@ -52,6 +53,12 @@ public class CronComponent extends AugeasConfigurationComponent<PlatformComponen
     private static final int AUGEAS_FILES_PREFIX_LENGTH = AUGEAS_FILES_PREFIX.length();
     private static final String CRONTAB_RESOURCE_TYPE_NAME = "Cron Tab";
     
+    @Override
+    protected String getResourceConfigurationRootPath() {
+        return "/files/"; //the trailing slash is intentional so that we can get the
+                          // /files//blah paths...
+    }
+
     public CreateResourceReport createResource(CreateResourceReport report) {
         if (CRONTAB_RESOURCE_TYPE_NAME.equals(report.getResourceType().getName())) {
             try {
@@ -149,36 +156,40 @@ public class CronComponent extends AugeasConfigurationComponent<PlatformComponen
     }
     
     protected void updateCrontab(String crontabPath, ConfigurationDefinition crontabConfigurationDefinition, Configuration crontabConfiguration) {
-        Augeas augeas = getAugeas();
-        augeas.load();
-        
-        File crontabFile = new File(crontabPath);
-        String basePath = AUGEAS_FILES_PREFIX + crontabFile.getAbsolutePath();
-        AugeasNode baseNode = new AugeasNode(basePath);
-        
-        PropertyMap basicSettings = crontabConfiguration.getMap(CronTabComponent.BASIC_SETTINGS_PROP);
-        PropertyDefinitionMap basicSettingsDef = crontabConfigurationDefinition.getPropertyDefinitionMap(CronTabComponent.BASIC_SETTINGS_PROP);
-        
-        setNodeFromPropertyMap(basicSettingsDef, basicSettings, augeas, baseNode);
-        
-        PropertyList entries = crontabConfiguration.getList(CronTabComponent.ENTRIES_PROP);
-        PropertyDefinitionList entriesDef = crontabConfigurationDefinition.getPropertyDefinitionList(CronTabComponent.ENTRIES_PROP);
-        setNodeFromPropertyList(entriesDef, entries, augeas, baseNode);
-        
-        PropertyList additionalSettings = crontabConfiguration.getList(CronTabComponent.ADDITIONAL_SETTINGS_PROP);
-        if (additionalSettings != null) {
-            for(Property p : additionalSettings.getList()) {
-                PropertyMap setting = (PropertyMap)p;
-                String name = setting.getSimpleValue(CronTabComponent.NAME_PROP, null);
-                String value = setting.getSimpleValue(CronTabComponent.VALUE_PROP, "");
-                if (name != null) {
-                    String settingPath = basePath + AugeasNode.SEPARATOR + name;
-                    augeas.set(settingPath, value);
+        try {
+            Augeas augeas = getAugeas();
+            augeas.load();
+            
+            File crontabFile = new File(crontabPath);
+            String basePath = AUGEAS_FILES_PREFIX + crontabFile.getAbsolutePath();
+            AugeasNode baseNode = new AugeasNode(basePath);
+            
+            PropertyMap basicSettings = crontabConfiguration.getMap(CronTabComponent.BASIC_SETTINGS_PROP);
+            PropertyDefinitionMap basicSettingsDef = crontabConfigurationDefinition.getPropertyDefinitionMap(CronTabComponent.BASIC_SETTINGS_PROP);
+            
+            setNodeFromPropertyMap(basicSettingsDef, basicSettings, augeas, baseNode);
+            
+            PropertyList entries = crontabConfiguration.getList(CronTabComponent.ENTRIES_PROP);
+            PropertyDefinitionList entriesDef = crontabConfigurationDefinition.getPropertyDefinitionList(CronTabComponent.ENTRIES_PROP);
+            setNodeFromPropertyList(entriesDef, entries, augeas, baseNode);
+            
+            PropertyList additionalSettings = crontabConfiguration.getList(CronTabComponent.ADDITIONAL_SETTINGS_PROP);
+            if (additionalSettings != null) {
+                for(Property p : additionalSettings.getList()) {
+                    PropertyMap setting = (PropertyMap)p;
+                    String name = setting.getSimpleValue(CronTabComponent.NAME_PROP, null);
+                    String value = setting.getSimpleValue(CronTabComponent.VALUE_PROP, "");
+                    if (name != null) {
+                        String settingPath = basePath + AugeasNode.SEPARATOR + name;
+                        augeas.set(settingPath, value);
+                    }
                 }
             }
+            
+            augeas.save();
+        } catch (AugeasException e) {
+            throw new RuntimeException(summarizeAugeasError(), e);
         }
-        
-        augeas.save();        
     }
     
     /**
@@ -191,53 +202,57 @@ public class CronComponent extends AugeasConfigurationComponent<PlatformComponen
      * @return
      */
     protected Configuration loadCronTab(String crontabPath, ConfigurationDefinition crontabConfigurationDefinition) {
-        Augeas augeas = getAugeas();
-        augeas.load();
-        
-        File crontabFile = new File(crontabPath);
-        String basePath = AUGEAS_FILES_PREFIX + crontabFile.getAbsolutePath();
-        AugeasNode baseNode = new AugeasNode(basePath);
-        
-        Configuration ret = new Configuration();
-        ret.setNotes("Loaded by Augeas at " + new Date());
-        
-        PropertyDefinitionMap basicSettingsDef = crontabConfigurationDefinition.getPropertyDefinitionMap(CronTabComponent.BASIC_SETTINGS_PROP);
-        PropertyMap dummyParent = new PropertyMap(".");
-        basicSettingsDef.setName(".");
-        loadProperty(basicSettingsDef, dummyParent, augeas, baseNode);
-        basicSettingsDef.setName(CronTabComponent.BASIC_SETTINGS_PROP);
-        PropertyMap basicSettings = dummyParent.getMap(".");
-        basicSettings.setName(CronTabComponent.BASIC_SETTINGS_PROP);
-        basicSettings.setParentMap(null);
-        ret.put(basicSettings);
+        try {
+            Augeas augeas = getAugeas();
+            augeas.load();
+            
+            File crontabFile = new File(crontabPath);
+            String basePath = AUGEAS_FILES_PREFIX + crontabFile.getAbsolutePath();
+            AugeasNode baseNode = new AugeasNode(basePath);
+            
+            Configuration ret = new Configuration();
+            ret.setNotes("Loaded by Augeas at " + new Date());
+            
+            PropertyDefinitionMap basicSettingsDef = crontabConfigurationDefinition.getPropertyDefinitionMap(CronTabComponent.BASIC_SETTINGS_PROP);
+            PropertyMap dummyParent = new PropertyMap(".");
+            basicSettingsDef.setName(".");
+            loadProperty(basicSettingsDef, dummyParent, augeas, baseNode);
+            basicSettingsDef.setName(CronTabComponent.BASIC_SETTINGS_PROP);
+            PropertyMap basicSettings = dummyParent.getMap(".");
+            basicSettings.setName(CronTabComponent.BASIC_SETTINGS_PROP);
+            basicSettings.setParentMap(null);
+            ret.put(basicSettings);
+                    
+            PropertyDefinitionList entriesDef = crontabConfigurationDefinition.getPropertyDefinitionList(CronTabComponent.ENTRIES_PROP);
+            entriesDef.setName(".");
+            loadProperty(entriesDef, dummyParent, augeas, baseNode);
+            entriesDef.setName(CronTabComponent.ENTRIES_PROP);
+            PropertyList entries = dummyParent.getList(".");
+            entries.setName(CronTabComponent.ENTRIES_PROP);
+            entries.setParentMap(null);
+            ret.put(entries);
+            
+    
+            List<String> envSettings = augeas.match(basePath + "/*[label() != \"entry\" and label() != \"#comment\"]");
+            
+            PropertyList additionalSettings = new PropertyList(CronTabComponent.ADDITIONAL_SETTINGS_PROP);
+            ret.put(additionalSettings);
+            
+            for(String env : envSettings) {
+                String name = env.substring(env.lastIndexOf(AugeasNode.SEPARATOR_CHAR) + 1);
+                if (!basicSettings.getMap().containsKey(name)) {
+                    String value = augeas.get(env);
+                    PropertyMap entry = new PropertyMap(CronTabComponent.SETTING_PROP);
+                    additionalSettings.add(entry);
+                    entry.put(new PropertySimple(CronTabComponent.NAME_PROP, name));
+                    entry.put(new PropertySimple(CronTabComponent.VALUE_PROP, value));                
+                }
                 
-        PropertyDefinitionList entriesDef = crontabConfigurationDefinition.getPropertyDefinitionList(CronTabComponent.ENTRIES_PROP);
-        entriesDef.setName(".");
-        loadProperty(entriesDef, dummyParent, augeas, baseNode);
-        entriesDef.setName(CronTabComponent.ENTRIES_PROP);
-        PropertyList entries = dummyParent.getList(".");
-        entries.setName(CronTabComponent.ENTRIES_PROP);
-        entries.setParentMap(null);
-        ret.put(entries);
-        
-
-        List<String> envSettings = augeas.match(basePath + "/*[label() != \"entry\" and label() != \"#comment\"]");
-        
-        PropertyList additionalSettings = new PropertyList(CronTabComponent.ADDITIONAL_SETTINGS_PROP);
-        ret.put(additionalSettings);
-        
-        for(String env : envSettings) {
-            String name = env.substring(env.lastIndexOf(AugeasNode.SEPARATOR_CHAR) + 1);
-            if (!basicSettings.getMap().containsKey(name)) {
-                String value = augeas.get(env);
-                PropertyMap entry = new PropertyMap(CronTabComponent.SETTING_PROP);
-                additionalSettings.add(entry);
-                entry.put(new PropertySimple(CronTabComponent.NAME_PROP, name));
-                entry.put(new PropertySimple(CronTabComponent.VALUE_PROP, value));                
             }
             
+            return ret;
+        } catch (AugeasException e) {
+            throw new RuntimeException(summarizeAugeasError(), e);
         }
-        
-        return ret;
     }
 }

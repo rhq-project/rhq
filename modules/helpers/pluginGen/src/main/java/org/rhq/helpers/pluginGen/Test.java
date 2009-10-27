@@ -34,19 +34,23 @@ public class Test {
 
         Props p = new Props();
         p.setName("foo");
+        p.setPluginName("fooPlugin");
+        p.setPluginDescription("fooDescription");
+        p.setPkg("a.package");
         p.setCategory(ResourceCategory.SERVER);
         p.setPackagePrefix("com.acme.plugin");
         p.setDiscoveryClass("FooDiscovery");
         p.setComponentClass("FooComponent");
         p.setResourceConfiguration(true);
-        p.setMonitoring(true);
-        p.setOperations(true);
+        p.setHasMetrics(true);
+        p.setHasOperations(true);
         p.setEvents(true);
         p.setCreateChildren(true);
         p.setSingleton(true);
 
         Props child = new Props();
         child.setName("FooChild1");
+        child.setPkg("child.package1");
         child.setCategory(ResourceCategory.SERVICE);
         child.setPackagePrefix(p.getPackagePrefix());
         child.setDiscoveryClass("ChildDiscovery1");
@@ -58,12 +62,15 @@ public class Test {
 
         child = new Props();
         child.setName("FooChild2");
+        child.setPkg("child.package2");
         child.setCategory(ResourceCategory.SERVICE);
         child.setParentType("FooComponent");
         child.setPackagePrefix(p.getPackagePrefix());
         child.setDiscoveryClass("ChildDiscovery2");
         child.setComponentClass("ChildComponent2");
         child.setEvents(true);
+        child.setHasMetrics(true);
+        child.setHasOperations(true);
 
         p.getChildren().add(child);
 

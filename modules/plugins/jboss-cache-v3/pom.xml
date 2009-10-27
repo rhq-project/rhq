@@ -23,7 +23,7 @@
 
     <properties>
         <scm.module.path>modules/plugins/jboss-cache-v3/</scm.module.path>
-        <jbossas.version>5.1.0-SNAPSHOT</jbossas.version>
+        <jbossas.version>5.2.0-SNAPSHOT</jbossas.version>
     </properties>
                       
     <dependencyManagement>

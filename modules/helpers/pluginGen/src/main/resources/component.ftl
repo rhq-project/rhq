@@ -31,7 +31,7 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.domain.measurement.AvailabilityType;
-<#if props.monitoring>
+<#if props.metrics??>
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
@@ -49,13 +49,13 @@ import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 </#if>
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
-<#if props.monitoring>
+<#if props.metrics??>
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 </#if>
 <#if props.events>
 import org.rhq.core.pluginapi.event.EventContext;
 </#if>
-<#if props.operations>
+<#if props.operations??>
 import org.rhq.core.pluginapi.operation.OperationContext;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
@@ -72,10 +72,10 @@ import org.rhq.core.pluginapi.support.SupportFacet;
 
 
 public class ${props.componentClass} implements ResourceComponent<#if props.parentType??><${props.parentType}></#if>
-<#if props.monitoring>
+<#if props.metrics??>
 , MeasurementFacet
 </#if>
-<#if props.operations>
+<#if props.operations??>
 , OperationFacet
 </#if>
 <#if props.resourceConfiguration>
@@ -164,7 +164,7 @@ public class ${props.componentClass} implements ResourceComponent<#if props.pare
     }
 
 
-<#if props.monitoring>
+<#if props.metrics??>
 
     /**
      * Gather measurement data
@@ -182,7 +182,7 @@ public class ${props.componentClass} implements ResourceComponent<#if props.pare
     }
 </#if>
 
-<#if props.operations>
+<#if props.operations??>
 
 
     public void startOperationFacet(OperationContext context) {

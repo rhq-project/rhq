@@ -24,12 +24,15 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation to denote a metric that should be measured
+ * Annotation that denotes an Operation that can be executed
+ *
  * @author Heiko W. Rupp
+ * @author Galder Zamarre–o
  */
-@Retention(RetentionPolicy.CLASS)
-@Target({ElementType.FIELD, ElementType.METHOD})
-public @interface RhqMetric {
-    String name();
-    long defaultInterval() default 120000000L; // 20 min
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface Operation {
+   String name() default "";
+   String displayName() default "";
+   String description() default "";
 }

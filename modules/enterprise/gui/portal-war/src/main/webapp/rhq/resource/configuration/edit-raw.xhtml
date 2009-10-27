@@ -32,43 +32,41 @@ THIS TEXT WILL BE REMOVED.
            </h:outputLink>
       <a4j:form id="editResourceConfigurationForm"  >
 
-<!--  
-	 <onc:rawconfig configurationDefinition="#{ExistingResourceConfigurationUIBean.configurationDefinition}"
-                     configuration="#{ExistingResourceConfigurationUIBean.configuration}"
-                     nullConfigurationDefinitionMessage="#{ExistingResourceConfigurationUIBean.nullConfigurationDefinitionMessage}"
-                     nullConfigurationMessage="#{ExistingResourceConfigurationUIBean.nullConfigurationMessage}"
-                     prevalidate="true"/>
--->
 
       <table class="summary-props-table" style="" >
         <tr>
         <td bgcolor="lightblue" width="25%" valign="top">
         Files
                 
-        <div>#{RawConfigCollection.current.path}</div>
-		<a4j:repeat 
-			value="#{RawConfigCollection.paths}" 
-				var="path"  
-			binding="#{RawConfigCollection.repeater}" >
-           <div>
-            <a4j:commandLink reRender="editor"  >
-                <h:outputText value="${path}"   />                 
-            </a4j:commandLink>
-         </div>
-		</a4j:repeat>
+   			<h:panelGroup id="changedFiles"  layout="vertical">   			
+     	        <ui:repeat value="#{RawConfigCollection.paths}" var="path">
+                <div>
+                <h:outputText value="*" rendered="#{RawConfigCollection.isModified(path) }"/>                                
+      			<h:commandLink value="#{path}" action="#{RawConfigCollection.select(path)}"    rendered="#{path != RawConfigCollection.current.path}">
+        			<f:param name="currentPath" value="#{path}"/>
+      			</h:commandLink>
+                <h:outputText value="#{path}"  rendered="#{path == RawConfigCollection.current.path}" />
+      			</div>
+		        </ui:repeat> 
+   			</h:panelGroup>
 
         <div>______________________________________</div>
+        <div> *  File contains uncommited changes. </div>
+
+        <a4j:commandButton action="#{RawConfigCollection.commit}" value="commit changes" reRender="changedFiles"/> 
+
         </td>
         <td>
          <h:panelGroup id="title">
         <h:outputText value="#{RawConfigCollection.current.path}" styleClass="outhello" />
         </h:panelGroup>
         
-        [Icon]View Full Screen [^] Upload Now [v] Download
+        <a href="#"><img src="/images/viewfullscreen.png" />View Full Screen</a>  <a href="#"><img src="/images/download.png" /> Download</a>
         
                 <rich:editor 
                     id="editor" width="600" height="400" 
-	                     viewMode="visual" value="#{RawConfigCollection.currentContents}" useSeamText="false">   
+	                     viewMode="visual" value="#{RawConfigCollection.currentContents}" 
+	                     useSeamText="true" >   
                     
                 </rich:editor>
         

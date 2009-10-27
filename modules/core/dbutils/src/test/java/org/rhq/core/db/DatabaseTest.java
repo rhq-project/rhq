@@ -32,7 +32,7 @@ import org.rhq.core.db.setup.DBSetup;
  * Tests database utilities like types and the factory. If you do not want the tests to fail if a database is not
  * available, set <code>DatabaseTest.nofail</code> system property to <code>true</code>.
  *
- * <p>This test loads in the test-databases.properties file as its defaults for database connecitivity info. You can set
+ * <p>This test loads in the test-databases.properties file as its defaults for database connectivity info. You can set
  * system properties to override those defaults, if your test environment is different than these defaults.</p>
  *
  * @author John Mazzitelli

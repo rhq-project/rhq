@@ -25,6 +25,7 @@ package org.rhq.plugins.augeas.helper;
  */
 public class AugeasNode {
     public static final char SEPARATOR_CHAR = '/';
+    public static final char VARIABLE_CHAR = '$';
     public static final String SEPARATOR = new String(new char[] { SEPARATOR_CHAR });
 
     private String path;
@@ -33,7 +34,7 @@ public class AugeasNode {
         if (path == null) {
             throw new IllegalArgumentException("'path' parameter must not be null.");
         }
-        if (path.charAt(0) != SEPARATOR_CHAR) {
+        if (path.charAt(0) != SEPARATOR_CHAR && path.charAt(0) != VARIABLE_CHAR) {
             throw new IllegalArgumentException("Specified path (" + path + ") is not absolute.");
         }
 

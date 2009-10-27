@@ -72,6 +72,7 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
     public static final String EXCLUDE_GLOBS_PROP = "configurationFilesExclusionPatterns";
     public static final String RESOURCE_CONFIGURATION_ROOT_NODE_PROP = "resourceConfigurationRootNode";
     public static final String AUGEAS_MODULE_NAME_PROP = "augeasModuleName";
+    public static final String NEW_NODE_EXPRESSION = "newNodeExpression";
 
     private static final boolean IS_WINDOWS = (File.separatorChar == '\\');
     private static final String AUGEAS_LOAD_PATH = "/usr/share/augeas/lenses";
@@ -468,6 +469,9 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
     protected void setNodeFromPropertyList(PropertyDefinitionList propDefList, PropertyList propList, Augeas augeas,
         AugeasNode listNode) {
         PropertyDefinition listMemberPropDef = propDefList.getMemberDefinition();
+
+        PropertySimple newNodeExpression = resourceContext.getPluginConfiguration().getSimple(NEW_NODE_EXPRESSION);
+
         if (!(listMemberPropDef instanceof PropertyDefinitionMap)) {
             throw new IllegalArgumentException(
                 "Invalid Resource ConfigurationDefinition - only lists of maps are supported.");
@@ -490,10 +494,15 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
                 // Keep track of the existing nodes that we'll be updating, so that we can remove all other existing
                 // nodes.
                 updatedListMemberNodes.add(memberNodeToUpdate);
+            } else if (newNodeExpression != null) {
+                String var = "var" + listIndex;
+                augeas.defineNode(var, newNodeExpression.getStringValue(), null);
+                memberNodeToUpdate = new AugeasNode("$" + var);
             } else {
                 // The maps in the list are non-keyed, or there is no map in the list with the same key as the map
                 // being added, so create a new node for the map to add to the list.
-                memberNodeToUpdate = new AugeasNode(listNode, "0" + (listIndex++));
+                memberNodeToUpdate = new AugeasNode(listNode, "0" + (listIndex));
+                listIndex++;
             }
 
             // Update the node's children.

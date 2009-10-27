@@ -52,7 +52,12 @@ public class SambaServerComponent extends AugeasConfigurationComponent {
     }
 
     @Override
-    public CreateResourceReport createResource(CreateResourceReport report) {
+    public CreateResourceReport createResource(CreateResourceReport reportIn) {
+        CreateResourceReport report = reportIn;
+        Configuration config = report.getResourceConfiguration();
+        String name = config.getSimple(SambaShareComponent.NAME_RESOURCE_CONFIG_PROP).getStringValue();
+        report.setResourceKey(name);
+        report.setResourceName(name);
         return super.createResource(report);
     }
 

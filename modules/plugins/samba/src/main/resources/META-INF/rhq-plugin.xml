@@ -50,7 +50,7 @@
           </c:group>
 
           <c:group name="Printing">
-              <c:simple-property name="load printers" displayName="Printing Enabled" type="boolean" description="Controls whether all printers in the printcap will be loaded for browsing by default"/>
+              <c:simple-property name="load printers" required="false" displayName="Printing Enabled" type="boolean" description="Controls whether all printers in the printcap will be loaded for browsing by default"/>
               <c:simple-property name="cups options" required="false" description="Free form string of options passed to cups library"/>
 
           </c:group>

@@ -81,8 +81,4 @@ public class SambaShareComponent extends AugeasConfigurationComponent<SambaServe
         super.deleteResource();
     }
 
-    public CreateResourceReport createResource(CreateResourceReport report) {
-        return super.createResource(report);
-    }
-    
 }

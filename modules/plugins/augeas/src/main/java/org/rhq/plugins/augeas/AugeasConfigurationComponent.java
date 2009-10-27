@@ -175,7 +175,7 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
         }
         String rootLabel = getChildResourceConfigurationRootLabel(report.getResourceType(), report
             .getResourceConfiguration());
-        this.augeas.insert(rootNode.getPath(), rootLabel, false);
+        this.augeas.set(rootNode.getPath(), rootLabel);
 
         // Then set all its child nodes.
         Collection<PropertyDefinition> propDefs = resourceConfigDef.getPropertyDefinitions().values();

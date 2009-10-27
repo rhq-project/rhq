@@ -67,7 +67,7 @@
     <c:simple-property name="time/dayofweek" displayName="Day of Week" type="string" required="true" activationPolicy="immediate"
                        default="*" description="TODO">
     </c:simple-property>                       
-    <c:simple-property name="user" displayName="Executing user" required="false" description="TODO"/>
+    <c:simple-property name="user" displayName="Executing user" required="true" description="TODO"/>
     <c:simple-property name="." displayName="Command" required="true" description="TODO"/>
 '>
 

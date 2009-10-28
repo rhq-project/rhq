@@ -27,16 +27,16 @@ import java.io.IOException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 
-public class RHNConnectorTest extends TestCase {
+public class RHNActivatorTest extends TestCase {
 
     private static final String TEST_CERT_PATH = "./entitlement-cert.xml";
     private static final String TEST_SERVER_URL = "http://satellite.rhn.redhat.com/rpc/api";
     private static final String TEST_SYSTEM_ID = RHNConstants.DEFAULT_SYSTEM_ID;
 
-    private RHNConnector rhnObject;
+    private RHNActivator rhnObject;
 
     public void setUp() throws Exception {
-        rhnObject = new RHNConnector(TEST_SYSTEM_ID, TEST_CERT_PATH, TEST_SERVER_URL);
+        rhnObject = new RHNActivator(TEST_SYSTEM_ID, TEST_CERT_PATH, TEST_SERVER_URL);
         assertNotNull(rhnObject);
     }
 

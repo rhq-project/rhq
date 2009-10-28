@@ -44,13 +44,13 @@ import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
  * @author pkilambi
  * 
  */
-public class RHNConnector {
+public class RHNActivator {
 
     private String certificateFileName;
     private String certificateText;
     private String systemid;
     private XmlRpcClient client;
-    private final Log log = LogFactory.getLog(RHNConnector.class);
+    private final Log log = LogFactory.getLog(RHNActivator.class);
 
     /**
      * RHN Connector Constructor
@@ -59,7 +59,7 @@ public class RHNConnector {
      * @param serverUrlIn hosted server url as a string
      * 
      */
-    public RHNConnector(String systemidIn, String certificateIn, String serverUrlIn)
+    public RHNActivator(String systemidIn, String certificateIn, String serverUrlIn)
         throws Exception {
         
         this.certificateFileName = certificateIn;
@@ -76,7 +76,7 @@ public class RHNConnector {
      * @param serverUrlIn hosted serverUrl
      * 
      */
-    public RHNConnector(String certificateTextIn, String serverUrlIn) throws Exception {
+    public RHNActivator(String certificateTextIn, String serverUrlIn) throws Exception {
         this.certificateText = certificateTextIn;
 
         // store the file to local server
@@ -171,7 +171,7 @@ public class RHNConnector {
             String cert = args[1];
             String serverUrl = "http://satellite.rhn.redhat.com/rpc/api";
             try {
-                RHNConnector rhqServer = new RHNConnector(systemid, cert, serverUrl);
+                RHNActivator rhqServer = new RHNActivator(systemid, cert, serverUrl);
                 rhqServer.processActivation();
                 System.out.println("Activation Complete");
                 rhqServer.processDeActivation();

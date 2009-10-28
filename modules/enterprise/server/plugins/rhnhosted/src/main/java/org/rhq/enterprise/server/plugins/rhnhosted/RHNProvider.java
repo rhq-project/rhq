@@ -49,7 +49,7 @@ package org.rhq.enterprise.server.plugins.rhnhosted;
 public class RHNProvider implements ContentProvider, PackageSource {
 
     private final Log log = LogFactory.getLog(RHNProvider.class);
-    private RHNConnector rhnObject;
+    private RHNActivator rhnObject;
     private RHNHelper helper;
 
     /**
@@ -104,7 +104,7 @@ public class RHNProvider implements ContentProvider, PackageSource {
         
         // Now we have valid data. Spawn the activation.
         try {
-            rhnObject = new RHNConnector(certificate, location);
+            rhnObject = new RHNActivator(certificate, location);
             rhnObject.processActivation();
             log.debug("Activation successful");
         } catch (Exception e) {

@@ -28,6 +28,7 @@ import static org.testng.Assert.*;
 import org.testng.annotations.Test;
 
 import java.util.Random;
+import java.util.Set;
 
 /**
  * This class has tests for Configuration just like org.rhq.core.domain.configuration.test.ConfigurationTest. These
@@ -110,7 +111,15 @@ public class ConfigurationTest {
             original.getRawConfigurations(),
             "The rawConfigurations property should not refer to the original rawConfigurations of the copied object."
         );
-        assertEquals(copy.getRawConfigurations(), original.getRawConfigurations(), "Failed to copy rawConfigurations property.");
+
+        assertRawConfigurationsEquals(copy.getRawConfigurations(), original.getRawConfigurations(), "Failed to copy rawConfigurations property.");
+    }
+
+    void assertRawConfigurationsEquals(Set<RawConfiguration> actual, Set<RawConfiguration> expected, String msg) {
+        assertEquals(actual.size(), expected.size(), msg + " -- The rawConfigurations set has the wrong number of elements.");
+        for (RawConfiguration rawConfig : expected) {
+            assertTrue(actual.contains(rawConfig), msg + " -- Failed to find " + rawConfig);
+        }
     }
 
     @Test

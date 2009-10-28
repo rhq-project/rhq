@@ -96,7 +96,7 @@ public class PluginTest extends AbstractEJB3Test {
             enabled = !enabled;
             md5 = md5 + "00000";
             String version = "version-UPDATED";
-            String ampsVersion = "ampsVersion-UPDATED";
+            String ampsVersion = "2.1";
             String description = "description-UPDATED";
             String help = "help-UPDATED";
 
@@ -147,6 +147,8 @@ public class PluginTest extends AbstractEJB3Test {
             em.close();
             getTransactionManager().commit();
             done = true;
+        } catch (Throwable t) {
+            t.printStackTrace();
         } finally {
             if (!done) {
                 getTransactionManager().rollback();

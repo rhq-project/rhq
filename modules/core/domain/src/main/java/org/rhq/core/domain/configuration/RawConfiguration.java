@@ -247,7 +247,7 @@ public class RawConfiguration implements Serializable, DeepCopyable<RawConfigura
         RawConfiguration copy = new RawConfiguration();
         copy.path = this.path;
         if (this.contents != null) {
-            copy.contents = this.getContents();
+            copy.setContents(this.getContents());
         }
 
         return copy;

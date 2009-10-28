@@ -13,4 +13,9 @@
         <property name="transactionManagementEnabled">false</property>
     </component>
 
+
+    <component class="org.jboss.seam.web.MultipartFilter">
+       <property name="createTempFiles">false</property>
+       <property name="maxRequestSize">1000000</property>
+    </component>
 </components>

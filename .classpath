@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="modules/common/jboss-as/src/test/java"/>
-	<classpathentry kind="src" path="modules/plugins/antlr-config/target/generated-sources/antlr3"/>
 	<classpathentry kind="src" path="modules/plugins/antlr-config/src/main/antlr3"/>
 	<classpathentry kind="src" path="modules/helpers/pluginAnnotations/src/main/java"/>
 	<classpathentry kind="src" path="modules/common/jboss-as/src/main/java"/>
@@ -77,7 +76,6 @@
 	<classpathentry kind="src" path="modules/plugins/netservices/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/iis/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/perftest/target/generated-sources/xjc"/>
-	<classpathentry kind="src" path="modules/plugins/antlr-config/target/generated-sources/antlr3"/>
 	<classpathentry kind="src" path="modules/plugins/perftest/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/perftest/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/apt/src/test/java"/>

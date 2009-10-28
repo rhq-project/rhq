@@ -5,20 +5,19 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.TreeMap;
 
+import org.richfaces.event.UploadEvent;
+
 import org.jboss.seam.ScopeType;
 import org.jboss.seam.annotations.Begin;
 import org.jboss.seam.annotations.Create;
 import org.jboss.seam.annotations.End;
-import org.jboss.seam.annotations.In;
 import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Scope;
-import org.jboss.seam.faces.Redirect;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.RawConfiguration;
-import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -35,15 +34,25 @@ public class RawConfigCollection implements Serializable {
     private TreeMap<String, RawConfiguration> raws;
     private TreeMap<String, RawConfiguration> modified = new TreeMap<String, RawConfiguration>();
     private RawConfiguration current = null;
-    @In(value = "org.jboss.seam.faces.redirect")
-    private Redirect redirect;
 
-    public Redirect getRedirect() {
-        return redirect;
+    public void fileUploadListener(UploadEvent event) throws Exception {
+        setCurrentContents(new String(event.getUploadItem().getData()));
     }
 
-    public void setRedirect(Redirect redirect) {
-        this.redirect = redirect;
+    void setFileSize(int size) {
+        System.out.println(size);
+    }
+
+    public void setData(byte[] data) {
+
+        if (data != null) {
+            setCurrentContents(data.toString());
+        }
+
+    }
+
+    public void upload() {
+
     }
 
     @Create
@@ -98,8 +107,6 @@ public class RawConfigCollection implements Serializable {
         getConfigurationManager();
         //        getConfigurationManager().setRawConfigurations(configId, raws.values());
 
-        this.redirect.setParameter(ParamConstants.CONFIG_ID_PARAM, getConfigId());
-        this.redirect.setViewId("http://localhost:7080/rhq/resource/configuration/history.xhtml");
     }
 
     public TreeMap<String, RawConfiguration> getRaws() {

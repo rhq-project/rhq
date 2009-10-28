@@ -26,6 +26,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.util.List;
+
 import mazz.i18n.Logger;
 
 /**
@@ -559,4 +560,17 @@ public abstract class DatabaseType {
      * @throws SQLException
      */
     public abstract void reindexTable(Connection conn, String table) throws SQLException;
+
+    /**
+     * Provides the value to be used for the ESCAPE character in string literals.  The SQL standard is a single
+     * character, typically '\', but not every dbType conforms to the standard.  To override the db default set
+     * the rhq.server.database.escape-character system property.
+     * 
+     * @return If set, the value of rhq.server.database.escape-character, otherwise the db default. 
+     */
+    public String getEscapeCharacter() {
+        String result = System.getProperty("rhq.server.database.escape-character");
+
+        return (null == result) ? "\\" : result;
+    }
 }

@@ -337,9 +337,10 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
     }
 
     private List<List<MeasurementDataNumericHighLowComposite>> findDataAggregatesForSiblingResources(Subject subject,
-        int[] resourceIds, int measurementDefinitionId, long beginTime, long endTime, int numberOfDataPoints) {
+        int[] resourceIds, int measurementDefinitionId, long beginTime, long endTime, int numDataPoints) {
+
         return MeasurementDataManagerUtility.getInstance(rhqDs).getMeasurementDataAggregatesForSiblingResources(
-            beginTime, endTime, resourceIds, measurementDefinitionId);
+            beginTime, endTime, resourceIds, measurementDefinitionId, numDataPoints);
     }
 
     public List<List<MeasurementDataNumericHighLowComposite>> findDataForAutoGroup(Subject subject,
@@ -790,14 +791,14 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
     }
 
     public List<List<MeasurementDataNumericHighLowComposite>> findDataForResource(Subject subject, int resourceId,
-        int[] definitionIds, long beginTime, long endTime, int numPoints) {
+        int[] definitionIds, long beginTime, long endTime, int numDataPoints) {
         if (authorizationManager.canViewResource(subject, resourceId) == false) {
             throw new PermissionException("User[" + subject.getName()
                 + "] does not have permission to view measurement data for resource[id=" + resourceId + "]");
         }
 
         return MeasurementDataManagerUtility.getInstance(rhqDs).getMeasurementDataForResource(beginTime, endTime,
-            resourceId, definitionIds);
+            resourceId, definitionIds, numDataPoints);
     }
 
     @SuppressWarnings("unchecked")

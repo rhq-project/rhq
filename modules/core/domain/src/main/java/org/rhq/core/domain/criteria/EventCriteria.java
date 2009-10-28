@@ -25,8 +25,8 @@ package org.rhq.core.domain.criteria;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
-import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.event.Event;
+import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.util.PageOrdering;
 
 /**
@@ -41,8 +41,8 @@ public class EventCriteria extends Criteria {
     private String filterDetail;
     private String filterSourceName; // requires overrides
     private EventSeverity filterSeverity;
-    private Long startTime; // requires overrides
-    private Long endTime; // requires overrides
+    private Long filterStartTime; // requires overrides
+    private Long filterEndTime; // requires overrides
     private Integer filterResourceId; // requires overrides
     private Integer filterResourceGroupId; // requires overrides
     private Integer filterAutoGroupResourceTypeId; // requires overrides
@@ -63,8 +63,8 @@ public class EventCriteria extends Criteria {
         filterOverrides.put("resourceGroupId", "source.resourceId IN " //
             + "( SELECT res.id " //
             + "    FROM Resource res " //
-            + "    JOIN res.implicitGroups group " //
-            + "   WHERE group.id = ? )");
+            + "    JOIN res.implicitGroups ig " //
+            + "   WHERE ig.id = ? )");
         filterOverrides.put("autoGroupResourceTypeId", "source.resourceId IN " //
             + "( SELECT res.id " //
             + "    FROM Resource res " //
@@ -87,6 +87,14 @@ public class EventCriteria extends Criteria {
 
     public void addFilterSourceName(String filterSourceName) {
         this.filterSourceName = filterSourceName;
+    }
+
+    public void addFilterStartTime(long filterStartTime) {
+        this.filterStartTime = filterStartTime;
+    }
+
+    public void addFilterEndTime(long filterEndTime) {
+        this.filterEndTime = filterEndTime;
     }
 
     public void addFilterSeverity(EventSeverity filterSeverity) {

@@ -25,8 +25,15 @@ THIS TEXT WILL BE REMOVED.
 
       <h:form id="editResourceConfigurationForm" onsubmit="prepareInputsForSubmission(this)" rendered="#{!ViewResourceConfigurationUIBean.updateInProgress}">
 
-         <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
 
+         <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
+           You are viewing this in standard mode. Switch to 
+           <h:outputLink value="edit-raw.xhtml">
+             <f:param name="conversationId" value="#{conversation.id}"/>
+             <f:param name="id" value="#{ResourceUIBean.id}"/>
+             <h:outputText value=" advanced mode"/>
+           </h:outputLink>
+  
          <onc:config configurationDefinition="#{ExistingResourceConfigurationUIBean.configurationDefinition}"
                      configuration="#{ExistingResourceConfigurationUIBean.configuration}"
                      nullConfigurationDefinitionMessage="#{ExistingResourceConfigurationUIBean.nullConfigurationDefinitionMessage}"

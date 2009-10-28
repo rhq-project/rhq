@@ -53,7 +53,7 @@ import org.rhq.core.db.OracleDatabaseType;
 import org.rhq.core.db.PostgresqlDatabaseType;
 import org.rhq.core.db.SQLServerDatabaseType;
 import org.rhq.core.domain.plugin.Plugin;
-import org.rhq.core.util.MD5Generator;
+import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.core.util.stream.StreamUtil;
@@ -275,7 +275,7 @@ public class AgentPluginDeploymentScanner implements AgentPluginDeploymentScanne
                 if (plugin != null) {
                     if (pluginJar.lastModified() == 0L) {
                         // for some reason the operating system can't give us the last mod time, we need to do MD5 check
-                        md5 = MD5Generator.getDigestString(pluginJar);
+                        md5 = MessageDigestGenerator.getDigestString(pluginJar);
                         if (!md5.equals(plugin.getMd5())) {
                             plugin = null; // this plugin jar has changed - force it to refresh the cache.
                         }
@@ -340,7 +340,7 @@ public class AgentPluginDeploymentScanner implements AgentPluginDeploymentScanne
      */
     private Plugin cacheFilesystemPluginJar(File pluginJar, String md5) throws Exception {
         if (md5 == null) { // don't calculate the MD5 is we've already done it before
-            md5 = MD5Generator.getDigestString(pluginJar);
+            md5 = MessageDigestGenerator.getDigestString(pluginJar);
         }
         URL pluginUrl = pluginJar.toURI().toURL();
         PluginDescriptor descriptor = AgentPluginDescriptorUtil.loadPluginDescriptorFromUrl(pluginUrl);
@@ -556,7 +556,7 @@ public class AgentPluginDeploymentScanner implements AgentPluginDeploymentScanne
                 String expectedMD5 = pluginsMissingContentInDbMD5.get(name);
                 File pluginFile = existingPluginFiles.get(name);
                 if (pluginFile != null) {
-                    String newMD5 = MD5Generator.getDigestString(pluginFile);
+                    String newMD5 = MessageDigestGenerator.getDigestString(pluginFile);
                     boolean different = !expectedMD5.equals(newMD5);
                     streamPluginFileContentToDatabase(name, pluginFile, different);
                     log.info("Missing content for plugin [" + name + "] will be uploaded from [" + pluginFile
@@ -651,7 +651,7 @@ public class AgentPluginDeploymentScanner implements AgentPluginDeploymentScanne
         String sql = "UPDATE " + Plugin.TABLE_NAME + " SET CONTENT = ?, MD5 = ?, MTIME = ?, PATH = ? WHERE NAME = ?";
 
         // if 'different' is true, give bogus data so the plugin deployer will think the plugin on the file system is new
-        String md5 = (!different) ? MD5Generator.getDigestString(file) : "TO BE UPDATED";
+        String md5 = (!different) ? MessageDigestGenerator.getDigestString(file) : "TO BE UPDATED";
         long mtime = (!different) ? file.lastModified() : 0L;
         InputStream fis = (!different) ? new FileInputStream(file) : new ByteArrayInputStream(new byte[0]);
         int contentSize = (int) ((!different) ? file.length() : 0);

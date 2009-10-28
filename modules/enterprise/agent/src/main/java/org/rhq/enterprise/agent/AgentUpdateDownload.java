@@ -26,7 +26,7 @@ import java.net.URL;
 
 import mazz.i18n.Logger;
 
-import org.rhq.core.util.MD5Generator;
+import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.agent.i18n.AgentI18NFactory;
@@ -271,7 +271,7 @@ public class AgentUpdateDownload {
      */
     private boolean validateFile(File file, String md5) {
         try {
-            String filemd5 = MD5Generator.getDigestString(file);
+            String filemd5 = MessageDigestGenerator.getDigestString(file);
             return (filemd5 != null && filemd5.equals(md5));
         } catch (Exception e) {
             return false;

@@ -160,6 +160,13 @@
       </dependency>
 
       <dependency>
+         <groupId>commons-codec</groupId>
+         <artifactId>commons-codec</artifactId>
+         <version>1.4</version>
+         <scope>test</scope>
+      </dependency>
+
+     <dependency>
          <groupId>dom4j</groupId>
          <artifactId>dom4j</artifactId>
          <version>1.6.1-jboss</version>

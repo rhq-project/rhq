@@ -1,0 +1,90 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"      
+      xmlns:a4j="http://richfaces.org/a4j"
+      xmlns:rich="http://richfaces.org/rich"
+      xmlns:onc="http://jboss.org/on/component">
+
+THIS TEXT WILL BE REMOVED.
+
+<ui:composition template="/rhq/resource/layout/main.xhtml">
+
+   THIS TEXT WILL BE REMOVED AS WELL.
+
+   <ui:param name="pageTitle" value="#{ResourceUIBean.resourceType.name} '#{ResourceUIBean.name}' - Edit Configuration"/>
+
+   <ui:param name="selectedTabName" value="Configuration.Current"/>
+
+   <ui:define name="content">
+  You are viewing this in advanced mode. Switch to 
+           <h:outputLink value="edit.xhtml">
+             <f:param name="conversationId" value="#{conversation.id}"/>
+             <f:param name="id" value="#{ResourceUIBean.id}"/>
+             <h:outputText value=" standard mode"/>
+           </h:outputLink>
+      <a4j:form id="editResourceConfigurationForm"  >
+
+
+      <table class="summary-props-table" style="" >
+        <tr>
+        <td bgcolor="lightblue" width="25%" valign="top">
+        Files
+                
+   			<h:panelGroup id="changedFiles"  layout="vertical">   			
+     	        <ui:repeat value="#{RawConfigCollection.paths}" var="path">
+                <div>
+                <h:outputText value="*" rendered="#{RawConfigCollection.isModified(path) }"/>                                
+      			<h:commandLink value="#{path}" action="#{RawConfigCollection.select(path)}"    rendered="#{path != RawConfigCollection.current.path}">
+        			<f:param name="currentPath" value="#{path}"/>
+      			</h:commandLink>
+                <h:outputText value="#{path}"  rendered="#{path == RawConfigCollection.current.path}" />
+      			</div>
+		        </ui:repeat> 
+   			</h:panelGroup>
+
+        <div>______________________________________</div>
+        <div> *  File contains uncommited changes. </div>
+
+        <a4j:commandButton action="#{RawConfigCollection.commit}" value="commit changes" reRender="changedFiles"/> 
+
+        </td>
+        <td>
+         <h:panelGroup id="title">
+        <h:outputText value="#{RawConfigCollection.current.path}" styleClass="outhello" />
+        </h:panelGroup>
+        
+        <a href="#"><img src="/images/viewfullscreen.png" />View Full Screen</a>  <a href="#"><img src="/images/download.png" /> Download</a>
+        
+                <rich:editor 
+                    id="editor" width="600" height="400" 
+	                     viewMode="visual" value="#{RawConfigCollection.currentContents}" 
+	                     useSeamText="true" >   
+                    
+                </rich:editor>
+        
+        <div>Upload A New Version</div>
+        <input type="file" /> <input type="submit" value="Upload"/>
+        </td></tr>
+		</table>
+         <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
+      </a4j:form>
+
+      <h:panelGroup layout="block" styleClass="InfoBlock" rendered="#{ExistingResourceConfigurationUIBean.updateInProgress}">
+         <b>${msg['note']}</b> ${msg['resource.config.Current.updateInProgress']}
+      </h:panelGroup>
+
+   </ui:define>
+
+</ui:composition>
+
+THIS TEXT WILL BE REMOVED AS WELL.
+
+</html>

@@ -36,7 +36,7 @@ import mazz.i18n.Logger;
 import org.rhq.core.clientapi.server.core.CoreServerService;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.pc.PluginContainerConfiguration;
-import org.rhq.core.util.MD5Generator;
+import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.agent.i18n.AgentI18NFactory;
@@ -377,7 +377,7 @@ public class PluginUpdate {
             String plugin_filename = plugin_file.getName();
             if (plugin_filename.endsWith(".jar")) {
                 Plugin cur_plugin = new Plugin(plugin_filename, plugin_filename);
-                cur_plugin.setMD5(MD5Generator.getDigestString(plugin_file));
+                cur_plugin.setMD5(MessageDigestGenerator.getDigestString(plugin_file));
                 plugins.put(plugin_filename, cur_plugin);
             }
         }

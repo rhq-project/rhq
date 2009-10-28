@@ -25,7 +25,7 @@ package org.rhq.core.util.file;
 import java.io.File;
 import java.io.IOException;
 
-import org.rhq.core.util.MD5Generator;
+import org.rhq.core.util.MessageDigestGenerator;
 
 /**
  * Handles any generic file. This is to be used as a fallback if no other
@@ -63,7 +63,7 @@ public class GenericContentFileInfo extends ContentFileInfo {
         }
 
         try {
-            return MD5Generator.getDigestString(getContentFile());
+            return MessageDigestGenerator.getDigestString(getContentFile());
         } catch (IOException e) {
             throw new RuntimeException("Cannot generate version for file [" + getContentFile() + "]", e);
         }

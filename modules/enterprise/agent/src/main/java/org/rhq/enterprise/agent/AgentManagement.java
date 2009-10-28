@@ -49,7 +49,7 @@ import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pluginapi.operation.OperationResult;
-import org.rhq.core.util.MD5Generator;
+import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.enterprise.agent.AgentRestartCounter.AgentRestartReason;
 import org.rhq.enterprise.communications.ServiceContainerMetricsMBean;
 import org.rhq.enterprise.communications.command.client.ClientCommandSender;
@@ -175,7 +175,7 @@ public class AgentManagement implements AgentManagementMBean, MBeanRegistration 
                 map.put(new PropertySimple(PLUGIN_INFO_SIZE, plugin.length()));
 
                 try {
-                    map.put(new PropertySimple(PLUGIN_INFO_MD5, MD5Generator.getDigestString(plugin)));
+                    map.put(new PropertySimple(PLUGIN_INFO_MD5, MessageDigestGenerator.getDigestString(plugin)));
                 } catch (IOException e) {
                     map.put(new PropertySimple(PLUGIN_INFO_MD5, e.toString()));
                 }
@@ -210,7 +210,7 @@ public class AgentManagement implements AgentManagementMBean, MBeanRegistration 
                     info.put(new PropertySimple(PLUGIN_INFO_SIZE, plugin.length()));
 
                     try {
-                        info.put(new PropertySimple(PLUGIN_INFO_MD5, MD5Generator.getDigestString(plugin)));
+                        info.put(new PropertySimple(PLUGIN_INFO_MD5, MessageDigestGenerator.getDigestString(plugin)));
                     } catch (IOException e) {
                         info.put(new PropertySimple(PLUGIN_INFO_MD5, e.toString()));
                     }

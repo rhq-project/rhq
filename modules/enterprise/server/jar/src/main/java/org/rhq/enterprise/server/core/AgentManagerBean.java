@@ -59,7 +59,7 @@ import org.rhq.core.domain.resource.composite.AgentLastAvailabilityReportComposi
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
-import org.rhq.core.util.MD5Generator;
+import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.RHQConstants;
@@ -461,7 +461,7 @@ public class AgentManagerBean implements AgentManagerLocal {
 
             // calculate the MD5 of the agent update binary file
             File binaryFile = getAgentUpdateBinaryFile();
-            String md5Property = RHQ_AGENT_LATEST_MD5 + '=' + MD5Generator.getDigestString(binaryFile) + '\n';
+            String md5Property = RHQ_AGENT_LATEST_MD5 + '=' + MessageDigestGenerator.getDigestString(binaryFile) + '\n';
 
             // second, get the agent version info (by peeking into the agent update binary jar)
             JarFile binaryJarFile = new JarFile(binaryFile);

@@ -39,7 +39,7 @@ import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.plugin.Plugin;
-import org.rhq.core.util.MD5Generator;
+import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.core.concurrency.LatchedServiceCircularityException;
 import org.rhq.enterprise.server.core.concurrency.LatchedServiceController;
@@ -348,7 +348,7 @@ public class ProductPluginDeployer {
 
         String md5 = null;
         try {
-            md5 = MD5Generator.getDigestString(new File(deploymentInfo.url.toURI()));
+            md5 = MessageDigestGenerator.getDigestString(new File(deploymentInfo.url.toURI()));
         } catch (Exception e) {
             log.error("Error generating MD5 for plugin [" + pluginName + "]. Cause: " + e);
         }
@@ -495,7 +495,7 @@ public class ProductPluginDeployer {
             }
 
             plugin.setVersion(version);
-            plugin.setMD5(MD5Generator.getDigestString(localPluginFile));
+            plugin.setMD5(MessageDigestGenerator.getDigestString(localPluginFile));
 
             // this manager is responsible for handling the munging of plugins that depend on other plugins
             // since we assume we are called in the proper deployment order, this should not fail

@@ -83,6 +83,9 @@ public class MeasurementDataManagerUtility {
 
     public static final long RAW_PURGE = STORED_DAYS * MILLISECONDS_PER_DAY;
 
+    /** For methods taking a number of data points, the default if the passed value is invalid (<=0). */
+    public static final int DEFAULT_NUM_DATA_POINTS = 60;
+
     private Connection connection;
 
     private DataSource datasource;
@@ -234,6 +237,14 @@ public class MeasurementDataManagerUtility {
 
     public List<List<MeasurementDataNumericHighLowComposite>> getMeasurementDataForResource(long beginTime,
         long endTime, int resourceId, int[] measurementDefinitionIds) throws MeasurementNotFoundException {
+
+        // use default number of data points
+        return getMeasurementDataForResource(beginTime, endTime, resourceId, measurementDefinitionIds, 0);
+    }
+
+    public List<List<MeasurementDataNumericHighLowComposite>> getMeasurementDataForResource(long beginTime,
+        long endTime, int resourceId, int[] measurementDefinitionIds, int numDataPoints)
+        throws MeasurementNotFoundException {
         String otherTable = ", RHQ_MEASUREMENT_SCHED s ";
 
         String conditions = "  AND d.schedule_id = s.id" + "  AND s.resource_id = ? \n" + "  AND s.definition = ? \n";
@@ -249,8 +260,8 @@ public class MeasurementDataManagerUtility {
                 ps = null;
                 rs = null;
                 try {
-                    ps = getFullQuery(myConnection, beginTime, endTime, 60, otherTable, conditions, resourceId,
-                        measurementDefinitionId);
+                    ps = getFullQuery(myConnection, beginTime, endTime, numDataPoints, otherTable, conditions,
+                        resourceId, measurementDefinitionId);
                     rs = ps.executeQuery();
 
                     List<MeasurementDataNumericHighLowComposite> compositeList = new ArrayList<MeasurementDataNumericHighLowComposite>();
@@ -292,6 +303,15 @@ public class MeasurementDataManagerUtility {
 
     public List<List<MeasurementDataNumericHighLowComposite>> getMeasurementDataForSiblingResources(long beginTime,
         long endTime, int[] resourceIds, int measurementDefinitionId) throws MeasurementNotFoundException {
+
+        // use default numDataPoints
+        return getMeasurementDataForSiblingResources(beginTime, endTime, resourceIds, measurementDefinitionId, 0);
+
+    }
+
+    public List<List<MeasurementDataNumericHighLowComposite>> getMeasurementDataForSiblingResources(long beginTime,
+        long endTime, int[] resourceIds, int measurementDefinitionId, int numDataPoints)
+        throws MeasurementNotFoundException {
         String otherTable = ", RHQ_MEASUREMENT_SCHED s ";
 
         String conditions = "  AND d.schedule_id = s.id" + "  AND s.resource_id = ? \n" + "  AND s.definition = ? \n";
@@ -303,7 +323,7 @@ public class MeasurementDataManagerUtility {
         for (int resourceId : resourceIds) {
             try {
                 myConnection = getConnection();
-                ps = getFullQuery(myConnection, beginTime, endTime, 60, otherTable, conditions, resourceId,
+                ps = getFullQuery(myConnection, beginTime, endTime, numDataPoints, otherTable, conditions, resourceId,
                     measurementDefinitionId);
                 rs = ps.executeQuery();
 
@@ -345,6 +365,15 @@ public class MeasurementDataManagerUtility {
     public List<List<MeasurementDataNumericHighLowComposite>> getMeasurementDataAggregatesForSiblingResources(
         long beginTime, long endTime, int[] resourceIds, int measurementDefinitionId)
         throws MeasurementNotFoundException {
+
+        // use default number of data points
+        return getMeasurementDataAggregatesForSiblingResources(beginTime, endTime, resourceIds,
+            measurementDefinitionId, 0);
+    }
+
+    public List<List<MeasurementDataNumericHighLowComposite>> getMeasurementDataAggregatesForSiblingResources(
+        long beginTime, long endTime, int[] resourceIds, int measurementDefinitionId, int numDataPoints)
+        throws MeasurementNotFoundException {
         String otherTable = ", RHQ_MEASUREMENT_SCHED s ";
 
         String conditions = "  AND d.schedule_id = s.id" + "  AND s.resource_id IN ( "
@@ -356,7 +385,7 @@ public class MeasurementDataManagerUtility {
         List<List<MeasurementDataNumericHighLowComposite>> data = new ArrayList<List<MeasurementDataNumericHighLowComposite>>();
         try {
             myConnection = getConnection();
-            ps = getFullQuery(myConnection, beginTime, endTime, 60, otherTable, conditions, resourceIds,
+            ps = getFullQuery(myConnection, beginTime, endTime, numDataPoints, otherTable, conditions, resourceIds,
                 measurementDefinitionId);
             rs = ps.executeQuery();
 
@@ -550,9 +579,13 @@ public class MeasurementDataManagerUtility {
         return null;
     }
 
-    private PreparedStatement getFullQuery(Connection connection, long beginTime, long endTime, int numberOfDataPoints,
+    private PreparedStatement getFullQuery(Connection connection, long beginTime, long endTime, int numDataPoints,
         String otherTables, String conditions, Object... bindParameters) throws SQLException {
-        long interval = (endTime - beginTime) / numberOfDataPoints;
+
+        // ensure valid number of data points        
+        numDataPoints = (numDataPoints <= 0) ? DEFAULT_NUM_DATA_POINTS : numDataPoints;
+
+        long interval = (endTime - beginTime) / numDataPoints;
 
         String valuesClause;
         if (isRawTimePeriod(beginTime)) {
@@ -589,13 +622,13 @@ public class MeasurementDataManagerUtility {
         for (String table : tables) {
             ps.setLong(i++, beginTime);
             ps.setLong(i++, interval); //  2) interval
-            ps.setInt(i++, numberOfDataPoints); //  3) points
+            ps.setInt(i++, numDataPoints); //  3) points
             ps.setLong(i++, interval); //  4) interval
 
             if (LOG.isDebugEnabled()) {
                 fullSql.replace(fullSql.indexOf("?"), fullSql.indexOf("?") + 1, String.valueOf(beginTime));
                 fullSql.replace(fullSql.indexOf("?"), fullSql.indexOf("?") + 1, String.valueOf(interval));
-                fullSql.replace(fullSql.indexOf("?"), fullSql.indexOf("?") + 1, String.valueOf(numberOfDataPoints));
+                fullSql.replace(fullSql.indexOf("?"), fullSql.indexOf("?") + 1, String.valueOf(numDataPoints));
                 fullSql.replace(fullSql.indexOf("?"), fullSql.indexOf("?") + 1, String.valueOf(interval));
             }
 
@@ -624,12 +657,12 @@ public class MeasurementDataManagerUtility {
 
         ps.setLong(i++, beginTime); //  1) begin
         ps.setLong(i++, interval); //  2) interval
-        ps.setInt(i++, numberOfDataPoints); //  3) points
+        ps.setInt(i++, numDataPoints); //  3) points
 
         if (LOG.isDebugEnabled()) {
             fullSql.replace(fullSql.indexOf("?"), fullSql.indexOf("?") + 1, String.valueOf(beginTime));
             fullSql.replace(fullSql.indexOf("?"), fullSql.indexOf("?") + 1, String.valueOf(interval));
-            fullSql.replace(fullSql.indexOf("?"), fullSql.indexOf("?") + 1, String.valueOf(numberOfDataPoints));
+            fullSql.replace(fullSql.indexOf("?"), fullSql.indexOf("?") + 1, String.valueOf(numDataPoints));
             LOG.debug(fullSql);
         }
 

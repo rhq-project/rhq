@@ -41,7 +41,6 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.Architecture;
-import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceSyncResults;
 import org.rhq.core.domain.content.ContentSourceSyncStatus;
@@ -53,6 +52,7 @@ import org.rhq.core.domain.content.PackageCategory;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.PackageVersionContentSource;
+import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.composite.PackageVersionMetadataComposite;
 import org.rhq.core.domain.resource.ProductVersion;
 import org.rhq.core.domain.resource.Resource;
@@ -60,11 +60,10 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.util.MD5Generator;
-import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
+import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.content.metadata.ContentSourceMetadataManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestContentSourcePluginService;
@@ -176,7 +175,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             types.add(type);
             contentSourceMetadataManager.registerTypes(types); // this blows away any previous existing types
             ContentSource contentSource = new ContentSource("testGetSyncResultsListCS", type);
-            contentSource = contentSourceManager.createContentSource(overlord, contentSource);
+            contentSource = contentSourceManager.simpleCreateContentSource(overlord, contentSource);
 
             // make sure we have nothing yet
             PageList<ContentSourceSyncResults> list;
@@ -254,7 +253,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
 
             // create content source
             ContentSource contentSource = new ContentSource("testMergeSyncReportCS", type);
-            contentSource = contentSourceManager.createContentSource(overlord, contentSource);
+            contentSource = contentSourceManager.simpleCreateContentSource(overlord, contentSource);
             assert contentSource != null;
             contentSourceId = contentSource.getId();
             assert contentSourceId > 0;
@@ -426,7 +425,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             ContentSource contentSource = new ContentSource("testMergeSyncReportAMUCS", type);
             contentSource.setLazyLoad(true);
             contentSource.setDownloadMode(DownloadMode.DATABASE);
-            contentSource = contentSourceManager.createContentSource(overlord, contentSource);
+            contentSource = contentSourceManager.simpleCreateContentSource(overlord, contentSource);
             contentSourceId = contentSource.getId();
             assert contentSourceId > 0;
 
@@ -547,7 +546,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             ContentSource contentSource = new ContentSource("testMergeSyncReportAMU2CS", type);
             contentSource.setLazyLoad(true);
             contentSource.setDownloadMode(DownloadMode.DATABASE);
-            contentSource = contentSourceManager.createContentSource(overlord, contentSource);
+            contentSource = contentSourceManager.simpleCreateContentSource(overlord, contentSource);
             contentSourceId = contentSource.getId();
             assert contentSourceId > 0;
             Repo repo = new Repo("testMergeSyncReportAMU2Ch");
@@ -647,7 +646,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
 
             // create the content source
             contentSource = new ContentSource("testDeleteContentSource", type);
-            contentSource = contentSourceManager.createContentSource(overlord, contentSource);
+            contentSource = contentSourceManager.simpleCreateContentSource(overlord, contentSource);
             assert contentSource != null;
             int contentSourceId = contentSource.getId();
             assert contentSourceId > 0;
@@ -692,7 +691,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
 
             // create the content source - note it doesn't have any config yet
             contentSource = new ContentSource("testUpdateContentSource", type);
-            contentSource = contentSourceManager.createContentSource(overlord, contentSource);
+            contentSource = contentSourceManager.simpleCreateContentSource(overlord, contentSource);
             assert contentSource != null;
             int contentSourceId = contentSource.getId();
             assert contentSourceId > 0;
@@ -750,7 +749,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             config.put(new PropertySimple("updateCSName", "updateCSValue"));
             contentSource = new ContentSource("testUpdateContentSource2", type);
             contentSource.setConfiguration(config);
-            contentSource = contentSourceManager.createContentSource(overlord, contentSource);
+            contentSource = contentSourceManager.simpleCreateContentSource(overlord, contentSource);
             assert contentSource != null;
             int contentSourceId = contentSource.getId();
             assert contentSourceId > 0;
@@ -801,7 +800,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             assert type != null;
             assert type.getId() > 0;
             contentSource = new ContentSource("testConstraintViolation", type);
-            contentSource = contentSourceManager.createContentSource(overlord, contentSource);
+            contentSource = contentSourceManager.simpleCreateContentSource(overlord, contentSource);
             assert contentSource != null;
             int contentSourceId = contentSource.getId();
             assert contentSourceId > 0;
@@ -809,7 +808,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             ContentSource dup = new ContentSource("testConstraintViolation", type);
 
             try {
-                contentSourceManager.createContentSource(overlord, dup);
+                contentSourceManager.simpleCreateContentSource(overlord, dup);
                 assert false : "Should not have been able to create the same content source";
             } catch (Exception expected) {
             } finally {
@@ -846,7 +845,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
 
             // create the content source
             contentSource = new ContentSource("testMergeWithRepoCS", type);
-            contentSource = contentSourceManager.createContentSource(overlord, contentSource);
+            contentSource = contentSourceManager.simpleCreateContentSource(overlord, contentSource);
             assert contentSource != null;
             int contentSourceId = contentSource.getId();
             assert contentSourceId > 0;
@@ -861,8 +860,8 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             // since a repo has this CS - the repo->PV will also get mapped
             PackageSyncReport report = new PackageSyncReport();
             ContentProviderPackageDetailsKey key = new ContentProviderPackageDetailsKey("testMergeWithRepofoo",
-                "testMergeWithRepo-Version", packageType1.getName(), architecture1.getName(), resourceType1
-                    .getName(), resourceType1.getPlugin());
+                "testMergeWithRepo-Version", packageType1.getName(), architecture1.getName(), resourceType1.getName(),
+                resourceType1.getPlugin());
             ContentProviderPackageDetails details = new ContentProviderPackageDetails(key);
             details.setExtraProperties(new Configuration());
             details.getExtraProperties().put(new PropertySimple("hello", "world"));
@@ -879,8 +878,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             contentSourceManager.mergeContentSourceSyncReport(contentSource, report, previous, results);
 
             List<PackageVersion> inRepo;
-            inRepo = repoManager.findPackageVersionsInRepo(overlord, repo.getId(), PageControl
-                .getUnlimitedInstance());
+            inRepo = repoManager.findPackageVersionsInRepo(overlord, repo.getId(), PageControl.getUnlimitedInstance());
             assert inRepo != null;
             assert inRepo.size() == 1;
             assert "testMergeWithRepo-Version".equals(inRepo.get(0).getVersion());

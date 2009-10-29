@@ -24,61 +24,126 @@
 package org.rhq.plugins.cron;
 
 import java.io.File;
+import java.util.List;
 
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
-import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import net.augeas.Augeas;
+
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertyList;
+import org.rhq.core.domain.configuration.PropertyMap;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
-import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
-import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.plugins.augeas.AugeasConfigurationComponent;
+import org.rhq.plugins.augeas.helper.AugeasNode;
 
 /**
  * A component representing a single crontab file.
  * 
  * @author Lukas Krejci
  */
-public class CronTabComponent implements ResourceComponent<CronComponent>, ConfigurationFacet {
+public class CronTabComponent extends AugeasConfigurationComponent<CronComponent> {
 
-    public static final String BASIC_SETTINGS_PROP = "basicSettings";
+    public static final String ENVIRONMENT_SETTINGS_PROP = "environmentSettings";
+    public static final String ENVIRONMENT_SETTINGS_NODE = ".";
+    public static final String VAR_PROP = "var";
     public static final String ENTRIES_PROP = "entries";
-    public static final String ADDITIONAL_SETTINGS_PROP = "additionalSettings";
-    public static final String SETTING_PROP = "setting";
+    public static final String ENTRIES_NODE = ".";
     public static final String NAME_PROP = "name";
     public static final String VALUE_PROP = "value";
 
-    private ResourceContext<CronComponent> resourceContext;
     private File crontabFile;
+    private String rootPath;
     
-    public Configuration loadResourceConfiguration() throws Exception {
-        CronComponent parent = resourceContext.getParentResourceComponent();
-        String resourceKey = resourceContext.getResourceKey();
-        ConfigurationDefinition configDef = resourceContext.getResourceType().getResourceConfigurationDefinition(); 
-        
-        return parent.loadCronTab(resourceKey, configDef);
-    }
-
-    public void updateResourceConfiguration(ConfigurationUpdateReport report) {
-        CronComponent parent = resourceContext.getParentResourceComponent();
-        ConfigurationDefinition configDef = resourceContext.getResourceType().getResourceConfigurationDefinition();
-        
-        parent.updateCrontab(resourceContext.getResourceKey(), configDef, report.getConfiguration());
-        
-        report.setStatus(ConfigurationUpdateStatus.SUCCESS);
-    }
-
     public void start(ResourceContext<CronComponent> context) throws InvalidPluginConfigurationException, Exception {
-        this.resourceContext = context;
         crontabFile = new File(context.getResourceKey());
+        rootPath = AugeasNode.SEPARATOR + "files" + crontabFile.getAbsolutePath();
+        super.start(context);
     }
-
-    public void stop() {
-    }
-
+    
     public AvailabilityType getAvailability() {
         return crontabFile.exists() ? AvailabilityType.UP : AvailabilityType.DOWN;
     }
 
+    @Override
+    protected String getResourceConfigurationRootPath() {
+        return rootPath;
+    }
+
+    @Override
+    protected String getAugeasPathRelativeToParent(PropertyDefinition propDef, AugeasNode parentNode, Augeas augeas) {
+        String name = propDef.getName();
+        if (ENVIRONMENT_SETTINGS_PROP.equals(name)) {
+            return ENVIRONMENT_SETTINGS_NODE;
+        } else if (ENTRIES_PROP.equals(name)) {
+            return ENTRIES_NODE;
+        } else {
+            return super.getAugeasPathRelativeToParent(propDef, parentNode, augeas);
+        }
+    }
+
+    @Override
+    protected Property createPropertyList(PropertyDefinitionList propDefList, Augeas augeas, AugeasNode node) {
+        if (ENVIRONMENT_SETTINGS_PROP.equals(propDefList.getName())) {
+            List<String> envSettings = augeas.match(node.getPath() + "/*[label() != \"entry\" and label() != \"#comment\"]");
+            PropertyList ret = new PropertyList(propDefList.getName());
+            
+            for(String path : envSettings) {
+                PropertyMap map = new PropertyMap(VAR_PROP);
+                ret.add(map);
+                String name = new AugeasNode(path).getName();
+                String value = augeas.get(path);
+                map.put(new PropertySimple(NAME_PROP, name));
+                map.put(new PropertySimple(VALUE_PROP, value));
+            }
+            
+            return ret;
+        } else {
+            return super.createPropertyList(propDefList, augeas, node);
+        }
+    }
+
+    @Override
+    protected void setNodeFromPropertyList(PropertyDefinitionList propDefList, PropertyList propList, Augeas augeas,
+        AugeasNode listNode) {
+        if (ENVIRONMENT_SETTINGS_PROP.equals(propDefList.getName())) {
+            List<String> currentVars = augeas.match(listNode.getPath() + "/*[label() != \"entry\" and label() != \"#comment\"]");
+            for(Property p : propList.getList()) {
+                PropertyMap map = (PropertyMap)p;
+                String name = map.getSimpleValue(NAME_PROP, null);
+                String value = map.getSimpleValue(VALUE_PROP, null);
+                String path = listNode.getPath() + AugeasNode.SEPARATOR + name;
+                augeas.set(path, value);
+                currentVars.remove(path);
+            }
+            
+            //delete the leftovers
+            for(String path : currentVars) {
+                augeas.remove(path);
+            }
+        } else if (ENTRIES_PROP.equals(propDefList.getName())) {
+            super.setNodeFromPropertyList(propDefList, propList, augeas, listNode);
+        }
+    }
+
+    @Override
+    protected AugeasNode getExistingChildNodeForListMemberPropertyMap(AugeasNode parentNode,
+        PropertyDefinitionList propDefList, PropertyMap propMap) {
+        if (ENTRIES_PROP.equals(propDefList.getName())) {
+            int idx = propMap.getParentList().getList().indexOf(propMap);
+            int matchesCnt = getAugeas().match(parentNode.getPath() + AugeasNode.SEPARATOR + "entry").size();
+            boolean useIndex = idx != 0 || matchesCnt > 1;
+            
+            if (idx < matchesCnt) {
+                return new AugeasNode(parentNode, propMap.getName() + (useIndex ? "[" + (idx + 1) + "]" : ""));
+            } else {
+                return null;
+            }
+        } else {
+            return super.getExistingChildNodeForListMemberPropertyMap(parentNode, propDefList, propMap);
+        }
+    }   
 }

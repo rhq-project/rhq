@@ -71,8 +71,27 @@
     <c:simple-property name="." displayName="Command" required="true" description="TODO"/>
 '>
 
+<!ENTITY readOnlyCronEntry '
+    <c:simple-property name="time/minute" displayName="Minute" type="string" readOnly="true" required="true" activationPolicy="immediate"
+                       default="*" description="TODO">
+    </c:simple-property>
+    <c:simple-property name="time/hour" displayName="Hour" type="string" readOnly="true" required="true" activationPolicy="immediate"
+                       default="*" description="TODO">
+    </c:simple-property>
+    <c:simple-property name="time/dayofmonth" displayName="Day of Month" type="string" readOnly="true" required="true" activationPolicy="immediate"
+                       default="*" description="TODO">
+    </c:simple-property>
+    <c:simple-property name="time/month" displayName="Month" type="string" readOnly="true" required="true" activationPolicy="immediate"
+                       default="*" description="TODO">
+    </c:simple-property>                       
+    <c:simple-property name="time/dayofweek" displayName="Day of Week" type="string" readOnly="true" required="true" activationPolicy="immediate"
+                       default="*" description="TODO">
+    </c:simple-property>                       
+    <c:simple-property name="user" displayName="Executing user" readOnly="true" required="true" description="TODO"/>
+    <c:simple-property name="." displayName="Command" readOnly="true" required="true" description="TODO"/>
+'>
 <!ENTITY cronTabRef '
-    <c:simple-property name=".." displayName="Cron Tab" type="string" required="true" description="TODO"/>
+    <c:simple-property name="crontab" displayName="Cron Tab" type="string" readOnly="true" required="true" description="TODO"/>
 '>
 
 ]>
@@ -117,37 +136,37 @@
 
       <resource-configuration>
          <c:list-property  displayName="Hourly Jobs" readOnly="true" 
-            name='entry[time/minute != "*" and time/hour = "*" and time/dayofmonth = "*" and time/month = "*" and time/dayofweek = "*"]'>
-            <c:map-property name=".">
-               &cronEntry;
+            name='hourlyJobs'>
+            <c:map-property name="." readOnly="true">
+               &readOnlyCronEntry;
                &cronTabRef;
             </c:map-property>
          </c:list-property>
          <c:list-property  displayName="Daily Jobs" readOnly="true" 
-            name='entry[time/minute != "*" and time/hour != "*" and time/dayofmonth = "*" and time/month = "*" and time/dayofweek = "*"]'>
-            <c:map-property name=".">
-               &cronEntry;
+            name='dailyJobs'>
+            <c:map-property name="." readOnly="true">
+               &readOnlyCronEntry;
                &cronTabRef;
             </c:map-property>
          </c:list-property>
          <c:list-property  displayName="Weekly Jobs" readOnly="true" 
-            name='entry[time/minute != "*" and time/hour != "*" and time/dayofmonth = "*" and time/month = "*" and time/dayofweek != "*"]'>
-            <c:map-property name=".">
-               &cronEntry;
+            name='weeklyJobs'>
+            <c:map-property name="." readOnly="true">
+               &readOnlyCronEntry;
                &cronTabRef;
             </c:map-property>
          </c:list-property>
          <c:list-property  displayName="Monthly Jobs" readOnly="true" 
-            name='entry[time/minute != "*" and time/hour != "*" and time/dayofmonth != "*" and time/month = "*" and time/dayofweek = "*"]'>
-            <c:map-property name=".">
-               &cronEntry;
+            name='monthlyJobs'>
+            <c:map-property name="." readOnly="true">
+               &readOnlyCronEntry;
                &cronTabRef;
             </c:map-property>
          </c:list-property>
          <c:list-property  displayName="Yearly Jobs" readOnly="true" 
-            name='entry[time/minute != "*" and time/hour != "*" and time/dayofmonth != "*" and time/month != "*" and time/dayofweek = "*"]'>
-            <c:map-property name=".">
-               &cronEntry;
+            name='yearlyJobs'>
+            <c:map-property name="." readOnly="true">
+               &readOnlyCronEntry;
                &cronTabRef;
             </c:map-property>
          </c:list-property>
@@ -158,28 +177,30 @@
                discovery="CronTabDiscoveryComponent"
                class="CronTabComponent"
                createDeletePolicy="both">
+      <plugin-configuration>
+        <c:simple-property name="augeasModuleName" displayName="Augeas Module Name" default="Cron" required="true" readOnly="true"
+                             description="the name of the Augeas module/lens to use for loading and updating this resource's configuration"/>
+        <c:simple-property name="configurationFilesInclusionPatterns" required="true" readOnly="true">
+          <c:description>A | delimited list of patterns of files to configure.</c:description>
+        </c:simple-property>
+        <c:simple-property name="configurationFilesExclusionPatterns" required="true" readOnly="true">
+          <c:description>A | delimited list of patterns of files to exclude from configuration.</c:description>
+        </c:simple-property>
+      </plugin-configuration>
         <resource-configuration>
-            <c:map-property name="basicSettings" displayName="Basic Environment Settings">
-                <c:simple-property name="SHELL" displayName="Shell" default="/bin/sh" required="false"/>
-                <c:simple-property name="MAILTO" displayName="Mail To" required="false"/>
-                <c:simple-property name="HOME" displayName="Home directory" required="false"/>
-                <c:simple-property name="CRON_TZ" displayName="Cron Timezone" required="false"/>
-                <c:simple-property name="MLS_LEVEL" displayName="SELinux security context" required="false"/>
-            </c:map-property>
+            <c:list-property name="environmentSettings" displayName="Environment Settings">
+                <c:map-property name="var">
+                    <c:simple-property name="name" required="true" />
+                    <c:simple-property name="value" required="true"/>
+                </c:map-property>
+            </c:list-property>
+
             <c:list-property name="entries" displayName="Cron Entries">
                 <c:map-property name="entry">
                     &cronEntry;
                 </c:map-property>
             </c:list-property>
             
-            <c:group name="advanced" displayName="Advanced">
-                <c:list-property name="additionalSettings">
-                    <c:map-property name="setting">
-                        <c:simple-property name="name" required="true" />
-                        <c:simple-property name="value" required="true"/>
-                    </c:map-property>
-                </c:list-property>
-            </c:group>
         </resource-configuration>
       </service>
    </service>

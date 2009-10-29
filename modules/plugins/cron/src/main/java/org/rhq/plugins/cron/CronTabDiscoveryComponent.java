@@ -24,6 +24,7 @@
 package org.rhq.plugins.cron;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -63,6 +64,8 @@ public class CronTabDiscoveryComponent implements ResourceDiscoveryComponent<Cro
         for(File f : files) {
             String resourceKey = f.getAbsolutePath();
             Configuration defaultConfiguration = context.getDefaultPluginConfiguration();
+            defaultConfiguration.put(AugeasConfigurationDiscoveryComponent.getGlobList(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP, Collections.singletonList(resourceKey)));
+            
             DiscoveredResourceDetails result = new DiscoveredResourceDetails(resourceType, resourceKey, resourceKey, null, null, defaultConfiguration, null);
             results.add(result);
         }

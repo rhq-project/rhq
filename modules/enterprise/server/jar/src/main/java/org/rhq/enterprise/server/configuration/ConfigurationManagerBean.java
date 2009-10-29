@@ -24,6 +24,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Collections;
+import java.util.Collection;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -56,6 +58,7 @@ import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
+import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.composite.ConfigurationUpdateComposite;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.group.AbstractGroupConfigurationUpdate;
@@ -1844,5 +1847,19 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         }
 
         return update;
+    }
+
+    public Collection<RawConfiguration> findRawConfigurationsByConfigurationId(int configId) {
+        Configuration config = entityManager.find(Configuration.class, configId);
+
+        if (config == null) {
+            return Collections.EMPTY_LIST;
+        }
+
+        return config.getRawConfigurations();
+    }
+
+    public RawConfiguration findRawConfigurationById(int rawConfigId) {
+        return entityManager.find(RawConfiguration.class, rawConfigId);
     }
 }

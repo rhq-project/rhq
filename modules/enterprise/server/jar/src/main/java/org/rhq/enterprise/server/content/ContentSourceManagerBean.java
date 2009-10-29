@@ -87,7 +87,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
-import org.rhq.core.util.MD5Generator;
+import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.RHQConstants;
@@ -660,7 +660,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                         // hmmm... it already exists, maybe we already have it?
                         // if the MD5's match, just ignore this download request and continue on
                         String expectedMD5 = (pv.getMD5() != null) ? pv.getMD5() : "<unspecified MD5>";
-                        String actualMD5 = MD5Generator.getDigestString(outputFile);
+                        String actualMD5 = MessageDigestGenerator.getDigestString(outputFile);
                         if (!expectedMD5.trim().toLowerCase().equals(actualMD5.toLowerCase())) {
                             throw new Exception("Already have package bits for [" + pv + "] located at [" + outputFile
                                 + "] but the MD5 hashcodes do not match. Expected MD5=[" + expectedMD5
@@ -1237,7 +1237,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
     @SuppressWarnings("unchecked")
     public String getResourceSubscriptionMD5(int resourceId) {
-        MD5Generator md5Generator = new MD5Generator();
+        MessageDigestGenerator md5Generator = new MessageDigestGenerator();
 
         Query q = entityManager.createNamedQuery(Channel.QUERY_FIND_CHANNELS_BY_RESOURCE_ID);
         q.setParameter("resourceId", resourceId);

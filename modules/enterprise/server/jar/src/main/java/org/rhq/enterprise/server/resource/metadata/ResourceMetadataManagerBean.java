@@ -204,6 +204,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
             q.setParameter("enabled", plugin.isEnabled());
             q.setParameter("md5", plugin.getMD5());
             q.setParameter("version", plugin.getVersion());
+            q.setParameter("ampsVersion", plugin.getAmpsVersion());
             q.setParameter("description", plugin.getDescription());
             q.setParameter("help", plugin.getHelp());
             q.setParameter("mtime", plugin.getMtime());

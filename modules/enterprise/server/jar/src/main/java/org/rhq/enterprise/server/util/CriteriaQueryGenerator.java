@@ -20,19 +20,21 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.core.domain.util;
+package org.rhq.enterprise.server.util;
 
-import java.util.Map;
-import java.util.List;
-import java.util.ArrayList;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.hibernate.annotations.IndexColumn;
 
+import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
@@ -40,7 +42,10 @@ import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.resource.ResourceCategory;
-import org.hibernate.annotations.IndexColumn;
+import org.rhq.core.domain.util.OrderingField;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.domain.util.PersistenceUtility;
 
 /**
  * A query generator used to generate queries with specific filtering, prefetching, or sorting requirements.
@@ -64,6 +69,7 @@ public final class CriteriaQueryGenerator {
     private String alias;
     private String className;
     private static String NL = System.getProperty("line.separator");
+    private static String ESCAPE_CHARACTER = null;
 
     private List<Field> persistentBagFields = new ArrayList<Field>();
 
@@ -110,7 +116,7 @@ public final class CriteriaQueryGenerator {
         }
 
         if (fuzzyMatch) {
-            expression += " ESCAPE '\\\\'";
+            expression += " ESCAPE '" + getEscapeCharacter() + "'";
         }
 
         return expression;
@@ -166,9 +172,8 @@ public final class CriteriaQueryGenerator {
             for (String fetchJoin : criteria.getFetchFields()) {
                 if (isPersistentBag(fetchJoin)) {
                     addPersistentBag(fetchJoin);
-                }
-                else {
-                    results.append("LEFT JOIN FETCH ").append(alias).append('.').append(fetchJoin).append(NL);    
+                } else {
+                    results.append("LEFT JOIN FETCH ").append(alias).append('.').append(fetchJoin).append(NL);
                 }
             }
         }
@@ -207,11 +212,7 @@ public final class CriteriaQueryGenerator {
                     } else {
                         fragment = alias + "." + fieldName + " " + operator + " :" + fieldName;
                     }
-                    /* 
-                     * Double escape backslashes because strings might be escaped at the database level that
-                     * Hibernate calls into -- http://opensource.atlassian.com/projects/hibernate/browse/HHH-2674
-                     */
-                    fragment += " ESCAPE '\\\\'";
+                    fragment += " ESCAPE '" + getEscapeCharacter() + "'";
                 } else {
                     fragment = alias + "." + fieldName + " " + operator + " :" + fieldName;
                 }
@@ -280,8 +281,7 @@ public final class CriteriaQueryGenerator {
             Field field = persistentClass.getDeclaredField(fieldName);
 
             return isAList(field) && !field.isAnnotationPresent(IndexColumn.class);
-        }
-        catch (NoSuchFieldException e) {
+        } catch (NoSuchFieldException e) {
             return false;
         }
     }
@@ -305,8 +305,7 @@ public final class CriteriaQueryGenerator {
         try {
             Field field = criteria.getPersistentClass().getDeclaredField(fieldName);
             persistentBagFields.add(field);
-        }
-        catch (NoSuchFieldException e) {
+        } catch (NoSuchFieldException e) {
             LOG.warn("Failed to add persistent bag collection.", e);
         }
     }
@@ -340,6 +339,7 @@ public final class CriteriaQueryGenerator {
     private void setBindValues(Query query, boolean countQuery) {
         boolean wantCaseInsensitiveMatch = !criteria.isCaseSensitive();
         boolean wantsFuzzyMatching = !criteria.isStrict();
+        boolean handleEscapedBackslash = "\\\\".equals(getEscapeCharacter());
 
         for (Map.Entry<String, Object> critField : criteria.getFilterFields().entrySet()) {
             Object value = critField.getValue();
@@ -349,10 +349,12 @@ public final class CriteriaQueryGenerator {
                     formattedValue = formattedValue.toLowerCase();
                 }
                 /* 
-                 * Double escape backslashes because strings might be escaped at the database level that
-                 * Hibernate calls into -- http://opensource.atlassian.com/projects/hibernate/browse/HHH-2674
+                 * Double escape backslashes if they are not treated as string literals by the db vendor
+                 * http://opensource.atlassian.com/projects/hibernate/browse/HHH-2674
                  */
-                formattedValue = ((String) formattedValue).replaceAll("\\_", "\\\\_");
+                if (handleEscapedBackslash) {
+                    formattedValue = ((String) formattedValue).replaceAll("\\_", "\\\\_");
+                }
                 if (wantsFuzzyMatching) {
                     // append '%' onto edges that don't already have '%' explicitly set from the caller
                     formattedValue = (formattedValue.startsWith("%") ? "" : "%") + formattedValue
@@ -363,6 +365,14 @@ public final class CriteriaQueryGenerator {
             LOG.debug("Bind: (" + critField.getKey() + ", " + value + ")");
             query.setParameter(critField.getKey(), value);
         }
+    }
+
+    public static String getEscapeCharacter() {
+        if (null == ESCAPE_CHARACTER) {
+            ESCAPE_CHARACTER = DatabaseTypeFactory.getDefaultDatabaseType().getEscapeCharacter();
+        }
+
+        return ESCAPE_CHARACTER;
     }
 
     public static void main(String[] args) {

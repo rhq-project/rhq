@@ -22,11 +22,6 @@
  */
 package org.rhq.plugins.hosts.helper;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
@@ -40,6 +35,11 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 /**
  * A set of hosts file entries. The set may contain duplicate entries (i.e. entries for different IP addresses
  * containing the same name, either as the canonical name or as an alias).
@@ -47,7 +47,7 @@ import java.util.Set;
  * @author Ian Springer
  */
 public class Hosts {
-    private static final Log LOG = LogFactory.getLog(Hosts.class);    
+    private static final Log LOG = LogFactory.getLog(Hosts.class);
 
     private Set<HostsEntry> entries = new LinkedHashSet<HostsEntry>();
     private Map<String, Set<HostsEntry>> ipAddressToEntriesMap = new HashMap<String, Set<HostsEntry>>();
@@ -94,12 +94,12 @@ public class Hosts {
     @NotNull
     public Set<HostsEntry> getEntriesByIpAddress(String ipAddress) {
         Set<HostsEntry> entries = this.ipAddressToEntriesMap.get(ipAddress);
-        return (entries != null) ? entries : Collections.<HostsEntry>emptySet();
+        return (entries != null) ? entries : Collections.<HostsEntry> emptySet();
     }
 
     public Set<HostsEntry> getEntriesByName(String canonicalName) {
         Set<HostsEntry> entries = this.nameToEntriesMap.get(canonicalName);
-        return (entries != null) ? entries : Collections.<HostsEntry>emptySet();
+        return (entries != null) ? entries : Collections.<HostsEntry> emptySet();
     }
 
     public Set<String> getIpAddressesWithDuplicateEntries() {
@@ -122,8 +122,7 @@ public class Hosts {
                     hosts.addEntry(entry);
                 }
             }
-        }
-        finally {
+        } finally {
             reader.close();
         }
 
@@ -131,11 +130,11 @@ public class Hosts {
     }
 
     public static void store(Hosts hosts, File hostsFile) throws IOException {
-        Set<String> namesWithDuplicateEntries = hosts.getNamesWithDuplicateEntries();
-        if (!namesWithDuplicateEntries.isEmpty()) {
-            throw new IllegalArgumentException("Hosts contains duplicate entries for the following names: "
-                    + namesWithDuplicateEntries);
-        }
+        //        Set<String> namesWithDuplicateEntries = hosts.getNamesWithDuplicateEntries();
+        //        if (!namesWithDuplicateEntries.isEmpty()) {
+        //            throw new IllegalArgumentException("Hosts contains duplicate entries for the following names: "
+        //                    + namesWithDuplicateEntries);
+        //        }
 
         if (!hostsFile.exists()) {
             // If a hosts file doesn't already exist, create an empty one.
@@ -156,23 +155,22 @@ public class Hosts {
                         newHostsFileWriter.println(newLine);
                     }
                 }
-            }
-            finally {
+            } finally {
                 hostsFileReader.close();
             }
 
             // Write out any entries for IP addresses that did not have entries in the original file.
             for (HostsEntry newEntry : hosts.getEntries()) {
                 if (!storedCanonicalNames.contains(newEntry.getCanonicalName())) {
-                    StringBuilder newLine = new StringBuilder(newEntry.getIpAddress()).append("\t").append(newEntry.getCanonicalName());
+                    StringBuilder newLine = new StringBuilder(newEntry.getIpAddress()).append("\t").append(
+                        newEntry.getCanonicalName());
                     for (String alias : newEntry.getAliases()) {
                         newLine.append("\t").append(alias);
                     }
                     newHostsFileWriter.println(newLine);
                 }
             }
-        }
-        finally {
+        } finally {
             newHostsFileWriter.close();
         }
 
@@ -184,7 +182,8 @@ public class Hosts {
         }
         boolean backupSucceeded = hostsFile.renameTo(backupHostsFile);
         if (!backupSucceeded) {
-            throw new IOException("Failed to backup original hosts file [" + hostsFile + "] to [" + backupHostsFile + "].");
+            throw new IOException("Failed to backup original hosts file [" + hostsFile + "] to [" + backupHostsFile
+                + "].");
         }
 
         // And finally, rename the new hosts file (e.g. /etc/hosts-1234567890) to the actual hosts file (e.g. /etc/hosts).
@@ -221,7 +220,7 @@ public class Hosts {
         String ipAddress = tokens[0];
         if (tokens.length == 1) {
             LOG.warn("Hosts file [" + hostsFile + "] contains invalid entry for IP address " + ipAddress
-                    + " - no canonical name is specified.");
+                + " - no canonical name is specified.");
         }
 
         String canonicalName = null;
@@ -229,10 +228,10 @@ public class Hosts {
         if (tokens.length >= 2) {
             canonicalName = tokens[1];
             if (tokens.length >= 3) {
-               aliasSet = new LinkedHashSet<String>(tokens.length - 2);
-               for (int  i = 2; i < tokens.length; i++) {
-                   aliasSet.add(tokens[i]);
-               }
+                aliasSet = new LinkedHashSet<String>(tokens.length - 2);
+                for (int i = 2; i < tokens.length; i++) {
+                    aliasSet.add(tokens[i]);
+                }
             }
         }
 
@@ -241,7 +240,7 @@ public class Hosts {
 
     @Nullable
     private static StringBuilder createNewLine(Hosts hosts, File hostsFile, SimpleUnixConfigFileLine existingLine,
-                                               Set<String> storedCanonicalNames) {
+        Set<String> storedCanonicalNames) {
         StringBuilder newLine;
         String nonComment = existingLine.getNonComment();
         String comment = existingLine.getComment();
@@ -252,15 +251,15 @@ public class Hosts {
             if (!newEntries.isEmpty()) {
                 // replace the existing entry
                 HostsEntry newEntry = newEntries.iterator().next();
-                LOG.debug("Replacing existing entry in hosts file [" + existingEntry + "] with new entry ["
-                        + newEntry + "]...");
+                LOG.debug("Replacing existing entry in hosts file [" + existingEntry + "] with new entry [" + newEntry
+                    + "]...");
                 newLine = new StringBuilder(newEntry.getIpAddress()).append("\t").append(newEntry.getCanonicalName());
                 for (String alias : newEntry.getAliases()) {
                     newLine.append("\t").append(alias);
                 }
                 // but still write out the existing comment
                 if (comment != null) {
-                   newLine.append(" #").append(comment);
+                    newLine.append(" #").append(comment);
                 }
                 storedCanonicalNames.add(newEntry.getCanonicalName());
             } else {

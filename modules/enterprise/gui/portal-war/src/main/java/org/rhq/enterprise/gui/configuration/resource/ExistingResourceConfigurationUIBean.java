@@ -29,6 +29,8 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.gui.configuration.ConfigurationMaskingUtility;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * @author Ian Springer
@@ -102,6 +104,8 @@ public class ExistingResourceConfigurationUIBean extends AbstractResourceConfigu
     protected int getConfigurationKey() {
         return EnterpriseFacesContextUtility.getResource().getId();
     }
+
+    protected ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
 
     @Nullable
     protected Configuration lookupConfiguration() {

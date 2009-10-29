@@ -30,6 +30,39 @@ public class AugeasNode {
 
     private String path;
 
+    public static String patchNodeName(String name) {
+        //first split by /
+        StringBuilder bld = new StringBuilder();
+        int start = 0;
+        do {
+            int nextSlash = name.indexOf(SEPARATOR, start);
+            int nextOpenBracket = name.indexOf('[', start);
+            int nextCloseBracket = name.indexOf(']', start);
+            
+            if (nextSlash > nextCloseBracket) {
+                if (nextOpenBracket == -1) {
+                    bld.append(name.substring(start, nextSlash + 1).replaceAll(" ", "\\\\ "));
+                } else {
+                    bld.append(name.substring(start, nextOpenBracket).replaceAll(" ", "\\\\ "))
+                        .append(name, nextOpenBracket, nextCloseBracket + 1);
+                }
+            } else {
+                if (nextSlash == -1) nextSlash = name.length();
+                if (nextOpenBracket != -1) {
+                    bld.append(name.substring(start, nextOpenBracket).replaceAll(" ", "\\\\ "))
+                    .append(name, nextOpenBracket, nextCloseBracket + 1);
+                    nextSlash = nextCloseBracket;
+                } else {
+                    bld.append(name.substring(start).replaceAll(" ", "\\\\ "));
+                }
+            }
+            
+            start = nextSlash + 1;
+        } while (start > 0 && start < name.length());
+        
+        return bld.toString();
+    }
+    
     public AugeasNode(String path) {
         if (path == null) {
             throw new IllegalArgumentException("'path' parameter must not be null.");
@@ -40,7 +73,7 @@ public class AugeasNode {
 
         // Remove redundant "." and ".." components and redundant slashes.
         // TODO: This is temporary until augeas-java fixes a bug.
-        this.path = path.replaceAll(" ", "\\\\ ");
+        this.path = patchNodeName(path);
     }
 
     public AugeasNode(AugeasNode parent, String name) {
@@ -56,7 +89,7 @@ public class AugeasNode {
         }*/
 
         // TODO: This is temporary until augeas-java fixes a bug.
-        this.path = parent.getPath() + SEPARATOR_CHAR + name.replaceAll(" ", "\\\\ ");
+        this.path = parent.getPath() + SEPARATOR_CHAR + patchNodeName(name);
     }
 
     public AugeasNode(String parentPath, String name) {

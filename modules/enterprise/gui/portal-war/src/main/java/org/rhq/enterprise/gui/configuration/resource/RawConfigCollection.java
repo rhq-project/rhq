@@ -1,10 +1,15 @@
 package org.rhq.enterprise.gui.configuration.resource;
 
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.TreeMap;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.richfaces.event.UploadEvent;
 
 import org.jboss.seam.ScopeType;
@@ -25,6 +30,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 @Name("RawConfigCollection")
 @Scope(ScopeType.CONVERSATION)
 public class RawConfigCollection implements Serializable {
+    private final Log log = LogFactory.getLog(RawConfigCollection.class);
 
     /**
      * 
@@ -35,24 +41,35 @@ public class RawConfigCollection implements Serializable {
     private TreeMap<String, RawConfiguration> modified = new TreeMap<String, RawConfiguration>();
     private RawConfiguration current = null;
 
+    File uploadFile;
+
     public void fileUploadListener(UploadEvent event) throws Exception {
-        setCurrentContents(new String(event.getUploadItem().getData()));
+        log.error("fileUploadListener called");
+        uploadFile = event.getUploadItem().getFile();
+        if (uploadFile != null) {
+            log.debug("fileUploadListener got file named " + event.getUploadItem().getFileName());
+        }
     }
 
     void setFileSize(int size) {
         System.out.println(size);
     }
 
-    public void setData(byte[] data) {
-
-        if (data != null) {
-            setCurrentContents(data.toString());
-        }
-
-    }
-
     public void upload() {
-
+        log.error("upload called");
+        if (uploadFile != null) {
+            try {
+                FileReader fileReader = new FileReader(uploadFile);
+                char[] buff = new char[1024];
+                StringBuffer stringBuffer = new StringBuffer();
+                for (int count = fileReader.read(buff); count != -1; count = fileReader.read(buff)) {
+                    stringBuffer.append(buff, 0, count);
+                }
+                setCurrentContents(stringBuffer.toString());
+            } catch (IOException e) {
+                log.error("problem reading uploaded file", e);
+            }
+        }
     }
 
     @Create

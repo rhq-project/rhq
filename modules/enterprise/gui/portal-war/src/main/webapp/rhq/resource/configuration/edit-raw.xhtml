@@ -57,7 +57,11 @@
 						<h:outputText value="#{RawConfigCollection.current.path}"
 							styleClass="outhello" />
 					</h:panelGroup> <a href="#"><img src="/images/viewfullscreen.png" />View Full
-					Screen</a> <a href="#"><img src="/images/download.png" /> Download</a>
+					Screen</a> 
+										<h:outputLink value="upload.xhtml"  target="uploadWindow" action="navigateToUpload" >
+						<img src="/images/upload.png" /> <h:outputText value=" upload file" />
+					</h:outputLink>
+					<a href="#"><img src="/images/download.png" /> Download</a>
 
 					<rich:editor id="editor" width="600" height="400" viewMode="visual"
 						value="#{RawConfigCollection.currentContents}" useSeamText="true">
@@ -69,17 +73,10 @@
 				<td></td>
 				<td>
 				<div>Upload A New Version</div>
-				enctype="multipart/form-data"  
-				<h:form id="uploadConfigurationForm" >
-				<h:inputHidden value="#{ResourceUIBean.id}"   />
-				
-				    <input type="hidden" name="id" value="#{ResourceUIBean.id}" />
-					<seam:fileUpload id="rawfile" data="#{RawConfigCollection.data}" fileSize="#{RawConfigCollection.fileSize}" localInputStream=""/>
-					
-					<h:commandButton action="#{RawConfigCollection.upload}"
-						value="upload" reRender="editor" />
-				</h:form></td>
+				</td>
 			</tr>
+			
+			
 
 		</table>
 

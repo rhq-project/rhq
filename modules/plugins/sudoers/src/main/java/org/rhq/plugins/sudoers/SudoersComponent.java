@@ -60,7 +60,7 @@ public class SudoersComponent extends AugeasConfigurationComponent {
         Augeas augeas = getAugeas();
 
         String userName = propMap.getSimple("user").getStringValue();
-        String specFilter = parentNode.getPath() + "/spec[*]";
+        String specFilter = parentNode.getPath() + "/spec";
         List<String> userPaths = augeas.match(String.format(specFilter + "/user[.='%s']", userName));
         if (userPaths == null || userPaths.isEmpty()) {
             return null;

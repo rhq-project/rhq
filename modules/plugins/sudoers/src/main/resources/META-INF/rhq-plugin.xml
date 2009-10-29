@@ -33,13 +33,11 @@
                                default="/etc/sudoers" description="Location of the sudoers file."/>
            <c:simple-property name="resourceConfigurationRootNode" required="true" readOnly="true"
                               default="/files/etc/sudoers"/>
-           <c:simple-property name="newNodeExpression" required="true" readOnly="true"
-                              default="/files/etc/sudoers/spec[last()+1]"/>
       </plugin-configuration>
 
       <resource-configuration>
          <c:list-property name="." displayName="Entries">
-            <c:map-property name="spec[*]">
+            <c:map-property name="spec">
               <c:simple-property name="user" displayName="User/Group" type="string" required="true" readOnly="true" activationPolicy="immediate"
                                   description="The User/User Alias/Group/Group Alias who needs to be given access to run a command. Alternatively you can specify aliases defined using User_Alias. Eg:  if you had  this defined previously User_Alias  OPERATORS = joe, mike, jude - You could enter OPERATORS for the user"/>
                <c:simple-property name="host_group/host" displayName="Host Alias" type="string" required="true" activationPolicy="immediate"

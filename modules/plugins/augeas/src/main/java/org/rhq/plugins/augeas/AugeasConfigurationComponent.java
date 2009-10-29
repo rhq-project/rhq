@@ -19,6 +19,8 @@
 package org.rhq.plugins.augeas;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -315,9 +317,13 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
         return true;
     }
 
+    protected String getAugeasPathRelativeToParent(PropertyDefinition propDef, AugeasNode parentNode, Augeas augeas) {
+        return propDef.getName();
+    }
+    
     protected void loadProperty(PropertyDefinition propDef, AbstractPropertyMap parentPropMap, Augeas augeas,
         AugeasNode parentNode) {
-        String propName = propDef.getName();
+        String propName = getAugeasPathRelativeToParent(propDef, parentNode, augeas);
         AugeasNode node = (propName.equals(".")) ? parentNode : new AugeasNode(parentNode, propName);
         Property prop;
         if (propDef instanceof PropertyDefinitionSimple) {
@@ -374,7 +380,8 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
         PropertyList propList = new PropertyList(propDefList.getName());
 
         String mapKey = getListMemberMapKey(propDefList);
-        String listMemberPathsExpression = node.getPath() + AugeasNode.SEPARATOR_CHAR + listMemberPropDefMap.getName();
+        String mapPath = getAugeasPathRelativeToParent(listMemberPropDefMap, node, augeas);
+        String listMemberPathsExpression = node.getPath() + AugeasNode.SEPARATOR_CHAR + mapPath;
         List<String> listMemberPaths = augeas.match(listMemberPathsExpression);
         for (String listMemberPath : listMemberPaths) {
             AugeasNode listMemberNode = new AugeasNode(listMemberPath);
@@ -403,7 +410,7 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
 
     protected void setNode(PropertyDefinition propDef, AbstractPropertyMap parentPropMap, Augeas augeas,
         AugeasNode parentNode) {
-        String propName = propDef.getName();
+        String propName = getAugeasPathRelativeToParent(propDef, parentNode, augeas);
         AugeasNode node = (propName.equals(".")) ? parentNode : new AugeasNode(parentNode, propName);
 
         if (isPropertyDefined(propDef, parentPropMap)) {
@@ -470,8 +477,6 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
         AugeasNode listNode) {
         PropertyDefinition listMemberPropDef = propDefList.getMemberDefinition();
 
-        PropertySimple newNodeExpression = resourceContext.getPluginConfiguration().getSimple(NEW_NODE_EXPRESSION);
-
         if (!(listMemberPropDef instanceof PropertyDefinitionMap)) {
             throw new IllegalArgumentException(
                 "Invalid Resource ConfigurationDefinition - only lists of maps are supported.");
@@ -479,8 +484,9 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
         PropertyDefinitionMap listMemberPropDefMap = (PropertyDefinitionMap) listMemberPropDef;
 
         int listIndex = 0;
+        String listMemberPropDefMapPath = getAugeasPathRelativeToParent(listMemberPropDefMap, listNode, augeas);
         List<String> existingListMemberPaths = augeas.match(listNode.getPath() + AugeasNode.SEPARATOR_CHAR
-            + listMemberPropDefMap.getName());
+            + listMemberPropDefMapPath);
         List<AugeasNode> existingListMemberNodes = new ArrayList<AugeasNode>();
         for (String existingListMemberPath : existingListMemberPaths) {
             existingListMemberNodes.add(new AugeasNode(existingListMemberPath));
@@ -494,17 +500,13 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
                 // Keep track of the existing nodes that we'll be updating, so that we can remove all other existing
                 // nodes.
                 updatedListMemberNodes.add(memberNodeToUpdate);
-            } else if (newNodeExpression != null) {
-                String var = "var" + listIndex;
-                augeas.defineNode(var, newNodeExpression.getStringValue(), null);
-                memberNodeToUpdate = new AugeasNode("$" + var);
             } else {
                 // The maps in the list are non-keyed, or there is no map in the list with the same key as the map
                 // being added, so create a new node for the map to add to the list.
-                memberNodeToUpdate = new AugeasNode(listNode, "0" + (listIndex));
-                listIndex++;
+                memberNodeToUpdate = new AugeasNode(listNode, getAugeasPathRelativeToParent(listMemberPropDefMap, listNode, augeas) + "[" + listIndex + "]");
             }
 
+            listIndex++;
             // Update the node's children.
             setNodeFromPropertyMap(listMemberPropDefMap, listMemberPropMap, augeas, memberNodeToUpdate);
         }
@@ -561,7 +563,7 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
         excludeGlobs = new ArrayList<String>();
 
         includeGlobs.addAll(Arrays.asList(includes.getStringValue().split("\\s*\\|\\s*")));
-        if (excludes != null) {
+        if (excludes != null && excludes.getStringValue() != null) {
             excludeGlobs.addAll(Arrays.asList(excludes.getStringValue().split("\\s*\\|\\s*")));
         }
     }
@@ -590,7 +592,7 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
             List<String> nodePaths = this.augeas.match(errorNode.getPath() + "/*");
             for (String path : nodePaths) {
                 String error = this.augeas.get(path);
-                summary.append("File \"").append(path.substring(metadataNodePrefix.length(), path.length() - 5))
+                summary.append("File \"").append(path.substring(metadataNodePrefix.length(), path.length()))
                 .append("\":\n").append(error).append("\n");
             }
         }

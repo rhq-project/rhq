@@ -1888,6 +1888,74 @@
           </statement>
         </schema-directSQL>
       </schemaSpec>
+
+      <schemaSpec version="2.61">
+         <schema-directSQL>
+          <statement desc="Creating table RHQ_KICKSTARTABLE_TREE">
+            CREATE TABLE RHQ_KICKSTARTABLE_TREE ( ID INTEGER PRIMARY KEY )
+          </statement>
+        </schema-directSQL>
+        <schema-alterColumn table="RHQ_KICKSTARTABLE_TREE" column="ID" nullable="false" columnType="INTEGER"/>
+        <schema-addColumn table="RHQ_KICKSTARTABLE_TREE" column="LABEL" precision="64" columnType="VARCHAR2" />
+        <schema-alterColumn table="RHQ_KICKSTARTABLE_TREE" column="LABEL" nullable="false" />
+        <schema-addColumn table="RHQ_KICKSTARTABLE_TREE" column="BASE_PATH" precision="256" columnType="VARCHAR2" />
+        <schema-alterColumn table="RHQ_KICKSTARTABLE_TREE" column="BASE_PATH" nullable="false" />
+        <schema-addColumn table="RHQ_KICKSTARTABLE_TREE" column="LAST_MODIFIED" columnType="LONG" />
+        <schema-alterColumn table="RHQ_KICKSTARTABLE_TREE" column="LAST_MODIFIED" nullable="false" />
+        <schema-directSQL>
+            <statement targetDBVendor="postgresql">
+            CREATE UNIQUE INDEX RHQ_KICKSTART_IDX
+            ON RHQ_KICKSTARTABLE_TREE ( LABEL, BASE_PATH )
+          </statement>
+          <statement targetDBVendor="oracle">
+            CREATE UNIQUE INDEX RHQ_KICKSTART_IDX
+            ON RHQ_KICKSTARTABLE_TREE ( LABEL, BASE_PATH )
+          </statement>
+        </schema-directSQL>
+
+        <schema-directSQL>
+          <statement desc="Creating table RHQ_REPO_KS_TREE">
+            CREATE TABLE RHQ_REPO_KS_TREE ( REPO_ID INTEGER )
+        </statement>
+        </schema-directSQL>
+
+        <schema-alterColumn table="RHQ_REPO_KS_TREE" column="REPO_ID" nullable="false" columnType="INTEGER"/>
+        <schema-addColumn table="RHQ_REPO_KS_TREE" column="KICKSTART_TREE_ID" columnType="INTEGER" />
+        <schema-alterColumn table="RHQ_REPO_KS_TREE" column="KICKSTART_TREE_ID" nullable="false" />
+        <schema-addColumn table="RHQ_REPO_KS_TREE" column="LAST_MODIFIED" columnType="LONG" />
+        <schema-alterColumn table="RHQ_REPO_KS_TREE" column="LAST_MODIFIED" nullable="false" />
+        <schema-directSQL>
+         <statement>
+            ALTER TABLE RHQ_REPO_KS_TREE
+            ADD CONSTRAINT RHQ_REPO_KS_MAP_KEY
+            PRIMARY KEY ( REPO_ID, KICKSTART_TREE_ID )
+         </statement>
+         <statement targetDBVendor="postgresql">
+            ALTER TABLE RHQ_REPO_KS_TREE
+            ADD CONSTRAINT RHQ_KS_REPO_ID_FKEY
+            FOREIGN KEY ( REPO_ID )
+            REFERENCES RHQ_REPO ( ID )
+          </statement>
+          <statement targetDBVendor="oracle">
+            ALTER TABLE RHQ_REPO_KS_TREE
+            ADD FOREIGN KEY ( REPO_ID )
+            REFERENCES RHQ_REPO ( ID )
+          </statement>
+          <statement targetDBVendor="postgresql">
+            ALTER TABLE RHQ_REPO_KS_TREE
+            ADD CONSTRAINT RHQ_REPO_KS_TREE_ID_FKEY
+            FOREIGN KEY ( KICKSTART_TREE_ID )
+            REFERENCES RHQ_KICKSTARTABLE_TREE ( ID )
+          </statement>
+          <statement targetDBVendor="oracle">
+            ALTER TABLE RHQ_REPO_KS_TREE
+            ADD FOREIGN KEY ( KICKSTART_TREE_ID )
+            REFERENCES RHQ_KICKSTARTABLE_TREE ( ID )
+          </statement>
+        </schema-directSQL>
+
+      </schemaSpec>
+
     </dbupgrade>
   </target>
 </project>

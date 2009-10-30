@@ -314,5 +314,31 @@
 
     </table>
 
+    <table name="RHQ_KICKSTARTABLE_TREE">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="LABEL" size="64" type="VARCHAR2" required="true"/>
+        <column name="BASE_PATH" size="256" type="VARCHAR2" required="true"/>
+        <column name="LAST_MODIFIED" type="LONG" required="true"/>
+
+        <index name="RHQ_KICKSTART_IDX" unique="true">
+            <field ref="LABEL"/>
+            <field ref="BASE_PATH"/>
+        </index>
+    </table>
+
+    <table name="RHQ_REPO_KS_TREE">
+        <column name="REPO_ID" type="INTEGER" required="true" references="RHQ_REPO"/>
+        <column name="KICKSTART_TREE_ID" type="INTEGER" required="true" references="RHQ_KICKSTARTABLE_TREE"/>
+        <column name="LAST_MODIFIED" type="LONG" required="true"/>
+
+        <constraint name="RHQ_REPO_KS_MAP_KEY">
+            <primaryKey>
+                <field ref="REPO_ID"/>
+                <field ref="KICKSTART_TREE_ID"/>
+            </primaryKey>
+        </constraint>
+    </table>
+           
+
 </dbsetup>
 

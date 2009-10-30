@@ -34,15 +34,14 @@ import org.apache.xmlrpc.XmlRpcException;
 import org.apache.xmlrpc.client.XmlRpcClient;
 import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
 
-
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelFamiliesType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelFamilyType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelsType;
-import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnKickstartableTreeType;
-import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnKickstartableTreesType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnKickstartFileType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnKickstartFilesType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnKickstartableTreeType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnKickstartableTreesType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageShortType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackagesShortType;
@@ -129,7 +128,7 @@ public class MockRhnXmlRpcExecutor implements XmlRpcExecutor {
             JAXBElement element = getRhnSatelliteType();
             RhnSatelliteType retval = (RhnSatelliteType) element.getValue();
             RhnKickstartableTreesType parentKSTree = new RhnKickstartableTreesType();
-            List<RhnKickstartableTreeType> ksTreeList =  parentKSTree.getRhnKickstartableTree();
+            List<RhnKickstartableTreeType> ksTreeList = parentKSTree.getRhnKickstartableTree();
             List<String> kstids = (List<String>) params[1];
             for (String kid : kstids) {
                 RhnKickstartableTreeType kstype = new RhnKickstartableTreeType();
@@ -241,5 +240,10 @@ public class MockRhnXmlRpcExecutor implements XmlRpcExecutor {
             throw new RuntimeException(e);
         }
 
+    }
+
+    @Override
+    public Object execute(String pMethodName, List pParams) throws XmlRpcException {
+        return execute(pMethodName, pParams.toArray());
     }
 }

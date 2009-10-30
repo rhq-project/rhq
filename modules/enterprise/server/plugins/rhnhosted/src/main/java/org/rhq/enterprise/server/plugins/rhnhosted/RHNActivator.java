@@ -21,10 +21,8 @@ package org.rhq.enterprise.server.plugins.rhnhosted;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintStream;
 import java.net.URL;
 import java.security.KeyException;
 import java.util.ArrayList;
@@ -32,13 +30,10 @@ import java.util.ArrayList;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.enterprise.server.plugins.rhnhosted.certificate.PublicKeyRing;
-import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.RhnSSLTransportFactory;
-
-import org.apache.xmlrpc.client.XmlRpcClient;
-import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
-
-
+import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.XmlRpcExecutor;
+import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.XmlRpcExecutorFactory;
 
 /**
  * @author pkilambi
@@ -46,28 +41,25 @@ import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
  */
 public class RHNActivator {
 
-    private String certificateFileName;
     private String certificateText;
     private String systemid;
-    private XmlRpcClient client;
+    private XmlRpcExecutor client;
     private final Log log = LogFactory.getLog(RHNActivator.class);
 
     /**
-     * RHN Connector Constructor
-     * @param systemidIn systemId file path
-     * @param certificateIn certificate file path
+     * Constructor
+     * @param systemIdString xml systemid
+     * @param certificateTextIn certificate file path
      * @param serverUrlIn hosted server url as a string
-     * 
+     * @throws Exception
      */
-    public RHNActivator(String systemidIn, String certificateIn, String serverUrlIn)
-        throws Exception {
-        
-        this.certificateFileName = certificateIn;
-        this.certificateText = FileUtils.readFileToString(new File(this.certificateFileName));
+    public RHNActivator(String systemIdString, String certificateTextIn, String serverUrlIn) throws Exception {
+
+        this.certificateText = certificateTextIn;
+        this.systemid = systemIdString;
         URL serverUrl = new URL(serverUrlIn);
         client = newClient(serverUrl);
-        File systemid_file = new File(systemidIn);
-        this.systemid = FileUtils.readFileToString(systemid_file);
+
     }
 
     /**
@@ -79,24 +71,16 @@ public class RHNActivator {
     public RHNActivator(String certificateTextIn, String serverUrlIn) throws Exception {
         this.certificateText = certificateTextIn;
 
-        // store the file to local server
-        this.writeStringToFile();
         URL serverUrl = new URL(serverUrlIn);
         client = newClient(serverUrl);
         File systemid_file = new File(RHNConstants.DEFAULT_SYSTEM_ID);
         this.systemid = FileUtils.readFileToString(systemid_file);
     }
 
-    protected XmlRpcClient newClient(URL serverUrl) {
-       XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
-       config.setServerURL(serverUrl);
-       client = new XmlRpcClient();
-       client.setConfig(config);
-       // Add support for SSL connections to RHN Hosted
-       RhnSSLTransportFactory transportFactory = new RhnSSLTransportFactory(client);
-       client.setTransportFactory(transportFactory);
-       return client;
+    protected XmlRpcExecutor newClient(URL serverUrl) {
+        return XmlRpcExecutorFactory.getClient(serverUrl.toString());
     }
+
     /**
      * Call that invokes the server object and passing in the xmlrpc
      * exposed call to activate the rhq server.
@@ -127,29 +111,9 @@ public class RHNActivator {
         // this.deleteCertTempFile(this.certificateFileName);
     }
 
-    public PublicKeyRing readDefaultKeyRing()
-        throws ClassNotFoundException, KeyException, IOException {
+    public PublicKeyRing readDefaultKeyRing() throws ClassNotFoundException, KeyException, IOException {
         InputStream keyringStream = new FileInputStream(RHNConstants.DEFAULT_WEBAPP_GPG_KEY_RING);
         return new PublicKeyRing(keyringStream);
-    }
-
-    /**
-     * Stores the certificate text string as a file on the filesystem
-     *
-     */
-    protected void writeStringToFile() throws Exception {
-        String tmpDir = System.getProperty("java.io.tmpdir");
-
-        this.certificateFileName = tmpDir + "/rhn-entitlement-cert" + ".cert";
-
-        FileOutputStream out = new FileOutputStream(this.certificateFileName);
-        PrintStream printer = new PrintStream(out);
-        try {
-            printer.println(this.certificateText);
-        }
-        finally {
-            printer.close();
-        }
     }
 
     /**
@@ -163,22 +127,22 @@ public class RHNActivator {
         return f.delete();
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         // commandline test
         if (args.length > 0) {
 
-            String systemid = args[0];
-            String cert = args[1];
+            String systemId = FileUtils.readFileToString(new File(args[0]));
+            String cert = FileUtils.readFileToString(new File(args[1]));
+
             String serverUrl = "http://satellite.rhn.redhat.com/rpc/api";
             try {
-                RHNActivator rhqServer = new RHNActivator(systemid, cert, serverUrl);
+                RHNActivator rhqServer = new RHNActivator(systemId, cert, serverUrl);
                 rhqServer.processActivation();
                 System.out.println("Activation Complete");
                 rhqServer.processDeActivation();
                 System.out.println("De-Activation Complete");
 
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }

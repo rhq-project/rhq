@@ -19,8 +19,6 @@
 package org.rhq.plugins.augeas;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -35,6 +33,7 @@ import net.augeas.jna.Aug;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.domain.configuration.AbstractPropertyMap;
@@ -73,8 +72,7 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
     public static final String INCLUDE_GLOBS_PROP = "configurationFilesInclusionPatterns";
     public static final String EXCLUDE_GLOBS_PROP = "configurationFilesExclusionPatterns";
     public static final String RESOURCE_CONFIGURATION_ROOT_NODE_PROP = "resourceConfigurationRootNode";
-    public static final String AUGEAS_MODULE_NAME_PROP = "augeasModuleName";
-    public static final String NEW_NODE_EXPRESSION = "newNodeExpression";
+    public static final String AUGEAS_MODULE_NAME_PROP = "augeasModuleName";    
 
     private static final boolean IS_WINDOWS = (File.separatorChar == '\\');
     private static final String AUGEAS_LOAD_PATH = "/usr/share/augeas/lenses";
@@ -99,8 +97,10 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
         if (this.augeas != null) {
             String resourceConfigRootPath = getResourceConfigurationRootPath();
             if (resourceConfigRootPath.indexOf(AugeasNode.SEPARATOR_CHAR) != 0) {
+                // root path is relative - make it absolute
                 this.resourceConfigRootNode = new AugeasNode("/files/", resourceConfigRootPath);
             } else {
+                // root path is already absolute
                 this.resourceConfigRootNode = new AugeasNode(resourceConfigRootPath);
             }
         }
@@ -225,9 +225,18 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
         }
     }
 
+    @NotNull
     protected String getResourceConfigurationRootPath() {
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
-        return pluginConfig.getSimpleValue(RESOURCE_CONFIGURATION_ROOT_NODE_PROP, null);
+        String rootPath = pluginConfig.getSimpleValue(RESOURCE_CONFIGURATION_ROOT_NODE_PROP, null);
+        if (rootPath == null) {
+            String includeGlobs = pluginConfig.getSimple(INCLUDE_GLOBS_PROP).getStringValue();
+            if (includeGlobs.indexOf('|') != -1) {
+                throw new IllegalStateException("Unable to determine resource configuration root Augeas path.");
+            }
+            rootPath = "/files" + includeGlobs;
+        }
+        return rootPath;
     }
 
     /**
@@ -335,7 +344,9 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
         } else {
             throw new IllegalStateException("Unsupported PropertyDefinition subclass: " + propDef.getClass().getName());
         }
-        parentPropMap.put(prop);
+        if (prop != null) {
+            parentPropMap.put(prop);
+        }
     }
 
     protected Object toPropertyValue(PropertyDefinitionSimple propDefSimple, Augeas augeas, AugeasNode node) {
@@ -503,10 +514,9 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
             } else {
                 // The maps in the list are non-keyed, or there is no map in the list with the same key as the map
                 // being added, so create a new node for the map to add to the list.
-                memberNodeToUpdate = new AugeasNode(listNode, getAugeasPathRelativeToParent(listMemberPropDefMap, listNode, augeas) + "[" + listIndex + "]");
+                memberNodeToUpdate = getNewListMemberNode(listNode, listMemberPropDefMap, listIndex++);
             }
 
-            listIndex++;
             // Update the node's children.
             setNodeFromPropertyMap(listMemberPropDefMap, listMemberPropMap, augeas, memberNodeToUpdate);
         }
@@ -517,6 +527,12 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
                 augeas.remove(existingListMemberNode.getPath());
             }
         }
+    }
+
+    protected AugeasNode getNewListMemberNode(AugeasNode listNode,
+                                              PropertyDefinitionMap listMemberPropDefMap, int listIndex) {
+        return new AugeasNode(listNode, getAugeasPathRelativeToParent(listMemberPropDefMap, listNode, getAugeas())
+                + "[" + listIndex + "]");
     }
 
     private boolean isPropertyDefined(PropertyDefinition propDef, AbstractPropertyMap parentPropMap) {

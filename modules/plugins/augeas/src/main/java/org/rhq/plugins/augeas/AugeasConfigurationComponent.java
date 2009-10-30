@@ -76,7 +76,9 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
 
     private static final boolean IS_WINDOWS = (File.separatorChar == '\\');
     private static final String AUGEAS_LOAD_PATH = "/usr/share/augeas/lenses";
-    public static final String AUGEAS_ROOT_PATH = "/";
+    private static final String AUGEAS_DEFAULT_ROOT_PATH = "/";
+
+    private static final String AUGEAS_ROOT_PATH_VAR = "AUGEAS_ROOT";
 
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -85,6 +87,14 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
     private List<String> excludeGlobs;
     private Augeas augeas;
     private AugeasNode resourceConfigRootNode;
+
+    static String getAugeasRootPath() {
+        String rootPath = System.getProperty("AUGEAS_ROOT");
+        if (rootPath != null && rootPath.trim().length() != 0) {
+            return rootPath;
+        }
+        return AUGEAS_ROOT_PATH_VAR;
+    }
 
     public void start(ResourceContext<T> resourceContext) throws InvalidPluginConfigurationException, Exception {
         this.resourceContext = resourceContext;
@@ -270,7 +280,7 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
     }
 
     public List<File> getConfigurationFiles() {
-        List<File> files = Glob.matchAll(new File(AUGEAS_ROOT_PATH), includeGlobs);
+        List<File> files = Glob.matchAll(new File(getAugeasRootPath()), includeGlobs);
         Glob.excludeAll(files, excludeGlobs);
         return files;
     }
@@ -292,7 +302,7 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
 
         Augeas augeas;
         try {
-            augeas = new Augeas(AUGEAS_ROOT_PATH, AUGEAS_LOAD_PATH, Augeas.NO_MODL_AUTOLOAD);
+            augeas = new Augeas(getAugeasRootPath(), AUGEAS_LOAD_PATH, Augeas.NO_MODL_AUTOLOAD);
             augeas.set("/augeas/load/" + augeasModuleName + "/lens", augeasModuleName + ".lns");
 
             int idx = 1;
@@ -303,6 +313,7 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
             for (String excl : excludeGlobs) {
                 augeas.set("/augeas/load/" + augeasModuleName + "/excl[" + (idx++) + "]", excl);
             }
+            augeas.load();
         } catch (RuntimeException e) {
             augeas = null;
             log.warn("Failed to initialize Augeas Java API.", e);

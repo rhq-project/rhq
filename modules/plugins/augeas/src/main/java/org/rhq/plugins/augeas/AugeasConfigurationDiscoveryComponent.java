@@ -43,24 +43,25 @@ import org.rhq.plugins.augeas.helper.Glob;
  * @author Ian Springer
  * @author Lukas Krejci
  */
-public class AugeasConfigurationDiscoveryComponent<T extends ResourceComponent> implements ResourceDiscoveryComponent<T>, ManualAddFacet<T> {
+public class AugeasConfigurationDiscoveryComponent<T extends ResourceComponent> implements
+    ResourceDiscoveryComponent<T>, ManualAddFacet<T> {
     private final Log log = LogFactory.getLog(this.getClass());
 
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<T> discoveryContext) throws InvalidPluginConfigurationException,
-        Exception {
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<T> discoveryContext)
+        throws InvalidPluginConfigurationException, Exception {
         Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>(1);
 
         List<String> includes = determineIncludeGlobs(discoveryContext);
         List<String> excludes = determineExcludeGlobs(discoveryContext);
-        
+
         Configuration pluginConfig = discoveryContext.getDefaultPluginConfiguration();
         PropertySimple includeProps = getGlobList(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP, includes);
         PropertySimple excludeProps = getGlobList(AugeasConfigurationComponent.EXCLUDE_GLOBS_PROP, excludes);
         pluginConfig.put(includeProps);
         pluginConfig.put(excludeProps);
-        
+
         checkFiles(pluginConfig);
-        
+
         DiscoveredResourceDetails resource = createResourceDetails(discoveryContext, pluginConfig);
         discoveredResources.add(resource);
         log.debug("Discovered " + discoveryContext.getResourceType().getName() + " Resource with key ["
@@ -71,7 +72,7 @@ public class AugeasConfigurationDiscoveryComponent<T extends ResourceComponent> 
 
     public DiscoveredResourceDetails discoverResource(Configuration pluginConfig,
         ResourceDiscoveryContext<T> discoveryContext) throws InvalidPluginConfigurationException {
-        
+
         checkFiles(pluginConfig);
 
         DiscoveredResourceDetails resource = createResourceDetails(discoveryContext, pluginConfig);
@@ -86,48 +87,52 @@ public class AugeasConfigurationDiscoveryComponent<T extends ResourceComponent> 
             .getName(), null, resourceType.getDescription(), pluginConfig, null);
         return resource;
     }
-    
+
     protected List<String> determineIncludeGlobs(ResourceDiscoveryContext<T> discoveryContext) {
         Configuration pluginConfiguration = discoveryContext.getDefaultPluginConfiguration();
-        PropertySimple includeGlobsProp = pluginConfiguration.getSimple(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP);
-       
+        PropertySimple includeGlobsProp = pluginConfiguration
+            .getSimple(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP);
+
         List<String> ret = getGlobList(includeGlobsProp);
         if (ret == null || ret.size() == 0) {
-            throw new IllegalStateException("Expecting at least once inclusion pattern for configuration files.");            
+            throw new IllegalStateException("Expecting at least once inclusion pattern for configuration files.");
         }
-        
+
         return ret;
     }
-    
+
     protected List<String> determineExcludeGlobs(ResourceDiscoveryContext<T> discoveryContext) {
         Configuration pluginConfiguration = discoveryContext.getDefaultPluginConfiguration();
-        PropertySimple excludeGlobsProp = pluginConfiguration.getSimple(AugeasConfigurationComponent.EXCLUDE_GLOBS_PROP);
-       
+        PropertySimple excludeGlobsProp = pluginConfiguration
+            .getSimple(AugeasConfigurationComponent.EXCLUDE_GLOBS_PROP);
+
         List<String> ret = getGlobList(excludeGlobsProp);
-        
+
         return ret;
     }
 
     private void checkFiles(Configuration pluginConfiguration) {
-        PropertySimple includeGlobsProp = pluginConfiguration.getSimple(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP);
-        PropertySimple excludeGlobsProp = pluginConfiguration.getSimple(AugeasConfigurationComponent.EXCLUDE_GLOBS_PROP);
-        
-        File root = new File(AugeasConfigurationComponent.AUGEAS_ROOT_PATH);
-        
+        PropertySimple includeGlobsProp = pluginConfiguration
+            .getSimple(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP);
+        PropertySimple excludeGlobsProp = pluginConfiguration
+            .getSimple(AugeasConfigurationComponent.EXCLUDE_GLOBS_PROP);
+
+        File root = new File(AugeasConfigurationComponent.getAugeasRootPath());
+
         List<String> includeGlobs = getGlobList(includeGlobsProp);
-        
+
         if (includeGlobsProp == null) {
             throw new IllegalStateException("Expecting at least once inclusion pattern for configuration files.");
         }
-        
+
         List<File> files = Glob.matchAll(root, includeGlobs);
-        
+
         if (excludeGlobsProp != null) {
             List<String> excludeGlobs = getGlobList(excludeGlobsProp);
             Glob.excludeAll(files, excludeGlobs);
         }
-        
-        for(File configFile : files) {
+
+        for (File configFile : files) {
             if (!configFile.isAbsolute()) {
                 throw new IllegalStateException("Configuration files inclusion patterns contain a non-absolute file.");
             }
@@ -139,29 +144,31 @@ public class AugeasConfigurationDiscoveryComponent<T extends ResourceComponent> 
             }
         }
     }
-    
+
     private String composeResourceKey(Configuration pluginConfiguration) {
-        PropertySimple includeGlobsProp = pluginConfiguration.getSimple(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP);
-        PropertySimple excludeGlobsProp = pluginConfiguration.getSimple(AugeasConfigurationComponent.EXCLUDE_GLOBS_PROP);
-        
+        PropertySimple includeGlobsProp = pluginConfiguration
+            .getSimple(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP);
+        PropertySimple excludeGlobsProp = pluginConfiguration
+            .getSimple(AugeasConfigurationComponent.EXCLUDE_GLOBS_PROP);
+
         StringBuilder bld = new StringBuilder();
-        
+
         bld.append(includeGlobsProp.getStringValue());
-        
-        if (excludeGlobsProp != null && excludeGlobsProp.getStringValue().length() > 0) {   
+
+        if (excludeGlobsProp != null && excludeGlobsProp.getStringValue().length() > 0) {
             bld.append("---");
             bld.append(excludeGlobsProp.getStringValue());
         }
-        
+
         bld.deleteCharAt(bld.length() - 1);
-        
+
         return bld.toString();
     }
-   
+
     public static PropertySimple getGlobList(String name, List<String> simples) {
         StringBuilder bld = new StringBuilder();
         if (simples != null) {
-            for(String s : simples) {
+            for (String s : simples) {
                 bld.append(s).append("|");
             }
         }
@@ -170,7 +177,7 @@ public class AugeasConfigurationDiscoveryComponent<T extends ResourceComponent> 
         }
         return new PropertySimple(name, bld.toString());
     }
-    
+
     public static List<String> getGlobList(PropertySimple list) {
         if (list != null) {
             return Arrays.asList(list.getStringValue().split("\\s*\\|\\s*"));

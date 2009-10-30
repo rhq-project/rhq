@@ -28,20 +28,36 @@ import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 @Name("RawConfigCollection")
-@Scope(ScopeType.CONVERSATION)
+@Scope(ScopeType.SESSION)
+/**
+ * The backing class for all Web based activities for manipulating the set of
+ * raw configuration files associated with a resource
+ */
 public class RawConfigCollection implements Serializable {
-    private final Log log = LogFactory.getLog(RawConfigCollection.class);
+
+    /*This is for development, to prevent actually going to the EJBs.
+    TODO It should be set to false prior to check in*/
+    private static final boolean useMock = true;
 
     /**
-     * 
+     * These values are transient due to the need to save and restore the view.  
+     * We can always fetch them again.
      */
+    transient private ConfigurationManagerLocal configurationManager;
+    transient private Configuration configuration = null;
+
+    private final Log log = LogFactory.getLog(RawConfigCollection.class);
+    private int resourceId;
     private static final long serialVersionUID = 4837157548556168146L;
     private String selectedPath;
     private TreeMap<String, RawConfiguration> raws;
     private TreeMap<String, RawConfiguration> modified = new TreeMap<String, RawConfiguration>();
     private RawConfiguration current = null;
 
-    File uploadFile;
+    private File uploadFile;
+
+    public RawConfigCollection() {
+    }
 
     public void fileUploadListener(UploadEvent event) throws Exception {
         log.error("fileUploadListener called");
@@ -75,21 +91,11 @@ public class RawConfigCollection implements Serializable {
     @Create
     @Begin
     public void init() {
-
+        resourceId = EnterpriseFacesContextUtility.getResource().getId();
     }
 
-    /**
-     * These values are transient due to the need to save and restore the view.  
-     * We can always fetch them again.
-     */
-    transient private ConfigurationManagerLocal configurationManager;
-    transient private Configuration configuration = null;
-
-    //This is for development, to prevent actually going to the EJBs.
-    //It should be set to false prior to check in
-    private static final boolean useMock = true;
-
-    public RawConfigCollection() {
+    public int getResourceId() {
+        return resourceId;
     }
 
     public void select(String s) {
@@ -100,7 +106,6 @@ public class RawConfigCollection implements Serializable {
     public Configuration getConfiguration() {
         if (null == configuration) {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
-            int resourceId = EnterpriseFacesContextUtility.getResource().getId();
             AbstractResourceConfigurationUpdate configurationUpdate = this.getConfigurationManager()
                 .getLatestResourceConfigurationUpdate(subject, resourceId);
             configuration = (configurationUpdate != null) ? configurationUpdate.getConfiguration() : null;

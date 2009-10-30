@@ -68,9 +68,13 @@ public class EnterpriseFacesContextUtility {
         ExternalContext externalContext = FacesContextUtility.getFacesContext().getExternalContext();
         Resource resource = (Resource) externalContext.getRequestMap().get(AttrConstants.RESOURCE_ATTR);
         if (resource == null) {
-            int resourceId = FacesContextUtility.getRequiredRequestParameter(ParamConstants.RESOURCE_ID_PARAM,
-                Integer.class);
+            int resourceId = FacesContextUtility.getOptionalRequestParameter(ParamConstants.CURRENT_RESOURCE_ID_PARAM,
+                Integer.class, -1);
 
+            if (resourceId == -1) {
+                resourceId = FacesContextUtility.getRequiredRequestParameter(ParamConstants.RESOURCE_ID_PARAM,
+                    Integer.class);
+            }
             // TODO: Instead call a manager method that returns a ResourceComposite, so we can stick the
             //       ResourceComposite in the request map, rather than just the Resource.
             resource = LookupUtil.getResourceManager().getResourceById(EnterpriseFacesContextUtility.getSubject(),

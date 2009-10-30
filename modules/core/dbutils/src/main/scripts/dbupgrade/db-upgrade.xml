@@ -1570,7 +1570,7 @@
                           precision="16"/>
    </schemaSpec>
 
-   <schemaSpec version="2.60.1">
+   <schemaSpec version="2.59.2">
         <schema-directSQL>
           <!-- RHN_CHANNEL => RHQ_REPO -->
           <statement>

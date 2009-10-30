@@ -34,35 +34,36 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.jboss.annotation.IgnoreDependency;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.content.Repo;
-import org.rhq.core.domain.content.RepoContentSource;
-import org.rhq.core.domain.content.RepoPackageVersion;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.PackageVersionContentSource;
-import org.rhq.core.domain.content.ResourceRepo;
+import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.content.RepoContentSource;
 import org.rhq.core.domain.content.RepoGroup;
 import org.rhq.core.domain.content.RepoGroupType;
-import org.rhq.core.domain.content.RepoRelationshipType;
+import org.rhq.core.domain.content.RepoPackageVersion;
 import org.rhq.core.domain.content.RepoRelationship;
+import org.rhq.core.domain.content.RepoRelationshipType;
 import org.rhq.core.domain.content.RepoRepoRelationship;
+import org.rhq.core.domain.content.ResourceRepo;
 import org.rhq.core.domain.content.composite.RepoComposite;
-import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
+import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.util.CriteriaQueryGenerator;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
-import org.rhq.core.domain.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.plugin.content.ContentProviderPluginContainer;
-import org.jboss.annotation.IgnoreDependency;
+import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
+import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
 @Stateless
 public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
@@ -86,8 +87,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         entityManager.flush();
         entityManager.clear();
 
-        entityManager.createNamedQuery(ResourceRepo.DELETE_BY_REPO_ID).setParameter("repoId", repoId)
-            .executeUpdate();
+        entityManager.createNamedQuery(ResourceRepo.DELETE_BY_REPO_ID).setParameter("repoId", repoId).executeUpdate();
 
         entityManager.createNamedQuery(RepoContentSource.DELETE_BY_REPO_ID).setParameter("repoId", repoId)
             .executeUpdate();
@@ -151,8 +151,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     public PageList<ContentSource> findAssociatedContentSources(Subject subject, int repoId, PageControl pc) {
         pc.initDefaultOrderingField("cs.id");
 
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, ContentSource.QUERY_FIND_BY_REPO_ID,
-            pc);
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, ContentSource.QUERY_FIND_BY_REPO_ID, pc);
         Query countQuery = PersistenceUtility.createCountQuery(entityManager, ContentSource.QUERY_FIND_BY_REPO_ID);
 
         query.setParameter("id", repoId);
@@ -169,8 +168,8 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     public PageList<Resource> findSubscribedResources(Subject subject, int repoId, PageControl pc) {
         pc.initDefaultOrderingField("rc.resource.id");
 
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, Repo.QUERY_FIND_SUBSCRIBER_RESOURCES,
-            pc);
+        Query query = PersistenceUtility
+            .createQueryWithOrderBy(entityManager, Repo.QUERY_FIND_SUBSCRIBER_RESOURCES, pc);
         Query countQuery = PersistenceUtility.createCountQuery(entityManager, Repo.QUERY_FIND_SUBSCRIBER_RESOURCES);
 
         query.setParameter("id", repoId);
@@ -257,8 +256,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
 
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public PageList<PackageVersion> findPackageVersionsInRepo(Subject subject, int repoId, String filter,
-        PageControl pc) {
+    public PageList<PackageVersion> findPackageVersionsInRepo(Subject subject, int repoId, String filter, PageControl pc) {
         pc.initDefaultOrderingField("pv.generalPackage.name, pv.version");
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
@@ -299,8 +297,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public RepoGroup createRepoGroup(Subject subject, RepoGroup repoGroup)
-        throws RepoException {
+    public RepoGroup createRepoGroup(Subject subject, RepoGroup repoGroup) throws RepoException {
         validateRepoGroup(repoGroup);
 
         entityManager.persist(repoGroup);
@@ -327,8 +324,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
 
         if (results.size() > 0) {
             return results.get(0);
-        }
-        else {
+        } else {
             return null;
         }
     }
@@ -342,8 +338,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
 
         if (results.size() > 0) {
             return results.get(0);
-        }
-        else {
+        } else {
             return null;
         }
     }
@@ -410,8 +405,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public void removeContentSourcesFromRepo(Subject subject, int repoId, int[] contentSourceIds)
-        throws RepoException {
+    public void removeContentSourcesFromRepo(Subject subject, int repoId, int[] contentSourceIds) throws RepoException {
         Repo repo = getRepo(subject, repoId);
 
         log.debug("User [" + subject + "] is removing content sources from repo [" + repo + "]");
@@ -547,8 +541,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
 
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public PageList<PackageVersion> findPackageVersionsInRepoByCriteria(Subject subject,
-        PackageVersionCriteria criteria) {
+    public PageList<PackageVersion> findPackageVersionsInRepoByCriteria(Subject subject, PackageVersionCriteria criteria) {
         Integer repoId = criteria.getFilterRepoId();
 
         if ((null == repoId) || (repoId < 1)) {

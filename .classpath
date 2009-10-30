@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="modules/common/jboss-as/src/test/java"/>
+	<classpathentry kind="src" path="modules/plugins/antlr-config/target/generated-sources/antlr3"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/rhnhosted/src/main/generated-source"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/rhnhosted/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/rhnhosted/src/test/java"/>

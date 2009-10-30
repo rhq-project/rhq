@@ -72,13 +72,13 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
     public static final String INCLUDE_GLOBS_PROP = "configurationFilesInclusionPatterns";
     public static final String EXCLUDE_GLOBS_PROP = "configurationFilesExclusionPatterns";
     public static final String RESOURCE_CONFIGURATION_ROOT_NODE_PROP = "resourceConfigurationRootNode";
-    public static final String AUGEAS_MODULE_NAME_PROP = "augeasModuleName";    
+    public static final String AUGEAS_MODULE_NAME_PROP = "augeasModuleName";
 
     private static final boolean IS_WINDOWS = (File.separatorChar == '\\');
     private static final String AUGEAS_LOAD_PATH = "/usr/share/augeas/lenses";
     private static final String AUGEAS_DEFAULT_ROOT_PATH = "/";
 
-    private static final String AUGEAS_ROOT_PATH_VAR = "AUGEAS_ROOT";
+    public static final String AUGEAS_ROOT_PATH_VAR = "AUGEAS_ROOT";
 
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -89,11 +89,11 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
     private AugeasNode resourceConfigRootNode;
 
     static String getAugeasRootPath() {
-        String rootPath = System.getProperty("AUGEAS_ROOT");
+        String rootPath = System.getProperty(AUGEAS_ROOT_PATH_VAR);
         if (rootPath != null && rootPath.trim().length() != 0) {
             return rootPath;
         }
-        return AUGEAS_ROOT_PATH_VAR;
+        return AUGEAS_DEFAULT_ROOT_PATH;
     }
 
     public void start(ResourceContext<T> resourceContext) throws InvalidPluginConfigurationException, Exception {
@@ -340,7 +340,7 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
     protected String getAugeasPathRelativeToParent(PropertyDefinition propDef, AugeasNode parentNode, Augeas augeas) {
         return propDef.getName();
     }
-    
+
     protected void loadProperty(PropertyDefinition propDef, AbstractPropertyMap parentPropMap, Augeas augeas,
         AugeasNode parentNode) {
         String propName = getAugeasPathRelativeToParent(propDef, parentNode, augeas);
@@ -540,10 +540,10 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
         }
     }
 
-    protected AugeasNode getNewListMemberNode(AugeasNode listNode,
-                                              PropertyDefinitionMap listMemberPropDefMap, int listIndex) {
+    protected AugeasNode getNewListMemberNode(AugeasNode listNode, PropertyDefinitionMap listMemberPropDefMap,
+        int listIndex) {
         return new AugeasNode(listNode, getAugeasPathRelativeToParent(listMemberPropDefMap, listNode, getAugeas())
-                + "[" + listIndex + "]");
+            + "[" + listIndex + "]");
     }
 
     private boolean isPropertyDefined(PropertyDefinition propDef, AbstractPropertyMap parentPropMap) {
@@ -607,10 +607,11 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
                 + "' is a directory, not a regular file.");
         }
     }
+
     protected String summarizeAugeasError() {
         StringBuilder summary = new StringBuilder();
         String metadataNodePrefix = "/augeas/files";
-        for(String glob : includeGlobs) {
+        for (String glob : includeGlobs) {
             if (glob.startsWith(AugeasNode.SEPARATOR)) {
                 glob = glob.substring(1);
             }
@@ -619,8 +620,8 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
             List<String> nodePaths = this.augeas.match(errorNode.getPath() + "/*");
             for (String path : nodePaths) {
                 String error = this.augeas.get(path);
-                summary.append("File \"").append(path.substring(metadataNodePrefix.length(), path.length()))
-                .append("\":\n").append(error).append("\n");
+                summary.append("File \"").append(path.substring(metadataNodePrefix.length(), path.length())).append(
+                    "\":\n").append(error).append("\n");
             }
         }
 

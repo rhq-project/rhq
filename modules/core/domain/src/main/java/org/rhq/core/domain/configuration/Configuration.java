@@ -34,6 +34,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -152,7 +154,11 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
     @MapKey(name = "name")
     @OneToMany(mappedBy = "configuration", fetch = FetchType.EAGER)
     @XmlTransient
-    private Map<String, Property> properties;
+    private Map<String, Property> properties = new LinkedHashMap<String, Property>();
+
+    @OneToMany(mappedBy = "configuration", fetch = FetchType.EAGER)
+    @Cascade({CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DELETE_ORPHAN})
+    private Set<RawConfiguration> rawConfigurations = new HashSet<RawConfiguration>();
 
     @Column(name = "NOTES")
     private String notes;
@@ -304,10 +310,6 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
      */
     @NotNull
     public Map<String, Property> getMap() {
-        if (this.properties == null) {
-            this.properties = new LinkedHashMap<String, Property>();
-        }
-
         return this.properties;
     }
 
@@ -395,6 +397,23 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
         return map;
     }
 
+    public Set<RawConfiguration> getRawConfigurations() {
+        return rawConfigurations;
+    }
+
+    public void addRawConfiguration(RawConfiguration rawConfiguration) {
+        rawConfiguration.setConfiguration(this);
+        rawConfigurations.add(rawConfiguration);
+    }
+
+    public boolean removeRawConfiguration(RawConfiguration rawConfiguration) {
+        boolean removed = rawConfigurations.remove(rawConfiguration);
+        if (removed) {
+            rawConfiguration.setConfiguration(null);
+        }
+        return removed;
+    }
+
     public String getNotes() {
         return notes;
     }
@@ -479,6 +498,10 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
             copy.put(property.deepCopy());
         }
 
+        for (RawConfiguration rawConfig : rawConfigurations) {
+            copy.addRawConfiguration(rawConfig.deepCopy());    
+        }
+
         return copy;
     }
 
@@ -530,25 +553,18 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
             return false;
         }
 
-        // NOTE: Use instanceof, rather than getClass(), because a) obj may be a JPA/Hibernate proxy or b) obj may be a
-        //       subclass with same equals semantics.
         if (!(obj instanceof Configuration)) {
             return false;
         }
 
         Configuration that = (Configuration) obj;
-        if ((this.properties == null) || this.properties.isEmpty()) {
-            // NOTE: Use that.getMap() (*not* that.getProperties()!), rather than that.properties, in case 'that' is a
-            //       JPA/Hibernate proxy, to force loading of the field.
-            return (that.getMap() == null) || that.getMap().isEmpty();
-        }
 
-        return this.properties.equals(that.getMap());
+        return (this.properties.equals(that.properties)) && (this.rawConfigurations.equals(that.rawConfigurations));
     }
 
     @Override
     public int hashCode() {
-        return (((this.properties != null) && !this.properties.isEmpty()) ? this.properties.hashCode() : 0);
+        return properties.hashCode() * rawConfigurations.hashCode() * 19;
     }
 
     @Override
@@ -565,6 +581,7 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
             builder.append(", notes=").append(this.notes);
 
         if (verbose) {
+            builder.append("properties[");
             for (Property property : this.getMap().values()) {
                 builder.append(", ");
                 builder.append(property.getName());
@@ -574,6 +591,16 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
                 else
                     builder.append(property);
             }
+            builder.append("], rawConfigurations[");
+
+            for (RawConfiguration rawConfig : rawConfigurations) {
+                builder.append("[")
+                       .append(rawConfig.getPath())
+                       .append(", ")
+                       .append(rawConfig.getSha256())
+                       .append("]");
+            }
+            builder.append("]");
         }
         return builder.append("]").toString();
     }

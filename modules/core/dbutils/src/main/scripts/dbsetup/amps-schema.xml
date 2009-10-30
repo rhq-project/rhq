@@ -11,6 +11,7 @@
         <column name="DISPLAY_NAME" size="200" type="VARCHAR2" required="true"/>
         <column name="DESCRIPTION" size="4000" type="VARCHAR2" required="false"/>
         <column name="VERSION" size="200" type="VARCHAR2" required="false"/>
+        <column name="AMPS_VERSION" size="16" type="VARCHAR2" required="false"/>
         <column name="ENABLED" type="BOOLEAN" required="true"/>
         <column name="HELP" type="CLOB" required="false"/>
         <column name="PATH" size="500" type="VARCHAR2" required="true"/>

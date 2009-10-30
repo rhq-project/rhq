@@ -21,15 +21,16 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-package org.rhq.core.domain.util;
+package org.rhq.enterprise.server.util;
 
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.criteria.Criteria;
+import java.lang.reflect.Field;
+import java.util.List;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
-import java.util.List;
-import java.lang.reflect.Field;
+
+import org.rhq.core.domain.criteria.Criteria;
+import org.rhq.core.domain.util.PageList;
 
 public class CriteriaQueryRunner<T> {
 
@@ -74,8 +75,7 @@ public class CriteriaQueryRunner<T> {
         try {
             field.setAccessible(true);
             return (List) field.get(entity);
-        }
-        catch (IllegalAccessException e) {
+        } catch (IllegalAccessException e) {
             e.printStackTrace();
             return null;
         }

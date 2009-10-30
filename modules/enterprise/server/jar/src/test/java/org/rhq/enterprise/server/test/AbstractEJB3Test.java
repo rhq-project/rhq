@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.test;
 
+import java.sql.Connection;
 import java.util.Hashtable;
 import java.util.Properties;
 
@@ -51,6 +52,7 @@ import org.rhq.enterprise.server.auth.SessionManager;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceMBean;
 import org.rhq.enterprise.server.scheduler.SchedulerService;
 import org.rhq.enterprise.server.scheduler.SchedulerServiceMBean;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * This is the abstract test base for server jar tests.
@@ -94,14 +96,13 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
             System.err.println("...... deploying MM ejb3.....");
             System.err.println("...... ejb3 deployed....");
 
-
             // Deploy everything we got
             //deployer.setKernel(EJB3StandaloneBootstrap.getKernel());
             deployer.create();
             System.err.println("...... deployer created....");
 
             // Set the hibernate dialect
-//            System.setProperty("hibernate.dialect","org.hibernate.dialect.Oracle10gDialect"); // TODO
+            //            System.setProperty("hibernate.dialect","org.hibernate.dialect.Oracle10gDialect"); // TODO
 
             deployer.start();
             System.err.println("...... deployer started....");
@@ -129,6 +130,16 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
 
     @BeforeMethod
     public static void startTest() {
+        if (DatabaseTypeFactory.getDefaultDatabaseType() == null) {
+            try {
+                Connection conn = LookupUtil.getDataSource().getConnection();
+                DatabaseTypeFactory.setDefaultDatabaseType(DatabaseTypeFactory.getDatabaseType(conn));
+            } catch (Exception e) {
+                System.err.println("!!! WARNING !!! cannot set default database type, some tests may fail");
+                e.printStackTrace();
+            }
+        }
+
         start = stats.getQueryExecutionCount();
     }
 

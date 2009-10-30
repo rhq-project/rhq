@@ -35,7 +35,7 @@ import org.rhq.core.clientapi.server.plugin.content.PackageSource;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyMap;
-import org.rhq.core.util.MD5Generator;
+import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.file.ContentFileInfo;
 import org.rhq.core.util.file.ContentFileInfoFactory;
 
@@ -189,7 +189,7 @@ public class DiskSource implements ContentProvider, PackageSource {
         }
 
         ContentFileInfo fileInfo = ContentFileInfoFactory.createContentFileInfo(file);
-        String md5 = MD5Generator.getDigestString(file);
+        String md5 = MessageDigestGenerator.getDigestString(file);
         String name = file.getName();
         String version = fileInfo.getVersion(md5);
         String packageTypeName = supportedPackageType.packageTypeName;

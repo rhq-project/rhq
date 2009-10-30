@@ -44,7 +44,7 @@ import org.testng.annotations.Test;
 import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.plugin.Plugin;
-import org.rhq.core.util.MD5Generator;
+import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerLocal;
@@ -368,7 +368,7 @@ public class DatabaseAndFilePluginDeploymentTest extends AbstractEJB3Test {
 
             Plugin pluginPojo = new Plugin(PLUGIN_NAME, file.getName());
             pluginPojo.setVersion(descriptor.getVersion());
-            pluginPojo.setMd5(MD5Generator.getDigestString(file));
+            pluginPojo.setMd5(MessageDigestGenerator.getDigestString(file));
             pluginPojo.setMtime(testTimestamps.get(entry.getKey()).getTime());
             testPlugins.put(entry.getKey(), pluginPojo);
         }
@@ -431,7 +431,7 @@ public class DatabaseAndFilePluginDeploymentTest extends AbstractEJB3Test {
     private void assertPluginOnFilesystem(Plugin plugin) throws Exception {
         File file = new File(DEPLOY_LOCATION, plugin.getPath());
         String version = AgentPluginDescriptorUtil.getPluginVersion(file, null).toString();
-        String md5 = MD5Generator.getDigestString(file);
+        String md5 = MessageDigestGenerator.getDigestString(file);
         long mtime = file.lastModified();
         Plugin filePlugin = new Plugin(PLUGIN_NAME, file.getName());
         filePlugin.setMd5(md5);

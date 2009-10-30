@@ -23,12 +23,20 @@
 
 package org.rhq.enterprise.client.utility;
 
+import static org.testng.Assert.*;
+
 import org.testng.annotations.Test;
+import org.testng.annotations.BeforeClass;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 
 public class ScriptAssertTest {
+
+    @BeforeClass
+    public void verifyScriptEngineIsAvailable() {
+        assertNotNull(createScriptEngine(), "ScriptEngine is not available. Are the required libraries on the classpath?");
+    }
 
     @Test
     public void assertExistsShouldReturnTrueWhenVariableIsBound() {

@@ -68,8 +68,6 @@ import org.rhq.core.domain.operation.composite.ResourceOperationScheduleComposit
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.core.domain.util.CriteriaQueryGenerator;
-import org.rhq.core.domain.util.CriteriaQueryRunner;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
@@ -91,6 +89,8 @@ import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
+import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
+import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
 @Stateless
 public class OperationManagerBean implements OperationManagerLocal, OperationManagerRemote {
@@ -393,8 +393,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return operationSchedules;
     }
 
-    public List<GroupOperationSchedule> findScheduledGroupOperations(Subject subject, int groupId)
-        throws Exception {
+    public List<GroupOperationSchedule> findScheduledGroupOperations(Subject subject, int groupId) throws Exception {
         ResourceGroup group = getCompatibleGroupIfAuthorized(subject, groupId);
 
         List<GroupOperationSchedule> operationSchedules = new ArrayList<GroupOperationSchedule>();

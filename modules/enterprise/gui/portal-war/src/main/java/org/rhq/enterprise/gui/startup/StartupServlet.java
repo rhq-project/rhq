@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.startup;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.sql.Connection;
 import java.util.List;
 import java.util.Properties;
 
@@ -29,11 +30,13 @@ import javax.management.MBeanServerInvocationHandler;
 import javax.management.ObjectName;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
+import javax.sql.DataSource;
 
 import org.quartz.SchedulerException;
 
 import org.jboss.mx.util.MBeanServerLocator;
 
+import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.cloud.Server.OperationMode;
 import org.rhq.core.domain.resource.Agent;
@@ -126,6 +129,15 @@ public class StartupServlet extends HttpServlet {
     }
 
     private void initializeServer() {
+        // Ensure the class is loaded and the dbType is set for our current db       
+        try {
+            DataSource ds = LookupUtil.getDataSource();
+            Connection conn = ds.getConnection();
+            DatabaseTypeFactory.setDefaultDatabaseType(DatabaseTypeFactory.getDatabaseType(conn));
+        } catch (Exception e) {
+            log("Could not initialize server: ", e);
+        }
+
         // Ensure that this server is registered in the database.
         createDefaultServerIfNecessary();
 

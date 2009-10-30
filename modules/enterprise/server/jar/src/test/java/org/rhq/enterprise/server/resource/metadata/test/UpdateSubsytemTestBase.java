@@ -49,7 +49,7 @@ import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.util.MD5Generator;
+import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerLocal;
@@ -125,7 +125,7 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
     protected void registerPlugin(String pathToDescriptor, String versionOverride) throws Exception {
         pathToDescriptor = COMMON_PATH_PREFIX + getSubsystemDirectory() + "/" + pathToDescriptor;
         System.out.println("Registering plugin with descriptor [" + pathToDescriptor + "]...");
-        String md5 = MD5Generator.getDigestString(pathToDescriptor);
+        String md5 = MessageDigestGenerator.getDigestString(pathToDescriptor);
         Plugin testPlugin = new Plugin(PLUGIN_NAME, "foo.jar", md5);
         testPlugin.setDisplayName("ResourceMetaDataManagerBeanTest: " + pathToDescriptor);
         PluginDescriptor descriptor = loadPluginDescriptor(pathToDescriptor);

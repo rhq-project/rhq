@@ -93,7 +93,7 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement
 @XmlSeeAlso( { PropertySimple.class, PropertyList.class, PropertyMap.class })
-public class Property implements Externalizable {
+public class Property implements Externalizable, DeepCopyable<Property> {
     private static final long serialVersionUID = 1L;
 
     public static final String QUERY_DELETE_BY_PROPERTY_IDS = "Property.deleteByPropertyIds";
@@ -284,7 +284,7 @@ public class Property implements Externalizable {
         return ((this.name != null) ? this.name.hashCode() : 0);
     }
 
-    public <P extends Property> P deepCopy() {
+    public Property deepCopy() {
         return null;
     }
 

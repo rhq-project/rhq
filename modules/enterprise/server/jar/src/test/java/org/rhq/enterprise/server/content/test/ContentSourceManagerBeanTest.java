@@ -62,6 +62,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.MD5Generator;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
+import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
 import org.rhq.enterprise.server.content.metadata.ContentSourceMetadataManagerLocal;
@@ -381,7 +382,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             long modifiedTimestamp = repo.getLastModifiedDate();
             Date modifiedDate = new Date(modifiedTimestamp);
             String datehash = Integer.toString(modifiedDate.hashCode());
-            assert metadataMd5.equals(MD5Generator.getDigestString(datehash)) : "-->" + metadataMd5;
+            assert metadataMd5.equals(MessageDigestGenerator.getDigestString(datehash)) : "-->" + metadataMd5;
 
             repoManager.unsubscribeResourceFromRepos(overlord, resource1.getId(), new int[] { repoId });
 

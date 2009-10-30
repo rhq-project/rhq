@@ -525,7 +525,11 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
             } else {
                 // The maps in the list are non-keyed, or there is no map in the list with the same key as the map
                 // being added, so create a new node for the map to add to the list.
-                memberNodeToUpdate = getNewListMemberNode(listNode, listMemberPropDefMap, listIndex++);
+                AugeasNode basePathNode = getNewListMemberNode(listNode, listMemberPropDefMap, listIndex);
+                String var = "prop" + listIndex;
+                augeas.defineNode(var, basePathNode.getPath(), null);
+                memberNodeToUpdate = new AugeasNode("$" + var);
+                listIndex++;
             }
 
             // Update the node's children.

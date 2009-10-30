@@ -485,7 +485,7 @@ public class ProductPluginDeployer {
             plugin.setDisplayName((displayName != null) ? displayName : pluginName);
             plugin.setEnabled(true);
             plugin.setDescription(pluginDescriptor.getDescription());
-            plugin.setAmpsVersion(pluginDescriptor.getAmpsVersion());
+            plugin.setAmpsVersion(getAmpsVersion(pluginDescriptor));
 
             // get the last modified of the "real" plugin jar since that's the one the user touches
             long mtime = deploymentInfo.url.openConnection().getLastModified();
@@ -508,6 +508,21 @@ public class ProductPluginDeployer {
         } catch (Exception e) {
             log.error("Failed to register RHQ plugin file [" + deploymentInfo.url + "]", e);
         }
+    }
+
+    private String getAmpsVersion(PluginDescriptor pluginDescriptor) {
+        if (pluginDescriptor.getAmpsVersion() == null) {
+            return "2.0";
+        }
+
+        ComparableVersion version = new ComparableVersion(pluginDescriptor.getAmpsVersion());
+        ComparableVersion version2 = new ComparableVersion("2.0");
+
+        if (version.compareTo(version2) <= 0) {
+            return "2.0";
+        }
+
+        return pluginDescriptor.getAmpsVersion();
     }
 
     private void checkVersionCompatibility(String version) throws RuntimeException {

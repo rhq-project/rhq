@@ -62,13 +62,13 @@
 						<a href="#"><img src="/images/viewfullscreen.png" />View Full	Screen</a> 
 						<h:outputLink value="upload.xhtml"  action="navigateToUpload" >
 							<img src="/images/upload.png" /> 
-							<h:outputText value=" upload file" />
+							<h:outputText value=" Upload " />
 							<f:param name="resourceId" value="#{ResourceUIBean.id}" />
 							<f:param name="conversationId" value="#{conversation.id}" />
 						</h:outputLink>
 						<a href="#"><img src="/images/download.png" /> Download</a>
 						<rich:editor id="editor" width="600" height="400" viewMode="visual"
-						value="#{RawConfigCollection.currentContents}" useSeamText="false">
+						value="#{RawConfigCollection.currentContents}"   useSeamText="true">
 				</rich:editor>
 			</td>
 		</tr>

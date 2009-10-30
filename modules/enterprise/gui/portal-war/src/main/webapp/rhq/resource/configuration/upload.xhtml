@@ -20,7 +20,6 @@
        <h:outputText value="Upload Plugin"/>
     </f:facet>
 
-    <div><pre><h:outputText id="contents" value="#{RawConfigCollection.currentContents}" /></pre></div>
     <h:panelGrid columns="1" width="100%">
     <h:form id="uploadform" enctype="multipart/form-data">
         <rich:fileUpload  
@@ -36,11 +35,13 @@
         </h:form>
     </h:panelGrid>
 	<h:outputLink value="edit-raw.xhtml"  action="toEditRaw" >
-		<h:outputText value=" back" />
-		<f:param name="currentResourceId" value="#{RawConfigCollection.resourceId}" />
-		
+		<h:outputText value=" Done" />
+		<f:param name="currentResourceId" value="#{RawConfigCollection.resourceId}" />		
 	</h:outputLink>
 </rich:panel>
+
+   <div><pre><h:outputText id="contents" value="#{RawConfigCollection.currentContents}" /></pre></div>
+
 
 </ui:define>
 

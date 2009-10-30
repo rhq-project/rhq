@@ -1,24 +1,28 @@
 package org.rhq.enterprise.gui.configuration.resource;
 
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.TreeMap;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.richfaces.event.UploadEvent;
+
 import org.jboss.seam.ScopeType;
 import org.jboss.seam.annotations.Begin;
 import org.jboss.seam.annotations.Create;
 import org.jboss.seam.annotations.End;
-import org.jboss.seam.annotations.In;
 import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Scope;
-import org.jboss.seam.faces.Redirect;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.RawConfiguration;
-import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -26,6 +30,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 @Name("RawConfigCollection")
 @Scope(ScopeType.CONVERSATION)
 public class RawConfigCollection implements Serializable {
+    private final Log log = LogFactory.getLog(RawConfigCollection.class);
 
     /**
      * 
@@ -35,15 +40,36 @@ public class RawConfigCollection implements Serializable {
     private TreeMap<String, RawConfiguration> raws;
     private TreeMap<String, RawConfiguration> modified = new TreeMap<String, RawConfiguration>();
     private RawConfiguration current = null;
-    @In(value = "org.jboss.seam.faces.redirect")
-    private Redirect redirect;
 
-    public Redirect getRedirect() {
-        return redirect;
+    File uploadFile;
+
+    public void fileUploadListener(UploadEvent event) throws Exception {
+        log.error("fileUploadListener called");
+        uploadFile = event.getUploadItem().getFile();
+        if (uploadFile != null) {
+            log.debug("fileUploadListener got file named " + event.getUploadItem().getFileName());
+        }
     }
 
-    public void setRedirect(Redirect redirect) {
-        this.redirect = redirect;
+    void setFileSize(int size) {
+        System.out.println(size);
+    }
+
+    public void upload() {
+        log.error("upload called");
+        if (uploadFile != null) {
+            try {
+                FileReader fileReader = new FileReader(uploadFile);
+                char[] buff = new char[1024];
+                StringBuffer stringBuffer = new StringBuffer();
+                for (int count = fileReader.read(buff); count != -1; count = fileReader.read(buff)) {
+                    stringBuffer.append(buff, 0, count);
+                }
+                setCurrentContents(stringBuffer.toString());
+            } catch (IOException e) {
+                log.error("problem reading uploaded file", e);
+            }
+        }
     }
 
     @Create
@@ -98,8 +124,6 @@ public class RawConfigCollection implements Serializable {
         getConfigurationManager();
         //        getConfigurationManager().setRawConfigurations(configId, raws.values());
 
-        this.redirect.setParameter(ParamConstants.CONFIG_ID_PARAM, getConfigId());
-        this.redirect.setViewId("http://localhost:7080/rhq/resource/configuration/history.xhtml");
     }
 
     public TreeMap<String, RawConfiguration> getRaws() {

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:a4j="http://richfaces.org/a4j"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+<ui:composition template="/rhq/layout/main.xhtml">
+<ui:param name="pageTitle" value="Upload Configuration File"/>
+
+<ui:define name="body">
+
+<rich:panel>
+    <f:facet name="header">
+       <h:outputText value="Upload Plugin"/>
+    </f:facet>
+
+    <div><h:outputText id="contents" value="#{RawConfigCollection.currentContents}" /></div>
+    <h:panelGrid columns="1" width="100%">
+    <h:form id="uploadform" enctype="multipart/form-data">
+        <rich:fileUpload  
+            id="upload"
+            fileUploadListener="#{RawConfigCollection.fileUploadListener}"
+            maxFilesQuantity="10"
+            noDuplicate="true"
+            immediateUpload="true"
+            autoclear="false"
+            allowFlash="false">
+            <a4j:support event="onuploadcomplete" action="#{RawConfigCollection.upload}" reRender="contents"/>
+        </rich:fileUpload>
+        </h:form>
+    </h:panelGrid>
+
+</rich:panel>
+
+</ui:define>
+
+</ui:composition>
+
+</html>
+
+

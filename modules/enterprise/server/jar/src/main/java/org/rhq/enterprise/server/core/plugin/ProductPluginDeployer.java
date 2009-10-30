@@ -485,6 +485,7 @@ public class ProductPluginDeployer {
             plugin.setDisplayName((displayName != null) ? displayName : pluginName);
             plugin.setEnabled(true);
             plugin.setDescription(pluginDescriptor.getDescription());
+            plugin.setAmpsVersion(pluginDescriptor.getAmpsVersion());
 
             // get the last modified of the "real" plugin jar since that's the one the user touches
             long mtime = deploymentInfo.url.openConnection().getLastModified();

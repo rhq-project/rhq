@@ -9,7 +9,7 @@ call ../../../../dev-container/jbossas/bin/wsconsume.bat -k http://127.0.0.1:708
 
 call ../../../../dev-container/jbossas/bin/wsconsume.bat -k http://127.0.0.1:7080/rhq-rhq-enterprise-server-ejb3/OperationManagerBean?wsdl -p org.rhq.enterprise.server.ws
 
-call ../../../../dev-container/jbossas/bin/wsconsume.bat -k http://127.0.0.1:7080/rhq-rhq-enterprise-server-ejb3/ChannelManagerBean?wsdl -p org.rhq.enterprise.server.ws
+call ../../../../dev-container/jbossas/bin/wsconsume.bat -k http://127.0.0.1:7080/rhq-rhq-enterprise-server-ejb3/RepoManagerBean?wsdl -p org.rhq.enterprise.server.ws
 
 call ../../../../dev-container/jbossas/bin/wsconsume.bat -k http://127.0.0.1:7080/rhq-rhq-enterprise-server-ejb3/ConfigurationManagerBean?wsdl -p org.rhq.enterprise.server.ws
 

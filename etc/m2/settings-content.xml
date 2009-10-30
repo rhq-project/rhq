@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+  <!--===== a sample Maven 2 user settings file for the RHQ build =====-->
+
+  <!-- See: http://maven.apache.org/settings.html -->
+
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
+                              http://maven.apache.org/xsd/settings-1.0.0.xsd">
+
+  <!--
+    The below line can be uncommented if you want your local repo to be
+    in a more convenient location under Windows.
+  -->
+  <!--<localRepository>C:\.m2-repo</localRepository>-->
+
+  <!--
+    **************************** PROFILES ****************************
+  -->
+
+  <!--
+    See:
+    http://maven.apache.org/guides/introduction/introduction-to-profiles.html
+    and: http://docs.codehaus.org/display/MAVENUSER/Profiles
+  -->
+
+  <activeProfiles>
+    <activeProfile>test.content</activeProfile>
+  </activeProfiles>
+
+  <profiles>
+    <profile>
+      <!--  Profile to use to point test runs at a different db -->
+      <id>test.content</id>
+      <properties>
+        <rhq.test.ds.connection-url>jdbc:postgresql://127.0.0.1:5432/rhqcontent</rhq.test.ds.connection-url>
+        <DatabaseTest.nofail>true</DatabaseTest.nofail>
+      </properties>
+    </profile>
+  </profiles>
+  <pluginGroups>
+    <!--
+      This will allow you to invoke "org.rhq" Maven goals using the
+      "rhq" prefix
+    -->
+    <pluginGroup>org.rhq</pluginGroup>
+  </pluginGroups>
+</settings>

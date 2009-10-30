@@ -18,7 +18,7 @@
  */
 package org.rhq.enterprise.server.test;
 
-import org.rhq.enterprise.server.plugin.content.ContentSourcePluginServiceManagement;
+import org.rhq.enterprise.server.plugin.content.ContentProviderPluginServiceManagement;
 
-public interface TestContentSourcePluginServiceMBean extends ContentSourcePluginServiceManagement {
+public interface TestContentSourcePluginServiceMBean extends ContentProviderPluginServiceManagement {
 }

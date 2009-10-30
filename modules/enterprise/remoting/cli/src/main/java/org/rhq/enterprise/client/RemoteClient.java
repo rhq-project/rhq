@@ -34,7 +34,7 @@ import org.rhq.enterprise.server.alert.AlertManagerRemote;
 import org.rhq.enterprise.server.auth.SubjectManagerRemote;
 import org.rhq.enterprise.server.authz.RoleManagerRemote;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerRemote;
-import org.rhq.enterprise.server.content.ChannelManagerRemote;
+import org.rhq.enterprise.server.content.RepoManagerRemote;
 import org.rhq.enterprise.server.content.ContentManagerRemote;
 import org.rhq.enterprise.server.discovery.DiscoveryBossRemote;
 import org.rhq.enterprise.server.event.EventManagerRemote;
@@ -69,7 +69,7 @@ public class RemoteClient {
         AlertDefinitionManager(AlertDefinitionManagerRemote.class), //
         AvailabilityManager(AvailabilityManagerRemote.class), //
         CallTimeDataManager(CallTimeDataManagerRemote.class), // 
-        ChannelManager(ChannelManagerRemote.class), //
+        RepoManager(RepoManagerRemote.class), //
         ConfigurationManager(ConfigurationManagerRemote.class), //
         //ContentHelperManager(ContentHelperRemote.class), //
         ContentManager(ContentManagerRemote.class), //
@@ -274,8 +274,8 @@ public class RemoteClient {
         return RemoteClientProxy.getProcessor(this, Manager.CallTimeDataManager);
     }
 
-    public ChannelManagerRemote getChannelManagerRemote() {
-        return RemoteClientProxy.getProcessor(this, Manager.ChannelManager);
+    public RepoManagerRemote getRepoManagerRemote() {
+        return RemoteClientProxy.getProcessor(this, Manager.RepoManager);
     }
 
     public ConfigurationManagerRemote getConfigurationManagerRemote() {

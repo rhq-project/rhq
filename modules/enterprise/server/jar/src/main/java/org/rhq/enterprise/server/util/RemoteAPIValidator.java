@@ -38,7 +38,7 @@ import org.rhq.enterprise.server.alert.AlertManagerBean;
 import org.rhq.enterprise.server.auth.SubjectManagerBean;
 import org.rhq.enterprise.server.authz.RoleManagerBean;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerBean;
-import org.rhq.enterprise.server.content.ChannelManagerBean;
+import org.rhq.enterprise.server.content.RepoManagerBean;
 import org.rhq.enterprise.server.content.ContentManagerBean;
 import org.rhq.enterprise.server.event.EventManagerBean;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerBean;
@@ -67,7 +67,7 @@ public class RemoteAPIValidator {
         AlertManagerBean.class,//
         AvailabilityManagerBean.class,//
         CallTimeDataManagerBean.class, //
-        ChannelManagerBean.class,//
+        RepoManagerBean.class,//
         ConfigurationManagerBean.class, //
         ContentManagerBean.class, //
         //ContentSourceManagerBean.class, //

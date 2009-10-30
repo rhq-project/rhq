@@ -37,7 +37,7 @@ import java.util.Map;
  */
 public class SimpleIndexParser implements IndexParser {
 
-    public Map<String, RemotePackageInfo> parse(InputStream indexStream, UrlSource contentSource) throws Exception {
+    public Map<String, RemotePackageInfo> parse(InputStream indexStream, UrlProvider contentSource) throws Exception {
 
         Map<String, RemotePackageInfo> fileList = new HashMap<String, RemotePackageInfo>();
         BufferedReader reader = new BufferedReader(new InputStreamReader(indexStream));

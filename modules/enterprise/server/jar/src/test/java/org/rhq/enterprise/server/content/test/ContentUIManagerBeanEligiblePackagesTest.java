@@ -33,9 +33,9 @@ import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.PackageCategory;
 import org.rhq.core.domain.content.InstalledPackage;
-import org.rhq.core.domain.content.Channel;
-import org.rhq.core.domain.content.ResourceChannel;
-import org.rhq.core.domain.content.ChannelPackageVersion;
+import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.content.ResourceRepo;
+import org.rhq.core.domain.content.RepoPackageVersion;
 import org.rhq.core.domain.content.ProductVersionPackageVersion;
 import org.rhq.core.domain.content.composite.LoadedPackageBitsComposite;
 import org.rhq.core.domain.content.composite.PackageVersionComposite;
@@ -74,21 +74,21 @@ public class ContentUIManagerBeanEligiblePackagesTest extends AbstractEJB3Test {
     private Package package3;
     private Package package4;
 
-    private ChannelPackageVersion channelPackageVersion1;
-    private ChannelPackageVersion channelPackageVersion2;
-    private ChannelPackageVersion channelPackageVersion3;
-    private ChannelPackageVersion channelPackageVersion4;
+    private RepoPackageVersion repoPackageVersion1;
+    private RepoPackageVersion repoPackageVersion2;
+    private RepoPackageVersion repoPackageVersion3;
+    private RepoPackageVersion repoPackageVersion4;
 
     private InstalledPackage installedPackage1;
 
     private Resource resource;
     private ResourceType resourceType;
 
-    private Channel channel1;
-    private Channel channel2;
+    private Repo repo1;
+    private Repo repo2;
 
-    private ResourceChannel resourceChannel1;
-    private ResourceChannel resourceChannel2;
+    private ResourceRepo resourceRepo1;
+    private ResourceRepo resourceRepo2;
 
     private ProductVersion productVersion1;
     private ProductVersion productVersion2;
@@ -215,29 +215,29 @@ public class ContentUIManagerBeanEligiblePackagesTest extends AbstractEJB3Test {
 
                 em.persist(package4);
 
-                // Wire up the channel to the resource and add all of these packages to it
-                channel1 = new Channel("testChannel1");
-                em.persist(channel1);
+                // Wire up the repo to the resource and add all of these packages to it
+                repo1 = new Repo("testRepo1");
+                em.persist(repo1);
 
-                channelPackageVersion1 = channel1.addPackageVersion(packageVersion1);
-                channelPackageVersion2 = channel1.addPackageVersion(packageVersion2);
-                channelPackageVersion3 = channel1.addPackageVersion(packageVersion3);
-                channelPackageVersion4 = channel1.addPackageVersion(packageVersion4);
+                repoPackageVersion1 = repo1.addPackageVersion(packageVersion1);
+                repoPackageVersion2 = repo1.addPackageVersion(packageVersion2);
+                repoPackageVersion3 = repo1.addPackageVersion(packageVersion3);
+                repoPackageVersion4 = repo1.addPackageVersion(packageVersion4);
 
-                em.persist(channelPackageVersion1);
-                em.persist(channelPackageVersion2);
-                em.persist(channelPackageVersion3);
-                em.persist(channelPackageVersion4);
+                em.persist(repoPackageVersion1);
+                em.persist(repoPackageVersion2);
+                em.persist(repoPackageVersion3);
+                em.persist(repoPackageVersion4);
 
-                resourceChannel1 = channel1.addResource(resource);
-                em.persist(resourceChannel1);
+                resourceRepo1 = repo1.addResource(resource);
+                em.persist(resourceRepo1);
 
-                // Subscribe the resource to a second channel to make sure the joins won't duplicate stuff
-                channel2 = new Channel("testChannel2");
-                em.persist(channel2);
+                // Subscribe the resource to a second repo to make sure the joins won't duplicate stuff
+                repo2 = new Repo("testRepo2");
+                em.persist(repo2);
 
-                resourceChannel2 = channel2.addResource(resource);
-                em.persist(resourceChannel2);
+                resourceRepo2 = repo2.addResource(resource);
+                em.persist(resourceRepo2);
 
                 installedPackage1 = new InstalledPackage();
                 installedPackage1.setResource(resource);
@@ -261,11 +261,11 @@ public class ContentUIManagerBeanEligiblePackagesTest extends AbstractEJB3Test {
 
         try {
             try {
-                Query q = em.createNamedQuery(ChannelPackageVersion.DELETE_BY_CHANNEL_ID);
-                q.setParameter("channelId", channel1.getId());
+                Query q = em.createNamedQuery(RepoPackageVersion.DELETE_BY_REPO_ID);
+                q.setParameter("repoId", repo1.getId());
                 q.executeUpdate();
 
-                q = em.createNamedQuery(ResourceChannel.DELETE_BY_RESOURCE_ID);
+                q = em.createNamedQuery(ResourceRepo.DELETE_BY_RESOURCE_ID);
                 q.setParameter("resourceId", resource.getId());
                 q.executeUpdate();
 
@@ -306,11 +306,11 @@ public class ContentUIManagerBeanEligiblePackagesTest extends AbstractEJB3Test {
 
                 em.remove(resource);
 
-                channel1 = em.find(Channel.class, channel1.getId());
-                em.remove(channel1);
+                repo1 = em.find(Repo.class, repo1.getId());
+                em.remove(repo1);
 
-                channel2 = em.find(Channel.class, channel2.getId());
-                em.remove(channel2);
+                repo2 = em.find(Repo.class, repo2.getId());
+                em.remove(repo2);
 
                 productVersion1 = em.find(ProductVersion.class, productVersion1.getId());
                 em.remove(productVersion1);

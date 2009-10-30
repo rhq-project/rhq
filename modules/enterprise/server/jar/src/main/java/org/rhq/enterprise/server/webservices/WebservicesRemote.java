@@ -9,7 +9,7 @@ import org.rhq.enterprise.server.alert.AlertManagerRemote;
 import org.rhq.enterprise.server.auth.SubjectManagerRemote;
 import org.rhq.enterprise.server.authz.RoleManagerRemote;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerRemote;
-import org.rhq.enterprise.server.content.ChannelManagerRemote;
+import org.rhq.enterprise.server.content.RepoManagerRemote;
 import org.rhq.enterprise.server.content.ContentManagerRemote;
 import org.rhq.enterprise.server.discovery.DiscoveryBossRemote;
 import org.rhq.enterprise.server.event.EventManagerRemote;
@@ -37,7 +37,7 @@ public interface WebservicesRemote extends //
     AlertDefinitionManagerRemote, //
     AvailabilityManagerRemote,//
     CallTimeDataManagerRemote,//
-    ChannelManagerRemote,//
+    RepoManagerRemote,//
     ConfigurationManagerRemote,//
     ContentManagerRemote,//
     //Removed as it was problematic for WS clients. Not sure if this well be re-enabled.

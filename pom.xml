@@ -638,14 +638,14 @@
       <extension>
         <groupId>org.apache.maven.wagon</groupId>
         <artifactId>wagon-scm</artifactId>
-        <version>1.0-beta-4</version>
+        <version>1.0-beta-6</version>
       </extension>
 
       <!-- Add support for dav URLs in the distributionManagement section. -->
       <extension>
         <groupId>org.apache.maven.wagon</groupId>
-        <artifactId>wagon-webdav</artifactId>
-        <version>1.0-beta-2</version>
+        <artifactId>wagon-webdav-jackrabbit</artifactId>
+        <version>1.0-beta-6</version>
       </extension>
 
     </extensions>
@@ -694,7 +694,6 @@
   </modules>
 
   <profiles>
-
     <profile>
         <id>ojdbc-driver</id>
 

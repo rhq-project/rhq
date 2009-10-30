@@ -1059,7 +1059,7 @@ public class AgentConfiguration {
      * Returns <code>true</code> if the server authentication mode is enabled. If this is enabled, it means when using
      * secure communications, the server certificate will be authenticated with the certificates found in the agent's
      * truststore. If this is <code>false</code>, the server does not have to authenticate itself with a trusted
-     * certificate; the agent will trust any remote server (in other words, the secure communications channel will only
+     * certificate; the agent will trust any remote server (in other words, the secure communications repo will only
      * be used for encryption and not authentication).
      *
      * @return server authenticate mode

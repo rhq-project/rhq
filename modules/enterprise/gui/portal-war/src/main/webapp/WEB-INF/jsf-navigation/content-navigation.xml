@@ -14,14 +14,14 @@
       </navigation-case>
 
       <navigation-case>
-         <from-action>#{ResourceChannelsUIBean.deleteSelectedResourceChannels}</from-action>
+         <from-action>#{ResourceReposUIBean.deleteSelectedResourceRepos}</from-action>
          <from-outcome>success</from-outcome>
          <to-view-id>/rhq/resource/content/subscription.xhtml?id=#{param.id}</to-view-id>
          <redirect/>
       </navigation-case>
 
       <navigation-case>
-         <from-action>#{AvailableResourceChannelsUIBean.subscribeSelectedResourceChannels}</from-action>
+         <from-action>#{AvailableResourceReposUIBean.subscribeSelectedResourceRepos}</from-action>
          <from-outcome>success</from-outcome>
          <to-view-id>/rhq/resource/content/subscription.xhtml?id=#{param.id}</to-view-id>
          <redirect/>
@@ -184,90 +184,90 @@
 
    </navigation-rule>
 
-   <!-- Channel List -->
+   <!-- Repo List -->
    <navigation-rule>
-      <from-view-id>/rhq/content/listChannels.xhtml</from-view-id>
+      <from-view-id>/rhq/content/listRepos.xhtml</from-view-id>
 
       <navigation-case>
          <!-- catch all navigation-case: if any actions return 'success', go here -->
          <from-outcome>success</from-outcome>
-         <to-view-id>/rhq/content/listChannels.xhtml</to-view-id>
+         <to-view-id>/rhq/content/listRepos.xhtml</to-view-id>
          <redirect/>
       </navigation-case>
 
       <navigation-case>
-         <from-outcome>createNewChannel</from-outcome>
-         <to-view-id>/rhq/content/createChannel.xhtml</to-view-id>
+         <from-outcome>createNewRepo</from-outcome>
+         <to-view-id>/rhq/content/createRepo.xhtml</to-view-id>
          <redirect/>
       </navigation-case>
       
       <navigation-case>
          <!-- sorting rule --> 
          <from-outcome>sort</from-outcome>
-         <to-view-id>/rhq/content/listChannels.xhtml</to-view-id>
+         <to-view-id>/rhq/content/listRepos.xhtml</to-view-id>
          <redirect/>
       </navigation-case> 
       
    </navigation-rule>
 
-   <!-- Channel View -->
+   <!-- Repo View -->
    <navigation-rule>
-      <from-view-id>/rhq/content/channel.xhtml</from-view-id>
+      <from-view-id>/rhq/content/repo.xhtml</from-view-id>
 
       <navigation-case>
          <from-outcome>success</from-outcome>
-         <to-view-id>/rhq/content/channel.xhtml?mode=view&amp;id=#{param.id}</to-view-id>
+         <to-view-id>/rhq/content/repo.xhtml?mode=view&amp;id=#{param.id}</to-view-id>
          <redirect/>
       </navigation-case>
 
       <navigation-case>
          <from-outcome>edit</from-outcome>
-         <to-view-id>/rhq/content/channel.xhtml?mode=edit&amp;id=#{param.id}</to-view-id>
+         <to-view-id>/rhq/content/repo.xhtml?mode=edit&amp;id=#{param.id}</to-view-id>
          <redirect/>
       </navigation-case>
 
       <navigation-case>
-         <from-outcome>associateWithContentSources</from-outcome>
-         <to-view-id>/rhq/content/channelAssociations.xhtml?id=#{param.id}</to-view-id>
+         <from-outcome>associateWithContentProviders</from-outcome>
+         <to-view-id>/rhq/content/repoAssociations.xhtml?id=#{param.id}</to-view-id>
          <redirect/>
       </navigation-case>
 
       <navigation-case>
          <from-outcome>subscribeResources</from-outcome>
-         <to-view-id>/rhq/content/channelSubscriptions.xhtml?id=#{param.id}</to-view-id>
+         <to-view-id>/rhq/content/repoSubscriptions.xhtml?id=#{param.id}</to-view-id>
          <redirect/>
       </navigation-case>
 
       <navigation-case>
          <!-- sorting rule --> 
          <from-outcome>sort</from-outcome>
-         <to-view-id>/rhq/content/channel.xhtml?mode=view&amp;id=#{param.id}</to-view-id>
+         <to-view-id>/rhq/content/repo.xhtml?mode=view&amp;id=#{param.id}</to-view-id>
          <redirect/>
       </navigation-case> 
       
    </navigation-rule>
    
-   <!-- Content Source List -->
+   <!-- Content Provider List -->
    <navigation-rule>
-      <from-view-id>/rhq/content/listContentSources.xhtml</from-view-id>
+      <from-view-id>/rhq/content/listContentProviders.xhtml</from-view-id>
 
       <navigation-case>
          <!-- catch all navigation-case: if any actions return 'success', go here -->
          <from-outcome>success</from-outcome>
-         <to-view-id>/rhq/content/listContentSources.xhtml</to-view-id>
+         <to-view-id>/rhq/content/listContentProviders.xhtml</to-view-id>
          <redirect/>
       </navigation-case>
 
       <navigation-case>
          <from-outcome>createNewContentSource</from-outcome>
-         <to-view-id>/rhq/content/createContentSource.xhtml</to-view-id>
+         <to-view-id>/rhq/content/createContentProvider.xhtml</to-view-id>
          <redirect/>
       </navigation-case>
       
       <navigation-case>
          <!-- sorting rule --> 
          <from-outcome>sort</from-outcome>
-         <to-view-id>/rhq/content/listContentSources.xhtml</to-view-id>
+         <to-view-id>/rhq/content/listContentProviders.xhtml</to-view-id>
          <redirect/>
       </navigation-case> 
       
@@ -275,166 +275,166 @@
    
    <!-- Content Source View -->
    <navigation-rule>
-      <from-view-id>/rhq/content/contentSource.xhtml</from-view-id>
+      <from-view-id>/rhq/content/contentProvider.xhtml</from-view-id>
 
       <navigation-case>
          <from-outcome>success</from-outcome>
-         <to-view-id>/rhq/content/contentSource.xhtml?mode=view&amp;id=#{param.id}</to-view-id>
+         <to-view-id>/rhq/content/contentProvider.xhtml?mode=view&amp;id=#{param.id}</to-view-id>
          <redirect/>
       </navigation-case>
 
       <navigation-case>
          <from-outcome>edit</from-outcome>
-         <to-view-id>/rhq/content/contentSource.xhtml?mode=edit&amp;id=#{param.id}</to-view-id>
+         <to-view-id>/rhq/content/contentProvider.xhtml?mode=edit&amp;id=#{param.id}</to-view-id>
          <redirect/>
       </navigation-case>
 
       <navigation-case>
          <!-- sorting rule --> 
          <from-outcome>sort</from-outcome>
-         <to-view-id>/rhq/content/contentSource.xhtml?mode=view&amp;id=#{param.id}</to-view-id>
+         <to-view-id>/rhq/content/contentProvider.xhtml?mode=view&amp;id=#{param.id}</to-view-id>
          <redirect/>
       </navigation-case>
       
       <navigation-case>
          <from-action>#{ConfigHelperUIBean.accessMap}</from-action>
-         <to-view-id>/rhq/content/contentSource-view-map.xhtml</to-view-id>
+         <to-view-id>/rhq/content/contentProvider-view-map.xhtml</to-view-id>
       </navigation-case>
 
       <navigation-case>
          <from-action>#{ConfigHelperUIBean.accessMap}</from-action>
-         <to-view-id>/rhq/content/contentSource-edit-map.xhtml</to-view-id>
+         <to-view-id>/rhq/content/contentProvider-edit-map.xhtml</to-view-id>
       </navigation-case>
 
       <navigation-case>
          <from-action>#{ConfigHelperUIBean.addNewMap}</from-action>
-         <to-view-id>/rhq/content/contentSource-add-map.xhtml</to-view-id>
+         <to-view-id>/rhq/content/contentProvider-add-map.xhtml</to-view-id>
       </navigation-case>
 
    </navigation-rule>
 
    <!-- Content Source Creation -->
    <navigation-rule>
-      <from-view-id>/rhq/content/createContentSource.xhtml</from-view-id>
+      <from-view-id>/rhq/content/createContentProvider.xhtml</from-view-id>
 
       <navigation-case>
          <from-action>#{ConfigHelperUIBean.accessMap}</from-action>
-         <to-view-id>/rhq/content/createContentSource-edit-map.xhtml</to-view-id>
+         <to-view-id>/rhq/content/createContentProvider-edit-map.xhtml</to-view-id>
       </navigation-case>
 
       <navigation-case>
          <from-action>#{ConfigHelperUIBean.addNewMap}</from-action>
-         <to-view-id>/rhq/content/createContentSource-add-map.xhtml</to-view-id>
+         <to-view-id>/rhq/content/createContentProvider-add-map.xhtml</to-view-id>
       </navigation-case>
 
       <navigation-case>
          <from-outcome>save</from-outcome>
-         <to-view-id>/rhq/content/listContentSources.xhtml</to-view-id>
+         <to-view-id>/rhq/content/listContentProviders.xhtml</to-view-id>
          <redirect/>
       </navigation-case>
 
       <navigation-case>
          <from-outcome>cancel</from-outcome>
-         <to-view-id>/rhq/content/listContentSources.xhtml</to-view-id>
+         <to-view-id>/rhq/content/listContentProviders.xhtml</to-view-id>
       </navigation-case>
    </navigation-rule>
 
    <navigation-rule>
-      <from-view-id>/rhq/content/createContentSource-edit-map.xhtml</from-view-id>
+      <from-view-id>/rhq/content/createContentProvider-edit-map.xhtml</from-view-id>
 
       <navigation-case>
-         <to-view-id>/rhq/content/createContentSource.xhtml</to-view-id>
+         <to-view-id>/rhq/content/createContentProvider.xhtml</to-view-id>
       </navigation-case>
    </navigation-rule>
 
    <navigation-rule>
-      <from-view-id>/rhq/content/createContentSource-add-map.xhtml</from-view-id>
+      <from-view-id>/rhq/content/createContentProvider-add-map.xhtml</from-view-id>
 
       <navigation-case>
-         <to-view-id>/rhq/content/createContentSource.xhtml</to-view-id>
+         <to-view-id>/rhq/content/createContentProvider.xhtml</to-view-id>
       </navigation-case>
    </navigation-rule>
 
    <navigation-rule>
-      <from-view-id>/rhq/content/contentSource-view-map.xhtml</from-view-id>
+      <from-view-id>/rhq/content/contentProvider-view-map.xhtml</from-view-id>
 
       <navigation-case>
-         <to-view-id>/rhq/content/contentSource.xhtml</to-view-id>
+         <to-view-id>/rhq/content/contentProvider.xhtml</to-view-id>
       </navigation-case>
    </navigation-rule>
 
    <navigation-rule>
-      <from-view-id>/rhq/content/contentSource-edit-map.xhtml</from-view-id>
+      <from-view-id>/rhq/content/contentProvider-edit-map.xhtml</from-view-id>
 
       <navigation-case>
-         <to-view-id>/rhq/content/contentSource.xhtml</to-view-id>
+         <to-view-id>/rhq/content/contentProvider.xhtml</to-view-id>
       </navigation-case>
    </navigation-rule>
 
    <navigation-rule>
-      <from-view-id>/rhq/content/contentSource-add-map.xhtml</from-view-id>
+      <from-view-id>/rhq/content/contentProvider-add-map.xhtml</from-view-id>
 
       <navigation-case>
-         <to-view-id>/rhq/content/contentSource.xhtml</to-view-id>
+         <to-view-id>/rhq/content/contentProvider.xhtml</to-view-id>
       </navigation-case>
    </navigation-rule>
 
-   <!-- Channel Creation -->
+   <!-- Repo Creation -->
    <navigation-rule>
-      <from-view-id>/rhq/content/createChannel.xhtml</from-view-id>
+      <from-view-id>/rhq/content/createRepo.xhtml</from-view-id>
 
       <navigation-case>
          <from-outcome>save</from-outcome>
-         <to-view-id>/rhq/content/listChannels.xhtml</to-view-id>
+         <to-view-id>/rhq/content/listRepos.xhtml</to-view-id>
          <redirect/>
       </navigation-case>
 
       <navigation-case>
          <from-outcome>cancel</from-outcome>
-         <to-view-id>/rhq/content/listChannels.xhtml</to-view-id>
+         <to-view-id>/rhq/content/listRepos.xhtml</to-view-id>
       </navigation-case>
       
    </navigation-rule>
 
-   <!-- Channel Associations With Content Sources -->
+   <!-- Repo Associations With Content Sources -->
    <navigation-rule>
-      <from-view-id>/rhq/content/channelAssociations.xhtml</from-view-id>
+      <from-view-id>/rhq/content/repoAssociations.xhtml</from-view-id>
 
       <navigation-case>
          <from-outcome>success</from-outcome>
-         <to-view-id>/rhq/content/channelAssociations.xhtml?id=#{param.id}</to-view-id>
+         <to-view-id>/rhq/content/repoAssociations.xhtml?id=#{param.id}</to-view-id>
          <redirect/>
       </navigation-case>
 
       <navigation-case>
          <!-- sorting rule --> 
          <from-outcome>sort</from-outcome>
-         <to-view-id>/rhq/content/channelAssociations.xhtml?id=#{param.id}</to-view-id>
+         <to-view-id>/rhq/content/repoAssociations.xhtml?id=#{param.id}</to-view-id>
          <redirect/>
       </navigation-case> 
       
    </navigation-rule>
 
-   <!-- Channel Subscriptions -->
+   <!-- Repo Subscriptions -->
    <navigation-rule>
-      <from-view-id>/rhq/content/channelSubscriptions.xhtml</from-view-id>
+      <from-view-id>/rhq/content/repoSubscriptions.xhtml</from-view-id>
 
       <navigation-case>
          <from-outcome>success</from-outcome>
-         <to-view-id>/rhq/content/channelSubscriptions.xhtml?id=#{param.id}</to-view-id>
+         <to-view-id>/rhq/content/repoSubscriptions.xhtml?id=#{param.id}</to-view-id>
          <redirect/>
       </navigation-case>
 
       <navigation-case>
          <from-outcome>search</from-outcome>
-         <to-view-id>/rhq/content/channelSubscriptions.xhtml?id=#{param.id}</to-view-id>
+         <to-view-id>/rhq/content/repoSubscriptions.xhtml?id=#{param.id}</to-view-id>
          <redirect/>
       </navigation-case>
 
       <navigation-case>
          <!-- sorting rule --> 
          <from-outcome>sort</from-outcome>
-         <to-view-id>/rhq/content/channelSubscriptions.xhtml?id=#{param.id}</to-view-id>
+         <to-view-id>/rhq/content/repoSubscriptions.xhtml?id=#{param.id}</to-view-id>
          <redirect/>
       </navigation-case> 
       

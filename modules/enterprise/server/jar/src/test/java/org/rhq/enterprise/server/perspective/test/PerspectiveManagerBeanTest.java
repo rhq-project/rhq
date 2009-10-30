@@ -58,7 +58,7 @@ public class PerspectiveManagerBeanTest extends AbstractEJB3Test {
         // Test to make sure we get null for a random string
         assert (pm.getTasks(System.currentTimeMillis() + "", System.currentTimeMillis() + "") == null);
 
-        List<Task> tasks = pm.getTasks("channel", "1", "234", "890234");
+        List<Task> tasks = pm.getTasks("repo", "1", "234", "890234");
 
         assert (tasks != null);
         assert (tasks.size() > 0);

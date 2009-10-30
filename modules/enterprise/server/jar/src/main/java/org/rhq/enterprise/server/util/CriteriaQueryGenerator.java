@@ -271,7 +271,6 @@ public final class CriteriaQueryGenerator {
         results.append(NL);
 
         LOG.debug(results);
-        System.out.println(results);
         return results.toString();
     }
 

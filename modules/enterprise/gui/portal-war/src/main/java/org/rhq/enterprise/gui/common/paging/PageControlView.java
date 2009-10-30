@@ -29,26 +29,26 @@ import org.rhq.enterprise.gui.configuration.group.GroupResourceConfigurationHist
 import org.rhq.enterprise.gui.configuration.group.GroupResourceConfigurationHistoryUIBean;
 import org.rhq.enterprise.gui.configuration.history.ListConfigurationUpdateUIBean;
 import org.rhq.enterprise.gui.content.AuditTrailUIBean;
-import org.rhq.enterprise.gui.content.AvailableResourceChannelsUIBean;
-import org.rhq.enterprise.gui.content.ChannelAssociationsUIBean;
-import org.rhq.enterprise.gui.content.ChannelContentSourcesUIBean;
-import org.rhq.enterprise.gui.content.ChannelDisassociationsUIBean;
-import org.rhq.enterprise.gui.content.ChannelPackageVersionsUIBean;
-import org.rhq.enterprise.gui.content.ChannelResourcesUIBean;
-import org.rhq.enterprise.gui.content.ChannelSubscriptionsUIBean;
-import org.rhq.enterprise.gui.content.ChannelUnsubscriptionsUIBean;
-import org.rhq.enterprise.gui.content.ContentSourceChannelsUIBean;
+import org.rhq.enterprise.gui.content.AvailableResourceReposUIBean;
+import org.rhq.enterprise.gui.content.RepoAssociationsUIBean;
+import org.rhq.enterprise.gui.content.RepoContentSourcesUIBean;
+import org.rhq.enterprise.gui.content.RepoDisassociationsUIBean;
+import org.rhq.enterprise.gui.content.RepoPackageVersionsUIBean;
+import org.rhq.enterprise.gui.content.RepoResourcesUIBean;
+import org.rhq.enterprise.gui.content.RepoSubscriptionsUIBean;
+import org.rhq.enterprise.gui.content.RepoUnsubscriptionsUIBean;
+import org.rhq.enterprise.gui.content.ContentSourceReposUIBean;
 import org.rhq.enterprise.gui.content.ContentSourcePackageVersionsUIBean;
 import org.rhq.enterprise.gui.content.ContentSourceSyncResultsUIBean;
 import org.rhq.enterprise.gui.content.DeployPackagesUIBean;
-import org.rhq.enterprise.gui.content.ListChannelsUIBean;
+import org.rhq.enterprise.gui.content.ListReposUIBean;
 import org.rhq.enterprise.gui.content.ListCompletedContentRequestsUIBean;
 import org.rhq.enterprise.gui.content.ListContentSourcesUIBean;
 import org.rhq.enterprise.gui.content.ListInProgressContentRequestsUIBean;
 import org.rhq.enterprise.gui.content.ListPackageHistoryUIBean;
 import org.rhq.enterprise.gui.content.ListPackageTypesUIBean;
 import org.rhq.enterprise.gui.content.ListPackagesUIBean;
-import org.rhq.enterprise.gui.content.ResourceChannelsUIBean;
+import org.rhq.enterprise.gui.content.ResourceReposUIBean;
 import org.rhq.enterprise.gui.content.ResourcePackageVersionsUIBean;
 import org.rhq.enterprise.gui.content.ShowContentServiceRequestUIBean;
 import org.rhq.enterprise.gui.definition.group.GroupDefinitionUIBean;
@@ -123,31 +123,31 @@ public enum PageControlView {
     /** */
     ContentSourcesList(ListContentSourcesUIBean.class),
     /** */
-    ChannelsList(ListChannelsUIBean.class),
+    ReposList(ListReposUIBean.class),
     /** */
     ContentSourceSyncResultsList(ContentSourceSyncResultsUIBean.class),
     /** */
-    ContentSourceChannelsList(ContentSourceChannelsUIBean.class),
+    ContentSourceReposList(ContentSourceReposUIBean.class),
     /** */
-    ChannelContentSourcesList(ChannelContentSourcesUIBean.class),
+    RepoContentSourcesList(RepoContentSourcesUIBean.class),
     /** */
-    ChannelResourcesList(ChannelResourcesUIBean.class),
+    RepoResourcesList(RepoResourcesUIBean.class),
     /** */
     ContentSourcePackageVersionsList(ContentSourcePackageVersionsUIBean.class),
     /** */
-    ChannelPackageVersionsList(ChannelPackageVersionsUIBean.class),
+    RepoPackageVersionsList(RepoPackageVersionsUIBean.class),
     /** */
-    ChannelAssociationsList(ChannelAssociationsUIBean.class),
+    RepoAssociationsList(RepoAssociationsUIBean.class),
     /** */
-    ChannelDisassociationsList(ChannelDisassociationsUIBean.class),
+    RepoDisassociationsList(RepoDisassociationsUIBean.class),
     /** */
-    ChannelSubscriptionsList(ChannelSubscriptionsUIBean.class),
+    RepoSubscriptionsList(RepoSubscriptionsUIBean.class),
     /** */
-    ChannelUnsubscriptionsList(ChannelUnsubscriptionsUIBean.class),
+    RepoUnsubscriptionsList(RepoUnsubscriptionsUIBean.class),
     /** */
-    ResourceChannelsList(ResourceChannelsUIBean.class),
+    ResourceReposList(ResourceReposUIBean.class),
     /** */
-    AvailableResourceChannelsList(AvailableResourceChannelsUIBean.class),
+    AvailableResourceReposList(AvailableResourceReposUIBean.class),
     /** */
     ResourcePackageVersionsList(ResourcePackageVersionsUIBean.class),
     /** */
@@ -158,7 +158,7 @@ public enum PageControlView {
     AuditTrailList(AuditTrailUIBean.class),
 
     /** */
-    //AvailableResourcePackageVersionList(AvailableResourceChannelsUIBean.class),
+    //AvailableResourcePackageVersionList(AvailableResourceReposUIBean.class),
     // Alerts
     /** */
     AlertDefinitionsList(ListAlertDefinitionsUIBean.class),

@@ -158,10 +158,10 @@
             ]]>
          </help>
                   
-         <service name="JGroupsChannel"
-            description="The underlying JGroups channel for this cache instance"
-            class="JGroupsChannelComponent"
-            discovery="JGroupsChannelDiscovery">
+         <service name="JGroupsRepo"
+            description="The underlying JGroups repo for this cache instance"
+            class="JGroupsRepoComponent"
+            discovery="JGroupsRepoDiscovery">
          </service>
        </service>
        

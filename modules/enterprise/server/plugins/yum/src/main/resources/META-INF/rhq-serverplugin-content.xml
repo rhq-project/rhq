@@ -9,7 +9,7 @@
                       description="This content source retrieves packages from a local or remote Yum repository."
                       lazyLoad="true"
                       downloadMode="filesystem"
-                      apiClass="org.rhq.enterprise.server.plugins.yum.RepoSource">
+                      apiClass="org.rhq.enterprise.server.plugins.yum.RepoProvider">
 
       <configuration>
          <c:simple-property 

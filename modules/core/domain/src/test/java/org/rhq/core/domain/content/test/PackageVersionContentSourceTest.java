@@ -29,9 +29,9 @@ import org.testng.annotations.Test;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.Architecture;
-import org.rhq.core.domain.content.Channel;
-import org.rhq.core.domain.content.ChannelContentSource;
-import org.rhq.core.domain.content.ChannelPackageVersion;
+import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.content.RepoContentSource;
+import org.rhq.core.domain.content.RepoPackageVersion;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceType;
 import org.rhq.core.domain.content.Package;
@@ -40,7 +40,7 @@ import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.PackageVersionContentSource;
 import org.rhq.core.domain.content.PackageVersionContentSourcePK;
-import org.rhq.core.domain.content.ResourceChannel;
+import org.rhq.core.domain.content.ResourceRepo;
 import org.rhq.core.domain.content.composite.PackageVersionMetadataComposite;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -130,21 +130,21 @@ public class PackageVersionContentSourceTest extends AbstractEJB3Test {
             assert pvcs.getPackageVersionContentSourcePK().getPackageVersion().getGeneralPackage().getPackageType()
                 .getResourceType().equals(rt);
 
-            // add channel and subscribe resource to it; test metadata query
+            // add repo and subscribe resource to it; test metadata query
             em = getEntityManager();
-            Channel channel = new Channel("testPVCSChannel");
-            em.persist(channel);
-            ChannelContentSource ccsmapping = channel.addContentSource(cs);
+            Repo repo = new Repo("testPVCSRepo");
+            em.persist(repo);
+            RepoContentSource ccsmapping = repo.addContentSource(cs);
             em.persist(ccsmapping);
-            ResourceChannel subscription = channel.addResource(resource);
+            ResourceRepo subscription = repo.addResource(resource);
             em.persist(subscription);
-            ChannelPackageVersion mapping = channel.addPackageVersion(pv);
+            RepoPackageVersion mapping = repo.addPackageVersion(pv);
             em.persist(mapping);
             em.flush();
 
-            channel = em.find(Channel.class, channel.getId());
-            assert channel.getResources().contains(resource);
-            assert channel.getContentSources().contains(cs);
+            repo = em.find(Repo.class, repo.getId());
+            assert repo.getResources().contains(resource);
+            assert repo.getContentSources().contains(cs);
 
             q = em.createNamedQuery(PackageVersion.QUERY_FIND_METADATA_BY_RESOURCE_ID);
             q.setParameter("resourceId", resource.getId());
@@ -285,7 +285,7 @@ public class PackageVersionContentSourceTest extends AbstractEJB3Test {
             assert new String(bits.getBits()).equals(new String(findBits.getBits()));
 
             em = getEntityManager();
-            q = em.createNamedQuery(PackageVersion.DELETE_IF_NO_CONTENT_SOURCES_OR_CHANNELS);
+            q = em.createNamedQuery(PackageVersion.DELETE_IF_NO_CONTENT_SOURCES_OR_REPOS);
             assert 1 == q.executeUpdate();
             em.close();
 

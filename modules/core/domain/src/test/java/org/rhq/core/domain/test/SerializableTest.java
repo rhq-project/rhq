@@ -35,7 +35,7 @@ import java.util.List;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.content.Architecture;
-import org.rhq.core.domain.content.Channel;
+import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.ContentServiceRequest;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceType;
@@ -73,7 +73,7 @@ public class SerializableTest {
     public void testSerialization() {
         List<Serializable> objects = new ArrayList<Serializable>();
         Serializable[] simpleObjects = new Serializable[] { new AvailabilityReport(), new PackageType(),
-            new Architecture(), new Channel(), new ContentDiscoveryReport(), new ContentServiceRequest(),
+            new Architecture(), new Repo(), new ContentDiscoveryReport(), new ContentServiceRequest(),
             new ContentSource(), new ContentSourceType(), new InstalledPackage(), new Package(),
             new PackageInstallationStep(), new PackageType(), new PackageVersion() };
         objects.addAll(Arrays.asList(simpleObjects));

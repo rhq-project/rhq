@@ -28,8 +28,8 @@ import java.util.zip.GZIPOutputStream;
 import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
 
-import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetails;
-import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetailsKey;
+import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetails;
+import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetailsKey;
 import org.rhq.core.domain.content.PackageDetails;
 import org.rhq.enterprise.server.plugins.yum.Repodata.Meta;
 
@@ -111,8 +111,8 @@ public class Repo {
      * @throws Exception On all errors.
      */
     @SuppressWarnings("unchecked")
-    public List<ContentSourcePackageDetails> getPackageDetails() throws Exception {
-        List<ContentSourcePackageDetails> list = new ArrayList<ContentSourcePackageDetails>();
+    public List<ContentProviderPackageDetails> getPackageDetails() throws Exception {
+        List<ContentProviderPackageDetails> list = new ArrayList<ContentProviderPackageDetails>();
         Element primary = repodata.getMetadata(Meta.primary);
         for (Element p : (List<Element>) primary.getChildren("package", Repodata.yumns)) {
             list.add(getDetails(p));
@@ -217,13 +217,13 @@ public class Repo {
      *
      * @return A {@link org.rhq.core.domain.content.PackageDetails } object.
      */
-    private ContentSourcePackageDetails getDetails(Element p) throws Exception {
+    private ContentProviderPackageDetails getDetails(Element p) throws Exception {
         String name = p.getChildText("name", Repodata.yumns);
         String version = encodeVersion(p);
         String arch = p.getChildText("arch", Repodata.yumns);
-        ContentSourcePackageDetailsKey key = new ContentSourcePackageDetailsKey(name, version, "rpm", arch, "Linux",
+        ContentProviderPackageDetailsKey key = new ContentProviderPackageDetailsKey(name, version, "rpm", arch, "Linux",
             "Platforms");
-        ContentSourcePackageDetails pkg = new ContentSourcePackageDetails(key);
+        ContentProviderPackageDetails pkg = new ContentProviderPackageDetails(key);
         String filename = filename(p);
         pkg.setDisplayName(filename);
         pkg.setShortDescription(p.getChildText("summary", Repodata.yumns));

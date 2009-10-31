@@ -189,7 +189,6 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/bouncycastle/bcprov-jdk15/140/bcprov-jdk15-140.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/xmlrpc/xmlrpc-client/3.1.2/xmlrpc-client-3.1.2.jar" sourcepath="/M2_REPO/org/apache/xmlrpc/xmlrpc-client/3.1.2/xmlrpc-client-3.1.2-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/xmlrpc/xmlrpc-common/3.1.2/xmlrpc-common-3.1.2.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/net/sf/xmlrpc/xmlrpc/1.1.1/xmlrpc-1.1.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/ws/commons/util/ws-commons-util/1.0.2/ws-commons-util-1.0.2.jar"/>
 	<classpathentry exported="true" kind="lib" path="modules/enterprise/remoting/webservices/target/rhq-remoting-webservices-1.4.0-SNAPSHOT/wsconsume-output"/>
 	<classpathentry kind="var" path="M2_REPO/org/antlr/antlr-runtime/3.2/antlr-runtime-3.2.jar"/>

@@ -20,14 +20,18 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.core.clientapi.descriptor;
+package org.rhq.enterprise.server.xmlschema;
 
 /**
- * Defines the JAXB generated package names for the different schemas.
+ * Defines the JAXB generated package names for the different server-side XML schemas.
  *
  * @author John Mazzitelli
  */
-public interface DescriptorPackages {
-    String CONFIGURATION = "org.rhq.core.clientapi.descriptor.configuration";
-    String PC_PLUGIN = "org.rhq.core.clientapi.descriptor.plugin";
+public interface XmlSchemaPackages {
+    String SERVERPLUGIN = "org.rhq.enterprise.server.xmlschema.generated.serverplugin";
+    String SERVERPLUGIN_GENERIC = "org.rhq.enterprise.server.xmlschema.generated.serverplugin.generic";
+    String SERVERPLUGIN_CONTENT = "org.rhq.enterprise.server.xmlschema.generated.serverplugin.content";
+    String SERVERPLUGIN_PERSPECTIVE = "org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective";
+    String CONFIGURATION = "org.rhq.enterprise.server.xmlschema.generated.configuration";
+    String CONTENTSOURCE_PACKAGEDETAILS = "org.rhq.enterprise.server.xmlschema.generated.contentsource.packagedetails";
 }

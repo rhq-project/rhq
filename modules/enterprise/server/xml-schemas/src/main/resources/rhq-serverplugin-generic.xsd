@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
+           xmlns:generic="urn:xmlns:rhq-serverplugin.generic"
+           targetNamespace="urn:xmlns:rhq-serverplugin.generic"
+           elementFormDefault="qualified"
+           jaxb:version="2.0"
+           xmlns:jaxb="http://java.sun.com/xml/ns/jaxb"
+           blockDefault="">
+
+    <xs:import namespace="urn:xmlns:rhq-serverplugin" schemaLocation="rhq-serverplugin.xsd" />
+
+    <xs:annotation>
+        <xs:documentation>
+            Schema for a generic server-side plugins. This type of plugin does not
+            need any additional support from the server plugin container other than
+            simple lifecycle management (for example, be told when to start and stop).
+            The plugin is otherwise standalone and can do everything it needs to do
+            without additional help from the server plugin container.
+        </xs:documentation>
+        <xs:appinfo>
+            <jaxb:schemaBindings>
+                <jaxb:package name="org.rhq.enterprise.server.xmlschema.generated.serverplugin.generic" />
+            </jaxb:schemaBindings>
+        </xs:appinfo>
+    </xs:annotation>
+
+    <xs:element name="generic-plugin" substitutionGroup="serverplugin:server-plugin">
+        <xs:annotation>
+            <xs:documentation>
+                Defines a generic plugin.
+            </xs:documentation>
+            <xs:appinfo>
+                <jaxb:class name="GenericServerPluginDescriptor" />
+            </xs:appinfo>
+        </xs:annotation>
+    </xs:element>
+
+</xs:schema>

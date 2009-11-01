@@ -35,20 +35,19 @@ import org.rhq.enterprise.server.plugin.content.ContentProviderManager;
 import org.rhq.enterprise.server.plugin.content.ContentProviderPluginContainer;
 import org.rhq.enterprise.server.plugin.content.ContentProviderPluginContainerConfiguration;
 import org.rhq.enterprise.server.plugin.content.ContentProviderPluginManager;
-import org.rhq.enterprise.server.plugin.content.ContentProviderPluginService;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginService;
 
 /**
- * Used as a mock service for the content source plugin containr.
+ * Used as a mock service for the content source plugin container.
  */
-public class TestContentSourcePluginService extends ContentProviderPluginService implements
-    TestContentSourcePluginServiceMBean {
+public class TestContentSourcePluginService extends ServerPluginService implements TestContentSourcePluginServiceMBean {
     // public so tests can directly set these
     public Map<ContentSource, ContentProvider> testAdapters;
     public PackageSyncReport testLastSyncReport;
     public Map<ContentSource, Collection<ContentProviderPackageDetails>> testExistingPackages;
 
     @Override
-    protected ContentProviderPluginContainer createPluginContainer() {
+    protected ServerPluginContainer createPluginContainer() {
         ContentProviderPluginContainer pc = new TestContentSourcePluginContainer();
         ContentProviderPluginContainerConfiguration config = new ContentProviderPluginContainerConfiguration();
         try {

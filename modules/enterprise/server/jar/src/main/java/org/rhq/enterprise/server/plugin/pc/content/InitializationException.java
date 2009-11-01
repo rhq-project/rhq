@@ -16,9 +16,28 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.server.test;
 
-import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceManagement;
+package org.rhq.core.clientapi.server.plugin.content;
 
-public interface TestContentSourcePluginServiceMBean extends ServerPluginServiceManagement {
+/**
+ *
+ * @author pkilambi
+ */
+public class InitializationException extends Exception {
+    private static final long serialVersionUID = 1L;
+
+    public InitializationException() {
+    }
+
+    public InitializationException(String message) {
+        super(message);
+    }
+
+    public InitializationException(Throwable cause) {
+        super(cause);
+    }
+
+    public InitializationException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

@@ -52,7 +52,7 @@ import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.core.CustomJaasDeploymentServiceMBean;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
 import org.rhq.enterprise.server.core.plugin.AgentPluginDeploymentScannerMBean;
-import org.rhq.enterprise.server.plugin.content.ContentProviderPluginServiceManagement;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceManagement;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.scheduler.jobs.AsyncResourceDeleteJob;
@@ -384,12 +384,12 @@ public class StartupServlet extends HttpServlet {
 
         // Content Source Sync Jobs
         try {
-            ContentProviderPluginServiceManagement mbean;
+            ServerPluginServiceManagement mbean;
             MBeanServer mbs = MBeanServerLocator.locateJBoss();
-            ObjectName name = ObjectNameFactory.create(ContentProviderPluginServiceManagement.OBJECT_NAME_STR);
-            Class<?> iface = ContentProviderPluginServiceManagement.class;
-            mbean = (ContentProviderPluginServiceManagement) MBeanServerInvocationHandler.newProxyInstance(mbs, name,
-                iface, false);
+            ObjectName name = ObjectNameFactory.create(ServerPluginServiceManagement.OBJECT_NAME_STR);
+            Class<?> iface = ServerPluginServiceManagement.class;
+            mbean = (ServerPluginServiceManagement) MBeanServerInvocationHandler.newProxyInstance(mbs, name, iface,
+                false);
             mbean.getPluginContainer().scheduleSyncJobs();
         } catch (Exception e) {
             log("Cannot schedule content source sync jobs: " + e.getMessage());
@@ -535,12 +535,12 @@ public class StartupServlet extends HttpServlet {
         log("Starting the server plugin container...");
 
         try {
-            ContentProviderPluginServiceManagement mbean;
+            ServerPluginServiceManagement mbean;
             MBeanServer mbs = MBeanServerLocator.locateJBoss();
-            ObjectName name = ObjectNameFactory.create(ContentProviderPluginServiceManagement.OBJECT_NAME_STR);
-            Class<?> iface = ContentProviderPluginServiceManagement.class;
-            mbean = (ContentProviderPluginServiceManagement) MBeanServerInvocationHandler.newProxyInstance(mbs, name,
-                iface, false);
+            ObjectName name = ObjectNameFactory.create(ServerPluginServiceManagement.OBJECT_NAME_STR);
+            Class<?> iface = ServerPluginServiceManagement.class;
+            mbean = (ServerPluginServiceManagement) MBeanServerInvocationHandler.newProxyInstance(mbs, name, iface,
+                false);
             mbean.startPluginContainer();
         } catch (Exception e) {
             throw new ServletException("Cannot start the server plugin container!", e);

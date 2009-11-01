@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2009 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,14 +20,26 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.core.clientapi.descriptor;
+package org.rhq.enterprise.server.xmlschema;
+
+import java.net.URL;
+
+import org.testng.annotations.Test;
+
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptor;
 
 /**
- * Defines the JAXB generated package names for the different schemas.
- *
+ * Tests that we can parse server-side plugin descriptors.
+ * 
  * @author John Mazzitelli
  */
-public interface DescriptorPackages {
-    String CONFIGURATION = "org.rhq.core.clientapi.descriptor.configuration";
-    String PC_PLUGIN = "org.rhq.core.clientapi.descriptor.plugin";
+@Test
+public class ServerPluginDescriptorUtilTest {
+
+    public void testGenericPluginDescriptor() throws Exception {
+        URL url = this.getClass().getClassLoader().getResource("test-serverplugin-generic.jar");
+        ServerPluginDescriptor descriptor = ServerPluginDescriptorUtil.loadPluginDescriptorFromUrl(url);
+        assert descriptor != null;
+        return;
+    }
 }

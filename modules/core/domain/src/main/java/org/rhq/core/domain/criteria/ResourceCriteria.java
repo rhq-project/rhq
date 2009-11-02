@@ -73,7 +73,7 @@ public class ResourceCriteria extends Criteria {
     private boolean fetchOperationHistories;
     private boolean fetchInstalledPackages;
     private boolean fetchInstalledPackageHistory;
-    private boolean fetchResourceChannels;
+    private boolean fetchResourceRepos;
     private boolean fetchSchedules;
     private boolean fetchCurrentAvailability;
     private boolean fetchResourceErrors;
@@ -242,8 +242,8 @@ public class ResourceCriteria extends Criteria {
         this.fetchInstalledPackageHistory = fetchInstalledPackageHistory;
     }
 
-    public void fetchResourceChannels(boolean fetchResourceChannels) {
-        this.fetchResourceChannels = fetchResourceChannels;
+    public void fetchResourceRepos(boolean fetchResourceRepos) {
+        this.fetchResourceRepos = fetchResourceRepos;
     }
 
     public void fetchSchedules(boolean fetchSchedules) {

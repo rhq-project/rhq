@@ -52,8 +52,8 @@
             	action="/NavigationHub.do?ff=3&amp;categoryName=resource.navigation.jboss.JMSTopics"/>
             <Item name="JMSQueues" title="resource.navigation.jboss.JMSQueues" 
             	action="/NavigationHub.do?ff=3&amp;categoryName=resource.navigation.jboss.JMSQueues"/>
-       		<Item name="JGroupsChannels" title="resource.navigation.jboss.JGroupsChannels" 
-            	action="/NavigationHub.do?ff=3&amp;categoryName=resource.navigation.jboss.JGroupsChannels"/>	
+		<Item name="JGroupsRepos" title="resource.navigation.jboss.JGroupsRepos"
+		action="/NavigationHub.do?ff=3&amp;categoryName=resource.navigation.jboss.JGroupsRepos"/>
             	
         </Item>		           
        

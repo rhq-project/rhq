@@ -302,7 +302,7 @@
  ing sent, sshd will disconnect the client, terminating the ses-
  sion.  It is important to note that the use of client alive mes-
  sages is very different from TCPKeepAlive (below).  The client
- alive messages are sent through the encrypted channel and there-
+ alive messages are sent through the encrypted repo and there-
  fore will not be spoofable.  The TCP keepalive option enabled by
  TCPKeepAlive is spoofable.  The client alive mechanism is valu-
  able when the client or server depend on knowing when a connec-
@@ -316,7 +316,7 @@
             <c:simple-property name="ClientAliveInterval" required="false" description="
              Sets a timeout interval in seconds after which if no data has
              been received from the client, sshd(8) will send a message
-             through the encrypted channel to request a response from the
+             through the encrypted repo to request a response from the
              client.  The default is 0, indicating that these messages will
              not be sent to the client.  This option applies to protocol ver-
              sion 2 only."/>

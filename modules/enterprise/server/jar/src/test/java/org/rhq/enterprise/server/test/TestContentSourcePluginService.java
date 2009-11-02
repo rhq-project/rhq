@@ -25,47 +25,53 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.rhq.core.clientapi.server.plugin.content.ContentSourceAdapter;
-import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetails;
+import org.rhq.core.clientapi.server.plugin.content.ContentProvider;
+import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetails;
+import org.rhq.core.clientapi.server.plugin.content.InitializationException;
+import org.rhq.core.clientapi.server.plugin.content.PackageSource;
 import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
 import org.rhq.core.domain.content.ContentSource;
-import org.rhq.enterprise.server.plugin.content.ContentSourceAdapterManager;
-import org.rhq.enterprise.server.plugin.content.ContentSourcePluginContainer;
-import org.rhq.enterprise.server.plugin.content.ContentSourcePluginContainerConfiguration;
-import org.rhq.enterprise.server.plugin.content.ContentSourcePluginManager;
-import org.rhq.enterprise.server.plugin.content.ContentSourcePluginService;
+import org.rhq.enterprise.server.plugin.content.ContentProviderManager;
+import org.rhq.enterprise.server.plugin.content.ContentProviderPluginContainer;
+import org.rhq.enterprise.server.plugin.content.ContentProviderPluginContainerConfiguration;
+import org.rhq.enterprise.server.plugin.content.ContentProviderPluginManager;
+import org.rhq.enterprise.server.plugin.content.ContentProviderPluginService;
 
 /**
  * Used as a mock service for the content source plugin containr.
  */
-public class TestContentSourcePluginService extends ContentSourcePluginService implements
+public class TestContentSourcePluginService extends ContentProviderPluginService implements
     TestContentSourcePluginServiceMBean {
     // public so tests can directly set these
-    public Map<ContentSource, ContentSourceAdapter> testAdapters;
+    public Map<ContentSource, ContentProvider> testAdapters;
     public PackageSyncReport testLastSyncReport;
-    public Map<ContentSource, Collection<ContentSourcePackageDetails>> testExistingPackages;
+    public Map<ContentSource, Collection<ContentProviderPackageDetails>> testExistingPackages;
 
     @Override
-    protected ContentSourcePluginContainer createPluginContainer() {
-        ContentSourcePluginContainer pc = new TestContentSourcePluginContainer();
-        ContentSourcePluginContainerConfiguration config = new ContentSourcePluginContainerConfiguration();
-        pc.initialize(config);
+    protected ContentProviderPluginContainer createPluginContainer() {
+        ContentProviderPluginContainer pc = new TestContentSourcePluginContainer();
+        ContentProviderPluginContainerConfiguration config = new ContentProviderPluginContainerConfiguration();
+        try {
+            pc.initialize(config);
+        } catch (InitializationException e) {
+            e.printStackTrace();
+        }
         return pc;
     }
 
     /**
      * The test PC.
      */
-    class TestContentSourcePluginContainer extends ContentSourcePluginContainer {
+    class TestContentSourcePluginContainer extends ContentProviderPluginContainer {
         @Override
-        protected ContentSourceAdapterManager createAdapterManager(ContentSourcePluginManager pluginManager) {
+        protected ContentProviderManager createAdapterManager(ContentProviderPluginManager pluginManager) {
             TestContentSourceAdapterManager am = new TestContentSourceAdapterManager();
             am.initialize(pluginManager);
             return am;
         }
 
         @Override
-        protected ContentSourcePluginManager createPluginManager() {
+        protected ContentProviderPluginManager createPluginManager() {
             TestContentSourcePluginManager pm = new TestContentSourcePluginManager();
             pm.initialize();
             return pm;
@@ -75,9 +81,9 @@ public class TestContentSourcePluginService extends ContentSourcePluginService i
     /**
      * The test plugin manager.
      */
-    class TestContentSourcePluginManager extends ContentSourcePluginManager {
+    class TestContentSourcePluginManager extends ContentProviderPluginManager {
         @Override
-        protected void setConfiguration(ContentSourcePluginContainerConfiguration configuration) {
+        protected void setConfiguration(ContentProviderPluginContainerConfiguration configuration) {
             super.setConfiguration(configuration);
         }
 
@@ -93,14 +99,14 @@ public class TestContentSourcePluginService extends ContentSourcePluginService i
     /**
      * The test adapter manager.
      */
-    class TestContentSourceAdapterManager extends ContentSourceAdapterManager {
+    class TestContentSourceAdapterManager extends ContentProviderManager {
         @Override
         public Set<ContentSource> getAllContentSources() {
             return (testAdapters != null) ? testAdapters.keySet() : new HashSet<ContentSource>();
         }
 
         @Override
-        protected void initialize(ContentSourcePluginManager pluginManager) {
+        protected void initialize(ContentProviderPluginManager pluginManager) {
             createInitialAdaptersMap();
         }
 
@@ -113,7 +119,8 @@ public class TestContentSourcePluginService extends ContentSourcePluginService i
             if (testAdapters != null) {
                 for (ContentSource cs : testAdapters.keySet()) {
                     if (cs.getId() == contentSourceId) {
-                        return testAdapters.get(cs).getInputStream(location);
+                        PackageSource packageSource = (PackageSource) testAdapters.get(cs);
+                        return packageSource.getInputStream(location);
                     }
                 }
             }
@@ -129,7 +136,8 @@ public class TestContentSourcePluginService extends ContentSourcePluginService i
                 for (ContentSource cs : testAdapters.keySet()) {
                     if (cs.getId() == contentSourceId) {
                         testLastSyncReport = new PackageSyncReport();
-                        testAdapters.get(cs).synchronizePackages(testLastSyncReport, testExistingPackages.get(cs));
+                        PackageSource packageSource = (PackageSource) testAdapters.get(cs);
+                        packageSource.synchronizePackages(testLastSyncReport, testExistingPackages.get(cs));
                         return true;
                     }
                 }
@@ -157,7 +165,7 @@ public class TestContentSourcePluginService extends ContentSourcePluginService i
         }
 
         @Override
-        protected void setConfiguration(ContentSourcePluginContainerConfiguration config) {
+        protected void setConfiguration(ContentProviderPluginContainerConfiguration config) {
             super.setConfiguration(config);
         }
     }

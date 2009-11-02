@@ -170,7 +170,8 @@ public class EventSource implements Externalizable {
     public void writeExternal(ObjectOutput out) throws IOException {
         out.writeObject(this.eventDefinition);
         out.writeInt((this.resource != null) ? this.resource.getId() : 0);
-        out.writeUTF(this.location);
+        // this can be null when serializing a containing referencing Event, in which it is lazy loaded 
+        out.writeUTF((null == this.location) ? "" : this.location);
     }
 
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {

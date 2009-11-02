@@ -20,19 +20,19 @@ package org.rhq.enterprise.server.plugins.url;
 
 import java.net.URL;
 
-import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetails;
+import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetails;
 
 /**
  * Contains the full metadata about package content.
- * This encapsulates the information stored in {@link ContentSourcePackageDetails}.
+ * This encapsulates the information stored in {@link org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetails}.
  * 
  * @author John Mazzitelli
  */
 public class FullRemotePackageInfo extends RemotePackageInfo {
 
-    private final ContentSourcePackageDetails details;
+    private final ContentProviderPackageDetails details;
 
-    public FullRemotePackageInfo(URL url, ContentSourcePackageDetails details) {
+    public FullRemotePackageInfo(URL url, ContentProviderPackageDetails details) {
         super(details.getLocation(), url, details.getMD5());
         this.details = details;
 
@@ -40,12 +40,12 @@ public class FullRemotePackageInfo extends RemotePackageInfo {
         SupportedPackageType type = new SupportedPackageType();
         type.packageTypeName = details.getPackageTypeName();
         type.architectureName = details.getArchitectureName();
-        type.resourceTypeName = details.getContentSourcePackageDetailsKey().getResourceTypeName();
-        type.resourceTypePluginName = details.getContentSourcePackageDetailsKey().getResourceTypePluginName();
+        type.resourceTypeName = details.getContentProviderPackageDetailsKey().getResourceTypeName();
+        type.resourceTypePluginName = details.getContentProviderPackageDetailsKey().getResourceTypePluginName();
         setSupportedPackageType(type);
     }
 
-    public ContentSourcePackageDetails getContentSourcePackageDetails() {
+    public ContentProviderPackageDetails getContentSourcePackageDetails() {
         return details;
     }
 

@@ -30,22 +30,22 @@ import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.util.ObjectNameFactory;
-import org.rhq.enterprise.server.plugin.content.ContentSourcePluginContainer;
-import org.rhq.enterprise.server.plugin.content.ContentSourcePluginServiceManagement;
+import org.rhq.enterprise.server.plugin.content.ContentProviderPluginContainer;
+import org.rhq.enterprise.server.plugin.content.ContentProviderPluginServiceManagement;
 
 /**
  * ContentManagerHelper - Helper class to contain common methods needed by the Content managers.
  */
 public class ContentManagerHelper {
-    public static ContentSourcePluginContainer getPluginContainer() throws Exception {
-        ContentSourcePluginContainer pc = null;
+    public static ContentProviderPluginContainer getPluginContainer() throws Exception {
+        ContentProviderPluginContainer pc = null;
 
         try {
-            ContentSourcePluginServiceManagement mbean;
+            ContentProviderPluginServiceManagement mbean;
             MBeanServer mbs = MBeanServerLocator.locateJBoss();
-            ObjectName name = ObjectNameFactory.create(ContentSourcePluginServiceManagement.OBJECT_NAME_STR);
-            Class<?> iface = ContentSourcePluginServiceManagement.class;
-            mbean = (ContentSourcePluginServiceManagement) MBeanServerInvocationHandler.newProxyInstance(mbs, name,
+            ObjectName name = ObjectNameFactory.create(ContentProviderPluginServiceManagement.OBJECT_NAME_STR);
+            Class<?> iface = ContentProviderPluginServiceManagement.class;
+            mbean = (ContentProviderPluginServiceManagement) MBeanServerInvocationHandler.newProxyInstance(mbs, name,
                 iface, false);
             if (!mbean.isPluginContainerStarted()) {
                 throw new IllegalStateException("The content source plugin container is not started!");

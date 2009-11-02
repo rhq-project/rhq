@@ -54,7 +54,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.common.SystemConfiguration;
 import org.rhq.core.domain.content.Architecture;
-import org.rhq.core.domain.content.Channel;
+import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.ContentServiceRequest;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceSyncResults;
@@ -136,7 +136,7 @@ public class QueryAllTest extends AbstractEJB3Test {
         ResourceType.class.getSimpleName(),
 
         // content stuff
-        Architecture.class.getSimpleName(), Channel.class.getSimpleName(), ContentServiceRequest.class.getSimpleName(),
+        Architecture.class.getSimpleName(), Repo.class.getSimpleName(), ContentServiceRequest.class.getSimpleName(),
         ContentSource.class.getSimpleName(), ContentSourceType.class.getSimpleName(),
         InstalledPackage.class.getSimpleName(), Package.class.getSimpleName(), PackageBits.class.getSimpleName(),
         PackageInstallationStep.class.getSimpleName(), PackageType.class.getSimpleName(),

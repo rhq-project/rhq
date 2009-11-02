@@ -29,8 +29,8 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathFactory;
 
-import churchillobjects.rss4j.RssChannel;
-import churchillobjects.rss4j.RssChannelItem;
+import churchillobjects.rss4j.RssRepo;
+import churchillobjects.rss4j.RssRepoItem;
 import churchillobjects.rss4j.RssDocument;
 import churchillobjects.rss4j.RssDublinCore;
 import churchillobjects.rss4j.RssJbnDependency;
@@ -91,7 +91,7 @@ public class RssFeedParser {
         // Used to determine if a package was already sent to the server or is new
         Map<PackageDetailsKey, ContentSourcePackageDetails> existingPackageMap = unpack(existingPackages);
 
-        Enumeration channels = feed.channels();
+        Enumeration repos = feed.repos();
 
         // do setup in preparation for parsing the automated installation instructions
         DocumentBuilderFactory xmlFact = DocumentBuilderFactory.newInstance();
@@ -101,12 +101,12 @@ public class RssFeedParser {
         XPath xpath = XPathFactory.newInstance().newXPath();
         String instructionExpression = "/automatedInstallation/instructions/instructionSet";
 
-        while (channels.hasMoreElements()) {
-            RssChannel channel = (RssChannel) channels.nextElement();
-            Enumeration channeltems = channel.items();
+        while (repos.hasMoreElements()) {
+            RssRepo repo = (RssRepo) repos.nextElement();
+            Enumeration repotems = repo.items();
 
-            while (channeltems.hasMoreElements()) {
-                RssChannelItem item = (RssChannelItem) channeltems.nextElement();
+            while (repotems.hasMoreElements()) {
+                RssRepoItem item = (RssRepoItem) repotems.nextElement();
 
                 RssJbnPatch patch = item.getJbnPatch();
                 RssDublinCore dublinCore = item.getDublinCore();

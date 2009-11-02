@@ -1,0 +1,339 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="rhn-satellite" type="rhn-satelliteType"/>
+  <xs:complexType name="rhn-packageType">
+    <xs:sequence>
+      <xs:element type="xs:string" name="rhn-package-summary"/>
+      <xs:element type="xs:string" name="rhn-package-description"/>
+      <xs:element type="xs:string" name="rhn-package-vendor"/>
+      <xs:element type="xs:string" name="rhn-package-copyright"/>
+      <xs:element type="rhn-package-header-sigType" name="rhn-package-header-sig"/>
+      <xs:element type="xs:string" name="rhn-package-header-start"/>
+      <xs:element type="xs:string" name="rhn-package-header-end"/>
+      <xs:element type="rhn-package-changelogType" name="rhn-package-changelog"/>
+      <xs:element type="rhn-package-requiresType" name="rhn-package-requires"/>
+      <xs:element type="rhn-package-providesType" name="rhn-package-provides"/>
+      <xs:element type="xs:string" name="rhn-package-conflicts"/>
+      <xs:element type="rhn-package-obsoletesType" name="rhn-package-obsoletes"/>
+      <xs:element type="rhn-package-filesType" name="rhn-package-files"/>
+    </xs:sequence>
+    <xs:attribute type="xs:string" name="compat" use="optional"/>
+    <xs:attribute type="xs:string" name="payload-size" use="optional"/>
+    <xs:attribute type="xs:string" name="name" use="optional"/>
+    <xs:attribute type="xs:string" name="package-size" use="optional"/>
+    <xs:attribute type="xs:string" name="package-group" use="optional"/>
+    <xs:attribute type="xs:string" name="build-time" use="optional"/>
+    <xs:attribute type="xs:string" name="source-rpm" use="optional"/>
+    <xs:attribute type="xs:string" name="md5sum" use="optional"/>
+    <xs:attribute type="xs:string" name="payload-format" use="optional"/>
+    <xs:attribute type="xs:string" name="package-arch" use="optional"/>
+    <xs:attribute type="xs:string" name="rpm-version" use="optional"/>
+    <xs:attribute type="xs:string" name="last-modified" use="optional"/>
+    <xs:attribute type="xs:string" name="epoch" use="optional"/>
+    <xs:attribute type="xs:string" name="version" use="optional"/>
+    <xs:attribute type="xs:string" name="cookie" use="optional"/>
+    <xs:attribute type="xs:string" name="release" use="optional"/>
+    <xs:attribute type="xs:string" name="build-host" use="optional"/>
+    <xs:attribute type="xs:string" name="id" use="optional"/>
+  </xs:complexType>
+  <xs:complexType name="rhn-package-obsoletesType" mixed="true">
+    <xs:sequence>
+      <xs:element type="rhn-package-obsoletes-entryType" name="rhn-package-obsoletes-entry" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="rhn-distsType" mixed="true">
+    <xs:sequence>
+      <xs:element type="rhn-distType" name="rhn-dist" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="rhn-channel-familiesType">
+    <xs:sequence>
+      <xs:element type="rhn-channel-familyType" name="rhn-channel-family" maxOccurs="unbounded" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="rhn-packages-shortType">
+    <xs:sequence>
+      <xs:element type="rhn-package-shortType" name="rhn-package-short" maxOccurs="unbounded" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="rhn-package-provides-entryType">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attribute type="xs:string" name="version" use="optional"/>
+        <xs:attribute type="xs:string" name="name" use="optional"/>
+        <xs:attribute type="xs:string" name="sense" use="optional"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="rhn-product-namesType">
+    <xs:sequence>
+      <xs:element type="rhn-product-nameType" name="rhn-product-name" maxOccurs="unbounded" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="rhn-package-filesType">
+    <xs:sequence>
+      <xs:element type="rhn-package-fileType" name="rhn-package-file" maxOccurs="unbounded" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="erratumType">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attribute type="xs:string" name="last-modified" use="optional"/>
+        <xs:attribute type="xs:string" name="id" use="optional"/>
+        <xs:attribute type="xs:string" name="advisory-name" use="optional"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="rhn-satelliteType">
+    <xs:sequence>
+      <xs:element type="rhn-channel-familiesType" name="rhn-channel-families" minOccurs="0"/>
+      <xs:element type="rhn-channelsType" name="rhn-channels" minOccurs="0"/>
+      <xs:element type="rhn-kickstartable-treesType" name="rhn-kickstartable-trees" minOccurs="0"/>
+      <xs:element type="rhn-packages-shortType" name="rhn-packages-short" minOccurs="0"/>
+      <xs:element type="rhn-packagesType" name="rhn-packages" minOccurs="0"/>
+      <xs:element type="rhn-product-namesType" name="rhn-product-names" minOccurs="0"/>
+      <xs:element type="rhn-source-packagesType" name="rhn-source-packages" minOccurs="0"/>
+    </xs:sequence>
+    <xs:attribute type="xs:string" name="generation" use="optional"/>
+    <xs:attribute type="xs:string" name="version" use="optional"/>
+  </xs:complexType>
+  <xs:complexType name="source-packageType">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attribute type="xs:string" name="last-modified" use="optional"/>
+        <xs:attribute type="xs:string" name="id" use="optional"/>
+        <xs:attribute type="xs:string" name="source-rpm" use="optional"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="rhn-distType">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attribute type="xs:string" name="release" use="optional"/>
+        <xs:attribute type="xs:string" name="channel-arch" use="optional"/>
+        <xs:attribute type="xs:string" name="os" use="optional"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="rhn-product-nameType">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attribute type="xs:string" name="name" use="optional"/>
+        <xs:attribute type="xs:string" name="label" use="optional"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="rhn-package-changelog-entryType">
+    <xs:sequence>
+      <xs:element type="xs:string" name="rhn-package-changelog-entry-name"/>
+      <xs:element type="xs:string" name="rhn-package-changelog-entry-text"/>
+      <xs:element type="xs:string" name="rhn-package-changelog-entry-time"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="rhn-package-changelogType">
+    <xs:sequence>
+      <xs:element type="rhn-package-changelog-entryType" name="rhn-package-changelog-entry" maxOccurs="unbounded" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="rhn-package-shortType">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attribute type="xs:string" name="name" use="optional"/>
+        <xs:attribute type="xs:string" name="package-size" use="optional"/>
+        <xs:attribute type="xs:string" name="md5sum" use="optional"/>
+        <xs:attribute type="xs:string" name="package-arch" use="optional"/>
+        <xs:attribute type="xs:string" name="last-modified" use="optional"/>
+        <xs:attribute type="xs:string" name="epoch" use="optional"/>
+        <xs:attribute type="xs:string" name="version" use="optional"/>
+        <xs:attribute type="xs:string" name="release" use="optional"/>
+        <xs:attribute type="xs:string" name="id" use="optional"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="rhn-package-providesType">
+    <xs:sequence>
+      <xs:element type="rhn-package-provides-entryType" name="rhn-package-provides-entry" maxOccurs="unbounded" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="rhn-package-fileType">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attribute type="xs:string" name="username" use="optional"/>
+        <xs:attribute type="xs:string" name="lang" use="optional"/>
+        <xs:attribute type="xs:string" name="name" use="optional"/>
+        <xs:attribute type="xs:string" name="verifyflags" use="optional"/>
+        <xs:attribute type="xs:string" name="rdev" use="optional"/>
+        <xs:attribute type="xs:string" name="groupname" use="optional"/>
+        <xs:attribute type="xs:string" name="mtime" use="optional"/>
+        <xs:attribute type="xs:string" name="file_size" use="optional"/>
+        <xs:attribute type="xs:string" name="device" use="optional"/>
+        <xs:attribute type="xs:string" name="flags" use="optional"/>
+        <xs:attribute type="xs:string" name="md5" use="optional"/>
+        <xs:attribute type="xs:string" name="inode" use="optional"/>
+        <xs:attribute type="xs:string" name="linkto" use="optional"/>
+        <xs:attribute type="xs:string" name="file_mode" use="optional"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="rhn-channel-parent-channelType" mixed="true">
+    <xs:sequence>
+      <xs:element type="xs:string" name="rhn-null" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="rhn-source-packageType">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attribute type="xs:string" name="md5sum" use="optional"/>
+        <xs:attribute type="xs:string" name="payload-size" use="optional"/>
+        <xs:attribute type="xs:string" name="package-size" use="optional"/>
+        <xs:attribute type="xs:string" name="package-group" use="optional"/>
+        <xs:attribute type="xs:string" name="build-time" use="optional"/>
+        <xs:attribute type="xs:string" name="sigmd5" use="optional"/>
+        <xs:attribute type="xs:string" name="source-rpm" use="optional"/>
+        <xs:attribute type="xs:string" name="rpm-version" use="optional"/>
+        <xs:attribute type="xs:string" name="build-host" use="optional"/>
+        <xs:attribute type="xs:string" name="cookie" use="optional"/>
+        <xs:attribute type="xs:string" name="vendor" use="optional"/>
+        <xs:attribute type="xs:string" name="last-modified" use="optional"/>
+        <xs:attribute type="xs:string" name="id" use="optional"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="rhn-channel-familyType" mixed="true">
+    <xs:sequence>
+      <xs:element type="xs:string" name="rhn-channel-family-name" minOccurs="0"/>
+      <xs:element type="xs:string" name="rhn-channel-family-product-url" minOccurs="0"/>
+    </xs:sequence>
+    <xs:attribute type="xs:string" name="channel-labels" use="optional"/>
+    <xs:attribute type="xs:string" name="id" use="optional"/>
+    <xs:attribute type="xs:string" name="label" use="optional"/>
+    <xs:attribute type="xs:string" name="max-members" use="optional"/>
+    <xs:attribute type="xs:string" name="virt-sub-level-label" use="optional"/>
+    <xs:attribute type="xs:string" name="virt-sub-level-name" use="optional"/>
+  </xs:complexType>
+  <xs:complexType name="rhn-kickstart-fileType">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attribute type="xs:string" name="file-size" use="optional"/>
+        <xs:attribute type="xs:string" name="md5sum" use="optional"/>
+        <xs:attribute type="xs:string" name="relative-path" use="optional"/>
+        <xs:attribute type="xs:string" name="last-modified" use="optional"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="rhn-packagesType">
+    <xs:sequence>
+      <xs:element type="rhn-packageType" name="rhn-package" maxOccurs="unbounded" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="rhn-package-obsoletes-entryType">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attribute type="xs:string" name="version" use="optional"/>
+        <xs:attribute type="xs:string" name="name" use="optional"/>
+        <xs:attribute type="xs:string" name="sense" use="optional"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="rhn-package-header-sigType">
+    <xs:sequence>
+      <xs:element type="xs:string" name="rhn-null"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="rhn-source-packagesType">
+    <xs:sequence>
+      <xs:element type="rhn-source-packageType" name="rhn-source-package" maxOccurs="unbounded" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="rhn-kickstart-filesType">
+    <xs:sequence>
+      <xs:element type="rhn-kickstart-fileType" name="rhn-kickstart-file" maxOccurs="unbounded" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="rhn-channel-descriptionType">
+    <xs:sequence>
+      <xs:element type="xs:string" name="rhn-null" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="rhn-kickstartable-treeType">
+    <xs:sequence>
+      <xs:element type="rhn-kickstart-filesType" name="rhn-kickstart-files"/>
+    </xs:sequence>
+    <xs:attribute type="xs:string" name="kstree-type-name" use="optional"/>
+    <xs:attribute type="xs:string" name="boot-image" use="optional"/>
+    <xs:attribute type="xs:string" name="kstree-type-label" use="optional"/>
+    <xs:attribute type="xs:string" name="label" use="optional"/>
+    <xs:attribute type="xs:string" name="last-modified" use="optional"/>
+    <xs:attribute type="xs:string" name="install-type-name" use="optional"/>
+    <xs:attribute type="xs:string" name="base-path" use="optional"/>
+    <xs:attribute type="xs:string" name="install-type-label" use="optional"/>
+    <xs:attribute type="xs:string" name="channel" use="optional"/>
+  </xs:complexType>
+  <xs:complexType name="rhn-channel-errataType">
+    <xs:sequence>
+      <xs:element type="erratumType" name="erratum" maxOccurs="unbounded" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="rhn-kickstartable-treesType">
+    <xs:sequence>
+      <xs:element type="rhn-kickstartable-treeType" name="rhn-kickstartable-tree" maxOccurs="unbounded" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="rhn-channelsType">
+    <xs:sequence>
+      <xs:element type="rhn-channelType" name="rhn-channel" maxOccurs="unbounded" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="rhn-channelType">
+    <xs:sequence>
+      <xs:element type="rhn-channel-parent-channelType" name="rhn-channel-parent-channel"/>
+      <xs:element type="xs:string" name="rhn-channel-basedir"/>
+      <xs:element type="xs:string" name="rhn-channel-name"/>
+      <xs:element type="xs:string" name="rhn-channel-summary"/>
+      <xs:element name="rhn-channel-description">
+        <xs:complexType mixed="true">
+          <xs:sequence>
+            <xs:element type="xs:string" name="rhn-null" minOccurs="0"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element type="xs:string" name="rhn-channel-gpg-key-url"/>
+      <xs:element type="xs:string" name="rhn-channel-receiving-updates"/>
+      <xs:element type="xs:string" name="rhn-channel-last-modified"/>
+      <xs:element type="xs:string" name="rhn-channel-product-name"/>
+      <xs:element type="xs:string" name="rhn-channel-product-version"/>
+      <xs:element type="xs:string" name="rhn-channel-product-beta"/>
+      <xs:element type="rhn-channel-familiesType" name="rhn-channel-families"/>
+      <xs:element type="rhn-distsType" name="rhn-dists"/>
+      <xs:element type="source-packagesType" name="source-packages"/>
+      <xs:element type="rhn-channel-errataType" name="rhn-channel-errata"/>
+      <xs:element type="xs:string" name="rhn-release"/>
+    </xs:sequence>
+    <xs:attribute type="xs:string" name="channel-arch" use="optional"/>
+    <xs:attribute type="xs:string" name="has-comps" use="optional"/>
+    <xs:attribute type="xs:string" name="channel-errata" use="optional"/>
+    <xs:attribute type="xs:string" name="kickstartable-trees" use="optional"/>
+    <xs:attribute type="xs:string" name="label" use="optional"/>
+    <xs:attribute type="xs:string" name="packages" use="optional"/>
+    <xs:attribute type="xs:string" name="channel-id" use="optional"/>
+  </xs:complexType>
+  <xs:complexType name="rhn-package-requires-entryType">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attribute type="xs:string" name="version" use="optional"/>
+        <xs:attribute type="xs:string" name="name" use="optional"/>
+        <xs:attribute type="xs:string" name="sense" use="optional"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="source-packagesType">
+    <xs:sequence>
+      <xs:element type="source-packageType" name="source-package" maxOccurs="unbounded" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="rhn-package-requiresType">
+    <xs:sequence>
+      <xs:element type="rhn-package-requires-entryType" name="rhn-package-requires-entry" maxOccurs="unbounded" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>

@@ -81,7 +81,7 @@ public class ProductVersionPackageVersion implements Serializable {
 
     @Override
     public String toString() {
-        StringBuilder str = new StringBuilder("ChannelPV: ");
+        StringBuilder str = new StringBuilder("RepoPV: ");
         str.append("prd=[").append(this.productVersion).append("]");
         str.append(", pkg=[").append(this.packageVersion).append("]");
         return str.toString();

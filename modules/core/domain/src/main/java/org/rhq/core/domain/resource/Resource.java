@@ -69,11 +69,11 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
-import org.rhq.core.domain.content.Channel;
+import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.ContentServiceRequest;
 import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.InstalledPackageHistory;
-import org.rhq.core.domain.content.ResourceChannel;
+import org.rhq.core.domain.content.ResourceRepo;
 import org.rhq.core.domain.event.EventSource;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
@@ -456,13 +456,13 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "  FROM ResourceGroup rg JOIN rg.explicitResources res " //
         + " WHERE rg.id = :groupId " //
         + "   AND res.inventoryStatus = 'COMMITTED' "),
-    @NamedQuery(name = Resource.QUERY_GET_AVAILABLE_RESOURCES_FOR_CHANNEL, query = "" //
+    @NamedQuery(name = Resource.QUERY_GET_AVAILABLE_RESOURCES_FOR_REPO, query = "" //
         + "  SELECT res " //  
         + "    FROM Resource AS res " //
         + "   WHERE res.id NOT IN " //
         + "       ( SELECT rc.resource.id " //
-        + "           FROM ResourceChannel rc " //
-        + "          WHERE rc.channel.id = :channelId ) " //
+        + "           FROM ResourceRepo rc " //
+        + "          WHERE rc.repo.id = :repoId ) " //
         + "     AND (:category = res.resourceType.category OR :category IS NULL) " //
         + "     AND (res.inventoryStatus = :inventoryStatus) " //
         + "     AND (UPPER(res.name) LIKE :search OR :search is null) "),
@@ -808,7 +808,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
     public static final String QUERY_FIND_EXPLICIT_RESOURCES_FOR_RESOURCE_GROUP_COUNT = "ResourceWithAvailability.findExplicitByResourceGroup_count";
     public static final String QUERY_FIND_EXPLICIT_RESOURCES_FOR_RESOURCE_GROUP_COUNT_ADMIN = "ResourceWithAvailability.findExplicitByResourceGroup_count_admin";
 
-    public static final String QUERY_GET_AVAILABLE_RESOURCES_FOR_CHANNEL = "Resource.getAvailableResourcesForChannel";
+    public static final String QUERY_GET_AVAILABLE_RESOURCES_FOR_REPO = "Resource.getAvailableResourcesForRepo";
 
     public static final String QUERY_GET_AVAILABLE_RESOURCES_FOR_RESOURCE_GROUP = "Resource.getAvailableResourcesForResourceGroup";
     public static final String QUERY_GET_AVAILABLE_RESOURCES_FOR_RESOURCE_GROUP_WITH_EXCLUDES = "Resource.getAvailableResourcesForResourceGroupWithExcludes";
@@ -989,7 +989,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
 
     // bulk delete
     @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY)
-    private Set<ResourceChannel> resourceChannels = new HashSet<ResourceChannel>();
+    private Set<ResourceRepo> resourceRepos = new HashSet<ResourceRepo>();
 
     // bulk delete @OneToMany(mappedBy = "resource", cascade = CascadeType.REMOVE)
     @OneToMany(mappedBy = "resource")
@@ -1465,71 +1465,71 @@ public class Resource implements Comparable<Resource>, Externalizable {
      *
      * @see    #getResources()
      */
-    public Set<ResourceChannel> getResourceChannels() {
-        return resourceChannels;
+    public Set<ResourceRepo> getResourceRepos() {
+        return resourceRepos;
     }
 
     /**
-     * The channels this resource is subscribed to.
+     * The repos this resource is subscribed to.
      *
-     * <p>The returned set is not backed by this entity - if you want to alter the set of associated channels, use
-     * {@link #getResourceChannels()} or {@link #addChannel(Channel)}, {@link #removeChannel(Channel)}.</p>
+     * <p>The returned set is not backed by this entity - if you want to alter the set of associated repos, use
+     * {@link #getResourceRepos()} or {@link #addRepo(Repo)}, {@link #removeRepo(Repo)}.</p>
      */
-    public Set<Channel> getChannels() {
-        HashSet<Channel> channels = new HashSet<Channel>();
+    public Set<Repo> getRepos() {
+        HashSet<Repo> repos = new HashSet<Repo>();
 
-        if (resourceChannels != null) {
-            for (ResourceChannel rc : resourceChannels) {
-                channels.add(rc.getResourceChannelPK().getChannel());
+        if (resourceRepos != null) {
+            for (ResourceRepo rc : resourceRepos) {
+                repos.add(rc.getResourceRepoPK().getRepo());
             }
         }
 
-        return channels;
+        return repos;
     }
 
     /**
-     * Directly subscribe the resource to a channel.
+     * Directly subscribe the resource to a repo.
      *
-     * @param  channel
+     * @param  repo
      *
      * @return the mapping that was added
      */
-    public ResourceChannel addChannel(Channel channel) {
-        if (this.resourceChannels == null) {
-            this.resourceChannels = new HashSet<ResourceChannel>();
+    public ResourceRepo addRepo(Repo repo) {
+        if (this.resourceRepos == null) {
+            this.resourceRepos = new HashSet<ResourceRepo>();
         }
 
-        ResourceChannel mapping = new ResourceChannel(this, channel);
-        this.resourceChannels.add(mapping);
-        channel.addResource(this);
+        ResourceRepo mapping = new ResourceRepo(this, repo);
+        this.resourceRepos.add(mapping);
+        repo.addResource(this);
         return mapping;
     }
 
     /**
-     * Unsubscribes the resource from a channel, if it exists. If it was already subscribed, the mapping that was
+     * Unsubscribes the resource from a repo, if it exists. If it was already subscribed, the mapping that was
      * removed is returned; if not, <code>null</code> is returned.
      *
-     * @param  channel the channel to unsubscribe from
+     * @param  repo the repo to unsubscribe from
      *
-     * @return the mapping that was removed or <code>null</code> if the resource was not subscribed to the channel
+     * @return the mapping that was removed or <code>null</code> if the resource was not subscribed to the repo
      */
-    public ResourceChannel removeChannel(Channel channel) {
-        if ((this.resourceChannels == null) || (channel == null)) {
+    public ResourceRepo removeRepo(Repo repo) {
+        if ((this.resourceRepos == null) || (repo == null)) {
             return null;
         }
 
-        ResourceChannel doomed = null;
+        ResourceRepo doomed = null;
 
-        for (ResourceChannel rc : this.resourceChannels) {
-            if (channel.equals(rc.getResourceChannelPK().getChannel())) {
+        for (ResourceRepo rc : this.resourceRepos) {
+            if (repo.equals(rc.getResourceRepoPK().getRepo())) {
                 doomed = rc;
-                channel.removeResource(this);
+                repo.removeResource(this);
                 break;
             }
         }
 
         if (doomed != null) {
-            this.resourceChannels.remove(doomed);
+            this.resourceRepos.remove(doomed);
         }
 
         return doomed;
@@ -1763,7 +1763,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
         // not supplied by remote: operationHistories
         // not supplied by remote: installedPackages
         // not supplied by remote: installedPackageHistory
-        // not supplied by remote: resourceChannels
+        // not supplied by remote: resourceRepos
         // not supplied by remote: schedules
         out.writeObject(availability);
         out.writeObject(currentAvailability);

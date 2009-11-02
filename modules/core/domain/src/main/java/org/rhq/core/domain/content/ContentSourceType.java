@@ -135,7 +135,7 @@ public class ContentSourceType implements Serializable {
     }
 
     /**
-     * Programmatic name of the channel source type.
+     * Programmatic name of the repo source type.
      */
     public String getName() {
         return name;
@@ -146,7 +146,7 @@ public class ContentSourceType implements Serializable {
     }
 
     /**
-     * Name of this channel source type that is suitable for display to the user in the UI.
+     * Name of this repo source type that is suitable for display to the user in the UI.
      */
     public String getDisplayName() {
         return displayName;
@@ -157,7 +157,7 @@ public class ContentSourceType implements Serializable {
     }
 
     /**
-     * Free text description of this channel source type.
+     * Free text description of this repo source type.
      */
     public String getDescription() {
         return description;

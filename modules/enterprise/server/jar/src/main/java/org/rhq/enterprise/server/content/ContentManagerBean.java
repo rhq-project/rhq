@@ -83,7 +83,6 @@ import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.util.CriteriaQueryGenerator;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.core.util.exception.ThrowableUtil;
@@ -95,6 +94,7 @@ import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
+import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 
 /**
  * EJB that handles content subsystem interaction with resources, including content discovery reports and create/delete
@@ -335,7 +335,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                     throw new IllegalArgumentException("PackageVersion: [" + packageVersionId + "] not found!");
                 }
 
-                ResourcePackageDetails details = ContentManagerHelper.packageVersionToDetails(packageVersion);                
+                ResourcePackageDetails details = ContentManagerHelper.packageVersionToDetails(packageVersion);
                 details.setInstallationTimestamp(System.currentTimeMillis());
                 packages.add(details);
             }

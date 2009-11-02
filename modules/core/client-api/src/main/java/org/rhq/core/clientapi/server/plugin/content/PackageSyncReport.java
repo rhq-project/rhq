@@ -26,19 +26,18 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Indicates the results of performing a syncronize with a content source. This object carries the diff information
+ * Indicates the results of performing a syncronize with a package source. This object carries the diff information
  * necessary to update the server's current knowledge of the source's packages.
  *
  * @author Jason Dobies
  */
 public class PackageSyncReport {
-    // Attributes  --------------------------------------------
 
     /**
      * Set of packages that have been added to the external package source that are not yet known to the server. A new
      * version of a package constitutes an entry in this list.
      */
-    private final Set<ContentSourcePackageDetails> newPackages = new HashSet<ContentSourcePackageDetails>();
+    private final Set<ContentProviderPackageDetails> newPackages = new HashSet<ContentProviderPackageDetails>();
 
     /**
      * Set of packages that are already known to the server and whose metadata has changed in the external package
@@ -46,33 +45,33 @@ public class PackageSyncReport {
      * Packages should only be included in this list if the name and version are the same as a package in the server;
      * new versions of a package belong in the <code>newPackages</code> list.
      */
-    private final Set<ContentSourcePackageDetails> updatedPackages = new HashSet<ContentSourcePackageDetails>();
+    private final Set<ContentProviderPackageDetails> updatedPackages = new HashSet<ContentProviderPackageDetails>();
 
     /**
      * Set of packages that are known to the server but no longer in the external source.
      */
-    private final Set<ContentSourcePackageDetails> deletedPackages = new HashSet<ContentSourcePackageDetails>();
+    private final Set<ContentProviderPackageDetails> deletedPackages = new HashSet<ContentProviderPackageDetails>();
 
     /**
      * The synchronization summary. Free form textual report.
      */
     private String summary;
 
-    // Public  --------------------------------------------
-
-    public Set<ContentSourcePackageDetails> getNewPackages() {
+    public Set<ContentProviderPackageDetails> getNewPackages() {
         return newPackages;
     }
 
     /**
      * Add to the set of packages that have been added to the external package source that are not yet known to the
      * server. A new version of a package constitutes an entry in this list.
+     *
+     * @param newPackage contains the details of the new package to be added; should not be <code>null</code>
      */
-    public void addNewPackage(ContentSourcePackageDetails newPackage) {
+    public void addNewPackage(ContentProviderPackageDetails newPackage) {
         this.newPackages.add(newPackage);
     }
 
-    public Set<ContentSourcePackageDetails> getUpdatedPackages() {
+    public Set<ContentProviderPackageDetails> getUpdatedPackages() {
         return updatedPackages;
     }
 
@@ -81,20 +80,25 @@ public class PackageSyncReport {
      * package source. The data in this package will be merged with the server's existing knowledge of the package.
      * Packages should only be added to this updated list if the name and version are the same as a package in the
      * server; new versions of a package belong in the
-     * {@link #addNewPackage(ContentSourcePackageDetails) new packages list}.
+     * {@link #addNewPackage(ContentProviderPackageDetails) new packages list}.
+     *
+     * @param updatedPackage contains the new information of a package that was updated; should not be
+     *                       <code>null</code>
      */
-    public void addUpdatedPackage(ContentSourcePackageDetails updatedPackage) {
+    public void addUpdatedPackage(ContentProviderPackageDetails updatedPackage) {
         this.updatedPackages.add(updatedPackage);
     }
 
-    public Set<ContentSourcePackageDetails> getDeletedPackages() {
+    public Set<ContentProviderPackageDetails> getDeletedPackages() {
         return deletedPackages;
     }
 
     /**
      * Add to the set of packages that are known to the server but no longer in the external source.
+     *
+     * @param deletedPackage details object identifying the package that was removed; should not be <code>null</code>
      */
-    public void addDeletePackage(ContentSourcePackageDetails deletedPackage) {
+    public void addDeletePackage(ContentProviderPackageDetails deletedPackage) {
         this.deletedPackages.add(deletedPackage);
     }
 
@@ -104,6 +108,8 @@ public class PackageSyncReport {
 
     /**
      * The synchronization summary. Free form textual report that will be stored with the content source sync report.
+     *
+     * @param summary should not be <code>null</code>
      */
     public void setSummary(String summary) {
         this.summary = summary;

@@ -39,5 +39,5 @@ public interface IndexParser {
      *
      * @throws Exception if failed to parse the index file
      */
-    public Map<String, RemotePackageInfo> parse(InputStream indexStream, UrlSource contentSource) throws Exception;
+    public Map<String, RemotePackageInfo> parse(InputStream indexStream, UrlProvider contentSource) throws Exception;
 }

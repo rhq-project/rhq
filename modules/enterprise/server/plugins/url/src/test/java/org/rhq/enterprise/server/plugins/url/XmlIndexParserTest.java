@@ -26,7 +26,7 @@ import java.util.Map;
 
 import org.testng.annotations.Test;
 
-import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetails;
+import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetails;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
@@ -61,7 +61,7 @@ public class XmlIndexParserTest {
             .getSupportedPackageType().resourceTypeName;
         assert "Mazzresource-type-plugin".equals(fullDetails.getSupportedPackageType().resourceTypePluginName) : fullDetails
             .getSupportedPackageType().resourceTypePluginName;
-        ContentSourcePackageDetails cspd = fullDetails.getContentSourcePackageDetails();
+        ContentProviderPackageDetails cspd = fullDetails.getContentSourcePackageDetails();
         assert "Mazzarchitecture-name".equals(cspd.getArchitectureName()) : cspd.getArchitectureName();
         assert "Mazzclassification".equals(cspd.getClassification()) : cspd.getClassification();
         assert "Mazzdisplay-name".equals(cspd.getDisplayName()) : cspd.getDisplayName();

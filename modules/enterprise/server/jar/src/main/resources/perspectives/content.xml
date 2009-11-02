@@ -2,28 +2,28 @@
 	description="advanced software content management"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xmlns="urn:xmlns:rhq-perspective">
-	<task name="channel create" path="/pulp/channels/create"
-		description="Create Channel">
-		<pathmatches>/pulp/channels</pathmatches>
-		<pathmatches>/pulp/channels/create</pathmatches>
-		<pathmatches>/pulp/channels/create_confirm</pathmatches>
-		<pathmatches>/pulp/channels/create*</pathmatches>
+	<task name="repo create" path="/pulp/repos/create"
+		description="Create Repo">
+		<pathmatches>/pulp/repos</pathmatches>
+		<pathmatches>/pulp/repos/create</pathmatches>
+		<pathmatches>/pulp/repos/create_confirm</pathmatches>
+		<pathmatches>/pulp/repos/create*</pathmatches>
 	</task>
-	<task name="channel add package"
-		path="/pulp/channels/add_package?cid={0}"
-		description="Add Content to this Channel" context="channel">
-		<pathmatches>/pulp/channels/details/*</pathmatches>
+	<task name="repo add package"
+		path="/pulp/repos/add_package?cid={0}"
+		description="Add Content to this Repo" context="repo">
+		<pathmatches>/pulp/repos/details/*</pathmatches>
 	</task>
-	<task name="channel clone" path="/pulp/channels/clone"
-		description="Clone A Channel">
-		<pathmatches>/pulp/channels/*</pathmatches>
+	<task name="repo clone" path="/pulp/repos/clone"
+		description="Clone A Repo">
+		<pathmatches>/pulp/repos/*</pathmatches>
 	</task>
-       <task name="channel clone existing" path="/pulp/channels/clone?cid={0}"
-           description="Clone this Channel"  context="channel">
-           <pathmatches>/pulp/channels/*</pathmatches>
+       <task name="repo clone existing" path="/pulp/repos/clone?cid={0}"
+           description="Clone this Repo"  context="repo">
+           <pathmatches>/pulp/repos/*</pathmatches>
        </task>
-	<task name="channel delete" path="/pulp/channels/delete"
-		description="Delete A channel">
-		<pathmatches>/pulp/channels/*</pathmatches>
+	<task name="repo delete" path="/pulp/repos/delete"
+		description="Delete A repo">
+		<pathmatches>/pulp/repos/*</pathmatches>
 	</task>
 </perspective>

@@ -77,7 +77,7 @@ import javax.persistence.Table;
     // finds the set of content sources that can deliver the pkg ver to the subscribed resource
     @NamedQuery(name = PackageVersionContentSource.QUERY_FIND_BY_PKG_VER_ID_AND_RES_ID, query = "SELECT pvcs "
         + "  FROM PackageVersionContentSource pvcs " + "       LEFT JOIN pvcs.packageVersion pv "
-        + "       LEFT JOIN pv.channelPackageVersions cpv " + "       LEFT JOIN cpv.channel.resourceChannels rc "
+        + "       LEFT JOIN pv.repoPackageVersions cpv " + "       LEFT JOIN cpv.repo.resourceRepos rc "
         + " WHERE rc.resource.id = :resourceId " + "   AND pv.id = :packageVersionId"),
     @NamedQuery(name = PackageVersionContentSource.DELETE_BY_CONTENT_SOURCE_ID, query = "DELETE PackageVersionContentSource pvcs WHERE pvcs.contentSource.id = :contentSourceId") })
 @Table(name = "RHQ_PKG_VER_CONTENT_SRC_MAP")

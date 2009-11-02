@@ -45,6 +45,12 @@ public class DatabaseTypeFactory {
      */
     private static final Map<String, String> DB_URL_DRIVER_MAP;
 
+    /**
+     * This can be set to store the defaultDatabaseType. Typically set it application initialization to
+     * provide a quick way to get the (typically) unchanging db vendor setting.
+     */
+    private static DatabaseType defaultDatabaseType = null;
+
     static {
         DB_URL_DRIVER_MAP = new Hashtable<String, String>();
         DB_URL_DRIVER_MAP.put("jdbc:postgresql:", "org.postgresql.Driver");
@@ -182,6 +188,26 @@ public class DatabaseTypeFactory {
         }
 
         return database_type_class.newInstance();
+    }
+
+    /** 
+     * This is the getter of a get/set convenience mechanism for storing and retrieving the active database type.
+     * Not a true singleton but typically the value will not change as the underlying db is typically
+     * not going to change at runtime.
+     * 
+     * @return The current DatabaseType or null if not yet set. 
+     */
+    public static DatabaseType getDefaultDatabaseType() {
+        return DatabaseTypeFactory.defaultDatabaseType;
+    }
+
+    /** 
+     * This is the setter of a get/set convenience mechanism for storing and retrieving the active database type.
+     * Typically called one time when the dbType is established.  Not a true singleton but typically the value will
+     * not change as the underlying db is typically not going to change.
+     */
+    public static void setDefaultDatabaseType(DatabaseType databaseType) {
+        DatabaseTypeFactory.defaultDatabaseType = databaseType;
     }
 
     /**

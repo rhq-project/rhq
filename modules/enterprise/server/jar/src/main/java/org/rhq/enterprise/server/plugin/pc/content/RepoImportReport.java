@@ -20,11 +20,11 @@
 * if not, write to the Free Software Foundation, Inc.,
 * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 */
-package org.rhq.core.clientapi.server.plugin.content;
+package org.rhq.enterprise.server.plugin.pc.content;
 
-import java.util.List;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Holds on to the repos and repo groups to be imported into the server through a {@link RepoSource}.

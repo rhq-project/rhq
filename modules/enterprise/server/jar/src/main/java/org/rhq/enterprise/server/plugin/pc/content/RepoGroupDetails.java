@@ -20,7 +20,7 @@
 * if not, write to the Free Software Foundation, Inc.,
 * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 */
-package org.rhq.core.clientapi.server.plugin.content;
+package org.rhq.enterprise.server.plugin.pc.content;
 
 /**
  * Represents a repo group being introduced by a repo source.

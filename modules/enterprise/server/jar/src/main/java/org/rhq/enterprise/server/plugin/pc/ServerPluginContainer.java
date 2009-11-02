@@ -26,7 +26,6 @@ import org.quartz.JobDetail;
 import org.quartz.SchedulerException;
 import org.quartz.SimpleTrigger;
 
-import org.rhq.core.clientapi.server.plugin.content.InitializationException;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.enterprise.server.plugin.content.ContentProviderManager;

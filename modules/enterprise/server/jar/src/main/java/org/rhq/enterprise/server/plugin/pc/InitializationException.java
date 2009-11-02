@@ -17,10 +17,11 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.core.clientapi.server.plugin.content;
+package org.rhq.enterprise.server.plugin.pc;
 
 /**
- *
+ * An exception thrown when something within the server plugin container fails to initialize.
+ * 
  * @author pkilambi
  */
 public class InitializationException extends Exception {

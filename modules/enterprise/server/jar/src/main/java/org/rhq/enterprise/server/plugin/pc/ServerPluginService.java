@@ -27,7 +27,6 @@ import org.jboss.annotation.ejb.Management;
 import org.jboss.annotation.ejb.Service;
 import org.jboss.system.server.ServerConfig;
 
-import org.rhq.core.clientapi.server.plugin.content.InitializationException;
 import org.rhq.enterprise.server.RHQConstants;
 
 /**
@@ -126,11 +125,7 @@ public class ServerPluginService implements ServerPluginServiceManagement {
         // TODO: determine what things to hide from our war classloader
         config.setRootPluginClassLoaderRegex(null);
 
-        try {
-            pc.initialize(config);
-        } catch (InitializationException e) {
-            log.error("Error initializing server plugin container [" + pc + "]", e);
-        }
+        pc.initialize(config);
 
         return pc;
     }

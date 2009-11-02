@@ -20,17 +20,22 @@
 * if not, write to the Free Software Foundation, Inc.,
 * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 */
-package org.rhq.enterprise.server.plugin.content;
+package org.rhq.enterprise.server.plugin.pc.content;
 
-import org.rhq.core.clientapi.server.plugin.content.ContentProvider;
-import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetails;
-import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetailsKey;
-import org.rhq.core.clientapi.server.plugin.content.PackageSource;
-import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
-import org.rhq.core.clientapi.server.plugin.content.RepoDetails;
-import org.rhq.core.clientapi.server.plugin.content.RepoGroupDetails;
-import org.rhq.core.clientapi.server.plugin.content.RepoImportReport;
-import org.rhq.core.clientapi.server.plugin.content.RepoSource;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+
+import javax.persistence.EntityManager;
+import javax.persistence.Query;
+import javax.transaction.TransactionManager;
+
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.content.ContentSource;
@@ -40,9 +45,9 @@ import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.PackageVersionContentSource;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.RepoGroup;
+import org.rhq.core.domain.content.RepoRelationship;
 import org.rhq.core.domain.content.RepoRepoGroup;
 import org.rhq.core.domain.content.RepoRepoRelationship;
-import org.rhq.core.domain.content.RepoRelationship;
 import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
@@ -50,21 +55,10 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
+import org.rhq.enterprise.server.plugin.content.ContentProviderManager;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestContentSourcePluginService;
 import org.rhq.enterprise.server.util.LookupUtil;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
-import javax.persistence.EntityManager;
-import javax.persistence.Query;
-import javax.transaction.TransactionManager;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
 
 /**
  * @author Jason Dobies
@@ -142,11 +136,11 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
         Subject overlord = subjectManager.getOverlord();
 
         // Delete the repo relationships
-        entityManager.createNamedQuery(RepoRepoRelationship.DELETE_BY_REPO_ID).setParameter(
-            "repoId", repoId).executeUpdate();
+        entityManager.createNamedQuery(RepoRepoRelationship.DELETE_BY_REPO_ID).setParameter("repoId", repoId)
+            .executeUpdate();
 
-        entityManager.createNamedQuery(RepoRelationship.DELETE_BY_RELATED_REPO_ID).setParameter(
-            "relatedRepoId", relatedRepoId).executeUpdate();
+        entityManager.createNamedQuery(RepoRelationship.DELETE_BY_RELATED_REPO_ID).setParameter("relatedRepoId",
+            relatedRepoId).executeUpdate();
 
         // Delete any repos that were created in this test
         for (Integer repoId : reposToDelete) {
@@ -161,7 +155,7 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
         // First disassociate packages from the content source
         entityManager.createNamedQuery(PackageVersionContentSource.DELETE_BY_CONTENT_SOURCE_ID).setParameter(
             "contentSourceId", testSource.getId()).executeUpdate();
-        
+
         // Delete any packages created in this test
         for (Integer packageId : packagesToDelete) {
             PackageVersion deleteMe = entityManager.find(PackageVersion.class, packageId);
@@ -322,10 +316,9 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
         }
 
         public void synchronizePackages(PackageSyncReport report,
-                                        Collection<ContentProviderPackageDetails> existingPackages) throws Exception {
-            ContentProviderPackageDetailsKey key1 =
-                new ContentProviderPackageDetailsKey(PACKAGE_NAME, PACKAGE_VERSION, PACKAGE_TYPE_NAME,
-                    PACKAGE_ARCH, RESOURCE_TYPE_NAME, PLUGIN_NAME);
+            Collection<ContentProviderPackageDetails> existingPackages) throws Exception {
+            ContentProviderPackageDetailsKey key1 = new ContentProviderPackageDetailsKey(PACKAGE_NAME, PACKAGE_VERSION,
+                PACKAGE_TYPE_NAME, PACKAGE_ARCH, RESOURCE_TYPE_NAME, PLUGIN_NAME);
             ContentProviderPackageDetails pkg1 = new ContentProviderPackageDetails(key1);
             pkg1.setLocation("repo/foo");
 
@@ -343,7 +336,6 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
         public void testConnection() throws Exception {
             // No-op
         }
-
 
         public InputStream getInputStream(String location) throws Exception {
             // No-op

@@ -19,11 +19,12 @@
 package org.rhq.enterprise.server.perspective;
 
 import java.util.List;
+
 import javax.jws.WebParam;
 import javax.jws.WebService;
 import javax.jws.soap.SOAPBinding;
-import org.rhq.core.clientapi.descriptor.perspective.Perspective;
-import org.rhq.core.clientapi.descriptor.perspective.Task;
+
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.Perspective;
 
 /**
  * PerspectiveManagerRemote
@@ -47,8 +48,7 @@ public interface PerspectiveManagerRemote {
      *
      * @return Perspective looked up
      */
-    public Perspective getPerspective(@WebParam(name = "user")
-    String name);
+    public Perspective getPerspective(@WebParam(name = "user") String name);
 
     /**
      * Get a list of Task items that are relative to the Context name passed in.
@@ -58,9 +58,8 @@ public interface PerspectiveManagerRemote {
      *
      * @return List<Task> that match. null if none found or defined that relate to this type of object passed in.
      */
-    public List<Task> getTasksWithArgs(@WebParam(name = "contextName")
-    String contextName, @WebParam(name = "args")
-    Object... args);
+    public List<Task> getTasksWithArgs(@WebParam(name = "contextName") String contextName,
+        @WebParam(name = "args") Object... args);
 
     /**
      * Get a list of Task items that are relative to the Context name passed in.
@@ -69,6 +68,5 @@ public interface PerspectiveManagerRemote {
      *
      * @return List<Task> that match. null if none found or defined that relate to this type of object passed in.
      */
-    public List<Task> getTasks(@WebParam(name = "contextName")
-    String contextName);
+    public List<Task> getTasks(@WebParam(name = "contextName") String contextName);
 }

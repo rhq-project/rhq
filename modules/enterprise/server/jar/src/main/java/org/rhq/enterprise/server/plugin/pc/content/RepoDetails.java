@@ -20,7 +20,7 @@
 * if not, write to the Free Software Foundation, Inc.,
 * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 */
-package org.rhq.core.clientapi.server.plugin.content;
+package org.rhq.enterprise.server.plugin.pc.content;
 
 /**
  * Contains the information used to describe a single repo being introduced to the system through the
@@ -46,7 +46,7 @@ public class RepoDetails {
         setName(name);
         setParentRepoName(parentRepoName);
     }
-    
+
     /**
      * Returns the identifying name of the repo.
      *

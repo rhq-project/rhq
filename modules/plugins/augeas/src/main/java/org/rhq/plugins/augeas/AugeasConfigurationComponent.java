@@ -636,8 +636,4 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
 
         return summary.toString();
     }
-
-    String getAugeasRootPath() {
-        return this.augeasRootPath;
-    }
 }

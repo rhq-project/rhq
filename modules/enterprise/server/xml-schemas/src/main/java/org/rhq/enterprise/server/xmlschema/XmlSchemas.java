@@ -50,6 +50,10 @@ public interface XmlSchemas {
     public static final String XSD_SERVERPLUGIN_PERSPECTIVE = "rhq-serverplugin-perspective.xsd";
     public static final String PKG_SERVERPLUGIN_PERSPECTIVE = "org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective";
 
+    // the server plugin descriptor for the alert plugin type
+    public static final String XSD_SERVERPLUGIN_ALERT = "rhq-serverplugin-alert.xsd";
+    public static final String PKG_SERVERPLUGIN_ALERT = "org.rhq.enterprise.server.xmlschema.generated.serverplugin.alert";
+
     // the configuration schema that can be reused in any other server-side schema to define normal configuration properties
     public static final String XSD_CONFIGURATION = "rhq-configuration.xsd";
     public static final String PKG_CONFIGURATION = DescriptorPackages.CONFIGURATION;

@@ -24,10 +24,14 @@ package org.rhq.enterprise.server.xmlschema;
 
 import java.net.URL;
 
+import javax.xml.bind.JAXBElement;
+import javax.xml.bind.Unmarshaller;
+
 import org.testng.annotations.Test;
 
 import org.rhq.core.clientapi.descriptor.configuration.ConfigurationDescriptor;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.alert.AlertPluginDescriptorType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.generic.GenericPluginDescriptorType;
 
 /**
@@ -38,7 +42,7 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.generic.Generi
 @Test
 public class ServerPluginDescriptorUtilTest {
 
-    public void testGenericPluginDescriptor() throws Exception {
+    public void testGenericPluginDescriptorInJar() throws Exception {
         URL url = this.getClass().getClassLoader().getResource("test-serverplugin-generic.jar");
         ServerPluginDescriptorType descriptor = ServerPluginDescriptorUtil.loadPluginDescriptorFromUrl(url);
         assert descriptor != null;
@@ -56,5 +60,35 @@ public class ServerPluginDescriptorUtilTest {
         assert config.getConfigurationProperty().get(0).getValue().getName().equals("prop1");
 
         return;
+    }
+
+    public void testAlertPluginDescriptor() throws Exception {
+        String testXml = "test-serverplugin-alert.xml";
+        ServerPluginDescriptorType data = parseTestXml(testXml);
+        assert data instanceof AlertPluginDescriptorType;
+        AlertPluginDescriptorType descriptor = (AlertPluginDescriptorType) data;
+
+        assert descriptor.getApiVersion().equals("11.22");
+        assert descriptor.getVersion().equals("100.999");
+        assert descriptor.getName().equals("alert plugin name");
+        assert descriptor.getDisplayName().equals("alert plugin display name");
+        assert descriptor.getDescription().equals("alert plugin wotgorilla?");
+        assert descriptor.getPackage().equals("org.alert.package.name.here");
+        assert descriptor.getPluginLifecycleListener().equals("alertPluginLifecycleListener");
+
+        ConfigurationDescriptor config = descriptor.getPluginConfiguration();
+        assert config != null;
+        assert config.getConfigurationProperty().get(0).getValue().getName().equals("alertprop1");
+    }
+
+    private ServerPluginDescriptorType parseTestXml(String testXml) throws Exception {
+        Unmarshaller unmarshaller = ServerPluginDescriptorUtil.getServerPluginDescriptorUnmarshaller();
+        URL url = this.getClass().getClassLoader().getResource(testXml);
+        JAXBElement<?> ele = (JAXBElement<?>) unmarshaller.unmarshal(url);
+        assert ele != null : "Invalid server plugin descriptor: " + testXml;
+
+        Object type = ele.getValue();
+        assert type instanceof ServerPluginDescriptorType : (testXml + ": invalid server plugin descriptor: " + type);
+        return (ServerPluginDescriptorType) type;
     }
 }

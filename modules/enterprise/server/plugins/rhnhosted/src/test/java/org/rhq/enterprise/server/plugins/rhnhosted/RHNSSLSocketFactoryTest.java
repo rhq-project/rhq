@@ -42,7 +42,10 @@ public class RHNSSLSocketFactoryTest
         {
             HttpsURLConnection conn = (HttpsURLConnection) new URL(goodUrl).openConnection();
             conn.connect();
-            assert false;
+            // On a clean system, this will not execute, a SSLHandshakeException will be thrown
+            // if the below line does execute, then it means that the keystore already has the
+            // certs loaded.
+            System.out.println("Looks like ssl cert is already loaded into keystore.");
         }
         catch (SSLHandshakeException e)
         {

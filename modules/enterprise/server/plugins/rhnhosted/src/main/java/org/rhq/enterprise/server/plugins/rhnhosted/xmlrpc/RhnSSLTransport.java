@@ -68,7 +68,7 @@ public class RhnSSLTransport extends XmlRpcSun15HttpTransport
                 log.error(e);
                 throw new IOException(e);
             }
-            log.debug("SSLSocketFactory has been set with a custom TrustManager");;
+            log.debug("SSLSocketFactory has been set with a custom version using cert path: " + sslCertPath);
         }
         return c;
     }

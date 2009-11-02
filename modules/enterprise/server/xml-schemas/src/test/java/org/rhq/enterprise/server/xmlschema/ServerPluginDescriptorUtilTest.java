@@ -26,7 +26,7 @@ import java.net.URL;
 
 import org.testng.annotations.Test;
 
-import org.rhq.enterprise.server.xmlschema.generated.configuration.ConfigurationDescriptor;
+import org.rhq.core.clientapi.descriptor.configuration.ConfigurationDescriptor;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.generic.GenericPluginDescriptorType;
 

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           xmlns:config="urn:xmlns:server:rhq-configuration"
+           xmlns:config="urn:xmlns:rhq-configuration"
            xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
            xmlns:content="urn:xmlns:rhq-serverplugin.content"
            targetNamespace="urn:xmlns:rhq-serverplugin.content"
@@ -10,7 +10,7 @@
            xmlns:jaxb="http://java.sun.com/xml/ns/jaxb"
            blockDefault="">
 
-    <xs:import namespace="urn:xmlns:server:rhq-configuration" schemaLocation="rhq-server-configuration.xsd" />
+    <xs:import namespace="urn:xmlns:rhq-configuration" schemaLocation="rhq-configuration.xsd" />
     <xs:import namespace="urn:xmlns:rhq-serverplugin" schemaLocation="rhq-serverplugin.xsd" />
 
     <xs:annotation>

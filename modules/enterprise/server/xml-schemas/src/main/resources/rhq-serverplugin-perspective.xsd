@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           xmlns:config="urn:xmlns:server:rhq-configuration"
+           xmlns:config="urn:xmlns:rhq-configuration"
            xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
            xmlns:perspective="urn:xmlns:rhq-serverplugin.perspective"           
            targetNamespace="urn:xmlns:rhq-serverplugin.perspective"

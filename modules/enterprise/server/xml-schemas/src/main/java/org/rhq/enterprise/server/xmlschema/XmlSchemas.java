@@ -22,6 +22,8 @@
  */
 package org.rhq.enterprise.server.xmlschema;
 
+import org.rhq.core.clientapi.descriptor.DescriptorPackages;
+
 /**
  * Defines constants related to the server-side XML Schemas, including their JAXB generated package names
  * and their .xsd files, as found in the server's classpath.
@@ -49,8 +51,8 @@ public interface XmlSchemas {
     public static final String PKG_SERVERPLUGIN_PERSPECTIVE = "org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective";
 
     // the configuration schema that can be reused in any other server-side schema to define normal configuration properties
-    public static final String XSD_CONFIGURATION = "rhq-server-configuration.xsd";
-    public static final String PKG_CONFIGURATION = "org.rhq.enterprise.server.xmlschema.generated.configuration";
+    public static final String XSD_CONFIGURATION = "rhq-configuration.xsd";
+    public static final String PKG_CONFIGURATION = DescriptorPackages.CONFIGURATION;
 
     // the schema used to define content source metadata which is used by content plugins like the URL or Disk plugins
     public static final String XSD_CONTENTSOURCE_PACKAGEDETAILS = "rhq-contentsource-packagedetails.xsd";

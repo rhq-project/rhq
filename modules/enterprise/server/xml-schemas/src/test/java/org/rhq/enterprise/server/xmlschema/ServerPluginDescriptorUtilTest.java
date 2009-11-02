@@ -26,6 +26,7 @@ import java.net.URL;
 
 import org.testng.annotations.Test;
 
+import org.rhq.enterprise.server.xmlschema.generated.configuration.ConfigurationDescriptor;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.generic.GenericPluginDescriptorType;
 
@@ -49,6 +50,11 @@ public class ServerPluginDescriptorUtilTest {
         assert descriptor.getDescription().equals("generic description");
         assert descriptor.getPackage().equals("generic.package");
         assert descriptor.getPluginLifecycleListener().equals("generic.plugin.lifecycle.listener");
+
+        ConfigurationDescriptor config = descriptor.getPluginConfiguration();
+        assert config != null;
+        assert config.getConfigurationProperty().get(0).getValue().getName().equals("prop1");
+
         return;
     }
 }

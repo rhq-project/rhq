@@ -41,6 +41,9 @@
     </xs:element>
 
     <xs:complexType name="ServerPluginDescriptorType">
+        <xs:sequence minOccurs="0" maxOccurs="1">
+           <xs:element name="plugin-configuration" type="config:configuration" />
+        </xs:sequence>
         <xs:attribute name="name" use="required">
             <xs:annotation>
                 <xs:documentation>

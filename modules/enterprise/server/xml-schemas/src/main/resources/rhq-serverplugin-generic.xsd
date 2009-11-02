@@ -13,11 +13,7 @@
 
     <xs:annotation>
         <xs:documentation>
-            Schema for a generic server-side plugins. This type of plugin does not
-            need any additional support from the server plugin container other than
-            simple lifecycle management (for example, be told when to start and stop).
-            The plugin is otherwise standalone and can do everything it needs to do
-            without additional help from the server plugin container.
+            Schema for a generic server-side plugins.
         </xs:documentation>
         <xs:appinfo>
             <jaxb:schemaBindings>
@@ -26,15 +22,26 @@
         </xs:appinfo>
     </xs:annotation>
 
-    <xs:element name="generic-plugin" substitutionGroup="serverplugin:server-plugin">
+    <xs:element name="generic-plugin" type="generic:GenericPluginDescriptorType" substitutionGroup="serverplugin:server-plugin">
         <xs:annotation>
             <xs:documentation>
-                Defines a generic plugin.
+                Defines a generic plugin. This type of plugin does not
+                need any additional support from the server plugin container other than
+                simple lifecycle management (for example, be told when to start and stop).
+                The plugin is otherwise standalone and can do everything it needs to do
+                without additional help from the server plugin container.
             </xs:documentation>
             <xs:appinfo>
-                <jaxb:class name="GenericServerPluginDescriptor" />
+                <jaxb:class name="GenericPluginElement" />
             </xs:appinfo>
         </xs:annotation>
     </xs:element>
+    <xs:complexType name="GenericPluginDescriptorType">
+        <xs:complexContent>
+            <xs:extension base="serverplugin:ServerPluginDescriptorType">
+               <xs:sequence></xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
 
 </xs:schema>

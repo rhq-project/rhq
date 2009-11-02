@@ -26,7 +26,8 @@ import java.net.URL;
 
 import org.testng.annotations.Test;
 
-import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptor;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.generic.GenericPluginDescriptorType;
 
 /**
  * Tests that we can parse server-side plugin descriptors.
@@ -38,8 +39,16 @@ public class ServerPluginDescriptorUtilTest {
 
     public void testGenericPluginDescriptor() throws Exception {
         URL url = this.getClass().getClassLoader().getResource("test-serverplugin-generic.jar");
-        ServerPluginDescriptor descriptor = ServerPluginDescriptorUtil.loadPluginDescriptorFromUrl(url);
+        ServerPluginDescriptorType descriptor = ServerPluginDescriptorUtil.loadPluginDescriptorFromUrl(url);
         assert descriptor != null;
+        assert descriptor instanceof GenericPluginDescriptorType;
+        assert descriptor.getApiVersion().equals("1.2");
+        assert descriptor.getVersion().equals("2.3");
+        assert descriptor.getName().equals("generic name");
+        assert descriptor.getDisplayName().equals("generic display");
+        assert descriptor.getDescription().equals("generic description");
+        assert descriptor.getPackage().equals("generic.package");
+        assert descriptor.getPluginLifecycleListener().equals("generic.plugin.lifecycle.listener");
         return;
     }
 }

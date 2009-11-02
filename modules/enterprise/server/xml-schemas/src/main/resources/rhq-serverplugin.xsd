@@ -26,20 +26,21 @@
         </xs:appinfo>
     </xs:annotation>
 
-    <xs:element name="server-plugin" type="serverplugin:ServerPluginComplexType" abstract="true">
+    <xs:element name="server-plugin" type="serverplugin:ServerPluginDescriptorType" abstract="true">
         <xs:annotation>
             <xs:documentation>
-                Root of a server-side plugin descriptor. All server side plugins
+                Root element of a server-side plugin descriptor. All server side plugins
                 will have this as their root element; however, child elements of this
-                root element will be plugin-type-specific.
+                root element will be plugin-type-specific. Note this is an abstract element,
+                it will actually be substituted with other elements of the concrete plugin types.
             </xs:documentation>
             <xs:appinfo>
-                <jaxb:class name="ServerPluginDescriptor" />
+                <jaxb:class name="ServerPluginElement" />
             </xs:appinfo>
         </xs:annotation>
     </xs:element>
 
-    <xs:complexType name="ServerPluginComplexType">
+    <xs:complexType name="ServerPluginDescriptorType">
         <xs:attribute name="name" use="required">
             <xs:annotation>
                 <xs:documentation>

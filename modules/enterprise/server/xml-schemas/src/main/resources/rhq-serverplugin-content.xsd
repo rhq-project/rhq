@@ -15,9 +15,7 @@
 
     <xs:annotation>
         <xs:documentation>
-            Schema for server-side content source plugins. These plugins will provide
-            implementations that allow remote repositories to feed content into
-            the server's content subsystem.
+            Schema for server-side content provider plugins.
        </xs:documentation>
         <xs:appinfo>
             <jaxb:schemaBindings>
@@ -26,31 +24,33 @@
         </xs:appinfo>
     </xs:annotation>
 
-    <xs:element name="content-plugin" substitutionGroup="serverplugin:server-plugin">
+    <xs:element name="content-plugin" type="content:ContentPluginDescriptorType" substitutionGroup="serverplugin:server-plugin">
         <xs:annotation>
             <xs:documentation>
                 A plugin representing a set of defined server content provider implementations.
+                This plugin will allow remote repositories to feed content into
+                the server's content subsystem.
             </xs:documentation>
             <xs:appinfo>
-                <jaxb:class name="ContentServerPluginDescriptor" />
+                <jaxb:class name="ContentPluginElement" />
             </xs:appinfo>
         </xs:annotation>
-        <xs:complexType>
-            <xs:complexContent>
-                <xs:extension base="serverplugin:ServerPluginComplexType">
-                    <xs:sequence>
-                        <xs:element ref="content:contentSourceType" minOccurs="1" maxOccurs="unbounded">
-                            <xs:annotation>
-                                <xs:documentation>
-                                    Defines a supported content source type that is able to feed content into the server.
-                                </xs:documentation>
-                            </xs:annotation>
-                        </xs:element>
-                    </xs:sequence>
-                </xs:extension>
-            </xs:complexContent>
-        </xs:complexType>
     </xs:element>
+    <xs:complexType name="ContentPluginDescriptorType">
+        <xs:complexContent>
+            <xs:extension base="serverplugin:ServerPluginDescriptorType">
+                <xs:sequence>
+                    <xs:element ref="content:contentSourceType" minOccurs="1" maxOccurs="unbounded">
+                        <xs:annotation>
+                            <xs:documentation>
+                                Defines a supported content source type that is able to feed content into the server.
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
 
     <xs:element name="contentSourceType">
         <xs:annotation>

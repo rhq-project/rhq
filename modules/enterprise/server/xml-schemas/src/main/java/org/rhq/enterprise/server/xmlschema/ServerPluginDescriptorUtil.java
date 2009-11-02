@@ -26,6 +26,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -34,9 +36,11 @@ import java.util.jar.Manifest;
 
 import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBElement;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.ValidationEvent;
 import javax.xml.bind.util.ValidationEventCollector;
+import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 
@@ -45,7 +49,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.maven.artifact.versioning.ComparableVersion;
 
 import org.rhq.core.domain.plugin.Plugin;
-import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptor;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 
 /**
  * Utilities for server-side plugin descriptors.
@@ -55,8 +59,32 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDe
 public abstract class ServerPluginDescriptorUtil {
     private static final Log LOG = LogFactory.getLog(ServerPluginDescriptorUtil.class);
 
+    // the path to the server plugin descriptor found in all server plugins 
     private static final String PLUGIN_DESCRIPTOR_PATH = "META-INF/rhq-serverplugin.xml";
-    private static final String PLUGIN_SCHEMA_PATH = "rhq-serverplugin.xsd";
+
+    // the names of all XSD schema files mapped to the package names where their generated classes are  
+    private static final Map<String, String> PLUGIN_SCHEMA_PACKAGES;
+
+    // a context path consisting of all the plugin descriptors' package names
+    private static final String PLUGIN_CONTEXT_PATH;
+
+    static {
+        // maps all xsd files to their generated package names for all known server plugin types;
+        // if a new plugin type is ever added, you must ensure you add the new plugin type's xsd/package here
+        PLUGIN_SCHEMA_PACKAGES = new HashMap<String, String>();
+        PLUGIN_SCHEMA_PACKAGES.put(XmlSchemas.XSD_SERVERPLUGIN, XmlSchemas.PKG_SERVERPLUGIN);
+        PLUGIN_SCHEMA_PACKAGES.put(XmlSchemas.XSD_SERVERPLUGIN_GENERIC, XmlSchemas.PKG_SERVERPLUGIN_GENERIC);
+        PLUGIN_SCHEMA_PACKAGES.put(XmlSchemas.XSD_SERVERPLUGIN_CONTENT, XmlSchemas.PKG_SERVERPLUGIN_CONTENT);
+        PLUGIN_SCHEMA_PACKAGES.put(XmlSchemas.XSD_SERVERPLUGIN_PERSPECTIVE, XmlSchemas.PKG_SERVERPLUGIN_PERSPECTIVE);
+
+        // so we only have to do this once, build a ':' separated context path containing all schema package names
+        StringBuilder packages = new StringBuilder();
+        for (String packageName : PLUGIN_SCHEMA_PACKAGES.values()) {
+            packages.append(packageName).append(':');
+        }
+        packages.setLength(packages.length() - 1); // delete the ending ':' so it isn't in our path
+        PLUGIN_CONTEXT_PATH = packages.toString();
+    }
 
     /**
      * Determines which of the two plugins is obsolete - in other words, this determines which
@@ -119,14 +147,14 @@ public abstract class ServerPluginDescriptorUtil {
      * @return the version of the plugin
      * @throws Exception if the plugin is invalid, there is no version for the plugin or the version string is invalid
      */
-    public static ComparableVersion getPluginVersion(File pluginFile, ServerPluginDescriptor descriptor)
+    public static ComparableVersion getPluginVersion(File pluginFile, ServerPluginDescriptorType descriptor)
         throws Exception {
 
         if (descriptor == null) {
             descriptor = loadPluginDescriptorFromUrl(pluginFile.toURI().toURL());
         }
 
-        String version = descriptor.getValue().getVersion();
+        String version = descriptor.getVersion();
         if (version == null) {
             Manifest manifest = getManifest(pluginFile);
             if (manifest != null) {
@@ -144,6 +172,134 @@ public abstract class ServerPluginDescriptorUtil {
             return new ComparableVersion(version);
         } catch (RuntimeException e) {
             throw new Exception("Version [" + version + "] for [" + pluginFile + "] did not parse", e);
+        }
+    }
+
+    /**
+     * Loads a plugin descriptor from the given plugin jar and returns it.
+     * 
+     * This is a static method to provide a convienence method for others to be able to use.
+     *  
+     * @param pluginJarFileUrl URL to a plugin jar file
+     * @return the plugin descriptor found in the given plugin jar file
+     * @throws Exception if failed to find or parse a descriptor file in the plugin jar
+     */
+    public static ServerPluginDescriptorType loadPluginDescriptorFromUrl(URL pluginJarFileUrl) throws Exception {
+
+        final Log logger = LogFactory.getLog(ServerPluginDescriptorUtil.class);
+
+        if (pluginJarFileUrl == null) {
+            throw new Exception("A valid plugin JAR URL must be supplied.");
+        }
+        logger.debug("Loading plugin descriptor from plugin jar at [" + pluginJarFileUrl + "]...");
+
+        testPluginJarIsReadable(pluginJarFileUrl);
+
+        JarInputStream jis = null;
+        JarEntry descriptorEntry = null;
+
+        try {
+            jis = new JarInputStream(pluginJarFileUrl.openStream());
+            JarEntry nextEntry = jis.getNextJarEntry();
+            while (nextEntry != null && descriptorEntry == null) {
+                if (PLUGIN_DESCRIPTOR_PATH.equals(nextEntry.getName())) {
+                    descriptorEntry = nextEntry;
+                } else {
+                    jis.closeEntry();
+                    nextEntry = jis.getNextJarEntry();
+                }
+            }
+
+            if (descriptorEntry == null) {
+                throw new Exception("The plugin descriptor does not exist");
+            }
+
+            Unmarshaller unmarshaller = null;
+            ServerPluginDescriptorType pluginDescriptor = null;
+            try {
+                unmarshaller = getServerPluginDescriptorUnmarshaller();
+                pluginDescriptor = ((JAXBElement<? extends ServerPluginDescriptorType>) unmarshaller.unmarshal(jis))
+                    .getValue();
+            } finally {
+                if (unmarshaller != null) {
+                    for (ValidationEvent ev : ((ValidationEventCollector) unmarshaller.getEventHandler()).getEvents()) {
+                        logger.debug("Plugin [" + pluginJarFileUrl + "] descriptor event {Severity: "
+                            + ev.getSeverity() + ", Message: " + ev.getMessage() + ", Exception: "
+                            + ev.getLinkedException() + "}");
+                    }
+                }
+            }
+
+            return pluginDescriptor;
+        } catch (Exception e) {
+            throw new Exception("Could not successfully parse the plugin descriptor [" + PLUGIN_DESCRIPTOR_PATH
+                + "] found in plugin jar at [" + pluginJarFileUrl + "]", e);
+        } finally {
+            if (jis != null) {
+                try {
+                    jis.close();
+                } catch (Exception e) {
+                    logger.warn("Cannot close jar stream [" + pluginJarFileUrl + "]. Cause: " + e);
+                }
+            }
+        }
+    }
+
+    /**
+     * This will return a JAXB unmarshaller that will enable the caller to parse a server plugin
+     * descriptor. The returned unmarshaller will have a {@link ValidationEventCollector}
+     * installed as an {@link Unmarshaller#getEventHandler() event handler} which can be used
+     * to obtain error messages if the unmarshaller fails to parse an XML document.
+     * 
+     * @return a JAXB unmarshaller enabling the caller to parse server plugin descriptors
+     * 
+     * @throws Exception if an unmarshaller could not be created
+     */
+    public static Unmarshaller getServerPluginDescriptorUnmarshaller() throws Exception {
+
+        // create the JAXB context with all the generated plugin packages in it
+        JAXBContext jaxbContext;
+        try {
+            jaxbContext = JAXBContext.newInstance(PLUGIN_CONTEXT_PATH);
+        } catch (Exception e) {
+            throw new Exception("Failed to create JAXB Context.", e);
+        }
+
+        // create the unmarshaller that can be used to parse XML documents containing server plugin descriptors
+        Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+
+        // enable schema validation to ensure the XML documents parsed by the unmarshaller are valid descriptors
+        ClassLoader cl = ServerPluginDescriptorUtil.class.getClassLoader();
+        SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+        StreamSource[] schemaSources = new StreamSource[PLUGIN_SCHEMA_PACKAGES.size()];
+        int i = 0;
+        for (String schemaPath : PLUGIN_SCHEMA_PACKAGES.keySet()) {
+            URL schemaURL = cl.getResource(schemaPath);
+            schemaSources[i++] = new StreamSource(schemaURL.toExternalForm());
+        }
+
+        Schema pluginSchema = schemaFactory.newSchema(schemaSources);
+        unmarshaller.setSchema(pluginSchema);
+
+        ValidationEventCollector vec = new ValidationEventCollector();
+        unmarshaller.setEventHandler(vec);
+
+        return unmarshaller;
+    }
+
+    private static void testPluginJarIsReadable(URL pluginJarFileUrl) throws Exception {
+        InputStream inputStream = null;
+        try {
+            inputStream = pluginJarFileUrl.openStream();
+        } catch (IOException e) {
+            throw new Exception("Unable to open plugin jar at [" + pluginJarFileUrl + "] for reading.");
+        } finally {
+            try {
+                if (inputStream != null) {
+                    inputStream.close();
+                }
+            } catch (IOException ignore) {
+            }
         }
     }
 
@@ -166,101 +322,6 @@ public abstract class ServerPluginDescriptorUtil {
             }
         } catch (Exception ignored) {
             return null; // this is OK, it just means we do not have a manifest
-        }
-    }
-
-    /**
-     * Loads a plugin descriptor from the given plugin jar and returns it.
-     * 
-     * This is a static method to provide a convienence method for others to be able to use.
-     *  
-     * @param pluginJarFileUrl URL to a plugin jar file
-     * @return the plugin descriptor found in the given plugin jar file
-     * @throws Exception if failed to find or parse a descriptor file in the plugin jar
-     */
-    public static ServerPluginDescriptor loadPluginDescriptorFromUrl(URL pluginJarFileUrl) throws Exception {
-
-        final Log logger = LogFactory.getLog(ServerPluginDescriptorUtil.class);
-
-        if (pluginJarFileUrl == null) {
-            throw new Exception("A valid plugin JAR URL must be supplied.");
-        }
-        logger.debug("Loading plugin descriptor from plugin jar at [" + pluginJarFileUrl + "]...");
-
-        testPluginJarIsReadable(pluginJarFileUrl);
-
-        JAXBContext jaxbContext;
-        try {
-            jaxbContext = JAXBContext.newInstance(XmlSchemaPackages.SERVERPLUGIN);
-        } catch (Exception e) {
-            throw new Exception("Failed to create JAXB Context.", e);
-        }
-
-        JarInputStream jis = null;
-        JarEntry descriptorEntry = null;
-
-        try {
-            jis = new JarInputStream(pluginJarFileUrl.openStream());
-            JarEntry nextEntry = jis.getNextJarEntry();
-            while (nextEntry != null && descriptorEntry == null) {
-                if (PLUGIN_DESCRIPTOR_PATH.equals(nextEntry.getName())) {
-                    descriptorEntry = nextEntry;
-                } else {
-                    jis.closeEntry();
-                    nextEntry = jis.getNextJarEntry();
-                }
-            }
-
-            if (descriptorEntry == null) {
-                throw new Exception("The plugin descriptor does not exist");
-            }
-
-            Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-
-            // Enable schema validation
-            URL schemaURL = ServerPluginDescriptorUtil.class.getClassLoader().getResource(PLUGIN_SCHEMA_PATH);
-            Schema pluginSchema = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(schemaURL);
-            unmarshaller.setSchema(pluginSchema);
-
-            ValidationEventCollector vec = new ValidationEventCollector();
-            unmarshaller.setEventHandler(vec);
-
-            ServerPluginDescriptor pluginDescriptor = (ServerPluginDescriptor) unmarshaller.unmarshal(jis);
-
-            for (ValidationEvent event : vec.getEvents()) {
-                logger.debug("Plugin [" + pluginDescriptor.getName() + "] descriptor messages {Severity: "
-                    + event.getSeverity() + ", Message: " + event.getMessage() + ", Exception: "
-                    + event.getLinkedException() + "}");
-            }
-
-            return pluginDescriptor;
-        } catch (Exception e) {
-            throw new Exception("Could not successfully parse the plugin descriptor [" + PLUGIN_DESCRIPTOR_PATH
-                + "] found in plugin jar at [" + pluginJarFileUrl + "]", e);
-        } finally {
-            if (jis != null) {
-                try {
-                    jis.close();
-                } catch (Exception e) {
-                    logger.warn("Cannot close jar stream [" + pluginJarFileUrl + "]. Cause: " + e);
-                }
-            }
-        }
-    }
-
-    private static void testPluginJarIsReadable(URL pluginJarFileUrl) throws Exception {
-        InputStream inputStream = null;
-        try {
-            inputStream = pluginJarFileUrl.openStream();
-        } catch (IOException e) {
-            throw new Exception("Unable to open plugin jar at [" + pluginJarFileUrl + "] for reading.");
-        } finally {
-            try {
-                if (inputStream != null) {
-                    inputStream.close();
-                }
-            } catch (IOException ignore) {
-            }
         }
     }
 }

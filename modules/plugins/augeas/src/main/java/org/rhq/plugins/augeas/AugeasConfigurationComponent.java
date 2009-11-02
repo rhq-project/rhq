@@ -88,7 +88,7 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
     private Augeas augeas;
     private AugeasNode resourceConfigRootNode;
 
-    static String getAugeasRootPath() {
+    public static String getAugeasRootPath() {
         String rootPath = System.getProperty(AUGEAS_ROOT_PATH_VAR);
         if (rootPath != null && rootPath.trim().length() != 0) {
             return rootPath;

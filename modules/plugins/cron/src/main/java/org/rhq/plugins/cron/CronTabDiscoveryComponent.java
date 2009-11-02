@@ -50,23 +50,27 @@ public class CronTabDiscoveryComponent implements ResourceDiscoveryComponent<Cro
         throws InvalidPluginConfigurationException, Exception {
 
         Configuration cronConfiguration = context.getParentResourceContext().getPluginConfiguration();
-        
-        List<String> includes = AugeasConfigurationDiscoveryComponent.getGlobList(cronConfiguration.getSimple(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP));
-        List<String> excludes = AugeasConfigurationDiscoveryComponent.getGlobList(cronConfiguration.getSimple(AugeasConfigurationComponent.EXCLUDE_GLOBS_PROP));
-        
-        List<File> files = Glob.matchAll(new File(AugeasConfigurationComponent.AUGEAS_ROOT_PATH), includes);
+
+        List<String> includes = AugeasConfigurationDiscoveryComponent.getGlobList(cronConfiguration
+            .getSimple(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP));
+        List<String> excludes = AugeasConfigurationDiscoveryComponent.getGlobList(cronConfiguration
+            .getSimple(AugeasConfigurationComponent.EXCLUDE_GLOBS_PROP));
+
+        List<File> files = Glob.matchAll(new File(AugeasConfigurationComponent.getAugeasRootPath()), includes);
         Glob.excludeAll(files, excludes);
-        
+
         HashSet<DiscoveredResourceDetails> results = new HashSet<DiscoveredResourceDetails>();
-        
+
         ResourceType resourceType = context.getResourceType();
-        
-        for(File f : files) {
+
+        for (File f : files) {
             String resourceKey = f.getAbsolutePath();
             Configuration defaultConfiguration = context.getDefaultPluginConfiguration();
-            defaultConfiguration.put(AugeasConfigurationDiscoveryComponent.getGlobList(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP, Collections.singletonList(resourceKey)));
-            
-            DiscoveredResourceDetails result = new DiscoveredResourceDetails(resourceType, resourceKey, resourceKey, null, null, defaultConfiguration, null);
+            defaultConfiguration.put(AugeasConfigurationDiscoveryComponent.getGlobList(
+                AugeasConfigurationComponent.INCLUDE_GLOBS_PROP, Collections.singletonList(resourceKey)));
+
+            DiscoveredResourceDetails result = new DiscoveredResourceDetails(resourceType, resourceKey, resourceKey,
+                null, null, defaultConfiguration, null);
             results.add(result);
         }
         return results;

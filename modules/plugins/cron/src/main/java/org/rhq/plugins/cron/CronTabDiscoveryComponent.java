@@ -54,7 +54,7 @@ public class CronTabDiscoveryComponent implements ResourceDiscoveryComponent<Cro
         List<String> includes = AugeasConfigurationDiscoveryComponent.getGlobList(cronConfiguration.getSimple(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP));
         List<String> excludes = AugeasConfigurationDiscoveryComponent.getGlobList(cronConfiguration.getSimple(AugeasConfigurationComponent.EXCLUDE_GLOBS_PROP));
         
-        List<File> files = Glob.matchAll(new File(AugeasConfigurationComponent.AUGEAS_ROOT_PATH), includes);
+        List<File> files = Glob.matchAll(new File(AugeasConfigurationComponent.DEFAULT_AUGEAS_ROOT_PATH), includes);
         Glob.excludeAll(files, excludes);
         
         HashSet<DiscoveredResourceDetails> results = new HashSet<DiscoveredResourceDetails>();

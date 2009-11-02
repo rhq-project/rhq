@@ -117,12 +117,14 @@ public class AugeasConfigurationDiscoveryComponent<T extends ResourceComponent> 
         PropertySimple excludeGlobsProp = pluginConfiguration
             .getSimple(AugeasConfigurationComponent.EXCLUDE_GLOBS_PROP);
 
-        File root = new File(AugeasConfigurationComponent.getAugeasRootPath());
+        String augeasRootPath = pluginConfiguration.getSimpleValue(AugeasConfigurationComponent.AUGEAS_ROOT_PATH_PROP,
+                AugeasConfigurationComponent.DEFAULT_AUGEAS_ROOT_PATH);
+        File root = new File(augeasRootPath);
 
         List<String> includeGlobs = getGlobList(includeGlobsProp);
 
         if (includeGlobsProp == null) {
-            throw new IllegalStateException("Expecting at least once inclusion pattern for configuration files.");
+            throw new IllegalStateException("Expecting at least one inclusion pattern for configuration files.");
         }
 
         List<File> files = Glob.matchAll(root, includeGlobs);
@@ -160,8 +162,6 @@ public class AugeasConfigurationDiscoveryComponent<T extends ResourceComponent> 
             bld.append(excludeGlobsProp.getStringValue());
         }
 
-        bld.deleteCharAt(bld.length() - 1);
-
         return bld.toString();
     }
 
@@ -175,7 +175,7 @@ public class AugeasConfigurationDiscoveryComponent<T extends ResourceComponent> 
         if (bld.length() > 0) {
             bld.deleteCharAt(bld.length() - 1);
         }
-        return new PropertySimple(name, bld.toString());
+        return new PropertySimple(name, bld);
     }
 
     public static List<String> getGlobList(PropertySimple list) {

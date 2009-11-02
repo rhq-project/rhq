@@ -174,8 +174,8 @@ public class CronComponent extends AugeasConfigurationComponent<PlatformComponen
     }
     
     protected void updateCrontab(String crontabPath, ConfigurationDefinition crontabConfigurationDefinition, Configuration crontabConfiguration) {
+        Augeas augeas = getAugeas();
         try {
-            Augeas augeas = getAugeas();
             augeas.load();
             
             File crontabFile = new File(crontabPath);
@@ -201,7 +201,7 @@ public class CronComponent extends AugeasConfigurationComponent<PlatformComponen
             
             augeas.save();
         } catch (AugeasException e) {
-            throw new RuntimeException(summarizeAugeasError(), e);
+            throw new RuntimeException(summarizeAugeasError(augeas), e);
         }
     }    
 }

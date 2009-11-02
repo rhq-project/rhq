@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.content;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.util.PageControl;
@@ -113,7 +114,7 @@ public class ListContentSourcesUIBean extends PagedDataTableUIBean {
     }
 
     private String[] getSelectedContentSources() {
-        return FacesContextUtility.getRequest().getParameterValues("selectedContentSources");
+        return FacesContextUtility.getRequest().getParameterValues("selectedContentProviders");
     }
 
     private Integer[] getIntegerArray(String[] input) {

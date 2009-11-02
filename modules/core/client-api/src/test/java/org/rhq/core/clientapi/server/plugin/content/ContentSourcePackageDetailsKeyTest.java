@@ -27,41 +27,41 @@ import org.testng.annotations.Test;
 @Test
 public class ContentSourcePackageDetailsKeyTest {
     public void testEqualsHashcode() {
-        ContentSourcePackageDetailsKey key1;
-        ContentSourcePackageDetailsKey key2;
+        ContentProviderPackageDetailsKey key1;
+        ContentProviderPackageDetailsKey key2;
 
-        key1 = new ContentSourcePackageDetailsKey("name1", "ver1", "pt1", "arch1", "rt1", "plugin1");
-        key2 = new ContentSourcePackageDetailsKey("name1", "ver1", "pt1", "arch1", "rt1", "plugin1");
+        key1 = new ContentProviderPackageDetailsKey("name1", "ver1", "pt1", "arch1", "rt1", "plugin1");
+        key2 = new ContentProviderPackageDetailsKey("name1", "ver1", "pt1", "arch1", "rt1", "plugin1");
         assert key1.equals(key2);
         assert key2.equals(key1);
         assert key1.hashCode() == key2.hashCode();
 
-        key2 = new ContentSourcePackageDetailsKey("BLAH", "ver1", "pt1", "arch1", "rt1", "plugin1");
+        key2 = new ContentProviderPackageDetailsKey("BLAH", "ver1", "pt1", "arch1", "rt1", "plugin1");
         assert !key1.equals(key2);
         assert !key2.equals(key1);
         assert key1.hashCode() != key2.hashCode();
 
-        key2 = new ContentSourcePackageDetailsKey("name1", "BLAH", "pt1", "arch1", "rt1", "plugin1");
+        key2 = new ContentProviderPackageDetailsKey("name1", "BLAH", "pt1", "arch1", "rt1", "plugin1");
         assert !key1.equals(key2);
         assert !key2.equals(key1);
         assert key1.hashCode() != key2.hashCode();
 
-        key2 = new ContentSourcePackageDetailsKey("name1", "ver1", "BLAH", "arch1", "rt1", "plugin1");
+        key2 = new ContentProviderPackageDetailsKey("name1", "ver1", "BLAH", "arch1", "rt1", "plugin1");
         assert !key1.equals(key2);
         assert !key2.equals(key1);
         assert key1.hashCode() != key2.hashCode();
 
-        key2 = new ContentSourcePackageDetailsKey("name1", "ver1", "pt1", "BLAH", "rt1", "plugin1");
+        key2 = new ContentProviderPackageDetailsKey("name1", "ver1", "pt1", "BLAH", "rt1", "plugin1");
         assert !key1.equals(key2);
         assert !key2.equals(key1);
         assert key1.hashCode() != key2.hashCode();
 
-        key2 = new ContentSourcePackageDetailsKey("name1", "ver1", "pt1", "arch1", "BLAH", "plugin1");
+        key2 = new ContentProviderPackageDetailsKey("name1", "ver1", "pt1", "arch1", "BLAH", "plugin1");
         assert !key1.equals(key2);
         assert !key2.equals(key1);
         assert key1.hashCode() != key2.hashCode();
 
-        key2 = new ContentSourcePackageDetailsKey("name1", "ver1", "pt1", "arch1", "rt1", "BLAH");
+        key2 = new ContentProviderPackageDetailsKey("name1", "ver1", "pt1", "arch1", "rt1", "BLAH");
         assert !key1.equals(key2);
         assert !key2.equals(key1);
         assert key1.hashCode() != key2.hashCode();

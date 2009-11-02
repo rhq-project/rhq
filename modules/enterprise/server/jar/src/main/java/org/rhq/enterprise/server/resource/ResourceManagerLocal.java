@@ -277,7 +277,7 @@ public interface ResourceManagerLocal {
     PageList<Resource> findAvailableResourcesForResourceGroup(Subject user, int groupId, ResourceType type,
         ResourceCategory category, String nameFilter, int[] excludeIds, PageControl pageControl);
 
-    PageList<Resource> findAvailableResourcesForChannel(Subject user, int channelId, String search,
+    PageList<Resource> findAvailableResourcesForRepo(Subject user, int repoId, String search,
         ResourceCategory category, PageControl pageControl);
 
     PageList<Resource> findAvailableResourcesForDashboardPortlet(Subject user, Integer typeId,

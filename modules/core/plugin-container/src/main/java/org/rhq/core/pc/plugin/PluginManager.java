@@ -22,7 +22,27 @@
  */
 package org.rhq.core.pc.plugin;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.jetbrains.annotations.Nullable;
+import org.rhq.core.clientapi.agent.PluginContainerException;
+import org.rhq.core.clientapi.agent.metadata.PluginDependencyGraph;
+import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
+import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
+import org.rhq.core.clientapi.descriptor.PluginTransformer;
+import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
+import org.rhq.core.domain.plugin.Plugin;
+import org.rhq.core.pc.ContainerService;
+import org.rhq.core.pc.PluginContainerConfiguration;
+import org.rhq.core.pluginapi.plugin.PluginContext;
+import org.rhq.core.pluginapi.plugin.PluginLifecycleListener;
+import org.rhq.core.system.SystemInfo;
+import org.rhq.core.system.SystemInfoFactory;
+import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.core.util.MessageDigestGenerator;
+
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -31,23 +51,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.jetbrains.annotations.Nullable;
-
-import org.rhq.core.clientapi.agent.PluginContainerException;
-import org.rhq.core.clientapi.agent.metadata.PluginDependencyGraph;
-import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
-import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
-import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
-import org.rhq.core.pc.ContainerService;
-import org.rhq.core.pc.PluginContainerConfiguration;
-import org.rhq.core.pluginapi.plugin.PluginContext;
-import org.rhq.core.pluginapi.plugin.PluginLifecycleListener;
-import org.rhq.core.system.SystemInfo;
-import org.rhq.core.system.SystemInfoFactory;
-import org.rhq.core.util.exception.ThrowableUtil;
 
 /**
  * This container service will load in all plugins that can be found and will maintain the complete set of
@@ -60,6 +63,16 @@ import org.rhq.core.util.exception.ThrowableUtil;
  * @author John Mazzitelli
  */
 public class PluginManager implements ContainerService {
+
+    /**
+     * A callback interface for updating the loadedPlugins list. When running inside of an agent, loadedPlugins gets
+     * updated with Plugin objects received from the RHQ server. When running in embedded mode, we have to create the
+     * Plugin objects ourselves.
+     */
+    private static interface UpdateLoadedPlugins {
+        void execute(PluginDescriptor pluginDescriptor, URL pluginURL);
+    }
+
     private static final Log log = LogFactory.getLog(PluginManager.class);
 
     /**
@@ -68,9 +81,9 @@ public class PluginManager implements ContainerService {
     private Map<String, PluginEnvironment> loadedPluginEnvironments;
 
     /**
-     * A list of loaded plugin names in the order in which they were loaded. 
+     * A list of loaded plugins in the order in which they were loaded.
      */
-    private List<String> loadedPlugins;
+    private List<Plugin> loadedPlugins;
 
     /**
      * Cached instances of objects used to initialize and shutdown individual plugins.
@@ -81,6 +94,7 @@ public class PluginManager implements ContainerService {
     private PluginMetadataManager metadataManager;
     private ClassLoaderManager classLoaderManager;
     private PluginContainerConfiguration configuration;
+    private UpdateLoadedPlugins updateLoadedPlugins;
 
     /**
      * Finds all plugins using the plugin finder defined in the
@@ -91,9 +105,11 @@ public class PluginManager implements ContainerService {
      */
     public void initialize() {
         loadedPluginEnvironments = new HashMap<String, PluginEnvironment>();
-        loadedPlugins = new ArrayList<String>();
+        loadedPlugins = new ArrayList<Plugin>();
         pluginLifecycleListenerCache = new HashMap<String, PluginLifecycleListener>();
         metadataManager = new PluginMetadataManager();
+
+        initUpdateLoadedPluginsCallback();
 
         PluginFinder finder = configuration.getPluginFinder();
         File tmpDir = configuration.getTemporaryDirectory();
@@ -161,6 +177,35 @@ public class PluginManager implements ContainerService {
         return;
     }
 
+    private void initUpdateLoadedPluginsCallback() {
+        if (configuration.isInsideAgent()) {
+            updateLoadedPlugins = new UpdateLoadedPlugins() {
+                public void execute(PluginDescriptor pluginDescriptor, URL pluginURL) {
+                    loadPluginIfFoundInListFromServer(pluginDescriptor);
+                }
+            };
+        }
+        else {
+            updateLoadedPlugins = new UpdateLoadedPlugins() {
+                PluginTransformer transformer = new PluginTransformer();
+
+                public void execute(PluginDescriptor pluginDescriptor, URL pluginURL) {
+                    Plugin plugin = transformer.toPlugin(pluginDescriptor, pluginURL);
+                    loadedPlugins.add(plugin);
+                }
+            };
+        }
+    }
+
+    private void loadPluginIfFoundInListFromServer(PluginDescriptor pluginDescriptor) {
+        for (Plugin plugin : configuration.getPluginsOnServer()) {
+            if (pluginDescriptor.getName().equals(plugin.getName())) {
+                loadedPlugins.add(plugin);
+                return;
+            }
+        }
+    }
+
     /**
      * @see ContainerService#shutdown()
      */
@@ -168,20 +213,20 @@ public class PluginManager implements ContainerService {
         // Inform the plugins we are shutting them down.
         // We want to shut them down in the reverse order that we initialized them.
         Collections.reverse(this.loadedPlugins);
-        for (String pluginName : this.loadedPlugins) {
-            PluginLifecycleListener listener = this.pluginLifecycleListenerCache.get(pluginName);
+        for (Plugin plugin : loadedPlugins) {
+            PluginLifecycleListener listener = this.pluginLifecycleListenerCache.get(plugin.getName());
             if (listener != null) {
                 try {
                     ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
                     Thread.currentThread().setContextClassLoader(
-                        this.classLoaderManager.obtainPluginClassLoader(pluginName));
+                        this.classLoaderManager.obtainPluginClassLoader(plugin.getName()));
                     try {
                         listener.shutdown();
                     } finally {
                         Thread.currentThread().setContextClassLoader(originalCL);
                     }
                 } catch (Throwable t) {
-                    log.warn("Failed to get lifecycle listener to shutdown [" + pluginName + "]. Cause: "
+                    log.warn("Failed to get lifecycle listener to shutdown [" + plugin.getName() + "]. Cause: "
                         + ThrowableUtil.getAllMessages(t));
                 }
             }
@@ -298,7 +343,7 @@ public class PluginManager implements ContainerService {
         // everything is loaded and initialized
         this.loadedPluginEnvironments.put(pluginName, pluginEnvironment);
         this.metadataManager.loadPlugin(pluginDescriptor);
-        this.loadedPlugins.add(pluginName);
+        updateLoadedPlugins.execute(pluginDescriptor, pluginUrl);
 
         return;
     }

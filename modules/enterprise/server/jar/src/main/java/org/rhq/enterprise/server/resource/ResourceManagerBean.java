@@ -63,7 +63,7 @@ import org.rhq.core.domain.content.ContentServiceRequest;
 import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.InstalledPackageHistory;
 import org.rhq.core.domain.content.PackageInstallationStep;
-import org.rhq.core.domain.content.ResourceChannel;
+import org.rhq.core.domain.content.ResourceRepo;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSource;
@@ -98,8 +98,6 @@ import org.rhq.core.domain.resource.composite.ResourceInstallCount;
 import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
-import org.rhq.core.domain.util.CriteriaQueryGenerator;
-import org.rhq.core.domain.util.CriteriaQueryRunner;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
@@ -117,6 +115,8 @@ import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.operation.ResourceOperationSchedule;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
+import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
+import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
 /**
  * A manager that provides methods for creating, updating, deleting, and querying {@link Resource}s.
@@ -333,7 +333,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         };
 
         String[] namedQueriesToExecute = new String[] { //
-            ResourceChannel.DELETE_BY_RESOURCES, //
+            ResourceRepo.DELETE_BY_RESOURCES, //
             MeasurementBaseline.QUERY_DELETE_BY_RESOURCES, // baseline BEFORE schedules
             MeasurementDataTrait.QUERY_DELETE_BY_RESOURCES, // traits BEFORE schedules
             CallTimeDataValue.QUERY_DELETE_BY_RESOURCES, // call time data values BEFORE schedules & call time data keys
@@ -1473,17 +1473,17 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<Resource> findAvailableResourcesForChannel(Subject user, int channelId, String search,
+    public PageList<Resource> findAvailableResourcesForRepo(Subject user, int repoId, String search,
         ResourceCategory category, PageControl pageControl) {
         pageControl.initDefaultOrderingField("res.name");
 
         Query queryCount = PersistenceUtility.createCountQuery(entityManager,
-            Resource.QUERY_GET_AVAILABLE_RESOURCES_FOR_CHANNEL);
+            Resource.QUERY_GET_AVAILABLE_RESOURCES_FOR_REPO);
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-            Resource.QUERY_GET_AVAILABLE_RESOURCES_FOR_CHANNEL, pageControl);
+            Resource.QUERY_GET_AVAILABLE_RESOURCES_FOR_REPO, pageControl);
 
-        queryCount.setParameter("channelId", channelId);
-        query.setParameter("channelId", channelId);
+        queryCount.setParameter("repoId", repoId);
+        query.setParameter("repoId", repoId);
 
         search = PersistenceUtility.formatSearchParameter(search);
         queryCount.setParameter("search", search);

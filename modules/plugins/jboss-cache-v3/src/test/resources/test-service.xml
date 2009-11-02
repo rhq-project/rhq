@@ -5,7 +5,7 @@ name="foo:config=test,testName=testValue,Dname=testName,service=ExampleCacheJmxW
 <attribute name="TransactionManagerLookupClass">
 org.jboss.cache.transaction.JBossTransactionManagerLookup
 </attribute>
-<attribute name="MuxChannelFactory"><inject bean="JChannelFactory"/></attribute>
+<attribute name="MuxRepoFactory"><inject bean="JRepoFactory"/></attribute>
 <attribute name="MultiplexerStack">udp</attribute>
 <attribute name="ClusterName">Example-EntityCache</attribute>
 <attribute name="IsolationLevel">REPEATABLE_READ</attribute>

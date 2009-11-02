@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.startup;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.sql.Connection;
 import java.util.List;
 import java.util.Properties;
 
@@ -29,11 +30,13 @@ import javax.management.MBeanServerInvocationHandler;
 import javax.management.ObjectName;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
+import javax.sql.DataSource;
 
 import org.quartz.SchedulerException;
 
 import org.jboss.mx.util.MBeanServerLocator;
 
+import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.cloud.Server.OperationMode;
 import org.rhq.core.domain.resource.Agent;
@@ -49,7 +52,7 @@ import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.core.CustomJaasDeploymentServiceMBean;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
 import org.rhq.enterprise.server.core.plugin.AgentPluginDeploymentScannerMBean;
-import org.rhq.enterprise.server.plugin.content.ContentSourcePluginServiceManagement;
+import org.rhq.enterprise.server.plugin.content.ContentProviderPluginServiceManagement;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.scheduler.jobs.AsyncResourceDeleteJob;
@@ -126,6 +129,15 @@ public class StartupServlet extends HttpServlet {
     }
 
     private void initializeServer() {
+        // Ensure the class is loaded and the dbType is set for our current db       
+        try {
+            DataSource ds = LookupUtil.getDataSource();
+            Connection conn = ds.getConnection();
+            DatabaseTypeFactory.setDefaultDatabaseType(DatabaseTypeFactory.getDatabaseType(conn));
+        } catch (Exception e) {
+            log("Could not initialize server: ", e);
+        }
+
         // Ensure that this server is registered in the database.
         createDefaultServerIfNecessary();
 
@@ -372,11 +384,11 @@ public class StartupServlet extends HttpServlet {
 
         // Content Source Sync Jobs
         try {
-            ContentSourcePluginServiceManagement mbean;
+            ContentProviderPluginServiceManagement mbean;
             MBeanServer mbs = MBeanServerLocator.locateJBoss();
-            ObjectName name = ObjectNameFactory.create(ContentSourcePluginServiceManagement.OBJECT_NAME_STR);
-            Class<?> iface = ContentSourcePluginServiceManagement.class;
-            mbean = (ContentSourcePluginServiceManagement) MBeanServerInvocationHandler.newProxyInstance(mbs, name,
+            ObjectName name = ObjectNameFactory.create(ContentProviderPluginServiceManagement.OBJECT_NAME_STR);
+            Class<?> iface = ContentProviderPluginServiceManagement.class;
+            mbean = (ContentProviderPluginServiceManagement) MBeanServerInvocationHandler.newProxyInstance(mbs, name,
                 iface, false);
             mbean.getPluginContainer().scheduleSyncJobs();
         } catch (Exception e) {
@@ -523,11 +535,11 @@ public class StartupServlet extends HttpServlet {
         log("Starting the server plugin container...");
 
         try {
-            ContentSourcePluginServiceManagement mbean;
+            ContentProviderPluginServiceManagement mbean;
             MBeanServer mbs = MBeanServerLocator.locateJBoss();
-            ObjectName name = ObjectNameFactory.create(ContentSourcePluginServiceManagement.OBJECT_NAME_STR);
-            Class<?> iface = ContentSourcePluginServiceManagement.class;
-            mbean = (ContentSourcePluginServiceManagement) MBeanServerInvocationHandler.newProxyInstance(mbs, name,
+            ObjectName name = ObjectNameFactory.create(ContentProviderPluginServiceManagement.OBJECT_NAME_STR);
+            Class<?> iface = ContentProviderPluginServiceManagement.class;
+            mbean = (ContentProviderPluginServiceManagement) MBeanServerInvocationHandler.newProxyInstance(mbs, name,
                 iface, false);
             mbean.startPluginContainer();
         } catch (Exception e) {

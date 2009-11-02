@@ -45,17 +45,17 @@ import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.NumericType;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.util.CriteriaQueryGenerator;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
-import org.rhq.core.domain.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.engine.AlertDefinitionEvent;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.cloud.StatusManagerLocal;
+import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
+import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
 /**
  * @author Joseph Marques
@@ -634,6 +634,6 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         }
 
         CriteriaQueryRunner<AlertDefinition> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
-        return queryRunner.execute();        
+        return queryRunner.execute();
     }
 }

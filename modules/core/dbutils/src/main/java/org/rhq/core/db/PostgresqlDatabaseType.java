@@ -162,4 +162,18 @@ public abstract class PostgresqlDatabaseType extends DatabaseType {
     public void reindexTable(Connection conn, String table) throws SQLException {
         executeSql(conn, "REINDEX TABLE " + table);
     }
+
+    /**
+     * This is overridden for Postgres because by default (at least in our currently supported versions)
+     * postgres does not treat the backslash as a string literal, which breaks the sql standard. See
+     * http://opensource.atlassian.com/projects/hibernate/browse/HHH-2674 for more.
+     * 
+     * @see DatabaseType#getEscapeCharacter()
+     */
+    public String getEscapeCharacter() {
+        String result = System.getProperty("rhq.server.database.escape-character");
+
+        return (null == result) ? "\\\\" : result;
+    }
+
 }

@@ -33,14 +33,14 @@ public class IRCServerComponent implements ResourceComponent, OperationFacet {
 
     private Bot bot;
 
-    private Map<String, IRCChannelComponent> channels = new HashMap<String, IRCChannelComponent>();
+    private Map<String, IRCRepoComponent> repos = new HashMap<String, IRCRepoComponent>();
 
     private String host;
     private String port;
     private String nick;
-    private List<String> activeChannels;
+    private List<String> activeRepos;
 
-    private Map<String, ChannelInfo> info = new HashMap<String, ChannelInfo>();
+    private Map<String, RepoInfo> info = new HashMap<String, RepoInfo>();
 
 
     /**
@@ -58,7 +58,7 @@ public class IRCServerComponent implements ResourceComponent, OperationFacet {
                 log.warn("Failure to connect to IRC server " + host + " reason: " + e.getMessage());
             }
         }
-        activeChannels = Arrays.asList(this.bot.getChannels());
+        activeRepos = Arrays.asList(this.bot.getRepos());
 
         return this.bot.isConnected() ? AvailabilityType.UP : AvailabilityType.DOWN;
     }
@@ -84,61 +84,61 @@ public class IRCServerComponent implements ResourceComponent, OperationFacet {
 
     }
 
-    public void registerChannel(IRCChannelComponent channelComponent) {
-        this.channels.put(channelComponent.getChannel(), channelComponent);
+    public void registerRepo(IRCRepoComponent repoComponent) {
+        this.repos.put(repoComponent.getRepo(), repoComponent);
 
-        this.bot.joinChannel(channelComponent.getChannel());
-        updateChannels();
+        this.bot.joinRepo(repoComponent.getRepo());
+        updateRepos();
     }
 
-    public void unregisterChannel(IRCChannelComponent channelComponent) {
-        this.bot.partChannel(channelComponent.getChannel());
-        this.channels.remove(channelComponent.getChannel());
+    public void unregisterRepo(IRCRepoComponent repoComponent) {
+        this.bot.partRepo(repoComponent.getRepo());
+        this.repos.remove(repoComponent.getRepo());
     }
 
-    public boolean isInChannel(String channel) {
-        return activeChannels.contains(channel);
+    public boolean isInRepo(String repo) {
+        return activeRepos.contains(repo);
     }
 
 
-    public void sendMessage(String channel, String message) {
-        this.bot.sendMessage(channel, message);
+    public void sendMessage(String repo, String message) {
+        this.bot.sendMessage(repo, message);
     }
 
     public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException, Exception {
-        if (name.equals("listChannels")) {
+        if (name.equals("listRepos")) {
             OperationResult result = new OperationResult();
             Configuration resultConfig = result.getComplexResults();
-            PropertyList channelList = new PropertyList("channelList");
+            PropertyList repoList = new PropertyList("repoList");
 
-            this.bot.listChannels();
+            this.bot.listRepos();
 
             Thread.sleep(5000); // TODO is this long enough... any other way to know when the list is done?
 
-            for (ChannelInfo channelInfo : info.values()) {
-                PropertyMap channelMap = new PropertyMap("channelMap");
-                channelMap.put(new PropertySimple("channel", channelInfo.channel));
-                channelMap.put(new PropertySimple("userCount", channelInfo.userCount));
-                channelMap.put(new PropertySimple("topic", channelInfo.topic));
-                channelList.add(channelMap);
+            for (RepoInfo repoInfo : info.values()) {
+                PropertyMap repoMap = new PropertyMap("repoMap");
+                repoMap.put(new PropertySimple("repo", repoInfo.repo));
+                repoMap.put(new PropertySimple("userCount", repoInfo.userCount));
+                repoMap.put(new PropertySimple("topic", repoInfo.topic));
+                repoList.add(repoMap);
             }
-            resultConfig.put(channelList);
+            resultConfig.put(repoList);
             return result;
         }
         return null;
     }
 
-    public int getUserCount(String channel) {
-        return this.bot.getUsers(channel).length;
+    public int getUserCount(String repo) {
+        return this.bot.getUsers(repo).length;
     }
 
-    public static class ChannelInfo {
-        String channel;
+    public static class RepoInfo {
+        String repo;
         int userCount;
         String topic;
 
-        public ChannelInfo(String channel, int userCount, String topic) {
-            this.channel = channel;
+        public RepoInfo(String repo, int userCount, String topic) {
+            this.repo = repo;
             this.userCount = userCount;
             this.topic = topic;
         }
@@ -151,19 +151,19 @@ public class IRCServerComponent implements ResourceComponent, OperationFacet {
         }
 
         @Override
-        protected void onChannelInfo(String channel, int userCount, String topic) {
-            info.put(channel, new ChannelInfo(channel, userCount, topic));
+        protected void onRepoInfo(String repo, int userCount, String topic) {
+            info.put(repo, new RepoInfo(repo, userCount, topic));
         }
 
-        public void onMessage(String channel, String sender, String login, String hostname, String message) {
+        public void onMessage(String repo, String sender, String login, String hostname, String message) {
 
-            IRCChannelComponent component = IRCServerComponent.this.channels.get(channel);
+            IRCRepoComponent component = IRCServerComponent.this.repos.get(repo);
             if (component != null) {
                 component.acceptMessage(sender, login, hostname, message);
             }
 
             if (message.contains(getName()) && sender.contains("ghinkle")) {
-                sendMessage(channel, "monitoring " + channels.size() + " channels");
+                sendMessage(repo, "monitoring " + repos.size() + " repos");
             }
         }
     }
@@ -179,8 +179,8 @@ public class IRCServerComponent implements ResourceComponent, OperationFacet {
     }
 
 
-    private void updateChannels() {
-        activeChannels = Arrays.asList(this.bot.getChannels());
+    private void updateRepos() {
+        activeRepos = Arrays.asList(this.bot.getRepos());
     }
 
 }

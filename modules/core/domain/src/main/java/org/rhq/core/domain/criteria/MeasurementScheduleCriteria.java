@@ -28,8 +28,8 @@ import java.util.List;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
-import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
+import org.rhq.core.domain.util.PageOrdering;
 
 /**
  * @author Joseph Marques
@@ -60,8 +60,8 @@ public class MeasurementScheduleCriteria extends Criteria {
         filterOverrides.put("resourceGroupId", "resource.id IN " //
             + "( SELECT res.id " //
             + "    FROM Resource res " //
-            + "    JOIN res.implicitGroups group " //
-            + "   WHERE group.id = ? )");
+            + "    JOIN res.implicitGroups ig " //
+            + "   WHERE ig.id = ? )");
         filterOverrides.put("autoGroupResourceTypeId", "resource.id IN " //
             + "( SELECT res.id " //
             + "    FROM Resource res " //

@@ -37,6 +37,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.lang.reflect.UndeclaredThrowableException;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -54,16 +55,14 @@ import org.apache.commons.logging.LogFactory;
 import org.jboss.annotation.ejb.TransactionTimeout;
 import org.jboss.util.StringPropertyReplacer;
 
-import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetails;
-import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetailsKey;
-import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
+import org.rhq.core.clientapi.server.plugin.content.*;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.content.Architecture;
-import org.rhq.core.domain.content.Channel;
-import org.rhq.core.domain.content.ChannelContentSource;
-import org.rhq.core.domain.content.ChannelPackageVersion;
+import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.content.RepoContentSource;
+import org.rhq.core.domain.content.RepoPackageVersion;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceSyncResults;
 import org.rhq.core.domain.content.ContentSourceSyncStatus;
@@ -93,8 +92,8 @@ import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
-import org.rhq.enterprise.server.plugin.content.ContentSourceAdapterManager;
-import org.rhq.enterprise.server.plugin.content.ContentSourcePluginContainer;
+import org.rhq.enterprise.server.plugin.content.ContentProviderManager;
+import org.rhq.enterprise.server.plugin.content.ContentProviderPluginContainer;
 import org.rhq.enterprise.server.resource.ProductVersionManagerLocal;
 
 /**
@@ -124,6 +123,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     private SubjectManagerLocal subjectManager;
     @EJB
     private ProductVersionManagerLocal productVersionManager;
+    @EJB
+    private RepoManagerLocal repoManager;
 
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
@@ -132,7 +133,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         // separately. We do this using em.remove so we can get hibernate to perform the cascading for us.
         // Package versions normally do not have extra props, so we gain the advantage of using hibernate
         // to do the cascade deletes without incurring too much overhead in performing multiple removes.
-        Query q = entityManager.createNamedQuery(PackageVersion.FIND_EXTRA_PROPS_IF_NO_CONTENT_SOURCES_OR_CHANNELS);
+        Query q = entityManager.createNamedQuery(PackageVersion.FIND_EXTRA_PROPS_IF_NO_CONTENT_SOURCES_OR_REPOS);
         List<PackageVersion> pvs = q.getResultList();
         for (PackageVersion pv : pvs) {
             entityManager.remove(pv.getExtraProperties());
@@ -143,7 +144,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         // Query the package bits table and get the package bits where bits column is null - for those get the
         // related package versions and given the package version/filename you can get the files to delete.
         // Do not delete the files yet - just get the (package version ID, filename) composite list.
-        q = entityManager.createNamedQuery(PackageVersion.FIND_FILES_IF_NO_CONTENT_SOURCES_OR_CHANNELS);
+        q = entityManager.createNamedQuery(PackageVersion.FIND_FILES_IF_NO_CONTENT_SOURCES_OR_REPOS);
         List<PackageVersionFile> pvFiles = q.getResultList();
 
         // get ready for bulk delete by clearing entity manager
@@ -151,10 +152,10 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         entityManager.clear();
 
         // remove the productVersion->packageVersion mappings for all orphaned package versions
-        entityManager.createNamedQuery(PackageVersion.DELETE_PVPV_IF_NO_CONTENT_SOURCES_OR_CHANNELS).executeUpdate();
+        entityManager.createNamedQuery(PackageVersion.DELETE_PVPV_IF_NO_CONTENT_SOURCES_OR_REPOS).executeUpdate();
 
         // remove the orphaned package versions
-        int count = entityManager.createNamedQuery(PackageVersion.DELETE_IF_NO_CONTENT_SOURCES_OR_CHANNELS)
+        int count = entityManager.createNamedQuery(PackageVersion.DELETE_IF_NO_CONTENT_SOURCES_OR_REPOS)
             .executeUpdate();
 
         // remove the package bits corresponding to the orphaned package versions we just deleted
@@ -190,7 +191,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         entityManager.flush();
         entityManager.clear();
 
-        entityManager.createNamedQuery(ChannelContentSource.DELETE_BY_CONTENT_SOURCE_ID).setParameter(
+        entityManager.createNamedQuery(RepoContentSource.DELETE_BY_CONTENT_SOURCE_ID).setParameter(
             "contentSourceId", contentSourceId).executeUpdate();
 
         entityManager.createNamedQuery(PackageVersionContentSource.DELETE_BY_CONTENT_SOURCE_ID).setParameter(
@@ -206,7 +207,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
             // make sure we stop its adapter and unschedule any sync job associated with it
             try {
-                ContentSourcePluginContainer pc = ContentManagerHelper.getPluginContainer();
+                ContentProviderPluginContainer pc = ContentManagerHelper.getPluginContainer();
                 pc.unscheduleSyncJob(cs);
                 pc.getAdapterManager().shutdownAdapter(cs);
             } catch (Exception e) {
@@ -246,17 +247,17 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public PageList<ContentSource> getAvailableContentSourcesForChannel(Subject subject, Integer channelId,
+    public PageList<ContentSource> getAvailableContentSourcesForRepo(Subject subject, Integer repoId,
         PageControl pc) {
         pc.initDefaultOrderingField("cs.name");
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-            ContentSource.QUERY_FIND_AVAILABLE_BY_CHANNEL_ID, pc);
+            ContentSource.QUERY_FIND_AVAILABLE_BY_REPO_ID, pc);
         Query countQuery = PersistenceUtility.createCountQuery(entityManager,
-            ContentSource.QUERY_FIND_AVAILABLE_BY_CHANNEL_ID);
+            ContentSource.QUERY_FIND_AVAILABLE_BY_REPO_ID);
 
-        query.setParameter("channelId", channelId);
-        countQuery.setParameter("channelId", channelId);
+        query.setParameter("repoId", repoId);
+        countQuery.setParameter("repoId", repoId);
 
         List<ContentSource> results = query.getResultList();
         long count = (Long) countQuery.getSingleResult();
@@ -304,20 +305,20 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public PageList<Channel> getAssociatedChannels(Subject subject, int contentSourceId, PageControl pc) {
+    public PageList<Repo> getAssociatedRepos(Subject subject, int contentSourceId, PageControl pc) {
         pc.initDefaultOrderingField("c.id");
 
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, Channel.QUERY_FIND_BY_CONTENT_SOURCE_ID,
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, Repo.QUERY_FIND_BY_CONTENT_SOURCE_ID,
             pc);
-        Query countQuery = PersistenceUtility.createCountQuery(entityManager, Channel.QUERY_FIND_BY_CONTENT_SOURCE_ID);
+        Query countQuery = PersistenceUtility.createCountQuery(entityManager, Repo.QUERY_FIND_BY_CONTENT_SOURCE_ID);
 
         query.setParameter("id", contentSourceId);
         countQuery.setParameter("id", contentSourceId);
 
-        List<Channel> results = query.getResultList();
+        List<Repo> results = query.getResultList();
         long count = (Long) countQuery.getSingleResult();
 
-        return new PageList<Channel>(results, (int) count, pc);
+        return new PageList<Repo>(results, (int) count, pc);
     }
 
     @SuppressWarnings("unchecked")
@@ -341,6 +342,34 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public void mergeRepoImportResults(List<RepoDetails> repos) {
+
+        Subject overlord = subjectManager.getOverlord();
+
+        for (RepoDetails createMe : repos) {
+
+            String repoName = createMe.getName();
+
+            // Make sure the repo doesn't already exist. If we add twice, currently we'll get an exception 
+            List<Repo> existingRepo = repoManager.getRepoByName(repoName);
+            if (existingRepo != null) {
+                continue;
+            }
+
+            Repo repo = new Repo(repoName);
+            repo.setDescription(createMe.getDescription());
+
+            try {
+                repoManager.createRepo(overlord, repo);
+            }
+            catch (RepoException e) {
+                log.error("Error creating repo [" + repo + "]", e);
+            }
+        }
+
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
     public void deleteContentSourceSyncResults(Subject subject, int[] ids) {
         if (ids != null) {
             for (int id : ids) {
@@ -354,7 +383,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public ContentSource createContentSource(Subject subject, String name, String description, String typeName,
-        Configuration configuration, boolean lazyLoad, DownloadMode downloadMode) throws ContentSourceException {
+        Configuration configuration, boolean lazyLoad, DownloadMode downloadMode)
+            throws ContentSourceException, InitializationException {
         log.debug("User [" + subject + "] is creating a content source [" + name + "] of type [" + typeName + "]");
 
         // we first must get the content source type - if it doesn't exist, we throw an exception
@@ -383,28 +413,42 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public ContentSource createContentSource(Subject subject, ContentSource contentSource)
-        throws ContentSourceException {
+        //throws ContentSourceException, InitializationException {
+       throws ContentSourceException, InitializationException {
         validateContentSource(contentSource);
 
         log.debug("User [" + subject + "] is creating content source [" + contentSource + "]");
 
-        // these aren't cascaded during persist, but I want to set them to null anyway, just to be sure
-        contentSource.setSyncResults(null);
 
-        entityManager.persist(contentSource);
-
-        log.debug("User [" + subject + "] created content source [" + contentSource + "]");
 
         // now that a new content source has been added to the system, let's start its adapter now
         try {
-            ContentSourcePluginContainer pc = ContentManagerHelper.getPluginContainer();
+            ContentProviderPluginContainer pc = ContentManagerHelper.getPluginContainer();
             pc.getAdapterManager().startAdapter(contentSource);
             pc.scheduleSyncJob(contentSource);
-        } catch (Exception e) {
+
+        } catch (InitializationException ie) {
+            log.warn("Failed to start adapter for [" + contentSource + "]", ie);
+            throw ie;
+        }  catch (Exception e) {
             log.warn("Failed to start adapter for [" + contentSource + "]", e);
         }
 
+        entityManager.persist(contentSource);
+        // these aren't cascaded during persist, but I want to set them to null anyway, just to be sure
+        contentSource.setSyncResults(null);
+
+        log.debug("User [" + subject + "] created content source [" + contentSource + "]");
         return contentSource; // now has the ID set
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public ContentSource simpleCreateContentSource(Subject subject, ContentSource contentSource)
+        throws ContentSourceException {
+        validateContentSource(contentSource);
+        contentSource.setSyncResults(new ArrayList<ContentSourceSyncResults>());
+        entityManager.persist(contentSource);
+        return contentSource;
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
@@ -428,7 +472,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             log.info("Content source [" + loaded.getName() + "] is being renamed to [" + contentSource.getName()
                 + "].  Will now unschedule the old sync job");
             try {
-                ContentSourcePluginContainer pc = ContentManagerHelper.getPluginContainer();
+                ContentProviderPluginContainer pc = ContentManagerHelper.getPluginContainer();
                 pc.unscheduleSyncJob(loaded);
             } catch (Exception e) {
                 log.warn("Failed to unschedule obsolete content source sync job for [" + loaded + "]", e);
@@ -443,7 +487,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         // restart its adapter and reschedule its sync job because the config might have changed.
         // synchronize it now, too
         try {
-            ContentSourcePluginContainer pc = ContentManagerHelper.getPluginContainer();
+            ContentProviderPluginContainer pc = ContentManagerHelper.getPluginContainer();
             pc.unscheduleSyncJob(contentSource);
             pc.getAdapterManager().restartAdapter(contentSource);
             pc.scheduleSyncJob(contentSource);
@@ -481,7 +525,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
     public boolean testContentSourceConnection(int contentSourceId) {
         try {
-            ContentSourcePluginContainer pc = ContentManagerHelper.getPluginContainer();
+            ContentProviderPluginContainer pc = ContentManagerHelper.getPluginContainer();
             return pc.getAdapterManager().testConnection(contentSourceId);
         } catch (Exception e) {
             log.info("Failed to test connection to [" + contentSourceId + "]. Cause: "
@@ -495,7 +539,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public void synchronizeAndLoadContentSource(Subject subject, int contentSourceId) {
         try {
-            ContentSourcePluginContainer pc = ContentManagerHelper.getPluginContainer();
+            ContentProviderPluginContainer pc = ContentManagerHelper.getPluginContainer();
             ContentSource contentSource = entityManager.find(ContentSource.class, contentSourceId);
 
             if (contentSource != null) {
@@ -629,7 +673,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         PackageBits packageBits = null;
 
         try {
-            ContentSourcePluginContainer pc = ContentManagerHelper.getPluginContainer();
+            ContentProviderPluginContainer pc = ContentManagerHelper.getPluginContainer();
             bitsStream = pc.getAdapterManager().loadPackageBits(contentSourceId, packageVersionLocation);
 
             Connection conn = null;
@@ -656,6 +700,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                 } else {
                     // store content to local file system
                     File outputFile = getPackageBitsLocalFilesystemFile(pv.getId(), pv.getFileName());
+                    log.info("OutPutFile is located at: " + outputFile);
                     if (outputFile.exists()) {
                         // hmmm... it already exists, maybe we already have it?
                         // if the MD5's match, just ignore this download request and continue on
@@ -713,7 +758,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public boolean internalSynchronizeContentSource(int contentSourceId) throws Exception {
-        ContentSourcePluginContainer pc = ContentManagerHelper.getPluginContainer();
+        ContentProviderPluginContainer pc = ContentManagerHelper.getPluginContainer();
         return pc.getAdapterManager().synchronizeContentSource(contentSourceId);
     }
 
@@ -772,7 +817,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     // we really want NEVER, but support tests that might be in a tx
     public ContentSourceSyncResults mergeContentSourceSyncReport(ContentSource contentSource, PackageSyncReport report,
-        Map<ContentSourcePackageDetailsKey, PackageVersionContentSource> previous, ContentSourceSyncResults syncResults) {
+        Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous, ContentSourceSyncResults syncResults) {
         try {
             StringBuilder progress = new StringBuilder();
             if (syncResults.getResults() != null) {
@@ -794,8 +839,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
             //////////////////
             // ADD
-            List<ContentSourcePackageDetails> newPackages;
-            newPackages = new ArrayList<ContentSourcePackageDetails>(report.getNewPackages());
+            List<ContentProviderPackageDetails> newPackages;
+            newPackages = new ArrayList<ContentProviderPackageDetails>(report.getNewPackages());
 
             int chunkSize = 200;
             int fromIndex = 0;
@@ -812,7 +857,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                     toIndex = newPackageCount;
                 }
 
-                List<ContentSourcePackageDetails> pkgs = newPackages.subList(fromIndex, toIndex);
+                List<ContentProviderPackageDetails> pkgs = newPackages.subList(fromIndex, toIndex);
                 syncResults = contentSourceManager._mergeContentSourceSyncReportADD(contentSource, pkgs, previous,
                     syncResults, progress, fromIndex);
                 addedCount += pkgs.size();
@@ -829,11 +874,11 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             syncResults = contentSourceManager._mergeContentSourceSyncReportUPDATE(contentSource, report, previous,
                 syncResults, progress);
 
-            // if we added/updated/deleted anything, change the last modified time of all channels
+            // if we added/updated/deleted anything, change the last modified time of all repos
             // that get content from this content source
             if ((report.getNewPackages().size() > 0) || (report.getUpdatedPackages().size() > 0)
                 || (report.getDeletedPackages().size() > 0)) {
-                contentSourceManager._mergeContentSourceSyncReportUpdateChannel(contentSource.getId());
+                contentSourceManager._mergeContentSourceSyncReportUpdateRepo(contentSource.getId());
             }
 
             // let our sync results object know that we completed the merge
@@ -853,15 +898,15 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void _mergeContentSourceSyncReportUpdateChannel(int contentSourceId) {
+    public void _mergeContentSourceSyncReportUpdateRepo(int contentSourceId) {
         // this method should be called only after a merge of a content source
         // added/updated/removed one or more packages.  When this happens, we need to change
-        // the last modified time for all channels that get content from the changed content source
+        // the last modified time for all repos that get content from the changed content source
         long now = System.currentTimeMillis();
         ContentSource contentSource = entityManager.find(ContentSource.class, contentSourceId);
-        Set<ChannelContentSource> ccss = contentSource.getChannelContentSources();
-        for (ChannelContentSource ccs : ccss) {
-            ccs.getChannelContentSourcePK().getChannel().setLastModifiedDate(now);
+        Set<RepoContentSource> ccss = contentSource.getRepoContentSources();
+        for (RepoContentSource ccs : ccss) {
+            ccs.getRepoContentSourcePK().getRepo().setLastModifiedDate(now);
         }
 
         return;
@@ -869,7 +914,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public ContentSourceSyncResults _mergeContentSourceSyncReportREMOVE(ContentSource contentSource,
-        PackageSyncReport report, Map<ContentSourcePackageDetailsKey, PackageVersionContentSource> previous,
+        PackageSyncReport report, Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
         ContentSourceSyncResults syncResults, StringBuilder progress) {
         progress.append(new Date()).append(": ").append("Removing");
         syncResults.setResults(progress.toString());
@@ -882,9 +927,9 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         // remove all packages that are no longer available on the remote repository
         // for each removed package, we need to purge the PVCS mapping and the PV itself
 
-        for (ContentSourcePackageDetails doomedDetails : report.getDeletedPackages()) {
+        for (ContentProviderPackageDetails doomedDetails : report.getDeletedPackages()) {
             // this is the mapping between the content source and the package version that needs to be deleted
-            ContentSourcePackageDetailsKey doomedDetailsKey = doomedDetails.getContentSourcePackageDetailsKey();
+            ContentProviderPackageDetailsKey doomedDetailsKey = doomedDetails.getContentProviderPackageDetailsKey();
             PackageVersionContentSource doomedPvcs = previous.get(doomedDetailsKey);
             doomedPvcs = entityManager.find(PackageVersionContentSource.class, doomedPvcs
                 .getPackageVersionContentSourcePK());
@@ -894,9 +939,9 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
             // this is the package version itself that we want to remove
             // but only delete if there are no other content sources that also serve that PackageVersion
-            // or channels that are directly associated with this package version
+            // or repos that are directly associated with this package version
             PackageVersion doomedPv = doomedPvcs.getPackageVersionContentSourcePK().getPackageVersion();
-            q = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_ID_IF_NO_CONTENT_SOURCES_OR_CHANNELS);
+            q = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_ID_IF_NO_CONTENT_SOURCES_OR_REPOS);
             q.setParameter("id", doomedPv.getId());
             try {
                 doomedPv = (PackageVersion) q.getSingleResult();
@@ -926,8 +971,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     @SuppressWarnings("unchecked")
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public ContentSourceSyncResults _mergeContentSourceSyncReportADD(ContentSource contentSource,
-        Collection<ContentSourcePackageDetails> newPackages,
-        Map<ContentSourcePackageDetailsKey, PackageVersionContentSource> previous,
+        Collection<ContentProviderPackageDetails> newPackages,
+        Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
         ContentSourceSyncResults syncResults, StringBuilder progress, int addCount) {
         Query q;
         int flushCount = 0; // used to know when we should flush the entity manager - for performance purposes
@@ -935,7 +980,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         Map<ResourceType, ResourceType> knownResourceTypes = new HashMap<ResourceType, ResourceType>();
         Map<PackageType, PackageType> knownPackageTypes = new HashMap<PackageType, PackageType>();
         Map<Architecture, Architecture> knownArchitectures = new HashMap<Architecture, Architecture>();
-        List<Channel> associatedChannels = null;
+        List<Repo> associatedRepos = null;
 
         Map<ResourceType, Map<String, ProductVersion>> knownProductVersions = new HashMap<ResourceType, Map<String, ProductVersion>>();
 
@@ -944,10 +989,10 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         // (both of which must exist, or we abort that package and move on to the next);
         // then find the package and architecture, creating them if they do not exist;
         // then create the new PV as well as the new PVCS mapping.
-        // if a channel is associated with the content source, the PV is directly associated with the channel.
+        // if a repo is associated with the content source, the PV is directly associated with the repo.
 
-        for (ContentSourcePackageDetails newDetails : newPackages) {
-            ContentSourcePackageDetailsKey key = newDetails.getContentSourcePackageDetailsKey();
+        for (ContentProviderPackageDetails newDetails : newPackages) {
+            ContentProviderPackageDetailsKey key = newDetails.getContentProviderPackageDetailsKey();
 
             // find the new package's associated resource type (should already exist)
             ResourceType rt = new ResourceType();
@@ -1107,15 +1152,15 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                 .getLocation());
             newPvcs = entityManager.merge(newPvcs);
 
-            // for all channels that are associated with this content source, add this package version directly to them
-            if (associatedChannels == null) {
-                q = entityManager.createNamedQuery(Channel.QUERY_FIND_BY_CONTENT_SOURCE_ID_FETCH_CCS);
+            // for all repos that are associated with this content source, add this package version directly to them
+            if (associatedRepos == null) {
+                q = entityManager.createNamedQuery(Repo.QUERY_FIND_BY_CONTENT_SOURCE_ID_FETCH_CCS);
                 q.setParameter("id", contentSource.getId());
-                associatedChannels = q.getResultList();
+                associatedRepos = q.getResultList();
             }
 
-            for (Channel associatedChannel : associatedChannels) {
-                ChannelPackageVersion mapping = new ChannelPackageVersion(associatedChannel, pv);
+            for (Repo associatedRepo : associatedRepos) {
+                RepoPackageVersion mapping = new RepoPackageVersion(associatedRepo, pv);
                 entityManager.merge(mapping); // use merge just in case this mapping somehow already exists
             }
 
@@ -1123,7 +1168,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                 knownResourceTypes.clear();
                 knownPackageTypes.clear();
                 knownArchitectures.clear();
-                associatedChannels = null;
+                associatedRepos = null;
                 knownProductVersions.clear();
                 entityManager.flush();
                 entityManager.clear();
@@ -1141,7 +1186,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public ContentSourceSyncResults _mergeContentSourceSyncReportUPDATE(ContentSource contentSource,
-        PackageSyncReport report, Map<ContentSourcePackageDetailsKey, PackageVersionContentSource> previous,
+        PackageSyncReport report, Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
         ContentSourceSyncResults syncResults, StringBuilder progress) {
         progress.append(new Date()).append(": ").append("Updating");
         syncResults.setResults(progress.toString());
@@ -1156,8 +1201,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         // (which must exist, or we abort that package and move on to the next);
         // then we have to get the current PVCS and merge its updates
 
-        for (ContentSourcePackageDetails updatedDetails : report.getUpdatedPackages()) {
-            ContentSourcePackageDetailsKey key = updatedDetails.getContentSourcePackageDetailsKey();
+        for (ContentProviderPackageDetails updatedDetails : report.getUpdatedPackages()) {
+            ContentProviderPackageDetailsKey key = updatedDetails.getContentProviderPackageDetailsKey();
 
             PackageVersionContentSource previousPvcs = previous.get(key);
             PackageVersionContentSource attachedPvcs; // what we will find in the DB, in jpa session
@@ -1239,12 +1284,12 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     public String getResourceSubscriptionMD5(int resourceId) {
         MessageDigestGenerator md5Generator = new MessageDigestGenerator();
 
-        Query q = entityManager.createNamedQuery(Channel.QUERY_FIND_CHANNELS_BY_RESOURCE_ID);
+        Query q = entityManager.createNamedQuery(Repo.QUERY_FIND_REPOS_BY_RESOURCE_ID);
         q.setParameter("resourceId", resourceId);
-        List<Channel> channels = q.getResultList();
+        List<Repo> repos = q.getResultList();
 
-        for (Channel channel : channels) {
-            long modifiedTimestamp = channel.getLastModifiedDate();
+        for (Repo repo : repos) {
+            long modifiedTimestamp = repo.getLastModifiedDate();
             Date modifiedDate = new Date(modifiedTimestamp);
             md5Generator.add(Integer.toString(modifiedDate.hashCode()).getBytes());
         }
@@ -1316,7 +1361,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
         // TODO: Should we make sure the resource is subscribed/allowed to receive the the package version?
         //       Or should we not bother to perform this check?  if the caller knows the PV ID, it
-        //       probably already got it through its channels
+        //       probably already got it through its repos
 
         Query query = entityManager.createNamedQuery(PackageBits.QUERY_PACKAGE_BITS_LOADED_STATUS_PACKAGE_VERSION_ID);
         query.setParameter("id", packageVersionId);
@@ -1351,7 +1396,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             }
             // if we got here, the package bits have not been downloaded yet.  This eliminates the
             // possibility that the package version were directly uploaded by a user
-            // or auto-discovered by a resource and attached to a channel. So, that leaves
+            // or auto-discovered by a resource and attached to a repo. So, that leaves
             // the only possibility - the package version comes from a content source and therefore has
             // a PackageVersionContentSource mapping.  Let's find that mapping.
             Query q2 = entityManager.createNamedQuery(PackageVersionContentSource.QUERY_FIND_BY_PKG_VER_ID_AND_RES_ID);
@@ -1360,7 +1405,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             List<PackageVersionContentSource> pvcss = q2.getResultList();
 
             // Note that its possible more than one content source can deliver a PV - if a resource is subscribed
-            // to channel(s) that contain multiple content sources that can deliver a PV, we just take
+            // to repo(s) that contain multiple content sources that can deliver a PV, we just take
             // the first one we find.
 
             if (pvcss.size() == 0) {
@@ -1401,8 +1446,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         try {
             if (composite == null) {
                 // this is DownloadMode.NEVER and we are really in pass-through mode, stream directly from adapter
-                ContentSourcePluginContainer pc = ContentManagerHelper.getPluginContainer();
-                ContentSourceAdapterManager adapterMgr = pc.getAdapterManager();
+                ContentProviderPluginContainer pc = ContentManagerHelper.getPluginContainer();
+                ContentProviderManager adapterMgr = pc.getAdapterManager();
                 int contentSourceId = pvcs.getPackageVersionContentSourcePK().getContentSource().getId();
                 bitsStream = adapterMgr.loadPackageBits(contentSourceId, pvcs.getLocation());
             } else {

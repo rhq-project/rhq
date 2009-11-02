@@ -27,10 +27,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.rhq.core.clientapi.server.plugin.content.ContentSourceAdapter;
-import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetails;
-import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetailsKey;
+import org.rhq.core.clientapi.server.plugin.content.ContentProvider;
+import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetails;
+import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetailsKey;
 import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
+import org.rhq.core.clientapi.server.plugin.content.PackageSource;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyMap;
@@ -46,7 +47,7 @@ import org.rhq.core.util.file.ContentFileInfoFactory;
  * @author jortel
  * @author John Mazzitelli
  */
-public class DiskSource implements ContentSourceAdapter {
+public class DiskSource implements ContentProvider, PackageSource {
 
     /**
      * The root path (directory) from which to synchronize content.
@@ -94,13 +95,13 @@ public class DiskSource implements ContentSourceAdapter {
         this.supportedPackageTypes = null;
     }
 
-    public void synchronizePackages(PackageSyncReport report, Collection<ContentSourcePackageDetails> existingPackages)
+    public void synchronizePackages(PackageSyncReport report, Collection<ContentProviderPackageDetails> existingPackages)
         throws Exception {
 
         // put all existing packages in a "to be deleted" list. As we sync, we will remove
         // packages from this list that still exist on the file system. Any leftover in the list
         // are packages that no longer exist on the file system and should be removed from the server inventory.
-        List<ContentSourcePackageDetails> deletedPackages = new ArrayList<ContentSourcePackageDetails>();
+        List<ContentProviderPackageDetails> deletedPackages = new ArrayList<ContentProviderPackageDetails>();
         deletedPackages.addAll(existingPackages);
 
         // sync now
@@ -109,7 +110,7 @@ public class DiskSource implements ContentSourceAdapter {
         long elapsed = System.currentTimeMillis() - before;
 
         // if there are packages that weren't found on the file system, tell server to remove them from inventory
-        for (ContentSourcePackageDetails p : deletedPackages) {
+        for (ContentProviderPackageDetails p : deletedPackages) {
             report.addDeletePackage(p);
         }
 
@@ -151,7 +152,7 @@ public class DiskSource implements ContentSourceAdapter {
      * @param directory the directory (and its subdirectories) to scan
      * @throws Exception if the sync fails
      */
-    protected void syncPackages(PackageSyncReport report, List<ContentSourcePackageDetails> packages, File directory)
+    protected void syncPackages(PackageSyncReport report, List<ContentProviderPackageDetails> packages, File directory)
         throws Exception {
 
         for (File file : directory.listFiles()) {
@@ -160,9 +161,9 @@ public class DiskSource implements ContentSourceAdapter {
                 syncPackages(report, packages, file);
             } else {
                 // process the file
-                ContentSourcePackageDetails details = createPackage(file);
+                ContentProviderPackageDetails details = createPackage(file);
                 if (details != null) {
-                    ContentSourcePackageDetails existing = findPackage(packages, details);
+                    ContentProviderPackageDetails existing = findPackage(packages, details);
                     if (existing == null) {
                         report.addNewPackage(details);
                     } else {
@@ -180,7 +181,7 @@ public class DiskSource implements ContentSourceAdapter {
         return;
     }
 
-    protected ContentSourcePackageDetails createPackage(File file) throws Exception {
+    protected ContentProviderPackageDetails createPackage(File file) throws Exception {
 
         SupportedPackageType supportedPackageType = determinePackageType(file);
         if (supportedPackageType == null) {
@@ -196,9 +197,9 @@ public class DiskSource implements ContentSourceAdapter {
         String resourceTypeName = supportedPackageType.resourceTypeName;
         String resourceTypePluginName = supportedPackageType.resourceTypePluginName;
 
-        ContentSourcePackageDetailsKey key = new ContentSourcePackageDetailsKey(name, version, packageTypeName,
+        ContentProviderPackageDetailsKey key = new ContentProviderPackageDetailsKey(name, version, packageTypeName,
             architectureName, resourceTypeName, resourceTypePluginName);
-        ContentSourcePackageDetails pkg = new ContentSourcePackageDetails(key);
+        ContentProviderPackageDetails pkg = new ContentProviderPackageDetails(key);
 
         pkg.setDisplayName(name);
         pkg.setFileName(name);
@@ -211,9 +212,9 @@ public class DiskSource implements ContentSourceAdapter {
         return pkg;
     }
 
-    protected ContentSourcePackageDetails findPackage(List<ContentSourcePackageDetails> packages,
-        ContentSourcePackageDetails pkg) {
-        for (ContentSourcePackageDetails p : packages) {
+    protected ContentProviderPackageDetails findPackage(List<ContentProviderPackageDetails> packages,
+        ContentProviderPackageDetails pkg) {
+        for (ContentProviderPackageDetails p : packages) {
             if (p.equals(pkg)) {
                 return p;
             }

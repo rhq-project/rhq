@@ -54,8 +54,8 @@ import org.rhq.core.clientapi.descriptor.contentsource.packagedetails.PackageDet
 import org.rhq.core.clientapi.descriptor.contentsource.packagedetails.PackageType;
 import org.rhq.core.clientapi.descriptor.contentsource.packagedetails.ResourceVersionsType;
 import org.rhq.core.clientapi.descriptor.contentsource.packagedetails.SimplePropertyType;
-import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetails;
-import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetailsKey;
+import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetails;
+import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetailsKey;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
@@ -72,7 +72,7 @@ public class XmlIndexParser implements IndexParser {
 
     private static final String PLUGIN_SCHEMA_PATH = "rhq-contentsource-packagedetails.xsd";
 
-    public Map<String, RemotePackageInfo> parse(InputStream indexStream, UrlSource contentSource) throws Exception {
+    public Map<String, RemotePackageInfo> parse(InputStream indexStream, UrlProvider contentSource) throws Exception {
         return jaxbParse(indexStream, contentSource.getIndexUrl(), contentSource.getRootUrlString());
     }
 
@@ -104,7 +104,7 @@ public class XmlIndexParser implements IndexParser {
         List<PackageDetailsType> allPackages = packagesXml.getValue().getPackage();
         for (PackageDetailsType pkg : allPackages) {
             URL locationUrl = new URL(rootUrlString + pkg.getLocation());
-            ContentSourcePackageDetails details = translateXmlToDomain(pkg);
+            ContentProviderPackageDetails details = translateXmlToDomain(pkg);
             FullRemotePackageInfo rpi = new FullRemotePackageInfo(locationUrl, details);
             fileList.put(stripLeadingSlash(rpi.getLocation()), rpi);
         }
@@ -118,15 +118,15 @@ public class XmlIndexParser implements IndexParser {
      * @return the domain object with the same data that the XML object had
      * @throws Exception 
      */
-    protected ContentSourcePackageDetails translateXmlToDomain(PackageDetailsType pkg) throws Exception {
+    protected ContentProviderPackageDetails translateXmlToDomain(PackageDetailsType pkg) throws Exception {
 
         PackageDetailsKeyType keyType = pkg.getPackageDetailsKey();
 
         try {
-            ContentSourcePackageDetailsKey key = new ContentSourcePackageDetailsKey(keyType.getName(), keyType
+            ContentProviderPackageDetailsKey key = new ContentProviderPackageDetailsKey(keyType.getName(), keyType
                 .getVersion(), keyType.getPackageTypeName(), keyType.getArchitectureName(), keyType
                 .getResourceTypeName(), keyType.getResourceTypePlugin());
-            ContentSourcePackageDetails details = new ContentSourcePackageDetails(key);
+            ContentProviderPackageDetails details = new ContentProviderPackageDetails(key);
             details.setDisplayName(pkg.getDisplayName());
             details.setDisplayVersion(pkg.getDisplayVersion());
             details.setShortDescription(pkg.getShortDescription());

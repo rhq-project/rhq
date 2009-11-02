@@ -153,10 +153,10 @@ public class Primary extends Content {
      *
      * <p/>The data is stale when the md5 stored locally does not match the server's md5.
      *
-     * <p/>The md5 is the checksum of all of the packages in all of the channels to which a resource is subscribed. The
+     * <p/>The md5 is the checksum of all of the packages in all of the repos to which a resource is subscribed. The
      * locally stored value is compared with the server's in order to detect that package metadata has changed in one or
-     * more channel which means the locally cached primary.xml no longer represents the content of the subscribed
-     * channels.
+     * more repo which means the locally cached primary.xml no longer represents the content of the subscribed
+     * repos.
      *
      * @return
      */

@@ -1,15 +1,16 @@
 package org.rhq.enterprise.server.plugins.rhnhosted;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import junit.framework.TestCase;
 
-import java.util.List;
-import java.util.ArrayList;
-import java.io.IOException;
-import java.io.File;
-
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.io.FileUtils;
-import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetails;
+import org.apache.commons.lang.StringUtils;
+
+import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
 
 /**
  * RHNHelper Tester.
@@ -38,7 +39,7 @@ public class RHNHelperTest extends TestCase {
         try {
             List pids = helper.getChannelPackages();
             List<ContentProviderPackageDetails> pkgdetails = helper.getPackageDetails(pids);
-            for (ContentProviderPackageDetails pkg: pkgdetails) {
+            for (ContentProviderPackageDetails pkg : pkgdetails) {
                 assertFalse(StringUtils.isBlank(pkg.getDisplayName()));
                 assertFalse(StringUtils.isBlank(pkg.getArchitectureName()));
                 assertFalse(StringUtils.isBlank(pkg.getPackageTypeName()));
@@ -69,7 +70,6 @@ public class RHNHelperTest extends TestCase {
 
         assertTrue(success);
     }
-
 
     protected String readSystemId() throws Exception {
         try {

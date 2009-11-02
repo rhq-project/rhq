@@ -16,47 +16,46 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.server.plugin.pc;
+package org.rhq.enterprise.server.plugin.pc.content;
 
 import java.util.Date;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.quartz.JobDetail;
 import org.quartz.SchedulerException;
 import org.quartz.SimpleTrigger;
 
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.PackageVersion;
-import org.rhq.enterprise.server.plugin.content.ContentProviderManager;
-import org.rhq.enterprise.server.plugin.content.ContentProviderPluginManager;
+import org.rhq.enterprise.server.plugin.pc.AbstractTypeServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.scheduler.jobs.ContentSourceSyncJob;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
- * The container responsible for managing the lifecycle of all server-side plugins.
+ * The container responsible for managing the lifecycle of content server-side plugins.
  *
  * @author John Mazzitelli
  */
-public class ServerPluginContainer {
+public class ContentServerPluginContainer extends AbstractTypeServerPluginContainer {
+
     private static final String SYNC_JOB_GROUP_NAME = "syncContentSource";
 
-    private static final Log log = LogFactory.getLog(ServerPluginContainer.class);
-
-    private ServerPluginContainerConfiguration configuration;
     private ContentProviderPluginManager pluginManager;
     private ContentProviderManager adapterManager;
+
+    public ContentServerPluginContainer(MasterServerPluginContainer master) {
+        super(master);
+    }
 
     /**
      * Starts the plugin container, which will load all plugins and begin managing them.
      *
      * @param config
      */
-    public void initialize(ServerPluginContainerConfiguration config) throws InitializationException {
-        log.debug("Server plugin container has been initialized with config: " + config);
+    public void initialize() throws Exception {
+        getLog().debug("Content server plugin container has been initialized");
 
-        this.configuration = config;
         this.pluginManager = createPluginManager();
         this.adapterManager = createAdapterManager(this.pluginManager);
 
@@ -67,32 +66,20 @@ public class ServerPluginContainer {
      * Stops all plugins and cleans up after them.
      */
     public void shutdown() {
-        log.debug("Server plugin container is being shutdown");
+        getLog().debug("Content server plugin container is being shutdown");
 
         this.adapterManager.shutdown();
         this.pluginManager.shutdown();
-        this.configuration = null;
     }
 
     /**
-     * Returns the configuration that this object was initialized with. If this plugin container was not
-     * {@link #initialize(ServerPluginContainerConfiguration) initialized} or has been {@link #shutdown() shutdown},
-     * this will return <code>null</code>.
-     *
-     * @return the configuration
-     */
-    public ServerPluginContainerConfiguration getConfiguration() {
-        return configuration;
-    }
-
-    /**
-     * Returns the object that is responsible for managing all {@link org.rhq.core.clientapi.server.plugin.content.ContentProvider adapters} which are the
+     * Returns the object that is responsible for managing all {@link ContentProvider adapters} which are the
      * things that know how to download content from a specific {@link ContentSource}.
      *
      * @return adapter manager
      */
     public ContentProviderManager getAdapterManager() {
-        return adapterManager;
+        return this.adapterManager;
     }
 
     /**
@@ -104,7 +91,7 @@ public class ServerPluginContainer {
      * @return plugin manager
      */
     protected ContentProviderPluginManager getPluginManager() {
-        return pluginManager;
+        return this.pluginManager;
     }
 
     /**
@@ -133,8 +120,9 @@ public class ServerPluginContainer {
         SchedulerLocal scheduler = LookupUtil.getSchedulerBean();
         Date next = scheduler.scheduleJob(job, trigger);
 
-        log.info("Scheduled content source sync job [" + job.getName() + ':' + job.getGroup() + "] to fire now at ["
-            + next + "] for [" + contentSource + "]");
+        getLog().info(
+            "Scheduled content source sync job [" + job.getName() + ':' + job.getGroup() + "] to fire now at [" + next
+                + "] for [" + contentSource + "]");
 
         return;
     }
@@ -154,7 +142,7 @@ public class ServerPluginContainer {
     public void scheduleSyncJob(ContentSource contentSource) throws SchedulerException {
         String syncSchedule = contentSource.getSyncSchedule();
         if ((syncSchedule == null) || (syncSchedule.trim().length() == 0)) {
-            log.debug(contentSource.toString() + " does not define a sync schedule - not scheduling");
+            getLog().debug(contentSource.toString() + " does not define a sync schedule - not scheduling");
             return;
         }
 
@@ -176,7 +164,7 @@ public class ServerPluginContainer {
                 try {
                     scheduleSyncJob(contentSource);
                 } catch (Exception e) {
-                    log.warn("Could not schedule sync job for content source [" + contentSource + "]", e);
+                    getLog().warn("Could not schedule sync job for content source [" + contentSource + "]", e);
                 }
             }
         }
@@ -208,8 +196,7 @@ public class ServerPluginContainer {
      * @return the new plugin manager
      */
     protected ContentProviderPluginManager createPluginManager() {
-        ContentProviderPluginManager pm = new ContentProviderPluginManager();
-        pm.setConfiguration(getConfiguration());
+        ContentProviderPluginManager pm = new ContentProviderPluginManager(this);
         pm.initialize();
         return pm;
     }
@@ -228,7 +215,6 @@ public class ServerPluginContainer {
     protected ContentProviderManager createAdapterManager(ContentProviderPluginManager pluginManager)
         throws InitializationException {
         ContentProviderManager am = new ContentProviderManager();
-        am.setConfiguration(getConfiguration());
         am.initialize(pluginManager);
         return am;
     }

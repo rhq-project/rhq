@@ -19,28 +19,28 @@
 
 package org.rhq.enterprise.server.plugins.rhnhosted;
 
- import org.apache.commons.logging.Log;
- import org.apache.commons.logging.LogFactory;
- import org.rhq.core.domain.configuration.Configuration;
- import org.rhq.core.clientapi.server.plugin.content.ContentProvider;
- import org.rhq.core.clientapi.server.plugin.content.InitializationException;
- import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetails;
- import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
- import org.rhq.core.clientapi.server.plugin.content.PackageSource;
- import org.rhq.enterprise.server.plugins.rhnhosted.certificate.Certificate;
- import org.rhq.enterprise.server.plugins.rhnhosted.certificate.CertificateFactory;
- import org.rhq.enterprise.server.plugins.rhnhosted.certificate.PublicKeyRing;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.security.KeyException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
- import java.security.KeyException;
- import java.io.IOException;
- import java.io.InputStream;
- import java.io.FileInputStream;
- import java.net.URL;
- import java.net.MalformedURLException;
- import java.util.Collection;
- import java.util.ArrayList;
- import java.util.List;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.enterprise.server.plugin.pc.content.ContentProvider;
+import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
+import org.rhq.enterprise.server.plugin.pc.content.InitializationException;
+import org.rhq.enterprise.server.plugin.pc.content.PackageSource;
+import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
+import org.rhq.enterprise.server.plugins.rhnhosted.certificate.Certificate;
+import org.rhq.enterprise.server.plugins.rhnhosted.certificate.CertificateFactory;
+import org.rhq.enterprise.server.plugins.rhnhosted.certificate.PublicKeyRing;
 
 /**
  * @author pkilambi
@@ -97,11 +97,11 @@ public class RHNProvider implements ContentProvider, PackageSource {
             PublicKeyRing keyRing = this.readDefaultKeyRing();
             cert.verifySignature(keyRing);
 
-        } catch(Exception e) {
+        } catch (Exception e) {
             log.debug("Invalid Cert");
             throw new InitializationException("Invalid 'Certificate' property", e);
         }
-        
+
         // Now we have valid data. Spawn the activation.
         try {
             rhnObject = new RHNActivator(certificate, location);
@@ -114,7 +114,6 @@ public class RHNProvider implements ContentProvider, PackageSource {
 
         String repos = configuration.getSimpleValue("SyncableChannels", null);
         log.info("Syncable Channel list :" + repos);
-
 
         // RHQ Server is now active, initialize the handler for the bits.
         helper = new RHNHelper(locationIn, repos);
@@ -150,19 +149,19 @@ public class RHNProvider implements ContentProvider, PackageSource {
         List<ContentProviderPackageDetails> deletedPackages = new ArrayList<ContentProviderPackageDetails>();
         deletedPackages.addAll(existingPackages);
         log.info("Report" + report);
-        
+
         // sync now
         try {
             summary.markStarted();
             ArrayList pkgIds = helper.getChannelPackages();
             for (ContentProviderPackageDetails p : helper.getPackageDetails(pkgIds)) {
-                    log.debug("Processing package at (" + p.getLocation());
-                    deletedPackages.remove(p);
-                    if (!existingPackages.contains(p)) {
-                        log.debug("New package at (" + p.getLocation() + ") detected");
-                        report.addNewPackage(p);
-                        summary.added++;
-                    }
+                log.debug("Processing package at (" + p.getLocation());
+                deletedPackages.remove(p);
+                if (!existingPackages.contains(p)) {
+                    log.debug("New package at (" + p.getLocation() + ") detected");
+                    report.addNewPackage(p);
+                    summary.added++;
+                }
             }
 
             for (ContentProviderPackageDetails p : deletedPackages) {
@@ -182,11 +181,11 @@ public class RHNProvider implements ContentProvider, PackageSource {
 
     }
 
-   /**
-     * Test's the adapter's connection.
-     *
-     * @throws Exception When connection is not functional for any reason.
-     */
+    /**
+      * Test's the adapter's connection.
+      *
+      * @throws Exception When connection is not functional for any reason.
+      */
     public void testConnection() throws Exception {
         rhnObject.processDeActivation();
         rhnObject.processActivation();
@@ -199,19 +198,18 @@ public class RHNProvider implements ContentProvider, PackageSource {
      * @throws IOException On failing to read webapp keyring
      * @throws KeyException thrown on failing to validate the key 
      */
-    private PublicKeyRing readDefaultKeyRing()
-        throws KeyException, IOException {
+    private PublicKeyRing readDefaultKeyRing() throws KeyException, IOException {
         InputStream keyringStream = new FileInputStream(RHNConstants.DEFAULT_WEBAPP_GPG_KEY_RING);
         return new PublicKeyRing(keyringStream);
     }
 
-     /**
-     * Trim white space and trailing (/) characters.
-     *
-     * @param  path A url/directory path string.
-     *
-     * @return A trimmed string.
-     */
+    /**
+    * Trim white space and trailing (/) characters.
+    *
+    * @param  path A url/directory path string.
+    *
+    * @return A trimmed string.
+    */
     private String trim(String path) {
         path = path.trim();
         while ((path.length() > 1) && path.endsWith("/")) {

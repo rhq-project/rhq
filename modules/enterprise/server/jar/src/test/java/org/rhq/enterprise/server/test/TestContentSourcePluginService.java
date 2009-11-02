@@ -25,17 +25,18 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.rhq.core.clientapi.server.plugin.content.ContentProvider;
-import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetails;
-import org.rhq.core.clientapi.server.plugin.content.InitializationException;
-import org.rhq.core.clientapi.server.plugin.content.PackageSource;
-import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
 import org.rhq.core.domain.content.ContentSource;
-import org.rhq.enterprise.server.plugin.content.ContentProviderManager;
-import org.rhq.enterprise.server.plugin.content.ContentProviderPluginContainer;
-import org.rhq.enterprise.server.plugin.content.ContentProviderPluginContainerConfiguration;
-import org.rhq.enterprise.server.plugin.content.ContentProviderPluginManager;
+import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainerConfiguration;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginService;
+import org.rhq.enterprise.server.plugin.pc.content.ContentProvider;
+import org.rhq.enterprise.server.plugin.pc.content.ContentProviderManager;
+import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
+import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPluginManager;
+import org.rhq.enterprise.server.plugin.pc.content.ContentServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.content.InitializationException;
+import org.rhq.enterprise.server.plugin.pc.content.PackageSource;
+import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
 
 /**
  * Used as a mock service for the content source plugin container.
@@ -47,11 +48,12 @@ public class TestContentSourcePluginService extends ServerPluginService implemen
     public Map<ContentSource, Collection<ContentProviderPackageDetails>> testExistingPackages;
 
     @Override
-    protected ServerPluginContainer createPluginContainer() {
-        ContentProviderPluginContainer pc = new TestContentSourcePluginContainer();
-        ContentProviderPluginContainerConfiguration config = new ContentProviderPluginContainerConfiguration();
+    protected ContentServerPluginContainer createMasterPluginContainer() {
+        // TODO how do I inject my own inner pcs?
+        ContentServerPluginContainer pc = new TestContentServerPluginContainer(new MasterServerPluginContainer());
+        MasterServerPluginContainerConfiguration config = new MasterServerPluginContainerConfiguration();
         try {
-            pc.initialize(config);
+            pc.initialize();
         } catch (InitializationException e) {
             e.printStackTrace();
         }
@@ -61,17 +63,21 @@ public class TestContentSourcePluginService extends ServerPluginService implemen
     /**
      * The test PC.
      */
-    class TestContentSourcePluginContainer extends ContentProviderPluginContainer {
+    class TestContentServerPluginContainer extends ContentServerPluginContainer {
+        public TestContentServerPluginContainer(MasterServerPluginContainer master) {
+            super(master);
+        }
+
         @Override
         protected ContentProviderManager createAdapterManager(ContentProviderPluginManager pluginManager) {
-            TestContentSourceAdapterManager am = new TestContentSourceAdapterManager();
+            TestContentProviderManager am = new TestContentProviderManager();
             am.initialize(pluginManager);
             return am;
         }
 
         @Override
         protected ContentProviderPluginManager createPluginManager() {
-            TestContentSourcePluginManager pm = new TestContentSourcePluginManager();
+            TestContentProviderPluginManager pm = new TestContentProviderPluginManager(this);
             pm.initialize();
             return pm;
         }
@@ -80,10 +86,9 @@ public class TestContentSourcePluginService extends ServerPluginService implemen
     /**
      * The test plugin manager.
      */
-    class TestContentSourcePluginManager extends ContentProviderPluginManager {
-        @Override
-        protected void setConfiguration(ContentProviderPluginContainerConfiguration configuration) {
-            super.setConfiguration(configuration);
+    class TestContentProviderPluginManager extends ContentProviderPluginManager {
+        public TestContentProviderPluginManager(ContentServerPluginContainer pc) {
+            super(pc);
         }
 
         @Override
@@ -98,7 +103,7 @@ public class TestContentSourcePluginService extends ServerPluginService implemen
     /**
      * The test adapter manager.
      */
-    class TestContentSourceAdapterManager extends ContentProviderManager {
+    class TestContentProviderManager extends ContentProviderManager {
         @Override
         public Set<ContentSource> getAllContentSources() {
             return (testAdapters != null) ? testAdapters.keySet() : new HashSet<ContentSource>();
@@ -161,11 +166,6 @@ public class TestContentSourcePluginService extends ServerPluginService implemen
             System.out.println("!!!!!!!!!!");
             System.out.println("CONN: TEST DID NOT SETUP ADAPTER - NO-OP FOR [" + contentSourceId + "]");
             return true;
-        }
-
-        @Override
-        protected void setConfiguration(ContentProviderPluginContainerConfiguration config) {
-            super.setConfiguration(config);
         }
     }
 }

@@ -31,7 +31,7 @@ import org.rhq.enterprise.server.RHQConstants;
 
 /**
  * This is the singleton management service responsible for managing the lifecycle of the
- * {@link ServerPluginContainer}. It will be started when the entire server starts and shutdown when the entire
+ * {@link MasterServerPluginContainer}. It will be started when the entire server starts and shutdown when the entire
  * server shuts down. It has a management interface to allow it to be recycled on demand when desired.
  *
  * @author John Mazzitelli
@@ -42,35 +42,35 @@ public class ServerPluginService implements ServerPluginServiceManagement {
     private static final Log log = LogFactory.getLog(ServerPluginService.class);
 
     private boolean started;
-    private ServerPluginContainer pluginContainer;
+    private MasterServerPluginContainer masterPluginContainer;
 
     public synchronized void start() {
-        log.debug("The server plugin service has been deployed (but plugin container will not be started yet)");
+        log.debug("The server plugin service has been deployed (but master plugin container will not be started yet)");
         this.started = true;
         return;
     }
 
-    public synchronized void startPluginContainer() {
+    public synchronized void startMasterPluginContainer() {
         if (!this.started) {
             throw new IllegalStateException(
-                "The server plugin service is not started - cannot start the plugin container");
+                "The server plugin service is not started - cannot start the master plugin container");
         }
 
         // only initialize if not already started; if already started/initialized, just ignore
-        if (this.pluginContainer == null) {
-            log.debug("The server plugin service is now starting the server plugin container");
-            this.pluginContainer = createPluginContainer();
+        if (this.masterPluginContainer == null) {
+            log.debug("The server plugin service is now starting the master server plugin container");
+            this.masterPluginContainer = createMasterPluginContainer();
         }
 
         return;
     }
 
-    public synchronized void stopPluginContainer() {
-        if (this.started && (this.pluginContainer != null)) {
-            log.info("The server plugin service is now stopping - the server plugin container will be shutdown now");
+    public synchronized void stopMasterPluginContainer() {
+        if (this.started && (this.masterPluginContainer != null)) {
+            log.info("The server plugin service is now stopping - the master plugin container will be shutdown now");
 
-            this.pluginContainer.shutdown();
-            this.pluginContainer = null;
+            this.masterPluginContainer.shutdown();
+            this.masterPluginContainer = null;
         }
 
         return;
@@ -78,28 +78,28 @@ public class ServerPluginService implements ServerPluginServiceManagement {
 
     public synchronized void stop() {
         if (this.started) {
-            stopPluginContainer();
+            stopMasterPluginContainer();
             this.started = false;
         }
 
         return;
     }
 
-    public synchronized void restartPluginContainer() {
-        stopPluginContainer();
-        startPluginContainer();
+    public synchronized void restartMasterPluginContainer() {
+        stopMasterPluginContainer();
+        startMasterPluginContainer();
     }
 
-    public ServerPluginContainer getPluginContainer() {
-        return this.pluginContainer;
+    public MasterServerPluginContainer getMasterPluginContainer() {
+        return this.masterPluginContainer;
     }
 
     public boolean isStarted() {
         return this.started;
     }
 
-    public boolean isPluginContainerStarted() {
-        return this.pluginContainer != null;
+    public boolean isMasterPluginContainerStarted() {
+        return this.masterPluginContainer != null;
     }
 
     /**
@@ -110,10 +110,10 @@ public class ServerPluginService implements ServerPluginServiceManagement {
      *
      * @return the PC that this service will use
      */
-    protected ServerPluginContainer createPluginContainer() {
-        ServerPluginContainer pc = new ServerPluginContainer();
+    protected MasterServerPluginContainer createMasterPluginContainer() {
+        MasterServerPluginContainer pc = new MasterServerPluginContainer();
 
-        ServerPluginContainerConfiguration config = new ServerPluginContainerConfiguration();
+        MasterServerPluginContainerConfiguration config = new MasterServerPluginContainerConfiguration();
 
         String pluginDirStr = System.getProperty(ServerConfig.SERVER_HOME_DIR);
         File pluginDir = new File(pluginDirStr, "deploy/" + RHQConstants.EAR_FILE_NAME + "/rhq-serverplugins");
@@ -123,6 +123,9 @@ public class ServerPluginService implements ServerPluginServiceManagement {
         config.setTemporaryDirectory(new File(tmpDirStr));
 
         // TODO: determine what things to hide from our war classloader
+        //StringBuilder defaultRegex = new StringBuilder();
+        //defaultRegex.append("(package\\.with\\.classes\\.to\\.hide\\..*)|");
+
         config.setRootPluginClassLoaderRegex(null);
 
         pc.initialize(config);

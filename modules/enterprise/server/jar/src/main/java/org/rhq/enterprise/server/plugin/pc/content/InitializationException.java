@@ -17,10 +17,10 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.server.plugin.pc;
+package org.rhq.enterprise.server.plugin.pc.content;
 
 /**
- * An exception thrown when something within the server plugin container fails to initialize.
+ * An exception thrown when something fails to initialize.
  * 
  * @author pkilambi
  */

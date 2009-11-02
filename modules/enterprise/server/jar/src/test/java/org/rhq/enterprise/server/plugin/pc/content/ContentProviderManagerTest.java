@@ -55,7 +55,6 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
-import org.rhq.enterprise.server.plugin.content.ContentProviderManager;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestContentSourcePluginService;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -92,7 +91,7 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
         // Plugin service setup
         prepareScheduler();
         TestContentSourcePluginService pluginService = prepareContentSourcePluginService();
-        pluginService.startPluginContainer();
+        pluginService.startMasterPluginContainer();
 
         // Because of the (current) transaction settings of some of the nested methods (i.e. REQUIRES_NEW),
         // this test must commit its data and clean up after itself, as compared to simply rolling back the

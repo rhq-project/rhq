@@ -35,6 +35,7 @@ import org.rhq.core.clientapi.agent.metadata.ConfigurationMetadataParser;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.content.ContentSourceType;
 import org.rhq.core.domain.content.DownloadMode;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.content.ContentPluginDescriptorType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.content.ContentSourceTypeDefinition;
 
 /**
@@ -71,7 +72,7 @@ public class ContentSourcePluginMetadataManager {
      *
      * @return the new content source types represented by this descriptor (not a copy)
      */
-    public synchronized Collection<ContentSourceType> loadPlugin(ContentSourcePluginDescriptor pluginDescriptor) {
+    public synchronized Collection<ContentSourceType> loadPlugin(ContentPluginDescriptorType pluginDescriptor) {
         try {
             Map<String, ContentSourceType> pluginTypes = loadedPlugins.get(pluginDescriptor.getName());
 

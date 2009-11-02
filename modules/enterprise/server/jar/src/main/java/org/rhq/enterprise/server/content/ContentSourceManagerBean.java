@@ -37,7 +37,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.lang.reflect.UndeclaredThrowableException;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -55,14 +54,9 @@ import org.apache.commons.logging.LogFactory;
 import org.jboss.annotation.ejb.TransactionTimeout;
 import org.jboss.util.StringPropertyReplacer;
 
-import org.rhq.core.clientapi.server.plugin.content.*;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.content.Architecture;
-import org.rhq.core.domain.content.Repo;
-import org.rhq.core.domain.content.RepoContentSource;
-import org.rhq.core.domain.content.RepoPackageVersion;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceSyncResults;
 import org.rhq.core.domain.content.ContentSourceSyncStatus;
@@ -76,6 +70,9 @@ import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.PackageVersionContentSource;
 import org.rhq.core.domain.content.PackageVersionContentSourcePK;
 import org.rhq.core.domain.content.ProductVersionPackageVersion;
+import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.content.RepoContentSource;
+import org.rhq.core.domain.content.RepoPackageVersion;
 import org.rhq.core.domain.content.composite.LoadedPackageBitsComposite;
 import org.rhq.core.domain.content.composite.PackageVersionFile;
 import org.rhq.core.domain.content.composite.PackageVersionMetadataComposite;
@@ -92,8 +89,13 @@ import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
-import org.rhq.enterprise.server.plugin.content.ContentProviderManager;
-import org.rhq.enterprise.server.plugin.content.ContentProviderPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.content.ContentProviderManager;
+import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
+import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetailsKey;
+import org.rhq.enterprise.server.plugin.pc.content.ContentServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.content.InitializationException;
+import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
+import org.rhq.enterprise.server.plugin.pc.content.RepoDetails;
 import org.rhq.enterprise.server.resource.ProductVersionManagerLocal;
 
 /**
@@ -191,8 +193,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         entityManager.flush();
         entityManager.clear();
 
-        entityManager.createNamedQuery(RepoContentSource.DELETE_BY_CONTENT_SOURCE_ID).setParameter(
-            "contentSourceId", contentSourceId).executeUpdate();
+        entityManager.createNamedQuery(RepoContentSource.DELETE_BY_CONTENT_SOURCE_ID).setParameter("contentSourceId",
+            contentSourceId).executeUpdate();
 
         entityManager.createNamedQuery(PackageVersionContentSource.DELETE_BY_CONTENT_SOURCE_ID).setParameter(
             "contentSourceId", contentSourceId).executeUpdate();
@@ -207,7 +209,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
             // make sure we stop its adapter and unschedule any sync job associated with it
             try {
-                ContentProviderPluginContainer pc = ContentManagerHelper.getPluginContainer();
+                ContentServerPluginContainer pc = ContentManagerHelper.getPluginContainer();
                 pc.unscheduleSyncJob(cs);
                 pc.getAdapterManager().shutdownAdapter(cs);
             } catch (Exception e) {
@@ -247,8 +249,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public PageList<ContentSource> getAvailableContentSourcesForRepo(Subject subject, Integer repoId,
-        PageControl pc) {
+    public PageList<ContentSource> getAvailableContentSourcesForRepo(Subject subject, Integer repoId, PageControl pc) {
         pc.initDefaultOrderingField("cs.name");
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
@@ -308,8 +309,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     public PageList<Repo> getAssociatedRepos(Subject subject, int contentSourceId, PageControl pc) {
         pc.initDefaultOrderingField("c.id");
 
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, Repo.QUERY_FIND_BY_CONTENT_SOURCE_ID,
-            pc);
+        Query query = PersistenceUtility
+            .createQueryWithOrderBy(entityManager, Repo.QUERY_FIND_BY_CONTENT_SOURCE_ID, pc);
         Query countQuery = PersistenceUtility.createCountQuery(entityManager, Repo.QUERY_FIND_BY_CONTENT_SOURCE_ID);
 
         query.setParameter("id", contentSourceId);
@@ -361,8 +362,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
             try {
                 repoManager.createRepo(overlord, repo);
-            }
-            catch (RepoException e) {
+            } catch (RepoException e) {
                 log.error("Error creating repo [" + repo + "]", e);
             }
         }
@@ -382,55 +382,24 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public ContentSource createContentSource(Subject subject, String name, String description, String typeName,
-        Configuration configuration, boolean lazyLoad, DownloadMode downloadMode)
-            throws ContentSourceException, InitializationException {
-        log.debug("User [" + subject + "] is creating a content source [" + name + "] of type [" + typeName + "]");
-
-        // we first must get the content source type - if it doesn't exist, we throw an exception
-        Query q = entityManager.createNamedQuery(ContentSourceType.QUERY_FIND_BY_NAME);
-        q.setParameter("name", typeName);
-        ContentSourceType type = (ContentSourceType) q.getSingleResult();
-
-        // if download mode isn't specified, use the default specified in the content source type definition
-        if (downloadMode == null) {
-            downloadMode = type.getDefaultDownloadMode();
-        }
-
-        // Store the content source
-        ContentSource source = new ContentSource(name, type);
-        source.setDescription(description);
-        source.setConfiguration(configuration);
-        source.setLazyLoad(lazyLoad);
-        source.setDownloadMode(downloadMode);
-
-        validateContentSource(source);
-
-        source = createContentSource(subject, source);
-
-        return source;
-    }
-
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
     public ContentSource createContentSource(Subject subject, ContentSource contentSource)
-        //throws ContentSourceException, InitializationException {
-       throws ContentSourceException, InitializationException {
+        throws ContentSourceException {
+
         validateContentSource(contentSource);
 
         log.debug("User [" + subject + "] is creating content source [" + contentSource + "]");
 
-
-
         // now that a new content source has been added to the system, let's start its adapter now
         try {
-            ContentProviderPluginContainer pc = ContentManagerHelper.getPluginContainer();
+            ContentServerPluginContainer pc = ContentManagerHelper.getPluginContainer();
             pc.getAdapterManager().startAdapter(contentSource);
             pc.scheduleSyncJob(contentSource);
 
         } catch (InitializationException ie) {
             log.warn("Failed to start adapter for [" + contentSource + "]", ie);
-            throw ie;
-        }  catch (Exception e) {
+            throw new ContentSourceException("Failed to start adapter for [" + contentSource + "]. Cause: "
+                + ThrowableUtil.getAllMessages(ie));
+        } catch (Exception e) {
             log.warn("Failed to start adapter for [" + contentSource + "]", e);
         }
 
@@ -472,7 +441,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             log.info("Content source [" + loaded.getName() + "] is being renamed to [" + contentSource.getName()
                 + "].  Will now unschedule the old sync job");
             try {
-                ContentProviderPluginContainer pc = ContentManagerHelper.getPluginContainer();
+                ContentServerPluginContainer pc = ContentManagerHelper.getPluginContainer();
                 pc.unscheduleSyncJob(loaded);
             } catch (Exception e) {
                 log.warn("Failed to unschedule obsolete content source sync job for [" + loaded + "]", e);
@@ -487,7 +456,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         // restart its adapter and reschedule its sync job because the config might have changed.
         // synchronize it now, too
         try {
-            ContentProviderPluginContainer pc = ContentManagerHelper.getPluginContainer();
+            ContentServerPluginContainer pc = ContentManagerHelper.getPluginContainer();
             pc.unscheduleSyncJob(contentSource);
             pc.getAdapterManager().restartAdapter(contentSource);
             pc.scheduleSyncJob(contentSource);
@@ -525,7 +494,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
     public boolean testContentSourceConnection(int contentSourceId) {
         try {
-            ContentProviderPluginContainer pc = ContentManagerHelper.getPluginContainer();
+            ContentServerPluginContainer pc = ContentManagerHelper.getPluginContainer();
             return pc.getAdapterManager().testConnection(contentSourceId);
         } catch (Exception e) {
             log.info("Failed to test connection to [" + contentSourceId + "]. Cause: "
@@ -539,7 +508,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public void synchronizeAndLoadContentSource(Subject subject, int contentSourceId) {
         try {
-            ContentProviderPluginContainer pc = ContentManagerHelper.getPluginContainer();
+            ContentServerPluginContainer pc = ContentManagerHelper.getPluginContainer();
             ContentSource contentSource = entityManager.find(ContentSource.class, contentSourceId);
 
             if (contentSource != null) {
@@ -673,7 +642,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         PackageBits packageBits = null;
 
         try {
-            ContentProviderPluginContainer pc = ContentManagerHelper.getPluginContainer();
+            ContentServerPluginContainer pc = ContentManagerHelper.getPluginContainer();
             bitsStream = pc.getAdapterManager().loadPackageBits(contentSourceId, packageVersionLocation);
 
             Connection conn = null;
@@ -758,7 +727,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public boolean internalSynchronizeContentSource(int contentSourceId) throws Exception {
-        ContentProviderPluginContainer pc = ContentManagerHelper.getPluginContainer();
+        ContentServerPluginContainer pc = ContentManagerHelper.getPluginContainer();
         return pc.getAdapterManager().synchronizeContentSource(contentSourceId);
     }
 
@@ -817,7 +786,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     // we really want NEVER, but support tests that might be in a tx
     public ContentSourceSyncResults mergeContentSourceSyncReport(ContentSource contentSource, PackageSyncReport report,
-        Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous, ContentSourceSyncResults syncResults) {
+        Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
+        ContentSourceSyncResults syncResults) {
         try {
             StringBuilder progress = new StringBuilder();
             if (syncResults.getResults() != null) {
@@ -1446,7 +1416,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         try {
             if (composite == null) {
                 // this is DownloadMode.NEVER and we are really in pass-through mode, stream directly from adapter
-                ContentProviderPluginContainer pc = ContentManagerHelper.getPluginContainer();
+                ContentServerPluginContainer pc = ContentManagerHelper.getPluginContainer();
                 ContentProviderManager adapterMgr = pc.getAdapterManager();
                 int contentSourceId = pvcs.getPackageVersionContentSourcePK().getContentSource().getId();
                 bitsStream = adapterMgr.loadPackageBits(contentSourceId, pvcs.getLocation());

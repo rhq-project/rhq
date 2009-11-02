@@ -390,7 +390,7 @@ public class StartupServlet extends HttpServlet {
             Class<?> iface = ServerPluginServiceManagement.class;
             mbean = (ServerPluginServiceManagement) MBeanServerInvocationHandler.newProxyInstance(mbs, name, iface,
                 false);
-            mbean.getPluginContainer().scheduleSyncJobs();
+            mbean.getMasterPluginContainer().scheduleSyncJobs();
         } catch (Exception e) {
             log("Cannot schedule content source sync jobs: " + e.getMessage());
         }
@@ -532,7 +532,7 @@ public class StartupServlet extends HttpServlet {
      * @throws ServletException
      */
     private void startServerPluginContainer() throws ServletException {
-        log("Starting the server plugin container...");
+        log("Starting the master server plugin container...");
 
         try {
             ServerPluginServiceManagement mbean;
@@ -541,9 +541,9 @@ public class StartupServlet extends HttpServlet {
             Class<?> iface = ServerPluginServiceManagement.class;
             mbean = (ServerPluginServiceManagement) MBeanServerInvocationHandler.newProxyInstance(mbs, name, iface,
                 false);
-            mbean.startPluginContainer();
+            mbean.startMasterPluginContainer();
         } catch (Exception e) {
-            throw new ServletException("Cannot start the server plugin container!", e);
+            throw new ServletException("Cannot start the master server plugin container!", e);
         }
     }
 

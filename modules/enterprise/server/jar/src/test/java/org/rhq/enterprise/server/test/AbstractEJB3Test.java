@@ -272,7 +272,7 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
 
     public void unprepareContentSourcePluginService() throws Exception {
         if (contentSourcePluginService != null) {
-            contentSourcePluginService.stopPluginContainer();
+            contentSourcePluginService.stopMasterPluginContainer();
             contentSourcePluginService.stop();
             getJBossMBeanServer().unregisterMBean(
                 ObjectNameFactory.create(TestContentSourcePluginService.OBJECT_NAME_STR));

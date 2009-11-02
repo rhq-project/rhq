@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.server.plugin.content;
+package org.rhq.enterprise.server.plugin.pc.content;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -24,28 +24,17 @@ import java.io.PrintStream;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.ArrayList;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.clientapi.server.plugin.content.ContentProvider;
-import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetails;
-import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetailsKey;
-import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
-import org.rhq.core.clientapi.server.plugin.content.PackageSource;
-import org.rhq.core.clientapi.server.plugin.content.RepoSource;
-import org.rhq.core.clientapi.server.plugin.content.RepoDetails;
-import org.rhq.core.clientapi.server.plugin.content.RepoImportReport;
-import org.rhq.core.clientapi.server.plugin.content.RepoGroupDetails;
-import org.rhq.core.clientapi.server.plugin.content.InitializationException;
-import org.rhq.core.clientapi.server.plugin.content.metadata.ContentSourcePluginMetadataManager;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceSyncResults;
@@ -59,17 +48,18 @@ import org.rhq.core.domain.content.RepoGroup;
 import org.rhq.core.domain.content.RepoGroupType;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
-import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
-import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.content.RepoException;
+import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.content.metadata.ContentSourceMetadataManagerLocal;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginEnvironment;
+import org.rhq.enterprise.server.plugin.pc.content.metadata.ContentSourcePluginMetadataManager;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
- * Responsible for managing {@link org.rhq.core.clientapi.server.plugin.content.ContentProvider}.
+ * Responsible for managing {@link ContentProvider} implementations. These implementations
+ * come from the content plugins themselves.
  *
  * @author John Mazzitelli
  */
@@ -78,7 +68,6 @@ public class ContentProviderManager {
 
     private static final String PARENT_RELATIONSHIP_NAME = "parent";
 
-    private ContentProviderPluginContainerConfiguration configuration;
     private ContentProviderPluginManager pluginManager;
     private Map<ContentSource, ContentProvider> adapters;
 
@@ -148,7 +137,8 @@ public class ContentProviderManager {
             // We can come back and revisit if we need more fine-grained locking.
             synchronized (synchronizeContentSourceLock) {
                 progress.append(new Date()).append(": ");
-                progress.append("Start synchronization of content provider [").append(contentSource.getName()).append("]");
+                progress.append("Start synchronization of content provider [").append(contentSource.getName()).append(
+                    "]");
                 progress.append('\n');
                 progress.append(new Date()).append(": ");
                 progress.append("Getting currently known list of content source packages...");
@@ -240,8 +230,8 @@ public class ContentProviderManager {
                 start = System.currentTimeMillis();
                 report = new PackageSyncReport();
                 PageControl pc = PageControl.getUnlimitedInstance(); // gulp - I assume we can fit all package versions in mem
-                existingPVCS = manager
-                    .getPackageVersionsFromContentSource(subjMgr.getOverlord(), contentSource.getId(), pc);
+                existingPVCS = manager.getPackageVersionsFromContentSource(subjMgr.getOverlord(),
+                    contentSource.getId(), pc);
                 int existingCount = existingPVCS.size();
                 keyPVCSMap = new HashMap<ContentProviderPackageDetailsKey, PackageVersionContentSource>(existingCount);
                 allDetails = new HashSet<ContentProviderPackageDetails>(existingCount);
@@ -252,8 +242,8 @@ public class ContentProviderManager {
                     ResourceType rt = p.getPackageType().getResourceType();
 
                     ContentProviderPackageDetailsKey key;
-                    key = new ContentProviderPackageDetailsKey(p.getName(), pv.getVersion(), p.getPackageType().getName(), pv
-                        .getArchitecture().getName(), rt.getName(), rt.getPlugin());
+                    key = new ContentProviderPackageDetailsKey(p.getName(), pv.getVersion(), p.getPackageType()
+                        .getName(), pv.getArchitecture().getName(), rt.getName(), rt.getPlugin());
 
                     ContentProviderPackageDetails details = new ContentProviderPackageDetails(key);
                     details.setClassification(pv.getGeneralPackage().getClassification());
@@ -353,8 +343,7 @@ public class ContentProviderManager {
         return true;
     }
 
-    private void processRepo(int contentSourceId, RepoDetails createMe)
-        throws Exception {
+    private void processRepo(int contentSourceId, RepoDetails createMe) throws Exception {
 
         RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
         SubjectManagerLocal subjMgr = LookupUtil.getSubjectManager();
@@ -383,26 +372,24 @@ public class ContentProviderManager {
                 List<Repo> parentList = repoManager.getRepoByName(parentName);
 
                 if (parentList.size() == 0) {
-                    String error = "Attempting to create repo [" + name + "] with parent [" + parentName +
-                        "] but cannot find the parent";
+                    String error = "Attempting to create repo [" + name + "] with parent [" + parentName
+                        + "] but cannot find the parent";
                     log.error(error);
                     throw new RepoException(error);
-                }
-                else {
+                } else {
                     Repo parent = parentList.get(0);
                     repoManager.addRepoRelationship(overlord, repo.getId(), parent.getId(), PARENT_RELATIONSHIP_NAME);
                 }
             }
 
-        }
-        else {
+        } else {
             repo = existingRepo.get(0);
         }
 
         // This call is safe even if the content source is already associated.
         // We either need to associate the content source with the newly created repo, or
         // associate the content source with the repo that was created elsewhere.
-        repoManager.addContentSourcesToRepo(overlord, repo.getId(), new int[] {contentSourceId});
+        repoManager.addContentSourcesToRepo(overlord, repo.getId(), new int[] { contentSourceId });
     }
 
     /**
@@ -509,17 +496,6 @@ public class ContentProviderManager {
     }
 
     /**
-     * Sets the internal configuration that can be used by this manager.
-     *
-     * <p>This is protected so only the plugin container and subclasses can use it.</p>
-     *
-     * @param config
-     */
-    protected void setConfiguration(ContentProviderPluginContainerConfiguration config) {
-        this.configuration = config;
-    }
-
-    /**
      * Tells this manager to initialize itself which will initialize all the adapters.
      *
      * <p>This is protected so only the plugin container and subclasses can use it.</p>
@@ -599,7 +575,7 @@ public class ContentProviderManager {
             apiClassName = type.getContentSourceApiClass();
             pluginName = this.pluginManager.getMetadataManager().getPluginNameFromContentSourceType(type);
 
-            ContentProviderPluginEnvironment pluginEnv = this.pluginManager.getPlugin(pluginName);
+            ServerPluginEnvironment pluginEnv = this.pluginManager.getPlugin(pluginName);
             ClassLoader pluginClassloader = pluginEnv.getClassLoader();
 
             ClassLoader startingClassLoader = Thread.currentThread().getContextClassLoader();
@@ -673,7 +649,7 @@ public class ContentProviderManager {
             throw new RuntimeException("There is no adapter for content source [" + adapter + "]");
         }
 
-        ContentProviderPluginEnvironment env = this.pluginManager.getPlugin(contentSource.getContentSourceType());
+        ServerPluginEnvironment env = this.pluginManager.getPlugin(contentSource.getContentSourceType());
         if (env == null) {
             throw new RuntimeException("There is no plugin env. for content source [" + contentSource + "]");
         }
@@ -692,7 +668,7 @@ public class ContentProviderManager {
         }
 
         Class<?>[] ifaces = ifacesList.toArray(new Class<?>[ifacesList.size()]);
-        
+
         return (ContentProvider) Proxy.newProxyInstance(classLoader, ifaces, handler);
     }
 

@@ -22,13 +22,15 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.rhq.core.clientapi.server.plugin.content.ContentProvider;
-import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetails;
-import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
-import org.rhq.core.clientapi.server.plugin.content.PackageSource;
+
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.enterprise.server.plugin.pc.content.ContentProvider;
+import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
+import org.rhq.enterprise.server.plugin.pc.content.PackageSource;
+import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
 
 /**
  * The RepoSource provides a content source for synchronizing content contained with a yum repo.

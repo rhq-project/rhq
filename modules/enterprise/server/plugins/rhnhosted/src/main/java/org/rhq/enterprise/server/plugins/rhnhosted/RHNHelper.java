@@ -19,25 +19,25 @@
 
 package org.rhq.enterprise.server.plugins.rhnhosted;
 
-
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.File;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Arrays;
+import java.util.List;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.xmlrpc.XmlRpcException;
+
+import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
+import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetailsKey;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelFamilyType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageType;
-import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelFamilyType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.RhnComm;
 import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.RhnDownloader;
-import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetails;
-import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetailsKey;
-import org.apache.xmlrpc.XmlRpcException;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.logging.LogFactory;
-import org.apache.commons.logging.Log;
 
 /**
  * @author pkilambi
@@ -75,12 +75,11 @@ public class RHNHelper {
      * @return A list of package detail objects
      * @throws Exception On all errors
      */
-    public List<ContentProviderPackageDetails> getPackageDetails(List packageIds)
-            throws Exception {
+    public List<ContentProviderPackageDetails> getPackageDetails(List packageIds) throws Exception {
 
         List<ContentProviderPackageDetails> pdlist = new ArrayList<ContentProviderPackageDetails>();
         List<RhnPackageType> pkgs = rhndata.getPackageMetadata(this.systemid, packageIds);
-        for(RhnPackageType pkg: pkgs) {
+        for (RhnPackageType pkg : pkgs) {
             pdlist.add(getDetails(pkg));
         }
         return pdlist;
@@ -100,8 +99,8 @@ public class RHNHelper {
         String arch = p.getPackageArch();
         String rpmname = constructRpmName(name, version, p.getRelease(), p.getEpoch(), arch);
 
-        ContentProviderPackageDetailsKey key =
-                new ContentProviderPackageDetailsKey(name, version, "rpm", arch, "Linux", "Platforms");
+        ContentProviderPackageDetailsKey key = new ContentProviderPackageDetailsKey(name, version, "rpm", arch,
+            "Linux", "Platforms");
         ContentProviderPackageDetails pkg = new ContentProviderPackageDetails(key);
 
         pkg.setDisplayName(name);
@@ -115,7 +114,7 @@ public class RHNHelper {
         pkg.setLocation(constructPackageUrl(repolabel, rpmname));
         //pkg.setMetadata();
         return pkg;
-        
+
     }
 
     /**
@@ -153,9 +152,9 @@ public class RHNHelper {
         ArrayList<String> allchannels = new ArrayList();
         List<RhnChannelFamilyType> cfts = rhndata.getChannelFamilies(this.systemid);
         for (RhnChannelFamilyType cf : cfts) {
-             String channeldata = cf.getChannelLabels();
-             String[] clabels  = channeldata.split(" ");
-             if (clabels.length > 1) {
+            String channeldata = cf.getChannelLabels();
+            String[] clabels = channeldata.split(" ");
+            if (clabels.length > 1) {
                 allchannels.addAll(Arrays.asList(clabels));
             }
         }
@@ -175,14 +174,11 @@ public class RHNHelper {
      *
      * @throws XmlRpcException On all errors.
      */
-    public InputStream openStream(String location)
-            throws IOException, XmlRpcException {
+    public InputStream openStream(String location) throws IOException, XmlRpcException {
 
         log.info("Package Fetched from: " + location);
         return rhndownload.getRPMStream(this.systemid, location);
     }
-
-
 
     /**
      * Constructs a downloadable url for package downloads.
@@ -208,7 +204,7 @@ public class RHNHelper {
     private String constructRpmName(String name, String version, String release, String epoch, String arch) {
 
         String releaseepoch = release + ":" + epoch;
-        return name + "-" + version + "-" +  releaseepoch + "." + arch + ".rpm";
+        return name + "-" + version + "-" + releaseepoch + "." + arch + ".rpm";
     }
 
     /**

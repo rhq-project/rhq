@@ -21,11 +21,11 @@ package org.rhq.enterprise.server.plugin.pc;
 import java.io.File;
 
 /**
- * A very simple object used to contain server plugin container configuration.
+ * A very simple object used to contain master server plugin container configuration.
  *
  * @author John Mazzitelli
  */
-public class ServerPluginContainerConfiguration {
+public class MasterServerPluginContainerConfiguration {
     private File pluginDirectory;
     private File tmpDirectory;
     private String rootClassLoaderRegex;
@@ -87,7 +87,7 @@ public class ServerPluginContainerConfiguration {
         File tdir = getTemporaryDirectory();
         String regex = getRootServerPluginClassLoaderRegex();
 
-        StringBuilder str = new StringBuilder("ServerPluginContainerConfiguration: ");
+        StringBuilder str = new StringBuilder(MasterServerPluginContainerConfiguration.class + ": ");
         str.append("plugin-dir=[" + ((pdir != null) ? pdir.getAbsolutePath() : "<null>"));
         str.append("], tmp-dir=[" + ((tdir != null) ? tdir.getAbsolutePath() : "<null>"));
         str.append("], root-cl-regex=[" + ((regex != null) ? regex : "<null>"));

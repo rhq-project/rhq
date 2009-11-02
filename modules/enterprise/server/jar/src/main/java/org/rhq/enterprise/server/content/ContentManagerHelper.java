@@ -30,28 +30,30 @@ import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.util.ObjectNameFactory;
-import org.rhq.enterprise.server.plugin.content.ContentProviderPluginContainer;
-import org.rhq.enterprise.server.plugin.content.ContentProviderPluginServiceManagement;
+import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceManagement;
+import org.rhq.enterprise.server.plugin.pc.content.ContentServerPluginContainer;
 
 /**
  * ContentManagerHelper - Helper class to contain common methods needed by the Content managers.
  */
 public class ContentManagerHelper {
-    public static ContentProviderPluginContainer getPluginContainer() throws Exception {
-        ContentProviderPluginContainer pc = null;
+    public static ContentServerPluginContainer getPluginContainer() throws Exception {
+        ContentServerPluginContainer pc = null;
 
         try {
-            ContentProviderPluginServiceManagement mbean;
+            ServerPluginServiceManagement mbean;
             MBeanServer mbs = MBeanServerLocator.locateJBoss();
-            ObjectName name = ObjectNameFactory.create(ContentProviderPluginServiceManagement.OBJECT_NAME_STR);
-            Class<?> iface = ContentProviderPluginServiceManagement.class;
-            mbean = (ContentProviderPluginServiceManagement) MBeanServerInvocationHandler.newProxyInstance(mbs, name,
-                iface, false);
-            if (!mbean.isPluginContainerStarted()) {
-                throw new IllegalStateException("The content source plugin container is not started!");
+            ObjectName name = ObjectNameFactory.create(ServerPluginServiceManagement.OBJECT_NAME_STR);
+            Class<?> iface = ServerPluginServiceManagement.class;
+            mbean = (ServerPluginServiceManagement) MBeanServerInvocationHandler.newProxyInstance(mbs, name, iface,
+                false);
+            if (!mbean.isMasterPluginContainerStarted()) {
+                throw new IllegalStateException("The master plugin container is not started!");
             }
 
-            pc = mbean.getPluginContainer();
+            MasterServerPluginContainer master = mbean.getMasterPluginContainer();
+            pc = master.getContentPluginContainer();
         } catch (IllegalStateException ise) {
             throw ise;
         } catch (Exception e) {

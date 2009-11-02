@@ -21,39 +21,36 @@ package org.rhq.enterprise.server.plugins.rhnhosted;
 
 import junit.framework.TestCase;
 
-import java.io.File;
-import java.io.IOException;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.StringUtils;
+import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.ApacheXmlRpcExecutor;
+import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.MockRhnHttpURLConnection;
+import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.MockRhnXmlRpcExecutor;
+import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.RhnCommTest;
+import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.RhnHttpURLConnectionFactory;
 
 public class RHNActivatorTest extends TestCase {
 
-    private static final String TEST_CERT_PATH = "./entitlement-cert.xml";
     private static final String TEST_SERVER_URL = "http://satellite.rhn.redhat.com/rpc/api";
     private static final String TEST_SYSTEM_ID = RHNConstants.DEFAULT_SYSTEM_ID;
 
     private RHNActivator rhnObject;
 
     public void setUp() throws Exception {
-        rhnObject = new RHNActivator(TEST_SYSTEM_ID, TEST_CERT_PATH, TEST_SERVER_URL);
+        /* OVERRIDE THE XMLRPC CLIENT WITH A MOCK OBJECT */
+        System.setProperty(ApacheXmlRpcExecutor.class.getName(), MockRhnXmlRpcExecutor.class.getName());
+        System.setProperty(RhnHttpURLConnectionFactory.RHN_MOCK_HTTP_URL_CONNECTION, MockRhnHttpURLConnection.class
+            .getName());
+
+        rhnObject = new RHNActivator(RhnCommTest.SYSTEM_ID, ENT_CERT, TEST_SERVER_URL);
+
         assertNotNull(rhnObject);
+
     }
 
-
     public final void testActivate() throws Exception {
-        String systemid = readSystemId();
-        String cert = readCertificate();
-        System.out.println("systemid and cert are:" + systemid + cert);
-        if (StringUtils.isBlank(systemid) || StringUtils.isBlank(cert)) {
-            System.out.println("Skipping test since systemid or cert is not readable");
-            return;
-        }
         boolean success = true;
         try {
             rhnObject.processActivation();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
             success = false;
         }
@@ -61,38 +58,32 @@ public class RHNActivatorTest extends TestCase {
     }
 
     public final void testDeActivate() throws Exception {
-        String systemid = readSystemId();
-        String cert = readCertificate();
-        if (StringUtils.isBlank(systemid) || StringUtils.isBlank(cert)) {
-            System.out.println("Skipping test since systemid or cert is not readable");
-            return;
-        }
+        String systemid = RhnCommTest.SYSTEM_ID;
         boolean success = true;
         try {
             rhnObject.processDeActivation();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
             success = false;
         }
         assertEquals(true, success);
     }
 
-    protected String readSystemId() throws Exception {
-        try {
-            return FileUtils.readFileToString(new File(TEST_SYSTEM_ID));
-        } catch (IOException e) {
-            return "";
-        }
-    }
-
-    protected String readCertificate() throws Exception {
-        try {
-            return FileUtils.readFileToString(new File(TEST_CERT_PATH));
-        } catch (IOException e) {
-            return "";
-        }
-
-    }
+    private static String ENT_CERT = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<rhn-cert version=\"0.1\">"
+        + "  <rhn-cert-field name=\"product\">RHN-SATELLITE-001</rhn-cert-field>"
+        + "  <rhn-cert-field name=\"owner\">Test Lab - Base Organization</rhn-cert-field>"
+        + "  <rhn-cert-field name=\"issued\">2009-08-17 00:00:00</rhn-cert-field>"
+        + "  <rhn-cert-field name=\"expires\">2010-08-17 00:00:00</rhn-cert-field>"
+        + "  <rhn-cert-field name=\"slots\">10</rhn-cert-field>"
+        + "  <rhn-cert-field name=\"monitoring-slots\">10</rhn-cert-field>"
+        + "  <rhn-cert-field name=\"provisioning-slots\">10</rhn-cert-field>"
+        + "  <rhn-cert-field name=\"virtualization_host\">10</rhn-cert-field>"
+        + "  <rhn-cert-field name=\"virtualization_host_platform\">10</rhn-cert-field>"
+        + "  <rhn-cert-field name=\"channel-families\" quantity=\"10\" family=\"rhel-server\"/>"
+        + "  <rhn-cert-field name=\"channel-families\" quantity=\"10\" family=\"rhel-server-vt\"/>"
+        + "  <rhn-cert-field name=\"channel-families\" quantity=\"10\" family=\"rhn-tools\"/>"
+        + "  <rhn-cert-field name=\"satellite-version\">5.3</rhn-cert-field>"
+        + "  <rhn-cert-field name=\"generation\">2</rhn-cert-field>" + "  <rhn-cert-signature>"
+        + "-----BEGIN PGP SIGNATURE-----" + "-----END PGP SIGNATURE-----" + "</rhn-cert-signature>" + "</rhn-cert>";
 
 }

@@ -19,6 +19,8 @@
 
 package org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc;
 
+import java.util.List;
+
 import org.apache.xmlrpc.XmlRpcException;
 
 public interface XmlRpcExecutor {
@@ -30,5 +32,13 @@ public interface XmlRpcExecutor {
      * @return
      */
     public Object execute(String methodName, Object[] params) throws XmlRpcException;
+
+    /** Performs a request with the clients default configuration.
+     * @param pMethodName The method being performed.
+     * @param pParams The parameters.
+     * @return The result object.
+     * @throws XmlRpcException Performing the request failed.
+     */
+    public Object execute(String pMethodName, List pParams) throws XmlRpcException;
 
 }

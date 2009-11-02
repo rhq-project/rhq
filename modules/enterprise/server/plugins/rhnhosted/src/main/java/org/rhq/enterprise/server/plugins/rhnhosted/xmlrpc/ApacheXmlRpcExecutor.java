@@ -19,6 +19,8 @@
 
 package org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc;
 
+import java.util.List;
+
 import org.apache.xmlrpc.XmlRpcException;
 import org.apache.xmlrpc.client.XmlRpcClient;
 
@@ -33,6 +35,11 @@ public class ApacheXmlRpcExecutor implements XmlRpcExecutor {
     @Override
     public Object execute(String methodName, Object[] params) throws XmlRpcException {
         return client.execute(methodName, params);
+    }
+
+    @Override
+    public Object execute(String pMethodName, List pParams) throws XmlRpcException {
+        return client.execute(pMethodName, pParams);
     }
 
 }

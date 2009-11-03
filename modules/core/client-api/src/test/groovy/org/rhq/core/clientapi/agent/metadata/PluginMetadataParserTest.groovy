@@ -29,7 +29,7 @@ import javax.xml.validation.SchemaFactory
 import org.rhq.core.clientapi.descriptor.DescriptorPackages
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor
 import org.testng.annotations.Test
-import org.rhq.core.clientapi.descriptor.configuration.ConfigurationFormat
+import org.rhq.core.domain.configuration.definition.ConfigurationFormat
 
 class PluginMetadataParserTest {
 

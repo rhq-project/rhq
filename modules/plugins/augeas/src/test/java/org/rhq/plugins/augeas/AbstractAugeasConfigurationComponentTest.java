@@ -18,6 +18,21 @@
  */
 package org.rhq.plugins.augeas;
 
+import static org.testng.Assert.fail;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
+
+import org.testng.annotations.AfterSuite;
+import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.Test;
+
+import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -30,19 +45,6 @@ import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.plugin.FileSystemPluginFinder;
 import org.rhq.core.pc.plugin.PluginManager;
 import org.rhq.core.util.file.FileUtil;
-import org.testng.annotations.AfterSuite;
-import org.testng.annotations.BeforeSuite;
-import org.testng.annotations.Test;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
-
-import static org.testng.Assert.fail;
 
 /**
  * An base class for integration tests for instances of {@link AugeasConfigurationComponent}.
@@ -98,16 +100,16 @@ public abstract class AbstractAugeasConfigurationComponentTest {
             InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
             ResourceType resourceType = getResourceType();
             switch (resourceType.getCategory()) {
-                case SERVICE:
-                    System.out.println("Executing platform service scan to discover " + resourceType + " Resource...");
-                    inventoryManager.performServiceScan(inventoryManager.getPlatform().getId());
-                    break;
-                case SERVER:
-                    System.out.println("Executing server scan to discover " + resourceType + " Resource...");
-                    inventoryManager.executeServerScanImmediately();
-                    break;
-                case PLATFORM:
-                    throw new IllegalStateException("Huh? Using Augeas to configure a platform?");
+            case SERVICE:
+                System.out.println("Executing platform service scan to discover " + resourceType + " Resource...");
+                inventoryManager.performServiceScan(inventoryManager.getPlatform().getId());
+                break;
+            case SERVER:
+                System.out.println("Executing server scan to discover " + resourceType + " Resource...");
+                inventoryManager.executeServerScanImmediately();
+                break;
+            case PLATFORM:
+                throw new IllegalStateException("Huh? Using Augeas to configure a platform?");
             }
             Resource resource = getResource();
             Configuration pluginConfig = resource.getPluginConfiguration();
@@ -162,14 +164,14 @@ public abstract class AbstractAugeasConfigurationComponentTest {
             Resource resource = getResource();
             Configuration resourceConfig = configurationManager.loadResourceConfiguration(resource.getId());
             Configuration expectedResourceConfig = getExpectedResourceConfig();
-            assert resourceConfig.equals(expectedResourceConfig) :
-                    "Unexpected Resource configuration - \nExpected:\n\t"
-                            + expectedResourceConfig.toString(true) + "\nActual:\n\t"
-                            + resourceConfig.toString(true);
+            assert resourceConfig.equals(expectedResourceConfig) : "Unexpected Resource configuration - \nExpected:\n\t"
+                + expectedResourceConfig.toString(true) + "\nActual:\n\t" + resourceConfig.toString(true);
         }
     }
 
     protected abstract Configuration getExpectedResourceConfig();
+
+    protected abstract Configuration getChangedResourceConfig();
 
     protected static ResourceType getResourceType(String resourceTypeName, String pluginName) {
         PluginManager pluginManager = PluginContainer.getInstance().getPluginManager();
@@ -182,6 +184,7 @@ public abstract class AbstractAugeasConfigurationComponentTest {
     }
 
     protected abstract String getPluginName();
+
     protected abstract String getResourceTypeName();
 
     protected Resource getResource() {
@@ -193,8 +196,26 @@ public abstract class AbstractAugeasConfigurationComponentTest {
         }
         if (resources.size() > 1) {
             throw new IllegalStateException("Found more than one " + resourceType.getName()
-                    + " Resource - expected there to be exactly one - resources: " + resources);
+                + " Resource - expected there to be exactly one - resources: " + resources);
         }
         return resources.iterator().next();
+    }
+
+    @Test(groups = TEST_GROUP)
+    public void testResourceConfigUpdate() throws Exception {
+        if (getResourceType().getResourceConfigurationDefinition() != null) {
+            ConfigurationManager configurationManager = PluginContainer.getInstance().getConfigurationManager();
+            Resource resource = getResource();
+            Configuration updatedResourceConfig = getChangedResourceConfig();
+            configurationManager.updateResourceConfiguration(new ConfigurationUpdateRequest(0, updatedResourceConfig,
+                resource.getId()));
+
+            //give the component and the managed resource some time to properly persist the update
+            Thread.sleep(500);
+
+            Configuration resourceConfig = configurationManager.loadResourceConfiguration(resource.getId());
+            assert resourceConfig.equals(updatedResourceConfig) : "Unexpected Resource configuration - \nExpected:\n\t"
+                + updatedResourceConfig.toString(true) + "\nActual:\n\t" + resourceConfig.toString(true);
+        }
     }
 }

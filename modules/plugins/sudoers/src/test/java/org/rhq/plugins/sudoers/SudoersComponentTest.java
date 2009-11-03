@@ -70,6 +70,46 @@ public class SudoersComponentTest extends AbstractAugeasConfigurationComponentTe
     }
 
     @Override
+    protected Configuration getChangedResourceConfig() {
+        Configuration config = new Configuration();
+        PropertyList entries = new PropertyList(".");
+        config.put(entries);
+        PropertyMap entry;
+        entry = new PropertyMap("spec");
+        entry.put(new PropertySimple("user", "root"));
+        entry.put(new PropertySimple("host_group/host", "fooo"));
+        entry.put(new PropertySimple("host_group/command", "/bin/env"));
+        entry.put(new PropertySimple("host_group/command/runas_user", "ALL"));
+        entry.put(new PropertySimple("host_group/command/tag", true));
+        entries.getList().add(entry);
+
+        entry = new PropertyMap("spec");
+        entry.put(new PropertySimple("user", "%wheel"));
+        entry.put(new PropertySimple("host_group/host", "ALL"));
+        entry.put(new PropertySimple("host_group/command", "ALL"));
+        entry.put(new PropertySimple("host_group/command/runas_user", "ALL"));
+        entry.put(new PropertySimple("host_group/command/tag", false));
+        entries.getList().add(entry);
+
+        entry = new PropertyMap("spec");
+        entry.put(new PropertySimple("user", "apache"));
+        entry.put(new PropertySimple("host_group/host", "ALL"));
+        entry.put(new PropertySimple("host_group/command", "/bin/env"));
+        entry.put(new PropertySimple("host_group/command/runas_user", "root"));
+        entry.put(new PropertySimple("host_group/command/tag", false));
+        entries.getList().add(entry);
+
+        entry = new PropertyMap("spec");
+        entry.put(new PropertySimple("user", "foo"));
+        entry.put(new PropertySimple("host_group/host", "ALL"));
+        entry.put(new PropertySimple("host_group/command", "NETWORKING"));
+        entry.put(new PropertySimple("host_group/command/runas_user", "root"));
+        entry.put(new PropertySimple("host_group/command/tag", true));
+        entries.getList().add(entry);
+        return config;
+    }
+
+    @Override
     protected String getPluginName() {
         return "Sudoers";
     }

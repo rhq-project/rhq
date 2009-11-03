@@ -37,7 +37,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.lang.reflect.UndeclaredThrowableException;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -55,14 +54,15 @@ import org.apache.commons.logging.LogFactory;
 import org.jboss.annotation.ejb.TransactionTimeout;
 import org.jboss.util.StringPropertyReplacer;
 
-import org.rhq.core.clientapi.server.plugin.content.*;
+import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetails;
+import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetailsKey;
+import org.rhq.core.clientapi.server.plugin.content.InitializationException;
+import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
+import org.rhq.core.clientapi.server.plugin.content.RepoDetails;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.content.Architecture;
-import org.rhq.core.domain.content.Repo;
-import org.rhq.core.domain.content.RepoContentSource;
-import org.rhq.core.domain.content.RepoPackageVersion;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceSyncResults;
 import org.rhq.core.domain.content.ContentSourceSyncStatus;
@@ -76,6 +76,9 @@ import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.PackageVersionContentSource;
 import org.rhq.core.domain.content.PackageVersionContentSourcePK;
 import org.rhq.core.domain.content.ProductVersionPackageVersion;
+import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.content.RepoContentSource;
+import org.rhq.core.domain.content.RepoPackageVersion;
 import org.rhq.core.domain.content.composite.LoadedPackageBitsComposite;
 import org.rhq.core.domain.content.composite.PackageVersionFile;
 import org.rhq.core.domain.content.composite.PackageVersionMetadataComposite;
@@ -169,7 +172,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         // the files for those package bits that were stored on the filesystem.
         for (PackageVersionFile pvFile : pvFiles) {
             try {
-                File doomed = getPackageBitsLocalFilesystemFile(pvFile.getPackageVersionId(), pvFile.getFileName());
+                File doomed = getPackageBitsLocalFileAndCreateParentDir(pvFile.getPackageVersionId(), pvFile
+                    .getFileName());
                 if (doomed.exists()) {
                     doomed.delete();
                 }
@@ -191,8 +195,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         entityManager.flush();
         entityManager.clear();
 
-        entityManager.createNamedQuery(RepoContentSource.DELETE_BY_CONTENT_SOURCE_ID).setParameter(
-            "contentSourceId", contentSourceId).executeUpdate();
+        entityManager.createNamedQuery(RepoContentSource.DELETE_BY_CONTENT_SOURCE_ID).setParameter("contentSourceId",
+            contentSourceId).executeUpdate();
 
         entityManager.createNamedQuery(PackageVersionContentSource.DELETE_BY_CONTENT_SOURCE_ID).setParameter(
             "contentSourceId", contentSourceId).executeUpdate();
@@ -247,8 +251,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public PageList<ContentSource> getAvailableContentSourcesForRepo(Subject subject, Integer repoId,
-        PageControl pc) {
+    public PageList<ContentSource> getAvailableContentSourcesForRepo(Subject subject, Integer repoId, PageControl pc) {
         pc.initDefaultOrderingField("cs.name");
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
@@ -308,8 +311,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     public PageList<Repo> getAssociatedRepos(Subject subject, int contentSourceId, PageControl pc) {
         pc.initDefaultOrderingField("c.id");
 
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, Repo.QUERY_FIND_BY_CONTENT_SOURCE_ID,
-            pc);
+        Query query = PersistenceUtility
+            .createQueryWithOrderBy(entityManager, Repo.QUERY_FIND_BY_CONTENT_SOURCE_ID, pc);
         Query countQuery = PersistenceUtility.createCountQuery(entityManager, Repo.QUERY_FIND_BY_CONTENT_SOURCE_ID);
 
         query.setParameter("id", contentSourceId);
@@ -361,8 +364,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
             try {
                 repoManager.createRepo(overlord, repo);
-            }
-            catch (RepoException e) {
+            } catch (RepoException e) {
                 log.error("Error creating repo [" + repo + "]", e);
             }
         }
@@ -383,8 +385,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public ContentSource createContentSource(Subject subject, String name, String description, String typeName,
-        Configuration configuration, boolean lazyLoad, DownloadMode downloadMode)
-            throws ContentSourceException, InitializationException {
+        Configuration configuration, boolean lazyLoad, DownloadMode downloadMode) throws ContentSourceException,
+        InitializationException {
         log.debug("User [" + subject + "] is creating a content source [" + name + "] of type [" + typeName + "]");
 
         // we first must get the content source type - if it doesn't exist, we throw an exception
@@ -413,13 +415,11 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public ContentSource createContentSource(Subject subject, ContentSource contentSource)
-        //throws ContentSourceException, InitializationException {
-       throws ContentSourceException, InitializationException {
+    //throws ContentSourceException, InitializationException {
+        throws ContentSourceException, InitializationException {
         validateContentSource(contentSource);
 
         log.debug("User [" + subject + "] is creating content source [" + contentSource + "]");
-
-
 
         // now that a new content source has been added to the system, let's start its adapter now
         try {
@@ -430,7 +430,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         } catch (InitializationException ie) {
             log.warn("Failed to start adapter for [" + contentSource + "]", ie);
             throw ie;
-        }  catch (Exception e) {
+        } catch (Exception e) {
             log.warn("Failed to start adapter for [" + contentSource + "]", e);
         }
 
@@ -634,8 +634,29 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
         List<PackageVersionContentSource> results = query.getResultList();
         long count = (Long) countQuery.getSingleResult();
+        PageList<PackageVersionContentSource> dbList = new PageList<PackageVersionContentSource>(results, (int) count,
+            pc);
+        // Setup a HashSet so we can add missing files to the results list without getting dupes in the Set
+        // Then translate at the end to a List.
+        HashSet<PackageVersionContentSource> uniquePVs = new HashSet<PackageVersionContentSource>();
+        uniquePVs.addAll(dbList);
 
-        return new PageList<PackageVersionContentSource>(results, (int) count, pc);
+        ContentSource contentSource = entityManager.find(ContentSource.class, contentSourceId);
+        // Only check if it is a FILESYSTEM backed contentsource
+        if (contentSource.getDownloadMode().equals(DownloadMode.FILESYSTEM)) {
+            List<PackageVersionContentSource> allPackageVersions = contentSourceManager
+                .getPackageVersionsFromContentSource(subject, contentSourceId, pc);
+            for (PackageVersionContentSource item : allPackageVersions) {
+                PackageVersion pv = item.getPackageVersionContentSourcePK().getPackageVersion();
+                File verifyFile = getPackageBitsLocalFilesystemFile(pv.getId(), pv.getFileName());
+                if (!verifyFile.exists()) {
+                    log.info("Missing file from ContentProvider, adding to list: " + verifyFile.getAbsolutePath());
+                    uniquePVs.add(item);
+                }
+            }
+        }
+        // Take the hit and convert to a List
+        return new PageList<PackageVersionContentSource>(uniquePVs, pc);
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
@@ -699,7 +720,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                     }
                 } else {
                     // store content to local file system
-                    File outputFile = getPackageBitsLocalFilesystemFile(pv.getId(), pv.getFileName());
+                    File outputFile = getPackageBitsLocalFileAndCreateParentDir(pv.getId(), pv.getFileName());
                     log.info("OutPutFile is located at: " + outputFile);
                     if (outputFile.exists()) {
                         // hmmm... it already exists, maybe we already have it?
@@ -817,7 +838,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     // we really want NEVER, but support tests that might be in a tx
     public ContentSourceSyncResults mergeContentSourceSyncReport(ContentSource contentSource, PackageSyncReport report,
-        Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous, ContentSourceSyncResults syncResults) {
+        Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
+        ContentSourceSyncResults syncResults) {
         try {
             StringBuilder progress = new StringBuilder();
             if (syncResults.getResults() != null) {
@@ -1373,8 +1395,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             // make sure no one deleted the file.  If the file is deleted, let's simply download it again.
             if (!composite.isPackageBitsInDatabase()) {
                 try {
-                    File bitsFile = getPackageBitsLocalFilesystemFile(composite.getPackageVersionId(), composite
-                        .getFileName());
+                    File bitsFile = getPackageBitsLocalFileAndCreateParentDir(composite.getPackageVersionId(),
+                        composite.getFileName());
                     if (!bitsFile.exists()) {
                         log.warn("Package version [" + packageDetailsKey + "] has had its bits file [" + bitsFile
                             + "] deleted. Will attempt to download it again.");
@@ -1466,8 +1488,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                     }
                 } else {
                     // this is  DownloadMode.FILESYSTEM - put the bits on the filesystem
-                    File bitsFile = getPackageBitsLocalFilesystemFile(composite.getPackageVersionId(), composite
-                        .getFileName());
+                    File bitsFile = getPackageBitsLocalFileAndCreateParentDir(composite.getPackageVersionId(),
+                        composite.getFileName());
                     if (!bitsFile.exists()) {
                         throw new RuntimeException("Package bits at [" + bitsFile + "] are missing for ["
                             + packageDetailsKey + "]");
@@ -1583,7 +1605,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         return same;
     }
 
-    private File getPackageBitsLocalFilesystemFile(int packageVersionId, String fileName) throws Exception {
+    private File getPackageBitsLocalFilesystemFile(int packageVersionId, String fileName) {
         final String filesystemProperty = "rhq.server.content.filesystem";
         String filesystem = System.getProperty(filesystemProperty);
 
@@ -1614,6 +1636,13 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
         File parentDir = new File(filesystem, idGroup);
         File packageBitsFile = new File(parentDir, bitsFileName.toString());
+        return packageBitsFile;
+    }
+
+    private File getPackageBitsLocalFileAndCreateParentDir(int packageVersionId, String fileName) throws Exception {
+
+        File packageBitsFile = getPackageBitsLocalFilesystemFile(packageVersionId, fileName);
+        File parentDir = packageBitsFile.getParentFile();
 
         if (!parentDir.isDirectory()) {
             if (!parentDir.exists()) {

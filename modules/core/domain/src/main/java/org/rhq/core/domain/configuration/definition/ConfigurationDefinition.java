@@ -46,6 +46,8 @@ import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Enumerated;
+import javax.persistence.EnumType;
 import javax.xml.bind.annotation.XmlSeeAlso;
 
 import org.jetbrains.annotations.NotNull;
@@ -99,6 +101,10 @@ public class ConfigurationDefinition implements Serializable {
     @OrderBy
     private Map<String, ConfigurationTemplate> templates;
 
+    @Column(name = "config_format")
+    @Enumerated(EnumType.STRING)    
+    private ConfigurationFormat configurationFormat;
+
     protected ConfigurationDefinition() {
         // JPA use only
     }
@@ -131,6 +137,22 @@ public class ConfigurationDefinition implements Serializable {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    /**
+     * This property is currently used only for resource configuration which may support structured config, raw
+     * config, both, or neither. For an older plugin that was implemented prior to raw config support, this would be
+     * <code>null</code>.
+     * 
+     * @return The configuration format which may be structured, raw, or both. <code>null</code> indicates an older
+     * plugin that was developed prior to raw configuration being supported.
+     */
+    public ConfigurationFormat getConfigurationFormat() {
+        return configurationFormat;
+    }
+
+    public void setConfigurationFormat(ConfigurationFormat configurationFormat) {
+        this.configurationFormat = configurationFormat;
     }
 
     /**

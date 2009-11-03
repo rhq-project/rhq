@@ -49,7 +49,7 @@ public class LimitedConcurrencyTest {
 
     @AfterTest
     public void pause() throws Exception {
-        Thread.sleep(3000);
+        Thread.sleep(6000);
     }
 
     /**

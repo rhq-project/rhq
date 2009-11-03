@@ -79,8 +79,15 @@ public class RHNHelper {
 
         List<ContentProviderPackageDetails> pdlist = new ArrayList<ContentProviderPackageDetails>();
         List<RhnPackageType> pkgs = rhndata.getPackageMetadata(this.systemid, packageIds);
-        for (RhnPackageType pkg : pkgs) {
-            pdlist.add(getDetails(pkg));
+
+        for(RhnPackageType pkg: pkgs) {
+            try {
+                pdlist.add(getDetails(pkg));
+            } catch( Exception e) {
+                // something went wrong while constructing the pkg object.
+                // Proceed to next and get as many packages as we can.
+                continue;
+            }
         }
         return pdlist;
     }

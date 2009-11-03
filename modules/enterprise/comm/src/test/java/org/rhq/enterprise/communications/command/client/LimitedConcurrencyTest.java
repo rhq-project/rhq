@@ -25,6 +25,7 @@ import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
+import org.testng.annotations.AfterMethod;
 import org.rhq.enterprise.communications.ServiceContainer;
 import org.rhq.enterprise.communications.ServiceContainerConfigurationConstants;
 import org.rhq.enterprise.communications.CommTestConstants;
@@ -44,6 +45,11 @@ public class LimitedConcurrencyTest {
         } catch (BackingStoreException e) {
             e.printStackTrace();
         }
+    }
+
+    @AfterMethod
+    public void pause() throws Exception {
+        Thread.sleep(5000);
     }
 
     /**

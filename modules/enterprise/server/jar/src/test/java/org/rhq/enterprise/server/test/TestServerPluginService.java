@@ -21,7 +21,6 @@ package org.rhq.enterprise.server.test;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -63,12 +62,8 @@ public class TestServerPluginService extends ServerPluginService implements Test
      */
     class TestMasterServerPluginContainer extends MasterServerPluginContainer {
         @Override
-        public void initialize(MasterServerPluginContainerConfiguration config) {
-            setConfiguration(config);
-            HashMap<ServerPluginType, AbstractTypeServerPluginContainer> pcs = new HashMap<ServerPluginType, AbstractTypeServerPluginContainer>();
+        protected void createPluginContainers(Map<ServerPluginType, AbstractTypeServerPluginContainer> pcs) {
             pcs.put(ServerPluginType.CONTENT, new TestContentServerPluginContainer(this));
-            setPluginContainers(pcs);
-            initializePluginContainers();
         }
     }
 

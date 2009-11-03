@@ -21,47 +21,59 @@ package org.rhq.enterprise.server.test;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import org.rhq.core.domain.content.ContentSource;
+import org.rhq.enterprise.server.plugin.pc.AbstractTypeServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainerConfiguration;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginService;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginType;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProvider;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderManager;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPluginManager;
 import org.rhq.enterprise.server.plugin.pc.content.ContentServerPluginContainer;
-import org.rhq.enterprise.server.plugin.pc.content.InitializationException;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSource;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
 
 /**
  * Used as a mock service for the content source plugin container.
  */
-public class TestContentSourcePluginService extends ServerPluginService implements TestContentSourcePluginServiceMBean {
+public class TestServerPluginService extends ServerPluginService implements TestServerPluginServiceMBean {
     // public so tests can directly set these
     public Map<ContentSource, ContentProvider> testAdapters;
     public PackageSyncReport testLastSyncReport;
     public Map<ContentSource, Collection<ContentProviderPackageDetails>> testExistingPackages;
+    public TestMasterServerPluginContainer master;
 
     @Override
     protected MasterServerPluginContainer createMasterPluginContainer() {
-        // TODO how do I inject my own inner pcs?
-        ContentServerPluginContainer pc = new TestContentServerPluginContainer(new MasterServerPluginContainer());
+        this.master = new TestMasterServerPluginContainer();
         MasterServerPluginContainerConfiguration config = new MasterServerPluginContainerConfiguration();
-        try {
-            pc.initialize();
-        } catch (InitializationException e) {
-            e.printStackTrace();
-        }
-        return pc;
+        this.master.initialize(config);
+        return this.master;
     }
 
     /**
-     * The test PC.
+     * The test master PC
+     */
+    class TestMasterServerPluginContainer extends MasterServerPluginContainer {
+        @Override
+        public void initialize(MasterServerPluginContainerConfiguration config) {
+            setConfiguration(config);
+            HashMap<ServerPluginType, AbstractTypeServerPluginContainer> pcs = new HashMap<ServerPluginType, AbstractTypeServerPluginContainer>();
+            pcs.put(ServerPluginType.CONTENT, new TestContentServerPluginContainer(this));
+            setPluginContainers(pcs);
+            initializePluginContainers();
+        }
+    }
+
+    /**
+     * The test content PC.
      */
     class TestContentServerPluginContainer extends ContentServerPluginContainer {
         public TestContentServerPluginContainer(MasterServerPluginContainer master) {

@@ -38,8 +38,10 @@ import org.rhq.enterprise.server.plugin.pc.perspective.PerspectiveServerPluginCo
 public class MasterServerPluginContainer {
     private static final Log log = LogFactory.getLog(MasterServerPluginContainer.class);
 
+    // this class is implemented such that it is subclassable - mainly to support tests;
+    // as such, methods should not directly access these private fields, instead, use the getters and setters
     private MasterServerPluginContainerConfiguration configuration;
-    private Map<ServerPluginType, AbstractTypeServerPluginContainer> pluginContainers = new HashMap<ServerPluginType, AbstractTypeServerPluginContainer>();
+    private Map<ServerPluginType, AbstractTypeServerPluginContainer> pluginContainers;
 
     /**
      * Starts the master plugin container, which will load all plugins and begin managing them.
@@ -49,16 +51,24 @@ public class MasterServerPluginContainer {
     public void initialize(MasterServerPluginContainerConfiguration config) {
         log.debug("Master server plugin container has been initialized with config: " + config);
 
-        this.configuration = config;
+        setConfiguration(config);
 
         // create all known child plugin containers
-        this.pluginContainers.put(ServerPluginType.GENERIC, new GenericServerPluginContainer(this));
-        this.pluginContainers.put(ServerPluginType.CONTENT, new ContentServerPluginContainer(this));
-        this.pluginContainers.put(ServerPluginType.PERSPECTIVE, new PerspectiveServerPluginContainer(this));
-        this.pluginContainers.put(ServerPluginType.ALERT, new AlertServerPluginContainer(this));
+        HashMap<ServerPluginType, AbstractTypeServerPluginContainer> pcs = new HashMap<ServerPluginType, AbstractTypeServerPluginContainer>();
+        pcs.put(ServerPluginType.GENERIC, new GenericServerPluginContainer(this));
+        pcs.put(ServerPluginType.CONTENT, new ContentServerPluginContainer(this));
+        pcs.put(ServerPluginType.PERSPECTIVE, new PerspectiveServerPluginContainer(this));
+        pcs.put(ServerPluginType.ALERT, new AlertServerPluginContainer(this));
+        setPluginContainers(pcs);
 
+        initializePluginContainers();
+
+        return;
+    }
+
+    protected void initializePluginContainers() {
         // initialize all the plugin containers
-        for (Map.Entry<ServerPluginType, AbstractTypeServerPluginContainer> entry : this.pluginContainers.entrySet()) {
+        for (Map.Entry<ServerPluginType, AbstractTypeServerPluginContainer> entry : getPluginContainers().entrySet()) {
             log.info("Master PC is initializing plugin container for plugin type [" + entry.getKey() + "]");
             try {
                 entry.getValue().initialize();
@@ -66,7 +76,6 @@ public class MasterServerPluginContainer {
                 log.error("Failed to initialize plugin container for plugin type [" + entry.getKey() + "]", e);
             }
         }
-
         return;
     }
 
@@ -76,8 +85,15 @@ public class MasterServerPluginContainer {
     public void shutdown() {
         log.debug("Master server plugin container is being shutdown");
 
+        shutdownPluginContainers();
+        getPluginContainers().clear();
+        setPluginContainers(null);
+        setConfiguration(null);
+    }
+
+    protected void shutdownPluginContainers() {
         // shutdown all the plugin containers
-        for (Map.Entry<ServerPluginType, AbstractTypeServerPluginContainer> entry : this.pluginContainers.entrySet()) {
+        for (Map.Entry<ServerPluginType, AbstractTypeServerPluginContainer> entry : getPluginContainers().entrySet()) {
             log.info("Master PC is shutting down plugin container for plugin type [" + entry.getKey() + "]");
             try {
                 entry.getValue().shutdown();
@@ -85,9 +101,6 @@ public class MasterServerPluginContainer {
                 log.error("Failed to shutdown plugin container for plugin type [" + entry.getKey() + "]", e);
             }
         }
-        this.pluginContainers.clear();
-
-        this.configuration = null;
     }
 
     /**
@@ -101,19 +114,31 @@ public class MasterServerPluginContainer {
         return this.configuration;
     }
 
+    protected void setConfiguration(MasterServerPluginContainerConfiguration config) {
+        this.configuration = config;
+    }
+
     public AbstractTypeServerPluginContainer getPluginContainer(ServerPluginType serverPluginType) {
-        if (this.pluginContainers != null) {
-            return this.pluginContainers.get(serverPluginType);
-        }
-        return null;
+        return getPluginContainers().get(serverPluginType);
     }
 
     public <T> T getPluginContainer(Class<T> clazz) {
-        for (AbstractTypeServerPluginContainer pc : this.pluginContainers.values()) {
+        for (AbstractTypeServerPluginContainer pc : getPluginContainers().values()) {
             if (clazz.isInstance(pc)) {
                 return (T) pc;
             }
         }
         return null;
+    }
+
+    protected Map<ServerPluginType, AbstractTypeServerPluginContainer> getPluginContainers() {
+        if (this.pluginContainers == null) {
+            throw new IllegalStateException("Plugin containers is null; is the master plugin container started?");
+        }
+        return this.pluginContainers;
+    }
+
+    protected void setPluginContainers(Map<ServerPluginType, AbstractTypeServerPluginContainer> pcs) {
+        this.pluginContainers = pcs;
     }
 }

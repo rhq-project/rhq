@@ -83,6 +83,7 @@ public class RHNProvider implements ContentProvider, PackageSource {
 
         location = trim(location);
         log.info("Initialized with location: " + location);
+        certificate = certificate.trim();
 
         // check location field validity
         try {

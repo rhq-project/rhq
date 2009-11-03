@@ -114,24 +114,7 @@ public abstract class AbstractAugeasConfigurationComponentTest {
             Resource resource = getResource();
             Configuration pluginConfig = resource.getPluginConfiguration();
 
-            String tmpDirPath = System.getProperty("java.io.tmpdir");
-            File tmpDir = new File(tmpDirPath);
-            File augeasRootPath = new File(tmpDir, "rhq-itest-augeas-root-path");
-            augeasRootPath.mkdirs();
-
-            pluginConfig.put(new PropertySimple(AugeasConfigurationComponent.AUGEAS_ROOT_PATH_PROP, augeasRootPath));
-
-            PropertySimple includes = pluginConfig.getSimple(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP);
-            List<String> includeGlobs = new ArrayList<String>();
-            includeGlobs.addAll(Arrays.asList(includes.getStringValue().split("\\s*\\|\\s*")));
-            for (String includeGlob : includeGlobs) {
-                InputStream inputStream = this.getClass().getResourceAsStream(includeGlob);
-                if (inputStream != null) {
-                    File outputFile = new File(augeasRootPath, includeGlob);
-                    outputFile.getParentFile().mkdirs();
-                    FileUtil.writeFile(inputStream, outputFile);
-                }
-            }
+            resetAugeasConfigs(pluginConfig);
 
             inventoryManager.updatePluginConfiguration(resource.getId(), pluginConfig);
         } catch (Exception e) {
@@ -139,15 +122,29 @@ public abstract class AbstractAugeasConfigurationComponentTest {
         }
     }
 
-    @BeforeSuite(dependsOnMethods = "updatePluginConfiguration", groups = TEST_GROUP)
-    public void scanInventory() {
-        /*try {
-            System.out.println("Executing full discovery scan...");
-            PluginContainer.getInstance().getInventoryManager().executeServerScanImmediately();
-            PluginContainer.getInstance().getInventoryManager().executeServiceScanImmediately();
-        } catch (Exception e) {
-            fail("Failed to execute full discovery scan.", e);
-        }*/
+    public void resetAugeasConfigs(Configuration pluginConfig) throws IOException {
+        String tmpDirPath = System.getProperty("java.io.tmpdir");
+        File tmpDir = new File(tmpDirPath);
+        File augeasRootPath = new File(tmpDir, "rhq-itest-augeas-root-path");
+        if (!augeasRootPath.exists()) {
+            augeasRootPath.mkdirs();
+        }
+
+        pluginConfig.put(new PropertySimple(AugeasConfigurationComponent.AUGEAS_ROOT_PATH_PROP, augeasRootPath));
+
+        PropertySimple includes = pluginConfig.getSimple(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP);
+        List<String> includeGlobs = new ArrayList<String>();
+        includeGlobs.addAll(Arrays.asList(includes.getStringValue().split("\\s*\\|\\s*")));
+        for (String includeGlob : includeGlobs) {
+            InputStream inputStream = this.getClass().getResourceAsStream(includeGlob);
+            if (inputStream != null) {
+                File outputFile = new File(augeasRootPath, includeGlob);
+                if (!outputFile.getParentFile().exists()) {
+                    outputFile.getParentFile().mkdirs();
+                }
+                FileUtil.writeFile(inputStream, outputFile);
+            }
+        }
     }
 
     @AfterSuite(groups = TEST_GROUP)
@@ -204,18 +201,22 @@ public abstract class AbstractAugeasConfigurationComponentTest {
     @Test(groups = TEST_GROUP)
     public void testResourceConfigUpdate() throws Exception {
         if (getResourceType().getResourceConfigurationDefinition() != null) {
-            ConfigurationManager configurationManager = PluginContainer.getInstance().getConfigurationManager();
-            Resource resource = getResource();
-            Configuration updatedResourceConfig = getChangedResourceConfig();
-            configurationManager.updateResourceConfiguration(new ConfigurationUpdateRequest(0, updatedResourceConfig,
-                resource.getId()));
+            try {
+                ConfigurationManager configurationManager = PluginContainer.getInstance().getConfigurationManager();
+                Resource resource = getResource();
+                Configuration updatedResourceConfig = getChangedResourceConfig();
+                configurationManager.updateResourceConfiguration(new ConfigurationUpdateRequest(0,
+                    updatedResourceConfig, resource.getId()));
 
-            //give the component and the managed resource some time to properly persist the update
-            Thread.sleep(500);
+                //give the component and the managed resource some time to properly persist the update
+                Thread.sleep(500);
 
-            Configuration resourceConfig = configurationManager.loadResourceConfiguration(resource.getId());
-            assert resourceConfig.equals(updatedResourceConfig) : "Unexpected Resource configuration - \nExpected:\n\t"
-                + updatedResourceConfig.toString(true) + "\nActual:\n\t" + resourceConfig.toString(true);
+                Configuration resourceConfig = configurationManager.loadResourceConfiguration(resource.getId());
+                assert resourceConfig.equals(updatedResourceConfig) : "Unexpected Resource configuration - \nExpected:\n\t"
+                    + updatedResourceConfig.toString(true) + "\nActual:\n\t" + resourceConfig.toString(true);
+            } finally {
+                resetAugeasConfigs(getResource().getPluginConfiguration());
+            }
         }
     }
 }

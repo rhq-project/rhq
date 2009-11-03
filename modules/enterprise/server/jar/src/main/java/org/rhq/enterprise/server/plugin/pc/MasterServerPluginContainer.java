@@ -18,8 +18,16 @@
  */
 package org.rhq.enterprise.server.plugin.pc;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import org.rhq.enterprise.server.plugin.pc.alert.AlertServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.content.ContentServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.generic.GenericServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.perspective.PerspectiveServerPluginContainer;
 
 /**
  * The container responsible for managing all the plugin containers for all the
@@ -31,6 +39,7 @@ public class MasterServerPluginContainer {
     private static final Log log = LogFactory.getLog(MasterServerPluginContainer.class);
 
     private MasterServerPluginContainerConfiguration configuration;
+    private Map<ServerPluginType, AbstractTypeServerPluginContainer> pluginContainers = new HashMap<ServerPluginType, AbstractTypeServerPluginContainer>();
 
     /**
      * Starts the master plugin container, which will load all plugins and begin managing them.
@@ -42,6 +51,22 @@ public class MasterServerPluginContainer {
 
         this.configuration = config;
 
+        // create all known child plugin containers
+        this.pluginContainers.put(ServerPluginType.GENERIC, new GenericServerPluginContainer(this));
+        this.pluginContainers.put(ServerPluginType.CONTENT, new ContentServerPluginContainer(this));
+        this.pluginContainers.put(ServerPluginType.PERSPECTIVE, new PerspectiveServerPluginContainer(this));
+        this.pluginContainers.put(ServerPluginType.ALERT, new AlertServerPluginContainer(this));
+
+        // initialize all the plugin containers
+        for (Map.Entry<ServerPluginType, AbstractTypeServerPluginContainer> entry : this.pluginContainers.entrySet()) {
+            log.info("Master PC is initializing plugin container for plugin type [" + entry.getKey() + "]");
+            try {
+                entry.getValue().initialize();
+            } catch (Exception e) {
+                log.error("Failed to initialize plugin container for plugin type [" + entry.getKey() + "]", e);
+            }
+        }
+
         return;
     }
 
@@ -50,6 +75,17 @@ public class MasterServerPluginContainer {
      */
     public void shutdown() {
         log.debug("Master server plugin container is being shutdown");
+
+        // shutdown all the plugin containers
+        for (Map.Entry<ServerPluginType, AbstractTypeServerPluginContainer> entry : this.pluginContainers.entrySet()) {
+            log.info("Master PC is shutting down plugin container for plugin type [" + entry.getKey() + "]");
+            try {
+                entry.getValue().shutdown();
+            } catch (Exception e) {
+                log.error("Failed to shutdown plugin container for plugin type [" + entry.getKey() + "]", e);
+            }
+        }
+        this.pluginContainers.clear();
 
         this.configuration = null;
     }
@@ -62,6 +98,22 @@ public class MasterServerPluginContainer {
      * @return the configuration
      */
     public MasterServerPluginContainerConfiguration getConfiguration() {
-        return configuration;
+        return this.configuration;
+    }
+
+    public AbstractTypeServerPluginContainer getPluginContainer(ServerPluginType serverPluginType) {
+        if (this.pluginContainers != null) {
+            return this.pluginContainers.get(serverPluginType);
+        }
+        return null;
+    }
+
+    public <T> T getPluginContainer(Class<T> clazz) {
+        for (AbstractTypeServerPluginContainer pc : this.pluginContainers.values()) {
+            if (clazz.isInstance(pc)) {
+                return (T) pc;
+            }
+        }
+        return null;
     }
 }

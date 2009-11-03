@@ -23,7 +23,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 /**
- * The abstract superclass for all plugin containers of the different plugin types.
+ * The abstract superclass for all plugin containers of the different {@link ServerPluginType plugin types}.
  * 
  * @author John Mazzitelli
  */
@@ -34,7 +34,8 @@ public abstract class AbstractTypeServerPluginContainer {
     private final MasterServerPluginContainer master;
 
     /**
-     * Instantiates the plugin container.
+     * Instantiates the plugin container. All subclasses must support this and only this
+     * constructor.
      * 
      * @param master the master plugin container that is creating this instance.
      */

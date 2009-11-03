@@ -48,7 +48,7 @@ public class TestContentSourcePluginService extends ServerPluginService implemen
     public Map<ContentSource, Collection<ContentProviderPackageDetails>> testExistingPackages;
 
     @Override
-    protected ContentServerPluginContainer createMasterPluginContainer() {
+    protected MasterServerPluginContainer createMasterPluginContainer() {
         // TODO how do I inject my own inner pcs?
         ContentServerPluginContainer pc = new TestContentServerPluginContainer(new MasterServerPluginContainer());
         MasterServerPluginContainerConfiguration config = new MasterServerPluginContainerConfiguration();

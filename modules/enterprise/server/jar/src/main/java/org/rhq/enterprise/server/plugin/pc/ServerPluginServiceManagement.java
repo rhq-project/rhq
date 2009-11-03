@@ -18,6 +18,10 @@
  */
 package org.rhq.enterprise.server.plugin.pc;
 
+import javax.management.ObjectName;
+
+import org.rhq.core.util.ObjectNameFactory;
+
 /**
  * The MBean management interface that defines the lifecycle methods for the {@link ServerPluginService} service.
  * This essentially is the server that starts and stops the {@link #getMasterPluginContainer() master plugin container}
@@ -27,6 +31,7 @@ package org.rhq.enterprise.server.plugin.pc;
  */
 public interface ServerPluginServiceManagement {
     String OBJECT_NAME_STR = "rhq.serverplugin:service=ServerPluginService";
+    ObjectName OBJECT_NAME = ObjectNameFactory.create(OBJECT_NAME_STR);
 
     /**
      * Starts the service but will <b>not</b> start the {@link #getMasterPluginContainer() master plugin container}. After the server

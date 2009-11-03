@@ -48,11 +48,7 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
         super(master);
     }
 
-    /**
-     * Starts the plugin container, which will load all plugins and begin managing them.
-     *
-     * @param config
-     */
+    @Override
     public void initialize() throws Exception {
         getLog().debug("Content server plugin container has been initialized");
 
@@ -62,9 +58,7 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
         return;
     }
 
-    /**
-     * Stops all plugins and cleans up after them.
-     */
+    @Override
     public void shutdown() {
         getLog().debug("Content server plugin container is being shutdown");
 

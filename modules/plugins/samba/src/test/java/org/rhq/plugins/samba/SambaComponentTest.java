@@ -18,58 +18,35 @@
  */
 package org.rhq.plugins.samba;
 
-import java.util.Collection;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.testng.annotations.BeforeSuite;
-import org.testng.annotations.Test;
-
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
-import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.plugins.augeas.AbstractAugeasConfigurationComponentTest;
 
-public class SambaComponentTest {
+public class SambaComponentTest extends AbstractAugeasConfigurationComponentTest {
 
-    private SambaServerComponent component = new SambaServerComponent();
 
-    private Configuration pluginConfiguration = new Configuration();
+    @Override
+    protected Configuration getExpectedResourceConfig() {
+        Configuration config = new Configuration();
 
-    private final Log log = LogFactory.getLog(this.getClass());
+        config.put(new PropertySimple("workgroup", "SCOOBY"));
+        config.put(new PropertySimple("server string", "MysteryMachine"));
+        config.put(new PropertySimple("security", "user"));
+        config.put(new PropertySimple("encrypt passwords", "yes"));
+        config.put(new PropertySimple("load printers", "yes"));
+        config.put(new PropertySimple("cups options", "raw"));
 
-    @Test
-    public void loadResourceConfiguration() throws Exception {
-        /*Configuration configuration;
-        try {
-            configuration = component.loadResourceConfiguration();
-        } catch (UnsatisfiedLinkError ule) {
-            // Skip tests if augeas not available
-            return;
-        }
+        return config;
+    }
 
-        assert configuration != null : "Null configuration returned from load call";
+    @Override
+    protected String getPluginName() {
+        return "Samba";
+    }
 
-        Collection<Property> allProperties = configuration.getProperties();
-
-        //assert allProperties.size() == 1 : "Incorrect number of properties found. Expected: 1, Found: "
-         //   + allProperties.size();
-
-        PropertyList entryList = (PropertyList) allProperties.iterator().next();
-
-        for (Property property : entryList.getList()) {
-            PropertyMap entry = (PropertyMap) property;
-            //System.out.println("Entry is " + entry.getName());
-            //Property ipProperty = entry.get("ip");
-            //Property canonicalProperty = entry.get("canonical");
-
-            //assert ipProperty != null : "IP was null in entry";
-            //assert canonicalProperty != null : "Canonical was null in entry";
-
-            //log.info("IP: " + ((PropertySimple) ipProperty).getStringValue());
-            //log.info("Canonical: " + ((PropertySimple) canonicalProperty).getStringValue());
-        }*/
-        return;
+    @Override
+    protected String getResourceTypeName() {
+        return "Samba Server"; 
     }
 }

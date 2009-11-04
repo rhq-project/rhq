@@ -23,6 +23,7 @@ import java.net.URL;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.Query;
+import javax.xml.bind.JAXBElement;
 import javax.xml.bind.Unmarshaller;
 
 import org.testng.annotations.BeforeClass;
@@ -78,6 +79,7 @@ public class TestBase extends AbstractEJB3Test {
     public ContentPluginDescriptorType loadPluginDescriptor(String descriptorFile) throws Exception {
         URL descriptorUrl = this.getClass().getClassLoader().getResource(descriptorFile);
         Unmarshaller unmarshaller = ServerPluginDescriptorUtil.getServerPluginDescriptorUnmarshaller();
-        return (ContentPluginDescriptorType) unmarshaller.unmarshal(descriptorUrl.openStream());
+        return (ContentPluginDescriptorType) (((JAXBElement<?>) unmarshaller.unmarshal(descriptorUrl.openStream()))
+            .getValue());
     }
 }

@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
-<plugin name="RHNHostedPlugin" 
+<content-plugin name="RHNHostedPlugin" 
+        version="1.0"
+        apiVersion="2.0"
         xmlns="urn:xmlns:rhq-serverplugin.content"
         xmlns:c="urn:xmlns:rhq-configuration">
 
@@ -46,4 +48,4 @@
 
    </contentSourceType>
 
-</plugin>
+</content-plugin>

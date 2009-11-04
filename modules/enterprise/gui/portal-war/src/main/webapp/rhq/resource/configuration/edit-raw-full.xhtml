@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:a4j="http://richfaces.org/a4j"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich"
+      xmlns:s="http://jboss.com/products/seam/taglib">
+
+<ui:composition template="/rhq/layout/main.xhtml">
+<ui:param name="pageTitle" value="Upload Configuration File"/>
+
+<ui:define name="body">
+
+<h:form id="editResourceConfigurationForm" >
+<input type="hidden" name="currentResourceId" value="#{ResourceUIBean.id}" />
+<h:commandLink action="#{RawConfigCollection.update}" >
+    <img src="/images/save.png" alt="Save" title="Save"/> 
+	<f:param name="conversationId" value="#{conversation.id}"/>
+    <f:param name="currentResourceId" value="#{ResourceUIBean.id}"/>
+</h:commandLink> 
+<h:commandButton action="#{RawConfigCollection.update}"/>
+<div>
+<h:inputTextarea cols="800" rows="600" value="#{RawConfigCollection.currentContents}" />
+</div>
+</h:form>
+</ui:define>
+
+</ui:composition>
+
+</html>
+
+

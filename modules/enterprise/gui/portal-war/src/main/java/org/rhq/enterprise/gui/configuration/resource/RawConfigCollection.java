@@ -88,6 +88,16 @@ public class RawConfigCollection implements Serializable {
     }
 
     /**
+     * This is a no-op, since the upload work was done by upload file
+     * But is kept as a target for the "save" icon from the full screen page
+     */
+    public String update() {
+        log.error("update called");
+
+        return "/rhq/resource/configuration/edit-raw.xhtml?currentResourceId=" + getResourceId();
+    }
+
+    /**
      * Hack Alert.  This bean needs to be initialized on one of the pages that has id or resourceId set
      * In order to capture the resource.  It will then Keep track of that particular resources until
      * commit is called.  Ideally, this should be a conversation scoped bean, but that has other issues
@@ -202,11 +212,24 @@ public class RawConfigCollection implements Serializable {
     }
 
     public void setCurrentContents(String updated) {
-        String u2 = updated.substring(2);
+
+        log.error("setCurrent Called");
+
+        //String u2 = updated.substring(2);
         String original = new String(getCurrent().getContents());
-        if (!u2.equals(original)) {
+        if (!updated.equals(original)) {
             log.error("original:" + original + ":");
             log.error("updated :" + updated + ":");
+            {
+
+                byte[] oBytes = original.getBytes();
+                byte[] uBytes = updated.getBytes();
+
+                int max = oBytes.length < uBytes.length ? oBytes.length : uBytes.length;
+                for (int i = 0; i < max; ++i) {
+                    log.error("original = " + Byte.toString(oBytes[i]) + ": updated = " + Byte.toString(uBytes[i]));
+                }
+            }
 
             current = current.deepCopy();
             current.setContents(updated.getBytes());

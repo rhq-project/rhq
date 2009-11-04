@@ -30,8 +30,7 @@
 #                          If this and RHQ_AGENT_JAVA_EXE_FILE_PATH are
 #                          not set, the agent's embedded JRE will be used.
 #
-#RHQ_AGENT_JAVA_HOME="/opt/java"
-RHQ_AGENT_JAVA_HOME="/usr/lib/jvm/java"
+#RHQ_AGENT_JAVA_HOME="/usr/lib/jvm/java"
 
 #    RHQ_AGENT_JAVA_EXE_FILE_PATH - Defines the full path to the Java
 #                                   executable to use. If this is set,

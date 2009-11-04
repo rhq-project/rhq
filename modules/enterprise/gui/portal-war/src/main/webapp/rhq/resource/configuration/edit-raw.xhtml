@@ -22,6 +22,18 @@
 	<ui:param name="selectedTabName" value="Configuration.Current" />
 
 	<ui:define name="content">
+	
+<script>	
+
+	window.onbeforeunload = confirmExit;
+
+	function confirmExit()
+	{
+		
+	}
+</script>
+	
+	
 	  You are viewing this in advanced mode. Switch to 
            <h:outputLink value="edit.xhtml">
 			<s:conversationId/>
@@ -55,26 +67,37 @@
 							value="commit changes" reRender="changedFiles" />
 			</td>
 			<td>
-				<h:panelGroup id="title">
-					<h:outputText value="#{RawConfigCollection.current.path}"
+				<div>
+					Current File: <h:outputText value="#{RawConfigCollection.current.path}"
 						styleClass="outhello" />
-					</h:panelGroup> 
-						<a href="#"><img src="/images/viewfullscreen.png" />View Full	Screen</a> 
+				</div>			
+						<h:outputLink value="edit-raw-full.xhtml"  action="navigateToUpload" >
+							<img src="/images/viewfullscreen.png" /> 
+							<h:outputText value=" Full Screen " />
+							<f:param name="currentResourceId" value="#{ResourceUIBean.id}" />
+							<f:param name="conversationId" value="#{conversation.id}" />
+						</h:outputLink>
+
 						<h:outputLink value="upload.xhtml"  action="navigateToUpload" >
 							<img src="/images/upload.png" /> 
 							<h:outputText value=" Upload " />
-							<f:param name="resourceId" value="#{ResourceUIBean.id}" />
+							<f:param name="currentResourceId" value="#{ResourceUIBean.id}" />
 							<f:param name="conversationId" value="#{conversation.id}" />
 						</h:outputLink>
-						<a href="#"><img src="/images/download.png" /> Download</a>
-						<rich:editor id="editor" width="600" height="400" viewMode="visual"
-						value="#{RawConfigCollection.currentContents}"   useSeamText="true">
-				</rich:editor>
+						
+						<h:outputLink value="download.jsp"  action="navigateToFullpage" >
+						    <img src="/images/download.png" />
+							<h:outputText value=" Download " />
+							<f:param name="currentResourceId" value="#{ResourceUIBean.id}" />
+							<f:param name="conversationId" value="#{conversation.id}" />
+						</h:outputLink>
+						<div>
+						<h:inputTextarea cols="80" rows="40" value="#{RawConfigCollection.currentContents}" />
+						</div>
 			</td>
 		</tr>
 	
         </a4j:form>
-
 		</table>
 	</ui:define>
 

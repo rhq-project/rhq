@@ -47,8 +47,8 @@ import javax.persistence.Table;
     @NamedQuery(name = RepoDistribution.DELETE_BY_REPO_ID, query = "DELETE RepoDistribution rkt WHERE rkt.repo.id = :repoId") })
 @Table(name = "RHQ_REPO_KS_MAP_KEY")
 public class RepoDistribution implements Serializable {
-    public static final String DELETE_BY_KICKSTART_TREE_ID = "RepoKickstartTree.deleteByKickstartTreeId";
-    public static final String DELETE_BY_REPO_ID = "RepoKickstartTree.deleteByRepoId";
+    public static final String DELETE_BY_KICKSTART_TREE_ID = "RepoDistribution.deleteByKickstartTreeId";
+    public static final String DELETE_BY_REPO_ID = "RepoDistribution.deleteByRepoId";
 
     private static final long serialVersionUID = 1L;
 

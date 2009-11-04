@@ -107,25 +107,65 @@ public interface RepoManagerRemote {
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "repoGroupId") int repoGroupId);
 
+    /**
+     * Returns the repo with the given id; throws an error if one does not exist at that id.
+     *
+     * @param subject user whose permissions will be checked for access to the repo
+     * @param repoId  identifies the repo to be retrieved
+     * @return details describing the repo
+     */
     @WebMethod
     Repo getRepo( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "repoId") int repoId);
 
+    /**
+     * Returns the repo group with the given id; throws an error if one does not exist at that id.
+     *
+     * @param subject     user whose permissions will be checked for access to the repo
+     * @param repoGroupId identifies the repo group to be retrieved
+     * @return details describing the repo group
+     */
     @WebMethod
     RepoGroup getRepoGroup(
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "repoGroupId") int repoGroupId);
 
+    /**
+     * Returns the repo group type with the given name.
+     *
+     * @param subject user whose permissions will be checked for access to the group type
+     * @param name    identifies the repo group type
+     * @return details of the group type; <code>null</code> if no group is found with the name
+     */
     @WebMethod
     RepoGroupType getRepoGroupTypeByName(
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "name") String name);
 
+    /**
+     * Returns all repos that match the given criteria.
+     *
+     * @param subject  user making the query
+     * @param criteria describes how the query should function; may not be <code>null</code>
+     * @return any repos that match the given criteria; empty list if none match 
+     */
     @WebMethod
     PageList<Repo> findReposByCriteria( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "criteria") RepoCriteria criteria);
+
+    /**
+     * Returns all imported repos in the server.
+     *
+     * @param subject user making the request
+     * @param pc      used for pagination
+     * @return paged list
+     */
+    @WebMethod
+    PageList<Repo> findRepos( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "pageControl") PageControl pc);
 
     /**
      * @param subject
@@ -169,11 +209,6 @@ public interface RepoManagerRemote {
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "repoId") int repoId, //
         @WebParam(name = "filter") String filter, //
-        @WebParam(name = "pageControl") PageControl pc);
-
-    @WebMethod
-    PageList<Repo> findRepos( //
-        @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "pageControl") PageControl pc);
 
     /**

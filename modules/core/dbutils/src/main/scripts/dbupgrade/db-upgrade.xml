@@ -1951,7 +1951,6 @@
             REFERENCES RHQ_KICKSTARTABLE_TREE ( ID )
           </statement>
         </schema-directSQL>
-<<<<<<< HEAD:modules/core/dbutils/src/main/scripts/dbupgrade/db-upgrade.xml
         <schema-directSQL>
           <statement>
             CREATE TABLE RHQ_DISTRIBUTION_TYPE ( ID INTEGER PRIMARY KEY )

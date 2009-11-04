@@ -16,6 +16,15 @@
     <name>RHQ Server XML Schemas</name>
     <description>Server side XML schemas and JAXB APIs used mailing to support the RHQ Server plugin container</description>
 
+    <scm>
+       <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/xml-schemas/</connection>
+       <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/xml-schemas/</developerConnection>
+    </scm>
+
+    <properties>
+       <scm.module.path>modules/enterprise/server/xml-schemas/</scm.module.path>
+    </properties>
+
     <dependencies>
 
         <dependency>

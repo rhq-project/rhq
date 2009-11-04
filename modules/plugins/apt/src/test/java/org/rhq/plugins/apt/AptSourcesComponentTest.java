@@ -32,6 +32,7 @@ import org.rhq.core.domain.configuration.PropertyMap;
 /**
  * @author Jason Dobies
  */
+@Test(groups = "apt-plugin")
 public class AptSourcesComponentTest {
 
     private AptSourcesComponent component = new AptSourcesComponent();

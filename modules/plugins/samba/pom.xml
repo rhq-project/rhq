@@ -25,20 +25,38 @@
    </properties>
 
    <dependencies>
+       <dependency>
+        <groupId>${rhq.groupId}</groupId>
+        <artifactId>rhq-platform-plugin</artifactId>
+             <version>${project.version}</version>
+             <scope>provided</scope>
+       </dependency>
+       <dependency>
+        <groupId>org.rhq</groupId>
+        <artifactId>rhq-augeas-plugin</artifactId>
+        <version>${project.version}</version>
+       </dependency>
+       <dependency>
+        <groupId>org.rhq</groupId>
+        <artifactId>rhq-augeas-plugin</artifactId>
+          <version>${project.version}</version>
+           <type>test-jar</type>
+           <scope>test</scope>
+       </dependency>
 
-      <dependency>
-         <groupId>net.augeas</groupId>
-         <artifactId>augeas</artifactId>
-         <version>0.0.1</version>
-      </dependency>
-
-      <dependency>
-         <groupId>com.sun.jna</groupId>
-         <artifactId>jna</artifactId>
-         <version>3.0.9</version>
-      </dependency>
 
    </dependencies>
+
+    <build>
+       <plugins>
+          <plugin>
+             <artifactId>maven-surefire-plugin</artifactId>
+             <configuration>
+                <skip>true</skip>
+             </configuration>
+          </plugin>
+       </plugins>
+    </build>
 
    <profiles>
       <profile>
@@ -99,6 +117,39 @@
                   </executions>
                </plugin>
 
+                <plugin>
+                   <artifactId>maven-dependency-plugin</artifactId>
+                   <executions>
+                      <execution>
+                         <id>copy-dependencies</id>
+                         <phase>pre-integration-test</phase>
+                         <goals>
+                            <goal>copy</goal>
+                         </goals>
+                         <configuration>
+                            <artifactItems>
+                               <artifactItem>
+                                  <groupId>org.rhq</groupId>
+                                  <artifactId>rhq-platform-plugin</artifactId>
+                               </artifactItem>
+                               <artifactItem>
+                                  <groupId>org.rhq</groupId>
+                                  <artifactId>rhq-augeas-plugin</artifactId>
+                               </artifactItem>
+                               <artifactItem>
+                                  <groupId>org.rhq</groupId>
+                                  <artifactId>${project.artifactId}</artifactId>
+                                  <version>${project.version}</version>
+                               </artifactItem>
+                            </artifactItems>
+                            <outputDirectory>target/itest/plugins</outputDirectory>
+                         </configuration>
+                      </execution>
+
+                   </executions>
+                </plugin>
+
+
                <!-- Integration testing voodoo to load and test this plugin with its plugin dependencies -->
                <plugin>
                   <artifactId>maven-surefire-plugin</artifactId>
@@ -115,7 +166,7 @@
                         <configuration>
                            <skip>${maven.test.skip}</skip>
                            <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
-                           <useSystemClassLoader>false</useSystemClassLoader>
+                           <useSystemClassLoader>true</useSystemClassLoader>
                            <argLine>-Dorg.hyperic.sigar.path=${basedir}/target/itest/lib</argLine>
                            <!--<argLine>-Dorg.hyperic.sigar.path=${basedir}/target/itest/lib -Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</argLine>-->
                            <systemProperties>

@@ -1499,7 +1499,6 @@
       <schema-addColumn table="RHQ_ALERT_DEFINITION" column="RESOURCE_GROUP_ID" columnType="INTEGER" />
       <schema-addColumn table="RHQ_ALERT_DEFINITION" column="GROUP_ALERT_DEF_ID" columnType="INTEGER" />
    </schemaSpec>
-
    <schemaSpec version="2.59">
       <schema-directSQL>
          <statement desc="Creating table RHQ_RAW_CONFIG">
@@ -1569,7 +1568,6 @@
                           columnType="VARCHAR2"
                           precision="16"/>
    </schemaSpec>
-
    <schemaSpec version="2.59.2">
         <schema-directSQL>
           <!-- RHN_CHANNEL => RHQ_REPO -->
@@ -1953,6 +1951,7 @@
             REFERENCES RHQ_KICKSTARTABLE_TREE ( ID )
           </statement>
         </schema-directSQL>
+<<<<<<< HEAD:modules/core/dbutils/src/main/scripts/dbupgrade/db-upgrade.xml
         <schema-directSQL>
           <statement>
             CREATE TABLE RHQ_DISTRIBUTION_TYPE ( ID INTEGER PRIMARY KEY )
@@ -2029,7 +2028,20 @@
         </schema-directSQL>
       </schemaSpec>
 
-      <schemaSpec version="2.62.1">
+      <schemaSpec version="2.62">
+        <schema-alterColumn
+           table="RHQ_CONFIG_PROP_DEF"
+           column="NAME"
+           columnType="VARCHAR2"
+           precision="255" />
+      <schema-alterColumn
+           table="RHQ_CONFIG_PROPERTY"
+           column="NAME"
+           columnType="VARCHAR2"
+           precision="255" />
+      </schemaSpec>
+
+      <schemaSpec version="2.63">
           <schema-addColumn table="RHQ_REPO" column="IS_CANDIDATE" columnType="BOOLEAN"/>
           <schema-alterColumn table="RHQ_REPO" column="IS_CANDIDATE" nullable="false" />
       </schemaSpec>

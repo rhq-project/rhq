@@ -120,6 +120,9 @@ public class Repo implements Serializable {
     @Column(name = "LAST_MODIFIED_TIME", nullable = false)
     private long lastModifiedDate;
 
+    @Column(name = "IS_CANDIDATE", nullable = false)
+    private boolean candidate;
+
     @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY)
     private Set<ResourceRepo> resourceRepos;
 
@@ -199,6 +202,18 @@ public class Repo implements Serializable {
 
     public void setLastModifiedDate(long lastModifiedDate) {
         this.lastModifiedDate = lastModifiedDate;
+    }
+
+    /**
+     * Indicates if the repo is a "real" repo in RHQ or is just a candidate for import, such as those introduced by
+     * a content provider.
+     */
+    public boolean isCandidate() {
+        return candidate;
+    }
+
+    public void setCandidate(boolean candidate) {
+        this.candidate = candidate;
     }
 
     /**

@@ -27,12 +27,12 @@ import java.util.List;
 import java.util.Map;
 
 import junit.framework.Test;
-import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.xmlrpc.XmlRpcException;
 
+import org.rhq.enterprise.server.plugins.rhnhosted.BaseRHNTest;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelFamilyType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnKickstartFileType;
@@ -42,19 +42,9 @@ import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageShortType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnProductNameType;
 
-public class RhnCommTest extends TestCase {
+public class RhnCommTest extends BaseRHNTest {
 
     public String serverUrl = "http://satellite.rhn.redhat.com";
-
-    public RhnCommTest(String testName) {
-        super(testName);
-        /* OVERRIDE THE XMLRPC CLIENT WITH A MOCK OBJECT */
-        System.setProperty(ApacheXmlRpcExecutor.class.getName(), MockRhnXmlRpcExecutor.class.getName());
-        System.setProperty(RhnHttpURLConnectionFactory.RHN_MOCK_HTTP_URL_CONNECTION, MockRhnHttpURLConnection.class
-            .getName());
-        /* Comment this out if you want to actually connect to RHN Hosted. */
-
-    }
 
     public static Test suite() {
         return new TestSuite(RhnCommTest.class);
@@ -373,43 +363,5 @@ public class RhnCommTest extends TestCase {
         }
         assertTrue(success);
     }
-
-    public static String SYSTEM_ID = "<?xml version=\"1.0\"?>" + "<params>\n" + "<param>\n" + "<value><struct>\n"
-        + "<member>\n" + "<name>username</name>\n" + "<value><string>unknown</string></value>\n" + "</member>\n"
-        + "<member>\n" + "<name>operating_system</name>\n" + "<value><string>redhat-release</string></value>\n"
-        + "</member>\n" + "<member>\n" + "<name>description</name>\n"
-        + "<value><string>Initial Registration Parameters:\n" + "OS: redhat-release\n" + "Release: 5Server\n"
-        + "CPU Arch: athlon-redhat-linux</string></value>\n" + "</member>\n" + "<member>\n" + "<name>checksum</name>\n"
-        + "<value><string>b57e3b8f0ffe10807b041905197068a7</string></value>\n" + "</member>\n" + "<member>\n"
-        + "<name>profile_name</name>\n" + "<value><string>unknown</string></value>\n" + "</member>\n" + "<member>\n"
-        + "<name>system_id</name>\n" + "<value><string>ID-1234</string></value>\n" + "</member>\n" + "<member>\n"
-        + "<name>architecture</name>\n" + "<value><string>athlon-redhat-linux</string></value>\n" + "</member>\n"
-        + "<member>\n" + "<name>os_release</name>\n" + "<value><string>5Server</string></value>\n" + "</member>\n"
-        + "<member>\n" + "<name>fields</name>\n" + "<value><array><data>\n"
-        + "<value><string>system_id</string></value>\n" + "<value><string>os_release</string></value>\n"
-        + "<value><string>operating_system</string></value>\n" + "<value><string>architecture</string></value>\n"
-        + "<value><string>username</string></value>\n" + "<value><string>type</string></value>\n"
-        + "</data></array></value>\n" + "</member>\n" + "<member>\n" + "<name>type</name>\n"
-        + "<value><string>REAL</string></value>\n" + "</member>\n" + "</struct></value>\n" + "</param>\n"
-        + "</params>\n";
-
-    public static String SYSTEM_ID_BAD = "<?xml version=\"1.0\"?>" + "<params>\n" + "<param>\n" + "<value><struct>\n"
-        + "<member>\n" + "<name>username</name>\n" + "<value><string>unknown</string></value>\n" + "</member>\n"
-        + "<member>\n" + "<name>operating_system</name>\n" + "<value><string>redhat-release</string></value>\n"
-        + "</member>\n" + "<member>\n" + "<name>description</name>\n"
-        + "<value><string>Initial Registration Parameters:\n" + "OS: redhat-release\n" + "Release: 5Server\n"
-        + "CPU Arch: athlon-redhat-linux</string></value>\n" + "</member>\n" + "<member>\n" + "<name>checksum</name>\n"
-        + "<value><string>b57e3b8f0ffe10807b041905197068a7</string></value>\n" + "</member>\n" + "<member>\n"
-        + "<name>profile_name</name>\n" + "<value><string>unknown</string></value>\n" + "</member>\n" + "<member>\n"
-        + "<name>system_id</name>\n" + "<value><string>ID-0000000000</string></value>\n" + "</member>\n" + "<member>\n"
-        + "<name>architecture</name>\n" + "<value><string>athlon-redhat-linux</string></value>\n" + "</member>\n"
-        + "<member>\n" + "<name>os_release</name>\n" + "<value><string>5Server</string></value>\n" + "</member>\n"
-        + "<member>\n" + "<name>fields</name>\n" + "<value><array><data>\n"
-        + "<value><string>system_id</string></value>\n" + "<value><string>os_release</string></value>\n"
-        + "<value><string>operating_system</string></value>\n" + "<value><string>architecture</string></value>\n"
-        + "<value><string>username</string></value>\n" + "<value><string>type</string></value>\n"
-        + "</data></array></value>\n" + "</member>\n" + "<member>\n" + "<name>type</name>\n"
-        + "<value><string>REAL</string></value>\n" + "</member>\n" + "</struct></value>\n" + "</param>\n"
-        + "</params>\n";
 
 }

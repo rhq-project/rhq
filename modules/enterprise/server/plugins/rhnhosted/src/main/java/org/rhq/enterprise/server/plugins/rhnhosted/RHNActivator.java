@@ -127,6 +127,10 @@ public class RHNActivator {
         return f.delete();
     }
 
+    public String getSystemid() {
+        return systemid;
+    }
+
     public static void main(String[] args) throws Exception {
         // commandline test
         if (args.length > 0) {

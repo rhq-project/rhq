@@ -27,7 +27,7 @@ public final class RHNConstants {
 
     public static final String DEFAULT_WEBAPP_GPG_KEY_RING = "/etc/webapp-keyring.gpg";
     public static final String DEFAULT_SYSTEM_ID = "/etc/sysconfig/rhn/systemid";
-    public static final String DEFAULT_HANDLER =  "/rpc/api";
+    public static final String DEFAULT_HANDLER = "/rpc/api";
     public static final String DEFAULT_SSL_CERT_PATH = "/usr/share/rhn/RHNS-CA-CERT";
 
 }

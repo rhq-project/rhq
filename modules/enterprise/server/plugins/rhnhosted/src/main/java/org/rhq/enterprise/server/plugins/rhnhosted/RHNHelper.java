@@ -19,25 +19,23 @@
 
 package org.rhq.enterprise.server.plugins.rhnhosted;
 
-
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.File;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Arrays;
+import java.util.List;
 
-import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelType;
-import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageType;
-import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelFamilyType;
-import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.RhnComm;
-import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.RhnDownloader;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.xmlrpc.XmlRpcException;
+
 import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetails;
 import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetailsKey;
-import org.apache.xmlrpc.XmlRpcException;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.logging.LogFactory;
-import org.apache.commons.logging.Log;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelFamilyType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.RhnComm;
+import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.RhnDownloader;
 
 /**
  * @author pkilambi
@@ -58,14 +56,15 @@ public class RHNHelper {
      *
      * @param baseurl The base url to connect to hosted
      * @param repolabelIn channel label
+     * @param systemIdIn systemId to use for auth
      */
-    public RHNHelper(String baseurl, String repolabelIn) {
+    public RHNHelper(String baseurl, String repolabelIn, String systemIdIn) {
 
         this.baseurl = baseurl;
         this.repolabel = repolabelIn;
         this.rhndata = new RhnComm(baseurl);
         this.rhndownload = new RhnDownloader(baseurl);
-        this.systemid = readSystemId();
+        this.systemid = systemIdIn;
 
     }
 
@@ -75,16 +74,15 @@ public class RHNHelper {
      * @return A list of package detail objects
      * @throws Exception On all errors
      */
-    public List<ContentProviderPackageDetails> getPackageDetails(List packageIds)
-            throws Exception {
+    public List<ContentProviderPackageDetails> getPackageDetails(List packageIds) throws Exception {
 
         List<ContentProviderPackageDetails> pdlist = new ArrayList<ContentProviderPackageDetails>();
         List<RhnPackageType> pkgs = rhndata.getPackageMetadata(this.systemid, packageIds);
 
-        for(RhnPackageType pkg: pkgs) {
+        for (RhnPackageType pkg : pkgs) {
             try {
                 pdlist.add(getDetails(pkg));
-            } catch( Exception e) {
+            } catch (Exception e) {
                 // something went wrong while constructing the pkg object.
                 // Proceed to next and get as many packages as we can.
                 continue;
@@ -107,8 +105,8 @@ public class RHNHelper {
         String arch = p.getPackageArch();
         String rpmname = constructRpmName(name, version, p.getRelease(), p.getEpoch(), arch);
 
-        ContentProviderPackageDetailsKey key =
-                new ContentProviderPackageDetailsKey(name, version, "rpm", arch, "Linux", "Platforms");
+        ContentProviderPackageDetailsKey key = new ContentProviderPackageDetailsKey(name, version, "rpm", arch,
+            "Linux", "Platforms");
         ContentProviderPackageDetails pkg = new ContentProviderPackageDetails(key);
 
         pkg.setDisplayName(name);
@@ -122,7 +120,7 @@ public class RHNHelper {
         pkg.setLocation(constructPackageUrl(repolabel, rpmname));
         //pkg.setMetadata();
         return pkg;
-        
+
     }
 
     /**
@@ -160,9 +158,9 @@ public class RHNHelper {
         ArrayList<String> allchannels = new ArrayList();
         List<RhnChannelFamilyType> cfts = rhndata.getChannelFamilies(this.systemid);
         for (RhnChannelFamilyType cf : cfts) {
-             String channeldata = cf.getChannelLabels();
-             String[] clabels  = channeldata.split(" ");
-             if (clabels.length > 1) {
+            String channeldata = cf.getChannelLabels();
+            String[] clabels = channeldata.split(" ");
+            if (clabels.length > 1) {
                 allchannels.addAll(Arrays.asList(clabels));
             }
         }
@@ -182,14 +180,11 @@ public class RHNHelper {
      *
      * @throws XmlRpcException On all errors.
      */
-    public InputStream openStream(String location)
-            throws IOException, XmlRpcException {
+    public InputStream openStream(String location) throws IOException, XmlRpcException {
 
         log.info("Package Fetched from: " + location);
         return rhndownload.getRPMStream(this.systemid, location);
     }
-
-
 
     /**
      * Constructs a downloadable url for package downloads.
@@ -215,23 +210,7 @@ public class RHNHelper {
     private String constructRpmName(String name, String version, String release, String epoch, String arch) {
 
         String releaseepoch = release + ":" + epoch;
-        return name + "-" + version + "-" +  releaseepoch + "." + arch + ".rpm";
-    }
-
-    /**
-     * Reads the systemId file from default location.
-     * @return A systemId file content as a string
-     */
-    private String readSystemId() {
-
-        try {
-            File systemid_file = new File(RHNConstants.DEFAULT_SYSTEM_ID);
-            return FileUtils.readFileToString(systemid_file);
-        } catch (IOException e) {
-            log.debug("SystemId file could not be read. Setting to empty string.");
-            return "";
-        }
-
+        return name + "-" + version + "-" + releaseepoch + "." + arch + ".rpm";
     }
 
     /*

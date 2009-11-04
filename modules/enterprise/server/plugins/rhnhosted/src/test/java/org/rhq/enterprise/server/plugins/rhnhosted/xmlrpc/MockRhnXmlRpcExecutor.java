@@ -72,7 +72,6 @@ public class MockRhnXmlRpcExecutor implements XmlRpcExecutor {
      */
     @Override
     public Object execute(String methodName, Object[] params) throws XmlRpcException {
-        System.out.println("MethodName: " + methodName);
         //for (Object object : params) {
         //    System.out.println("parm: " + object);
         //}

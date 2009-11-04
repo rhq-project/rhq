@@ -529,21 +529,21 @@ public final class LookupUtil {
     }
 
     public static CoreServerMBean getCoreServer() {
-        MBeanServer jBossMBeanServer = MBeanServerLocator.locate();
+        MBeanServer jBossMBeanServer = MBeanServerLocator.locateJBoss();
         CoreServerMBean jonServer = (CoreServerMBean) MBeanProxyExt.create(CoreServerMBean.class,
             CoreServerMBean.OBJECT_NAME, jBossMBeanServer);
         return jonServer;
     }
 
     public static AgentPluginDeploymentScannerMBean getAgentPluginDeploymentScanner() {
-        MBeanServer jBossMBeanServer = MBeanServerLocator.locate();
+        MBeanServer jBossMBeanServer = MBeanServerLocator.locateJBoss();
         AgentPluginDeploymentScannerMBean scanner = (AgentPluginDeploymentScannerMBean) MBeanProxyExt.create(
             AgentPluginDeploymentScannerMBean.class, AgentPluginDeploymentScannerMBean.OBJECT_NAME, jBossMBeanServer);
         return scanner;
     }
 
     public static ServerPluginServiceManagement getServerPluginService() {
-        MBeanServer jBossMBeanServer = MBeanServerLocator.locate();
+        MBeanServer jBossMBeanServer = MBeanServerLocator.locateJBoss();
         ServerPluginServiceManagement service = (ServerPluginServiceManagement) MBeanProxyExt.create(
             ServerPluginServiceManagement.class, ServerPluginServiceManagement.OBJECT_NAME, jBossMBeanServer);
         return service;

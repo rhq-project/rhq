@@ -33,6 +33,8 @@ import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.PrePersist;
 import javax.persistence.Table;
+import javax.persistence.ManyToOne;
+import javax.persistence.JoinColumn;
 
 /**
  * This is the many-to-many entity that correlates a repo with a content source that will fill the repo with
@@ -43,9 +45,9 @@ import javax.persistence.Table;
 @Entity
 @IdClass(RepoDistributionPK.class)
 @NamedQueries( {
-    @NamedQuery(name = RepoDistribution.DELETE_BY_KICKSTART_TREE_ID, query = "DELETE RepoDistribution rkt WHERE rkt.kstree.id = :KsTreeId"),
+    @NamedQuery(name = RepoDistribution.DELETE_BY_KICKSTART_TREE_ID, query = "DELETE RepoDistribution rkt WHERE rkt.dist.id = :KsTreeId"),
     @NamedQuery(name = RepoDistribution.DELETE_BY_REPO_ID, query = "DELETE RepoDistribution rkt WHERE rkt.repo.id = :repoId") })
-@Table(name = "RHQ_REPO_KS_MAP_KEY")
+@Table(name = "RHQ_REPO_DIST_MAP_KEY")
 public class RepoDistribution implements Serializable {
     public static final String DELETE_BY_KICKSTART_TREE_ID = "RepoDistribution.deleteByKickstartTreeId";
     public static final String DELETE_BY_REPO_ID = "RepoDistribution.deleteByRepoId";
@@ -58,14 +60,15 @@ public class RepoDistribution implements Serializable {
      * @IdClass.
      */
     @Id
-    //   @ManyToOne
-    //   @JoinColumn(name = "REPO_ID", referencedColumnName = "ID", nullable = false, insertable = false, updatable = false)
+    @ManyToOne
+    @JoinColumn(name = "REPO_ID", referencedColumnName = "ID", nullable = false, insertable = false, updatable = false)
     private Repo repo;
 
     @Id
-    //   @ManyToOne
-    //   @JoinColumn(name = "KICKSTART_TREE_ID", referencedColumnName = "ID", nullable = false, insertable = false, updatable = false)
-    private Distribution kstree;
+    @ManyToOne
+    @JoinColumn(name = "DISTRIBUTION_ID", referencedColumnName = "ID", nullable = false, insertable = false, updatable = false)
+    private Distribution dist;
+
 
     @Column(name = "LAST_MODIFIED", nullable = false)
     private long last_modified;
@@ -73,18 +76,18 @@ public class RepoDistribution implements Serializable {
     protected RepoDistribution() {
     }
 
-    public RepoDistribution(Repo repo, Distribution kstree) {
+    public RepoDistribution(Repo repo, Distribution dist) {
         this.repo = repo;
-        this.kstree = kstree;
+        this.dist = dist;
     }
 
     public RepoDistributionPK getRepoKickstartTreePK() {
-        return new RepoDistributionPK(repo, kstree);
+        return new RepoDistributionPK(repo, dist);
     }
 
     public void setRepoKickstartTreePK(RepoDistributionPK pk) {
         this.repo = pk.getRepo();
-        this.kstree = pk.getKickstartTree();
+        this.dist = pk.getKickstartTree();
     }
 
     /**
@@ -102,10 +105,10 @@ public class RepoDistribution implements Serializable {
 
     @Override
     public String toString() {
-        StringBuilder str = new StringBuilder("RepoKickstartTree: ");
+        StringBuilder str = new StringBuilder("RepoDistribution: ");
         str.append("ctime=[").append(new Date(this.last_modified)).append("]");
         str.append(", ch=[").append(this.repo).append("]");
-        str.append(", cs=[").append(this.kstree).append("]");
+        str.append(", cs=[").append(this.dist).append("]");
         return str.toString();
     }
 
@@ -113,7 +116,7 @@ public class RepoDistribution implements Serializable {
     public int hashCode() {
         int result = 1;
         result = (31 * result) + ((repo == null) ? 0 : repo.hashCode());
-        result = (31 * result) + ((kstree == null) ? 0 : kstree.hashCode());
+        result = (31 * result) + ((dist == null) ? 0 : dist.hashCode());
         return result;
     }
 
@@ -137,11 +140,11 @@ public class RepoDistribution implements Serializable {
             return false;
         }
 
-        if (kstree == null) {
-            if (kstree != null) {
+        if (dist == null) {
+            if (dist != null) {
                 return false;
             }
-        } else if (!kstree.equals(other.kstree)) {
+        } else if (!dist.equals(other.dist)) {
             return false;
         }
 

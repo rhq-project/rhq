@@ -47,16 +47,16 @@ public class RepoDistributionPK implements Serializable {
     @ManyToOne
     private Repo repo;
 
-    @JoinColumn(name = "KICKSTART_TREE_ID", referencedColumnName = "ID", nullable = false)
+    @JoinColumn(name = "DISTRIBUTION_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne
-    private Distribution kstree;
+    private Distribution dist;
 
     public RepoDistributionPK() {
     }
 
-    public RepoDistributionPK(Repo repo, Distribution kstree) {
+    public RepoDistributionPK(Repo repo, Distribution dist) {
         this.repo = repo;
-        this.kstree = kstree;
+        this.dist = dist;
     }
 
     public Repo getRepo() {
@@ -68,23 +68,23 @@ public class RepoDistributionPK implements Serializable {
     }
 
     public Distribution getKickstartTree() {
-        return kstree;
+        return dist;
     }
 
     public void setContentSource(Distribution kstree) {
-        this.kstree = kstree;
+        this.dist = kstree;
     }
 
     @Override
     public String toString() {
-        return "RepoContentSourcePK: repo=[" + repo + "]; contentSource=[" + kstree + "]";
+        return "RepoContentSourcePK: repo=[" + repo + "]; contentSource=[" + dist + "]";
     }
 
     @Override
     public int hashCode() {
         int result = 1;
         result = (31 * result) + ((repo == null) ? 0 : repo.hashCode());
-        result = (31 * result) + ((kstree == null) ? 0 : kstree.hashCode());
+        result = (31 * result) + ((dist == null) ? 0 : dist.hashCode());
         return result;
     }
 
@@ -108,11 +108,11 @@ public class RepoDistributionPK implements Serializable {
             return false;
         }
 
-        if (kstree == null) {
-            if (other.kstree != null) {
+        if (dist == null) {
+            if (other.dist != null) {
                 return false;
             }
-        } else if (!kstree.equals(other.kstree)) {
+        } else if (!dist.equals(other.dist)) {
             return false;
         }
 

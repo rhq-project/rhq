@@ -32,6 +32,8 @@ import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import java.io.Serializable;
 
 
@@ -41,18 +43,23 @@ import java.io.Serializable;
  */
 @Entity
 @NamedQueries( {
+    @NamedQuery(name = Distribution.QUERY_FIND_ALL,
+            query = "SELECT dt FROM Distribution dt"),
+    @NamedQuery(name = Distribution.QUERY_FIND_PATH_BY_DIST_TYPE, query = "SELECT dt " + "  FROM Distribution dt "
+        + " WHERE dt.label = :label AND dt.distributionType.name = :typeName "),
     @NamedQuery(name = Distribution.QUERY_FIND_PATH_BY_KSTREE_LABEL,
-            query = "SELECT ks.base_path FROM Distribution AS ks WHERE ks.label = :label"),
+            query = "SELECT dt.base_path FROM Distribution AS dt WHERE dt.label = :label"),
     @NamedQuery(name = Distribution.QUERY_FIND_PATH_BY_KSTREE_PATH,
-            query = "SELECT ks.base_path FROM Distribution AS ks WHERE ks.base_path = :path")})
+            query = "SELECT dt.base_path FROM Distribution AS dt WHERE dt.base_path = :path")})
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_DISTRIBUTION_ID_SEQ")
 @Table(name = "RHQ_DISTRIBUTION")
 public class Distribution implements Serializable {
     
     private static final long serialVersionUID = 1L;
     public static final String QUERY_FIND_ALL = "Distribution.findAll";
-    public static final String QUERY_FIND_PATH_BY_KSTREE_LABEL = "Distribution.findPathByKSTreeLabel";
+    public static final String QUERY_FIND_PATH_BY_KSTREE_LABEL =  "Distribution.findPathByKSTreeLabel";
     public static final String QUERY_FIND_PATH_BY_KSTREE_PATH  =  "Distribution.findPathByKSTreePath";
+    public static final String QUERY_FIND_PATH_BY_DIST_TYPE  =  "Distribution.findPathByDistType";
 
     // Attributes  --------------------------------------------
 
@@ -61,8 +68,12 @@ public class Distribution implements Serializable {
     @Id
     private int id;
 
+    @JoinColumn(name = "DISTRIBUTION_TYPE_ID", referencedColumnName = "ID", nullable = false)
+    @ManyToOne
+    private DistributionType distributionType;
+
     /**
-     *Kickstart tree label
+     *Distribution label
      */
     @Column(name = "LABEL", nullable = false)
     private String label;
@@ -79,9 +90,10 @@ public class Distribution implements Serializable {
     public Distribution() {
     }
 
-    public Distribution(String label, String basepathIn) {
+    public Distribution(String label, String basepathIn, DistributionType distributionType ) {
         setLabel(label);
         setBasePath(basepathIn);
+        setDistributionType(distributionType);
     }
 
     public String getLabel() {
@@ -100,11 +112,22 @@ public class Distribution implements Serializable {
         this.base_path = basepathIn;
     }
 
+    /**
+     * Describes the capabilities of this distribution.
+     */
+    public DistributionType getDistributionType() {
+        return distributionType;
+    }
+
+    public void setDistributionType(DistributionType distributionType) {
+        this.distributionType = distributionType;
+    }
+
     // Object Overridden Methods  --------------------------------------------
 
     @Override
     public String toString() {
-        return "Distribtuion [label=" + label + ",basePath=" + base_path + "]";
+        return String.format("Distribtuion [label=%s, Type=%s, basePath=%s]", label, distributionType, base_path);
     }
 
     @Override

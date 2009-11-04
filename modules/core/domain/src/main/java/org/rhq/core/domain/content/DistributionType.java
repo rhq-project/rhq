@@ -66,10 +66,6 @@ public class DistributionType implements Serializable {
     @Id
     private int id;
 
-    @JoinColumn(name = "DISTRIBUTION_TYPE_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne
-    private DistributionType distributionType;
-
     @Column(name = "NAME", nullable = false)
     private String name;
 
@@ -114,7 +110,7 @@ public class DistributionType implements Serializable {
 
     @Override
     public String toString() {
-        return "DistributionType: name=[" + this.name + "]";
+        return String.format("DistributionType: name=[%s]", this.name);
     }
 
     @Override

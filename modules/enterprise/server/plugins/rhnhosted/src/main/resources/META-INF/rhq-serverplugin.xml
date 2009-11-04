@@ -2,7 +2,7 @@
 
 <plugin name="RHNHostedPlugin" 
         xmlns="urn:xmlns:rhq-serverplugin.content"
-        xmlns:c="urn:xmlns:server:rhq-configuration">
+        xmlns:c="urn:xmlns:rhq-configuration">
 
    <contentSourceType name="RHNSource"
                       displayName="RHN Hosted Source"

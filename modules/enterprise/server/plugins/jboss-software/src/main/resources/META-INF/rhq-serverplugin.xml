@@ -2,7 +2,7 @@
 
 <plugin name="JBossASPatchContentSourcePlugin"
         xmlns="urn:xmlns:rhq-serverplugin.content"
-        xmlns:c="urn:xmlns:server:rhq-configuration">
+        xmlns:c="urn:xmlns:rhq-configuration">
 
    <contentSourceType name="JBossASPatchSource"
                       displayName="JBoss AS Patch Content Source"

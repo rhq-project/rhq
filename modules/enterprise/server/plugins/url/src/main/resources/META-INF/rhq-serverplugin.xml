@@ -4,7 +4,7 @@
                 version="1.0"
                 apiVersion="2.0"
                 xmlns="urn:xmlns:rhq-serverplugin.content"
-                xmlns:c="urn:xmlns:server:rhq-configuration">
+                xmlns:c="urn:xmlns:rhq-configuration">
 
    <contentSourceType name="UrlSource"
                       displayName="Remote URL Content Source"

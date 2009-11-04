@@ -312,8 +312,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         pc.initDefaultOrderingField("c.id");
 
         Query query = PersistenceUtility
-            .createQueryWithOrderBy(entityManager, Repo.QUERY_FIND_BY_CONTENT_SOURCE_ID, pc);
-        Query countQuery = PersistenceUtility.createCountQuery(entityManager, Repo.QUERY_FIND_BY_CONTENT_SOURCE_ID);
+            .createQueryWithOrderBy(entityManager, Repo.QUERY_FIND_IMPORTED_BY_CONTENT_SOURCE_ID, pc);
+        Query countQuery = PersistenceUtility.createCountQuery(entityManager, Repo.QUERY_FIND_IMPORTED_BY_CONTENT_SOURCE_ID);
 
         query.setParameter("id", contentSourceId);
         countQuery.setParameter("id", contentSourceId);

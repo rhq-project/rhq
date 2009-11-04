@@ -75,7 +75,7 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
     public static final String AUGEAS_MODULE_NAME_PROP = "augeasModuleName";
     public static final String AUGEAS_ROOT_PATH_PROP = "augeasRootPath";
 
-    public static final String DEFAULT_AUGEAS_ROOT_PATH = "/";
+    public static final String DEFAULT_AUGEAS_ROOT_PATH = File.listRoots()[0].getPath();
 
     private static final boolean IS_WINDOWS = (File.separatorChar == '\\');
     private static final String AUGEAS_LOAD_PATH = "/usr/share/augeas/lenses";

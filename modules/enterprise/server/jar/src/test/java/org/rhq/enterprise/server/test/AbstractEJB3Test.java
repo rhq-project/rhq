@@ -46,7 +46,6 @@ import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.db.PostgresqlDatabaseType;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.util.PersistenceUtility;
-import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SessionManager;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceMBean;
@@ -262,7 +261,7 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
             MBeanServer mbs = getJBossMBeanServer();
             TestServerPluginService mbean = new TestServerPluginService();
             mbean.start();
-            mbs.registerMBean(mbean, ObjectNameFactory.create(TestServerPluginService.OBJECT_NAME_STR));
+            mbs.registerMBean(mbean, TestServerPluginService.OBJECT_NAME);
             serverPluginService = mbean;
             return mbean;
         } catch (Exception e) {
@@ -274,7 +273,7 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
         if (serverPluginService != null) {
             serverPluginService.stopMasterPluginContainer();
             serverPluginService.stop();
-            getJBossMBeanServer().unregisterMBean(ObjectNameFactory.create(TestServerPluginService.OBJECT_NAME_STR));
+            getJBossMBeanServer().unregisterMBean(TestServerPluginService.OBJECT_NAME);
             serverPluginService = null;
         }
     }

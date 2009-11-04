@@ -66,7 +66,7 @@ import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetailsKey;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
-import org.rhq.enterprise.server.test.TestContentSourcePluginService;
+import org.rhq.enterprise.server.test.TestServerPluginService;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 @Test
@@ -123,7 +123,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
 
     private ResourceType resourceType1;
     private Resource resource1;
-    private TestContentSourcePluginService pluginService;
+    private TestServerPluginService pluginService;
 
     @BeforeClass
     public void setupBeforeClass() throws Exception {
@@ -151,7 +151,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
         setupTestEnvironment();
         overlord = LookupUtil.getSubjectManager().getOverlord();
         prepareScheduler();
-        pluginService = prepareContentSourcePluginService();
+        pluginService = prepareServerPluginService();
         pluginService.startMasterPluginContainer();
 
         cleanupPreviousTestRuns();
@@ -160,7 +160,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
     @AfterMethod
     public void tearDownAfterMethod() throws Exception {
         tearDownTestEnvironment();
-        unprepareContentSourcePluginService();
+        unprepareServerPluginService();
         unprepareScheduler();
     }
 
